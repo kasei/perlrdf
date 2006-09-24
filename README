@@ -1,0 +1,39 @@
+RDF-Base version 0.0.1
+
+RDF::Base provides base classes and an API for working with RDF in Perl.
+This includes classes for RDF Nodes (RDF::Node), RDF Statements
+(RDF::Statement), RDF Storage backends (RDF::Storage), and collections of
+RDF patterns used for query support (RDF::Pattern).
+
+
+To use the Node and Statement classes, here's an example of how to construct
+the following N3 triple: [ foaf:name "greg" ]
+
+  $subj      = RDF::Node::Blank->new();
+  $pred      = RDF::Node::Resource->new( uri => "http://xmlns.com/foaf/0.1/name" );
+  $obj       = RDF::Node::Literal->new( value => "greg" );
+  $statement = RDF::Statement->new( subject => $subj, predicate => $pred, object => $obj );
+
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+    perl Makefile.PL
+    make
+    make test
+    make install
+
+
+
+DEPENDENCIES
+
+URI
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2006, Gregory Todd Williams
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.

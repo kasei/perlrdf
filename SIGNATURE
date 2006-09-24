@@ -1,0 +1,71 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.54.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 1c120d1bf15033d1d30d1acf03abdda5937c7c29 Base.xs
+SHA1 d6f32162aed3050d862a9f2c5aca209826894f3d Changes
+SHA1 2cb83052d3741a2d1d8524ad7870835b3fb369ac MANIFEST
+SHA1 0fa9aea7e29826af8eb3f83339d3070a11d2eb35 META.yml
+SHA1 a782e9d16178693551ba62ba41c4d2586c0d02b8 README
+SHA1 017bedfcba1e0c72b36301e6ef21b8712b84d175 inc/Module/Install.pm
+SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
+SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
+SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
+SHA1 55850b13446560874911467f65e85e0c07c762b3 lib/RDF/Base.pm
+SHA1 4cf13e5922dc31eacfa92bd4444ca49e0ca99c23 lib/RDF/Base/Iterator.pm
+SHA1 4a83b37308c07329c8daf056e25d859202d2e7a7 lib/RDF/Base/Iterator/Node.pm
+SHA1 70aa9d164f8b88149eeb894dc94431b5ab937820 lib/RDF/Base/Iterator/QueryBindings.pm
+SHA1 280aea4ecb87ef7872bf054561c37789b070426d lib/RDF/Base/Iterator/Statement.pm
+SHA1 ec29bc46ba2eaf8946b5137bd2a1f484e386473c lib/RDF/Base/Model.pm
+SHA1 609994d9af6482e17a6ca7f5bd9ea72f3239bcdd lib/RDF/Base/Node.pm
+SHA1 9d0fc7efd00cc08c88d55dedfebb6f4f7c60a8e5 lib/RDF/Base/Node/Blank.pm
+SHA1 9a562c5ed0557a7ca25ca811105490afc0bb786c lib/RDF/Base/Node/Literal.pm
+SHA1 0c4bb7453138c4039acf037e75a427f3ad730772 lib/RDF/Base/Node/Resource.pm
+SHA1 6c0cea84901853a2af50960c2237a426d70ceed6 lib/RDF/Base/Node/Variable.pm
+SHA1 e3bbc0a548bbacf26c09930f3227c289b2804260 lib/RDF/Base/Parser.pm
+SHA1 5745eb5b4de891303e168ecc2b969d60efff9139 lib/RDF/Base/Parser/RDFXML.pm
+SHA1 2c56b947de5a8d5b7e8b3aa0f8d0519e153ec6e3 lib/RDF/Base/Parser/Simple.pm
+SHA1 78d209962b6e1c78f68d2dea09608e2da56864f8 lib/RDF/Base/Parser/Turtle.pm
+SHA1 b87e5291271ea0fe785f9bffb33c958f1e7f31e3 lib/RDF/Base/Pattern.pm
+SHA1 31dddc06b71bcdac86b43cdf130ffc2089b2c5e2 lib/RDF/Base/Pattern/Filter.pm
+SHA1 b666b316390554e2700b171715eeb30bb7d53dff lib/RDF/Base/Pattern/Graph.pm
+SHA1 e85c7145448709a248a827fa05134f783da21040 lib/RDF/Base/Pattern/Optional.pm
+SHA1 2f2285c3a4dcec9c790a2a7cfb0597660209a65a lib/RDF/Base/Pattern/Triples.pm
+SHA1 7237690f9d63f7ecb4204ac231b3d005c622515d lib/RDF/Base/Pattern/Union.pm
+SHA1 91a32bc0871e2e5dc5c0c338028fe9f5a01e96ec lib/RDF/Base/Serialiser.pm
+SHA1 fc124335c71a809bebe0513c95eaa306b9662937 lib/RDF/Base/Statement.pm
+SHA1 efb4dd78b4e4f071fb1dbfb28529a175919fba97 lib/RDF/Base/Storage.pm
+SHA1 b24ecb026470108614c5388b40f179de982992d3 lib/RDF/Base/Storage/DBI.pm
+SHA1 9286aa579e062d8ac4486c5fb2f29938536f071b lib/RDF/Base/Storage/Memory.pm
+SHA1 10cbf155a0f4867b3dcccb21b7e850a93a410507 t/00.load.t
+SHA1 598f387ee224621666f6ba1c1e4d5fae9d1a9cfa t/model.t
+SHA1 71efb3b4014632d16ca5c2f05d331993f7dce090 t/node.t
+SHA1 266b209f6acbd7aa1b8d9bfa4c60379f34bd52aa t/parser.t
+SHA1 a8696e40c548f3ed13ba1979b1ad72567b7c940f t/pattern.t
+SHA1 6da39b48ce64b584e4c3274bff96fc76ff484820 t/pod-coverage.t
+SHA1 0190346d7072d458c8a10a45c19f86db641dcc48 t/pod.t
+SHA1 3285febb1ea2bbc2be916827cd5dec5e6ddeae64 t/statement.t
+SHA1 371ae70e1e5091aa9393cb92796939cbca0cade4 t/storage.dbi.t
+SHA1 3545101a6f2d30d33f1dbb9d0e6e8b6a08ccd2fd t/storage.multiget.t
+SHA1 08d14e326ee28f6fb04ebde2c256ed42194671d6 t/storage.t
+SHA1 fd37335e29ab59e14cfe0b349bb4981a0e16d292 t/test.rdf
+SHA1 33e9dae9cccd3fb1e7330b7c7558abced8221959 t/test.simple
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.4 (Darwin)
+
+iD8DBQFFFdODhPK6VMqoyC0RAk5+AJ4034xothtcgnCKlJuIa6Y36/eEIACeNZDu
+MjwMrAW0I9r91FLCjz1CSWg=
+=rkrM
+-----END PGP SIGNATURE-----

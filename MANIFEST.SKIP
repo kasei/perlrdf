@@ -1,0 +1,7 @@
+inc/.author
+MANIFEST.SKIP
+Makefile
+.DS_Store
+.svn
+.cvsignore
+
