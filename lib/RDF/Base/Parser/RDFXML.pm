@@ -36,12 +36,13 @@ use strict;
 use warnings;
 use Data::Dumper;
 use RDF::Base::Iterator::Statement;
-use Gandolfini::Stream qw(smap sgrep);
+use RDF::SPARQLResults qw(smap sgrep);
 
 use LWP::Simple qw(get);
 use RDF::Redland;
 use RDF::Redland::Parser;
 use Params::Coerce 'coerce';
+use Scalar::Util qw(blessed);
 
 # Module implementation here
 
@@ -83,8 +84,14 @@ undef on failure.
 
 sub parse_as_stream ($$) {
 	my $self		= shift;
-	my $source_uri	= coerce( 'RDF::Base::Node::Resource', shift );
-	my $base_uri	= shift;
+	my $uri			= shift;
+	my $source_uri;
+	if (blessed($uri)) {
+		$source_uri	= coerce( 'RDF::Query::Node::Resource', $uri );
+	} else {
+		$source_uri	= RDF::Query::Node::Resource->new( uri => $uri );
+	}
+	my $base_uri	= shift || $source_uri;
 	
 	my $content		= get( $source_uri->uri_value );
 	my $stream		= $self->parse_string_as_stream($content, $base_uri);
@@ -141,7 +148,15 @@ undef on failure.
 sub parse_string_as_stream ($$) {
 	my $self		= shift;
 	my $string		= shift;
-	my $base_uri	= coerce( 'RDF::Redland::URI', shift );
+	my $base_uri	= shift;
+	if (not blessed($base_uri)) {
+		$base_uri	= RDF::Redland::URI->new( $base_uri );
+	} elsif (UNIVERSAL::isa($base_uri, 'URI::file')) {
+		$base_uri	= RDF::Redland::URI->new( "$base_uri" );
+	} else {
+		$base_uri	= coerce( 'RDF::Redland::URI', $base_uri );
+	}
+	
 	my $stream		=  $self->{parser}->parse_string_as_stream( $string, $base_uri );
 	return coerce( 'RDF::Base::Iterator::Statement', $stream );
 }
@@ -187,6 +202,9 @@ Returns the parser info including serialization name, mime-type and uri.
 
 sub parser_info {
 	return {
+# 		name		=> 'xxx', qr/rdf-?xml/,
+# 		mimetype	=> 'xxx', 'application/rdf+xml',
+# 		uri			=> '...',
 		name		=> qr/rdf-?xml/,
 		mimetype	=> 'application/rdf+xml',
 		uri			=> '...',

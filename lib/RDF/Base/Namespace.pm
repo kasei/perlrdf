@@ -40,7 +40,7 @@ use warnings;
 use base qw(XML::Namespace);
 
 use Carp;
-use RDF::Base::Node::Resource;
+use RDF::Query::Node::Resource;
 
 =head1 METHODS
 
@@ -56,7 +56,7 @@ added to the end of it.
 sub uri {
 	my $self	= shift;
 	my $uri		= $self->SUPER::uri( @_ );
-	return RDF::Base::Node::Resource->new( uri => $uri );
+	return RDF::Query::Node::Resource->new( uri => $uri );
 }
 
 

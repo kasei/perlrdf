@@ -36,17 +36,14 @@ use version; $VERSION = qv('0.0.1');
 use strict;
 use warnings;
 
-use RDF::Base::Node;
+use base qw(RDF::Query::Algebra::Triple);
+
+use RDF::Query::Node;
+
+use Carp;
 use Scalar::Util qw(blessed);
 use Params::Coerce qw(coerce);
 
-# use Moose;
-use Carp;
-
-# has 'subject'	=> ( is => 'rw', isa => 'RDF::Base::Node', required => 1 );
-# has 'predicate'	=> ( is => 'rw', isa => 'RDF::Base::Node', required => 1 );
-# has 'object'	=> ( is => 'rw', isa => 'RDF::Base::Node', required => 1 );
-# has 'context'	=> ( is => 'rw', isa => 'RDF::Base::Node', predicate => 'has_context' );
 
 # Module implementation here
 
@@ -56,64 +53,15 @@ use Carp;
 
 =cut
 
-=item C<< new ( subject => $s, predicate => $p, object => $o [, context => $c] ) >>
-
-=cut
-
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	my $subj	= $args{ subject };
-	my $pred	= $args{ predicate };
-	my $obj		= $args{ object };
-	my $context	= $args{ context };
-	Carp::confess unless ($subj and $pred and $obj);
-	my $self	= bless( { subject => $subj, predicate => $pred, object => $obj, context => $context }, $class );
+	$class->SUPER::new( @args{qw(subject predicate object)} );
 }
-
-
-=item C<< subject >>
-
-Returns the statement's subject node.
-
-=cut
-
-sub subject {
-	my $self	= shift;
-	return $self->{subject};
-}
-
-=item C<< predicate >>
-
-Returns the statement's predicate node.
-
-=cut
-
-sub predicate {
-	my $self	= shift;
-	return $self->{predicate};
-}
-
-=item C<< object >>
-
-Returns the statement's object node.
-
-=cut
-
-sub object {
-	my $self	= shift;
-	return $self->{object};
-}
-
-=item C<< context >>
-
-Returns the statement's context node.
-
-=cut
 
 sub context {
 	my $self	= shift;
-	return $self->{context};
+	return $self->[3];
 }
 
 =item C<< has_context >>
@@ -124,7 +72,7 @@ Returns true if the statement has an associated context node.
 
 sub has_context {
 	my $self	= shift;
-	return ref($self->{context}) ? 1 : 0;
+	return ref($self->[3]) ? 1 : 0;
 }
 
 
@@ -195,7 +143,7 @@ Returns a serialized representation of the statement.
 
 sub as_string {
 	my $self	= shift;
-	return sprintf('{%s, %s, %s} %s', map { blessed($self->$_()) ? $self->$_()->as_string : '' } qw(subject predicate object context));
+	return sprintf('{%s, %s, %s} %s', map { blessed($self->$_()) ? $self->$_()->as_sparql : '' } qw(subject predicate object context));
 }
 
 sub __from_RDF_Redland_Statement {

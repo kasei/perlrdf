@@ -53,9 +53,7 @@ use Scalar::Util qw(blessed);
 use Encode qw(encode_utf8 decode_utf8);
 
 use RDF::Base;
-use RDF::Base::Iterator;
-use RDF::Base::Iterator::Statement;
-use RDF::Base::Iterator::QueryBindings;
+use RDF::SPARQLResults;
 
 supports RDF::Base::Storage 'multi_get';
 supports RDF::Base::Storage 'ordered-get';
@@ -117,7 +115,7 @@ sub new {
 
 Adds the specified statement to the stored RDF graph.
 C<$statement> must be a RDF::Base::Statement object.
-C<$subject>, C<$predicate>, and C<$object> must be RDF::Base::Node objects.
+C<$subject>, C<$predicate>, and C<$object> must be RDF::Query::Node objects.
 
 =cut
 
@@ -170,7 +168,7 @@ sub add_statement {
 
 Removes the specified statement from the stored RDF graph.
 C<$statement> must be a RDF::Base::Statement object.
-C<$subject>, C<$predicate>, and C<$object> must be RDF::Base::Node objects.
+C<$subject>, C<$predicate>, and C<$object> must be RDF::Query::Node objects.
 
 =cut
 
@@ -222,7 +220,7 @@ sub remove_statement {
 =item C<< exists_statement ( $subject, $predicate, $object ) >>
 
 Returns true if the specified statement exists in the stored RDF graph.
-C<$subject>, C<$predicate>, and C<$object> must be RDF::Base::Node objects.
+C<$subject>, C<$predicate>, and C<$object> must be RDF::Query::Node objects.
 
 =cut
 
@@ -252,7 +250,7 @@ sub exists_statement {
 
 Returns the number of matching statement that exists in the stored RDF graph.
 C<$statement> must be a RDF::Base::Statement object.
-C<$subject>, C<$predicate>, and C<$object> must be RDF::Base::Node objects.
+C<$subject>, C<$predicate>, and C<$object> must be RDF::Query::Node objects.
 
 =cut
 
@@ -290,7 +288,7 @@ sub count_statements {
 Returns an iterator object of all statements matching the specified statement.
 C<$statement> must be a RDF::Base::Statement object.
 C<$subject>, C<$predicate>, and C<$object> must be either undef (to match any node)
-or RDF::Base::Node objects.
+or RDF::Query::Node objects.
 
 =cut
 
@@ -334,7 +332,7 @@ sub get_statements {
 			}
 		};
 		
-		return RDF::Base::Iterator::Statement->new( $code );
+		return RDF::SPARQLResults::Graph->new( $code );
 	} else {
 		return sub { undef };
 	}
@@ -345,7 +343,7 @@ sub get_statements {
 =item C<< wrap_results ( $sth, @fields ) >>
 
 Wraps the results from a DBI statement handle with an iterator closure.
-Each row is turned into a list of RDF::Base::Node objects, based on the named
+Each row is turned into a list of RDF::Query::Node objects, based on the named
 C<< @fields >> (often just qw(subject predicate object)).
 
 =cut
@@ -375,9 +373,9 @@ sub wrap_results {
 		foreach my $pos (@fields) {
 			my $node;
 			if (defined(my $uri = $data->{"${pos}_URI"})) {
-				$node	= RDF::Base::Node::Resource->new( uri => $uri );
+				$node	= RDF::Query::Node::Resource->new( uri => $uri );
 			} elsif (defined(my $name = $data->{"${pos}_Name"})) {
-				$node	= RDF::Base::Node::Blank->new( name => $name );
+				$node	= RDF::Query::Node::Blank->new( name => $name );
 			} elsif (defined(my $value = $data->{"${pos}_Value"})) {
 				my %args;
 				if (my $lang = $data->{"${pos}_Language"}) {
@@ -387,13 +385,14 @@ sub wrap_results {
 					$args{ datatype }	= $dt;
 				}
 				
-				$node		= RDF::Base::Node::Literal->new( value => decode_utf8( $value ), %args );
+				$node		= RDF::Query::Node::Literal->new( value => decode_utf8( $value ), %args );
 			} else {
 				warn "Uh oh.";
 				warn Dumper($data);
 			}
 			push(@nodes, $node);
 		}
+		
 		return @nodes;
 	};
 	return $stream;
@@ -527,7 +526,7 @@ END
 
 =item C<< multi_get ( triples => \@triples, order => $field ) >>
 
-Returns a RDF::Base::Iterator::QueryBindings iterator based on the simple
+Returns a RDF::SPARQLResults::Bindings iterator based on the simple
 graph pattern expressed by C<< \@triples >>. Results may be sorted by the
 named C<< $field >>.
 
@@ -535,6 +534,7 @@ named C<< $field >>.
 
 sub multi_get {
 	my $self			= shift;
+	
 	my $dbh				= $self->dbh;
 	my ($sql, @vars)	= $self->get_multi_sql( @_ );
 	
@@ -552,9 +552,9 @@ sub multi_get {
 							return;
 						}
 					};
-		return RDF::Base::Iterator::QueryBindings->new( $code );
+		return RDF::SPARQLResults::Bindings->new( $code );
 	} else {
-		return RDF::Base::Iterator::QueryBindings->new();
+		return RDF::SPARQLResults::Bindings->new();
 	}
 }
 
@@ -815,14 +815,14 @@ END
 =item C<< _mysql_node_hash ( $node ) >>
 
 Returns the MD5 hash of the specified C<$node> object.
-C<$node> must be an RDF::Base::Node object.
+C<$node> must be an RDF::Query::Node object.
 
 =end private
 
 =cut
 
 sub _mysql_node_hash {
-	my $node	= shift;
+	my $node	= Params::Coerce::coerce( 'RDF::Query::Node', shift );
 	my $data;
 	if ($node->is_resource) {
 		$data	= 'R' . $node->uri_value;

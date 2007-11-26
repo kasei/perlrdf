@@ -32,32 +32,15 @@ use version; $VERSION = qv('0.0.1');
 use strict;
 use warnings;
 
-# use Moose;
-# use Moose::Util::TypeConstraints;
 use Params::Coerce;
 use Scalar::Util qw(blessed);
 
 use Carp;
 use URI;
 
-# subtype Uri
-# 	=> as Object
-# 	=> where { $_->isa('URI') };
-#   
-# coerce Uri
-# 	=> from Object
-# 		=> via {
-# 			$_->isa('RDF::Redland::URI')
-# 				? URI->new( $_->as_string )
-# 				: Params::Coerce::coerce( 'URI', $_ )
-# 		}
-# 	=> from Str
-# 		=> via { URI->new( $_ ) };
-
-
-use Module::Pluggable	search_path	=> 'RDF::Base::Node',
-						require		=> 1;
-__PACKAGE__->plugins();
+# use Module::Pluggable	search_path	=> 'RDF::Base::Node',
+# 						require		=> 1;
+# __PACKAGE__->plugins();
 
 
 # Module implementation here
@@ -67,59 +50,6 @@ __PACKAGE__->plugins();
 =over 4
 
 =cut
-
-=item C<< is_node >>
-
-Returns true if the object is a valid node object.
-
-=cut
-
-sub is_node {
-	return 1;
-}
-
-=item C<< is_literal >>
-
-Returns true if the object is a valid literal node object.
-
-=cut
-
-sub is_literal  { return 0; }
-
-=item C<< is_resource >>
-
-Returns true if the object is a valid resource node object.
-
-=cut
-
-sub is_resource { return 0; }
-
-=item C<< is_blank >>
-
-Returns true if the object is a valid blank node object.
-
-=cut
-
-sub is_blank    { return 0; }
-
-=item C<< is_variable >>
-
-Returns true if the object is a valid variable node object.
-
-=cut
-
-sub is_variable    { return 0; }
-
-
-=item C<< equal ( $node ) >>
-
-Returns true if the object value is equal to that of the specified C<$node>.
-
-=cut
-
-sub equal {
-	return 0;
-}
 
 =item C<< parse ( $string ) >>
 
@@ -131,24 +61,24 @@ sub parse {
 	my $self	= shift;
 	$_			= shift;
 	if (/^\[(.*)\]$/) {
-		return RDF::Base::Node::Resource->new( uri => $1 );
+		return RDF::Query::Node::Resource->new( $1 );
 	} elsif (/^\((.*)\)$/) {
-		return RDF::Base::Node::Blank->new( name => $1 );
+		return RDF::Query::Node::Blank->new( $1 );
 	} elsif (/^(["'])([^"]*)\1/) {
 		my $value	= $2;
 		my $rest	= substr($_, length($2) + 2);
 		if ($rest) {
 			if ($rest =~ m/^@([A-Za-z_-]+)$/) {
 				my $lang	= $1;
-				return RDF::Base::Node::Literal->new( value => $value, language => $lang );
+				return RDF::Query::Node::Literal->new( $value, $lang );
 			} elsif ($rest =~ m/^\^\^<([^>]+)>$/) {
 				my $dt	= $1;
-				return RDF::Base::Node::Literal->new( value => $value, datatype => $dt );
+				return RDF::Query::Node::Literal->new( $value, undef, $dt );
 			} else {
 				return;
 			}
 		} else {
-			return RDF::Base::Node::Literal->new( value => $value );
+			return RDF::Query::Node::Literal->new( $value );
 		}
 	} else {
 		return;

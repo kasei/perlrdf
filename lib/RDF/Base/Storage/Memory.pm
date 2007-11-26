@@ -39,7 +39,7 @@ use base qw(RDF::Base::Storage);
 
 use Carp;
 use Scalar::Util qw(blessed refaddr);
-use RDF::Base::Iterator::Statement;
+use RDF::SPARQLResults::Graph;
 
 # Module implementation here
 
@@ -96,7 +96,7 @@ sub add_statement {
 	}
 	
 	my $addr	= $st->as_string;
-	my @addr	= map { blessed($_) ? $_->as_string : '' } ($s, $p, $o, $c);
+	my @addr	= map { blessed($_) ? $_->as_sparql : '' } ($s, $p, $o, $c);
 	my %addr;
 	@addr{ qw(s p o c) }	= @addr;
 	
@@ -136,7 +136,7 @@ sub remove_statement {
 	}
 	
 	my $addr	= $st->as_string;
-	my @addr	= map { blessed($_) ? $_->as_string : '' } ($s, $p, $o, $c);
+	my @addr	= map { blessed($_) ? $_->as_sparql : '' } ($s, $p, $o, $c);
 	my %addr;
 	@addr{ qw(s p o c) }	= @addr;
 	
@@ -252,7 +252,7 @@ sub get_statements {
 	my @triples	= (values %{ $self->{'triples'} });
 	my %match	= map { @$_ } grep { defined($_->[1]) } ( [ subject => $s ], [ predicate => $p ], [ object => $o ], [ context => $c ] );
 	
-	my $stream	= RDF::Base::Iterator::Statement->new( sub {
+	my $stream	= RDF::SPARQLResults::Graph->new( sub {
 		TRIPLES: while (my $triple = shift(@triples)) {
 			foreach my $method (keys %match) {
 				my $value	= $match{ $method };

@@ -75,7 +75,7 @@ undef on failure.
 
 sub parse_as_stream ($$) {
 	my $self	= shift;
-	my $source	= coerce( 'RDF::Base::Node::Resource', shift );
+	my $source	= coerce( 'RDF::Query::Node::Resource', shift );
 	my $base	= shift;
 	my $content	= get( $source->uri_value );
 	return unless ($content);
