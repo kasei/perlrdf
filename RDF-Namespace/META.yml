@@ -1,0 +1,14 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         RDF-Namespace
+version:      0.001
+version_from: lib/RDF/Namespace.pm
+installdirs:  site
+requires:
+    RDF::Query::Node:              0
+    Test::More:                    0
+    XML::CommonNS:                 0.04
+    XML::Namespace:                0
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17
