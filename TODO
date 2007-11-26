@@ -1,0 +1,24 @@
+Model
+	- Implement composite models.
+		- Model(A,B,C) should forward calls to A, then B, then C.
+
+
+Storage
+	- Let storage objects be marked as read only.
+
+
+Parsing
+	- Implement RDF/XML parser based on XML::SAX.
+	- Remove dependency on Redland in RDF::Base::Parser::RDFXML.
+	- Implement Turtle parser.
+
+
+Serialization
+	- Merge Kasei::Common::RDF::Export into RDF::Base::Serializer::RDFXML.
+	- Write turtle serializer.
+
+
+Future Work:
+	- Inferencing.
+
+

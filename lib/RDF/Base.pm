@@ -36,7 +36,7 @@ This document describes RDF::Base version 0.001.
 
 package RDF::Base;
 
-our $VERSION = '0.001001';	# v0.1.1
+our $VERSION = '0.001003';	# v0.1.3
 
 use strict;
 use warnings;
@@ -50,16 +50,15 @@ use Carp;
 
 use Module::Pluggable;
 
+use RDF::Base::Node;
 use RDF::Base::Model;
 use RDF::Base::Parser;
 
-use RDF::Base::Node;
+use RDF::Query::Node;
+use RDF::Query::Algebra::Triple;
 use RDF::Base::Storage;
-use RDF::Base::Statement;
 
-use RDF::Base::Iterator::Node;
-use RDF::Base::Iterator::Statement;
-use RDF::Base::Iterator::QueryBindings;
+use RDF::SPARQLResults;
 
 
 # Module implementation here

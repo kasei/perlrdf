@@ -22,7 +22,7 @@ isa_ok( $dbi, 'RDF::Base::Storage::DBI' );
 
 {
 	my $uri		= 'http://xmlns.com/foaf/0.1/name';
-	my $node	= RDF::Base::Node::Resource->new( uri => $uri );
+	my $node	= RDF::Query::Node::Resource->new( uri => $uri );
 	my $hash	= RDF::Base::Storage::DBI::_mysql_node_hash( $node );
 	is( $hash, '14911999128994829034', 'uri hash' );
 }
@@ -30,31 +30,31 @@ isa_ok( $dbi, 'RDF::Base::Storage::DBI' );
 my $greg;
 
 {
-	my $s	= RDF::Base::Node::Blank->new();
+	my $s	= RDF::Query::Node::Blank->new();
 	$greg	= $s;	# save this node for later
-	my $p	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
-	my $o	= RDF::Base::Node::Literal->new( value => 'greg' );
+	my $p	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
+	my $o	= RDF::Query::Node::Literal->new( value => 'greg' );
 	my $st	= RDF::Base::Statement->new( subject => $s, predicate => $p, object => $o );
 	$dbi->add_statement( $st );
 	is( $dbi->count_statements, 1, 'statement count' );
 }
 
 {
-	my $s	= RDF::Base::Node::Blank->new();
-	my $p	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
-	my $o	= RDF::Base::Node::Literal->new( value => 'ubu' );
+	my $s	= RDF::Query::Node::Blank->new();
+	my $p	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $o	= RDF::Query::Node::Literal->new( value => 'ubu' );
 	my $st	= RDF::Base::Statement->new( subject => $s, predicate => $p, object => $o );
 	$dbi->add_statement( $st );
 	is( $dbi->count_statements, 2, 'statement count' );
 }
 
 {
-	my $p		= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $p		= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
 	my $stream	= $dbi->get_statements(undef, $p, undef);
 	my $st		= $stream->next;
 	isa_ok( $st, 'RDF::Base::Statement' );
 	my $o		= $st->object;
-	isa_ok( $o, 'RDF::Base::Node::Literal' );
+	isa_ok( $o, 'RDF::Query::Node::Literal' );
 	is( $o->literal_value, 'ubu', 'expected literal value' );
 	ok( not($o->language), 'no language expected' );
 	ok( not($o->datatype), 'no datatype expected' );
@@ -70,9 +70,9 @@ my $greg;
 }
 
 {
-	my $subj	= RDF::Base::Node::Variable->new( name => 'foo' );
-	my $pred	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
-	my $obj		= RDF::Base::Node::Variable->new( name => 'bar' );
+	my $subj	= RDF::Query::Node::Variable->new( name => 'foo' );
+	my $pred	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $obj		= RDF::Query::Node::Variable->new( name => 'bar' );
 	my $triple	= RDF::Base::Statement->new( subject => $subj, predicate => $pred, object => $obj );
 	my $stream	= $dbi->multi_get( triples => [ $triple ] );
 	
@@ -82,22 +82,22 @@ my $greg;
 	my $person	= $data->{foo};
 	my $nick	= $data->{bar};
 	
-	isa_ok( $person, 'RDF::Base::Node::Blank' );
-	isa_ok( $nick, 'RDF::Base::Node::Literal' );
+	isa_ok( $person, 'RDF::Query::Node::Blank' );
+	isa_ok( $nick, 'RDF::Query::Node::Literal' );
 	is( $nick->literal_value, 'ubu', 'expected literal value' );
 }
 
 {
 	use utf8;
-	my $kasei	= RDF::Base::Node::Literal->new( value => '火星', language => 'ja' );
-	my $nick	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $kasei	= RDF::Query::Node::Literal->new( value => '火星', language => 'ja' );
+	my $nick	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
 	my $st		= RDF::Base::Statement->new( subject => $greg, predicate => $nick, object => $kasei );
 	$dbi->add_statement( $st );
 	
-	my $person	= RDF::Base::Node::Variable->new( name => 'foo' );
-	my $var		= RDF::Base::Node::Variable->new( name => 'bar' );
-	my $literal	= RDF::Base::Node::Literal->new( value => 'greg' );
-	my $name	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
+	my $person	= RDF::Query::Node::Variable->new( name => 'foo' );
+	my $var		= RDF::Query::Node::Variable->new( name => 'bar' );
+	my $literal	= RDF::Query::Node::Literal->new( value => 'greg' );
+	my $name	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
 	my $triple1	= RDF::Base::Statement->new( subject => $person, predicate => $name, object => $literal );
 	my $triple2	= RDF::Base::Statement->new( subject => $person, predicate => $nick, object => $var );
 	my $stream	= $dbi->multi_get( triples => [ $triple1, $triple2 ] );
@@ -109,8 +109,8 @@ my $greg;
 		my $person	= $data->{foo};
 		my $nick	= $data->{bar};
 		
-		isa_ok( $person, 'RDF::Base::Node::Blank' );
-		isa_ok( $nick, 'RDF::Base::Node::Literal' );
+		isa_ok( $person, 'RDF::Query::Node::Blank' );
+		isa_ok( $nick, 'RDF::Query::Node::Literal' );
 		is( $nick->literal_value, "火星", 'expected multi-get nickname value' );
 		is( $nick->language, 'ja', 'expected multi-get nickname language' );
 	}

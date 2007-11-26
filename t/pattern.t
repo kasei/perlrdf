@@ -21,9 +21,9 @@ use_ok( 'RDF::Base::Pattern::Union' );
 	dies_ok { RDF::Base::Pattern->new( pattern => [ 1 ] ) } 'pattern with non-statement scalar';
 	dies_ok { RDF::Base::Pattern->new( pattern => [ bless({}, 'foo') ] ) } 'pattern with non-statement object';
 	
-	my $subj		= RDF::Base::Node::Resource->new( uri => "foo:bar" );
-	my $pred		= RDF::Base::Node::Resource->new( uri => URI->new("http://xmlns.com/foaf/0.1/name") );
-	my $obj			= RDF::Base::Node::Literal->new( value => "greg" );
+	my $subj		= RDF::Query::Node::Resource->new( uri => "foo:bar" );
+	my $pred		= RDF::Query::Node::Resource->new( uri => URI->new("http://xmlns.com/foaf/0.1/name") );
+	my $obj			= RDF::Query::Node::Literal->new( value => "greg" );
 	my $statement	= RDF::Base::Statement->new( subject => $subj, predicate => $pred, object => $obj );
 	
 	{
@@ -35,7 +35,7 @@ use_ok( 'RDF::Base::Pattern::Union' );
 	
 	{
 		dies_ok { RDF::Base::Pattern::Graph->new( pattern => [ $statement ] ) } 'graph pattern without graph';
-		my $uri			= RDF::Base::Node::Resource->new( uri => "http://example.com/" );
+		my $uri			= RDF::Query::Node::Resource->new( uri => "http://example.com/" );
 		my $pattern		= RDF::Base::Pattern::Graph->new( graph => $uri, pattern => [ $statement ] );
 		isa_ok( $pattern, 'RDF::Base::Pattern::Graph' );
 	}
@@ -52,7 +52,7 @@ use_ok( 'RDF::Base::Pattern::Union' );
 	}
 	
 	{
-		my $var			= RDF::Base::Node::Variable->new( name => 'foo' );
+		my $var			= RDF::Query::Node::Variable->new( name => 'foo' );
 		dies_ok { RDF::Base::Pattern::Filter->new( pattern => [ $var ] ) } 'filter pattern without operator';
 		my $pattern		= RDF::Base::Pattern::Filter->new( operator => 'BOUND', pattern => [ $var ] );
 		isa_ok( $pattern, 'RDF::Base::Pattern' );

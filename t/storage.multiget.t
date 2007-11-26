@@ -46,10 +46,10 @@ my $name	= parse_triple qq[	?person [http://xmlns.com/foaf/0.1/nick] ?nick	];
 	is( reftype($data), 'HASH', 'stream data returned' );
 	
 	my ($person, $type)	= @{ $data }{qw(person type)};
-	isa_ok( $person, 'RDF::Base::Node::Blank' );
+	isa_ok( $person, 'RDF::Query::Node::Blank' );
 	like( $person->blank_identifier, qr/^r\d+$/, 'valid blank node id' );
 	
-	isa_ok( $type, 'RDF::Base::Node::Resource' );
+	isa_ok( $type, 'RDF::Query::Node::Resource' );
 	is( $type->uri_value, 'http://xmlns.com/foaf/0.1/Person', 'type is foaf:Person' );
 }
 
@@ -59,13 +59,13 @@ my $name	= parse_triple qq[	?person [http://xmlns.com/foaf/0.1/nick] ?nick	];
 		is( reftype($data), 'HASH', 'stream data returned' );
 		
 		my ($person, $nick, $type)	= @{ $data }{qw(person nick type)};
-		isa_ok( $person, 'RDF::Base::Node::Blank' );
+		isa_ok( $person, 'RDF::Query::Node::Blank' );
 		like( $person->blank_identifier, qr/^r\d+$/, 'valid blank node id' );
 		
-		isa_ok( $nick, 'RDF::Base::Node::Literal' );
+		isa_ok( $nick, 'RDF::Query::Node::Literal' );
 		like( $nick->literal_value, qr/^(kasei|ubu|aaaa)$/, 'known foaf:nick' );
 		
-		isa_ok( $type, 'RDF::Base::Node::Resource' );
+		isa_ok( $type, 'RDF::Query::Node::Resource' );
 		is( $type->uri_value, 'http://xmlns.com/foaf/0.1/Person', 'type is foaf:Person' );
 	}
 }
@@ -77,17 +77,17 @@ my $name	= parse_triple qq[	?person [http://xmlns.com/foaf/0.1/nick] ?nick	];
 		is( reftype($data), 'HASH', 'stream data returned' );
 		
 		my ($person, $nick, $type)	= @{ $data }{qw(person nick type)};
-		isa_ok( $person, 'RDF::Base::Node::Blank' );
+		isa_ok( $person, 'RDF::Query::Node::Blank' );
 		like( $person->blank_identifier, qr/^r\d+$/, 'valid blank node id' );
 		
-		isa_ok( $nick, 'RDF::Base::Node::Literal' );
+		isa_ok( $nick, 'RDF::Query::Node::Literal' );
 		if (defined($last)) {
 			cmp_ok( $nick->literal_value, 'ge', $last, 'order by ?nick' );
 		} else {
 			$last	= $nick->literal_value;
 		}
 		
-		isa_ok( $type, 'RDF::Base::Node::Resource' );
+		isa_ok( $type, 'RDF::Query::Node::Resource' );
 		is( $type->uri_value, 'http://xmlns.com/foaf/0.1/Person', 'type is foaf:Person' );
 	}
 }
@@ -109,21 +109,21 @@ sub parse_triple ($) {
 			my $index	= index($string, '"');
 			my $value	= substr($string, 0, $index, '');
 			substr($string,0,1,'');
-			push(@nodes, $pos => RDF::Base::Node::Literal->new( value => $value ));
+			push(@nodes, $pos => RDF::Query::Node::Literal->new( value => $value ));
 		} elsif ($type eq '[') {
 			my $index	= index($string, ']');
 			my $value	= substr($string, 0, $index, '');
 			substr($string,0,1,'');
-			push(@nodes, $pos => RDF::Base::Node::Resource->new( uri => $value ));
+			push(@nodes, $pos => RDF::Query::Node::Resource->new( uri => $value ));
 		} elsif ($type eq '(') {
 			my $index	= index($string, ')');
 			my $value	= substr($string, 0, $index, '');
 			substr($string,0,1,'');
-			push(@nodes, $pos => RDF::Base::Node::Blank->new( name => $value ));
+			push(@nodes, $pos => RDF::Query::Node::Blank->new( name => $value ));
 		} elsif ($type eq '?') {
 			my ($value)	= ($string =~ m#^(\w+)#);
 			substr($string, 0, length($value), '');
-			push(@nodes, $pos => RDF::Base::Node::Variable->new( name => $value ));
+			push(@nodes, $pos => RDF::Query::Node::Variable->new( name => $value ));
 		} else {
 			warn "Unknown node type ${type}";
 		}

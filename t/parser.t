@@ -10,7 +10,7 @@ use Test::More qw(no_plan);
 use Test::Exception;
 use File::Spec;
 
-use RDF::Base::Node;
+use RDF::Query::Node;
 use_ok( 'RDF::Base::Parser' );
 
 {
@@ -40,7 +40,7 @@ use_ok( 'RDF::Base::Parser' );
 {
 	my $parser	= RDF::Base::Parser->new();
 	my $file	= File::Spec->rel2abs( 't/test.rdf' );
-	my $uri		= RDF::Base::Node::Resource->new( uri => "file://${file}" );
+	my $uri		= RDF::Query::Node::Resource->new( uri => "file://${file}" );
 	my $stream	= $parser->parse_as_stream( $uri, $uri );
 	
 	my $count	= 0;
@@ -55,7 +55,7 @@ use_ok( 'RDF::Base::Parser' );
 {
 	my $parser	= RDF::Base::Parser->new( name => 'simple' );
 	my $file	= File::Spec->rel2abs( 't/test.simple' );
-	my $uri		= RDF::Base::Node::Resource->new( uri => "file://${file}" );
+	my $uri		= RDF::Query::Node::Resource->new( uri => "file://${file}" );
 	my $stream	= $parser->parse_as_stream( $uri, $uri );
 	
 	my @cmps;

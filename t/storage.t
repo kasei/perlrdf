@@ -18,10 +18,10 @@ isa_ok( $storage, 'RDF::Base::Storage::Memory' );
 my $greg;
 
 {
-	my $s	= RDF::Base::Node::Blank->new();
+	my $s	= RDF::Query::Node::Blank->new();
 	$greg	= $s;	# save this node for later
-	my $p	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
-	my $o	= RDF::Base::Node::Literal->new( value => 'greg' );
+	my $p	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' );
+	my $o	= RDF::Query::Node::Literal->new( value => 'greg' );
 	my $st	= RDF::Base::Statement->new( subject => $s, predicate => $p, object => $o );
 	$storage->add_statement( $st );
 	is( $storage->count_statements, 1, 'statement count' );
@@ -30,20 +30,20 @@ my $greg;
 }
 
 {
-	my $s	= RDF::Base::Node::Blank->new();
-	my $p	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
-	my $o	= RDF::Base::Node::Literal->new( value => 'ubu' );
+	my $s	= RDF::Query::Node::Blank->new();
+	my $p	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $o	= RDF::Query::Node::Literal->new( value => 'ubu' );
 	$storage->add_statement( $s, $p, $o );
 	is( $storage->count_statements, 2, 'statement count' );
 }
 
 {
-	my $p		= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+	my $p		= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
 	my $stream	= $storage->get_statements(undef, $p, undef);
 	my $st		= $stream->next;
 	isa_ok( $st, 'RDF::Base::Statement' );
 	my $o		= $st->object;
-	isa_ok( $o, 'RDF::Base::Node::Literal' );
+	isa_ok( $o, 'RDF::Query::Node::Literal' );
 	is( $o->literal_value, 'ubu', 'expected literal value' );
 	ok( not($o->language), 'no language expected' );
 	ok( not($o->datatype), 'no datatype expected' );
@@ -70,8 +70,8 @@ my $greg;
 {
 	$storage->remove_statement(
 		$greg,
-		RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ),
-		RDF::Base::Node::Literal->new( value => 'greg' ),
+		RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ),
+		RDF::Query::Node::Literal->new( value => 'greg' ),
 	);
 	is( $storage->count_statements, 1, 'statement count' );
 }

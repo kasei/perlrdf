@@ -10,22 +10,22 @@ use Test::Exception;
 use_ok( 'RDF::Base::Statement' );
 
 {
-	my $subj		= RDF::Base::Node::Resource->new( uri => "foo:bar" );
-	my $pred		= RDF::Base::Node::Resource->new( uri => URI->new("http://xmlns.com/foaf/0.1/name") );
-	my $obj			= RDF::Base::Node::Literal->new( value => "greg" );
-	my $blank		= RDF::Base::Node::Blank->new( name => time() );
+	my $subj		= RDF::Query::Node::Resource->new( uri => "foo:bar" );
+	my $pred		= RDF::Query::Node::Resource->new( uri => URI->new("http://xmlns.com/foaf/0.1/name") );
+	my $obj			= RDF::Query::Node::Literal->new( value => "greg" );
+	my $blank		= RDF::Query::Node::Blank->new( name => time() );
 		
 	my $statement	= RDF::Base::Statement->new( subject => $subj, predicate => $pred, object => $obj );
-	my $st2			= RDF::Base::Statement->new( subject => $subj, predicate => RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ), object => $obj );
+	my $st2			= RDF::Base::Statement->new( subject => $subj, predicate => RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ), object => $obj );
 	my $st3			= RDF::Base::Statement->new( subject => $subj, predicate => $pred, object => $blank );
 	my $st4			= RDF::Base::Statement->parse('{[foo:bar], [http://xmlns.com/foaf/0.1/name], "greg"}');
 	my $st5			= RDF::Base::Statement->parse('{[foo:quux], [http://xmlns.com/foaf/0.1/name], "greg"}');
 	my $st6			= RDF::Base::Statement->parse('{[foo:quux], [http://xmlns.com/foaf/0.1/nick], "greg"}');
 	my $st7			= RDF::Base::Statement->new(
-						subject		=> RDF::Base::Node::Resource->new( uri => 'foo:quux' ),
-						predicate	=> RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ),
-						object		=> RDF::Base::Node::Literal->new( value => "greg" ),
-						context		=> RDF::Base::Node::Resource->new( uri => 'http://example.com/' ),
+						subject		=> RDF::Query::Node::Resource->new( uri => 'foo:quux' ),
+						predicate	=> RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/name' ),
+						object		=> RDF::Query::Node::Literal->new( value => "greg" ),
+						context		=> RDF::Query::Node::Resource->new( uri => 'http://example.com/' ),
 					);
 	my $st8			= RDF::Base::Statement->parse(q({[foo:quux], [http://xmlns.com/foaf/0.1/name], 'greg'} [http://example.com/]));
 	

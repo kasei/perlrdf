@@ -1,3 +1,9 @@
+--- #YAML:1.0
+meta-spec:
+  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+name: RDF-Base
+abstract: An RDF framework for Perl.
 author: 'Gregory Todd Williams <gwilliams@cpan.org>'
 build_requires:
   Test::Exception: 0
@@ -5,8 +11,6 @@ build_requires:
 distribution_type: module
 generated_by: Module::Install version 0.630
 license: perl
-module_name: RDF::Base
-name: RDF-Base
 no_index:
   directory:
     - inc
@@ -15,9 +19,4 @@ requires:
   Module::Pluggable: 0
   URI: 0
   version: 0
-version: !!perl/hash:version
-  qv: 1
-  version:
-    - 0
-    - 0
-    - 1
+version: 0.001002

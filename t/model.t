@@ -30,12 +30,12 @@ use_ok( 'RDF::Base::Model' );
 	
 	{
 		my $stream	= $model->as_stream;
-		isa_ok( $stream, 'RDF::Base::Iterator::Statement' );
+		isa_ok( $stream, 'RDF::SPARQLResults::Graph' );
 		
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			$count++;
-			ok( $st->subject->equal( RDF::Base::Node->parse('(greg)') ), 'subject: ' . $st->subject->name );
+			ok( $st->subject->equal( RDF::Base::Node->parse('(greg)') ), 'subject: ' . $st->subject->as_sparql );
 			like( $st->predicate->uri_value, qr#^http://xmlns.com/foaf/0.1/(name|nick)$#, 'predicate: ' . $st->predicate->uri_value );
 			like( $st->object->literal_value, qr/^(greg|kasei)$/, "object: " . $st->object->literal_value );
 		}
@@ -54,12 +54,12 @@ END
 	);
 	
 	{
-		my $nick	= RDF::Base::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
+		my $nick	= RDF::Query::Node::Resource->new( uri => 'http://xmlns.com/foaf/0.1/nick' );
 		my $stream	= $model->get_statements( undef, $nick, undef );
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			$count++;
-			isa_ok( $st->subject, 'RDF::Base::Node::Blank', 'subject: ' . $st->subject->name );
+			isa_ok( $st->subject, 'RDF::Query::Node::Blank', 'subject: ' . $st->subject->name );
 			is( $st->predicate->uri_value, 'http://xmlns.com/foaf/0.1/nick', 'predicate' );
 			like( $st->object->literal_value, qr/^(kasei|火星)$/, "object" );
 		}
