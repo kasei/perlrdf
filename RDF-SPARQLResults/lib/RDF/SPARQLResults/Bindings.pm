@@ -57,13 +57,23 @@ $type should be one of: bindings, boolean, graph.
 =cut
 
 sub new {
-	my $class		= shift;
-	my $stream		= shift || sub { undef };
-	my $names		= shift || [];
-	my %args		= @_;
+	my $class	= shift;
+	my $stream	= shift || sub { undef };
+	my $names	= shift || [];
+	my %args	= @_;
 	
-	my $type		= 'bindings';
-	return $class->SUPER::new( $stream, $type, $names, %args );
+	my $type	= 'bindings';
+	my $self	= $class->SUPER::new( $stream, $type, $names, %args );
+	
+	my $s 	= $args{ sorted_by };
+	my @s	= (ref($s) and reftype($s) eq 'ARRAY')
+			? @$s
+			: defined($s)
+				? ($s)
+				: ();
+	$self->{sorted}	= \@s;
+	
+	return $self;
 }
 
 =item C<< project ( @columns ) >>
@@ -99,6 +109,16 @@ sub next_result {
 		Carp::confess "not a HASH ref" unless (reftype($data) eq 'HASH');
 	}
 	return $data;
+}
+
+=item C<< sorted_by >>
+
+=cut
+
+sub sorted_by {
+	my $self	= shift;
+	my $sorted	= $self->{sorted};
+	return @$sorted;
 }
 
 =item C<< binding_value_by_name ( $name ) >>

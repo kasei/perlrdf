@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use URI::file;
-use Test::More tests => 42;
+use Test::More tests => 45;
 
 use Data::Dumper;
 use RDF::SPARQLResults;
@@ -78,4 +78,22 @@ use RDF::SPARQLResults;
 	
 	my $end		= $pstream->next;
 	is( $end, undef, 'project: end' );
+}
+
+{
+	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)] );
+	my @sort	= $stream->sorted_by;
+	is_deeply( \@sort, [], 'sorted empty' );
+}
+
+{
+	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number'] );
+	my @sort	= $stream->sorted_by;
+	is_deeply( \@sort, ['number'], 'sorted array' );
+}
+
+{
+	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number'] );
+	my @sort	= $stream->sorted_by;
+	is_deeply( \@sort, ['number'], 'sorted array' );
 }
