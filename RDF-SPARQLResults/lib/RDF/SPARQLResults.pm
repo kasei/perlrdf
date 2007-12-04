@@ -37,6 +37,7 @@ use warnings;
 use JSON;
 use Data::Dumper;
 use Carp qw(carp);
+use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype);
 use RDF::SPARQLResults::Bindings;
 use RDF::SPARQLResults::Boolean;
@@ -91,16 +92,6 @@ sub new {
 		}
 	}
 	
-	if ($class eq __PACKAGE__) {
-		if ($type eq 'bindings') {
-			$class	= 'RDF::SPARQLResults::Bindings';
-		} elsif ($type eq 'graph') {
-			$class	= 'RDF::SPARQLResults::Graph';
-		} elsif ($type eq 'boolean') {
-			$class	= 'RDF::SPARQLResults::Boolean';
-		}
-	}
-	
 	my $open		= 0;
 	my $finished	= 0;
 	my $row;
@@ -113,6 +104,7 @@ sub new {
 		_stream		=> $stream,
 		_args		=> \%args,
 		_row		=> undef,
+		_source		=> Carp::longmess(),
 	};
 	
 	my $self	= bless($data, $class);
@@ -301,6 +293,9 @@ names and C<<%args>> from the referant stream.
 sub concat {
 	my $self	= shift;
 	my $stream	= shift;
+	my $type	= shift || $stream->type;
+	my $names	= shift || [ $stream->binding_names ];
+	my $args	= shift || $stream->_args;
 	my $class	= ref($self);
 	my @streams	= ($self, $stream);
 	my $next	= sub {
@@ -314,9 +309,6 @@ sub concat {
 		}
 		return;
 	};
-	my $type	= $self->type;
-	my $names	= [$self->binding_names];
-	my $args	= $self->_args;
 	my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
 	return $s;
 }
@@ -349,6 +341,64 @@ sub get_all {
 	}
 	return @data;
 }
+
+=item C<join_streams ( $stream, $stream, $bridge )>
+
+Performs a natural, nested loop join of the two streams, returning a new stream
+of joined results.
+
+=cut
+
+sub join_streams {
+	my $self	= shift;
+	my $astream	= shift;
+	my $bstream	= shift;
+	my $bridge	= shift;
+#	my $debug	= $args{debug};
+	
+	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
+	my $a		= $astream->project( @names );
+	my $b		= $bstream->project( @names );
+	
+	my @results;
+	my @data	= $b->get_all();
+	no warnings 'uninitialized';
+	while (my $rowa = $a->next) {
+		LOOP: foreach my $rowb (@data) {
+			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=',$_,$bridge->as_string($row->{$_})) } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+			my %keysa	= map {$_=>1} (keys %$rowa);
+			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
+			foreach my $key (@shared) {
+				my $val_a	= $rowa->{ $key };
+				my $val_b	= $rowb->{ $key };
+				my $defined	= 0;
+				foreach my $n ($val_a, $val_b) {
+					$defined++ if (defined($n));
+				}
+				if ($defined == 2) {
+					unless ($bridge->equals($val_a, $val_b)) {
+						warn "can't join because mismatch of $key (" . join(' <==> ', map {$bridge->as_string($_)} ($val_a, $val_b)) . ")" if ($debug);
+						next LOOP;
+					}
+				}
+			}
+			
+			my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
+			if ($debug) {
+				warn "JOINED:\n";
+				foreach my $key (keys %$row) {
+					warn "$key\t=> " . $bridge->as_string( $row->{ $key } ) . "\n";
+				}
+			}
+			push(@results, $row);
+		}
+	}
+	return RDF::SPARQLResults->new( \@results, 'bindings', \@names );
+}
+
+
+
+
 
 =begin private
 
@@ -395,6 +445,20 @@ sub format_node_xml ($$$$) {
 	return qq(<binding name="${name}">${node_label}</binding>);
 }
 
+=item C<< construct_args >>
+
+Returns the arguments necessary to pass to a stream constructor
+to re-create this stream (assuming the same closure as the first
+argument).
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my $type	= $self->type;
+	my $args	= $self->_args || {};
+	return ($type, []);
+}
 
 =begin private
 
@@ -423,9 +487,23 @@ sub _row {
 	return $self->{_row};
 }
 
+=item C<< bridge >>
+
+Returns the RDF::Query::Model bridge object used for insepcting the objects returned by the stream.
+
+=cut
+
+sub bridge {
+	my $self	= shift;
+	if (@_) {
+		$self->_args->{bridge}	= shift;
+	}
+	return $self->_args->{bridge};
+}
+
 sub _bridge {
 	my $self	= shift;
-	return $self->_args->{bridge};
+	return $self->bridge;
 }
 
 sub _names {
@@ -522,8 +600,18 @@ sub smap (&$;$$$) {
 		return $item;
 	};
 	
-	my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
-	return $s;
+	my %classes	= (
+		bindings	=> 'RDF::SPARQLResults::Bindings',
+		boolean		=> 'RDF::SPARQLResults::Boolean',
+		graph		=> 'RDF::SPARQLResults::Graph',
+	);
+	
+	{
+		my $class		= $classes{ $type } || 'RDF::SPARQLResults';
+		my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
+		bless($s, $class);
+		return $s;
+	}
 }
 
 =item C<swatch { EXPR } $stream>

@@ -28,9 +28,13 @@ package RDF::SPARQLResults::Bindings;
 
 use strict;
 use warnings;
-use JSON;
 
+use JSON;
+use Scalar::Util qw(reftype);
+
+use RDF::SPARQLResults qw(smap);
 use base qw(RDF::SPARQLResults);
+
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
@@ -62,6 +66,41 @@ sub new {
 	return $class->SUPER::new( $stream, $type, $names, %args );
 }
 
+=item C<< project ( @columns ) >>
+
+Returns a new stream that projects the current bindings to only the given columns.
+
+=cut
+
+sub project {
+	my $self	= shift;
+	my @proj	= @_;
+	
+	my @cols	= $self->binding_names;
+	use Data::Dumper;
+	my $proj	= RDF::SPARQLResults::smap( sub {
+		my $row = $_;
+		my $p	= { map { $_ => $row->{ $_ } } @proj };
+		return $p;
+	}, $self, $self->type, [@proj] );
+	return $proj;
+}
+
+=item C<< next_result >>
+
+Returns the next binding result.
+
+=cut
+
+sub next_result {
+	my $self	= shift;
+	my $data	= $self->SUPER::next_result();
+	if (defined($data)) {
+		Carp::confess "not a HASH ref" unless (reftype($data) eq 'HASH');
+	}
+	return $data;
+}
+
 =item C<< binding_value_by_name ( $name ) >>
 
 Returns the binding of the named variable in the current result.
@@ -71,13 +110,12 @@ Returns the binding of the named variable in the current result.
 sub binding_value_by_name {
 	my $self	= shift;
 	my $name	= shift;
-	my $names	= $self->{_names};
-	foreach my $i (0 .. $#{ $names }) {
-		if ($names->[$i] eq $name) {
-			return $self->binding_value( $i );
-		}
+	my $row		= ($self->open) ? $self->current : $self->next;
+	if (exists( $row->{ $name } )) {
+		return $row->{ $name };
+	} else {
+		warn "No variable named '$name' is present in query results.\n";
 	}
-	warn "No variable named '$name' is present in query results.\n";
 }
 
 =item C<< binding_value ( $i ) >>
@@ -89,8 +127,8 @@ Returns the binding of the $i-th variable in the current result.
 sub binding_value {
 	my $self	= shift;
 	my $val		= shift;
-	my $row		= ($self->open) ? $self->current : $self->next;
-	return $row->[ $val ];
+	my @names	= $self->binding_names;
+	return $self->binding_value_by_name( $names[ $val ] );
 }
 
 
@@ -103,7 +141,7 @@ Returns a list of the binding values from the current result.
 sub binding_values {
 	my $self	= shift;
 	my $row		= ($self->open) ? $self->current : $self->next;
-	return @$row;
+	return @{ $row }{ $self->binding_names };
 }
 
 
@@ -127,8 +165,8 @@ Returns the name of the $i-th result column.
 
 sub binding_name {
 	my $self	= shift;
-	my $names	= $self->{_names};
 	my $val		= shift;
+	my $names	= $self->{_names};
 	return $names->[ $val ];
 }
 
@@ -143,9 +181,9 @@ sub bindings_count {
 	my $self	= shift;
 	my $names	= $self->{_names};
 	my $row		= ($self->open) ? $self->current : $self->next;
-	return scalar( @$names )if (scalar(@$names));
+	return scalar( @$names ) if (scalar(@$names));
 	return 0 unless ref($row);
-	return scalar( @$row );
+	return scalar( @{ [ keys %$row ] } );
 }
 
 =item C<as_json ( $max_size )>
@@ -158,7 +196,7 @@ sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
 	my $width			= $self->bindings_count;
-	my $bridge			= $self->_bridge;
+	my $bridge			= $self->bridge;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {
@@ -203,7 +241,7 @@ sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
 	my $width			= $self->bindings_count;
-	my $bridge			= $self->_bridge;
+	my $bridge			= $self->bridge;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {
@@ -273,6 +311,23 @@ sub format_node_json ($$$) {
 		return;
 	}
 }
+
+=item C<< construct_args >>
+
+Returns the arguments necessary to pass to a stream constructor
+to re-create this stream (assuming the same closure as the first
+argument).
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my $type	= $self->type;
+	my @names	= $self->binding_names;
+	my $args	= $self->_args || {};
+	return ($type, \@names);
+}
+
 
 1;
 

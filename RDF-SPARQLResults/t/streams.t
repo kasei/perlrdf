@@ -2,41 +2,39 @@
 use strict;
 use warnings;
 use URI::file;
-use Test::More tests => 38;
+use Test::More tests => 42;
 
 use Data::Dumper;
 use RDF::SPARQLResults;
 
 {
-	my @data	= ([1],[2],[3]);
-	my $stream	= RDF::SPARQLResults->new( \@data, 'bindings', [qw(value)] );
+	my @data	= ({value=>1},{value=>2},{value=>3});
+	my $stream	= RDF::SPARQLResults::Bindings->new( \@data, [qw(value)] );
 	isa_ok( $stream, 'RDF::SPARQLResults' );
 	ok( $stream->is_bindings, 'is_bindings' );
 	is( $stream->is_boolean, 0, 'is_boolean' );
 	is( $stream->is_graph, 0, 'is_graph' );
 	
 	my @values	= $stream->get_all;
-	is_deeply( \@values, [[1], [2], [3]], 'deep comparison' );
+	is_deeply( \@values, [{value=>1}, {value=>2}, {value=>3}], 'deep comparison' );
 }
 
 {
-	my @data	= ([1],[2]);
+	my @data	= ({value=>1},{value=>2});
 	my @sources	= ([@data], sub { shift(@data) });
 	foreach my $data (@sources) {
-		my $stream	= RDF::SPARQLResults->new( $data, 'bindings', [qw(value)] );
+		my $stream	= RDF::SPARQLResults::Bindings->new( $data, [qw(value)] );
 		my $first	= $stream->next_result;
-		isa_ok( $first, 'ARRAY' );
-		is( $first->[0], 1 );
+		isa_ok( $first, 'HASH' );
+		is( $first->{value}, 1 );
 		
 		my $second	= $stream->next;
-		isa_ok( $second, 'ARRAY' );
-		is( $second->[0], 2 );
+		isa_ok( $second, 'HASH' );
+		is( $second->{value}, 2 );
 		
 		my @names	= $stream->binding_names;
 		is_deeply( \@names, [qw(value)], 'binding_names' );
-		
-		is( $stream->binding_name( 0 ), 'value' );
-		
+		is( $stream->binding_name( 0 ), 'value', 'binding_name' );
 		is( $stream->binding_value_by_name('value'), 2, 'binding_value_by_name' );
 		is( $stream->binding_value(0), 2, 'binding_value' );
 		my @values	= $stream->binding_values;
@@ -54,10 +52,30 @@ use RDF::SPARQLResults;
 }
 
 {
-	my $true	= RDF::SPARQLResults->new( [1], 'boolean' );
+	my $true	= RDF::SPARQLResults::Boolean->new( [1] );
 	isa_ok( $true, 'RDF::SPARQLResults' );
 	is( $true->get_boolean, 1, 'get_boolean' );
-	my $false	= RDF::SPARQLResults->new( [0], 'boolean' );
+	my $false	= RDF::SPARQLResults::Boolean->new( [0] );
 	is( $false->get_boolean, 0, 'get_boolean' );
 }
 
+{
+	my @data	= (
+					{ name => 'alice', url => 'http://example.com/alice', number => 1 },
+					{ name => 'eve', url => 'http://example.com/eve', number => 2 }
+				);
+	my $stream	= RDF::SPARQLResults::Bindings->new( \@data, [qw(name url number)] );
+	my $pstream	= $stream->project( qw(name number) );
+	
+	my @cols	= $pstream->binding_names;
+	is_deeply( \@cols, [qw(name number)], 'project: binding_names' );
+	
+	my $alice	= $pstream->next;
+	is_deeply( $alice, { name => 'alice', number => 1 }, 'project: alice' );
+	
+	my $eve		= $pstream->next;
+	is_deeply( $eve, { name => 'eve', number => 2 }, 'project: eve' );
+	
+	my $end		= $pstream->next;
+	is( $end, undef, 'project: end' );
+}

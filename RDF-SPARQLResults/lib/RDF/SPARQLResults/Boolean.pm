@@ -39,9 +39,9 @@ BEGIN {
 	$VERSION	= '1.000';
 }
 
-=item C<new ( \@results, \@names, %args )>
+=item C<new ( \@results, %args )>
 
-=item C<new ( \&results, \@names, %args )>
+=item C<new ( \&results, %args )>
 
 Returns a new SPARQL Result interator object. Results must be either
 an reference to an array containing results or a CODE reference that
@@ -55,11 +55,10 @@ $type should be one of: bindings, boolean, graph.
 sub new {
 	my $class		= shift;
 	my $stream		= shift || sub { undef };
-	my $names		= shift || [];
 	my %args		= @_;
 	
 	my $type		= 'boolean';
-	return $class->SUPER::new( $stream, $type, $names, %args );
+	return $class->SUPER::new( $stream, $type, [], %args );
 }
 
 =item C<as_xml ( $max_size )>
