@@ -1,0 +1,11 @@
+bin/init_rdf_store.pl
+Build.PL
+Changes
+lib/RDF/Store/DBI.pm
+Makefile.PL
+MANIFEST			This list of files
+README
+t/00.load.t
+t/pod-coverage.t
+t/pod.t
+t/triple_sql.t
