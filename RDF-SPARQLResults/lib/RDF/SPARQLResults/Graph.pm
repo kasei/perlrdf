@@ -56,10 +56,31 @@ $type should be one of: bindings, boolean, graph.
 sub new {
 	my $class		= shift;
 	my $stream		= shift || sub { undef };
+	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args		= @_;
 	
 	my $type		= 'graph';
 	return $class->SUPER::new( $stream, $type, [], %args );
+}
+
+sub _new {
+	my $class	= shift;
+	my $stream	= shift;
+	my $type	= shift;
+	my $names	= shift;
+	my %args	= @_;
+	return $class->new( $stream, %args );
+}
+
+=item C<is_graph>
+
+Returns true if the underlying result is an RDF graph.
+
+=cut
+
+sub is_graph {
+	my $self			= shift;
+	return 1;
 }
 
 =item C<as_xml ( $max_size )>
@@ -135,6 +156,21 @@ sub as_json {
 	my $max_result_size	= shift || 0;
 	throw RDF::Query::Error::SerializationError ( -text => 'There is no JSON serialization specified for graph query results' );
 }
+
+=item C<< construct_args >>
+
+Returns the arguments necessary to pass to the stream constructor _new
+to re-create this stream (assuming the same closure as the first
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my $type	= $self->type;
+	my $args	= $self->_args || {};
+	return ($type, [], %{ $args });
+}
+
 
 1;
 

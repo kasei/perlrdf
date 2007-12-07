@@ -28,6 +28,7 @@ package RDF::SPARQLResults::Bindings;
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 use JSON;
 use Scalar::Util qw(reftype);
@@ -60,20 +61,25 @@ sub new {
 	my $class	= shift;
 	my $stream	= shift || sub { undef };
 	my $names	= shift || [];
+	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args	= @_;
 	
 	my $type	= 'bindings';
 	my $self	= $class->SUPER::new( $stream, $type, $names, %args );
 	
-	my $s 	= $args{ sorted_by };
-	my @s	= (ref($s) and reftype($s) eq 'ARRAY')
-			? @$s
-			: defined($s)
-				? ($s)
-				: ();
-	$self->{sorted}	= \@s;
-	
+	my $s 	= $args{ sorted_by } || [];
+	Carp::confess unless (reftype($s) eq 'ARRAY');
+	$self->{sorted_by}	= $s;
 	return $self;
+}
+
+sub _new {
+	my $class	= shift;
+	my $stream	= shift;
+	my $type	= shift;
+	my $names	= shift;
+	my %args	= @_;
+	return $class->new( $stream, $names, %args );
 }
 
 =item C<< project ( @columns ) >>
@@ -84,16 +90,75 @@ Returns a new stream that projects the current bindings to only the given column
 
 sub project {
 	my $self	= shift;
+	my $class	= ref($self);
 	my @proj	= @_;
 	
-	my @cols	= $self->binding_names;
-	use Data::Dumper;
-	my $proj	= RDF::SPARQLResults::smap( sub {
-		my $row = $_;
+	my $sub		= sub {
+		my $row	= $self->next;
+		return unless ($row);
 		my $p	= { map { $_ => $row->{ $_ } } @proj };
 		return $p;
-	}, $self, $self->type, [@proj] );
+	};
+	
+	my $args	= $self->_args();
+	my $proj	= $class->new( $sub, [@proj], %$args );
 	return $proj;
+}
+
+=item C<join_streams ( $stream, $stream, $bridge )>
+
+Performs a natural, nested loop join of the two streams, returning a new stream
+of joined results.
+
+=cut
+
+sub join_streams {
+	my $self	= shift;
+	my $a		= shift;
+	my $b		= shift;
+	my $bridge	= shift;
+	my %args	= @_;
+	
+#	my $debug	= $args{debug};
+	
+	Carp::confess unless ($a->isa('RDF::SPARQLResults::Bindings'));
+	Carp::confess unless ($b->isa('RDF::SPARQLResults::Bindings'));
+	
+	my @join_sorted_by;
+	if (my $o = $args{ orderby }) {
+		my $req_sort	= join(',', map { $_->[1]->name => $_->[0] } @$o);
+		my $a_sort		= join(',', $a->sorted_by);
+		my $b_sort		= join(',', $b->sorted_by);
+		
+		if (DEBUG) {
+			warn '---------------------------';
+			warn 'REQUESTED SORT in JOIN: ' . Dumper($req_sort);
+			warn 'JOIN STREAM SORTED BY: ' . Dumper($a_sort);
+			warn 'JOIN STREAM SORTED BY: ' . Dumper($b_sort);
+		}
+		my $actual_sort;
+		if (substr( $a_sort, 0, length($req_sort) ) eq $req_sort) {
+			warn "first stream is already sorted. using it in the outer loop.\n" if (DEBUG);
+		} elsif (substr( $b_sort, 0, length($req_sort) ) eq $req_sort) {
+			warn "second stream is already sorted. using it in the outer loop.\n" if (DEBUG);
+			($a,$b)	= ($b,$a);
+		} else {
+			my $a_common	= join('!', $a_sort, $req_sort);
+			my $b_common	= join('!', $b_sort, $req_sort);
+			if ($a_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $a_sort and $req_sort?
+				warn "first stream is closely sorted ($1).\n" if (DEBUG);
+			} elsif ($b_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $b_sort and $req_sort?
+				warn "second stream is closely sorted ($1).\n" if (DEBUG);
+				($a,$b)	= ($b,$a);
+			}
+		}
+		@join_sorted_by	= ($a->sorted_by, $b->sorted_by);
+	}
+	
+	my $stream	= $self->SUPER::join_streams( $a, $b, $bridge, %args );
+	warn "JOINED stream is sorted by: " . join(',', @join_sorted_by) . "\n" if (DEBUG);
+	$stream->{sorted_by}	= \@join_sorted_by;
+	return $stream;
 }
 
 =item C<< next_result >>
@@ -117,7 +182,7 @@ sub next_result {
 
 sub sorted_by {
 	my $self	= shift;
-	my $sorted	= $self->{sorted};
+	my $sorted	= $self->{sorted_by};
 	return @$sorted;
 }
 
@@ -204,6 +269,17 @@ sub bindings_count {
 	return scalar( @$names ) if (scalar(@$names));
 	return 0 unless ref($row);
 	return scalar( @{ [ keys %$row ] } );
+}
+
+=item C<is_bindings>
+
+Returns true if the underlying result is a set of variable bindings.
+
+=cut
+
+sub is_bindings {
+	my $self			= shift;
+	return 1;
 }
 
 =item C<as_json ( $max_size )>
@@ -334,7 +410,7 @@ sub format_node_json ($$$) {
 
 =item C<< construct_args >>
 
-Returns the arguments necessary to pass to a stream constructor
+Returns the arguments necessary to pass to the stream constructor _new
 to re-create this stream (assuming the same closure as the first
 argument).
 
@@ -345,7 +421,7 @@ sub construct_args {
 	my $type	= $self->type;
 	my @names	= $self->binding_names;
 	my $args	= $self->_args || {};
-	return ($type, \@names);
+	return ($type, \@names, %{ $args });
 }
 
 

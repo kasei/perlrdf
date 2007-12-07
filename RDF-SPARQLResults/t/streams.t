@@ -2,10 +2,13 @@
 use strict;
 use warnings;
 use URI::file;
-use Test::More tests => 45;
+use Test::More tests => 50;
 
 use Data::Dumper;
-use RDF::SPARQLResults;
+use RDF::SPARQLResults qw(sgrep smap swatch);
+use RDF::SPARQLResults::Graph;
+use RDF::SPARQLResults::Bindings;
+use RDF::SPARQLResults::Boolean;
 
 {
 	my @data	= ({value=>1},{value=>2},{value=>3});
@@ -87,13 +90,25 @@ use RDF::SPARQLResults;
 }
 
 {
-	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number'] );
+	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC'] );
 	my @sort	= $stream->sorted_by;
-	is_deeply( \@sort, ['number'], 'sorted array' );
+	is_deeply( \@sort, ['number' => 'ASC'], 'sorted array' );
 }
 
 {
-	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number'] );
+	my $stream	= RDF::SPARQLResults::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
 	my @sort	= $stream->sorted_by;
-	is_deeply( \@sort, ['number'], 'sorted array' );
+	is_deeply( \@sort, [qw(number ASC name DESC)], 'sorted array' );
+}
+
+{
+	my $count	= 0;
+	my $stream	= swatch { $count++ } sgrep { $_->{number} % 2 == 0 } RDF::SPARQLResults::Bindings->new( [{ name => 'Alice', number => 1}, { name => 'Eve', number => 2 }], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
+	my @sort	= $stream->sorted_by;
+	is_deeply( \@sort, [qw(number ASC name DESC)], 'sorted array' );
+	is( $count, 0, 'zero watched results' );
+	my $row		= $stream->next;
+	is_deeply( $row, { name => 'Eve', number => 2 }, 'expected result after sgrep' );
+	is( $count, 1, 'one watched result' );
+	is( $stream->next, undef, 'empty stream' );
 }

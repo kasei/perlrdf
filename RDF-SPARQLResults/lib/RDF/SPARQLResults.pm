@@ -39,9 +39,6 @@ use Data::Dumper;
 use Carp qw(carp);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype);
-use RDF::SPARQLResults::Bindings;
-use RDF::SPARQLResults::Boolean;
-use RDF::SPARQLResults::Graph;
 
 our ($REVISION, $VERSION, $debug, @ISA, @EXPORT_OK);
 use constant DEBUG	=> 0;
@@ -64,6 +61,11 @@ use overload '&{}' => sub {
 	};
 };
 
+use RDF::SPARQLResults::Bindings;
+use RDF::SPARQLResults::Boolean;
+use RDF::SPARQLResults::Graph;
+
+
 
 =item C<new ( \@results, $type, \@names, %args )>
 
@@ -79,7 +81,8 @@ $type should be one of: bindings, boolean, graph.
 =cut
 
 sub new {
-	my $class		= shift;
+	my $proto		= shift;
+	my $class		= ref($proto) || $proto;
 	my $stream		= shift || sub { undef };
 	my $type		= shift || 'bindings';
 	my $names		= shift || [];
@@ -126,23 +129,9 @@ sub type {
 
 Returns true if the underlying result is a boolean value.
 
-=cut
-
-sub is_boolean {
-	my $self			= shift;
-	return ($self->type eq 'boolean') ? 1 : 0;
-}
-
 =item C<is_bindings>
 
 Returns true if the underlying result is a set of variable bindings.
-
-=cut
-
-sub is_bindings {
-	my $self			= shift;
-	return ($self->type eq 'bindings') ? 1 : 0;
-}
 
 =item C<is_graph>
 
@@ -150,10 +139,11 @@ Returns true if the underlying result is an RDF graph.
 
 =cut
 
-sub is_graph {
-	my $self			= shift;
-	return ($self->type eq 'graph') ? 1 : 0;
-}
+sub is_boolean { 0 }
+sub is_bindings { 0 }
+sub is_graph { 0 }
+
+
 
 =item C<to_string ( $format )>
 
@@ -293,9 +283,7 @@ names and C<<%args>> from the referant stream.
 sub concat {
 	my $self	= shift;
 	my $stream	= shift;
-	my $type	= shift || $stream->type;
-	my $names	= shift || [ $stream->binding_names ];
-	my $args	= shift || $stream->_args;
+	my @args	= $stream->construct_args();
 	my $class	= ref($self);
 	my @streams	= ($self, $stream);
 	my $next	= sub {
@@ -309,7 +297,7 @@ sub concat {
 		}
 		return;
 	};
-	my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
+	my $s	= $stream->_new( $next, @args );
 	return $s;
 }
 
@@ -354,7 +342,12 @@ sub join_streams {
 	my $astream	= shift;
 	my $bstream	= shift;
 	my $bridge	= shift;
+	my %args	= @_;
+	
 #	my $debug	= $args{debug};
+	
+	Carp::confess unless ($astream->isa('RDF::SPARQLResults::Bindings'));
+	Carp::confess unless ($bstream->isa('RDF::SPARQLResults::Bindings'));
 	
 	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
@@ -393,7 +386,9 @@ sub join_streams {
 			push(@results, $row);
 		}
 	}
-	return RDF::SPARQLResults->new( \@results, 'bindings', \@names );
+	
+	my $args	= $astream->_args;
+	return $astream->_new( \@results, 'bindings', \@names, %$args );
 }
 
 
@@ -534,6 +529,7 @@ sub _stream {
 sub sgrep (&$) {
 	my $block	= shift;
 	my $stream	= shift;
+	my @args	= $stream->construct_args();
 	my $class	= ref($stream);
 	
 	my $open	= 1;
@@ -563,10 +559,8 @@ sub sgrep (&$) {
 	};
 	
 	Carp::confess "not a stream: " . Dumper($stream) unless (blessed($stream));
-	my $type	= $stream->type;
-	my $names	= ($stream->is_bindings) ? [$stream->binding_names] : [];
-	my $args	= $stream->_args;
-	my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
+	Carp::confess unless ($stream->can('_new'));
+	my $s	= $stream->_new( $next, @args );
 	return $s;
 }
 
@@ -577,9 +571,7 @@ sub sgrep (&$) {
 sub smap (&$;$$$) {
 	my $block	= shift;
 	my $stream	= shift;
-	my $type	= shift || $stream->type;
-	my $names	= shift || [$stream->binding_names];
-	my $args	= shift || $stream->_args;
+	my @args	= $stream->construct_args();
 	my $class	= ref($stream);
 	
 	my $open	= 1;
@@ -600,18 +592,7 @@ sub smap (&$;$$$) {
 		return $item;
 	};
 	
-	my %classes	= (
-		bindings	=> 'RDF::SPARQLResults::Bindings',
-		boolean		=> 'RDF::SPARQLResults::Boolean',
-		graph		=> 'RDF::SPARQLResults::Graph',
-	);
-	
-	{
-		my $class		= $classes{ $type } || 'RDF::SPARQLResults';
-		my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
-		bless($s, $class);
-		return $s;
-	}
+	return $stream->_new( $next, @args );
 }
 
 =item C<swatch { EXPR } $stream>
@@ -621,6 +602,7 @@ sub smap (&$;$$$) {
 sub swatch (&$) {
 	my $block	= shift;
 	my $stream	= shift;
+	my @args	= $stream->construct_args();
 	my $class	= ref($stream);
 	
 	my $open	= 1;
@@ -641,10 +623,7 @@ sub swatch (&$) {
 		return $data;
 	};
 	
-	my $type	= $stream->type;
-	my $names	= [$stream->binding_names];
-	my $args	= $stream->_args;
-	my $s	= RDF::SPARQLResults->new( $next, $type, $names, %$args );
+	my $s		= $stream->_new( $next, @args );
 	return $s;
 }
 

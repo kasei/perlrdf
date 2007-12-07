@@ -61,6 +61,26 @@ sub new {
 	return $class->SUPER::new( $stream, $type, [], %args );
 }
 
+sub _new {
+	my $class	= shift;
+	my $stream	= shift;
+	my $type	= shift;
+	my $names	= shift;
+	my %args	= @_;
+	return $class->new( $stream, %args );
+}
+
+=item C<is_boolean>
+
+Returns true if the underlying result is a boolean value.
+
+=cut
+
+sub is_boolean {
+	my $self			= shift;
+	return 1;
+}
+
 =item C<as_xml ( $max_size )>
 
 Returns an XML serialization of the stream data.
@@ -94,6 +114,20 @@ sub as_json {
 	my $value	= $self->get_boolean ? JSON::True : JSON::False;
 	my $data	= { head => { vars => [] }, boolean => $value };
 	return objToJson( $data );
+}
+
+=item C<< construct_args >>
+
+Returns the arguments necessary to pass to the stream constructor _new
+to re-create this stream (assuming the same closure as the first
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my $type	= $self->type;
+	my $args	= $self->_args || {};
+	return ($type, [], %{ $args });
 }
 
 
