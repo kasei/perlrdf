@@ -79,7 +79,7 @@ sub new {
 	
 	my $name	= shift || 'model';
 	my %args;
-	if (@_ == 0) {
+	if (scalar(@_) == 0) {
 		warn "trying to construct a temporary model" if ($debug);
 		my $file	= File::Temp->new;
 		$file->unlink_on_destroy( 1 );
@@ -131,7 +131,7 @@ sub get_statements {
 	my $triple	= RDF::Query::Algebra::Triple->new( $subj, $pred, $obj );
 	my @vars	= $triple->referenced_variables;
 	
-	my $sql		= $self->_sql_for_pattern( $triple, $context );
+	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -162,6 +162,88 @@ sub get_statements {
 	};
 	
 	return RDF::SPARQLResults::Graph->new( $sub )
+}
+
+
+=item C<< get_pattern ( $bgp [, $context] ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_pattern {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	my %args	= @_;
+	
+	my $dbh		= $self->dbh;
+	my @vars	= $pattern->referenced_variables;
+	my %vars	= map { $_ => 1 } @vars;
+	
+	my $sql		= $self->_sql_for_pattern( $pattern, $context, %args );
+	my $sth		= $dbh->prepare( $sql );
+	$sth->execute();
+	
+	my $sub		= sub {
+		my $row	= $sth->fetchrow_hashref;
+		return unless $row;
+		
+		my %bindings;
+		foreach my $name (@vars) {
+			my $prefix	= $name . '_';
+			if (defined $row->{ "${prefix}URI" }) {
+				$bindings{ $name }	 = RDF::Query::Node::Resource->new( $row->{"${prefix}URI" } );
+			} elsif (defined $row->{ "${prefix}Name" }) {
+				$bindings{ $name }	 = RDF::Query::Node::Blank->new( $row->{"${prefix}Name" } );
+			} else {
+				$bindings{ $name }	 = RDF::Query::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
+			}
+		}
+		return \%bindings;
+	};
+	
+	my @args;
+	if (my $o = $args{ orderby }) {
+		my @ordering	= @$o;
+		my @realordering;
+		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
+			if (exists $vars{ $col }) {
+				push(@realordering, $col, $dir);
+			}
+		}
+		@args	= ( sorted_by => \@realordering );
+	}
+	return RDF::SPARQLResults::Bindings->new( $sub, \@vars, @args )
+}
+
+
+=item C<< get_contexts >>
+
+
+=cut
+
+sub get_contexts {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $model	= $self->model_name;
+	my $id		= _mysql_hash( $model );
+ 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM Statements${id} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0;";
+ 	my $sth		= $dbh->prepare( $sql );
+ 	$sth->execute();
+ 	my $sub		= sub {
+ 		my $row	= $sth->fetchrow_hashref;
+ 		if ($row->{URI}) {
+ 			return RDF::Query::Node::Resource->new( $row->{URI} );
+ 		} elsif ($row->{Name}) {
+ 			return RDF::Query::Node::Blank->new( $row->{Name} );
+ 		} elsif (defined $row->{Value}) {
+ 			return RDF::Query::Node::Literal->new( @{ $row }{qw(Value Language Datatype)} );
+ 		} else {
+ 			return;
+ 		}
+ 	};
+ 	return RDF::SPARQLResults->new( $sub );
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -229,6 +311,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
+	Carp::confess unless (blessed($node));
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -271,8 +354,23 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub count_statements {
 	my $self	= shift;
-	my $count	= 0;
-	# XXX
+	my $subj	= shift;
+	my $pred	= shift;
+	my $obj		= shift;
+	my $context	= shift;
+	
+	my $dbh		= $self->dbh;
+	my $var		= 0;
+	my $triple	= RDF::Query::Algebra::Triple->new( map { defined($_) ? $_ : RDF::Query::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my @vars	= $triple->referenced_variables;
+	
+	my $sql		= $self->_sql_for_pattern( $triple, $context, count => 1 );
+#	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
+	my $count;
+	my $sth		= $dbh->prepare( $sql );
+	$sth->execute();
+	$sth->bind_columns( \$count );
+	$sth->fetch;
 	return $count;
 }
 
@@ -313,6 +411,23 @@ sub model_as_stream {
 	my $self	= shift;
 	my $stream	= $self->get_statements();
 	return $stream;
+}
+
+=item C<< variable_columns ( $var ) >>
+
+Given a variable name, returns the set of column aliases that store the values
+for the column (values for Literals, URIs, and Blank Nodes).
+
+=cut
+
+sub variable_columns {
+	my $self	= shift;
+	my $var		= shift;
+	
+	### ORDERING of these is important to enforce the correct sorting of results
+	### based on the SPARQL spec. Bnodes < IRIs < Literals, but since NULLs sort
+	### higher than other values, the list needs to be reversed.
+	return map { "${var}_$_" } (qw(Value URI Name));
 }
 
 =item C<< add_variable_values_joins >>
@@ -405,6 +520,7 @@ sub _sql_for_pattern {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $ctx		= shift;
+	my %args	= @_;
 	my $type	= $pattern->type;
 	my $method	= "_sql_for_" . lc($type);
 	my $model	= $self->model_name;
@@ -416,7 +532,7 @@ sub _sql_for_pattern {
 				};
 	if ($self->can($method)) {
 		$self->$method( $pattern, $ctx, $context );
-		return $self->_sql_from_context( $context );
+		return $self->_sql_from_context( $context, %args );
 	} else {
 		throw Error ( -text => "Don't know how to turn a $type into SQL" );
 	}
@@ -426,6 +542,7 @@ use constant INDENT	=> "\t";
 sub _sql_from_context {
 	my $self	= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $vars	= $context->{vars};
 	my $from	= $context->{from_tables} || [];
 	my $where	= $context->{where_clauses} || [];
@@ -445,6 +562,9 @@ sub _sql_from_context {
 	my $where_clause	= @$where ? "WHERE\n"
 						. INDENT . join(" AND\n" . INDENT, @$where) : '';
 	
+	if ($args{ count }) {
+		@cols	= ('COUNT(*)');
+	}
 	
 #	my @cols	= map { _get_var( $context, $_ ) . " AS $_" } keys %$vars;
 	my @sql	= (
@@ -455,6 +575,18 @@ sub _sql_from_context {
 				$where_clause,
 			);
 	
+	if (my $o = $args{ orderby }) {
+		my @ordering	= @$o;
+		my @sort;
+		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
+			if (exists $vars->{ $col }) {
+				push(@sort, map { "$_ $dir" } $self->variable_columns( $col ));
+			}
+		}
+		if (@sort) {
+			push(@sql, "ORDER BY " . join(', ', @sort));
+		}
+	}
 #	push(@sql, $self->order_by_clause( $varcols, $level ) );
 #	push(@sql, $self->limit_clause( $options ) );
 	
@@ -492,6 +624,8 @@ sub _sql_for_triple {
 	}
 	if (defined($ctx)) {
 		$self->_add_sql_node_clause( "${table}.Context", $ctx, $context );
+	} else {
+		$self->_add_sql_node_clause( "${table}.Context", RDF::Query::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
 	}
 }
 
@@ -690,15 +824,22 @@ END
 	warn "committed" if ($debug);
 }
 
+sub _cleanup {
+	my $self	= shift;
+	if ($self->{dbh}) {
+		my $dbh		= $self->{dbh};
+		my $name	= $self->{model_name};
+		my $id		= _mysql_hash( $name );
+		if ($self->{ remove_store }) {
+			$dbh->do( "DROP TABLE IF EXISTS `Statements${id}`;" );
+			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
+		}
+	}
+}
+
 sub DESTROY {
 	my $self	= shift;
-	my $dbh		= $self->dbh;
-	my $name	= $self->model_name;
-	my $id		= _mysql_hash( $name );
-	if ($self->{ remove_store }) {
-		$dbh->do( "DROP TABLE IF EXISTS `Statements${id}`;" );
-		$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
-	}
+	$self->_cleanup;
 }
 
 1; # Magic true value required at end of module
