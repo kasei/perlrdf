@@ -1,18 +1,21 @@
 <html>
 	<head>
-		<title>SPARQL</title>
+		<title>Endpoint Admin</title>
+		<style type="text/css">
+			.fileTable {
+				border: 1px solid #000;
+				border-collapse: collapse;
+			}
+			
+			th { background-color: #ddd; }
+			td, th {
+				padding: 1px 5px 1px 5px;
+				border: 1px solid #000;
+			}
+		</style>
 	</head>
 	<body>
-	<form action="/sparql" method="get">
-		<textarea id="query" name="query" rows="10" cols="80">
-PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/>
-SELECT *
-FROM &lt;http://www.w3.org/People/Berners-Lee/card>
-WHERE {
-	[ a foaf:Person ; foaf:name ?name ]
-}
-		</textarea><br/>
-		<input name="submit" id="submit" type="submit" value="Submit" />
-	</form>
+	<h1>Admin</h1>
+	<?files?>
 	</body>
 </html>

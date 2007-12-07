@@ -7,47 +7,48 @@ use RDF::Query;
 use Data::Dumper;
 use RDF::Store::DBI;
 use List::Util qw(first);
-use base qw(HTTP::Server::Simple::CGI HTTP::Server::Simple::Static);
 
 sub new {
 	my $class		= shift;
-	my $self		= $class->SUPER::new( @_ );
-	my $store		= RDF::Store::DBI->new('endpoint', 'DBI:mysql:database=test', 'test', 'test');
+	my @args		= @_;
+	my $self		= bless( {}, $class );
+	my $store		= RDF::Store::DBI->new( @args );
 	$self->{_store}	= $store;
 	return $self;
 }
 
-sub handle_request {
+sub handle_admin_post {
 	my $self	= shift;
 	my $cgi		= shift;
-	binmode( \*STDOUT, ':utf8' );
-	
 	my $port	= $self->port;
 	my $host	= $self->host;
-	my $path	= $ENV{REQUEST_URI};
-	my $prefix	= "http://${host}:${port}";
-	my $url		= $prefix . $path;
+	warn 1;
+	my $fh		= $cgi->upload('file');
+	warn 2;
+	my $data	= do { local($/) = undef; <$fh> };
+	warn "RDF DATA:\n---------------------\n$data\n-----------------------\n";
+	$self->redir(302, 'Found', "http://${host}:${port}/admin/index.html");
+}
+
+sub admin_index {
+	my $self	= shift;
+	my $cgi		= shift;
+	my $store	= $self->{_store};
+	my $html	= read_file( './docs/admin/index.html' );
 	
-	if ($path =~ qr'^/sparql') {
-		my $sparql	= $cgi->param('query');
-		if ($sparql) {
-			$self->run_query( $cgi, $sparql );
-		} else {
-			$self->error( 400, 'Bad Request', 'No query.' );
-		}
-	} else {
-		if ($path =~ qr</$>) {
-			my $url	= "${prefix}${path}index.html";
-			print "HTTP/1.1 303 See Other\nLocation: ${url}\n\n";
-		} elsif ($path =~ qr[^/admin/]) {
-			$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
-			# do admin stuff here
-		} else {
-			unless ($self->serve_static($cgi, "./docs")) {
-				$self->error( 404, 'Not Found', 'The requested resource could not be found' );
-			}
-		}
+	my $files	= qq[<table class="fileTable">\n]
+				. qq[\t<tr><th>Source</th><th>Statements</th></tr>\n];
+	my $stream	= $store->get_contexts;
+	while (my $c = $stream->next) {
+		my $uri		= $c->as_string;
+		my $count	= $store->count_statements( undef, undef, undef, $c );
+		$files		.= qq[\t<tr>] . join('', map { "<td>" . _html_escape($_) . "</td>" } ($uri, $count)) . qq[</tr>\n];
 	}
+	$files		.= qq[</table>\n];
+	$html		=~ s/<[?]files[?]>/$files/se;
+	
+	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
+	print $html;
 }
 
 sub run_query {
@@ -113,28 +114,61 @@ sub stream_as_html {
 		print (($stream->get_boolean) ? "True" : "False");
 		print "</body></html>\n";
 	} elsif ($stream->isa('RDF::SPARQLResults::Bindings')) {
-		print "<html><head><title>SPARQL Results</title></head><body>\n";
+		print "<html><head><title>SPARQL Results</title>\n";
+		print <<"END";
+			<style type="text/css">
+				table {
+					border: 1px solid #000;
+					border-collapse: collapse;
+				}
+				
+				th { background-color: #ddd; }
+				td, th {
+					padding: 1px 5px 1px 5px;
+					border: 1px solid #000;
+				}
+			</style>
+END
+		print "</head><body>\n";
 		print "<table>\n<tr>\n";
-		foreach my $name ($stream->binding_names) {
+		
+		my @names	= $stream->binding_names;
+		my $columns	= scalar(@names);
+		foreach my $name (@names) {
 			print "\t<th>" . $name . "</th>\n";
 		}
 		print "</tr>\n";
 		
+		my $count	= 0;
 		while (my $row = $stream->next) {
+			$count++;
 			print "<tr>\n";
-			foreach my $v (@$row) {
-				my $value	= $bridge->as_string( $v );
+			foreach my $k (@names) {
+				my $value	= $bridge->as_string( $row->{ $k } );
 				$value		=~ s/&/&amp;/g;
 				$value		=~ s/</&lt;/g;
 				print "\t<td>" . $value . "</td>\n";
 			}
 			print "</tr>\n";
 		}
+		print qq[<tr><th colspan="$columns">Total: $count</th></tr>];
 		print "</table>\n";
 		print "</body></html>\n";
 	} else {
 	
 	}
+}
+
+sub _html_escape {
+	my $text	= shift;
+	for ($text) {
+		s/&/&amp;/g;
+		s/</&lt;/g;
+		s/>/&gt;/g;
+		s/'/&apos;/g;
+		s/"/&quot;/g;
+	}
+	return $text;
 }
 
 sub error {
@@ -144,6 +178,14 @@ sub error {
 	my $error	= shift;
 	print "HTTP/1.1 ${code} ${name}\n\n<html><head><title>${name}</title></head><body><h1>${name}</h1><p>${error}</p></body></html>";
 	return;
+}
+
+sub redir {
+	my $self	= shift;
+	my $code	= shift;
+	my $message	= shift;
+	my $url		= shift;
+	print "HTTP/1.1 ${code} ${message}\nLocation: ${url}\n\n";
 }
 
 1;
