@@ -61,9 +61,9 @@ use overload '&{}' => sub {
 	};
 };
 
-use RDF::SPARQLResults::Bindings;
-use RDF::SPARQLResults::Boolean;
-use RDF::SPARQLResults::Graph;
+require RDF::SPARQLResults::Bindings;
+require RDF::SPARQLResults::Boolean;
+require RDF::SPARQLResults::Graph;
 
 
 
@@ -107,7 +107,7 @@ sub new {
 		_stream		=> $stream,
 		_args		=> \%args,
 		_row		=> undef,
-		_source		=> Carp::longmess(),
+#		_source		=> Carp::longmess(),
 	};
 	
 	my $self	= bless($data, $class);

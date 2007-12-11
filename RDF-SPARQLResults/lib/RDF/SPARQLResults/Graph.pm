@@ -30,6 +30,7 @@ use strict;
 use warnings;
 use JSON;
 use List::Util qw(max);
+use RDF::SPARQLResults qw(sgrep);
 
 use base qw(RDF::SPARQLResults);
 our ($REVISION, $VERSION, $debug);
@@ -72,6 +73,29 @@ sub _new {
 	return $class->new( $stream, %args );
 }
 
+=item C<< unique >>
+
+Returns a Graph iterator that ensures the returned statements are unique. While
+the underlying RDF graph is the same regardless of uniqueness, the iterator's
+serialization methods assume the results are unique, and so use this method
+before serialization.
+
+Uniqueness is opt-in for efficiency concerns -- this method requires O(n) memory,
+and so may have noticable effects on large graphs.
+
+=cut
+
+sub unique {
+	my $self	= shift;
+	my $bridge	= $self->bridge;
+	my %seen;
+	return sgrep {
+		my $s	= $_;
+		my $str	= $bridge->as_string( $s );
+		not($seen{ $str }++)
+	} $self;
+}
+
 =item C<is_graph>
 
 Returns true if the underlying result is an RDF graph.
@@ -93,13 +117,14 @@ sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
 	my $bridge			= $self->_bridge;
+	my $graph			= $self->unique();
 	
 	my $count	= 0;
 	my $xml		= <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 END
-	while (my $stmt = $self->next) {
+	while (my $stmt = $graph->next) {
 		if ($max_result_size) {
 			last if ($count++ >= $max_result_size);
 		}
