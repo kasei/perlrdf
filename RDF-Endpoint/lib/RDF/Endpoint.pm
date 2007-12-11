@@ -3,7 +3,10 @@ package RDF::Endpoint;
 use strict;
 use warnings;
 
+use Template;
 use RDF::Query;
+use File::Slurp;
+use URI::Escape;
 use Data::Dumper;
 use RDF::Store::DBI;
 use List::Util qw(first);
@@ -12,49 +15,110 @@ sub new {
 	my $class		= shift;
 	my @args		= @_;
 	my $self		= bless( {}, $class );
+	
 	my $store		= RDF::Store::DBI->new( @args );
 	$self->{_store}	= $store;
+	
+	my $template	= Template->new( {
+						INCLUDE_PATH	=> './include',
+					} );
+	$self->{_tt}	= $template;
+	
 	return $self;
 }
 
 sub handle_admin_post {
 	my $self	= shift;
 	my $cgi		= shift;
-	my $port	= $self->port;
-	my $host	= $self->host;
-	warn 1;
-	my $fh		= $cgi->upload('file');
-	warn 2;
-	my $data	= do { local($/) = undef; <$fh> };
-	warn "RDF DATA:\n---------------------\n$data\n-----------------------\n";
+	my $host	= shift;
+	my $port	= shift;
+	
+	my $method	= $cgi->request_method();
+	if ($method eq 'POST') {
+		warn 1;
+		warn 2;
+		my $data	= '';
+		warn "RDF DATA:\n---------------------\n$data\n-----------------------\n";
+	}
 	$self->redir(302, 'Found', "http://${host}:${port}/admin/index.html");
 }
 
 sub admin_index {
 	my $self	= shift;
 	my $cgi		= shift;
-	my $store	= $self->{_store};
-	my $html	= read_file( './docs/admin/index.html' );
-	
-	my $files	= qq[<table class="fileTable">\n]
-				. qq[\t<tr><th>Source</th><th>Statements</th></tr>\n];
+	my $store	= $self->_store;
+	my $tt		= $self->_template;
+	my $file	= 'admin_index.html';
+
+	my @files;
 	my $stream	= $store->get_contexts;
 	while (my $c = $stream->next) {
 		my $uri		= $c->as_string;
 		my $count	= $store->count_statements( undef, undef, undef, $c );
-		$files		.= qq[\t<tr>] . join('', map { "<td>" . _html_escape($_) . "</td>" } ($uri, $count)) . qq[</tr>\n];
+		push( @files, {
+			source			=> _html_escape($uri),
+			count			=> $count,
+			delete_field	=> $cgi->checkbox( -name => "delete_${uri}", -label => '', -checked => 0 ),
+			replace_field	=> $cgi->filefield( -name => "replace_${uri}" ),
+		} );
 	}
-	$files		.= qq[</table>\n];
-	$html		=~ s/<[?]files[?]>/$files/se;
 	
 	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-	print $html;
+	$tt->process( $file, { files => \@files } );
+}
+
+sub save_query {
+	my $self	= shift;
+	my $cgi		= shift;
+	my $sparql	= shift;
+	my $query	= RDF::Query->new( $sparql );
+	my $serial	= $query->as_sparql;
+	my $dbh		= $self->_store->dbh;
+	
+	my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
+	$sth->execute( $serial );
+	my ($name)	= $sth->fetchrow;
+	unless ($name) {
+		$dbh->begin_work;
+		my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
+		$sth->execute();
+		my ($name)	= $sth->fetchrow;
+		if ($name) {
+			$name++;
+		} else {
+			$name	= 'a';
+		}
+		
+		my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
+		$ins->execute( $name, $serial );
+		$dbh->commit;
+	}
+	return $name;
+}
+
+sub run_saved_query {
+	my $self	= shift;
+	my $cgi		= shift;
+	my $name	= shift;
+
+	my $dbh		= $self->_store->dbh;
+	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
+	$sth->execute( $name );
+	my ($sparql)	= $sth->fetchrow;
+	if ($sparql) {
+		$self->run_query( $cgi, $sparql );
+	} else {
+		my $error	= 'Unrecognized query name';
+		return $self->error( 400, 'Bad Request', $error );
+	}
 }
 
 sub run_query {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $sparql	= shift;
+	$self->save_query( $cgi, $sparql );
+	
 	my $store	= $self->{_store};
 	my @accept	= map { $_->[0] }
 					sort { $b->[1] <=> $a->[1] }
@@ -62,7 +126,10 @@ sub run_query {
 							sort { index($b, 'html') }
 								split(',', $ENV{HTTP_ACCEPT});
 	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml);
-	my @types	= grep { exists($ok{ $_ }) } @accept;
+	if (my $t = $cgi->param('mime-type')) {
+		unshift( @accept, $t );
+	}
+	my @types	= (grep { exists($ok{ $_ }) } @accept);
 	
 	my $query	= RDF::Query->new( $sparql );
 	unless ($query) {
@@ -71,6 +138,8 @@ sub run_query {
 	}
 	my $stream	= $query->execute( $store );
 	if ($stream) {
+		my $tt		= $self->_template;
+		my $file	= 'results.html';
 		my $type	= first {
 						(/xml/)
 							? 1
@@ -79,9 +148,22 @@ sub run_query {
 								: 1
 					} @types;
 		if (defined($type)) {
+			my $bridge	= $stream->bridge;
 			if ($type =~ /html/) {
 				print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-				$self->stream_as_html( $stream );
+				my $total	= 0;
+				my $rtype	= $stream->type;
+				my $rstream	= ($rtype eq 'graph') ? $stream->unique() : $stream;
+				$tt->process( $file, {
+					result_type => $rtype,
+					next_result => sub { my $r = $rstream->next_result; $total++ if ($r); return $r },
+					columns		=> sub { $rstream->binding_names },
+					values		=> sub { my $row = shift; my $col = shift; return _html_escape( $bridge->as_string( $row->{ $col } ) ) },
+					boolean		=> sub { $rstream->get_boolean },
+					nodes		=> sub { my $s = shift; return [ map { _html_escape( $bridge->as_string( $s->$_() ) ) } qw(subject predicate object) ]; },
+					total		=> sub { $total },
+					feed_url	=> $self->feed_url( $cgi ),
+				} ) or warn $tt->error();
 			} elsif ($type =~ /xml/) {
 				print "HTTP/1.1 200 OK\nContent-Type: ${type}; charset=utf-8\n\n";
 				print $stream->as_xml;
@@ -99,6 +181,19 @@ sub run_query {
 		my $error	= RDF::Query->error;
 		return $self->error( 400, 'Bad Request', $error );
 	}
+}
+
+sub feed_url {
+	my $self	= shift;
+	my $cgi		= shift;
+	my @keys	= grep { $_ ne 'mime-type' } $cgi->param();
+	my %args;
+	foreach my $key ($cgi->param()) {
+		$args{ $key }	= $cgi->param( $key );
+	}
+	$args{ 'mime-type' }	= 'application/rdf+xml';
+	my $url		= '?' . join('&', map { join('=', uri_escape( $_ ), uri_escape( $args{ $_ } )) } (keys %args));
+	return $url
 }
 
 sub stream_as_html {
@@ -159,6 +254,16 @@ END
 	}
 }
 
+sub _template {
+	my $self	= shift;
+	return $self->{_tt};
+}
+
+sub _store {
+	my $self	= shift;
+	return $self->{_store};
+}
+
 sub _html_escape {
 	my $text	= shift;
 	for ($text) {
@@ -169,6 +274,19 @@ sub _html_escape {
 		s/"/&quot;/g;
 	}
 	return $text;
+}
+
+sub init {
+	my $self	= shift;
+	my $store	= $self->_store;
+	my $dbh		= $store->dbh;
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Queries (
+            Name VARCHAR(8) UNIQUE NOT NULL,
+            Query longtext NOT NULL
+        );
+END
+	return 1;
 }
 
 sub error {

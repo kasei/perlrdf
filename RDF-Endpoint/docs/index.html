@@ -6,11 +6,11 @@
 	<form action="/sparql" method="get">
 		<textarea id="query" name="query" rows="10" cols="50">
 PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/>
-SELECT *
-FROM &lt;http://www.w3.org/People/Berners-Lee/card>
+SELECT DISTINCT *
 WHERE {
 	[ a foaf:Person ; foaf:name ?name ]
 }
+ORDER BY ?name
 </textarea><br/>
 		<input name="submit" id="submit" type="submit" value="Submit" />
 	</form>

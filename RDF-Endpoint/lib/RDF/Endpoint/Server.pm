@@ -8,8 +8,17 @@ use base qw(HTTP::Server::Simple::CGI HTTP::Server::Simple::Static);
 
 sub new {
 	my $class		= shift;
-	my $self		= $class->SUPER::new( @_ );
-	my $endpoint	= RDF::Endpoint->new('endpoint', 'DBI:mysql:database=test', 'test', 'test');
+	my %args		= @_;
+	
+	my $port		= $args{ Port };
+	my $dsn			= $args{ DBServer };
+	my $user		= $args{ DBUser };
+	my $pass		= $args{ DBPass };
+	my $model		= $args{ Model };
+	
+	my $self		= $class->SUPER::new( $port );
+	my $endpoint	= RDF::Endpoint->new( $model, $dsn, $user, $pass );
+	$endpoint->init();
 	$self->{endpoint}	= $endpoint;
 	return $self;
 }
@@ -33,13 +42,16 @@ sub handle_request {
 		} else {
 			$self->error( 400, 'Bad Request', 'No query.' );
 		}
+	} elsif ($path =~ qr'^/query/(\w+)') {
+		my $query	= $endpoint->run_saved_query( $cgi, $1 );
 	} else {
 		if ($path =~ qr</$>) {
 			my $url	= "${prefix}${path}index.html";
 			$self->redir( 303, 'See Other', $url );
 		} elsif ($path =~ qr[^/admin$]) {
 			# POSTing data for the admin page
-			$endpoint->handle_admin_post($cgi);
+			warn 'admin post';
+			$endpoint->handle_admin_post( $cgi, $host, $port );
 		} elsif ($path =~ qr[^/admin/]) {
 			if ($path =~ qr[^/admin/index.html$]) {
 				$endpoint->admin_index($cgi);
@@ -71,6 +83,7 @@ sub redir {
 	my $message	= shift;
 	my $url		= shift;
 	print "HTTP/1.1 ${code} ${message}\nLocation: ${url}\n\n";
+	return;
 }
 
 1;
