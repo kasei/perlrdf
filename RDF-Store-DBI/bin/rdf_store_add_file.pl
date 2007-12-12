@@ -46,7 +46,7 @@ if ($file =~ qr[^http(s?)://]) {
 		$base		= $file;
 	}
 } else {
-	my $data	= read_file( $file );
+	$data	= read_file( $file );
 	unless ($base) {
 		my $abs	= File::Spec->rel2abs( $file );
 		$base	= 'file://' . $abs;

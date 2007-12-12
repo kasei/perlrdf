@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More tests => 17;
 
 use strict;
 use warnings;
@@ -53,5 +53,24 @@ my $st2		= RDF::Query::Algebra::Triple->new( $g, $foaf->homepage, RDF::Query::No
 		$count++;
 	}
 	is( $count, 2, 'two contexts' );
+}
+
+{
+	my $ctx		= RDF::Query::Node::Blank->new('blank-context');
+	$store->add_statement( $_, $ctx ) for ($st0, $st1, $st2);
+	my $stream	= $store->get_contexts;
+	my $count	= 0;
+	while (my $c = $stream->next) {
+		isa_ok( $c, 'RDF::Query::Node' );
+		if ($c->isa('RDF::Query::Node::Resource')) {
+			is( $c->uri_value, 'http://kasei.us/about/foaf.xrdf', 'context uri' );
+		} elsif ($c->isa('RDF::Query::Node::Literal')) {
+			is( $c->literal_value, 'Literal Context', 'context literal' );
+		} else {
+			is( $c->blank_identifier, 'blank-context', 'context bnode' );
+		}
+		$count++;
+	}
+	is( $count, 3, 'three contexts' );
 }
 

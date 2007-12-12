@@ -56,7 +56,8 @@ use RDF::Query::Algebra;
 use RDF::SPARQLResults;
 
 our $VERSION	= "0.002";
-our $debug		= 0;
+use constant DEBUG	=> 0;
+our $debug		= DEBUG;
 
 
 
@@ -80,19 +81,19 @@ sub new {
 	my $name	= shift || 'model';
 	my %args;
 	if (scalar(@_) == 0) {
-		warn "trying to construct a temporary model" if ($debug);
+		warn "trying to construct a temporary model" if (DEBUG);
 		my $file	= File::Temp->new;
 		$file->unlink_on_destroy( 1 );
 		my $dsn		= "dbi:SQLite:dbname=" . $file->filename;
 		$dbh		= DBI->connect( $dsn, '', '' );
-	} elsif (blessed($_[0]) and $_[0]->isa('DBD')) {
-		warn "got a DBD handle" if ($debug);
+	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
+		warn "got a DBD handle" if (DEBUG);
 		$dbh		= shift;
 	} else {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-		warn "Connecting to $dsn ($user, $pass)" if ($debug);
+		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
 	my $self	= bless( { model_name => $name, dbh => $dbh, %args }, $class );
@@ -132,6 +133,7 @@ sub get_statements {
 	my @vars	= $triple->referenced_variables;
 	
 	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
+#	warn $sql;
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -176,6 +178,16 @@ sub get_pattern {
 	my $pattern	= shift;
 	my $context	= shift;
 	my %args	= @_;
+	
+	if (my $o = $args{ orderby }) {
+		my @ordering	= @$o;
+		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
+			no warnings 'uninitialized';
+			unless ($dir =~ /^(ASC|DESC)$/) {
+				throw Error -text => 'Direction must be ASC or DESC in get_pattern call';
+			}
+		}
+	}
 	
 	my $dbh		= $self->dbh;
 	my @vars	= $pattern->referenced_variables;
@@ -311,7 +323,6 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-	Carp::confess unless (blessed($node));
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -331,8 +342,6 @@ sub _add_node {
 			push(@cols, 'Datatype');
 			$values{ 'Datatype' }	= $node->literal_datatype;
 		}
-	} else {
-		die;
 	}
 	
 	my $sql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
@@ -409,7 +418,7 @@ Returns an iterator object containing every statement in the model.
 
 sub model_as_stream {
 	my $self	= shift;
-	my $stream	= $self->get_statements();
+	my $stream	= $self->get_statements( map { RDF::Query::Node::Variable->new($_) } qw(s p o) );
 	return $stream;
 }
 
@@ -466,7 +475,7 @@ sub add_variable_values_joins {
 		my $col_table	= (split(/[.]/, $col))[0];
 		my ($count)		= ($col_table =~ /\w(\d+)/);
 		
-		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if ($debug);
+		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if (DEBUG);
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
 		foreach (@NODE_TYPE_TABLES) {
@@ -821,7 +830,7 @@ END
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
 	
 	$dbh->commit;
-	warn "committed" if ($debug);
+	warn "committed" if (DEBUG);
 }
 
 sub _cleanup {
