@@ -1,0 +1,27 @@
+--- #YAML:1.0
+meta-spec:
+  version: 1.3
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+name: RDF-Parser
+version: 1.000
+abstract: A pure-perl impelmentation of RDF parsers for Turtle and RDF/XML.
+author:
+  - Gregory Todd Williams <gwilliams@cpan.org>
+build_requires:
+  Test::Exception: 0
+  Test::More: 0.61
+  FindBin: 0
+distribution_type: module
+generated_by: Module::Install version 0.63
+license: perl
+no_index:
+  directory:
+    - inc
+    - t
+requires:
+  Error: 0
+  RDF::Namespace: 0
+  RDF::Query: 0
+  Unicode::Escape: 0
+  Scalar::Util: 0
+  URI: 0

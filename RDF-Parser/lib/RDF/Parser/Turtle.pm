@@ -3,6 +3,13 @@ package RDF::Parser::Turtle;
 use strict;
 use warnings;
 
+BEGIN {
+	foreach my $t ('turtle', 'application/x-turtle', 'application/turtle') {
+		$RDF::Parser::types{ $t }	= __PACKAGE__;
+	}
+}
+
+
 use URI;
 use RDF::Namespace;
 use RDF::Query::Node;
@@ -31,23 +38,38 @@ my $xsd			= RDF::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $rdf			= RDF::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
 sub new {
-	warn "> new
-" if ($debug);
 	my $class	= shift;
 	my $uri		= shift || 'http://example.com/';
 	my $input	= shift;
 	my $self	= bless({
-					baseURI		=> $uri,
-					tokens		=> $input,
 					bindings	=> {},
 					bnode_id	=> 0,
 				}, $class);
 	return $self;
 }
 
+sub parse {
+	my $self	= shift;
+	my $uri		= shift;
+	my $input	= shift;
+	local($self->{baseURI})	= $uri;
+	local($self->{tokens})	= $input;
+	return $self->turtleDoc();
+}
+
+sub parse_into_model {
+	my $self	= shift;
+	my $uri		= shift;
+	my $input	= shift;
+	my $model	= shift;
+	local($self->{handle_triple})	= sub {
+		my $st	= shift;
+		$model->add_statement( $st );
+	};
+	return $self->parse( $uri, $input );
+}
+
 sub eat {
-	warn "> eat
-" if ($debug);
 	my $self	= shift;
 	my $thing	= shift;
 	if (not(length($self->{tokens}))) {
@@ -85,8 +107,6 @@ sub eat {
 }
 
 sub test {
-	warn "> test
-" if ($debug);
 	my $self	= shift;
 	my $thing	= shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
@@ -97,8 +117,6 @@ sub test {
 }
 
 sub triple {
-	warn "> triple
-" if ($debug);
 	my $self	= shift;
 	my $s		= shift;
 	my $p		= shift;
@@ -109,21 +127,17 @@ sub triple {
 		}
 	}
 	
+	if (my $code = $self->{handle_triple}) {
+		my $st	= RDF::Query::Algebra::Triple->new( $s, $p, $o );
+		$code->( $st );
+	}
+	
 	my $count	= ++$self->{triple_count};
 	warn "$count\n" if ($debug);
 #	print join(' ', map { $_->sse } ($s, $p, $o)), '.' . "\n";
 }
 
-sub parse {
-	warn "> parse
-" if ($debug);
-	my $self	= shift;
-	return $self->turtleDoc();
-}
-
 sub turtleDoc {
-	warn "> turtleDoc
-" if ($debug);
 	my $self	= shift;
 	while ($self->statement_test()) {
 		$self->statement();
@@ -131,8 +145,6 @@ sub turtleDoc {
 }
 
 sub statement_test {
-	warn "> statement_test
-" if ($debug);
 	my $self	= shift;
 	if (length($self->{tokens})) {
 		return 1;
@@ -142,8 +154,6 @@ sub statement_test {
 }
 
 sub statement {
-	warn "> statement
-" if ($debug);
 	my $self	= shift;
 	if ($self->directive_test()) {
 		$self->directive();
@@ -162,8 +172,6 @@ sub statement {
 }
 
 sub directive_test {
-	warn "> directive_test
-" if ($debug);
 	my $self	= shift;
 	### between directive | triples | ws
 	### directives must start with @, triples must not
@@ -175,8 +183,6 @@ sub directive_test {
 }
 
 sub directive {
-	warn "> directive
-" if ($debug);
 	my $self	= shift;
 	### prefixID | base
 	if ($self->prefixID_test()) {
@@ -187,8 +193,6 @@ sub directive {
 }
 
 sub prefixID_test {
-	warn "> prefixID_test
-" if ($debug);
 	my $self	= shift;
 	### between prefixID | base. prefixID is @prefix, base is @base
 	if ($self->_startswith('@prefix')) {
@@ -199,8 +203,6 @@ sub prefixID_test {
 }
 
 sub prefixID {
-	warn "> prefixID
-" if ($debug);
 	my $self	= shift;
 	### '@prefix' ws+ prefixName? ':' ws+ uriref
 	$self->eat('@prefix');
@@ -229,8 +231,6 @@ sub prefixID {
 
 
 sub base {
-	warn "> base
-" if ($debug);
 	my $self	= shift;
 	### '@base' ws+ uriref
 	$self->eat('@base');
@@ -240,8 +240,6 @@ sub base {
 }
 
 sub triples_test {
-	warn "> triples_test
-" if ($debug);
 	my $self	= shift;
 	### between triples and ws. disjoint, so easy enough
 	return 0 unless (length($self->{tokens}));
@@ -253,8 +251,6 @@ sub triples_test {
 }
 
 sub triples {
-	warn "> triples
-" if ($debug);
 	my $self	= shift;
 	### subject ws+ predicateObjectList
 	my $subj	= $self->subject();
@@ -267,8 +263,6 @@ sub triples {
 }
 
 sub predicateObjectList {
-	warn "> predicateObjectList
-" if ($debug);
 	my $self	= shift;
 	### verb ws+ objectList ( ws* ';' ws* verb ws+ objectList )* (ws* ';')?
 	my $pred = $self->verb();
@@ -300,8 +294,6 @@ sub predicateObjectList {
 }
 
 sub objectList {
-	warn "> objectList
-" if ($debug);
 	my $self	= shift;
 	### object (ws* ',' ws* object)*
 	my @list;
@@ -318,8 +310,6 @@ sub objectList {
 }
 
 sub verb_test {
-	warn "> verb_test
-" if ($debug);
 	my $self	= shift;
 	return 0 unless (length($self->{tokens}));
 	if ($self->{tokens} !~ /^[.]/) {
@@ -330,8 +320,6 @@ sub verb_test {
 }
 
 sub verb {
-	warn "> verb
-" if ($debug);
 	my $self	= shift;
 	### predicate | a
 	if ($self->predicate_test()) {
@@ -343,16 +331,12 @@ sub verb {
 }
 
 sub comment {
-	warn "> comment
-" if ($debug);
 	my $self	= shift;
 	### '#' ( [^#xA#xD] )*
 	$self->eat($r_comment);
 }
 
 sub subject {
-	warn "> subject
-" if ($debug);
 	my $self	= shift;
 	### resource | blank
 #	if ($self->resource_test()) {
@@ -364,8 +348,6 @@ sub subject {
 }
 
 sub predicate_test {
-	warn "> predicate_test
-" if ($debug);
 	my $self	= shift;
 	### between this and 'a'... a little tricky
 	### if it's a, it'll be followed by whitespace; whitespace is mandatory
@@ -381,16 +363,12 @@ sub predicate_test {
 }
 
 sub predicate {
-	warn "> predicate
-" if ($debug);
 	my $self	= shift;
 	### resource
 	return $self->resource();
 }
 
 sub object {
-	warn "> object
-" if ($debug);
 	my $self	= shift;
 	### resource | blank | literal
 #	if ($self->resource_test()) {
@@ -404,8 +382,6 @@ sub object {
 }
 
 sub literal {
-	warn "> literal
-" if ($debug);
 	my $self	= shift;
 	### quotedString ( '@' language )? | datatypeString | integer | 
 	### double | decimal | boolean
@@ -438,8 +414,6 @@ sub literal {
 }
 
 sub double_test {
-	warn "> double_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_double/) {
 		return 1;
@@ -449,8 +423,6 @@ sub double_test {
 }
 
 sub double {
-	warn "> double
-" if ($debug);
 	my $self	= shift;
 	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent 
 	### | ([0-9])+ exponent )
@@ -460,8 +432,6 @@ sub double {
 }
 
 sub decimal_test {
-	warn "> decimal_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_decimal/) {
 		return 1;
@@ -471,8 +441,6 @@ sub decimal_test {
 }
 
 sub decimal {
-	warn "> decimal
-" if ($debug);
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
 	my $token	= $self->eat( $r_decimal );
@@ -480,8 +448,6 @@ sub decimal {
 }
 
 sub integer_test {
-	warn "> integer_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_integer/) {
 		return 1;
@@ -491,8 +457,6 @@ sub integer_test {
 }
 
 sub integer {
-	warn "> integer
-" if ($debug);
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
 	my $token	= $self->eat( $r_integer );
@@ -500,8 +464,6 @@ sub integer {
 }
 
 sub boolean {
-	warn "> boolean
-" if ($debug);
 	my $self	= shift;
 	### 'true' | 'false'
 	my $token	= $self->eat( $r_boolean );
@@ -509,8 +471,6 @@ sub boolean {
 }
 
 sub blank_test {
-	warn "> blank_test
-" if ($debug);
 	my $self	= shift;
 	### between this and literal. urgh!
 	### this can start with...
@@ -525,8 +485,6 @@ sub blank_test {
 }
 
 sub blank {
-	warn "> blank
-" if ($debug);
 	my $self	= shift;
 	### nodeID | '[]' | '[' ws* predicateObjectList ws* ']' | collection
 	if ($self->nodeID_test) {
@@ -551,8 +509,6 @@ sub blank {
 }
 
 sub itemList_test {
-	warn "> itemList_test
-" if ($debug);
 	my $self	= shift;
 	### between this and whitespace or ')'
 	return 0 unless (length($self->{tokens}));
@@ -564,8 +520,6 @@ sub itemList_test {
 }
 
 sub itemList {
-	warn "> itemList
-" if ($debug);
 	my $self	= shift;
 	### object (ws+ object)*
 	my @list;
@@ -581,8 +535,6 @@ sub itemList {
 }
 
 sub collection {
-	warn "> collection
-" if ($debug);
 	my $self	= shift;
 	### '(' ws* itemList? ws* ')'
 	my $b	= $self->_bNode( $self->_generate_bnode_id() );
@@ -611,8 +563,6 @@ sub collection {
 }
 
 sub ws_test {
-	warn "> ws_test
-" if ($debug);
 	my $self	= shift;
 	unless (length($self->{tokens})) {
 		return 0;
@@ -626,8 +576,6 @@ sub ws_test {
 }
 
 sub ws {
-	warn "> ws
-" if ($debug);
 	my $self	= shift;
 	### #x9 | #xA | #xD | #x20 | comment
 	if ($self->test('#')) {
@@ -641,8 +589,6 @@ sub ws {
 }
 
 sub resource_test {
-	warn "> resource_test
-" if ($debug);
 	my $self	= shift;
 	### between this and blank and literal
 	### quotedString ( '@' language )? | datatypeString | integer |
@@ -657,8 +603,6 @@ sub resource_test {
 }
 
 sub resource {
-	warn "> resource
-" if ($debug);
 	my $self	= shift;
 	### uriref | qname
 	if ($self->uriref_test()) {
@@ -669,8 +613,6 @@ sub resource {
 }
 
 sub nodeID_test {
-	warn "> nodeID_test
-" if ($debug);
 	my $self	= shift;
 	### between this (_) and []
 	if (substr($self->{tokens}, 0, 1) eq '_') {
@@ -681,8 +623,6 @@ sub nodeID_test {
 }
 
 sub nodeID {
-	warn "> nodeID
-" if ($debug);
 	my $self	= shift;
 	### '_:' name
 	$self->eat('_:');
@@ -690,8 +630,6 @@ sub nodeID {
 }
 
 sub qname {
-	warn "> qname
-" if ($debug);
 	my $self	= shift;
 	### prefixName? ':' name?
 	my $prefix	= ($self->prefixName_test()) ? $self->prefixName() : '';
@@ -702,8 +640,6 @@ sub qname {
 }
 
 sub uriref_test {
-	warn "> uriref_test
-" if ($debug);
 	my $self	= shift;
 	### between this and qname
 	if ($self->_startswith('<')) {
@@ -714,8 +650,6 @@ sub uriref_test {
 }
 
 sub uriref {
-	warn "> uriref
-" if ($debug);
 	my $self	= shift;
 	### '<' relativeURI '>'
 	$self->eat('<');
@@ -725,8 +659,6 @@ sub uriref {
 }
 
 sub language {
-	warn "> language
-" if ($debug);
 	my $self	= shift;
 	### [a-z]+ ('-' [a-z0-9]+ )*
 	my $token	= $self->eat( $r_language );
@@ -734,8 +666,6 @@ sub language {
 }
 
 sub nameStartChar_test {
-	warn "> nameStartChar_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
 		return 1;
@@ -745,8 +675,6 @@ sub nameStartChar_test {
 }
 
 sub nameStartChar {
-	warn "> nameStartChar
-" if ($debug);
 	my $self	= shift;
 	### [A-Z] | "_" | [a-z] | [#x00C0-#x00D6] | [#x00D8-#x00F6] | 
 	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] 
@@ -757,8 +685,6 @@ sub nameStartChar {
 }
 
 sub nameChar_test {
-	warn "> nameChar_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
 		return 1;
@@ -770,8 +696,6 @@ sub nameChar_test {
 }
 
 sub nameChar {
-	warn "> nameChar
-" if ($debug);
 	my $self	= shift;
 	### nameStartChar | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | 
 	### [#x203F-#x2040]
@@ -786,8 +710,6 @@ sub nameChar {
 }
 
 sub name {
-	warn "> name
-" if ($debug);
 	my $self	= shift;
 	### nameStartChar nameChar*
 	my ($name)	= ($self->eat( qr/^(${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*)/ ));
@@ -804,8 +726,6 @@ sub name {
 }
 
 sub prefixName_test {
-	warn "> prefixName_test
-" if ($debug);
 	my $self	= shift;
 	### between this and colon
 	if ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) {
@@ -816,8 +736,6 @@ sub prefixName_test {
 }
 
 sub prefixName {
-	warn "> prefixName
-" if ($debug);
 	my $self	= shift;
 	### ( nameStartChar - '_' ) nameChar*
 	my @parts;
@@ -832,8 +750,6 @@ sub prefixName {
 }
 
 sub relativeURI {
-	warn "> relativeURI
-" if ($debug);
 	my $self	= shift;
 	### ucharacter*
 	my $token	= $self->eat( $r_ucharacters );
@@ -841,8 +757,6 @@ sub relativeURI {
 }
 
 sub quotedString_test {
-	warn "> quotedString_test
-" if ($debug);
 	my $self	= shift;
 	if (substr($self->{tokens}, 0, 1) eq '"') {
 		return 1;
@@ -852,8 +766,6 @@ sub quotedString_test {
 }
 
 sub quotedString {
-	warn "> quotedString
-" if ($debug);
 	my $self	= shift;
 	### string | longString
 	if ($self->longString_test()) {
@@ -864,8 +776,6 @@ sub quotedString {
 }
 
 sub string {
-	warn "> string
-" if ($debug);
 	my $self	= shift;
 	### #x22 scharacter* #x22
 	$self->eat('"');
@@ -875,8 +785,6 @@ sub string {
 }
 
 sub longString_test {
-	warn "> longString_test
-" if ($debug);
 	my $self	= shift;
 	if ($self->_startswith( '"""' )) {
 		return 1;
@@ -886,8 +794,6 @@ sub longString_test {
 }
 
 sub longString {
-	warn "> longString
-" if ($debug);
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
 	$self->eat('"""');
@@ -958,16 +864,12 @@ sub typed {
 }
 
 sub _generate_bnode_id {
-	warn "> _generate_bnode_id
-" if ($debug);
 	my $self	= shift;
 	my $id		= $self->{ bnode_id }++;
 	return 'r' . $id;
 }
 
 sub _consume_ws {
-	warn "> _consume_ws
-" if ($debug);
 	my $self	= shift;
 	while ($self->ws_test()) {
 		$self->ws()
@@ -975,37 +877,27 @@ sub _consume_ws {
 }
 
 sub _URI {
-	warn "> _URI
-" if ($debug);
 	my $self	= shift;
 	return RDF::Query::Node::Resource->new( @_ )
 }
 
 sub _bNode {
-	warn "> _bNode
-" if ($debug);
 	my $self	= shift;
 	return RDF::Query::Node::Blank->new( @_ )
 }
 
 sub _Literal {
-	warn "> _Literal
-" if ($debug);
 	my $self	= shift;
 	return RDF::Query::Node::Blank->new( @_ )
 }
 
 sub _DatatypedLiteral {
-	warn "> _DatatypedLiteral
-" if ($debug);
 	my $self	= shift;
 	return RDF::Query::Node::Blank->new( $_[0], undef, $_[1] )
 }
 
 
 sub _startswith {
-	warn "> _startswith
-" if ($debug);
 	my $self	= shift;
 	my $thing	= shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
