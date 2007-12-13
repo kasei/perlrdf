@@ -1,0 +1,5 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+
+<alice.rdf> dc:title "Test data for Alice"; foaf:topic "Alice" .
+<bob.rdf> dc:title "Test data for Bob"; foaf:topic "Bob" .

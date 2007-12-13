@@ -1,0 +1,3 @@
+#!/bin/sh
+
+roqet -q -s "t/dawg/data-r2/"`perl -e 'for (@ARGV) { s/#.*$/.ttl/; print }' $1` -e "PREFIX mf: <http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#> PREFIX qt: <http://www.w3.org/2001/sw/DataAccess/tests/test-query#> PREFIX earl: <http://www.w3.org/ns/earl#> SELECT ?data ?query ?result WHERE { ?test mf:name ?name ; mf:action [ qt:data ?data ; qt:query ?query ] ; mf:result ?result . FILTER( REGEX(STR(?test), \"$1\") ) }" | perl -MData::Dumper -ne '@files{ /(?:query|data|result)=uri<([^>]*)>/g } = undef; } END { print join(q( ), map {substr($_, 0, index($_, "data-r2/")+8) = "t/dawg/data-r2/"} keys(%files))' | xargs bbedit

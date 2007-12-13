@@ -1,0 +1,498 @@
+RDF::Query - A SPARQL/RDQL implementation for RDF::Redland and RDF::Core
+
+   RDF::Query allows RDQL and SPARQL queries to be run against an RDF model, returning rows of matching results.
+
+REQUIREMENTS
+
+	To install RDF::Query you'll need the following perl modules installed:
+
+     * RDF::Core or RDF::Redland
+     * Parse::RecDescent
+     * DateTime::Format::W3CDTF
+     * JSON
+     * Error
+     * Storable
+
+	The following additional modules are recommended for some functionality:
+
+     * LWP::Simple
+
+INSTALLATION
+
+   To install, run:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+VERSION HISTORY
+
+  Version 1.502 (2007-12-XX)
+
+     * Moved RDF::Query::Stream into it's own package RDF::SPARQLResults.
+     * Removed unnecessary dependencies on Data::Dumper.
+     * Reshuffled SPARQL parsers tests.
+     * Added support for (new) RDF::Store::DBI models.
+     * RDF::SPARQLResults now can serialize to XML and JSON natively. Updated tests accordingly.
+     * rdf namespace is only added by default for RDQL.
+     * Fixed bug where the wrong bridge object would be returned for queries with FROM clauses.
+     * Moved query_more code to Algebra classes.
+     * Added RDF::Query::pattern method to return the GGP algebra pattern for the query.
+     * Added RDF::Query::as_sparql method to serialize query as SPARQL string.
+     * Removed unused RDF::Query::set_named_graph_query method.
+     * Fixed bug where triples from a FROM clause were loaded into the underlying persistent store.
+     * Added POD to RDF::Query::Node classes.
+     * Added equal method to RDF::Query::Node classes.
+     * RDF::Query::Node::Blank constructor now optionally produces identifiers.
+     * Added RDF::Query::Node::as_node method to return a bridge-native node object.
+     * (t)SPARQL parser now returns explicit variables when query projects on '*'.
+     * Added definite_variables method to RDF::Query::Algebra classes.
+     * Triple class now serializes rdf:type shortcut 'a' appropriately.
+     * Removed 'VAR' type from ::Node::Variable object structure.
+     * Updated code to always expect a HASH reference from Binding streams.
+     * Added more (sparql and see) serialization tests.
+     * Removed old fixup code, replaced by ::Algebra fixup methods.
+     * Moved FROM clause data loading to its own method.
+     * Started removing old code (RDF::Base, direct DBI use, AUTOLOAD, profiling).
+     * Moved general count_statements() method into bridge superclass.
+     * new_resource() bridge methods now pass-through native resources.
+     * Fixed SQL compiler to work with ::Algebra and ::Node classes.
+     * Added as_native method to bridge superclass for converting ::Node objects to bridge-native objects.
+     * Added fixup code to ::Algebra classes.
+
+  Version 1.501 (2007-11-15)
+
+     * Fixed CONSTRUCT+OPTIONAL bug.
+     * Added as_sparql methods to Algebra and Node classes to serialize patterns in SPARQL syntax.
+     * Added deparse script.
+     * Fixed jena:sha1sum tests when Digest::SHA1 isn't available.
+
+  Version 1.500 (2007-11-13)
+
+     * Query Engine:
+       * URIs are now properly qualified with a BASE when present.
+       * Base URI passed to constructor is now used if no BASE clause exists in the query.
+       * Fixed BASE qualification when an IRI contains Unicode characters (Emulating IRI support with the URI module).
+       * NAMED graph data is now seperated from the default model into new (temporary) models.
+       * NAMED graphs now work with RDF::Core.
+       * Added new RDF::Query::Algebra:: classes that are used to represent query ASTs.
+       * Added new RDF::Query::Node:: classes that are used to represent RDF Nodes and Variables.
+       * Major refactoring to RDF::Query::query_more() to enhance extensibility.
+       * Added RDF::Query::query_more_triple() and RDF::Query::query_more_bgp() for triple and bgp matching.
+       * Improved support of GGP pattern matching.
+       * Added sgrep, smap, swatch and concat methods to RDF::Query::Stream class.
+       * Refactored query_more() variants and sort_rows() to use new stream methods sgrep, smap, and concat.
+       * Continued to fix bugs to more closely align with DAWG tests.
+       * Updated DAWG tests to run with the RDF::Core backend.
+       * Any DAWG tests with mf:requires are now automatically marked TODO.
+       * DAWG tests graph equality is now punted to user verification.
+       * Fixed bNode merging code in DAWG tests.
+       * query_more() variants and sort_rows() now all return RDF::Query::Stream objects.
+       * query_more() (and everything it calls) now expects bridge object as a method argument (to ensure NAMED graph querying works).
+       * Added join_streams() to perform netsted-loop natural joins on two Stream objects.
+     * Filters:
+       * Added call_function() method to abstract the generation of ['FUNCTION',...] blocks.
+       * FILTER operator != is now negative for unknown datatypes.
+       * Fixed exception handling in check_constraints().
+       * Fixed type-promotion in arithmetic operations and added recognized xsd numeric types.
+       * API Chnage: extension functions now take a bridge object as their second argument (after the query object).
+       * Fixed equals() method in RDF::Core bridge to properly use the RDF::Core API.
+       * Javascript function makeTerm now accepts language and datatype parameters.
+       * toString() javascript funtion now returns just the literal value (not including language or datatype).
+       * sop:str now will stringify blank nodes properly.
+       * sparql:langmatches now properly differentiates between no language tag and an empty language tag.
+     * Parsers:
+       * Parsers now generate ASTs using the Algebra and Node classes.
+       * Fixed bugs in SPARQL tokenizer for some Unicode strings (with combining accents).
+       * RDF::Query::Parser::new_literal() now canonicalizes language tags (to lowercase).
+       * Fixed GGP verification in RDF::Query::Parser::SPARQL::fixup().
+       * Merged GGPAtom changes from tSPARQL to SPARQL grammar.
+     * Backends:
+       * Fixed bug in RDF::Query::Model::RDFCore::equals() when comparing two blank nodes.
+       * Changed RDF::Query::Model::RDFCore::as_string to return strings where node type is identifiable (like Redland, URIs as [...], literal \"...\", bnodes (...)).
+       * Model methods literal_value, literal_datatype and literal_value_langauge now return undef if argument isn't a literal.
+       * Model methods uri_value and blank_identifier now return undef unless argument is of correct type.
+       * Model add_string methods now normalize Unicode input.
+       * Blank node prefix is now scoped to bridge, not lexically in RDF::Query::Model::RDFCore.
+       * RDF::Query::Model::Redland::new_literal now forces argument to a string (XS code breaks on non-PVOK scalars).
+       * RDF::Query::Model::Redland::add_uri now uses LWP instead of relying on Redland to fetch content.
+       * Redland model class now recognizes DateTime objects as literals.
+       * Updated add_uri() method in RDF::Core bridge to support named graphs (only one name per model for now).
+     * Miscellaneous:
+       * Added rudimentary profiling code (Devel::DProf seems to crash on RDF::Query)
+       * Added initial code for supporting property functions (using time:inside as an example).
+       * Removed multi_get code.
+       * Removed code for MULTI patterns. Will replace with algebra-based optimization in the future.
+       * RDF::Query::Stream constructor now accepts an ARRAY reference.
+       * Stopped using the peephole optimizers. Will replace with an algebra-based optimizer in the future.
+
+  Version 1.044 (2007-09-13)
+
+     * DAWG tests now emit EARL reports.
+     * Added test harness and temporal data importing scripts to new bin/ directory.
+     * Added support for temporal queries in RDF::Query and optimizers.
+     * Added support for CONSTRUCT queries in new YAPP-based SPARQL parsers.
+     * Added TIMED graph tests for new SPARQL temporal extensions.
+     * Added tests to SPARQL parser for bugs that were discovered with temporal extensions.
+     * Added POD to new SPARQL parsers.
+     * Added new Parse::Yapp-based SPARQL parser in preparation for temporal SPARQL extensions.
+     * Added stub functions for temporal extension support.
+     * Added model_as_stream() method to Redland bridge class.
+     * Addded debug() method to RDF::Query::Model.
+     * Added UNION tests.
+     * Added a javascript debugging flag to RDF::Query.
+     * Added RDF::Query::groupgraphpattern() for handling GGPs.
+     * Added xsd:integer casting function.
+     * Added <http://kasei.us/2007/09/functions/warn> as a FILTER tee that warns to STDERR.
+     * Added Eyapp SPARQL grammer file and replaced parser with auto-generated code from eyapp.
+     * Marked some SPARQL parser tests as TODO (due to incompatability with new YAPP-based parser).
+     * Network tests are now run against all available models.
+     * Stream tests are now run against all available models.
+     * Query parser initialization code cleaned up (and now supports beta tSPARQL parser).
+     * net_filter_function() now properly accesses nodes with bridge methods.
+     * RDF::Query::Parser::new_blank now assigns default names if none is supplied.
+     * Updated error messages in SPARQL parser to align with new YAPP-based parser.
+     * SPARQL parse_predicate_object() fixed to support tripleNodes.
+     * SPARQL parse_object() and parse_predicate() fixed for whitespace insensitivity.
+     * Moved old hand-written SPARQL parser to now unused SPARQL-RD.pm.
+     * Moved new YAPP-based SPARQL parser to SPARQL.pm.
+     * Copied YAPP-based SPARQL parser for new temporal extension tSPARQL.pm.
+     * Moved existing tests for hand-written SPARQL parser to 01-sparql_parser.t.rd-old.
+     * Moved new YAPP-based SPARQL tests to t/01-sparql_parser.t.
+     * Removed bad-syntax queries from optimizer and SQL compiler tests.
+     * Fixed bad-syntax queries in stream and hook tests.
+     * Made output of coverage tests easier to read by adding test names.
+     * Fixed SPARQL parsers to allow keywords as variable names.
+     * Fixed SPARQL parsers to allow dashes and underscores in variable names.
+     * Fixed bad parser constructor call in SQL compiler tests.
+     * Suppressed RDF::Base loading (again) during RDF::Query startup.
+     * RDF::Query::Model::Redland::debug now shows contexts during iterator debugging.
+     * Moved the old (hand written) SPARQL parser out of the way to make test harnesses happy.
+     * SPARQL parser now respects spec regarding the reuse of blank node labels across BGPs.
+     * SPARQL parser now does the right thing with NIL (the empty list).
+     * SPARQL parser now handles embedded GGPs correctly.
+     * Updated SPARQL parser and tests to pass (almost all) DAWG tests.
+     * Fixed bug where results couldn't be sorted by a non-selected variable.
+     * Removed the unused RDF::Query::timed_graph() method.
+     * RDF::Query::qualify_uri is now more liberal in what it accepts.
+     * Fixed xsd:boolean casting of integer values.
+     * RDF::Query::Parser::new_variable can now generate private variable names.
+     * Fixed test suite to work properly on systems without Redland.
+     * Disabled loading of tSPARQL parser for release.
+     * Removed function prototype definitions in Model base class (was causing loading problems when models are missing).
+
+  Version 1.043 (2007-06-14)
+
+     * Fixed broken MANIFEST causing MakeMaker code to break.
+
+  Version 1.042 (2007-06-13)
+
+     * Added support for Javascript URL-based extension functions.
+     * Added GPG signing support for Javascript functions.
+     * Added meta methods to model classes.
+     * Added count_statements methods to model classes.
+     * Added default format for stringifying query result streams.
+     * Added SPARQL syntax coverage tests.
+     * Added stream tests.
+     * ISIRI() now returns a sop:isIRI function IRI.
+     * Redland bridge add_uri strips off URI fragment from parser base URI.
+     * Underlying models aren't loaded if turned off by environment variables.
+     * Stopped using the (currently broken) multi-get code.
+     * Model classes aren't used if turned off by environment variable.
+     * Standardized node testing to is_node (replacing older isa_node).
+     * GPG verification failure now throws exceptions.
+     * GPG fingerprint handling is now whitespace insensitive.
+     * Removed (currently) unused multiget tests.
+     * Redland bridge uri_value returns undef if not called with a node.
+
+  Version 1.041 (2006-11-26)
+
+     * Removed unwanted '+' signs on stringified bigints when running under perl 5.6.x.
+     * Fixed unicode errors when running under perl 5.6.x.
+     * Added tests for model bridge classes.
+     * Fixed bugs in SQL bridge class.
+     * RDFCore and Redland bridge classes now throw error when passed a bad model object.
+     * Bridge class support() method now responds to feature requests for 'temp_model'.
+     * Fixed bug in RDF::Query::Model::RDFCore::isa_resource returning true for blank nodes.
+     * Fixed code in RDF::Query::Model::::SQL::equals().
+     * Added partial support for new RDF::Storage::DBI storage class.
+     * Added support for RDF::Query:::Model::SQL models in RDF::Query bridge code.
+     * Removed RDF::Query::Model::SQL::* code that's now in RDF::Storage::DBI.
+     * Added tests for backend bridge classes (RDF::Query::Model::*).
+     * Added checks for which backends support XML serialization.
+     * Fixed naive peephole tests in cases where model supports cost-based analysis.
+     * Fixed bugs in tests that were relying on C<as_string> to act like C<literal_value>.
+     * Added RDF::Base support.
+     * Fixed bug in C<fixup> that prevented running queries against multiple models.
+     * Added SimpleQueryPatternError exception class for future work on multi-get optimizations.
+     * Removed forced dependence on Digest::SHA1.
+     * Makefile.PL now recommends Digest::SHA1 (for jena function) and Geo::Distance (for 07-filters.t).
+
+  Version 1.040 (2006-07-21)
+
+     * Added support for BOUND() fiters in SQL compilation.
+     * SQL compiler now produces valid SQL when query variable names are SQL reserved keywords.
+     * Moved SPARQL parser test data into YAML.
+     * Added YAML as a build-time prerequisite.
+     * Fixed SPARQL parsing bug for blank nodes as statement objects.
+     * Added peephole optimizer code with naive and cost-analysis strategies.
+     * Added add_string method to RDF::Query::Model::Redland.
+     * Added node_count method to RDF::Query::Model::Redland (only used for testing at this point).
+     * RDF::Query::execute() now uses the peephole optimizer.
+     * Removed punting code in RDF::Query::execute that tried to do JIT optimization.
+     * Removed calls to getLabel() on model objects in test files.
+     * Fixed dawg tests (was dying because of multiple plans being printed).
+     * Fixed cost-based peephole optimizer tests (by forcing Redland to do node counting).
+
+  Version 1.039 (2006-07-14)
+
+     * Removed dawg tests from distribution. Only used as developer tests now.
+     * Updated package to use Module::Install instead of ExtUtils::MakeMaker.
+     * Fixed a spurious uninitialized warning in RDF::Query::get_bridge.
+
+  Version 1.038 (2006-07-09)
+
+     * Fixed DBI case-sensitivity for PostgreSQL support.
+     * Cleaned up SQL syntax for easier debugging.
+     * Removed extra parens in SQL that were causing postgresql to break.
+     * Reference test foaf file using File::Spec->catfile() instead of directly.
+     * Fixed SPARQL parsing bug for anonymous nodes in FILTER expressions.
+     * Fixed major SQL compilation bugs for testing equality in FILTER expressions.
+     * Fixed bug in hashing code for blank nodes in SQL compiler.
+
+  Version 1.037 (2006-07-06)
+
+     * execute() method now takes optional 'bind' parameter for pre-binding query variables.
+     * Updated code to support basic FILTERs in SQL compilation.
+     * Fixed bug in SQL compilation where no WHERE clause was needed.
+     * Fixed bug in SQL compilation when using model-specific Statements tables.
+     * Added Storable to the list of required modules (was missing in the list).
+     * Fixed typos in metadata about past versions in DOAP Changes.ttl.
+
+  Version 1.036 (2006-06-26)
+
+     * Fixed memory leak in RDF::Query::Stream that resulted in too many database handles.
+     * Initial support for OPTIONALs in SQL compiler.
+     * Removed LWP requirement for systems without libwww.
+     * Added support for class variable to hold parsing errors. (Beware under threads.)
+     * RDF::Query now sets error variable upon parsing error. (Access with C<error()>.)
+     * Fixed POD errors, and added tests for POD coverage.
+     * Added model API methods to SQL model class.
+     * Added C<close> method to RDF::Query::Stream.
+
+  Version 1.035 (2006-06-04)
+
+     * Added DAWG tests and harness.
+     * Rewrote core logic in OPTIONAL handling code.
+     * Comparisons on literals now respect numeric datatypes.
+     * Fixed outdated calling conventions in casting functions.
+     * Added custom functions:
+        + jena:sha1sum
+        + jena:now
+        + jena:langeq
+        + jena:listMember
+        + ldodds:Distance
+     * Added new model methods: equals, subject, predicate, object.
+     * Relocated external http-based test data to .Mac URLs.
+
+  Version 1.034 (2006-05-01)
+
+     * Added JSON serialization for bindings and boolean queries.
+     * Initial support for compiling RDF queries to SQL queries using the Redland schema.
+     * Added to_string method to query results Stream class.
+     * Model objects now store the query parse tree for access to data needed in serialization.
+     * Unquoted number and boolean literals in SPARQL are now datatyped appropriately.
+     * Fixed crashing bug when RDF::Query::Model::Redland::as_string was called with an undefined value.
+     * Fixed bug parsing queries with predicate starting with 'a' (confused with { ?subj a ?type}).
+     * Fixed bug parsing queries whose triple pattern ended with the optional dot.
+
+  Version 1.033 (2006-03-08)
+
+     * Updated test suite to work if one of the model classes is missing.
+     * Data-typed literals are now cast appropriately when used in a FILTER.
+     * Added support for xsd:dateTime datatypes using the DateTime module.
+     * Added support for LANG(), LANGMATCHES() and DATATYPE() built-in functions.
+     * Updated TODO list.
+     * Added more exception types to RDF::Query::Error.
+     * Added POD coverage.
+     * Fixed SPARQL parsing bug for logical operators <= and >=.
+
+  Version 1.032 (2006-03-03)
+
+     * Replaced the Parse::RecDescent SPARQL parser with a much faster hand-written one.
+     * Updated SPARQL parsing rules to be better about URI and QName character sets.
+     * FILTER equality operator now '=', not '==' (to match SPARQL spec).
+     * Initial support for FILTER constraints as part of the triple pattern structure (Will allow for nested FILTERs).
+     * Implemented support for ordering query results by an expression.
+     * Fixed bug in expresion handling of unary minus.
+     * Fixed bug in Redland NAMED GRAPH parsing.
+     * Fixed bug in RDF::Core parsing code where blank nodes would be accidentally smushed.
+
+  Version 1.031 (2006-02-08)
+
+     * Added support for NAMED graphs.
+
+  Version 1.030 (2006-01-13)
+
+     * Added support for SELECT * in SPARQL queries.
+     * Added support for default namespaces in SPARQL queries.
+     * Added tests for querying RDF collections in SPARQL (1 ?x 3)
+     * Added tests for triple patterns of the form { ?a ?a ?b . }
+     * Added tests for default namespaces in SPARQL.
+     * Added tests for SELECT * SPARQL queries.
+     * Bugfix where one of two identical triple variables would be ignored ({ ?a ?a ?b }).
+
+  Version 1.028 (2005-11-18)
+
+     * Added SPARQL functions: BOUND, isURI, isBLANK, isLITERAL.
+     * Updated SPARQL REGEX syntax.
+     * Updated SPARQL FILTER syntax.
+     * Added SPARQL RDF Collections syntactic forms.
+     * Fixed FILTER support in OPTIONAL queries.
+     * Added binding_value_by_name method to Query results stream class.
+     * Added isa_blank methods to RDF::Redland and RDF::Core model classes.
+     * Fixed RDF literal datatyping when using Redland versions >= 1.00_02.
+     * Updated SPARQL grammar to make 'WHERE' token optional.
+     * Added <commit> directives to SPARQL grammar.
+     * Updated SPARQL 'ORDER BY' syntax to use parenthesis.
+     * Fixed SPARQL FILTER logical-and support for more than two operands.
+     * Fixed SPARQL FILTER equality operator syntax to use '=' instead of '=='.
+     * Now requires Test::More 0.52 because of changes to is_deeply().
+
+  Version 1.027 (2005-07-28)
+
+     * Updated to follow SPARQL Draft 2005.07.21:
+        + ORDER BY arguments now use parenthesis.
+        + SPARQL parser now supports ORDER BY operands:
+          variable, expression, or function call.
+     * Added binding_value_by_name() method to query result streams.
+
+  Version 1.026 (2005-06-05)
+
+     * Added new DBI model bridge (accesses Redland's mysql storage directly).
+     * Added built-in SPARQL functions and operators (not connected to grammar yet).
+     * Added bridge methods for accessing typed literal information.
+
+  Version 1.024 (2005-06-02)
+
+     * Added missing SPARQL OFFSET grammar rules.
+     * Added XML Results support for graph and boolean queries (DESCRIBE, CONSTRUCT, ASK).
+     * Fixed major bugs in RDF::Core bridge:
+          + Bridge wasn't using passed model.
+          + Literal construction was broken.
+          + Blank node construction was broken when no identifier was specified.
+     * Stream::bindings_count now returns the right number even if there is no data.
+     * XML Result format now works with RDF::Core models.
+     * The Model bridge object is now passed to the Stream constructor.
+     * Internal code now uses the variables method.
+     * Removed redundant code from ORDER BY/LIMIT/OFFSET handling.
+     * Removed unused count method.
+     * Removed unused delegating AUTOLOAD.
+     * Removed unused parse_files method.
+     * Removed usused add_file method.
+     * Removed duplicate net test file.
+     * Added test file for local file-based SPARQL 'FROM' queries.
+     * Added test file for SPARQL Result Forms (LIMIT, ORDER BY, OFFSET, DISTINCT).
+     * Added test file for SPARQL Protocol for RDF (XML Results).
+     * Added new tests based on Devel::Cover results.
+     * Some test files now run against both Redland and RDF::Core:
+          + 00-simple.t
+          + 03-coverage.t
+          + 10-sparql_protocol.t
+     * All debugging is now centrally located in the _debug method.
+     * Moved Stream class to lib/RDF/Query/Stream.pm.
+     * Fixed tests that broke with previous fix to CONSTRUCT queries.
+     * Fixed tests that broke with previous change to ASK query results.
+
+  Version 1.021 (2005-06-01)
+
+     * Added SPARQL UNION support.
+     * Broke OPTIONAL handling code off into a seperate method.
+     * Added new debugging code to trace errors in the twisty web of closures.
+
+  Version 1.020 (2005-05-18)
+
+     * Added support for SPARQL OPTIONAL graph patterns.
+     * Calling bindings_count on a stream now returns 0 with no data.
+     * Added Stream methods:
+          + is_bindings
+          + binding_name
+          + binding_values
+          + binding_names
+     * Added as_xml method to Stream class for XML Binding Results format.
+
+  Version 1.016 (2005-05-08)
+
+     * Added initial support for SPARQL ASK, DESCRIBE and CONSTRUCT queries.
+          + Added new test files for new query types.
+     * Added methods to bridge classes for creating statements and blank nodes.
+     * Added as_string method to bridge classes for getting string versions of nodes.
+     * Broke out triple fixup code into fixup_triple_bridge_variables().
+     * Updated FILTER test to use new Geo::Distance API.
+
+  Version 1.015 (2005-05-03)
+
+     * Fixes to the arguments passed to FILTERs.
+     * Filter tests now show example of two custom filters:
+          + Transitive subClassOf testing.
+          + Logical comparison operators (range testing lat/lon values).
+     * Added literal_value, uri_value, and blank_identifier methods to bridges.
+     * Redland bridge now calls sources/arcs/targets when only one field is missing.
+     * Fixes to stream code. Iterators are now destroyed in a timely manner.
+          + Complex queries no longer max out mysql connections under Redland.
+     * Cleaned up node sorting code.
+          + Removed dependency on Sort::Naturally.
+          + Added new node sorting function ncmp().
+     * check_constraints now calls ncmp() for logical comparisons.
+     * Added get_value method to make bridge calls and return a scalar value.
+     * Fixed node creation in Redland bridge.
+     * Moved DISTINCT handling code to occur before LIMITing.
+     * Added variables method to retrieve bound variable names.
+     * Added binding_count and get_all methods to streams.
+     * get_statments bridge methods now return RDF::Query::Stream objects.
+
+  Version 1.014 (2005-04-26)
+
+     * Made FILTERs work in SPARQL.
+     * Added initial SPARQL support for custom function constraints.
+     * SPARQL variables may now begin with the '$' sigil.
+     * Added direction support for ORDER BY (ascending/descending).
+     * Added 'next', 'current', and 'end' to Stream API.
+
+  Version 1.012 (2005-04-24)
+
+     * Stream objects now handle being constructed with an undef coderef.
+     * Streams are now objects usinig the Redland QueryResult API.
+     * RDF namespace is now always available in queries.
+     * row() now uses a stream when calling execute().
+     * Added ORDER BY support to RDQL parser.
+     * SPARQL constraints now properly use the 'FILTER' keyword.
+     * SPARQL constraints can now use '&&' as an operator.
+     * SPARQL namespace declaration is now optional.
+     * Updated tests.
+
+  Version 1.010 (2005-04-21)
+
+     * execute now returns an iterator.
+     * Added core support for DISTINCT, LIMIT, OFFSET.
+     * Added initial core support for ORDER BY (only works on one column right now).
+     * Broke out the query parser into it's own RDQL class.
+     * Added initial support for a SPARQL parser.
+          + Added support for blank nodes.
+          + Added lots of syntactic sugar (with blank nodes, multiple predicates and objects).
+          + Added SPARQL support for DISTINCT and ORDER BY.
+     * Moved model-specific code into RDF::Query::Model::*.
+     * Moving over to redland's query API (pass in the model when query is executed).
+
+COPYRIGHT
+
+   Copyright (C) 2005-2006 Gregory Williams. All rights reserved.
+   This program is free software; you can redistribute it and/or
+   modify it under the same terms as Perl itself.
+
+AUTHOR
+
+	Gregory Williams <gwilliams@cpan.org>
+
+$Id: README 301 2007-12-05 20:57:44Z samofool $

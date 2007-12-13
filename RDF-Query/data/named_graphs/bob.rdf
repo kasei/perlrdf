@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <rdf:Description>
+    <ns0:name xmlns:ns0="http://xmlns.com/foaf/0.1/">Bob</ns0:name>
+    <ns1:mbox xmlns:ns1="http://xmlns.com/foaf/0.1/" rdf:resource="mailto:bob@oldcorp.example.org"/>
+  </rdf:Description>
+</rdf:RDF>

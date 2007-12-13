@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+		xmlns:admin="http://webns.net/mvcb/"
+		xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		xmlns:cyc="http://www.cyc.com/2004/06/04/cyc#"
+		xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+		xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+		xmlns:wot="http://xmlns.com/wot/0.1/"
+		xmlns:rel="http://purl.org/vocab/relationship/"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:dcterms="http://purl.org/dc/terms/"
+		xmlns:canon="http://www.kanzaki.com/ns/exif/canon#"
+		xmlns:exif="http://www.kanzaki.com/ns/exif#"
+		xmlns:contact="http://www.w3.org/2000/10/swap/pim/contact#"
+		xmlns:air="http://www.daml.org/2001/10/html/airport-ont#"
+		xmlns:p="http://www.usefulinc.com/picdiary/"
+		xmlns:wn="http://xmlns.com/wordnet/1.6/">
+
+	<foaf:Image rdf:about="http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg">
+			<dcterms:spatial>
+				<geo:Point rdf:ID="r1101876275r7">
+                        <geo:lat>52.972770</geo:lat>
+                        <foaf:name>Cliffs of Moher, Ireland</foaf:name>
+                        <geo:long>-9.430733</geo:long>
+                </geo:Point>
+			</dcterms:spatial>
+			<foaf:depicts><wn:Clouds/></foaf:depicts>
+			<foaf:depicts><wn:Sky/></foaf:depicts>
+			<foaf:page rdf:resource="http://kasei.us/pictures/2004/20040909-Ireland/22"/>
+			<exif:make>NIKON CORPORATION</exif:make>
+			<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
+			<dc:creator>Greg Williams</dc:creator>
+			<exif:fNumber>11</exif:fNumber>
+			<exif:model>NIKON D70</exif:model>
+			<exif:exposureTime>1/500</exif:exposureTime>
+			<dc:description></dc:description>
+			<dc:date rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2004-09-06T15:19:20+01:00</dc:date>
+			<foaf:thumbnail rdf:resource="http://kasei.us/pictures/2004/20040909-Ireland/thumbnails/DSC_5705.jpg"/>
+	</foaf:Image>
+	<foaf:Image rdf:about="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/images/DSC_8055.jpg">
+		<dcterms:spatial>
+			<geo:Point rdf:nodeID="r1114285136r1">
+				<cyc:inRegion rdf:resource="http://www.daml.ri.cmu.edu/ont/USRegionState.daml#RI"/>
+				<geo:lat>41.849756</geo:lat>
+				<foaf:name>Providence, RI</foaf:name>
+				<geo:long>-71.392400</geo:long>
+			</geo:Point>
+		</dcterms:spatial>
+		<foaf:depicts><wn:Flower-2 rdf:nodeID="t1114285306wFlower-2"/></foaf:depicts>
+		<foaf:page rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/01"/>
+		<exif:make>NIKON CORPORATION</exif:make>
+		<foaf:maker>
+			<foaf:Person rdf:about="http://kasei.us/about/foaf.xrdf#greg">
+				<foaf:mbox rdf:resource="mailto:greg@evilfunhouse.com"/>
+				<foaf:mbox_sha1sum>19fc9d0234848371668cf10a1b71ac9bd4236806</foaf:mbox_sha1sum>
+				<foaf:mbox_sha1sum>f3c455a88761f83ba243b2653e6042de71fdd149</foaf:mbox_sha1sum>
+				<foaf:mbox_sha1sum>25c5f4f21afaedf113d92ac7c8591178ad9c03fa</foaf:mbox_sha1sum>
+				<foaf:mbox_sha1sum>9d179d12b032b4689cf5dd1ffaf237c3e007c919</foaf:mbox_sha1sum>
+				<foaf:mbox_sha1sum>f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8</foaf:mbox_sha1sum>
+				<foaf:nick>The Samo Fool</foaf:nick>
+				<foaf:nick>kasei</foaf:nick>
+				<foaf:homepage rdf:resource="http://kasei.us/"/>
+				<foaf:name>Gregory Todd Williams</foaf:name>
+				<foaf:weblog rdf:resource="http://kasei.us/"/>
+			</foaf:Person>
+		</foaf:maker>
+		<dc:creator>Greg Williams</dc:creator>
+		<exif:fNumber>4.5</exif:fNumber>
+		<exif:model>Nikon D70</exif:model>
+		<exif:exposureTime>1/60</exif:exposureTime>
+		<dc:date>2005-04-07T18:27:37-04:00</dc:date>
+		<foaf:thumbnail rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/thumbnails/DSC_8055.jpg"/>
+	</foaf:Image>
+	<foaf:Image rdf:about="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/images/DSC_8056.jpg">
+		<dcterms:spatial rdf:nodeID="r1114285136r1"/>
+		<foaf:depicts><wn:Flower-2 rdf:nodeID="t1114310775wFlower-2"/></foaf:depicts>
+		<foaf:page rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/02"/>
+		<exif:make>NIKON CORPORATION</exif:make>
+		<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
+		<dc:creator>Greg Williams</dc:creator>
+		<exif:fNumber>4.5</exif:fNumber>
+		<exif:model>Nikon D70</exif:model>
+		<exif:exposureTime>1/60</exif:exposureTime>
+		<dc:date>2005-04-07T18:27:50-04:00</dc:date>
+		<foaf:thumbnail rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/thumbnails/DSC_8056.jpg"/>
+	</foaf:Image>
+	<foaf:Image rdf:about="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/images/DSC_8057.jpg">
+		<dcterms:spatial rdf:nodeID="r1114285136r1"/>
+		<foaf:depicts><wn:Flower-2 rdf:nodeID="t1114285309wFlower-2"/></foaf:depicts>
+		<foaf:page rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/03"/>
+		<exif:make>NIKON CORPORATION</exif:make>
+		<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
+		<dc:creator>Greg Williams</dc:creator>
+		<exif:fNumber>4.5</exif:fNumber>
+		<exif:model>Nikon D70</exif:model>
+		<exif:exposureTime>1/80</exif:exposureTime>
+		<dc:date rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2005-04-07T18:27:56-04:00</dc:date>
+		<foaf:thumbnail rdf:resource="http://kasei.us/pictures/2005/20050422-WCCS_Dinner/thumbnails/DSC_8057.jpg"/>
+	</foaf:Image>
+</rdf:RDF>

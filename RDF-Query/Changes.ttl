@@ -1,0 +1,498 @@
+# -*-n3-*-
+
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix asc:     <http://aaronland.info/ns/changefile/> .
+                                     
+<>
+        dc:identifier           "$Id: Changes.ttl 298 2007-12-03 20:48:55Z samofool $" ;
+        dc:description          "Changes for RDF::Query" ;
+        dcterms:references      <http://kasei.us/code/rdf-query/#project> .
+
+<http://kasei.us/code/files/RDF-Query-1.501.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.500.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.501" ;
+                        doap:created      "2007-11-15" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added as_sparql methods to Algebra and Node classes to serialize patterns in SPARQL syntax." ;
+                        asc:addition      "Added deparse script." ;
+                        asc:update        "Fixed CONSTRUCT+OPTIONAL bug." ;
+                        asc:update        "Fixed jena:sha1sum tests when Digest::SHA1 isn't available." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.500.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.044.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.500" ;
+                        doap:created      "2007-11-13" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added new RDF::Query::Algebra:: classes that are used to represent query ASTs." ;
+                        asc:addition      "Added new RDF::Query::Node:: classes that are used to represent RDF Nodes and Variables." ;
+                        asc:addition      "Added RDF::Query::query_more_triple() and RDF::Query::query_more_bgp() for triple and bgp matching." ;
+                        asc:addition      "Added sgrep, smap, swatch and concat methods to RDF::Query::Stream class." ;
+                        asc:addition      "Added join_streams() to perform netsted-loop natural joins on two Stream objects." ;
+                        asc:addition      "Added call_function() method to abstract the generation of ['FUNCTION',...] blocks." ;
+                        asc:addition      "Added rudimentary profiling code (Devel::DProf seems to crash on RDF::Query)" ;
+                        asc:addition      "Added initial code for supporting property functions (using time:inside as an example)." ;
+                        asc:update        "URIs are now properly qualified with a BASE when present." ;
+                        asc:update        "Base URI passed to constructor is now used if no BASE clause exists in the query." ;
+                        asc:update        "Fixed BASE qualification when an IRI contains Unicode characters (Emulating IRI support with the URI module)." ;
+                        asc:update        "NAMED graph data is now seperated from the default model into new (temporary) models." ;
+                        asc:update        "NAMED graphs now work with RDF::Core." ;
+                        asc:update        "Major refactoring to RDF::Query::query_more() to enhance extensibility." ;
+                        asc:update        "Improved support of GGP pattern matching." ;
+                        asc:update        "Refactored query_more() variants and sort_rows() to use new stream methods sgrep, smap, and concat." ;
+                        asc:update        "Continued to fix bugs to more closely align with DAWG tests." ;
+                        asc:update        "Updated DAWG tests to run with the RDF::Core backend." ;
+                        asc:update        "Any DAWG tests with mf:requires are now automatically marked TODO." ;
+                        asc:update        "DAWG tests graph equality is now punted to user verification." ;
+                        asc:update        "Fixed bNode merging code in DAWG tests." ;
+                        asc:update        "query_more() variants and sort_rows() now all return RDF::Query::Stream objects." ;
+                        asc:update        "query_more() (and everything it calls) now expects bridge object as a method argument (to ensure NAMED graph querying works)." ;
+                        asc:update        "Parsers now generate ASTs using the Algebra and Node classes." ;
+                        asc:update        "FILTER operator != is now negative for unknown datatypes." ;
+                        asc:update        "Fixed exception handling in check_constraints()." ;
+                        asc:update        "Fixed type-promotion in arithmetic operations and added recognized xsd numeric types." ;
+                        asc:update        "API Chnage: extension functions now take a bridge object as their second argument (after the query object)." ;
+                        asc:update        "Fixed equals() method in RDF::Core bridge to properly use the RDF::Core API." ;
+                        asc:update        "Javascript function makeTerm now accepts language and datatype parameters." ;
+                        asc:update        "toString() javascript funtion now returns just the literal value (not including language or datatype)." ;
+                        asc:update        "sop:str now will stringify blank nodes properly." ;
+                        asc:update        "sparql:langmatches now properly differentiates between no language tag and an empty language tag." ;
+                        asc:update        "Fixed bugs in SPARQL tokenizer for some Unicode strings (with combining accents)." ;
+                        asc:update        "RDF::Query::Parser::new_literal() now canonicalizes language tags (to lowercase)." ;
+                        asc:update        "Fixed GGP verification in RDF::Query::Parser::SPARQL::fixup()." ;
+                        asc:update        "Merged GGPAtom changes from tSPARQL to SPARQL grammar." ;
+                        asc:update        "Fixed bug in RDF::Query::Model::RDFCore::equals() when comparing two blank nodes." ;
+                        asc:update        "Changed RDF::Query::Model::RDFCore::as_string to return strings where node type is identifiable (like Redland, URIs as [...], literal \"...\", bnodes (...))." ;
+                        asc:update        "Model methods literal_value, literal_datatype and literal_value_langauge now return undef if argument isn't a literal." ;
+                        asc:update        "Model methods uri_value and blank_identifier now return undef unless argument is of correct type." ;
+                        asc:update        "Model add_string methods now normalize Unicode input." ;
+                        asc:update        "Blank node prefix is now scoped to bridge, not lexically in RDF::Query::Model::RDFCore." ;
+                        asc:update        "RDF::Query::Model::Redland::new_literal now forces argument to a string (XS code breaks on non-PVOK scalars)." ;
+                        asc:update        "RDF::Query::Model::Redland::add_uri now uses LWP instead of relying on Redland to fetch content." ;
+                        asc:update        "Redland model class now recognizes DateTime objects as literals." ;
+                        asc:update        "Updated add_uri() method in RDF::Core bridge to support named graphs (only one name per model for now)." ;
+                        asc:update        "RDF::Query::Stream constructor now accepts an ARRAY reference." ;
+                        asc:update        "Stopped using the peephole optimizers. Will replace with an algebra-based optimizer in the future." ;
+                        asc:update        "Removed code for MULTI patterns. Will replace with algebra-based optimization in the future." ;
+                        asc:update        "Removed multi_get code." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.044.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.043.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.044" ;
+                        doap:created      "2007-09-13" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "DAWG tests now emit EARL reports." ;
+                        asc:addition      "Added test harness and temporal data importing scripts to new bin/ directory." ;
+                        asc:addition      "Added support for temporal queries in RDF::Query and optimizers." ;
+                        asc:addition      "Added support for CONSTRUCT queries in new YAPP-based SPARQL parsers." ;
+                        asc:addition      "Added TIMED graph tests for new SPARQL temporal extensions." ;
+                        asc:addition      "Added tests to SPARQL parser for bugs that were discovered with temporal extensions." ;
+                        asc:addition      "Added POD to new SPARQL parsers." ;
+                        asc:addition      "Added new Parse::Yapp-based SPARQL parser in preparation for temporal SPARQL extensions." ;
+                        asc:addition      "Added stub functions for temporal extension support." ;
+                        asc:addition      "Added model_as_stream() method to Redland bridge class." ;
+                        asc:addition      "Addded debug() method to RDF::Query::Model." ;
+                        asc:addition      "Added UNION tests." ;
+                        asc:addition      "Added a javascript debugging flag to RDF::Query." ;
+                        asc:addition      "Added RDF::Query::groupgraphpattern() for handling GGPs." ;
+                        asc:addition      "Added xsd:integer casting function." ;
+                        asc:addition      "Added <http://kasei.us/2007/09/functions/warn> as a FILTER tee that warns to STDERR." ;
+                        asc:addition      "Added Eyapp SPARQL grammer file and replaced parser with auto-generated code from eyapp." ;
+                        asc:update        "Marked some SPARQL parser tests as TODO (due to incompatability with new YAPP-based parser)." ;
+                        asc:update        "Network tests are now run against all available models." ;
+                        asc:update        "Stream tests are now run against all available models." ;
+                        asc:update        "Query parser initialization code cleaned up (and now supports beta tSPARQL parser)." ;
+                        asc:update        "net_filter_function() now properly accesses nodes with bridge methods." ;
+                        asc:update        "RDF::Query::Parser::new_blank now assigns default names if none is supplied." ;
+                        asc:update        "Updated error messages in SPARQL parser to align with new YAPP-based parser." ;
+                        asc:update        "SPARQL parse_predicate_object() fixed to support tripleNodes." ;
+                        asc:update        "SPARQL parse_object() and parse_predicate() fixed for whitespace insensitivity." ;
+                        asc:update        "Moved old hand-written SPARQL parser to now unused SPARQL-RD.pm." ;
+                        asc:update        "Moved new YAPP-based SPARQL parser to SPARQL.pm." ;
+                        asc:update        "Copied YAPP-based SPARQL parser for new temporal extension tSPARQL.pm." ;
+                        asc:update        "Moved existing tests for hand-written SPARQL parser to 01-sparql_parser.t.rd-old." ;
+                        asc:update        "Moved new YAPP-based SPARQL tests to t/01-sparql_parser.t." ;
+                        asc:update        "Removed bad-syntax queries from optimizer and SQL compiler tests." ;
+                        asc:update        "Fixed bad-syntax queries in stream and hook tests." ;
+                        asc:update        "Made output of coverage tests easier to read by adding test names." ;
+                        asc:update        "Fixed SPARQL parsers to allow keywords as variable names." ;
+                        asc:update        "Fixed SPARQL parsers to allow dashes and underscores in variable names." ;
+                        asc:update        "Fixed bad parser constructor call in SQL compiler tests." ;
+                        asc:update        "Suppressed RDF::Base loading (again) during RDF::Query startup." ;
+                        asc:update        "RDF::Query::Model::Redland::debug now shows contexts during iterator debugging." ;
+                        asc:update        "Moved the old (hand written) SPARQL parser out of the way to make test harnesses happy." ;
+                        asc:update        "SPARQL parser now respects spec regarding the reuse of blank node labels across BGPs." ;
+                        asc:update        "SPARQL parser now does the right thing with NIL (the empty list)." ;
+                        asc:update        "SPARQL parser now handles embedded GGPs correctly." ;
+                        asc:update        "Updated SPARQL parser and tests to pass (almost all) DAWG tests." ;
+                        asc:update        "Fixed bug where results couldn't be sorted by a non-selected variable." ;
+                        asc:update        "Removed the unused RDF::Query::timed_graph() method." ;
+                        asc:update        "RDF::Query::qualify_uri is now more liberal in what it accepts." ;
+                        asc:update        "Fixed xsd:boolean casting of integer values." ;
+                        asc:update        "RDF::Query::Parser::new_variable can now generate private variable names." ;
+                        asc:update        "Fixed test suite to work properly on systems without Redland." ;
+                        asc:update        "Disabled loading of tSPARQL parser for release." ;
+                        asc:update        "Removed function prototype definitions in Model base class (was causing loading problems when models are missing)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.043.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.042.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.043" ;
+                        doap:created      "2007-06-14" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed broken MANIFEST causing MakeMaker code to break." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.042.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.041.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.042" ;
+                        doap:created      "2007-06-13" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for Javascript URL-based extension functions." ;
+                        asc:addition      "Added GPG signing support for Javascript functions." ;
+                        asc:addition      "Added meta methods to model classes." ;
+                        asc:addition      "Added count_statements methods to model classes." ;
+                        asc:addition      "Added default format for stringifying query result streams." ;
+                        asc:addition      "Added SPARQL syntax coverage tests." ;
+                        asc:addition      "Added stream tests." ;
+                        asc:update        "ISIRI() now returns a sop:isIRI function IRI." ;
+                        asc:update        "Redland bridge add_uri strips off URI fragment from parser base URI." ;
+                        asc:update        "Underlying models aren't loaded if turned off by environment variables." ;
+                        asc:update        "Stopped using the (currently broken) multi-get code." ;
+                        asc:update        "Model classes aren't used if turned off by environment variable." ;
+                        asc:update        "Standardized node testing to is_node (replacing older isa_node)." ;
+                        asc:update        "GPG verification failure now throws exceptions." ;
+                        asc:update        "GPG fingerprint handling is now whitespace insensitive." ;
+                        asc:update        "Removed (currently) unused multiget tests." ;
+                        asc:update        "Redland bridge uri_value returns undef if not called with a node." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.041.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.040.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.041" ;
+                        doap:created      "2006-11-26" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added tests for model bridge classes." ;
+                        asc:addition      "Added partial support for new RDF::Storage::DBI storage class." ;
+                        asc:addition      "Added tests for backend bridge classes (RDF::Query::Model::*)." ;
+                        asc:addition      "Added checks for which backends support XML serialization." ;
+                        asc:addition      "Added RDF::Base support." ;
+                        asc:addition      "Added SimpleQueryPatternError exception class for future work on multi-get optimizations." ;
+                        asc:addition      "Removed unwanted '+' signs on stringified bigints when running under perl 5.6.x." ;
+                        asc:update        "Fixed unicode errors when running under perl 5.6.x." ;
+                        asc:update        "Skips tests that rely on stable sorting when running under perl 5.6.x." ;
+                        asc:update        "Fixed bugs in SQL bridge class." ;
+                        asc:update        "RDFCore and Redland bridge classes now throw error when passed a bad model object." ;
+                        asc:update        "Bridge class support() method now responds to feature requests for 'temp_model'." ;
+                        asc:update        "Fixed bug in RDF::Query::Model::RDFCore::isa_resource returning true for blank nodes." ;
+                        asc:update        "Fixed code in RDF::Query::Model::::SQL::equals()." ;
+                        asc:update        "Added support for RDF::Query:::Model::SQL models in RDF::Query bridge code." ;
+                        asc:update        "Removed RDF::Query::Model::SQL::* code that's now in RDF::Storage::DBI." ;
+                        asc:update        "Fixed naive peephole tests in cases where model supports cost-based analysis." ;
+                        asc:update        "Fixed bugs in tests that were relying on C<as_string> to act like C<literal_value>." ;
+                        asc:update        "Fixed bug in C<fixup> that prevented running queries against multiple models." ;
+                        asc:update        "Removed forced dependence on Digest::SHA1." ;
+                        asc:update        "Makefile.PL now recommends Digest::SHA1 (for jena function) and Geo::Distance (for 07-filters.t)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.040.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.039.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.040" ;
+                        doap:created      "2006-07-21" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for BOUND() fiters in SQL compilation." ;
+                        asc:addition      "Added peephole optimizer code with naive and cost-analysis strategies." ;
+                        asc:addition      "Added add_string method to RDF::Query::Model::Redland." ;
+                        asc:addition      "Added node_count method to RDF::Query::Model::Redland (only used for testing at this point)." ;
+                        asc:update        "RDF::Query::execute() now uses the peephole optimizer." ;
+                        asc:update        "SQL compiler now produces valid SQL when query variable names are SQL reserved keywords." ;
+                        asc:update        "Moved SPARQL parser test data into YAML." ;
+                        asc:update        "Added YAML as a build-time prerequisite." ;
+                        asc:update        "Fixed SPARQL parsing bug for blank nodes as statement objects." ;
+                        asc:update        "Removed punting code in RDF::Query::execute that tried to do JIT optimization." ;
+                        asc:update        "Removed calls to getLabel() on model objects in test files." ;
+                        asc:update        "Fixed dawg tests (was dying because of multiple plans being printed)." ;
+                        asc:update        "Fixed cost-based peephole optimizer tests (by forcing Redland to do node counting)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.039.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.038.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.039" ;
+                        doap:created      "2006-07-14" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Removed dawg tests from distribution. Only used as developer tests now." ;
+                        asc:update        "Updated package to use Module::Install instead of ExtUtils::MakeMaker." ;
+                        asc:update        "Fixed a spurious uninitialized warning in RDF::Query::get_bridge." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.038.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.037.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.038" ;
+                        doap:created      "2006-07-09" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed DBI case-sensitivity for PostgreSQL support." ;
+                        asc:update        "Cleaned up SQL syntax for easier debugging." ;
+                        asc:update        "Removed extra parens in SQL that were causing postgresql to break." ;
+                        asc:update        "Reference test foaf file using File::Spec->catfile() instead of directly." ;
+                        asc:update        "Fixed SPARQL parsing bug for anonymous nodes in FILTER expressions." ;
+                        asc:update        "Fixed major SQL compilation bugs for testing equality in FILTER expressions." ;
+                        asc:update        "Fixed bug in hashing code for blank nodes in SQL compiler." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.037.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.036.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.037" ;
+                        doap:created      "2006-07-06" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "execute() method now takes optional 'bind' parameter for pre-binding query variables." ;
+                        asc:update        "Updated code to support basic FILTERs in SQL compilation." ;
+                        asc:update        "Fixed bug in SQL compilation where no WHERE clause was needed." ;
+                        asc:update        "Fixed bug in SQL compilation when using model-specific Statements tables." ;
+                        asc:update        "Added Storable to the list of required modules (was missing in the list)." ;
+                        asc:update        "Fixed typos in metadata about past versions in DOAP Changes.ttl." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.036.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.035.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.036" ;
+                        doap:created      "2006-06-26" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Initial support for OPTIONALs in SQL compiler." ;
+                        asc:addition      "Added support for class variable to hold parsing errors. (Beware under threads.)" ;
+                        asc:addition      "Added model API methods to SQL model class." ;
+                        asc:addition      "Added C<close> method to RDF::Query::Stream." ;
+                        asc:update        "Fixed memory leak in RDF::Query::Stream that resulted in too many database handles." ;
+                        asc:update        "Removed LWP requirement for systems without libwww." ;
+                        asc:update        "RDF::Query now sets error variable upon parsing error. (Access with C<error()>.)" ;
+                        asc:update        "Fixed POD errors, and added tests for POD coverage." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.035.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.034.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.035" ;
+                        doap:created      "2006-06-04" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added DAWG tests and harness." ;
+                        asc:addition      "Added custom functions: jena:sha1sum, jena:now, jena:langeq, jena:listMember, ldodds:Distance" ;
+                        asc:addition      "Added new model methods: equals, subject, predicate, object." ;
+                        asc:update        "Rewrote core logic in OPTIONAL handling code." ;
+                        asc:update        "Comparisons on literals now respect numeric datatypes." ;
+                        asc:update        "Fixed outdated calling conventions in casting functions." ;
+                        asc:update        "Relocated external http-based test data to .Mac URLs." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.034.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.033.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.034" ;
+                        doap:created      "2006-05-01" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added JSON serialization for bindings and boolean queries." ;
+                        asc:addition      "Initial support for compiling RDF queries to SQL queries using the Redland schema." ;
+                        asc:addition      "Added to_string method to query results Stream class." ;
+                        asc:update        "Model objects now store the query parse tree for access to data needed in serialization." ;
+                        asc:update        "Unquoted number and boolean literals in SPARQL are now datatyped appropriately." ;
+                        asc:update        "Fixed crashing bug when RDF::Query::Model::Redland::as_string was called with an undefined value." ;
+                        asc:update        "Fixed bug parsing queries with predicate starting with 'a' (confused with { ?subj a ?type})." ;
+                        asc:update        "Fixed bug parsing queries whose triple pattern ended with the optional dot." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.033.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.032.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.033" ;
+                        doap:created      "2006-03-08" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated test suite to work if one of the model classes is missing." ;
+                        asc:update        "Data-typed literals are now cast appropriately when used in a FILTER." ;
+                        asc:addition      "Added support for xsd:dateTime datatypes using the DateTime module." ;
+                        asc:addition      "Added support for LANG(), LANGMATCHES() and DATATYPE() built-in functions." ;
+                        asc:update        "Updated TODO list." ;
+                        asc:addition      "Added more exception types to RDF::Query::Error." ;
+                        asc:addition      "Added POD coverage." ;
+                        asc:update        "Fixed SPARQL parsing bug for logical operators <= and >=." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.032.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.031.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.032" ;
+                        doap:created      "2006-03-03" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Replaced the Parse::RecDescent SPARQL parser with a much faster hand-written one." ;
+                        asc:update        "Updated SPARQL parsing rules to be better about URI and QName character sets." ;
+                        asc:update        "FILTER equality operator now '=', not '==' (to match SPARQL spec)." ;
+                        asc:update        "Initial support for FILTER constraints as part of the triple pattern structure (Will allow for nested FILTERs)." ;
+                        asc:addition      "Implemented support for ordering query results by an expression." ;
+                        asc:update        "Fixed bug in expresion handling of unary minus." ;
+                        asc:update        "Fixed bug in Redland NAMED GRAPH parsing." ;
+                        asc:update        "Fixed bug in RDF::Core parsing code where blank nodes would be accidentally smushed." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.031.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.030.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.031" ;
+                        doap:created      "2006-02-08" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for NAMED graphs." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.030.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.028.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.030" ;
+                        doap:created      "2006-01-13" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for SELECT * in SPARQL queries." ;
+                        asc:addition      "Added support for default namespaces in SPARQL queries." ;
+                        asc:addition      "Added tests for querying RDF collections in SPARQL (1 ?x 3)" ;
+                        asc:addition      "Added tests for triple patterns of the form { ?a ?a ?b . }" ;
+                        asc:addition      "Added tests for default namespaces in SPARQL." ;
+                        asc:addition      "Added tests for SELECT * SPARQL queries." ;
+                        asc:update        "Bugfix where one of two identical triple variables would be ignored ({ ?a ?a ?b })." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.028.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.027.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.028" ;
+                        doap:created      "2005-11-18" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added SPARQL functions: BOUND, isURI, isBLANK, isLITERAL." ;
+                        asc:addition      "Added SPARQL RDF Collections syntactic forms." ;
+                        asc:addition      "Added binding_value_by_name method to Query results stream class." ;
+                        asc:addition      "Added isa_blank methods to RDF::Redland and RDF::Core model classes." ;
+                        asc:addition      "Added <commit> directives to SPARQL grammar." ;
+                        asc:addition      "Updated SPARQL REGEX syntax." ;
+                        asc:update        "Updated SPARQL FILTER syntax." ;
+                        asc:update        "Fixed FILTER support in OPTIONAL queries." ;
+                        asc:update        "Fixed RDF literal datatyping when using Redland versions >= 1.00_02." ;
+                        asc:update        "Updated SPARQL grammar to make 'WHERE' token optional." ;
+                        asc:update        "Updated SPARQL 'ORDER BY' syntax to use parenthesis." ;
+                        asc:update        "Fixed SPARQL FILTER logical-and support for more than two operands." ;
+                        asc:update        "Fixed SPARQL FILTER equality operator syntax to use '=' instead of '=='." ;
+                        asc:update        "Now requires Test::More 0.52 because of changes to is_deeply()." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.027.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.026.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.027" ;
+                        doap:created      "2005-07-28" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added binding_value_by_name() method to query result streams." ;
+                        asc:update        "ORDER BY arguments now use parenthesis (SPARQL Draft 2005.07.21)." ;
+                        asc:update        "SPARQL parser now supports ORDER BY operands: variable, expression, or function call (SPARQL Draft 2005.07.21)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-1.026.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.024.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.026" ;
+                        doap:created      "2005-06-05" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added new DBI model bridge (accesses Redland's mysql storage directly)." ;
+                        asc:addition      "Added built-in SPARQL functions and operators (not connected to grammar yet)." ;
+                        asc:addition      "Added bridge methods for accessing typed literal information." ;
+                        ] .
+
+
+<http://kasei.us/code/rdf-query/#project>
+        a doap:Project ;
+        doap:download-page      <http://search.cpan.org/dist/RDF-Query/> ;
+        doap:download-mirror    <http://kasei.us/code/rdf-query/> .

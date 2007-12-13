@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:ex="http://www.mindswap.org/~gtw/sparql#"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<ex:Namespace rdf:about="">
+		<ex:hasFunction>
+			<ex:Function rdf:about="#sha1">
+				<dc:description>SHA-1 Hash</dc:description>
+				<ex:source rdf:resource="sha1.js"/>
+				<ex:signature rdf:resource="sha1.js.asc"/>
+				<ex:function>sha1Hash</ex:function>
+			</ex:Function>
+		</ex:hasFunction>
+		<ex:hasFunction>
+			<ex:Function rdf:about="#distance">
+				<dc:description>Great Circle Distance</dc:description>
+				<ex:source rdf:resource="distance.js"/>
+				<ex:function>gcdistance</ex:function>
+			</ex:Function>
+		</ex:hasFunction>
+	</ex:Namespace>
+</rdf:RDF>

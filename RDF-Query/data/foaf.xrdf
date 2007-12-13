@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+		xml:base="http://kasei.us/about/foaf.xrdf"
+		xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		xmlns:wot="http://xmlns.com/wot/0.1/"
+		xmlns:test="http://kasei.us/e/ns/test#"
+		>
+
+<!-- FOAF INFO -->
+	<foaf:PersonalProfileDocument rdf:about="">
+		<dc:title>FOAF Description for Gregory Williams</dc:title>
+		<dc:description>Friend of a Friend (FOAF) description, containing personal metadata for Gregory Williams</dc:description>
+		<wot:assurance rdf:resource="http://kasei.us/about/foaf.xrdf.asc" />
+		<dc:date>Sat, 4 Oct 2003 20:02:22 PDT-0700</dc:date>
+		<foaf:maker rdf:resource="#greg" />
+	</foaf:PersonalProfileDocument>
+
+<!-- ME -->
+	<foaf:Person rdf:ID="greg">
+		<foaf:name>Gregory Todd Williams</foaf:name>
+		<foaf:firstName>Gregory</foaf:firstName>
+		<foaf:surname>Williams</foaf:surname>
+		<foaf:nick>kasei</foaf:nick>
+		<foaf:mbox rdf:resource="mailto:greg@evilfunhouse.com"/>
+		<foaf:mbox_sha1sum>f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8</foaf:mbox_sha1sum>
+		<foaf:depiction rdf:resource="http://kasei.us/images/greg.png"/>
+		<foaf:img rdf:resource="http://kasei.us/images/greg.png"/>
+		<foaf:homepage rdf:resource="http://kasei.us/"/>
+		<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
+		<foaf:schoolHomepage rdf:resource="http://www.wheatonma.edu/"/>
+		<foaf:weblog rdf:resource="http://kasei.us/"/>
+		<foaf:aimChatID>samofool</foaf:aimChatID>
+
+		<foaf:interest><rdf:Description rdf:about="http://www.w3.org/2001/sw/" dc:title="Semantic Web" /></foaf:interest>
+		<foaf:interest><rdf:Description rdf:about="http://www.movabletype.org/" dc:title="MovableType" /></foaf:interest>
+		<foaf:interest><rdf:Description rdf:about="http://rdfweb.org/" dc:title="RDFWeb" /></foaf:interest>
+		<foaf:interest><rdf:Description rdf:about="http://dev.perl.org/" dc:title="Perl Development" /></foaf:interest>
+		<foaf:interest><rdf:Description rdf:about="http://www.parrotcode.org/" dc:title="Parrot" /></foaf:interest>
+		
+		<foaf:knows>
+			<foaf:Person rdf:nodeID="gary">
+				<foaf:name xml:lang="en">Gary Peck</foaf:name>
+				<foaf:firstName>Gary</foaf:firstName>
+				<foaf:surname>Peck</foaf:surname>
+				<foaf:nick>tylix</foaf:nick>
+				<foaf:mbox_sha1sum>2057969209f1dfdad832de387cf13e6ff8c93b12</foaf:mbox_sha1sum>
+				<foaf:homepage rdf:resource="http://www.realify.com/~gary/"/>
+				<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
+				<foaf:schoolHomepage rdf:resource="http://www.berkeley.edu/"/>
+				<rdfs:seeAlso rdf:resource="http://realify.com/~gary/foaf.rdf"/>
+			</foaf:Person>
+		</foaf:knows>
+		<foaf:knows>
+			<foaf:Person rdf:ID="lauren">
+				<foaf:name>Lauren Bradford</foaf:name>
+				<foaf:firstName>Lauren</foaf:firstName>
+				<foaf:surname>Bradford</foaf:surname>
+				<foaf:mbox_sha1sum>f272c39785d651d0776093f3d28aadfd0719e787</foaf:mbox_sha1sum>
+				<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
+				<foaf:schoolHomepage rdf:resource="http://www.mit.edu/"/>
+			</foaf:Person>
+		</foaf:knows>
+		<foaf:knows>
+			<foaf:Person rdf:ID="liz">
+				<foaf:name>Liz Farrand Dubeck</foaf:name>
+				<foaf:firstName>Elizabeth</foaf:firstName>
+				<foaf:surname>Dubeck</foaf:surname>
+				<foaf:mbox_sha1sum>f8677979059b73385c9d14cadf7d1e3652b205a8</foaf:mbox_sha1sum>
+				<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
+				<foaf:schoolHomepage rdf:resource="http://www.yale.edu/"/>
+			</foaf:Person>
+		</foaf:knows>
+		
+		<test:mycollection>
+			<rdf:Description rdf:nodeID="collection">
+				<rdf:first>1</rdf:first>
+				<rdf:rest>
+					<rdf:Description>
+						<rdf:first>2</rdf:first>
+						<rdf:rest>
+							<rdf:Description>
+								<rdf:first>3</rdf:first>
+								<rdf:rest rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#nil" />
+							</rdf:Description>
+						</rdf:rest>
+					</rdf:Description>
+				</rdf:rest>
+			</rdf:Description>
+		</test:mycollection>
+	</foaf:Person>
+	
+	<rdf:Property rdf:about="http://www.w3.org/1999/02/22-rdf-syntax-ns#type">
+		<rdfs:isDefinedBy rdf:resource="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+		<rdfs:label>type</rdfs:label>
+		<rdfs:comment>The subject is an instance of a class.</rdfs:comment>
+		<rdfs:range rdf:resource="http://www.w3.org/2000/01/rdf-schema#Class"/>
+		<rdfs:domain rdf:resource="http://www.w3.org/2000/01/rdf-schema#Resource"/>
+	</rdf:Property>
+</rdf:RDF>

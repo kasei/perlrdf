@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+		xmlns:admin="http://webns.net/mvcb/"
+		xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		xmlns:cyc="http://www.cyc.com/2004/06/04/cyc#"
+		xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+		xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+		xmlns:wot="http://xmlns.com/wot/0.1/"
+		xmlns:rel="http://purl.org/vocab/relationship/"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:dcterms="http://purl.org/dc/terms/"
+		xmlns:canon="http://www.kanzaki.com/ns/exif/canon#"
+		xmlns:exif="http://www.kanzaki.com/ns/exif#"
+		xmlns:contact="http://www.w3.org/2000/10/swap/pim/contact#"
+		xmlns:air="http://www.daml.org/2001/10/html/airport-ont#"
+		xmlns:p="http://www.usefulinc.com/picdiary/"
+		xmlns:wn="http://xmlns.com/wordnet/1.6/"
+		xmlns:bio="http://purl.org/vocab/bio/0.1/"
+		xmlns:time="http://www.w3.org/2006/09/time#"
+		>
+
+
+
+<foaf:Person rdf:ID="person">
+	<bio:condition>
+		<bio:Condition rdf:ID="cond1">
+			<time:begins>1975-01-01</time:begins>
+			<time:ends>1999-12-31</time:ends>
+			<foaf:name>Alice</foaf:name>
+		</bio:Condition>
+	</bio:condition>
+
+	<bio:condition>
+		<bio:Condition rdf:ID="cond2">
+			<time:begins>2000-01-01</time:begins>
+			<foaf:name>Eve</foaf:name>
+		</bio:Condition>
+	</bio:condition>
+</foaf:Person>
+
+<time:Interval rdf:ID="year2000">
+	<time:begins>2000-01-01</time:begins>
+	<time:ends>2001-01-01</time:ends>
+</time:Interval>
+
+<time:Interval rdf:ID="yearTo2000">
+	<time:ends>2000-01-01</time:ends>
+</time:Interval>
+
+<time:Interval rdf:ID="yearFrom2003">
+	<time:begins>2003-01-01</time:begins>
+</time:Interval>
+
+<!-- from http://iandavis.com/blog/2005/10/refactoring-bio-with-einstein-part-2-conditions -->
+<!--
+<foaf:Person rdf:nodeID="pauline">
+	<bio:condition>
+		<bio:Condition rdf:nodeID="pauline-maiden-name">
+			<time:intMetBy rdf:nodeID="pauline-birth" />
+			<time:intMeets rdf:nodeID="pauline-married-name" />
+			<foaf:name>Pauline Koch</foaf:name>
+		</bio:Condition>
+	</bio:condition>
+
+	<bio:condition>
+		<bio:Condition rdf:nodeID="pauline-married-name">
+			<time:intMetBy rdf:nodeID="hermann-and-pauline-being-married" />
+			<foaf:name>Pauline Einstein</foaf:name>
+		</bio:Condition>
+	</bio:condition>
+
+	<bio:event rdf:nodeID="hermann-and-pauline-marriage" />
+	<bio:event rdf:nodeID="hermann-and-pauline-being-married" />
+</foaf:Person>
+-->
+</rdf:RDF>
