@@ -7307,7 +7307,7 @@ sub {
 						sources		=> $_[3]{children},
 						triples		=> ${ $_[4]{children} || [] }[0],
 					};
-					$ret->{triples}	= [] if (not defined($ret->{triples}));
+					$ret->{triples}	= RDF::Query::Algebra::GroupGraphPattern->new() if (not defined($ret->{triples}));
 					if (my $o = $modifier->{orderby}){
 						$ret->{orderby}	= $o;
 					}
@@ -7426,230 +7426,229 @@ sub {
 #line 115 "lib/RDF/Query/Parser/SPARQL.yp"
 
 																my $ggp			= $_[2];
-																my @patterns	= $ggp->patterns;
-																return \@patterns;
+																return $ggp;
 															}
-#line 7432 lib/RDF/Query/Parser/SPARQL.pm
+#line 7431 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-12', 1,
 sub {
-#line 121 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 120 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7439 lib/RDF/Query/Parser/SPARQL.pm
+#line 7438 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-12', 0,
 sub {
-#line 121 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 120 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7446 lib/RDF/Query/Parser/SPARQL.pm
+#line 7445 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-13', 1,
 sub {
-#line 121 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 120 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7453 lib/RDF/Query/Parser/SPARQL.pm
+#line 7452 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-13', 0,
 sub {
-#line 121 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 120 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7460 lib/RDF/Query/Parser/SPARQL.pm
+#line 7459 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule SolutionModifier_50
 		 'SolutionModifier', 2,
 sub {
-#line 122 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 121 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		return +{ orderby => $_[1]{children}[0], limitoffset => $_[2]{children}[0] };
 	}
-#line 7469 lib/RDF/Query/Parser/SPARQL.pm
+#line 7468 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-14', 1,
 sub {
-#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 125 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7476 lib/RDF/Query/Parser/SPARQL.pm
+#line 7475 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-14', 0,
 sub {
-#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 125 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7483 lib/RDF/Query/Parser/SPARQL.pm
+#line 7482 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-15', 1,
 sub {
-#line 127 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7490 lib/RDF/Query/Parser/SPARQL.pm
+#line 7489 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-15', 0,
 sub {
-#line 127 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7497 lib/RDF/Query/Parser/SPARQL.pm
+#line 7496 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LimitOffsetClauses_55
 		 'LimitOffsetClauses', 2,
 sub {
-#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 125 "lib/RDF/Query/Parser/SPARQL.yp"
  [ @{$_[1]}, @{ $_[2]{children}[0] || [] } ] }
-#line 7504 lib/RDF/Query/Parser/SPARQL.pm
+#line 7503 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LimitOffsetClauses_56
 		 'LimitOffsetClauses', 2,
 sub {
-#line 127 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 126 "lib/RDF/Query/Parser/SPARQL.yp"
  [ @{$_[1]}, @{ $_[2]{children}[0] || [] } ] }
-#line 7511 lib/RDF/Query/Parser/SPARQL.pm
+#line 7510 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-16', 2,
 sub {
-#line 130 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 129 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 7518 lib/RDF/Query/Parser/SPARQL.pm
+#line 7517 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-16', 1,
 sub {
-#line 130 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 129 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7525 lib/RDF/Query/Parser/SPARQL.pm
+#line 7524 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderClause_59
 		 'OrderClause', 2,
 sub {
-#line 131 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 130 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $order	= $_[2]{children};
 		return $order;
 	}
-#line 7535 lib/RDF/Query/Parser/SPARQL.pm
+#line 7534 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderCondition_60
 		 'OrderCondition', 2,
 sub {
-#line 136 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 135 "lib/RDF/Query/Parser/SPARQL.yp"
  [ $_[1], $_[2] ] }
-#line 7542 lib/RDF/Query/Parser/SPARQL.pm
+#line 7541 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderCondition_61
 		 'OrderCondition', 1,
 sub {
-#line 137 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 136 "lib/RDF/Query/Parser/SPARQL.yp"
  [ 'ASC', $_[1] ] }
-#line 7549 lib/RDF/Query/Parser/SPARQL.pm
+#line 7548 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderCondition_62
 		 'OrderCondition', 1,
 sub {
-#line 138 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 137 "lib/RDF/Query/Parser/SPARQL.yp"
  [ 'ASC', $_[1] ] }
-#line 7556 lib/RDF/Query/Parser/SPARQL.pm
+#line 7555 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderDirection_63
 		 'OrderDirection', 1,
 sub {
-#line 140 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 139 "lib/RDF/Query/Parser/SPARQL.yp"
  'ASC' }
-#line 7563 lib/RDF/Query/Parser/SPARQL.pm
+#line 7562 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OrderDirection_64
 		 'OrderDirection', 1,
 sub {
-#line 141 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 140 "lib/RDF/Query/Parser/SPARQL.yp"
  'DESC' }
-#line 7570 lib/RDF/Query/Parser/SPARQL.pm
+#line 7569 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LimitClause_65
 		 'LimitClause', 2,
 sub {
-#line 144 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 143 "lib/RDF/Query/Parser/SPARQL.yp"
  [ limit => $_[2] ] }
-#line 7577 lib/RDF/Query/Parser/SPARQL.pm
+#line 7576 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OffsetClause_66
 		 'OffsetClause', 2,
 sub {
-#line 146 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 145 "lib/RDF/Query/Parser/SPARQL.yp"
  [ offset => $_[2] ] }
-#line 7584 lib/RDF/Query/Parser/SPARQL.pm
+#line 7583 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-17', 1,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7591 lib/RDF/Query/Parser/SPARQL.pm
+#line 7590 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-17', 0,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7598 lib/RDF/Query/Parser/SPARQL.pm
+#line 7597 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-18', 1,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7605 lib/RDF/Query/Parser/SPARQL.pm
+#line 7604 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-18', 0,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7612 lib/RDF/Query/Parser/SPARQL.pm
+#line 7611 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-19', 1,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7619 lib/RDF/Query/Parser/SPARQL.pm
+#line 7618 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-19', 0,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7626 lib/RDF/Query/Parser/SPARQL.pm
+#line 7625 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-20', 3,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 7633 lib/RDF/Query/Parser/SPARQL.pm
+#line 7632 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_21
 		 'STAR-21', 2,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 7640 lib/RDF/Query/Parser/SPARQL.pm
+#line 7639 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_21
 		 'STAR-21', 0,
 sub {
-#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 147 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7647 lib/RDF/Query/Parser/SPARQL.pm
+#line 7646 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GroupGraphPattern_76
 		 'GroupGraphPattern', 4,
 sub {
-#line 149 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 148 "lib/RDF/Query/Parser/SPARQL.yp"
 
 						my $self	= $_[0];
 						my @ggp	= ( @{ $_[2]{children}[0] || [] } );
@@ -7721,64 +7720,64 @@ sub {
 						
 						return RDF::Query::Algebra::GroupGraphPattern->new( @new_ggp );
 					}
-#line 7724 lib/RDF/Query/Parser/SPARQL.pm
+#line 7723 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GGPAtom_77
 		 'GGPAtom', 1,
 sub {
-#line 221 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 220 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 7731 lib/RDF/Query/Parser/SPARQL.pm
+#line 7730 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GGPAtom_78
 		 'GGPAtom', 1,
 sub {
-#line 222 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 221 "lib/RDF/Query/Parser/SPARQL.yp"
 
 																	my $self	= $_[0];
 																	[ $self->new_filter($_[1]), [] ]
 																}
-#line 7741 lib/RDF/Query/Parser/SPARQL.pm
+#line 7740 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-22', 1,
 sub {
-#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 227 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7748 lib/RDF/Query/Parser/SPARQL.pm
+#line 7747 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-22', 0,
 sub {
-#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 227 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7755 lib/RDF/Query/Parser/SPARQL.pm
+#line 7754 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-23', 2,
 sub {
-#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 227 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 7762 lib/RDF/Query/Parser/SPARQL.pm
+#line 7761 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-24', 1,
 sub {
-#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 227 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7769 lib/RDF/Query/Parser/SPARQL.pm
+#line 7768 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-24', 0,
 sub {
-#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 227 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7776 lib/RDF/Query/Parser/SPARQL.pm
+#line 7775 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule TriplesBlock_84
 		 'TriplesBlock', 2,
 sub {
-#line 229 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 228 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $self	= $_[0];
 		my @triples	= @{ $_[1] };
@@ -7793,76 +7792,76 @@ sub {
 		
 		return [ RDF::Query::Algebra::BasicGraphPattern->new( @triples ) ];
 	}
-#line 7796 lib/RDF/Query/Parser/SPARQL.pm
+#line 7795 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphPatternNotTriples_85
 		 'GraphPatternNotTriples', 1,
 sub {
-#line 246 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 245 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1],[]] }
-#line 7803 lib/RDF/Query/Parser/SPARQL.pm
+#line 7802 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphPatternNotTriples_86
 		 'GraphPatternNotTriples', 1,
 sub {
-#line 247 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 246 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1],[]] }
-#line 7810 lib/RDF/Query/Parser/SPARQL.pm
+#line 7809 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphPatternNotTriples_87
 		 'GraphPatternNotTriples', 1,
 sub {
-#line 248 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 247 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1],[]] }
-#line 7817 lib/RDF/Query/Parser/SPARQL.pm
+#line 7816 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule OptionalGraphPattern_88
 		 'OptionalGraphPattern', 2,
 sub {
-#line 251 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 250 "lib/RDF/Query/Parser/SPARQL.yp"
 
 																	my $ggp	= $_[2];
 																	return ['OPTIONAL', $ggp]
 																}
-#line 7827 lib/RDF/Query/Parser/SPARQL.pm
+#line 7826 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphGraphPattern_89
 		 'GraphGraphPattern', 3,
 sub {
-#line 256 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 255 "lib/RDF/Query/Parser/SPARQL.yp"
 
 																	my $self	= $_[0];
 																	my $graph	= $_[2];
 																	my $ggp		= $_[3];
 																	return $self->new_named_graph( $graph, $ggp );
 																}
-#line 7839 lib/RDF/Query/Parser/SPARQL.pm
+#line 7838 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-25', 2,
 sub {
-#line 263 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 262 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 7846 lib/RDF/Query/Parser/SPARQL.pm
+#line 7845 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_26
 		 'STAR-26', 2,
 sub {
-#line 263 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 262 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 7853 lib/RDF/Query/Parser/SPARQL.pm
+#line 7852 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_26
 		 'STAR-26', 0,
 sub {
-#line 263 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 262 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7860 lib/RDF/Query/Parser/SPARQL.pm
+#line 7859 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GroupOrUnionGraphPattern_93
 		 'GroupOrUnionGraphPattern', 2,
 sub {
-#line 264 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 263 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $self	= $_[0];
 		if (@{ $_[2]{children} }) {
@@ -7877,73 +7876,73 @@ sub {
 			return $_[1];
 		}
 	}
-#line 7880 lib/RDF/Query/Parser/SPARQL.pm
+#line 7879 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Filter_94
 		 'Filter', 2,
 sub {
-#line 279 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 278 "lib/RDF/Query/Parser/SPARQL.yp"
 
 #									warn 'FILTER CONSTRAINT: ' . Dumper($_[2]);
 								$_[2]
 							}
-#line 7890 lib/RDF/Query/Parser/SPARQL.pm
+#line 7889 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Constraint_95
 		 'Constraint', 1,
 sub {
-#line 284 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 283 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 7897 lib/RDF/Query/Parser/SPARQL.pm
+#line 7896 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Constraint_96
 		 'Constraint', 1,
 sub {
-#line 285 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 284 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 7904 lib/RDF/Query/Parser/SPARQL.pm
+#line 7903 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Constraint_97
 		 'Constraint', 1,
 sub {
-#line 286 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 285 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 7911 lib/RDF/Query/Parser/SPARQL.pm
+#line 7910 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule FunctionCall_98
 		 'FunctionCall', 2,
 sub {
-#line 290 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 289 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		$_[0]->new_function_expression( $_[1], @{ $_[2] } )
 	}
-#line 7920 lib/RDF/Query/Parser/SPARQL.pm
+#line 7919 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-27', 2,
 sub {
-#line 294 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 293 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 7927 lib/RDF/Query/Parser/SPARQL.pm
+#line 7926 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_28
 		 'STAR-28', 2,
 sub {
-#line 294 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 293 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 7934 lib/RDF/Query/Parser/SPARQL.pm
+#line 7933 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_28
 		 'STAR-28', 0,
 sub {
-#line 294 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 293 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7941 lib/RDF/Query/Parser/SPARQL.pm
+#line 7940 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ArgList_102
 		 'ArgList', 4,
 sub {
-#line 295 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 294 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			my $args	= [
 				$_[2],
@@ -7952,33 +7951,33 @@ sub {
 			
 			$args;
 		}
-#line 7955 lib/RDF/Query/Parser/SPARQL.pm
+#line 7954 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ArgList_103
 		 'ArgList', 1,
 sub {
-#line 303 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 302 "lib/RDF/Query/Parser/SPARQL.yp"
  [] }
-#line 7962 lib/RDF/Query/Parser/SPARQL.pm
+#line 7961 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-29', 1,
 sub {
-#line 305 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 304 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7969 lib/RDF/Query/Parser/SPARQL.pm
+#line 7968 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-29', 0,
 sub {
-#line 305 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 304 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 7976 lib/RDF/Query/Parser/SPARQL.pm
+#line 7975 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ConstructTemplate_106
 		 'ConstructTemplate', 3,
 sub {
-#line 306 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 305 "lib/RDF/Query/Parser/SPARQL.yp"
 
 	if (@{ $_[2]{children} }) {
 		return $_[2]{children}[0];
@@ -7986,61 +7985,61 @@ sub {
 		return {};
 	}
 }
-#line 7989 lib/RDF/Query/Parser/SPARQL.pm
+#line 7988 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-30', 1,
 sub {
-#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 313 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 7996 lib/RDF/Query/Parser/SPARQL.pm
+#line 7995 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-30', 0,
 sub {
-#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 313 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8003 lib/RDF/Query/Parser/SPARQL.pm
+#line 8002 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-31', 2,
 sub {
-#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 313 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8010 lib/RDF/Query/Parser/SPARQL.pm
+#line 8009 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-32', 1,
 sub {
-#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 313 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8017 lib/RDF/Query/Parser/SPARQL.pm
+#line 8016 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-32', 0,
 sub {
-#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 313 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8024 lib/RDF/Query/Parser/SPARQL.pm
+#line 8023 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ConstructTriples_112
 		 'ConstructTriples', 2,
 sub {
-#line 315 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 314 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my @triples	= @{ $_[1] };
 		if (@{ $_[2]{children} }) {
 			my $triples	= $_[2]{children}[0]{children}[0];
 			push(@triples, @{ $triples || [] });
 		}
-		return \@triples;
+		return RDF::Query::Algebra::GroupGraphPattern->new( @triples );
 	}
-#line 8038 lib/RDF/Query/Parser/SPARQL.pm
+#line 8037 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule TriplesSameSubject_113
 		 'TriplesSameSubject', 2,
 sub {
-#line 324 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 323 "lib/RDF/Query/Parser/SPARQL.yp"
 
 															my $self	= $_[0];
 															my ($props, $triples)	= @{ $_[2] };
@@ -8051,12 +8050,12 @@ sub {
 															push(@triples, @{ $triples });
 															return [map { $self->new_triple(@$_) } @triples];
 														}
-#line 8054 lib/RDF/Query/Parser/SPARQL.pm
+#line 8053 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule TriplesSameSubject_114
 		 'TriplesSameSubject', 2,
 sub {
-#line 334 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 333 "lib/RDF/Query/Parser/SPARQL.yp"
 
 															my $self	= $_[0];
 															my ($node, $triples)	= @{ $_[1] };
@@ -8073,54 +8072,54 @@ sub {
 															
 															return [map { $self->new_triple(@$_) } @triples];
 														}
-#line 8076 lib/RDF/Query/Parser/SPARQL.pm
+#line 8075 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-33', 2,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8083 lib/RDF/Query/Parser/SPARQL.pm
+#line 8082 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-34', 1,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8090 lib/RDF/Query/Parser/SPARQL.pm
+#line 8089 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-34', 0,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8097 lib/RDF/Query/Parser/SPARQL.pm
+#line 8096 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-35', 2,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8104 lib/RDF/Query/Parser/SPARQL.pm
+#line 8103 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_36
 		 'STAR-36', 2,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8111 lib/RDF/Query/Parser/SPARQL.pm
+#line 8110 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_36
 		 'STAR-36', 0,
 sub {
-#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 351 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8118 lib/RDF/Query/Parser/SPARQL.pm
+#line 8117 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PropertyListNotEmpty_121
 		 'PropertyListNotEmpty', 3,
 sub {
-#line 353 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 352 "lib/RDF/Query/Parser/SPARQL.yp"
 
 															my $objectlist	= $_[2];
 															my @objects		= @{ $objectlist->[0] };
@@ -8143,26 +8142,26 @@ sub {
 															];
 															return [ $prop, \@triples ];
 														}
-#line 8146 lib/RDF/Query/Parser/SPARQL.pm
+#line 8145 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-37', 1,
 sub {
-#line 376 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 375 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8153 lib/RDF/Query/Parser/SPARQL.pm
+#line 8152 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-37', 0,
 sub {
-#line 376 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 375 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8160 lib/RDF/Query/Parser/SPARQL.pm
+#line 8159 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PropertyList_124
 		 'PropertyList', 1,
 sub {
-#line 377 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 376 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		if (@{ $_[1]{children} }) {
 			return $_[1]{children}[0];
@@ -8170,80 +8169,80 @@ sub {
 			return [ [], [] ];
 		}
 	}
-#line 8173 lib/RDF/Query/Parser/SPARQL.pm
+#line 8172 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-38', 2,
 sub {
-#line 385 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 384 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8180 lib/RDF/Query/Parser/SPARQL.pm
+#line 8179 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_39
 		 'STAR-39', 2,
 sub {
-#line 385 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 384 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8187 lib/RDF/Query/Parser/SPARQL.pm
+#line 8186 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_39
 		 'STAR-39', 0,
 sub {
-#line 385 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 384 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8194 lib/RDF/Query/Parser/SPARQL.pm
+#line 8193 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ObjectList_128
 		 'ObjectList', 2,
 sub {
-#line 386 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 385 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my @objects	= ($_[1][0], map { $_->[0] } @{ $_[2]{children} });
 		my @triples	= (@{ $_[1][1] }, map { @{ $_->[1] } } @{ $_[2]{children} });
 		my $data	= [ \@objects, \@triples ];
 		return $data;
 	}
-#line 8206 lib/RDF/Query/Parser/SPARQL.pm
+#line 8205 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Object_129
 		 'Object', 1,
 sub {
-#line 393 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 392 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8213 lib/RDF/Query/Parser/SPARQL.pm
+#line 8212 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Verb_130
 		 'Verb', 1,
 sub {
-#line 395 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 394 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8220 lib/RDF/Query/Parser/SPARQL.pm
+#line 8219 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Verb_131
 		 'Verb', 1,
 sub {
-#line 396 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 395 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_uri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type') }
-#line 8227 lib/RDF/Query/Parser/SPARQL.pm
+#line 8226 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule TriplesNode_132
 		 'TriplesNode', 1,
 sub {
-#line 399 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 398 "lib/RDF/Query/Parser/SPARQL.yp"
  return $_[1] }
-#line 8234 lib/RDF/Query/Parser/SPARQL.pm
+#line 8233 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule TriplesNode_133
 		 'TriplesNode', 1,
 sub {
-#line 400 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 399 "lib/RDF/Query/Parser/SPARQL.yp"
  return $_[1] }
-#line 8241 lib/RDF/Query/Parser/SPARQL.pm
+#line 8240 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BlankNodePropertyList_134
 		 'BlankNodePropertyList', 3,
 sub {
-#line 404 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 403 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $node	= $_[0]->new_blank();
 		my ($props, $triples)	= @{ $_[2] };
@@ -8252,26 +8251,26 @@ sub {
 		push(@triples, map { [$node, @$_] } @$props);
 		return [ $node, \@triples ];
 	}
-#line 8255 lib/RDF/Query/Parser/SPARQL.pm
+#line 8254 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-40', 2,
 sub {
-#line 413 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 412 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8262 lib/RDF/Query/Parser/SPARQL.pm
+#line 8261 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-40', 1,
 sub {
-#line 413 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 412 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8269 lib/RDF/Query/Parser/SPARQL.pm
+#line 8268 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Collection_137
 		 'Collection', 3,
 sub {
-#line 414 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 413 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $self		= $_[0];
 		my @children	= @{ $_[2]{children}};
@@ -8301,138 +8300,138 @@ sub {
 		push(@triples, [ $last_node, $p_rest, $nil ]);
 		return [ $node, \@triples ];
 	}
-#line 8304 lib/RDF/Query/Parser/SPARQL.pm
+#line 8303 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphNode_138
 		 'GraphNode', 1,
 sub {
-#line 444 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 443 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], []] }
-#line 8311 lib/RDF/Query/Parser/SPARQL.pm
+#line 8310 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphNode_139
 		 'GraphNode', 1,
 sub {
-#line 445 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 444 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8318 lib/RDF/Query/Parser/SPARQL.pm
+#line 8317 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VarOrTerm_140
 		 'VarOrTerm', 1,
 sub {
-#line 448 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 447 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8325 lib/RDF/Query/Parser/SPARQL.pm
+#line 8324 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VarOrTerm_141
 		 'VarOrTerm', 1,
 sub {
-#line 449 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 448 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8332 lib/RDF/Query/Parser/SPARQL.pm
+#line 8331 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VarOrIRIref_142
 		 'VarOrIRIref', 1,
 sub {
-#line 452 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 451 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8339 lib/RDF/Query/Parser/SPARQL.pm
+#line 8338 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VarOrIRIref_143
 		 'VarOrIRIref', 1,
 sub {
-#line 453 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 452 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8346 lib/RDF/Query/Parser/SPARQL.pm
+#line 8345 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Var_144
 		 'Var', 1,
 sub {
-#line 456 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 455 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8353 lib/RDF/Query/Parser/SPARQL.pm
+#line 8352 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Var_145
 		 'Var', 1,
 sub {
-#line 457 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 456 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8360 lib/RDF/Query/Parser/SPARQL.pm
+#line 8359 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_146
 		 'GraphTerm', 1,
 sub {
-#line 460 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 459 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8367 lib/RDF/Query/Parser/SPARQL.pm
+#line 8366 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_147
 		 'GraphTerm', 1,
 sub {
-#line 461 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 460 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8374 lib/RDF/Query/Parser/SPARQL.pm
+#line 8373 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_148
 		 'GraphTerm', 1,
 sub {
-#line 462 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 461 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8381 lib/RDF/Query/Parser/SPARQL.pm
+#line 8380 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_149
 		 'GraphTerm', 1,
 sub {
-#line 463 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 462 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8388 lib/RDF/Query/Parser/SPARQL.pm
+#line 8387 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_150
 		 'GraphTerm', 1,
 sub {
-#line 464 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 463 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8395 lib/RDF/Query/Parser/SPARQL.pm
+#line 8394 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule GraphTerm_151
 		 'GraphTerm', 1,
 sub {
-#line 465 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 464 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8402 lib/RDF/Query/Parser/SPARQL.pm
+#line 8401 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule Expression_152
 		 'Expression', 1,
 sub {
-#line 468 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 467 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8409 lib/RDF/Query/Parser/SPARQL.pm
+#line 8408 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-41', 2,
 sub {
-#line 470 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 469 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8416 lib/RDF/Query/Parser/SPARQL.pm
+#line 8415 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_42
 		 'STAR-42', 2,
 sub {
-#line 470 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 469 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8423 lib/RDF/Query/Parser/SPARQL.pm
+#line 8422 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_42
 		 'STAR-42', 0,
 sub {
-#line 470 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 469 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8430 lib/RDF/Query/Parser/SPARQL.pm
+#line 8429 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ConditionalOrExpression_156
 		 'ConditionalOrExpression', 2,
 sub {
-#line 471 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 470 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $expr	= $_[1];
 		if (@{ $_[2]{children} }) {
@@ -8440,33 +8439,33 @@ sub {
 		}
 		$expr;
 	}
-#line 8443 lib/RDF/Query/Parser/SPARQL.pm
+#line 8442 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-43', 2,
 sub {
-#line 479 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 478 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8450 lib/RDF/Query/Parser/SPARQL.pm
+#line 8449 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_44
 		 'STAR-44', 2,
 sub {
-#line 479 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 478 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8457 lib/RDF/Query/Parser/SPARQL.pm
+#line 8456 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_44
 		 'STAR-44', 0,
 sub {
-#line 479 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 478 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8464 lib/RDF/Query/Parser/SPARQL.pm
+#line 8463 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ConditionalAndExpression_160
 		 'ConditionalAndExpression', 2,
 sub {
-#line 480 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 479 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $expr	= $_[1];
 		if (@{ $_[2]{children} }) {
@@ -8474,33 +8473,33 @@ sub {
 		}
 		$expr;
 	}
-#line 8477 lib/RDF/Query/Parser/SPARQL.pm
+#line 8476 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ValueLogical_161
 		 'ValueLogical', 1,
 sub {
-#line 488 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 487 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8484 lib/RDF/Query/Parser/SPARQL.pm
+#line 8483 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-45', 1,
 sub {
-#line 490 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 489 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8491 lib/RDF/Query/Parser/SPARQL.pm
+#line 8490 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-45', 0,
 sub {
-#line 490 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 489 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8498 lib/RDF/Query/Parser/SPARQL.pm
+#line 8497 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpression_164
 		 'RelationalExpression', 2,
 sub {
-#line 491 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 490 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $expr	= $_[1];
 		if (@{ $_[2]{children} }) {
@@ -8509,75 +8508,75 @@ sub {
 		}
 		$expr;
 	}
-#line 8512 lib/RDF/Query/Parser/SPARQL.pm
+#line 8511 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_165
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 500 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 499 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '==', $_[2] ] }
-#line 8519 lib/RDF/Query/Parser/SPARQL.pm
+#line 8518 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_166
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 501 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 500 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '!=', $_[2] ] }
-#line 8526 lib/RDF/Query/Parser/SPARQL.pm
+#line 8525 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_167
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 502 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 501 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '<', $_[2] ] }
-#line 8533 lib/RDF/Query/Parser/SPARQL.pm
+#line 8532 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_168
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 503 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 502 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '>', $_[2] ] }
-#line 8540 lib/RDF/Query/Parser/SPARQL.pm
+#line 8539 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_169
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 504 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 503 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '<=', $_[2] ] }
-#line 8547 lib/RDF/Query/Parser/SPARQL.pm
+#line 8546 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RelationalExpressionExtra_170
 		 'RelationalExpressionExtra', 2,
 sub {
-#line 505 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 504 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '>=', $_[2] ] }
-#line 8554 lib/RDF/Query/Parser/SPARQL.pm
+#line 8553 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericExpression_171
 		 'NumericExpression', 1,
 sub {
-#line 508 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 507 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8561 lib/RDF/Query/Parser/SPARQL.pm
+#line 8560 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_46
 		 'STAR-46', 2,
 sub {
-#line 510 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 509 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8568 lib/RDF/Query/Parser/SPARQL.pm
+#line 8567 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_46
 		 'STAR-46', 0,
 sub {
-#line 510 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 509 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8575 lib/RDF/Query/Parser/SPARQL.pm
+#line 8574 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule AdditiveExpression_174
 		 'AdditiveExpression', 2,
 sub {
-#line 511 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 510 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $expr	= $_[1];
 		foreach my $extra (@{ $_[2]{children} }) {
@@ -8585,54 +8584,54 @@ sub {
 		}
 		return $expr
 	}
-#line 8588 lib/RDF/Query/Parser/SPARQL.pm
+#line 8587 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule AdditiveExpressionExtra_175
 		 'AdditiveExpressionExtra', 2,
 sub {
-#line 519 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 518 "lib/RDF/Query/Parser/SPARQL.yp"
  ['+',$_[2]] }
-#line 8595 lib/RDF/Query/Parser/SPARQL.pm
+#line 8594 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule AdditiveExpressionExtra_176
 		 'AdditiveExpressionExtra', 2,
 sub {
-#line 520 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 519 "lib/RDF/Query/Parser/SPARQL.yp"
  ['-',$_[2]] }
-#line 8602 lib/RDF/Query/Parser/SPARQL.pm
+#line 8601 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule AdditiveExpressionExtra_177
 		 'AdditiveExpressionExtra', 1,
 sub {
-#line 521 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 520 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8609 lib/RDF/Query/Parser/SPARQL.pm
+#line 8608 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule AdditiveExpressionExtra_178
 		 'AdditiveExpressionExtra', 1,
 sub {
-#line 522 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 521 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8616 lib/RDF/Query/Parser/SPARQL.pm
+#line 8615 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_47
 		 'STAR-47', 2,
 sub {
-#line 525 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 524 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 8623 lib/RDF/Query/Parser/SPARQL.pm
+#line 8622 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_47
 		 'STAR-47', 0,
 sub {
-#line 525 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 524 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8630 lib/RDF/Query/Parser/SPARQL.pm
+#line 8629 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule MultiplicativeExpression_181
 		 'MultiplicativeExpression', 2,
 sub {
-#line 526 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 525 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $expr	= $_[1];
 		foreach my $extra (@{ $_[2]{children} }) {
@@ -8640,208 +8639,208 @@ sub {
 		}
 		$expr
 }
-#line 8643 lib/RDF/Query/Parser/SPARQL.pm
+#line 8642 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule MultiplicativeExpressionExtra_182
 		 'MultiplicativeExpressionExtra', 2,
 sub {
-#line 533 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 532 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '*', $_[2] ] }
-#line 8650 lib/RDF/Query/Parser/SPARQL.pm
+#line 8649 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule MultiplicativeExpressionExtra_183
 		 'MultiplicativeExpressionExtra', 2,
 sub {
-#line 534 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 533 "lib/RDF/Query/Parser/SPARQL.yp"
  [ '/', $_[2] ] }
-#line 8657 lib/RDF/Query/Parser/SPARQL.pm
+#line 8656 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule UnaryExpression_184
 		 'UnaryExpression', 2,
 sub {
-#line 536 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 535 "lib/RDF/Query/Parser/SPARQL.yp"
  ['!', $_[2]] }
-#line 8664 lib/RDF/Query/Parser/SPARQL.pm
+#line 8663 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule UnaryExpression_185
 		 'UnaryExpression', 2,
 sub {
-#line 537 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 536 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[2] }
-#line 8671 lib/RDF/Query/Parser/SPARQL.pm
+#line 8670 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule UnaryExpression_186
 		 'UnaryExpression', 2,
 sub {
-#line 538 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 537 "lib/RDF/Query/Parser/SPARQL.yp"
  ['-', $_[2]] }
-#line 8678 lib/RDF/Query/Parser/SPARQL.pm
+#line 8677 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule UnaryExpression_187
 		 'UnaryExpression', 1,
 sub {
-#line 539 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 538 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8685 lib/RDF/Query/Parser/SPARQL.pm
+#line 8684 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_188
 		 'PrimaryExpression', 1,
 sub {
-#line 542 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 541 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8692 lib/RDF/Query/Parser/SPARQL.pm
+#line 8691 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_189
 		 'PrimaryExpression', 1,
 sub {
-#line 543 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 542 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8699 lib/RDF/Query/Parser/SPARQL.pm
+#line 8698 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_190
 		 'PrimaryExpression', 1,
 sub {
-#line 544 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 543 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8706 lib/RDF/Query/Parser/SPARQL.pm
+#line 8705 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_191
 		 'PrimaryExpression', 1,
 sub {
-#line 545 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 544 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8713 lib/RDF/Query/Parser/SPARQL.pm
+#line 8712 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_192
 		 'PrimaryExpression', 1,
 sub {
-#line 546 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 545 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8720 lib/RDF/Query/Parser/SPARQL.pm
+#line 8719 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_193
 		 'PrimaryExpression', 1,
 sub {
-#line 547 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 546 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8727 lib/RDF/Query/Parser/SPARQL.pm
+#line 8726 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrimaryExpression_194
 		 'PrimaryExpression', 1,
 sub {
-#line 548 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 547 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8734 lib/RDF/Query/Parser/SPARQL.pm
+#line 8733 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BrackettedExpression_195
 		 'BrackettedExpression', 3,
 sub {
-#line 551 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 550 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[2] }
-#line 8741 lib/RDF/Query/Parser/SPARQL.pm
+#line 8740 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_196
 		 'BuiltInCall', 4,
 sub {
-#line 553 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 552 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:str'), $_[3] ) }
-#line 8748 lib/RDF/Query/Parser/SPARQL.pm
+#line 8747 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_197
 		 'BuiltInCall', 4,
 sub {
-#line 554 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 553 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sparql:lang'), $_[3] ) }
-#line 8755 lib/RDF/Query/Parser/SPARQL.pm
+#line 8754 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_198
 		 'BuiltInCall', 6,
 sub {
-#line 555 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 554 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sparql:langmatches'), $_[3], $_[5] ) }
-#line 8762 lib/RDF/Query/Parser/SPARQL.pm
+#line 8761 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_199
 		 'BuiltInCall', 4,
 sub {
-#line 556 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 555 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sparql:datatype'), $_[3] ) }
-#line 8769 lib/RDF/Query/Parser/SPARQL.pm
+#line 8768 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_200
 		 'BuiltInCall', 4,
 sub {
-#line 557 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 556 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:isBound'), $_[3] ) }
-#line 8776 lib/RDF/Query/Parser/SPARQL.pm
+#line 8775 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_201
 		 'BuiltInCall', 6,
 sub {
-#line 558 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 557 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sparql:sameTerm'), $_[3], $_[5] ) }
-#line 8783 lib/RDF/Query/Parser/SPARQL.pm
+#line 8782 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_202
 		 'BuiltInCall', 4,
 sub {
-#line 559 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 558 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:isIRI'), $_[3] ) }
-#line 8790 lib/RDF/Query/Parser/SPARQL.pm
+#line 8789 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_203
 		 'BuiltInCall', 4,
 sub {
-#line 560 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 559 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:isURI'), $_[3] ) }
-#line 8797 lib/RDF/Query/Parser/SPARQL.pm
+#line 8796 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_204
 		 'BuiltInCall', 4,
 sub {
-#line 561 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 560 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:isBlank'), $_[3] ) }
-#line 8804 lib/RDF/Query/Parser/SPARQL.pm
+#line 8803 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_205
 		 'BuiltInCall', 4,
 sub {
-#line 562 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 561 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_function_expression( $_[0]->new_uri('sop:isLiteral'), $_[3] ) }
-#line 8811 lib/RDF/Query/Parser/SPARQL.pm
+#line 8810 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BuiltInCall_206
 		 'BuiltInCall', 1,
 sub {
-#line 563 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 562 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 8818 lib/RDF/Query/Parser/SPARQL.pm
+#line 8817 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-48', 2,
 sub {
-#line 566 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 565 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 8825 lib/RDF/Query/Parser/SPARQL.pm
+#line 8824 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-49', 1,
 sub {
-#line 566 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 565 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8832 lib/RDF/Query/Parser/SPARQL.pm
+#line 8831 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-49', 0,
 sub {
-#line 566 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 565 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8839 lib/RDF/Query/Parser/SPARQL.pm
+#line 8838 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RegexExpression_210
 		 'RegexExpression', 7,
 sub {
-#line 567 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 566 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my @data	= ('~~', $_[3], $_[5]);
 		if (scalar(@{ $_[6]->{children} })) {
@@ -8849,26 +8848,26 @@ sub {
 		}
 		return \@data;
 	}
-#line 8852 lib/RDF/Query/Parser/SPARQL.pm
+#line 8851 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-50', 1,
 sub {
-#line 575 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 574 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8859 lib/RDF/Query/Parser/SPARQL.pm
+#line 8858 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-50', 0,
 sub {
-#line 575 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 574 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8866 lib/RDF/Query/Parser/SPARQL.pm
+#line 8865 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule IRIrefOrFunction_213
 		 'IRIrefOrFunction', 2,
 sub {
-#line 576 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 575 "lib/RDF/Query/Parser/SPARQL.yp"
 
 		my $self	= $_[0];
 		my $uri		= $_[1];
@@ -8880,26 +8879,26 @@ sub {
 			return $uri;
 		}
 	}
-#line 8883 lib/RDF/Query/Parser/SPARQL.pm
+#line 8882 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-51', 1,
 sub {
-#line 588 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 587 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 8890 lib/RDF/Query/Parser/SPARQL.pm
+#line 8889 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _OPTIONAL
 		 'OPTIONAL-51', 0,
 sub {
-#line 588 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 587 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 8897 lib/RDF/Query/Parser/SPARQL.pm
+#line 8896 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule RDFLiteral_216
 		 'RDFLiteral', 2,
 sub {
-#line 588 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 587 "lib/RDF/Query/Parser/SPARQL.yp"
 
 											my $self	= $_[0];
 											my %extra	= @{ $_[2]{children}[0] || [] };
@@ -8910,643 +8909,643 @@ sub {
 											}
 											$self->new_literal( $_[1], $lang, $dt );
 										}
-#line 8913 lib/RDF/Query/Parser/SPARQL.pm
+#line 8912 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LiteralExtra_217
 		 'LiteralExtra', 1,
 sub {
-#line 599 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 598 "lib/RDF/Query/Parser/SPARQL.yp"
  [ lang => $_[1] ] }
-#line 8920 lib/RDF/Query/Parser/SPARQL.pm
+#line 8919 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LiteralExtra_218
 		 'LiteralExtra', 2,
 sub {
-#line 600 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 599 "lib/RDF/Query/Parser/SPARQL.yp"
  [ datatype => $_[2] ] }
-#line 8927 lib/RDF/Query/Parser/SPARQL.pm
+#line 8926 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteral_219
 		 'NumericLiteral', 1,
 sub {
-#line 603 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 602 "lib/RDF/Query/Parser/SPARQL.yp"
  my $self = $_[0]; my ($value, $type) = @{$_[1]}; $self->new_literal( $value, undef, $type ) }
-#line 8934 lib/RDF/Query/Parser/SPARQL.pm
+#line 8933 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteral_220
 		 'NumericLiteral', 1,
 sub {
-#line 604 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 603 "lib/RDF/Query/Parser/SPARQL.yp"
  my $self = $_[0]; my ($value, $type) = @{$_[1]}; $self->new_literal( $value, undef, $type ) }
-#line 8941 lib/RDF/Query/Parser/SPARQL.pm
+#line 8940 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteral_221
 		 'NumericLiteral', 1,
 sub {
-#line 605 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 604 "lib/RDF/Query/Parser/SPARQL.yp"
  my $self = $_[0]; my ($value, $type) = @{$_[1]}; $self->new_literal( $value, undef, $type ) }
-#line 8948 lib/RDF/Query/Parser/SPARQL.pm
+#line 8947 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralUnsigned_222
 		 'NumericLiteralUnsigned', 1,
 sub {
-#line 608 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 607 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#integer'] }
-#line 8955 lib/RDF/Query/Parser/SPARQL.pm
+#line 8954 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralUnsigned_223
 		 'NumericLiteralUnsigned', 1,
 sub {
-#line 609 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 608 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#decimal'] }
-#line 8962 lib/RDF/Query/Parser/SPARQL.pm
+#line 8961 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralUnsigned_224
 		 'NumericLiteralUnsigned', 1,
 sub {
-#line 610 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 609 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#double'] }
-#line 8969 lib/RDF/Query/Parser/SPARQL.pm
+#line 8968 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralPositive_225
 		 'NumericLiteralPositive', 1,
 sub {
-#line 614 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 613 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#integer'] }
-#line 8976 lib/RDF/Query/Parser/SPARQL.pm
+#line 8975 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralPositive_226
 		 'NumericLiteralPositive', 1,
 sub {
-#line 615 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 614 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#decimal'] }
-#line 8983 lib/RDF/Query/Parser/SPARQL.pm
+#line 8982 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralPositive_227
 		 'NumericLiteralPositive', 1,
 sub {
-#line 616 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 615 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#double'] }
-#line 8990 lib/RDF/Query/Parser/SPARQL.pm
+#line 8989 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralNegative_228
 		 'NumericLiteralNegative', 1,
 sub {
-#line 620 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 619 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#integer'] }
-#line 8997 lib/RDF/Query/Parser/SPARQL.pm
+#line 8996 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralNegative_229
 		 'NumericLiteralNegative', 1,
 sub {
-#line 621 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 620 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#decimal'] }
-#line 9004 lib/RDF/Query/Parser/SPARQL.pm
+#line 9003 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NumericLiteralNegative_230
 		 'NumericLiteralNegative', 1,
 sub {
-#line 622 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 621 "lib/RDF/Query/Parser/SPARQL.yp"
  [$_[1], 'http://www.w3.org/2001/XMLSchema#double'] }
-#line 9011 lib/RDF/Query/Parser/SPARQL.pm
+#line 9010 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BooleanLiteral_231
 		 'BooleanLiteral', 1,
 sub {
-#line 625 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 624 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_literal( 'true', undef, 'http://www.w3.org/2001/XMLSchema#boolean' ) }
-#line 9018 lib/RDF/Query/Parser/SPARQL.pm
+#line 9017 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BooleanLiteral_232
 		 'BooleanLiteral', 1,
 sub {
-#line 626 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 625 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_literal( 'false', undef, 'http://www.w3.org/2001/XMLSchema#boolean' ) }
-#line 9025 lib/RDF/Query/Parser/SPARQL.pm
+#line 9024 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule IRIref_233
 		 'IRIref', 1,
 sub {
-#line 631 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 630 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9032 lib/RDF/Query/Parser/SPARQL.pm
+#line 9031 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule IRIref_234
 		 'IRIref', 1,
 sub {
-#line 632 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 631 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9039 lib/RDF/Query/Parser/SPARQL.pm
+#line 9038 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrefixedName_235
 		 'PrefixedName', 1,
 sub {
-#line 635 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 634 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9046 lib/RDF/Query/Parser/SPARQL.pm
+#line 9045 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PrefixedName_236
 		 'PrefixedName', 1,
 sub {
-#line 636 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 635 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_uri([$_[1],'']) }
-#line 9053 lib/RDF/Query/Parser/SPARQL.pm
+#line 9052 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BlankNode_237
 		 'BlankNode', 1,
 sub {
-#line 639 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 638 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9060 lib/RDF/Query/Parser/SPARQL.pm
+#line 9059 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BlankNode_238
 		 'BlankNode', 1,
 sub {
-#line 640 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 639 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9067 lib/RDF/Query/Parser/SPARQL.pm
+#line 9066 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule IRI_REF_239
 		 'IRI_REF', 1,
 sub {
-#line 643 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 642 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_uri($_[1]) }
-#line 9074 lib/RDF/Query/Parser/SPARQL.pm
+#line 9073 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PNAME_NS_240
 		 'PNAME_NS', 2,
 sub {
-#line 647 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 646 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			return $_[1];
 		}
-#line 9083 lib/RDF/Query/Parser/SPARQL.pm
+#line 9082 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PNAME_NS_241
 		 'PNAME_NS', 1,
 sub {
-#line 651 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 650 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			return '__DEFAULT__';
 		}
-#line 9092 lib/RDF/Query/Parser/SPARQL.pm
+#line 9091 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PNAME_LN_242
 		 'PNAME_LN', 2,
 sub {
-#line 656 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 655 "lib/RDF/Query/Parser/SPARQL.yp"
 
 	return $_[0]->new_uri([$_[1], $_[2]]);
 }
-#line 9101 lib/RDF/Query/Parser/SPARQL.pm
+#line 9100 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule BLANK_NODE_LABEL_243
 		 'BLANK_NODE_LABEL', 2,
 sub {
-#line 660 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 659 "lib/RDF/Query/Parser/SPARQL.yp"
 
 											my $self	= $_[0];
 											my $name	= $_[2];
-											$self->register_blank_node( $name );
+#											$self->register_blank_node( $name );
 											return $self->new_blank( $name );
 										}
-#line 9113 lib/RDF/Query/Parser/SPARQL.pm
+#line 9112 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_244
 		 'PN_LOCAL', 2,
 sub {
-#line 668 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 667 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			my $name	= $_[1];
 			my $extra	= $_[2];
 			return join('',$name,$extra);
 		}
-#line 9124 lib/RDF/Query/Parser/SPARQL.pm
+#line 9123 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_245
 		 'PN_LOCAL', 3,
 sub {
-#line 673 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 672 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			my $int		= $_[1];
 			my $name	= $_[2];
 			my $extra	= $_[3];
 			return join('',$int,$name,$extra);
 		}
-#line 9136 lib/RDF/Query/Parser/SPARQL.pm
+#line 9135 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_246
 		 'PN_LOCAL', 2,
 sub {
-#line 679 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 678 "lib/RDF/Query/Parser/SPARQL.yp"
 
 			my $int		= $_[1];
 			my $name	= $_[2];
 			return join('',$int,$name);
 		}
-#line 9147 lib/RDF/Query/Parser/SPARQL.pm
+#line 9146 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_247
 		 'PN_LOCAL', 1,
 sub {
-#line 684 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 683 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9154 lib/RDF/Query/Parser/SPARQL.pm
+#line 9153 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_EXTRA_248
 		 'PN_LOCAL_EXTRA', 1,
 sub {
-#line 687 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 686 "lib/RDF/Query/Parser/SPARQL.yp"
  return $_[1] }
-#line 9161 lib/RDF/Query/Parser/SPARQL.pm
+#line 9160 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_EXTRA_249
 		 'PN_LOCAL_EXTRA', 2,
 sub {
-#line 688 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 687 "lib/RDF/Query/Parser/SPARQL.yp"
  return "-$_[2]" }
-#line 9168 lib/RDF/Query/Parser/SPARQL.pm
+#line 9167 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule PN_LOCAL_EXTRA_250
 		 'PN_LOCAL_EXTRA', 2,
 sub {
-#line 689 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 688 "lib/RDF/Query/Parser/SPARQL.yp"
  return "_$_[2]" }
-#line 9175 lib/RDF/Query/Parser/SPARQL.pm
+#line 9174 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VAR1_251
 		 'VAR1', 2,
 sub {
-#line 692 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 691 "lib/RDF/Query/Parser/SPARQL.yp"
  my $self	= $_[0]; return $self->new_variable($_[2]) }
-#line 9182 lib/RDF/Query/Parser/SPARQL.pm
+#line 9181 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VAR2_252
 		 'VAR2', 2,
 sub {
-#line 694 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 693 "lib/RDF/Query/Parser/SPARQL.yp"
  my $self	= $_[0]; return $self->new_variable($_[2]) }
-#line 9189 lib/RDF/Query/Parser/SPARQL.pm
+#line 9188 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-52', 2,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 9196 lib/RDF/Query/Parser/SPARQL.pm
+#line 9195 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PLUS_LIST
 		 'PLUS-52', 1,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_single }
-#line 9203 lib/RDF/Query/Parser/SPARQL.pm
+#line 9202 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _PAREN
 		 'PAREN-53', 2,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYBuildAST }
-#line 9210 lib/RDF/Query/Parser/SPARQL.pm
+#line 9209 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_54
 		 'STAR-54', 2,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 9217 lib/RDF/Query/Parser/SPARQL.pm
+#line 9216 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_54
 		 'STAR-54', 0,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 9224 lib/RDF/Query/Parser/SPARQL.pm
+#line 9223 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule LANGTAG_258
 		 'LANGTAG', 3,
 sub {
-#line 696 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 695 "lib/RDF/Query/Parser/SPARQL.yp"
  join('-', $_[2], map { $_->{children}[0]{attr} } @{ $_[3]{children} }) }
-#line 9231 lib/RDF/Query/Parser/SPARQL.pm
+#line 9230 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule INTEGER_POSITIVE_259
 		 'INTEGER_POSITIVE', 2,
 sub {
-#line 700 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 699 "lib/RDF/Query/Parser/SPARQL.yp"
  '+' . $_[2] }
-#line 9238 lib/RDF/Query/Parser/SPARQL.pm
+#line 9237 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule DOUBLE_POSITIVE_260
 		 'DOUBLE_POSITIVE', 2,
 sub {
-#line 701 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 700 "lib/RDF/Query/Parser/SPARQL.yp"
  '+' . $_[2] }
-#line 9245 lib/RDF/Query/Parser/SPARQL.pm
+#line 9244 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule DECIMAL_POSITIVE_261
 		 'DECIMAL_POSITIVE', 2,
 sub {
-#line 702 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 701 "lib/RDF/Query/Parser/SPARQL.yp"
  '+' . $_[2] }
-#line 9252 lib/RDF/Query/Parser/SPARQL.pm
+#line 9251 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_262
 		 'VARNAME', 1,
 sub {
-#line 707 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 706 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9259 lib/RDF/Query/Parser/SPARQL.pm
+#line 9258 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_263
 		 'VARNAME', 1,
 sub {
-#line 708 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 707 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9266 lib/RDF/Query/Parser/SPARQL.pm
+#line 9265 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_264
 		 'VARNAME', 1,
 sub {
-#line 709 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 708 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9273 lib/RDF/Query/Parser/SPARQL.pm
+#line 9272 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_265
 		 'VARNAME', 1,
 sub {
-#line 710 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 709 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9280 lib/RDF/Query/Parser/SPARQL.pm
+#line 9279 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_266
 		 'VARNAME', 1,
 sub {
-#line 711 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 710 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9287 lib/RDF/Query/Parser/SPARQL.pm
+#line 9286 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_267
 		 'VARNAME', 1,
 sub {
-#line 712 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 711 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9294 lib/RDF/Query/Parser/SPARQL.pm
+#line 9293 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_268
 		 'VARNAME', 1,
 sub {
-#line 713 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 712 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9301 lib/RDF/Query/Parser/SPARQL.pm
+#line 9300 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_269
 		 'VARNAME', 1,
 sub {
-#line 714 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 713 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9308 lib/RDF/Query/Parser/SPARQL.pm
+#line 9307 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_270
 		 'VARNAME', 1,
 sub {
-#line 715 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 714 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9315 lib/RDF/Query/Parser/SPARQL.pm
+#line 9314 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_271
 		 'VARNAME', 1,
 sub {
-#line 716 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 715 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9322 lib/RDF/Query/Parser/SPARQL.pm
+#line 9321 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_272
 		 'VARNAME', 1,
 sub {
-#line 717 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 716 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9329 lib/RDF/Query/Parser/SPARQL.pm
+#line 9328 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_273
 		 'VARNAME', 1,
 sub {
-#line 718 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 717 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9336 lib/RDF/Query/Parser/SPARQL.pm
+#line 9335 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_274
 		 'VARNAME', 1,
 sub {
-#line 719 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 718 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9343 lib/RDF/Query/Parser/SPARQL.pm
+#line 9342 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_275
 		 'VARNAME', 1,
 sub {
-#line 720 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 719 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9350 lib/RDF/Query/Parser/SPARQL.pm
+#line 9349 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_276
 		 'VARNAME', 1,
 sub {
-#line 721 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 720 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9357 lib/RDF/Query/Parser/SPARQL.pm
+#line 9356 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_277
 		 'VARNAME', 1,
 sub {
-#line 722 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 721 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9364 lib/RDF/Query/Parser/SPARQL.pm
+#line 9363 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_278
 		 'VARNAME', 1,
 sub {
-#line 723 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 722 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9371 lib/RDF/Query/Parser/SPARQL.pm
+#line 9370 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_279
 		 'VARNAME', 1,
 sub {
-#line 724 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 723 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9378 lib/RDF/Query/Parser/SPARQL.pm
+#line 9377 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_280
 		 'VARNAME', 1,
 sub {
-#line 725 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 724 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9385 lib/RDF/Query/Parser/SPARQL.pm
+#line 9384 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_281
 		 'VARNAME', 1,
 sub {
-#line 726 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 725 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9392 lib/RDF/Query/Parser/SPARQL.pm
+#line 9391 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_282
 		 'VARNAME', 1,
 sub {
-#line 727 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 726 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9399 lib/RDF/Query/Parser/SPARQL.pm
+#line 9398 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_283
 		 'VARNAME', 1,
 sub {
-#line 728 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 727 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9406 lib/RDF/Query/Parser/SPARQL.pm
+#line 9405 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_284
 		 'VARNAME', 1,
 sub {
-#line 729 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 728 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9413 lib/RDF/Query/Parser/SPARQL.pm
+#line 9412 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_285
 		 'VARNAME', 1,
 sub {
-#line 730 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 729 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9420 lib/RDF/Query/Parser/SPARQL.pm
+#line 9419 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_286
 		 'VARNAME', 1,
 sub {
-#line 731 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 730 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9427 lib/RDF/Query/Parser/SPARQL.pm
+#line 9426 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_287
 		 'VARNAME', 1,
 sub {
-#line 732 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 731 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9434 lib/RDF/Query/Parser/SPARQL.pm
+#line 9433 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_288
 		 'VARNAME', 1,
 sub {
-#line 733 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 732 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9441 lib/RDF/Query/Parser/SPARQL.pm
+#line 9440 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_289
 		 'VARNAME', 1,
 sub {
-#line 734 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 733 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9448 lib/RDF/Query/Parser/SPARQL.pm
+#line 9447 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_290
 		 'VARNAME', 1,
 sub {
-#line 735 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 734 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9455 lib/RDF/Query/Parser/SPARQL.pm
+#line 9454 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_291
 		 'VARNAME', 1,
 sub {
-#line 736 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 735 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9462 lib/RDF/Query/Parser/SPARQL.pm
+#line 9461 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_292
 		 'VARNAME', 1,
 sub {
-#line 737 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 736 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9469 lib/RDF/Query/Parser/SPARQL.pm
+#line 9468 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_293
 		 'VARNAME', 1,
 sub {
-#line 738 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 737 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9476 lib/RDF/Query/Parser/SPARQL.pm
+#line 9475 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_294
 		 'VARNAME', 1,
 sub {
-#line 739 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 738 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9483 lib/RDF/Query/Parser/SPARQL.pm
+#line 9482 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule VARNAME_295
 		 'VARNAME', 1,
 sub {
-#line 740 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 739 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9490 lib/RDF/Query/Parser/SPARQL.pm
+#line 9489 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_55
 		 'STAR-55', 2,
 sub {
-#line 743 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 742 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 9497 lib/RDF/Query/Parser/SPARQL.pm
+#line 9496 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_55
 		 'STAR-55', 0,
 sub {
-#line 743 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 742 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 9504 lib/RDF/Query/Parser/SPARQL.pm
+#line 9503 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule NIL_298
 		 'NIL', 3,
 sub {
-#line 743 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 742 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_uri('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') }
-#line 9511 lib/RDF/Query/Parser/SPARQL.pm
+#line 9510 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_56
 		 'STAR-56', 2,
 sub {
-#line 745 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 744 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_TX1X2 }
-#line 9518 lib/RDF/Query/Parser/SPARQL.pm
+#line 9517 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule _STAR_LIST_56
 		 'STAR-56', 0,
 sub {
-#line 745 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 744 "lib/RDF/Query/Parser/SPARQL.yp"
  goto &Parse::Eyapp::Driver::YYActionforT_empty }
-#line 9525 lib/RDF/Query/Parser/SPARQL.pm
+#line 9524 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule ANON_301
 		 'ANON', 3,
 sub {
-#line 745 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 744 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[0]->new_blank() }
-#line 9532 lib/RDF/Query/Parser/SPARQL.pm
+#line 9531 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule INTEGER_302
 		 'INTEGER', 1,
 sub {
-#line 749 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 748 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9539 lib/RDF/Query/Parser/SPARQL.pm
+#line 9538 lib/RDF/Query/Parser/SPARQL.pm
 	],
 	[#Rule INTEGER_303
 		 'INTEGER', 1,
 sub {
-#line 750 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 749 "lib/RDF/Query/Parser/SPARQL.yp"
  $_[1] }
-#line 9546 lib/RDF/Query/Parser/SPARQL.pm
+#line 9545 lib/RDF/Query/Parser/SPARQL.pm
 	]
 ],
-#line 9549 lib/RDF/Query/Parser/SPARQL.pm
+#line 9548 lib/RDF/Query/Parser/SPARQL.pm
                                   yybypass => 0,
                                   @_,);
     bless($self,$class);
@@ -9777,7 +9776,7 @@ sub {
     $self;
 }
 
-#line 763 "lib/RDF/Query/Parser/SPARQL.yp"
+#line 762 "lib/RDF/Query/Parser/SPARQL.yp"
 
 
 # RDF::Query::Parser::SPARQL
@@ -9866,173 +9865,28 @@ sub parse {
 #		warn $@;	# XXX
 		return;
 	} else {
-		my $ok	= $self->fixup_triples( $t->{triples} );
-#		warn "fixup ok? <$ok>\n";
-		return unless $ok;
-		return $t;
-	}
-}
-
-=begin private
-
-=item C<< fixup_triples ( \@triples ) >>
-
-Checks all triples recursively for proper use of blank node labels (the same
-labels cannot be re-used across different BGPs). Returns true if the blank
-node label use is proper, false otherwise.
-
-=end private
-
-=cut
-
-sub fixup_triples {
-	my $self	= shift;
-	my $triples	= shift;
-	my $block	= $triples;
-	my $part	= 1;
-	unless (reftype($triples) eq 'ARRAY') {
-		confess Dumper($triples);
-	}
-	
-	foreach my $triple (@$triples) {
-		my $context	= join('', $block, $part);
-		my $type	= $self->fixup( $context, $triple );
-		return unless $type;
-		$part++ if ($type =~ /OPTIONAL|GRAPH|UNION|GGP|BGP/);
-	}
-	return 1;
-}
-
-=begin private
-
-=item C<< fixup ( $context, $triple ) >>
-
-Takes a triple or parse-tree atom, and returns true if the triple conforms
-to the SPARQL spec regarding the re-use of blank node labels.
-C<<$context>> is an opaque string representing the enclosing BGP of the triple.
-
-=end private
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $context	= shift;
-	my $triple	= shift;
-	
-#	warn "fixup: " . Dumper($triple);
-#	Carp::confess 'not an array in SPARQL fixup: ' . Dumper($triple) unless (reftype($triple) eq 'ARRAY');
-	Carp::confess 'not an algebra or func expr pattern in SPARQL fixup: ' . Dumper($triple)
-		unless (
-			(blessed($triple) and ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'))) or
-			(reftype($triple) eq 'ARRAY' and $triple->[0] =~ m#^[=~<>!&|*/+-]#)
-		);
-	my $type	= (blessed($triple)) ? $triple->type : $triple->[0];
-#	warn $type;
-	if (ref($type) or $type eq 'TRIPLE') {
-		$self->fixup_triple( $context, $triple );
-		return 'TRIPLE';
-	} else {
-		no warnings 'uninitialized';
-		if ($type =~ /^(VAR|URI|LITERAL)$/) {
-			return 1;
-		} elsif ($type eq 'GGP') {
-			my @triples	= $triple->patterns;
-			return unless $self->fixup_triples( \@triples, \@triples );
-			return 'GGP';
-		} elsif ($type eq 'BGP') {
-			my @triples	= $triple->triples;
-			foreach my $t (@triples) {
-				return unless $self->fixup_triple( $triple, $t );
+		my $ok;
+		try {
+			$t->{triples}->check_duplicate_blanks;
+			my $base	= (exists($t->{base})) ? $t->{base} : undef;
+			$t->{triples}	= $t->{triples}->qualify_uris( $t->{'namespaces'}, $base );
+			if (exists($t->{construct_triples})) {
+				$t->{construct_triples}	= $t->{construct_triples}->qualify_uris( $t->{'namespaces'}, $base );
 			}
-			return 'BGP';
-		} elsif ($type eq 'OPTIONAL') {
-			return unless $self->fixup( $triple->pattern, $triple->pattern );
-			return unless $self->fixup( $triple->optional, $triple->optional );
-			return 'OPTIONAL';
-		} elsif ($type eq 'GRAPH') {
-			return unless $self->fixup( $triple->[2], $triple->[2] );
-			return 'GRAPH';
-		} elsif ($type eq 'FILTER') {
-			return unless $self->fixup( $context, $triple->[1] );
-			return 'FILTER';
-		} elsif ($type eq 'UNION') {
-			foreach my $i (1 .. $#{$triple}) {
-				return unless $self->fixup( $triple->[$i], $triple->[$i] );
-			}
-			return 'UNION';
-		} elsif ($type =~ qr#^[=~<>!&|*/+-]# || $type eq 'FUNCTION') {
-			return unless $self->fixup_triples([ @{$triple}[1..$#{$triple}] ]);
-			return 1;
+			$ok	= 1;
+		} catch RDF::Query::Error with {
+			my $e	= shift;
+			$self->set_error( "Syntax error; " . $e->{'-text'} );
+			$ok	= 0;
+		};
+		
+		if ($ok) {
+			return $t;
 		} else {
-			warn "unrecognized triple: " . Dumper($triple);
-			return 0;
+			return;
 		}
 	}
 }
-
-=begin private
-
-=item C<< fixup_triple ( $context, $triple ) >>
-
-Takes a triple, and returns true if the triple conforms to the SPARQL spec
-regarding the re-use of blank node labels. C<<$context>> is an opaque string
-representing the enclosing BGP of the triple.
-
-=end private
-
-=cut
-
-sub fixup_triple {
-	my $self	= shift;
-	my $context	= shift;
-	my $triple	= shift;
-	
-#	warn "fixup_triple: " . Dumper($triple);
-	my ($s,$p,$o)	= $triple->nodes;
-	foreach my $node ($s,$p,$o) {
-		no warnings 'uninitialized';
-		if (reftype($node) eq 'ARRAY') {
-			if ($node->[0] eq 'BLANK' and $self->{__blank_nodes}{$node->[1]}) {
-				my $name	= $node->[1];
-#					warn "GOT A BLANK NODE ($name) in context: $context!";
-				if (not exists ($self->{__registered_blank_nodes}{$name})) {
-#						warn "\thaven't seen this blank node before\n";
-					$self->{__registered_blank_nodes}{$name}	= "$context";
-				}
-				
-				if ($self->{__registered_blank_nodes}{$name} ne "$context") {
-#						warn "\tblank node conflicts with previous use\n";
-					$self->{error}	= "Syntax error; Same blank node identifier ($name) used in more than one basic graph pattern.";
-					return;
-				}
-			}
-		} else {
-			warn "unknown fixup type: " . Dumper($node) if ($debug);
-		}
-	}
-	return 1;
-}
-
-=begin private
-
-=item C<< register_blank_node ( $name ) >>
-
-Used during parsing, this method registers the names of blank nodes that are
-used in the query so that they may be checked after the parse.
-
-=end private
-
-=cut
-
-sub register_blank_node {
-	my $self	= shift;
-	my $name	= shift;
-	no warnings 'uninitialized';
-	$self->{__blank_nodes}{$name}++;
-}
-
-
 
 =item C<< error >>
 
@@ -10049,16 +9903,6 @@ sub error {
 	}
 }
 
-
-# package RDF::Query::Parser::SPARQL::Value;
-# 
-# use overload '""' => sub { $_[0][0] };
-# 
-# sub new {
-# 	my $class	= shift;
-# 	my $data	= [ @_ ];
-# 	return bless($data, $class);
-# }
 
 {
 my $last;
@@ -10263,6 +10107,6 @@ __END__
 =cut
 
 
-#line 10266 lib/RDF/Query/Parser/SPARQL.pm
+#line 10110 lib/RDF/Query/Parser/SPARQL.pm
 
 1;

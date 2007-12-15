@@ -55,6 +55,19 @@ sub new {
 	return bless( [ $pattern, $groupby, \@ops ] );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my @ops		= @{ $self->[2] };
+	return ($self->pattern, [ $self->groupby ], \@ops);
+}
+
 =item C<< pattern >>
 
 Returns the aggregates pattern.
@@ -129,7 +142,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	throw RDF::Query::Error -text => "Aggregates can't be serialized as SPARQL";
 }
 
@@ -252,7 +265,7 @@ sub execute {
 	
 	
 	
-	$args{ orderby }	= [ map { [ 'ASC', $bridge->new_variable( $_ ) ] } @groupby ];
+	$args{ orderby }	= [ map { [ 'ASC', RDF::Query::Node::Variable->new( $_ ) ] } @groupby ];
 	my $stream		= $self->pattern->execute( $query, $bridge, $bound, $context, %args );
 	while (my $row = $stream->next) {
 		foreach my $agg (@aggregators) {

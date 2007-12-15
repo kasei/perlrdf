@@ -99,7 +99,6 @@ t/30-aggregate.t
 t/dawg-eval.t
 t/dawg-syntax.t
 t/distance.js
-t/deparse.t
 t/functions.rdf
 t/models.pl
 t/sha1.js

@@ -49,6 +49,18 @@ sub new {
 	return bless( [ 'EXPR', $op, @operands ] );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->op, $self->operands);
+}
+
 =item C<< op >>
 
 Returns the operator of the expression.

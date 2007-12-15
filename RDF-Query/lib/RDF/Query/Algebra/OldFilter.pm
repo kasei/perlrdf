@@ -101,6 +101,18 @@ sub new {
 	return bless( [ 'FILTER', $expr ] );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->expr);
+}
+
 =item C<< expr >>
 
 Returns the filter expression.
@@ -139,7 +151,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	
 	my $expr	= $self->expr;
 	my ($op, @ops)	= @{ $expr };
@@ -205,7 +217,7 @@ sub fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
-
+	
 	my $expr	= $self->expr;
 	if (blessed($expr) and $expr->isa('RDF::Query::Algebra::Function')) {
 		$self->expr( $expr->fixup( $bridge, $base, $ns ) );

@@ -63,6 +63,18 @@ sub new {
 	return bless( [ 'FUNCTION', $uri, @args ] );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->uri, $self->arguments);
+}
+
 =item C<< uri >>
 
 Returns the URI of the function.
@@ -110,7 +122,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
 	my $func	= ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|is(Bound|URI|IRI|Blank|Literal))/)

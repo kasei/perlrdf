@@ -49,6 +49,18 @@ sub new {
 	return bless( [@_], $class );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->patterns);
+}
+
 =item C<< patterns >>
 
 Returns a list of the graph patterns in this GGP.
@@ -96,7 +108,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	
 	my @patterns;
 	foreach my $p ($self->patterns) {
@@ -137,6 +149,20 @@ Returns a list of the variable names that will be bound after evaluating this al
 sub definite_variables {
 	my $self	= shift;
 	return uniq(map { $_->definite_variables } $self->patterns);
+}
+
+sub check_duplicate_blanks {
+	my $self	= shift;
+	my %seen;
+	foreach my $p ($self->patterns) {
+		my @blanks	= $p->referenced_blanks;
+		foreach my $b (@blanks) {
+			if ($seen{ $b }++) {
+				throw RDF::Query::Error::QueryPatternError -text => "Same blank node identifier ($b) used in more than one BasicGraphPattern.";
+			}
+		}
+	}
+	return 1;
 }
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>

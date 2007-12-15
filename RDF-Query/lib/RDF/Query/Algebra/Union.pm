@@ -50,6 +50,18 @@ sub new {
 	return bless( [ 'UNION', $left, $right ], $class );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->first, $self->second);
+}
+
 =item C<< first >>
 
 Returns the first pattern (LHS) of the union.
@@ -109,7 +121,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	my $string	= sprintf(
 		"%s\n${indent}UNION\n${indent}%s",
 		$self->first->as_sparql( $context, $indent ),

@@ -83,7 +83,7 @@ DescribeQuery:	'DESCRIBE' DescribeVars DatasetClause* WhereClause? SolutionModif
 						sources		=> $_[3]{children},
 						triples		=> ${ $_[4]{children} || [] }[0],
 					};
-					$ret->{triples}	= [] if (not defined($ret->{triples}));
+					$ret->{triples}	= RDF::Query::Algebra::GroupGraphPattern->new() if (not defined($ret->{triples}));
 					if (my $o = $modifier->{orderby}){
 						$ret->{orderby}	= $o;
 					}
@@ -114,8 +114,7 @@ SourceSelector:	IRIref										{ $_[1] };
 
 WhereClause:	'WHERE'? GroupGraphPattern					{
 																my $ggp			= $_[2];
-																my @patterns	= $ggp->patterns;
-																return \@patterns;
+																return $ggp;
 															};
 
 SolutionModifier:	OrderClause? LimitOffsetClauses?
@@ -318,7 +317,7 @@ ConstructTriples:	TriplesSameSubject ( '.' ConstructTriples? )?
 			my $triples	= $_[2]{children}[0]{children}[0];
 			push(@triples, @{ $triples || [] });
 		}
-		return \@triples;
+		return RDF::Query::Algebra::GroupGraphPattern->new( @triples );
 	};
 
 TriplesSameSubject:	VarOrTerm PropertyListNotEmpty		{
@@ -660,7 +659,7 @@ PNAME_LN:	PNAME_NS PN_LOCAL			{
 BLANK_NODE_LABEL:	'_:' PN_LOCAL		{
 											my $self	= $_[0];
 											my $name	= $_[2];
-											$self->register_blank_node( $name );
+#											$self->register_blank_node( $name );
 											return $self->new_blank( $name );
 										};
 
@@ -848,173 +847,28 @@ sub parse {
 #		warn $@;	# XXX
 		return;
 	} else {
-		my $ok	= $self->fixup_triples( $t->{triples} );
-#		warn "fixup ok? <$ok>\n";
-		return unless $ok;
-		return $t;
-	}
-}
-
-=begin private
-
-=item C<< fixup_triples ( \@triples ) >>
-
-Checks all triples recursively for proper use of blank node labels (the same
-labels cannot be re-used across different BGPs). Returns true if the blank
-node label use is proper, false otherwise.
-
-=end private
-
-=cut
-
-sub fixup_triples {
-	my $self	= shift;
-	my $triples	= shift;
-	my $block	= $triples;
-	my $part	= 1;
-	unless (reftype($triples) eq 'ARRAY') {
-		confess Dumper($triples);
-	}
-	
-	foreach my $triple (@$triples) {
-		my $context	= join('', $block, $part);
-		my $type	= $self->fixup( $context, $triple );
-		return unless $type;
-		$part++ if ($type =~ /OPTIONAL|GRAPH|UNION|GGP|BGP/);
-	}
-	return 1;
-}
-
-=begin private
-
-=item C<< fixup ( $context, $triple ) >>
-
-Takes a triple or parse-tree atom, and returns true if the triple conforms
-to the SPARQL spec regarding the re-use of blank node labels.
-C<<$context>> is an opaque string representing the enclosing BGP of the triple.
-
-=end private
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $context	= shift;
-	my $triple	= shift;
-	
-#	warn "fixup: " . Dumper($triple);
-#	Carp::confess 'not an array in SPARQL fixup: ' . Dumper($triple) unless (reftype($triple) eq 'ARRAY');
-	Carp::confess 'not an algebra or func expr pattern in SPARQL fixup: ' . Dumper($triple)
-		unless (
-			(blessed($triple) and ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'))) or
-			(reftype($triple) eq 'ARRAY' and $triple->[0] =~ m#^[=~<>!&|*/+-]#)
-		);
-	my $type	= (blessed($triple)) ? $triple->type : $triple->[0];
-#	warn $type;
-	if (ref($type) or $type eq 'TRIPLE') {
-		$self->fixup_triple( $context, $triple );
-		return 'TRIPLE';
-	} else {
-		no warnings 'uninitialized';
-		if ($type =~ /^(VAR|URI|LITERAL)$/) {
-			return 1;
-		} elsif ($type eq 'GGP') {
-			my @triples	= $triple->patterns;
-			return unless $self->fixup_triples( \@triples, \@triples );
-			return 'GGP';
-		} elsif ($type eq 'BGP') {
-			my @triples	= $triple->triples;
-			foreach my $t (@triples) {
-				return unless $self->fixup_triple( $triple, $t );
+		my $ok;
+		try {
+			$t->{triples}->check_duplicate_blanks;
+			my $base	= (exists($t->{base})) ? $t->{base} : undef;
+			$t->{triples}	= $t->{triples}->qualify_uris( $t->{'namespaces'}, $base );
+			if (exists($t->{construct_triples})) {
+				$t->{construct_triples}	= $t->{construct_triples}->qualify_uris( $t->{'namespaces'}, $base );
 			}
-			return 'BGP';
-		} elsif ($type eq 'OPTIONAL') {
-			return unless $self->fixup( $triple->pattern, $triple->pattern );
-			return unless $self->fixup( $triple->optional, $triple->optional );
-			return 'OPTIONAL';
-		} elsif ($type eq 'GRAPH') {
-			return unless $self->fixup( $triple->[2], $triple->[2] );
-			return 'GRAPH';
-		} elsif ($type eq 'FILTER') {
-			return unless $self->fixup( $context, $triple->[1] );
-			return 'FILTER';
-		} elsif ($type eq 'UNION') {
-			foreach my $i (1 .. $#{$triple}) {
-				return unless $self->fixup( $triple->[$i], $triple->[$i] );
-			}
-			return 'UNION';
-		} elsif ($type =~ qr#^[=~<>!&|*/+-]# || $type eq 'FUNCTION') {
-			return unless $self->fixup_triples([ @{$triple}[1..$#{$triple}] ]);
-			return 1;
+			$ok	= 1;
+		} catch RDF::Query::Error with {
+			my $e	= shift;
+			$self->set_error( "Syntax error; " . $e->{'-text'} );
+			$ok	= 0;
+		};
+		
+		if ($ok) {
+			return $t;
 		} else {
-			warn "unrecognized triple: " . Dumper($triple);
-			return 0;
+			return;
 		}
 	}
 }
-
-=begin private
-
-=item C<< fixup_triple ( $context, $triple ) >>
-
-Takes a triple, and returns true if the triple conforms to the SPARQL spec
-regarding the re-use of blank node labels. C<<$context>> is an opaque string
-representing the enclosing BGP of the triple.
-
-=end private
-
-=cut
-
-sub fixup_triple {
-	my $self	= shift;
-	my $context	= shift;
-	my $triple	= shift;
-	
-#	warn "fixup_triple: " . Dumper($triple);
-	my ($s,$p,$o)	= $triple->nodes;
-	foreach my $node ($s,$p,$o) {
-		no warnings 'uninitialized';
-		if (reftype($node) eq 'ARRAY') {
-			if ($node->[0] eq 'BLANK' and $self->{__blank_nodes}{$node->[1]}) {
-				my $name	= $node->[1];
-#					warn "GOT A BLANK NODE ($name) in context: $context!";
-				if (not exists ($self->{__registered_blank_nodes}{$name})) {
-#						warn "\thaven't seen this blank node before\n";
-					$self->{__registered_blank_nodes}{$name}	= "$context";
-				}
-				
-				if ($self->{__registered_blank_nodes}{$name} ne "$context") {
-#						warn "\tblank node conflicts with previous use\n";
-					$self->{error}	= "Syntax error; Same blank node identifier ($name) used in more than one basic graph pattern.";
-					return;
-				}
-			}
-		} else {
-			warn "unknown fixup type: " . Dumper($node) if ($debug);
-		}
-	}
-	return 1;
-}
-
-=begin private
-
-=item C<< register_blank_node ( $name ) >>
-
-Used during parsing, this method registers the names of blank nodes that are
-used in the query so that they may be checked after the parse.
-
-=end private
-
-=cut
-
-sub register_blank_node {
-	my $self	= shift;
-	my $name	= shift;
-	no warnings 'uninitialized';
-	$self->{__blank_nodes}{$name}++;
-}
-
-
 
 =item C<< error >>
 
@@ -1031,16 +885,6 @@ sub error {
 	}
 }
 
-
-# package RDF::Query::Parser::SPARQL::Value;
-# 
-# use overload '""' => sub { $_[0][0] };
-# 
-# sub new {
-# 	my $class	= shift;
-# 	my $data	= [ @_ ];
-# 	return bless($data, $class);
-# }
 
 {
 my $last;

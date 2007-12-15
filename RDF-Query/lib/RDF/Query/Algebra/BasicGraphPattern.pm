@@ -49,6 +49,18 @@ sub new {
 	return bless( [ @triples ] );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->triples);
+}
+
 =item C<< triples >>
 
 Returns a list of triples belonging to this BGP.
@@ -84,7 +96,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	my @triples;
 	foreach my $t ($self->triples) {
 		push(@triples, $t->as_sparql( $context, $indent ));

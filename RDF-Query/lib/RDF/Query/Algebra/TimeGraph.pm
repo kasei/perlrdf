@@ -48,6 +48,18 @@ sub new {
 	return bless( [ 'TIME', @data ], $class );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->interval, $self->pattern, $self->time_triples);
+}
+
 =item C<< interval >>
 
 Returns the time interval node of the temporal graph expression.
@@ -111,7 +123,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	my $nindent	= $indent . "\t";
 	my $string	= sprintf(
 		"TIME %s %s",

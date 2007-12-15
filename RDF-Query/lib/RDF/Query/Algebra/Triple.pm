@@ -52,6 +52,18 @@ sub new {
 	return bless( [ @nodes ], $class );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->nodes);
+}
+
 =item C<< nodes >>
 
 Returns the subject, predicate and object of the triple pattern.
@@ -134,7 +146,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	
 	my $pred	= $self->predicate->as_sparql( $context );
 	if ($pred eq '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
@@ -182,6 +194,50 @@ sub definite_variables {
 	return $self->referenced_variables;
 }
 
+=item C<< referenced_blanks >>
+
+Returns a list of the blank node names used in this algebra expression.
+
+=cut
+
+sub referenced_blanks {
+	my $self	= shift;
+	my @nodes	= $self->nodes;
+	return map { $_->blank_identifier } grep { $_->isa('RDF::Query::Node::Blank') } @nodes;
+}
+
+=item C<< qualify_uris ( \%namespaces, $base ) >>
+
+Returns a new algebra pattern where all referenced Resource nodes representing
+QNames (ns:local) are qualified using the supplied %namespaces.
+
+=cut
+
+sub qualify_uris {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $ns		= shift;
+	my $base	= shift;
+	my @nodes;
+	foreach my $n ($self->nodes) {
+		if (blessed($n) and $n->isa('RDF::Query::Node::Resource')) {
+			my $uri	= $n->uri;
+			if (ref($uri)) {
+				my ($n,$l)	= @$uri;
+				unless (exists($ns->{ $n })) {
+					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
+				}
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				push(@nodes, $resolved);
+			} else {
+				push(@nodes, $n);
+			}
+		} else {
+			push(@nodes, $n);
+		}
+	}
+	return $class->new( @nodes );
+}
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 

@@ -16,6 +16,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Node);
 
+use URI;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
@@ -44,8 +45,35 @@ Returns a new Resource structure.
 
 sub new {
 	my $class	= shift;
-	my $iri		= shift;
-	return bless( [ 'URI', $iri ], $class );
+	my $uri		= shift;
+	if (defined($_[0])) {
+		my $base	= shift;
+		### We have to work around the URI module not accepting IRIs. If there's
+		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
+		### the URI into an absolute URI, and then replace the breadcrumbs with
+		### the Unicode.
+		
+		my @uni;
+		my $count	= 0;
+		while ($uri =~ /([\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]+)/) {
+			my $text	= $1;
+			push(@uni, $text);
+			$uri		=~ s/$1/',____' . $count . '____,'/e;
+			$count++;
+		}
+		
+		my $abs			= URI->new_abs( $uri, $base->uri_value );
+		
+		$uri			= $abs->as_string;
+		while ($uri =~ /,____(\d+)____,/) {
+			my $num	= $1;
+			my $i	= index($uri, ",____${num}____,");
+			my $len	= 10 + length($num);
+			substr($uri, $i, $len)	= shift(@uni);
+		}
+		$uri	= $uri;
+	}
+	return bless( [ 'URI', $uri ], $class );
 }
 
 =item C<< uri_value >>

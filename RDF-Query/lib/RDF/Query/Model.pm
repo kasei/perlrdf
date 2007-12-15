@@ -47,41 +47,6 @@ sub parsed {
 }
 
 
-=item C<< literal_as_array ( $literal ) >>
-
-Returns a literal in ARRAY (model-neutral) form.
-
-=cut
-
-sub literal_as_array {
-	my $self	= shift;
-	my $literal	= shift;
-	my $value	= $self->literal_value( $literal );
-	my $lang	= $self->literal_value_language( $literal );
-	my $dt		= $self->literal_datatype( $literal );
-	return [ 'LITERAL', $value, $lang, ($dt) ? [ 'URI', $dt ] : undef ];
-}
-
-=item C<< as_node ( $node ) >>
-
-Returns a RDF::Query::Node object for the given node.
-
-=cut
-
-sub as_node {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return unless ($self->isa_node($node));
-	if ($self->isa_resource( $node )) {
-		return RDF::Query::Node::Resource->new( $self->uri_value( $node ) );
-	} elsif ($self->isa_literal( $node )) {
-		return RDF::Query::Node::Literal->new( $self->literal_value( $node ), $self->literal_value_language( $node ), $self->literal_datatype( $node ) );
-	} elsif ($self->isa_blank( $node )) {
-		return RDF::Query::Node::Blank->new( $self->blank_identifier( $node ) );
-	}
-}
-
 =item C<< as_native ( $node, $base, \%namespaces ) >>
 
 Returns bridge-native RDF node objects for the given node.

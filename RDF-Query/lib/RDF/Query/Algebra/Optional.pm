@@ -50,6 +50,18 @@ sub new {
 	return bless( [ 'OPTIONAL', $pattern, $opt ], $class );
 }
 
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	return ($self->pattern, $self->optional);
+}
+
 =item C<< pattern >>
 
 Returns the base pattern (LHS) onto which the optional pattern joins.
@@ -97,7 +109,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift || '';
+	my $indent	= shift;
 	my $string	= sprintf(
 		"%s\n${indent}OPTIONAL %s",
 		$self->pattern->as_sparql( $context, $indent ),
@@ -190,7 +202,7 @@ sub execute {
 				my $val_a	= $rowa->{ $key };
 				my $val_b	= $rowb->{ $key };
 				unless ($bridge->equals($val_a, $val_b)) {
-					warn "can't join because mismatch of $key (" . join(' <==> ', map {$bridge->as_string($_)} ($val_a, $val_b)) . ")" if ($debug);
+# 					warn "can't join because mismatch of $key (" . join(' <==> ', map {$bridge->as_string($_)} ($val_a, $val_b)) . ")" if ($debug);
 					$ok	= 0;
 					last;
 				}

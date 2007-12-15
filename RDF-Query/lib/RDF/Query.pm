@@ -85,9 +85,8 @@ use RDF::Query::Error qw(:try);
 
 ######################################################################
 
-our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER, $PROF);
+our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER);
 use constant DEBUG	=> 0;
-use constant PROF	=> 0;
 BEGIN {
 	$debug		= DEBUG;
 	$js_debug	= 0;
@@ -95,28 +94,7 @@ BEGIN {
 	$VERSION	= '1.502';
 	$ENV{RDFQUERY_NO_RDFBASE}	= 1;	# XXX Not ready for release
 	$DEFAULT_PARSER		= 'sparql';
-	
-	# PROFILING
-	if (PROF) {
-		require Time::HiRes;
-		Time::HiRes->import(qw(gettimeofday));
-		open( $PROF, '>>', "rdfquery.profile.out" );
-	}
 }
-
-######################################################################
-# if (PROF) {
-# 	require Hook::LexWrap;
-# 	Hook::LexWrap->import();
-# eval <<"END" for (qw(new get execute describe construct ask supports set_named_graph_query loadable_bridge_class new_bridge get_bridge fixup get_statements union optional qualify_uri check_constraints _isa_known_node_type _one_isa _promote_to get_value add_function get_function net_filter_function _is_trusted new_javascript_engine add_hook get_hooks run_hook ncmp is_numeric_type sort_rows parse_url variables all_variables parsed error set_error clear_error));
-# wrap "RDF::Query::$_",
-# 	pre		=> sub { _PROFILE(1,"$_") },
-# 	post	=> sub { _PROFILE(0,"$_") };
-# END
-# }
-######################################################################
-
-
 
 our %PATTERN_TYPES	= map { $_ => 1 } (qw(
 						BGP
@@ -245,39 +223,6 @@ sub execute {
 	$self->{model}		= $model;
 	
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
-# 	if (my $dbh = $self->{'dbh'} || $args{'dbh'}) {
-# 		try {
-# 			if (%bound) {
-# 				throw RDF::Query::Error::CompilationError ( -text => 'SQL compilation does not yet support pre-bound query variables.' );
-# 			}
-# 			my $compiler	= RDF::Query::Compiler::SQL->new( dclone($parsed), $args{'model'} );
-# 			my $sql			= $compiler->compile();
-# 			try {
-# 				$dbh->{FetchHashKeyName}	= 'NAME_lc';
-# 				my $sth			= $dbh->prepare( $sql );
-# 				$sth->execute;
-# 				if (my $err = $sth->errstr) {
-# 					throw RDF::Query::Error::CompilationError ( -text => $err );
-# 				}
-# 				$self->{sql}	= $sql;
-# 				$self->{sth}	= $sth;
-# 			} catch RDF::Query::Error::CompilationError with {
-# 				my $err	= shift;
-# 				my $text	= $err->text;
-# 				throw RDF::Query::Error::CompilationError ( -text => "$text : $sql" );
-# 			};
-# 		} catch RDF::Query::Error::CompilationError with {
-# 			my $err	= shift;
-# 			if ($args{'require_sql'}) {
-# 				throw $err;
-# 			} else {
-# 				warn $err->text;
-# 				delete $self->{'dbh'};
-# 				delete $self->{'sql'};
-# 			}
-# 		};
-# 	}
-	
 	my $bridge	= $self->get_bridge( $model, %args );
 	if ($bridge) {
 		$self->bridge( $bridge );
@@ -285,32 +230,21 @@ sub execute {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-# 	if (my $sth = $self->{sth}) {
-# 		$stream	= $bridge->stream( $parsed, $sth );
-# 	} elsif ($args{'require_sql'}) {
-# 		throw RDF::Query::Error::CompilationError ( -text => 'Failed to compile query to SQL' );
-# 	} else {
-		# JIT: Load external data, swap in model objects (Redland, RDF::Core, etc.) for abstract RDF Nodes
-#		$parsed		= $self->fixup( $self->{parsed} );
-#		local($self->{parsed})	= $parsed;
-		
-		$self->load_data();
-		my ($pattern, $cpattern)	= $self->fixup();
-		$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
-		my @vars	= $self->variables( $parsed );
-		
-		# RUN THE QUERY!
-
-		my $options	= $parsed->{options} || {};		
-		$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
-		
-		_debug( "got stream: $stream" ) if (DEBUG);
-		my $sorted		= $self->sort_rows( $stream, $parsed );
-		my $projected	= $sorted->project( @vars );
-		$stream			= $projected;
-		$stream->bridge( $bridge );
-# 	}
+	$self->load_data();
+	my ($pattern, $cpattern)	= $self->fixup();
+	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
+	my @vars	= $self->variables( $parsed );
 	
+	# RUN THE QUERY!
+
+	my $options	= $parsed->{options} || {};		
+	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
+	
+	_debug( "got stream: $stream" ) if (DEBUG);
+	my $sorted		= $self->sort_rows( $stream, $parsed );
+	my $projected	= $sorted->project( @vars );
+	$stream			= $projected;
+	$stream->bridge( $bridge );
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -518,7 +452,7 @@ sub as_sparql {
 	
 	my $context	= {};
 	my $method	= $parsed->{method};
-	my @vars	= map { $_->as_sparql( $context ) } @{ $parsed->{ variables } };
+	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
 	
@@ -536,8 +470,8 @@ sub as_sparql {
 		push(@mod, 'ORDER BY ' . join(' ', map {
 					my ($dir,$v) = @$_;
 					($dir eq 'ASC')
-						? $v->as_sparql( $context )
-						: "${dir}" . $v->as_sparql( $context );
+						? $v->as_sparql( $context, '' )
+						: "${dir}" . $v->as_sparql( $context, '' );
 				} @$ob));
 	}
 	if (my $l = $parsed->{options}{limit}) {
@@ -557,7 +491,7 @@ sub as_sparql {
 	} elsif ($method eq 'CONSTRUCT') {
 		my $ctriples	= $parsed->{construct_triples};
 		my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$ctriples );
-		$methoddata		= sprintf("%s %s\nWHERE", $method, $ggp->as_sparql( $context ));
+		$methoddata		= sprintf("%s %s\nWHERE", $method, $ggp->as_sparql( $context, '' ));
 	} elsif ($method eq 'DESCRIBE') {
 		my $ctriples	= $parsed->{construct_triples};
 		my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$ctriples );
@@ -571,7 +505,7 @@ sub as_sparql {
 		"%s\n%s %s\n%s",
 		join("\n", @ns),
 		$methoddata,
-		$ggp->as_sparql( $context ),
+		$ggp->as_sparql( $context, '' ),
 		$mod,
 	);
 	
@@ -617,15 +551,6 @@ sub loadable_bridge_class {
 			warn "RDF::Query::Model::RDFStoreDBI didn't load cleanly" if ($debug);
 		}
 	} else { warn "RDF::Store::DBI supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
-	
-# 	if (not $ENV{RDFQUERY_NO_RDFBASE}) {
-# 		eval "use RDF::Query::Model::RDFBase;";
-# 		if (RDF::Query::Model::RDFBase->can('new')) {
-# 			return 'RDF::Query::Model::RDFBase';
-# 		} else {
-# 			warn "RDF::Query::Model::RDFBase didn't load cleanly" if ($debug);
-# 		}
-# 	} else { warn "RDF::Base supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
 	
 	if (not $ENV{RDFQUERY_NO_REDLAND}) {
 		eval "use RDF::Query::Model::Redland;";
@@ -698,25 +623,6 @@ sub get_bridge {
 	} elsif (blessed($model) and $model->isa('RDF::Core::Model')) {
 		require RDF::Query::Model::RDFCore;
 		$bridge	= RDF::Query::Model::RDFCore->new( $model, parsed => $parsed );
-# 	} elsif (blessed($model) and $model->isa('DBD')) {
-# 		require RDF::Query::Model::RDFStoreDBI;
-# 		my $store	= RDF::Store::DBI->new( 'model', $model );
-# 		$bridge	= RDF::Query::Model::RDFStoreDBI->new( $store, parsed => $parsed );
-# 	} elsif (my $dbh = (ref($self) ? $self->{'dbh'} : undef) || $args{'dbh'}) {
-# 		require RDF::Query::Model::SQL;
-# 		no warnings 'uninitialized';
-# 		if (not length($args{'model'})) {
-# 			throw RDF::Query::Error::ExecutionError ( -text => 'No model specified for DBI-based triplestore' );
-# 		}
-# 		
-# 		my $storage	= RDF::Base::Storage::DBI->new( $dbh, $args{'model'} );
-# 		$bridge	= RDF::Query::Model::SQL->new( $storage, parsed => $parsed );
-# 	} elsif (blessed($model) and ($model->isa('RDF::Base::Model') or $model->isa('RDF::Base::Storage'))) {
-# 		if ($model->isa('RDF::Base::Storage')) {
-# 			$model	= RDF::Base::Model->new( storage => $model );
-# 		}
-# 		require RDF::Query::Model::RDFBase;
-# 		$bridge	= RDF::Query::Model::RDFBase->new( $model, parsed => $parsed );
 	} else {
 		require Data::Dumper;
 		Carp::confess "unknown model type: " . Data::Dumper::Dumper($model);
@@ -788,7 +694,6 @@ sub fixup {
 # 		}
 # 	}
 	my $native	= $pattern->fixup( $bridge, $base, $namespaces );
-	my $cnative	= 
 	$self->{known_variables}	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
 #	$parsed->{'method'}	||= 'SELECT';
 	
@@ -805,99 +710,6 @@ sub fixup {
 	return $native;
 }
 
-
-# =begin private
-# 
-# =item C<get_statements ( $subject, $predicate, $object [, $graph] )>
-# 
-# Returns a RDF::SPARQLResults iterator of statements matching the statement
-# pattern (including an optional context).
-# 
-# =end private
-# 
-# =cut
-# 
-# sub get_statements {
-# 	my $self			= shift;
-# 	my %args			= @_;
-# 	my $class			= ref($self);
-# 	
-# 	my ($s,$p,$o)		= @{ delete $args{ triple } };
-# 	my @c				= @{ (delete $args{ graph }) || [] };
-# 	my $req_context		= $args{ require_context };
-# 	my $named_graph		= $args{ named_graph };
-# 	my $bridge			= $args{ bridge };
-# 	
-# #	warn "get_statements:\n";
-# #	warn "-> " . (blessed($_) ? $bridge->as_string($_) : '') . "\n" for ($s,$p,$o);
-# 	my $stream			= $bridge->get_statements( $s, $p, $o, @c );
-# #	$stream	= swatch { warn (blessed($_) ? $bridge->as_string($_) : '') } $stream;
-# 	
-# 	if (ref($p) and $bridge->is_resource($p) and $bridge->uri_value($p) =~ m<^http://www.w3.org/2006/09/time#(.*)>) {
-#  		my $pred	= $1;
-# # 		warn "owl-time predicate: $pred\n";
-#  		if ($pred eq 'inside') {
-# #			warn "-> " . (blessed($_) ? $bridge->as_string($_) : '') . "\n" for ($s,$p,$o);
-# #			warn Dumper([$s,$p,$o]);
-#  			my $interval	= $s;
-#  			my $instant		= $o;
-#  			if ($bridge->is_node( $instant )) {
-#  				if (not defined($interval)) {
-# #		 			warn "instant: " . $instant->as_string;
-# # 					warn Data::Dumper->Dump([$interval, $instant], [qw(interval instant)]);
-#  					my ($dt)	= $self->_promote_to( $bridge, 'DateTime', $bridge->literal_as_array( $instant ) );
-#  					my $sparql	= sprintf( <<"END", ($dt) x 4 );
-#  						PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-#  						PREFIX t: <http://www.w3.org/2006/09/time#>
-#  						SELECT ?interval ?b ?e
-#  						WHERE {
-# 							{
-# 								?interval a t:Interval ;
-# 											t:begins ?b ; t:ends ?e .
-# 								FILTER( ?b <= "%s"^^xsd:dateTime && ?e > "%s"^^xsd:dateTime )
-# 							} UNION {
-# 								?interval a t:Interval ;
-# 											t:begins ?b .
-# 								OPTIONAL { ?interval t:ends ?e } .
-# 								FILTER( !BOUND(?e) ) .
-# 								FILTER( ?b <= "%s"^^xsd:dateTime )
-# 							} UNION {
-# 								?interval a t:Interval .
-# 								OPTIONAL { ?interval t:begins ?b } .
-# 								?interval t:ends ?e .
-# 								FILTER( !BOUND(?b) ) .
-# 								FILTER( ?e > "%s"^^xsd:dateTime )
-# 							} UNION {
-# 								?interval a t:Interval .
-# 								OPTIONAL { ?interval t:begins ?b } .
-# 								OPTIONAL { ?interval t:ends ?e } .
-# 								FILTER( !BOUND(?b) && !BOUND(?e) ) .
-# 							}
-#  						}
-# END
-# 					my $query		= $class->new( $sparql, undef, undef, 'sparql' );
-# 					my $time_stream	= $query->execute( $bridge->model );
-# 					my $inside		= $bridge->new_resource('http://www.w3.org/2006/09/time#inside');
-# 					my $time_stmts	= smap {
-# 										return undef unless (reftype($_) eq 'ARRAY');
-# 										warn sprintf("found an interval that contains $dt: [%s, %s]", map {blessed($_) ? $bridge->as_string($_) : '' } (@{$_}[1,2]));
-# 										my $stmt	= $bridge->new_statement($_->[0],$inside,$instant);
-# 										$stmt
-# 									} $time_stream;
-# 					$stream			= $stream->concat( $time_stmts );
-#  				} else {
-#  					warn "time:inside called with known interval";
-#  				}
-#  			} else {
-#  				warn "cannot inference time:inside without a time instant";
-#  			}
-#  		}
-#  	}
-# 	
-# 	
-# 	return $stream;
-# 	
-# }
 
 =begin private
 
@@ -2383,16 +2195,6 @@ sub _debug {
 		}
 	}
 }
-
-# sub _PROFILE {
-# 	my $enter	= shift;
-# 	my $name	= shift;
-# 	my $time	= gettimeofday();
-# #	my ($package, $filename, $line, $sub)	= caller(2);
-# 	my $char	= ($enter) ? '>' : '<';
-# 	print {$PROF} "${char} $name $time\n";
-# }
-
 
 
 1;
