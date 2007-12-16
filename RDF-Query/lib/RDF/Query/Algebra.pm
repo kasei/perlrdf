@@ -48,6 +48,13 @@ sub referenced_blanks {
 	return uniq(@list);
 }
 
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
+
 sub check_duplicate_blanks {
 	my $self	= shift;
 	foreach my $arg ($self->construct_args) {

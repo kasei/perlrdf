@@ -104,11 +104,12 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(union %s %s)',
-		$self->first->sse,
-		$self->second->sse
+		$self->first->sse( $context ),
+		$self->second->sse( $context )
 	);
 }
 
@@ -161,7 +162,7 @@ sub definite_variables {
 	my $self	= shift;
 	my $seta	= Set::Scalar->new( $self->first->definite_variables );
 	my $setb	= Set::Scalar->new( $self->second->definite_variables );
-	return $seta->intersection( $setb );
+	return $seta->intersection( $setb )->members;
 }
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>

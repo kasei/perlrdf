@@ -450,7 +450,7 @@ sub as_sparql {
 	my $self	= shift;
 	my $parsed	= $self->parsed;
 	
-	my $context	= {};
+	my $context	= { namespaces => $self->{parsed}{namespaces} };
 	my $method	= $parsed->{method};
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
@@ -498,9 +498,6 @@ sub as_sparql {
 		$methoddata		= sprintf("%s %s\nWHERE", $method, $vars);
 	}
 	
-	
-	
-	
 	my $sparql	= sprintf(
 		"%s\n%s %s\n%s",
 		join("\n", @ns),
@@ -511,6 +508,24 @@ sub as_sparql {
 	
 	chomp($sparql);
 	return $sparql;
+}
+
+=item C<< sse >>
+
+Returns the query as a string in the SSE syntax.
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $parsed	= $self->parsed;
+	
+	my $ggp		= $self->pattern;
+	my $context	= { namespaces => $self->{parsed}{namespaces} };
+	my $sse	= $ggp->sse( $context, '' );
+	
+	chomp($sse);
+	return $sse;
 }
 
 =begin private
@@ -1316,9 +1331,11 @@ sub _promote_to {
 		@objects	= map {
 						(blessed($_) and $_->isa($type))
 							? $_
-							: (reftype($_) eq 'ARRAY' and $_->[0] eq 'LITERAL')
+							: (blessed($_) and $_->isa('RDF::Query::Node::Literal'))
 								? $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', $_ )
-								: $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', RDF::Query::Node::Literal->new( @$_ ) );
+								: (blessed($_) and $bridge->is_literal($_))
+									? $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', $_ )
+									: $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', RDF::Query::Node::Literal->new( @$_ ) )
 					} @objects;
 	}
 	return @objects;

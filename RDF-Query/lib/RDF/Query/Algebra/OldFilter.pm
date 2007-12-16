@@ -135,10 +135,11 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(oldfilter %s)',
-		$self->expr->sse,
+		$self->expr->sse( $context ),
 	);
 }
 

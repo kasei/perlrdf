@@ -117,6 +117,7 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
@@ -127,7 +128,7 @@ sub sse {
 	
 	return sprintf(
 		'(aggregate %s (%s) %s)',
-		$self->pattern->sse,
+		$self->pattern->sse( $context ),
 		join(', ', $self->groupby),
 		join(', ', @ops_sse)
 	);

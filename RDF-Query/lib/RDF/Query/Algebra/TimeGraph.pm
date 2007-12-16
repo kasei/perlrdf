@@ -105,12 +105,13 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(time %s %s %s)',
-		$self->interval->sse,
-		$self->pattern->sse,
-		$self->time_triples->sse,
+		$self->interval->sse( $context ),
+		$self->pattern->sse( $context ),
+		$self->time_triples->sse( $context ),
 	);
 }
 

@@ -99,11 +99,12 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(namedgraph %s %s)',
-		$self->graph->sse,
-		$self->pattern->sse
+		$self->graph->sse( $context ),
+		$self->pattern->sse( $context )
 	);
 }
 

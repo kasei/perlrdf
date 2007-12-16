@@ -92,11 +92,12 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(leftjoin %s %s)',
-		$self->pattern->sse,
-		$self->optional->sse
+		$self->pattern->sse( $context ),
+		$self->optional->sse( $context )
 	);
 }
 

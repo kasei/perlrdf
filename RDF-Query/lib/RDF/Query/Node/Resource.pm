@@ -109,13 +109,24 @@ Returns the SSE string for this resource.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	my $uri		= $self->uri_value;
+	my $ns		= $context->{namespaces};
+	
 	if (ref($uri) and reftype($uri) eq 'ARRAY') {
 		my ($ns, $local)	= @$uri;
 		$ns	= '' if ($ns eq '__DEFAULT__');
 		return join(':', $ns, $local);
 	} else {
-		return qq(<${uri}>);
+		my $string	= qq(<${uri}>);
+		foreach my $n (keys %$ns) {
+			if (substr($uri, 0, length($ns->{ $n })) eq $ns->{ $n }) {
+				$string	= join(':', $n, substr($uri, length($ns->{ $n })));
+				last;
+			}
+		}
+		
+		return $string;
 	}
 }
 

@@ -128,12 +128,12 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
-	
+	my $context	= shift;
 	return sprintf(
 		'(triple %s %s %s)',
-		$self->subject->sse,
-		$self->predicate->sse,
-		$self->object->sse,
+		$self->subject->sse( $context ),
+		$self->predicate->sse( $context ),
+		$self->object->sse( $context ),
 	);
 }
 

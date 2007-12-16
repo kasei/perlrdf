@@ -105,11 +105,12 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(function %s %s)',
 		$self->uri,
-		join(' ', map { $self->sse } $self->arguments),
+		join(' ', map { $self->sse( $context ) } $self->arguments),
 	);
 }
 

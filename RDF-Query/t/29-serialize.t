@@ -6,7 +6,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::More;
-plan tests => 14;
+plan tests => 16;
 
 use_ok( 'RDF::Query' );
 
@@ -128,8 +128,7 @@ END
 		SELECT ?person
 		WHERE { ?person foaf:name "Gregory Todd Williams" }
 END
-	my $pattern	= $query->pattern;
-	my $sse		= $pattern->sse;
+	my $sse	= $query->sse;
 	is( $sse, '(join (bgp (triple ?person foaf:name "Gregory Todd Williams")))', 'sse: select' );
 }
 
@@ -144,8 +143,7 @@ END
 			}
 		}
 END
-	my $pattern	= $query->pattern;
-	my $sse		= $pattern->sse;
+	my $sse	= $query->sse;
 	is( $sse, '(join (namedgraph ?g (join (bgp (triple _:a1 foaf:name "Gregory Todd Williams")))))', 'sse: select with named graph' );
 }
 
@@ -160,8 +158,7 @@ END
 			{ [ dc:title ?name ] }
 		}
 END
-	my $pattern	= $query->pattern;
-	my $sse		= $pattern->sse;
+	my $sse	= $query->sse;
 	is( $sse, '(join (union (join (bgp (triple _:a1 foaf:name ?name))) (join (bgp (triple _:a2 dc:title ?name)))))', 'sse: select with union' );
 }
 
@@ -175,8 +172,7 @@ END
 			FILTER( ?name < "Greg" )
 		}
 END
-	my $pattern	= $query->pattern;
-	my $sse		= eval { $pattern->sse };
+	my $sse		= eval { $query->sse };
 	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter <' );
 }
 
@@ -190,8 +186,7 @@ END
 			FILTER( REGEX(?name, "Greg") )
 		}
 END
-	my $pattern	= $query->pattern;
-	my $sse		= eval { $pattern->sse };
+	my $sse		= eval { $query->sse };
 	is( $sse, '(filter (regex ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter regex' );
 }
 

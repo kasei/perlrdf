@@ -92,10 +92,11 @@ Returns the SSE string for this alegbra expression.
 
 sub sse {
 	my $self	= shift;
+	my $context	= shift;
 	
 	return sprintf(
 		'(join %s)',
-		join(' ', map { $_->sse } $self->patterns)
+		join(' ', map { $_->sse( $context ) } $self->patterns)
 	);
 }
 
@@ -150,6 +151,13 @@ sub definite_variables {
 	my $self	= shift;
 	return uniq(map { $_->definite_variables } $self->patterns);
 }
+
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
 
 sub check_duplicate_blanks {
 	my $self	= shift;
