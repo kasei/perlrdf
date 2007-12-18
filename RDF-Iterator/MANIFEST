@@ -1,0 +1,19 @@
+Changes
+MANIFEST
+META.yml # Will be created by "make dist"
+Makefile.PL
+README
+SIGNATURE
+lib/RDF/Iterator.pm
+lib/RDF/Iterator/Boolean.pm
+lib/RDF/Iterator/Bindings.pm
+lib/RDF/Iterator/Graph.pm
+inc/Module/Install.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/Metadata.pm
+t/00.load.t
+t/pod-coverage.t
+t/pod.t
+t/streams.t

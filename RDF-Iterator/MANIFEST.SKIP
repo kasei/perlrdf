@@ -1,0 +1,16 @@
+.cvsignore
+inc/.author
+MANIFEST.SKIP
+Makefile
+.DS_Store
+.svn
+t/dawg/
+benchmark/
+t/esparql-count.t.dev
+t/esparql-filtered_select.t.dev
+temp/
+test.pl
+test-geo.pl
+lib/RDF/Query/Model/SQL/Statement.pm
+t/24-optimizer-multiget.t.disabled
+t/disabled/
