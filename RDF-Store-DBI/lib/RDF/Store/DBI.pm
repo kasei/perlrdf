@@ -53,9 +53,9 @@ use Math::BigInt;
 use Data::Dumper;
 use RDF::Query::Node;
 use RDF::Query::Algebra;
-use RDF::SPARQLResults;
+use RDF::Iterator;
 
-our $VERSION	= "0.002";
+our $VERSION	= "0.003";
 use constant DEBUG	=> 0;
 our $debug		= DEBUG;
 
@@ -163,7 +163,7 @@ sub get_statements {
 		return $triple;
 	};
 	
-	return RDF::SPARQLResults::Graph->new( $sub )
+	return RDF::Iterator::Graph->new( $sub )
 }
 
 
@@ -226,7 +226,7 @@ sub get_pattern {
 		}
 		@args	= ( sorted_by => \@realordering );
 	}
-	return RDF::SPARQLResults::Bindings->new( $sub, \@vars, @args )
+	return RDF::Iterator::Bindings->new( $sub, \@vars, @args )
 }
 
 
@@ -255,7 +255,7 @@ sub get_contexts {
  			return;
  		}
  	};
- 	return RDF::SPARQLResults->new( $sub );
+ 	return RDF::Iterator->new( $sub );
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -729,9 +729,6 @@ sub _mysql_node_hash {
 	my $data;
 	if ($node->isa('RDF::Query::Node::Resource')) {
 		my $value	= $node->uri_value;
-		if (ref($value)) {
-			$value	= $self->qualify_uri( $value );
-		}
 		$data	= 'R' . $value;
 	} elsif ($node->isa('RDF::Query::Node::Blank')) {
 		my $value	= $node->blank_identifier;

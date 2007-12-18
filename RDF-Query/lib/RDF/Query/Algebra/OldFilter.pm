@@ -204,6 +204,16 @@ sub referenced_variables {
 	}
 }
 
+=item C<< definite_variables >>
+
+Returns a list of the variable names that will be bound after evaluating this algebra expression.
+
+=cut
+
+sub definite_variables {
+	my $self	= shift;
+	return ();
+}
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 

@@ -8,6 +8,10 @@
 
 RDF::Query::Node - Base class for Algebra expressions
 
+=head1 METHODS
+
+=over 4
+
 =cut
 
 package RDF::Query::Algebra;
@@ -91,6 +95,8 @@ sub qualify_uris {
 1;
 
 __END__
+
+=back
 
 =head1 AUTHOR
 

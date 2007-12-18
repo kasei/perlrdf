@@ -19,7 +19,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
-use RDF::SPARQLResults qw(smap sgrep swatch);
+use RDF::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
@@ -228,7 +228,7 @@ sub execute {
 		}
 	}
 	
-	my $stream	= RDF::SPARQLResults::Bindings->new( \@results, \@names );
+	my $stream	= RDF::Iterator::Bindings->new( \@results, \@names );
 	$stream	= swatch {
 		my $row	= $_;
 #		warn "[OPTIONAL] " . join(', ', map { join('=',$_,$bridge->as_string($row->{$_})) } (keys %$row)) . "\n";

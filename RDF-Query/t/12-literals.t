@@ -25,7 +25,7 @@ foreach my $model (@models) {
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		my $current	= $stream->current;
 		isa_ok( $current, 'HASH' );
 		my ($p, $h)	= @{ $current }{qw(person homepage)};
@@ -44,7 +44,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		my $current	= $stream->current;
 		isa_ok( $current, 'HASH' );
 		my ($h)	= @{ $current }{image};

@@ -14,7 +14,7 @@ use Scalar::Util qw(blessed reftype);
 use Unicode::Normalize qw(normalize);
 use Encode;
 
-use RDF::SPARQLResults;
+use RDF::Iterator;
 
 ######################################################################
 
@@ -553,7 +553,7 @@ sub get_statements {
 		}
 	}
 	
-	return RDF::SPARQLResults::Graph->new( $stream, %args );
+	return RDF::Iterator::Graph->new( $stream, %args );
 }
 
 

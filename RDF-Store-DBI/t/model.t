@@ -119,7 +119,7 @@ foreach my $store (@$stores) {
 	
 	{
 		my $stream	= $store->model_as_stream();
-		isa_ok( $stream, 'RDF::SPARQLResults::Graph' );
+		isa_ok( $stream, 'RDF::Iterator::Graph' );
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			my $p	= $st->predicate;

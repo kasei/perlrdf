@@ -21,7 +21,7 @@ use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
-use RDF::SPARQLResults qw(smap sgrep swatch);
+use RDF::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
@@ -427,7 +427,7 @@ sub execute {
 		my $r	= $bindings->next;
 		return $r;
 	};
-	return RDF::SPARQLResults::Bindings->new( $sub, [grep defined, @vars], bridge => $bridge );
+	return RDF::Iterator::Bindings->new( $sub, [grep defined, @vars], bridge => $bridge );
 }
 
 

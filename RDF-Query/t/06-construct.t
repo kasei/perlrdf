@@ -25,7 +25,7 @@ foreach my $model (@models) {
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults', 'stream' );
+		isa_ok( $stream, 'RDF::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next()) {
 			my $p	= $bridge->predicate( $stmt );
@@ -45,7 +45,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults', 'stream' );
+		isa_ok( $stream, 'RDF::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->()) {
 			my $p	= $bridge->predicate( $stmt );
@@ -65,7 +65,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults', 'stream' );
+		isa_ok( $stream, 'RDF::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next) {
 			my $p	= $bridge->predicate( $stmt );

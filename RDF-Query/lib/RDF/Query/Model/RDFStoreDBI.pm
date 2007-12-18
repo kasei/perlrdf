@@ -15,7 +15,7 @@ use Scalar::Util qw(blessed reftype);
 use LWP::Simple qw(get);
 use Encode;
 
-use RDF::SPARQLResults;
+use RDF::Iterator;
 
 ######################################################################
 
@@ -450,7 +450,7 @@ sub get_statements {
 	my $context	= shift;
 	if ($context and $context->isa('RDF::Query::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::SPARQLResults::Graph->new( [], bridge => $self );
+			return RDF::Iterator::Graph->new( [], bridge => $self );
 		}
 	}
 	
@@ -571,7 +571,7 @@ sub unify_bgp {
 	
 	if ($context and $context->isa('RDF::Query::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::SPARQLResults::Bindings->new( [], [], bridge => $self );
+			return RDF::Iterator::Bindings->new( [], [], bridge => $self );
 		}
 	}
 	

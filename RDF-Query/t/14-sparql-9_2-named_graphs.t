@@ -225,7 +225,7 @@ END
 END
 		my $stream	= $query->execute();
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		my $count	= 0;
 		while (my $data = $stream->next) {
 			$count++;
@@ -251,7 +251,7 @@ END
 END
 		my $stream	= $query->execute();
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		my $count	= 0;
 		while (my $data = $stream->next) {
 			$count++;
@@ -277,7 +277,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		my $count	= 0;
 		while ($stream and not $stream->finished) {
 			my $row		= $stream->current;

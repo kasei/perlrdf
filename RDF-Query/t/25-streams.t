@@ -13,7 +13,7 @@ my (@data)	= test_models_and_classes( @files );
 use Test::More;
 plan tests => 1 + 15 * scalar(@data);
 
-use RDF::SPARQLResults (qw(sgrep smap));
+use RDF::Iterator (qw(sgrep smap));
 
 use_ok( 'RDF::Query' );
 foreach my $data (@data) {
@@ -36,7 +36,7 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		
 		my @names	= $stream->binding_names;
 		is_deeply( \@names, [qw(person homepage)], 'binding_names' );

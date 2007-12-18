@@ -22,7 +22,7 @@ use RDF::Query::Error;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
-use RDF::SPARQLResults qw(sgrep smap swatch);
+use RDF::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
@@ -254,7 +254,7 @@ sub execute {
 				$row{ $cvar }	= $name;
 				return \%row;
 			};
-			$stream	= RDF::SPARQLResults::Bindings->new( $sub, [uniq($_stream->binding_names, $cvar)], bridge => $bridge );
+			$stream	= RDF::Iterator::Bindings->new( $sub, [uniq($_stream->binding_names, $cvar)], bridge => $bridge );
 # 			$stream	= smap {
 # 				my $row	= $_;
 # 				return { %$row, $cvar => $name };
@@ -271,7 +271,7 @@ sub execute {
 	}
 	
 	unless ($nstream) {
-		$nstream	= RDF::SPARQLResults::Bindings->new( [], [] );
+		$nstream	= RDF::Iterator::Bindings->new( [], [] );
 	}
 	_debug( 'named stream: ' . $nstream, 1 ) if (DEBUG);
 	_debug_closure( $nstream ) if (DEBUG);

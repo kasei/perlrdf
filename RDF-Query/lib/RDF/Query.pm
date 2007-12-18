@@ -49,7 +49,7 @@ L<Storable|Storable>
 
 L<List::Utils|List::Utils>
 
-L<RDF::SPARQLResults|RDF::SPARQLResults>
+L<RDF::Iterator|RDF::Iterator>
 
 =cut
 
@@ -67,7 +67,7 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
-use RDF::SPARQLResults qw(sgrep smap swatch);
+use RDF::Iterator qw(sgrep smap swatch);
 
 use RDF::Query::Functions;	# all the built-in functions including:
 							#     datatype casting, language ops, logical ops,
@@ -302,7 +302,7 @@ sub describe {
 			}
 		}
 	};
-	return RDF::SPARQLResults::Graph->new( $ret, bridge => $bridge );
+	return RDF::Iterator::Graph->new( $ret, bridge => $bridge );
 }
 
 =begin private
@@ -359,7 +359,7 @@ sub construct {
 			my $st	= $bridge->new_statement( @triple );
 			push(@triples, $st);
 		}
-		push(@streams, RDF::SPARQLResults::Graph->new( sub { shift(@triples) } ));
+		push(@streams, RDF::Iterator::Graph->new( sub { shift(@triples) } ));
 	}
 	
 	
@@ -375,7 +375,7 @@ sub construct {
 		}
 		return undef;
 	};
-	return RDF::SPARQLResults::Graph->new( $ret, bridge => $bridge );
+	return RDF::Iterator::Graph->new( $ret, bridge => $bridge );
 }
 
 =begin private
@@ -393,7 +393,7 @@ sub ask {
 	my $stream	= shift;
 	my $value	= $stream->next;
 	my $bool	= ($value) ? 1 : 0;
-	return RDF::SPARQLResults::Boolean->new( [ $bool ], bridge => $self->bridge );
+	return RDF::Iterator::Boolean->new( [ $bool ], bridge => $self->bridge );
 }
 
 ######################################################################
@@ -1972,7 +1972,7 @@ sub sort_rows {
 			my $type	= $nodes->type;
 			my $names	= [$nodes->binding_names];
 			my $args	= $nodes->_args;
-			$nodes		= RDF::SPARQLResults::Bindings->new( sub { shift(@nodes) }, $names, %$args );
+			$nodes		= RDF::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args );
 		}
 	}
 	

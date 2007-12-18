@@ -19,7 +19,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
-use RDF::SPARQLResults qw(smap);
+use RDF::Iterator qw(smap);
 
 ######################################################################
 
@@ -204,10 +204,10 @@ sub execute {
 			while (@streams > 1) {
 				my $a	= shift(@streams);
 				my $b	= shift(@streams);
-				unshift(@streams, RDF::SPARQLResults->join_streams( $a, $b, $bridge ));
+				unshift(@streams, RDF::Iterator->join_streams( $a, $b, $bridge ));
 			}
 		} else {
-			push(@streams, RDF::SPARQLResults::Bindings->new([{}], []));
+			push(@streams, RDF::Iterator::Bindings->new([{}], []));
 		}
 		my $stream	= shift(@streams);
 		return $stream;

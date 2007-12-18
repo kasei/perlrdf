@@ -28,7 +28,7 @@ foreach my $model (@models) {
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		while (my $row = $stream->next) {
 			my ($thing, $name)	= @{ $row }{qw(thing name)};
 			like( $query->bridge->as_string( $thing ), qr/kasei|xmlns|[(]|_:/, 'union person|thing' );
@@ -49,7 +49,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::SPARQLResults' );
+		isa_ok( $stream, 'RDF::Iterator' );
 		while (my $row = $stream->next) {
 			my ($thing, $name)	= @{ $row }{qw(thing name)};
 			like( $query->bridge->as_string( $thing ), qr/kasei|xmlns|[(]|_:/, 'union person|thing' );

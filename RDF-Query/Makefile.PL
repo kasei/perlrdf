@@ -32,7 +32,7 @@ WriteMakefile(
 					'JSON'						=> 0,
 					'URI'						=> 0,
 					'List::MoreUtils'			=> 0,
-					'RDF::SPARQLResults'		=> 1,
+					'RDF::Iterator'				=> 1,
 					'RDF::Parser'				=> 0,
 					'Set::Scalar'				=> 0,
 					'File::Spec'				=> 0,
