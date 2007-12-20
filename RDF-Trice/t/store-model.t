@@ -1,4 +1,4 @@
-use Test::More tests => 177;
+use Test::More tests => 180;
 use Test::Exception;
 
 use strict;
@@ -177,6 +177,11 @@ foreach my $store (@$stores) {
 		}
 		is( $count, 2, 'expected result count (2 names)' );
 		is( $dt, 1, 'expected result count (1 datatyped literal)' );
+	}
+	
+	{
+		$store->remove_statements( $p );
+		is( $store->count_statements(), 2, 'model size after remove_statements' );
 	}
 	
 	SKIP: {

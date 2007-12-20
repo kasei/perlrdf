@@ -48,6 +48,13 @@ sub new {
 	my $class	= shift;
 	my @nodes	= @_;
 	Carp::confess "Triple constructor must have three node arguments" unless (scalar(@nodes) == 3);
+	my @names	= qw(subject predicate object);
+	foreach my $i (0 .. 2) {
+		unless (defined($nodes[ $i ])) {
+			$nodes[ $i ]	= RDF::Trice::Node::Variable->new($names[ $i ]);
+		}
+	}
+	
 	return bless( [ @nodes ], $class );
 }
 
@@ -144,7 +151,7 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
 	my $pred	= $self->predicate->as_sparql( $context );
@@ -179,7 +186,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { $_->isa('RDF::Trice::Node::Variable') } $self->nodes);
+	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Trice::Node::Variable') } $self->nodes);
 }
 
 =item C<< definite_variables >>

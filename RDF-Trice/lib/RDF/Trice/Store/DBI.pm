@@ -144,6 +144,7 @@ sub get_statements {
 		return undef unless (defined $row);
 		
 		my @triple;
+		my $temp_var_count	= 1;
 		foreach my $node ($triple->nodes) {
 			if ($node->is_variable) {
 				my $name	= $node->name;
@@ -240,7 +241,7 @@ sub get_contexts {
 	my $dbh		= $self->dbh;
 	my $model	= $self->model_name;
 	my $id		= _mysql_hash( $model );
- 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM Statements${id} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0;";
+ 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM Statements${id} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
  	my $sth		= $dbh->prepare( $sql );
  	$sth->execute();
  	my $sub		= sub {
@@ -311,6 +312,38 @@ sub remove_statement {
 	my @nodes	= $stmt->nodes;
 	my $sth		= $dbh->prepare("DELETE FROM Statements${id} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
 	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes, $context);
+	$sth->execute( @values );
+}
+
+=item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
+
+Removes the specified C<$statement> from the underlying model.
+
+=cut
+
+sub remove_statements {
+	my $self	= shift;
+	my $subj	= shift;
+	my $pred	= shift;
+	my $obj		= shift;
+	my $context	= shift;
+	my $dbh		= $self->dbh;
+	my $model	= $self->model_name;
+	my $id		= _mysql_hash( $model );
+	
+	my (@where, @bind);
+	my @keys	= qw(Subject Predicate Object Context);
+	foreach my $node ($subj, $pred, $obj, $context) {
+		my $key	= shift(@keys);
+		if (defined($node)) {
+			push(@bind, $node);
+			push(@where, "${key} = ?");
+		}
+	}
+	
+	my $where	= join(" AND ", @where);
+	my $sth		= $dbh->prepare("DELETE FROM Statements${id} WHERE ${where}");
+	my @values	= map { $self->_mysql_node_hash( $_ ) } (@bind);
 	$sth->execute( @values );
 }
 

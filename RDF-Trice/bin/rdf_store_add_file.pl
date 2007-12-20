@@ -5,8 +5,8 @@ use warnings;
 use File::Spec;
 use File::Slurp;
 use RDF::Redland;
+use LWP::UserAgent;
 use RDF::Store::DBI;
-use LWP::Simple qw(get);
 use RDF::Trice::Statement;
 
 unless (@ARGV >= 6) {
@@ -41,7 +41,16 @@ if ($server eq 'mysql') {
 my $data;
 my $store	= RDF::Store::DBI->new($model, $dsn, $user, $pass);
 if ($file =~ qr[^http(s?)://]) {
-	$data		= get( $file );
+	my $ua	= LWP::UserAgent->new;
+	$ua->agent( "RDF::Trice/${RDF::Trice::VERSION}" );
+	$ua->default_header( 'Accept' => 'application/turtle,application/x-turtle,application/rdf+xml' );
+	my $resp	= $ua->get( $file );
+	if ($resp->is_success) {
+		$data		= $resp->content;
+	} else {
+		die $resp->status_line;
+	}
+	
 	unless ($base) {
 		$base		= $file;
 	}
@@ -52,8 +61,8 @@ if ($file =~ qr[^http(s?)://]) {
 		$base	= 'file://' . $abs;
 	}
 }
-my $format	= 'guess';
 
+my $format	= 'guess';
 my $baseuri		= RDF::Redland::URI->new( $base );
 my $basenode	= RDF::Trice::Node::Resource->new( $base );
 my $parser		= RDF::Redland::Parser->new( $format );
