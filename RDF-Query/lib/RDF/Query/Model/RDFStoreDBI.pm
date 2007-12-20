@@ -6,16 +6,16 @@ use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak confess);
 
-use RDF::Parser;
 use RDF::Query::Error (':try');
 use File::Spec;
-use RDF::Store::DBI;
+use RDF::Trice::Parser;
+use RDF::Trice::Store::DBI;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use LWP::Simple qw(get);
 use Encode;
 
-use RDF::Iterator;
+use RDF::Trice::Iterator;
 
 ######################################################################
 
@@ -43,10 +43,10 @@ sub new {
 	my %args	= @_;
 	
 	if (not defined $model) {
-		$model	= RDF::Store::DBI->temporary_store();
+		$model	= RDF::Trice::Store::DBI->temporary_store();
 	}
 
-	throw RDF::Query::Error::MethodInvocationError ( -text => 'Not a RDF::Store::DBI passed to bridge constructor' ) unless (blessed($model) and $model->isa('RDF::Store::DBI'));
+	throw RDF::Query::Error::MethodInvocationError ( -text => 'Not a RDF::Trice::Store::DBI passed to bridge constructor' ) unless (blessed($model) and $model->isa('RDF::Trice::Store::DBI'));
 	
 	my $self	= bless( {
 					model	=> $model,
@@ -69,7 +69,7 @@ resources and blanks).
 sub meta {
 	return {
 		class		=> __PACKAGE__,
-		model		=> 'RDF::Store::DBI',
+		model		=> 'RDF::Trice::Store::DBI',
 		statement	=> 'RDF::Query::Algebra::Triple',
 		node		=> 'RDF::Query::Node',
 		resource	=> 'RDF::Query::Node::Resource',
@@ -373,10 +373,10 @@ sub add_string {
 	}
 	
 	$self->set_context( $base );
-	my $parser	= RDF::Parser->new('turtle');
+	my $parser	= RDF::Trice::Parser->new('turtle');
 	try {
 		$parser->parse_into_model( $base, $data, $self );
-	} catch RDF::Parser::Error with {
+	} catch RDF::Trice::Parser::Error with {
 		require RDF::Redland;
 		my $uri		= RDF::Redland::URI->new( $base );
 		my $parser	= RDF::Redland::Parser->new($format);
@@ -450,7 +450,7 @@ sub get_statements {
 	my $context	= shift;
 	if ($context and $context->isa('RDF::Query::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::Iterator::Graph->new( [], bridge => $self );
+			return RDF::Trice::Iterator::Graph->new( [], bridge => $self );
 		}
 	}
 	
@@ -512,7 +512,7 @@ sub set_context {
 	my $self	= shift;
 	my $name	= shift;
 	if (exists($self->{context}) and not($self->{ignore_contexts})) {
-		Carp::confess "RDF::Store::DBI models can only represent a single context" unless ($self->{context} eq $name);
+		Carp::confess "RDF::Trice::Store::DBI models can only represent a single context" unless ($self->{context} eq $name);
 	}
 	$self->{context}	= $name;
 }
@@ -571,7 +571,7 @@ sub unify_bgp {
 	
 	if ($context and $context->isa('RDF::Query::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::Iterator::Bindings->new( [], [], bridge => $self );
+			return RDF::Trice::Iterator::Bindings->new( [], [], bridge => $self );
 		}
 	}
 	
