@@ -16,7 +16,7 @@ use RDF::Core::Model::Serializer;
 use Scalar::Util qw(blessed);
 use Unicode::Normalize qw(normalize);
 
-use RDF::Iterator;
+use RDF::Trice::Iterator;
 
 ######################################################################
 
@@ -533,7 +533,7 @@ sub get_statements {
 	my $context	= shift;
 	if ($context) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::Iterator::Graph->new( sub {undef}, bridge => $self );
+			return RDF::Trice::Iterator::Graph->new( sub {undef}, bridge => $self );
 		}
 	}
 	
@@ -550,7 +550,7 @@ sub get_statements {
 		return $ret;
 	};
 	
-	return RDF::Iterator::Graph->new( $stream, bridge => $self );
+	return RDF::Trice::Iterator::Graph->new( $stream, bridge => $self );
 }
 
 =item C<< add_statement ( $statement ) >>

@@ -49,7 +49,7 @@ L<Storable|Storable>
 
 L<List::Utils|List::Utils>
 
-L<RDF::Iterator|RDF::Iterator>
+L<RDF::Trice::Iterator|RDF::Trice::Iterator>
 
 =cut
 
@@ -67,7 +67,7 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
-use RDF::Iterator qw(sgrep smap swatch);
+use RDF::Trice::Iterator qw(sgrep smap swatch);
 
 use RDF::Query::Functions;	# all the built-in functions including:
 							#     datatype casting, language ops, logical ops,
@@ -302,7 +302,7 @@ sub describe {
 			}
 		}
 	};
-	return RDF::Iterator::Graph->new( $ret, bridge => $bridge );
+	return RDF::Trice::Iterator::Graph->new( $ret, bridge => $bridge );
 }
 
 =begin private
@@ -359,7 +359,7 @@ sub construct {
 			my $st	= $bridge->new_statement( @triple );
 			push(@triples, $st);
 		}
-		push(@streams, RDF::Iterator::Graph->new( sub { shift(@triples) } ));
+		push(@streams, RDF::Trice::Iterator::Graph->new( sub { shift(@triples) } ));
 	}
 	
 	
@@ -375,7 +375,7 @@ sub construct {
 		}
 		return undef;
 	};
-	return RDF::Iterator::Graph->new( $ret, bridge => $bridge );
+	return RDF::Trice::Iterator::Graph->new( $ret, bridge => $bridge );
 }
 
 =begin private
@@ -393,7 +393,7 @@ sub ask {
 	my $stream	= shift;
 	my $value	= $stream->next;
 	my $bool	= ($value) ? 1 : 0;
-	return RDF::Iterator::Boolean->new( [ $bool ], bridge => $self->bridge );
+	return RDF::Trice::Iterator::Boolean->new( [ $bool ], bridge => $self->bridge );
 }
 
 ######################################################################
@@ -558,14 +558,14 @@ Returns the class name of a model backend that is present and loadable on the sy
 sub loadable_bridge_class {
 	my $self	= shift;
 	
-	if (not $ENV{RDFQUERY_NO_RDFSTORE}) {
-		eval "use RDF::Query::Model::RDFStoreDBI;";
-		if (RDF::Query::Model::RDFStoreDBI->can('new')) {
-			return 'RDF::Query::Model::RDFStoreDBI';
+	if (not $ENV{RDFQUERY_NO_RDFTRICE}) {
+		eval "use RDF::Query::Model::RDFTrice;";
+		if (RDF::Query::Model::RDFTrice->can('new')) {
+			return 'RDF::Query::Model::RDFTrice';
 		} else {
-			warn "RDF::Query::Model::RDFStoreDBI didn't load cleanly" if ($debug);
+			warn "RDF::Query::Model::RDFTrice didn't load cleanly" if ($debug);
 		}
-	} else { warn "RDF::Store::DBI supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
+	} else { warn "RDF::Trice supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
 	
 	if (not $ENV{RDFQUERY_NO_REDLAND}) {
 		eval "use RDF::Query::Model::Redland;";
@@ -629,9 +629,9 @@ sub get_bridge {
 	my $bridge;
 	if (not $model) {
 		$bridge	= $self->new_bridge();
-	} elsif (blessed($model) and $model->isa('RDF::Store::DBI')) {
-		require RDF::Query::Model::RDFStoreDBI;
-		$bridge	= RDF::Query::Model::RDFStoreDBI->new( $model, parsed => $parsed );
+	} elsif (blessed($model) and $model->isa('RDF::Trice::Store::DBI')) {
+		require RDF::Query::Model::RDFTrice;
+		$bridge	= RDF::Query::Model::RDFTrice->new( $model, parsed => $parsed );
 	} elsif (blessed($model) and $model->isa('RDF::Redland::Model')) {
 		require RDF::Query::Model::Redland;
 		$bridge	= RDF::Query::Model::Redland->new( $model, parsed => $parsed );
@@ -1972,7 +1972,7 @@ sub sort_rows {
 			my $type	= $nodes->type;
 			my $names	= [$nodes->binding_names];
 			my $args	= $nodes->_args;
-			$nodes		= RDF::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args );
+			$nodes		= RDF::Trice::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args );
 		}
 	}
 	

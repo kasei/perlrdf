@@ -14,7 +14,7 @@ use Scalar::Util qw(blessed reftype);
 use Unicode::Normalize qw(normalize);
 use Encode;
 
-use RDF::Iterator;
+use RDF::Trice::Iterator;
 
 ######################################################################
 
@@ -553,7 +553,7 @@ sub get_statements {
 		}
 	}
 	
-	return RDF::Iterator::Graph->new( $stream, %args );
+	return RDF::Trice::Iterator::Graph->new( $stream, %args );
 }
 
 

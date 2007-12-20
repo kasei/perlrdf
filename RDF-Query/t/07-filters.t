@@ -59,7 +59,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my $count	= 0;
 		while (my $row = $stream->()) {
 			isa_ok( $row, "HASH" );
@@ -83,7 +83,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my $count	= 0;
 		while (my $row = $stream->()) {
 			isa_ok( $row, "HASH" );

@@ -32,7 +32,7 @@ foreach my $model (@models) {
 END
 			my $stream	= $query->execute( $model );
 			my $bridge	= $query->bridge;
-			isa_ok( $stream, 'RDF::Iterator' );
+			isa_ok( $stream, 'RDF::Trice::Iterator' );
 			my ($count, $last);
 			while (my $row = $stream->()) {
 				my ($p, $node)	= @{ $row }{qw(p name)};
@@ -63,7 +63,7 @@ END
 END
 			my $stream	= $query->execute( $model );
 			my $bridge	= $query->bridge;
-			isa_ok( $stream, 'RDF::Iterator' );
+			isa_ok( $stream, 'RDF::Trice::Iterator' );
 			my ($count, $last);
 			while (my $row = $stream->next) {
 				my ($p, $node)	= @{ $row }{qw(p name)};
@@ -92,7 +92,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($p, $node)	= @{ $row }{qw(p name)};
@@ -115,7 +115,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($p, $node)	= @{ $row }{qw(p name)};
@@ -141,7 +141,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($n, $c)	= @{ $row }{qw(name camera)};
@@ -169,7 +169,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my $count	= 0;
 		
 		my $min;
@@ -208,7 +208,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		isa_ok( $stream, 'RDF::Iterator' );
+		isa_ok( $stream, 'RDF::Trice::Iterator' );
 		my $count	= 0;
 		
 		my $max;

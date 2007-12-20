@@ -1,4 +1,4 @@
-package RDF::Query::Model::RDFStoreDBI;
+package RDF::Query::Model::RDFTrice;
 
 use strict;
 use warnings;
@@ -71,10 +71,10 @@ sub meta {
 		class		=> __PACKAGE__,
 		model		=> 'RDF::Trice::Store::DBI',
 		statement	=> 'RDF::Query::Algebra::Triple',
-		node		=> 'RDF::Query::Node',
-		resource	=> 'RDF::Query::Node::Resource',
-		literal		=> 'RDF::Query::Node::Literal',
-		blank		=> 'RDF::Query::Node::Blank',
+		node		=> 'RDF::Trice::Node',
+		resource	=> 'RDF::Trice::Node::Resource',
+		literal		=> 'RDF::Trice::Node::Literal',
+		blank		=> 'RDF::Trice::Node::Blank',
 	};
 }
 
@@ -101,7 +101,7 @@ sub new_resource {
 	if ($self->is_resource( $uri )) {
 		return $uri;
 	} else {
-		my $node	= RDF::Query::Node::Resource->new( $uri );
+		my $node	= RDF::Trice::Node::Resource->new( $uri );
 		return $node;
 	}
 }
@@ -117,7 +117,7 @@ sub new_literal {
 	my $value	= shift;
 	my $lang	= shift;
 	my $type	= shift;
-	return RDF::Query::Node::Literal->new( $value, $lang, $type );
+	return RDF::Trice::Node::Literal->new( $value, $lang, $type );
 }
 
 =item C<new_blank ( $identifier )>
@@ -129,7 +129,7 @@ Returns a new blank node object.
 sub new_blank {
 	my $self	= shift;
 	my $name	= shift;
-	return RDF::Query::Node::Blank->new( $name );
+	return RDF::Trice::Node::Blank->new( $name );
 }
 
 =item C<new_statement ( $s, $p, $o )>
@@ -157,7 +157,7 @@ sub new_variable {
 		push(@_, $name);
 	}
 	my $name	= shift;
-	return RDF::Query::Node::Variable->new( $name );
+	return RDF::Trice::Node::Variable->new( $name );
 }
 
 =item C<is_node ( $node )>
@@ -171,7 +171,7 @@ Returns true if C<$node> is a node object for the current model.
 sub isa_node {
 	my $self	= shift;
 	my $node	= shift;
-	return (blessed($node) and $node->isa('RDF::Query::Node'));
+	return (blessed($node) and $node->isa('RDF::Trice::Node'));
 }
 
 =item C<is_resource ( $node )>
@@ -185,7 +185,7 @@ Returns true if C<$node> is a resource object for the current model.
 sub isa_resource {
 	my $self	= shift;
 	my $node	= shift;
-	return (blessed($node) and $node->isa('RDF::Query::Node::Resource'));
+	return (blessed($node) and $node->isa('RDF::Trice::Node::Resource'));
 }
 
 =item C<is_literal ( $node )>
@@ -199,7 +199,7 @@ Returns true if C<$node> is a literal object for the current model.
 sub isa_literal {
 	my $self	= shift;
 	my $node	= shift;
-	return (blessed($node) and $node->isa('RDF::Query::Node::Literal'));
+	return (blessed($node) and $node->isa('RDF::Trice::Node::Literal'));
 }
 
 =item C<is_blank ( $node )>
@@ -213,13 +213,13 @@ Returns true if C<$node> is a blank node object for the current model.
 sub isa_blank {
 	my $self	= shift;
 	my $node	= shift;
-	return (blessed($node) and $node->isa('RDF::Query::Node::Blank'));
+	return (blessed($node) and $node->isa('RDF::Trice::Node::Blank'));
 }
 no warnings 'once';
-*RDF::Query::Model::RDFStoreDBI::is_node		= \&isa_node;
-*RDF::Query::Model::RDFStoreDBI::is_resource	= \&isa_resource;
-*RDF::Query::Model::RDFStoreDBI::is_literal		= \&isa_literal;
-*RDF::Query::Model::RDFStoreDBI::is_blank		= \&isa_blank;
+*RDF::Query::Model::RDFTrice::is_node		= \&isa_node;
+*RDF::Query::Model::RDFTrice::is_resource	= \&isa_resource;
+*RDF::Query::Model::RDFTrice::is_literal		= \&isa_literal;
+*RDF::Query::Model::RDFTrice::is_blank		= \&isa_blank;
 
 =item C<< equals ( $node_a, $node_b ) >>
 
@@ -448,7 +448,7 @@ sub get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
-	if ($context and $context->isa('RDF::Query::Node::Resource')) {
+	if ($context and $context->isa('RDF::Trice::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
 			return RDF::Trice::Iterator::Graph->new( [], bridge => $self );
 		}
@@ -569,7 +569,7 @@ sub unify_bgp {
 	my $context	= shift;
 	my %args	= @_;
 	
-	if ($context and $context->isa('RDF::Query::Node::Resource')) {
+	if ($context and $context->isa('RDF::Trice::Node::Resource')) {
 		unless ($self->equals( $context, $self->get_context)) {
 			return RDF::Trice::Iterator::Bindings->new( [], [], bridge => $self );
 		}
@@ -580,8 +580,8 @@ sub unify_bgp {
 	foreach my $triple ($pattern->triples) {
 		foreach my $method (qw(subject predicate object)) {
 			my $node	= $triple->$method();
-			if ($node->isa('RDF::Query::Node::Blank')) {
-				my $var	= RDF::Query::Node::Variable->new( '__' . $node->blank_identifier );
+			if ($node->isa('RDF::Trice::Node::Blank')) {
+				my $var	= RDF::Trice::Node::Variable->new( '__' . $node->blank_identifier );
 				$triple->$method( $var );
 			}
 		}
@@ -593,7 +593,7 @@ sub unify_bgp {
 	
 	my @args;
 	if (my $o = $args{ orderby }) {
-		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Query::Node::Variable') } @$o ] );
+		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trice::Node::Variable') } @$o ] );
 	}
 	
 	return $model->get_pattern( $pattern, undef, @args );

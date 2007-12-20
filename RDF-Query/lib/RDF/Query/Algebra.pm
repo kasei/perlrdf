@@ -16,6 +16,10 @@ RDF::Query::Node - Base class for Algebra expressions
 
 package RDF::Query::Algebra;
 
+BEGIN {
+	our $VERSION	= '2.000';
+}
+
 use strict;
 use warnings;
 use Set::Scalar;
@@ -46,7 +50,8 @@ sub referenced_blanks {
 	my @list;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@list, $arg->referenced_blanks);
+			my @blanks	= $arg->referenced_blanks;
+			push(@list, @blanks);
 		}
 	}
 	return uniq(@list);

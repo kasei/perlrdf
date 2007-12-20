@@ -19,7 +19,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
-use RDF::Iterator qw(sgrep smap swatch);
+use RDF::Trice::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
@@ -220,10 +220,10 @@ sub execute {
 		while (@streams > 1) {
 			my $a	= shift(@streams);
 			my $b	= shift(@streams);
-			unshift(@streams, RDF::Iterator::Bindings->join_streams( $a, $b, $bridge, %args ));
+			unshift(@streams, RDF::Trice::Iterator::Bindings->join_streams( $a, $b, $bridge, %args ));
 		}
 	} else {
-		push(@streams, RDF::Iterator::Bindings->new([{}], []));
+		push(@streams, RDF::Trice::Iterator::Bindings->new([{}], []));
 	}
 	my $stream	= shift(@streams);
 	foreach my $data (@filters) {

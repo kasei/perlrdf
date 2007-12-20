@@ -9,7 +9,7 @@ use RDF::Query;
 use Test::More;
 use Storable qw(dclone);
 use File::Temp qw(tempfile);
-use RDF::Iterator qw(smap);
+use RDF::Trice::Iterator qw(smap);
 use Scalar::Util qw(blessed reftype);
 
 use RDF::Core;
@@ -162,7 +162,7 @@ sub eval_test {
 			print STDERR "ok\n" if ($debug);
 			
 			print STDERR "getting expected results... " if ($debug);
-			my $type		= (blessed($actual) and $actual->isa( 'RDF::Iterator::Graph' )) ? 'graph' : '';
+			my $type		= (blessed($actual) and $actual->isa( 'RDF::Trice::Iterator::Graph' )) ? 'graph' : '';
 			my $expected	= get_expected_results( $resfilename, $type );
 			print STDERR "ok\n" if ($debug);
 			
@@ -469,8 +469,8 @@ sub compare_results {
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
 		return $ok;
-	} elsif (blessed($actual) and $actual->isa('RDF::Iterator::Graph')) {
-		die unless (blessed($expected) and $expected->isa('RDF::Iterator::Graph'));
+	} elsif (blessed($actual) and $actual->isa('RDF::Trice::Iterator::Graph')) {
+		die unless (blessed($expected) and $expected->isa('RDF::Trice::Iterator::Graph'));
 		
 		local($debug)	= 1 if ($PATTERN);
 		warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" if ($debug);

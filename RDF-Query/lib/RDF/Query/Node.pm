@@ -25,50 +25,6 @@ use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
 use RDF::Query::Node::Variable;
 
-=item C<< is_node >>
-
-Returns true if this object is a RDF node, false otherwise.
-
-=cut
-
-sub is_node {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Query::Node'));
-}
-
-=item C<< is_blank >>
-
-Returns true if this RDF node is a blank node, false otherwise.
-
-=cut
-
-sub is_blank {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Query::Node::Blank'));
-}
-
-=item C<< is_resource >>
-
-Returns true if this RDF node is a resource, false otherwise.
-
-=cut
-
-sub is_resource {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Query::Node::Resource'));
-}
-
-=item C<< is_literal >>
-
-Returns true if this RDF node is a literal, false otherwise.
-
-=cut
-
-sub is_literal {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Query::Node::Literal'));
-}
-
 =item C<< is_variable >>
 
 Returns true if this RDF node is a variable, false otherwise.

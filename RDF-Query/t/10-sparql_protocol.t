@@ -87,8 +87,8 @@ END
 	
 	### JSON Tests
 	
-	sub JSON::True;
-	sub JSON::False;
+	sub JSON::true;
+	sub JSON::false;
 	
 	if ($run_json_tests) {
 		{
@@ -109,8 +109,8 @@ END
 			my $expect	= {
 							head	=> { vars => [qw(person homepage)] },
 							results	=> {
-								ordered 	=> JSON::True,
-								distinct	=> JSON::False,
+								ordered 	=> JSON::true,
+								distinct	=> JSON::false,
 								bindings	=> [
 									{
 										person		=> { type => 'uri', value => 'http://kasei.us/about/foaf.xrdf#greg' },
@@ -120,7 +120,7 @@ END
 							}
 						};
 			is_valid_json( $js, 'valid json syntax' );
-			is_json( $js, objToJson($expect), 'expected json results' );
+			is_json( $js, to_json($expect), 'expected json results' );
 		}
 	
 		{
@@ -133,10 +133,10 @@ END
 			my $js		= $stream->as_json;
 			my $expect	= {
 							head	=> { vars => [] },
-							boolean	=> JSON::True,
+							boolean	=> JSON::true,
 						};
 			is_valid_json( $js, 'valid json syntax' );
-			is_json( $js, objToJson($expect), 'expected json results' );
+			is_json( $js, to_json($expect), 'expected json results' );
 		}
 	}
 }

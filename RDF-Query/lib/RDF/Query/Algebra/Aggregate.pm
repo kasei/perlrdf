@@ -19,7 +19,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
-use RDF::Iterator qw(smap);
+use RDF::Trice::Iterator qw(smap);
 
 ######################################################################
 
@@ -286,7 +286,7 @@ sub execute {
 	}
 	
 	my @cols	= (@groupby, keys %aggregates);
-	return RDF::Iterator::Bindings->new(\@rows, \@cols);
+	return RDF::Trice::Iterator::Bindings->new(\@rows, \@cols);
 }
 
 

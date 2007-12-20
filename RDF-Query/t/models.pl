@@ -111,16 +111,16 @@ sub test_models_and_classes {
 		}
 	}
 	
-	if (not $ENV{RDFQUERY_NO_RDFSTORE}) {
-		eval "use RDF::Query::Model::RDFStoreDBI;";
+	if (not $ENV{RDFQUERY_NO_RDFTRICE}) {
+		eval "use RDF::Query::Model::RDFTrice;";
 		if (not $@) {
-			require RDF::Query::Model::RDFStoreDBI;
-			my $model	= RDF::Store::DBI->temporary_store('DBI:mysql:database=test', 'test', 'test');
+			require RDF::Query::Model::RDFTrice;
+			my $model	= RDF::Trice::Store::DBI->temporary_store('DBI:mysql:database=test', 'test', 'test');
 			
 			{
 				eval "use RDF::Redland";
 				if ($@) {
-					warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Store";
+					warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Trice::Store";
 					return @models;
 				}
 				my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
@@ -130,21 +130,21 @@ sub test_models_and_classes {
 				$parser->parse_into_model($_, $_, $model) for (@data);
 			}
 			
-			my $bridge	= RDF::Query::Model::RDFStoreDBI->new( $model );
+			my $bridge	= RDF::Query::Model::RDFTrice->new( $model );
 			my $data	= {
 							bridge		=> $bridge,
 							modelobj	=> $model,
-							class		=> 'RDF::Query::Model::RDFStoreDBI',
-							model		=> 'RDF::Store::DBI',
-							statement	=> 'RDF::Query::Algebra::Triple',
-							node		=> 'RDF::Query::Node',
-							resource	=> 'RDF::Query::Node::Resource',
-							literal		=> 'RDF::Query::Node::Literal',
-							blank		=> 'RDF::Query::Node::Blank',
+							class		=> 'RDF::Query::Model::RDFTrice',
+							model		=> 'RDF::Trice::Store::DBI',
+							statement	=> 'RDF::Trice::Statement',
+							node		=> 'RDF::Trice::Node',
+							resource	=> 'RDF::Trice::Node::Resource',
+							literal		=> 'RDF::Trice::Node::Literal',
+							blank		=> 'RDF::Trice::Node::Blank',
 						};
 			push(@models, $data);
 		} else {
-			warn "RDF::Store::DBI not loaded: $@\n";# if ($RDF::Query::debug);
+			warn "RDF::Trice::Store::DBI not loaded: $@\n";# if ($RDF::Query::debug);
 		}
 	}
 	

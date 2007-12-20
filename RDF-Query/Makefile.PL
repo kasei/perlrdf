@@ -25,6 +25,7 @@ WriteMakefile(
 	PREREQ_PM		=> {
 					'Storable'					=> 0,
 					'RDF::Core'					=> 0,
+					'RDF::Trice'				=> 1,
 					'Parse::RecDescent'			=> 0,
 					'DateTime::Format::W3CDTF'	=> 0,
 					'Scalar::Util'				=> 0,
@@ -32,8 +33,7 @@ WriteMakefile(
 					'JSON'						=> 0,
 					'URI'						=> 0,
 					'List::MoreUtils'			=> 0,
-					'RDF::Iterator'				=> 1,
-					'RDF::Parser'				=> 0,
+					'RDF::Trice::Iterator'		=> 1,
 					'Set::Scalar'				=> 0,
 					'File::Spec'				=> 0,
 					'File::Temp'				=> 0,

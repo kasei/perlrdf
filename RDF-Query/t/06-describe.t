@@ -26,7 +26,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
 		ok( $stream->is_graph, "Stream is graph result" );
-		isa_ok( $stream, 'RDF::Iterator', 'stream' );
+		isa_ok( $stream, 'RDF::Trice::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->()) {
 			my $p	= $bridge->predicate( $stmt );
@@ -48,7 +48,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
 		ok( $stream->is_graph, "Stream is graph result" );
-		isa_ok( $stream, 'RDF::Iterator', 'stream' );
+		isa_ok( $stream, 'RDF::Trice::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->()) {
 			my $p	= $bridge->predicate( $stmt );

@@ -37,6 +37,6 @@ requires:
   Storable: 0
   URI: 0
   List::MoreUtils: 0
-  RDF::Iterator: 1
-  RDF::Parser: 0
+  RDF::Trice::Iterator: 1
   Set::Scalar: 0
+  RDF::Trice: 1
