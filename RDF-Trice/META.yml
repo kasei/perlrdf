@@ -4,7 +4,16 @@ name:         RDF-Trice
 version:      0.001
 version_from: lib/RDF/Trice.pm
 installdirs:  site
+author:
+  - Gregory Todd Williams <gwilliams@cpan.org>
+build_requires:
+  Test::JSON: 0
+  Test::More: 0.61
+recommends:
+  RDF::Redland: 1
+  RDF::Core: 0
 requires:
+    JSON: 0
     RDF::Query::Node:              0
     Test::More:                    0
     XML::CommonNS:                 0.04
@@ -15,6 +24,10 @@ requires:
     Unicode::Escape: 0
     Scalar::Util: 0
     URI: 0
-
+license: perl
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17
+no_index:
+  directory:
+    - inc
+    - t
