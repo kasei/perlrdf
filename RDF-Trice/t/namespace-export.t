@@ -1,11 +1,11 @@
 use Test::More tests => 5;
 
-use RDF::Namespace qw(FOAF DC rdf);
+use RDF::Trice::Namespace qw(FOAF DC rdf);
 
-isa_ok( $FOAF, 'RDF::Namespace' );
+isa_ok( $FOAF, 'RDF::Trice::Namespace' );
 
 my $uri		= $FOAF->homepage;
-isa_ok( $uri, 'RDF::Query::Node' );
+isa_ok( $uri, 'RDF::Trice::Node' );
 
 is( $uri->uri_value, 'http://xmlns.com/foaf/0.1/homepage', 'foaf:homepage' );
 is( $DC->title->uri_value, 'http://purl.org/dc/elements/1.1/title', 'dc:title' );

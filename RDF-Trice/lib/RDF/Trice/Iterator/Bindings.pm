@@ -1,4 +1,4 @@
-# RDF::Iterator::Bindings
+# RDF::Trice::Iterator::Bindings
 # -------------
 # $Revision $
 # $Date $
@@ -6,11 +6,11 @@
 
 =head1 NAME
 
-RDF::Iterator::Bindings - Stream (iterator) class for bindings query results.
+RDF::Trice::Iterator::Bindings - Stream (iterator) class for bindings query results.
 
 =head1 SYNOPSIS
 
-    use RDF::Iterator;
+    use RDF::Trice::Iterator;
     my $query	= RDF::Query->new( '...query...' );
     my $stream	= $query->execute();
     while (my $row = $stream->next) {
@@ -24,7 +24,7 @@ RDF::Iterator::Bindings - Stream (iterator) class for bindings query results.
 
 =cut
 
-package RDF::Iterator::Bindings;
+package RDF::Trice::Iterator::Bindings;
 
 use strict;
 use warnings;
@@ -33,8 +33,8 @@ use Data::Dumper;
 use JSON 2.0 qw(-support_by_pp);
 use Scalar::Util qw(reftype);
 
-use RDF::Iterator qw(smap);
-use base qw(RDF::Iterator);
+use RDF::Trice::Iterator qw(smap);
+use base qw(RDF::Trice::Iterator);
 
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
@@ -121,8 +121,8 @@ sub join_streams {
 	
 #	my $debug	= $args{debug};
 	
-	Carp::confess unless ($a->isa('RDF::Iterator::Bindings'));
-	Carp::confess unless ($b->isa('RDF::Iterator::Bindings'));
+	Carp::confess unless ($a->isa('RDF::Trice::Iterator::Bindings'));
+	Carp::confess unless ($b->isa('RDF::Trice::Iterator::Bindings'));
 	
 	my @join_sorted_by;
 	if (my $o = $args{ orderby }) {

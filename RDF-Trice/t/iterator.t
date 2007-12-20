@@ -5,15 +5,15 @@ use URI::file;
 use Test::More tests => 50;
 
 use Data::Dumper;
-use RDF::Iterator qw(sgrep smap swatch);
-use RDF::Iterator::Graph;
-use RDF::Iterator::Bindings;
-use RDF::Iterator::Boolean;
+use RDF::Trice::Iterator qw(sgrep smap swatch);
+use RDF::Trice::Iterator::Graph;
+use RDF::Trice::Iterator::Bindings;
+use RDF::Trice::Iterator::Boolean;
 
 {
 	my @data	= ({value=>1},{value=>2},{value=>3});
-	my $stream	= RDF::Iterator::Bindings->new( \@data, [qw(value)] );
-	isa_ok( $stream, 'RDF::Iterator' );
+	my $stream	= RDF::Trice::Iterator::Bindings->new( \@data, [qw(value)] );
+	isa_ok( $stream, 'RDF::Trice::Iterator' );
 	ok( $stream->is_bindings, 'is_bindings' );
 	is( $stream->is_boolean, 0, 'is_boolean' );
 	is( $stream->is_graph, 0, 'is_graph' );
@@ -26,7 +26,7 @@ use RDF::Iterator::Boolean;
 	my @data	= ({value=>1},{value=>2});
 	my @sources	= ([@data], sub { shift(@data) });
 	foreach my $data (@sources) {
-		my $stream	= RDF::Iterator::Bindings->new( $data, [qw(value)] );
+		my $stream	= RDF::Trice::Iterator::Bindings->new( $data, [qw(value)] );
 		my $first	= $stream->next_result;
 		isa_ok( $first, 'HASH' );
 		is( $first->{value}, 1 );
@@ -55,10 +55,10 @@ use RDF::Iterator::Boolean;
 }
 
 {
-	my $true	= RDF::Iterator::Boolean->new( [1] );
-	isa_ok( $true, 'RDF::Iterator' );
+	my $true	= RDF::Trice::Iterator::Boolean->new( [1] );
+	isa_ok( $true, 'RDF::Trice::Iterator' );
 	is( $true->get_boolean, 1, 'get_boolean' );
-	my $false	= RDF::Iterator::Boolean->new( [0] );
+	my $false	= RDF::Trice::Iterator::Boolean->new( [0] );
 	is( $false->get_boolean, 0, 'get_boolean' );
 }
 
@@ -67,7 +67,7 @@ use RDF::Iterator::Boolean;
 					{ name => 'alice', url => 'http://example.com/alice', number => 1 },
 					{ name => 'eve', url => 'http://example.com/eve', number => 2 }
 				);
-	my $stream	= RDF::Iterator::Bindings->new( \@data, [qw(name url number)] );
+	my $stream	= RDF::Trice::Iterator::Bindings->new( \@data, [qw(name url number)] );
 	my $pstream	= $stream->project( qw(name number) );
 	
 	my @cols	= $pstream->binding_names;
@@ -84,26 +84,26 @@ use RDF::Iterator::Boolean;
 }
 
 {
-	my $stream	= RDF::Iterator::Bindings->new( [], [qw(name url number)] );
+	my $stream	= RDF::Trice::Iterator::Bindings->new( [], [qw(name url number)] );
 	my @sort	= $stream->sorted_by;
 	is_deeply( \@sort, [], 'sorted empty' );
 }
 
 {
-	my $stream	= RDF::Iterator::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC'] );
+	my $stream	= RDF::Trice::Iterator::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC'] );
 	my @sort	= $stream->sorted_by;
 	is_deeply( \@sort, ['number' => 'ASC'], 'sorted array' );
 }
 
 {
-	my $stream	= RDF::Iterator::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
+	my $stream	= RDF::Trice::Iterator::Bindings->new( [], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
 	my @sort	= $stream->sorted_by;
 	is_deeply( \@sort, [qw(number ASC name DESC)], 'sorted array' );
 }
 
 {
 	my $count	= 0;
-	my $stream	= swatch { $count++ } sgrep { $_->{number} % 2 == 0 } RDF::Iterator::Bindings->new( [{ name => 'Alice', number => 1}, { name => 'Eve', number => 2 }], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
+	my $stream	= swatch { $count++ } sgrep { $_->{number} % 2 == 0 } RDF::Trice::Iterator::Bindings->new( [{ name => 'Alice', number => 1}, { name => 'Eve', number => 2 }], [qw(name url number)], sorted_by => ['number' => 'ASC', name => 'DESC'] );
 	my @sort	= $stream->sorted_by;
 	is_deeply( \@sort, [qw(number ASC name DESC)], 'sorted array' );
 	is( $count, 0, 'zero watched results' );

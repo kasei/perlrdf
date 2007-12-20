@@ -7,7 +7,7 @@ use File::Slurp;
 use RDF::Redland;
 use RDF::Store::DBI;
 use LWP::Simple qw(get);
-use RDF::Query::Algebra::Triple;
+use RDF::Trice::Statement;
 
 unless (@ARGV >= 6) {
 	print <<"END";
@@ -55,12 +55,12 @@ if ($file =~ qr[^http(s?)://]) {
 my $format	= 'guess';
 
 my $baseuri		= RDF::Redland::URI->new( $base );
-my $basenode	= RDF::Query::Node::Resource->new( $base );
+my $basenode	= RDF::Trice::Node::Resource->new( $base );
 my $parser		= RDF::Redland::Parser->new( $format );
 my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
 while ($stream and !$stream->end) {
 	my $statement	= $stream->current;
-	my $stmt		= RDF::Query::Algebra::Triple->from_redland( $statement );
+	my $stmt		= RDF::Trice::Statement->from_redland( $statement );
 	$store->add_statement( $stmt, $basenode );
 	$stream->next;
 }

@@ -1,19 +1,50 @@
-package RDF::Parser::Turtle;
+# RDF::Trice::Parser::Turtle
+# -------------
+# $Revision: 127 $
+# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Trice::Parser::Turtle - Turtle RDF Parser.
+
+=head1 VERSION
+
+This document describes RDF::Trice::Parser::Turtle version 1.000
+
+=head1 SYNOPSIS
+
+ use RDF::Trice::Parser;
+ my $parser	= RDF::Trice::Parser->new( 'turtle' );
+ my $iterator = $parser->parse( $base_uri, $data );
+
+=head1 DESCRIPTION
+
+...
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+package RDF::Trice::Parser::Turtle;
 
 use strict;
 use warnings;
+our $VERSION	= '1.000';
 
 BEGIN {
 	foreach my $t ('turtle', 'application/x-turtle', 'application/turtle') {
-		$RDF::Parser::types{ $t }	= __PACKAGE__;
+		$RDF::Trice::Parser::types{ $t }	= __PACKAGE__;
 	}
 }
 
 
 use URI;
-use RDF::Namespace;
-use RDF::Query::Node;
-use RDF::Parser::Error;
+use RDF::Trice::Namespace;
+use RDF::Trice::Node;
+use RDF::Trice::Parser::Error;
 use Scalar::Util qw(blessed looks_like_number);
 
 our $r_boolean				= qr'(?:true|false)';
@@ -34,13 +65,18 @@ our $r_resource_test		= qr/(?![_[("0-9+-]|$r_booltest)/;
 our $r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 
 my $debug		= 0;
-my $xsd			= RDF::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-my $rdf			= RDF::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+my $xsd			= RDF::Trice::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+my $rdf			= RDF::Trice::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+
+
+=item C<< new >>
+
+Returns a new Turtle parser.
+
+=cut
 
 sub new {
 	my $class	= shift;
-	my $uri		= shift || 'http://example.com/';
-	my $input	= shift;
 	my $self	= bless({
 					bindings	=> {},
 					bnode_id	=> 0,
@@ -48,14 +84,29 @@ sub new {
 	return $self;
 }
 
+=item C<< parse ( $base_uri, $data ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
+C<< triple >> method for each RDF triple parsed. This method does nothing by
+default, but can be set by using one of the default C<< parse_* >> methods.
+
+=cut
+
 sub parse {
 	my $self	= shift;
 	my $uri		= shift;
 	my $input	= shift;
 	local($self->{baseURI})	= $uri;
 	local($self->{tokens})	= $input;
-	return $self->turtleDoc();
+	return $self->_turtleDoc();
 }
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
+parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=cut
 
 sub parse_into_model {
 	my $self	= shift;
@@ -69,12 +120,12 @@ sub parse_into_model {
 	return $self->parse( $uri, $input );
 }
 
-sub eat {
+sub _eat {
 	my $self	= shift;
 	my $thing	= shift;
 	if (not(length($self->{tokens}))) {
 		Carp::cluck("no tokens left ($thing)") if ($debug);
-		throw RDF::Parser::Error::ValueError -text => "No tokens";
+		throw RDF::Trice::Parser::Error::ValueError -text => "No tokens";
 	}
 	
 	if (substr($self->{tokens}, 0, 1) eq '^') {
@@ -88,7 +139,7 @@ sub eat {
 			return $match;
 		}
 		Carp::cluck("Expected ($thing)") if ($debug);
-		throw RDF::Parser::Error::ValueError -text => "Expected: $thing";
+		throw RDF::Trice::Parser::Error::ValueError -text => "Expected: $thing";
 	} elsif (looks_like_number( $thing )) {
 		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
 		return $token
@@ -99,14 +150,14 @@ sub eat {
 			return $thing;
 		} else {
 			Carp::cluck("expected: $thing, got: $self->{tokens}") if ($debug);
-			throw RDF::Parser::Error::ValueError("Expected: $thing")
+			throw RDF::Trice::Parser::Error::ValueError("Expected: $thing")
 		}
 	}
 	print $thing;
 	throw Error;
 }
 
-sub test {
+sub _test {
 	my $self	= shift;
 	my $thing	= shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
@@ -116,19 +167,19 @@ sub test {
 	}
 }
 
-sub triple {
+sub _triple {
 	my $self	= shift;
 	my $s		= shift;
 	my $p		= shift;
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
-		unless (blessed($n) and $n->isa('RDF::Query::Node')) {
-			throw RDF::Parser::Error;
+		unless (blessed($n) and $n->isa('RDF::Trice::Node')) {
+			throw RDF::Trice::Parser::Error;
 		}
 	}
 	
 	if (my $code = $self->{handle_triple}) {
-		my $st	= RDF::Query::Algebra::Triple->new( $s, $p, $o );
+		my $st	= RDF::Trice::Statement->new( $s, $p, $o );
 		$code->( $st );
 	}
 	
@@ -137,14 +188,14 @@ sub triple {
 #	print join(' ', map { $_->sse } ($s, $p, $o)), '.' . "\n";
 }
 
-sub turtleDoc {
+sub _turtleDoc {
 	my $self	= shift;
-	while ($self->statement_test()) {
-		$self->statement();
+	while ($self->_statement_test()) {
+		$self->_statement();
 	}
 }
 
-sub statement_test {
+sub _statement_test {
 	my $self	= shift;
 	if (length($self->{tokens})) {
 		return 1;
@@ -153,93 +204,93 @@ sub statement_test {
 	}
 }
 
-sub statement {
+sub _statement {
 	my $self	= shift;
-	if ($self->directive_test()) {
-		$self->directive();
-		$self->_consume_ws();
-		$self->eat('.');
-		$self->_consume_ws();
-	} elsif ($self->triples_test()) {
-		$self->triples();
-		$self->_consume_ws();
-		$self->eat('.');
-		$self->_consume_ws();
+	if ($self->_directive_test()) {
+		$self->_directive();
+		$self->__consume_ws();
+		$self->_eat('.');
+		$self->__consume_ws();
+	} elsif ($self->_triples_test()) {
+		$self->_triples();
+		$self->__consume_ws();
+		$self->_eat('.');
+		$self->__consume_ws();
 	}  else {
-		$self->ws();
-		$self->_consume_ws();
+		$self->_ws();
+		$self->__consume_ws();
 	}
 }
 
-sub directive_test {
+sub _directive_test {
 	my $self	= shift;
 	### between directive | triples | ws
 	### directives must start with @, triples must not
-	if ($self->_startswith('@')) {
+	if ($self->__startswith('@')) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-sub directive {
+sub _directive {
 	my $self	= shift;
 	### prefixID | base
-	if ($self->prefixID_test()) {
-		$self->prefixID();
+	if ($self->_prefixID_test()) {
+		$self->_prefixID();
 	} else {
-		$self->base();
+		$self->_base();
 	}
 }
 
-sub prefixID_test {
+sub _prefixID_test {
 	my $self	= shift;
 	### between prefixID | base. prefixID is @prefix, base is @base
-	if ($self->_startswith('@prefix')) {
+	if ($self->__startswith('@prefix')) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-sub prefixID {
+sub _prefixID {
 	my $self	= shift;
 	### '@prefix' ws+ prefixName? ':' ws+ uriref
-	$self->eat('@prefix');
-	$self->ws();
-	while ($self->ws_test()) {
-		$self->ws()
+	$self->_eat('@prefix');
+	$self->_ws();
+	while ($self->_ws_test()) {
+		$self->_ws()
 	}
 	
 	my $prefix;
-	if ($self->prefixName_test()) {
-		$prefix = $self->prefixName();
+	if ($self->_prefixName_test()) {
+		$prefix = $self->_prefixName();
 	} else {
 		$prefix	= '';
 	}
 	
-	$self->eat(':');
-	$self->ws();
-	while ($self->ws_test()) {
-		$self->ws();
+	$self->_eat(':');
+	$self->_ws();
+	while ($self->_ws_test()) {
+		$self->_ws();
 	}
 	
-	my $uri = $self->uriref();
+	my $uri = $self->_uriref();
 	$self->{bindings}{$prefix}	= $uri;
 }
 
 
 
-sub base {
+sub _base {
 	my $self	= shift;
 	### '@base' ws+ uriref
-	$self->eat('@base');
-	$self->ws();
-	$self->_consume_ws();
-	$self->{baseURI}	=	$self->join_uri($self->{baseURI}, $self->uriref()->uri_value);
+	$self->_eat('@base');
+	$self->_ws();
+	$self->__consume_ws();
+	$self->{baseURI}	=	$self->_join_uri($self->{baseURI}, $self->_uriref()->uri_value);
 }
 
-sub triples_test {
+sub _triples_test {
 	my $self	= shift;
 	### between triples and ws. disjoint, so easy enough
 	return 0 unless (length($self->{tokens}));
@@ -250,39 +301,39 @@ sub triples_test {
 	}
 }
 
-sub triples {
+sub _triples {
 	my $self	= shift;
 	### subject ws+ predicateObjectList
-	my $subj	= $self->subject();
-	$self->ws();
-	$self->_consume_ws;
-	foreach my $data ($self->predicateObjectList()) {
+	my $subj	= $self->_subject();
+	$self->_ws();
+	$self->__consume_ws;
+	foreach my $data ($self->_predicateObjectList()) {
 		my ($pred, $objt)	= @$data;
-		$self->triple( $subj, $pred, $objt );
+		$self->_triple( $subj, $pred, $objt );
 	}
 }
 
-sub predicateObjectList {
+sub _predicateObjectList {
 	my $self	= shift;
 	### verb ws+ objectList ( ws* ';' ws* verb ws+ objectList )* (ws* ';')?
-	my $pred = $self->verb();
-	$self->ws();
-	$self->_consume_ws();
+	my $pred = $self->_verb();
+	$self->_ws();
+	$self->__consume_ws();
 	
 	my @list;
-	foreach my $objt ($self->objectList()) {
+	foreach my $objt ($self->_objectList()) {
 		push(@list, [$pred, $objt]);
 	}
 	
-	while ($self->ws_test() or $self->test(';')) {
-		$self->_consume_ws();
-		$self->eat(';');
-		$self->_consume_ws();
-		if ($self->verb_test()) { # @@
-			$pred = $self->verb();
-			$self->ws();
-			$self->_consume_ws();
-			foreach my $objt ($self->objectList()) {
+	while ($self->_ws_test() or $self->_test(';')) {
+		$self->__consume_ws();
+		$self->_eat(';');
+		$self->__consume_ws();
+		if ($self->_verb_test()) { # @@
+			$pred = $self->_verb();
+			$self->_ws();
+			$self->__consume_ws();
+			foreach my $objt ($self->_objectList()) {
 				push(@list, [$pred, $objt]);
 			}
 		} else {
@@ -293,23 +344,23 @@ sub predicateObjectList {
 	return @list;
 }
 
-sub objectList {
+sub _objectList {
 	my $self	= shift;
 	### object (ws* ',' ws* object)*
 	my @list;
-	push(@list, $self->object());
-	$self->_consume_ws();
-	while ($self->test(',')) {
-		$self->_consume_ws();
-		$self->eat(',');
-		$self->_consume_ws();
-		push(@list, $self->object());
-		$self->_consume_ws();
+	push(@list, $self->_object());
+	$self->__consume_ws();
+	while ($self->_test(',')) {
+		$self->__consume_ws();
+		$self->_eat(',');
+		$self->__consume_ws();
+		push(@list, $self->_object());
+		$self->__consume_ws();
 	}
 	return @list;
 }
 
-sub verb_test {
+sub _verb_test {
 	my $self	= shift;
 	return 0 unless (length($self->{tokens}));
 	if ($self->{tokens} !~ /^[.]/) {
@@ -319,41 +370,41 @@ sub verb_test {
 	}
 }
 
-sub verb {
+sub _verb {
 	my $self	= shift;
 	### predicate | a
-	if ($self->predicate_test()) {
-		return $self->predicate();
+	if ($self->_predicate_test()) {
+		return $self->_predicate();
 	} else {
-		$self->eat('a');
+		$self->_eat('a');
 		return $rdf->type;
 	}
 }
 
-sub comment {
+sub _comment {
 	my $self	= shift;
 	### '#' ( [^#xA#xD] )*
-	$self->eat($r_comment);
+	$self->_eat($r_comment);
 }
 
-sub subject {
+sub _subject {
 	my $self	= shift;
 	### resource | blank
-#	if ($self->resource_test()) {
+#	if ($self->_resource_test()) {
 	if (length($self->{tokens}) and $self->{tokens} =~ /^$r_resource_test/) {
-		return $self->resource();
+		return $self->_resource();
 	} else {
-		return $self->blank();
+		return $self->_blank();
 	}
 }
 
-sub predicate_test {
+sub _predicate_test {
 	my $self	= shift;
 	### between this and 'a'... a little tricky
 	### if it's a, it'll be followed by whitespace; whitespace is mandatory
 	### after a verb, which is the only thing predicate appears in
 	return 0 unless (length($self->{tokens}));
-	if (not $self->_startswith('a')) {
+	if (not $self->__startswith('a')) {
 		return 1
 	} elsif ($self->{tokens} !~ m/^a[\r\n\t #]/) {
 		return 1
@@ -362,26 +413,26 @@ sub predicate_test {
 	}
 }
 
-sub predicate {
+sub _predicate {
 	my $self	= shift;
 	### resource
-	return $self->resource();
+	return $self->_resource();
 }
 
-sub object {
+sub _object {
 	my $self	= shift;
 	### resource | blank | literal
-#	if ($self->resource_test()) {
+#	if ($self->_resource_test()) {
 	if (length($self->{tokens}) and $self->{tokens} =~ /^$r_resource_test/) {
-		return $self->resource();
-	} elsif ($self->blank_test()) {
-		return $self->blank();
+		return $self->_resource();
+	} elsif ($self->_blank_test()) {
+		return $self->_blank();
 	} else {
-		return $self->literal();
+		return $self->_literal();
 	}
 }
 
-sub literal {
+sub _literal {
 	my $self	= shift;
 	### quotedString ( '@' language )? | datatypeString | integer | 
 	### double | decimal | boolean
@@ -389,31 +440,31 @@ sub literal {
 	### (so we change this around a bit to make it parsable without a huge 
 	### multiple lookahead)
 	
-	if ($self->quotedString_test()) {
-		my $value = $self->quotedString();
-		if ($self->test('@')) {
-			$self->eat('@');
-			my $lang = $self->language();
-			return $self->_Literal($value, $lang);
-		} elsif ($self->test('^^')) {
-			$self->eat('^^');
-			my $dtype = $self->resource();
-			return $self->typed($value, $dtype);
+	if ($self->_quotedString_test()) {
+		my $value = $self->_quotedString();
+		if ($self->_test('@')) {
+			$self->_eat('@');
+			my $lang = $self->_language();
+			return $self->__Literal($value, $lang);
+		} elsif ($self->_test('^^')) {
+			$self->_eat('^^');
+			my $dtype = $self->_resource();
+			return $self->_typed($value, $dtype);
 		} else {
-			return $self->_Literal($value);
+			return $self->__Literal($value);
 		}
-	} elsif ($self->double_test()) {
-		return $self->double();
-	} elsif ($self->decimal_test()) {
-		return $self->decimal();
-	} elsif ($self->integer_test()) {
-		return $self->integer();
+	} elsif ($self->_double_test()) {
+		return $self->_double();
+	} elsif ($self->_decimal_test()) {
+		return $self->_decimal();
+	} elsif ($self->_integer_test()) {
+		return $self->_integer();
 	} else {
-		return $self->boolean();
+		return $self->_boolean();
 	}
 }
 
-sub double_test {
+sub _double_test {
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_double/) {
 		return 1;
@@ -422,16 +473,16 @@ sub double_test {
 	}
 }
 
-sub double {
+sub _double {
 	my $self	= shift;
 	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent 
 	### | ([0-9])+ exponent )
 	### exponent = [eE] ('-' | '+')? [0-9]+
-	my $token	= $self->eat( $r_double );
-	return $self->typed( $token, $xsd->double );
+	my $token	= $self->_eat( $r_double );
+	return $self->_typed( $token, $xsd->double );
 }
 
-sub decimal_test {
+sub _decimal_test {
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_decimal/) {
 		return 1;
@@ -440,14 +491,14 @@ sub decimal_test {
 	}
 }
 
-sub decimal {
+sub _decimal {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->eat( $r_decimal );
-	return $self->typed( $token, $xsd->decimal );
+	my $token	= $self->_eat( $r_decimal );
+	return $self->_typed( $token, $xsd->decimal );
 }
 
-sub integer_test {
+sub _integer_test {
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_integer/) {
 		return 1;
@@ -456,21 +507,21 @@ sub integer_test {
 	}
 }
 
-sub integer {
+sub _integer {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->eat( $r_integer );
-	return $self->typed( $token, $xsd->integer );
+	my $token	= $self->_eat( $r_integer );
+	return $self->_typed( $token, $xsd->integer );
 }
 
-sub boolean {
+sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
-	my $token	= $self->eat( $r_boolean );
-	return $self->typed( $token, $xsd->boolean );
+	my $token	= $self->_eat( $r_boolean );
+	return $self->_typed( $token, $xsd->boolean );
 }
 
-sub blank_test {
+sub _blank_test {
 	my $self	= shift;
 	### between this and literal. urgh!
 	### this can start with...
@@ -484,31 +535,31 @@ sub blank_test {
 	}
 }
 
-sub blank {
+sub _blank {
 	my $self	= shift;
 	### nodeID | '[]' | '[' ws* predicateObjectList ws* ']' | collection
-	if ($self->nodeID_test) {
-		return $self->_bNode($self->nodeID());
-	} elsif ($self->test('[]')) {
-		$self->eat('[]');
-		return $self->_bNode( $self->_generate_bnode_id() );
-	} elsif ($self->test('[')) {
-		$self->eat('[');
-		my $subj	= $self->_bNode( $self->_generate_bnode_id() );
-		$self->_consume_ws();
-		foreach my $data ($self->predicateObjectList()) {
+	if ($self->_nodeID_test) {
+		return $self->__bNode($self->_nodeID());
+	} elsif ($self->_test('[]')) {
+		$self->_eat('[]');
+		return $self->__bNode( $self->__generate_bnode_id() );
+	} elsif ($self->_test('[')) {
+		$self->_eat('[');
+		my $subj	= $self->__bNode( $self->__generate_bnode_id() );
+		$self->__consume_ws();
+		foreach my $data ($self->_predicateObjectList()) {
 			my ($pred, $objt)	= @$data;
-			$self->triple( $subj, $pred, $objt );
+			$self->_triple( $subj, $pred, $objt );
 		}
-		$self->_consume_ws();
-		$self->eat(']');
+		$self->__consume_ws();
+		$self->_eat(']');
 		return $subj;
 	} else {
-		return $self->collection();
+		return $self->_collection();
 	}
 }
 
-sub itemList_test {
+sub _itemList_test {
 	my $self	= shift;
 	### between this and whitespace or ')'
 	return 0 unless (length($self->{tokens}));
@@ -519,50 +570,50 @@ sub itemList_test {
 	}
 }
 
-sub itemList {
+sub _itemList {
 	my $self	= shift;
 	### object (ws+ object)*
 	my @list;
-	push(@list, $self->object());
-	while ($self->ws_test()) {
-		$self->ws();
-		$self->_consume_ws();
-		if (not $self->test(')')) {
-			push(@list, $self->object());
+	push(@list, $self->_object());
+	while ($self->_ws_test()) {
+		$self->_ws();
+		$self->__consume_ws();
+		if (not $self->_test(')')) {
+			push(@list, $self->_object());
 		}
 	}
 	return @list;
 }
 
-sub collection {
+sub _collection {
 	my $self	= shift;
 	### '(' ws* itemList? ws* ')'
-	my $b	= $self->_bNode( $self->_generate_bnode_id() );
+	my $b	= $self->__bNode( $self->__generate_bnode_id() );
 	my ($this, $rest)	= ($b, undef);
-	$self->eat('(');
-	$self->_consume_ws();
-	if ($self->itemList_test()) {
-#		while (my $objt = $self->itemList()) {
-		foreach my $objt ($self->itemList()) {
+	$self->_eat('(');
+	$self->__consume_ws();
+	if ($self->_itemList_test()) {
+#		while (my $objt = $self->_itemList()) {
+		foreach my $objt ($self->_itemList()) {
 			if (defined($rest)) {
-				$this	= $self->_bNode( $self->_generate_bnode_id() );
-				$self->triple( $rest, $rdf->rest, $this)
+				$this	= $self->__bNode( $self->__generate_bnode_id() );
+				$self->_triple( $rest, $rdf->rest, $this)
 			}
-			$self->triple( $this, $rdf->first, $objt );
+			$self->_triple( $this, $rdf->first, $objt );
 			$rest = $this;
 		}
 	}
 	if (defined($rest)) {
-		$self->triple( $rest, $rdf->rest, $rdf->nil );
+		$self->_triple( $rest, $rdf->rest, $rdf->nil );
 	} else {
 		$b = $rdf->nil;
 	}
-	$self->_consume_ws();
-	$self->eat(')');
+	$self->__consume_ws();
+	$self->_eat(')');
 	return $b;
 }
 
-sub ws_test {
+sub _ws_test {
 	my $self	= shift;
 	unless (length($self->{tokens})) {
 		return 0;
@@ -575,20 +626,20 @@ sub ws_test {
 	}
 }
 
-sub ws {
+sub _ws {
 	my $self	= shift;
 	### #x9 | #xA | #xD | #x20 | comment
-	if ($self->test('#')) {
-		$self->comment();
+	if ($self->_test('#')) {
+		$self->_comment();
 	} else {
-		my $ws	= $self->eat(1);
+		my $ws	= $self->_eat(1);
 		unless ($ws =~ /^[\n\r\t ]/) {
-			throw RDF::Parser::Error::ValueError -text => 'Not whitespace';
+			throw RDF::Trice::Parser::Error::ValueError -text => 'Not whitespace';
 		}
 	}
 }
 
-sub resource_test {
+sub _resource_test {
 	my $self	= shift;
 	### between this and blank and literal
 	### quotedString ( '@' language )? | datatypeString | integer |
@@ -602,17 +653,17 @@ sub resource_test {
 	}
 }
 
-sub resource {
+sub _resource {
 	my $self	= shift;
 	### uriref | qname
-	if ($self->uriref_test()) {
-		return $self->_URI($self->join_uri($self->{baseURI}, $self->uriref()));
+	if ($self->_uriref_test()) {
+		return $self->__URI($self->_join_uri($self->{baseURI}, $self->_uriref()));
 	} else {
-		return $self->_URI($self->join_uri($self->{baseURI}, $self->qname()));
+		return $self->__URI($self->_join_uri($self->{baseURI}, $self->_qname()));
 	}
 }
 
-sub nodeID_test {
+sub _nodeID_test {
 	my $self	= shift;
 	### between this (_) and []
 	if (substr($self->{tokens}, 0, 1) eq '_') {
@@ -622,50 +673,50 @@ sub nodeID_test {
 	}
 }
 
-sub nodeID {
+sub _nodeID {
 	my $self	= shift;
 	### '_:' name
-	$self->eat('_:');
-	return $self->name();
+	$self->_eat('_:');
+	return $self->_name();
 }
 
-sub qname {
+sub _qname {
 	my $self	= shift;
 	### prefixName? ':' name?
-	my $prefix	= ($self->prefixName_test()) ? $self->prefixName() : '';
-	$self->eat(':');
-	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->name() : '';
+	my $prefix	= ($self->_prefixName_test()) ? $self->_prefixName() : '';
+	$self->_eat(':');
+	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
 	my $uri		= $self->{bindings}{$prefix};
 	return $uri . $name
 }
 
-sub uriref_test {
+sub _uriref_test {
 	my $self	= shift;
 	### between this and qname
-	if ($self->_startswith('<')) {
+	if ($self->__startswith('<')) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-sub uriref {
+sub _uriref {
 	my $self	= shift;
 	### '<' relativeURI '>'
-	$self->eat('<');
-	my $value	= $self->relativeURI();
-	$self->eat('>');
+	$self->_eat('<');
+	my $value	= $self->_relativeURI();
+	$self->_eat('>');
 	return $value;
 }
 
-sub language {
+sub _language {
 	my $self	= shift;
 	### [a-z]+ ('-' [a-z0-9]+ )*
-	my $token	= $self->eat( $r_language );
+	my $token	= $self->_eat( $r_language );
 	return $token;
 }
 
-sub nameStartChar_test {
+sub _nameStartChar_test {
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
 		return 1;
@@ -674,17 +725,17 @@ sub nameStartChar_test {
 	}
 }
 
-sub nameStartChar {
+sub _nameStartChar {
 	my $self	= shift;
 	### [A-Z] | "_" | [a-z] | [#x00C0-#x00D6] | [#x00D8-#x00F6] | 
 	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] 
 	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | 
 	### [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
-	my $nc	= $self->eat( $r_nameStartChar );
+	my $nc	= $self->_eat( $r_nameStartChar );
 	return $nc;
 }
 
-sub nameChar_test {
+sub _nameChar_test {
 	my $self	= shift;
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
 		return 1;
@@ -695,37 +746,37 @@ sub nameChar_test {
 	}
 }
 
-sub nameChar {
+sub _nameChar {
 	my $self	= shift;
 	### nameStartChar | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | 
 	### [#x203F-#x2040]
-#	if ($self->nameStartChar_test()) {
+#	if ($self->_nameStartChar_test()) {
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
-		my $nc	= $self->nameStartChar();
+		my $nc	= $self->_nameStartChar();
 		return $nc;
 	} else {
-		my $nce	= $self->eat( $r_nameChar_extra );
+		my $nce	= $self->_eat( $r_nameChar_extra );
 		return $nce;
 	}
 }
 
-sub name {
+sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	my ($name)	= ($self->eat( qr/^(${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*)/ ));
+	my ($name)	= ($self->_eat( qr/^(${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*)/ ));
 	return $name;
 # 	my @parts;
-# 	my $nsc	= $self->nameStartChar();
+# 	my $nsc	= $self->_nameStartChar();
 # 	push(@parts, $nsc);
-# #	while ($self->nameChar_test()) {
+# #	while ($self->_nameChar_test()) {
 # 	while ($self->{tokens} =~ /^$r_nameChar_test/) {
-# 		my $nc	= $self->nameChar();
+# 		my $nc	= $self->_nameChar();
 # 		push(@parts, $nc);
 # 	}
 # 	return join('', @parts);
 }
 
-sub prefixName_test {
+sub _prefixName_test {
 	my $self	= shift;
 	### between this and colon
 	if ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) {
@@ -735,28 +786,28 @@ sub prefixName_test {
 	}
 }
 
-sub prefixName {
+sub _prefixName {
 	my $self	= shift;
 	### ( nameStartChar - '_' ) nameChar*
 	my @parts;
-	my $nsc	= $self->eat( $r_nameStartChar_minus_underscore );
+	my $nsc	= $self->_eat( $r_nameStartChar_minus_underscore );
 	push(@parts, $nsc);
-#	while ($self->nameChar_test()) {
+#	while ($self->_nameChar_test()) {
 	while ($self->{tokens} =~ /^$r_nameChar_test/) {
-		my $nc	= $self->nameChar();
+		my $nc	= $self->_nameChar();
 		push(@parts, $nc);
 	}
 	return join('', @parts);
 }
 
-sub relativeURI {
+sub _relativeURI {
 	my $self	= shift;
 	### ucharacter*
-	my $token	= $self->eat( $r_ucharacters );
+	my $token	= $self->_eat( $r_ucharacters );
 	return $token;
 }
 
-sub quotedString_test {
+sub _quotedString_test {
 	my $self	= shift;
 	if (substr($self->{tokens}, 0, 1) eq '"') {
 		return 1;
@@ -765,47 +816,47 @@ sub quotedString_test {
 	}
 }
 
-sub quotedString {
+sub _quotedString {
 	my $self	= shift;
 	### string | longString
-	if ($self->longString_test()) {
-		return $self->longString();
+	if ($self->_longString_test()) {
+		return $self->_longString();
 	} else {
-		return $self->string();
+		return $self->_string();
 	}
 }
 
-sub string {
+sub _string {
 	my $self	= shift;
 	### #x22 scharacter* #x22
-	$self->eat('"');
-	my $value	= $self->eat( $r_scharacters );
-	$self->eat('"');
-	return $self->parse_short( $value );
+	$self->_eat('"');
+	my $value	= $self->_eat( $r_scharacters );
+	$self->_eat('"');
+	return $self->_parse_short( $value );
 }
 
-sub longString_test {
+sub _longString_test {
 	my $self	= shift;
-	if ($self->_startswith( '"""' )) {
+	if ($self->__startswith( '"""' )) {
 		return 1;
 	} else {
 		return 0;
 	}
 }
 
-sub longString {
+sub _longString {
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
-	$self->eat('"""');
-	my $value	= $self->eat( $r_lcharacters );
-	$self->eat('"""');
-	return $self->parse_long( $value );
+	$self->_eat('"""');
+	my $value	= $self->_eat( $r_lcharacters );
+	$self->_eat('"""');
+	return $self->_parse_long( $value );
 }
 
 ################################################################################
 
 use Unicode::Escape;
-sub parse_short {
+sub _parse_short {
 	my $self	= shift;
 	my $s		= shift;
 	for ($s) {
@@ -817,7 +868,7 @@ sub parse_short {
 	return Unicode::Escape::escape( $s );
 }
 
-sub parse_long {
+sub _parse_long {
 	my $self	= shift;
 	my $s		= shift;
 	for ($s) {
@@ -829,7 +880,7 @@ sub parse_long {
 	return Unicode::Escape::escape( $s );
 }
 
-sub join_uri {
+sub _join_uri {
 	my $self	= shift;
 	my $base	= shift;
 	my $uri		= shift;
@@ -839,7 +890,7 @@ sub join_uri {
 	return URI->new_abs( $uri, $base );
 }
 
-sub typed {
+sub _typed {
 	my $self		= shift;
 	my $value		= shift;
 	my $type		= shift;
@@ -860,44 +911,44 @@ sub typed {
 			$value = $value . '.0';
 		}
 	}
-	return RDF::Query::Node::Literal->new($value, undef, $datatype)
+	return RDF::Trice::Node::Literal->new($value, undef, $datatype)
 }
 
-sub _generate_bnode_id {
+sub __generate_bnode_id {
 	my $self	= shift;
 	my $id		= $self->{ bnode_id }++;
 	return 'r' . $id;
 }
 
-sub _consume_ws {
+sub __consume_ws {
 	my $self	= shift;
-	while ($self->ws_test()) {
-		$self->ws()
+	while ($self->_ws_test()) {
+		$self->_ws()
 	}
 }
 
-sub _URI {
+sub __URI {
 	my $self	= shift;
-	return RDF::Query::Node::Resource->new( @_ )
+	return RDF::Trice::Node::Resource->new( @_ )
 }
 
-sub _bNode {
+sub __bNode {
 	my $self	= shift;
-	return RDF::Query::Node::Blank->new( @_ )
+	return RDF::Trice::Node::Blank->new( @_ )
 }
 
-sub _Literal {
+sub __Literal {
 	my $self	= shift;
-	return RDF::Query::Node::Blank->new( @_ )
+	return RDF::Trice::Node::Blank->new( @_ )
 }
 
-sub _DatatypedLiteral {
+sub __DatatypedLiteral {
 	my $self	= shift;
-	return RDF::Query::Node::Blank->new( $_[0], undef, $_[1] )
+	return RDF::Trice::Node::Blank->new( $_[0], undef, $_[1] )
 }
 
 
-sub _startswith {
+sub __startswith {
 	my $self	= shift;
 	my $thing	= shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {

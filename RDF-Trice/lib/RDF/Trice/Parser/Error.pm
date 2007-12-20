@@ -1,18 +1,18 @@
 =head1 NAME
 
-RDF::Parser::Error - Error classes for RDF::Parser.
+RDF::Trice::Parser::Error - Error classes for RDF::Trice::Parser.
 
 =head1 VERSION
 
-This document describes RDF::Parser::Error version 1.001
+This document describes RDF::Trice::Parser::Error version 1.001
 
 =head1 SYNOPSIS
 
- use RDF::Parser::Error qw(:try);
+ use RDF::Trice::Parser::Error qw(:try);
 
 =head1 DESCRIPTION
 
-RDF::Parser::Error provides an class hierarchy of errors that other RDF::Parser
+RDF::Trice::Parser::Error provides an class hierarchy of errors that other RDF::Trice::Parser
 classes may throw using the L<Error|Error> API. See L<Error> for more information.
 
 =head1 REQUIRES
@@ -21,7 +21,7 @@ L<Error|Error>
 
 =cut
 
-package RDF::Parser::Error;
+package RDF::Trice::Parser::Error;
 
 use strict;
 use warnings;
@@ -40,9 +40,9 @@ BEGIN {
 
 ######################################################################
 
-package RDF::Parser::Error::ValueError;
+package RDF::Trice::Parser::Error::ValueError;
 
-use base qw(RDF::Parser::Error);
+use base qw(RDF::Trice::Parser::Error);
 
 1;
 

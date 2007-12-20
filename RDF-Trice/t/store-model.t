@@ -5,25 +5,31 @@ use strict;
 use warnings;
 
 use DBI;
-use RDF::Namespace;
-use RDF::Store::DBI;
-use RDF::Query::Node;
-use RDF::Query::Algebra;
+use RDF::Trice::Namespace;
+use RDF::Trice::Store::DBI;
+use RDF::Trice::Node;
+use RDF::Trice::Statement;
 use File::Temp qw(tempfile);
 
-my $rdf		= RDF::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-my $foaf	= RDF::Namespace->new('http://xmlns.com/foaf/0.1/');
-my $kasei	= RDF::Namespace->new('http://kasei.us/');
-my $b		= RDF::Query::Node::Blank->new();
-my $p		= RDF::Query::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
-my $st0		= RDF::Query::Algebra::Triple->new( $p, $rdf->type, $foaf->Person );
-my $st1		= RDF::Query::Algebra::Triple->new( $p, $foaf->name, RDF::Query::Node::Literal->new('Gregory Todd Williams') );
-my $st2		= RDF::Query::Algebra::Triple->new( $b, $rdf->type, $foaf->Person );
-my $st3		= RDF::Query::Algebra::Triple->new( $b, $foaf->name, RDF::Query::Node::Literal->new('Eve') );
+my $rdf		= RDF::Trice::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+my $foaf	= RDF::Trice::Namespace->new('http://xmlns.com/foaf/0.1/');
+my $kasei	= RDF::Trice::Namespace->new('http://kasei.us/');
+my $b		= RDF::Trice::Node::Blank->new();
+my $p		= RDF::Trice::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
+my $st0		= RDF::Trice::Statement->new( $p, $rdf->type, $foaf->Person );
+my $st1		= RDF::Trice::Statement->new( $p, $foaf->name, RDF::Trice::Node::Literal->new('Gregory Todd Williams') );
+my $st2		= RDF::Trice::Statement->new( $b, $rdf->type, $foaf->Person );
+my $st3		= RDF::Trice::Statement->new( $b, $foaf->name, RDF::Trice::Node::Literal->new('Eve') );
+
+my $e			= eval "use RDF::Query::Algebra 2.0; 1";
+my $RDFQUERY	= defined($e) ? 1 : 0;
+unless ($RDFQUERY) {
+	warn $@;
+}
 
 my ($stores, $remove)	= stores();
 foreach my $store (@$stores) {
-	isa_ok( $store, 'RDF::Store::DBI' );
+	isa_ok( $store, 'RDF::Trice::Store::DBI' );
 	$store->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
 	
 	{
@@ -34,40 +40,42 @@ foreach my $store (@$stores) {
 	}
 	
 	{
-		my $stream	= $store->get_statements( $p, $foaf->name, RDF::Query::Node::Variable->new('name') );
+		my $stream	= $store->get_statements( $p, $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $st		= $stream->next;
 		is_deeply( $st, $st1, 'foaf:name statement' );
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
 	{
-		my $stream	= $store->get_statements( $b, $foaf->name, RDF::Query::Node::Variable->new('name') );
+		my $stream	= $store->get_statements( $b, $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $st		= $stream->next;
 		is_deeply( $st, $st3, 'foaf:name statement (with bnode in triple)' );
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
 	{
-		my $stream	= $store->get_statements( RDF::Query::Node::Variable->new('p'), $foaf->name, RDF::Query::Node::Literal->new('Gregory Todd Williams') );
+		my $stream	= $store->get_statements( RDF::Trice::Node::Variable->new('p'), $foaf->name, RDF::Trice::Node::Literal->new('Gregory Todd Williams') );
 		my $st		= $stream->next;
 		is_deeply( $st, $st1, 'foaf:name statement (with literal in triple)' );
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 
 	{
-		my $stream	= $store->get_statements( RDF::Query::Node::Variable->new('p'), $foaf->name, RDF::Query::Node::Variable->new('name') );
+		my $stream	= $store->get_statements( RDF::Trice::Node::Variable->new('p'), $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			my $subj	= $st->subject;
-			isa_ok( $subj, 'RDF::Query::Node' );
+			isa_ok( $subj, 'RDF::Trice::Node' );
 			$count++;
 		}
 		is( $count, 2, 'expected result count (2 people)' );
 	}
 	
-	{
-		my $p1		= RDF::Query::Algebra::Triple->new( RDF::Query::Node::Variable->new('p'), $rdf->type, $foaf->Person );
-		my $p2		= RDF::Query::Algebra::Triple->new( RDF::Query::Node::Variable->new('p'), $foaf->name, RDF::Query::Node::Variable->new('name') );
+	SKIP: {
+		skip("RDF::Query not available", 19) unless ($RDFQUERY);
+		
+		my $p1		= RDF::Trice::Statement->new( RDF::Trice::Node::Variable->new('p'), $rdf->type, $foaf->Person );
+		my $p2		= RDF::Trice::Statement->new( RDF::Trice::Node::Variable->new('p'), $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $pattern	= RDF::Query::Algebra::BasicGraphPattern->new( $p1, $p2 );
 		
 		{
@@ -75,8 +83,8 @@ foreach my $store (@$stores) {
 			my $count	= 0;
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Query::Node', 'node person' );
-				isa_ok( $b->{name}, 'RDF::Query::Node::Literal', 'literal name' );
+				isa_ok( $b->{p}, 'RDF::Trice::Node', 'node person' );
+				isa_ok( $b->{name}, 'RDF::Trice::Node::Literal', 'literal name' );
 				like( $b->{name}->literal_value, qr/Eve|Gregory/, 'name pattern' );
 				$count++;
 			}
@@ -90,7 +98,7 @@ foreach my $store (@$stores) {
 			my @expect	= ('Eve', 'Gregory Todd Williams');
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Query::Node', 'node person' );
+				isa_ok( $b->{p}, 'RDF::Trice::Node', 'node person' );
 				my $name	= shift(@expect);
 				is( $b->{name}->literal_value, $name, 'name pattern' );
 				$count++;
@@ -119,7 +127,7 @@ foreach my $store (@$stores) {
 	
 	{
 		my $stream	= $store->model_as_stream();
-		isa_ok( $stream, 'RDF::Iterator::Graph' );
+		isa_ok( $stream, 'RDF::Trice::Iterator::Graph' );
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			my $p	= $st->predicate;
@@ -130,15 +138,15 @@ foreach my $store (@$stores) {
 	}
 	
 	{
-		my $st5		= RDF::Query::Algebra::Triple->new( $p, $foaf->name, RDF::Query::Node::Literal->new('グレゴリ　ウィリアムス', 'jp') );
+		my $st5		= RDF::Trice::Statement->new( $p, $foaf->name, RDF::Trice::Node::Literal->new('グレゴリ　ウィリアムス', 'jp') );
 		$store->add_statement( $st5 );
 		
-		my $pattern	= RDF::Query::Algebra::Triple->new( $p, $foaf->name, RDF::Query::Node::Variable->new('name') );
+		my $pattern	= RDF::Trice::Statement->new( $p, $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $stream	= $store->get_pattern( $pattern );
 		my $count	= 0;
 		while (my $b = $stream->next) {
 			isa_ok( $b, 'HASH' );
-			isa_ok( $b->{name}, 'RDF::Query::Node::Literal', 'literal name' );
+			isa_ok( $b->{name}, 'RDF::Trice::Node::Literal', 'literal name' );
 			like( $b->{name}->literal_value, qr/Gregory|グレゴリ/, 'name pattern　with language-tagged result' );
 			$count++;
 		}
@@ -149,17 +157,17 @@ foreach my $store (@$stores) {
 	}
 	
 	{
-		my $st6		= RDF::Query::Algebra::Triple->new( $p, $foaf->name, RDF::Query::Node::Literal->new('Gregory Todd Williams', undef, 'http://www.w3.org/2000/01/rdf-schema#Literal') );
+		my $st6		= RDF::Trice::Statement->new( $p, $foaf->name, RDF::Trice::Node::Literal->new('Gregory Todd Williams', undef, 'http://www.w3.org/2000/01/rdf-schema#Literal') );
 		$store->add_statement( $st6 );
 		
-		my $pattern	= RDF::Query::Algebra::Triple->new( $p, $foaf->name, RDF::Query::Node::Variable->new('name') );
+		my $pattern	= RDF::Trice::Statement->new( $p, $foaf->name, RDF::Trice::Node::Variable->new('name') );
 		my $stream	= $store->get_pattern( $pattern );
 		my $count	= 0;
 		my $dt		= 0;
 		while (my $b = $stream->next) {
 			my $name	= $b->{name};
 			isa_ok( $b, 'HASH' );
-			isa_ok( $name, 'RDF::Query::Node::Literal', 'literal name' );
+			isa_ok( $name, 'RDF::Trice::Node::Literal', 'literal name' );
 			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern　with datatyped result' );
 			if (my $type = $name->literal_datatype) {
 				is( $type, 'http://www.w3.org/2000/01/rdf-schema#Literal', 'datatyped literal' );
@@ -171,11 +179,13 @@ foreach my $store (@$stores) {
 		is( $dt, 1, 'expected result count (1 datatyped literal)' );
 	}
 	
-	{
+	SKIP: {
+		skip "RDF::Query not available", 1 unless ($RDFQUERY);
+		
 		throws_ok {
 			my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new();
 			my $stream	= $store->get_pattern( $pattern );
-		} 'Error', 'bad ordering request throws exception';
+		} 'Error', 'empty GGP throws exception';
 	}
 }
 
@@ -187,7 +197,7 @@ sub stores {
 	my @stores;
 	my @removeme;
 	{
-		my $store	= RDF::Store::DBI->new();
+		my $store	= RDF::Trice::Store::DBI->new();
 		$store->init();
 		push(@stores, $store);
 	}
@@ -196,7 +206,7 @@ sub stores {
 		my ($fh, $filename) = tempfile();
 		undef $fh;
 		my $dbh		= DBI->connect( "dbi:SQLite:dbname=${filename}", '', '' );
-		my $store	= RDF::Store::DBI->new( 'model', $dbh );
+		my $store	= RDF::Trice::Store::DBI->new( 'model', $dbh );
 		$store->init();
 		push(@stores, $store);
 		push(@removeme, $filename);
@@ -206,7 +216,7 @@ sub stores {
 		my ($fh, $filename) = tempfile();
 		undef $fh;
 		my $dsn		= "dbi:SQLite:dbname=${filename}";
-		my $store	= RDF::Store::DBI->new( 'model', $dsn, '', '' );
+		my $store	= RDF::Trice::Store::DBI->new( 'model', $dsn, '', '' );
 		$store->init();
 		push(@stores, $store);
 		push(@removeme, $filename);

@@ -9,12 +9,9 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/RDF/Trice.pm',
     PL_FILES            => {},
     PREREQ_PM => {
-		'RDF::Query::Node'			=> 0,
 		'XML::Namespace'			=> 0,
 		'XML::CommonNS'				=> 0.04,
 		'Error'						=> 0,
-		'RDF::Namespace'			=> 0,
-		'RDF::Query'				=> 0,
 		'Unicode::Escape'			=> 0,
 		'Scalar::Util'				=> 0,
 		'URI'						=> 0,

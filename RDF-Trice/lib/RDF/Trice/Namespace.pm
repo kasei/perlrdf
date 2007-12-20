@@ -1,4 +1,4 @@
-# RDF::Namespace
+# RDF::Trice::Namespace
 # -------------
 # $Revision $
 # $Date $
@@ -7,27 +7,27 @@
 
 =head1 NAME
 
-RDF::Namespace - Abbreviated syntax for constructing RDF node objects.
+RDF::Trice::Namespace - Abbreviated syntax for constructing RDF node objects.
 
 =head1 VERSION
 
-This document describes RDF::Namespace version 0.0.1
+This document describes RDF::Trice::Namespace version 0.0.1
 
 =head1 SYNOPSIS
 
-    use RDF::Namespace qw(rdf);
-    my $foaf = RDF::Namespace->new( 'http://xmlns.com/foaf/0.1/' );
+    use RDF::Trice::Namespace qw(rdf);
+    my $foaf = RDF::Trice::Namespace->new( 'http://xmlns.com/foaf/0.1/' );
     my $pred = $foaf->name;
     my $type = $rdf->type;
     print $pred->as_string; # '[http://xmlns.com/foaf/0.1/name]'
 
 =head1 DESCRIPTION
 
-This module provides an abbreviated syntax for creating RDF::Query::Node objects
+This module provides an abbreviated syntax for creating RDF::Trice::Node objects
 for URIs sharing common namespaces. The module provides a constructor for creating
 namespace objects which may be used for constructing Node objects. Calling any
 method (other than 'import', 'new', 'uri' or 'AUTOLOAD') on the namespace object
-will return a RDF::Query::Node object representing the URI of the method name
+will return a RDF::Trice::Node object representing the URI of the method name
 appended to the namespace.
 
 =head1 METHODS
@@ -36,7 +36,7 @@ appended to the namespace.
 
 =cut
 
-package RDF::Namespace;
+package RDF::Trice::Namespace;
 
 our $VERSION = '0.001';
 
@@ -46,7 +46,7 @@ use warnings;
 use base qw(XML::Namespace);
 
 use Carp;
-use RDF::Query::Node::Resource;
+use RDF::Trice::Node::Resource;
 use XML::CommonNS 0.04 ();
 
 sub import {
@@ -80,7 +80,7 @@ added to the end of it.
 sub uri {
 	my $self	= shift;
 	my $uri		= $self->SUPER::uri( @_ );
-	return RDF::Query::Node::Resource->new( $uri );
+	return RDF::Trice::Node::Resource->new( $uri );
 }
 
 

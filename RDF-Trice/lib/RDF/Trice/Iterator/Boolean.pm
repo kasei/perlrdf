@@ -1,4 +1,4 @@
-# RDF::Iterator::Boolean
+# RDF::Trice::Iterator::Boolean
 # -------------
 # $Revision $
 # $Date $
@@ -6,11 +6,11 @@
 
 =head1 NAME
 
-RDF::Iterator::Boolean - Stream (iterator) class for boolean query results.
+RDF::Trice::Iterator::Boolean - Stream (iterator) class for boolean query results.
 
 =head1 SYNOPSIS
 
-    use RDF::Iterator;
+    use RDF::Trice::Iterator;
     my $query	= RDF::Query->new( '...query...' );
     my $stream	= $query->execute();
     while (my $row = $stream->next) {
@@ -24,13 +24,13 @@ RDF::Iterator::Boolean - Stream (iterator) class for boolean query results.
 
 =cut
 
-package RDF::Iterator::Boolean;
+package RDF::Trice::Iterator::Boolean;
 
 use strict;
 use warnings;
 use JSON;
 
-use base qw(RDF::Iterator);
+use base qw(RDF::Trice::Iterator);
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {

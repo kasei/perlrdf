@@ -1,16 +1,16 @@
 =head1 NAME
 
-RDF::Store::DBI - [One line description of module's purpose here]
+RDF::Trice::Store::DBI - [One line description of module's purpose here]
 
 
 =head1 VERSION
 
-This document describes RDF::Store::DBI version 0.002
+This document describes RDF::Trice::Store::DBI version 0.002
 
 
 =head1 SYNOPSIS
 
-    use RDF::Store::DBI;
+    use RDF::Trice::Store::DBI;
 
 =for author to fill in:
     Brief code example(s) here showing commonest usage(s).
@@ -37,7 +37,7 @@ None.
 
 =cut
 
-package RDF::Store::DBI;
+package RDF::Trice::Store::DBI;
 
 use strict;
 use warnings;
@@ -51,9 +51,9 @@ use Scalar::Util qw(blessed reftype);
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
-use RDF::Query::Node;
-use RDF::Query::Algebra;
-use RDF::Iterator;
+use RDF::Trice::Node;
+use RDF::Trice::Statement;
+use RDF::Trice::Iterator;
 
 our $VERSION	= "0.003";
 use constant DEBUG	=> 0;
@@ -129,7 +129,7 @@ sub get_statements {
 	my $context	= shift;
 	
 	my $dbh		= $self->dbh;
-	my $triple	= RDF::Query::Algebra::Triple->new( $subj, $pred, $obj );
+	my $triple	= RDF::Trice::Statement->new( $subj, $pred, $obj );
 	my @vars	= $triple->referenced_variables;
 	
 	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
@@ -149,21 +149,21 @@ sub get_statements {
 				my $name	= $node->name;
 				my $prefix	= $name . '_';
 				if (defined $row->{ "${prefix}URI" }) {
-					push( @triple, RDF::Query::Node::Resource->new( $row->{"${prefix}URI" } ) );
+					push( @triple, RDF::Trice::Node::Resource->new( $row->{"${prefix}URI" } ) );
 				} elsif (defined $row->{ "${prefix}Name" }) {
-					push( @triple, RDF::Query::Node::Blank->new( $row->{"${prefix}Name" } ) );
+					push( @triple, RDF::Trice::Node::Blank->new( $row->{"${prefix}Name" } ) );
 				} else {
-					push( @triple, RDF::Query::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+					push( @triple, RDF::Trice::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
 				}
 			} else {
 				push(@triple, $node);
 			}
 		}
-		my $triple	= RDF::Query::Algebra::Triple->new( @triple );
+		my $triple	= RDF::Trice::Statement->new( @triple );
 		return $triple;
 	};
 	
-	return RDF::Iterator::Graph->new( $sub )
+	return RDF::Trice::Iterator::Graph->new( $sub )
 }
 
 
@@ -205,11 +205,11 @@ sub get_pattern {
 		foreach my $name (@vars) {
 			my $prefix	= $name . '_';
 			if (defined $row->{ "${prefix}URI" }) {
-				$bindings{ $name }	 = RDF::Query::Node::Resource->new( $row->{"${prefix}URI" } );
+				$bindings{ $name }	 = RDF::Trice::Node::Resource->new( $row->{"${prefix}URI" } );
 			} elsif (defined $row->{ "${prefix}Name" }) {
-				$bindings{ $name }	 = RDF::Query::Node::Blank->new( $row->{"${prefix}Name" } );
+				$bindings{ $name }	 = RDF::Trice::Node::Blank->new( $row->{"${prefix}Name" } );
 			} else {
-				$bindings{ $name }	 = RDF::Query::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
+				$bindings{ $name }	 = RDF::Trice::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
 			}
 		}
 		return \%bindings;
@@ -226,7 +226,7 @@ sub get_pattern {
 		}
 		@args	= ( sorted_by => \@realordering );
 	}
-	return RDF::Iterator::Bindings->new( $sub, \@vars, @args )
+	return RDF::Trice::Iterator::Bindings->new( $sub, \@vars, @args )
 }
 
 
@@ -246,16 +246,16 @@ sub get_contexts {
  	my $sub		= sub {
  		my $row	= $sth->fetchrow_hashref;
  		if ($row->{URI}) {
- 			return RDF::Query::Node::Resource->new( $row->{URI} );
+ 			return RDF::Trice::Node::Resource->new( $row->{URI} );
  		} elsif ($row->{Name}) {
- 			return RDF::Query::Node::Blank->new( $row->{Name} );
+ 			return RDF::Trice::Node::Blank->new( $row->{Name} );
  		} elsif (defined $row->{Value}) {
- 			return RDF::Query::Node::Literal->new( @{ $row }{qw(Value Language Datatype)} );
+ 			return RDF::Trice::Node::Literal->new( @{ $row }{qw(Value Language Datatype)} );
  		} else {
  			return;
  		}
  	};
- 	return RDF::Iterator->new( $sub );
+ 	return RDF::Trice::Iterator->new( $sub );
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -370,7 +370,7 @@ sub count_statements {
 	
 	my $dbh		= $self->dbh;
 	my $var		= 0;
-	my $triple	= RDF::Query::Algebra::Triple->new( map { defined($_) ? $_ : RDF::Query::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $triple	= RDF::Trice::Statement->new( map { defined($_) ? $_ : RDF::Trice::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	my @vars	= $triple->referenced_variables;
 	
 	my $sql		= $self->_sql_for_pattern( $triple, $context, count => 1 );
@@ -418,7 +418,7 @@ Returns an iterator object containing every statement in the model.
 
 sub model_as_stream {
 	my $self	= shift;
-	my $stream	= $self->get_statements( map { RDF::Query::Node::Variable->new($_) } qw(s p o) );
+	my $stream	= $self->get_statements( map { RDF::Trice::Node::Variable->new($_) } qw(s p o) );
 	return $stream;
 }
 
@@ -469,7 +469,7 @@ sub add_variable_values_joins {
 	foreach my $var (grep { not $seen_vars{ $_ }++ } (@vars, keys %$vars)) {
 		my $col	= $vars->{ $var };
 		unless ($col) {
-			throw RDF::Query::Error::CompilationError "*** Nothing is known about the variable ?${var}";
+			throw RDF::Trice::Error::CompilationError "*** Nothing is known about the variable ?${var}";
 		}
 		
 		my $col_table	= (split(/[.]/, $col))[0];
@@ -634,7 +634,7 @@ sub _sql_for_triple {
 	if (defined($ctx)) {
 		$self->_add_sql_node_clause( "${table}.Context", $ctx, $context );
 	} else {
-		$self->_add_sql_node_clause( "${table}.Context", RDF::Query::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
+		$self->_add_sql_node_clause( "${table}.Context", RDF::Trice::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
 	}
 }
 
@@ -643,19 +643,19 @@ sub _add_sql_node_clause {
 	my $col		= shift;
 	my $node	= shift;
 	my $context	= shift;
-	if ($node->isa('RDF::Query::Node::Variable')) {
+	if ($node->isa('RDF::Trice::Node::Variable')) {
 		my $name	= $node->name;
 		if (my $existing_col = _get_var( $context, $name )) {
 			_add_where( $context, "$col = ${existing_col}" );
 		} else {
 			_add_var( $context, $name, $col );
 		}
-	} elsif ($node->isa('RDF::Query::Node::Resource')) {
+	} elsif ($node->isa('RDF::Trice::Node::Resource')) {
 		my $uri	= $node->uri_value;
 		my $id	= $self->_mysql_node_hash( $node );
 		$id		=~ s/\D//;
 		_add_where( $context, "${col} = $id" );
-	} elsif ($node->isa('RDF::Query::Node::Blank')) {
+	} elsif ($node->isa('RDF::Trice::Node::Blank')) {
 		my $id	= $self->_mysql_node_hash( $node );
 		$id		=~ s/\D//;
 		_add_where( $context, "${col} = $id" );
@@ -664,12 +664,12 @@ sub _add_sql_node_clause {
 #		_add_from( $context, "Bnodes $b" );
 #		_add_where( $context, "${col} = ${b}.ID" );
 #		_add_where( $context, "${b}.Name = '$id'" );
-	} elsif ($node->isa('RDF::Query::Node::Literal')) {
+	} elsif ($node->isa('RDF::Trice::Node::Literal')) {
 		my $id	= $self->_mysql_node_hash( $node );
 		$id		=~ s/\D//;
 		_add_where( $context, "${col} = $id" );
 	} else {
-		throw RDF::Query::Error::CompilationError( -text => "Unknown node type: " . Dumper($node) );
+		throw RDF::Trice::Error::CompilationError( -text => "Unknown node type: " . Dumper($node) );
 	}
 }
 
@@ -727,13 +727,13 @@ sub _mysql_node_hash {
 	return 0 unless (blessed($node));
 	
 	my $data;
-	if ($node->isa('RDF::Query::Node::Resource')) {
+	if ($node->isa('RDF::Trice::Node::Resource')) {
 		my $value	= $node->uri_value;
 		$data	= 'R' . $value;
-	} elsif ($node->isa('RDF::Query::Node::Blank')) {
+	} elsif ($node->isa('RDF::Trice::Node::Blank')) {
 		my $value	= $node->blank_identifier;
 		$data	= 'B' . $value;
-	} elsif ($node->isa('RDF::Query::Node::Literal')) {
+	} elsif ($node->isa('RDF::Trice::Node::Literal')) {
 		my $value	= $node->literal_value || '';
 		my $lang	= $node->literal_value_language || '';
 		my $dt		= $node->literal_datatype || '';

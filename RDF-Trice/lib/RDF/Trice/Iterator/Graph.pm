@@ -1,4 +1,4 @@
-# RDF::Iterator::Graph
+# RDF::Trice::Iterator::Graph
 # -------------
 # $Revision $
 # $Date $
@@ -6,11 +6,11 @@
 
 =head1 NAME
 
-RDF::Iterator::Graph - Stream (iterator) class for graph query results.
+RDF::Trice::Iterator::Graph - Stream (iterator) class for graph query results.
 
 =head1 SYNOPSIS
 
-    use RDF::Iterator;
+    use RDF::Trice::Iterator;
     my $query	= RDF::Query->new( '...query...' );
     my $stream	= $query->execute();
     while (my $row = $stream->next) {
@@ -24,15 +24,15 @@ RDF::Iterator::Graph - Stream (iterator) class for graph query results.
 
 =cut
 
-package RDF::Iterator::Graph;
+package RDF::Trice::Iterator::Graph;
 
 use strict;
 use warnings;
 use JSON;
 use List::Util qw(max);
-use RDF::Iterator qw(sgrep);
+use RDF::Trice::Iterator qw(sgrep);
 
-use base qw(RDF::Iterator);
+use base qw(RDF::Trice::Iterator);
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
@@ -90,6 +90,7 @@ sub unique {
 	my $bridge	= $self->bridge;
 	my %seen;
 	return sgrep {
+		no warnings 'uninitialized';
 		my $s	= $_;
 		my $str	= $bridge->as_string( $s );
 		not($seen{ $str }++)
@@ -179,7 +180,7 @@ Returns a JSON serialization of the stream data.
 sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	throw RDF::Query::Error::SerializationError ( -text => 'There is no JSON serialization specified for graph query results' );
+	throw RDF::Trice::Error::SerializationError ( -text => 'There is no JSON serialization specified for graph query results' );
 }
 
 =item C<< construct_args >>

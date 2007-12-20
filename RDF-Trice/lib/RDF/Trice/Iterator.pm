@@ -1,4 +1,4 @@
-# RDF::Iterator
+# RDF::Trice::Iterator
 # -------------
 # $Revision $
 # $Date $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Iterator - Stream (iterator) class for SPARQL query results.
+RDF::Trice::Iterator - Stream (iterator) class for SPARQL query results.
 
 =head1 VERSION
 
-This document describes RDF::Iterator version 1.000.
+This document describes RDF::Trice::Iterator version 1.000.
 
 
 =head1 SYNOPSIS
 
-    use RDF::Iterator;
+    use RDF::Trice::Iterator;
     my $query	= RDF::Query->new( '...query...' );
     my $stream	= $query->execute();
     while (my $row = $stream->next) {
@@ -29,7 +29,7 @@ This document describes RDF::Iterator version 1.000.
 
 =cut
 
-package RDF::Iterator;
+package RDF::Trice::Iterator;
 
 use strict;
 use warnings;
@@ -61,9 +61,9 @@ use overload '&{}' => sub {
 	};
 };
 
-require RDF::Iterator::Bindings;
-require RDF::Iterator::Boolean;
-require RDF::Iterator::Graph;
+require RDF::Trice::Iterator::Bindings;
+require RDF::Trice::Iterator::Boolean;
+require RDF::Trice::Iterator::Graph;
 
 
 
@@ -346,8 +346,8 @@ sub join_streams {
 	
 #	my $debug	= $args{debug};
 	
-	Carp::confess unless ($astream->isa('RDF::Iterator::Bindings'));
-	Carp::confess unless ($bstream->isa('RDF::Iterator::Bindings'));
+	Carp::confess unless ($astream->isa('RDF::Trice::Iterator::Bindings'));
+	Carp::confess unless ($bstream->isa('RDF::Trice::Iterator::Bindings'));
 	
 	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
@@ -484,7 +484,7 @@ sub _row {
 
 =item C<< bridge >>
 
-Returns the RDF::Query::Model bridge object used for insepcting the objects returned by the stream.
+Returns the model bridge object used for insepcting the objects returned by the stream.
 
 =cut
 
