@@ -1,0 +1,20 @@
+# http://module-build.sourceforge.net/META-spec.html
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         RDF-Trice
+version:      0.001
+version_from: lib/RDF/Trice.pm
+installdirs:  site
+requires:
+    RDF::Query::Node:              0
+    Test::More:                    0
+    XML::CommonNS:                 0.04
+    XML::Namespace:                0
+    Error: 0
+    RDF::Namespace: 0
+    RDF::Query: 0
+    Unicode::Escape: 0
+    Scalar::Util: 0
+    URI: 0
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.17
