@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use JSON;
+use JSON 2.0 qw(-support_by_pp);
 use Scalar::Util qw(reftype);
 
 use RDF::Iterator qw(smap);
@@ -302,8 +302,8 @@ sub as_json {
 	
 	my $count	= 0;
 	my $parsed	= $bridge->parsed;
-	my $order	= ref($parsed->{options}{orderby}) ? JSON::True : JSON::False;
-	my $dist	= $parsed->{options}{distinct} ? JSON::True : JSON::False;
+	my $order	= ref($parsed->{options}{orderby}) ? JSON::true : JSON::false;
+	my $dist	= $parsed->{options}{distinct} ? JSON::true : JSON::false;
 	
 	my $data	= {
 					head	=> { vars => \@variables },

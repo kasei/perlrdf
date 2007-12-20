@@ -111,7 +111,7 @@ Returns a JSON serialization of the stream data.
 sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	my $value	= $self->get_boolean ? JSON::True : JSON::False;
+	my $value	= $self->get_boolean ? JSON::true : JSON::false;
 	my $data	= { head => { vars => [] }, boolean => $value };
 	return objToJson( $data );
 }

@@ -119,6 +119,10 @@ sub test_models_and_classes {
 			
 			{
 				eval "use RDF::Redland";
+				if ($@) {
+					warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Store";
+					return @models;
+				}
 				my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
 				my $storage	= RDF::Redland::Storage->new("mysql", $model->model_name, { host => 'localhost', database=> 'test', user => 'test', password => 'test' });
 				my $model	= RDF::Redland::Model->new($storage, "");

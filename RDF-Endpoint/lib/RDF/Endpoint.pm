@@ -27,11 +27,25 @@ sub new {
 	return $self;
 }
 
+sub query_page {
+	my $self	= shift;
+	my $cgi		= shift;
+	my $prefix	= shift;
+	
+	my $store	= $self->_store;
+	my $tt		= $self->_template;
+	my $file	= 'index.html';
+
+	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
+	$tt->process( $file, { prefix => $prefix } );
+}
+
 sub handle_admin_post {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $host	= shift;
 	my $port	= shift;
+	my $prefix	= shift;
 	
 	my $method	= $cgi->request_method();
 	if ($method eq 'POST') {
@@ -40,12 +54,14 @@ sub handle_admin_post {
 		my $data	= '';
 		warn "RDF DATA:\n---------------------\n$data\n-----------------------\n";
 	}
-	$self->redir(302, 'Found', "http://${host}:${port}/admin/index.html");
+	$self->redir(302, 'Found', "http://${host}:${port}/${prefix}admin/index.html");
 }
 
 sub admin_index {
 	my $self	= shift;
 	my $cgi		= shift;
+	my $prefix	= shift;
+	
 	my $store	= $self->_store;
 	my $tt		= $self->_template;
 	my $file	= 'admin_index.html';
@@ -64,7 +80,7 @@ sub admin_index {
 	}
 	
 	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-	$tt->process( $file, { files => \@files } );
+	$tt->process( $file, { prefix => $prefix, files => \@files } );
 }
 
 sub save_query {

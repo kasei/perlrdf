@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 use RDF::Endpoint;
-use base qw(HTTP::Server::Simple::CGI HTTP::Server::Simple::Static);
+use base qw(HTTP::Server::Simple::CGI);
 
 sub new {
 	my $class		= shift;
@@ -15,11 +15,13 @@ sub new {
 	my $user		= $args{ DBUser };
 	my $pass		= $args{ DBPass };
 	my $model		= $args{ Model };
+	my $prefix		= $args{ Prefix };
 	
 	my $self		= $class->SUPER::new( $port );
 	my $endpoint	= RDF::Endpoint->new( $model, $dsn, $user, $pass );
 	$endpoint->init();
 	$self->{endpoint}	= $endpoint;
+	$self->{prefix}		= $prefix || '';
 	return $self;
 }
 
@@ -32,8 +34,9 @@ sub handle_request {
 	my $port	= $self->port;
 	my $host	= $self->host;
 	my $path	= $ENV{REQUEST_URI};
-	my $prefix	= "http://${host}:${port}";
-	my $url		= $prefix . $path;
+	my $prefix	= $self->prefix;
+	my $domain	= "http://${host}:${port}" . $prefix;
+	my $url		= $domain . $path;
 	
 	if ($path =~ qr'^/sparql') {
 		my $sparql	= $cgi->param('query');
@@ -42,30 +45,32 @@ sub handle_request {
 		} else {
 			$self->error( 400, 'Bad Request', 'No query.' );
 		}
-	} elsif ($path =~ qr'^/query/(\w+)') {
+	} elsif ($path =~ qr'^${prefix}/query/(\w+)') {
 		my $query	= $endpoint->run_saved_query( $cgi, $1 );
 	} else {
 		if ($path =~ qr</$>) {
-			my $url	= "${prefix}${path}index.html";
+			my $url	= "${domain}${path}index.html";
 			$self->redir( 303, 'See Other', $url );
-		} elsif ($path =~ qr[^/admin$]) {
+		} elsif ($path =~ qr[^${prefix}/admin$]) {
 			# POSTing data for the admin page
-			warn 'admin post';
-			$endpoint->handle_admin_post( $cgi, $host, $port );
-		} elsif ($path =~ qr[^/admin/]) {
-			if ($path =~ qr[^/admin/index.html$]) {
-				$endpoint->admin_index($cgi);
+			$endpoint->handle_admin_post( $cgi, $host, $port, $prefix );
+		} elsif ($path =~ qr[^${prefix}/admin/]) {
+			if ($path =~ qr[^${prefix}/admin/index.html$]) {
+				$endpoint->admin_index( $cgi, $prefix );
 			} else {
-				unless ($self->serve_static($cgi, "./docs")) {
-					$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
-				}
+				$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
 			}
+		} elsif ($path =~ qr[^${prefix}/index.html$]) {
+			$endpoint->query_page( $cgi, $prefix );
 		} else {
-			unless ($self->serve_static($cgi, "./docs")) {
-				$self->error( 404, 'Not Found', 'The requested resource could not be found' );
-			}
+			$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
 		}
 	}
+}
+
+sub prefix {
+	my $self	= shift;
+	return $self->{prefix};
 }
 
 sub error {
