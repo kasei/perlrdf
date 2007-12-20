@@ -16,9 +16,19 @@ sub new {
 	my $pass		= $args{ DBPass };
 	my $model		= $args{ Model };
 	my $prefix		= $args{ Prefix };
+	my $incpath		= $args{ IncludePath };
 	
+	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
 	my $self		= $class->SUPER::new( $port );
-	my $endpoint	= RDF::Endpoint->new( $model, $dsn, $user, $pass );
+	my $endpoint	= RDF::Endpoint->new(
+						$model,
+						$dsn,
+						$user,
+						$pass,
+						IncludePath => $incpath,
+						AdminURL	=> "http://${hostname}/${prefix}admin/",
+						SubmitURL	=> "http://${hostname}/${prefix}sparql",
+					);
 	$endpoint->init();
 	$self->{endpoint}	= $endpoint;
 	$self->{prefix}		= $prefix || '';

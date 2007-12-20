@@ -3,24 +3,43 @@ package RDF::Endpoint;
 use strict;
 use warnings;
 
+our $VERSION;
+BEGIN {
+	$VERSION	= '1.000';
+}
+
 use Template;
 use RDF::Query;
+use File::Spec;
 use File::Slurp;
 use URI::Escape;
 use Data::Dumper;
-use RDF::Store::DBI;
+use LWP::UserAgent;
+use RDF::Trice::Store::DBI;
 use List::Util qw(first);
 
 sub new {
 	my $class		= shift;
-	my @args		= @_;
-	my $self		= bless( {}, $class );
+	my $dsn			= shift;
+	my $user		= shift;
+	my $pass		= shift;
+	my $model		= shift;
+	my %args		= @_;
 	
-	my $store		= RDF::Store::DBI->new( @args );
+	my $incpath		= $args{ IncludePath } || './include';
+	my $adminurl	= $args{ AdminURL };
+	my $submiturl	= $args{ SubmitURL };
+	
+	my $self		= bless( { incpath => $incpath, admin => $adminurl, submit => $submiturl }, $class );
+	my $store		= RDF::Trice::Store::DBI->new( $dsn, $user, $pass, $model );
 	$self->{_store}	= $store;
+	$self->{_ua}	= LWP::UserAgent->new;
+	
+	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
+	$self->{_ua}->default_header( 'Accept' => 'application/turtle,application/x-turtle,application/rdf+xml' );
 	
 	my $template	= Template->new( {
-						INCLUDE_PATH	=> './include',
+						INCLUDE_PATH	=> $incpath,
 					} );
 	$self->{_tt}	= $template;
 	
@@ -36,8 +55,9 @@ sub query_page {
 	my $tt		= $self->_template;
 	my $file	= 'index.html';
 
-	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-	$tt->process( $file, { prefix => $prefix } );
+	print $cgi->header( -type => 'text/html; charset=utf-8' );
+	my $submit	= $self->submit_url;
+	$tt->process( $file, { submit_url => $submit } ) || die $tt->error();
 }
 
 sub handle_admin_post {
@@ -46,15 +66,57 @@ sub handle_admin_post {
 	my $host	= shift;
 	my $port	= shift;
 	my $prefix	= shift;
+	my $store		= $self->{_store};
 	
-	my $method	= $cgi->request_method();
-	if ($method eq 'POST') {
-		warn 1;
-		warn 2;
-		my $data	= '';
-		warn "RDF DATA:\n---------------------\n$data\n-----------------------\n";
+	my @keys	= $cgi->param;
+	foreach my $key (sort @keys) {
+		if ($key eq 'add_uri') {
+			my $url		= $cgi->param($key);
+			$self->_add_uri( $url );
+		} elsif ($key =~ /^delete_<(.*)>$/) {
+			my $url	= $1;
+			my $ctx	= RDF::Trice::Node::Resource->new( $url );
+			$store->remove_statements( undef, undef, undef, $ctx );
+		} elsif ($key =~ /^replace_<(.*)>$/) {
+			my $url	= $1;
+			my $ctx	= RDF::Trice::Node::Resource->new( $url );
+#			$store->remove_statements( undef, undef, undef, $ctx );
+			
+			warn "REPLACE $url";
+		}
+		
 	}
-	$self->redir(302, 'Found', "http://${host}:${port}/${prefix}admin/index.html");
+	use Data::Dumper;
+	warn 'ADMIN POST: ' . Dumper( { $cgi->Vars } );
+	my $method	= $cgi->request_method();
+	
+	$self->redir( $cgi, 302, "Found", $self->admin_url );
+}
+
+sub _add_uri {
+	my $self	= shift;
+	my $url		= shift;
+	my $ua		= $self->_agent;
+	my $resp	= $ua->get($url);
+	my $store		= $self->{_store};
+	if ($resp->is_success) {
+		require RDF::Redland;
+		my $data		= $resp->content;
+		my $base		= $url;
+		my $format		= 'guess';
+		my $baseuri		= RDF::Redland::URI->new( $base );
+		my $basenode	= RDF::Trice::Node::Resource->new( $base );
+		my $parser		= RDF::Redland::Parser->new( $format );
+		my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
+		while ($stream and !$stream->end) {
+			my $statement	= $stream->current;
+			my $stmt		= RDF::Trice::Statement->from_redland( $statement );
+			$store->add_statement( $stmt, $basenode );
+			$stream->next;
+		}
+	} else {
+		die $resp->status_line;
+	}
 }
 
 sub admin_index {
@@ -79,8 +141,9 @@ sub admin_index {
 		} );
 	}
 	
-	print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
-	$tt->process( $file, { prefix => $prefix, files => \@files } );
+	print $cgi->header( -type => 'text/html; charset=utf-8' );
+	my $submit	= $self->admin_url;
+	$tt->process( $file, { admin_submit_url => $submit, files => \@files } );
 }
 
 sub save_query {
@@ -125,7 +188,7 @@ sub run_saved_query {
 		$self->run_query( $cgi, $sparql );
 	} else {
 		my $error	= 'Unrecognized query name';
-		return $self->error( 400, 'Bad Request', $error );
+		return $self->error( $cgi, 400, 'Bad Request', $error );
 	}
 }
 
@@ -135,12 +198,13 @@ sub run_query {
 	my $sparql	= shift;
 	$self->save_query( $cgi, $sparql );
 	
-	my $store	= $self->{_store};
+	my $store		= $self->{_store};
+	my $http_accept	= $ENV{HTTP_ACCEPT} || 'text/html';
 	my @accept	= map { $_->[0] }
 					sort { $b->[1] <=> $a->[1] }
 						map { my ($t,$q) = split(/;q=/, $_); $q ||= 1; [ $t,$q ] }
 							sort { index($b, 'html') }
-								split(',', $ENV{HTTP_ACCEPT});
+								split(',', $http_accept);
 	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml);
 	if (my $t = $cgi->param('mime-type')) {
 		unshift( @accept, $t );
@@ -150,7 +214,7 @@ sub run_query {
 	my $query	= RDF::Query->new( $sparql );
 	unless ($query) {
 		my $error	= RDF::Query->error;
-		return $self->error( 400, 'Bad Request', $error );
+		return $self->error( $cgi, 400, 'Bad Request', $error );
 	}
 	my $stream	= $query->execute( $store );
 	if ($stream) {
@@ -166,7 +230,7 @@ sub run_query {
 		if (defined($type)) {
 			my $bridge	= $stream->bridge;
 			if ($type =~ /html/) {
-				print "HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n";
+				print $cgi->header( -type => 'text/html; charset=utf-8' );
 				my $total	= 0;
 				my $rtype	= $stream->type;
 				my $rstream	= ($rtype eq 'graph') ? $stream->unique() : $stream;
@@ -181,21 +245,21 @@ sub run_query {
 					feed_url	=> $self->feed_url( $cgi ),
 				} ) or warn $tt->error();
 			} elsif ($type =~ /xml/) {
-				print "HTTP/1.1 200 OK\nContent-Type: ${type}; charset=utf-8\n\n";
+				print $cgi->header( -type => "$type; charset=utf-8" );
 				print $stream->as_xml;
 			} elsif ($type =~ /json/) {
-				print "HTTP/1.1 200 OK\nContent-Type: application/json; charset=utf-8\n\n";
+				print $cgi->header( -type => "application/json; charset=utf-8" );
 				print $stream->as_json;
 			} else {
-				print "HTTP/1.1 200 OK\nContent-Type: text/plain; charset=utf-8\n\n";
+				print $cgi->header( -type => "text/plain; charset=utf-8" );
 				print $stream->as_xml;
 			}
 		} else {
-			return $self->error( 406, 'Not Acceptable', 'No acceptable result encoding was found matching the request' );
+			return $self->error( $cgi, 406, 'Not Acceptable', 'No acceptable result encoding was found matching the request' );
 		}
 	} else {
 		my $error	= RDF::Query->error;
-		return $self->error( 400, 'Bad Request', $error );
+		return $self->error( $cgi, 400, 'Bad Request', $error );
 	}
 }
 
@@ -270,9 +334,24 @@ END
 	}
 }
 
+sub admin_url {
+	my $self	= shift;
+	return $self->{admin};
+}
+
+sub submit_url {
+	my $self	= shift;
+	return $self->{submit};
+}
+
 sub _template {
 	my $self	= shift;
 	return $self->{_tt};
+}
+
+sub _agent {
+	my $self	= shift;
+	return $self->{_ua};
 }
 
 sub _store {
@@ -307,19 +386,23 @@ END
 
 sub error {
 	my $self	= shift;
+	my $cgi		= shift;
 	my $code	= shift;
 	my $name	= shift;
 	my $error	= shift;
-	print "HTTP/1.1 ${code} ${name}\n\n<html><head><title>${name}</title></head><body><h1>${name}</h1><p>${error}</p></body></html>";
+	print $cgi->header( -status => "${code} ${name}" );
+	print "<html><head><title>${name}</title></head><body><h1>${name}</h1><p>${error}</p></body></html>";
 	return;
 }
 
 sub redir {
 	my $self	= shift;
+	my $cgi		= shift;
 	my $code	= shift;
 	my $message	= shift;
 	my $url		= shift;
-	print "HTTP/1.1 ${code} ${message}\nLocation: ${url}\n\n";
+	print $cgi->header( -status => "${code} ${message}", -Location => $url );
+	return;
 }
 
 1;

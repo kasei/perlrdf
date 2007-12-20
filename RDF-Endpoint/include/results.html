@@ -1,0 +1,63 @@
+<html><head>
+	<title>SPARQL Results</title>
+	<style type="text/css">
+		table {
+			border: 1px solid #000;
+			border-collapse: collapse;
+		}
+		
+		th { background-color: #ddd; }
+		td, th {
+			padding: 1px 5px 1px 5px;
+			border: 1px solid #000;
+		}
+	</style>
+</head><body>
+	<h1>SPARQL Results</h1>
+
+[% IF result_type == "bindings" %]
+	<table>
+		<tr>
+		[% FOREACH name = columns %]
+			<th>[% name %]</th>
+		[% END %]
+		</tr>
+	[% WHILE (b = next_result) %]
+		<tr>
+		[% FOREACH name = columns %]
+			<td>[% values(b, name) %]</td>
+		[% END %]
+		</tr>
+	[% END %]
+		<tr>
+			<th colspan="2">
+				Total: [% total %]
+			</th>
+		</tr>
+	</table>
+[% ELSIF result_type == 'boolean' %]
+	[% IF boolean %]True[% ELSE %]False[% END %]
+[% ELSIF result_type == 'graph' %]
+	<table>
+		<tr>
+			<th>Subject</th>
+			<th>Predicate</th>
+			<th>Object</th>
+		</tr>
+	[% WHILE (s = next_result) %]
+		<tr>
+		[% FOREACH node = nodes(s) %]
+			<td>[% node %]</td>
+		[% END %]
+		</tr>
+	[% END %]
+		<tr>
+			<th colspan="3">
+				Total: [% total %]
+			</th>
+		</tr>
+	</table>
+[% END %]
+
+<a href="[% feed_url %]">Feed</a>
+</body></html>
