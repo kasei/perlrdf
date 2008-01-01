@@ -43,8 +43,8 @@ lib/RDF/Query/Compiler/SQL.pm
 lib/RDF/Query/Error.pm
 lib/RDF/Query/Functions.pm
 lib/RDF/Query/Model.pm
-lib/RDF/Query/Model/RDFStoreDBI.pm
 lib/RDF/Query/Model/RDFCore.pm
+lib/RDF/Query/Model/RDFTrine.pm
 lib/RDF/Query/Model/Redland.pm
 lib/RDF/Query/Node.pm
 lib/RDF/Query/Node/Blank.pm
