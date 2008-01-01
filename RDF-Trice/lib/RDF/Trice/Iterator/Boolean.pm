@@ -28,7 +28,7 @@ package RDF::Trice::Iterator::Boolean;
 
 use strict;
 use warnings;
-use JSON;
+use JSON 2.0;
 
 use base qw(RDF::Trice::Iterator);
 our ($REVISION, $VERSION, $debug);
@@ -113,7 +113,7 @@ sub as_json {
 	my $max_result_size	= shift || 0;
 	my $value	= $self->get_boolean ? JSON::true : JSON::false;
 	my $data	= { head => { vars => [] }, boolean => $value };
-	return objToJson( $data );
+	return to_json( $data );
 }
 
 =item C<< construct_args >>

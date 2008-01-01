@@ -30,7 +30,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 
-use JSON 2.0 qw(-support_by_pp);
+use JSON 2.0;
 use Scalar::Util qw(reftype);
 
 use RDF::Trice::Iterator qw(smap);
@@ -324,7 +324,7 @@ sub as_json {
 		last if ($max_result_size and ++$count >= $max_result_size);
 	} continue { $self->next_result }
 	
-	return objToJson( $data );
+	return to_json( $data );
 }
 
 =item C<as_xml ( $max_size )>
