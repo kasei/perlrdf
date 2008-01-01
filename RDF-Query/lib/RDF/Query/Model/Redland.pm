@@ -14,7 +14,7 @@ use Scalar::Util qw(blessed reftype);
 use Unicode::Normalize qw(normalize);
 use Encode;
 
-use RDF::Trice::Iterator;
+use RDF::Trine::Iterator;
 
 ######################################################################
 
@@ -441,14 +441,14 @@ sub object {
 	return $stmt->object;
 }
 
-=item C<get_statements ($subject, $predicate, $object)>
+=item C<< _get_statements ($subject, $predicate, $object) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
@@ -553,7 +553,7 @@ sub get_statements {
 		}
 	}
 	
-	return RDF::Trice::Iterator::Graph->new( $stream, %args );
+	return RDF::Trine::Iterator::Graph->new( $stream, %args );
 }
 
 

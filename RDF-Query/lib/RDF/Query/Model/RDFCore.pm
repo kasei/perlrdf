@@ -16,7 +16,7 @@ use RDF::Core::Model::Serializer;
 use Scalar::Util qw(blessed);
 use Unicode::Normalize qw(normalize);
 
-use RDF::Trice::Iterator;
+use RDF::Trine::Iterator;
 
 ######################################################################
 
@@ -520,20 +520,20 @@ sub object {
 	return $stmt->getObject;
 }
 
-=item C<get_statements ($subject, $predicate, $object)>
+=item C<< _get_statements ($subject, $predicate, $object) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
 	if ($context) {
 		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::Trice::Iterator::Graph->new( sub {undef}, bridge => $self );
+			return RDF::Trine::Iterator::Graph->new( sub {undef}, bridge => $self );
 		}
 	}
 	
@@ -550,7 +550,7 @@ sub get_statements {
 		return $ret;
 	};
 	
-	return RDF::Trice::Iterator::Graph->new( $stream, bridge => $self );
+	return RDF::Trine::Iterator::Graph->new( $stream, bridge => $self );
 }
 
 =item C<< add_statement ( $statement ) >>

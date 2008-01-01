@@ -14,7 +14,7 @@ package RDF::Query::Node::Literal;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Node RDF::Trice::Node::Literal);
+use base qw(RDF::Query::Node RDF::Trine::Node::Literal);
 
 use RDF::Query::Error;
 use Data::Dumper;

@@ -14,14 +14,14 @@ package RDF::Query::Algebra::Triple;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Algebra RDF::Trice::Statement);
+use base qw(RDF::Query::Algebra RDF::Trine::Statement);
 use constant DEBUG	=> 0;
 
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
-use RDF::Trice::Iterator qw(smap sgrep swatch);
+use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
@@ -48,7 +48,7 @@ Returns a list of the blank node names used in this algebra expression.
 sub referenced_blanks {
 	my $self	= shift;
 	my @nodes	= $self->nodes;
-	my @blanks	= grep { $_->isa('RDF::Trice::Node::Blank') } @nodes;
+	my @blanks	= grep { $_->isa('RDF::Trine::Node::Blank') } @nodes;
 	return map { $_->blank_identifier } @blanks;
 }
 
@@ -267,7 +267,7 @@ sub execute {
 		my $r	= $bindings->next;
 		return $r;
 	};
-	return RDF::Trice::Iterator::Bindings->new( $sub, [grep defined, @vars], bridge => $bridge );
+	return RDF::Trine::Iterator::Bindings->new( $sub, [grep defined, @vars], bridge => $bridge );
 }
 
 

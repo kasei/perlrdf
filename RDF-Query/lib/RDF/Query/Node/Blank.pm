@@ -14,7 +14,7 @@ package RDF::Query::Node::Blank;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Node RDF::Trice::Node::Blank);
+use base qw(RDF::Query::Node RDF::Trine::Node::Blank);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);

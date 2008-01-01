@@ -27,7 +27,7 @@ foreach my $model (@models) {
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $row		= $stream->current;
 		isa_ok( $row, "HASH" );
 		my ($p,$n)	= @{ $row }{qw(person nick)};
@@ -45,7 +45,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		while ($stream and not $stream->finished) {
 			my $row		= $stream->current;
 			isa_ok( $row, "HASH" );
@@ -69,7 +69,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n,$h)	= @{ $row }{qw(person nick page)};
@@ -95,7 +95,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $row		= $stream->current;
 		isa_ok( $row, "HASH" );
 		my ($p,$h)	= @{ $row }{qw(person h)};
@@ -117,7 +117,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $row		= $stream->current;
 		isa_ok( $row, "HASH" );
 		my ($p,$h,$t)	= @{ $row }{qw(person h title)};
@@ -137,7 +137,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $row		= $stream->current;
 		ok( not($row), 'no results: successful BOUND() filter' );
 	}
@@ -154,7 +154,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator' );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while ($stream and not $stream->finished) {
 			my $row		= $stream->current;

@@ -14,7 +14,7 @@ package RDF::Query::Node::Variable;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Node RDF::Trice::Node::Variable);
+use base qw(RDF::Query::Node RDF::Trine::Node::Variable);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);

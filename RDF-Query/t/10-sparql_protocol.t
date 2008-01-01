@@ -11,7 +11,7 @@ my @models	= test_models( @files );
 
 use Test::More;
 
-eval "use Test::JSON; use JSON;";
+eval "use Test::JSON 0.03; use JSON 2.0;";
 my $run_json_tests	= (not $@) ? 1 : 0;
 my $tests_per_model	= 7 + ($run_json_tests ? 6 : 0);
 

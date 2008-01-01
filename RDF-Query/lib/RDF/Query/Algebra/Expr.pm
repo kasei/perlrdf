@@ -46,7 +46,7 @@ sub new {
 	my $class	= shift;
 	my $op		= shift;
 	my @operands	= @_;
-	return bless( [ 'EXPR', $op, @operands ] );
+	return bless( [ $op, @operands ] );
 }
 
 =item C<< construct_args >>
@@ -69,7 +69,7 @@ Returns the operator of the expression.
 
 sub op {
 	my $self	= shift;
-	return $self->[1];
+	return $self->[0];
 }
 
 =item C<< operands >>
@@ -80,7 +80,7 @@ Returns a list of the operands of the expression.
 
 sub operands {
 	my $self	= shift;
-	return @{ $self }[ 2 .. $#{ $self } ];
+	return @{ $self }[ 1 .. $#{ $self } ];
 }
 
 =item C<< sse >>

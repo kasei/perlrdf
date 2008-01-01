@@ -137,6 +137,20 @@ sub as_native {
 # sub node_count;
 # sub model_as_stream;
 
+=item C<< get_statements ( $subject, $predicate, $object, $context ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub get_statements {
+	my $self	= shift;
+	return $self->_get_statements( @_ );
+}
+
+
+
 =item C<count_statements ($subject, $predicate, $object)>
 
 Returns a stream object of all statements matching the specified subject,

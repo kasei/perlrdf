@@ -7,7 +7,7 @@ use URI::file;
 use RDF::Query;
 use Test::More;
 use Scalar::Util qw(blessed);
-use RDF::Trice::Iterator qw(smap);
+use RDF::Trine::Iterator qw(smap);
 
 our $debug	= 0;
 if ($] < 5.007003) {

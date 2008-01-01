@@ -27,7 +27,7 @@ foreach my $model (@models) {
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator', 'stream' );
+		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count;
 		while (not $stream->finished) {
 			my ($node)	= $stream->binding_value( 0 );
@@ -49,7 +49,7 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		isa_ok( $stream, 'RDF::Trice::Iterator', 'stream' );
+		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count;
 		while (my $row = $stream->()) {
 			my ($node)	= $row->{name};

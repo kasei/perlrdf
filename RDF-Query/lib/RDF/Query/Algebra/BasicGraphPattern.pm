@@ -19,7 +19,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
-use RDF::Trice::Iterator qw(smap);
+use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
 
@@ -204,10 +204,10 @@ sub execute {
 			while (@streams > 1) {
 				my $a	= shift(@streams);
 				my $b	= shift(@streams);
-				unshift(@streams, RDF::Trice::Iterator->join_streams( $a, $b, $bridge ));
+				unshift(@streams, RDF::Trine::Iterator->join_streams( $a, $b, $bridge ));
 			}
 		} else {
-			push(@streams, RDF::Trice::Iterator::Bindings->new([{}], []));
+			push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
 		}
 		my $stream	= shift(@streams);
 		return $stream;
