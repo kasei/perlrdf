@@ -15,7 +15,7 @@ use File::Slurp;
 use URI::Escape;
 use Data::Dumper;
 use LWP::UserAgent;
-use RDF::Trice::Store::DBI;
+use RDF::Trine::Store::DBI;
 use List::Util qw(first);
 
 sub new {
@@ -31,7 +31,8 @@ sub new {
 	my $submiturl	= $args{ SubmitURL };
 	
 	my $self		= bless( { incpath => $incpath, admin => $adminurl, submit => $submiturl }, $class );
-	my $store		= RDF::Trice::Store::DBI->new( $dsn, $user, $pass, $model );
+	my $store		= RDF::Trine::Store::DBI->new( $dsn, $user, $pass, $model );
+	
 	$self->{_store}	= $store;
 	$self->{_ua}	= LWP::UserAgent->new;
 	
@@ -42,7 +43,6 @@ sub new {
 						INCLUDE_PATH	=> $incpath,
 					} );
 	$self->{_tt}	= $template;
-	
 	return $self;
 }
 
@@ -75,11 +75,11 @@ sub handle_admin_post {
 			$self->_add_uri( $url );
 		} elsif ($key =~ /^delete_<(.*)>$/) {
 			my $url	= $1;
-			my $ctx	= RDF::Trice::Node::Resource->new( $url );
+			my $ctx	= RDF::Trine::Node::Resource->new( $url );
 			$store->remove_statements( undef, undef, undef, $ctx );
 		} elsif ($key =~ /^replace_<(.*)>$/) {
 			my $url	= $1;
-			my $ctx	= RDF::Trice::Node::Resource->new( $url );
+			my $ctx	= RDF::Trine::Node::Resource->new( $url );
 #			$store->remove_statements( undef, undef, undef, $ctx );
 			
 			warn "REPLACE $url";
@@ -105,12 +105,12 @@ sub _add_uri {
 		my $base		= $url;
 		my $format		= 'guess';
 		my $baseuri		= RDF::Redland::URI->new( $base );
-		my $basenode	= RDF::Trice::Node::Resource->new( $base );
+		my $basenode	= RDF::Trine::Node::Resource->new( $base );
 		my $parser		= RDF::Redland::Parser->new( $format );
 		my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
 		while ($stream and !$stream->end) {
 			my $statement	= $stream->current;
-			my $stmt		= RDF::Trice::Statement->from_redland( $statement );
+			my $stmt		= RDF::Trine::Statement->from_redland( $statement );
 			$store->add_statement( $stmt, $basenode );
 			$stream->next;
 		}
@@ -254,6 +254,7 @@ sub run_query {
 				print $cgi->header( -type => "text/plain; charset=utf-8" );
 				print $stream->as_xml;
 			}
+			
 		} else {
 			return $self->error( $cgi, 406, 'Not Acceptable', 'No acceptable result encoding was found matching the request' );
 		}
@@ -360,7 +361,7 @@ sub _store {
 }
 
 sub _html_escape {
-	my $text	= shift;
+	my $text	= shift || '';
 	for ($text) {
 		s/&/&amp;/g;
 		s/</&lt;/g;

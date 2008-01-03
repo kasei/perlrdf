@@ -17,5 +17,6 @@ my $s	= RDF::Endpoint::Server->new(
 			Prefix		=> '',
 			CGI			=> $cgi,
 		);
+
 my $pid	= $s->run();
 print "Endpoint started as [$pid]\n";

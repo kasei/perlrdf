@@ -17,7 +17,9 @@ sub new {
 	my $model		= $args{ Model };
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
+	my $cgi			= $args{ CGI };
 	
+	my $host	= $cgi->server_name;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
 	my $self		= $class->SUPER::new( $port );
 	my $endpoint	= RDF::Endpoint->new(
