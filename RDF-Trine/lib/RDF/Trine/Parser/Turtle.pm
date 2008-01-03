@@ -150,7 +150,7 @@ sub _eat {
 			return $thing;
 		} else {
 			Carp::cluck("expected: $thing, got: $self->{tokens}") if ($debug);
-			throw RDF::Trine::Parser::Error::ValueError("Expected: $thing")
+			throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 		}
 	}
 	print $thing;
