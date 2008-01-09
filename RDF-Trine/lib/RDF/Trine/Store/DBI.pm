@@ -502,7 +502,7 @@ sub add_variable_values_joins {
 	foreach my $var (grep { not $seen_vars{ $_ }++ } (@vars, keys %$vars)) {
 		my $col	= $vars->{ $var };
 		unless ($col) {
-			throw RDF::Trine::Error::CompilationError "*** Nothing is known about the variable ?${var}";
+			throw RDF::Trine::Error::CompilationError -text => "*** Nothing is known about the variable ?${var}";
 		}
 		
 		my $col_table	= (split(/[.]/, $col))[0];
@@ -559,21 +559,22 @@ sub add_variable_values_joins {
 }
 
 sub _sql_for_pattern {
-	my $self	= shift;
-	my $pattern	= shift;
-	my $ctx		= shift;
-	my %args	= @_;
-	my $type	= $pattern->type;
-	my $method	= "_sql_for_" . lc($type);
-	my $model	= $self->model_name;
-	my $hash	= _mysql_hash( $model );
-	my $context	= {
-					next_alias		=> 0,
-					level			=> 0,
-					statement_table	=> "Statements${hash}",
-				};
+	my $self		= shift;
+	my $pattern		= shift;
+	my $ctx_node	= shift;
+	my %args		= @_;
+	my $type		= $pattern->type;
+	my $method		= "_sql_for_" . lc($type);
+	my $model		= $self->model_name;
+	my $hash		= _mysql_hash( $model );
+	my $context		= {
+						next_alias		=> 0,
+						level			=> 0,
+						statement_table	=> "Statements${hash}",
+					};
+	
 	if ($self->can($method)) {
-		$self->$method( $pattern, $ctx, $context );
+		$self->$method( $pattern, $ctx_node, $context );
 		return $self->_sql_from_context( $context, %args );
 	} else {
 		throw Error ( -text => "Don't know how to turn a $type into SQL" );
@@ -644,6 +645,56 @@ sub _add_where { push( @{ $_[0]{where_clauses} }, $_[1] ); }
 sub _get_var { return $_[0]{vars}{ $_[1] }; }
 sub _add_var { $_[0]{vars}{ $_[1] } = $_[2]; }
 
+sub _sql_for_filter {
+	my $self		= shift;
+	my $filter		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	
+	my $expr	= $filter->expr;
+	my $pattern	= $filter->pattern;
+	my $type		= $pattern->type;
+	my $method		= "_sql_for_" . lc($type);
+	$self->$method( $pattern, $ctx_node, $context );
+	$self->_sql_for_expr( $expr, $ctx_node, $context );
+}
+
+sub _sql_for_expr {
+	my $self		= shift;
+	my $expr		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	
+	if ($expr->isa('RDF::Query::Algebra::Expr')) {
+		my $op		= $expr->op;
+		my @args	= $expr->operands;
+		if ($op eq '==') {
+			my $model	= $self->model_name;
+			my $hash	= _mysql_hash( $model );
+			my %context	= (
+							next_alias		=> 0,
+							level			=> 0,
+							statement_table	=> "Statements${hash}",
+						);
+			my $lhs_ctx	= { %context };
+			my $rhs_ctx	= { %context };
+			$self->_sql_for_expr( $args[0], $ctx_node, $lhs_ctx );
+			$self->_sql_for_expr( $args[1], $ctx_node, $rhs_ctx );
+			warn Dumper($lhs_ctx, $rhs_ctx);
+		} elsif ($op eq '||') {
+		
+		} else {
+			throw Error -text => "Unknown expression operator $op";
+		}
+	} elsif ($expr->isa('RDF::Trine::Node')) {
+		warn Dumper($expr);
+	} else {
+		warn "Unknown expr data: " . Dumper($expr);
+		Carp::confess;
+	}
+	return;
+}
+
 sub _sql_for_triple {
 	my $self	= shift;
 	my $triple	= shift;
@@ -659,9 +710,9 @@ sub _sql_for_triple {
 	_add_from( $context, "${stable} ${table}" );
 	foreach my $method (@posmap) {
 		my $node	= $triple->$method();
+		next unless defined($node);
 		my $pos		= $method;
 		my $col		= "${table}.${pos}";
-		next unless defined($node);
 		$self->_add_sql_node_clause( $col, $node, $context );
 	}
 	if (defined($ctx)) {
@@ -715,6 +766,22 @@ sub _sql_for_bgp {
 	
 	foreach my $triple ($bgp->triples) {
 		$self->_sql_for_triple( $triple, $ctx, $context );
+	}
+}
+
+sub _sql_for_ggp {
+	my $self	= shift;
+	my $ggp		= shift;
+	my $ctx		= shift;
+	my $context	= shift;
+	
+	my @patterns	= $ggp->patterns;
+	throw RDF::Trine::Error::CompilationError -text => "Can't compile an empty GroupGraphPattern to SQL" unless (scalar(@patterns));;
+	
+	foreach my $p (@patterns) {
+		my $type	= $p->type;
+		my $method	= "_sql_for_" . lc($type);
+		$self->$method( $p, $ctx, $context );
 	}
 }
 

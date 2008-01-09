@@ -1,3 +1,4 @@
+benchmark.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_store_add_file.pl
@@ -9,6 +10,7 @@ lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
 lib/RDF/Trine/Iterator.pm
 lib/RDF/Trine/Iterator/Bindings.pm
+lib/RDF/Trine/Iterator/Bindings/Materialized.pm
 lib/RDF/Trine/Iterator/Boolean.pm
 lib/RDF/Trine/Iterator/Graph.pm
 lib/RDF/Trine/Namespace.pm
@@ -249,6 +251,8 @@ t/data/turtle/test-24.out
 t/data/turtle/test-24.ttl
 t/data/turtle/test-25.out
 t/data/turtle/test-25.ttl
+t/iterator-materialized.t
+t/iterator-thaw.t
 t/iterator.t
 t/namespace-export.t
 t/namespace-uri.t

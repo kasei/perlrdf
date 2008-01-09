@@ -35,10 +35,13 @@ use strict;
 use warnings;
 
 use JSON;
+use XML::Twig;
 use Data::Dumper;
 use Carp qw(carp);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype);
+
+use RDF::Trine::Node;
 
 our ($REVISION, $VERSION, $debug, @ISA, @EXPORT_OK);
 use constant DEBUG	=> 0;
@@ -166,6 +169,46 @@ sub to_string {
 		return $self->as_json;
 	} else {
 		return $self->as_xml;
+	}
+}
+
+=item C<from_string ( $xml )>
+
+Returns a new iterator using the supplied XML in the SPARQL XML Results format.
+
+=cut
+
+sub from_string {
+	my $class	= shift;
+	my $string	= shift;
+	
+	my $bool;
+	my @vars;
+	my $value;
+	my @results;
+	my $result	= {};
+	
+	my $twig	= XML::Twig->new(
+		twig_handlers => {
+			variable	=> sub { push(@vars, $_->att('name')) },
+			binding		=> sub { $result->{ $_->att('name') }	= $value; },
+			result		=> sub { push(@results, $result); $result	= {}; },
+			bnode		=> sub { $value	= RDF::Trine::Node::Blank->new( $_->text ) },
+			uri			=> sub { $value	= RDF::Trine::Node::Resource->new( $_->text ) },
+			literal		=> sub {
+							my $lang	= $_->att('xml:lang');
+							my $dt		= $_->att('datatype');
+							$value	= RDF::Trine::Node::Literal->new( $_->text, $lang, $dt )
+						},
+			boolean		=> sub { $bool	= ($_->text eq 'true') ? 1 : 0 },
+		},
+	);
+	$twig->parse( $string );
+	
+	if (defined($bool)) {
+		return RDF::Trine::Iterator::Boolean->new( [$bool] );
+	} else {
+		return RDF::Trine::Iterator::Bindings->new( \@results, \@vars );
 	}
 }
 

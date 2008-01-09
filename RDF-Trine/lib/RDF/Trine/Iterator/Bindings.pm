@@ -32,6 +32,7 @@ use Data::Dumper;
 
 use JSON 2.0;
 use Scalar::Util qw(reftype);
+use RDF::Trine::Iterator::Bindings::Materialized;
 
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
@@ -80,6 +81,23 @@ sub _new {
 	my $names	= shift;
 	my %args	= @_;
 	return $class->new( $stream, $names, %args );
+}
+
+=item C<< materialize >>
+
+Returns a materialized version of the current binding iterator.
+
+=cut
+
+sub materialize {
+	my $self	= shift;
+	my @data	= $self->get_all;
+	my @args	= $self->construct_args;
+	return $self->_mclass->_new( \@data, @args );
+}
+
+sub _mclass {
+	return 'RDF::Trine::Iterator::Bindings::Materialized';
 }
 
 =item C<< project ( @columns ) >>

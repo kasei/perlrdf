@@ -190,7 +190,7 @@ foreach my $store (@$stores) {
 		throws_ok {
 			my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new();
 			my $stream	= $store->get_pattern( $pattern );
-		} 'Error', 'empty GGP throws exception';
+		} 'RDF::Trine::Error::CompilationError', 'empty GGP throws exception';
 	}
 }
 

@@ -23,6 +23,7 @@ requires:
     Unicode::Escape: 0
     Scalar::Util: 0
     URI: 0
+    XML::Twig: 0
 license: perl
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

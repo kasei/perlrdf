@@ -17,6 +17,7 @@ WriteMakefile(
 		'URI'						=> 0,
 		'Test::More' 				=> 0,
 		'JSON'						=> 2,
+		'XML::Twig'					=> 0,
     },
     LICENSE				=> 'perl',
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
