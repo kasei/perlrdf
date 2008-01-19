@@ -135,7 +135,7 @@ Returns a string representation of the node.
 sub as_string {
 	my $self	= shift;
 	my $string	= '"' . $self->literal_value . '"';
-	if ($self->has_datatpe) {
+	if ($self->has_datatype) {
 		$string	.= '^^<' . $self->literal_datatype . '>';
 	} elsif ($self->has_language) {
 		$string	.= '@' . $self->literal_value_language;
