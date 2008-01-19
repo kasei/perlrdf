@@ -24,7 +24,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
@@ -124,6 +124,17 @@ sub object {
 		$self->[2]	= shift;
 	}
 	return $self->[2];
+}
+
+=item C<< as_string >>
+
+Returns the statement in a string form.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	return $self->as_sparql;
 }
 
 =item C<< sse >>

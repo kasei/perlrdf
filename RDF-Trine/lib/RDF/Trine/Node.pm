@@ -80,6 +80,27 @@ sub is_variable {
 	return (blessed($self) and $self->isa('RDF::Trine::Node::Variable'));
 }
 
+=item C<< as_string >>
+
+Returns the node in a string form.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	return $self->as_sparql;
+}
+
+=item C<< equal ( $node ) >>
+
+Returns true if the two nodes are equal, false otherwise.
+
+=cut
+
+sub equal {
+	return 0;
+}
+
 1;
 
 __END__
