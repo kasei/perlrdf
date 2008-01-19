@@ -31,6 +31,7 @@ use warnings;
 use JSON;
 use List::Util qw(max);
 use RDF::Trine::Iterator qw(sgrep);
+use RDF::Trine::Iterator::Graph::Materialized;
 
 use base qw(RDF::Trine::Iterator);
 our ($REVISION, $VERSION, $debug);
@@ -73,6 +74,24 @@ sub _new {
 	return $class->new( $stream, %args );
 }
 
+=item C<< materialize >>
+
+Returns a materialized version of the current graph iterator.
+
+=cut
+
+sub materialize {
+	my $self	= shift;
+	my @data	= $self->get_all;
+	my @args	= $self->construct_args;
+	return $self->_mclass->_new( \@data, @args );
+}
+
+sub _mclass {
+	return 'RDF::Trine::Iterator::Graph::Materialized';
+}
+
+
 =item C<< unique >>
 
 Returns a Graph iterator that ensures the returned statements are unique. While
@@ -87,12 +106,11 @@ and so may have noticable effects on large graphs.
 
 sub unique {
 	my $self	= shift;
-	my $bridge	= $self->bridge;
 	my %seen;
 	return sgrep {
 		no warnings 'uninitialized';
 		my $s	= $_;
-		my $str	= $bridge->as_string( $s );
+		my $str	= $s->as_string;
 		not($seen{ $str }++)
 	} $self;
 }
@@ -117,7 +135,7 @@ Returns an XML serialization of the stream data.
 sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	my $bridge			= $self->_bridge;
+# 	my $bridge			= $self->_bridge;
 	my $graph			= $self->unique();
 	
 	my $count	= 0;
@@ -129,25 +147,25 @@ END
 		if ($max_result_size) {
 			last if ($count++ >= $max_result_size);
 		}
-		my $p		= $bridge->uri_value( $bridge->predicate( $stmt ) );
+		my $p		= $stmt->predicate->uri_value;
 		my $pos		= max( rindex( $p, '/' ), rindex( $p, '#' ) );
 		my $ns		= substr($p,0,$pos+1);
 		my $local	= substr($p, $pos+1);
-		my $subject	= $bridge->subject( $stmt );
-		my $subjstr	= ($bridge->is_resource( $subject ))
-					? 'rdf:about="' . $bridge->uri_value( $subject ) . '"'
-					: 'rdf:nodeID="' . $bridge->blank_identifier( $subject ) . '"';
-		my $object	= $bridge->object( $stmt );
+		my $subject	= $stmt->subject;
+		my $subjstr	= ($subject->is_resource)
+					? 'rdf:about="' . $subject->uri_value . '"'
+					: 'rdf:nodeID="' . $subject->blank_identifier . '"';
+		my $object	= $stmt->object;
 		
 		$xml		.= qq[<rdf:Description $subjstr>\n];
-		if ($bridge->is_resource( $object )) {
-			my $uri	= $bridge->uri_value( $object );
+		if ($object->is_resource) {
+			my $uri	= $object->uri_value;
 			$xml	.= qq[\t<${local} xmlns="${ns}" rdf:resource="$uri"/>\n];
-		} elsif ($bridge->is_blank( $object )) {
-			my $id	= $bridge->blank_identifier( $object );
+		} elsif ($object->is_blank) {
+			my $id	= $object->blank_identifier;
 			$xml	.= qq[\t<${local} xmlns="${ns}" rdf:nodeID="$id"/>\n];
 		} else {
-			my $value	= $bridge->literal_value( $object );
+			my $value	= $object->literal_value;
 			# escape < and & and ' and " and >
 			$value	=~ s/&/&amp;/g;
 			$value	=~ s/'/&apos;/g;
@@ -156,11 +174,11 @@ END
 			$value	=~ s/>/&gt;/g;
 			
 			my $tag		= qq[${local} xmlns="${ns}"];
-			if (defined($bridge->literal_value_language( $object ))) {
-				my $lang	= $bridge->literal_value_language( $object );
+			if (defined($object->literal_value_language)) {
+				my $lang	= $object->literal_value_language;
 				$tag	.= qq[ xml:lang="${lang}"];
-			} elsif (defined($bridge->literal_datatype( $object ))) {
-				my $dt	= $bridge->literal_datatype( $object );
+			} elsif (defined($object->literal_datatype)) {
+				my $dt	= $object->literal_datatype;
 				$tag	.= qq[ rdf:datatype="${dt}"];
 			}
 			$xml	.= qq[\t<${tag}>${value}</${local}>\n];

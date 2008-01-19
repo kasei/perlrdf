@@ -123,7 +123,7 @@ sub project {
 	return $proj;
 }
 
-=item C<join_streams ( $stream, $stream, $bridge )>
+=item C<join_streams ( $stream, $stream )>
 
 Performs a natural, nested loop join of the two streams, returning a new stream
 of joined results.
@@ -134,7 +134,7 @@ sub join_streams {
 	my $self	= shift;
 	my $a		= shift;
 	my $b		= shift;
-	my $bridge	= shift;
+# 	my $bridge	= shift;
 	my %args	= @_;
 	
 #	my $debug	= $args{debug};
@@ -173,7 +173,7 @@ sub join_streams {
 		@join_sorted_by	= ($a->sorted_by, $b->sorted_by);
 	}
 	
-	my $stream	= $self->SUPER::join_streams( $a, $b, $bridge, %args );
+	my $stream	= $self->SUPER::join_streams( $a, $b, %args );
 	warn "JOINED stream is sorted by: " . join(',', @join_sorted_by) . "\n" if (DEBUG);
 	$stream->{sorted_by}	= \@join_sorted_by;
 	return $stream;
@@ -310,7 +310,7 @@ sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
 	my $width			= $self->bindings_count;
-	my $bridge			= $self->bridge;
+# 	my $bridge			= $self->bridge;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {
@@ -319,7 +319,7 @@ sub as_json {
 	}
 	
 	my $count	= 0;
-	my $parsed	= $bridge->parsed;
+	my $parsed	= die; # XXX $bridge->parsed;
 	my $order	= ref($parsed->{options}{orderby}) ? JSON::true : JSON::false;
 	my $dist	= $parsed->{options}{distinct} ? JSON::true : JSON::false;
 	
@@ -333,7 +333,7 @@ sub as_json {
 		for (my $i = 0; $i < $width; $i++) {
 			my $name		= $self->binding_name($i);
 			my $value		= $self->binding_value($i);
-			if (my ($k, $v) = format_node_json($bridge, $value, $name)) {
+			if (my ($k, $v) = format_node_json($value, $name)) {
 				$row{ $k }		= $v;
 			}
 		}
@@ -355,7 +355,7 @@ sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
 	my $width			= $self->bindings_count;
-	my $bridge			= $self->bridge;
+# 	my $bridge			= $self->bridge;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {
@@ -379,7 +379,7 @@ END
 		for (my $i = 0; $i < $width; $i++) {
 			my $name		= $self->binding_name($i);
 			my $value		= $self->binding_value($i);
-			$xml	.= "\t\t\t" . $self->format_node_xml($bridge, $value, $name) . "\n";
+			$xml	.= "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
 		}
 		$xml	.= "\t\t</result>\n";
 		
@@ -403,8 +403,8 @@ Returns a string representation of C<$node> for use in a JSON serialization.
 =cut
 
 sub format_node_json ($$$) {
-	my $bridge	= shift;
-	return undef unless ($bridge);
+# 	my $bridge	= shift;
+# 	return undef unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;
@@ -412,14 +412,14 @@ sub format_node_json ($$$) {
 	
 	if(!defined $node) {
 		return;
-	} elsif ($bridge->is_resource($node)) {
-		$node_label	= $bridge->uri_value( $node );
+	} elsif ($node->is_resource) {
+		$node_label	= $node->uri_value;
 		return $name => { type => 'uri', value => $node_label };
-	} elsif ($bridge->is_literal($node)) {
-		$node_label	= $bridge->literal_value( $node );
+	} elsif ($node->is_literal) {
+		$node_label	= $node->literal_value;
 		return $name => { type => 'literal', value => $node_label };
-	} elsif ($bridge->is_blank($node)) {
-		$node_label	= $bridge->blank_identifier( $node );
+	} elsif ($node->is_blank) {
+		$node_label	= $node->blank_identifier;
 		return $name => { type => 'bnode', value => $node_label };
 	} else {
 		return;
