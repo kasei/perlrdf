@@ -1,0 +1,164 @@
+# RDF::Trine::Model::Union
+# -------------
+# $Revision: 121 $
+# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Trine::Model::Union - Union models for joining multiple stores together.
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+package RDF::Trine::Model::Union;
+
+use strict;
+use warnings;
+use base qw(RDF::Trine::Model);
+use Scalar::Util qw(blessed);
+
+use RDF::Trine::Node;
+use RDF::Trine::Store::DBI;
+
+=item C<< new ( @stores ) >>
+
+Returns a new union-model over the list of supplied rdf stores.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @stores	= @_;
+	my $self	= bless({ stores => \@stores }, $class);
+}
+
+=item C<< add_statement ( $statement [, $context] ) >>
+
+Adds the specified C<$statement> to the first rdf store.
+
+=cut
+
+sub add_statement {
+	my $self	= shift;
+	my @iterators;
+	my $store	= $self->_store;
+	$store->add_statement( @_ );
+}
+
+=item C<< remove_statement ( $statement [, $context]) >>
+
+Removes the specified C<$statement> from all of the rdf stores.
+
+=cut
+
+sub remove_statement {
+	my $self	= shift;
+	foreach my $store ($self->_stores) {
+		$store->remove_statement( @_ );
+	}
+}
+
+=item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
+
+Removes all statements matching the supplied C<$statement> pattern from all of the rdf stores.
+
+=cut
+
+sub remove_statements {
+	my $self	= shift;
+	foreach my $store ($self->_stores) {
+		$store->remove_statements( @_ );
+	}
+}
+
+=item C<< count_statements ($subject, $predicate, $object) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_statements {
+	my $self	= shift;
+	my $count	= 0;
+	foreach my $store ($self->_stores) {
+		$count	+= $store->count_statements( @_ );
+	}
+	return $count;
+}
+
+=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate and objects from all of the rdf stores. Any of the arguments may be
+undef to match any value.
+
+=cut
+
+sub get_statements {
+	my $self	= shift;
+	my @iterators;
+	foreach my $store ($self->_stores) {
+		my $i	= $self->_store->get_statements( @_ );
+		my @data;
+		while (my $d = $i->next) {
+			warn '++++++++++++++++++ ' . $d->as_string;
+			
+		}
+		
+		my $m	= $i->materialize;
+		push(@iterators, $m);
+	}
+	while (@iterators > 1) {
+		my $i	= shift(@iterators);
+		my $j	= shift(@iterators);
+		unshift(@iterators, $i->concat( $j ));
+	}
+	return $iterators[0]->unique;
+}
+
+=item C<< get_pattern ( $bgp [, $context] ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_pattern {
+	my $self	= shift;
+	my @iterators;
+	foreach my $store ($self->_stores) {
+		push(@iterators, $self->_store->get_pattern( @_ ));
+	}
+	while (@iterators > 1) {
+		my $i	= shift(@iterators);
+		my $j	= shift(@iterators);
+		unshift(@iterators, $i->concat( $j ));
+	}
+	return $iterators[0];
+}
+
+sub _stores {
+	my $self	= shift;
+	return @{ $self->{stores} };
+}
+
+sub _store {
+	my $self	= shift;
+	return $self->{stores}[0];
+}
+
+1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+ Gregory Todd Williams <gwilliams@cpan.org>
+
+=cut
