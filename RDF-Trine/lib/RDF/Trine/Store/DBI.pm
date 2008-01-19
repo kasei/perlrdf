@@ -53,6 +53,7 @@ use Math::BigInt;
 use Data::Dumper;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
+use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 
 our $VERSION	= "0.003";
@@ -132,17 +133,15 @@ sub get_statements {
 	my $triple	= RDF::Trine::Statement->new( $subj, $pred, $obj );
 	my @vars	= $triple->referenced_variables;
 	
+	local($self->{context_variable_count})	= 0;
 	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
 #	warn $sql;
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
-#	my ($ss, $sp, $so);
-#	$sth->bind_columns( \$ss, \$sp, \$so );
 	my $sub		= sub {
 		my $row	= $sth->fetchrow_hashref;
 		return undef unless (defined $row);
-		
 		my @triple;
 		my $temp_var_count	= 1;
 		foreach my $node ($triple->nodes) {
@@ -160,7 +159,22 @@ sub get_statements {
 				push(@triple, $node);
 			}
 		}
-		my $triple	= RDF::Trine::Statement->new( @triple );
+		if (blessed($context) and $context->is_variable) {
+			my $prefix	= 'sql_ctx_1__';
+			if (defined $row->{ "${prefix}URI" }) {
+				push( @triple, RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } ) );
+			} elsif (defined $row->{ "${prefix}Name" }) {
+				push( @triple, RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } ) );
+			} elsif (defined $row->{ "${prefix}Value" }) {
+				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+			}
+		} elsif ($context) {
+			push( @triple, $context );
+		}
+		
+		my $triple	= (@triple == 3)
+					? RDF::Trine::Statement->new( @triple )
+					: RDF::Trine::Statement::Quad->new( @triple );
 		return $triple;
 	};
 	
@@ -291,8 +305,9 @@ sub add_statement {
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( @values, $cid );
 	unless ($sth->fetch) {
-		my $sth		= $dbh->prepare("INSERT INTO Statements${id} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)");
-		$sth->execute( @values, $cid );
+		my $sql		= sprintf( "INSERT INTO Statements${id} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values, $cid );
+		my $sth		= $dbh->prepare( $sql );
+		$sth->execute();
 	}
 }
 
@@ -387,9 +402,9 @@ sub _add_node {
 	}
 }
 
-=item C<count_statements ($subject, $predicate, $object)>
+=item C<< count_statements ($subject, $predicate, $object) >>
 
-Returns a stream object of all statements matching the specified subject,
+Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
@@ -442,18 +457,6 @@ Adds the specified C<$statement> to the underlying model.
 Removes the specified C<$statement> from the underlying model.
 
 =cut
-
-=item C<< model_as_stream >>
-
-Returns an iterator object containing every statement in the model.
-
-=cut
-
-sub model_as_stream {
-	my $self	= shift;
-	my $stream	= $self->get_statements( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
-	return $stream;
-}
 
 =item C<< variable_columns ( $var ) >>
 
