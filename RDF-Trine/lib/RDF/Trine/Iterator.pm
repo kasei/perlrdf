@@ -232,12 +232,12 @@ sub next_result {
 	}
 
 	my $args	= $self->_args;
-	if ($args->{named}) {
-		if ($self->_bridge->supports('named_graph')) {
-			my $bridge	= $self->_bridge;
-			$args->{context}	= $bridge->get_context( $self->{_stream}, %$args );
-		}
-	}
+# 	if ($args->{named}) {
+# 		if ($self->_bridge->supports('named_graph')) {
+# 			my $bridge	= $self->_bridge;
+# 			$args->{context}	= $bridge->get_context( $self->{_stream}, %$args );
+# 		}
+# 	}
 	
 	$self->{_open}	= 1;
 	$self->{_row}	= $value;
@@ -299,20 +299,20 @@ sub close {
 	return;
 }
 
-=item C<< context >>
-
-Returns the context node of the current result (if applicable).
-
-=cut
-
-sub context {
-	my $self	= shift;
-	my $args	= $self->_args;
-	my $bridge	= $args->{bridge};
-	my $stream	= $self->{_stream};
-	my $context	= $bridge->get_context( $stream, %$args );
-	return $context;
-}
+# =item C<< context >>
+# 
+# Returns the context node of the current result (if applicable).
+# 
+# =cut
+# 
+# sub context {
+# 	my $self	= shift;
+# 	my $args	= $self->_args;
+# 	my $bridge	= $args->{bridge};
+# 	my $stream	= $self->{_stream};
+# 	my $context	= $bridge->get_context( $stream, %$args );
+# 	return $context;
+# }
 
 
 =item C<< concat ( $stream ) >>
@@ -373,7 +373,7 @@ sub get_all {
 	return @data;
 }
 
-=item C<join_streams ( $stream, $stream, $bridge )>
+=item C<< join_streams ( $stream, $stream ) >>
 
 Performs a natural, nested loop join of the two streams, returning a new stream
 of joined results.
@@ -384,7 +384,7 @@ sub join_streams {
 	my $self	= shift;
 	my $astream	= shift;
 	my $bstream	= shift;
-	my $bridge	= shift;
+#	my $bridge	= shift;
 	my %args	= @_;
 	
 #	my $debug	= $args{debug};
@@ -401,7 +401,7 @@ sub join_streams {
 	no warnings 'uninitialized';
 	while (my $rowa = $a->next) {
 		LOOP: foreach my $rowb (@data) {
-			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=',$_,$bridge->as_string($row->{$_})) } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=',$_,$row->{$_}->as_string) } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
 			my %keysa	= map {$_=>1} (keys %$rowa);
 			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
 			foreach my $key (@shared) {
@@ -412,8 +412,8 @@ sub join_streams {
 					$defined++ if (defined($n));
 				}
 				if ($defined == 2) {
-					unless ($bridge->equals($val_a, $val_b)) {
-						warn "can't join because mismatch of $key (" . join(' <==> ', map {$bridge->as_string($_)} ($val_a, $val_b)) . ")" if ($debug);
+					unless ($val_a->equal($val_b)) {
+						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
 						next LOOP;
 					}
 				}
@@ -423,7 +423,7 @@ sub join_streams {
 			if ($debug) {
 				warn "JOINED:\n";
 				foreach my $key (keys %$row) {
-					warn "$key\t=> " . $bridge->as_string( $row->{ $key } ) . "\n";
+					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
 				}
 			}
 			push(@results, $row);
@@ -450,8 +450,8 @@ Returns a string representation of C<$node> for use in an XML serialization.
 
 sub format_node_xml ($$$$) {
 	my $self	= shift;
-	my $bridge	= shift;
-	return undef unless ($bridge);
+# 	my $bridge	= shift;
+# 	return undef unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;
@@ -459,20 +459,20 @@ sub format_node_xml ($$$$) {
 	
 	if(!defined $node) {
 		$node_label	= "<unbound/>";
-	} elsif ($bridge->is_resource($node)) {
-		$node_label	= $bridge->uri_value( $node );
+	} elsif ($node->is_resource) {
+		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
 		$node_label	= qq(<uri>${node_label}</uri>);
-	} elsif ($bridge->is_literal($node)) {
-		$node_label	= $bridge->literal_value( $node );
+	} elsif ($node->is_literal) {
+		$node_label	= $node->literal_value;
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
 		$node_label	= qq(<literal>${node_label}</literal>);
-	} elsif ($bridge->is_blank($node)) {
-		$node_label	= $bridge->blank_identifier( $node );
+	} elsif ($node->is_blank) {
+		$node_label	= $node->blank_identifier;
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
@@ -525,24 +525,24 @@ sub _row {
 	return $self->{_row};
 }
 
-=item C<< bridge >>
-
-Returns the model bridge object used for insepcting the objects returned by the stream.
-
-=cut
-
-sub bridge {
-	my $self	= shift;
-	if (@_) {
-		$self->_args->{bridge}	= shift;
-	}
-	return $self->_args->{bridge};
-}
-
-sub _bridge {
-	my $self	= shift;
-	return $self->bridge;
-}
+# =item C<< bridge >>
+# 
+# Returns the model bridge object used for insepcting the objects returned by the stream.
+# 
+# =cut
+# 
+# sub bridge {
+# 	my $self	= shift;
+# 	if (@_) {
+# 		$self->_args->{bridge}	= shift;
+# 	}
+# 	return $self->_args->{bridge};
+# }
+# 
+# sub _bridge {
+# 	my $self	= shift;
+# 	return $self->bridge;
+# }
 
 sub _names {
 	my $self	= shift;
