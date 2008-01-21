@@ -17,6 +17,7 @@ use Scalar::Util qw(blessed);
 use Unicode::Normalize qw(normalize);
 
 use RDF::Trine::Iterator;
+use RDF::Trine::Statement::Quad;
 
 ######################################################################
 
@@ -100,132 +101,9 @@ sub model {
 	return $self->{'model'};
 }
 
-=item C<new_resource ( $uri )>
+=item C<< equals ( $nodea, $nodeb ) >>
 
-Returns a new resource object.
-
-=cut
-
-sub new_resource {
-	my $self	= shift;
-	my $uri		= shift;
-	if ($self->is_resource( $uri )) {
-		return $uri;
-	} else {
-		return RDF::Core::Resource->new( $uri );
-	}
-}
-
-=item C<new_literal ( $string, $language, $datatype )>
-
-Returns a new literal object.
-
-=cut
-
-sub new_literal {
-	my $self	= shift;
-	return RDF::Core::Literal->new(@_);
-}
-
-=item C<new_blank ( $identifier )>
-
-Returns a new blank node object.
-
-=cut
-
-sub new_blank {
-	my $self	= shift;
-	my $id		= shift;
-	unless ($id) {
-		$id	= 'r' . $self->{'sttime'} . 'r' . $self->{'counter'}++;
-	}
-	return $self->{'factory'}->newResource("_:${id}");
-}
-
-=item C<new_statement ( $s, $p, $o )>
-
-Returns a new statement object.
-
-=cut
-
-sub new_statement {
-	my $self	= shift;
-	return RDF::Core::Statement->new(@_);
-}
-
-=item C<is_node ( $node )>
-
-=item C<isa_node ( $node )>
-
-Returns true if C<$node> is a node object for the current model.
-
-=cut
-
-sub isa_node {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return $node->isa('RDF::Core::Node');
-}
-
-=item C<is_resource ( $node )>
-
-=item C<isa_resource ( $node )>
-
-Returns true if C<$node> is a resource object for the current model.
-
-=cut
-
-sub isa_resource {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	my $rsrc	= ($node->isa('RDF::Core::Resource'));
-	if ($rsrc) {
-		my $label	= $node->getLabel;
-		return ($label !~ m/^_:/);
-	} else {
-		return;
-	}
-}
-
-=item C<is_literal ( $node )>
-
-=item C<isa_literal ( $node )>
-
-Returns true if C<$node> is a literal object for the current model.
-
-=cut
-
-sub isa_literal {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return $node->isa('RDF::Core::Literal');
-}
-
-=item C<is_blank ( $node )>
-
-=item C<isa_blank ( $node )>
-
-Returns true if C<$node> is a blank node object for the current model.
-
-=cut
-
-sub isa_blank {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return ($node->isa('RDF::Core::Resource') and $node->getURI =~ /^_:/);
-}
-*RDF::Query::Model::RDFCore::is_node		= \&isa_node;
-*RDF::Query::Model::RDFCore::is_resource	= \&isa_resource;
-*RDF::Query::Model::RDFCore::is_literal		= \&isa_literal;
-*RDF::Query::Model::RDFCore::is_blank		= \&isa_blank;
-
-=item C<< equals ( $node_a, $node_b ) >>
-
-Returns true if C<$node_a> and C<$node_b> are equal
+Returns true if the two nodes are equal, false otherwise.
 
 =cut
 
@@ -260,116 +138,39 @@ sub equals {
 }
 
 
-=item C<as_string ( $node )>
-
-Returns a string version of the node object.
-
-=cut
-
-sub as_string {
-	my $self	= shift;
-	my $node	= shift;
-	return unless blessed($node);
-	if ($self->isa_resource( $node )) {
-		my $uri	= $node->getLabel;
-		return qq<[$uri]>;
-	} elsif ($self->isa_literal( $node )) {
-		my $value	= $self->literal_value( $node );
-		my $lang	= $self->literal_value_language( $node );
-		my $dt		= $self->literal_datatype( $node );
-		if ($lang) {
-			return qq["$value"\@${lang}];
-		} elsif ($dt) {
-			return qq["$value"^^<$dt>];
-		} else {
-			return qq["$value"];
-		}
-	} elsif ($self->isa_blank( $node )) {
-		my $id	= $self->blank_identifier( $node );
-		return qq[($id)];
-	} elsif (blessed($node) and $node->isa('RDF::Core::Statement')) {
-		return $node->getLabel;
-	} else {
-		return;
-	}
-}
-
-=item C<literal_value ( $node )>
-
-Returns the string value of the literal object.
-
-=cut
-
-sub literal_value {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return $node->getLabel;
-}
-
-=item C<literal_datatype ( $node )>
-
-Returns the datatype of the literal object.
-
-=cut
-
-sub literal_datatype {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return unless ($self->is_literal($node));
-	if ($node->isa('DateTime')) {
-		return 'http://www.w3.org/2001/XMLSchema#dateTime';
-	} else {
-		my $type	= $node->getDatatype;
-		return $type;
-	}
-}
-
-=item C<literal_value_language ( $node )>
-
-Returns the language of the literal object.
-
-=cut
-
-sub literal_value_language {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_literal($node));
-	my $lang	= $node->getLang;
-	return $lang;
-}
-
-=item C<uri_value ( $node )>
-
-Returns the URI string of the resource object.
-
-=cut
-
-sub uri_value {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_resource($node));
-	return $node->getLabel;
-}
-
-=item C<blank_identifier ( $node )>
-
-Returns the identifier for the blank node object.
-
-=cut
-
-sub blank_identifier {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_blank($node));
-	my $label	= $node->getLabel;
-	$label		=~ s/^_://;
-	return $label;
-}
+# =item C<as_string ( $node )>
+# 
+# Returns a string version of the node object.
+# 
+# =cut
+# 
+# sub as_string {
+# 	my $self	= shift;
+# 	my $node	= shift;
+# 	return unless blessed($node);
+# 	if ($self->isa_resource( $node )) {
+# 		my $uri	= $node->getLabel;
+# 		return qq<[$uri]>;
+# 	} elsif ($self->isa_literal( $node )) {
+# 		my $value	= $self->literal_value( $node );
+# 		my $lang	= $self->literal_value_language( $node );
+# 		my $dt		= $self->literal_datatype( $node );
+# 		if ($lang) {
+# 			return qq["$value"\@${lang}];
+# 		} elsif ($dt) {
+# 			return qq["$value"^^<$dt>];
+# 		} else {
+# 			return qq["$value"];
+# 		}
+# 	} elsif ($self->isa_blank( $node )) {
+# 		my $id	= $self->blank_identifier( $node );
+# 		return qq[($id)];
+# 	} elsif (blessed($node) and $node->isa('RDF::Core::Statement')) {
+# 		return $node->getLabel;
+# 	} else {
+# 		return;
+# 	}
+# }
 
 =item C<add_uri ( $uri, $named )>
 
@@ -480,44 +281,8 @@ object will return the subject, predicate, and object objects, respectively.
 =cut
 
 sub statement_method_map {
-	return qw(getSubject getPredicate getObject);
-}
-
-=item C<< subject ( $statement ) >>
-
-Returns the subject node of the specified C<$statement>.
-
-=cut
-
-sub subject {
-	my $self	= shift;
-	my $stmt	= shift;
-	return $stmt->getSubject;
-}
-
-=item C<< predicate ( $statement ) >>
-
-Returns the predicate node of the specified C<$statement>.
-
-=cut
-
-sub predicate {
-	my $self	= shift;
-	my $stmt	= shift;
-	return $stmt->getPredicate;
-}
-
-=item C<< object ( $statement ) >>
-
-Returns the object node of the specified C<$statement>.
-
-=cut
-
-sub object {
-	my $self	= shift;
-	my $stmt	= shift;
-	return unless (blessed($stmt));
-	return $stmt->getObject;
+#	return qw(getSubject getPredicate getObject);
+	return qw(subject predicate object);
 }
 
 =item C<< _get_statements ($subject, $predicate, $object) >>
@@ -531,7 +296,11 @@ sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
+	
+	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
+	
 	if ($context) {
+		my $context	= _cast_to_rdfcore( $context );
 		unless ($self->equals( $context, $self->get_context)) {
 			return RDF::Trine::Iterator::Graph->new( sub {undef}, bridge => $self );
 		}
@@ -545,13 +314,59 @@ sub _get_statements {
 		$finished	= 1 unless defined($stmt);
 		return undef if ($finished);
 		
-		my $ret	= $stmt;
+		my $rstmt	= $stmt;
 		$stmt	= $enum->getNext;
-		return $ret;
+		
+		my $rs		= $rstmt->getSubject;
+		my $rp		= $rstmt->getPredicate;
+		my $ro		= $rstmt->getObject;
+		my @nodes;
+		foreach my $n ($rs, $rp, $ro, $context) {
+			push(@nodes, _cast_to_trine( $n ));
+		}
+		my $st	= (@nodes == 3)
+				? RDF::Trine::Statement->new( @nodes )
+				: RDF::Trine::Statement::Quad->new( @nodes );
+		return $st;
 	};
 	
 	return RDF::Trine::Iterator::Graph->new( $stream, bridge => $self );
 }
+
+sub _cast_to_rdfcore {
+	my $node	= shift;
+	return undef unless (blessed($node));
+	if ($node->isa('RDF::Trine::Node::Resource')) {
+		return RDF::Core::Resource->new( $node->uri_value );
+	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
+		return RDF::Core::Resource->new( '_:' . $node->blank_identifier );
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
+		my $lang	= $node->literal_value_language;
+		my $dt		= $node->literal_datatype;
+		return RDF::Core::Literal->new( $node->literal_value, $lang, $dt );
+	} else {
+		return undef;
+	}
+}
+
+sub _cast_to_trine {
+	my $node	= shift;
+	return unless (blessed($node));
+	if ($node->isLiteral) {
+		my $lang	= $node->getLang;
+		my $dt		= $node->getDatatype;
+		return RDF::Trine::Node::Literal->new( $node->getValue, $lang, $dt );
+	} elsif ($node->isa('RDF::Core::Resource') and $node->getURI =~ /^_:/) {
+		my $label	= $node->getLabel;
+		$label		=~ s/^_://;
+		return RDF::Trine::Node::Blank->new( $label );
+	} elsif ($node->isa('RDF::Core::Resource')) {
+		return RDF::Trine::Node::Resource->new( $node->getLabel );
+	} else {
+		return undef;
+	}
+}
+
 
 =item C<< add_statement ( $statement ) >>
 

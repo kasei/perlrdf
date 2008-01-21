@@ -55,7 +55,7 @@ END
 		'triples'		=> [
 							[['point'],['URI',['geo','lat']],['lat']],
 							[['image'],['pred'],['point']],
-							['FILTER', ['&&',['||',['==',['pred'],['URI','http://purl.org/dc/terms/spatial']],['==',['pred'],['URI','http://xmlns.com/foaf/0.1/based_near']]],['>',['lat'],['LITERAL','52.988674']],['<',['lat'],['LITERAL','53.036526']]]]
+							['OLDFILTER', ['&&',['||',['==',['pred'],['URI','http://purl.org/dc/terms/spatial']],['==',['pred'],['URI','http://xmlns.com/foaf/0.1/based_near']]],['>',['lat'],['LITERAL','52.988674']],['<',['lat'],['LITERAL','53.036526']]]]
 						],
 		'sources'		=> undef,
 		'namespaces'	=> {'foaf' => 'http://xmlns.com/foaf/0.1/','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#','dcterms' => 'http://purl.org/dc/terms/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
@@ -86,7 +86,7 @@ END
 					'triples'		=> [
 										[['person'],['URI',['foaf','name']],['LITERAL','Gregory Todd Williams']],
 										[['person'],['URI',['foaf','homepage']],['homepage']],
-										['FILTER', ['~~',['homepage'],['LITERAL','kasei']]],
+										['OLDFILTER', ['~~',['homepage'],['LITERAL','kasei']]],
 									],
 					'namespaces'	=> {'foaf' => 'http://xmlns.com/foaf/0.1/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#','dcterms' => 'http://purl.org/dc/terms/'},
 					'sources'		=> undef,

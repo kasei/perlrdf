@@ -988,7 +988,7 @@ sub __Lexer {
 		m{\G"((([^\x22\x5C\x0A\x0D])|\\([tbnrf\\"']))*)"}gc and return('STRING',$parser->__new_value( _literal_escape($1), $ws ));
 		
 		
-		m{\G<([^<>"{}|^`\x92]*)>}gc and return('URI',$parser->__new_value( $1, $ws ));
+		m{\G<([^<>"{}|^`\\\x{00}-\x{20}]*)>}gc and return('URI',$parser->__new_value( $1, $ws ));
 		
 		m{\G(
 				!=

@@ -47,6 +47,78 @@ sub parsed {
 }
 
 
+=item C<new_resource ( $uri )>
+
+Returns a new resource object.
+
+=cut
+
+sub new_resource {
+	my $self	= shift;
+	my $uri		= shift;
+	if ($self->is_resource( $uri )) {
+		return $uri;
+	} else {
+		my $node	= RDF::Trine::Node::Resource->new( $uri );
+		return $node;
+	}
+}
+
+=item C<new_literal ( $string, $language, $datatype )>
+
+Returns a new literal object.
+
+=cut
+
+sub new_literal {
+	my $self	= shift;
+	my $value	= shift;
+	my $lang	= shift;
+	my $type	= shift;
+	return RDF::Trine::Node::Literal->new( $value, $lang, $type );
+}
+
+=item C<new_blank ( $identifier )>
+
+Returns a new blank node object.
+
+=cut
+
+sub new_blank {
+	my $self	= shift;
+	my $name	= shift;
+	return RDF::Trine::Node::Blank->new( $name );
+}
+
+=item C<new_statement ( $s, $p, $o )>
+
+Returns a new statement object.
+
+=cut
+
+sub new_statement {
+	my $self	= shift;
+	my ($s, $p, $o)	= @_;
+	return RDF::Query::Algebra::Triple->new( $s, $p, $o );
+}
+
+=item C<new_variable ( $name )>
+
+Returns a new variable object.
+
+=cut
+
+sub new_variable {
+	my $self	= shift;
+	unless (@_) {
+		my $name	= '__rdfstoredbi_variable_' . $self->{_blank_id}++;
+		push(@_, $name);
+	}
+	my $name	= shift;
+	return RDF::Trine::Node::Variable->new( $name );
+}
+
+
 =item C<< as_native ( $node, $base, \%namespaces ) >>
 
 Returns bridge-native RDF node objects for the given node.
@@ -102,6 +174,201 @@ sub as_native {
 		# keep variables as they are
 		return $node;
 	}
+}
+
+=item C<as_string ( $node )>
+
+Returns a string version of the node object.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	my $string	= $node->as_string;
+	return $string;
+}
+
+=item C<is_node ( $node )>
+
+=item C<isa_node ( $node )>
+
+Returns true if C<$node> is a node object for the current model.
+
+=cut
+
+sub isa_node {
+	my $self	= shift;
+	my $node	= shift;
+	return (blessed($node) and $node->isa('RDF::Trine::Node'));
+}
+
+=item C<is_resource ( $node )>
+
+=item C<isa_resource ( $node )>
+
+Returns true if C<$node> is a resource object for the current model.
+
+=cut
+
+sub isa_resource {
+	my $self	= shift;
+	my $node	= shift;
+	return (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
+}
+
+=item C<is_literal ( $node )>
+
+=item C<isa_literal ( $node )>
+
+Returns true if C<$node> is a literal object for the current model.
+
+=cut
+
+sub isa_literal {
+	my $self	= shift;
+	my $node	= shift;
+	return (blessed($node) and $node->isa('RDF::Trine::Node::Literal'));
+}
+
+=item C<is_blank ( $node )>
+
+=item C<isa_blank ( $node )>
+
+Returns true if C<$node> is a blank node object for the current model.
+
+=cut
+
+sub isa_blank {
+	my $self	= shift;
+	my $node	= shift;
+	return (blessed($node) and $node->isa('RDF::Trine::Node::Blank'));
+}
+no warnings 'once';
+*RDF::Query::Model::is_node		= \&isa_node;
+*RDF::Query::Model::is_resource	= \&isa_resource;
+*RDF::Query::Model::is_literal		= \&isa_literal;
+*RDF::Query::Model::is_blank		= \&isa_blank;
+
+
+=item C<literal_value ( $node )>
+
+Returns the string value of the literal object.
+
+=cut
+
+sub literal_value {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	return undef unless ($self->is_literal( $node ));
+	if ($node->isa('DateTime')) {
+		my $f	= DateTime::Format::W3CDTF->new;
+		my $l	= $f->format_datetime( $node );
+		return $l;
+	} else {
+		return $node->literal_value || '';
+	}
+}
+
+=item C<literal_datatype ( $node )>
+
+Returns the datatype of the literal object.
+
+=cut
+
+sub literal_datatype {
+	my $self	= shift;
+	my $node	= shift;
+	return unless (blessed($node));
+	return unless ($self->is_literal($node));
+	if ($node->isa('DateTime')) {
+		return 'http://www.w3.org/2001/XMLSchema#dateTime';
+	} else {
+		my $type	= $node->literal_datatype;
+		return undef unless $type;
+		return $type;
+	}
+}
+
+=item C<literal_value_language ( $node )>
+
+Returns the language of the literal object.
+
+=cut
+
+sub literal_value_language {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	return undef unless ($self->is_literal($node));
+	my $lang	= $node->literal_value_language;
+	return $lang;
+}
+
+=item C<uri_value ( $node )>
+
+Returns the URI string of the resource object.
+
+=cut
+
+sub uri_value {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	return undef unless ($self->is_resource($node));
+	return $node->uri_value;
+}
+
+=item C<blank_identifier ( $node )>
+
+Returns the identifier for the blank node object.
+
+=cut
+
+sub blank_identifier {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	return undef unless ($self->is_blank($node));
+	return $node->blank_identifier;
+}
+
+=item C<< subject ( $statement ) >>
+
+Returns the subject of the statement.
+
+=cut
+
+sub subject {
+	my $self	= shift;
+	my $st		= shift;
+	return $st->subject;
+}
+
+=item C<< predicate ( $statement ) >>
+
+Returns the predicate of the statement.
+
+=cut
+
+sub predicate {
+	my $self	= shift;
+	my $st		= shift;
+	return $st->predicate;
+}
+
+=item C<< object ( $statement ) >>
+
+Returns the object of the statement.
+
+=cut
+
+sub object {
+	my $self	= shift;
+	my $st		= shift;
+	return $st->object;
 }
 
 # sub new;

@@ -193,7 +193,7 @@ END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($image, $thing, $ttype, $tname)	= @{ $row }{qw(image thing type name)};
 			my $url		= $bridge->uri_value( $image );
 			my $node	= $bridge->as_string( $thing );

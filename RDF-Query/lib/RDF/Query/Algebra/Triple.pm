@@ -78,6 +78,20 @@ sub qualify_uris {
 			} else {
 				push(@nodes, $n);
 			}
+		} elsif (blessed($n) and $n->isa('RDF::Query::Node::Literal')) {
+			my $node	= $n;
+			my $dt	= $node->literal_datatype;
+			if (ref($dt)) {
+				my ($n,$l)	= @$dt;
+				unless (exists($ns->{ $n })) {
+					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
+				}
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				my $lit			= RDF::Query::Node::Literal->new( $node->literal_value, undef, $resolved->uri_value );
+				push(@nodes, $lit);
+			} else {
+				push(@nodes, $node);
+			}
 		} else {
 			push(@nodes, $n);
 		}

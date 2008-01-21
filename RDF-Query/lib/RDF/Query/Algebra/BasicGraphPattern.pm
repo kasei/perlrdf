@@ -204,7 +204,7 @@ sub execute {
 			while (@streams > 1) {
 				my $a	= shift(@streams);
 				my $b	= shift(@streams);
-				unshift(@streams, RDF::Trine::Iterator->join_streams( $a, $b, $bridge ));
+				unshift(@streams, RDF::Trine::Iterator->join_streams( $a, $b ));
 			}
 		} else {
 			push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));

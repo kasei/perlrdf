@@ -239,13 +239,13 @@ sub execute {
 
 	my $options	= $parsed->{options} || {};		
 	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
-	
+
 	_debug( "got stream: $stream" ) if (DEBUG);
 	my $sorted		= $self->sort_rows( $stream, $parsed );
 	my $projected	= $sorted->project( @vars );
 	$stream			= $projected;
-	$stream->bridge( $bridge );
-	
+#	$stream->bridge( $bridge );
+
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
 	} elsif ($parsed->{'method'} eq 'CONSTRUCT') {
@@ -843,7 +843,7 @@ my %dispatch	= (
 								if (blessed($l) and $l->has_datatype) {
 									my $literal	= $l->literal_value;
 									my $lang	= $l->literal_value_language;
-									my $uri		= $self->qualify_uri( $l->literal_datatype );
+									my $uri		= $l->literal_datatype;
 									return $bridge->new_literal( $literal, $lang, $uri );
 								} else {
 									Carp::confess unless (ref($l));
@@ -952,6 +952,10 @@ my %dispatch	= (
 								} else {
 									$cmp		= ncmp($operands[0], $operands[1], $bridge);
 								}
+# 								warn '-----------------------------';
+# 								warn "GREATER-THAN OP[0]: " . eval { $operands[0]->as_string };
+# 								warn "GREATER-THAN OP[1]: " . eval { $operands[1]->as_string };
+# 								warn "GREATER-THAN: $cmp\n";
 								return $cmp == 1;
 							},
 					'<='	=> sub {
@@ -1913,6 +1917,7 @@ sub sort_rows {
 			my $key	= join($;, map {$bridge->as_string( $_ )} map { $row->{$_} } @variables);
 			return (not $seen{ $key }++);
 		} $nodes;
+		$nodes->_args->{distinct}++;
 	}
 	
 	if ($orderby) {
@@ -1972,7 +1977,8 @@ sub sort_rows {
 			my $type	= $nodes->type;
 			my $names	= [$nodes->binding_names];
 			my $args	= $nodes->_args;
-			$nodes		= RDF::Trine::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args );
+			my %sorting	= (sorted_by => [$col, $dir]);
+			$nodes		= RDF::Trine::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args, %sorting );
 		}
 	}
 	

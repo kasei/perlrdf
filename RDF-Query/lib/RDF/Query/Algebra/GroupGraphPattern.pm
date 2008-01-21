@@ -186,8 +186,18 @@ sub fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
-	my $fixed	= $class->new( map { $_->fixup( $bridge, $base, $ns ) } $self->patterns );
-	return $fixed;
+
+	my @patterns	= $self->patterns;
+	my @triples		= grep { not $_->isa('RDF::Query::Algebra::OldFilter') } @patterns;
+	my @filters		= grep { $_->isa('RDF::Query::Algebra::OldFilter') } @patterns;
+	
+	my $ggp			= $class->new( map { $_->fixup( $bridge, $base, $ns ) } @triples );
+	while (my $filter = shift @filters) {
+		my $expr	= $filter->expr;
+		$ggp		= RDF::Query::Algebra::Filter->new( $expr, $ggp );
+	}
+	
+	return $ggp;
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
@@ -207,20 +217,15 @@ sub execute {
 	my @filters;
 	foreach my $triple (@triples) {
 		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'));
-		my $type	= $triple->type;
-		if ($type eq 'FILTER') {
-			push(@filters, $triple);
-		} else {
-			my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
-			push(@streams, $stream);
-		}
+		my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
+		push(@streams, $stream);
 	}
 	
 	if (@streams) {
 		while (@streams > 1) {
 			my $a	= shift(@streams);
 			my $b	= shift(@streams);
-			unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b, $bridge, %args ));
+			unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b, %args ));
 		}
 	} else {
 		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));

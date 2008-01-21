@@ -15,6 +15,7 @@ use Unicode::Normalize qw(normalize);
 use Encode;
 
 use RDF::Trine::Iterator;
+use RDF::Trine::Statement::Quad;
 
 ######################################################################
 
@@ -90,149 +91,6 @@ sub model {
 	return $self->{'model'};
 }
 
-=item C<new_resource ( $uri )>
-
-Returns a new resource object.
-
-=cut
-
-sub new_resource {
-	my $self	= shift;
-	my $uri		= shift;
-	if ($self->is_resource( $uri )) {
-		return $uri;
-	} else {
-		my $node	= RDF::Redland::URI->new( $uri );
-		return RDF::Redland::Node->new_from_uri( $node );
-	}
-}
-
-=item C<new_literal ( $string, $language, $datatype )>
-
-Returns a new literal object.
-
-=cut
-
-sub new_literal {
-	my $self	= shift;
-	my $value	= shift;
-	my $lang	= shift;
-	my $type	= shift;
-	my @args	= ("$value");
-	no warnings 'uninitialized';
-	if ($type and $RDF::Redland::VERSION >= 1.00_02) {
-		# $RDF::Redland::VERSION is introduced in 1.0.2, and that's also when datatypes are fixed.
-		$type	= RDF::Redland::URI->new( $type );
-		push(@args, $type);
-		push(@args, undef);
-	} elsif ($lang) {
-		push(@args, undef);
-		push(@args, $lang);
-	}
-	
-	# XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	# XXX hack... the values don't seem to work unless i print them out...
-	# XXX popped up as an error when debugging the javascript net function...
-	# XXX possibly an error in the XS in the JavaScript module
-	my $buffer;
-	open( my $fh, '>', \$buffer );
-	print {$fh} Dumper(\@args);
-	close($fh);
-	# XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	
-	my $literal	= RDF::Redland::Node->new_literal( @args );
-	return $literal;
-}
-
-=item C<new_blank ( $identifier )>
-
-Returns a new blank node object.
-
-=cut
-
-sub new_blank {
-	my $self	= shift;
-	return RDF::Redland::Node->new_from_blank_identifier(@_);
-}
-
-=item C<new_statement ( $s, $p, $o )>
-
-Returns a new statement object.
-
-=cut
-
-sub new_statement {
-	my $self	= shift;
-	return RDF::Redland::Statement->new(@_);
-}
-
-=item C<is_node ( $node )>
-
-=item C<isa_node ( $node )>
-
-Returns true if C<$node> is a node object for the current model.
-
-=cut
-
-sub isa_node {
-	my $self	= shift;
-	my $node	= shift;
-	return UNIVERSAL::isa($node,'RDF::Redland::Node');
-}
-
-=item C<is_resource ( $node )>
-
-=item C<isa_resource ( $node )>
-
-Returns true if C<$node> is a resource object for the current model.
-
-=cut
-
-sub isa_resource {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return (ref($node) and $node->is_resource);
-}
-
-=item C<is_literal ( $node )>
-
-=item C<isa_literal ( $node )>
-
-Returns true if C<$node> is a literal object for the current model.
-
-=cut
-
-sub isa_literal {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	if ($node->isa('DateTime')) {
-		return 1;
-	} else {
-		return (ref($node) and $node->is_literal);
-	}
-}
-
-=item C<is_blank ( $node )>
-
-=item C<isa_blank ( $node )>
-
-Returns true if C<$node> is a blank node object for the current model.
-
-=cut
-
-sub isa_blank {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return (ref($node) and $node->is_blank);
-}
-*RDF::Query::Model::Redland::is_node		= \&isa_node;
-*RDF::Query::Model::Redland::is_resource	= \&isa_resource;
-*RDF::Query::Model::Redland::is_literal		= \&isa_literal;
-*RDF::Query::Model::Redland::is_blank		= \&isa_blank;
-
 =item C<< equals ( $node_a, $node_b ) >>
 
 Returns true if C<$node_a> and C<$node_b> are equal
@@ -245,105 +103,9 @@ sub equals {
 	my $nodeb	= shift;
 	return 1 if (not(defined($nodea)) and not(defined($nodeb)));
 	return 0 unless blessed($nodea);
-	return $nodea->equals( $nodeb );
+	return $nodea->equal( $nodeb );
 }
 
-
-=item C<as_string ( $node )>
-
-Returns a string version of the node object.
-
-=cut
-
-sub as_string {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	my $string	= $node->as_string;
-	return $string;
-}
-
-=item C<literal_value ( $node )>
-
-Returns the string value of the literal object.
-
-=cut
-
-sub literal_value {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	if ($node->isa('DateTime')) {
-		my $f	= DateTime::Format::W3CDTF->new;
-		my $l	= $f->format_datetime( $node );
-		return $l;
-	} else {
-		return decode('utf8', $node->literal_value) || '';
-	}
-}
-
-=item C<literal_datatype ( $node )>
-
-Returns the datatype of the literal object.
-
-=cut
-
-sub literal_datatype {
-	my $self	= shift;
-	my $node	= shift;
-	return unless (blessed($node));
-	return unless ($self->is_literal($node));
-	if ($node->isa('DateTime')) {
-		return 'http://www.w3.org/2001/XMLSchema#dateTime';
-	} else {
-		my $type	= $node->literal_datatype;
-		return undef unless $type;
-		return $type->as_string;
-	}
-}
-
-=item C<literal_value_language ( $node )>
-
-Returns the language of the literal object.
-
-=cut
-
-sub literal_value_language {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_literal($node));
-	my $lang	= $node->literal_value_language;
-	return $lang;
-}
-
-=item C<uri_value ( $node )>
-
-Returns the URI string of the resource object.
-
-=cut
-
-sub uri_value {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_resource($node));
-	return $node->uri->as_string;
-}
-
-=item C<blank_identifier ( $node )>
-
-Returns the identifier for the blank node object.
-
-=cut
-
-sub blank_identifier {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef unless ($self->is_blank($node));
-	return $node->blank_identifier;
-}
 
 =item C<add_uri ( $uri, $named, $format )>
 
@@ -453,6 +215,8 @@ sub _get_statements {
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
 	
+	@triple		= map { _cast_to_redland( $_ ) } @triple;
+	
 #	warn "get_statements: <<" . join(', ', map { ref($_) ? $_->as_string : 'undef' } (@triple)) . ">> [" . (blessed($context) ? $context->as_string : '') . "]";
 	
 	my @defs	= grep defined, @triple;
@@ -465,6 +229,7 @@ sub _get_statements {
 	my %args	= ( bridge => $self );
 	
 	if ($context) {
+		my $context	= _cast_to_redland( $context );
 		my $iter	= $model->find_statements( $stmt, $context );
 		$args{ context }	= $context;
 		$args{ named }		= 1;
@@ -501,61 +266,101 @@ sub _get_statements {
 				}
 			}
 			my $iter	= $model->$imethod( @defs );
-			my $context;
 			my $finished	= 0;
 			$stream	= sub {
 				$finished	= 1 if (@_ and $_[0] eq 'close');
 				return undef if ($finished);
-				if (@_ and $_[0] eq 'context') {
-					return $context;
-				} elsif (not $iter) {
+				if (not $iter) {
 					return undef;
 				} elsif ($iter->end) {
 					$iter	= undef;
 					return undef;
 				} else {
-					my $ret	= $iter->current;
-					$context	= $iter->context;
+					my $ret		= $iter->current;
+					my $context	= $iter->context;
 					$iter->next;
-					my $s	= $stmt->clone;
+					my $s		= $stmt->clone;
 					$s->$smethod( $ret );
-					my $ctx	= blessed($context) ? $context->as_string : '';
-#					warn ">>>>> " . $s->as_string . "\t<$ctx>\n" if (blessed($s));	# XXX
-					return $s;
+					return ($s, $context);
 				}
 			};
 		} else {
 			my $iter	= $model->find_statements( $stmt );
 			warn "iterator: $iter (" . $stmt->as_string . ')' if (0);
 			my $finished	= 0;
-			my $context;
 			$stream	= sub {
 				$finished	= 1 if (@_ and $_[0] eq 'close');
 				return undef if ($finished);
 				no warnings 'uninitialized';
-				if (@_ and $_[0] eq 'context') {
-					return $context;
-				} elsif (not $iter) {
+				if (not $iter) {
 					return undef;
 				} elsif ($iter->end) {
-					$context	= $iter->context;
 					$iter	= undef;
 					return undef;
 				} else {
-					my $ret	= $iter->current;
-					$context	= $iter->context;
+					my $ret		= $iter->current;
+					my $context	= $iter->context;
 					$iter->next;
-					my $ctx	= blessed($context) ? $context->as_string : '';
-#					warn ">>>>> " . $ret->as_string . "\t<$ctx>\n" if (blessed($ret));	# XXX
-					return $ret;
+					return ($ret, $context);
 				}
 			};
 		}
 	}
 	
-	return RDF::Trine::Iterator::Graph->new( $stream, %args );
+	my $iter	= sub {
+		my ($rstmt, $context)	= $stream->();
+		return unless ($rstmt);
+		my $rs		= $rstmt->subject;
+		my $rp		= $rstmt->predicate;
+		my $ro		= $rstmt->object;
+		my @nodes;
+		foreach my $n ($rs, $rp, $ro, $context) {
+			push(@nodes, _cast_to_trine( $n ));
+		}
+		my $st	= (@nodes == 3)
+				? RDF::Trine::Statement->new( @nodes )
+				: RDF::Trine::Statement::Quad->new( @nodes );
+		return $st;
+	};
+	
+	return RDF::Trine::Iterator::Graph->new( $iter, %args );
 }
 
+sub _cast_to_redland {
+	my $node	= shift;
+	return undef unless (blessed($node));
+	if ($node->isa('RDF::Trine::Node::Resource')) {
+		return RDF::Redland::Node->new_from_uri( $node->uri_value );
+	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
+		return RDF::Redland::Node->new_from_blank_identifier( $node->blank_identifier );
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
+		my $lang	= $node->literal_value_language;
+		my $dt		= $node->literal_datatype;
+		return RDF::Redland::Node->new_literal( $node->literal_value, $dt, $lang );
+	} else {
+		return undef;
+	}
+}
+
+sub _cast_to_trine {
+	my $node	= shift;
+	return unless (blessed($node));
+	my $type	= $node->type;
+	if ($type == $RDF::Redland::Node::Type_Resource) {
+		return RDF::Trine::Node::Resource->new( $node->uri->as_string );
+	} elsif ($type == $RDF::Redland::Node::Type_Blank) {
+		return RDF::Trine::Node::Blank->new( $node->blank_identifier );
+	} elsif ($type == $RDF::Redland::Node::Type_Literal) {
+		my $lang	= $node->literal_value_language;
+		my $dturi	= $node->literal_datatype;
+		my $dt		= ($dturi)
+					? $dturi->as_string
+					: undef;
+		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
+	} else {
+		return undef;
+	}
+}
 
 =item C<< add_statement ( $statement ) >>
 
@@ -660,7 +465,7 @@ sub node_count {
 	my $self	= shift;
 	my $model	= $self->model;
 	my $total	= $model->size;
-	my $st		= RDF::Redland::Statement->new( @_ );
+	my $st		= RDF::Redland::Statement->new( map { _cast_to_redland($_) } @_ );
 	my $stream	= $model->find_statements( $st );
 	my $count	= 0;
 	while ($stream and not $stream->end) {
