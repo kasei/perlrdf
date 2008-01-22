@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use RDF::Store::DBI;
+use RDF::Trine::Store::DBI;
 
 unless (@ARGV) {
 	print <<"END";
@@ -31,5 +31,5 @@ if ($server eq 'mysql') {
 	exit;
 }
 
-my $store		= RDF::Store::DBI->new($model, $dsn, $user, $pass);
+my $store		= RDF::Trine::Store::DBI->new($model, $dsn, $user, $pass);
 $store->init;

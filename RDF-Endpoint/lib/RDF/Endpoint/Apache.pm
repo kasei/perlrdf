@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use CGI;
+use Apache::DBI;
 use RDF::Endpoint;
 use Data::Dumper;
 

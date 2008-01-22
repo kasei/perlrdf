@@ -6,7 +6,9 @@ use File::Spec;
 use File::Slurp;
 use RDF::Redland;
 use LWP::UserAgent;
-use RDF::Store::DBI;
+
+use RDF::Trine;
+use RDF::Trine::Store::DBI;
 use RDF::Trine::Statement;
 
 unless (@ARGV >= 6) {
@@ -39,7 +41,7 @@ if ($server eq 'mysql') {
 }
 
 my $data;
-my $store	= RDF::Store::DBI->new($model, $dsn, $user, $pass);
+my $store	= RDF::Trine::Store::DBI->new($model, $dsn, $user, $pass);
 if ($file =~ qr[^http(s?)://]) {
 	my $ua	= LWP::UserAgent->new;
 	$ua->agent( "RDF::Trine/${RDF::Trine::VERSION}" );
