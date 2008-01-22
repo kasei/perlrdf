@@ -151,28 +151,32 @@ sub save_query {
 	my $cgi		= shift;
 	my $sparql	= shift;
 	my $query	= RDF::Query->new( $sparql );
-	my $serial	= $query->as_sparql;
-	my $dbh		= $self->_store->dbh;
-	
-	my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
-	$sth->execute( $serial );
-	my ($name)	= $sth->fetchrow;
-	unless ($name) {
-		$dbh->begin_work;
-		my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
-		$sth->execute();
-		my ($name)	= $sth->fetchrow;
-		if ($name) {
-			$name++;
-		} else {
-			$name	= 'a';
-		}
+	if ($query) {
+		my $serial	= $query->as_sparql;
+		my $dbh		= $self->_store->dbh;
 		
-		my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
-		$ins->execute( $name, $serial );
-		$dbh->commit;
+		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
+		$sth->execute( $serial );
+		my ($name)	= $sth->fetchrow;
+		unless ($name) {
+			$dbh->begin_work;
+			my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
+			$sth->execute();
+			my ($name)	= $sth->fetchrow;
+			if ($name) {
+				$name++;
+			} else {
+				$name	= 'a';
+			}
+			
+			my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
+			$ins->execute( $name, $serial );
+			$dbh->commit;
+		}
+		return $name;
+	} else {
+		die RDF::Query->error;
 	}
-	return $name;
 }
 
 sub run_saved_query {
@@ -228,7 +232,6 @@ sub run_query {
 								: 1
 					} @types;
 		if (defined($type)) {
-			my $bridge	= $stream->bridge;
 			if ($type =~ /html/) {
 				print $cgi->header( -type => 'text/html; charset=utf-8' );
 				my $total	= 0;
@@ -238,9 +241,20 @@ sub run_query {
 					result_type => $rtype,
 					next_result => sub { my $r = $rstream->next_result; $total++ if ($r); return $r },
 					columns		=> sub { $rstream->binding_names },
-					values		=> sub { my $row = shift; my $col = shift; return _html_escape( $bridge->as_string( $row->{ $col } ) ) },
+					values		=> sub {
+									my $row 	= shift;
+									my $col 	= shift;
+									my $node	= $row->{ $col };
+									my $str		= ($node) ? $node->as_string : '';
+									return _html_escape( $str )
+								},
 					boolean		=> sub { $rstream->get_boolean },
-					nodes		=> sub { my $s = shift; return [ map { _html_escape( $bridge->as_string( $s->$_() ) ) } qw(subject predicate object) ]; },
+					nodes		=> sub {
+									my $s 		= shift;
+									my @nodes	= map { $s->$_() } qw(subject predicate object);
+									my @strs	= map { ($_) ? $_->as_string : '' } @nodes;
+									return [ map { _html_escape( $_ ) } @strs ];
+								},
 					total		=> sub { $total },
 					feed_url	=> $self->feed_url( $cgi ),
 				} ) or warn $tt->error();
@@ -280,7 +294,6 @@ sub feed_url {
 sub stream_as_html {
 	my $self	= shift;
 	my $stream	= shift;
-	my $bridge	= $stream->bridge;
 	
 	if ($stream->isa('RDF::SPARQLResults::Graph')) {
 		print "<html><head><title>SPARQL Results</title></head><body>\n";
@@ -320,7 +333,8 @@ END
 			$count++;
 			print "<tr>\n";
 			foreach my $k (@names) {
-				my $value	= $bridge->as_string( $row->{ $k } );
+				my $node	= $row->{ $k };
+				my $value	= ($node) ? $node->as_string : '';
 				$value		=~ s/&/&amp;/g;
 				$value		=~ s/</&lt;/g;
 				print "\t<td>" . $value . "</td>\n";
