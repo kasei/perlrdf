@@ -13,6 +13,10 @@ lib/RDF/Trine/Iterator/Bindings.pm
 lib/RDF/Trine/Iterator/Bindings/Materialized.pm
 lib/RDF/Trine/Iterator/Boolean.pm
 lib/RDF/Trine/Iterator/Graph.pm
+lib/RDF/Trine/Iterator/Graph/Materialized.pm
+lib/RDF/Trine/Model.pm
+lib/RDF/Trine/Model/Union.pm
+lib/RDF/Trine/Model/StatementFilter.pm
 lib/RDF/Trine/Namespace.pm
 lib/RDF/Trine/Node.pm
 lib/RDF/Trine/Node/Blank.pm
@@ -23,8 +27,10 @@ lib/RDF/Trine/Parser.pm
 lib/RDF/Trine/Parser/Error.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Statement.pm
+lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store/DBI.pm
 MANIFEST			This list of files
+MANIFEST.bak
 META.yml
 t/00.load.t
 t/data/rdfxml/bad-00.nt
@@ -254,8 +260,11 @@ t/data/turtle/test-25.ttl
 t/iterator-materialized.t
 t/iterator-thaw.t
 t/iterator.t
+t/model.t
+t/model-filter.t
 t/namespace-export.t
 t/namespace-uri.t
+t/node.t
 t/parser-rdfxml.t
 t/parser-turtle.t
 t/pod-coverage.t

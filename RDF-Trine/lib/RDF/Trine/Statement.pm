@@ -221,6 +221,63 @@ sub clone {
 	return $class->new( $self->nodes );
 }
 
+=item C<< bind_variables ( \%bound ) >>
+
+Returns a new algebra pattern with variables named in %bound replaced by their corresponding bound values.
+
+=cut
+
+sub bind_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $bound	= shift;
+	my @nodes	= $self->nodes;
+	foreach my $i (0 .. 2) {
+		my $n	= $nodes[ $i ];
+		if ($n->isa('RDF::Trine::Node::Variable')) {
+			my $name	= $n->name;
+			if (my $value = $bound->{ $name }) {
+				$nodes[ $i ]	= $value;
+			}
+		}
+	}
+	return $class->new( @nodes );
+}
+
+=item C<< subsumes ( $statement ) >>
+
+Returns true if this statement will subsume the $statement when matched against
+a triple store.
+
+=cut
+
+sub subsumes {
+	my $self	= shift;
+	my $st		= shift;
+	my @nodes	= $self->nodes;
+	my @match	= $st->nodes;
+	
+	my %bind;
+	foreach my $i (0..2) {
+		my $m	= $match[ $i ];
+		if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
+			my $name	= $nodes[$i]->name;
+			if (exists( $bind{ $name } )) {
+				warn "variable $name has already been bound" if ($debug);
+				if (not $bind{ $name }->equal( $m )) {
+					warn "-> and " . $bind{$name}->sse . " does not equal " . $m->sse if ($debug);
+					return 0;
+				}
+			} else {
+				$bind{ $name }	= $m;
+			}
+		} else {
+			return 0 unless ($nodes[$i]->equal( $m ));
+		}
+	}
+	return 1;
+}
+
 
 =item C<< from_redland ( $statement ) >>
 

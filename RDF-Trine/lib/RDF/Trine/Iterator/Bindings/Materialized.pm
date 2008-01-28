@@ -11,11 +11,22 @@ RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class.
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
+    
+    my $iterator = RDF::Trine::Iterator::Bindings::Materialized->new( \@data, \@names );
+    while (my $row = $iterator->next) {
+    	my @vars	= keys %$row;
     	# do something with @vars
+    }
+
+    my $iterator = RDF::Trine::Iterator::Bindings->new( \&code, \@names );
+    my $miter = $iterator->materialize;
+    while (my $row = $miter->next) {
+    	my @vars	= keys %$row;
+    	# do something with @vars
+    }
+    $miter->reset; # start the iteration again
+    while (my $row = $miter->next) {
+        # ...
     }
 
 =head1 METHODS

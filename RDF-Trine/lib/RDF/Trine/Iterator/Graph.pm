@@ -11,11 +11,10 @@ RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results.
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
-    	# do something with @vars
+    
+    my $iterator = RDF::Trine::Iterator::Graph->new( \&data );
+    while (my $statement = $iterator->next) {
+    	# do something with $statement
     }
 
 =head1 METHODS
@@ -30,6 +29,8 @@ use strict;
 use warnings;
 use JSON;
 use List::Util qw(max);
+use Scalar::Util qw(blessed);
+
 use RDF::Trine::Iterator qw(sgrep);
 use RDF::Trine::Iterator::Graph::Materialized;
 
@@ -72,6 +73,33 @@ sub _new {
 	my $names	= shift;
 	my %args	= @_;
 	return $class->new( $stream, %args );
+}
+
+=item C<< as_bindings ( $s, $p, $o ) >>
+
+Returns the iterator as a Bindings iterator, using the supplied triple nodes to
+determine the variable bindings.
+
+=cut
+
+sub as_bindings {
+	my $self	= shift;
+	my @nodes	= @_;
+	my @names	= qw(subject predicate object context);
+	my %bindings;
+	foreach my $i (0 .. $#nodes) {
+		my $n	= $nodes[ $i ];
+		if (blessed($n) and $n->isa( 'RDF::Trine::Node::Variable' )) {
+			$bindings{ $n->name }	= $names[ $i ];
+		}
+	}
+	my $sub	= sub {
+		my $statement	= $self->next;
+		return undef unless ($statement);
+		my %values		= map { my $method = $bindings{ $_ }; $_ => $statement->$method() } (keys %bindings);
+		return \%values;
+	};
+	return RDF::Trine::Iterator::Bindings->new( $sub, [ keys %bindings ] );
 }
 
 =item C<< materialize >>

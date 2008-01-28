@@ -63,44 +63,6 @@ package RDF::Trine::Error::SerializationError;
 use base qw(RDF::Trine::Error);
 
 
-# 
-# package RDF::Query::Error::ParseError;
-# 
-# use base qw(RDF::Query::Error);
-# 
-# package RDF::Query::Error::MethodError;
-# 
-# use base qw(RDF::Query::Error);
-# 
-# package RDF::Query::Error::ModelError;
-# 
-# use base qw(RDF::Query::Error);
-# 
-# package RDF::Query::Error::QueryPatternError;
-# 
-# use base qw(RDF::Query::Error::QuerySyntaxError);
-# 
-# package RDF::Query::Error::SimpleQueryPatternError;
-# 
-# use base qw(RDF::Query::Error::QueryPatternError);
-# 
-# package RDF::Query::Error::ComparisonError;
-# 
-# use base qw(RDF::Query::Error::CompilationError);
-# 
-# package RDF::Query::Error::FilterEvaluationError;
-# 
-# use base qw(RDF::Query::Error);
-# 
-# package RDF::Query::Error::TypeError;
-# 
-# use base qw(RDF::Query::Error);
-# 
-# package RDF::Query::Error::ExecutionError;
-# 
-# use base qw(RDF::Query::Error);
-
-
 1;
 
 __END__

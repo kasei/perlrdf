@@ -58,7 +58,7 @@ sub new {
 	} else {
 		$self	= [ 'LITERAL', $literal ];
 	}
-	bless($self, $class);
+	return bless($self, $class);
 }
 
 =item C<< literal_value >>
@@ -69,6 +69,9 @@ Returns the string value of the literal.
 
 sub literal_value {
 	my $self	= shift;
+	if (@_) {
+		$self->[1]	= shift;
+	}
 	return $self->[1];
 }
 

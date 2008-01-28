@@ -10,12 +10,11 @@ RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query result
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
-    	# do something with @vars
+    use RDF::Trine::Iterator::Boolean;
+    
+    my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
+    if ($iterator->get_boolean) {
+    	# ...
     }
 
 =head1 METHODS

@@ -1,19 +1,21 @@
-use Test::More tests => 183;
+use Test::More tests => 66;
 use Test::Exception;
 
 use strict;
 use warnings;
+use Data::Dumper;
 
 use DBI;
-use RDF::Trine::Model;
-use RDF::Trine::Node;
-use RDF::Trine::Pattern;
+use RDF::Trine::Model::StatementFilter;
 use RDF::Trine::Namespace;
 use RDF::Trine::Store::DBI;
+use RDF::Trine::Node;
+use RDF::Trine::Pattern;
 use RDF::Trine::Statement;
 use File::Temp qw(tempfile);
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+my $rdfs	= RDF::Trine::Namespace->new('http://www.w3.org/2000/01/rdf-schema#');
 my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 my $b		= RDF::Trine::Node::Blank->new();
@@ -23,41 +25,40 @@ my $st1		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Litera
 my $st2		= RDF::Trine::Statement->new( $b, $rdf->type, $foaf->Person );
 my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
 
-my ($stores, $remove)	= stores();
-foreach my $store (@$stores) {
-	isa_ok( $store, 'RDF::Trine::Store::DBI' );
-	my $model	= RDF::Trine::Model->new( $store );
+{
+	my $model	= model();
 	isa_ok( $model, 'RDF::Trine::Model' );
+	
 	$model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
 	
 	{
-		is( $model->count_statements(), 4, 'model size' );
+		is( $model->count_statements(), 4, 'initial model size' );
 		$model->add_statement( $_ ) for ($st0);
 		is( $model->count_statements(), 4, 'model size after duplicate statements' );
-		is( $model->count_statements( undef, $foaf->name, undef ), 2, 'count of foaf:name statements' );
+		is( $model->count_statements( undef, $foaf->name, undef ), 2, 'count of foaf:name statements after redundant add' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement' );
-		is( $stream->next, undef, 'end-of-stream' );
+		is_deeply( $st, $st1, 'got foaf:name statement' );
+		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement)' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( $b, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st3, 'foaf:name statement (with bnode in triple)' );
-		is( $stream->next, undef, 'end-of-stream' );
+		is_deeply( $st, $st3, 'got foaf:name statement (with bnode in triple)' );
+		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement with bnode)' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement (with literal in triple)' );
-		is( $stream->next, undef, 'end-of-stream' );
+		is_deeply( $st, $st1, 'got foaf:name statement (with literal in triple)' );
+		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement with literal)' );
 	}
-
+	
 	{
 		my $stream	= $model->get_statements( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $count	= 0;
@@ -66,7 +67,7 @@ foreach my $store (@$stores) {
 			isa_ok( $subj, 'RDF::Trine::Node' );
 			$count++;
 		}
-		is( $count, 2, 'expected result count (2 people)' );
+		is( $count, 2, 'got two results for triple { ?p foaf:name ?name }' );
 	}
 	
 	{
@@ -84,10 +85,11 @@ foreach my $store (@$stores) {
 				like( $b->{name}->literal_value, qr/Eve|Gregory/, 'name pattern' );
 				$count++;
 			}
-			is( $count, 2, 'expected result count (2 people)' );
+			is( $count, 2, 'got two results for pattern { ?p a foaf:Person ; foaf:name ?name }' );
 		}
 	
-		{
+		TODO: {
+			local($TODO)	= "get_pattern needs to respect requested ordering, even if the underlying store doesn't do it natively";
 			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name', 'ASC' ] );
 			is_deeply( [ $stream->sorted_by ], ['name', 'ASC'], 'results sort order' );
 			my $count	= 0;
@@ -99,9 +101,9 @@ foreach my $store (@$stores) {
 				is( $b->{name}->literal_value, $name, 'name pattern' );
 				$count++;
 			}
-			is( $count, 2, 'expected result count (2 people)' );
+			is( $count, 2, 'got two results for ordered pattern { ?p a foaf:Person ; foaf:name ?name }' );
 		}
-
+	
 		{
 			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'date', 'ASC' ] );
 			is_deeply( [ $stream->sorted_by ], [], 'results sort order for unknown binding' );
@@ -112,13 +114,13 @@ foreach my $store (@$stores) {
 				my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' ] );
 			} 'Error', 'bad ordering request throws exception';
 		}
-	}
-	
-	{
-		my $stream	= $model->get_pattern( $st0 );
-		my $empty	= $stream->next;
-		is_deeply( $empty, {}, 'empty binding on no-variable pattern' );
-		is( $stream->next, undef, 'end-of-stream' );
+		
+		{
+			my $stream	= $model->get_pattern( $st0 );
+			my $empty	= $stream->next;
+			is_deeply( $empty, {}, 'empty binding on no-variable pattern' );
+			is( $stream->next, undef, 'end-of-stream' );
+		}
 	}
 	
 	{
@@ -180,55 +182,42 @@ foreach my $store (@$stores) {
 		is( $model->count_statements(), 2, 'model size after remove_statements' );
 	}
 	
-	{
-		throws_ok {
-			my $pattern	= RDF::Trine::Pattern->new();
-			my $stream	= $model->get_pattern( $pattern );
-		} 'RDF::Trine::Error::CompilationError', 'empty GGP throws exception';
-	}
-}
+	throws_ok {
+		my $pattern	= RDF::Trine::Pattern->new();
+		my $stream	= $model->get_pattern( $pattern );
+	} 'RDF::Trine::Error::CompilationError', 'empty GGP throws exception';
 
-foreach my $file (@$remove) {
-	unlink( $file );
-}
+################################################################################
 
-sub stores {
-	my @stores;
-	my @removeme;
 	{
-		my $store	= RDF::Trine::Store::DBI->new();
-		$store->init();
-		push(@stores, $store);
+		my $stream	= $model->get_statements( undef, $rdf->type, $foaf->Person );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $st		= $stream->next;
+		isa_ok( $st, 'RDF::Trine::Statement', 'got expected type statement' );
 	}
 	
-	{
-		my ($fh, $filename) = tempfile();
-		undef $fh;
-		my $dbh		= DBI->connect( "dbi:SQLite:dbname=${filename}", '', '' );
-		my $store	= RDF::Trine::Store::DBI->new( 'model', $dbh );
-		$store->init();
-		push(@stores, $store);
-		push(@removeme, $filename);
-	}
+	is( $model->count_statements(), 2, 'model size before add_rule' );
+	$model->add_rule( sub {
+		my $st	= shift;
+		my $p	= $st->predicate;
+		return 0 if ($p->equal( $rdf->type ));
+		return 1;
+		warn $st->as_string;
+	} );
+	is( $model->count_statements(), 1, 'model size after add_rule' );
 	
 	{
-		my ($fh, $filename) = tempfile();
-		undef $fh;
-		my $dsn		= "dbi:SQLite:dbname=${filename}";
-		my $store	= RDF::Trine::Store::DBI->new( 'model', $dsn, '', '' );
-		$store->init();
-		push(@stores, $store);
-		push(@removeme, $filename);
+		my $stream	= $model->get_statements( undef, $rdf->type, $foaf->person );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $st		= $stream->next;
+		is( $st, undef, 'expected empty iterator for hidden type statement' );
 	}
-	return (\@stores, \@removeme);
 }
 
-sub debug {
-	my $store	= shift;
-	my $dbh		= $store->dbh;
-	my $sth		= $dbh->prepare( "SELECT * FROM Statements15799945864759145248" );
-	$sth->execute();
-	while (my $row = $sth->fetchrow_hashref) {
-		warn Dumper($row);
-	}
+
+sub model {
+	my $store	= RDF::Trine::Store::DBI->new();
+	$store->init();
+	my $model	= RDF::Trine::Model::StatementFilter->new( $store );
+	return $model;
 }

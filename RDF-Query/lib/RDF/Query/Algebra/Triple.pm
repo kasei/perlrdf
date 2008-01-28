@@ -118,33 +118,6 @@ sub fixup {
 	return $fixed;
 }
 
-=item C<< clone >>
-
-=cut
-
-=item C<< bind_variables ( \%bound ) >>
-
-Returns a new algebra pattern with variables named in %bound replaced by their corresponding bound values.
-
-=cut
-
-sub bind_variables {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $bound	= shift;
-	my @nodes	= $self->nodes;
-	foreach my $i (0 .. 2) {
-		my $n	= $nodes[ $i ];
-		if ($n->isa('RDF::Query::Node::Variable')) {
-			my $name	= $n->name;
-			if (my $value = $bound->{ $name }) {
-				$nodes[ $i ]	= $value;
-			}
-		}
-	}
-	return $class->new( @nodes );
-}
-
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
 
 =cut

@@ -11,11 +11,20 @@ RDF::Trine::Iterator::Graph::Materialized - Materialized graph class.
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
-    	# do something with @vars
+    
+    my $iterator = RDF::Trine::Iterator::Graph::Materialized->new( \@data );
+    while (my $statement = $iterator->next) {
+    	# do something with $statement
+    }
+
+    my $iterator = RDF::Trine::Iterator::Graph->new( \&code );
+    my $miter = $iterator->materialize;
+    while (my $statement = $miter->next) {
+    	# do something with $statement
+    }
+    $miter->reset; # start the iteration again
+    while (my $statement = $miter->next) {
+        # ...
     }
 
 =head1 METHODS

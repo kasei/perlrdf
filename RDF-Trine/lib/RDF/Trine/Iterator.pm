@@ -16,10 +16,9 @@ This document describes RDF::Trine::Iterator version 1.000.
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
+    my $iterator = RDF::Trine::Iterator->new( \&data, 'bindings', \@names );
+    while (my $row = $iterator->next) {
+    	my @vars	= keys %$row;
     	# do something with @vars
     }
 
@@ -511,7 +510,6 @@ Prints debugging information about the stream.
 sub debug {
 	my $self	= shift;
 	my $stream	= $self->{_stream};
-	local($RDF::Query::debug)	= 2;
 	RDF::Query::_debug_closure( $stream );
 }
 

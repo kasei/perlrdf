@@ -11,10 +11,10 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
-    my $query	= RDF::Query->new( '...query...' );
-    my $stream	= $query->execute();
-    while (my $row = $stream->next) {
-    	my @vars	= @$row;
+    
+    my $iterator = RDF::Trine::Iterator::Bindings->new( \&data, \@names );
+    while (my $row = $iterator->next) {
+    	my @vars	= keys %$row;
     	# do something with @vars
     }
 
@@ -319,9 +319,9 @@ sub as_json {
 	}
 	
 	my $count	= 0;
-	my $parsed	= die; # XXX $bridge->parsed;
-	my $order	= ref($parsed->{options}{orderby}) ? JSON::true : JSON::false;
-	my $dist	= $parsed->{options}{distinct} ? JSON::true : JSON::false;
+	my @sorted	= $self->sorted_by;
+	my $order	= scalar(@sorted) ? JSON::true : JSON::false;
+	my $dist	= $self->_args->{distinct} ? JSON::true : JSON::false;
 	
 	my $data	= {
 					head	=> { vars => \@variables },
