@@ -100,7 +100,7 @@ sub new {
 	my $class	= shift;
 	my $expr	= shift;
 	my $pattern	= shift;
-	Carp::confess unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern'));
+	Carp::confess unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern') or $pattern->isa('RDF::Query::Algebra::BasicGraphPattern') or $pattern->isa('RDF::Query::Algebra::Filter'));
 	return bless( [ 'FILTER', $expr, $pattern ] );
 }
 

@@ -46,7 +46,7 @@ sub new {
 		$model	= RDF::Trine::Store::DBI->temporary_store();
 	}
 
-	throw RDF::Query::Error::MethodInvocationError ( -text => 'Not a RDF::Trine::Store::DBI passed to bridge constructor' ) unless (blessed($model) and $model->isa('RDF::Trine::Store::DBI'));
+	throw RDF::Query::Error::MethodInvocationError ( -text => 'Not a RDF::Trine::Store::DBI passed to bridge constructor' ) unless (blessed($model) and ($model->isa('RDF::Trine::Store::DBI') or $model->isa('RDF::Trine::Model')));
 	
 	my $self	= bless( {
 					model	=> $model,

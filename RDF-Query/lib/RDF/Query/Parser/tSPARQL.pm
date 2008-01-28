@@ -35,6 +35,7 @@ require 5.004;
 use strict;
 no warnings 'ambiguous';
 no warnings 'redefine';
+no warnings 'uninitialized';
 
 our ( $VERSION, $COMPATIBLE, $FILENAME );
 

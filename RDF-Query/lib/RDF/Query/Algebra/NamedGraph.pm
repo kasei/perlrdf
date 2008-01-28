@@ -77,7 +77,8 @@ sub graph {
 		my $graph	= shift;
 		$self->[1]	= $graph;
 	}
-	return $self->[1];
+	my $graph	= $self->[1];
+	return $graph;
 }
 
 =item C<< pattern >>
@@ -255,10 +256,6 @@ sub execute {
 				return \%row;
 			};
 			$stream	= RDF::Trine::Iterator::Bindings->new( $sub, [uniq($_stream->binding_names, $cvar)], bridge => $bridge );
-# 			$stream	= smap {
-# 				my $row	= $_;
-# 				return { %$row, $cvar => $name };
-# 			} $stream, 'bindings', [$stream->binding_names, $context->name];
 		} else {
 			$stream	= $_stream;
 		}

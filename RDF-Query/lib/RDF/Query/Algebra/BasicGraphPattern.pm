@@ -46,6 +46,12 @@ Returns a new BasicGraphPattern structure.
 sub new {
 	my $class	= shift;
 	my @triples	= @_;
+	foreach my $t (@triples) {
+		unless ($t->isa('RDF::Query::Algebra::Triple')) {
+			Carp::cluck;
+			throw RDF::Query::Error::QueryPatternError -text => "Patterns belonging to a BGP must be triples";
+		}
+	}
 	return bless( [ @triples ] );
 }
 

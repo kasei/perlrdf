@@ -285,7 +285,7 @@ sub statement_method_map {
 	return qw(subject predicate object);
 }
 
-=item C<< _get_statements ($subject, $predicate, $object) >>
+=item C<< _get_statements ($subject, $predicate, $object [, $context]) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
@@ -300,8 +300,9 @@ sub _get_statements {
 	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
 	
 	if ($context) {
-		my $context	= _cast_to_rdfcore( $context );
-		unless ($self->equals( $context, $self->get_context)) {
+		if ($self->equals( $context, $self->get_context)) {
+			# 
+		} else {
 			return RDF::Trine::Iterator::Graph->new( sub {undef}, bridge => $self );
 		}
 	}
@@ -321,12 +322,12 @@ sub _get_statements {
 		my $rp		= $rstmt->getPredicate;
 		my $ro		= $rstmt->getObject;
 		my @nodes;
-		foreach my $n ($rs, $rp, $ro, $context) {
+		foreach my $n ($rs, $rp, $ro) {
 			push(@nodes, _cast_to_trine( $n ));
 		}
-		my $st	= (@nodes == 3)
+		my $st	= ($context)
 				? RDF::Trine::Statement->new( @nodes )
-				: RDF::Trine::Statement::Quad->new( @nodes );
+				: RDF::Trine::Statement::Quad->new( @nodes, $context );
 		return $st;
 	};
 	

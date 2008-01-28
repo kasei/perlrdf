@@ -629,7 +629,7 @@ sub get_bridge {
 	my $bridge;
 	if (not $model) {
 		$bridge	= $self->new_bridge();
-	} elsif (blessed($model) and $model->isa('RDF::Trine::Store::DBI')) {
+	} elsif (blessed($model) and ($model->isa('RDF::Trine::Store::DBI') or $model->isa('RDF::Trine::Model'))) {
 		require RDF::Query::Model::RDFTrine;
 		$bridge	= RDF::Query::Model::RDFTrine->new( $model, parsed => $parsed );
 	} elsif (blessed($model) and $model->isa('RDF::Redland::Model')) {

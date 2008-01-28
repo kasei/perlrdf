@@ -97,7 +97,7 @@ sub sse {
 	return sprintf(
 		'(%s %s)',
 		$self->op,
-		join(' ', map { $self->sse( $context ) } $self->operands),
+		join(' ', map { $_->sse( $context ) } $self->operands),
 	);
 }
 
