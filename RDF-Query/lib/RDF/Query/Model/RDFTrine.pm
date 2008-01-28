@@ -317,7 +317,9 @@ sub _get_statements {
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
 	if ($context and $context->isa('RDF::Trine::Node::Resource')) {
-		unless ($self->equals( $context, $self->get_context)) {
+		if ($self->equals( $context, $self->get_context)) {
+			Carp::cluck( Dumper(@triple, $context) );	# XXX
+		} else {
 			return RDF::Trine::Iterator::Graph->new( [], bridge => $self );
 		}
 	}

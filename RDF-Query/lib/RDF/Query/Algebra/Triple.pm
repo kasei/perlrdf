@@ -199,7 +199,7 @@ sub execute {
 # 	}
 	# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 	
-	my $statments	= $bridge->get_statements( @triple, @graph );
+	my $statements	= $bridge->get_statements( @triple, @graph );
 	if ($dup_var) {
 		# there's a node in the triple pattern that is repeated (like (?a ?b ?b)), but since get_statements() can't
 		# directly make that query, we're stuck filtering the triples after we get the stream back.
@@ -212,7 +212,7 @@ sub execute {
 			}
 		}
 		my @dup_methods	= grep { $map{$_} eq $dup_key } @methodmap;
-		$statments	= sgrep {
+		$statements	= sgrep {
 			my $stmt	= $_;
 			if (2 == @dup_methods) {
 				my ($a, $b)	= @dup_methods;
@@ -221,7 +221,7 @@ sub execute {
 				my ($a, $b, $c)	= @dup_methods;
 				return (($bridge->equals( $stmt->$a(), $stmt->$b() )) and ($bridge->equals( $stmt->$a(), $stmt->$c() ))) ? 1 : 0;
 			}
-		} $statments;
+		} $statements;
 	}
 	
 	my $bindings	= smap {
@@ -248,7 +248,7 @@ sub execute {
 			}
 		}
 		$result;
-	} $statments;
+	} $statements;
 	
 	my $sub	= sub {
 		my $r	= $bindings->next;
