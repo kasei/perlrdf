@@ -15,7 +15,10 @@ use File::Slurp;
 use URI::Escape;
 use Data::Dumper;
 use LWP::UserAgent;
+use Net::OpenID::Consumer;
+
 use RDF::Trine::Store::DBI;
+use RDF::Trine::Model::StatementFilter;
 use List::Util qw(first);
 
 sub new {
@@ -32,8 +35,26 @@ sub new {
 	
 	my $self		= bless( { incpath => $incpath, admin => $adminurl, submit => $submiturl }, $class );
 	my $store		= RDF::Trine::Store::DBI->new( $dsn, $user, $pass, $model );
+	my $m			= RDF::Trine::Model::StatementFilter->new( $store );
 	
-	$self->{_store}	= $store;
+	if (my $id = $args{ Identity }) {
+		$self->set_identity( $id );
+	}
+	
+	unless ($self->get_identity) {
+		$m->add_rule( sub {
+			my $st	= shift;
+			my $p	= $st->predicate;
+			my $uri	= $p->uri_value;
+			
+			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/mbox');
+			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/phone');
+			return 0 if ($uri =~ m<^http://xmlns.com/foaf/0.1/\w+ChatID$>);
+			return 1;
+		} );
+	}
+	
+	$self->{_model}	= $m;
 	$self->{_ua}	= LWP::UserAgent->new;
 	
 	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
@@ -46,18 +67,49 @@ sub new {
 	return $self;
 }
 
+sub login_page {
+	my $self	= shift;
+	my $cgi		= shift;
+	
+	my $model	= $self->_model;
+	my $tt		= $self->_template;
+	my $file	= 'login.html';
+
+	print $cgi->header( -type => 'text/html; charset=utf-8' );
+	my $submit	= $self->submit_url;
+	
+	$tt->process( $file, {
+					submit_url	=> $submit,
+				} ) || die $tt->error();
+}
+
 sub query_page {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $prefix	= shift;
 	
-	my $store	= $self->_store;
+	my $model	= $self->_model;
 	my $tt		= $self->_template;
 	my $file	= 'index.html';
 
 	print $cgi->header( -type => 'text/html; charset=utf-8' );
 	my $submit	= $self->submit_url;
-	$tt->process( $file, { submit_url => $submit } ) || die $tt->error();
+	
+	my $login	= $self->_login_crumb;
+	$tt->process( $file, {
+					submit_url	=> $submit,
+					login		=> $login,
+				} ) || die $tt->error();
+}
+
+sub _login_crumb {
+	my $self	= shift;
+	if (my $id = $self->get_identity) {
+		return qq<[Logged in as $id]>;
+	} else {
+		my $submit	= $self->submit_url;
+		return qq<[<a href="${submit}?login=1">Login</a>]>;
+	}
 }
 
 sub handle_admin_post {
@@ -66,7 +118,7 @@ sub handle_admin_post {
 	my $host	= shift;
 	my $port	= shift;
 	my $prefix	= shift;
-	my $store		= $self->{_store};
+	my $model	= $self->_model;
 	
 	my @keys	= $cgi->param;
 	foreach my $key (sort @keys) {
@@ -76,11 +128,11 @@ sub handle_admin_post {
 		} elsif ($key =~ /^delete_<(.*)>$/) {
 			my $url	= $1;
 			my $ctx	= RDF::Trine::Node::Resource->new( $url );
-			$store->remove_statements( undef, undef, undef, $ctx );
+			$model->remove_statements( undef, undef, undef, $ctx );
 		} elsif ($key =~ /^replace_<(.*)>$/) {
 			my $url	= $1;
 			my $ctx	= RDF::Trine::Node::Resource->new( $url );
-#			$store->remove_statements( undef, undef, undef, $ctx );
+#			$model->remove_statements( undef, undef, undef, $ctx );
 			
 			warn "REPLACE $url";
 		}
@@ -98,7 +150,7 @@ sub _add_uri {
 	my $url		= shift;
 	my $ua		= $self->_agent;
 	my $resp	= $ua->get($url);
-	my $store		= $self->{_store};
+	my $model	= $self->_model;
 	if ($resp->is_success) {
 		require RDF::Redland;
 		my $data		= $resp->content;
@@ -111,7 +163,7 @@ sub _add_uri {
 		while ($stream and !$stream->end) {
 			my $statement	= $stream->current;
 			my $stmt		= RDF::Trine::Statement->from_redland( $statement );
-			$store->add_statement( $stmt, $basenode );
+			$model->add_statement( $stmt, $basenode );
 			$stream->next;
 		}
 	} else {
@@ -124,15 +176,15 @@ sub admin_index {
 	my $cgi		= shift;
 	my $prefix	= shift;
 	
-	my $store	= $self->_store;
+	my $model	= $self->_model;
 	my $tt		= $self->_template;
 	my $file	= 'admin_index.html';
 
 	my @files;
-	my $stream	= $store->get_contexts;
+	my $stream	= $model->get_contexts;
 	while (my $c = $stream->next) {
 		my $uri		= $c->as_string;
-		my $count	= $store->count_statements( undef, undef, undef, $c );
+		my $count	= $model->count_statements( undef, undef, undef, $c );
 		push( @files, {
 			source			=> _html_escape($uri),
 			count			=> $count,
@@ -153,7 +205,7 @@ sub save_query {
 	my $query	= RDF::Query->new( $sparql );
 	if ($query) {
 		my $serial	= $query->as_sparql;
-		my $dbh		= $self->_store->dbh;
+		my $dbh		= $self->_model->_store->dbh;
 		
 		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
 		$sth->execute( $serial );
@@ -184,7 +236,7 @@ sub run_saved_query {
 	my $cgi		= shift;
 	my $name	= shift;
 
-	my $dbh		= $self->_store->dbh;
+	my $dbh		= $self->_model->_store->dbh;
 	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
 	$sth->execute( $name );
 	my ($sparql)	= $sth->fetchrow;
@@ -202,7 +254,7 @@ sub run_query {
 	my $sparql	= shift;
 	$self->save_query( $cgi, $sparql );
 	
-	my $store		= $self->{_store};
+	my $model		= $self->_model;
 	my $http_accept	= $ENV{HTTP_ACCEPT} || 'text/html';
 	my @accept	= map { $_->[0] }
 					sort { $b->[1] <=> $a->[1] }
@@ -220,7 +272,7 @@ sub run_query {
 		my $error	= RDF::Query->error;
 		return $self->error( $cgi, 400, 'Bad Request', $error );
 	}
-	my $stream	= $query->execute( $store );
+	my $stream	= $query->execute( $model );
 	if ($stream) {
 		my $tt		= $self->_template;
 		my $file	= 'results.html';
@@ -359,6 +411,17 @@ sub submit_url {
 	return $self->{submit};
 }
 
+sub set_identity {
+	my $self	= shift;
+	my $id		= shift;
+	$self->{_identity}	= $id;
+}
+
+sub get_identity {
+	my $self	= shift;
+	return $self->{_identity};
+}
+
 sub _template {
 	my $self	= shift;
 	return $self->{_tt};
@@ -369,9 +432,9 @@ sub _agent {
 	return $self->{_ua};
 }
 
-sub _store {
+sub _model {
 	my $self	= shift;
-	return $self->{_store};
+	return $self->{_model};
 }
 
 sub _html_escape {
@@ -388,8 +451,8 @@ sub _html_escape {
 
 sub init {
 	my $self	= shift;
-	my $store	= $self->_store;
-	my $dbh		= $store->dbh;
+	my $model	= $self->_model;
+	my $dbh		= $model->_store->dbh;
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
         CREATE TABLE IF NOT EXISTS Queries (
             Name VARCHAR(8) UNIQUE NOT NULL,
