@@ -26,6 +26,7 @@ lib/RDF/Trine/Node/Variable.pm
 lib/RDF/Trine/Parser.pm
 lib/RDF/Trine/Parser/Error.pm
 lib/RDF/Trine/Parser/Turtle.pm
+lib/RDF/Trine/Pattern.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store/DBI.pm

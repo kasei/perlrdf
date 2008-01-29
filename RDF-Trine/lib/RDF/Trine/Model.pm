@@ -109,6 +109,16 @@ sub get_pattern {
 	return $self->_store->get_pattern( $bgp, @_ );
 }
 
+=item C<< get_contexts >>
+
+=cut
+
+sub get_contexts {
+	my $self	= shift;
+	my $store	= $self->_store;
+	return $store->get_contexts( @_ );
+}
+
 =item C<< as_stream >>
 
 Returns an iterator object containing every statement in the model.
