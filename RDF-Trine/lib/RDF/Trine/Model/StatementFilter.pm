@@ -59,10 +59,10 @@ sub count_statements {
 	my $s		= shift;
 	my $p		= shift;
 	my $o		= shift;
-	my $st		= RDF::Trine::Statement->new( $s, $p, $o );
+	my $c		= shift;
 	
 	my $count	= 0;
-	my $i		= $self->get_statements( $s, $p, $o );
+	my $i		= $self->get_statements( $s, $p, $o, $c );
 	while (my $s = $i->next) {
 		$count++;
 	}
