@@ -17,9 +17,11 @@ use Data::Dumper;
 use LWP::UserAgent;
 use Net::OpenID::Consumer;
 
+use List::Util qw(first);
+use Scalar::Util qw(blessed);
+
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::StatementFilter;
-use List::Util qw(first);
 
 sub new {
 	my $class		= shift;
@@ -32,16 +34,27 @@ sub new {
 	my $incpath		= $args{ IncludePath } || './include';
 	my $adminurl	= $args{ AdminURL };
 	my $submiturl	= $args{ SubmitURL };
+	my $whitelist	= $args{ WhiteListModel };
 	
-	my $self		= bless( { incpath => $incpath, admin => $adminurl, submit => $submiturl }, $class );
-	my $store		= RDF::Trine::Store::DBI->new( $dsn, $user, $pass, $model );
+	my $wlstore		= RDF::Trine::Store::DBI->new( $whitelist, $dsn, $user, $pass );
+	my $wlmodel		= RDF::Trine::Model->new( $wlstore );
+	
+	my $store		= RDF::Trine::Store::DBI->new( $model, $dsn, $user, $pass );
 	my $m			= RDF::Trine::Model::StatementFilter->new( $store );
+	my $self		= bless( {
+						incpath		=> $incpath,
+						admin		=> $adminurl,
+						submit		=> $submiturl,
+						whitelist	=> $wlmodel,
+						_model		=> $m,
+						_ua			=> LWP::UserAgent->new,
+					}, $class );
 	
 	if (my $id = $args{ Identity }) {
 		$self->set_identity( $id );
 	}
 	
-	unless ($self->get_identity) {
+	if (not $self->authorized_user) {
 		$m->add_rule( sub {
 			my $st	= shift;
 			my $p	= $st->predicate;
@@ -54,9 +67,6 @@ sub new {
 		} );
 	}
 	
-	$self->{_model}	= $m;
-	$self->{_ua}	= LWP::UserAgent->new;
-	
 	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
 	$self->{_ua}->default_header( 'Accept' => 'application/turtle,application/x-turtle,application/rdf+xml' );
 	
@@ -65,6 +75,40 @@ sub new {
 					} );
 	$self->{_tt}	= $template;
 	return $self;
+}
+
+sub authorized_user {
+	my $self	= shift;
+	my $id		= $self->get_identity;
+	
+	our %authorized;
+	if (exists $authorized{ $id }) {
+		return $authorized{ $id };
+	} else {
+		my $wl		= $self->{ whitelist };
+		my $query	= RDF::Query->new( <<"END" );
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+ASK
+WHERE {
+	[ a foaf:PersonalProfileDocument ; foaf:primaryTopic ?p ] .
+	{
+		{ ?p foaf:openid <${id}> } UNION { ?p foaf:homepage <${id}> }
+	} UNION {
+		{ ?p foaf:knows [ foaf:openid <${id}> ] }
+		UNION
+		{ ?p foaf:knows [ foaf:homepage <${id}> ] }
+	}
+}
+END
+		my $res		= $query->execute( $wl );
+		if (blessed($res) and $res->get_boolean) {
+			$authorized{ $id }	= 1;
+			return 1;
+		} else {
+			$authorized{ $id }	= 0;
+			return 0;
+		}
+	}
 }
 
 sub login_page {

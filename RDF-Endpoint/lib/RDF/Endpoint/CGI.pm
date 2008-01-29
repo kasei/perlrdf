@@ -5,6 +5,7 @@ use warnings;
 
 use CGI;
 use RDF::Endpoint;
+use Data::Dumper;
 use LWPx::ParanoidAgent;
 use Digest::SHA1 qw(sha1_hex);
 
@@ -22,13 +23,19 @@ sub new {
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
 	my $cgi			= $args{ CGI };
+	my $wl			= $args{ WhiteListModel };
 	
 	my $host	= $cgi->server_name;
 	my $port	= $cgi->server_port;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
 	my $self		= bless({}, $class);
-	
+
 	my %endargs;
+	
+	if ($wl) {
+		$endargs{ WhiteListModel }	= $wl;
+	}
+	
 	if (my $data = $cgi->cookie( -name => 'identity' )) {
 		my ($id, $hash)	= split('>', $data, 2);
 		if ($hash eq $self->_id_hash( $id )) {
@@ -36,12 +43,11 @@ sub new {
 		}
 	}
 	
-	
 	my $endpoint	= RDF::Endpoint->new(
-						$model,
 						$dsn,
 						$user,
 						$pass,
+						$model,
 						IncludePath => $incpath,
 						SubmitURL	=> "http://${hostname}" . $cgi->url( -absolute => 1 ),
 						AdminURL	=> "http://${hostname}" . join('?', $cgi->url( -absolute => 1 ), 'admin=1'),
@@ -72,7 +78,6 @@ sub run {
 		consumer_secret => $secret,
 	);
 	
-
 	no warnings 'uninitialized';
 	my $host	= $cgi->server_name;
 	my $port	= $cgi->server_port;
@@ -97,11 +102,15 @@ sub run {
 		}
 	} elsif (my $id = $cgi->param('identity')) {
 		my $claimed_identity = $csr->claimed_identity($id);
-		my $check_url = $claimed_identity->check_url(
-			return_to  => "${url}?openid.check=1",
-#			trust_root => "http://example.com/",
-		);
-		$self->redir( $cgi, 303, 'See Other', $check_url );
+		if ($claimed_identity) {
+			my $check_url = $claimed_identity->check_url(
+				return_to  => "${url}?openid.check=1",
+#				trust_root => "http://example.com/",
+			);
+			$self->redir( $cgi, 303, 'See Other', $check_url );
+		} else {
+			$endpoint->login_page( $cgi );
+		}
 	} elsif ($cgi->param('login')) {
 		$endpoint->login_page( $cgi );
 	} elsif (my $sparql = $cgi->param('query')) {
