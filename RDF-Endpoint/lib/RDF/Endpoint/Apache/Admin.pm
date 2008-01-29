@@ -18,7 +18,8 @@ sub run {
 	my $r		= $self->{_r};
 	my $id		= $endpoint->get_identity;
 	my $owner	= $r->dir_config( 'EndpointOwnerIdentity' );
-	if ($owner eq $id) {
+	
+	if ($owner and ($owner eq $id)) {
 		no warnings 'uninitialized';
 		my $host	= $cgi->server_name;
 		my $port	= $cgi->server_port;
@@ -28,7 +29,7 @@ sub run {
 			$endpoint->admin_index( $cgi, $prefix );
 		}
 	} else {
-		$self->error( $cgi, 401, 'Unauthorized' );
+		$self->error( $cgi, 401, 'Unauthorized', 'You need to be the owner of this endpoint and logged in with OpenID to access the admin page.' );
 	}
 }
 

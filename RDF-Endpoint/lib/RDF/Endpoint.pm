@@ -54,7 +54,9 @@ sub new {
 		$self->set_identity( $id );
 	}
 	
-	if (not $self->authorized_user) {
+	if ($self->authorized_user) {
+		$self->{_model}	= RDF::Trine::Model->new( $store );
+	} else {
 		$m->add_rule( sub {
 			my $st	= shift;
 			my $p	= $st->predicate;
@@ -80,12 +82,15 @@ sub new {
 sub authorized_user {
 	my $self	= shift;
 	my $id		= $self->get_identity;
+	return 0 unless ($id);
 	
 	our %authorized;
 	if (exists $authorized{ $id }) {
 		return $authorized{ $id };
 	} else {
 		my $wl		= $self->{ whitelist };
+		warn 'whitelist: ' . $wl;
+		warn 'id: ' . $id;
 		my $query	= RDF::Query->new( <<"END" );
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 ASK
