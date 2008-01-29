@@ -15,14 +15,20 @@ sub run {
 	my $path	= $url;
 	$path		=~ s/$prefix//;
 	
-	
-	no warnings 'uninitialized';
-	my $host	= $cgi->server_name;
-	my $port	= $cgi->server_port;
-	if ($cgi->param('submit')) {
-		$endpoint->handle_admin_post( $cgi, $host, $port, $prefix );
+	my $r		= $self->{_r};
+	my $id		= $endpoint->get_identity;
+	my $owner	= $r->dir_config( 'EndpointOwnerIdentity' );
+	if ($owner eq $id) {
+		no warnings 'uninitialized';
+		my $host	= $cgi->server_name;
+		my $port	= $cgi->server_port;
+		if ($cgi->param('submit')) {
+			$endpoint->handle_admin_post( $cgi, $host, $port, $prefix );
+		} else {
+			$endpoint->admin_index( $cgi, $prefix );
+		}
 	} else {
-		$endpoint->admin_index( $cgi, $prefix );
+		$self->error( $cgi, 401, 'Unauthorized' );
 	}
 }
 

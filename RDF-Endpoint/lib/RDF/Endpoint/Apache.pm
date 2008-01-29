@@ -37,6 +37,8 @@ sub handler ($$) {
 		CGI				=> $cgi,
 		WhiteListModel	=> $wl,
 	);
+	
+	$endpoint->{_r}	= $r;
 	$endpoint->run( $cgi );
 }
 
