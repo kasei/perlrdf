@@ -89,8 +89,6 @@ sub authorized_user {
 		return $authorized{ $id };
 	} else {
 		my $wl		= $self->{ whitelist };
-		warn 'whitelist: ' . $wl;
-		warn 'id: ' . $id;
 		my $query	= RDF::Query->new( <<"END" );
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 ASK
@@ -301,7 +299,7 @@ sub run_query {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $sparql	= shift;
-	$self->save_query( $cgi, $sparql );
+	# $self->save_query( $cgi, $sparql );
 	
 	my $model		= $self->_model;
 	my $http_accept	= $ENV{HTTP_ACCEPT} || 'text/html';
