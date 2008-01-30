@@ -108,7 +108,7 @@ sub as_sparql {
 	foreach my $t ($self->triples) {
 		push(@triples, $t->as_sparql( $context, $indent ));
 	}
-	my $string	= join(" .\n${indent}", @triples);
+	my $string	= join("\n${indent}", @triples);
 	return $string;
 }
 
