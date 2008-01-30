@@ -215,7 +215,8 @@ sub fixup {
 				? $bridge->as_native( $self->graph )
 				: $self->graph->fixup( $bridge, $base, $ns );
 	
-	return $class->new( $graph, map { $_->fixup( $bridge, $base, $ns ) } ($self->pattern) );
+	my $pattern	= $self->pattern->fixup( $bridge, $base, $ns );
+	return $class->new( $graph, $pattern );
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>

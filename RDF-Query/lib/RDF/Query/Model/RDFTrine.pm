@@ -315,8 +315,25 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
+	
+	my $model	= $self->{'model'};
+	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } @triple );
+	return $stream;
+}
+
+=item C<< _get_named_statements ( $subject, $predicate, $object, $context ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate, object and context. Any of the arguments may be undef to match
+any value.
+
+=cut
+
+sub _get_named_statements {
+	my $self	= shift;
+	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
-	if ($context and $context->isa('RDF::Trine::Node::Resource')) {
+	if ($context->isa('RDF::Trine::Node::Resource')) {
 		if ($self->equals( $context, $self->get_context)) {
 			Carp::cluck( Dumper(@triple, $context) );	# XXX
 		} else {
