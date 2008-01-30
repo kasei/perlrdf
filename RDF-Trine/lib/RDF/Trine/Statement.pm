@@ -171,7 +171,7 @@ sub as_sparql {
 	}
 	
 	my $string	= sprintf(
-		"%s %s %s",
+		"%s %s %s .",
 		$self->subject->as_sparql( $context ),
 		$pred,
 		$self->object->as_sparql( $context ),
