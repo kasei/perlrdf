@@ -97,9 +97,14 @@ sub new {
 		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
-	my $self	= bless( { model_name => $name, dbh => $dbh, %args }, $class );
+	
+	my $self	= bless( {
+		model_name				=> $name,
+		dbh						=> $dbh,
+		statements_table_prefix	=> 'Statements',
+		%args
+	}, $class );
 }
-
 
 =item C<< temporary_store >>
 
@@ -253,9 +258,8 @@ sub get_pattern {
 sub get_contexts {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
-	my $model	= $self->model_name;
-	my $id		= _mysql_hash( $model );
- 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM Statements${id} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
+	my $stable	= $self->statements_table;
+ 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM ${stable} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
  	my $sth		= $dbh->prepare( $sql );
  	$sth->execute();
  	my $sub		= sub {
@@ -284,8 +288,7 @@ sub add_statement {
 	my $stmt	= shift;
 	my $context	= shift;
 	my $dbh		= $self->dbh;
-	my $model	= $self->model_name;
-	my $id		= _mysql_hash( $model );
+	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
 		$self->_add_node( $n );
@@ -301,11 +304,11 @@ sub add_statement {
 	};
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
-	my $sql	= "SELECT 1 FROM Statements${id} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?";
+	my $sql	= "SELECT 1 FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?";
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( @values, $cid );
 	unless ($sth->fetch) {
-		my $sql		= sprintf( "INSERT INTO Statements${id} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values, $cid );
+		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values, $cid );
 		my $sth		= $dbh->prepare( $sql );
 		$sth->execute();
 	}
@@ -322,10 +325,9 @@ sub remove_statement {
 	my $stmt	= shift;
 	my $context	= shift;
 	my $dbh		= $self->dbh;
-	my $model	= $self->model_name;
-	my $id		= _mysql_hash( $model );
+	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
-	my $sth		= $dbh->prepare("DELETE FROM Statements${id} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
+	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
 	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes, $context);
 	$sth->execute( @values );
 }
@@ -343,8 +345,7 @@ sub remove_statements {
 	my $obj		= shift;
 	my $context	= shift;
 	my $dbh		= $self->dbh;
-	my $model	= $self->model_name;
-	my $id		= _mysql_hash( $model );
+	my $stable	= $self->statements_table;
 	
 	my (@where, @bind);
 	my @keys	= qw(Subject Predicate Object Context);
@@ -357,7 +358,7 @@ sub remove_statements {
 	}
 	
 	my $where	= join(" AND ", @where);
-	my $sth		= $dbh->prepare("DELETE FROM Statements${id} WHERE ${where}");
+	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE ${where}");
 	my @values	= map { $self->_mysql_node_hash( $_ ) } (@bind);
 	$sth->execute( @values );
 }
@@ -491,6 +492,7 @@ sub add_variable_values_joins {
 	my $self	= shift;
 	my $context	= shift;
 	my $varhash	= shift;
+	
 	my @vars	= keys %$varhash;
 	my %select_vars	= map { $_ => 1 } @vars;
 	my %variable_value_cols;
@@ -498,6 +500,7 @@ sub add_variable_values_joins {
 	my $vars	= $context->{vars};
 	my $from	= $context->{from_tables};
 	my $where	= $context->{where_clauses};
+	my $stable	= $self->statements_table;
 	
 	my @cols;
 	my $uniq_count	= 0;
@@ -534,7 +537,7 @@ sub add_variable_values_joins {
 		foreach my $i (0 .. $#{ $from }) {
 			my $f		= $from->[ $i ];
 			next if ($from->[ $i ] =~ m/^[()]$/);
-			my ($alias)	= ($f =~ m/Statements\d* (\w\d+)/);	#split(/ /, $f))[1];
+			my ($alias)	= ($f =~ m/${stable} (\w\d+)/);	#split(/ /, $f))[1];
 			
 			if ($alias eq $col_table) {
 #				my (@tables, @where);
@@ -568,12 +571,10 @@ sub _sql_for_pattern {
 	my %args		= @_;
 	my $type		= $pattern->type;
 	my $method		= "_sql_for_" . lc($type);
-	my $model		= $self->model_name;
-	my $hash		= _mysql_hash( $model );
 	my $context		= {
 						next_alias		=> 0,
 						level			=> 0,
-						statement_table	=> "Statements${hash}",
+						statement_table	=> $self->statements_table,
 					};
 	
 	if ($self->can($method)) {
@@ -672,12 +673,10 @@ sub _sql_for_expr {
 		my $op		= $expr->op;
 		my @args	= $expr->operands;
 		if ($op eq '==') {
-			my $model	= $self->model_name;
-			my $hash	= _mysql_hash( $model );
 			my %context	= (
 							next_alias		=> 0,
 							level			=> 0,
-							statement_table	=> "Statements${hash}",
+							statement_table	=> $self->statements_table,
 						);
 			my $lhs_ctx	= { %context };
 			my $rhs_ctx	= { %context };
@@ -759,7 +758,6 @@ sub _add_sql_node_clause {
 		throw RDF::Trine::Error::CompilationError( -text => "Unknown node type: " . Dumper($node) );
 	}
 }
-
 
 sub _sql_for_bgp {
 	my $self	= shift;
@@ -851,6 +849,43 @@ sub _mysql_node_hash {
 	return $hash;
 }
 
+=item C<< statements_table >>
+
+Returns the name of the Statements table.
+
+=cut
+
+sub statements_table {
+	my $self	= shift;
+	my $model	= $self->model_name;
+	my $id		= _mysql_hash( $model );
+	my $prefix	= $self->{statements_table_prefix};
+	return join('', $prefix, $id);
+}
+
+=item C<< statements_prefix >>
+
+Returns the prefix for the underlying Statements database table.
+
+=cut
+
+sub statements_prefix {
+	my $self	= shift;
+	return $self->{ statements_table_prefix };
+}
+
+=item C<< set_statements_prefix ( $prefix ) >>
+
+Sets the prefix for the underlying Statements database table.
+
+=cut
+
+sub set_statements_prefix {
+	my $self	= shift;
+	my $prefix	= shift;
+	$self->{ statements_table_prefix }	= $prefix;
+}
+
 =item C<< model_name >>
 
 Returns the name of the underlying model.
@@ -861,6 +896,31 @@ sub model_name {
 	my $self	= shift;
 	Carp::confess unless (blessed($self));
 	return $self->{model_name};
+}
+
+=item C<< make_private_predicate_view ( $prefix, @preds ) >>
+
+=cut
+
+sub make_private_predicate_view {
+	my $self	= shift;
+	my $prefix	= shift;
+	my @preds	= @_;
+	
+	my $oldtable	= $self->statements_table;
+	my $oldpre		= $self->statements_prefix;
+	my $model		= $self->model_name;
+	my $id			= _mysql_hash( $model );
+	
+	my $stable		= join('', $prefix, $oldpre, $id);
+	my $predlist	= join(', ', map { $self->_mysql_node_hash( $_ ) } (@preds));
+	my $sql			= "CREATE VIEW ${stable} AS SELECT * FROM ${oldtable} WHERE Predicate NOT IN (${predlist})";
+	warn $sql;
+	
+	my $dbh			= $self->dbh;
+	$dbh->do( $sql );
+	
+	return $stable;
 }
 
 =item C<< dbh >>

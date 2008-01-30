@@ -109,6 +109,8 @@ sub sse {
 	my $lang	= $self->[2];
 	my $dt		= $self->[3];
 	$literal	=~ s/"/\\"/g;
+	$literal	=~ s/\n/\\n/g;
+	$literal	=~ s/\t/\\t/g;
 	if ($lang) {
 		return qq("${literal}"\@${lang});
 	} elsif ($dt) {
