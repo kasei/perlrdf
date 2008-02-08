@@ -9,6 +9,7 @@ WriteMakefile(
     ABSTRACT_FROM       => 'lib/RDF/Trine.pm',
     PL_FILES            => {},
     PREREQ_PM => {
+    'Bloom::Filter'				=> 0,
 		'XML::Namespace'			=> 0,
 		'XML::CommonNS'				=> 0.04,
 		'Error'						=> 0,

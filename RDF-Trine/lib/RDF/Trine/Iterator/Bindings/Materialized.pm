@@ -39,8 +39,12 @@ package RDF::Trine::Iterator::Bindings::Materialized;
 
 use strict;
 use warnings;
-use Data::Dumper;
 use base qw(RDF::Trine::Iterator::Bindings);
+
+use Data::Dumper;
+use Scalar::Util qw(blessed);
+
+use Bloom::Filter;
 
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
@@ -107,4 +111,44 @@ sub next {
 	return $data;
 }
 
+=item C<< bloom ( $variable, $error ) >>
+
+=cut
+
+sub bloom {
+	my $self	= shift;
+	my $var		= shift;
+	my $error	= shift || 0.01;
+	my $length	= scalar(@{ $self->{ _data } });
+	
+	my $name	= blessed($var) ? $var->name : $var;
+	
+	my $filter	= Bloom::Filter->new( capacity => $length, error_rate => $error );
+	while (my $result = $self->next) {
+		my $node	= $result->{ $name };
+		$filter->add( $node->as_string );
+	}
+	$self->reset;
+	warn Dumper($filter);
+}
+
+
 1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
+
+
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (c) 2007, Gregory Todd Williams C<< <gwilliams@cpan.org> >>. All rights reserved.
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+
