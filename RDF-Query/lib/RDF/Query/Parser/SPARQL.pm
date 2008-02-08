@@ -179,9 +179,9 @@ sub _eat {
 		throw RDF::Query::Error::ParseError -text => "No tokens";
 	}
 	
-	if (substr($self->{tokens}, 0, 1) eq '^') {
-		Carp::cluck( "eating $thing with input $self->{tokens}" );
-	}
+# 	if (substr($self->{tokens}, 0, 1) eq '^') {
+# 		Carp::cluck( "eating $thing with input $self->{tokens}" );
+# 	}
 	
 	if (blessed($thing) and $thing->isa('Regexp')) {
 		if ($self->{tokens} =~ /^$thing/) {
@@ -574,6 +574,7 @@ sub _OffsetClause {
 # [20]   GroupGraphPattern   ::=   '{' TriplesBlock? ( ( GraphPatternNotTriples | Filter ) '.'? TriplesBlock? )* '}'
 sub _GroupGraphPattern {
 	my $self	= shift;
+	
 	$self->_push_pattern_container;
 	
 	$self->_eat('{');
@@ -583,7 +584,7 @@ sub _GroupGraphPattern {
 		$self->_TriplesBlock;
 		$self->__consume_ws_opt;
 	}
-	
+
 	while (not $self->_test('}')) {
 		if ($self->_GraphPatternNotTriples_test) {
 			$self->_GraphPatternNotTriples;
@@ -591,7 +592,6 @@ sub _GroupGraphPattern {
 			my ($class, @args)	= @$data;
 			if ($class eq 'RDF::Query::Algebra::Optional') {
 				my $ggp	= $self->_remove_pattern();
-				Carp::confess 'ggp: ' . Dumper($ggp, @args);
 				my $opt	= $class->new( $ggp, @args );
 				$self->_add_patterns( $opt );
 			} elsif ($class eq 'RDF::Query::Algebra::Union') {
@@ -626,6 +626,7 @@ sub _GroupGraphPattern {
 	$self->_eat('}');
 
 	my $cont		= $self->_pop_pattern_container;
+	
 	my @filters		= splice(@{ $self->{filters} });
 	my @patterns;
 	if (@$cont) {
@@ -702,7 +703,7 @@ sub _OptionalGraphPattern {
 	$self->_eat( qr/OPTIONAL/i );
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
-	my ($ggp)	= splice(@{ $self->{stack} });
+	my $ggp	= $self->_remove_pattern;
 	my $opt		= ['RDF::Query::Algebra::Optional', $ggp];
 	$self->_add_stack( $opt );
 }
@@ -725,19 +726,24 @@ sub _GraphGraphPattern {
 }
 
 # [25]   GroupOrUnionGraphPattern   ::=   GroupGraphPattern ( 'UNION' GroupGraphPattern )*
+sub _GroupOrUnionGraphPattern_test {
+	my $self	= shift;
+	return $self->_test('{');
+}
+
 sub _GroupOrUnionGraphPattern {
 	my $self	= shift;
 	$self->_GroupGraphPattern;
-	my ($ggp)	= splice(@{ $self->{stack} });
+	my $ggp	= $self->_remove_pattern;
 	$self->__consume_ws_opt;
 	
 	if ($self->_test( qr/UNION/i )) {
 		$self->_eat( qr/UNION/i );
 		$self->__consume_ws_opt;
 		$self->_GroupGraphPattern;
-		my ($rhs)	= splice(@{ $self->{stack} });
+		my $rhs	= $self->_remove_pattern;
 		my $union	= RDF::Query::Algebra::Union->new( $ggp, $rhs );
-		$self->_add_triples( $union );
+		$self->_add_patterns( $union );
 		$self->_add_stack( [ 'RDF::Query::Algebra::Union' ] );
 	} else {
 		$self->_add_patterns( $ggp );
@@ -1301,17 +1307,19 @@ sub _IRIrefOrFunction {
 sub _RDFLiteral {
 	my $self	= shift;
 	$self->_String;
-	my @args;
+	my @args	= splice(@{ $self->{stack} });
 	if ($self->_test('@')) {
 		my $lang	= $self->_eat( $r_LANGTAG );
 		substr($lang,0,1)	= '';	# remove '@'
-		$self->_add_stack( $lang );
+		push(@args, $lang);
 	} elsif ($self->_test('^^')) {
 		$self->_eat('^^');
-		$self->_add_stack( undef );
+		push(@args, undef);
 		$self->_IRIref;
+		my ($iri)	= splice(@{ $self->{stack} });
+		push(@args, $iri->uri_value);
 	}
-	$self->_add_stack( RDF::Trine::Node::Literal->new( splice(@{ $self->{stack} }) ) );
+	$self->_add_stack( RDF::Trine::Node::Literal->new( @args ) );
 }
 
 # [61]   NumericLiteral   ::=   NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
