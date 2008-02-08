@@ -218,12 +218,12 @@ sub node_as_string {
 
 sub get_first_literal {
 	my $node	= get_first_obj( @_ );
-	return $node ? Encode::decode('utf8', $bridge->literal_value($node)) : undef;
+	return $node ? $bridge->literal_value($node) : undef;
 }
 
 sub get_all_literal {
 	my @nodes	= get_all_obj( @_ );
-	return map { Encode::decode('utf8', $bridge->literal_value($_)) } grep { $bridge->isa_literal($_) } @nodes;
+	return map { $bridge->literal_value($_) } grep { $bridge->isa_literal($_) } @nodes;
 }
 
 sub get_first_uri {
@@ -244,8 +244,8 @@ sub get_first_obj {
 	my @preds	= map { ref($_) ? $_ : $bridge->new_resource( $_ ) } @uris;
 	foreach my $pred (@preds) {
 		my $stream	= $bridge->get_statements( $node, $pred, undef );
-		my $targets	= smap { $bridge->object( $_ ) } $stream;
-		while (my $node = $targets->()) {
+		while (my $st = $stream->next) {
+			my $node	= $st->object;
 			return $node if ($node);
 		}
 	}
@@ -267,8 +267,7 @@ sub get_all_obj {
 	while (@streams) {
 		$stream	= $stream->concat( shift(@streams) );
 	}
-	my $targets	= smap { $bridge->object( $_ ) } $stream;
-	return $targets->get_all();
+	return map { $_->object } $stream->get_all();
 }
 
 sub relativeize_url {

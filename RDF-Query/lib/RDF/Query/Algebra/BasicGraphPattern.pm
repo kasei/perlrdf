@@ -144,6 +144,25 @@ sub definite_variables {
 	return uniq(map { $_->definite_variables } $self->triples);
 }
 
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
+
+sub _check_duplicate_blanks {
+	my $self	= shift;
+	my %seen;
+	foreach my $t ($self->triples) {
+		my @blanks	= $t->referenced_blanks;
+		foreach my $b (@blanks) {
+			$seen{ $b }++;
+		}
+	}
+	return [keys %seen];
+}
+
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
