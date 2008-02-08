@@ -945,12 +945,12 @@ sub __bNode {
 
 sub __Literal {
 	my $self	= shift;
-	return RDF::Trine::Node::Blank->new( @_ )
+	return RDF::Trine::Node::Literal->new( @_ )
 }
 
 sub __DatatypedLiteral {
 	my $self	= shift;
-	return RDF::Trine::Node::Blank->new( $_[0], undef, $_[1] )
+	return RDF::Trine::Node::Literal->new( $_[0], undef, $_[1] )
 }
 
 

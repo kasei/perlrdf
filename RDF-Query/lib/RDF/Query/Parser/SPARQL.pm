@@ -42,6 +42,7 @@ use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
+use List::MoreUtils qw(uniq);
 
 # our $r_nil					= qr'[(][\n\r\t ]*[)]';
 # our $r_iri					= qr'<([^<>"{}|^`\x92]*)>';
@@ -63,7 +64,7 @@ use Scalar::Util qw(blessed looks_like_number);
 # our $r_resource_test		= qr/(?![_[("0-9+-]|$r_booltest)/;
 # our $r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 
-our $r_ECHAR				= qr/\\[tbnrf\\"']/;
+our $r_ECHAR				= qr/\\([tbnrf\\"'])/;
 our $r_STRING_LITERAL1		= qr/'(([^\x{27}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*'/;
 our $r_STRING_LITERAL2		= qr/"(([^\x{22}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*"/;
 our $r_STRING_LITERAL_LONG1	= qr/'''(('|'')?([^'\\]|${r_ECHAR}))*'''/;
@@ -82,12 +83,13 @@ our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/;
 our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/;
 our $r_EXPONENT				= qr/[eE][-+]?\d+/;
 our $r_DOUBLE				= qr/\d+[.]\d*${r_EXPONENT}|[.]\d+${r_EXPONENT}|\d+${r_EXPONENT}/;
-our $r_DECIMAL				= qr/(\d+)?[.]\d+/;
+our $r_DECIMAL				= qr/(\d+[.]\d*)|([.]\d+)/;
 our $r_INTEGER				= qr/\d+/;
 our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL}/;
 our $r_ANON					= qr/\[[\t\r\n ]*\]/;
+our $r_NIL					= qr/\([\n\r\t ]*\)/;
 
-my $debug		= 1;
+my $debug		= 0;
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
@@ -118,6 +120,12 @@ sub parse {
 	my $self	= shift;
 	my $input	= shift;
 	my $uri		= shift;
+	
+	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
+	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
+	
+	delete $self->{error};
+	local($self->{namespaces})				= {};
 	local($self->{blank_ids})				= 1;
 	local($self->{baseURI})					= $uri;
 	local($self->{tokens})					= $input;
@@ -125,11 +133,23 @@ sub parse {
 	local($self->{filters})					= [];
 	local($self->{pattern_container_stack})	= [];
 	my $triples								= $self->_push_pattern_container();
-	$self->{build}							= { sources => [] };
-	$self->_Query();
+	$self->{build}							= { sources => [], triples => $triples };
+	
+	try {
+		$self->_Query();
+	} catch RDF::Query::Error with {
+		my $e	= shift;
+		$self->{build}	= undef;
+		$self->{error}	= $e->text;
+	};
 	my $data								= delete $self->{build};
-	$data->{triples}						= $self->_pop_pattern_container();
+#	$data->{triples}						= $self->_pop_pattern_container();
 	return $data;
+}
+
+sub error {
+	my $self	= shift;
+	return $self->{error};
 }
 
 sub _add_patterns {
@@ -143,6 +163,13 @@ sub _remove_pattern {
 	my $self	= shift;
 	my $container	= $self->{ pattern_container_stack }[0];
 	my $pattern		= pop( @{ $container } );
+	return $pattern;
+}
+
+sub _peek_pattern {
+	my $self	= shift;
+	my $container	= $self->{ pattern_container_stack }[0];
+	my $pattern		= $container->[-1];
 	return $pattern;
 }
 
@@ -175,8 +202,7 @@ sub _eat {
 	my $self	= shift;
 	my $thing	= shift;
 	if (not(length($self->{tokens}))) {
-		Carp::cluck("no tokens left ($thing)") if ($debug);
-		throw RDF::Query::Error::ParseError -text => "No tokens";
+		$self->_syntax_error("no tokens left");
 	}
 	
 # 	if (substr($self->{tokens}, 0, 1) eq '^') {
@@ -189,8 +215,8 @@ sub _eat {
 			substr($self->{tokens}, 0, length($match))	= '';
 			return $match;
 		}
-		Carp::cluck("Expected ($thing), got «$self->{tokens}»") if ($debug);
-		throw RDF::Query::Error::ParseError -text => "Expected: $thing";
+		
+		$self->_syntax_error( $thing );
 	} elsif (looks_like_number( $thing )) {
 		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
 		return $token
@@ -200,12 +226,28 @@ sub _eat {
 			substr($self->{tokens}, 0, length($thing))	= '';
 			return $thing;
 		} else {
-			Carp::cluck("expected: $thing, got: «$self->{tokens}»") if ($debug);
-			throw RDF::Query::Error::ParseError -text => "Expected: $thing";
+			$self->_syntax_error( $thing );
 		}
 	}
 	print $thing;
-	throw Error;
+	throw RDF::Query::Error;
+}
+
+sub _syntax_error {
+	my $self	= shift;
+	my $thing	= shift;
+	my $expect	= $thing;
+
+	my $level	= 2;
+	while (my $sub = (caller($level++))[3]) {
+		if ($sub =~ m/::_([A-Z]\w*)$/) {
+			$expect	= $1;
+			last;
+		}
+	}
+	
+	Carp::cluck( "eating $thing with input <<$self->{tokens}>>" ) if ($debug);
+	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
 sub _test {
@@ -243,7 +285,7 @@ sub _ws {
 	my $self	= shift;
 	### #x9 | #xA | #xD | #x20 | comment
 	if ($self->_test('#')) {
-		$self->_comment();
+		$self->_eat(qr/#[^\x0d\x0a]*.?/);
 	} else {
 		$self->_eat(qr/[\n\r\t ]/);
 	}
@@ -264,6 +306,15 @@ sub __consume_ws {
 	}
 }
 
+sub __base {
+	my $self	= shift;
+	my $build	= $self->{build};
+	if (defined($build->{base})) {
+		return $build->{base};
+	} else {
+		return;
+	}
+}
 
 ################################################################################
 
@@ -283,8 +334,12 @@ sub _Query {
 	} elsif ($self->_test(qr/ASK/i)) {
 		$self->_AskQuery();
 	} else {
-		Carp::cluck("expected: query method, got: «$self->{tokens}»") if ($debug);
-		throw RDF::Query::Error::ParseError -text => 'Expecting query method';
+		throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
+	}
+	
+	my $remaining	= $self->{tokens};
+	if ($remaining =~ m/\S/) {
+		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
 	}
 	
 # 	my %query	= (%p, %body);
@@ -299,9 +354,15 @@ sub _Prologue {
 	my $self	= shift;
 	
 	my $base;
+	my @base;
 	if ($self->_test( qr/BASE/i )) {
 		$self->_eat( qr/BASE/i );
-		$base	= $self->_IRI_REF;
+		$self->__consume_ws_opt;
+		my $iriref	= $self->_eat( $r_IRI_REF );
+		my $iri		= substr($iriref,1,length($iriref)-2);
+		$base		= RDF::Query::Node::Resource->new( $iri );
+		@base		= $base;
+		$self->__consume_ws_opt;
 		$self->{base}	= $base;
 	}
 	
@@ -311,9 +372,16 @@ sub _Prologue {
 		$self->__consume_ws_opt;
 		my $prefix	= $self->_eat( $r_PNAME_NS );
 		my $ns		= substr($prefix, 0, length($prefix) - 1);
+		if ($ns eq '') {
+			$ns	= '__DEFAULT__';
+		}
 		$self->__consume_ws_opt;
 		my $iriref	= $self->_eat( $r_IRI_REF );
 		my $iri		= substr($iriref,1,length($iriref)-2);
+		if (@base) {
+			my $r	= RDF::Query::Node::Resource->new( $iri, @base );
+			$iri	= $r->uri_value;
+		}
 		$self->__consume_ws_opt;
 		$namespaces{ $ns }	= $iri;
 		$self->{namespaces}{$ns}	= $iri;
@@ -331,7 +399,7 @@ sub _Prologue {
 sub _SelectQuery {
 	my $self	= shift;
 	$self->_eat(qr/SELECT/i);
-	$self->_ws;
+	$self->__consume_ws;
 	
 	if ($self->{tokens} =~ m/^(DISTINCT|REDUCED)/i) {
 		my $mod	= $self->_eat( qr/DISTINCT|REDUCED/i );
@@ -339,9 +407,10 @@ sub _SelectQuery {
 		$self->{build}{options}{lc($mod)}	= 1;
 	}
 	
+	my $star	= 0;
 	if ($self->_test('*')) {
 		$self->_eat('*');
-		$self->{build}{variables}	= ['*'];
+		$star	= 1;
 		$self->__consume_ws_opt;
 	} else {
 		$self->_Var;
@@ -353,14 +422,15 @@ sub _SelectQuery {
 		$self->{build}{variables}	= [ splice(@{ $self->{stack} }) ];
 	}
 	
-# 	my @dataset	= 
 	$self->_DatasetClause();
 	
-# 	my $where;
 	$self->__consume_ws_opt;
-	if ($self->_WhereClause_test) {
-# 		$where	= 
-		$self->_WhereClause;
+	$self->_WhereClause;
+
+	if ($star) {
+		my $triples	= $self->{build}{triples} || [];
+		my @vars	= uniq( map { $_->referenced_variables } @$triples );
+		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
 	}
 	
 	$self->__consume_ws_opt;
@@ -380,7 +450,18 @@ sub _SelectQuery {
 }
 
 # [6] ConstructQuery ::= 'CONSTRUCT' ConstructTemplate DatasetClause* WhereClause SolutionModifier
-sub _ConstructQuery {die}
+sub _ConstructQuery {
+	my $self	= shift;
+	$self->_eat(qr/CONSTRUCT/i);
+	$self->__consume_ws_opt;
+	$self->_ConstructTemplate;
+	$self->__consume_ws_opt;
+	$self->_DatasetClause();
+	$self->__consume_ws_opt;
+	$self->_WhereClause;
+	$self->_SolutionModifier();
+	$self->{build}{method}		= 'CONSTRUCT';
+}
 
 # [7] DescribeQuery ::= 'DESCRIBE' ( VarOrIRIref+ | '*' ) DatasetClause* WhereClause? SolutionModifier
 sub _DescribeQuery {
@@ -411,41 +492,64 @@ sub _DescribeQuery {
 	
 	$self->_SolutionModifier();
 	$self->{build}{method}		= 'DESCRIBE';
-	
-# 	my %query	= (
-# 		variables	=> $vars,
-# 		method		=> 'DESCRIBE',
-# 		sources		=> \@dataset,
-# 		triples		=> $where,
-# 		%mod,
-# 	);
-# 	
-# 	return %query;
 }
 
 # [8] AskQuery ::= 'ASK' DatasetClause* WhereClause
-sub _AskQuery {die}
+sub _AskQuery {
+	my $self	= shift;
+	$self->_eat(qr/ASK/i);
+	$self->_ws;
+	
+	$self->_DatasetClause();
+	
+	$self->__consume_ws_opt;
+	$self->_WhereClause;
+	
+	$self->{build}{variables}	= [];
+	$self->{build}{method}		= 'ASK';
+}
 
 # [9] DatasetClause ::= 'FROM' ( DefaultGraphClause | NamedGraphClause )
 sub _DatasetClause {
 	my $self	= shift;
 	
 # 	my @dataset;
+ 	$self->{build}{sources}	= [];
 	while ($self->_test( qr/FROM/i )) {
-		$self->_select_dataset;
-		push(@{ $self->{build}{sources} }, splice(@{ $self->{stack} }));
+		$self->_eat( qr/FROM/i );
+		$self->__consume_ws;
+		if ($self->_test( qr/NAMED/i )) {
+			$self->_NamedGraphClause;
+		} else {
+			$self->_DefaultGraphClause;
+		}
+		$self->__consume_ws_opt;
 	}
-# 	$self->{build}{sources}	= \@dataset;
 }
 
 # [10] DefaultGraphClause ::= SourceSelector
-sub _DefaultGraphClause {die}
+sub _DefaultGraphClause {
+	my $self	= shift;
+	$self->_SourceSelector;
+	my ($source)	= splice(@{ $self->{stack} });
+	push( @{ $self->{build}{sources} }, [$source] );
+}
 
 # [11] NamedGraphClause ::= 'NAMED' SourceSelector
-sub _NamedGraphClause {die}
+sub _NamedGraphClause {
+	my $self	= shift;
+	$self->_eat( qr/NAMED/i );
+	$self->__consume_ws_opt;
+	$self->_SourceSelector;
+	my ($source)	= splice(@{ $self->{stack} });
+	push( @{ $self->{build}{sources} }, [$source, 'NAMED'] );
+}
 
 # [12] SourceSelector ::= IRIref
-sub _SourceSelector {die}
+sub _SourceSelector {
+	my $self	= shift;
+	$self->_IRIref;
+}
 
 # [13] WhereClause ::= 'WHERE'? GroupGraphPattern
 sub _WhereClause_test {
@@ -457,8 +561,11 @@ sub _WhereClause {
 	if ($self->_test( qr/WHERE/i )) {
 		$self->_eat( qr/WHERE/i );
 	}
-	$self->__consume_ws;
+	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
+	
+	my $ggp	= $self->_peek_pattern;
+	$ggp->check_duplicate_blanks;
 }
 
 # [14] SolutionModifier ::= OrderClause? LimitOffsetClauses?
@@ -485,11 +592,13 @@ sub _LimitOffsetClauses {
 	my $self	= shift;
 	if ($self->_LimitClause_test) {
 		$self->_LimitClause;
+		$self->__consume_ws;
 		if ($self->_OffsetClause_test) {
 			$self->_OffsetClause;
 		}
 	} else {
 		$self->_OffsetClause;
+		$self->__consume_ws;
 		if ($self->_LimitClause_test) {
 			$self->_LimitClause;
 		}
@@ -512,8 +621,9 @@ sub _OrderClause {
 	$self->_OrderCondition;
 	$self->__consume_ws_opt;
 	push(@order, splice(@{ $self->{stack} }));
-	if ($self->_OrderCondition_test) {
+	while ($self->_OrderCondition_test) {
 		$self->_OrderCondition;
+		$self->__consume_ws_opt;
 		push(@order, splice(@{ $self->{stack} }));
 	}
 	$self->{build}{options}{orderby}	= \@order;
@@ -574,24 +684,34 @@ sub _OffsetClause {
 # [20] GroupGraphPattern ::= '{' TriplesBlock? ( ( GraphPatternNotTriples | Filter ) '.'? TriplesBlock? )* '}'
 sub _GroupGraphPattern {
 	my $self	= shift;
-	
 	$self->_push_pattern_container;
 	
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	
+	my $got_pattern	= 0;
+	my $need_dot	= 0;
 	if ($self->_TriplesBlock_test) {
+		$need_dot	= 1;
+		$got_pattern++;
 		$self->_TriplesBlock;
 		$self->__consume_ws_opt;
 	}
 	
+	my $pos	= length($self->{tokens});
 	while (not $self->_test('}')) {
 		if ($self->_GraphPatternNotTriples_test) {
+			$need_dot	= 0;
+			$got_pattern++;
 			$self->_GraphPatternNotTriples;
+			$self->__consume_ws_opt;
 			my ($data)	= splice(@{ $self->{stack} });
 			my ($class, @args)	= @$data;
 			if ($class eq 'RDF::Query::Algebra::Optional') {
 				my $ggp	= $self->_remove_pattern();
+				unless ($ggp) {
+					$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+				}
 				my $opt	= $class->new( $ggp, @args );
 				$self->_add_patterns( $opt );
 			} elsif ($class eq 'RDF::Query::Algebra::Union') {
@@ -605,22 +725,47 @@ sub _GroupGraphPattern {
 			}
 			$self->__consume_ws_opt;
 		} elsif ($self->_test( qr/FILTER/i )) {
+			$got_pattern++;
+			$need_dot	= 0;
 			$self->_Filter;
 			$self->__consume_ws_opt;
 		}
 		
-		if ($self->_test('.')) {
+		if ($need_dot or $self->_test('.')) {
 			$self->_eat('.');
+			if ($got_pattern) {
+				$need_dot		= 0;
+				$got_pattern	= 0;
+			} else {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Extra dot found without preceding pattern";
+			}
 			$self->__consume_ws_opt;
 		}
 		
 		if ($self->_TriplesBlock_test) {
-			$self->_TriplesBlock;
+			my $peek	= $self->_peek_pattern;
+			if (blessed($peek) and $peek->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+				$self->_TriplesBlock;
+				my $rhs		= $self->_remove_pattern;
+				my $lhs		= $self->_remove_pattern;
+				my $merged	= RDF::Query::Algebra::BasicGraphPattern->new( map { $_->triples } ($lhs, $rhs) );
+				$self->_add_patterns( $merged );
+			} else {
+				$self->_TriplesBlock;
+			}
 			$self->__consume_ws_opt;
 		}
 		
 		$self->__consume_ws_opt;
 		last unless ($self->_test( qr/\S/ ));
+		
+		my $new	= length($self->{tokens});
+		if ($pos == $new) {
+			# we haven't progressed, and so would infinite loop if we don't break out and throw an error.
+			$self->_syntax_error('');
+		} else {
+			$pos	= $new;
+		}
 	}
 	
 	$self->_eat('}');
@@ -629,15 +774,11 @@ sub _GroupGraphPattern {
 	
 	my @filters		= splice(@{ $self->{filters} });
 	my @patterns;
-	if (@$cont) {
-		my $pattern	= (@$cont == 1)
-					? $cont->[0]
-					: RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-		while (my $f = shift @filters) {
-			$pattern	= RDF::Query::Algebra::Filter->new( $f->expr, $pattern );
-		}
-		$self->_add_patterns( $pattern );
+	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+	while (my $f = shift @filters) {
+		$pattern	= RDF::Query::Algebra::Filter->new( $f->expr, $pattern );
 	}
+	$self->_add_patterns( $pattern );
 }
 
 # [21] TriplesBlock ::= TriplesSameSubject ( '.' TriplesBlock? )?
@@ -646,7 +787,7 @@ sub _TriplesBlock_test {
 	# VarOrTerm | TriplesNode -> (Var | GraphTerm) | (Collection | BlankNodePropertyList) -> Var | IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL | Collection | BlankNodePropertyList
 	# but since a triple can't start with a literal, this is reduced to:
 	# Var | IRIref | BlankNode | NIL
-	return $self->_test(qr/[\$?]|<|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[|[[(]/);
+	return $self->_test(qr/[\$?]|<|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[|[[(]|${r_PNAME_NS}/);
 }
 
 sub _TriplesBlock {
@@ -665,10 +806,16 @@ sub __TriplesBlock {
 	my $self	= shift;
 	$self->_TriplesSameSubject;
 	$self->__consume_ws_opt;
+	my $got_dot	= 0;
 	while ($self->_test('.')) {
+		if ($got_dot) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: found extra DOT after TriplesBlock";
+		}
 		$self->_eat('.');
+		$got_dot++;
 		$self->__consume_ws_opt;
 		if ($self->_TriplesBlock_test) {
+			$got_dot	= 0;
 			$self->__TriplesBlock;
 			$self->__consume_ws_opt;
 		}
@@ -718,7 +865,7 @@ sub _GraphGraphPattern {
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
-	my ($ggp)	= splice(@{ $self->{stack} });
+	my $ggp	= $self->_remove_pattern;
 	
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
 	$self->_add_patterns( $pattern );
@@ -738,12 +885,15 @@ sub _GroupOrUnionGraphPattern {
 	$self->__consume_ws_opt;
 	
 	if ($self->_test( qr/UNION/i )) {
-		$self->_eat( qr/UNION/i );
-		$self->__consume_ws_opt;
-		$self->_GroupGraphPattern;
-		my $rhs	= $self->_remove_pattern;
-		my $union	= RDF::Query::Algebra::Union->new( $ggp, $rhs );
-		$self->_add_patterns( $union );
+		while ($self->_test( qr/UNION/i )) {
+			$self->_eat( qr/UNION/i );
+			$self->__consume_ws_opt;
+			$self->_GroupGraphPattern;
+			$self->__consume_ws_opt;
+			my $rhs	= $self->_remove_pattern;
+			$ggp	= RDF::Query::Algebra::Union->new( $ggp, $rhs );
+		}
+		$self->_add_patterns( $ggp );
 		$self->_add_stack( [ 'RDF::Query::Algebra::Union' ] );
 	} else {
 		$self->_add_patterns( $ggp );
@@ -783,7 +933,8 @@ sub _Constraint {
 
 # [28] FunctionCall ::= IRIref ArgList
 sub _FunctionCall_test {
-	return 0;	# XXX
+	my $self	= shift;
+	return $self->_IRIref_test;
 }
 
 sub _FunctionCall {
@@ -791,13 +942,11 @@ sub _FunctionCall {
 	$self->_IRIref;
 	my ($iri)	= splice(@{ $self->{stack} });
 	
-	die 'Function: ' . Dumper($iri);
-	
 	$self->__consume_ws_opt;
 	
 	$self->_ArgList;
 	my @args	= splice(@{ $self->{stack} });
-	my $func	= $self->new_function( $iri, @args );
+	my $func	= $self->new_function_expression( $iri, @args );
 	$self->_add_stack( $func );
 }
 
@@ -827,7 +976,40 @@ sub _ArgList {
 }
 
 # [30] ConstructTemplate ::= '{' ConstructTriples? '}'
+sub _ConstructTemplate {
+	my $self	= shift;
+	$self->_push_pattern_container;
+	$self->_eat( '{' );
+	$self->__consume_ws_opt;
+	
+	if ($self->_ConstructTriples_test) {
+		$self->_ConstructTriples;
+	}
+
+	$self->__consume_ws_opt;
+	$self->_eat( '}' );
+	my $cont	= $self->_pop_pattern_container;
+	$self->{build}{construct_triples}	= $cont;
+}
+
 # [31] ConstructTriples ::= TriplesSameSubject ( '.' ConstructTriples? )?
+sub _ConstructTriples_test {
+	my $self	= shift;
+	return $self->_TriplesBlock_test;
+}
+
+sub _ConstructTriples {
+	my $self	= shift;
+	$self->_TriplesSameSubject;
+	$self->__consume_ws_opt;
+	while ($self->_test(qr/[.]/)) {
+		$self->_eat( qr/[.]/ );
+		$self->__consume_ws_opt;
+		if ($self->_ConstructTriples_test) {
+			$self->_TriplesSameSubject;
+		}
+	}
+}
 
 # [32] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList
 sub _TriplesSameSubject {
@@ -921,12 +1103,12 @@ sub _Object {
 # [37] Verb ::= VarOrIRIref | 'a'
 sub _Verb_test {
 	my $self	= shift;
-	return $self->_test( qr/a\b|[?\$]|<|${r_PNAME_LN}|${r_PNAME_NS}/ );
+	return $self->_test( qr/a[\n\t\r <]|[?\$]|<|${r_PNAME_LN}|${r_PNAME_NS}/ );
 }
 
 sub _Verb {
 	my $self	= shift;
-	if ($self->_test(qr/a\b/)) {
+	if ($self->_test(qr/a[\n\t\r <]/)) {
 		$self->_eat('a');
 		$self->__consume_ws;
 		$self->_add_stack( $rdf->type );
@@ -938,7 +1120,7 @@ sub _Verb {
 # [38] TriplesNode ::= Collection | BlankNodePropertyList
 sub _TriplesNode_test {
 	my $self	= shift;
-	return $self->_test(qr/[[(](?!\])/);
+	return $self->_test(qr/[[(](?![\n\r\t ]*\])(?![\n\r\t ]*\))/);
 }
 
 sub _TriplesNode {
@@ -1010,7 +1192,7 @@ sub _GraphNode_test {
 	# VarOrTerm | TriplesNode -> (Var | GraphTerm) | (Collection | BlankNodePropertyList) -> Var | IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL | Collection | BlankNodePropertyList
 	# but since a triple can't start with a literal, this is reduced to:
 	# Var | IRIref | BlankNode | NIL
-	return $self->_test(qr/[\$?]|<|['"]|(true\b|false\b)|([+-]?\d)|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[|[[(]/);
+	return $self->_test(qr/[\$?]|<|['"]|(true\b|false\b)|([+-]?\d)|_:|${r_ANON}|${r_NIL}|\[|[[(]/);
 }
 
 sub _GraphNode {
@@ -1023,6 +1205,13 @@ sub _GraphNode {
 }
 
 # [42] VarOrTerm ::= Var | GraphTerm
+sub _VarOrTerm_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/[$?]/));
+	return 1 if ($self->_test(qr/[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
+	return 0;
+}
+
 sub _VarOrTerm {
 	my $self	= shift;
 	if ($self->{tokens} =~ m'^[?$]') {
@@ -1051,7 +1240,7 @@ sub _VarOrIRIref {
 sub _Var {
 	my $self	= shift;
 	my $var		= ($self->_test( $r_VAR1 )) ? $self->_eat( $r_VAR1 ) : $self->_eat( $r_VAR2 );
-	$self->_add_stack( RDF::Trine::Node::Variable->new( substr($var,1) ) );
+	$self->_add_stack( RDF::Query::Node::Variable->new( substr($var,1) ) );
 }
 
 # [45] GraphTerm ::= IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL
@@ -1061,7 +1250,7 @@ sub _GraphTerm {
 		$self->_BooleanLiteral;
 	} elsif ($self->_test('(')) {
 		$self->_NIL;
-	} elsif ($self->_test('[') or $self->_test('_:')) {
+	} elsif ($self->_test( $r_ANON ) or $self->_test('_:')) {
 		$self->_BlankNode;
 	} elsif ($self->_test(qr/[-+]?\d/)) {
 		$self->_NumericLiteral;
@@ -1196,6 +1385,9 @@ sub _UnaryExpression {
 		$self->_eat('!');
 		$self->__consume_ws_opt;
 		$self->_PrimaryExpression;
+		my ($expr)	= splice(@{ $self->{stack} });
+		my $not		= RDF::Query::Algebra::Expr->new( '!', $expr );
+		$self->_add_stack( $not );
 	} elsif ($self->_test('+')) {
 		$self->_eat('+');
 		$self->__consume_ws_opt;
@@ -1258,7 +1450,7 @@ sub _BrackettedExpression {
 # [57] BuiltInCall ::= 'STR' '(' Expression ')'  | 'LANG' '(' Expression ')'  | 'LANGMATCHES' '(' Expression ',' Expression ')'  | 'DATATYPE' '(' Expression ')'  | 'BOUND' '(' Var ')'  | 'sameTerm' '(' Expression ',' Expression ')'  | 'isIRI' '(' Expression ')'  | 'isURI' '(' Expression ')'  | 'isBLANK' '(' Expression ')'  | 'isLITERAL' '(' Expression ')'  | RegexExpression
 sub _BuiltInCall_test {
 	my $self	= shift;
-	return $self->_test(qr/STR|LANG|LANGMATCHES|DATATYPE|BOUND|isIRI|isURI|isBLANK|isLITERAL|REGEX/);
+	return $self->_test(qr/STR|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX/i);
 }
 
 sub _BuiltInCall {
@@ -1401,22 +1593,31 @@ sub _NumericLiteral {
 }
 
 # [65] BooleanLiteral ::= 'true' | 'false'
+sub _BooleanLiteral {
+	my $self	= shift;
+	my $bool	= $self->_eat(qr/(true|false)\b/);
+	$self->_add_stack( RDF::Trine::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value ) );
+}
+
 # [66] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
 sub _String {
 	my $self	= shift;
-	if ($self->_test( $r_STRING_LITERAL1 )) {
-		my $string	= $self->_eat( $r_STRING_LITERAL1 );
-		$self->_add_stack( substr($string, 1, length($string) - 2) );
-	} elsif ($self->_test( $r_STRING_LITERAL2 )) {
-		my $string	= $self->_eat( $r_STRING_LITERAL2 );
-		$self->_add_stack( substr($string, 1, length($string) - 2) );
-	} elsif ($self->_test( $r_STRING_LITERAL_LONG1 )) {
+	my $value;
+	if ($self->_test( $r_STRING_LITERAL_LONG1 )) {
 		my $string	= $self->_eat( $r_STRING_LITERAL_LONG1 );
-		$self->_add_stack( substr($string, 3, length($string) - 6) );
-	} else {
+		$value		= substr($string, 3, length($string) - 6);
+	} elsif ($self->_test( $r_STRING_LITERAL_LONG2 )) {
 		my $string	= $self->_eat( $r_STRING_LITERAL_LONG2 );
-		$self->_add_stack( substr($string, 3, length($string) - 6) );
+		$value		= substr($string, 3, length($string) - 6);
+	} elsif ($self->_test( $r_STRING_LITERAL1 )) {
+		my $string	= $self->_eat( $r_STRING_LITERAL1 );
+		$value		= substr($string, 1, length($string) - 2);
+	} else { # ($self->_test( $r_STRING_LITERAL2 )) {
+		my $string	= $self->_eat( $r_STRING_LITERAL2 );
+		$value		= substr($string, 1, length($string) - 2);
 	}
+	$value	=~ s/${r_ECHAR}/$1/g;
+	$self->_add_stack( $value );
 }
 
 # [67] IRIref ::= IRI_REF | PrefixedName
@@ -1442,12 +1643,20 @@ sub _PrefixedName {
 	if ($self->_test( $r_PNAME_LN )) {
 		my $ln	= $self->_eat( $r_PNAME_LN );
 		my ($ns,$local)	= split(/:/, $ln);
+		if ($ns eq '') {
+			$ns	= '__DEFAULT__';
+		}
 		my $iri		= $self->{namespaces}{$ns} . $local;
-		$self->_add_stack( RDF::Trine::Node::Resource->new( $iri ) );
+		$self->_add_stack( RDF::Trine::Node::Resource->new( $iri, $self->__base ) );
 	} else {
 		my $ns	= $self->_eat( $r_PNAME_NS );
-		warn "NS: $ns";
-		die $ns;
+		if ($ns eq ':') {
+			$ns	= '__DEFAULT__';
+		} else {
+			chop($ns);
+		}
+		my $iri		= $self->{namespaces}{$ns};
+		$self->_add_stack( RDF::Trine::Node::Resource->new( $iri, $self->__base ) );
 	}
 }
 
@@ -1462,6 +1671,12 @@ sub _BlankNode {
 		$self->_eat( $r_ANON );
 		$self->_add_stack( $self->new_blank );
 	}
+}
+
+sub _NIL {
+	my $self	= shift;
+	$self->_eat( $r_NIL );
+	$self->_add_stack( $rdf->nil );
 }
 
 1;
