@@ -30,7 +30,7 @@ WriteMakefile(
 					'DateTime::Format::W3CDTF'	=> 0,
 					'Scalar::Util'				=> 0,
 					'Error'						=> 0,
-					'JSON'						=> 0,
+					'JSON'						=> 2,
 					'URI'						=> 0,
 					'List::MoreUtils'			=> 0,
 					'RDF::Trine::Iterator'		=> 1,
