@@ -176,7 +176,9 @@ sub fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
-	my $fixed	= $class->new( map { $_->fixup( $bridge, $base, $ns ) } $self->triples );
+	
+	my @nodes	= map { $_->fixup( $bridge, $base, $ns ) } $self->triples;
+	my $fixed	= $class->new( @nodes );
 	return $fixed;
 }
 

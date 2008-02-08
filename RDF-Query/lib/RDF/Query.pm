@@ -422,8 +422,12 @@ sub pattern {
 	my $self	= shift;
 	my $parsed	= $self->parsed;
 	my @triples	= @{ $parsed->{triples} };
-	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @triples );
-	return $ggp;
+	if (scalar(@triples) == 1 and $triples[0]->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+		my $ggp		= $triples[0];
+		return $ggp;
+	} else {
+		return RDF::Query::Algebra::GroupGraphPattern->new( @triples );
+	}
 }
 
 =item C<< construct_pattern >>
@@ -667,7 +671,7 @@ sub load_data {
 		my $need_new_bridge	= 1;
 		my $named_query	= 0;
 		foreach my $source (sort { scalar(@$b) == 2 } @{ $sources }) {
-			my $named_source	= (3 == @{$source} and $source->[2] eq 'NAMED');
+			my $named_source	= (2 == @{$source} and $source->[1] eq 'NAMED');
 			if ((not $named_source) and $need_new_bridge) {
 				# query uses FROM <..> clauses, so create a new bridge so we don't add the statements to a persistent default graph
 				$bridge				= $self->new_bridge();
@@ -675,7 +679,8 @@ sub load_data {
 				$need_new_bridge	= 0;
 			}
 			
-			$self->parse_url( $self->qualify_uri( $source->[1] ), $named_source );
+			my $uri	= $source->[0]->uri_value;
+			$self->parse_url( $uri, $named_source );
 		}
 		$self->run_hook( 'http://kasei.us/code/rdf-query/hooks/post-create-model', $bridge );
 	}
@@ -2006,6 +2011,7 @@ If $named is TRUE, associate all parsed triples with a named graph.
 sub parse_url {
 	my $self	= shift;
 	my $url		= shift;
+	
 	my $named	= shift;
 	my $bridge	= $self->bridge;
 	

@@ -465,10 +465,13 @@ sub patterns2sql {
 							};
 				$self->patterns2sql( [ $pattern ], $level, from_hook => $hook );
 			}
-		} elsif ($triple->isa('RDF::Query::Algebra::OldFilter')) {
+		} elsif ($triple->isa('RDF::Query::Algebra::Filter')) {
 			++$$level;
 			my $expr		= $triple->expr;
+			my $pattern	= $triple->pattern;
 			$self->expr2sql( $expr, $level, from_hook => $add_from, where_hook => $add_where );
+			++$$level;
+			$self->patterns2sql( [ $pattern ], $level, %args );
 		} elsif ($triple->isa('RDF::Query::Algebra::BasicGraphPattern')) {
 			++$$level;
 			$self->patterns2sql( [ $triple->triples ], $level, %args );
@@ -573,6 +576,7 @@ sub expr2sql {
 		} elsif ($expr->isa('RDF::Query::Node::Variable')) {
 			my $name	= $expr->name;
 			my $col		= $vars->{ $name };
+			no warnings 'uninitialized';
 			$add_where->( qq(${col}) );
 		}
 	} else {
@@ -897,6 +901,7 @@ $functions{ '~~' }	= sub {
 	return ({}, \@from, \@where);
 };
 
+$functions{ 'sparql:bound' } =
 $functions{ 'sop:isBound' }	= sub {
 	my $self	= shift;
 	my $parsed_vars	= shift;
