@@ -268,7 +268,7 @@ sub __consume_ws {
 ################################################################################
 
 
-# [1]   Query   ::=   Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery )
+# [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery )
 sub _Query {
 	my $self	= shift;
 	$self->__consume_ws_opt;
@@ -292,9 +292,9 @@ sub _Query {
 }
 
 
-# [2]   Prologue   ::=   BaseDecl? PrefixDecl*
-# [3]   BaseDecl   ::=   'BASE' IRI_REF
-# [4]   PrefixDecl   ::=   'PREFIX' PNAME_NS IRI_REF
+# [2] Prologue ::= BaseDecl? PrefixDecl*
+# [3] BaseDecl ::= 'BASE' IRI_REF
+# [4] PrefixDecl ::= 'PREFIX' PNAME_NS IRI_REF
 sub _Prologue {
 	my $self	= shift;
 	
@@ -327,7 +327,7 @@ sub _Prologue {
 }
 
 
-# [5]   SelectQuery   ::=   'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( Var+ | '*' ) DatasetClause* WhereClause SolutionModifier
+# [5] SelectQuery ::= 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( Var+ | '*' ) DatasetClause* WhereClause SolutionModifier
 sub _SelectQuery {
 	my $self	= shift;
 	$self->_eat(qr/SELECT/i);
@@ -379,10 +379,10 @@ sub _SelectQuery {
 # 	return %query;
 }
 
-# [6]   ConstructQuery   ::=   'CONSTRUCT' ConstructTemplate DatasetClause* WhereClause SolutionModifier
+# [6] ConstructQuery ::= 'CONSTRUCT' ConstructTemplate DatasetClause* WhereClause SolutionModifier
 sub _ConstructQuery {die}
 
-# [7]   DescribeQuery   ::=   'DESCRIBE' ( VarOrIRIref+ | '*' ) DatasetClause* WhereClause? SolutionModifier
+# [7] DescribeQuery ::= 'DESCRIBE' ( VarOrIRIref+ | '*' ) DatasetClause* WhereClause? SolutionModifier
 sub _DescribeQuery {
 	my $self	= shift;
 	$self->_eat(qr/DESCRIBE/i);
@@ -423,10 +423,10 @@ sub _DescribeQuery {
 # 	return %query;
 }
 
-# [8]   AskQuery   ::=   'ASK' DatasetClause* WhereClause
+# [8] AskQuery ::= 'ASK' DatasetClause* WhereClause
 sub _AskQuery {die}
 
-# [9]   DatasetClause   ::=   'FROM' ( DefaultGraphClause | NamedGraphClause )
+# [9] DatasetClause ::= 'FROM' ( DefaultGraphClause | NamedGraphClause )
 sub _DatasetClause {
 	my $self	= shift;
 	
@@ -438,16 +438,16 @@ sub _DatasetClause {
 # 	$self->{build}{sources}	= \@dataset;
 }
 
-# [10]   DefaultGraphClause   ::=   SourceSelector
+# [10] DefaultGraphClause ::= SourceSelector
 sub _DefaultGraphClause {die}
 
-# [11]   NamedGraphClause   ::=   'NAMED' SourceSelector
+# [11] NamedGraphClause ::= 'NAMED' SourceSelector
 sub _NamedGraphClause {die}
 
-# [12]   SourceSelector   ::=   IRIref
+# [12] SourceSelector ::= IRIref
 sub _SourceSelector {die}
 
-# [13]   WhereClause   ::=   'WHERE'? GroupGraphPattern
+# [13] WhereClause ::= 'WHERE'? GroupGraphPattern
 sub _WhereClause_test {
 	my $self	= shift;
 	return $self->_test( qr/WHERE|{/i );
@@ -461,7 +461,7 @@ sub _WhereClause {
 	$self->_GroupGraphPattern;
 }
 
-# [14]   SolutionModifier   ::=   OrderClause? LimitOffsetClauses?
+# [14] SolutionModifier ::= OrderClause? LimitOffsetClauses?
 sub _SolutionModifier {
 	my $self	= shift;
 	
@@ -475,7 +475,7 @@ sub _SolutionModifier {
 	}
 }
 
-# [15]   LimitOffsetClauses   ::=   ( LimitClause OffsetClause? | OffsetClause LimitClause? )
+# [15] LimitOffsetClauses ::= ( LimitClause OffsetClause? | OffsetClause LimitClause? )
 sub _LimitOffsetClauses_test {
 	my $self	= shift;
 	return $self->_test( qr/LIMIT|OFFSET/i );
@@ -496,7 +496,7 @@ sub _LimitOffsetClauses {
 	}
 }
 
-# [16]   OrderClause   ::=   'ORDER' 'BY' OrderCondition+
+# [16] OrderClause ::= 'ORDER' 'BY' OrderCondition+
 sub _OrderClause_test {
 	my $self	= shift;
 	return $self->_test( qr/ORDER[\n\r\t ]+BY/i );
@@ -519,7 +519,7 @@ sub _OrderClause {
 	$self->{build}{options}{orderby}	= \@order;
 }
 
-# [17]   OrderCondition   ::=   ( ( 'ASC' | 'DESC' ) BrackettedExpression ) | ( Constraint | Var )
+# [17] OrderCondition ::= ( ( 'ASC' | 'DESC' ) BrackettedExpression ) | ( Constraint | Var )
 sub _OrderCondition_test {
 	my $self	= shift;
 	return 1 if $self->_test( qr/ASC|DESC|[?\$]/i );
@@ -543,7 +543,7 @@ sub _OrderCondition {
 	$self->_add_stack( [ $dir, $expr ] );
 }
 
-# [18]   LimitClause   ::=   'LIMIT' INTEGER
+# [18] LimitClause ::= 'LIMIT' INTEGER
 sub _LimitClause_test {
 	my $self	= shift;
 	return $self->_test( qr/LIMIT/i );
@@ -557,7 +557,7 @@ sub _LimitClause {
 	$self->{build}{options}{limit}	= $limit;
 }
 
-# [19]   OffsetClause   ::=   'OFFSET' INTEGER
+# [19] OffsetClause ::= 'OFFSET' INTEGER
 sub _OffsetClause_test {
 	my $self	= shift;
 	return $self->_test( qr/OFFSET/i );
@@ -571,7 +571,7 @@ sub _OffsetClause {
 	$self->{build}{options}{offset}	= $off;
 }
 
-# [20]   GroupGraphPattern   ::=   '{' TriplesBlock? ( ( GraphPatternNotTriples | Filter ) '.'? TriplesBlock? )* '}'
+# [20] GroupGraphPattern ::= '{' TriplesBlock? ( ( GraphPatternNotTriples | Filter ) '.'? TriplesBlock? )* '}'
 sub _GroupGraphPattern {
 	my $self	= shift;
 	
@@ -584,7 +584,7 @@ sub _GroupGraphPattern {
 		$self->_TriplesBlock;
 		$self->__consume_ws_opt;
 	}
-
+	
 	while (not $self->_test('}')) {
 		if ($self->_GraphPatternNotTriples_test) {
 			$self->_GraphPatternNotTriples;
@@ -640,13 +640,13 @@ sub _GroupGraphPattern {
 	}
 }
 
-# [21]   TriplesBlock   ::=   TriplesSameSubject ( '.' TriplesBlock? )?
+# [21] TriplesBlock ::= TriplesSameSubject ( '.' TriplesBlock? )?
 sub _TriplesBlock_test {
 	my $self	= shift;
-	# VarOrTerm -> (Var | GraphTerm) -> Var | IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL
+	# VarOrTerm | TriplesNode -> (Var | GraphTerm) | (Collection | BlankNodePropertyList) -> Var | IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL | Collection | BlankNodePropertyList
 	# but since a triple can't start with a literal, this is reduced to:
 	# Var | IRIref | BlankNode | NIL
-	return $self->_test(qr/[\$?]|<|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[/);
+	return $self->_test(qr/[\$?]|<|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[|[[(]/);
 }
 
 sub _TriplesBlock {
@@ -675,7 +675,7 @@ sub __TriplesBlock {
 	}
 }
 
-# [22]   GraphPatternNotTriples   ::=   OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
+# [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
 	return $self->_test(qr/OPTIONAL|{|GRAPH/);
@@ -692,7 +692,7 @@ sub _GraphPatternNotTriples {
 	}
 }
 
-# [23]   OptionalGraphPattern   ::=   'OPTIONAL' GroupGraphPattern
+# [23] OptionalGraphPattern ::= 'OPTIONAL' GroupGraphPattern
 sub _OptionalGraphPattern_test {
 	my $self	= shift;
 	return $self->_test( qr/OPTIONAL/i );
@@ -708,7 +708,7 @@ sub _OptionalGraphPattern {
 	$self->_add_stack( $opt );
 }
 
-# [24]   GraphGraphPattern   ::=   'GRAPH' VarOrIRIref GroupGraphPattern
+# [24] GraphGraphPattern ::= 'GRAPH' VarOrIRIref GroupGraphPattern
 sub _GraphGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/GRAPH/i );
@@ -725,7 +725,7 @@ sub _GraphGraphPattern {
 	$self->_add_stack( [ 'RDF::Query::Algebra::NamedGraph' ] );
 }
 
-# [25]   GroupOrUnionGraphPattern   ::=   GroupGraphPattern ( 'UNION' GroupGraphPattern )*
+# [25] GroupOrUnionGraphPattern ::= GroupGraphPattern ( 'UNION' GroupGraphPattern )*
 sub _GroupOrUnionGraphPattern_test {
 	my $self	= shift;
 	return $self->_test('{');
@@ -751,7 +751,7 @@ sub _GroupOrUnionGraphPattern {
 	}
 }
 
-# [26]   Filter   ::=   'FILTER' Constraint
+# [26] Filter ::= 'FILTER' Constraint
 sub _Filter {
 	my $self	= shift;
 	$self->_eat( qr/FILTER/i );
@@ -761,7 +761,7 @@ sub _Filter {
 	$self->_add_filter( $self->new_filter( $expr ) );
 }
 
-# [27]   Constraint   ::=   BrackettedExpression | BuiltInCall | FunctionCall
+# [27] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall
 sub _Constraint_test {
 	my $self	= shift;
 	return 1 if $self->_test( qr/[(]/ );
@@ -781,7 +781,7 @@ sub _Constraint {
 	}
 }
 
-# [28]   FunctionCall   ::=   IRIref ArgList
+# [28] FunctionCall ::= IRIref ArgList
 sub _FunctionCall_test {
 	return 0;	# XXX
 }
@@ -801,7 +801,7 @@ sub _FunctionCall {
 	$self->_add_stack( $func );
 }
 
-# [29]   ArgList   ::=   ( NIL | '(' Expression ( ',' Expression )* ')' )
+# [29] ArgList ::= ( NIL | '(' Expression ( ',' Expression )* ')' )
 sub _ArgList_test {
 	my $self	= shift;
 	return $self->_test('(');
@@ -826,10 +826,10 @@ sub _ArgList {
 	$self->_add_stack( @args );
 }
 
-# [30]   ConstructTemplate   ::=   '{' ConstructTriples? '}'
-# [31]   ConstructTriples   ::=   TriplesSameSubject ( '.' ConstructTriples? )?
+# [30] ConstructTemplate ::= '{' ConstructTriples? '}'
+# [31] ConstructTriples ::= TriplesSameSubject ( '.' ConstructTriples? )?
 
-# [32]   TriplesSameSubject   ::=   VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList
+# [32] TriplesSameSubject ::= VarOrTerm PropertyListNotEmpty | TriplesNode PropertyList
 sub _TriplesSameSubject {
 	my $self	= shift;
 	my @triples;
@@ -861,7 +861,7 @@ sub _TriplesSameSubject {
 #	return @triples;
 }
 
-# [33]   PropertyListNotEmpty   ::=   Verb ObjectList ( ';' ( Verb ObjectList )? )*
+# [33] PropertyListNotEmpty ::= Verb ObjectList ( ';' ( Verb ObjectList )? )*
 sub _PropertyListNotEmpty {
 	my $self	= shift;
 	$self->_Verb;
@@ -885,7 +885,7 @@ sub _PropertyListNotEmpty {
 	$self->_add_stack( @props );
 }
 
-# [34]   PropertyList   ::=   PropertyListNotEmpty?
+# [34] PropertyList ::= PropertyListNotEmpty?
 sub _PropertyList {
 	my $self	= shift;
 	if ($self->_Verb_test) {
@@ -893,7 +893,7 @@ sub _PropertyList {
 	}
 }
 
-# [35]   ObjectList   ::=   Object ( ',' Object )*
+# [35] ObjectList ::= Object ( ',' Object )*
 sub _ObjectList {
 	my $self	= shift;
 	
@@ -912,13 +912,13 @@ sub _ObjectList {
 	$self->_add_stack( @list );
 }
 
-# [36]   Object   ::=   GraphNode
+# [36] Object ::= GraphNode
 sub _Object {
 	my $self	= shift;
 	$self->_GraphNode;
 }
 
-# [37]   Verb   ::=   VarOrIRIref | 'a'
+# [37] Verb ::= VarOrIRIref | 'a'
 sub _Verb_test {
 	my $self	= shift;
 	return $self->_test( qr/a\b|[?\$]|<|${r_PNAME_LN}|${r_PNAME_NS}/ );
@@ -935,7 +935,7 @@ sub _Verb {
 	}
 }
 
-# [38]   TriplesNode   ::=   Collection | BlankNodePropertyList
+# [38] TriplesNode ::= Collection | BlankNodePropertyList
 sub _TriplesNode_test {
 	my $self	= shift;
 	return $self->_test(qr/[[(](?!\])/);
@@ -950,7 +950,7 @@ sub _TriplesNode {
 	}
 }
 
-# [39]   BlankNodePropertyList   ::=   '[' PropertyListNotEmpty ']'
+# [39] BlankNodePropertyList ::= '[' PropertyListNotEmpty ']'
 sub _BlankNodePropertyList {
 	my $self	= shift;
 	$self->_eat('[');
@@ -966,8 +966,53 @@ sub _BlankNodePropertyList {
 	$self->_add_stack( $subj );
 }
 
-# [40]   Collection   ::=   '(' GraphNode+ ')'
-# [41]   GraphNode   ::=   VarOrTerm | TriplesNode
+# [40] Collection ::= '(' GraphNode+ ')'
+sub _Collection {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	$self->_GraphNode;
+	$self->__consume_ws_opt;
+	
+	my @nodes;
+	push(@nodes, splice(@{ $self->{stack} }));
+	
+	while ($self->_GraphNode_test) {
+		$self->_GraphNode;
+		$self->__consume_ws_opt;
+		push(@nodes, splice(@{ $self->{stack} }));
+	}
+	
+	$self->_eat(')');
+	
+	my $subj	= $self->new_blank;
+	my $cur		= $subj;
+	my $last;
+	
+	my @triples;
+	foreach my $node (@nodes) {
+		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rdf->first, $node ) );
+		my $new	= $self->new_blank;
+		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rdf->rest, $new ) );
+		$last	= $cur;
+		$cur	= $new;
+	}
+	pop(@triples);
+	push(@triples, RDF::Query::Algebra::Triple->new( $last, $rdf->rest, $rdf->nil ));
+	$self->_add_patterns( @triples );
+	
+	$self->_add_stack( $subj );
+}
+
+# [41] GraphNode ::= VarOrTerm | TriplesNode
+sub _GraphNode_test {
+	my $self	= shift;
+	# VarOrTerm | TriplesNode -> (Var | GraphTerm) | (Collection | BlankNodePropertyList) -> Var | IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL | Collection | BlankNodePropertyList
+	# but since a triple can't start with a literal, this is reduced to:
+	# Var | IRIref | BlankNode | NIL
+	return $self->_test(qr/[\$?]|<|['"]|(true\b|false\b)|([+-]?\d)|_:|\[[\n\r\t ]*\]|\([\n\r\t ]*\)|\[|[[(]/);
+}
+
 sub _GraphNode {
 	my $self	= shift;
 	if ($self->_TriplesNode_test) {
@@ -977,7 +1022,7 @@ sub _GraphNode {
 	}
 }
 
-# [42]   VarOrTerm   ::=   Var | GraphTerm
+# [42] VarOrTerm ::= Var | GraphTerm
 sub _VarOrTerm {
 	my $self	= shift;
 	if ($self->{tokens} =~ m'^[?$]') {
@@ -987,7 +1032,7 @@ sub _VarOrTerm {
 	}
 }
 
-# [43]   VarOrIRIref   ::=   Var | IRIref
+# [43] VarOrIRIref ::= Var | IRIref
 sub _VarOrIRIref_test {
 	my $self	= shift;
 	return $self->_test(qr/[\$?]|<|${r_PNAME_LN}|${r_PNAME_NS}/);
@@ -1002,14 +1047,14 @@ sub _VarOrIRIref {
 	}
 }
 
-# [44]   Var   ::=   VAR1 | VAR2
+# [44] Var ::= VAR1 | VAR2
 sub _Var {
 	my $self	= shift;
 	my $var		= ($self->_test( $r_VAR1 )) ? $self->_eat( $r_VAR1 ) : $self->_eat( $r_VAR2 );
 	$self->_add_stack( RDF::Trine::Node::Variable->new( substr($var,1) ) );
 }
 
-# [45]   GraphTerm   ::=   IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL
+# [45] GraphTerm ::= IRIref | RDFLiteral | NumericLiteral | BooleanLiteral | BlankNode | NIL
 sub _GraphTerm {
 	my $self	= shift;
 	if ($self->_test(qr/(true|false)\b/)) {
@@ -1027,13 +1072,13 @@ sub _GraphTerm {
 	}
 }
 
-# [46]   Expression   ::=   ConditionalOrExpression
+# [46] Expression ::= ConditionalOrExpression
 sub _Expression {
 	my $self	= shift;
 	$self->_ConditionalOrExpression;
 }
 
-# [47]   ConditionalOrExpression   ::=   ConditionalAndExpression ( '||' ConditionalAndExpression )*
+# [47] ConditionalOrExpression ::= ConditionalAndExpression ( '||' ConditionalAndExpression )*
 sub _ConditionalOrExpression {
 	my $self	= shift;
 	my @list;
@@ -1057,7 +1102,7 @@ sub _ConditionalOrExpression {
 	Carp::confess $self->{tokens} if (scalar(@{ $self->{stack} }) == 0);
 }
 
-# [48]   ConditionalAndExpression   ::=   ValueLogical ( '&&' ValueLogical )*
+# [48] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
 sub _ConditionalAndExpression {
 	my $self	= shift;
 	my @list;
@@ -1081,13 +1126,13 @@ sub _ConditionalAndExpression {
 	}
 }
 
-# [49]   ValueLogical   ::=   RelationalExpression
+# [49] ValueLogical ::= RelationalExpression
 sub _ValueLogical {
 	my $self	= shift;
 	$self->_RelationalExpression;
 }
 
-# [50]   RelationalExpression   ::=   NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression )?
+# [50] RelationalExpression ::= NumericExpression ( '=' NumericExpression | '!=' NumericExpression | '<' NumericExpression | '>' NumericExpression | '<=' NumericExpression | '>=' NumericExpression )?
 sub _RelationalExpression {
 	my $self	= shift;
 	$self->_NumericExpression;
@@ -1104,13 +1149,13 @@ sub _RelationalExpression {
 	}
 }
 
-# [51]   NumericExpression   ::=   AdditiveExpression
+# [51] NumericExpression ::= AdditiveExpression
 sub _NumericExpression {
 	my $self	= shift;
 	$self->_AdditiveExpression;
 }
 
-# [52]   AdditiveExpression   ::=   MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | NumericLiteralPositive | NumericLiteralNegative )*
+# [52] AdditiveExpression ::= MultiplicativeExpression ( '+' MultiplicativeExpression | '-' MultiplicativeExpression | NumericLiteralPositive | NumericLiteralNegative )*
 sub _AdditiveExpression {
 	my $self	= shift;
 	$self->_MultiplicativeExpression;
@@ -1127,7 +1172,7 @@ sub _AdditiveExpression {
 	$self->_add_stack( $expr );
 }
 
-# [53]   MultiplicativeExpression   ::=   UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
+# [53] MultiplicativeExpression ::= UnaryExpression ( '*' UnaryExpression | '/' UnaryExpression )*
 sub _MultiplicativeExpression {
 	my $self	= shift;
 	$self->_UnaryExpression;
@@ -1144,7 +1189,7 @@ sub _MultiplicativeExpression {
 	$self->_add_stack( $expr );
 }
 
-# [54]   UnaryExpression   ::=     '!' PrimaryExpression  | '+' PrimaryExpression  | '-' PrimaryExpression  | PrimaryExpression
+# [54] UnaryExpression ::= '!' PrimaryExpression  | '+' PrimaryExpression  | '-' PrimaryExpression  | PrimaryExpression
 sub _UnaryExpression {
 	my $self	= shift;
 	if ($self->_test('!')) {
@@ -1175,7 +1220,7 @@ sub _UnaryExpression {
 	}
 }
 
-# [55]   PrimaryExpression   ::=   BrackettedExpression | BuiltInCall | IRIrefOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
+# [55] PrimaryExpression ::= BrackettedExpression | BuiltInCall | IRIrefOrFunction | RDFLiteral | NumericLiteral | BooleanLiteral | Var
 sub _PrimaryExpression {
 	my $self	= shift;
 	if ($self->_BrackettedExpression_test) {
@@ -1195,7 +1240,7 @@ sub _PrimaryExpression {
 	}
 }
 
-# [56]   BrackettedExpression   ::=   '(' Expression ')'
+# [56] BrackettedExpression ::= '(' Expression ')'
 sub _BrackettedExpression_test {
 	my $self	= shift;
 	return $self->_test('(');
@@ -1210,7 +1255,7 @@ sub _BrackettedExpression {
 	$self->_eat(')');
 }
 
-# [57]   BuiltInCall   ::=     'STR' '(' Expression ')'  | 'LANG' '(' Expression ')'  | 'LANGMATCHES' '(' Expression ',' Expression ')'  | 'DATATYPE' '(' Expression ')'  | 'BOUND' '(' Var ')'  | 'sameTerm' '(' Expression ',' Expression ')'  | 'isIRI' '(' Expression ')'  | 'isURI' '(' Expression ')'  | 'isBLANK' '(' Expression ')'  | 'isLITERAL' '(' Expression ')'  | RegexExpression
+# [57] BuiltInCall ::= 'STR' '(' Expression ')'  | 'LANG' '(' Expression ')'  | 'LANGMATCHES' '(' Expression ',' Expression ')'  | 'DATATYPE' '(' Expression ')'  | 'BOUND' '(' Var ')'  | 'sameTerm' '(' Expression ',' Expression ')'  | 'isIRI' '(' Expression ')'  | 'isURI' '(' Expression ')'  | 'isBLANK' '(' Expression ')'  | 'isLITERAL' '(' Expression ')'  | RegexExpression
 sub _BuiltInCall_test {
 	my $self	= shift;
 	return $self->_test(qr/STR|LANG|LANGMATCHES|DATATYPE|BOUND|isIRI|isURI|isBLANK|isLITERAL|REGEX/);
@@ -1251,7 +1296,7 @@ sub _BuiltInCall {
 	}
 }
 
-# [58]   RegexExpression   ::=   'REGEX' '(' Expression ',' Expression ( ',' Expression )? ')'
+# [58] RegexExpression ::= 'REGEX' '(' Expression ',' Expression ( ',' Expression )? ')'
 sub _RegexExpression_test {
 	my $self	= shift;
 	return $self->_test( qr/REGEX/i );
@@ -1285,7 +1330,7 @@ sub _RegexExpression {
 	$self->_add_stack( RDF::Query::Algebra::Expr->new( '~~', @args ) );
 }
 
-# [59]   IRIrefOrFunction   ::=   IRIref ArgList?
+# [59] IRIrefOrFunction ::= IRIref ArgList?
 sub _IRIrefOrFunction_test {
 	my $self	= shift;
 	$self->_IRIref_test;
@@ -1303,7 +1348,7 @@ sub _IRIrefOrFunction {
 	}
 }
 
-# [60]   RDFLiteral   ::=   String ( LANGTAG | ( '^^' IRIref ) )?
+# [60] RDFLiteral ::= String ( LANGTAG | ( '^^' IRIref ) )?
 sub _RDFLiteral {
 	my $self	= shift;
 	$self->_String;
@@ -1322,10 +1367,10 @@ sub _RDFLiteral {
 	$self->_add_stack( RDF::Trine::Node::Literal->new( @args ) );
 }
 
-# [61]   NumericLiteral   ::=   NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
-# [62]   NumericLiteralUnsigned   ::=   INTEGER | DECIMAL | DOUBLE
-# [63]   NumericLiteralPositive   ::=   INTEGER_POSITIVE | DECIMAL_POSITIVE | DOUBLE_POSITIVE
-# [64]   NumericLiteralNegative   ::=   INTEGER_NEGATIVE | DECIMAL_NEGATIVE | DOUBLE_NEGATIVE
+# [61] NumericLiteral ::= NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
+# [62] NumericLiteralUnsigned ::= INTEGER | DECIMAL | DOUBLE
+# [63] NumericLiteralPositive ::= INTEGER_POSITIVE | DECIMAL_POSITIVE | DOUBLE_POSITIVE
+# [64] NumericLiteralNegative ::= INTEGER_NEGATIVE | DECIMAL_NEGATIVE | DOUBLE_NEGATIVE
 sub _NumericLiteral {
 	my $self	= shift;
 	my $sign	= 1;
@@ -1355,8 +1400,8 @@ sub _NumericLiteral {
 	$self->_add_stack( RDF::Trine::Node::Literal->new( $value, undef, $type->uri_value ) );
 }
 
-# [65]   BooleanLiteral   ::=   'true' | 'false'
-# [66]   String   ::=   STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
+# [65] BooleanLiteral ::= 'true' | 'false'
+# [66] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
 sub _String {
 	my $self	= shift;
 	if ($self->_test( $r_STRING_LITERAL1 )) {
@@ -1374,7 +1419,7 @@ sub _String {
 	}
 }
 
-# [67]   IRIref   ::=   IRI_REF | PrefixedName
+# [67] IRIref ::= IRI_REF | PrefixedName
 sub _IRIref_test {
 	my $self	= shift;
 	return $self->_test(qr/<|${r_PNAME_LN}|${r_PNAME_NS}/);
@@ -1391,7 +1436,7 @@ sub _IRIref {
 	}
 }
 
-# [68]   PrefixedName   ::=   PNAME_LN | PNAME_NS
+# [68] PrefixedName ::= PNAME_LN | PNAME_NS
 sub _PrefixedName {
 	my $self	= shift;
 	if ($self->_test( $r_PNAME_LN )) {
@@ -1406,7 +1451,7 @@ sub _PrefixedName {
 	}
 }
 
-# [69]   BlankNode   ::=   BLANK_NODE_LABEL | ANON
+# [69] BlankNode ::= BLANK_NODE_LABEL | ANON
 sub _BlankNode {
 	my $self	= shift;
 	if ($self->_test( $r_BLANK_NODE_LABEL )) {
