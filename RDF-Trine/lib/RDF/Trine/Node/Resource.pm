@@ -37,7 +37,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $iri )>
+=item C<new ( $iri, [ $base ] )>
 
 Returns a new Resource structure.
 
