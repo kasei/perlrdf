@@ -1,4 +1,4 @@
-# RDF::Query::Parser::SPARQL1
+# RDF::Query::Parser::SPARQL
 # -------------
 # $Revision: 127 $
 # $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Query::Parser::SPARQL1 - SPARQL Parser.
+RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL1 version 1.000
+This document describes RDF::Query::Parser::SPARQL version 1.000
 
 =head1 SYNOPSIS
 
- use RDF::Query::Parser::SPARQL1;
- my $parser	= RDF::Query::Parse::SPARQL1->new();
+ use RDF::Query::Parser::SPARQL;
+ my $parser	= RDF::Query::Parse::SPARQL->new();
  my $iterator = $parser->parse( $query, $base_uri );
 
 =head1 DESCRIPTION
@@ -28,7 +28,7 @@ This document describes RDF::Query::Parser::SPARQL1 version 1.000
 
 =cut
 
-package RDF::Query::Parser::SPARQL1;
+package RDF::Query::Parser::SPARQL;
 
 use strict;
 use warnings;
