@@ -1,4 +1,3 @@
-benchmark.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_store_add_file.pl
@@ -31,7 +30,6 @@ lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store/DBI.pm
 MANIFEST			This list of files
-MANIFEST.bak
 META.yml
 t/00.load.t
 t/data/rdfxml/bad-00.nt
@@ -271,5 +269,4 @@ t/parser-turtle.t
 t/pod-coverage.t
 t/pod.t
 t/store-context.t
-t/store-model.t
 t/store-triple_sql.t
