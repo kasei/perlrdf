@@ -1,6 +1,8 @@
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_store_add_file.pl
+bin/rdf_store_makeprivate.pl
+bin/rdf_store_serialize.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/MakeMaker.pm
