@@ -33,6 +33,7 @@ lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store/DBI.pm
 MANIFEST			This list of files
 META.yml
+Changes.ttl
 t/00.load.t
 t/data/rdfxml/bad-00.nt
 t/data/rdfxml/bad-00.rdf
