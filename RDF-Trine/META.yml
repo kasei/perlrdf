@@ -8,21 +8,26 @@ author:
 build_requires:
   Test::JSON: 0
   Test::More: 0.61
+  Test::Exception: 0
 recommends:
   RDF::Redland: 1
   RDF::Core: 0
 requires:
+    DBI:                           0
+    Digest::MD5:                   0
+    Error:                         0
     JSON:                          2
-    RDF::Trine::Node:              0
+    LWP::UserAgent:                0
+    List::MoreUtils:               0
+    List::Util:                    0
+    Math::BigInt:                  0
+    Scalar::Util:                  0
     Test::More:                    0
+    Unicode::Escape:               0
+    URI:                           0
     XML::CommonNS:                 0.04
     XML::Namespace:                0
-    Error: 0
-    RDF::Namespace: 0
-    Unicode::Escape: 0
-    Scalar::Util: 0
-    URI: 0
-    XML::Twig: 0
+    XML::Twig:                     0
 license: perl
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17
