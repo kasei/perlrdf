@@ -80,6 +80,7 @@ use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
 use RDF::Query::Parser::tSPARQL;	# XXX temporal extensions
+use RDF::Query::Parser::SPARQLP;
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 
@@ -132,6 +133,7 @@ sub new {
 					rdql	=> 'RDF::Query::Parser::RDQL',
 					sparql	=> 'RDF::Query::Parser::SPARQL',
 					tsparql	=> 'RDF::Query::Parser::tSPARQL',
+					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
 				);
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',
