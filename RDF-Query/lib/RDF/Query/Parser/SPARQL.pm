@@ -147,6 +147,12 @@ sub parse {
 	return $data;
 }
 
+=item C<< error >>
+
+Returns the error encountered during the last parse.
+
+=cut
+
 sub error {
 	my $self	= shift;
 	return $self->{error};
@@ -1111,7 +1117,8 @@ sub _Verb {
 	if ($self->_test(qr/a[\n\t\r <]/)) {
 		$self->_eat('a');
 		$self->__consume_ws;
-		$self->_add_stack( $rdf->type );
+		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
+		$self->_add_stack( $type );
 	} else {
 		$self->_VarOrIRIref;
 	}
@@ -1170,17 +1177,22 @@ sub _Collection {
 	my $subj	= $self->new_blank;
 	my $cur		= $subj;
 	my $last;
+
+	my $first	= RDF::Query::Node::Resource->new( $rdf->first->uri_value );
+	my $rest	= RDF::Query::Node::Resource->new( $rdf->rest->uri_value );
+	my $nil		= RDF::Query::Node::Resource->new( $rdf->nil->uri_value );
+
 	
 	my @triples;
 	foreach my $node (@nodes) {
-		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rdf->first, $node ) );
+		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $first, $node ) );
 		my $new	= $self->new_blank;
-		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rdf->rest, $new ) );
+		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rest, $new ) );
 		$last	= $cur;
 		$cur	= $new;
 	}
 	pop(@triples);
-	push(@triples, RDF::Query::Algebra::Triple->new( $last, $rdf->rest, $rdf->nil ));
+	push(@triples, RDF::Query::Algebra::Triple->new( $last, $rest, $nil ));
 	$self->_add_patterns( @triples );
 	
 	$self->_add_stack( $subj );
@@ -1404,7 +1416,8 @@ sub _UnaryExpression {
 			$expr->literal_value( $value );
 			$self->_add_stack( $expr );
 		} else {
-			my $neg		= RDF::Query::Algebra::Expr->new( '*', $self->new_literal('-1', undef, $xsd->integer), $expr );
+			my $int		= RDF::Query::Node::Resource->new( $xsd->integer->uri_value );
+			my $neg		= RDF::Query::Algebra::Expr->new( '*', $self->new_literal('-1', undef, $int), $expr );
 			$self->_add_stack( $neg );
 		}
 	} else {
@@ -1459,7 +1472,7 @@ sub _BuiltInCall {
 		$self->_RegexExpression;
 	} else {
 		my $op		= $self->_eat( qr/\w+/ );
-		my $iri		= RDF::Trine::Node::Resource->new( 'sparql:' . lc($op) );
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/) {
@@ -1556,7 +1569,7 @@ sub _RDFLiteral {
 		my ($iri)	= splice(@{ $self->{stack} });
 		push(@args, $iri->uri_value);
 	}
-	$self->_add_stack( RDF::Trine::Node::Literal->new( @args ) );
+	$self->_add_stack( RDF::Query::Node::Literal->new( @args ) );
 }
 
 # [61] NumericLiteral ::= NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
@@ -1577,26 +1590,29 @@ sub _NumericLiteral {
 	my $type;
 	if ($self->_test( $r_DOUBLE )) {
 		$value	= $self->_eat( $r_DOUBLE );
-		$type	= $xsd->double;
+		my $double	= RDF::Query::Node::Resource->new( $xsd->double->uri_value );
+		$type	= $double
 	} elsif ($self->_test( $r_DECIMAL )) {
 		$value	= $self->_eat( $r_DECIMAL );
-		$type	= $xsd->decimal;
+		my $decimal	= RDF::Query::Node::Resource->new( $xsd->decimal->uri_value );
+		$type	= $decimal;
 	} else {
 		$value	= $self->_eat( $r_INTEGER );
-		$type	= $xsd->integer;
+		my $integer	= RDF::Query::Node::Resource->new( $xsd->integer->uri_value );
+		$type	= $integer;
 	}
 	
 	if ($sign < 0) {
 		$value *= -1;
 	}
-	$self->_add_stack( RDF::Trine::Node::Literal->new( $value, undef, $type->uri_value ) );
+	$self->_add_stack( RDF::Query::Node::Literal->new( $value, undef, $type->uri_value ) );
 }
 
 # [65] BooleanLiteral ::= 'true' | 'false'
 sub _BooleanLiteral {
 	my $self	= shift;
 	my $bool	= $self->_eat(qr/(true|false)\b/);
-	$self->_add_stack( RDF::Trine::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value ) );
+	$self->_add_stack( RDF::Query::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value ) );
 }
 
 # [66] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
@@ -1630,7 +1646,7 @@ sub _IRIref {
 	my $self	= shift;
 	if ($self->_test( $r_IRI_REF )) {
 		my $iri	= $self->_eat( $r_IRI_REF );
-		my $node	= RDF::Trine::Node::Resource->new( substr($iri,1,length($iri)-2) );
+		my $node	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2) );
 		$self->_add_stack( $node );
 	} else {
 		$self->_PrefixedName;
@@ -1647,7 +1663,7 @@ sub _PrefixedName {
 			$ns	= '__DEFAULT__';
 		}
 		my $iri		= $self->{namespaces}{$ns} . $local;
-		$self->_add_stack( RDF::Trine::Node::Resource->new( $iri, $self->__base ) );
+		$self->_add_stack( RDF::Query::Node::Resource->new( $iri, $self->__base ) );
 	} else {
 		my $ns	= $self->_eat( $r_PNAME_NS );
 		if ($ns eq ':') {
@@ -1656,7 +1672,7 @@ sub _PrefixedName {
 			chop($ns);
 		}
 		my $iri		= $self->{namespaces}{$ns};
-		$self->_add_stack( RDF::Trine::Node::Resource->new( $iri, $self->__base ) );
+		$self->_add_stack( RDF::Query::Node::Resource->new( $iri, $self->__base ) );
 	}
 }
 
@@ -1676,7 +1692,8 @@ sub _BlankNode {
 sub _NIL {
 	my $self	= shift;
 	$self->_eat( $r_NIL );
-	$self->_add_stack( $rdf->nil );
+	my $nil	= RDF::Query::Node::Resource->new( $rdf->nil->uri_value );
+	$self->_add_stack( $nil );
 }
 
 1;

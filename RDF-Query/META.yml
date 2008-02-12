@@ -30,7 +30,7 @@ recommends:
 requires:
   DateTime::Format::W3CDTF: 0
   Error: 0
-  JSON: 0
+  JSON: 2
   Parse::RecDescent: 0
   RDF::Core: 0
   Scalar::Util: 0

@@ -113,7 +113,8 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my @nodes	= map { $bridge->as_native( $_, $base, $ns ) } $self->nodes;
+	my @nodes	= $self->nodes;
+	@nodes	= map { $bridge->as_native( $_, $base, $ns ) } @nodes;
 	my $fixed	= $class->new( @nodes );
 	return $fixed;
 }

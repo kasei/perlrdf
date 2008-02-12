@@ -60,7 +60,7 @@ BEGIN {
 	orderbyvariable:			variable										{ $return = ['ASC', $item[1]] }
 					|			/ASC|DESC/i '[' variable ']'					{ $return = [uc($item[1]), $item[3]] }
 	SourceClause:				('SOURCE' | 'FROM') Source(s)					{ $return = $item[2] }
-	Source:						URI												{ $return = $item[1] }
+	Source:						URI												{ $return = [$item[1]] }
 	variable:					'?' identifier									{ $return = RDF::Query::Parser->new_variable($item[2]) }
 	triplepattern:				'(' VarUri VarUri VarUriConst ')'				{ $return = RDF::Query::Parser->new_triple(@item[2,3,4]) }
 	constraints:				'AND' Expression OptExpression(s?)				{

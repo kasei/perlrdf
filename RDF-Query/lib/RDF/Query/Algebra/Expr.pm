@@ -122,6 +122,23 @@ sub referenced_variables {
 	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->operands);
 }
 
+=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+
+Returns a new pattern that is ready for execution using the given bridge.
+This method replaces generic node objects with bridge-native objects.
+
+=cut
+
+sub fixup {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $bridge	= shift;
+	my $base	= shift;
+	my $ns		= shift;
+	
+	return $self;	# XXX
+}
+
 
 1;
 

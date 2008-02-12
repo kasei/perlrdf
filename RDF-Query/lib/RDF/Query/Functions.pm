@@ -231,6 +231,7 @@ $RDF::Query::functions{"sop:numeric"}	= sub {
 	}
 };
 
+$RDF::Query::functions{"sparql:str"}	=
 $RDF::Query::functions{"sop:str"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -285,6 +286,7 @@ $RDF::Query::functions{"sop:logical-and"}	= sub {
 };
 
 # sop:isBound
+$RDF::Query::functions{"sparql:bound"}	=
 $RDF::Query::functions{"sop:isBound"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -294,6 +296,7 @@ $RDF::Query::functions{"sop:isBound"}	= sub {
 };
 
 # sop:isURI
+$RDF::Query::functions{"sparql:isuri"}	=
 $RDF::Query::functions{"sop:isURI"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -302,6 +305,7 @@ $RDF::Query::functions{"sop:isURI"}	= sub {
 };
 
 # sop:isIRI
+$RDF::Query::functions{"sparql:isiri"}	=
 $RDF::Query::functions{"sop:isIRI"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -310,6 +314,7 @@ $RDF::Query::functions{"sop:isIRI"}	= sub {
 };
 
 # sop:isBlank
+$RDF::Query::functions{"sparql:isblank"}	=
 $RDF::Query::functions{"sop:isBlank"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -318,6 +323,7 @@ $RDF::Query::functions{"sop:isBlank"}	= sub {
 };
 
 # sop:isLiteral
+$RDF::Query::functions{"sparql:isliteral"}	=
 $RDF::Query::functions{"sop:isLiteral"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;

@@ -54,7 +54,6 @@ lib/RDF/Query/Node/Variable.pm
 lib/RDF/Query/Parser.pm
 lib/RDF/Query/Parser/RDQL.pm
 lib/RDF/Query/Parser/SPARQL.pm
-lib/RDF/Query/Parser/SPARQL.yp
 lib/RDF/Query/Parser/tSPARQL.pm
 lib/RDF/Query/Parser/tSPARQL.yp
 lib/RDF/Query/Temporal.pm

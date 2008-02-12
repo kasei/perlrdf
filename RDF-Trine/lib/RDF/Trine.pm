@@ -30,7 +30,7 @@ This document describes RDF::Trine version 0.0.1
 package RDF::Trine;
 
 BEGIN {
-	our $VERSION	= '1.000';
+	our $VERSION	= '0.100';
 }
 
 use RDF::Trine::Parser;
@@ -49,7 +49,19 @@ __END__
 
 =head1 DEPENDENCIES
 
+L<DBI>
+L<Digest::MD5>
+L<Error>
+L<JSON>
+L<LWP::UserAgent>
+L<List::MoreUtils>
+L<List::Util>
+L<Math::BigInt>
+L<Unicode::Escape>
+L<URI>
+L<XML::CommonNS>
 L<XML::Namespace>
+L<XML::Twig>
 
 =head1 BUGS AND LIMITATIONS
 
