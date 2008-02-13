@@ -308,7 +308,7 @@ sub run_query {
 						map { my ($t,$q) = split(/;q=/, $_); $q ||= 1; [ $t,$q ] }
 							sort { index($b, 'html') }
 								split(',', $http_accept);
-	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml);
+	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml application/sparql-results+xml);
 	if (my $t = $cgi->param('mime-type')) {
 		unshift( @accept, $t );
 	}
