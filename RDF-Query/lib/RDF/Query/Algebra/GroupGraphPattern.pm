@@ -215,6 +215,7 @@ sub execute {
 					$new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
 					throw RDF::Query::Error unless ($new);
 				} otherwise {
+					warn "*** Wasn't able to use :bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
 					$new	= $triple->execute( $query, $bridge, $bound, $context, %args );
 				};
 				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $m, $new, %args );

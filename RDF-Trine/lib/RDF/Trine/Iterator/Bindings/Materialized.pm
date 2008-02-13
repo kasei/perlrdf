@@ -126,7 +126,7 @@ sub next {
 sub bloom {
 	my $self	= shift;
 	my $var		= shift;
-	my $error	= shift || 0.01;
+	my $error	= shift || 0.05;
 	my $length	= scalar(@{ $self->{ _data } });
 	
 	my $name	= blessed($var) ? $var->name : $var;

@@ -113,10 +113,14 @@ sub add_bloom {
 	my $var		= shift;
 	my $bloom	= shift;
 	
+	unless (blessed($var)) {
+		$var	= RDF::Query::Node::Variable->new( $var );
+	}
+	
 	my $pattern	= $self->pattern;
 	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom');
-	my $literal	= RDF::Query::Node::Literal->new( encode_base64(freeze($bloom)) );
-	my $expr	= RDF::Query::Algebra::Function->new( $iri, $literal );
+	my $literal	= RDF::Query::Node::Literal->new( encode_base64(freeze($bloom), '') );
+	my $expr	= RDF::Query::Algebra::Function->new( $iri, $var, $literal );
 	my $filter	= RDF::Query::Algebra::Filter->new( $expr, $pattern );
 	return $class->new( $self->endpoint, $filter );
 }

@@ -149,7 +149,7 @@ sub new {
 	my $parsed	= $parser->parse( $query );
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
-	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9, application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
+	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	my $self 	= bless( {
 					base			=> $baseuri,
 					dateparser		=> $f,
@@ -217,6 +217,8 @@ sub execute {
 	my $self	= shift;
 	my $model	= shift;
 	my %args	= @_;
+	
+	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
 	local($::NO_BRIDGE)	= 0;
 	$self->{parsed}	= dclone( $self->{parsed_orig} );
