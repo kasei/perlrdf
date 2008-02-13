@@ -17,8 +17,11 @@ use warnings;
 use base qw(RDF::Query::Algebra);
 use constant DEBUG	=> 0;
 
+use URI::Escape;
+use MIME::Base64;
 use Data::Dumper;
 use RDF::Query::Error;
+use Storable qw(freeze);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
@@ -89,7 +92,33 @@ Returns the graph pattern of the named graph expression.
 
 sub pattern {
 	my $self	= shift;
+	if (@_) {
+		my $pattern	= shift;
+		$self->[2]	= $pattern;
+	}
 	return $self->[2];
+}
+
+=item C<< add_bloom ( $variable, $filter ) >>
+
+Adds a FILTER to the enclosed GroupGraphPattern to restrict values of the named
+C<< $variable >> to the values encoded in the C<< $filter >> (a
+L<Bloom::Filter|Bloom::Filter> object).
+
+=cut
+
+sub add_bloom {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $var		= shift;
+	my $bloom	= shift;
+	
+	my $pattern	= $self->pattern;
+	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom');
+	my $literal	= RDF::Query::Node::Literal->new( encode_base64(freeze($bloom)) );
+	my $expr	= RDF::Query::Algebra::Function->new( $iri, $literal );
+	my $filter	= RDF::Query::Algebra::Filter->new( $expr, $pattern );
+	return $class->new( $self->endpoint, $filter );
 }
 
 =item C<< sse >>
@@ -221,10 +250,19 @@ sub execute {
 		throw RDF::Query::Error::QueryPatternError ( -text => "Can't use nested SERVICE graphs" );
 	}
 
-	my $context			= $self->endpoint;
-	my $named_triples	= $self->pattern;
+	my $endpoint	= $self->endpoint;
+	my $pattern		= $self->pattern;
 	
-	throw RDF::Query::Error -text => "SERVICE queries not yet implemented";
+	my $sparql		= sprintf("SELECT DISTINCT * WHERE %s", $pattern->as_sparql( {}, '' ));
+	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
+	my $ua			= $query->useragent;
+	my $resp		= $ua->get( $url );
+	unless ($resp->is_success) {
+		throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+	}
+	my $content		= $resp->content;
+	my $stream		= RDF::Trine::Iterator->from_string( $content );
+	return $stream;
 }
 
 1;

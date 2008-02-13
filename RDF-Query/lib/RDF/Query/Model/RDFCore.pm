@@ -7,6 +7,7 @@ use base qw(RDF::Query::Model);
 use Carp qw(carp croak);
 
 use File::Spec;
+use LWP::UserAgent;
 use RDF::Core::Model;
 use RDF::Core::Query;
 use RDF::Core::Model::Parser;
@@ -25,8 +26,6 @@ our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 301 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	eval "use LWP::Simple ();";
-	our $LWP_SUPPORT	= ($@) ? 0 : 1;
 }
 
 ######################################################################
@@ -185,13 +184,18 @@ sub add_uri {
 	my $url		= shift;
 	my $named	= shift;
 	
-	our $LWP_SUPPORT;
-	unless ($LWP_SUPPORT) {
-		die "LWP::Simple is not available for loading external data";
-	}
-	
 	$self->set_context( $url );
-	my $rdf		= LWP::Simple::get($url);
+	
+	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
+	
+	my $resp	= $ua->get( $url );
+	unless ($resp->is_success) {
+		warn "No content available from $url: " . $resp->status_line;
+		return;
+	}
+	my $rdf	= $resp->content;
+	
 	my %options = (
 				Model		=> $self->{'model'},
 				Source		=> $rdf,

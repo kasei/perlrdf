@@ -12,7 +12,7 @@ use RDF::Trine::Parser;
 use RDF::Trine::Store::DBI;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
-use LWP::Simple qw(get);
+use LWP::UserAgent;
 use Encode;
 
 use RDF::Trine::Iterator;
@@ -218,7 +218,15 @@ sub add_uri {
 	my $named		= shift;
 	my $format		= shift || 'guess';
 	
-	my $content		= get( $uri );
+	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
+	
+	my $resp	= $ua->get( $uri );
+	unless ($resp->is_success) {
+		warn "No content available from $uri: " . $resp->status_line;
+		return;
+	}
+	my $content	= $resp->content;
 	$self->add_string( $content, $uri, $named, $format );
 }
 

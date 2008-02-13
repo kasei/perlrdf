@@ -9,7 +9,7 @@ use Carp qw(carp croak confess);
 use File::Spec;
 use RDF::Redland 1.00;
 use Data::Dumper;
-use LWP::Simple qw(get);
+use LWP::UserAgent;
 use Scalar::Util qw(blessed reftype);
 use Unicode::Normalize qw(normalize);
 use Encode;
@@ -124,7 +124,15 @@ sub add_uri {
 	my $model		= $self->{model};
 	my $parser		= RDF::Redland::Parser->new($format);
 	
-	my $data		= get( $uri );
+	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
+	
+	my $resp	= $ua->get( $uri );
+	unless ($resp->is_success) {
+		warn "No content available from $uri: " . $resp->status_line;
+		return;
+	}
+	my $data	= $resp->content;
 	$data			= decode_utf8( $data );
 	$self->add_string( $data, $uri, $named, $format );
 }

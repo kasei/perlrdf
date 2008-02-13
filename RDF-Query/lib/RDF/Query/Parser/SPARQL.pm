@@ -1481,6 +1481,7 @@ sub _BuiltInCall {
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->__consume_ws_opt;
 		$self->_eat('(');
+		$self->__consume_ws_opt;
 		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/) {
 			### one-arg functions that take an expression
 			$self->_Expression;

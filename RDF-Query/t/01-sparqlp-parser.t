@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 150;
+use Test::More tests => 151;
 
 use YAML;
 use Data::Dumper;
@@ -5207,3 +5207,68 @@ __END__
       - p
     - !!perl/array:RDF::Query::Node::Variable
       - name
+---
+- SPARQLP: BGP join SERVICE
+- |
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  SELECT *
+  FROM <http://dbpedia.org/resource/Vancouver_Island>
+  WHERE {
+  	?thing rdfs:label ?label .
+  	SERVICE <http://dbpedia.org/sparql> {
+  		?thing a <http://dbpedia.org/class/yago/Island109316454>
+  	}
+  	FILTER( LANGMATCHES( ?label, "en" ) )
+  }
+- method: SELECT
+  namespaces:
+    rdfs: http://www.w3.org/2000/01/rdf-schema#
+  sources:
+    -
+      - !!perl/array:RDF::Query::Node::Resource
+        - URI
+        - http://dbpedia.org/resource/Vancouver_Island
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Filter
+      - FILTER
+      - !!perl/array:RDF::Query::Algebra::Function
+        - FUNCTION
+        - !!perl/array:RDF::Query::Node::Resource
+          - URI
+          - sparql:langmatches
+        - !!perl/array:RDF::Query::Node::Variable
+          - label
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - en
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - thing
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/2000/01/rdf-schema#label
+            - !!perl/array:RDF::Query::Node::Variable
+              - label
+        - !!perl/array:RDF::Query::Algebra::Service
+          - SERVICE
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://dbpedia.org/sparql
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - thing
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://dbpedia.org/class/yago/Island109316454
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - thing
+    - !!perl/array:RDF::Query::Node::Variable
+      - label

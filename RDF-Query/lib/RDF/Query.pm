@@ -149,6 +149,7 @@ sub new {
 	my $parsed	= $parser->parse( $query );
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
+	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9, application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
 	my $self 	= bless( {
 					base			=> $baseuri,
 					dateparser		=> $f,
@@ -1498,7 +1499,7 @@ sub net_filter_function {
 		my $impl	= $bridge->uri_value( $obj );
 	};
 	
-	my $resp	= $self->{useragent}->get( $impl );
+	my $resp	= $self->useragent->get( $impl );
 	unless ($resp->is_success) {
 		warn "No content available from $uri: " . $resp->status_line;
 		return;
@@ -1514,7 +1515,7 @@ sub net_filter_function {
 					: File::Spec->catfile($ENV{HOME}, '.gnupg', 'pubring.gpg');
 		$gpg->gpgopts("--lock-multiple --keyring " . $keyring);
 		
-		my $sigresp	= $self->{useragent}->get( "${impl}.asc" );
+		my $sigresp	= $self->useragent->get( "${impl}.asc" );
 #		if (not $sigresp) {
 #			throw RDF::Query::Error::ExecutionError -text => "Required signature not found: ${impl}.asc\n";
 		if ($sigresp->is_success) {
@@ -2121,6 +2122,19 @@ sub bridge {
 	
 	return $bridge;
 }
+
+
+=item C<< useragent >>
+
+Returns the LWP::UserAgent object used for retrieving web content.
+
+=cut
+
+sub useragent {
+	my $self	= shift;
+	return $self->{useragent};
+}
+
 
 =item C<error ()>
 
