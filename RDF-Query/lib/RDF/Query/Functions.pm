@@ -18,6 +18,7 @@ use warnings;
 use Scalar::Util qw(blessed reftype looks_like_number);
 use RDF::Query::Error qw(:try);
 
+use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
 use Storable qw(thaw);
@@ -669,6 +670,7 @@ $RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
 	my $bloom	= (exists( $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash} ))
 				? $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}
 				: thaw( decode_base64($filter) );
+	$query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}	= $bloom;
 	
 	my $string	= $value->as_string;
 	warn "checking bloom filter for --> $string\n" if ($debug);
