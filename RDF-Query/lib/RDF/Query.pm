@@ -79,8 +79,7 @@ use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
-use RDF::Query::Parser::tSPARQL;	# XXX temporal extensions
-use RDF::Query::Parser::SPARQLP;
+use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 
@@ -132,7 +131,7 @@ sub new {
 	my %names	= (
 					rdql	=> 'RDF::Query::Parser::RDQL',
 					sparql	=> 'RDF::Query::Parser::SPARQL',
-					tsparql	=> 'RDF::Query::Parser::tSPARQL',
+					tsparql	=> 'RDF::Query::Parser::SPARQLP',
 					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
 				);
 	my %uris	= (

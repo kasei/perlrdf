@@ -36,7 +36,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $graph, $pattern )>
+=item C<new ( $interval, $pattern, $time_triples )>
 
 Returns a new TimeGraph structure.
 

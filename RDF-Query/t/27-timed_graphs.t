@@ -143,7 +143,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $data = $stream->next) {
-			my $interval	= $data->[0];
+			my $interval	= $data->{interval};
 			ok( $query->bridge->is_node( $interval ), 'time-intervals' );
 			like( $query->bridge->uri_value( $interval ), qr'http://kasei.us/e/time/all', 'time-intervals: uri' );
 			$count++;
@@ -152,7 +152,7 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'tsparql' );
+		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'sparqlp' );
 			# select all the email addresses ever held by the person
 			# who held a given email address on 2007-01-01
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -173,7 +173,7 @@ END
 	}
 
 	{
-		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'tsparql' );
+		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'sparqlp' );
 			# select all people who had email addresses on 2002-01-01
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX t: <http://www.w3.org/2006/09/time#>
@@ -194,7 +194,7 @@ END
 	}
 
 	{
-		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'tsparql' );
+		my $query	= new RDF::Query::Temporal ( <<'END', undef, undef, 'sparqlp' );
 			# select all the email addresses ever held by the person
 			# who held a given email address on 2006-01-01
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
