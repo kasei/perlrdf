@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use URI::file;
-use Test::More tests => 50;
+use Test::More tests => 2;
 
 use Data::Dumper;
 use RDF::Trine::Node;
@@ -17,5 +17,7 @@ use RDF::Trine::Iterator::Boolean;
 	my $stream	= RDF::Trine::Iterator::Bindings->new( \@data, [qw(value)] );
 	my $mstream	= $stream->materialize;
 	my $bloom	= $mstream->bloom( 'o' );
+	ok( $bloom->check( $foaf->Person->as_string ) );
+	ok( $bloom->check( $foaf->Document->as_string ) );
 }
 
