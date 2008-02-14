@@ -1225,7 +1225,7 @@ sub _GraphNode {
 # [42] VarOrTerm ::= Var | GraphTerm
 sub _VarOrTerm_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/[$?]/));
+	return 1 if ($self->_test(qr/[\$?]/));
 	return 1 if ($self->_test(qr/[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
