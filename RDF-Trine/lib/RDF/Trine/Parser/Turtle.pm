@@ -32,6 +32,7 @@ package RDF::Trine::Parser::Turtle;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 our $VERSION	= '1.000';
 
 BEGIN {

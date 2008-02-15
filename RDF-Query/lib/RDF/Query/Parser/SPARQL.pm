@@ -32,6 +32,7 @@ package RDF::Query::Parser::SPARQL;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Parser);
 our $VERSION	= '1.000';
 

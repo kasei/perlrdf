@@ -14,6 +14,7 @@ package RDF::Query::Functions;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use Scalar::Util qw(blessed reftype looks_like_number);
 use RDF::Query::Error qw(:try);

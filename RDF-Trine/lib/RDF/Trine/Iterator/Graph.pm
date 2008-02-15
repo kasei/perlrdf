@@ -27,6 +27,7 @@ package RDF::Trine::Iterator::Graph;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use JSON;
 use List::Util qw(max);
 use Scalar::Util qw(blessed);

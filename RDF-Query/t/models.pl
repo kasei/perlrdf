@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Query;
 use File::Spec;

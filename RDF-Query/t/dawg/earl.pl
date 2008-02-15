@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'redefine';
 
 sub init_earl {
 	my $bridge	= shift;

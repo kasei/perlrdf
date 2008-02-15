@@ -39,6 +39,7 @@ package RDF::Trine::Iterator::Bindings::Materialized;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use base qw(RDF::Trine::Iterator::Bindings);
 

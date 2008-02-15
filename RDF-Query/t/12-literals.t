@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 use Test::More qw(no_plan);
 
 use_ok( 'RDF::Query' );

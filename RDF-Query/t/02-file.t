@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 use Test::More tests => 11;
 use URI::file;
 

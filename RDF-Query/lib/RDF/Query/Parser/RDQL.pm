@@ -14,6 +14,7 @@ package RDF::Query::Parser::RDQL;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Parser);
 
 use Data::Dumper;

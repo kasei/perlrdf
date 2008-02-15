@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 use URI::file;
 
 use lib qw(. t);

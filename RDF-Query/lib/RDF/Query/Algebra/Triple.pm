@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Triple;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra RDF::Trine::Statement);
 use constant DEBUG	=> 0;
 

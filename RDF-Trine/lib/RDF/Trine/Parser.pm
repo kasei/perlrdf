@@ -32,6 +32,7 @@ package RDF::Trine::Parser;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Trine::Parser::Turtle;
 

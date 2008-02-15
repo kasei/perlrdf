@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Test::Exception;
 use Scalar::Util qw(refaddr);
 

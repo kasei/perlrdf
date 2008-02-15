@@ -41,6 +41,7 @@ package RDF::Trine::Store::DBI;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use DBI;
 use Carp;

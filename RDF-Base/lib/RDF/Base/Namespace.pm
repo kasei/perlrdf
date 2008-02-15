@@ -37,6 +37,7 @@ use version; $VERSION = qv('0.0.1');
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(XML::Namespace);
 
 use Carp;

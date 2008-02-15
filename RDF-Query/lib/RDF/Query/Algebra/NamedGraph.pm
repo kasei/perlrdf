@@ -14,6 +14,7 @@ package RDF::Query::Algebra::NamedGraph;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 use constant DEBUG	=> 0;
 

@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Filter;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;

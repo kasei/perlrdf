@@ -14,6 +14,7 @@ package RDF::Trine::Node::Literal;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use RDF::Trine::Error;

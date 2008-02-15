@@ -14,6 +14,7 @@ package RDF::Trine::Node::Resource;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use URI;

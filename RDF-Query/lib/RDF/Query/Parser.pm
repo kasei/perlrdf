@@ -14,6 +14,7 @@ package RDF::Query::Parser;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Query::Node::Resource;
 use RDF::Query::Node::Literal;

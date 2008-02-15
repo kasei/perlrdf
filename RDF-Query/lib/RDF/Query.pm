@@ -57,6 +57,7 @@ package RDF::Query;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Carp qw(carp croak confess);
 
 use Data::Dumper;

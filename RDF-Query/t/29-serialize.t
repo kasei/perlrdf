@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }

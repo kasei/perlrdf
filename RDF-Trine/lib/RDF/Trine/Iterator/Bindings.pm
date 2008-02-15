@@ -28,6 +28,7 @@ package RDF::Trine::Iterator::Bindings;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 
 use JSON 2.0;

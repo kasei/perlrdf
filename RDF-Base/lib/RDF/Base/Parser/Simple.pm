@@ -34,6 +34,7 @@ use version; $VERSION = qv('0.0.1');
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use LWP::Simple qw(get);
 use Params::Coerce qw(coerce);

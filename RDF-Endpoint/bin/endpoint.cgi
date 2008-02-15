@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use lib qw(/Users/samofool/data/prog/dist/perlrdf/RDF-Endpoint/lib);
 

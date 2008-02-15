@@ -22,6 +22,7 @@ BEGIN {
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Set::Scalar;
 use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);

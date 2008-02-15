@@ -18,6 +18,7 @@ package RDF::Query::Node;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Scalar::Util qw(blessed);
 
 use RDF::Query::Node::Blank;

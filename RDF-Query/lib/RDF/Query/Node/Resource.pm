@@ -14,6 +14,7 @@ package RDF::Query::Node::Resource;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Resource);
 
 use URI;

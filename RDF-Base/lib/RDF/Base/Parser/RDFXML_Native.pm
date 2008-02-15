@@ -35,6 +35,7 @@ use version; $VERSION = qv('0.0.1');
 use utf8;
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use RDF::Base::Iterator::Statement;
 use RDF::SPARQLResults qw(smap sgrep);

@@ -31,6 +31,7 @@ use version; $VERSION = qv('0.0.1');
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use Params::Coerce;
 use Scalar::Util qw(blessed);

@@ -2,6 +2,7 @@ package RDF::Endpoint::Apache;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use CGI;
 use Apache::DBI;

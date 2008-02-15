@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'redefine';
 
 # use ExtUtils::MakeMaker;
 use inc::Module::Install;

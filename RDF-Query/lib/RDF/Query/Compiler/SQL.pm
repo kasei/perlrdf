@@ -14,6 +14,7 @@ package RDF::Query::Compiler::SQL;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Query::Error qw(:try);
 

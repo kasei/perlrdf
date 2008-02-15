@@ -2,6 +2,7 @@ use Test::More tests => 3;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;

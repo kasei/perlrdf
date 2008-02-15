@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Expr::Unary;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra::Expr);
 
 use Data::Dumper;

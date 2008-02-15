@@ -2,6 +2,7 @@ package RDF::Endpoint::CGI;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use CGI;
 use RDF::Endpoint;

@@ -2,6 +2,7 @@ package RDF::Endpoint::Server;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Endpoint;
 use base qw(HTTP::Server::Simple::CGI);

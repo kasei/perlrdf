@@ -2,6 +2,8 @@ package RDF::Endpoint;
 
 use strict;
 use warnings;
+no warnings 'redefine';
+no warnings 'redefine';
 
 our $VERSION;
 BEGIN {

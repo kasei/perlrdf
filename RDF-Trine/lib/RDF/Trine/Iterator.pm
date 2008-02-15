@@ -32,6 +32,7 @@ package RDF::Trine::Iterator;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use JSON;
 use XML::Twig;

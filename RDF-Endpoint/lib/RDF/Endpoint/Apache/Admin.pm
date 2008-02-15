@@ -2,6 +2,7 @@ package RDF::Endpoint::Apache::Admin;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Endpoint::Apache);
 
 sub run {

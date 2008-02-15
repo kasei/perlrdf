@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use lib qw(lib ../RDF-Store-DBI/lib ../RDF-SPARQLResults/lib);
 use RDF::Endpoint::Server;
 $0		= 'sparql-endpoint';

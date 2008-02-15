@@ -3,6 +3,7 @@ use Test::Exception;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 
 use DBI;

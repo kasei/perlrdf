@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'redefine';
 use Test::More;
 
 use lib qw(. t);
