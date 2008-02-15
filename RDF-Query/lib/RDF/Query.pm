@@ -855,30 +855,6 @@ my %dispatch	= (
 									return $l->literal_value;
 								}
 							},
-					'~~'	=> sub {
-								my $self	= shift;
-								my $values	= shift;
-								my $data	= shift;
-								my %args	= @_;
-								my $bridge	= $args{bridge};
-								
-								my $text	= $self->_check_constraints( $values, $data->[0], %args );
-								my $pattern	= $self->_check_constraints( $values, $data->[1], %args );
-								if (scalar(@$data) == 3) {
-									my $flags	= $self->get_value( $self->_check_constraints( $values, $data->[2], %args ), %args );
-									if ($flags !~ /^[smix]*$/) {
-										throw RDF::Query::Error::FilterEvaluationError ( -text => 'REGEX() called with unrecognized flags' );
-									}
-									$pattern	= qq[(?${flags}:$pattern)];
-								}
-								if ($bridge->is_literal($text)) {
-									$text	= $bridge->literal_value( $text );
-								} elsif (blessed($text)) {
-									throw RDF::Query::Error::TypeError ( -text => 'REGEX() called with non-string data' );
-								}
-								
-								return ($text =~ /$pattern/)
-							},
 					'=='	=> sub {
 								my $self	= shift;
 								my $values	= shift;

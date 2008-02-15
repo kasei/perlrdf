@@ -203,7 +203,7 @@ Returns a new n-ary expression structure.
 sub new_nary_expression {
 	my $self		= shift;
 	my $op			= shift;
-	my @operands	= @_[0,1];
+	my @operands	= @_;
 	return RDF::Query::Algebra::Expr::Binary->new( $op, @operands );
 }
 

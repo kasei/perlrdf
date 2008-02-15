@@ -70,24 +70,6 @@ sub as_sparql {
 }
 
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	return $class->new( $self->op, map { $_->fixup( $bridge, $base, $ns ) } $self->operands );
-}
-
-
 1;
 
 __END__

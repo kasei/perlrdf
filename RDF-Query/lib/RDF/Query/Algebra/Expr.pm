@@ -136,7 +136,13 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 	
-	return $class->new( $self->op, map { $_->fixup( $bridge, $base, $ns ) } $self->operands );
+	my @operands	= map {
+		($_->isa('RDF::Query::Algebra'))
+			? $_->fixup( $bridge, $base, $ns )
+			: $_
+	} $self->operands;
+	
+	return $class->new( $self->op, @operands );
 }
 
 1;

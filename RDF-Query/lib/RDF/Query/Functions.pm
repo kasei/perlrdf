@@ -399,7 +399,30 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 	}
 };
 
-
+$RDF::Query::functions{"sparql:regex"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	my $node	= shift;
+	my $match	= shift;
+	
+	my $text	= $query->get_value( $node, bridge => $bridge );
+	my $pattern	= $query->get_value( $match, bridge => $bridge );
+	if (@_) {
+		my $data	= shift;
+		my $flags	= $query->get_value( $data, bridge => $bridge );
+		if ($flags !~ /^[smix]*$/) {
+			throw RDF::Query::Error::FilterEvaluationError ( -text => 'REGEX() called with unrecognized flags' );
+		}
+		$pattern	= qq[(?${flags}:$pattern)];
+	}
+	if ($bridge->is_literal($text)) {
+		$text	= $bridge->literal_value( $text );
+	} elsif (blessed($text)) {
+		throw RDF::Query::Error::TypeError ( -text => 'REGEX() called with non-string data' );
+	}
+	
+	return ($text =~ /$pattern/)
+};
 
 # op:dateTime-equal
 $RDF::Query::functions{"op:dateTime-equal"}	= sub {

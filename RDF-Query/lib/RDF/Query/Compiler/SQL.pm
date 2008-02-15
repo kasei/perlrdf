@@ -596,11 +596,6 @@ sub expr2sql {
 		}
 		
 		
-		if ($op eq '~~') {
-			$op	= 'FUNCTION';
-			unshift(@args, '~~');
-		}
-		
 		if ($op =~ m#^(=|==|!=|[<>]=?|[*]|/|[-+])$#) {
 			
 			$op	= '<>' if ($op eq '!=');
@@ -865,7 +860,7 @@ sub get_function {
 
 our %functions;
 
-$functions{ '~~' }	= sub {
+$functions{ 'sparql:regex' }	= sub {
 	my $self	= shift;
 	my $parsed_vars	= shift;
 	my $level	= shift || \do{ my $a = 0 };
