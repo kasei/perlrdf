@@ -28,21 +28,29 @@ use_ok( 'RDF::Query' );
 	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name", 'sparql to sparql' );
 }
 
-eval {
-	my $sparql	= 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person; foaf:homepage ?homepage . FILTER( REGEX( STR(?homepage), "^http://www.rpi.edu/.+") ) } ORDER BY ?p';
+{
+	my $sparql	= 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person ; foaf:homepage ?homepage . FILTER( REGEX( STR(?homepage), "^http://www.rpi.edu/.+") ) }';
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage FILTER REGEX(STR( ?homepage ), "^http://www.rpi.edu/.+") } ORDER BY ?p', 'sparql to sparql with filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER REGEX( STR( ?homepage ), "^http://www.rpi.edu/.+" ) . }', 'sparql to sparql with regex filter' );
 };
 
-eval {
+{
+	my $sparql	= "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person; foaf:name ?name . FILTER( ?name < 'Greg' ) }";
+	my $query	= new RDF::Query ( $sparql );
+	my $string	= $query->as_sparql;
+	$string		=~ s/\s+/ /gms;
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER(?name < "Greg") . }', 'sparql to sparql with less-than filter' );
+}
+
+{
 	my $sparql	= "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person; foaf:name ?name } ORDER BY ?name LIMIT 5 OFFSET 5";
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
 	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name LIMIT 5 OFFSET 5", 'sparql to sparql with slice' );
-};
+}
 
 {
 	my $query	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
@@ -172,8 +180,8 @@ END
 			FILTER( ?name < "Greg" )
 		}
 END
-	my $sse		= eval { $query->sse };
-	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter <' );
+	my $sse		= $query->sse;
+	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter <' );
 }
 
 {
@@ -186,8 +194,8 @@ END
 			FILTER( REGEX(?name, "Greg") )
 		}
 END
-	my $sse		= eval { $query->sse };
-	is( $sse, '(filter (regex ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter regex' );
+	my $sse		= $query->sse;
+	is( $sse, '(filter (sparql:regex ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter regex' );
 }
 
 __END__

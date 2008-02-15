@@ -422,7 +422,7 @@ sub pattern {
 	my $self	= shift;
 	my $parsed	= $self->parsed;
 	my @triples	= @{ $parsed->{triples} };
-	if (scalar(@triples) == 1 and $triples[0]->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+	if (scalar(@triples) == 1 and ($triples[0]->isa('RDF::Query::Algebra::GroupGraphPattern') or $triples[0]->isa('RDF::Query::Algebra::Filter'))) {
 		my $ggp		= $triples[0];
 		return $ggp;
 	} else {

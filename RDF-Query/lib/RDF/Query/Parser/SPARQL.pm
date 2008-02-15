@@ -1296,7 +1296,7 @@ sub _ConditionalOrExpression {
 	}
 	
 	if (scalar(@list) > 1) {
-		$self->_add_stack( RDF::Query::Algebra::Expr->new( '||', @list ) );
+		$self->_add_stack( $self->new_nary_expression( '||', @list ) );
 	} else {
 		$self->_add_stack( @list );
 	}
@@ -1321,7 +1321,7 @@ sub _ConditionalAndExpression {
 	}
 	
 	if (scalar(@list) > 1) {
-		$self->_add_stack( RDF::Query::Algebra::Expr->new( '&&', @list ) );
+		$self->_add_stack( $self->new_nary_expression( '&&', @list ) );
 	} else {
 		$self->_add_stack( @list );
 	}
@@ -1346,7 +1346,7 @@ sub _RelationalExpression {
 		$self->__consume_ws_opt;
 		$self->_NumericExpression;
 		push(@list, splice(@{ $self->{stack} }));
-		$self->_add_stack( RDF::Query::Algebra::Expr->new( $op, @list ) );
+		$self->_add_stack( $self->new_binary_expression( $op, @list ) );
 	}
 }
 
@@ -1368,7 +1368,7 @@ sub _AdditiveExpression {
 		$self->__consume_ws_opt;
 		$self->_MultiplicativeExpression;
 		my ($rhs)	= splice(@{ $self->{stack} });
-		$expr	= RDF::Query::Algebra::Expr->new( $op, $expr, $rhs );
+		$expr	= $self->new_binary_expression( $op, $expr, $rhs );
 	}
 	$self->_add_stack( $expr );
 }
@@ -1385,7 +1385,7 @@ sub _MultiplicativeExpression {
 		$self->__consume_ws_opt;
 		$self->_UnaryExpression;
 		my ($rhs)	= splice(@{ $self->{stack} });
-		$expr	= RDF::Query::Algebra::Expr->new( $op, $expr, $rhs );
+		$expr	= $self->new_binary_expression( $op, $expr, $rhs );
 	}
 	$self->_add_stack( $expr );
 }
@@ -1398,7 +1398,7 @@ sub _UnaryExpression {
 		$self->__consume_ws_opt;
 		$self->_PrimaryExpression;
 		my ($expr)	= splice(@{ $self->{stack} });
-		my $not		= RDF::Query::Algebra::Expr->new( '!', $expr );
+		my $not		= $self->new_unary_expression( '!', $expr );
 		$self->_add_stack( $not );
 	} elsif ($self->_test('+')) {
 		$self->_eat('+');
@@ -1417,7 +1417,7 @@ sub _UnaryExpression {
 			$self->_add_stack( $expr );
 		} else {
 			my $int		= RDF::Query::Node::Resource->new( $xsd->integer->uri_value );
-			my $neg		= RDF::Query::Algebra::Expr->new( '*', $self->new_literal('-1', undef, $int), $expr );
+			my $neg		= $self->new_binary_expression( '*', $self->new_literal('-1', undef, $int), $expr );
 			$self->_add_stack( $neg );
 		}
 	} else {
@@ -1532,7 +1532,9 @@ sub _RegexExpression {
 	
 	$self->__consume_ws_opt;
 	$self->_eat(')');
-	$self->_add_stack( RDF::Query::Algebra::Expr->new( '~~', @args ) );
+	
+	my $iri		= RDF::Query::Node::Resource->new( 'sparql:regex' );
+	$self->_add_stack( RDF::Query::Algebra::Function->new( $iri, @args ) );
 }
 
 # [59] IRIrefOrFunction ::= IRIref ArgList?

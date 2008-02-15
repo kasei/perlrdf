@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Expr
+# RDF::Query::Algebra::Expr::Binary
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,15 +6,15 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Expr - Algebra class for Expr expressions
+RDF::Query::Algebra::Expr::Binary - Algebra class for binary expressions
 
 =cut
 
-package RDF::Query::Algebra::Expr;
+package RDF::Query::Algebra::Expr::Binary;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Algebra);
+use base qw(RDF::Query::Algebra::Expr);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -37,53 +37,6 @@ BEGIN {
 
 =cut
 
-=item C<new ( $op, @operands )>
-
-Returns a new Expr structure.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	my $op		= shift;
-	my @operands	= @_;
-	return bless( [ $op, @operands ], $class );
-}
-
-=item C<< construct_args >>
-
-Returns a list of arguments that, passed to this class' constructor,
-will produce a clone of this algebra pattern.
-
-=cut
-
-sub construct_args {
-	my $self	= shift;
-	return ($self->op, $self->operands);
-}
-
-=item C<< op >>
-
-Returns the operator of the expression.
-
-=cut
-
-sub op {
-	my $self	= shift;
-	return $self->[0];
-}
-
-=item C<< operands >>
-
-Returns a list of the operands of the expression.
-
-=cut
-
-sub operands {
-	my $self	= shift;
-	return @{ $self }[ 1 .. $#{ $self } ];
-}
-
 =item C<< sse >>
 
 Returns the SSE string for this alegbra expression.
@@ -95,32 +48,26 @@ sub sse {
 	my $context	= shift;
 	
 	return sprintf(
-		'(%s %s)',
+		'(%s %s %s)',
 		$self->op,
-		join(' ', map { $_->sse( $context ) } $self->operands),
+		map { $_->sse( $context ) } $self->operands,
 	);
 }
 
-=item C<< type >>
+=item C<< as_sparql >>
 
-Returns the type of this algebra expression.
-
-=cut
-
-sub type {
-	return 'EXPR';
-}
-
-=item C<< referenced_variables >>
-
-Returns a list of the variable names used in this algebra expression.
+Returns the SPARQL string for this alegbra expression.
 
 =cut
 
-sub referenced_variables {
+sub as_sparql {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->operands);
+	my $context	= shift;
+	my $indent	= shift;
+	my $op		= $self->op;
+	return sprintf("(%s $op %s)", map { $_->as_sparql( $context, $indent ) } $self->operands);
 }
+
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 
@@ -138,6 +85,7 @@ sub fixup {
 	
 	return $class->new( $self->op, map { $_->fixup( $bridge, $base, $ns ) } $self->operands );
 }
+
 
 1;
 
