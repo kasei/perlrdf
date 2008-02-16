@@ -14,7 +14,7 @@ recommends:
   RDF::Core: 0
 requires:
     DBI:                           0
-    DBD::SQLite                    1.14
+    DBD::SQLite:                   1.14
     Digest::MD5:                   0
     Error:                         0
     JSON:                          2
