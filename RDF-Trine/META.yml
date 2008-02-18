@@ -1,8 +1,9 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+--- #YAML:1.0
+meta-spec:
+  version: 1.3
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
 name:         RDF-Trine
-version_from: lib/RDF/Trine.pm
-installdirs:  site
+version: 0.100
 author:
   - Gregory Todd Williams <gwilliams@cpan.org>
 build_requires:
@@ -31,8 +32,11 @@ requires:
     XML::Twig:                     0
 license: perl
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+generated_by: Module::Install version 0.63
 no_index:
   directory:
     - inc
     - t
+resources:
+  homepage: http://kasei.us/code/rdf-trine/
+  Repository: http://code.google.com/p/perlrdf/source
