@@ -14,10 +14,10 @@
 
         doap:Version    [
                         doap:revision     "0.100" ;
-                        doap:created      "2008-02-11" ;
+                        doap:created      "2008-02-18" ;
                         ];
         asc:changes     [
-                        asc:addition      "First public release." ;
+                        asc:addition      "Initial public release." ;
                         ] .
 
 

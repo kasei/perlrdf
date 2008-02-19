@@ -37,6 +37,7 @@ Makefile.PL
 META.yml
 Changes.ttl
 SIGNATURE
+README
 t/00.load.t
 t/data/rdfxml/bad-00.nt
 t/data/rdfxml/bad-00.rdf

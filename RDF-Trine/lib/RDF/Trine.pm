@@ -29,6 +29,10 @@ This document describes RDF::Trine version 0.0.1
 
 package RDF::Trine;
 
+use strict;
+use warnings;
+no warnings 'redefine';
+
 BEGIN {
 	our $VERSION	= '0.100';
 }
