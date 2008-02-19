@@ -44,6 +44,7 @@ use RDF::Trine::Namespace;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
+use RDF::Trine::Model;
 
 
 1; # Magic true value required at end of module
