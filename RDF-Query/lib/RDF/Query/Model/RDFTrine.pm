@@ -7,16 +7,16 @@ use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak confess);
 
-use RDF::Query::Error (':try');
 use File::Spec;
-use RDF::Trine::Parser;
-use RDF::Trine::Store::DBI;
 use Data::Dumper;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use LWP::Simple qw(get);
 use Encode;
 
+use RDF::Trine::Model;
+use RDF::Trine::Parser;
 use RDF::Trine::Iterator;
+use RDF::Trine::Store::DBI;
 
 ######################################################################
 
@@ -39,7 +39,8 @@ Returns a new bridge object for the specified C<$model>.
 =cut
 
 sub new {
-	my $class	= shift;
+	my $proto	= shift;
+	my $class	= ref($proto) || $proto;
 	my $model	= shift;
 	my %args	= @_;
 	
@@ -225,7 +226,7 @@ sub add_uri {
 
 =item C<add_string ( $data, $base_uri, $named, $format )>
 
-Added the contents of C<$data> to the model. If C<$named> is true,
+Adds the contents of C<$data> to the model. If C<$named> is true,
 the data is added to the model using C<$base_uri> as the named context.
 
 =cut
@@ -237,25 +238,25 @@ sub add_string {
 	my $named	= shift;
 	my $format	= shift || 'guess';
 	
-	if (not $named) {
-		$self->ignore_contexts();
-	}
+	my $graph	= RDF::Query::Node::Resource->new( $base );
+	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
 	
-	$self->set_context( $base );
-	my $parser	= RDF::Trine::Parser->new('turtle');
-	try {
-		$parser->parse_into_model( $base, $data, $self );
-	} catch RDF::Trine::Parser::Error with {
+	if ($data =~ /<?xml/s) {
 		require RDF::Redland;
 		my $uri		= RDF::Redland::URI->new( $base );
 		my $parser	= RDF::Redland::Parser->new($format);
 		my $stream	= $parser->parse_string_as_stream($data, $uri);
 		while ($stream and !$stream->end) {
 			my $statement	= $stream->current;
-			my $stmt		= RDF::Query::Algebra::Triple->from_redland( $statement );
-			$self->add_statement( $stmt );
+			my $stmt		= ($named)
+							? RDF::Query::Algebra::Quad->from_redland( $statement, $graph )
+							: RDF::Query::Algebra::Triple->from_redland( $statement );
+			$model->add_statement( $stmt );
 			$stream->next;
 		}
+	} else {
+		my $parser	= RDF::Trine::Parser->new('turtle');
+		$parser->parse_into_model( $base, $data, $model );
 	}
 }
 
@@ -317,7 +318,7 @@ sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	
-	my $model	= $self->{'model'};
+	my $model	= $self->model;
 	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } @triple );
 	return $stream;
 }
@@ -334,16 +335,9 @@ sub _get_named_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
-	if ($context->isa('RDF::Trine::Node::Resource')) {
-		if ($self->equals( $context, $self->get_context)) {
-			Carp::cluck( Dumper(@triple, $context) );	# XXX
-		} else {
-			return RDF::Trine::Iterator::Graph->new( [], bridge => $self );
-		}
-	}
 	
-	my $model	= $self->{'model'};
-	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } @triple );
+	my $model	= $self->_named_graphs_model;
+	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } (@triple, $context) );
 	return $stream;
 }
 
@@ -373,51 +367,6 @@ sub remove_statement {
 	$model->remove_statement( $stmt );
 }
 
-=item C<get_context ($stream)>
-
-Returns the context node of the last statement retrieved from the specified
-C<$stream>. The stream object, in turn, calls the closure (that was passed to
-the stream constructor in C<get_statements>) with the argument 'context'.
-
-=cut
-
-sub get_context {
-	my $self	= shift;
-	if (exists($self->{context})) {
-		return $self->new_resource( $self->{context} );
-	} else {
-		return;
-	}
-}
-
-=item C<< set_context ( $url ) >>
-
-Sets the context of triples in this model.
-
-=cut
-
-sub set_context {
-	my $self	= shift;
-	my $name	= shift;
-	if (exists($self->{context}) and not($self->{ignore_contexts})) {
-		Carp::confess "RDF::Trine::Store::DBI models can only represent a single context" unless ($self->{context} eq $name);
-	}
-	$self->{context}	= $name;
-}
-
-=begin private
-
-=item C<< ignore_contexts >>
-
-=end private
-
-=cut
-
-sub ignore_contexts {
-	my $self	= shift;
-	$self->{ignore_contexts}	= 1;
-}
-
 =item C<supports ($feature)>
 
 Returns true if the underlying model supports the named C<$feature>.
@@ -433,6 +382,9 @@ Possible features include:
 sub supports {
 	my $self	= shift;
 	my $feature	= shift;
+	return 1 if ($feature eq 'temp_model');
+	return 1 if ($feature eq 'named_graph');
+	return 1 if ($feature eq 'named_graphs');
 	return 1 if ($feature eq 'xml');
 	return 0;
 }
@@ -457,16 +409,22 @@ sub unify_bgp {
 	my $context	= shift;
 	my %args	= @_;
 	
-	if ($context and $context->isa('RDF::Trine::Node::Resource')) {
-		unless ($self->equals( $context, $self->get_context)) {
-			return RDF::Trine::Iterator::Bindings->new( [], [], bridge => $self );
-		}
+	my $pattern	= $bgp->clone;
+	my @triples	= $pattern->triples;
+	
+	if ($RDF::Trine::Store::DBI::debug) {
+		warn Dumper(\@triples);
+		warn $self->{named_graphs};
 	}
 	
-	my $pattern	= $bgp->clone;
-	my $model	= $self->model;
+	my $model	= (@triples and $triples[0]->isa('RDF::Trine::Statement::Quad'))
+				? $self->_named_graphs_model
+				: $self->model;
 	foreach my $triple ($pattern->triples) {
-		foreach my $method (qw(subject predicate object)) {
+		my @posmap	= ($triple->isa('RDF::Trine::Statement::Quad'))
+					? qw(subject predicate object context)
+					: qw(subject predicate object);
+		foreach my $method (@posmap) {
 			my $node	= $triple->$method();
 			if ($node->isa('RDF::Trine::Node::Blank')) {
 				my $var	= RDF::Trine::Node::Variable->new( '__' . $node->blank_identifier );
@@ -484,8 +442,25 @@ sub unify_bgp {
 		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trine::Node::Variable') } @$o ] );
 	}
 	
+	if ($RDF::Trine::Store::DBI::debug) {
+		warn "unifying with store: " . refaddr( $model->_store ) . "\n";
+		$model->_debug;
+	}
 	return $model->get_pattern( $pattern, undef, @args );
 }
+
+sub _named_graphs_model {
+	my $self	= shift;
+	if ($self->{named_graphs}) {
+		return $self->{named_graphs};
+	} else {
+		my $store	= RDF::Trine::Store::DBI->temporary_store();
+		my $model	= RDF::Trine::Model->new( $store );
+		$self->{named_graphs}	= $model;
+		return $model;
+	}
+}
+
 
 1;
 

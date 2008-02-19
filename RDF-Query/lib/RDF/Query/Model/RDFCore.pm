@@ -191,10 +191,12 @@ sub add_uri {
 		die "LWP::Simple is not available for loading external data";
 	}
 	
-	$self->set_context( $url );
 	my $rdf		= LWP::Simple::get($url);
+	my $model	= ($named)
+				? $self->_named_graph_models( $url )
+				: $self->model;
 	my %options = (
-				Model		=> $self->{'model'},
+				Model		=> $model,
 				Source		=> $rdf,
 				SourceType	=> 'string',
 				BaseURI		=> $url,
@@ -218,9 +220,11 @@ sub add_string {
 	my $named	= shift;
 	
 	my $data	= normalize( 'C', $_data );
-	$self->set_context( $uri );
+	my $model	= ($named)
+				? $self->_named_graph_models( $uri )
+				: $self->model;
 	my %options = (
-				Model		=> $self->{'model'},
+				Model		=> $model,
 				Source		=> $data,
 				SourceType	=> 'string',
 				BNodePrefix	=> "genid" . $self->{counter}++ . 'r',
@@ -228,50 +232,6 @@ sub add_string {
 	$options{ BaseURI }	= $uri if ($uri);
 	my $parser	= new RDF::Core::Model::Parser (%options);
 	$parser->parse;
-}
-
-=item C<< set_context ( $url ) >>
-
-Sets the context of triples in this model.
-
-=cut
-
-sub set_context {
-	my $self	= shift;
-	my $name	= shift;
-	if (exists($self->{context}) and not($self->{ignore_contexts})) {
-		Carp::confess "RDF::Core models can only represent a single context" unless ($self->{context} eq $name);
-	}
-	$self->{context}	= $name;
-}
-
-=begin private
-
-=item C<< ignore_contexts >>
-
-=end private
-
-=cut
-
-sub ignore_contexts {
-	my $self	= shift;
-	$self->{ignore_contexts}	= 1;
-}
-
-=item C<< get_context () >>
-
-If the triples in this model are named, returns the resource object representing
-the context. Otherwise returns undef.
-
-=cut
-
-sub get_context {
-	my $self	= shift;
-	if (exists($self->{context})) {
-		return $self->new_resource( $self->{context} );
-	} else {
-		return;
-	}
 }
 
 =item C<statement_method_map ()>
@@ -296,17 +256,8 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
-	my $context	= shift;
 	
 	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
-	
-	if ($context) {
-		if ($self->equals( $context, $self->get_context)) {
-			# 
-		} else {
-			return RDF::Trine::Iterator::Graph->new( sub {undef}, bridge => $self );
-		}
-	}
 	
 	my $enum	= $self->{'model'}->getStmts( @triple );
 	my $stmt	= $enum->getNext;
@@ -326,14 +277,92 @@ sub _get_statements {
 		foreach my $n ($rs, $rp, $ro) {
 			push(@nodes, _cast_to_trine( $n ));
 		}
-		my $st	= ($context)
-				? RDF::Trine::Statement->new( @nodes )
-				: RDF::Trine::Statement::Quad->new( @nodes, $context );
+		my $st	= RDF::Query::Algebra::Triple->new( @nodes );
 		return $st;
 	};
 	
 	return RDF::Trine::Iterator::Graph->new( $stream, bridge => $self );
 }
+
+=item C<< _get_named_statements ( $subject, $predicate, $object, $context ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate, object and context. Any of the arguments may be undef to match
+any value.
+
+=cut
+
+sub _get_named_statements {
+	my $self	= shift;
+	my @triple	= splice(@_, 0, 3);
+	my $context	= shift;
+	
+	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
+	
+	if (not defined($context) or $context->isa('RDF::Query::Node::Variable')) {
+		my $nstream;
+		my %models	= $self->_named_graph_models;
+		foreach my $uri (keys %models) {
+			my $c	= RDF::Query::Node::Resource->new( $uri );
+			my $model	= $models{ $uri };
+			my $enum	= $model->getStmts( @triple );
+			my $stmt	= $enum->getNext;
+			my $finished	= 0;
+			my $stream	= sub {
+				$finished	= 1 if (@_ and $_[0] eq 'close');
+				$finished	= 1 unless defined($stmt);
+				return undef if ($finished);
+				
+				my $rstmt	= $stmt;
+				$stmt	= $enum->getNext;
+				
+				my $rs		= $rstmt->getSubject;
+				my $rp		= $rstmt->getPredicate;
+				my $ro		= $rstmt->getObject;
+				my @nodes;
+				foreach my $n ($rs, $rp, $ro) {
+					push(@nodes, _cast_to_trine( $n ));
+				}
+				my $st	= RDF::Query::Algebra::Quad->new( @nodes, $c );
+				return $st;
+			};
+			
+			my $iter	= RDF::Trine::Iterator::Graph->new( $stream, bridge => $self );
+			if ($nstream) {
+				$nstream	= $nstream->concat( $iter );
+			} else {
+				$nstream	= $iter;
+			}
+		}
+		return $nstream;
+	} else {
+		my $model	= $self->_named_graph_models( $context->uri_value );
+		my $enum	= $model->getStmts( @triple );
+		my $stmt	= $enum->getNext;
+		my $finished	= 0;
+		my $stream	= sub {
+			$finished	= 1 if (@_ and $_[0] eq 'close');
+			$finished	= 1 unless defined($stmt);
+			return undef if ($finished);
+			
+			my $rstmt	= $stmt;
+			$stmt	= $enum->getNext;
+			
+			my $rs		= $rstmt->getSubject;
+			my $rp		= $rstmt->getPredicate;
+			my $ro		= $rstmt->getObject;
+			my @nodes;
+			foreach my $n ($rs, $rp, $ro) {
+				push(@nodes, _cast_to_trine( $n ));
+			}
+			my $st	= RDF::Query::Algebra::Quad->new( @nodes, $context );
+			return $st;
+		};
+		
+		return RDF::Trine::Iterator::Graph->new( $stream, bridge => $self );
+	}
+}
+
 
 sub _cast_to_rdfcore {
 	my $node	= shift;
@@ -438,6 +467,24 @@ sub as_xml {
 	$serializer->serialize;
 	return $xml;
 }
+
+sub _named_graph_models {
+	my $self	= shift;
+	if (@_) {
+		my $graph	= shift;
+		if ($self->{named_graphs}{$graph}) {
+			return $self->{named_graphs}{$graph};
+		} else {
+			my $storage	= new RDF::Core::Storage::Memory;
+			my $model	= new RDF::Core::Model (Storage => $storage);
+			$self->{named_graphs}{$graph}	= $model;
+			return $model;
+		}
+	} else {
+		return %{ $self->{named_graphs} };
+	}
+}
+
 
 1;
 

@@ -136,6 +136,15 @@ sub _store {
 	my $self	= shift;
 	return $self->{store};
 }
+
+sub _debug {
+	my $self	= shift;
+	my $stream	= $self->as_stream;
+	while (my $s = $stream->next) {
+		warn $s->as_string;
+	}
+}
+
 1;
 
 __END__

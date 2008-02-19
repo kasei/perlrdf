@@ -48,7 +48,7 @@ use Carp;
 use Error;
 use DBI;
 use File::Temp;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
@@ -105,6 +105,8 @@ sub new {
 		statements_table_prefix	=> 'Statements',
 		%args
 	}, $class );
+	
+	return $self;
 }
 
 =item C<< temporary_store >>
@@ -288,28 +290,35 @@ sub add_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $context	= shift;
+	
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
 		$self->_add_node( $n );
 	}
-
-	my $cid		= do {
-		if ($context) {
-			$self->_add_node( $context );
-			$self->_mysql_node_hash( $context );
-		} else {
-			0
-		}
-	};
+	
+	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+		$context	= $stmt->context;
+	}
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
+	unless ($stmt->isa('RDF::Trine::Statement::Quad')) {
+		my $cid		= do {
+			if ($context) {
+				$self->_add_node( $context );
+				$self->_mysql_node_hash( $context );
+			} else {
+				0
+			}
+		};
+		push(@values, $cid);
+	}
 	my $sql	= "SELECT 1 FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?";
 	my $sth	= $dbh->prepare( $sql );
-	$sth->execute( @values, $cid );
+	$sth->execute( @values );
 	unless ($sth->fetch) {
-		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values, $cid );
+		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values );
 		my $sth		= $dbh->prepare( $sql );
 		$sth->execute();
 	}
@@ -373,6 +382,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
+	Carp::confess unless (blessed($node));
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -470,11 +480,18 @@ for the column (values for Literals, URIs, and Blank Nodes).
 sub variable_columns {
 	my $self	= shift;
 	my $var		= shift;
+	my $context	= shift;
 	
 	### ORDERING of these is important to enforce the correct sorting of results
 	### based on the SPARQL spec. Bnodes < IRIs < Literals, but since NULLs sort
 	### higher than other values, the list needs to be reversed.
-	return map { "${var}_$_" } (qw(Value URI Name));
+	my $r	= $context->{restrict}{$var};
+	
+	my @cols;
+	push(@cols, 'Value') unless ($r->{literal});
+	push(@cols, 'URI') unless ($r->{resource});
+	push(@cols, 'Name') unless ($r->{blank});
+	return map { "${var}_$_" } @cols;
 }
 
 =item C<< add_variable_values_joins >>
@@ -630,7 +647,7 @@ sub _sql_from_context {
 		my @sort;
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
 			if (exists $vars->{ $col }) {
-				push(@sort, map { "$_ $dir" } $self->variable_columns( $col ));
+				push(@sort, map { "$_ $dir" } $self->variable_columns( $col, $context ));
 			}
 		}
 		if (@sort) {
@@ -709,11 +726,11 @@ sub _sql_for_expr {
 }
 
 {
-	my @posmap		= qw(subject predicate object);
 	my %restrictions	= (
 		subject		=> ['literal'],
 		predicate	=> [qw(literal blank)],
 		object		=> [],
+		context		=> [],
 	);
 sub _sql_for_triple {
 	my $self	= shift;
@@ -722,7 +739,10 @@ sub _sql_for_triple {
 	my $ctx		= shift;
 	my $context	= shift;
 	
-	my ($s,$p,$o)	= map { $triple->$_() } @posmap;
+	my $quad		= $triple->isa('RDF::Trine::Statement::Quad');
+	my @posmap	= ($quad)
+				? qw(subject predicate object context)
+				: qw(subject predicate object);
 	my $table		= "s" . _next_alias($context);
 	my $stable		= _statements_table($context);
 	my $level		= _get_level( $context );
@@ -737,10 +757,13 @@ sub _sql_for_triple {
 		}
 		$self->_add_sql_node_clause( $col, $node, $context );
 	}
-	if (defined($ctx)) {
-		$self->_add_sql_node_clause( "${table}.Context", $ctx, $context );
-	} else {
-		$self->_add_sql_node_clause( "${table}.Context", RDF::Trine::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
+	
+	unless ($quad) {
+		if (defined($ctx)) {
+			$self->_add_sql_node_clause( "${table}.Context", $ctx, $context );
+		} else {
+			$self->_add_sql_node_clause( "${table}.Context", RDF::Trine::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
+		}
 	}
 }}
 

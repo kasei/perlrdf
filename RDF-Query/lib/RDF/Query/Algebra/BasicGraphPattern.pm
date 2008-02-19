@@ -224,7 +224,7 @@ sub execute {
 		my (@triples)	= $self->triples;
 		my @streams;
 		foreach my $triple (@triples) {
-			Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Query::Algebra::Triple'));
+			Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
 			my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
 			push(@streams, $stream);
 		}

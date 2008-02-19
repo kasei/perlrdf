@@ -8,13 +8,13 @@ use base qw(RDF::Query::Model);
 use Carp qw(carp croak confess);
 
 use File::Spec;
-use RDF::Redland 1.00;
 use Data::Dumper;
+use Scalar::Util qw(blessed reftype refaddr);
 use LWP::Simple qw(get);
-use Scalar::Util qw(blessed reftype);
 use Unicode::Normalize qw(normalize);
 use Encode;
 
+use RDF::Redland 1.00;
 use RDF::Trine::Iterator;
 use RDF::Trine::Statement::Quad;
 
@@ -117,22 +117,19 @@ named context.
 =cut
 
 sub add_uri {
-	my $self	= shift;
-	my $uri		= shift;
-	my $named	= shift;
-	my $format	= shift || 'guess';
+	my $self		= shift;
+	my $uri			= shift;
+	my $named		= shift;
+	my $format		= shift || 'guess';
 	
-	my $model		= $self->{model};
-	my $parser		= RDF::Redland::Parser->new($format);
-	
-	my $data		= get( $uri );
-	$data			= decode_utf8( $data );
-	$self->add_string( $data, $uri, $named, $format );
+	my $content		= get( $uri );
+	$content		= decode_utf8( $content );
+	$self->add_string( $content, $uri, $named, $format );
 }
 
 =item C<add_string ( $data, $base_uri, $named, $format )>
 
-Addsd the contents of C<$data> to the model. If C<$named> is true,
+Adds the contents of C<$data> to the model. If C<$named> is true,
 the data is added to the model using C<$base_uri> as the named context.
 
 =cut
@@ -140,14 +137,16 @@ the data is added to the model using C<$base_uri> as the named context.
 sub add_string {
 	my $self	= shift;
 	my $_data	= shift;
-	my $uri		= shift;
+	my $base	= shift;
 	my $named	= shift;
 	my $format	= shift || 'guess';
 	
+	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
+	
 	my $data		= normalize( 'C', $_data );
-	my $model		= $self->{model};
+	
 	my $parser		= RDF::Redland::Parser->new($format);
-	my $redlanduri	= RDF::Redland::URI->new( $uri );
+	my $redlanduri	= RDF::Redland::URI->new( $base );
 	
 	if ($named) {
 		my $stream		= $parser->parse_string_as_stream($data, $redlanduri);
@@ -214,98 +213,67 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
-	my $context	= shift;
+	my $model	= $self->model;
 	
 	@triple		= map { _cast_to_redland( $_ ) } @triple;
-	
-#	warn "get_statements: <<" . join(', ', map { ref($_) ? $_->as_string : 'undef' } (@triple)) . ">> [" . (blessed($context) ? $context->as_string : '') . "]";
-	
-	my @defs	= grep defined, @triple;
-	my $model	= $self->{'model'};
 	my $stmt	= RDF::Redland::Statement->new( @triple );
+	my @defs	= grep defined, @triple;
 	my $stream;
 	
 #	warn "GETTING " . $stmt->as_string if ($RDF::Query::debug);
 	
 	my %args	= ( bridge => $self );
 	
-	if ($context) {
-		my $context	= _cast_to_redland( $context );
-		my $iter	= $model->find_statements( $stmt, $context );
-		$args{ context }	= $context;
-		$args{ named }		= 1;
-
+	if (scalar(@defs) == 2) {
+		my @imethods	= qw(sources_iterator arcs_iterator targets_iterator);
+		my @smethods	= qw(subject predicate object);
+		my ($imethod, $smethod);
+		foreach my $i (0 .. 2) {
+			if (not defined $triple[ $i ]) {
+				$imethod	= $imethods[ $i ];
+				$smethod	= $smethods[ $i ];
+				last;
+			}
+		}
+		my $iter	= $model->$imethod( @defs );
 		my $finished	= 0;
 		$stream	= sub {
 			$finished	= 1 if (@_ and $_[0] eq 'close');
 			return undef if ($finished);
-			if (@_ and $_[0] eq 'context') {
-				return $context;
-			} elsif (not $iter) {
+			if (not $iter) {
 				return undef;
 			} elsif ($iter->end) {
 				$iter	= undef;
 				return undef;
 			} else {
-				my $ret	= $iter->current;
+				my $ret		= $iter->current;
+				my $context	= $iter->context;
 				$iter->next;
-				my $ctx	= blessed($context) ? $context->as_string : '';
-#				warn ">>>>> " . $ret->as_string . "\t<$ctx>\n" if (blessed($ret));	# XXX
-				return $ret;
+				my $s		= $stmt->clone;
+				$s->$smethod( $ret );
+				return ($s, $context);
 			}
 		};
 	} else {
-		if (scalar(@defs) == 2) {
-			my @imethods	= qw(sources_iterator arcs_iterator targets_iterator);
-			my @smethods	= qw(subject predicate object);
-			my ($imethod, $smethod);
-			foreach my $i (0 .. 2) {
-				if (not defined $triple[ $i ]) {
-					$imethod	= $imethods[ $i ];
-					$smethod	= $smethods[ $i ];
-					last;
-				}
+		my $iter	= $model->find_statements( $stmt );
+		warn "iterator: $iter (" . $stmt->as_string . ')' if (0);
+		my $finished	= 0;
+		$stream	= sub {
+			$finished	= 1 if (@_ and $_[0] eq 'close');
+			return undef if ($finished);
+			no warnings 'uninitialized';
+			if (not $iter) {
+				return undef;
+			} elsif ($iter->end) {
+				$iter	= undef;
+				return undef;
+			} else {
+				my $ret		= $iter->current;
+				my $context	= $iter->context;
+				$iter->next;
+				return ($ret, $context);
 			}
-			my $iter	= $model->$imethod( @defs );
-			my $finished	= 0;
-			$stream	= sub {
-				$finished	= 1 if (@_ and $_[0] eq 'close');
-				return undef if ($finished);
-				if (not $iter) {
-					return undef;
-				} elsif ($iter->end) {
-					$iter	= undef;
-					return undef;
-				} else {
-					my $ret		= $iter->current;
-					my $context	= $iter->context;
-					$iter->next;
-					my $s		= $stmt->clone;
-					$s->$smethod( $ret );
-					return ($s, $context);
-				}
-			};
-		} else {
-			my $iter	= $model->find_statements( $stmt );
-			warn "iterator: $iter (" . $stmt->as_string . ')' if (0);
-			my $finished	= 0;
-			$stream	= sub {
-				$finished	= 1 if (@_ and $_[0] eq 'close');
-				return undef if ($finished);
-				no warnings 'uninitialized';
-				if (not $iter) {
-					return undef;
-				} elsif ($iter->end) {
-					$iter	= undef;
-					return undef;
-				} else {
-					my $ret		= $iter->current;
-					my $context	= $iter->context;
-					$iter->next;
-					return ($ret, $context);
-				}
-			};
-		}
+		};
 	}
 	
 	my $iter	= sub {
@@ -315,17 +283,65 @@ sub _get_statements {
 		my $rp		= $rstmt->predicate;
 		my $ro		= $rstmt->object;
 		my @nodes;
-		foreach my $n ($rs, $rp, $ro, $context) {
+		foreach my $n ($rs, $rp, $ro) {
 			push(@nodes, _cast_to_trine( $n ));
 		}
-		my $st	= (@nodes == 3)
-				? RDF::Trine::Statement->new( @nodes )
-				: RDF::Trine::Statement::Quad->new( @nodes );
+		my $st	= RDF::Trine::Statement->new( @nodes );
 		return $st;
 	};
 	
 	return RDF::Trine::Iterator::Graph->new( $iter, %args );
 }
+
+=item C<< _get_named_statements ( $subject, $predicate, $object, $context ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate, object and context. Any of the arguments may be undef to match
+any value.
+
+=cut
+
+sub _get_named_statements {
+	my $self		= shift;
+	my @triple		= splice(@_, 0, 3);
+	Carp::confess 'no context' unless (@_);
+	my $_context	= shift;
+	my $model		= $self->_named_graphs_model;
+	
+	@triple		= map { _cast_to_redland( $_ ) } @triple;
+	my $stmt	= RDF::Redland::Statement->new( @triple );
+	
+	my $context	= _cast_to_redland( $_context );
+	my @context	= ($context) ? $context : ();
+	my $iter	= $model->find_statements( $stmt, @context );
+
+	my $finished	= 0;
+	my $stream	= sub {
+		$finished	= 1 if (@_ and $_[0] eq 'close');
+		return undef if ($finished);
+		if (not $iter) {
+			return undef;
+		} elsif ($iter->end) {
+			$iter	= undef;
+			return undef;
+		} else {
+			my $rstmt	= $iter->current;
+			my $rc		= $iter->context;
+			$iter->next;
+			my $rs		= $rstmt->subject;
+			my $rp		= $rstmt->predicate;
+			my $ro		= $rstmt->object;
+			my @nodes;
+			foreach my $n ($rs, $rp, $ro, $rc) {
+				push(@nodes, _cast_to_trine( $n ));
+			}
+			my $st	= RDF::Trine::Statement::Quad->new( @nodes );
+			return $st;
+		}
+	};
+	return RDF::Trine::Iterator::Graph->new( $stream );
+}
+
 
 sub _cast_to_redland {
 	my $node	= shift;
@@ -345,7 +361,7 @@ sub _cast_to_redland {
 
 sub _cast_to_trine {
 	my $node	= shift;
-	return unless (blessed($node));
+	return undef unless (blessed($node));
 	my $type	= $node->type;
 	if ($type == $RDF::Redland::Node::Type_Resource) {
 		return RDF::Trine::Node::Resource->new( $node->uri->as_string );
@@ -387,45 +403,6 @@ sub remove_statement {
 	my $stmt	= shift;
 	my $model	= $self->model;
 	$model->remove_statement( $stmt );
-}
-
-
-=begin private
-
-=item C<< ignore_contexts >>
-
-=end private
-
-=cut
-
-sub ignore_contexts {
-	my $self	= shift;
-	# no-op
-}
-
-
-=item C<get_context ($stream)>
-
-Returns the context node of the last statement retrieved from the specified
-C<$stream>. The stream object, in turn, calls the closure (that was passed to
-the stream constructor in C<get_statements>) with the argument 'context'.
-
-=cut
-
-sub get_context {
-	my $self	= shift;
-	my $stream	= shift;
-	my %args	= @_;
-	
-	if (0) {
-		Carp::cluck "get_context stream: ";
-		local($RDF::Query::debug)	= 2;
-		RDF::Query::_debug_closure( $stream );
-	}
-	
-	Carp::confess "Not a CODE reference: " . Dumper($stream) unless (reftype($stream) eq 'CODE');
-	my $context	= $stream->('context');
-	return $context;
 }
 
 =item C<supports ($feature)>
@@ -523,7 +500,7 @@ Returns an iterator object containing every statement in the model.
 
 sub model_as_stream {
 	my $self	= shift;
-	my $model	= $self->model;
+	my $model	= shift || $self->model;
 	return $model->as_stream;
 }
 
@@ -538,7 +515,8 @@ model) to STDERR.
 
 sub debug {
 	my $self	= shift;
-	my $stream	= $self->model_as_stream();
+	my $model	= shift || $self->model;
+	my $stream	= $self->model_as_stream( $model );
 	warn "------------------------------\n";
 	while (my $st = $stream->current) {
 		my $string	= $self->as_string( $st );
@@ -550,6 +528,19 @@ sub debug {
 	} continue { $stream->next }
 	warn "------------------------------\n";
 }
+
+sub _named_graphs_model {
+	my $self	= shift;
+	if ($self->{named_graphs}) {
+		return $self->{named_graphs};
+	} else {
+		my $storage	= RDF::Redland::Storage->new( "hashes", "test", "new='yes',hash-type='memory',contexts='yes'" );
+		my $model	= RDF::Redland::Model->new( $storage, '' );
+		$self->{named_graphs}	= $model;
+		return $model;
+	}
+}
+
 
 1;
 

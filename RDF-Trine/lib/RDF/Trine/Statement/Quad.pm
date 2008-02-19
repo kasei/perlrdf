@@ -120,6 +120,51 @@ sub clone {
 	return $class->new( $self->nodes );
 }
 
+=item C<< from_redland ( $statement, $name ) >>
+
+Given a RDF::Redland::Statement object and a graph name, returns a perl-native
+RDF::Trine::Statement::Quad object.
+
+=cut
+
+sub from_redland {
+	my $self	= shift;
+	my $rstmt	= shift;
+	my $graph	= shift;
+	
+	my $rs		= $rstmt->subject;
+	my $rp		= $rstmt->predicate;
+	my $ro		= $rstmt->object;
+	
+	my $cast	= sub {
+		my $node	= shift;
+		my $type	= $node->type;
+		if ($type == $RDF::Redland::Node::Type_Resource) {
+			return RDF::Trine::Node::Resource->new( $node->uri->as_string );
+		} elsif ($type == $RDF::Redland::Node::Type_Blank) {
+			return RDF::Trine::Node::Blank->new( $node->blank_identifier );
+		} elsif ($type == $RDF::Redland::Node::Type_Literal) {
+			my $lang	= $node->literal_value_language;
+			my $dturi	= $node->literal_datatype;
+			my $dt		= ($dturi)
+						? $dturi->as_string
+						: undef;
+			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
+		} else {
+			die;
+		}
+	};
+	
+	my @nodes;
+	foreach my $n ($rs, $rp, $ro) {
+		push(@nodes, $cast->( $n ));
+	}
+	my $st	= $self->new( @nodes, $graph );
+	return $st;
+}
+
+
+
 
 1;
 

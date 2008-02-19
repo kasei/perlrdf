@@ -388,12 +388,14 @@ sub patterns2sql {
 	
 	
 	my $triple	= shift(@$triples);
-	my @posmap	= qw(subject predicate object);
 	Carp::confess "unblessed atom: " . Dumper($triple) unless (blessed($triple));
 	
-	if ($triple->isa('RDF::Query::Algebra::Triple')) {
+	if ($triple->isa('RDF::Query::Algebra::Triple') or $triple->isa('RDF::Query::Algebra::Quad')) {
+		my $quad	= $triple->isa('RDF::Query::Algebra::Quad');
+		my @posmap	= ($quad)
+					? qw(subject predicate object context)
+					: qw(subject predicate object);
 #		$add_from->('(');
-		my ($s,$p,$o)	= map { $triple->$_() } @posmap;
 		my $table	= "s${$level}";
 		my $stable	= $self->{stable};
 		$add_from->( "${stable} ${table}" );
@@ -434,39 +436,40 @@ sub patterns2sql {
 		if ($triple->isa('RDF::Query::Algebra::Optional')) {
 			throw RDF::Query::Error::CompilationError( -text => "SQL compilation of OPTIONAL blocks is currently broken" );
 		} elsif ($triple->isa('RDF::Query::Algebra::NamedGraph')) {
-			my $graph	= $triple->graph;
-			my $pattern	= $triple->pattern;
-			if ($graph->isa('RDF::Query::Node::Variable')) {
-				my $name	= $graph->name;
-				my $context;
-				my $hook	= sub {
-								my $f	= shift;
-								if ($f =~ /^Statements/i) {
-									my $alias	= (split(/ /, $f))[1];
-									if (defined($context)) {
-										$context	=~ s/\D//;
-										$add_where->( "${alias}.Context = ${context}" );
-									} else {
-										$context	= "${alias}.Context";
-										$vars->{ $name }	= $context;
-									}
-								}
-								return $f;
-							};
-				$self->patterns2sql( [ $pattern ], $level, from_hook => $hook );
-			} else {
-				my $hash	= $self->_mysql_node_hash( $graph );
-				my $hook	= sub {
-								my $f	= shift;
-								if ($f =~ /^Statements/i) {
-									my $alias	= (split(/ /, $f))[1];
-									$hash	=~ s/\D//;
-									$add_where->( "${alias}.Context = ${hash}" );
-								}
-								return $f;
-							};
-				$self->patterns2sql( [ $pattern ], $level, from_hook => $hook );
-			}
+			$self->patterns2sql( [ $triple->pattern ], $level, %args );
+# 			my $graph	= $triple->graph;
+# 			my $pattern	= $triple->pattern;
+# 			if ($graph->isa('RDF::Query::Node::Variable')) {
+# 				my $name	= $graph->name;
+# 				my $context;
+# 				my $hook	= sub {
+# 								my $f	= shift;
+# 								if ($f =~ /^Statements/i) {
+# 									my $alias	= (split(/ /, $f))[1];
+# 									if (defined($context)) {
+# 										$context	=~ s/\D//;
+# 										$add_where->( "${alias}.Context = ${context}" );
+# 									} else {
+# 										$context	= "${alias}.Context";
+# 										$vars->{ $name }	= $context;
+# 									}
+# 								}
+# 								return $f;
+# 							};
+# 				$self->patterns2sql( [ $pattern ], $level, from_hook => $hook );
+# 			} else {
+# 				my $hash	= $self->_mysql_node_hash( $graph );
+# 				my $hook	= sub {
+# 								my $f	= shift;
+# 								if ($f =~ /^Statements/i) {
+# 									my $alias	= (split(/ /, $f))[1];
+# 									$hash	=~ s/\D//;
+# 									$add_where->( "${alias}.Context = ${hash}" );
+# 								}
+# 								return $f;
+# 							};
+# 				$self->patterns2sql( [ $pattern ], $level, from_hook => $hook );
+# 			}
 		} elsif ($triple->isa('RDF::Query::Algebra::Filter')) {
 			++$$level;
 			my $expr		= $triple->expr;

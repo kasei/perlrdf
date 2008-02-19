@@ -153,7 +153,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( $sse, '(join (namedgraph ?g (join (bgp (triple _:a1 foaf:name "Gregory Todd Williams")))))', 'sse: select with named graph' );
+	is( $sse, '(join (namedgraph ?g (join (bgp (quad _:a1 foaf:name "Gregory Todd Williams" ?g)))))', 'sse: select with named graph' );
 }
 
 {
@@ -172,7 +172,6 @@ END
 }
 
 {
-	local($TODO)	= "filters not properly serializable yet";
 	my $query	= new RDF::Query ( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT ?person
@@ -186,7 +185,6 @@ END
 }
 
 {
-	local($TODO)	= "filters not properly serializable yet";
 	my $query	= new RDF::Query ( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT ?person

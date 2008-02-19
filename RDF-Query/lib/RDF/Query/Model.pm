@@ -427,7 +427,11 @@ any value.
 
 sub get_named_statements {
 	my $self	= shift;
-	return $self->_get_named_statements( @_ );
+	my $s		= shift;
+	my $p		= shift;
+	my $o		= shift;
+	my $c		= shift;
+	return $self->_get_named_statements( $s, $p, $o, $c );
 }
 
 

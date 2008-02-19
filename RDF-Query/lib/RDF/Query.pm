@@ -155,7 +155,6 @@ sub new {
 					parser			=> $parser,
 					parsed			=> $parsed,
 					parsed_orig		=> $parsed,
-					named_models	=> {},
 					useragent		=> $ua,
 				}, $class );
 	unless ($parsed->{'triples'}) {
@@ -677,7 +676,14 @@ sub load_data {
 	if (ref($sources) and reftype($sources) eq 'ARRAY') {
 		my $need_new_bridge	= 1;
 		my $named_query	= 0;
-		foreach my $source (sort { scalar(@$b) == 2 } @{ $sources }) {
+		
+		# put non-named sources first, because they will cause a new bridge to be
+		# constructed. subsequent named data will then be loaded into the correct
+		# bridge object.
+		my @sources	= sort { @$a == 2 } @$sources;
+		
+		
+		foreach my $source (@sources) {
 			my $named_source	= (2 == @{$source} and $source->[1] eq 'NAMED');
 			if ((not $named_source) and $need_new_bridge) {
 				# query uses FROM <..> clauses, so create a new bridge so we don't add the statements to a persistent default graph
@@ -2000,44 +2006,10 @@ If $named is TRUE, associate all parsed triples with a named graph.
 sub parse_url {
 	my $self	= shift;
 	my $url		= shift;
-	
 	my $named	= shift;
 	my $bridge	= $self->bridge;
 	
-	if ($named) {
-		my $class	= ref($self->bridge) || $self->loadable_bridge_class;
-		my $bridge	= $class->new();
-		$bridge->add_uri( $url, $named );
-		$self->{ named_models }{ $url }	= [$bridge, $bridge->new_resource($url)];
-	} else {
-		$bridge->add_uri( $url );
-	}
-}
-
-=begin private
-
-=item C<parse_string ( $string, $name )>
-
-Parse the RDF in $string into the RDF store.
-If $name is TRUE, associate all parsed triples with a named graph.
-
-=end private
-
-=cut
-sub parse_string {
-	my $self	= shift;
-	my $string	= shift;
-	my $name	= shift;
-	my $bridge	= $self->bridge;
-	
-	if ($name) {
-		my $class	= ref($self->bridge) || $self->loadable_bridge_class;
-		my $bridge	= $class->new();
-		$bridge->add_string( $string, $name, $name );
-		$self->{ named_models }{ $name }	= [$bridge, $bridge->new_resource($name)];
-	} else {
-		$bridge->add_string( $string );
-	}
+	$bridge->add_uri( $url, $named );
 }
 
 =begin private
