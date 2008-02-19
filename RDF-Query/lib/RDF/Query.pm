@@ -92,7 +92,7 @@ BEGIN {
 	$debug		= DEBUG;
 	$js_debug	= 0;
 	$REVISION	= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.502';
+	$VERSION	= '2.000_01';
 	$ENV{RDFQUERY_NO_RDFBASE}	= 1;	# XXX Not ready for release
 	$DEFAULT_PARSER		= 'sparql';
 }
