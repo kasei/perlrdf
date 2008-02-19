@@ -11,6 +11,9 @@ my @models	= test_models( @files );
 my $tests	= 0 + (scalar(@models) * 43);
 plan tests => $tests;
 
+eval "use Geo::Distance 0.09;";
+my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
+
 use RDF::Query;
 foreach my $model (@models) {
 	print "\n#################################\n";
@@ -97,8 +100,7 @@ END
 	}
 	
 	SKIP: {
-		eval "use Geo::Distance 0.09;";
-		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) if ($@);
+		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
 		my $sparql	= <<"END";
 			PREFIX	rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
@@ -123,7 +125,7 @@ END
 			my $point	= shift;
 			my $plat	= get_first_literal( $bridge, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
 			my $plon	= get_first_literal( $bridge, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
-			my ($lat, $lon)	= map { Scalar::Util::blessed($_) ? $bridge->literal_value( $_ ) : $_ } @_;
+			my ($lat, $lon)	= map { Scalar::Util::blessed($_) ? $_->literal_value : $_ } @_;
 			my $dist	= $geo->distance(
 							'kilometer',
 							$lon,
@@ -258,8 +260,8 @@ END
 	}
 
 	SKIP: {
-		eval "use Geo::Distance 0.09;";
-		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) if ($@);
+		local($RDF::Query::error)	= 1;
+		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
 		my $sparql	= <<"END";
 			PREFIX	ldodds: <java:com.ldodds.sparql.>
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
@@ -279,10 +281,10 @@ END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
 		my $count	= 0;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next()) {
 			my ($image, $point, $pname, $lat, $lon)	= @{ $row }{qw(image point name lat long)};
-			my $url		= $bridge->uri_value( $image );
-			my $name	= $bridge->literal_value( $pname );
+			my $url		= $image->uri_value;
+			my $name	= $pname->literal_value;
 			like( $name, qr/, (RI|MA|CT)$/, "$name ($url)" );
 			$count++;
 		}

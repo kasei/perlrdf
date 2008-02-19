@@ -30,21 +30,22 @@ use RDF::Query::Error qw(:try);
 
 ######################################################################
 
+my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	@NODE_TYPE_TABLES	= (
+							['Resources', 'ljr', 'URI'],
+							['Literals', 'ljl', qw(Value Language Datatype)],
+							['Bnodes', 'ljb', qw(Name)]
+						);
+	%NODE_TYPE_TABLES	= map { $_->[0] => [ @{ $_ }[1 .. $#{ $_ }] ] } @NODE_TYPE_TABLES;
 }
 
 ######################################################################
 
 use constant INDENT		=> "\t";
-my @NODE_TYPE_TABLES	= (
-						['Resources', 'ljr', 'URI'],
-						['Literals', 'ljl', qw(Value Language Datatype)],
-						['Bnodes', 'ljb', qw(Name)]
-					);
-my %NODE_TYPE_TABLES	= map { $_->[0] => [ @{ $_ }[1 .. $#{ $_ }] ] } @NODE_TYPE_TABLES;
 
 =head1 METHODS
 
@@ -860,98 +861,99 @@ sub get_function {
 
 
 our %functions;
-
-$functions{ 'sparql:regex' }	= sub {
-	my $self	= shift;
-	my $parsed_vars	= shift;
-	my $level	= shift || \do{ my $a = 0 };
-	my @args	= @_;
-	my (@from, @where);
-	
-	my (@regex, @literal, @pattern);
-	if (blessed($args[0]) and $args[0]->isa('RDF::Query::Node::Variable')) {
-		my $name	= $args[0]->name;
-		push(@literal, "${name}_Value");
-		push(@literal, "${name}_URI");
-		push(@literal, "${name}_Name");
-	} else {
-		push(@literal, $self->expr2sql( $args[0], $level ));
-	}
-	
-	if ($args[1][0] eq 'VAR') {
-		my $name	= $args[0][1];
-		push(@pattern, "${name}_Value");
-		push(@pattern, "${name}_URI");
-		push(@pattern, "${name}_Name");
-	} else {
-		push(@pattern, $self->expr2sql( $args[1], $level ));
-	}
-	
-	foreach my $literal (@literal) {
-		foreach my $pattern (@pattern) {
-			push(@regex, sprintf(qq(%s REGEXP %s), $literal, $pattern));
+BEGIN {
+	$functions{ 'sparql:regex' }	= sub {
+		my $self	= shift;
+		my $parsed_vars	= shift;
+		my $level	= shift || \do{ my $a = 0 };
+		my @args	= @_;
+		my (@from, @where);
+		
+		my (@regex, @literal, @pattern);
+		if (blessed($args[0]) and $args[0]->isa('RDF::Query::Node::Variable')) {
+			my $name	= $args[0]->name;
+			push(@literal, "${name}_Value");
+			push(@literal, "${name}_URI");
+			push(@literal, "${name}_Name");
+		} else {
+			push(@literal, $self->expr2sql( $args[0], $level ));
 		}
-	}
+		
+		if ($args[1][0] eq 'VAR') {
+			my $name	= $args[0][1];
+			push(@pattern, "${name}_Value");
+			push(@pattern, "${name}_URI");
+			push(@pattern, "${name}_Name");
+		} else {
+			push(@pattern, $self->expr2sql( $args[1], $level ));
+		}
+		
+		foreach my $literal (@literal) {
+			foreach my $pattern (@pattern) {
+				push(@regex, sprintf(qq(%s REGEXP %s), $literal, $pattern));
+			}
+		}
+		
+		push(@where, '(' . join(' OR ', @regex) . ')');
+		return ({}, \@from, \@where);
+	};
 	
-	push(@where, '(' . join(' OR ', @regex) . ')');
-	return ({}, \@from, \@where);
-};
-
-$functions{ 'sparql:bound' } =
-$functions{ 'sop:isBound' }	= sub {
-	my $self	= shift;
-	my $parsed_vars	= shift;
-	my $level	= shift || \do{ my $a = 0 };
-	my @args	= @_;
-	my (@from, @where);
+	$functions{ 'sparql:bound' } =
+	$functions{ 'sop:isBound' }	= sub {
+		my $self	= shift;
+		my $parsed_vars	= shift;
+		my $level	= shift || \do{ my $a = 0 };
+		my @args	= @_;
+		my (@from, @where);
+		
+		my $literal	= $self->expr2sql( $args[0], $level );
+		push(@where, sprintf(qq(%s IS NOT NULL), $literal));
+		return ({}, \@from, \@where);
+	};
 	
-	my $literal	= $self->expr2sql( $args[0], $level );
-	push(@where, sprintf(qq(%s IS NOT NULL), $literal));
-	return ({}, \@from, \@where);
-};
-
-$functions{ 'rdfquery:isNotBound' }	= sub {
-	my $self	= shift;
-	my $parsed_vars	= shift;
-	my $level	= shift || \do{ my $a = 0 };
-	my @args	= @_;
-	my (@from, @where);
+	$functions{ 'rdfquery:isNotBound' }	= sub {
+		my $self	= shift;
+		my $parsed_vars	= shift;
+		my $level	= shift || \do{ my $a = 0 };
+		my @args	= @_;
+		my (@from, @where);
+		
+		my $literal	= $self->expr2sql( $args[0], $level );
+		push(@where, sprintf(qq(%s IS NULL), $literal));
+		return ({}, \@from, \@where);
+	};
 	
-	my $literal	= $self->expr2sql( $args[0], $level );
-	push(@where, sprintf(qq(%s IS NULL), $literal));
-	return ({}, \@from, \@where);
-};
-
-$functions{ 'http://www.w3.org/2001/XMLSchema#integer' }	= sub {
-	my $self	= shift;
-	my $parsed_vars	= shift;
-	my $level	= shift || \do{ my $a = 0 };
-	my @args	= @_;
-	my (@from, @where);
+	$functions{ 'http://www.w3.org/2001/XMLSchema#integer' }	= sub {
+		my $self	= shift;
+		my $parsed_vars	= shift;
+		my $level	= shift || \do{ my $a = 0 };
+		my @args	= @_;
+		my (@from, @where);
+		
+		my $literal	= $self->expr2sql( $args[0], $level );
+		push(@where, sprintf(qq((0 + %s)), $literal));
+		return ({}, \@from, \@where);
+	};
 	
-	my $literal	= $self->expr2sql( $args[0], $level );
-	push(@where, sprintf(qq((0 + %s)), $literal));
-	return ({}, \@from, \@where);
-};
-
-$functions{ 'http://www.w3.org/2001/XMLSchema#decimal' }	= sub {
-	my $self	= shift;
-	my $parsed_vars	= shift;
-	my $level	= shift || \do{ my $a = 0 };
-	my @args	= @_;
-	
-	my (@from, @where);
-	
-	if ($args[0] eq 'FUNCTION') {
-		Carp::confess;
-	}
-	
-	my $literal	= $self->expr2sql( $args[0], $level );
-	push(@where, sprintf(qq((0.0 + %s)), $literal));
-	return ({}, \@from, \@where);
-};
-$functions{'sop:numeric'}	= $functions{ 'http://www.w3.org/2001/XMLSchema#double' }
-							= $functions{ 'http://www.w3.org/2001/XMLSchema#decimal' };
+	$functions{ 'http://www.w3.org/2001/XMLSchema#decimal' }	= sub {
+		my $self	= shift;
+		my $parsed_vars	= shift;
+		my $level	= shift || \do{ my $a = 0 };
+		my @args	= @_;
+		
+		my (@from, @where);
+		
+		if ($args[0] eq 'FUNCTION') {
+			Carp::confess;
+		}
+		
+		my $literal	= $self->expr2sql( $args[0], $level );
+		push(@where, sprintf(qq((0.0 + %s)), $literal));
+		return ({}, \@from, \@where);
+	};
+	$functions{'sop:numeric'}	= $functions{ 'http://www.w3.org/2001/XMLSchema#double' }
+								= $functions{ 'http://www.w3.org/2001/XMLSchema#decimal' };
+}
 
 
 

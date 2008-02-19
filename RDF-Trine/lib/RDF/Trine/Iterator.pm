@@ -53,16 +53,14 @@ BEGIN {
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(sgrep smap swatch);
-}
-
-
-use overload 'bool' => sub { $_[0] };
-use overload '&{}' => sub {
-	my $self	= shift;
-	return sub {
-		return $self->next;
+	use overload 'bool' => sub { $_[0] };
+	use overload '&{}' => sub {
+		my $self	= shift;
+		return sub {
+			return $self->next;
+		};
 	};
-};
+}
 
 use RDF::Trine::Iterator::Bindings;
 use RDF::Trine::Iterator::Boolean;
