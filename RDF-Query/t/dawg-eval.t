@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 require Encode;
 use URI::file;
@@ -512,7 +513,7 @@ sub compare_results {
 					delete $actual_flat{ $key };
 				}
 				
-				next EXPECTED;
+				next; #next EXPECTED;
 #				pass( "expected result found: " . join(', ', @{$row}{ @keys }) );
 #				return 1;
 			} else {
@@ -528,7 +529,7 @@ sub compare_results {
 					
 					if ($seen{ $actual_key }++) {
 						$skipped++;
-						next ACTUAL;
+						next; #next ACTUAL;
 					}
 					
 					my $actual_row		= $actual_flat{ $actual_key }[0][ 1 ];
@@ -545,7 +546,7 @@ sub compare_results {
 						my $expectedv	= $values[ $i ];
 						if ($expectedv eq $actualv) {
 							warn "\tvalues of $skeys[$i] match. going to next property\n" if ($debug);
-							next PROP;
+							next; #next PROP;
 						}
 						
 						if ($values[ $i ] =~ $BNODE_RE and $actual_values[ $i ] =~ $BNODE_RE) {
@@ -555,7 +556,7 @@ sub compare_results {
 								no warnings 'uninitialized';
 								if ($id == $bnode_map{ expected }{ $values[ $i ] }) {
 									warn "\tvalues of $skeys[$i] are merged bnodes. going to next property\n" if ($debug);
-									next PROP;
+									next; #next PROP;
 								} else {
 									warn Data::Dumper::Dumper(\%bnode_map) if ($debug);
 									next ACTUAL;
@@ -565,14 +566,14 @@ sub compare_results {
 								no warnings 'uninitialized';
 								if ($id == $bnode_map{ actual }{ $actual_values[ $i ] }) {
 									warn "\tvalues of $skeys[$i] are merged bnodes. going to next property\n" if ($debug);
-									next PROP;
+									next; #next PROP;
 								}
 							} else {
 								my $id	= $bnode++;
 								warn "\tvalues of $skeys[$i] are both bnodes ($actual_values[ $i ] and $values[ $i ]). merging them and going to next property\n" if ($debug);
 								$bnode_map{ actual }{ $actual_values[ $i ] }	= $id;
 								$bnode_map{ expected }{ $values[ $i ] }			= $id;
-								next PROP;
+								next; #next PROP;
 							}
 						}
 						

@@ -14,6 +14,7 @@ package RDF::Trine::Statement::Quad;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Statement);
 
 ######################################################################

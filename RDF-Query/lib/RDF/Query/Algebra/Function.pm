@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Function;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
@@ -37,11 +38,12 @@ our %FUNCTION_MAP	= (
 	langmatches	=> "LANGMATCHES",
 	sameTerm	=> "sameTerm",
 	datatype	=> "DATATYPE",
-	isBound		=> "BOUND",
-	isURI		=> "isURI",
-	isIRI		=> "isIRI",
-	isBlank		=> "isBlank",
-	isLiteral	=> "isLiteral",
+	isbound		=> "BOUND",
+	isuri		=> "isURI",
+	isiri		=> "isIRI",
+	isblank		=> "isBlank",
+	isliteral	=> "isLiteral",
+	regex		=> "REGEX",
 );
 
 =head1 METHODS
@@ -107,11 +109,20 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	
-	return sprintf(
-		'(function %s %s)',
-		$self->uri,
-		join(' ', map { $self->sse( $context ) } $self->arguments),
-	);
+	my $uri		= $self->uri->uri_value;
+	if ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|is(Bound|URI|IRI|Blank|Literal))/i) {
+		return sprintf(
+			'(%s %s)',
+			$uri,
+			join(' ', map { $_->sse( $context ) } $self->arguments),
+		);
+	} else {
+		return sprintf(
+			'(function %s %s)',
+			$self->uri->sse( $context ),
+			join(' ', map { $_->sse( $context ) } $self->arguments),
+		);
+	}
 }
 
 =item C<< as_sparql >>
@@ -126,8 +137,8 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|is(Bound|URI|IRI|Blank|Literal))/)
-				? $FUNCTION_MAP{ $2 }
+	my $func	= ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|is(Bound|URI|IRI|Blank|Literal))/i)
+				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
 	my $string	= sprintf(
 		"%s( %s )",

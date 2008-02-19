@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 use Test::More;
 
 use RDF::Query;

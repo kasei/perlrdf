@@ -3,6 +3,7 @@
 use utf8;
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use URI;
 use Test::More qw(no_plan);

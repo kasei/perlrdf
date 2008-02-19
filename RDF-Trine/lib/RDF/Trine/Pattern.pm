@@ -14,6 +14,7 @@ package RDF::Trine::Pattern;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use Data::Dumper;
 use List::MoreUtils qw(uniq);

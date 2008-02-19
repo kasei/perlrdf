@@ -18,6 +18,7 @@ package RDF::Trine::Model;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Scalar::Util qw(blessed);
 
 use RDF::Trine::Node;

@@ -1704,6 +1704,7 @@ sub info {
 package Parse::Eyapp::YATW;
 use strict;
 use warnings;
+no warnings 'redefine';
 no warnings 'ambiguous';
 no warnings 'redefine';
 use Carp;
@@ -9933,6 +9934,7 @@ package RDF::Query::Parser::tSPARQL;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 no warnings 'ambiguous';
 no warnings 'redefine';
 use base qw(RDF::Query::Parser);

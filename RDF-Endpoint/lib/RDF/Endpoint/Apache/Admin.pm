@@ -2,6 +2,7 @@ package RDF::Endpoint::Apache::Admin;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Endpoint::Apache);
 
 sub run {
@@ -17,8 +18,10 @@ sub run {
 	
 	my $r		= $self->{_r};
 	my $id		= $endpoint->get_identity;
-	my $owner	= $r->dir_config( 'EndpointOwnerIdentity' );
+	warn $id;
 	
+	my $dbh		= $self->dbh;
+	my ($owner)	= $dbh->selectrow_array( 'SELECT owner_openid FROM Endpoint WHERE ID = 1' );
 	if ($owner and ($owner eq $id)) {
 		no warnings 'uninitialized';
 		my $host	= $cgi->server_name;

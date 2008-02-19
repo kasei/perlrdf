@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Expr;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
@@ -47,7 +48,7 @@ sub new {
 	my $class	= shift;
 	my $op		= shift;
 	my @operands	= @_;
-	return bless( [ $op, @operands ] );
+	return bless( [ $op, @operands ], $class );
 }
 
 =item C<< construct_args >>
@@ -122,6 +123,28 @@ sub referenced_variables {
 	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->operands);
 }
 
+=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+
+Returns a new pattern that is ready for execution using the given bridge.
+This method replaces generic node objects with bridge-native objects.
+
+=cut
+
+sub fixup {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $bridge	= shift;
+	my $base	= shift;
+	my $ns		= shift;
+	
+	my @operands	= map {
+		($_->isa('RDF::Query::Algebra'))
+			? $_->fixup( $bridge, $base, $ns )
+			: $_
+	} $self->operands;
+	
+	return $class->new( $self->op, @operands );
+}
 
 1;
 

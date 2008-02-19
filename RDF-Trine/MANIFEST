@@ -1,10 +1,12 @@
-benchmark.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_store_add_file.pl
+bin/rdf_store_makeprivate.pl
+bin/rdf_store_serialize.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
@@ -31,8 +33,11 @@ lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store/DBI.pm
 MANIFEST			This list of files
-MANIFEST.bak
+Makefile.PL
 META.yml
+Changes.ttl
+SIGNATURE
+README
 t/00.load.t
 t/data/rdfxml/bad-00.nt
 t/data/rdfxml/bad-00.rdf
@@ -271,5 +276,4 @@ t/parser-turtle.t
 t/pod-coverage.t
 t/pod.t
 t/store-context.t
-t/store-model.t
 t/store-triple_sql.t

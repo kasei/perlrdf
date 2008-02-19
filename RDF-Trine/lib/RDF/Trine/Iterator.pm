@@ -32,6 +32,7 @@ package RDF::Trine::Iterator;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use JSON;
 use XML::Twig;
@@ -52,22 +53,18 @@ BEGIN {
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(sgrep smap swatch);
+	use overload 'bool' => sub { $_[0] };
+	use overload '&{}' => sub {
+		my $self	= shift;
+		return sub {
+			return $self->next;
+		};
+	};
 }
 
-
-use overload 'bool' => sub { $_[0] };
-use overload '&{}' => sub {
-	my $self	= shift;
-	return sub {
-		return $self->next;
-	};
-};
-
-require RDF::Trine::Iterator::Bindings;
-require RDF::Trine::Iterator::Boolean;
-require RDF::Trine::Iterator::Graph;
-
-
+use RDF::Trine::Iterator::Bindings;
+use RDF::Trine::Iterator::Boolean;
+use RDF::Trine::Iterator::Graph;
 
 =item C<new ( \@results, $type, \@names, %args )>
 

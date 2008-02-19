@@ -14,6 +14,7 @@ package RDF::Trine::Node::Resource;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use URI;
@@ -37,7 +38,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $iri )>
+=item C<new ( $iri, [ $base ] )>
 
 Returns a new Resource structure.
 

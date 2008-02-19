@@ -2,6 +2,7 @@ package RDF::Query::Model::RDFTrine;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak confess);

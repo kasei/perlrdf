@@ -37,6 +37,7 @@ package RDF::Trine::Iterator::Graph::Materialized;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use Scalar::Util qw(reftype);
 use base qw(RDF::Trine::Iterator::Graph);

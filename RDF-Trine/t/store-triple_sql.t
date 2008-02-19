@@ -1,7 +1,8 @@
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
@@ -40,6 +41,14 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
 	sql_like( $sql, qr'SELECT s0.object AS title_Node, ljr0.URI AS title_URI, ljl0.Value AS title_Value, ljl0.Language AS title_Language, ljl0.Datatype AS title_Datatype, ljb0.Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.object = ljr0.ID[)] LEFT JOIN Literals ljl0 ON [(]s0.object = ljl0.ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0.object = ljb0.ID[)] WHERE s0.subject = 2882409734267140843 AND s0.predicate = 16668832798855018521 AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
+}
+
+{
+	my $triple	= RDF::Trine::Statement->new($v1, $v1, $v1);
+	my $store	= RDF::Trine::Store::DBI->new('temp');
+	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
+	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
+	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
 }
 
 

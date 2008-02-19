@@ -14,6 +14,7 @@ package RDF::Query::Algebra::BasicGraphPattern;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
@@ -144,6 +145,25 @@ sub definite_variables {
 	return uniq(map { $_->definite_variables } $self->triples);
 }
 
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
+
+sub _check_duplicate_blanks {
+	my $self	= shift;
+	my %seen;
+	foreach my $t ($self->triples) {
+		my @blanks	= $t->referenced_blanks;
+		foreach my $b (@blanks) {
+			$seen{ $b }++;
+		}
+	}
+	return [keys %seen];
+}
+
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
@@ -157,7 +177,9 @@ sub fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
-	my $fixed	= $class->new( map { $_->fixup( $bridge, $base, $ns ) } $self->triples );
+	
+	my @nodes	= map { $_->fixup( $bridge, $base, $ns ) } $self->triples;
+	my $fixed	= $class->new( @nodes );
 	return $fixed;
 }
 

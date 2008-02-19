@@ -18,6 +18,7 @@ package RDF::Trine::Model::Union;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Model);
 use Scalar::Util qw(blessed);
 

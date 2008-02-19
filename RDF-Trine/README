@@ -1,0 +1,66 @@
+RDF::Trine - An RDF Framework for Perl.
+
+   RDF::Trine provides an RDF framework with an emphasis on extensibility, API
+   stability, and the presence of a test suite. The package consists of several
+   components:
+
+   * RDF::Trine::Model - RDF model providing access to a triple store.
+   * RDF::Trine::Parser - Native RDF parsers (currently for Turtle only).
+   * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
+     Redland schema.
+   * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
+     statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
+   * RDF::Trine::Namespace - A convenience class for easily constructing RDF
+     node objects from URI namespaces.
+
+REQUIREMENTS
+
+	To install RDF::Trine you'll need the following perl modules installed:
+
+     * DBI
+     * DBD::SQLite
+     * Digest::MD5
+     * Error
+     * JSON
+     * LWP::UserAgent
+     * List::MoreUtils
+     * List::Util
+     * Scalar::Util
+     * Unicode::Escape
+     * URI
+     * XML::CommonNS
+     * XML::Namespace
+     * XML::Twig
+
+	The following additional modules are optional:
+
+     * DBD::Mysql
+     * Test::More
+     * Test::JSON
+     * Test::Exception
+
+INSTALLATION
+
+   To install, run:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+VERSION HISTORY
+
+  Version 0.100 (2008-02-18)
+
+     * Initial public release.
+
+COPYRIGHT
+
+   Copyright (C) 2008 Gregory Williams. All rights reserved.
+   This program is free software; you can redistribute it and/or
+   modify it under the same terms as Perl itself.
+
+AUTHOR
+
+	Gregory Williams <gwilliams@cpan.org>
+

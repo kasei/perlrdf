@@ -40,6 +40,7 @@ our $VERSION = '0.001003';	# v0.1.3
 
 use strict;
 use warnings;
+no warnings 'redefine';
 require DynaLoader;
 our @ISA	= qw(DynaLoader);
 

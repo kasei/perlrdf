@@ -30,6 +30,10 @@ lib/RDF/Query.pm
 lib/RDF/Query/Algebra/Aggregate.pm
 lib/RDF/Query/Algebra/BasicGraphPattern.pm
 lib/RDF/Query/Algebra/Expr.pm
+lib/RDF/Query/Algebra/Expr/Binary.pm
+lib/RDF/Query/Algebra/Expr/Nary.pm
+lib/RDF/Query/Algebra/Expr/Unary.pm
+lib/RDF/Query/Algebra/Filter.pm
 lib/RDF/Query/Algebra/OldFilter.pm
 lib/RDF/Query/Algebra/Function.pm
 lib/RDF/Query/Algebra/GroupGraphPattern.pm
@@ -54,7 +58,6 @@ lib/RDF/Query/Node/Variable.pm
 lib/RDF/Query/Parser.pm
 lib/RDF/Query/Parser/RDQL.pm
 lib/RDF/Query/Parser/SPARQL.pm
-lib/RDF/Query/Parser/SPARQL.yp
 lib/RDF/Query/Parser/tSPARQL.pm
 lib/RDF/Query/Parser/tSPARQL.yp
 lib/RDF/Query/Temporal.pm
@@ -96,6 +99,7 @@ t/27-timed_graphs.t
 t/28-time_intervals.t
 t/29-serialize.t
 t/30-aggregate.t
+t/algebra.t
 t/dawg-eval.t
 t/dawg-syntax.t
 t/distance.js

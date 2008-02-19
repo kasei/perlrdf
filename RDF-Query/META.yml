@@ -30,7 +30,7 @@ recommends:
 requires:
   DateTime::Format::W3CDTF: 0
   Error: 0
-  JSON: 0
+  JSON: 2
   Parse::RecDescent: 0
   RDF::Core: 0
   Scalar::Util: 0
@@ -39,7 +39,7 @@ requires:
   List::MoreUtils: 0
   RDF::Trine::Iterator: 1
   Set::Scalar: 0
-  RDF::Trine: 1
+  RDF::Trine: 0.1
 resources:
   homepage: http://kasei.us/code/rdf-query/
   Repository: http://code.google.com/p/perlrdf/source

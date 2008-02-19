@@ -1,12 +1,13 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::More;
-plan tests => 16;
+plan qw(no_plan);	# tests => 16;
 
 use_ok( 'RDF::Query' );
 
@@ -17,7 +18,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $rdql, undef, undef, 'rdql' );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> SELECT * WHERE { ?person foaf:name "Gregory Todd Williams" }', 'rdql to sparql' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> SELECT * WHERE { ?person foaf:name "Gregory Todd Williams" . }', 'rdql to sparql' );
 }
 
 {
@@ -25,15 +26,23 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name } ORDER BY ?name", 'sparql to sparql' );
+	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name", 'sparql to sparql' );
 }
 
 {
-	my $sparql	= 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person; foaf:homepage ?homepage . FILTER( REGEX( STR(?homepage), "^http://www.rpi.edu/.+") ) } ORDER BY ?p';
+	my $sparql	= 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person ; foaf:homepage ?homepage . FILTER( REGEX( STR(?homepage), "^http://www.rpi.edu/.+") ) }';
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage FILTER REGEX(STR( ?homepage ), "^http://www.rpi.edu/.+") } ORDER BY ?p', 'sparql to sparql with filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER REGEX( STR( ?homepage ), "^http://www.rpi.edu/.+" ) . }', 'sparql to sparql with regex filter' );
+};
+
+{
+	my $sparql	= "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person; foaf:name ?name . FILTER( ?name < 'Greg' ) }";
+	my $query	= new RDF::Query ( $sparql );
+	my $string	= $query->as_sparql;
+	$string		=~ s/\s+/ /gms;
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER(?name < "Greg") . }', 'sparql to sparql with less-than filter' );
 }
 
 {
@@ -41,7 +50,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name } ORDER BY ?name LIMIT 5 OFFSET 5", 'sparql to sparql with slice' );
+	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name LIMIT 5 OFFSET 5", 'sparql to sparql with slice' );
 }
 
 {
@@ -172,8 +181,8 @@ END
 			FILTER( ?name < "Greg" )
 		}
 END
-	my $sse		= eval { $query->sse };
-	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter <' );
+	my $sse		= $query->sse;
+	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter <' );
 }
 
 {
@@ -186,8 +195,8 @@ END
 			FILTER( REGEX(?name, "Greg") )
 		}
 END
-	my $sse		= eval { $query->sse };
-	is( $sse, '(filter (regex ?name "Greg") (join (bgp (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select with filter regex' );
+	my $sse		= $query->sse;
+	is( $sse, '(filter (sparql:regex ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter regex' );
 }
 
 __END__

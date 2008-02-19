@@ -18,6 +18,31 @@
 	<h1>Admin</h1>
 
 	<form method="post" action="[% admin_submit_url %]" enctype="multipart/form-data">
+		<div id="settings">
+			<h2>Settings</h2>
+			<div>
+				<p>
+					Endpoint Owner OpenID: <input name="owner_openid" id="owner_openid" type="text" size="20" value="[% owner_openid %]" /><input name="submit" type="submit" value="Submit" />
+				</p>
+				
+				<div id="privacy">
+					<h3>Privacy</h3>
+					<div>
+						<p>
+							Private Predicates:
+							<textarea id="priv_preds" name="priv_preds" rows="20" cols="80">[% priv_preds %]</textarea>
+						</p>
+						
+						<p>
+							Authorized Users:
+							<textarea id="auth_query" name="auth_query" rows="20" cols="80">[% auth_query %]</textarea>
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<h2>Data</h2>
 		<input name="admin" id="admin" type="hidden" value="1" />
 		<p>
 			Add RDF from URI: <input name="add_uri" id="add_uri" type="text" size="60" /><input name="submit" type="submit" value="Submit" />
@@ -35,7 +60,6 @@
 				<td>[% file.source %]</td>
 				<td>[% file.count %]</td>
 				<td>[% file.delete_field %]</td>
-				<td>[% file.replace_field %]</td>
 			</tr>
 		[% END %]
 			<tr><th colspan="4"><input name="submit" id="submit" type="submit" value="Submit" /></th></tr>

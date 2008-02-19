@@ -42,6 +42,7 @@ our $VERSION = '0.001';
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use base qw(XML::Namespace);
 

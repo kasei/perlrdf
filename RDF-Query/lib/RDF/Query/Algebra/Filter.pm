@@ -14,6 +14,7 @@ package RDF::Query::Algebra::Filter;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
@@ -173,28 +174,16 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift;
-	die;
 	
 	my $expr	= $self->expr;
-	my ($op, @ops)	= @{ $expr };
-	if (exists($OPERATORS{$op})) {
-		my $data	= $OPERATORS{ $op };
-		my $arity	= scalar(@ops);
-		if (exists($data->{arity}{$arity})) {
-			my $template	= $data->{arity}{$arity};
-			my $expr	= sprintf( $template, map { $_->as_sparql( $context, $indent ) } @ops );
-			my $string	= sprintf(
-				"FILTER %s",
-				$expr,
-			);
-			return $string;
-		} else {
-			warn "Operator '$op' is not defined for arity of $arity\n";
-			die;
-		}
-	} else {
-		die Dumper($expr);
+	my $filter_sparql	= $expr->as_sparql( $context, $indent );
+	if (blessed($expr) and $expr->isa('RDF::Query::Algebra::Function')) {
+		$filter_sparql	= ' ' . $filter_sparql;
 	}
+	
+	my $pattern_sparql	= $self->pattern->as_sparql( $context, $indent );
+	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER${filter_sparql} .\n${indent}}#;
+	return $pattern_sparql;
 }
 
 =item C<< type >>

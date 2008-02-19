@@ -41,6 +41,7 @@ package RDF::Trine::Store::DBI;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use DBI;
 use Carp;
@@ -483,10 +484,10 @@ contain the node values (for literals, resources, and blank nodes).
 
 =cut
 
-my @NODE_TYPE_TABLES	= (
-						['Resources', 'ljr', 'URI'],
-						['Literals', 'ljl', qw(Value Language Datatype)],
-						['Bnodes', 'ljb', qw(Name)]
+my %NODE_TYPE_TABLES	= (
+						resource	=> ['Resources', 'ljr', 'URI'],
+						literal		=> ['Literals', 'ljl', qw(Value Language Datatype)],
+						blank		=> ['Bnodes', 'ljb', qw(Name)]
 					);
 sub add_variable_values_joins {
 	my $self	= shift;
@@ -517,8 +518,9 @@ sub add_variable_values_joins {
 		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if (DEBUG);
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
-		foreach (@NODE_TYPE_TABLES) {
-			my ($table, $alias, @join_cols)	= @$_;
+		foreach my $type (reverse sort keys %NODE_TYPE_TABLES) {
+			next if ($context->{restrict}{$var}{$type});
+			my ($table, $alias, @join_cols)	= @{ $NODE_TYPE_TABLES{ $type } };
 			foreach my $jc (@join_cols) {
 				my $column_real_name	= "${alias}${uniq_count}.${jc}";
 				my $column_alias_name	= "${var}_${jc}";
@@ -541,8 +543,9 @@ sub add_variable_values_joins {
 			
 			if ($alias eq $col_table) {
 #				my (@tables, @where);
-				foreach (@NODE_TYPE_TABLES) {
-					my ($vtable, $vname)	= @$_;
+				foreach my $type (reverse sort keys %NODE_TYPE_TABLES) {
+					next if ($context->{restrict}{$var}{$type});
+					my ($vtable, $vname)	= @{ $NODE_TYPE_TABLES{ $type } };
 					my $valias	= join('', $vname, $uniq_count);
 					next if ($seen_joins{ $valias }++);
 					
@@ -648,6 +651,14 @@ sub _add_from { push( @{ $_[0]{from_tables} }, $_[1] ); }
 sub _add_where { push( @{ $_[0]{where_clauses} }, $_[1] ); }
 sub _get_var { return $_[0]{vars}{ $_[1] }; }
 sub _add_var { $_[0]{vars}{ $_[1] } = $_[2]; }
+sub _add_restriction {
+	my $context	= shift;
+	my $var		= shift;
+	my @rests	= @_;
+	foreach my $r (@rests) {
+		$context->{restrict}{ $var->name }{ $r }++
+	}
+}
 
 sub _sql_for_filter {
 	my $self		= shift;
@@ -697,6 +708,13 @@ sub _sql_for_expr {
 	return;
 }
 
+{
+	my @posmap		= qw(subject predicate object);
+	my %restrictions	= (
+		subject		=> ['literal'],
+		predicate	=> [qw(literal blank)],
+		object		=> [],
+	);
 sub _sql_for_triple {
 	my $self	= shift;
 	my $triple	= shift;
@@ -704,7 +722,6 @@ sub _sql_for_triple {
 	my $ctx		= shift;
 	my $context	= shift;
 	
-	my @posmap		= qw(subject predicate object);
 	my ($s,$p,$o)	= map { $triple->$_() } @posmap;
 	my $table		= "s" . _next_alias($context);
 	my $stable		= _statements_table($context);
@@ -715,6 +732,9 @@ sub _sql_for_triple {
 		next unless defined($node);
 		my $pos		= $method;
 		my $col		= "${table}.${pos}";
+		if ($node->isa('RDF::Trine::Node::Variable')) {
+			_add_restriction( $context, $node, @{ $restrictions{ $method } } );
+		}
 		$self->_add_sql_node_clause( $col, $node, $context );
 	}
 	if (defined($ctx)) {
@@ -722,7 +742,7 @@ sub _sql_for_triple {
 	} else {
 		$self->_add_sql_node_clause( "${table}.Context", RDF::Trine::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
 	}
-}
+}}
 
 sub _add_sql_node_clause {
 	my $self	= shift;

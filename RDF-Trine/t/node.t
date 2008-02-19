@@ -3,6 +3,7 @@ use Test::Exception;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use_ok 'RDF::Trine::Node';
 use RDF::Trine::Namespace;

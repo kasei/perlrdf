@@ -14,6 +14,7 @@ package RDF::Query::Model;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use RDF::Query::Error qw(:try);
 

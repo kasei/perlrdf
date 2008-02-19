@@ -39,6 +39,7 @@ package RDF::Trine::Iterator::Bindings::Materialized;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use base qw(RDF::Trine::Iterator::Bindings);
 
@@ -108,3 +109,21 @@ sub next {
 }
 
 1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
+
+
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (c) 2007, Gregory Todd Williams C<< <gwilliams@cpan.org> >>. All rights reserved.
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+

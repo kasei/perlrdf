@@ -3,6 +3,7 @@ use Test::Exception;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 
 use DBI;
@@ -90,8 +91,8 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 	
 		TODO: {
 			local($TODO)	= "get_pattern needs to respect requested ordering, even if the underlying store doesn't do it natively";
-			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name', 'ASC' ] );
-			is_deeply( [ $stream->sorted_by ], ['name', 'ASC'], 'results sort order' );
+			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' => 'ASC' ] );
+			is_deeply( [ $stream->sorted_by ], ['name' => 'ASC'], 'results sort order' );
 			my $count	= 0;
 			my @expect	= ('Eve', 'Gregory Todd Williams');
 			while (my $b = $stream->next) {
@@ -105,7 +106,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 		}
 	
 		{
-			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'date', 'ASC' ] );
+			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'date' => 'ASC' ] );
 			is_deeply( [ $stream->sorted_by ], [], 'results sort order for unknown binding' );
 		}
 		

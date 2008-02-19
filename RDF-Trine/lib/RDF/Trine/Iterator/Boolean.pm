@@ -27,6 +27,7 @@ package RDF::Trine::Iterator::Boolean;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use JSON 2.0;
 
 use base qw(RDF::Trine::Iterator);

@@ -14,6 +14,7 @@ package RDF::Query::Node::Blank;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Blank);
 
 use Data::Dumper;

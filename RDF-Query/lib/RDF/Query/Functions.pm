@@ -14,6 +14,7 @@ package RDF::Query::Functions;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 
 use Scalar::Util qw(blessed reftype looks_like_number);
 use RDF::Query::Error qw(:try);
@@ -40,8 +41,8 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#integer"}	= sub {
 	my $node	= shift;
 	my $value;
 	if ($bridge->is_literal($node)) {
-		my $type	= $bridge->literal_datatype( $node ) || '';
-		$value		= $bridge->literal_value( $node );
+		my $type	= $node->literal_datatype || '';
+		$value		= $node->literal_value;
 		if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 			$value	= ($value eq 'true') ? '1' : '0';
 		}
@@ -68,8 +69,8 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#decimal"}	= sub {
 	my $node	= shift;
 	my $value;
 	if ($bridge->is_literal($node)) {
-		my $type	= $bridge->literal_datatype( $node ) || '';
-		$value		= $bridge->literal_value( $node );
+		my $type	= $node->literal_datatype || '';
+		$value		= $node->literal_value;
 		if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 			$value	= ($value eq 'true') ? '1.0' : '0.0';
 		}
@@ -92,8 +93,8 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#float"}	= sub {
 	my $node	= shift;
 	my $value;
 	if ($bridge->is_literal($node)) {
-		my $type	= $bridge->literal_datatype( $node ) || '';
-		$value		= $bridge->literal_value( $node );
+		my $type	= $node->literal_datatype || '';
+		$value		= $node->literal_value;
 		if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 			$value	= ($value eq 'true') ? 1.0E0 : 0.0E0;
 		}
@@ -116,8 +117,8 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#double"}	= sub {
 	my $node	= shift;
 	my $value;
 	if ($bridge->is_literal($node)) {
-		my $type	= $bridge->literal_datatype( $node ) || '';
-		$value		= $bridge->literal_value( $node );
+		my $type	= $node->literal_datatype || '';
+		$value		= $node->literal_value;
 		if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 			$value	= ($value eq 'true') ? 1.0E0 : 0.0E0;
 		}
@@ -161,8 +162,8 @@ $RDF::Query::functions{"sop:boolean"}	= sub {
 	
 	if (ref($node)) {
 		if ($bridge->is_literal($node)) {
-			my $value	= $bridge->literal_value( $node );
-			my $type	= $bridge->literal_datatype( $node );
+			my $value	= $node->literal_value;
+			my $type	= $node->literal_datatype;
 			if ($type) {
 				if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 #					warn "boolean-typed: $value";
@@ -218,8 +219,8 @@ $RDF::Query::functions{"sop:numeric"}	= sub {
 	my $bridge	= shift;
 	my $node	= shift;
 	if ($bridge->is_literal($node)) {
-		my $value	= $bridge->literal_value( $node );
-		my $type	= $bridge->literal_datatype( $node );
+		my $value	= $node->literal_value;
+		my $type	= $node->literal_datatype;
 		if ($type and $type eq 'http://www.w3.org/2001/XMLSchema#integer') {
 			return int($value)
 		}
@@ -231,6 +232,7 @@ $RDF::Query::functions{"sop:numeric"}	= sub {
 	}
 };
 
+$RDF::Query::functions{"sparql:str"}	=
 $RDF::Query::functions{"sop:str"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -239,8 +241,8 @@ $RDF::Query::functions{"sop:str"}	= sub {
 	
 	my $node	= shift;
 	if ($bridge->is_literal($node)) {
-		my $value	= $bridge->literal_value( $node );
-		my $type	= $bridge->literal_datatype( $node );
+		my $value	= $node->literal_value;
+		my $type	= $node->literal_datatype;
 		return $value;
 	} elsif ($bridge->is_resource($node)) {
 		return $bridge->uri_value($node);
@@ -285,6 +287,7 @@ $RDF::Query::functions{"sop:logical-and"}	= sub {
 };
 
 # sop:isBound
+$RDF::Query::functions{"sparql:bound"}	=
 $RDF::Query::functions{"sop:isBound"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -294,6 +297,7 @@ $RDF::Query::functions{"sop:isBound"}	= sub {
 };
 
 # sop:isURI
+$RDF::Query::functions{"sparql:isuri"}	=
 $RDF::Query::functions{"sop:isURI"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -302,6 +306,7 @@ $RDF::Query::functions{"sop:isURI"}	= sub {
 };
 
 # sop:isIRI
+$RDF::Query::functions{"sparql:isiri"}	=
 $RDF::Query::functions{"sop:isIRI"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -310,6 +315,7 @@ $RDF::Query::functions{"sop:isIRI"}	= sub {
 };
 
 # sop:isBlank
+$RDF::Query::functions{"sparql:isblank"}	=
 $RDF::Query::functions{"sop:isBlank"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -318,6 +324,7 @@ $RDF::Query::functions{"sop:isBlank"}	= sub {
 };
 
 # sop:isLiteral
+$RDF::Query::functions{"sparql:isliteral"}	=
 $RDF::Query::functions{"sop:isLiteral"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -380,7 +387,7 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 		if ($lang) {
 			throw RDF::Query::Error::TypeError ( -text => "cannot call datatype() on a language-tagged literal" );
 		}
-		my $type	= $bridge->literal_datatype( $node );
+		my $type	= $node->literal_datatype;
 		if ($type) {
 			return $type;
 		} elsif (not $bridge->literal_value_language( $node )) {
@@ -393,7 +400,30 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 	}
 };
 
-
+$RDF::Query::functions{"sparql:regex"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	my $node	= shift;
+	my $match	= shift;
+	
+	my $text	= $query->get_value( $node, bridge => $bridge );
+	my $pattern	= $query->get_value( $match, bridge => $bridge );
+	if (@_) {
+		my $data	= shift;
+		my $flags	= $query->get_value( $data, bridge => $bridge );
+		if ($flags !~ /^[smix]*$/) {
+			throw RDF::Query::Error::FilterEvaluationError ( -text => 'REGEX() called with unrecognized flags' );
+		}
+		$pattern	= qq[(?${flags}:$pattern)];
+	}
+	if ($bridge->is_literal($text)) {
+		$text	= $bridge->literal_value( $text );
+	} elsif (blessed($text)) {
+		throw RDF::Query::Error::TypeError ( -text => 'REGEX() called with non-string data' );
+	}
+	
+	return ($text =~ /$pattern/)
+};
 
 # op:dateTime-equal
 $RDF::Query::functions{"op:dateTime-equal"}	= sub {
@@ -581,37 +611,55 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 	
 	my $list	= shift;
 	my $value	= shift;
-	if ($bridge->is_resource( $list ) and $bridge->uri_value( $list ) eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-		return 0;
-	} else {
-		my $first	= $bridge->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
-		my $rest	= $bridge->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
-		my $stream	= $bridge->get_statements( $list, $first, undef );
-		while (my $stmt = $stream->()) {
-			my $member	= $bridge->object( $stmt );
-			return 1 if ($bridge->equals( $value, $member ));
-		}
-		
-		my $stmt	= $bridge->get_statements( $list, $rest, undef )->();
-		my $tail	= $bridge->object( $stmt );
-		if ($tail) {
-			return $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}->( $query, $bridge, $tail, $value );
-		} else {
+	
+	my $first	= $bridge->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
+	my $rest	= $bridge->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
+	LIST: while ($list) {
+		if ($bridge->is_resource( $list ) and $bridge->uri_value( $list ) eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
 			return 0;
+		} else {
+			my $stream	= $bridge->get_statements( $list, $first, undef );
+			while (my $stmt = $stream->next()) {
+				my $member	= $bridge->object( $stmt );
+				return 1 if ($bridge->equals( $value, $member ));
+			}
+			
+			my $stmt	= $bridge->get_statements( $list, $rest, undef )->next();
+			return 0 unless ($stmt);
+			
+			my $tail	= $bridge->object( $stmt );
+			if ($tail) {
+				$list	= $tail;
+				next; #next LIST;
+			} else {
+				return 0;
+			}
 		}
 	}
+	
+	return 0;
 };
 
+
+our $GEO_DISTANCE_LOADED;
+BEGIN {
+	$GEO_DISTANCE_LOADED	= do {
+		eval {
+			require Geo::Distance;
+		};
+		($@) ? 0 : 1;
+	};
+}
 $RDF::Query::functions{"java:com.ldodds.sparql.Distance"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my ($lat1, $lon1, $lat2, $lon2);
 	
-	eval { require Geo::Distance };
-	if ($@) {
+	unless ($GEO_DISTANCE_LOADED) {
 		throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute distance because Geo::Distance is not available" );
 	}
-	
+
+	my $geo		= ($query->{_query_cache}{'java:com.ldodds.sparql.Distance'}{_geo_dist_obj} ||= new Geo::Distance);
 	my $cast	= 'sop:str';
 	if (2 == @_) {
 		my $point1	= $RDF::Query::functions{$cast}->( $query, $bridge, shift );
@@ -625,7 +673,6 @@ $RDF::Query::functions{"java:com.ldodds.sparql.Distance"}	= sub {
 		$lon2	= $RDF::Query::functions{$cast}->( $query, $bridge, shift );
 	}
 	
-	my $geo		= new Geo::Distance;
 	my $dist	= $geo->distance(
 					'kilometer',
 					$lon1,
@@ -633,16 +680,19 @@ $RDF::Query::functions{"java:com.ldodds.sparql.Distance"}	= sub {
 					$lon2,
 					$lat2,
 				);
-	return $bridge->new_literal("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
+#	warn "ldodds:Distance => $dist\n";
+	my $lit	= $bridge->new_literal("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
+	return $lit;
 };
 
 $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
+	my $value	= shift;
 	my $cast	= 'sop:str';
-	my $value	= $RDF::Query::functions{$cast}->( $query, $bridge, shift );
+	my $string	= Dumper($value);
 	no warnings 'uninitialized';
-	warn "FILTER VALUE: $value\n";
+	warn "FILTER VALUE: $string\n";
 	return $value;
 };
 

@@ -18,6 +18,7 @@ package RDF::Trine::Model::StatementFilter;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 use base qw(RDF::Trine::Model);
 use Scalar::Util qw(blessed reftype);

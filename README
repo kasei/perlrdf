@@ -4,31 +4,17 @@ Currently, the project includes:
 
   * RDF::Query, a SPARQL (and RDQL) query engine supporting RDF::Redland,
     RDF::Core, and RDF::Store.
-  * RDF::Parser - A native parser for Turtle (with RDF/XML support expected soon).
-  * RDF::Store::DBI, an RDF Store for MySQL and SQLite, based on the Redland schema.
-  * RDF::SPARQLResults, iterator classes for SPARQL results (variable bindings
-    and RDF statements).
-  * RDF::Namespace - A convenience class for easily constructing RDF node objects
-    from URI namespaces.
+  * RDF::Trine::Parser - A native parser for Turtle (with RDF/XML expected soon).
+  * RDF::Trine::Store::DBI, an RDF Store for MySQL and SQLite, based on the
+    Redland schema.
+  * RDF::Trine::Iterator, iterator classes for variable bindings and RDF
+    statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
+  * RDF::Trine::Namespace - A convenience class for easily constructing RDF node
+    objects from URI namespaces.
   * RDF::Endpoint - A SPARQL endpoint based on RDF::Query.
 
-The code is a bit incestuous at the moment, with many of the packages depending
-on the RDF::Query::Node and RDF::Query::Algebra::Triple classes, with RDF::Query
-similarly depending on several of the other packages. It all works once
-installed, but passing tests during an installation may be tricky due to
-dependancies. At some point, the main functionality of RDF::Query::Node and
-RDF::Query::Algebra::Triple should be moved to a new package, with the
-RDF::Query classes being subclasses providing query-specific code (execution).
-At that point, the projects currently depending on the RDF::Query classes may
-instead depend on the new lower-level classes.
 
 
-Components that are expected to be written for this project, but have not yet
-been started, are:
-
-  * A rules-based reasoning system.
-
-
-Finally, the RDF::Base code is included in the repository, but isn't currently
+Note, the RDF::Base code is included in the repository, but isn't currently
 being supported. It has probably experienced some bitrot, and is mostly replaced
 by RDF::Store::DBI.

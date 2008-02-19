@@ -34,6 +34,7 @@ use version; $VERSION = qv('0.0.1');
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use Data::Dumper;
 
 

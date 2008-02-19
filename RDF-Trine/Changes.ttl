@@ -1,0 +1,27 @@
+# -*-n3-*-
+
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix asc:     <http://aaronland.info/ns/changefile/> .
+                                     
+<>
+        dc:description          "Changes for RDF::Trine" ;
+        dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
+
+<http://kasei.us/code/files/RDF-Trine-0.100.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+
+        doap:Version    [
+                        doap:revision     "0.100" ;
+                        doap:created      "2008-02-18" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Initial public release." ;
+                        ] .
+
+
+<http://kasei.us/code/rdf-trine/#project>
+        a doap:Project ;
+        doap:download-page      <http://search.cpan.org/dist/RDF-Trine/> ;
+        doap:download-mirror    <http://kasei.us/code/rdf-trine/> .

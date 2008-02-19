@@ -2,6 +2,8 @@ package RDF::Endpoint;
 
 use strict;
 use warnings;
+no warnings 'redefine';
+no warnings 'redefine';
 
 our $VERSION;
 BEGIN {
@@ -49,6 +51,7 @@ sub new {
 						_model		=> $m,
 						_ua			=> LWP::UserAgent->new,
 					}, $class );
+	$self->_load_endpoint_config;
 	
 	if (my $id = $args{ Identity }) {
 		$self->set_identity( $id );
@@ -89,20 +92,8 @@ sub authorized_user {
 		return $authorized{ $id };
 	} else {
 		my $wl		= $self->{ whitelist };
-		my $query	= RDF::Query->new( <<"END" );
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-ASK
-WHERE {
-	[ a foaf:PersonalProfileDocument ; foaf:primaryTopic ?p ] .
-	{
-		{ ?p foaf:openid <${id}> } UNION { ?p foaf:homepage <${id}> }
-	} UNION {
-		{ ?p foaf:knows [ foaf:openid <${id}> ] }
-		UNION
-		{ ?p foaf:knows [ foaf:homepage <${id}> ] }
-	}
-}
-END
+		my $sparql	= $self->auth_query( $id );
+		my $query	= RDF::Query->new( $sparql );
 		my $res		= $query->execute( $wl );
 		if (blessed($res) and $res->get_boolean) {
 			$authorized{ $id }	= 1;
@@ -151,10 +142,10 @@ sub query_page {
 
 sub _login_crumb {
 	my $self	= shift;
+	my $submit	= $self->submit_url;
 	if (my $id = $self->get_identity) {
-		return qq<[Logged in as $id]>;
+		return qq<[Logged in as $id; <a href="${submit}?logout=1">Logout</a>.]>;
 	} else {
-		my $submit	= $self->submit_url;
 		return qq<[<a href="${submit}?login=1">Login</a>]>;
 	}
 }
@@ -167,28 +158,34 @@ sub handle_admin_post {
 	my $prefix	= shift;
 	my $model	= $self->_model;
 	
+	my $owner	= $cgi->param( 'owner_openid' );
+	if ($owner ne $self->owner_openid) {
+		$self->set_owner_openid( $owner );
+		return $self->redir( $cgi, 302, "Found", $self->submit_url );
+	}
+	
+	my $preds		= $cgi->param('priv_preds');
+	$self->update_priv_preds( $preds );
+	
+	my $auth		= $cgi->param('auth_query');
+	$self->update_auth_query( $auth );
+
+	$self->_load_endpoint_config;
+	
 	my @keys	= $cgi->param;
-	foreach my $key (sort @keys) {
+	foreach my $key (grep { /^(add|delete)_/ } sort @keys) {
 		if ($key eq 'add_uri') {
 			my $url		= $cgi->param($key);
-			$self->_add_uri( $url );
+			if ($url) {
+				$self->_add_uri( $url );
+			}
 		} elsif ($key =~ /^delete_<(.*)>$/) {
 			my $url	= $1;
 			my $ctx	= RDF::Trine::Node::Resource->new( $url );
 			$model->remove_statements( undef, undef, undef, $ctx );
-		} elsif ($key =~ /^replace_<(.*)>$/) {
-			my $url	= $1;
-			my $ctx	= RDF::Trine::Node::Resource->new( $url );
-#			$model->remove_statements( undef, undef, undef, $ctx );
-			
-			warn "REPLACE $url";
 		}
 		
 	}
-	use Data::Dumper;
-	warn 'ADMIN POST: ' . Dumper( { $cgi->Vars } );
-	my $method	= $cgi->request_method();
-	
 	$self->redir( $cgi, 302, "Found", $self->admin_url );
 }
 
@@ -236,13 +233,23 @@ sub admin_index {
 			source			=> _html_escape($uri),
 			count			=> $count,
 			delete_field	=> $cgi->checkbox( -name => "delete_${uri}", -label => '', -checked => 0 ),
-			replace_field	=> $cgi->filefield( -name => "replace_${uri}" ),
 		} );
 	}
 	
+	my $owner		= $self->owner_openid;
+	my $auth_query	= $self->raw_auth_query();
+	my $priv_preds	= join("\n", map { $_->uri_value } @{ $self->priv_preds });
+	warn 'owner: ' . $owner;
+	
 	print $cgi->header( -type => 'text/html; charset=utf-8' );
 	my $submit	= $self->admin_url;
-	$tt->process( $file, { admin_submit_url => $submit, files => \@files } );
+	$tt->process( $file, {
+		admin_submit_url	=> $submit,
+		files				=> \@files,
+		owner_openid		=> $owner,
+		priv_preds			=> $priv_preds,
+		auth_query			=> $auth_query,
+	} );
 }
 
 sub save_query {
@@ -252,7 +259,7 @@ sub save_query {
 	my $query	= RDF::Query->new( $sparql );
 	if ($query) {
 		my $serial	= $query->as_sparql;
-		my $dbh		= $self->_model->_store->dbh;
+		my $dbh		= $self->dbh;
 		
 		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
 		$sth->execute( $serial );
@@ -283,7 +290,7 @@ sub run_saved_query {
 	my $cgi		= shift;
 	my $name	= shift;
 
-	my $dbh		= $self->_model->_store->dbh;
+	my $dbh		= $self->dbh;
 	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
 	$sth->execute( $name );
 	my ($sparql)	= $sth->fetchrow;
@@ -308,7 +315,7 @@ sub run_query {
 						map { my ($t,$q) = split(/;q=/, $_); $q ||= 1; [ $t,$q ] }
 							sort { index($b, 'html') }
 								split(',', $http_accept);
-	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml);
+	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/json text/html application/xhtml+xml application/sparql-results+xml);
 	if (my $t = $cgi->param('mime-type')) {
 		unshift( @accept, $t );
 	}
@@ -448,6 +455,95 @@ END
 	}
 }
 
+sub owner_openid {
+	my $self	= shift;
+	return $self->{config}{owner_openid};
+}
+
+sub auth_query {
+	my $self	= shift;
+	my $id		= shift || '[%USER_OPENID%]';
+	my $query	= $self->raw_auth_query;
+	$query		=~ s/\[%USER_OPENID%\]/<$id>/g;
+	my $owner	= $self->owner_openid;
+	$query		=~ s/\[%OWNER_OPENID%\]/<$owner>/g;
+	return $query;
+}
+
+sub raw_auth_query {
+	my $self	= shift;
+	my $query	= $self->{config}{auth_query};
+	return $query;
+}
+
+sub update_auth_query {
+	my $self	= shift;
+	my $query	= shift;
+	my $dbh		= $self->dbh;
+	if ($query ne $self->auth_query) {
+		my $sth	= $dbh->prepare('UPDATE Endpoint SET auth_query = ? WHERE ID = 1');
+		$sth->execute( $query );
+	}
+}
+
+sub priv_preds {
+	my $self	= shift;
+	return $self->{config}{priv_preds} || [];
+}
+
+sub update_priv_preds {
+	my $self	= shift;
+	my $preds	= shift;
+	my $dbh		= $self->dbh;
+	
+	my @new_preds	= sort grep { length($_) } split(/\s+/, $preds);
+	my @old_preds	= map { $_->uri_value } @{ $self->priv_preds };
+	if (join('<', @new_preds) ne join('<', @old_preds)) {
+		my $add	= $dbh->prepare('INSERT INTO Endpoint_PrivatePredicates (endpoint, ID, URI) VALUES (1,?,?)');
+		my $rm	= $dbh->prepare('DELETE FROM Endpoint_PrivatePredicates WHERE URI = ?');
+		
+		my %old_preds	= map { $_ => 1 } @old_preds;
+		foreach my $new (@new_preds) {
+			if ($old_preds{ $new }) {
+				delete $old_preds{ $new };
+			} else {
+				my $node	= RDF::Trine::Node::Resource->new( $new );
+				my $id		= RDF::Trine::Store::DBI->_mysql_node_hash( $node );
+				$add->execute( $id, $new );
+			}
+		}
+		foreach my $old (keys %old_preds) {
+			$rm->execute( $old );
+		}
+	}
+}
+
+sub _load_endpoint_config {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my ($owner, $auth)	= $dbh->selectrow_array( 'SELECT owner_openid, auth_query FROM Endpoint WHERE ID = 1' );
+	$self->{config}{owner_openid}	= $owner;
+	$self->{config}{auth_query}		= $auth;
+	
+	my $sth		= $dbh->prepare( 'SELECT URI FROM Endpoint_PrivatePredicates WHERE endpoint = 1' );
+	$sth->execute();
+	
+	my @preds;
+	while (my ($uri) = $sth->fetchrow) {
+		push( @preds, RDF::Trine::Node::Resource->new( $uri ) );
+	}
+	$self->{config}{priv_preds}	= [ sort @preds ];
+	return $owner;
+}
+
+sub set_owner_openid {
+	my $self	= shift;
+	my $id		= shift;
+	my $dbh		= $self->dbh;
+	my $sth		= $dbh->prepare( 'UPDATE Endpoint SET owner_openid = ? WHERE ID = 1' );
+	$sth->execute( $id );
+}
+
 sub admin_url {
 	my $self	= shift;
 	return $self->{admin};
@@ -466,7 +562,8 @@ sub set_identity {
 
 sub get_identity {
 	my $self	= shift;
-	return $self->{_identity};
+	my $id	= $self->{_identity};
+	return $id;
 }
 
 sub _template {
@@ -498,12 +595,28 @@ sub _html_escape {
 
 sub init {
 	my $self	= shift;
-	my $model	= $self->_model;
-	my $dbh		= $model->_store->dbh;
+	my $dbh		= $self->dbh;
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
         CREATE TABLE IF NOT EXISTS Queries (
             Name VARCHAR(8) UNIQUE NOT NULL,
             Query longtext NOT NULL
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Endpoint (
+            ID bigint unsigned PRIMARY KEY AUTO_INCREMENT,
+            owner_openid VARCHAR(256) NOT NULL,
+            include_path VARCHAR(256) NOT NULL,
+            auth_query VARCHAR(1024),
+            priv_query VARCHAR(1024)
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Endpoint_PrivatePredicates (
+            endpoint bigint unsigned,
+            ID bigint unsigned,
+            URI text NOT NULL,
+            PRIMARY KEY (endpoint, ID)
         );
 END
 	return 1;
@@ -528,6 +641,12 @@ sub redir {
 	my $url		= shift;
 	print $cgi->header( -status => "${code} ${message}", -Location => $url );
 	return;
+}
+
+sub dbh {
+	my $self	= shift;
+	my $dbh		= $self->_model->_store->dbh;
+	return $dbh;
 }
 
 1;

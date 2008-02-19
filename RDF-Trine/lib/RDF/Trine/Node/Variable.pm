@@ -14,6 +14,7 @@ package RDF::Trine::Node::Variable;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use Data::Dumper;

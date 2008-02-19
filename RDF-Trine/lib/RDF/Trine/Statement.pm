@@ -14,6 +14,7 @@ package RDF::Trine::Statement;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use constant DEBUG	=> 0;
 
 use Data::Dumper;

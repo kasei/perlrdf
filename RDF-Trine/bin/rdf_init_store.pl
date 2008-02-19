@@ -2,6 +2,7 @@
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use RDF::Trine::Store::DBI;
 
 unless (@ARGV) {

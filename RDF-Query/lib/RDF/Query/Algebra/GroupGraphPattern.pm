@@ -14,6 +14,7 @@ package RDF::Query::Algebra::GroupGraphPattern;
 
 use strict;
 use warnings;
+no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
@@ -150,27 +151,6 @@ Returns a list of the variable names that will be bound after evaluating this al
 sub definite_variables {
 	my $self	= shift;
 	return uniq(map { $_->definite_variables } $self->patterns);
-}
-
-=item C<< check_duplicate_blanks >>
-
-Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
-across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
-
-=cut
-
-sub check_duplicate_blanks {
-	my $self	= shift;
-	my %seen;
-	foreach my $p ($self->patterns) {
-		my @blanks	= $p->referenced_blanks;
-		foreach my $b (@blanks) {
-			if ($seen{ $b }++) {
-				throw RDF::Query::Error::QueryPatternError -text => "Same blank node identifier ($b) used in more than one BasicGraphPattern.";
-			}
-		}
-	}
-	return 1;
 }
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
