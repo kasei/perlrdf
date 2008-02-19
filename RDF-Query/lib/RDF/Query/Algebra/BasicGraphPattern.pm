@@ -48,9 +48,9 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-		unless ($t->isa('RDF::Query::Algebra::Triple')) {
+		unless ($t->isa('RDF::Trine::Statement')) {
 			Carp::cluck;
-			throw RDF::Query::Error::QueryPatternError -text => "Patterns belonging to a BGP must be triples";
+			throw RDF::Query::Error::QueryPatternError -text => "Patterns belonging to a BGP must be graph statements";
 		}
 	}
 	return bless( [ @triples ] );

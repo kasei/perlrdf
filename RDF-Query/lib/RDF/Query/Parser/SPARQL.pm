@@ -303,6 +303,16 @@ sub __base {
 	}
 }
 
+sub __new_statement {
+	my $self	= shift;
+	my @nodes	= @_;
+	if (my $graph = $self->{named_graph}) {
+		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
+	} else {
+		return RDF::Query::Algebra::Triple->new( @nodes );
+	}
+}
+
 ################################################################################
 
 
@@ -850,10 +860,17 @@ sub _GraphGraphPattern {
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
 	
-	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
-	my $ggp	= $self->_remove_pattern;
+	if ($self->{named_graph}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Cannot nest GRAPH patterns";
+	}
 	
+	{
+		local($self->{named_graph})	= $graph;
+		$self->__consume_ws_opt;
+		$self->_GroupGraphPattern;
+	}
+	
+	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
 	$self->_add_patterns( $pattern );
 	$self->_add_stack( [ 'RDF::Query::Algebra::NamedGraph' ] );
@@ -1011,7 +1028,7 @@ sub _TriplesSameSubject {
 		
 		my @list	= splice(@{ $self->{stack} });
 		foreach my $data (@list) {
-			push(@triples, RDF::Query::Algebra::Triple->new( $s, @$data ));
+			push(@triples, $self->__new_statement( $s, @$data ));
 		}
 	} else {
 		$self->_VarOrTerm;
@@ -1022,7 +1039,7 @@ sub _TriplesSameSubject {
 		$self->__consume_ws_opt;
 		my (@list)	= splice(@{ $self->{stack} });
 		foreach my $data (@list) {
-			push(@triples, RDF::Query::Algebra::Triple->new( $s, @$data ));
+			push(@triples, $self->__new_statement( $s, @$data ));
 		}
 	}
 	
@@ -1131,7 +1148,7 @@ sub _BlankNodePropertyList {
 	
 	my @props	= splice(@{ $self->{stack} });
 	my $subj	= $self->new_blank;
-	my @triples	= map { RDF::Query::Algebra::Triple->new( $subj, @$_ ) } @props;
+	my @triples	= map { $self->__new_statement( $subj, @$_ ) } @props;
 	$self->_add_patterns( @triples );
 	$self->_add_stack( $subj );
 }
@@ -1166,14 +1183,14 @@ sub _Collection {
 	
 	my @triples;
 	foreach my $node (@nodes) {
-		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $first, $node ) );
+		push(@triples, $self->__new_statement( $cur, $first, $node ) );
 		my $new	= $self->new_blank;
-		push(@triples, RDF::Query::Algebra::Triple->new( $cur, $rest, $new ) );
+		push(@triples, $self->__new_statement( $cur, $rest, $new ) );
 		$last	= $cur;
 		$cur	= $new;
 	}
 	pop(@triples);
-	push(@triples, RDF::Query::Algebra::Triple->new( $last, $rest, $nil ));
+	push(@triples, $self->__new_statement( $last, $rest, $nil ));
 	$self->_add_patterns( @triples );
 	
 	$self->_add_stack( $subj );

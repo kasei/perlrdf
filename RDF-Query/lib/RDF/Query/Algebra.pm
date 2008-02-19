@@ -38,6 +38,7 @@ use RDF::Query::Algebra::Filter;
 use RDF::Query::Algebra::GroupGraphPattern;
 use RDF::Query::Algebra::Optional;
 use RDF::Query::Algebra::Triple;
+use RDF::Query::Algebra::Quad;
 use RDF::Query::Algebra::Union;
 use RDF::Query::Algebra::NamedGraph;
 use RDF::Query::Algebra::TimeGraph;

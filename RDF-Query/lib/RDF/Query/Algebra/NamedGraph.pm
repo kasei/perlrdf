@@ -240,42 +240,7 @@ sub execute {
 	my $named_triples	= $self->pattern;
 	
 	_debug( 'named triples: ' . Dumper($named_triples), 1 ) if (DEBUG);
-	
-	
-	my $nstream;
-	foreach my $nmodel_data (values %{ $query->{named_models} }) {	# XXX shouldn't be poking directly into $query
-		my ($nbridge, $name)	= @{ $nmodel_data };
-		my $_stream	= $named_triples->execute( $query, $nbridge, $bound, $context, %args );
-		
-		my $stream;
-		if (blessed($context) and $context->isa('RDF::Query::Node::Variable')) {
-			my $cvar	= $context->name;
-			my $sub	= sub {
-				my $row	= $_stream->next();
-				return unless ($row);
-				my %row	= %$row;
-				$row{ $cvar }	= $name;
-				return \%row;
-			};
-			$stream	= RDF::Trine::Iterator::Bindings->new( $sub, [uniq($_stream->binding_names, $cvar)], bridge => $bridge );
-		} else {
-			$stream	= $_stream;
-		}
-		
-		if (defined($nstream)) {
-			$nstream	= $nstream->concat( $stream );
-		} else {
-			$nstream	= $stream;
-		}
-	}
-	
-	unless ($nstream) {
-		$nstream	= RDF::Trine::Iterator::Bindings->new( [], [] );
-	}
-	_debug( 'named stream: ' . $nstream, 1 ) if (DEBUG);
-	_debug_closure( $nstream ) if (DEBUG);
-	
-	_debug( 'got named stream' ) if (DEBUG);
+	my $nstream	= $named_triples->execute( $query, $bridge, $bound, $context, %args );
 	return $nstream;
 }
 
