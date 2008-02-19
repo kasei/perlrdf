@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 50;
+use Test::More tests => 55;
 
 use Data::Dumper;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
@@ -22,6 +22,25 @@ use RDF::Trine::Iterator::Boolean;
 	my @values	= $stream->get_all;
 	is_deeply( \@values, [{value=>1}, {value=>2}, {value=>3}], 'deep comparison' );
 }
+
+{
+	my @first	= ({value=>1},{value=>2});
+	my @second	= ({value=>3});
+	
+	my $data	= RDF::Trine::Iterator::Bindings->new( \@first, [qw(value)] );
+	my $extra	= RDF::Trine::Iterator::Bindings->new( \@second, [qw(value)] );
+	
+	my $stream	= $data->concat( $extra );
+	
+	isa_ok( $stream, 'RDF::Trine::Iterator' );
+	ok( $stream->is_bindings, 'is_bindings' );
+	is( $stream->is_boolean, 0, 'is_boolean' );
+	is( $stream->is_graph, 0, 'is_graph' );
+	
+	my @values	= $stream->get_all;
+	is_deeply( \@values, [{value=>1}, {value=>2}, {value=>3}], 'deep comparison' );
+}
+
 
 {
 	my @data	= ({value=>1},{value=>2});

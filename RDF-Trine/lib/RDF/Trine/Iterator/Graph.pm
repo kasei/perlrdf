@@ -28,6 +28,7 @@ package RDF::Trine::Iterator::Graph;
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use JSON;
 use List::Util qw(max);
 use Scalar::Util qw(blessed);
@@ -136,12 +137,13 @@ and so may have noticable effects on large graphs.
 sub unique {
 	my $self	= shift;
 	my %seen;
-	return sgrep {
-		no warnings 'uninitialized';
+	no warnings 'uninitialized';
+	my $stream	= sgrep( sub {
 		my $s	= $_;
 		my $str	= $s->as_string;
 		not($seen{ $str }++)
-	} $self;
+	}, $self);
+	return $stream;
 }
 
 =item C<is_graph>

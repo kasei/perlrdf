@@ -64,11 +64,9 @@ use overload '&{}' => sub {
 	};
 };
 
-require RDF::Trine::Iterator::Bindings;
-require RDF::Trine::Iterator::Boolean;
-require RDF::Trine::Iterator::Graph;
-
-
+use RDF::Trine::Iterator::Bindings;
+use RDF::Trine::Iterator::Boolean;
+use RDF::Trine::Iterator::Graph;
 
 =item C<new ( \@results, $type, \@names, %args )>
 
