@@ -56,11 +56,13 @@ sub new {
 	my $cgi			= $args{ CGI };
 	my $wl			= $args{ WhiteListModel };
 	
-	my $host	= $cgi->server_name;
-	my $port	= $cgi->server_port;
+	my $host		= $cgi->server_name;
+	my $port		= $cgi->server_port;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
-	my $self		= bless({}, $class);
 
+	my $dbh			= DBI->connect( $dsn, $user, $pass );
+	my $self		= bless({ dbh => $dbh }, $class);
+	
 	my %endargs;
 	
 	if ($wl) {
@@ -144,6 +146,8 @@ sub run {
 		}
 	} elsif ($cgi->param('login')) {
 		$endpoint->login_page( $cgi );
+	} elsif ($cgi->param('logout')) {
+		$self->redir( $cgi, 303, 'See Other', $url, '' );
 	} elsif (my $sparql = $cgi->param('query')) {
 		$endpoint->run_query( $cgi, $sparql );
 	} elsif (my $q = $cgi->param('queryname')) {
@@ -177,7 +181,7 @@ sub redir {
 	my $url		= shift;
 	my $id		= shift;
 	my %args;
-	if ($id) {
+	if (defined($id)) {
 		my $hash			= $id . '>' . $self->_id_hash( $id );
 		my $cookie			= $cgi->cookie(
 								-name		=> 'identity',
@@ -189,6 +193,11 @@ sub redir {
 	}
 	print $cgi->header( -status => "${code} ${message}", -Location => $url, %args );
 	return;
+}
+
+sub dbh {
+	my $self	= shift;
+	return $self->{dbh};
 }
 
 sub _id_hash {
