@@ -866,10 +866,6 @@ sub _GraphGraphPattern {
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
 	
-	if ($self->{named_graph}) {
-		throw RDF::Query::Error::ParseError -text => "Syntax error: Cannot nest GRAPH patterns";
-	}
-	
 	{
 		local($self->{named_graph})	= $graph;
 		$self->__consume_ws_opt;

@@ -16,13 +16,6 @@ if ($] < 5.007003) {
 	exit;
 }
 
-if ($ENV{RDFQUERY_DAWGTEST}) {
-#	plan qw(no_plan);
-} else {
-	plan skip_all => 'Developer tests. Set RDFQUERY_DAWGTEST to run these tests.';
-	exit;
-}
-
 require Encode;
 require Data::Dumper;
 
