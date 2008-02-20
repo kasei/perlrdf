@@ -185,8 +185,6 @@ sub add_uri {
 	my $url		= shift;
 	my $named	= shift;
 	
-	$self->set_context( $url );
-	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
 	

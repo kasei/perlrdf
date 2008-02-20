@@ -34,7 +34,6 @@ BAIL_OUT( 'RDF::Query not loaded' ) unless ($loaded);
 			FILTER <http://kasei.us/code/rdf-query/functions/bloom>( ?p, "BAcEMTIzNAQEBAgRDUJsb29tOjpGaWx0ZXIDCAAAAAoEAAAAAAgAAABibGFua3ZlYweamZmZmZmpPwoAAABlcnJvcl9yYXRlCggAAAFAAAgCAAYAAABmaWx0ZXIIhA4AAABudW1faGFzaF9mdW5jcwiBCQAAAGtleV9jb3VudAi/DQAAAGZpbHRlcl9sZW5ndGgIiggAAABjYXBhY2l0eQQCBAAAAAoRMC4zNzkxOTU0NDEyOTczOTQKETAuMjQ0MjQ5NjM2ODQ2NjkzChEwLjg1MTQ5ODA5NTE3NjMxMQoSMC4wNzgyMTI0NDE5NjY1MjA5BQAAAHNhbHRz" ) .
 		}
 END
-	use Data::Dumper;
 	my $stream	= $query->execute();
 	isa_ok( $stream, 'RDF::Trine::Iterator' );
 	my $d	= $stream->next;
@@ -44,7 +43,10 @@ END
 }
 
 
-{
+SKIP: {
+	unless ($ENV{RDFQUERY_DEV_TEST}) {
+		skip "developer network tests", 3;
+	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT DISTINCT *
@@ -75,7 +77,10 @@ END
 	} );
 }
 
-{
+SKIP: {
+	unless ($ENV{RDFQUERY_DEV_TEST}) {
+		skip "developer network tests", 3;
+	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		SELECT DISTINCT *
@@ -110,7 +115,10 @@ END
 }
 
 
-{
+SKIP: {
+	unless ($ENV{RDFQUERY_DEV_TEST}) {
+		skip "developer network tests", 3;
+	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT *

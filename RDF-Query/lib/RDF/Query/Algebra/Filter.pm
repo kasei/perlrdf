@@ -39,52 +39,6 @@ BEGIN {
 # 	binary
 
 
-our %OPERATORS	= (
-	'~~'	=> {
-				arity	=> { 2 => 'REGEX(%s, %s)', 3 => "REGEX(%s, %s, %s)" },
-			},
-	'=='	=> {
-				arity	=> { 2 => '%s = %s' },
-			},
-	'!='	=> {
-				arity	=> { 2 => '%s != %s' },
-			},
-	'<'		=> {
-				arity	=> { 2 => '%s < %s' },
-			},
-	'>'		=> {
-				arity	=> { 2 => '%s > %s' },
-			},
-	'<='	=> {
-				arity	=> { 2 => '%s <= %s' },
-			},
-	'>='	=> {
-				arity	=> { 2 => '%s >= %s' },
-			},
-	'&&'	=> {
-				arity	=> { 2 => '%s && %s' },
-			},
-	'||'	=> {
-				arity	=> { 2 => '%s || %s' },
-			},
-	'*'		=> {
-				arity	=> { 2 => '%s * %s' },
-			},
-	'/'		=> {
-				arity	=> { 2 => '%s / %s' },
-			},
-	'+'		=> {
-				arity	=> { 2 => '%s + %s' },
-			},
-	'-'		=> {
-				arity	=> { 1 => '-%s', 2 => '%s - %s' },
-			},
-	'!'		=> {
-				arity	=> { 1 => '! %s' },
-			},
-);
-
-
 =head1 METHODS
 
 =over 4
@@ -178,7 +132,7 @@ sub as_sparql {
 	my $expr	= $self->expr;
 	my $filter_sparql	= $expr->as_sparql( $context, $indent );
 	my $pattern_sparql	= $self->pattern->as_sparql( $context, $indent );
-	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER${filter_sparql} .\n${indent}}#;
+	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER ${filter_sparql} .\n${indent}}#;
 	return $pattern_sparql;
 }
 

@@ -42,7 +42,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER(?name < "Greg") . }', 'sparql to sparql with less-than filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER (?name < "Greg") . }', 'sparql to sparql with less-than filter' );
 }
 
 {
