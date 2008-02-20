@@ -14,6 +14,7 @@ recommends:
   RDF::Redland: 1
   RDF::Core: 0
 requires:
+    Bloom::Filter:                 0
     DBI:                           0
     DBD::SQLite:                   1.14
     Digest::MD5:                   0

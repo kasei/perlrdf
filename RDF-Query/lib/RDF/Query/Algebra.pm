@@ -41,6 +41,7 @@ use RDF::Query::Algebra::Triple;
 use RDF::Query::Algebra::Quad;
 use RDF::Query::Algebra::Union;
 use RDF::Query::Algebra::NamedGraph;
+use RDF::Query::Algebra::Service;
 use RDF::Query::Algebra::TimeGraph;
 use RDF::Query::Algebra::Function;
 use RDF::Query::Algebra::Aggregate;

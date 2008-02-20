@@ -17,6 +17,7 @@ WriteMakefile(
     ABSTRACT_FROM		=> 'lib/RDF/Trine.pm',
 	AUTHOR				=> 'Gregory Todd Williams <gwilliams@cpan.org>',
     PREREQ_PM			=> {
+					'Bloom::Filter'				=> 0,
 					'DBI'						=> 0,
 					'DBD::SQLite'				=> 1.14,
 					'Digest::MD5'				=> 0,

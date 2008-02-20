@@ -18,8 +18,10 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
+use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
+use RDF::Query::Error qw(:try);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
@@ -193,24 +195,49 @@ sub execute {
 	my %args		= @_;
 	
 	my (@triples)	= $self->patterns;
-	my @streams;
+	my $stream;
 	my @filters;
 	foreach my $triple (@triples) {
 		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'));
-		my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
-		push(@streams, $stream);
+		
+		my $handled	= 0;
+		
+		try {
+			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
+				my $m		= $stream->materialize;
+				
+				my @vars	= $triple->referenced_variables;
+				my %svars	= map { $_ => 1 } $stream->binding_names;
+				my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
+				my $f		= $m->bloom( $var );
+				my $new;
+				try {
+					my $pattern	= $triple->add_bloom( $var, $f );
+					$new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
+					throw RDF::Query::Error unless ($new);
+				} otherwise {
+					warn "*** Wasn't able to use :bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
+					$new	= $triple->execute( $query, $bridge, $bound, $context, %args );
+				};
+				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $m, $new, %args );
+				$handled	= 1;
+			}
+		};
+		
+		unless ($handled) {
+			my $new	= $triple->execute( $query, $bridge, $bound, $context, %args );
+			if ($stream) {
+				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $new, %args )
+			} else {
+				$stream	= $new;
+			}
+		}
 	}
 	
-	if (@streams) {
-		while (@streams > 1) {
-			my $a	= shift(@streams);
-			my $b	= shift(@streams);
-			unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b, %args ));
-		}
-	} else {
-		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
+	unless ($stream) {
+		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
 	}
-	my $stream	= shift(@streams);
+	
 	foreach my $data (@filters) {
 		$stream	= sgrep {
 					my $bound			= $_;

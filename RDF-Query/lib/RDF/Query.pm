@@ -81,6 +81,7 @@ use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
 use RDF::Query::Parser::tSPARQL;	# XXX temporal extensions
+use RDF::Query::Parser::SPARQLP;
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 
@@ -134,6 +135,7 @@ sub new {
 					rdql	=> 'RDF::Query::Parser::RDQL',
 					sparql	=> 'RDF::Query::Parser::SPARQL',
 					tsparql	=> 'RDF::Query::Parser::tSPARQL',
+					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
 				);
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',
@@ -149,6 +151,7 @@ sub new {
 	my $parsed	= $parser->parse( $query );
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
+	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	my $self 	= bless( {
 					base			=> $baseuri,
 					dateparser		=> $f,
@@ -216,7 +219,7 @@ sub execute {
 	my $model	= shift;
 	my %args	= @_;
 	
-	$self->{_query_cache}	= {};	# a new scratch hash for each execution
+	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
 	local($::NO_BRIDGE)	= 0;
 	$self->{parsed}	= dclone( $self->{parsed_orig} );
@@ -1491,7 +1494,7 @@ sub net_filter_function {
 		my $impl	= $bridge->uri_value( $obj );
 	};
 	
-	my $resp	= $self->{useragent}->get( $impl );
+	my $resp	= $self->useragent->get( $impl );
 	unless ($resp->is_success) {
 		warn "No content available from $uri: " . $resp->status_line;
 		return;
@@ -1507,7 +1510,7 @@ sub net_filter_function {
 					: File::Spec->catfile($ENV{HOME}, '.gnupg', 'pubring.gpg');
 		$gpg->gpgopts("--lock-multiple --keyring " . $keyring);
 		
-		my $sigresp	= $self->{useragent}->get( "${impl}.asc" );
+		my $sigresp	= $self->useragent->get( "${impl}.asc" );
 #		if (not $sigresp) {
 #			throw RDF::Query::Error::ExecutionError -text => "Required signature not found: ${impl}.asc\n";
 		if ($sigresp->is_success) {
@@ -2080,6 +2083,19 @@ sub bridge {
 	
 	return $bridge;
 }
+
+
+=item C<< useragent >>
+
+Returns the LWP::UserAgent object used for retrieving web content.
+
+=cut
+
+sub useragent {
+	my $self	= shift;
+	return $self->{useragent};
+}
+
 
 =item C<error ()>
 

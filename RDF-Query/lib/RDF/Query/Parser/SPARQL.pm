@@ -703,23 +703,7 @@ sub _GroupGraphPattern {
 			$self->_GraphPatternNotTriples;
 			$self->__consume_ws_opt;
 			my ($data)	= splice(@{ $self->{stack} });
-			my ($class, @args)	= @$data;
-			if ($class eq 'RDF::Query::Algebra::Optional') {
-				my $ggp	= $self->_remove_pattern();
-				unless ($ggp) {
-					$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-				}
-				my $opt	= $class->new( $ggp, @args );
-				$self->_add_patterns( $opt );
-			} elsif ($class eq 'RDF::Query::Algebra::Union') {
-				# no-op
-			} elsif ($class eq 'RDF::Query::Algebra::NamedGraph') {
-				# no-op
-			} elsif ($class eq 'RDF::Query::Algebra::GroupGraphPattern') {
-				# no-op
-			} else {
-				Carp::confess Dumper($class, \@args);
-			}
+			$self->__handle_GraphPatternNotTriples( $data );
 			$self->__consume_ws_opt;
 		} elsif ($self->_test( qr/FILTER/i )) {
 			$got_pattern++;
@@ -778,6 +762,28 @@ sub _GroupGraphPattern {
 	$self->_add_patterns( $pattern );
 }
 
+sub __handle_GraphPatternNotTriples {
+	my $self	= shift;
+	my $data	= shift;
+	my ($class, @args)	= @$data;
+	if ($class eq 'RDF::Query::Algebra::Optional') {
+		my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		my $opt	= $class->new( $ggp, @args );
+		$self->_add_patterns( $opt );
+	} elsif ($class eq 'RDF::Query::Algebra::Union') {
+		# no-op
+	} elsif ($class eq 'RDF::Query::Algebra::NamedGraph') {
+		# no-op
+	} elsif ($class eq 'RDF::Query::Algebra::GroupGraphPattern') {
+		# no-op
+	} else {
+		Carp::confess Dumper($class, \@args);
+	}
+}
+
 # [21] TriplesBlock ::= TriplesSameSubject ( '.' TriplesBlock? )?
 sub _TriplesBlock_test {
 	my $self	= shift;
@@ -822,7 +828,7 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/OPTIONAL|{|GRAPH/);
+	return $self->_test(qr/OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
@@ -1473,6 +1479,7 @@ sub _BuiltInCall {
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->__consume_ws_opt;
 		$self->_eat('(');
+		$self->__consume_ws_opt;
 		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/) {
 			### one-arg functions that take an expression
 			$self->_Expression;

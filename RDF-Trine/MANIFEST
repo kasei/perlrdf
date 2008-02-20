@@ -263,6 +263,7 @@ t/data/turtle/test-24.out
 t/data/turtle/test-24.ttl
 t/data/turtle/test-25.out
 t/data/turtle/test-25.ttl
+t/iterator-bloom.t
 t/iterator-materialized.t
 t/iterator-thaw.t
 t/iterator.t

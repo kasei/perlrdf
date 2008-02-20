@@ -43,6 +43,10 @@ no warnings 'redefine';
 use Data::Dumper;
 use base qw(RDF::Trine::Iterator::Bindings);
 
+use Data::Dumper;
+use Scalar::Util qw(blessed reftype);
+
+use Bloom::Filter;
 our ($REVISION, $VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
@@ -65,8 +69,17 @@ sub new {
 	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args	= @_;
 	
-	my $type	= 'bindings';
+	if (reftype($data) eq 'CODE') {
+		my @rows;
+		while (my $row = $data->()) {
+			push(@rows, $row);
+		}
+		$data	= \@rows;
+	}
 	
+	Carp::confess "not an ARRAY: " . Dumper($data) unless (reftype($data) eq 'ARRAY');
+	
+	my $type	= 'bindings';
 	my $index	= 0;
 	my $stream	= sub {
 		my $data	= $data->[ $index++ ];
@@ -107,6 +120,29 @@ sub next {
 	}
 	return $data;
 }
+
+=item C<< bloom ( $variable, $error ) >>
+
+=cut
+
+sub bloom {
+	my $self	= shift;
+	my $var		= shift;
+	my $error	= shift || 0.05;
+	my $length	= scalar(@{ $self->{ _data } });
+	
+	my $name	= blessed($var) ? $var->name : $var;
+	
+	my $filter	= Bloom::Filter->new( capacity => $length, error_rate => $error );
+	while (my $result = $self->next) {
+		use Data::Dumper;
+		my $node	= $result->{ $name };
+		$filter->add( $node->as_string );
+	}
+	$self->reset;
+	return $filter;
+}
+
 
 1;
 

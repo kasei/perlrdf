@@ -19,14 +19,18 @@ no warnings 'redefine';
 use Scalar::Util qw(blessed reftype looks_like_number);
 use RDF::Query::Error qw(:try);
 
+use Bloom::Filter;
 use Data::Dumper;
+use MIME::Base64;
+use Storable qw(thaw);
+use Digest::SHA1 qw(sha1_hex);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
 our ($VERSION, $debug);
 BEGIN {
-	$debug		= 1;
+	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
 }
 
@@ -696,6 +700,28 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	return $value;
 };
 
+
+### func:bloom( ?var, "filter-base64" ) => true iff str(?var) is in the bloom filter.
+$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+
+	my $cast	= 'sop:str';
+	my $value	= shift;
+	my $filter	= $RDF::Query::functions{$cast}->( $query, $bridge, shift );
+	my $hash	= sha1_hex( $filter );
+	
+	my $bloom	= (exists( $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash} ))
+				? $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}
+				: thaw( decode_base64($filter) );
+	$query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}	= $bloom;
+	
+	my $string	= $value->as_string;
+	warn "checking bloom filter for --> $string\n" if ($debug);
+	my $ok	= $bloom->check( $string );
+	warn "-> ok\n" if ($ok and $debug);
+	return $ok;
+};
 
 1;
 
