@@ -32,6 +32,27 @@ BEGIN {
 
 ######################################################################
 
+use overload	'<=>'	=> \&_cmp,
+				'cmp'	=> \&_cmp,
+				'<'		=> sub { _cmp(@_) == -1 },
+				'>'		=> sub { _cmp(@_) == 1 },
+				'!='	=> sub { _cmp(@_) != 0 },
+				'=='	=> sub { _cmp(@_) == 0 },
+				'+'		=> sub { $_[0] },
+				'""'	=> sub { $_[0]->sse },
+			;
+
+sub _cmp {
+	my $a	= shift;
+	my $b	= shift;
+	return 1 unless blessed($b);
+	return -1 if ($b->isa('RDF::Query::Node::Literal'));
+	return 1 if ($b->isa('RDF::Query::Node::Blank'));
+	return 0 unless ($b->isa('RDF::Query::Node::Resource'));
+	my $cmp	= $a->uri_value cmp $b->uri_value;
+	return $cmp;
+}
+
 =head1 METHODS
 
 =over 4

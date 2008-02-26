@@ -134,7 +134,7 @@ END
 							$plat
 						);
 #			warn "\t-> ${dist} kilometers from Providence";
-			return $bridge->new_literal("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
+			return RDF::Query::Node::Literal->new("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
 		} );
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
@@ -156,26 +156,26 @@ END
 			my $node	= shift;
 			my $ntype	= $bridge->new_resource( shift );
 			my $model	= $query->{model};
-			my $p_type	= $bridge->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' );
-			my $p_sub	= $bridge->new_resource( 'http://www.w3.org/2000/01/rdf-schema#subClassOf' );
+			my $p_type	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' );
+			my $p_sub	= RDF::Query::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#subClassOf' );
 			my $stmts	= $bridge->get_statements( $node, $p_type, undef );
 			my %seen;
 			my @types;
 			while (my $s = $stmts->next) {
-				push( @types, $bridge->object( $s ) );
+				push( @types, $s->object );
 			}
 			while (my $type = shift @types) {
-				if ($bridge->equals( $type, $ntype )) {
-					return 1;
+				if ($type->equal( $ntype )) {
+					return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 				} else {
-					next if ($seen{ $bridge->as_string($type) }++);
+					next if ($seen{ $type->as_string }++);
 					my $sub_stmts	= $bridge->get_statements( $type, $p_sub, undef );
 					while (my $s = $sub_stmts->next) {
-						push( @types, $bridge->object( $s ) );
+						push( @types, $s->object );
 					}
 				}
 			}
-			return 0;
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 		} );
 		
 		my $sparql	= <<"END";

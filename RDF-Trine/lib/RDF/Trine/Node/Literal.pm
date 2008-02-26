@@ -167,7 +167,7 @@ Returns true if this literal is language-tagged, false otherwise.
 
 sub has_language {
 	my $self	= shift;
-	return defined($self->literal_value_language);
+	return defined($self->literal_value_language) ? 1 : 0;
 }
 
 =item C<< has_datatype >>
@@ -178,7 +178,7 @@ Returns true if this literal is datatyped, false otherwise.
 
 sub has_datatype {
 	my $self	= shift;
-	return defined($self->literal_datatype);
+	return defined($self->literal_datatype) ? 1 : 0;
 }
 
 =item C<< equal ( $node ) >>

@@ -19,6 +19,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
+use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
@@ -198,6 +199,16 @@ sub execute {
 	my @streams;
 	foreach my $u_triples ($self->first, $self->second) {
 		my $stream	= $u_triples->execute( $query, $bridge, $bound, $context, %args );
+		
+		if ($debug) {
+			$stream		= $stream->materialize;
+			warn "union stream:\n";
+			while (my $b = $stream->next) {
+				warn "BINDING: " . join(', ', map { my $v = $b->{$_}; join('=', $_, (blessed($v) ? $v->sse : '')) } (keys %$b));
+			}
+			$stream->reset;
+		}
+		
 		push(@names, $stream->binding_names);
 		push(@streams, $stream);
 	}

@@ -6,12 +6,15 @@ no warnings 'redefine';
 
 require Encode;
 use URI::file;
-use RDF::Query;
 use Test::More;
 use Storable qw(dclone);
 use File::Temp qw(tempfile);
-use RDF::Trine::Iterator qw(smap);
 use Scalar::Util qw(blessed reftype);
+
+use RDF::Query;
+use RDF::Trine;
+use RDF::Trine::Namespace qw(rdf);
+use RDF::Trine::Iterator qw(smap);
 
 use RDF::Core;
 use RDF::Query::Model::RDFCore;
@@ -43,30 +46,34 @@ require "t/dawg/earl.pl";
 my $PATTERN		= shift(@ARGV) || '';
 my $BNODE_RE	= qr/^(r|genid)\d+[r0-9]*$/;
 
+$RDF::Query::Model::RDFCore::USE_RAPPER	= 1;
+$RDF::Query::Model::RDFTrine::USE_RAPPER	= 1;
+
 if ($PATTERN) {
 	$debug_results	= 1;
 }
 
-warn "PATTERN: ${PATTERN}\n" if ($debug);
+warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
 my ($bridge, $model)	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
 
+
 {
-	my $ns		= 'http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#';
-	my $inc		= $bridge->new_resource( "${ns}include" );
+	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
+	my $inc		= $ns->include;
 	my $st		= $bridge->new_statement( undef, $inc, undef );
 	my $stream	= $bridge->get_statements( undef, $inc, undef );
 	my $statement	= $stream->next();
 	
 	if ($statement) {
-		my $list		= $bridge->object( $statement );
-		my $first	= $bridge->new_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" );
-		my $rest	= $bridge->new_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" );
-		while ($list and $bridge->as_string( $list ) ne '[http://www.w3.org/1999/02/22-rdf-syntax-ns#nil]') {
+		my $list		= $statement->object;
+		my $first		= $rdf->first;
+		my $rest		= $rdf->rest;
+		while ($list and not $list->equal( $rdf->nil )) {
 			my $value			= get_first_obj( $bridge, $list, $first );
 			$list				= get_first_obj( $bridge, $list, $rest );
-			my $manifest		= $bridge->uri_value( $value );
+			my $manifest		= $value->uri_value;
 			next unless (defined($manifest));
 			$manifest	= relativeize_url( $manifest );
 			push(@manifests, $manifest) if (defined($manifest));
@@ -75,7 +82,7 @@ my ($bridge, $model)	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl"
 	
 	if ($debug) {
 		use Data::Dumper;
-		warn Dumper(\@manifests);
+		warn 'manifests: ' . Dumper(\@manifests);
 	}
 	add_to_model( $bridge, @manifests );
 }
@@ -89,9 +96,9 @@ my $mfname	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/
 	print "# Evaluation Tests\n";
 	my $stream	= $bridge->get_statements( undef, $type, $evalt );
 	while (my $statement = $stream->next()) {
-		my $test		= $bridge->subject( $statement );
+		my $test		= $statement->subject;
 		my $name		= get_first_literal( $bridge, $test, $mfname );
-		warn "### eval test: " . $bridge->as_string( $test ) . " >>> " . $name . "\n" if ($debug);
+		warn "### eval test: " . $test->as_string . " >>> " . $name . "\n" if ($debug);
 		unless ($bridge->uri_value( $test ) =~ /$PATTERN/) {
 			next;
 		}
@@ -113,13 +120,14 @@ sub eval_test {
 	my $bridge	= shift;
 	my $test	= shift;
 	my $earl	= shift;
-	my $mfact	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#action" );
-	my $mfres	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#result" );
-	my $qtquery	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-query#query" );
-	my $qtdata	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-query#data" );
-	my $qtgdata	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-query#graphData" );
-	my $reqs	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#requires" );
-	
+	my $man		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
+	my $rq		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
+	my $mfact	= $man->action;
+	my $mfres	= $man->result;
+	my $qtquery	= $rq->query;
+	my $qtdata	= $rq->data;
+	my $qtgdata	= $rq->graphData;
+	my $reqs	= $rq->requires;
 	
 	my $action	= get_first_obj( $bridge, $test, $mfact );
 	my $result	= get_first_obj( $bridge, $test, $mfres );
@@ -127,7 +135,7 @@ sub eval_test {
 	my $queryd	= get_first_obj( $bridge, $action, $qtquery );
 	my $data	= get_first_obj( $bridge, $action, $qtdata );
 	my @gdata	= get_all_obj( $bridge, $action, $qtgdata );
-
+	
 	my $uri					= URI->new( $bridge->uri_value( $queryd ) );
 	my $filename			= $uri->file;
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
@@ -158,6 +166,7 @@ sub eval_test {
 	TODO: {
 		local($TODO)	= (blessed($req)) ? "requires " . $bridge->as_string( $req ) : '';
 		my $ok	= eval {
+			warn $sparql if ($debug);
 			print STDERR "getting actual results... " if ($debug);
 			my $actual		= get_actual_results( $test_model, $sparql, $base, @gdata );
 			print STDERR "ok\n" if ($debug);
@@ -176,6 +185,7 @@ sub eval_test {
 		} else {
 			earl_fail_test( $earl, $test );
 			print "# failed: " . $bridge->as_string( $test ) . "\n";
+# 			die;	 # XXX
 		}
 	}
 }
@@ -204,14 +214,21 @@ sub add_to_model {
 				$file	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{t/dawg/data-r2/};
 				$file	= 'file://' . File::Spec->rel2abs( $file );
 			}
-			my $data	= do {
-							open(my $fh, '-|', "cwm.py --n3 $file --rdf");
-							local($/)	= undef;
-							<$fh>
-						};
+			my $data	= ($file =~ /[.]rdf/)
+						? do {
+								$file	=~ s#^file://##;
+								open(my $fh, '<', $file);
+								local($/)	= undef;
+								<$fh>
+							}
+						: do {
+#								open(my $fh, '-|', "cwm.py --n3 $file --rdf");
+								open(my $fh, '-|', "rapper -q -i turtle -o rdfxml $file");
+								local($/)	= undef;
+								<$fh>
+							};
 			
 			$data		=~ s/^(.*)<rdf:RDF/<rdf:RDF/m;
-			$bridge->ignore_contexts;
 #			warn "---------------------\n$data---------------------\n";
 			$bridge->add_string( $data, $file );
 		}
@@ -267,15 +284,10 @@ sub get_actual_results {
 	my $sparql	= shift;
 	my $base	= shift;
 	my @gdata	= @_;
-	
 	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql' );
 	return unless $query;
 	
-	foreach my $gdata (@gdata) {
-		$query->parse_url( $bridge->uri_value( $gdata ), 1 );
-	}
-	
-	my $results	= $query->execute( $model );
+	my $results	= $query->execute_with_named_graphs( $model, @gdata );
 	if ($results->is_bindings) {
 		my @keys	= $results->binding_names;
 		my @results;
@@ -558,7 +570,7 @@ sub compare_results {
 									warn "\tvalues of $skeys[$i] are merged bnodes. going to next property\n" if ($debug);
 									next; #next PROP;
 								} else {
-									warn Data::Dumper::Dumper(\%bnode_map) if ($debug);
+									warn 'bnode map: ' . Data::Dumper::Dumper(\%bnode_map) if ($debug);
 									next ACTUAL;
 								}
 							} elsif (exists $bnode_map{ expected }{ $values[ $i ] }) {
@@ -622,15 +634,15 @@ sub node_as_string {
 	my $node	= shift;
 	if ($node) {
 		no warnings 'once';
-		if ($bridge->isa_resource( $node )) {
-			return $bridge->uri_value( $node );
-		} elsif ($bridge->isa_literal( $node )) {
-			my $value	= $bridge->literal_value( $node );
-			my $lang	= $bridge->literal_value_language( $node );
-			my $dt		= $bridge->literal_datatype( $node );
+		if ($node->is_resource) {
+			return $node->uri_value;
+		} elsif ($node->is_literal) {
+			my $value	= $node->literal_value;
+			my $lang	= $node->literal_value_language;
+			my $dt		= $node->literal_datatype;
 			return literal_as_string( $value, $lang, $dt );
 		} else {
-			return $bridge->blank_identifier( $node );
+			return $node->blank_identifier;
 		}
 	} else {
 		return;
@@ -645,7 +657,7 @@ sub literal_as_string {
 	if (defined $value) {
 		my $string	= qq["$value"];
 		if ($lang) {
-			$string	.= '@' . $lang;
+			$string	.= '@' . lc($lang);
 		} elsif ($dt) {
 			$string	.= '^^<' . $dt . '>';
 		}

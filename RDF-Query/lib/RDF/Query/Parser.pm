@@ -24,6 +24,7 @@ use RDF::Query::Algebra;
 use RDF::Query::Error qw(:try);
 
 use Data::Dumper;
+use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
 
 ######################################################################
@@ -232,10 +233,13 @@ sub new_function_expression {
 	my $self		= shift;
 	my $function	= shift;
 	my @operands	= @_;
-	return RDF::Query::Algebra::Function->new( $function, @operands );
+	unless (blessed($function)) {
+		$function	= RDF::Query::Node::Resource->new( $function );
+	}
+	return RDF::Query::Algebra::Expr::Function->new( $function, @operands );
 }
 
-=item C<new_filter ( $filter_expr )>
+=item C<new_filter ( $filter_expr, $pattern )>
 
 Returns a new filter structure.
 
@@ -244,7 +248,8 @@ Returns a new filter structure.
 sub new_filter {
 	my $self	= shift;
 	my $expr	= shift;
-	return RDF::Query::Algebra::OldFilter->new( $expr );
+	my $pattern	= shift;
+	return RDF::Query::Algebra::Filter->new( $expr, $pattern );
 }
 
 

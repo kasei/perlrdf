@@ -12,5 +12,5 @@ use RDF::Trine::Parser::Turtle;
 my $file	= File::Spec->rel2abs( shift );
 my $data	= read_file( $file );
 my $url		= 'file://' . $file;
-my $doc		= RDF::Trine::Parser::Turtle::Document->new( $url, $data );
-$doc->parse();
+my $parser	= RDF::Trine::Parser::Turtle->new;
+$parser->parse( $url, $data );

@@ -100,7 +100,7 @@ Parses the C<< $query >>, using the given C<< $base_uri >>.
 sub parse {
 	my $self	= shift;
 	my $input	= shift;
-	my $uri		= shift;
+	my $baseuri	= shift;
 	
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
@@ -108,13 +108,16 @@ sub parse {
 	delete $self->{error};
 	local($self->{namespaces})				= {};
 	local($self->{blank_ids})				= 1;
-	local($self->{baseURI})					= $uri;
+	local($self->{baseURI})					= $baseuri;
 	local($self->{tokens})					= $input;
 	local($self->{stack})					= [];
 	local($self->{filters})					= [];
 	local($self->{pattern_container_stack})	= [];
 	my $triples								= $self->_push_pattern_container();
 	$self->{build}							= { sources => [], triples => $triples };
+	if ($baseuri) {
+		$self->{build}{base}	= $baseuri;
+	}
 	
 	try {
 		$self->_Query();
@@ -757,7 +760,7 @@ sub _GroupGraphPattern {
 	my @patterns;
 	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 	while (my $f = shift @filters) {
-		$pattern	= RDF::Query::Algebra::Filter->new( $f->expr, $pattern );
+		$pattern	= RDF::Query::Algebra::Filter->new( $f, $pattern );
 	}
 	$self->_add_patterns( $pattern );
 }
@@ -767,7 +770,10 @@ sub __handle_GraphPatternNotTriples {
 	my $data	= shift;
 	my ($class, @args)	= @$data;
 	if ($class eq 'RDF::Query::Algebra::Optional') {
-		my $ggp	= $self->_remove_pattern();
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
 		unless ($ggp) {
 			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
 		}
@@ -914,7 +920,7 @@ sub _Filter {
 	$self->__consume_ws_opt;
 	$self->_Constraint;
 	my ($expr) = splice(@{ $self->{stack} });
-	$self->_add_filter( $self->new_filter( $expr ) );
+	$self->_add_filter( $expr );
 }
 
 # [27] Constraint ::= BrackettedExpression | BuiltInCall | FunctionCall
@@ -1296,7 +1302,7 @@ sub _ConditionalOrExpression {
 	}
 	
 	if (scalar(@list) > 1) {
-		$self->_add_stack( $self->new_nary_expression( '||', @list ) );
+		$self->_add_stack( $self->new_function_expression( 'sparql:logical-or', @list ) );
 	} else {
 		$self->_add_stack( @list );
 	}
@@ -1321,7 +1327,7 @@ sub _ConditionalAndExpression {
 	}
 	
 	if (scalar(@list) > 1) {
-		$self->_add_stack( $self->new_nary_expression( '&&', @list ) );
+		$self->_add_stack( $self->new_function_expression( 'sparql:logical-and', @list ) );
 	} else {
 		$self->_add_stack( @list );
 	}
@@ -1404,6 +1410,16 @@ sub _UnaryExpression {
 		$self->_eat('+');
 		$self->__consume_ws_opt;
 		$self->_PrimaryExpression;
+		my ($expr)	= splice(@{ $self->{stack} });
+		
+		### if it's just a literal, force the positive down into the literal
+		if (blessed($expr) and $expr->isa('RDF::Trine::Node::Literal') and $expr->is_numeric_type) {
+			my $value	= '+' . $expr->literal_value;
+			$expr->literal_value( $value );
+			$self->_add_stack( $expr );
+		} else {
+			$self->_add_stack( $expr );
+		}
 	} elsif ($self->_test('-')) {
 		$self->_eat('-');
 		$self->__consume_ws_opt;
@@ -1411,12 +1427,12 @@ sub _UnaryExpression {
 		my ($expr)	= splice(@{ $self->{stack} });
 		
 		### if it's just a literal, force the negative down into the literal instead of make an unnecessary multiplication.
-		if (blessed($expr) and $expr->isa('RDF::Trine::Node::Literal') and $expr->has_datatype and $expr->literal_datatype =~ m<^http://www.w3.org/2001/XMLSchema#(integer|decimal|double)>) {
+		if (blessed($expr) and $expr->isa('RDF::Trine::Node::Literal') and $expr->is_numeric_type) {
 			my $value	= -1 * $expr->literal_value;
 			$expr->literal_value( $value );
 			$self->_add_stack( $expr );
 		} else {
-			my $int		= RDF::Query::Node::Resource->new( $xsd->integer->uri_value );
+			my $int		= $xsd->integer->uri_value;
 			my $neg		= $self->new_binary_expression( '*', $self->new_literal('-1', undef, $int), $expr );
 			$self->_add_stack( $neg );
 		}
@@ -1476,12 +1492,12 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/) {
+		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
-			$self->_add_stack( RDF::Query::Algebra::Function->new($iri, $expr) );
-		} elsif ($op =~ /^(LANGMATCHES|sameTerm)$/) {
+			$self->_add_stack( $self->new_function_expression($iri, $expr) );
+		} elsif ($op =~ /^(LANGMATCHES|sameTerm)$/i) {
 			### two-arg functions that take expressions
 			$self->_Expression;
 			my ($arg1)	= splice(@{ $self->{stack} });
@@ -1490,12 +1506,12 @@ sub _BuiltInCall {
 			$self->__consume_ws_opt;
 			$self->_Expression;
 			my ($arg2)	= splice(@{ $self->{stack} });
-			$self->_add_stack( RDF::Query::Algebra::Function->new($iri, $arg1, $arg2) );
+			$self->_add_stack( $self->new_function_expression($iri, $arg1, $arg2) );
 		} else {
 			### BOUND(Var)
 			$self->_Var;
 			my ($expr)	= splice(@{ $self->{stack} });
-			$self->_add_stack( RDF::Query::Algebra::Function->new($iri, $expr) );
+			$self->_add_stack( $self->new_function_expression($iri, $expr) );
 		}
 		$self->__consume_ws_opt;
 		$self->_eat(')');
@@ -1535,7 +1551,7 @@ sub _RegexExpression {
 	$self->_eat(')');
 	
 	my $iri		= RDF::Query::Node::Resource->new( 'sparql:regex' );
-	$self->_add_stack( RDF::Query::Algebra::Function->new( $iri, @args ) );
+	$self->_add_stack( $self->new_function_expression( $iri, @args ) );
 }
 
 # [59] IRIrefOrFunction ::= IRIref ArgList?
@@ -1551,7 +1567,7 @@ sub _IRIrefOrFunction {
 		my ($iri)	= splice(@{ $self->{stack} });
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
-		my $func	= RDF::Query::Algebra::Function->new( $iri, @args );
+		my $func	= $self->new_function_expression( $iri, @args );
 		$self->_add_stack( $func );
 	}
 }
@@ -1581,12 +1597,13 @@ sub _RDFLiteral {
 # [64] NumericLiteralNegative ::= INTEGER_NEGATIVE | DECIMAL_NEGATIVE | DOUBLE_NEGATIVE
 sub _NumericLiteral {
 	my $self	= shift;
-	my $sign	= 1;
+	my $sign	= 0;
 	if ($self->_test('+')) {
 		$self->_eat('+');
+		$sign	= '+';
 	} elsif ($self->_test('-')) {
 		$self->_eat('-');
-		$sign	= -1;
+		$sign	= '-';
 	}
 	
 	my $value;
@@ -1605,8 +1622,8 @@ sub _NumericLiteral {
 		$type	= $integer;
 	}
 	
-	if ($sign < 0) {
-		$value *= -1;
+	if ($sign) {
+		$value	= $sign . $value;
 	}
 	$self->_add_stack( RDF::Query::Node::Literal->new( $value, undef, $type->uri_value ) );
 }
@@ -1649,7 +1666,7 @@ sub _IRIref {
 	my $self	= shift;
 	if ($self->_test( $r_IRI_REF )) {
 		my $iri	= $self->_eat( $r_IRI_REF );
-		my $node	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2) );
+		my $node	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
 		$self->_add_stack( $node );
 	} else {
 		$self->_PrefixedName;

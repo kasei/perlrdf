@@ -16,7 +16,6 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra RDF::Trine::Statement::Quad);
-use constant DEBUG	=> 0;
 
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
@@ -147,7 +146,7 @@ sub execute {
 	my $dup_var	= 0;
 	my @dups;
 	for my $idx (0 .. 3) {
-		_debug( "looking at triple " . $methodmap[ $idx ] ) if (DEBUG);
+		warn "looking at triple " . $methodmap[ $idx ] if ($debug);
 		my $data	= $triple[$idx];
 		if (blessed($data)) {
 			if ($data->isa('RDF::Query::Node::Variable') or $data->isa('RDF::Query::Node::Blank')) {
@@ -160,11 +159,11 @@ sub execute {
 				}
 				my $val		= $bound->{ $tmpvar };
 				if ($bridge->is_node($val)) {
-					_debug( "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" ) if (DEBUG);
+					warn "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" if ($debug);
 					$triple[$idx]	= $val;
 				} else {
 					++$vars;
-					_debug( "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" ) if (DEBUG);
+					warn "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" if ($debug);
 					$triple[$idx]	= undef;
 					$vars[$idx]		= $tmpvar;
 					$methods[$idx]	= $methodmap[ $idx ];
@@ -177,7 +176,10 @@ sub execute {
 	my $stream;
 	my @streams;
 	
+	warn "QUAD EXECUTING: " . Dumper(\@triple) if ($debug);
 	my $statements	= $bridge->get_named_statements( @triple );
+	warn "-> statements stream: $statements\n" if ($debug);
+	
 	if ($dup_var) {
 		# there's a node in the triple pattern that is repeated (like (?a ?b ?b)), but since get_statements() can't
 		# directly make that query, we're stuck filtering the triples after we get the stream back.
@@ -211,14 +213,14 @@ sub execute {
 			my $method	= $methods[ $_ ];
 			next unless (defined($var));
 			
-			_debug( "${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ) . "\n" ) if (DEBUG);
+			warn "${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ) . "\n" if ($debug);
 			if (defined($bound->{$var})) {
-				_debug( "${indent}-> uh oh. $var has been defined more than once.\n" ) if (DEBUG);
+				warn "${indent}-> uh oh. $var has been defined more than once.\n" if ($debug);
 				if ($bridge->as_string( $stmt->$method() ) eq $bridge->as_string( $bound->{$var} )) {
-					_debug( "${indent}-> the two values match. problem avoided.\n" ) if (DEBUG);
+					warn "${indent}-> the two values match. problem avoided.\n" if ($debug);
 				} else {
-					_debug( "${indent}-> the two values don't match. this triple won't work.\n" ) if (DEBUG);
-					_debug( "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ) . "\n" ) if (DEBUG);
+					warn "${indent}-> the two values don't match. this triple won't work.\n" if ($debug);
+					warn "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ) . "\n" if ($debug);
 					return ();
 				}
 			} else {

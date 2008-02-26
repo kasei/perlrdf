@@ -43,6 +43,8 @@ BEGIN {
 
 
 use URI;
+use Data::UUID;
+use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Parser::Error;
@@ -57,12 +59,15 @@ our $r_language				= qr'[a-z]+(-[a-z0-9]+)*';
 our $r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
 our $r_line					= qr'([^\r\n]+[\r\n]+)(?=[^\r\n])';
 our $r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
-our $r_nameStartChar		= qr'[A-Z_a-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
 our $r_nameStartChar_minus_underscore	= qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
 our $r_scharacters			= qr'[^"\\]*(?:\\.[^"\\]*)*';
 our $r_ucharacters			= qr'[^>\\]*(?:\\.[^>\\]*)*';
 our $r_booltest				= qr'(true|false)\b';
-our $r_resource_test		= qr/(?![_[("0-9+-]|$r_booltest)/;
+our $r_nameStartChar		= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
+our $r_nameChar				= qr/${r_nameStartChar}|[-0-9\x{b7}\x{0300}-\x{036f}\x{203F}-\x{2040}]/;
+our $r_prefixName			= qr/((?!_)${r_nameStartChar})($r_nameChar)*/;
+our $r_qname				= qr/(${r_prefixName})?:/;
+our $r_resource_test		= qr/<|$r_qname/;
 our $r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 
 my $debug		= 0;
@@ -78,9 +83,12 @@ Returns a new Turtle parser.
 
 sub new {
 	my $class	= shift;
+	my $ug		= new Data::UUID;
+	my $uuid	= $ug->create();
 	my $self	= bless({
-					bindings	=> {},
-					bnode_id	=> 0,
+					bindings		=> {},
+					bnode_id		=> 0,
+					bnode_prefix	=> $uuid,
 				}, $class);
 	return $self;
 }
@@ -190,8 +198,9 @@ sub _triple {
 		}
 	}
 	
+	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
+	warn $st->as_string if ($debug);
 	if (my $code = $self->{handle_triple}) {
-		my $st	= RDF::Trine::Statement->new( $s, $p, $o );
 		$code->( $st );
 	}
 	
@@ -371,11 +380,8 @@ sub _objectList {
 sub _verb_test {
 	my $self	= shift;
 	return 0 unless (length($self->{tokens}));
-	if ($self->{tokens} !~ /^[.]/) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return 1 if ($self->{tokens} =~ /^a\b/);
+	return $self->_predicate_test();
 }
 
 sub _verb {
@@ -412,13 +418,7 @@ sub _predicate_test {
 	### if it's a, it'll be followed by whitespace; whitespace is mandatory
 	### after a verb, which is the only thing predicate appears in
 	return 0 unless (length($self->{tokens}));
-	if (not $self->__startswith('a')) {
-		return 1
-	} elsif ($self->{tokens} !~ m/^a[\r\n\t #]/) {
-		return 1
-	} else {
-		return 0
-	}
+	return $self->_resource_test;
 }
 
 sub _predicate {
@@ -653,9 +653,10 @@ sub _resource_test {
 	### double | decimal | boolean
 	### datatypeString = quotedString '^^' resource
 	return 0 unless (length($self->{tokens}));
-	if ($self->{tokens} !~ m/^([_["0-9+-]|$r_booltest)/) {# and $self->{tokens} !~ $r_booltest) {
+	if ($self->{tokens} =~ m/^$r_resource_test/) {
 		return 1;
 	} else {
+		warn "not a resource: $self->{tokens}" if ($debug);
 		return 0;
 	}
 }
@@ -924,7 +925,7 @@ sub _typed {
 sub __generate_bnode_id {
 	my $self	= shift;
 	my $id		= $self->{ bnode_id }++;
-	return 'r' . $id;
+	return 'r' . $self->{bnode_prefix} . 'r' . $id;
 }
 
 sub __consume_ws {

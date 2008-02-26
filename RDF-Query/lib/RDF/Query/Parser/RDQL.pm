@@ -40,17 +40,18 @@ BEGIN {
 	our $RDQL_GRAMMAR	= <<'END';
 	query:			'SELECT' variable(s) SourceClause(?) 'WHERE' triplepattern(s) constraints(?) OptOrderBy(?) 'USING' namespaces
 																	{
-																		my $triples	= $item[5];
+																		my $triples	= RDF::Query::Algebra::GroupGraphPattern->new( @{ $item[5] } );
 																		my $filter	= ($item[6][0] || []);
+																		
 																		if (scalar(@$filter)) {
-																			push(@$triples, RDF::Query::Parser->new_filter($filter));
+																			$triples	= RDF::Query::Parser->new_filter( $filter, $triples );
 																		}
 																		
 																		$return = {
 																			method		=> 'SELECT',
 																			variables	=> $item[2],
 																			sources		=> $item[3][0],
-																			triples		=> $triples,
+																			triples		=> [ $triples ],
 																			namespaces	=> $item[9]
 																		};
 																		if (@{ $item[7] }) {
@@ -66,28 +67,30 @@ BEGIN {
 	triplepattern:				'(' VarUri VarUri VarUriConst ')'				{ $return = RDF::Query::Parser->new_triple(@item[2,3,4]) }
 	constraints:				'AND' Expression OptExpression(s?)				{
 																					if (scalar(@{ $item[3] })) {
-																						$return = [ $item[3][0][0], $item[2], map { $_->[1] } @{ $item[3] } ];
+																						my ($op, $expr)	= @{ $item[3][0] };
+																						$return	= RDF::Query::Parser->new_function_expression( $op, $item[2], $expr );
 																					} else {
 																						$return	= $item[2];
 																					}
 																				}
 	OptExpression:				(',' | 'AND') Expression						{
-																					$return = [ '&&', $item[2] ];
+																					$return = [ 'sparql:logical-and', $item[2] ];
 																				}
 	Expression:					CondOrExpr										{
 																					$return = $item[1]
 																				}
 	CondOrExpr:					CondAndExpr CondOrExprOrPart(?)					{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_function_expression( $op, $item[1], $expr );
 																					} else {
 																						$return	= $item[1];
 																					}
 																				}
-	CondOrExprOrPart:			'||' CondAndExpr								{ $return = [ @item[1,2] ] }
+	CondOrExprOrPart:			'||' CondAndExpr								{ $return = [ 'sparql:logical-or', $item[2] ] }
 	CondAndExpr:				ValueLogical CondAndExprAndPart(?)				{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						$return = RDF::Query::Parser->new_function_expression( 'sparql:logical-and', $item[1], $item[2][0][1] );
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -96,7 +99,12 @@ BEGIN {
 	ValueLogical:				StringEqualityExpression						{ $return = $item[1] }
 	StringEqualityExpression:	NumericalLogical StrEqExprPart(s?)				{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						if ($op eq '~~') {
+																							$return = RDF::Query::Parser->new_function_expression( 'sparql:regex', $item[1], $expr );
+																						} else {
+																							$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
+																						}
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -121,7 +129,8 @@ BEGIN {
 	ExclusiveOrExprPart:		'^' AndExpression								{ $return = [ @item[1,2] ] }
 	AndExpression:				ArithmeticCondition AndExprPart(s?)				{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], map { $_->[1] } @{ $item[2] } ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
 																					} else {
 																						$return = $item[1];
 																					}
@@ -130,7 +139,8 @@ BEGIN {
 	ArithmeticCondition:		EqualityExpression								{ $return = $item[1]; }
 	EqualityExpression:			RelationalExpression EqualityExprPart(?)		{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -138,7 +148,8 @@ BEGIN {
 	EqualityExprPart:			/(==|!=)/ RelationalExpression					{ $return = [ @item[1,2] ] }
 	RelationalExpression:		NumericExpression RelationalExprPart(?)			{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -146,7 +157,8 @@ BEGIN {
 	RelationalExprPart:			/(<|>|<=|>=)/ NumericExpression					{ $return = [ @item[1,2] ] }
 	NumericExpression:			MultiplicativeExpression NumericExprPart(s?)	{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0][0], $item[1], $item[2][0][1] ];
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -154,7 +166,8 @@ BEGIN {
 	NumericExprPart:			/([-+])/ MultiplicativeExpression				{ $return = [ @item[1,2] ] }
 	MultiplicativeExpression:	UnaryExpression MultExprPart(s?)				{
 																					if (scalar(@{ $item[2] })) {
-																						$return = [ $item[2][0], $item[1], $item[2][1] ]
+																						my ($op, $expr)	= @{ $item[2][0] };
+																						$return = RDF::Query::Parser->new_binary_expression( $op, $item[1], $expr );
 																					} else {
 																						$return	= $item[1];
 																					}
@@ -187,7 +200,8 @@ BEGIN {
 	URI:						(qURI | QName)									{ $return = RDF::Query::Parser->new_uri( $item[1] ) }
 	qURI:						'<' /[A-Za-z0-9_.!~*'()%;\/?:@&=+,#\$-]+/ '>'	{ $return = $item[2] }
 	QName:						identifier ':' /([^ \t<>()]+)/					{ $return = [@item[1,3]] }
-	CONST:						(Text | Number)									{ $return = RDF::Query::Parser->new_literal($item[1]) }
+	CONST:						Text											{ $return = RDF::Query::Parser->new_literal($item[1]) }
+							|	Number											{ $return = RDF::Query::Parser->new_literal($item[1], undef, ($item[1] =~ /[.]/ ? 'http://www.w3.org/2001/XMLSchema#float' : 'http://www.w3.org/2001/XMLSchema#integer')) }
 	Number:						/([0-9]+(\.[0-9]+)?)/							{ $return = $item[1] }
 	Text:						dQText | sQText | Pattern						{ $return = $item[1] }
 	sQText:						"'" /([^']+)/ '"'								{ $return = $item[2] }

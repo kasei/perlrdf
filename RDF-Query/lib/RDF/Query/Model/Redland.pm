@@ -11,7 +11,6 @@ use File::Spec;
 use Data::Dumper;
 use LWP::UserAgent;
 use Scalar::Util qw(blessed reftype);
-use Unicode::Normalize qw(normalize);
 use Encode;
 
 use RDF::Redland 1.00;
@@ -154,12 +153,12 @@ sub add_string {
 	
 	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
 	
-	my $data		= normalize( 'C', $_data );
-	
+	my $data		= $_data;
 	my $parser		= RDF::Redland::Parser->new($format);
 	my $redlanduri	= RDF::Redland::URI->new( $base );
 	
 	if ($named) {
+		warn "adding named data with name ($base) to model " . Dumper($model) . ": $data\n" if ($debug);
 		my $stream		= $parser->parse_string_as_stream($data, $redlanduri);
 		$model->add_statements( $stream, $redlanduri );
 	} else {
@@ -295,7 +294,7 @@ sub _get_statements {
 		my $ro		= $rstmt->object;
 		my @nodes;
 		foreach my $n ($rs, $rp, $ro) {
-			push(@nodes, _cast_to_trine( $n ));
+			push(@nodes, _cast_to_local( $n ));
 		}
 		my $st	= RDF::Trine::Statement->new( @nodes );
 		return $st;
@@ -325,7 +324,7 @@ sub _get_named_statements {
 	my $context	= _cast_to_redland( $_context );
 	my @context	= ($context) ? $context : ();
 	my $iter	= $model->find_statements( $stmt, @context );
-
+	
 	my $finished	= 0;
 	my $stream	= sub {
 		$finished	= 1 if (@_ and $_[0] eq 'close');
@@ -344,7 +343,7 @@ sub _get_named_statements {
 			my $ro		= $rstmt->object;
 			my @nodes;
 			foreach my $n ($rs, $rp, $ro, $rc) {
-				push(@nodes, _cast_to_trine( $n ));
+				push(@nodes, _cast_to_local( $n ));
 			}
 			my $st	= RDF::Trine::Statement::Quad->new( @nodes );
 			return $st;
@@ -364,27 +363,28 @@ sub _cast_to_redland {
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		my $lang	= $node->literal_value_language;
 		my $dt		= $node->literal_datatype;
-		return RDF::Redland::Node->new_literal( $node->literal_value, $dt, $lang );
+		my $value	= $node->literal_value;
+		return RDF::Redland::Node->new_literal( "$value", $dt, $lang );
 	} else {
 		return undef;
 	}
 }
 
-sub _cast_to_trine {
+sub _cast_to_local {
 	my $node	= shift;
 	return undef unless (blessed($node));
 	my $type	= $node->type;
 	if ($type == $RDF::Redland::Node::Type_Resource) {
-		return RDF::Trine::Node::Resource->new( $node->uri->as_string );
+		return RDF::Query::Node::Resource->new( $node->uri->as_string );
 	} elsif ($type == $RDF::Redland::Node::Type_Blank) {
-		return RDF::Trine::Node::Blank->new( $node->blank_identifier );
+		return RDF::Query::Node::Blank->new( $node->blank_identifier );
 	} elsif ($type == $RDF::Redland::Node::Type_Literal) {
 		my $lang	= $node->literal_value_language;
 		my $dturi	= $node->literal_datatype;
 		my $dt		= ($dturi)
 					? $dturi->as_string
 					: undef;
-		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
+		return RDF::Query::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
 	} else {
 		return undef;
 	}
@@ -543,11 +543,13 @@ sub debug {
 sub _named_graphs_model {
 	my $self	= shift;
 	if ($self->{named_graphs}) {
+		warn "named graphs model: " . Dumper($self->{named_graphs}) if ($debug);
 		return $self->{named_graphs};
 	} else {
 		my $storage	= RDF::Redland::Storage->new( "hashes", "test", "new='yes',hash-type='memory',contexts='yes'" );
 		my $model	= RDF::Redland::Model->new( $storage, '' );
 		$self->{named_graphs}	= $model;
+		warn "creating new graphs model: " . Dumper($self->{named_graphs}) if ($debug);
 		return $model;
 	}
 }

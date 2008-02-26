@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Function
+# RDF::Query::Algebra::Expr::Function
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Function - Algebra class for Function expressions
+RDF::Query::Algebra::Expr::Function - Algebra class for Function expressions
 
 =cut
 
-package RDF::Query::Algebra::Function;
+package RDF::Query::Algebra::Expr::Function;
 
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra);
+use base qw(RDF::Query::Algebra::Expr);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -36,7 +36,7 @@ our %FUNCTION_MAP	= (
 	str			=> "STR",
 	lang		=> "LANG",
 	langmatches	=> "LANGMATCHES",
-	sameTerm	=> "sameTerm",
+	sameterm	=> "sameTerm",
 	datatype	=> "DATATYPE",
 	isbound		=> "BOUND",
 	isuri		=> "isURI",
@@ -54,7 +54,7 @@ our %FUNCTION_MAP	= (
 
 =item C<new ( $uri, @arguments )>
 
-Returns a new Function structure.
+Returns a new Expr structure.
 
 =cut
 
@@ -62,19 +62,10 @@ sub new {
 	my $class	= shift;
 	my $uri		= shift;
 	my @args	= @_;
-	return bless( [ 'FUNCTION', $uri, @args ] );
-}
-
-=item C<< construct_args >>
-
-Returns a list of arguments that, passed to this class' constructor,
-will produce a clone of this algebra pattern.
-
-=cut
-
-sub construct_args {
-	my $self	= shift;
-	return ($self->uri, $self->arguments);
+	unless (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
+		$uri	= RDF::Query::Node::Resource->new( $uri );
+	}
+	return $class->SUPER::new( $uri, @args );
 }
 
 =item C<< uri >>
@@ -85,7 +76,7 @@ Returns the URI of the function.
 
 sub uri {
 	my $self	= shift;
-	return $self->[1];
+	return $self->op;
 }
 
 =item C<< arguments >>
@@ -96,7 +87,7 @@ Returns a list of the arguments to the function.
 
 sub arguments {
 	my $self	= shift;
-	return @{ $self }[ 2 .. $#{ $self } ];
+	return $self->operands;
 }
 
 =item C<< sse >>
@@ -158,40 +149,6 @@ sub type {
 	return 'FUNCTION';
 }
 
-=item C<< referenced_variables >>
-
-Returns a list of the variable names used in this algebra expression.
-
-=cut
-
-sub referenced_variables {
-	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->arguments);
-}
-
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	my $uri		= $self->uri;	# $bridge->as_native( $self->uri );
-	my @args	= map {
-					$_->isa('RDF::Query::Node')
-						? $bridge->as_native( $_, $base, $ns )
-						: $_->fixup( $bridge, $base, $ns )
-				} $self->arguments;
-	return $class->new( $uri, @args );
-}
-
 =item C<< qualify_uris ( \%namespaces, $base ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
@@ -225,6 +182,52 @@ sub qualify_uris {
 		}
 	}
 	return $class->new( @args );
+}
+
+=item C<< evaluate ( $query, $bridge, \%bound ) >>
+
+Evaluates the expression using the supplied context (bound variables and bridge
+object). Will return a RDF::Query::Node object.
+
+=cut
+
+sub evaluate {
+	my $self	= shift;
+	my $query	= shift || 'RDF::Query';
+	my $bridge	= shift;
+	my $bound	= shift;
+	my $uri		= $self->uri;
+	
+	if ($uri->uri_value =~ /^sparql:logical-(.+)$/) {
+		# logical operators must have their arguments passed lazily, because
+		# some of them can still succeed even if some of their arguments throw
+		# TypeErrors (e.g. true || fail ==> true).
+		my @args	= $self->arguments;
+		my $args	= sub {
+						my $value	= shift(@args);
+						return unless (defined $value);
+						return $value->isa('RDF::Query::Algebra')
+							? $value->evaluate( $query, $bridge, $bound )
+							: ($value->isa('RDF::Query::Node::Variable'))
+								? $bound->{ $value->name }
+								: $value
+					};
+		my $func	= $query->get_function( $uri );
+		my $value	= $func->( $query, $bridge, $args );
+		return $value;
+	} else {
+		my @args	= map {
+						$_->isa('RDF::Query::Algebra')
+							? $_->evaluate( $query, $bridge, $bound )
+							: ($_->isa('RDF::Query::Node::Variable'))
+								? $bound->{ $_->name }
+								: $_
+					} $self->arguments;
+		
+		my $func	= $query->get_function($uri);
+		my $value	= $func->( $query, $bridge, @args );
+		return $value;
+	}
 }
 
 1;

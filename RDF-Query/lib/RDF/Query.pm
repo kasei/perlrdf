@@ -89,14 +89,13 @@ use RDF::Query::Error qw(:try);
 
 my $KEYWORD_RE;
 our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER, %PATTERN_TYPES);
-use constant DEBUG	=> 0;
+use constant DEBUG	=> 1;
 BEGIN {
-	$debug		= DEBUG;
-	$js_debug	= 0;
-	$REVISION	= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '2.000_01';
-	$ENV{RDFQUERY_NO_RDFBASE}	= 1;	# XXX Not ready for release
-	$DEFAULT_PARSER		= 'sparql';
+	$debug			= DEBUG;
+	$js_debug		= 0;
+	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION		= '2.000_01';
+	$DEFAULT_PARSER	= 'sparql';
 	%PATTERN_TYPES	= map { $_ => 1 } (qw(
 							BGP
 							GGP
@@ -142,13 +141,16 @@ sub new {
 					'http://www.w3.org/TR/rdf-sparql-query/'	=> 'RDF::Query::Parser::SPARQL',
 				);
 	
+	if ($baseuri and not blessed($baseuri)) {
+		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
+	}
 	
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
 #	my $parser	= ($lang eq 'rdql' or $languri eq 'http://jena.hpl.hp.com/2003/07/query/RDQL')
 #				? RDF::Query::Parser::RDQL->new()
 #				: RDF::Query::Parser::SPARQL->new();
-	my $parsed	= $parser->parse( $query );
+	my $parsed	= $parser->parse( $query, $baseuri );
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
 	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
@@ -218,6 +220,7 @@ sub execute {
 	my $self	= shift;
 	my $model	= shift;
 	my %args	= @_;
+	warn "executing query with model $model" if ($debug);
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
@@ -229,12 +232,14 @@ sub execute {
 	$self->{model}		= $model;
 	
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
-	my $bridge	= $self->get_bridge( $model, %args );
+	my $bridge	= $self->{bridge} || $self->get_bridge( $model, %args );
 	if ($bridge) {
 		$self->bridge( $bridge );
 	} else {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
+
+	warn "got bridge $bridge" if ($debug);
 	
 	$self->load_data();
 	my ($pattern, $cpattern)	= $self->fixup();
@@ -243,11 +248,16 @@ sub execute {
 	
 	# RUN THE QUERY!
 
+	warn "executing the graph pattern" if ($debug);
+	
 	my $options	= $parsed->{options} || {};		
 	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
 
 	_debug( "got stream: $stream" ) if ($debug);
+	warn "performing sort, unique, and slicing" if ($debug);
 	my $sorted		= $self->sort_rows( $stream, $parsed );
+	
+	warn "performing projection" if ($debug);
 	my $projected	= $sorted->project( @vars );
 	$stream			= $projected;
 #	$stream->bridge( $bridge );
@@ -265,6 +275,26 @@ sub execute {
 	} else {
 		return $stream;
 	}
+}
+
+sub execute_with_named_graphs {
+	my $self		= shift;
+	my $model		= shift;
+	
+	$self->{model}	= $model;
+	my $bridge		= $self->get_bridge( $model );
+	if ($bridge) {
+		$self->bridge( $bridge );
+	} else {
+		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
+	}
+	
+	foreach my $gdata (@_) {
+		warn "-> adding graph data " . $gdata->uri_value if ($debug);
+		$self->parse_url( $gdata->uri_value, 1 );
+	}
+	
+	return $self->execute( $model );
 }
 
 =begin private
@@ -571,7 +601,7 @@ Returns the class name of a model backend that is present and loadable on the sy
 sub loadable_bridge_class {
 	my $self	= shift;
 	
-	if (not $ENV{RDFQUERY_NO_RDFTRICE}) {
+	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
 		eval "use RDF::Query::Model::RDFTrine;";
 		if (RDF::Query::Model::RDFTrine->can('new')) {
 			return 'RDF::Query::Model::RDFTrine';
@@ -642,7 +672,7 @@ sub get_bridge {
 	my $bridge;
 	if (not $model) {
 		$bridge	= $self->new_bridge();
-	} elsif (blessed($model) and ($model->isa('RDF::Trine::Store::DBI') or $model->isa('RDF::Trine::Model'))) {
+	} elsif (blessed($model) and ($model->isa('RDF::Trine::Model'))) {
 		require RDF::Query::Model::RDFTrine;
 		$bridge	= RDF::Query::Model::RDFTrine->new( $model, parsed => $parsed );
 	} elsif (blessed($model) and $model->isa('RDF::Redland::Model')) {
@@ -747,645 +777,18 @@ sub fixup {
 }
 
 
-=begin private
-
-=item C<qualify_uri ( [ 'URI', [ $prefix, $localPart ] ] )>
-
-=item C<qualify_uri ( [ 'URI', $uri )>
-
-Returns a full URI given the URI data structure passed as an argument.
-For already-qualified URIs, simply returns the URI.
-For QNames, looks up the QName prefix in the parse-tree namespaces, and
-concatenates with the QName local part.
-
-=end private
-
-=cut
-
-sub qualify_uri {
-	my $self	= shift;
-	my $data	= shift;
-	my $parsed	= $self->{parsed};
-	my $base	= $parsed->{base};
-	if ($base) {
-		$base	= $base->uri_value;
-	} else {
-		$base	= $self->{base};
-	}
-	
-	if (ref($data) and reftype($data) eq 'ARRAY') {
-		if ($data->[0] ne 'URI') {
-			$data	= ['URI',$data];
-		}
-	}
-	
-	my $uri;
-	if (ref($data)) {
-		if (reftype($data) eq 'ARRAY' and ref($data->[1])) {
-			my $prefix	= $data->[1][0];
-			unless (exists($parsed->{'namespaces'}{$data->[1][0]})) {
-				_debug( "No namespace defined for prefix '${prefix}'" ) if ($debug);
-			}
-			my $ns	= $parsed->{'namespaces'}{$prefix};
-			$uri	= join('', $ns, $data->[1][1]);
-		} else {
-			$uri	= $data->[1];
-		}
-	} else {
-		$uri	= $data;
-	}
-	
-	if ($base) {
-		### We have to work around the URI module not accepting IRIs. If there's
-		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-		### the URI into an absolute URI, and then replace the breadcrumbs with
-		### the Unicode.
-		my @uni;
-		my $count	= 0;
-		while ($uri =~ /([\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]+)/) {
-			my $text	= $1;
-			push(@uni, $text);
-			$uri		=~ s/$1/',____' . $count . '____,'/e;
-			$count++;
-		}
-		my $abs			= URI->new_abs( $uri, $base );
-		my $uri			= $abs->as_string;
-		while ($uri =~ /,____(\d+)____,/) {
-			my $num	= $1;
-			my $i	= index($uri, ",____${num}____,");
-			my $len	= 10 + length($num);
-			substr($uri, $i, $len)	= shift(@uni);
-		}
-		return $uri;
-	} else {
-		return $uri;
-	}
-}
-
-=begin private
-
-=item C<_check_constraints ( \%bound, \@data )>
-
-Returns the value returned by evaluating the expression structures in C<@data>
-with the bound variables in C<%bound>.
-
-=end private
-
-=cut
-
-my %dispatch;
-BEGIN {
-	our %functions;
-	no warnings 'numeric';
-	%dispatch	= (
-						VAR		=> sub {
-									my ($self, $values, $data) = @_;
-									my $name	= $data->[0]->name;
-									my $value	= $values->{ $name };
-									return $value;
-								},
-						URI		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my $uri		= $data->[0]->uri_value;
-									if (ref($uri)) {
-										$uri	= $self->qualify_uri( $uri );
-									}
-									return $uri;
-								},
-						LITERAL	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									
-									my $l	= $data->[0];
-									if (blessed($l) and $l->has_datatype) {
-										my $literal	= $l->literal_value;
-										my $lang	= $l->literal_value_language;
-										my $uri		= $l->literal_datatype;
-										return $bridge->new_literal( $literal, $lang, $uri );
-									} else {
-										Carp::confess unless (ref($l));
-										return $l->literal_value;
-									}
-								},
-						'=='	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map {
-										my $value	= $self->_check_constraints( $values, $_, %args );
-										my $v		= $self->get_value( $value, %args );
-										$v;
-									} @{ $data };
-	
-									my $eq;
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-										$eq			= (0 == DateTime->compare( $operands[0], $operands[1] ));
-									} else {
-										$eq		= eval { (0 == ncmp(@operands, $bridge)) };
-										warn $@ if ($@ and $debug);
-									}
-	# 								warn "EQ [$eq]: " . Dumper(\@operands);
-									return $eq;
-								},
-						'!='	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map { $self->get_value( $self->_check_constraints( $values, $_, %args ), %args ) } @{ $data };
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-									}
-									foreach my $node (@operands) {
-										next unless (ref($node));
-										unless ($self->_isa_known_node_type( $bridge, $node )) {
-											warn "not a known type in neq: " . Dumper($node) if ($debug);
-											return 0;
-										}
-									}
-									my $eq	= ncmp($operands[0], $operands[1], $bridge) != 0;
-									return $eq;
-								},
-						'<'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my $cmp;
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-										$cmp		= (DateTime->compare( $operands[0], $operands[1] ));
-									} else {
-										$cmp		= ncmp($operands[0], $operands[1], $bridge);
-									}
-	
-# 									warn '-----------------------------';
-# 									warn "LESS-THAN OP[0]: " . eval { $operands[0]->as_string };
-# 									warn "LESS-THAN OP[1]: " . eval { $operands[1]->as_string };
-# 									warn "LESS-THAN: $cmp\n";
-									return $cmp == -1;
-								},
-						'>'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my $cmp;
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-										$cmp		= (DateTime->compare( $operands[0], $operands[1] ));
-									} else {
-										$cmp		= ncmp($operands[0], $operands[1], $bridge);
-									}
-	# 								warn '-----------------------------';
-	# 								warn "GREATER-THAN OP[0]: " . eval { $operands[0]->as_string };
-	# 								warn "GREATER-THAN OP[1]: " . eval { $operands[1]->as_string };
-	# 								warn "GREATER-THAN: $cmp\n";
-									return $cmp == 1;
-								},
-						'<='	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my $cmp;
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-										$cmp		= (DateTime->compare( $operands[0], $operands[1] ));
-									} else {
-										$cmp		= ncmp($operands[0], $operands[1], $bridge);
-									}
-									return $cmp != 1;
-								},
-						'>='	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands = map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my $cmp;
-									if ($self->_one_isa( $bridge, 'DateTime', @operands )) {
-										@operands	= $self->_promote_to( $bridge, 'DateTime', @operands );
-										$cmp		= (DateTime->compare( $operands[0], $operands[1] ));
-									} else {
-										$cmp		= ncmp($operands[0], $operands[1], $bridge);
-									}
-									return $cmp != -1;
-								},
-						'&&'	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @results;
-									foreach my $part (@{ $data }) {
-										my $error;
-										my $value;
-										try {
-											my $data	= $self->_check_constraints( $values, $part, %args );
-											$value		= $self->get_function('sop:boolean')->( $self, $bridge, $data );
-											push(@results, $value);
-										} catch RDF::Query::Error::FilterEvaluationError with {
-											$error	= shift;
-											push(@results, $error);
-										};
-										if (not $error and not $value) {
-											return 0;
-										}
-									}
-									
-									if ($results[0] and $results[1]) {
-										return 1;
-									} else {
-										foreach my $r (@results) {
-											throw $r if (ref($r) and $r->isa('RDF::Query::Error'));
-										}
-										throw RDF::Query::Error::FilterEvaluationError;
-									}
-								},
-						'||'	=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my $error;
-									my $bool	= 0;
-									foreach my $part (@{ $data }) {
-										undef $error;
-										my $value;
-										try {
-											my $data	= $self->_check_constraints( $values, $part, %args );
-											$value		= $self->get_function('sop:boolean')->( $self, $bridge, $data );
-										} catch RDF::Query::Error::FilterEvaluationError with {
-											$error	= shift;
-											$value	= 0;
-										};
-										
-	# 									warn "OR [1]: " . Dumper($part);
-										if ($value) {
-											$bool	= 1;
-											last;
-										}
-									}
-									
-									if ($error) {
-										throw $error;
-									} else {
-										return $bool;
-									}
-								},
-						'*'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands	= map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my @types		= map { $bridge->literal_datatype( $_ ) } @operands;
-									my @values		= map { $self->get_function('sop:numeric')->( $self, $bridge, $_ ) } @operands;
-									my $value		= $values[0] * $values[1];
-									my $type		= $self->_result_type( '*', @types );
-									return $bridge->new_literal($value, undef, $type);
-								},
-						'/'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands	= map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my @types		= map { $bridge->literal_datatype( $_ ) } @operands;
-									my @values		= map { $self->get_function('sop:numeric')->( $self, $bridge, $_ ) } @operands;
-									my $value		= $values[0] / $values[1];
-									my $type		= $self->_result_type( '/', @types );
-									return $bridge->new_literal($value, undef, $type);
-								},
-						'+'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands	= map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my @types		= map { $bridge->literal_datatype( $_ ) } @operands;
-									my @values		= map { $self->get_function('sop:numeric')->( $self, $bridge, $_ ) } @operands;
-									my $value		= $values[0] + $values[1];
-									my $type		= $self->_result_type( '+', @types );
-									return $bridge->new_literal($value, undef, $type);
-								},
-						'-'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my @operands	= map { $self->_check_constraints( $values, $_, %args ) } @{ $data };
-									my @types		= map { $bridge->literal_datatype( $_ ) } @operands;
-									my @values		= map { $self->get_function('sop:numeric')->( $self, $bridge, $_ ) } @operands;
-									my $value		= (1 == @operands) ? (-1 * $values[0]) : ($values[0] - $values[1]);
-									my $type		= $self->_result_type( '-', @types );
-									return $bridge->new_literal($value, undef, $type);
-								},
-						'!'		=> sub {
-									my $self	= shift;
-									my $values	= shift;
-									my $data	= shift;
-									my %args	= @_;
-									my $bridge	= $args{bridge};
-									my $value	= $self->_check_constraints( $values, $data->[0], %args );
-									if (defined $value) {
-										my $bool	= $self->get_function('sop:boolean')->( $self, $bridge, $value );
-										return (not $bool) ? $self->_true( $bridge ) : $self->_false( $bridge );
-									} else {
-										throw RDF::Query::Error::TypeError ( -text => 'Cannot negate an undefined value' );
-									}
-								},
-						'FUNCTION'	=> sub {
-							our %functions;
-							my $self	= shift;
-							my $values	= shift;
-							my $data	= shift;
-							my %args	= @_;
-							my $bridge	= $args{bridge};
-							my $uri		= $self->qualify_uri( $data->[0][1] );
-							my $func	= $self->get_function( $uri, %args );
-							if (ref($func) and reftype($func) eq 'CODE') {
-								my $value;
-								$self->{'values'}	= $values;
-								my @args;
-								foreach my $d (@{ $data }[1..$#{ $data }]) {
-									if (blessed($d) and $d->isa('RDF::Query::Node::Variable')) {
-										push(@args, $values->{ $d->name });
-									} elsif (blessed($d) and $bridge->is_node( $d )) {
-										push(@args, $d);
-									} else {
-										push(@args, $self->_check_constraints( $values, $d, %args ));
-									}
-								}
-								$value	= $func->(
-											$self,
-											$bridge,
-											@args
-										);
-								{ no warnings 'uninitialized';
-									_debug( "function <$uri> -> " . Dumper($value) ) if ($debug);
-								}
-								return $value;
-							} else {
-								warn "No function defined for <${uri}>\n";
-								Carp::cluck if ($::counter++ > 5);
-								return undef;
-							}
-						},
-					);
-	sub _check_constraints {
-		my $self	= shift;
-		my $values	= shift;
-		my $data	= shift;
-		my %args	= @_;
-		Carp::confess unless ($args{bridge});	# XXXassert
-		
-		_debug( '_check_constraints: ' . Dumper($data), 2 ) if ($debug);
-		return 1 unless ref($data);
-		
-		my ($op, @data);
-		if (blessed($data) and $data->isa('RDF::Query::Node')) {
-			$op		= $data->type;
-			@data	= $data;
-		} else {
-			$op		= $data->[0];
-			@data	= @{ $data }[ 1 .. $#{ $data } ];
-		}
-		my $code	= $dispatch{ $op };
-		
-		if ($code) {
-	#		local($Data::Dumper::Indent)	= 0;
-			my $result	= $code->( $self, $values, \@data, %args );
-			_debug( "OP: $op -> " . Dumper($data) . ' = ' . Dumper($result), 2 ) if ($debug);
-			return $result;
-		} else {
-			confess "OPERATOR $op NOT IMPLEMENTED!";
-		}
-	}
-}
-
-=begin private
-
-=item C<check_constraints ( \%bound, \@data )>
-
-Returns the value returned by evaluating the expression structures in C<@data>
-with the bound variables in C<%bound>. Catches any evaluation exceptions,
-returning undef if an error is raised.
-
-=end private
-
-=cut
-
-sub check_constraints {
-	my $self	= shift;
-	my $values	= shift;
-	my $data	= shift;
-	my %args	= @_;
-	
-	my $result;
-	try {
-		$result	= $self->_check_constraints( $values, $data, %args );
-	} catch RDF::Query::Error::FilterEvaluationError with {
-		my $error	= shift;
-		warn "FilterEvaluationError: $error\n" if ($debug);
-		$result	= undef;
-	} catch RDF::Query::Error::TypeError with {
-		my $error	= shift;
-		warn "TypeError: $error\n" if ($debug);
-		$result	= undef;
-	} except {
-		my $error	= shift;
-		warn "Error: $error\n" if ($debug);
-	} otherwise {
-		warn "Unknown Error: $@" if ($debug);
-	};
-	return $result;
-}
-
-
-{
-my $xsd				= 'http://www.w3.org/2001/XMLSchema#';
-my $integerTypes	= qr<^http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>;
-my @typeOrder		= qw(double float decimal integer);
-sub _result_type {
-	my $self	= shift;
-	my $op		= shift;
-	my @data	= @_;
-	no warnings 'uninitialized';
-	return "${xsd}integer" if ($data[0] =~ $integerTypes and $data[1] =~ $integerTypes);
-	foreach my $t (@typeOrder) {
-		no warnings 'uninitialized';
-		return "${xsd}${t}" if ($data[0] =~ /$t/i or $data[1] =~ /$t/i);
-	}
-}
-}
-
 sub _true {
 	my $self	= shift;
 	my $bridge	= shift || $self->bridge;
-	return $bridge->new_literal('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 }
 
 sub _false {
 	my $self	= shift;
 	my $bridge	= shift || $self->bridge;
-	return $bridge->new_literal('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 }
 
-sub _isa_known_datatype {
-	my $self	= shift;
-	my $type	= shift;
-	no warnings 'uninitialized';
-	return 1 if ($type =~ m<^http://www.w3.org/2001/XMLSchema#(boolean|double|float|decimal|integer|dateTime|string)$>);
-	return 0;
-}
-
-sub _isa_known_node_type {
-	my $self	= shift;
-	my $bridge	= shift;
-	my $data	= shift;
-	
-	return 0 unless (ref($data));
-	my $blessed	= blessed($data);
-	return 1 if ($blessed and $_->isa( 'DateTime' ));
-	return 1 if ($bridge->is_resource($data));
-	if ($bridge->is_literal($data)) {
-		my $type	= $bridge->literal_datatype( $data );
-		if ($type) {
-			return $self->_isa_known_datatype( $type );
-		} else {
-			return 1;
-		}
-	}
-	
-	if (reftype($data) eq 'ARRAY') {
-		if ($data->[0] eq 'LITERAL') {
-			if ($data->[3]) {
-				my $type	= $data->[3];
-				return $self->_isa_known_datatype( $type );
-			} else {
-				return 1;
-			}
-		} else {
-			if ($data->[2]) {
-				my $type	= $data->[2];
-				return 1 if ($type =~ m<^http://www.w3.org/2001/XMLSchema#(boolean|double|float|decimal|integer|dateTime|string)$>);
-				return 0;
-			} else {
-				return 1;
-			}
-		}
-	} else {
-		return 0;
-	}
-}
-
-sub _one_isa {
-	my $self	= shift;
-	my $bridge	= shift;
-	my $type	= shift;
-	my $a		= shift;
-	my $b		= shift;
-#	warn Data::Dumper->Dump([$a,$b], [qw(a b)]);
-	for ($a, $b) {
-		my $blessed	= blessed($_);
-		my $reftype	= reftype($_);
-		return 1 if ($blessed and $_->isa( $type ));
-		return 1 if ($blessed and $reftype eq 'ARRAY' and $_->[0] eq $type);
-		if ($type eq 'DateTime') {
-			no warnings 'uninitialized';
-			return 1 if ($bridge->is_literal($_) and $bridge->literal_datatype($_) eq 'http://www.w3.org/2001/XMLSchema#dateTime');
-			no warnings 'uninitialized';
-			if ($reftype eq 'ARRAY') {
-				return 1 if ($_->[2] eq 'http://www.w3.org/2001/XMLSchema#dateTime');
-			}
-		}
-	}
-	return 0;
-}
-
-sub _promote_to {
-	my $self	= shift;
-	my $bridge	= shift;
-	Carp::confess unless (blessed($bridge));	# XXXassert
-	
-	my $type	= shift;
-	my @objects	= @_;
-	if ($type eq 'DateTime') {
-		@objects	= map {
-						(blessed($_) and $_->isa($type))
-							? $_
-							: (blessed($_) and $_->isa('RDF::Query::Node::Literal'))
-								? $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', $_ )
-								: (blessed($_) and $bridge->is_literal($_))
-									? $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', $_ )
-									: $self->call_function( $bridge, {}, 'http://www.w3.org/2001/XMLSchema#dateTime', RDF::Query::Node::Literal->new( @$_ ) )
-					} @objects;
-	}
-	return @objects;
-}
-
-=begin private
-
-=item C<get_value ( $value )>
-
-Returns the scalar value (string literal, URI value, or blank node identifier)
-for the specified model-specific node object.
-
-=end private
-
-=cut
-
-sub get_value {
-	my $self	= shift;
-	my $value	= shift;
-	my %args	= @_;
-	my $bridge	= $args{bridge};
-	Carp::confess unless ($bridge);	# XXXassert
-	
-	if (blessed($value) and $value->isa('DateTime')) {
-		return $value;
-		return $self->{dateparser}->format_datetime($value);
-	} elsif ($bridge->is_resource($value)) {
-		return $bridge->uri_value( $value );
-	} elsif ($bridge->is_literal($value)) {
-		my $literal	= $bridge->literal_value( $value );
-		if (my $dt = $bridge->literal_datatype( $value )) {
-			return [$literal, undef, $dt]
-		} elsif (my $lang = $bridge->literal_value_language( $value )) {
-			return [$literal, $lang, undef];
-		} else {
-			return $literal;
-		}
-	} elsif ($bridge->is_blank($value)) {
-		return $bridge->blank_identifier( $value );
-	} else {
-		return $value;
-	}
-}
 
 =item C<add_function ( $uri, $function )>
 
@@ -1406,6 +809,7 @@ sub add_function {
 	}
 }
 
+
 =begin private
 
 =item C<get_function ( $uri, %args )>
@@ -1423,8 +827,17 @@ sub get_function {
 	my %args	= @_;
 	warn "trying to get function from $uri" if ($debug);
 	
-	my $func	= $self->{'functions'}{$uri}
-				|| $RDF::Query::functions{ $uri };
+	if (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
+	
+	my $func;
+	if (ref($self)) {
+		$func	= $self->{'functions'}{$uri} || $RDF::Query::functions{ $uri };
+	} else {
+		$func	= $RDF::Query::functions{ $uri };
+	}
+	
 	if ($func) {
 		return $func;
 	} elsif ($self->{options}{net_filters}) {
@@ -1451,8 +864,8 @@ sub call_function {
 	my $uri		= shift;
 	warn "trying to get function from $uri" if ($debug);
 	
-	my $filter			= [ 'FUNCTION', RDF::Query::Node::Resource->new($uri), @_ ];
-	return $self->check_constraints( $bound, $filter, bridge => $bridge );
+	my $filter			= RDF::Query::Algebra::Expr::Function->new( $uri, @_ );
+	return $filter->evaluate( $self, $bridge, $bound );
 }
 
 
@@ -1746,140 +1159,6 @@ sub run_hook {
 
 =begin private
 
-=item C<ncmp ( $value )>
-
-General-purpose sorting function for both numbers and strings.
-
-=end private
-
-=cut
-
-sub _get_value {
-		my $node	= shift;
-		if (blessed($node) and not $node->isa('DateTime')) {
-			return $node->literal_value;
-		} elsif (ref($node) and reftype($node) eq 'ARRAY') {
-			return $node->[0];
-		} else {
-			return $node;
-		}
-}
-
-sub _get_type {
-		my $node	= shift;
-		if (blessed($node) and not $node->isa('DateTime')) {
-			return $node->literal_datatype;
-		} elsif (ref($node) and reftype($node) eq 'ARRAY') {
-			return $node->[2];
-		} else {
-			return undef;
-		}
-}
-
-sub _get_lang {
-		my $node	= shift;
-		if (blessed($node) and not $node->isa('DateTime')) {
-			return $node->literal_value_language;
-		} elsif (ref($node) and reftype($node) eq 'ARRAY') {
-			return $node->[1];
-		} else {
-			return undef;
-		}
-}
-
-sub ncmp ($$;$) {
-	my ($a, $b, $bridge)	= @_;
-	for ($a, $b) {
-		throw RDF::Query::Error::FilterEvaluationError ( -text => 'Cannot sort undefined values' ) unless defined($_);
-	}
-	my @node_type	= map {
-		my $node	= $_;
-		my $type;
-		if (blessed($node) and not $node->isa('DateTime')) {
-			if ($bridge->is_blank( $node )) {
-				$type	= 'BLANK' ;
-			} elsif ($bridge->is_resource( $node )) {
-				$type	= 'URI';
-			} elsif ($bridge->is_literal( $node )) {
-				$type	= 'LITERAL';
-			} else {
-				$type	= undef;
-			}
-		} elsif (ref($node) and reftype($node) eq 'ARRAY' and $node->[0] =~ /^[A-Z]+$/) {
-			$type	= 'LITERAL';
-		} else {
-			$type	= 'LITERAL';
-		}
-		$type;
-	} ($a, $b);
-	
-	if ($node_type[0] ne $node_type[1]) {
-		throw RDF::Query::Error::FilterEvaluationError ( -text => 'Cannot compare values of different types' );
-	}
-	
-	my @values	= map { _get_value( $_ ) } ($a, $b);
-	my @types	= map { _get_type( $_ ) } ($a, $b);
-	my @langs	= map { _get_lang( $_ ) } ($a, $b);
-	my @numeric	= map { is_numeric_type($_) } @types;
-#	warn Dumper(\@values, \@types, \@langs, \@numeric);	# XXX
-	
-	no warnings 'numeric';
-	no warnings 'uninitialized';
-	my $num_cmp		= ($numeric[0] and $numeric[1]);
-	my $lang_cmp	= ($langs[0] or $langs[1]);
-	
-	if ($num_cmp) {
-#		warn "num cmp";
-		for (@values) {
-			unless (looks_like_number($_)) {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => "Not a numeric literal: '$_'" );
-			}
-		}
-		return ($values[0] <=> $values[1]);
-	} elsif ($lang_cmp) {
-#		warn "lang cmp";
-		return (lc($langs[0]) cmp lc($langs[1])) if (lc($langs[0]) ne lc($langs[1]));
-		my $av	= $values[0];
-		my $bv	= $values[1];
-		return ($values[0] cmp $values[1]);
-	} else {
-#		warn "plain cmp";
-		if (RDF::Query->_isa_known_datatype($types[0]) xor RDF::Query->_isa_known_datatype($types[1])) {
-			if ($types[0] eq $types[1] and $values[0] eq $values[1]) {
-				return 0;
-			} else {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => 'Cannot compare values of unknown types' );
-			}
-		}
-		if (defined($types[0]) or defined($types[1])) {
-			no warnings 'uninitialized';
-			if ($types[0] ne $types[1]) {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => 'Cannot compare values of unknown types' );
-			}
-		}
-#		warn "plain cmp";
-		return ($values[0] cmp $values[1]);
-	}
-}
-
-=begin private
-
-=item C<is_numeric_type ( $type )>
-
-Returns true if the specified C<$type> URI represents a numeric type.
-This includes XSD numeric, double and integer types.
-	
-=end private
-
-=cut
-
-sub is_numeric_type {
-	my $type	= shift || '';
-	return ($type =~ m<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|numeric|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) ? 1 : 0;
-}
-
-=begin private
-
 =item C<sort_rows ( $nodes, $parsed )>
 
 Called by C<execute> to handle result forms including:
@@ -1958,21 +1237,21 @@ sub sort_rows {
 			
 			no warnings 'numeric';
 			@nodes	= map {
-						my $node	= $_;
-						Carp::cluck if (reftype($node) eq 'ARRAY');
-						my %data	= %$node;
-	#					my %data	= map { $_ => $node->[ $colmap{$_} ] } (keys %colmap);
-	#					warn "data: " . Dumper(\%data, $data);
-						my $result	= $self->check_constraints( \%data, $data, bridge => $bridge );
-						my $value	= $self->get_value( $result, bridge => $bridge );
-						[ $node, $value ]
+						my $bound	= $_;
+						my $value	= $data->isa('RDF::Query::Algebra')
+									? $data->evaluate( $self, $bridge, $bound )
+									: ($data->isa('RDF::Query::Node::Variable'))
+										? $bound->{ $data->name }
+										: $data;
+						[ $_, $value ]
 					} @nodes;
 			
-			use sort 'stable';
-			@nodes	= sort {
-						my $val	= eval { ncmp($a->[1],$b->[1]) } || 0;
-					} @nodes;
-			@nodes	= reverse @nodes if ($dir eq 'DESC');
+			{
+				local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
+				use sort 'stable';
+				@nodes	= sort { $a->[1] <=> $b->[1] } @nodes;
+				@nodes	= reverse @nodes if ($dir eq 'DESC');
+			}
 			
 			@nodes	= map { $_->[0] } @nodes;
 	
@@ -2031,24 +1310,6 @@ sub variables {
 	my @vars	= map { $_->name } @{ $parsed->{'variables'} };
 	return @vars;
 }
-
-# =begin private
-# 
-# =item C<all_variables ()>
-# 
-# Returns a list of all variables referenced in the query.
-# 	
-# =end private
-# 
-# =cut
-# 
-# sub all_variables {
-# 	my $self	= shift;
-# 	my $parsed	= $self->parsed;
-# 	my @vars	= map { $_->[1] } @{ $self->{'known_variables'} };
-# 	return @vars;
-# }
-
 
 =item C<parsed ()>
 

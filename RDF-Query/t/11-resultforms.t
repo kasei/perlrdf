@@ -160,13 +160,14 @@ END
 			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			PREFIX	exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
+			PREFIX	xsd: <http://www.w3.org/2001/XMLSchema#>
 			SELECT	DISTINCT ?img ?long
 			WHERE	{
 						?img a foaf:Image .
 						?img dcterms:spatial ?point .
 						?point geo:long ?long .
 					}
-			ORDER BY ASC(?long * -1)
+			ORDER BY ASC(xsd:float(?long * -1))
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
@@ -199,13 +200,14 @@ END
 			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			PREFIX	exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
+			PREFIX	xsd: <http://www.w3.org/2001/XMLSchema#>
 			SELECT	DISTINCT ?img ?long
 			WHERE	{
 						?img a foaf:Image .
 						?img dcterms:spatial ?point .
 						?point geo:long ?long .
 					}
-			ORDER BY DESC(?long * -1)
+			ORDER BY DESC(xsd:float(?long * -1))
 END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;

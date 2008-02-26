@@ -8,6 +8,7 @@ use base qw(RDF::Query::Model);
 use Carp qw(carp croak);
 
 use File::Spec;
+use File::Temp qw(tempfile);
 use LWP::UserAgent;
 use RDF::Core::Model;
 use RDF::Core::Query;
@@ -16,7 +17,6 @@ use RDF::Core::Storage::Memory;
 use RDF::Core::NodeFactory;
 use RDF::Core::Model::Serializer;
 use Scalar::Util qw(blessed);
-use Unicode::Normalize qw(normalize);
 
 use RDF::Trine::Iterator;
 use RDF::Trine::Statement::Quad;
@@ -194,19 +194,7 @@ sub add_uri {
 		return;
 	}
 	my $rdf	= $resp->content;
-	
-	my $model	= ($named)
-				? $self->_named_graph_models( $url )
-				: $self->model;
-	my %options = (
-				Model		=> $model,
-				Source		=> $rdf,
-				SourceType	=> 'string',
-				BaseURI		=> $url,
-				BNodePrefix	=> "genid" . $self->{counter}++ . 'r',
-			);
-	my $parser	= new RDF::Core::Model::Parser (%options);
-	$parser->parse;
+	$self->add_string( $rdf, $url, $named );
 }
 
 =item C<add_string ( $data, $base_uri, $named, $format )>
@@ -218,14 +206,32 @@ the data is added to the model using C<$base_uri> as the named context.
 
 sub add_string {
 	my $self	= shift;
-	my $_data	= shift;
+	my $data	= shift;
 	my $uri		= shift;
 	my $named	= shift;
 	
-	my $data	= normalize( 'C', $_data );
 	my $model	= ($named)
 				? $self->_named_graph_models( $uri )
 				: $self->model;
+	
+	our $USE_RAPPER;
+	if ($USE_RAPPER) {
+		if ($data !~ m/<rdf:RDF/ms) {
+			my ($fh, $filename) = tempfile();
+			print $fh $data;
+			close($fh);
+			$data	= do {
+								open(my $fh, '-|', "rapper -q -i turtle -o rdfxml $filename");
+								local($/)	= undef;
+								my $data	= <$fh>;
+								my $c		= $self->{counter}++;
+								$data		=~ s/nodeID="([^"]+)"/nodeID="r${c}r$1"/smg;
+								$data;
+							};
+			unlink($filename);
+		}
+	}
+	
 	my %options = (
 				Model		=> $model,
 				Source		=> $data,
@@ -278,7 +284,7 @@ sub _get_statements {
 		my $ro		= $rstmt->getObject;
 		my @nodes;
 		foreach my $n ($rs, $rp, $ro) {
-			push(@nodes, _cast_to_trine( $n ));
+			push(@nodes, _cast_to_local( $n ));
 		}
 		my $st	= RDF::Query::Algebra::Triple->new( @nodes );
 		return $st;
@@ -302,7 +308,7 @@ sub _get_named_statements {
 	
 	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
 	
-	if (not defined($context) or $context->isa('RDF::Query::Node::Variable')) {
+	if (not defined($context) or $context->isa('RDF::Trine::Node::Variable')) {
 		my $nstream;
 		my %models	= $self->_named_graph_models;
 		foreach my $uri (keys %models) {
@@ -324,7 +330,7 @@ sub _get_named_statements {
 				my $ro		= $rstmt->getObject;
 				my @nodes;
 				foreach my $n ($rs, $rp, $ro) {
-					push(@nodes, _cast_to_trine( $n ));
+					push(@nodes, _cast_to_local( $n ));
 				}
 				my $st	= RDF::Query::Algebra::Quad->new( @nodes, $c );
 				return $st;
@@ -336,6 +342,9 @@ sub _get_named_statements {
 			} else {
 				$nstream	= $iter;
 			}
+		}
+		unless ($nstream) {
+			$nstream	= RDF::Trine::Iterator::Graph->new([]);
 		}
 		return $nstream;
 	} else {
@@ -356,7 +365,7 @@ sub _get_named_statements {
 			my $ro		= $rstmt->getObject;
 			my @nodes;
 			foreach my $n ($rs, $rp, $ro) {
-				push(@nodes, _cast_to_trine( $n ));
+				push(@nodes, _cast_to_local( $n ));
 			}
 			my $st	= RDF::Query::Algebra::Quad->new( @nodes, $context );
 			return $st;
@@ -383,19 +392,19 @@ sub _cast_to_rdfcore {
 	}
 }
 
-sub _cast_to_trine {
+sub _cast_to_local {
 	my $node	= shift;
 	return unless (blessed($node));
 	if ($node->isLiteral) {
 		my $lang	= $node->getLang;
 		my $dt		= $node->getDatatype;
-		return RDF::Trine::Node::Literal->new( $node->getValue, $lang, $dt );
+		return RDF::Query::Node::Literal->new( $node->getValue, $lang, $dt );
 	} elsif ($node->isa('RDF::Core::Resource') and $node->getURI =~ /^_:/) {
 		my $label	= $node->getLabel;
 		$label		=~ s/^_://;
-		return RDF::Trine::Node::Blank->new( $label );
+		return RDF::Query::Node::Blank->new( $label );
 	} elsif ($node->isa('RDF::Core::Resource')) {
-		return RDF::Trine::Node::Resource->new( $node->getLabel );
+		return RDF::Query::Node::Resource->new( $node->getLabel );
 	} else {
 		return undef;
 	}
@@ -484,10 +493,9 @@ sub _named_graph_models {
 			return $model;
 		}
 	} else {
-		return %{ $self->{named_graphs} };
+		return %{ $self->{named_graphs} || {} };
 	}
 }
-
 
 1;
 

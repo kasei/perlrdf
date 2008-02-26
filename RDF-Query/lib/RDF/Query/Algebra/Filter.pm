@@ -21,6 +21,8 @@ use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+
+use RDF::Query::Error qw(:try);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
@@ -192,7 +194,10 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my $expr	= $self->expr->fixup( $bridge, $base, $ns );
+	my $expr	= $self->expr;
+	if ($expr->isa('RDF::Query::Algebra')) {
+		$expr	= $expr->fixup( $bridge, $base, $ns );
+	}
 	my $pattern	= $self->pattern->fixup( $bridge, $base, $ns );
 	return $class->new( $expr, $pattern );
 }
@@ -210,11 +215,17 @@ sub execute {
 	my %args		= @_;
 	
 	my $expr		= $self->expr;
+	my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+	my $filter		= RDF::Query::Algebra::Expr::Function->new( $bool, $expr );
 	my $pattern		= $self->pattern;
 	my $stream		= sgrep {
-						my $bound			= $_;
-						my $filter_value	= $query->call_function( $bridge, $bound, 'sop:boolean', $expr );
-						return ($filter_value);
+						my $bound	= $_;
+						my $bool	= 0;
+						eval {
+							my $value	= $filter->evaluate( $query, $bridge, $bound );
+							$bool	= ($value->literal_value eq 'true') ? 1 : 0;
+						};
+						return $bool;
 					} $pattern->execute( $query, $bridge, $bound, $context, %args );
 }
 

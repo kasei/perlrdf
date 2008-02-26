@@ -17,6 +17,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
+use Scalar::Util qw(blessed);
 use Data::Dumper;
 use List::Util qw(first);
 use List::MoreUtils qw(uniq);
@@ -47,9 +48,13 @@ Returns a new GroupGraphPattern structure.
 =cut
 
 sub new {
-	my $class	= shift;
-	my $gp		= @_;
-	return bless( [@_], $class );
+	my $class		= shift;
+	my @patterns	= @_;
+	my $self	= bless( \@patterns, $class );
+	if (@patterns) {
+		Carp::confess unless blessed($patterns[0]);
+	}
+	return $self;
 }
 
 =item C<< construct_args >>
@@ -169,16 +174,9 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 
-	my @patterns	= $self->patterns;
-	my @triples		= grep { not $_->isa('RDF::Query::Algebra::OldFilter') } @patterns;
-	my @filters		= grep { $_->isa('RDF::Query::Algebra::OldFilter') } @patterns;
+	my @triples	= $self->patterns;
 	
 	my $ggp			= $class->new( map { $_->fixup( $bridge, $base, $ns ) } @triples );
-	while (my $filter = shift @filters) {
-		my $expr	= $filter->expr;
-		$ggp		= RDF::Query::Algebra::Filter->new( $expr, $ggp );
-	}
-	
 	return $ggp;
 }
 
@@ -196,7 +194,6 @@ sub execute {
 	
 	my (@triples)	= $self->patterns;
 	my $stream;
-	my @filters;
 	foreach my $triple (@triples) {
 		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'));
 		
@@ -236,14 +233,6 @@ sub execute {
 	
 	unless ($stream) {
 		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
-	}
-	
-	foreach my $data (@filters) {
-		$stream	= sgrep {
-					my $bound			= $_;
-					my $filter_value	= $query->call_function( $bridge, $bound, 'sop:boolean', $data->[1] );
-					return ($filter_value);
-				} $stream;
 	}
 	
 	return $stream;

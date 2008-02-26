@@ -43,7 +43,7 @@ use RDF::Query::Algebra::Union;
 use RDF::Query::Algebra::NamedGraph;
 use RDF::Query::Algebra::Service;
 use RDF::Query::Algebra::TimeGraph;
-use RDF::Query::Algebra::Function;
+use RDF::Query::Algebra::Expr::Function;
 use RDF::Query::Algebra::Aggregate;
 
 =item C<< referenced_blanks >>

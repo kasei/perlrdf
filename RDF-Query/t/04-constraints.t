@@ -75,8 +75,8 @@ END
 		my ($point, $lat, $lon)	= $query->get( $model );
 		my $bridge	= $query->bridge;
 		ok( $bridge->isa_node( $point ), 'Point isa Node' );
-		cmp_ok( abs( $bridge->literal_value( $lat ) - 52.97277 ), '<', 0.001, 'latitude' );
-		cmp_ok( abs( $bridge->literal_value( $lon ) + 9.430733 ), '<', 0.001, 'longitude' );
+		cmp_ok( abs( $lat->numeric_value - 52.97277 ), '<', 0.001, 'latitude' );
+		cmp_ok( abs( $lon->literal_value + 9.430733 ), '<', 0.001, 'longitude' );
 	}
 	
 	{
