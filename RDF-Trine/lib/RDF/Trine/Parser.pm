@@ -35,6 +35,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::RDFXML;
 
 our %types;
 

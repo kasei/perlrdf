@@ -5,7 +5,8 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 32;
+use Test::More tests => 31;
+use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
 use RDF::Query;
@@ -115,8 +116,10 @@ END
 		cmp_ok( $lb, '>', $la, 'literal greater-than' );
 		cmp_ok( $la, '!=', $lb, 'literal not-eq' );
 		cmp_ok( $la, '==', $la, 'literal eq' );
-		cmp_ok( $la, '==', $lal, 'same-valued plain- and language-literals are unsortable' );
-		cmp_ok( $la, '>', $l1d, 'different-valued plain- and datatype-literals are sortable' );
+# 		cmp_ok( $la, '<', $lal, 'same-valued plain- and language-literals are unsortable' );
+		throws_ok {
+			$la <=> $l1d
+		} 'RDF::Query::Error::TypeError', 'different-valued plain- and datatype-literals are sortable';
 		cmp_ok( $l1d, '==', $l01d, 'numeric-datatype-literals are sortable (equal, but not sameTerm)' );
 		cmp_ok( $l2d, '>', $l1d, 'numeric-datatype-literals are sortable (greater-than, but different numeric type)' );
 	}

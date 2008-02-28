@@ -89,7 +89,7 @@ use RDF::Query::Error qw(:try);
 
 my $KEYWORD_RE;
 our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER, %PATTERN_TYPES);
-use constant DEBUG	=> 1;
+use constant DEBUG	=> 0;
 BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
@@ -216,6 +216,7 @@ Executes the query using the specified model. If called in a list
 context, returns an array of rows, otherwise returns an iterator.
 
 =cut
+
 sub execute {
 	my $self	= shift;
 	my $model	= shift;
@@ -276,6 +277,14 @@ sub execute {
 		return $stream;
 	}
 }
+
+=item C<< execute_with_named_graphs ( $model, @uris ) >>
+
+Executes the query using the specified model, loading the contents of the
+specified C<@uris> into named graphs immediately prior to matching the query.
+Otherwise, acts just like C<< execute >>.
+
+=cut
 
 sub execute_with_named_graphs {
 	my $self		= shift;

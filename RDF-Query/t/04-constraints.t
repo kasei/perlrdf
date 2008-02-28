@@ -56,21 +56,18 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
-			SELECT
-					?point ?lat ?lon
-			WHERE
-					(<http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg> dcterms:spatial ?point)
-					(?point geo:lat ?lat)
-					(?point geo:long ?lon)
-			AND
-					?lat > 52.97,
-					?lat < 53.036526
-			USING
-					rdf FOR <http://www.w3.org/1999/02/22-rdf-syntax-ns#>,
-					foaf FOR <http://xmlns.com/foaf/0.1/>,
-					dcterms FOR <http://purl.org/dc/terms/>,
-					geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
+		my $query	= new RDF::Query ( <<"END" );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			PREFIX dcterms: <http://purl.org/dc/terms/>
+			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT ?point ?lat ?lon
+			WHERE {
+				<http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg> dcterms:spatial ?point .
+				?point geo:lat ?lat ; geo:long ?lon .
+				FILTER ( xsd:float(?lat) > 52.97 && xsd:float(?lat) < 53.036526 )
+			}
 END
 		my ($point, $lat, $lon)	= $query->get( $model );
 		my $bridge	= $query->bridge;
@@ -80,22 +77,20 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
-			SELECT
-					?point ?lat ?lon
-			WHERE
-					(<http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg> dcterms:spatial ?point)
-					(?point geo:lat ?lat)
-					(?point geo:long ?lon)
-			AND
-					?lat > 52,
-					?lat < 53
-			USING
-					rdf FOR <http://www.w3.org/1999/02/22-rdf-syntax-ns#>,
-					foaf FOR <http://xmlns.com/foaf/0.1/>,
-					dcterms FOR <http://purl.org/dc/terms/>,
-					geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
+		my $query	= new RDF::Query ( <<"END" );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			PREFIX dcterms: <http://purl.org/dc/terms/>
+			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT ?point ?lat ?lon
+			WHERE {
+				<http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg> dcterms:spatial ?point .
+				?point geo:lat ?lat ; geo:long ?lon .
+				FILTER( xsd:float(?lat) > 52 && xsd:float(?lat) < 53 )
+			}
 END
+		warn RDF::Query->error unless ($query);
 		my ($point, $lat, $lon)	= $query->get( $model );
 		my $bridge	= $query->bridge;
 		ok( $bridge->isa_node( $point ), 'Point isa Node' );
@@ -104,20 +99,18 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
-			SELECT
-					?image ?point ?lat
-			WHERE
-					(?point geo:lat ?lat)
-					(?image dcterms:spatial ?point)
-			AND
-					?lat > 52.972,
-					?lat < 53
-			USING
-					rdf FOR <http://www.w3.org/1999/02/22-rdf-syntax-ns#>,
-					foaf FOR <http://xmlns.com/foaf/0.1/>,
-					dcterms FOR <http://purl.org/dc/terms/>,
-					geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
+		my $query	= new RDF::Query ( <<"END" );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			PREFIX dcterms: <http://purl.org/dc/terms/>
+			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			SELECT ?image ?lat ?lon
+			WHERE {
+				?image dcterms:spatial [ geo:lat ?lat ] .
+				FILTER( xsd:float(?lat) > 52.972 ) .
+				FILTER( xsd:float(?lat) < 53 ) .
+			}
 END
 		my ($image, $point, $lat)	= $query->get( $model );
 		my $bridge	= $query->bridge;

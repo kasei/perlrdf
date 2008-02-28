@@ -33,14 +33,6 @@ package RDF::Trine::Parser::Turtle;
 use strict;
 use warnings;
 no warnings 'redefine';
-our $VERSION	= '1.000';
-
-BEGIN {
-	foreach my $t ('turtle', 'application/x-turtle', 'application/turtle') {
-		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
-	}
-}
-
 
 use URI;
 use Data::UUID;
@@ -50,30 +42,38 @@ use RDF::Trine::Node;
 use RDF::Trine::Parser::Error;
 use Scalar::Util qw(blessed looks_like_number);
 
-our $r_boolean				= qr'(?:true|false)';
-our $r_comment				= qr'#[^\r\n]*';
-our $r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
-our $r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
-our $r_integer				= qr'[+-]?[0-9]+';
-our $r_language				= qr'[a-z]+(-[a-z0-9]+)*';
-our $r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
-our $r_line					= qr'([^\r\n]+[\r\n]+)(?=[^\r\n])';
-our $r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
-our $r_nameStartChar_minus_underscore	= qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
-our $r_scharacters			= qr'[^"\\]*(?:\\.[^"\\]*)*';
-our $r_ucharacters			= qr'[^>\\]*(?:\\.[^>\\]*)*';
-our $r_booltest				= qr'(true|false)\b';
-our $r_nameStartChar		= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
-our $r_nameChar				= qr/${r_nameStartChar}|[-0-9\x{b7}\x{0300}-\x{036f}\x{203F}-\x{2040}]/;
-our $r_prefixName			= qr/((?!_)${r_nameStartChar})($r_nameChar)*/;
-our $r_qname				= qr/(${r_prefixName})?:/;
-our $r_resource_test		= qr/<|$r_qname/;
-our $r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
-
-my $debug		= 0;
-my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
-
+our ($VERSION, $debug, $rdf, $xsd);
+our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
+BEGIN {
+	$debug					= 1;
+	$VERSION				= '1.000';
+	
+	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+	
+	foreach my $t ('turtle', 'application/x-turtle', 'application/turtle') {
+		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
+	}
+	$r_boolean				= qr'(?:true|false)';
+	$r_comment				= qr'#[^\r\n]*';
+	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
+	$r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
+	$r_integer				= qr'[+-]?[0-9]+';
+	$r_language				= qr'[a-z]+(-[a-z0-9]+)*';
+	$r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
+	$r_line					= qr'([^\r\n]+[\r\n]+)(?=[^\r\n])';
+	$r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
+	$r_nameStartChar_minus_underscore	= qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
+	$r_scharacters			= qr'[^"\\]*(?:\\.[^"\\]*)*';
+	$r_ucharacters			= qr'[^>\\]*(?:\\.[^>\\]*)*';
+	$r_booltest				= qr'(true|false)\b';
+	$r_nameStartChar		= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
+	$r_nameChar				= qr/${r_nameStartChar}|[-0-9\x{b7}\x{0300}-\x{036f}\x{203F}-\x{2040}]/;
+	$r_prefixName			= qr/((?!_)${r_nameStartChar})($r_nameChar)*/;
+	$r_qname				= qr/(${r_prefixName})?:/;
+	$r_resource_test		= qr/<|$r_qname/;
+	$r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
+}
 
 =item C<< new >>
 
@@ -84,7 +84,7 @@ Returns a new Turtle parser.
 sub new {
 	my $class	= shift;
 	my $ug		= new Data::UUID;
-	my $uuid	= $ug->create();
+	my $uuid	= $ug->to_string( $ug->create() );
 	my $self	= bless({
 					bindings		=> {},
 					bnode_id		=> 0,
@@ -105,6 +105,11 @@ sub parse {
 	my $self	= shift;
 	my $uri		= shift;
 	my $input	= shift;
+	my $handler	= shift;
+	local($self->{handle_triple});
+	if ($handler) {
+		$self->{handle_triple}	= $handler;
+	}
 	local($self->{baseURI})	= $uri;
 	local($self->{tokens})	= $input;
 	return $self->_turtleDoc();
@@ -137,12 +142,20 @@ sub _eat_re {
 		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
 	}
 	
-	if ($self->{tokens} =~ /^$thing/) {
-		my $match	= $&;
-		substr($self->{tokens}, 0, length($match))	= '';
-		return $match;
+# 	if ($self->{tokens} =~ /^$thing/) {
+# 		my $match	= $&;
+# 		substr($self->{tokens}, 0, length($match))	= '';
+	if (defined(wantarray)) {
+		if ($self->{tokens} =~ s/^($thing)//) {
+			my $match	= $1;
+			return $match;
+		}
+	} else {
+		if ($self->{tokens} =~ s/^$thing//) {
+			return;
+		}
 	}
-	Carp::cluck("Expected ($thing)") if ($debug);
+	Carp::cluck("Expected ($thing) with remaining: $self->{tokens}") if ($debug);
 	throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 }
 
@@ -193,19 +206,19 @@ sub _triple {
 	my $p		= shift;
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
-		unless (blessed($n) and $n->isa('RDF::Trine::Node')) {
+		unless ($n->isa('RDF::Trine::Node')) {
 			throw RDF::Trine::Parser::Error;
 		}
 	}
 	
 	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
-	warn $st->as_string if ($debug);
+	
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}
 	
 	my $count	= ++$self->{triple_count};
-	warn "$count\n" if ($debug);
+# 	warn "$count\n" if ($debug);
 #	print join(' ', map { $_->sse } ($s, $p, $o)), '.' . "\n";
 }
 
@@ -399,6 +412,7 @@ sub _comment {
 	my $self	= shift;
 	### '#' ( [^#xA#xD] )*
 	$self->_eat_re($r_comment);
+	return 1;
 }
 
 sub _subject {
@@ -656,7 +670,6 @@ sub _resource_test {
 	if ($self->{tokens} =~ m/^$r_resource_test/) {
 		return 1;
 	} else {
-		warn "not a resource: $self->{tokens}" if ($debug);
 		return 0;
 	}
 }
@@ -771,7 +784,7 @@ sub _nameChar {
 sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	my ($name)	= ($self->_eat_re( qr/^(${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*)/ ));
+	my $name	= $self->_eat_re( qr/^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/ );
 	return $name;
 # 	my @parts;
 # 	my $nsc	= $self->_nameStartChar();

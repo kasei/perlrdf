@@ -119,7 +119,7 @@ sub evaluate {
 			foreach my $type (@types) {
 				$ok	||= 1 if ($lhs->isa($type) and $rhs->isa($type));
 			}
-			unless ($ok) {
+			if (not($ok) and not($RDF::Query::Node::Literal::LAZY_COMPARISONS)) {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare two nodes of different types.";
 			}
 		}

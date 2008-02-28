@@ -30,9 +30,9 @@ my ($bridge, $model)	= new_model( glob( "t/dawg/data-r2/manifest-syntax.ttl" ) )
 
 {
 	my $ns		= 'http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#';
-	my $inc		= $bridge->new_resource( "${ns}include" );
+	my $inc		= RDF::Query::Node::Resource->new( "${ns}include" );
 	my $stream	= $bridge->get_statements( undef, $inc, undef );
-	my $statement	= $stream->();
+	my $statement	= $stream->next();
 	
 	if ($statement) {
 		my $list		= $bridge->object( $statement );

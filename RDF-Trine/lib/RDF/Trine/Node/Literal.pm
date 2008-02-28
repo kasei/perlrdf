@@ -50,8 +50,12 @@ sub new {
 	my $lang	= shift;
 	my $dt		= shift;
 	my $self;
+
+	if ($lang and $dt) {
+		Carp::cluck;
+		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
+	}
 	
-	throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" ) if ($lang and $dt);
 	if ($lang) {
 		$self	= [ 'LITERAL', $literal, lc($lang), undef ];
 	} elsif ($dt) {
@@ -106,15 +110,15 @@ Returns the SSE string for this literal.
 
 sub sse {
 	my $self	= shift;
-	my $literal	= $self->[1];
-	my $lang	= $self->[2];
-	my $dt		= $self->[3];
+	my $literal	= $self->literal_value;
 	$literal	=~ s/"/\\"/g;
 	$literal	=~ s/\n/\\n/g;
 	$literal	=~ s/\t/\\t/g;
-	if ($lang) {
+	if ($self->has_language) {
+		my $lang	= $self->literal_value_language;
 		return qq("${literal}"\@${lang});
-	} elsif ($dt) {
+	} elsif ($self->has_datatype) {
+		my $dt		= $self->literal_datatype;
 		return qq("${literal}"^^<${dt}>);
 	} else {
 		return qq("${literal}");

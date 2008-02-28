@@ -45,6 +45,10 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
+my $debug		= 1;
+my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+
 our $r_ECHAR				= qr/\\([tbnrf\\"'])/;
 our $r_STRING_LITERAL1		= qr/'(([^\x{27}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*'/;
 our $r_STRING_LITERAL2		= qr/"(([^\x{22}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*"/;
@@ -69,10 +73,6 @@ our $r_INTEGER				= qr/\d+/;
 our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL}/;
 our $r_ANON					= qr/\[[\t\r\n ]*\]/;
 our $r_NIL					= qr/\([\n\r\t ]*\)/;
-
-my $debug		= 0;
-my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
 =item C<< new >>
 
@@ -334,6 +334,7 @@ sub _Query {
 	} elsif ($self->_test(qr/ASK/i)) {
 		$self->_AskQuery();
 	} else {
+		Carp::cluck( "with input <<$self->{tokens}>>" ) if ($debug);
 		throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 	}
 	

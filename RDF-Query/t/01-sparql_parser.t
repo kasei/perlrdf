@@ -10,7 +10,6 @@ use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
 
-
 use RDF::Query::Node;
 use_ok( 'RDF::Query::Parser::SPARQL' );
 my $parser	= new RDF::Query::Parser::SPARQL ();
@@ -1729,7 +1728,7 @@ __END__
             - point
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
-            - 41.849331
+            - +41.849331
             - ~
             - http://www.w3.org/2001/XMLSchema#decimal
           - !!perl/array:RDF::Query::Node::Literal
@@ -3127,7 +3126,7 @@ __END__
           - lat
         - !!perl/array:RDF::Query::Node::Literal
           - LITERAL
-          - 52
+          - +52
           - ~
           - http://www.w3.org/2001/XMLSchema#integer
       - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
@@ -4153,7 +4152,7 @@ __END__
             - b
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
-            - 1.0
+            - +1.0
             - ~
             - http://www.w3.org/2001/XMLSchema#decimal
   variables: []
@@ -4199,7 +4198,7 @@ __END__
             - b
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
-            - 1.0e+1
+            - +1.0e+1
             - ~
             - http://www.w3.org/2001/XMLSchema#double
   variables: []
@@ -4509,7 +4508,7 @@ __END__
             - p
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
-            - 5
+            - +5
             - ~
             - http://www.w3.org/2001/XMLSchema#integer
   variables:

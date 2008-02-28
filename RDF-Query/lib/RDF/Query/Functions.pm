@@ -54,6 +54,8 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#integer"}	= sub {
 		} elsif ($node->is_numeric_type) {
 			if ($type eq 'http://www.w3.org/2001/XMLSchema#double') {
 				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
+			} elsif (int($value) != $value) {
+				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
 			} else {
 				$value	= $node->numeric_value;
 			}
@@ -208,12 +210,12 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#boolean"}	= sub {
 		} elsif ($node->has_datatype) {
 			my $type	= $node->literal_datatype;
 			my $value	= $node->literal_value;
-			if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-				return ($value eq 'true')
-					? RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')
-					: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			if ($value eq 'true') {
+				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			} elsif ($value eq 'false') {
+				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 			} else {
-				throw RDF::Query::Error::TypeError -text => "Unusable type in EBV: " . Dumper($node);
+				throw RDF::Query::Error::TypeError -text => "Unusable type in boolean cast: " . Dumper($node);
 			}
 		} else {
 			my $value	= $node->literal_value;

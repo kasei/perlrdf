@@ -4,8 +4,7 @@ use FindBin qw($Bin);
 use File::Spec;
 use File::Slurp;
 
-plan skip_all => "RDF/XML parser hasn't been written yet.";
-exit;
+plan qw(no_plan);
 
 use_ok( 'RDF::Trine::Parser::RDFXML' );
 
@@ -18,8 +17,8 @@ foreach my $file (@good) {
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	lives_ok {
 		my $url	= 'file://' . $file;
-		my $doc	= RDF::Trine::Parser::RDFXML->new( $url, $data );
-		$doc->parse();
+		my $doc	= RDF::Trine::Parser::RDFXML->new();
+		$doc->parse( $url, $data );
 	} $test;
 }
 
@@ -28,7 +27,7 @@ foreach my $file (@bad) {
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	throws_ok {
 		my $url	= 'file://' . $file;
-		my $doc	= RDF::Trine::Parser::RDFXML->new( $url, $data );
-		$doc->parse();
+		my $doc	= RDF::Trine::Parser::RDFXML->new();
+		$doc->parse( $url, $data );
 	} 'RDF::Trine::Parser::Error::ValueError', $test;
 }

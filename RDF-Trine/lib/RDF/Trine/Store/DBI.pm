@@ -231,8 +231,10 @@ sub get_pattern {
 				$bindings{ $name }	 = RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } );
 			} elsif (defined $row->{ "${prefix}Name" }) {
 				$bindings{ $name }	 = RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } );
-			} else {
+			} elsif (defined $row->{ "${prefix}Value" }) {
 				$bindings{ $name }	 = RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
+			} else {
+				$bindings{ $name }	= undef;
 			}
 		}
 		return \%bindings;
@@ -292,18 +294,17 @@ sub add_statement {
 	my $context	= shift;
 	
 	my $dbh		= $self->dbh;
+	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
 		$self->_add_node( $n );
 	}
 	
+	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
 		$context	= $stmt->context;
-	}
-	
-	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
-	unless ($stmt->isa('RDF::Trine::Statement::Quad')) {
+	} else {
 		my $cid		= do {
 			if ($context) {
 				$self->_add_node( $context );

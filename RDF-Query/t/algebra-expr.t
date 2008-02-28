@@ -127,6 +127,7 @@ my $bin	= 'RDF::Query::Algebra::Expr::Binary';
 
 {
 	# RELATIONAL OPERATORS
+	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'double-float less-than';
 		my $lt		= $bin->new( '<', $l3dd, $l2d );

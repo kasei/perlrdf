@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 197;
+use Test::More tests => 199;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -65,6 +65,8 @@ my $bin		= 'RDF::Query::Algebra::Expr::Binary';
 my $func	= 'RDF::Query::Algebra::Expr::Function';
 my $xsd		= 'http://www.w3.org/2001/XMLSchema#';
 
+local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
+
 {
 	# xsd:integer()
 	{
@@ -118,7 +120,7 @@ my $xsd		= 'http://www.w3.org/2001/XMLSchema#';
 		throws_ok {
 			my $value	= $alg->evaluate( undef, undef, {} );
 			warn Dumper($value);
-		} 'RDF::Query::Error::TypeError', $TEST;
+		} 'RDF::Query::Error::FilterEvaluationError', $TEST;
 	}
 }
 
@@ -162,12 +164,12 @@ my $xsd		= 'http://www.w3.org/2001/XMLSchema#';
 	}
 
 	{
-		my $TEST	= 'custom->decimal cast (throws)';
+		my $TEST	= 'custom->decimal cast';
 		my $alg		= $func->new( "${xsd}decimal", $cv );
-		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
-			warn Dumper($value);
-		} 'RDF::Query::Error::TypeError', $TEST;
+		my $value	= $alg->evaluate( undef, undef, {} );
+		isa_ok( $value, 'RDF::Query::Node::Literal' );
+		is( $value->numeric_value, 1, "$TEST value" );
+		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#decimal', "$TEST datatype" );
 	}
 }
 
@@ -304,7 +306,7 @@ my $xsd		= 'http://www.w3.org/2001/XMLSchema#';
 		throws_ok {
 			my $value	= $alg->evaluate( undef, undef, {} );
 			warn Dumper($value);
-		} 'RDF::Query::Error::FilterEvaluationError', $TEST;
+		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
 	{

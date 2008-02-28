@@ -91,7 +91,10 @@ sub test_models_and_classes {
 			my $user	= $ENV{DBI_USER} || 'test';
 			my $pass	= $ENV{DBI_PASS} || 'test';
 			
-			my $model	= eval { RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass) };
+			my $model	= eval {
+				my $store	= RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass);
+				my $model	= RDF::Trine::Model->new( $store );
+			};
 			if (not $@) {
 				{
 					eval "use RDF::Redland";
@@ -100,7 +103,7 @@ sub test_models_and_classes {
 						return @models;
 					}
 					my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
-					my $storage	= RDF::Redland::Storage->new("mysql", $model->model_name, { host => 'localhost', database=> 'test', user => 'test', password => 'test' });
+					my $storage	= RDF::Redland::Storage->new("mysql", $model->_store->model_name, { host => 'localhost', database=> 'test', user => 'test', password => 'test' });
 					my $model	= RDF::Redland::Model->new($storage, "");
 					my $parser	= RDF::Redland::Parser->new("rdfxml");
 					$parser->parse_into_model($_, $_, $model) for (@data);

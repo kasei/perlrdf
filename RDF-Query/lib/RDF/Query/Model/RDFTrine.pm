@@ -8,8 +8,9 @@ use base qw(RDF::Query::Model);
 use Carp qw(carp croak confess);
 
 use File::Spec;
+use File::Temp qw(tempfile);
 use Data::Dumper;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use LWP::UserAgent;
 use Encode;
 
@@ -17,6 +18,7 @@ use RDF::Trine::Model;
 use RDF::Trine::Parser;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store::DBI;
+use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
 
@@ -45,7 +47,8 @@ sub new {
 	my %args	= @_;
 	
 	if (not defined $model) {
-		$model	= RDF::Trine::Store::DBI->temporary_store();
+		my $store	= RDF::Trine::Store::DBI->temporary_store();
+		$model		= RDF::Trine::Model->new( $store );
 	}
 
 	throw RDF::Query::Error::MethodInvocationError ( -text => 'Not a RDF::Trine::Store::DBI passed to bridge constructor' ) unless (blessed($model) and ($model->isa('RDF::Trine::Store::DBI') or $model->isa('RDF::Trine::Model')));
@@ -249,22 +252,47 @@ sub add_string {
 	my $graph	= RDF::Query::Node::Resource->new( $base );
 	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
 	
-	if ($data =~ /<?xml/s) {
-		require RDF::Redland;
-		my $uri		= RDF::Redland::URI->new( $base );
-		my $parser	= RDF::Redland::Parser->new($format);
-		my $stream	= $parser->parse_string_as_stream($data, $uri);
-		while ($stream and !$stream->end) {
-			my $statement	= $stream->current;
-			my $stmt		= ($named)
-							? RDF::Query::Algebra::Quad->from_redland( $statement, $graph )
-							: RDF::Query::Algebra::Triple->from_redland( $statement );
-			$model->add_statement( $stmt );
-			$stream->next;
-		}
+# 	our $USE_RAPPER;
+# 	if ($USE_RAPPER) {
+# 		if ($data !~ m/<rdf:RDF/ms) {
+# 			my ($fh, $filename) = tempfile();
+# 			print $fh $data;
+# 			close($fh);
+# 			$data	= do {
+# 								open(my $fh, '-|', "rapper -q -i turtle -o rdfxml $filename") or die $!;
+# 								local($/)	= undef;
+# 								my $data	= <$fh>;
+# 								my $c		= $self->{counter}++;
+# 								$data		=~ s/nodeID="([^"]+)"/nodeID="r${c}r$1"/smg;
+# 								$data;
+# 							};
+# 			unlink($filename);
+# 		}
+# 	}
+	
+	my $handler	= ($named)
+				? sub { my $st	= shift; $model->add_statement( $st, $graph ) }
+				: sub { my $st	= shift; $model->add_statement( $st ) };
+	
+	if ($data =~ m/<rdf:RDF/ms) {
+		my $parser	= RDF::Trine::Parser->new('rdfxml');
+		$parser->parse( $base, $data, $handler );
+# 		
+# 		require RDF::Redland;
+# 		my $uri		= RDF::Redland::URI->new( $base );
+# 		my $parser	= RDF::Redland::Parser->new($format);
+# 		my $stream	= $parser->parse_string_as_stream($data, $uri);
+# 		while ($stream and !$stream->end) {
+# 			my $statement	= $stream->current;
+# 			my $stmt		= ($named)
+# 							? RDF::Query::Algebra::Quad->from_redland( $statement, $graph )
+# 							: RDF::Query::Algebra::Triple->from_redland( $statement );
+# 			$model->add_statement( $stmt );
+# 			$stream->next;
+# 		}
 	} else {
 		my $parser	= RDF::Trine::Parser->new('turtle');
-		$parser->parse_into_model( $base, $data, $model );
+		$parser->parse( $base, $data, $handler );
 	}
 }
 
@@ -327,7 +355,13 @@ sub _get_statements {
 	my @triple	= splice(@_, 0, 3);
 	
 	my $model	= $self->model;
-	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } @triple );
+	my @nodes	= map { blessed($_) ? $_ : $self->new_variable() } @triple;
+	if ($debug) {
+		warn "statement pattern: " . Dumper(\@nodes);
+		warn "model contains:\n";
+		$model->_debug;
+	}
+	my $stream	= smap { _cast_triple_to_local( $_ ) } $model->get_statements( @nodes );
 	return $stream;
 }
 
@@ -345,7 +379,8 @@ sub _get_named_statements {
 	my $context	= shift;
 	
 	my $model	= $self->_named_graphs_model;
-	my $stream	= $model->get_statements( map { $self->is_node($_) ? $_ : $self->new_variable() } (@triple, $context) );
+	my @nodes	= map { $self->is_node($_) ? $_ : $self->new_variable() } (@triple, $context);
+	my $stream	= smap { _cast_quad_to_local( $_ ) } $model->get_statements( @nodes );
 	return $stream;
 }
 
@@ -420,14 +455,22 @@ sub unify_bgp {
 	my $pattern	= $bgp->clone;
 	my @triples	= $pattern->triples;
 	
+	Carp::cluck "attempting to unify bgp: " . Dumper($pattern) if ($debug);
+	
 	if ($RDF::Trine::Store::DBI::debug) {
-		warn Dumper(\@triples);
 		warn $self->{named_graphs};
 	}
 	
-	my $model	= (@triples and $triples[0]->isa('RDF::Trine::Statement::Quad'))
-				? $self->_named_graphs_model
-				: $self->model;
+	my $model;
+	my $modeldebug;
+	if (@triples and $triples[0]->isa('RDF::Trine::Statement::Quad')) {
+		$modeldebug	= 'named';
+		$model	= $self->_named_graphs_model;
+	} else {
+		$modeldebug	= 'default';
+		$model	= $self->model;
+	}
+	
 	foreach my $triple ($pattern->triples) {
 		my @posmap	= ($triple->isa('RDF::Trine::Statement::Quad'))
 					? qw(subject predicate object context)
@@ -450,11 +493,21 @@ sub unify_bgp {
 		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trine::Node::Variable') } @$o ] );
 	}
 	
-	if ($RDF::Trine::Store::DBI::debug) {
+	if ($debug) {
 		warn "unifying with store: " . refaddr( $model->_store ) . "\n";
+		warn "bgp pattern: " . Dumper($pattern);
+		warn "model contains:\n";
 		$model->_debug;
 	}
-	return $model->get_pattern( $pattern, undef, @args );
+	return smap {
+		my $bindings	= $_;
+		return undef unless ($bindings);
+		my %cast	= map {
+						$_ => _cast_to_local( $bindings->{ $_ } )
+					} (keys %$bindings);
+		warn "[$modeldebug]" . Dumper(\%cast) if ($debug);
+		return \%cast;
+	} $model->get_pattern( $pattern, undef, @args );
 }
 
 sub _named_graphs_model {
@@ -469,6 +522,31 @@ sub _named_graphs_model {
 	}
 }
 
+sub _cast_triple_to_local {
+	my $st	= shift;
+	return undef unless ($st);
+	return RDF::Query::Algebra::Triple->new( map { _cast_to_local( $st->$_() ) } qw(subject predicate object) );
+}
+
+sub _cast_quad_to_local {
+	my $st	= shift;
+	return undef unless ($st);
+	return RDF::Query::Algebra::Quad->new( map { _cast_to_local( $st->$_() ) } qw(subject predicate object context) );
+}
+
+sub _cast_to_local {
+	my $node	= shift;
+	return undef unless (blessed($node));
+	if ($node->isa('RDF::Trine::Node::Literal')) {
+		return RDF::Query::Node::Literal->new( $node->literal_value, $node->literal_value_language, $node->literal_datatype );
+	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
+		return RDF::Query::Node::Blank->new( $node->blank_identifier );
+	} elsif ($node->isa('RDF::Trine::Node::Resource')) {
+		return RDF::Query::Node::Resource->new( $node->uri_value );
+	} else {
+		return undef;
+	}
+}
 
 1;
 
