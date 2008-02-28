@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 151;
+use Test::More tests => 156;
 
 use YAML;
 use Data::Dumper;
@@ -5277,3 +5277,212 @@ __END__
       - thing
     - !!perl/array:RDF::Query::Node::Variable
       - label
+---
+- temporal query with time variable
+- |
+  # select the person who held a given email address on 2007-01-01
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?t ?p WHERE {
+      TIME ?t { ?p foaf:mbox <mailto:gtw@cs.umd.edu> } .
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::TimeGraph
+        - TIME
+        - !!perl/array:RDF::Query::Node::Variable
+          - t
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/mbox
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - mailto:gtw@cs.umd.edu
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern []
+  variables:
+    -
+      - t
+    -
+      - p
+---
+- temporal query with empty time bNode
+- |
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?p WHERE {
+      TIME [] { ?p foaf:mbox <mailto:gtw@cs.umd.edu> } .
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::TimeGraph
+        - TIME
+        - !!perl/array:RDF::Query::Node::Blank
+          - BLANK
+          - a1
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/mbox
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - mailto:gtw@cs.umd.edu
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern []
+  variables:
+    -
+      - p
+---
+- temporal query with time bNode
+- |
+  # select the person who held a given email address on 2007-01-01
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  PREFIX : <http://www.w3.org/2006/09/time#>
+  SELECT ?p WHERE {
+      TIME [ :inside "2007-01-01" ] { ?p foaf:mbox <mailto:gtw@cs.umd.edu> } .
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+    __DEFAULT__: http://www.w3.org/2006/09/time#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::TimeGraph
+        - TIME
+        - &1 !!perl/array:RDF::Query::Node::Blank
+          - BLANK
+          - a1
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/mbox
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - mailto:gtw@cs.umd.edu
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/2006/09/time#inside
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 2007-01-01
+  variables:
+    -
+      - p
+---
+- temporal query with time bNode and extra triple
+- |
+  # select all the email addresses ever held by the person
+  # who held a given email address on 2007-01-01
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  PREFIX : <http://www.w3.org/2006/09/time#>
+  SELECT ?mbox WHERE {
+      TIME [ :inside "2007-01-01" ] { ?p foaf:mbox <mailto:gtw@cs.umd.edu> } .
+      ?p foaf:mbox ?mbox
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+    __DEFAULT__: http://www.w3.org/2006/09/time#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::TimeGraph
+        - TIME
+        - &1 !!perl/array:RDF::Query::Node::Blank
+          - BLANK
+          - a1
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/mbox
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - mailto:gtw@cs.umd.edu
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/2006/09/time#inside
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 2007-01-01
+      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/mbox
+          - !!perl/array:RDF::Query::Node::Variable
+            - mbox
+  variables:
+    -
+      - mbox
+---
+- select with TIME
+- |
+  PREFIX t: <http://www.w3.org/2006/09/time#>
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?name WHERE {
+  	TIME [ t:begins "2000-01-01" ] { ?p foaf:name ?name . }
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+    t: http://www.w3.org/2006/09/time#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::TimeGraph
+        - TIME
+        - &1 !!perl/array:RDF::Query::Node::Blank
+          - BLANK
+          - a1
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/name
+              - !!perl/array:RDF::Query::Node::Variable
+                - name
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/2006/09/time#begins
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 2000-01-01
+  variables:
+    -
+      - name
