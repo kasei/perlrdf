@@ -1,3 +1,33 @@
+# RDF::Trine::Parser::RDFXML
+# -------------
+# $Revision: 127 $
+# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Trine::Parser::RDFXML - RDF/XML Parser.
+
+=head1 VERSION
+
+This document describes RDF::Trine::Parser::RDFXML version 1.000
+
+=head1 SYNOPSIS
+
+ use RDF::Trine::Parser;
+ my $parser	= RDF::Trine::Parser->new( 'rdfxml' );
+ my $iterator = $parser->parse( $base_uri, $data );
+
+=head1 DESCRIPTION
+
+...
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
 package RDF::Trine::Parser::RDFXML;
 
 use strict;
@@ -116,18 +146,20 @@ our %RDF_TYPECONST = (Bag	   => NODE_BAG,
 
 our %RDF_TYPENAMES = reverse %RDF_TYPECONST;
 
-########################################
-# ordinary methods
+=item C<< new >>
+
+=cut
+
 sub new {
 	my $class	= shift;
+	$class = ref($class) || $class;
 	my %params	= (
-					Assert => \&handleAssert,
 					BaseURI => "http://www.foo.com/",
 					BNodePrefix => "genid"
 				);
-	$class = ref($class) || $class;
+	
 	if ($params{InlineURI}) {
-	carp "InlineURI parameter is deprecated, use BNodePrefix instead";
+		carp "InlineURI parameter is deprecated, use BNodePrefix instead";
 	}
 	
 	my $handler	= sub { my $st	= shift; warn $st->as_string if ($debug) };
@@ -154,6 +186,10 @@ sub parse_into_model {
 	return $self->parse( $uri, $input, sub { my $st	= shift; $model->add_statement( $st ) } );
 }
 
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
+
+=cut
+
 sub parse {
 	my $self	= shift;
 	my $base	= shift;
@@ -164,7 +200,7 @@ sub parse {
 
 	}
 	
-	local($self->{assert});
+	local($self->{assert})	= $self->{assert};
 	if ($handler) {
 		$self->{assert}	= sub { __assert( $handler, @_ ) };
 	}
@@ -228,6 +264,12 @@ sub __assert {
 		$handle->( $st );
 	}
 }
+
+=begin private
+
+=item C<< parseFile >>
+
+=cut
 
 sub parseFile {
 	my ($self, $filename) = @_;
@@ -316,7 +358,8 @@ sub _doAssert {
 	my %params = %$params;
 	#ordinary assertion
 	unless ($subject->{abouteach}) {
-	&{$self->{assert}}(%params);
+		Carp::cluck Dumper($self) unless ($self->{assert});
+		$self->{assert}->(%params);
 	} 
 	#about each caching
 	else {
@@ -890,6 +933,11 @@ sub _createSubject {
 
 ########################################
 # handlers
+
+=item C<< init >>
+
+=cut
+
 sub init {
 	my ($self, $expat) = @_;
 #	 print "---> init\n";
@@ -901,6 +949,10 @@ sub init {
 	$self->{abouteach} = {};
 }
 
+=item C<< final >>
+
+=cut
+
 sub final {
 	my ($self, $expat) = @_;
 #	 print "---> final\n";
@@ -909,6 +961,10 @@ sub final {
 #	 print "urimembers: ", Dumper($self->{urimembers});
 #	 print "abouteachs: ", Dumper($self->{abouteach});
 }
+
+=item C<< start >>
+
+=cut
 
 sub start {
 	my ($self, $expat, $name, %attrs) = @_;
@@ -952,6 +1008,10 @@ sub start {
 	$expat->setHandlers(%{$self->_getHandlersLiteral($name)});
 	}
 }
+
+=item C<< end >>
+
+=cut
 
 sub end {
 	my ($self, $expat, $name) = @_;
@@ -1011,6 +1071,10 @@ sub end {
 	pop @{$self->{subjects}} if $element->{subject};
 }
 
+=item C<< char >>
+
+=cut
+
 sub char {
 	my ($self, $expat, $string) = @_;
 	my $elt = ${$self->{path}}[-1];
@@ -1020,10 +1084,18 @@ sub char {
 	$elt->{text} .= $string;
 }
 
+=item C<< start_literal >>
+
+=cut
+
 sub start_literal {
 	my ($self, $expat, $name, %attrs) = @_;
 	${$self->{path}}[-1]{text} .= $expat->recognized_string;
 }
+
+=item C<< end_literal >>
+
+=cut
 
 sub end_literal {
 	my ($self, $fname, $expat, $name) = @_;
@@ -1034,6 +1106,10 @@ sub end_literal {
 	${$self->{path}}[-1]{text} .= $expat->recognized_string;
 	}
 }
+
+=item C<< char_literal >>
+
+=cut
 
 sub char_literal {
 	my ($self, $expat, $string) = @_;
@@ -1151,104 +1227,17 @@ sub _getImplicitURI {
 
 __END__
 
-
-
-=head1 NAME
-
-RDF::Core::Parser - RDF Parser
-
-=head1 DESCRIPTION
-
-A module for parsing XML documents containing RDF data. It's based on XML::Parser. Parser goes through XML and calls what is referenced in Assert option for each statement found.
-
-=head1 SYNOPSIS
-
-  require RDF::Core::Parser;
-
-  my %options = (Assert => \&handleAssert,
-				 BaseURI => "http://www.foo.com/",
-				 BNodePrefix => "genid"
-				);
-  my $parser = new RDF::Core::Parser(%options);
-  $parser->parseFile('./rdfFile.xml');
-  #or
-  $parser->parse($rdfString);
-
-=head2 Interface
-
-=over 4
-
-=item * new(%options)
-
-Available options are
-
-=over 4
-
-=item * Assert
-
-A reference to a subroutine, that is called for every assertion that parser generates.
-
-=item * BaseURI
-
-A base URI of parsed document. It will be used to resolve relative URI references.
-
-=item * BNodePrefix
-
-Blank node identifier is generated as "_:" concatenated with BNodePrefix value concatenated with counter number. Default BnodePrefix is "a".
-
-=item * InlineURI
-
-Deprecated.
+=end private
 
 =back
-
-=item * parse($string)
-
-=item * parseFile($fileName)
-
-=back
-
-=head2 Assert handler
-
-Assert handler is called with key value pairs in a parameters array.
-
-Keys are:
-
-=over 4
-
-=item * subject_ns, subject_name, subject_uri
-
-namespace, local value and URI of subject
-
-=item * predicate_ns, predicate_name, predicate_uri
-
-namespace, local value and URI of predicate
-
-=item * object_ns, object_name, object_uri
-
-namespace, local value and URI of object, if the object is a resource
-
-or
-
-=item * object_literal, object_lang, object_datatype
-
-object value for literal, it's language and datatype
-
-=back
-
-=head1 LICENSE
-
-This package is subject to the MPL (or the GPL alternatively).
 
 =head1 AUTHOR
 
-Ginger Alliance, rdf@gingerall.cz
-
-=head1 SEE ALSO
-
-RDF::Core::Model::Parser
+ Gregory Williams <gwilliams@cpan.org>
 
 =cut
+
+
 
 
 ################################################################################
@@ -1289,3 +1278,100 @@ RDF::Core::Model::Parser
 # may use your version of this file under either the MPL or the
 # GPL.
 # 
+# 
+# =head1 NAME
+# 
+# RDF::Core::Parser - RDF Parser
+# 
+# =head1 DESCRIPTION
+# 
+# A module for parsing XML documents containing RDF data. It's based on XML::Parser. Parser goes through XML and calls what is referenced in Assert option for each statement found.
+# 
+# =head1 SYNOPSIS
+# 
+#   require RDF::Core::Parser;
+# 
+#   my %options = (Assert => \&handleAssert,
+# 				 BaseURI => "http://www.foo.com/",
+# 				 BNodePrefix => "genid"
+# 				);
+#   my $parser = new RDF::Core::Parser(%options);
+#   $parser->parseFile('./rdfFile.xml');
+#   #or
+#   $parser->parse($rdfString);
+# 
+# =head2 Interface
+# 
+# =over 4
+# 
+# =item * new(%options)
+# 
+# Available options are
+# 
+# =over 4
+# 
+# =item * Assert
+# 
+# A reference to a subroutine, that is called for every assertion that parser generates.
+# 
+# =item * BaseURI
+# 
+# A base URI of parsed document. It will be used to resolve relative URI references.
+# 
+# =item * BNodePrefix
+# 
+# Blank node identifier is generated as "_:" concatenated with BNodePrefix value concatenated with counter number. Default BnodePrefix is "a".
+# 
+# =item * InlineURI
+# 
+# Deprecated.
+# 
+# =back
+# 
+# =item * parse($string)
+# 
+# =item * parseFile($fileName)
+# 
+# =back
+# 
+# =head2 Assert handler
+# 
+# Assert handler is called with key value pairs in a parameters array.
+# 
+# Keys are:
+# 
+# =over 4
+# 
+# =item * subject_ns, subject_name, subject_uri
+# 
+# namespace, local value and URI of subject
+# 
+# =item * predicate_ns, predicate_name, predicate_uri
+# 
+# namespace, local value and URI of predicate
+# 
+# =item * object_ns, object_name, object_uri
+# 
+# namespace, local value and URI of object, if the object is a resource
+# 
+# or
+# 
+# =item * object_literal, object_lang, object_datatype
+# 
+# object value for literal, it's language and datatype
+# 
+# =back
+# 
+# =head1 LICENSE
+# 
+# This package is subject to the MPL (or the GPL alternatively).
+# 
+# =head1 AUTHOR
+# 
+# Ginger Alliance, rdf@gingerall.cz
+# 
+# =head1 SEE ALSO
+# 
+# RDF::Core::Model::Parser
+# 
+# =cut
