@@ -46,8 +46,8 @@ require "t/dawg/earl.pl";
 my $PATTERN		= shift(@ARGV) || '';
 my $BNODE_RE	= qr/^(r|genid)\d+[r0-9]*$/;
 
+no warnings 'once';
 $RDF::Query::Model::RDFCore::USE_RAPPER	= 1;
-$RDF::Query::Model::RDFTrine::USE_RAPPER	= 1;
 
 if ($PATTERN) {
 	$debug_results	= 1;

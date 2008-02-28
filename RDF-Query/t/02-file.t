@@ -2,14 +2,14 @@
 use strict;
 use warnings;
 no warnings 'redefine';
-use Test::More tests => 20;
+use Test::More;
 use URI::file;
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 my @models	= test_models();
-
+plan tests => 1 + 10 * scalar(@models);
 my $file	= URI::file->new_abs( 'data/foaf.xrdf' );
 
 use_ok( 'RDF::Query' );

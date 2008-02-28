@@ -45,7 +45,7 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
-my $debug		= 1;
+my $debug		= 0;
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
