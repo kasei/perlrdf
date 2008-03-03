@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 5;
 
 use strict;
 use warnings;
@@ -49,6 +49,27 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
 	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
+}
+
+SKIP: {
+	eval "use RDF::Query;";
+	if ($@) {
+		skip("RDF::Query can't be loaded", 1);
+	} else {
+		my $s		= RDF::Query::Node::Resource->new('http://example/x1');
+		my $p		= RDF::Query::Node::Resource->new('http://purl.org/dc/elements/1.1/title');
+		my $v		= RDF::Query::Node::Variable->new('v');
+		my $l		= RDF::Query::Node::Literal->new('literal');
+		
+		{
+			my $triple	= RDF::Query::Algebra::Triple->new($s, $p, $v);
+			my $expr	= RDF::Query::Algebra::Expr::Function->new( 'sparql:isliteral', $v );
+			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
+			my $store	= RDF::Trine::Store::DBI->new('temp');
+			my $sql		= $store->_sql_for_pattern( $filter );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, s0[.]Context AS sql_ctx_1_Node, ljr1[.]URI AS sql_ctx_1_URI, ljl1[.]Value AS sql_ctx_1_Value, ljl1[.]Language AS sql_ctx_1_Language, ljl1[.]Datatype AS sql_ctx_1_Datatype, ljb1[.]Name AS sql_ctx_1_Name FROM Statements14109427105860845629 s0 LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Resources ljr1 ON [(]s0[.]Context = ljr1[.]ID[)] LEFT JOIN Literals ljl1 ON [(]s0[.]Context = ljl1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]Context = ljb1[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521$', 'triple with isliteral(?node) filter' );
+		}
+	}
 }
 
 

@@ -115,7 +115,7 @@ sub get_pattern {
 	if (@rules) {
 		my (@triples)	= ($bgp->isa('RDF::Trine::Statement')) ? $bgp : $bgp->triples;
 		unless (@triples) {
-			throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty patter';
+			throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 		}
 		
 		my @streams;

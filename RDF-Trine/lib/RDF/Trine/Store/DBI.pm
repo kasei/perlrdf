@@ -698,30 +698,26 @@ sub _sql_for_expr {
 	my $ctx_node	= shift;
 	my $context		= shift;
 	
-	if ($expr->isa('RDF::Query::Algebra::Expr')) {
-		my $op		= $expr->op;
-		my @args	= $expr->operands;
-		if ($op eq '==') {
-			my %context	= (
-							next_alias		=> 0,
-							level			=> 0,
-							statement_table	=> $self->statements_table,
-						);
-			my $lhs_ctx	= { %context };
-			my $rhs_ctx	= { %context };
-			$self->_sql_for_expr( $args[0], $ctx_node, $lhs_ctx );
-			$self->_sql_for_expr( $args[1], $ctx_node, $rhs_ctx );
-			warn Dumper($lhs_ctx, $rhs_ctx);
-		} elsif ($op eq '||') {
-		
+	### None of these should affect the context directly, since the expression
+	### might be a child of another expression (e.g. "isliteral(?node) || isresource(?node)")
+	
+	if ($expr->isa('RDF::Query::Algebra::Expr::Function')) {
+		my $func	= $expr->uri->uri_value;
+		my @args	= $expr->arguments;
+		if ($func eq 'sparql:isliteral' and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
+			my $node	= $args[0];
+			_add_restriction( $context, $node, qw(blank resource) );
+		} elsif ($func =~ qr/^sparql:is[iu]ri$/ and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
+			my $node	= $args[0];
+			_add_restriction( $context, $node, qw(blank literal) );
+		} elsif ($func =~ qr/^sparql:isblank$/ and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
+			my $node	= $args[0];
+			_add_restriction( $context, $node, qw(literal resource) );
 		} else {
-			throw Error -text => "Unknown expression operator $op";
+			throw RDF::Trine::Error::CompilationError -text => "Unknown function data: " . Dumper($expr);
 		}
-	} elsif ($expr->isa('RDF::Trine::Node')) {
-		warn Dumper($expr);
 	} else {
-		warn "Unknown expr data: " . Dumper($expr);
-		Carp::confess;
+		throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
 	}
 	return;
 }
