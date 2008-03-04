@@ -11,7 +11,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.0.1
+This document describes RDF::Trine version 0.101
 
 =head1 SYNOPSIS
 
@@ -54,7 +54,10 @@ __END__
 
 =head1 DEPENDENCIES
 
+L<Bloom::Filter>
+L<Data::UUID>
 L<DBI>
+L<DBD::SQLite>
 L<Digest::MD5>
 L<Error>
 L<JSON>
@@ -62,6 +65,7 @@ L<LWP::UserAgent>
 L<List::MoreUtils>
 L<List::Util>
 L<Math::BigInt>
+L<Scalar::Util>
 L<Unicode::Escape>
 L<URI>
 L<XML::CommonNS>

@@ -13,6 +13,25 @@
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
 
         doap:Version    [
+                        doap:revision     "0.101" ;
+                        doap:created      "2008-03-04" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added an RDF/XML parser based on RDF::Core::Parser." ;
+                        asc:update        "Added Bloom filter support for Mmterialized bindings iterators." ;
+                        asc:update        "Fixed IRI workaround using the URI module." ;
+                        asc:update        "Turtle parser now uses Data::UUID for unique names." ;
+                        asc:update        "Fixed turtle parser bug for Verb testing." ;
+                        asc:update        "Added RDF::Trine::Statement::Quad::from_redland method." ;
+                        asc:update        "DBI store now constrains variable node types based on position in a statement." ;
+                        asc:update        "Added support for BOUND(), ISLITERAL(), ISURI() and ISIRI() functions in DBI store." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.100.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+
+        doap:Version    [
                         doap:revision     "0.100" ;
                         doap:created      "2008-02-18" ;
                         ];
