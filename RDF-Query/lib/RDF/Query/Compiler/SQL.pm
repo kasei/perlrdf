@@ -890,8 +890,7 @@ BEGIN {
 		return ({}, \@from, \@where);
 	};
 	
-	$functions{ 'sparql:bound' } =
-	$functions{ 'sop:isBound' }	= sub {
+	$functions{ 'sparql:bound' } = sub {
 		my $self	= shift;
 		my $parsed_vars	= shift;
 		my $level	= shift || \do{ my $a = 0 };
@@ -927,6 +926,7 @@ BEGIN {
 		return ({}, \@from, \@where);
 	};
 	
+	$functions{ 'http://www.w3.org/2001/XMLSchema#double' }	=
 	$functions{ 'http://www.w3.org/2001/XMLSchema#decimal' }	= sub {
 		my $self	= shift;
 		my $parsed_vars	= shift;
@@ -943,8 +943,6 @@ BEGIN {
 		push(@where, sprintf(qq((0.0 + %s)), $literal));
 		return ({}, \@from, \@where);
 	};
-	$functions{'sop:numeric'}	= $functions{ 'http://www.w3.org/2001/XMLSchema#double' }
-								= $functions{ 'http://www.w3.org/2001/XMLSchema#decimal' };
 }
 
 

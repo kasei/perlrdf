@@ -247,53 +247,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#string"}	= sub {
 	}
 };
 
-$RDF::Query::functions{"sop:boolean"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $node	= shift;
-	
-	return 0 if not defined($node);
-	
-	if (ref($node)) {
-		if ($node->is_literal) {
-			my $value	= $node->literal_value;
-			my $type	= $node->literal_datatype;
-			if ($type) {
-				if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-#					warn "boolean-typed: $value";
-					return 0 if ($value eq 'false');
-					return 1 if ($value eq 'true');
-					throw RDF::Query::Error::FilterEvaluationError ( -text => "'$value' is not a boolean type (true or false)" );
-				} elsif ($type eq 'http://www.w3.org/2001/XMLSchema#string') {
-#					warn "string-typed: $value";
-					return 0 if (length($value) == 0);
-					return 1;
-				} elsif (RDF::Query::is_numeric_type( $type )) {
-#					warn "numeric-typed: $value";
-					return ($value == 0) ? 0 : 1;
-				} else {
-#					warn "unknown-typed: $value";
-					throw RDF::Query::Error::TypeError ( -text => "'$value' cannot be coerced into a boolean value" );
-				}
-			} else {
-				no warnings 'numeric';
-				no warnings 'uninitialized';
-#				warn "not-typed: $value";
-				return 0 if (length($value) == 0);
-				if (looks_like_number($value) and $value == 0) {
-					return 0;
-				} else {
-					return 1;
-				}
-			}
-		}
-		throw RDF::Query::Error::TypeError;
-	} else {
-		return $node ? 1 : 0;
-	}
-};
-
-$RDF::Query::functions{"sop:date"}	= 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#dateTime"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -310,26 +263,7 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#dateTime"}	= sub {
 };
 
 
-$RDF::Query::functions{"sop:numeric"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $node	= shift;
-	if ($node->is_literal) {
-		my $value	= $node->literal_value;
-		my $type	= $node->literal_datatype;
-		if ($type and $type eq 'http://www.w3.org/2001/XMLSchema#integer') {
-			return int($value)
-		}
-		return +$value;
-	} elsif (looks_like_number($node)) {
-		return $node;
-	} else {
-		return 0;
-	}
-};
-
-$RDF::Query::functions{"sparql:str"}	=
-$RDF::Query::functions{"sop:str"}	= sub {
+$RDF::Query::functions{"sparql:str"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	
@@ -345,9 +279,7 @@ $RDF::Query::functions{"sop:str"}	= sub {
 	}
 };
 
-# sop:logical-or
-$RDF::Query::functions{"sparql:logical-or"}	=
-$RDF::Query::functions{"sop:logical-or"}	= sub {
+$RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure
@@ -383,8 +315,7 @@ $RDF::Query::functions{"sop:logical-or"}	= sub {
 };
 
 # sop:logical-and
-$RDF::Query::functions{"sparql:logical-and"}	=
-$RDF::Query::functions{"sop:logical-and"}	= sub {
+$RDF::Query::functions{"sparql:logical-and"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure
@@ -420,8 +351,7 @@ $RDF::Query::functions{"sop:logical-and"}	= sub {
 };
 
 # sop:isBound
-$RDF::Query::functions{"sparql:bound"}	=
-$RDF::Query::functions{"sop:isBound"}	= sub {
+$RDF::Query::functions{"sparql:bound"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $node	= shift;
@@ -432,12 +362,8 @@ $RDF::Query::functions{"sop:isBound"}	= sub {
 	}
 };
 
-# sop:isURI
-# sop:isIRI
 $RDF::Query::functions{"sparql:isuri"}	=
-$RDF::Query::functions{"sop:isURI"}	=
-$RDF::Query::functions{"sparql:isiri"}	=
-$RDF::Query::functions{"sop:isIRI"}	= sub {
+$RDF::Query::functions{"sparql:isiri"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $node	= shift;
@@ -449,8 +375,7 @@ $RDF::Query::functions{"sop:isIRI"}	= sub {
 };
 
 # sop:isBlank
-$RDF::Query::functions{"sparql:isblank"}	=
-$RDF::Query::functions{"sop:isBlank"}	= sub {
+$RDF::Query::functions{"sparql:isblank"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $node	= shift;
@@ -462,8 +387,7 @@ $RDF::Query::functions{"sop:isBlank"}	= sub {
 };
 
 # sop:isLiteral
-$RDF::Query::functions{"sparql:isliteral"}	=
-$RDF::Query::functions{"sop:isLiteral"}	= sub {
+$RDF::Query::functions{"sparql:isliteral"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $node	= shift;
@@ -475,7 +399,6 @@ $RDF::Query::functions{"sop:isLiteral"}	= sub {
 };
 
 
-$RDF::Query::functions{"sop:lang"} =
 $RDF::Query::functions{"sparql:lang"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
@@ -548,7 +471,6 @@ $RDF::Query::functions{"sparql:sameterm"}	= sub {
 		: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 };
 
-$RDF::Query::functions{"sop:datatype"}	=
 $RDF::Query::functions{"sparql:datatype"}	= sub {
 	# """Returns the datatype IRI of typedLit; returns xsd:string if the parameter is a simple literal."""
 	my $query	= shift;
@@ -594,106 +516,6 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 	return ($text =~ /$pattern/)
 		? RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')
 		: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-};
-
-# op:dateTime-equal
-$RDF::Query::functions{"op:dateTime-equal"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:date';
-	return ($RDF::Query::functions{$cast}->( $query, $nodea ) == $RDF::Query::functions{$cast}->( $query, $nodeb ));
-};
-
-# op:dateTime-less-than
-$RDF::Query::functions{"op:dateTime-less-than"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:date';
-	return ($RDF::Query::functions{$cast}->( $query, $nodea ) < $RDF::Query::functions{$cast}->( $query, $nodeb ));
-};
-
-# op:dateTime-greater-than
-$RDF::Query::functions{"op:dateTime-greater-than"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:date';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) > $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-equal
-$RDF::Query::functions{"op:numeric-equal"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) == $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-less-than
-$RDF::Query::functions{"op:numeric-less-than"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) < $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-greater-than
-$RDF::Query::functions{"op:numeric-greater-than"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) > $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-multiply
-$RDF::Query::functions{"op:numeric-multiply"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) * $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-divide
-$RDF::Query::functions{"op:numeric-divide"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) / $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-add
-$RDF::Query::functions{"op:numeric-add"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) + $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# op:numeric-subtract
-$RDF::Query::functions{"op:numeric-subtract"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:numeric';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) - $RDF::Query::functions{$cast}->($query, $nodeb));
 };
 
 # fn:compare
@@ -753,7 +575,6 @@ $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub
 
 };
 
-# sop:	http://www.w3.org/TR/rdf-sparql-query/
 # xs:	http://www.w3.org/2001/XMLSchema
 # fn:	http://www.w3.org/2005/04/xpath-functions
 # xdt:	http://www.w3.org/2005/04/xpath-datatypes
@@ -889,8 +710,9 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $value	= shift;
-	my $cast	= 'sop:str';
-	my $string	= Dumper($value);
+	my $func	= RDF::Query::Algebra::Expr::Function->new( 'sparql:str', $value );
+	
+	my $string	= Dumper( $func->evaluate( undef, undef, {} ) );
 	no warnings 'uninitialized';
 	warn "FILTER VALUE: $string\n";
 	return $value;
@@ -902,9 +724,8 @@ $RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 
-	my $cast	= 'sop:str';
 	my $value	= shift;
-	my $filter	= $RDF::Query::functions{$cast}->( $query, $bridge, shift );
+	my $filter	= shift;
 	my $hash	= sha1_hex( $filter );
 	
 	my $bloom	= (exists( $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash} ))

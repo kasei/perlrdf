@@ -52,7 +52,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 }
 
 SKIP: {
-	eval "use RDF::Query;";
+	eval "use RDF::Query 2.0;";
 	if ($@) {
 		skip("RDF::Query can't be loaded", 1);
 	} else {

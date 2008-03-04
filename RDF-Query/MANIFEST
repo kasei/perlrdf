@@ -33,9 +33,9 @@ lib/RDF/Query/Algebra/Expr.pm
 lib/RDF/Query/Algebra/Expr/Binary.pm
 lib/RDF/Query/Algebra/Expr/Nary.pm
 lib/RDF/Query/Algebra/Expr/Unary.pm
+lib/RDF/Query/Algebra/Expr/Function.pm
 lib/RDF/Query/Algebra/Filter.pm
 lib/RDF/Query/Algebra/OldFilter.pm
-lib/RDF/Query/Algebra/Function.pm
 lib/RDF/Query/Algebra/GroupGraphPattern.pm
 lib/RDF/Query/Algebra/NamedGraph.pm
 lib/RDF/Query/Algebra/Optional.pm
@@ -58,8 +58,6 @@ lib/RDF/Query/Node/Variable.pm
 lib/RDF/Query/Parser.pm
 lib/RDF/Query/Parser/RDQL.pm
 lib/RDF/Query/Parser/SPARQL.pm
-lib/RDF/Query/Parser/tSPARQL.pm
-lib/RDF/Query/Parser/tSPARQL.yp
 lib/RDF/Query/Temporal.pm
 MANIFEST			This list of files
 META.yml

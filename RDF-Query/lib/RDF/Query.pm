@@ -93,7 +93,7 @@ BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
 	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION		= '2.000_01';
+	$VERSION		= '2.000_02';
 	$DEFAULT_PARSER	= 'sparql';
 	%PATTERN_TYPES	= map { $_ => 1 } (qw(
 							BGP
@@ -1522,7 +1522,7 @@ Casting functions: xsd:{boolean,double,float,decimal,integer}, rdf:{URIRef,Liter
 
 XPath functions: numeric-equal, numeric-less-than, numeric-greater-than, numeric-multiply, numeric-divide, numeric-add, numeric-subtract, not, matches
 
-SPARQL operators: sop:RDFterm-equal, sop:bound, sop:isURI, sop:isBlank, sop:isLiteral, sop:str, sop:lang, sop:datatype, sop:logical-or, sop:logical-and
+SPARQL operators: bound, isURI, isBlank, isLiteral, str, lang, datatype, logical-or, logical-and
 
 =back
 
