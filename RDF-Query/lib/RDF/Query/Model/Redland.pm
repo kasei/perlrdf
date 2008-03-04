@@ -536,7 +536,8 @@ sub debug {
 			$string	.= "\tC<$cs>";
 		}
 		print STDERR "$string\n";
-	} continue { $stream->next }
+		$stream->next;
+	}
 	warn "------------------------------\n";
 }
 

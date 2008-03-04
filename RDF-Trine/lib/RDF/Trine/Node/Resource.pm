@@ -47,6 +47,16 @@ Returns a new Resource structure.
 sub new {
 	my $class	= shift;
 	my $uri		= shift;
+	
+	my @uni;
+	my $count	= 0;
+	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+		my $text	= $1;
+		push(@uni, $text);
+		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
+		$count++;
+	}
+	
 	if (defined($_[0])) {
 		my $base	= shift;
 		### We have to work around the URI module not accepting IRIs. If there's
@@ -54,26 +64,18 @@ sub new {
 		### the URI into an absolute URI, and then replace the breadcrumbs with
 		### the Unicode.
 		
-		my @uni;
-		my $count	= 0;
-		while ($uri =~ /([\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]+)/) {
-			my $text	= $1;
-			push(@uni, $text);
-			$uri		=~ s/$1/',____' . $count . '____,'/e;
-			$count++;
-		}
 		
 		my $abs			= URI->new_abs( $uri, $base->uri_value );
-		
 		$uri			= $abs->as_string;
-		while ($uri =~ /,____(\d+)____,/) {
-			my $num	= $1;
-			my $i	= index($uri, ",____${num}____,");
-			my $len	= 10 + length($num);
-			substr($uri, $i, $len)	= shift(@uni);
-		}
-		$uri	= $uri;
 	}
+
+	while ($uri =~ /,____rq(\d+)____,/) {
+		my $num	= $1;
+		my $i	= index($uri, ",____rq${num}____,");
+		my $len	= 12 + length($num);
+		substr($uri, $i, $len)	= shift(@uni);
+	}
+	
 	return bless( [ 'URI', $uri ], $class );
 }
 

@@ -7,6 +7,7 @@ use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak);
 
+use Data::Dumper;
 use File::Spec;
 use File::Temp qw(tempfile);
 use LWP::UserAgent;
@@ -478,6 +479,27 @@ sub as_xml {
 					);
 	$serializer->serialize;
 	return $xml;
+}
+
+=item C<< debug >>
+
+Prints debugging information about the model (including all statements in the
+model) to STDERR.
+
+=cut
+
+sub debug {
+	my $self	= shift;
+	my $model	= shift || $self->model;
+	my $stream	= $model->getStmts();
+	warn "------------------------------\n";
+	my $statement	= $stream->getFirst;
+	while (defined $statement) {
+		print STDERR $statement->getLabel . "\n";
+		$statement = $stream->getNext
+	}
+	$stream->close;
+	warn "------------------------------\n";
 }
 
 sub _named_graph_models {

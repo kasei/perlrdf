@@ -98,10 +98,10 @@ my $mfname	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/
 	while (my $statement = $stream->next()) {
 		my $test		= $statement->subject;
 		my $name		= get_first_literal( $bridge, $test, $mfname );
-		warn "### eval test: " . $test->as_string . " >>> " . $name . "\n" if ($debug);
 		unless ($bridge->uri_value( $test ) =~ /$PATTERN/) {
 			next;
 		}
+		warn "### eval test: " . $test->as_string . " >>> " . $name . "\n" if ($debug);
 		eval_test( $bridge, $test, $earl );
 	}
 }
@@ -166,7 +166,11 @@ sub eval_test {
 	TODO: {
 		local($TODO)	= (blessed($req)) ? "requires " . $bridge->as_string( $req ) : '';
 		my $ok	= eval {
-			warn $sparql if ($debug);
+			if ($debug) {
+				my $q	= $sparql;
+				$q		=~ s/([\x{256}-\x{1000}])/warn ord($1); '\x{' . sprintf('%x', ord($1)) . '}'/eg;
+				warn $q;
+			}
 			print STDERR "getting actual results... " if ($debug);
 			my $actual		= get_actual_results( $test_model, $sparql, $base, @gdata );
 			print STDERR "ok\n" if ($debug);
@@ -285,6 +289,11 @@ sub get_actual_results {
 	my $base	= shift;
 	my @gdata	= @_;
 	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql' );
+	
+	local($RDF::Query::Model::Redland::debug)	= 1 if ($debug);
+	local($RDF::Query::Model::RDFCore::debug)	= 1 if ($debug);
+	local($RDF::Query::Model::RDFTrine::debug)	= 1 if ($debug);
+	
 	return unless $query;
 	
 	my $results	= $query->execute_with_named_graphs( $model, @gdata );
