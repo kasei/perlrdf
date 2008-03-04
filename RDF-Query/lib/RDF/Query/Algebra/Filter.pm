@@ -58,7 +58,8 @@ sub new {
 	my $expr	= shift;
 	my $pattern	= shift;
 	Carp::confess "Not an algebra pattern: " . Dumper($pattern) unless ($pattern->isa('RDF::Query::Algebra'));
-	unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+	unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern') or $pattern->isa('RDF::Query::Algebra::Filter')) {
+		# for proper serialization, the pattern needs to be a GGP or another filter
 		$pattern	= RDF::Query::Algebra::GroupGraphPattern->new( $pattern );
 	}
 	return bless( [ 'FILTER', $expr, $pattern ] );

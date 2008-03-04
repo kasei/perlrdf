@@ -135,32 +135,9 @@ sub as_native {
 	return unless (blessed($node) and $node->isa('RDF::Query::Node'));
 	if ($node->isa('RDF::Query::Node::Resource')) {
 		my $uri	= $node->uri_value;
-# 		if (ref($uri) and reftype($uri) eq 'ARRAY') {
-# 			$uri	= join('', $ns->{ $uri->[0] }, $uri->[1] );
-# 			die;
-# 		}
-# 		if ($base) {
-# 			### We have to work around the URI module not accepting IRIs. If there's
-# 			### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-# 			### the URI into an absolute URI, and then replace the breadcrumbs with
-# 			### the Unicode.
-# 			my @uni;
-# 			my $count	= 0;
-# 			while ($uri =~ /([\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]+)/) {
-# 				my $text	= $1;
-# 				push(@uni, $text);
-# 				$uri		=~ s/$1/',____' . $count . '____,'/e;
-# 				$count++;
-# 			}
-# 			my $abs			= URI->new_abs( $uri, $base->uri_value );
-# 			$uri			= $abs->as_string;
-# 			while ($uri =~ /,____(\d+)____,/) {
-# 				my $num	= $1;
-# 				my $i	= index($uri, ",____${num}____,");
-# 				my $len	= 10 + length($num);
-# 				substr($uri, $i, $len)	= shift(@uni);
-# 			}
-# 		}
+		if (ref($uri) and reftype($uri) eq 'ARRAY') {
+			$uri	= join('', $ns->{ $uri->[0] }, $uri->[1] );
+		}
 		return $self->new_resource( $uri, $base );
 	} elsif ($node->isa('RDF::Query::Node::Literal')) {
 		my $dt	= $node->literal_datatype;
