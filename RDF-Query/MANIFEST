@@ -104,8 +104,6 @@ t/31-service.t
 t/algebra.t
 t/algebra-expr.t
 t/algebra-func.t
-t/dawg-eval.t
-t/dawg-syntax.t
 t/distance.js
 t/functions.rdf
 t/models.pl

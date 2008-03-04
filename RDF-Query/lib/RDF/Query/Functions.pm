@@ -294,6 +294,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
+		warn "error in lhs of logical-or" if ($debug);
 		$error	= shift;
 	};
 	try {
@@ -302,6 +303,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
+		warn "error in rhs of logical-or" if ($debug);
 		$error	= shift;
 	};
 	

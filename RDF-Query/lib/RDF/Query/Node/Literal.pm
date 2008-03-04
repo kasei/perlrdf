@@ -17,6 +17,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Literal);
 
+use DateTime;
 use RDF::Query;
 use RDF::Query::Error;
 use Data::Dumper;
@@ -66,14 +67,16 @@ sub _cmp {
 	
 	my $dta			= $nodea->literal_datatype || '';
 	my $dtb			= $nodeb->literal_datatype || '';
-	my $datetype	= 'http://www.w3.org/2001/XMLSchema#dateTime';
-	my $datecmp		= ($dta eq $datetype and $dtb eq $datetype);
+	my $datetype	= '^http://www.w3.org/2001/XMLSchema#dateTime';
+	my $datecmp		= ($dta =~ $datetype and $dtb =~ $datetype);
+	my $numericcmp	= ($nodea->is_numeric_type and $nodeb->is_numeric_type);
+
 	if ($datecmp) {
 		warn 'datecmp' if ($debug);
 		my $datea	= $nodea->datetime;
 		my $dateb	= $nodeb->datetime;
 		return DateTime->compare( $datea, $dateb );
-	} elsif ($nodea->is_numeric_type and $nodeb->is_numeric_type) {
+	} elsif ($numericcmp) {
 		warn 'both numeric cmp' if ($debug);
 		return $nodea->numeric_value <=> $nodeb->numeric_value;
 	} else {
@@ -211,8 +214,9 @@ Returns the numeric value of the literal (even if the literal isn't a known nume
 sub numeric_value {
 	my $self	= shift;
 	if ($self->is_numeric_type) {
-		if (looks_like_number($self->literal_value)) {
-			return 0 + $self->literal_value;
+		my $value	= $self->literal_value;
+		if (looks_like_number($value)) {
+			return 0 + $value;
 		} else {
 			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
 		}

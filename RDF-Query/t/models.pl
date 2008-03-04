@@ -123,10 +123,10 @@ sub test_models_and_classes {
 							};
 				push(@models, $data);
 			} else {
-				warn "Couldn't connect to mysql: $dsn, $user, $pass";
+				warn "Couldn't connect to mysql: $dsn, $user, $pass" if ($RDF::Query::debug);
 			}
 		} else {
-			warn "RDF::Trine::Store::DBI not loaded: $@\n";# if ($RDF::Query::debug);
+			warn "RDF::Trine::Store::DBI not loaded: $@\n" if ($RDF::Query::debug);
 		}
 	}
 	
