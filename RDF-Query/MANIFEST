@@ -39,6 +39,8 @@ lib/RDF/Query/Algebra/OldFilter.pm
 lib/RDF/Query/Algebra/GroupGraphPattern.pm
 lib/RDF/Query/Algebra/NamedGraph.pm
 lib/RDF/Query/Algebra/Optional.pm
+lib/RDF/Query/Algebra/Quad.pm
+lib/RDF/Query/Algebra/Service.pm
 lib/RDF/Query/Algebra/TimeGraph.pm
 lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
@@ -58,6 +60,7 @@ lib/RDF/Query/Node/Variable.pm
 lib/RDF/Query/Parser.pm
 lib/RDF/Query/Parser/RDQL.pm
 lib/RDF/Query/Parser/SPARQL.pm
+lib/RDF/Query/Parser/SPARQLP.pm
 lib/RDF/Query/Temporal.pm
 MANIFEST			This list of files
 META.yml
@@ -67,7 +70,7 @@ SIGNATURE
 t/00-simple.t
 t/01-rdql_parser.t
 t/01-sparql_parser.t
-t/01-tsparql_parser.t
+t/01-sparqlp-parser.t
 t/02-file.t
 t/02-net.t
 t/03-coverage.t
@@ -97,7 +100,10 @@ t/27-timed_graphs.t
 t/28-time_intervals.t
 t/29-serialize.t
 t/30-aggregate.t
+t/31-service.t
 t/algebra.t
+t/algebra-expr.t
+t/algebra-func.t
 t/dawg-eval.t
 t/dawg-syntax.t
 t/distance.js
