@@ -45,7 +45,7 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
-my $debug		= 0;
+our $debug		= 0;
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
@@ -1653,7 +1653,14 @@ sub _String {
 		my $string	= $self->_eat( $r_STRING_LITERAL2 );
 		$value		= substr($string, 1, length($string) - 2);
 	}
-	$value	=~ s/${r_ECHAR}/$1/g;
+#	$value	=~ s/(${r_ECHAR})/"$1"/ge;
+	$value	=~ s/\\t/\n/g;
+	$value	=~ s/\\b/\n/g;
+	$value	=~ s/\\n/\n/g;
+	$value	=~ s/\\r/\n/g;
+	$value	=~ s/\\"/"/g;
+	$value	=~ s/\\'/'/g;
+	$value	=~ s/\\\\/\\/g;	# backslash must come last, so it doesn't accidentally create a new escape
 	$self->_add_stack( $value );
 }
 
@@ -1683,6 +1690,11 @@ sub _PrefixedName {
 		if ($ns eq '') {
 			$ns	= '__DEFAULT__';
 		}
+		
+		unless (exists $self->{namespaces}{$ns}) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Use of undefined namespace '$ns'";
+		}
+		
 		my $iri		= $self->{namespaces}{$ns} . $local;
 		$self->_add_stack( RDF::Query::Node::Resource->new( $iri, $self->__base ) );
 	} else {
@@ -1692,6 +1704,11 @@ sub _PrefixedName {
 		} else {
 			chop($ns);
 		}
+		
+		unless (exists $self->{namespaces}{$ns}) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Use of undefined namespace '$ns'";
+		}
+		
 		my $iri		= $self->{namespaces}{$ns};
 		$self->_add_stack( RDF::Query::Node::Resource->new( $iri, $self->__base ) );
 	}

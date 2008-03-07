@@ -199,6 +199,11 @@ sub execute {
 		
 		my $handled	= 0;
 		
+		### cooperate with ::Algebra::Service so that if we've already got a stream
+		### of results from previous patterns, and the next pattern is a remote
+		### service call, we can try to send along a bloom filter function.
+		### if it doesn't work (the remote endpoint may not support the kasei:bloom
+		### function), then fall back on making the call without the filter.
 		try {
 			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
 				my $m		= $stream->materialize;
@@ -206,7 +211,9 @@ sub execute {
 				my @vars	= $triple->referenced_variables;
 				my %svars	= map { $_ => 1 } $stream->binding_names;
 				my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
-				my $f		= $m->bloom( $var );
+				
+				my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
+				
 				my $new;
 				try {
 					my $pattern	= $triple->add_bloom( $var, $f );

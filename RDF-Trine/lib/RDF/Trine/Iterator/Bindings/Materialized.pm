@@ -121,28 +121,16 @@ sub next {
 	return $data;
 }
 
-=item C<< bloom ( $variable, $error ) >>
+=item C<< length >>
+
+Returns the number of elements in the iterator.
 
 =cut
 
-sub bloom {
+sub length {
 	my $self	= shift;
-	my $var		= shift;
-	my $error	= shift || 0.05;
-	my $length	= scalar(@{ $self->{ _data } });
-	
-	my $name	= blessed($var) ? $var->name : $var;
-	
-	my $filter	= Bloom::Filter->new( capacity => $length, error_rate => $error );
-	while (my $result = $self->next) {
-		use Data::Dumper;
-		my $node	= $result->{ $name };
-		$filter->add( $node->as_string );
-	}
-	$self->reset;
-	return $filter;
+	return scalar(@{ $self->{ _data } });
 }
-
 
 1;
 

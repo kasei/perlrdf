@@ -111,6 +111,7 @@ Returns the SSE string for this literal.
 sub sse {
 	my $self	= shift;
 	my $literal	= $self->literal_value;
+	$literal	=~ s/\\/\\\\/g;
 	$literal	=~ s/"/\\"/g;
 	$literal	=~ s/\n/\\n/g;
 	$literal	=~ s/\t/\\t/g;

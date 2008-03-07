@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+		xml:base="http://kasei.us/about/foaf.xrdf"
+		xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		xmlns:wot="http://xmlns.com/wot/0.1/"
+		xmlns:test="http://kasei.us/e/ns/test#"
+		xmlns:owl="http://www.w3.org/2002/07/owl#"
+		>
+		<foaf:Person rdf:nodeID="adamp">
+			<foaf:name>Adam Pisoni</foaf:name>
+			<foaf:mbox_sha1sum>26fb6400147dcccfda59717ff861db9cb97ac5ec</foaf:mbox_sha1sum>
+		</foaf:Person>
+		<foaf:Document rdf:about="http://kasei.us/">
+			<foaf:primaryTopic>
+				<foaf:Person>
+					<foaf:name>Gregory Todd Williams</foaf:name>
+				</foaf:Person>
+			</foaf:primaryTopic>
+		</foaf:Document>
+		<owl:InverseFunctionalProperty rdf:about="http://xmlns.com/foaf/0.1/mbox_sha1sum" />
+		<owl:FunctionalProperty rdf:about="http://xmlns.com/foaf/0.1/primaryTopic" />
+</rdf:RDF>

@@ -721,29 +721,56 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 };
 
 
-### func:bloom( ?var, "filter-base64" ) => true iff str(?var) is in the bloom filter.
-$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-
-	my $value	= shift;
-	my $filter	= shift;
-	my $hash	= sha1_hex( $filter );
-	
-	my $bloom	= (exists( $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash} ))
-				? $query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}
-				: thaw( decode_base64($filter) );
-	$query->{_query_cache}{'http://kasei.us/code/rdf-query/functions/bloom'}{$hash}	= $bloom;
-	
-	my $string	= $value->as_string;
-	warn "checking bloom filter for --> $string\n" if ($debug);
-	my $ok	= $bloom->check( $string );
-	warn "-> ok\n" if ($ok and $debug);
-	return $ok
-		? RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')
-		: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-};
-
+### func:bloom( ?var, "frozen-bloom-filter" ) => true iff str(?var) is in the bloom filter.
+{
+	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
+	sub BLOOM_ADD_NODE_MAP_TO_STREAM {
+		my $query	= shift;
+		my $bridge	= shift;
+		my $stream	= shift;
+		if ($query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }) {
+			foreach my $map (@{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' } }) {
+				my ($node, $string)	= @$map;
+				warn "adding node map: " . $node->as_string . ": " . $string . "\n";
+			}
+		}
+	}
+	RDF::Query->add_hook('http://kasei.us/code/rdf-query/hooks/function_init', sub {
+		my $query		= shift;
+		my $function	= shift;
+		if ($function eq $BLOOM_URL) {
+			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
+		}
+	});
+	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
+		my $query	= shift;
+		my $bridge	= shift;
+		
+		my $value	= shift;
+		my $filter	= shift;
+		my $bloom;
+		
+		if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
+			$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };
+		} else {
+			my $value	= $filter->literal_value;
+			$bloom	= Bloom::Filter->thaw( $value );
+			$query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter }	= $bloom;
+		}
+		
+		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, 0 );
+		foreach my $string (@names) {
+			warn "checking bloom filter for --> '$string'\n" if ($debug);
+			my $ok	= $bloom->check( $string );
+			warn "-> ok\n" if ($ok and $debug);
+			if ($ok) {
+				push( @{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' } }, [ $value, $string ] );
+				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			}
+		}
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	};
+}
 1;
 
 __END__

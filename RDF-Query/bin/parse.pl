@@ -7,6 +7,7 @@ use Data::Dumper;
 use lib qw(../lib lib);
 use RDF::Query::Parser::SPARQL;
 
+local($RDF::Query::Parser::SPARQL::debug)	= 1;
 binmode(STDIN, ':utf8');
 my $input	= (scalar(@ARGV) == 0 or $ARGV[0] eq '-')
 			? do { local($/) = undef; <> }

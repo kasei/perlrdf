@@ -269,6 +269,8 @@ sub execute {
 	} elsif ($parsed->{'method'} eq 'ASK') {
 		$stream	= $self->ask( $stream );
 	}
+
+	$self->run_hook( 'http://kasei.us/code/rdf-query/hooks/post-execute', $bridge, $stream );
 	
 	if (wantarray) {
 		return $stream->get_all();
@@ -1100,7 +1102,25 @@ sub new_javascript_engine {
 	return ($rt, $cx);
 }
 
-=item C<add_hook ( $uri, $function )>
+=item C<< add_hook_once ( $hook_uri, $function, $token ) >>
+
+Calls C<< add_hook >> adding the supplied C<< $function >> only once based on
+the C<< $token >> identifier. This may be useful if the only code that is able
+to add a hook is called many times (in an extension function, for example).
+
+=cut
+
+sub add_hook_once {
+	my $self	= shift;
+	my $uri		= shift;
+	my $code	= shift;
+	my $token	= shift;
+	unless ($self->{'hooks_once'}{ $token }++) {
+		$self->add_hook( $uri, $code );
+	}
+}
+
+=item C<< add_hook ( $hook_uri, $function ) >>
 
 Associates the custom function C<$function> (a CODE reference) with the
 RDF::Query code hook specified by C<$uri>. Each function that has been
@@ -1315,7 +1335,7 @@ Returns a list of the ordered variables the query is selecting.
 sub variables {
 	my $self	= shift;
 	my $parsed	= shift || $self->parsed;
-	my @vars	= map { $_->name } @{ $parsed->{'variables'} };
+	my @vars	= map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } @{ $parsed->{'variables'} };
 	return @vars;
 }
 

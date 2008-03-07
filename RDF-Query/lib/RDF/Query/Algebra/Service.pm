@@ -15,7 +15,6 @@ package RDF::Query::Algebra::Service;
 use strict;
 use warnings;
 use base qw(RDF::Query::Algebra);
-use constant DEBUG	=> 0;
 
 use URI::Escape;
 use MIME::Base64;
@@ -119,7 +118,9 @@ sub add_bloom {
 	
 	my $pattern	= $self->pattern;
 	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom');
-	my $literal	= RDF::Query::Node::Literal->new( encode_base64(freeze($bloom), '') );
+	warn "Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query";
+	my $frozen	= $bloom->freeze;
+	my $literal	= RDF::Query::Node::Literal->new( $frozen );
 	my $expr	= RDF::Query::Algebra::Expr::Function->new( $iri, $var, $literal );
 	my $filter	= RDF::Query::Algebra::Filter->new( $expr, $pattern );
 	return $class->new( $self->endpoint, $filter );
@@ -258,6 +259,8 @@ sub execute {
 	my $pattern		= $self->pattern;
 	
 	my $sparql		= sprintf("SELECT DISTINCT * WHERE %s", $pattern->as_sparql( {}, '' ));
+	warn "SERVICE REQUEST $endpoint: $sparql\n" if ($debug);
+	
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	my $ua			= $query->useragent;
 	my $resp		= $ua->get( $url );
@@ -265,9 +268,96 @@ sub execute {
 		throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 	}
 	my $content		= $resp->content;
+	warn $content;
 	my $stream		= RDF::Trine::Iterator->from_string( $content );
 	return $stream;
 }
+
+=item C<< bloom_filter_for_iterator ( $query, $bridge, $bound, $iterator, $variable, $error ) >>
+
+Returns a Bloom::Filter object containing the Resource and Literal
+values that are bound to $variable in the $iterator's data.
+
+=cut
+
+sub bloom_filter_for_iterator {
+	my $class	= shift;
+	my $query	= shift;
+	my $bridge	= shift;
+	my $bound	= shift;
+	my $iter	= shift;
+	my $var		= shift;
+	my $error	= shift;
+	
+	my $length	= $iter->length;
+	my $name	= blessed($var) ? $var->name : $var;
+	my $filter	= Bloom::Filter->new( capacity => $length, error_rate => $error );
+	
+	while (my $result = $iter->next) {
+		my $node	= $result->{ $name };
+		my @names	= $class->_names_for_node( $node, $query, $bridge, $bound, 0 );
+		foreach my $n (@names) {
+			warn "Adding to bloom filter: '$n'\n" if ($debug);
+			$filter->add( $n );
+		}
+	}
+	$iter->reset;
+	return $filter;
+}
+
+sub _names_for_node {
+	my $class	= shift;
+	my $node	= shift;
+	my $query	= shift;
+	my $bridge	= shift;
+	my $bound	= shift;
+	my $depth	= shift || 0;
+	my $pre		= shift || '';
+	my $seen	= shift || {};
+	return if ($depth > 2);
+	
+	warn "  " x $depth . "name for node " . $node->as_string . "...\n" if ($debug);
+	
+	my @names;
+	if ($node->isa('RDF::Trine::Node::Blank')) {
+		my $n		= RDF::Query::Node::Variable->new('n');
+		my $p		= RDF::Query::Node::Variable->new('p');
+		my $o		= RDF::Query::Node::Variable->new('o');
+		
+		my $type	= RDF::Query::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+		{
+			our $fp		||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#FunctionalProperty');
+			my $s1		= RDF::Query::Algebra::Triple->new( $p, $type, $fp );
+			my $s2		= RDF::Query::Algebra::Triple->new( $o, $p, $n );
+			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s1, $s2 );
+			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			
+			while (my $row = $iter->next) {
+				my ($p, $o)	= @{ $row }{qw(p o)};
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '^' . $p->sse ));
+			}
+		}
+		
+		{
+			our $ifp	||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#InverseFunctionalProperty');
+			my $s1		= RDF::Query::Algebra::Triple->new( $p, $type, $ifp );
+			my $s2		= RDF::Query::Algebra::Triple->new( $n, $p, $o );
+			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s1, $s2 );
+			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			
+			while (my $row = $iter->next) {
+				my ($p, $o)	= @{ $row }{qw(p o)};
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '!' . $p->sse ));
+			}
+		}
+	} else {
+		my $string	= $pre . $node->as_string;
+		push(@names, $string);
+	}
+	warn "  " x $depth . "-> " . join(', ', @names) . "\n" if ($debug);
+	return @names;
+}
+
 
 1;
 
