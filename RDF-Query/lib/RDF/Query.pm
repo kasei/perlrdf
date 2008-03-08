@@ -70,12 +70,12 @@ use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
-use RDF::Query::Functions;	# all the built-in functions including:
-							#     datatype casting, language ops, logical ops,
-							#     numeric ops, datetime ops, and node type testing
-							# also, custom functions including:
-							#     jena:sha1sum, jena:now, jena:langeq, jena:listMember
-							#     ldodds:Distance, kasei:warn
+require RDF::Query::Functions;	# all the built-in functions including:
+								#     datatype casting, language ops, logical ops,
+								#     numeric ops, datetime ops, and node type testing
+								# also, custom functions including:
+								#     jena:sha1sum, jena:now, jena:langeq, jena:listMember
+								#     ldodds:Distance, kasei:warn
 use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
@@ -86,8 +86,7 @@ use RDF::Query::Error qw(:try);
 
 ######################################################################
 
-my $KEYWORD_RE;
-our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER, %PATTERN_TYPES);
+our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug			= DEBUG;
@@ -95,15 +94,6 @@ BEGIN {
 	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
 	$VERSION		= '2.000_02';
 	$DEFAULT_PARSER	= 'sparql';
-	%PATTERN_TYPES	= map { $_ => 1 } (qw(
-							BGP
-							GGP
-							GRAPH
-							OPTIONAL
-							UNION
-							TRIPLE
-						));
-	$KEYWORD_RE	= qr/^(BGP|GGP|OPTIONAL|UNION|GRAPH|FILTER|TIME)$/;
 }
 
 
@@ -724,7 +714,6 @@ sub load_data {
 		# constructed. subsequent named data will then be loaded into the correct
 		# bridge object.
 		my @sources	= sort { @$a == 2 } @$sources;
-		
 		
 		foreach my $source (@sources) {
 			my $named_source	= (2 == @{$source} and $source->[1] eq 'NAMED');

@@ -23,7 +23,6 @@ our ($debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$RDF::Query::PATTERN_TYPES{ TIME }++;
 }
 
 =begin private

@@ -24,7 +24,10 @@ my $loaded	= use_ok( 'RDF::Query' );
 BAIL_OUT( 'RDF::Query not loaded' ) unless ($loaded);
 
 
-{
+SKIP: {
+	unless ($ENV{RDFQUERY_DEV_TESTS}) {
+		skip "developer network tests", 4;
+	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT DISTINCT *
@@ -44,7 +47,7 @@ END
 
 
 SKIP: {
-	unless ($ENV{RDFQUERY_DEV_TEST}) {
+	unless ($ENV{RDFQUERY_DEV_TESTS}) {
 		skip "developer network tests", 3;
 	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
@@ -78,7 +81,7 @@ END
 }
 
 SKIP: {
-	unless ($ENV{RDFQUERY_DEV_TEST}) {
+	unless ($ENV{RDFQUERY_DEV_TESTS}) {
 		skip "developer network tests", 3;
 	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
@@ -116,7 +119,7 @@ END
 
 
 SKIP: {
-	unless ($ENV{RDFQUERY_DEV_TEST}) {
+	unless ($ENV{RDFQUERY_DEV_TESTS}) {
 		skip "developer network tests", 3;
 	}
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );

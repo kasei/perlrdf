@@ -356,7 +356,10 @@ sub _get_named_statements {
 sub _cast_to_redland {
 	my $node	= shift;
 	return undef unless (blessed($node));
-	if ($node->isa('RDF::Trine::Node::Resource')) {
+	if ($node->isa('RDF::Trine::Statement')) {
+		my @nodes	= map { _cast_to_redland( $_ ) } $node->nodes;
+		return RDF::Redland::Statement->new( @nodes );
+	} elsif ($node->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Redland::Node->new_from_uri( $node->uri_value );
 	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Redland::Node->new_from_blank_identifier( $node->blank_identifier );
@@ -400,7 +403,8 @@ sub add_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $model	= $self->model;
-	$model->add_statement( $stmt );
+	my $rstmt	= _cast_to_redland( $stmt );
+	$model->add_statement( $rstmt );
 }
 
 =item C<< remove_statement ( $statement ) >>
@@ -413,7 +417,8 @@ sub remove_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $model	= $self->model;
-	$model->remove_statement( $stmt );
+	my $rstmt	= _cast_to_redland( $stmt );
+	$model->remove_statement( $rstmt );
 }
 
 =item C<supports ($feature)>

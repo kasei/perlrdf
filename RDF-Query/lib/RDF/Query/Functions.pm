@@ -724,7 +724,7 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 ### func:bloom( ?var, "frozen-bloom-filter" ) => true iff str(?var) is in the bloom filter.
 {
 	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
-	sub BLOOM_ADD_NODE_MAP_TO_STREAM {
+	sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
 		my $query	= shift;
 		my $bridge	= shift;
 		my $stream	= shift;
@@ -739,7 +739,7 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 		my $query		= shift;
 		my $function	= shift;
 		if ($function eq $BLOOM_URL) {
-			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
+			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&_BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
 		}
 	});
 	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {

@@ -380,7 +380,10 @@ sub _get_named_statements {
 sub _cast_to_rdfcore {
 	my $node	= shift;
 	return undef unless (blessed($node));
-	if ($node->isa('RDF::Trine::Node::Resource')) {
+	if ($node->isa('RDF::Trine::Statement')) {
+		my @nodes	= map { _cast_to_rdfcore( $_ ) } $node->nodes;
+		return RDF::Core::Statement->new( @nodes );
+	} elsif ($node->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Core::Resource->new( $node->uri_value );
 	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Core::Resource->new( '_:' . $node->blank_identifier );
@@ -422,7 +425,8 @@ sub add_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $model	= $self->model;
-	$model->addStmt( $stmt );
+	my $rstmt	= _cast_to_rdfcore( $stmt );
+	$model->addStmt( $rstmt );
 }
 
 =item C<< remove_statement ( $statement ) >>
@@ -435,7 +439,8 @@ sub remove_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $model	= $self->model;
-	$model->removeStmt( $stmt );
+	my $rstmt	= _cast_to_rdfcore( $stmt );
+	$model->removeStmt( $rstmt );
 }
 
 =item C<supports ($feature)>
