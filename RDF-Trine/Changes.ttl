@@ -9,8 +9,24 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
-<http://kasei.us/code/files/RDF-Trine-0.100.tar.gz>
+<http://kasei.us/code/files/RDF-Trine-0.102.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.101.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.102" ;
+                        doap:created      "2008-03-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added length() method to Materialized bindings iterator class." ;
+                        asc:update        "Removed bloom filter construction from bindings iterator (RDF::Query code now does this itself)." ;
+                        asc:update        "Fixed escaping of backslashes in Literal node serialization." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.101.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.100.tar.gz> ;
 
         doap:Version    [
                         doap:revision     "0.101" ;
@@ -18,7 +34,7 @@
                         ];
         asc:changes     [
                         asc:addition      "Added an RDF/XML parser based on RDF::Core::Parser." ;
-                        asc:update        "Added Bloom filter support for Mmterialized bindings iterators." ;
+                        asc:update        "Added Bloom filter support for Materialized bindings iterators." ;
                         asc:update        "Fixed IRI workaround using the URI module." ;
                         asc:update        "Turtle parser now uses Data::UUID for unique names." ;
                         asc:update        "Fixed turtle parser bug for Verb testing." ;

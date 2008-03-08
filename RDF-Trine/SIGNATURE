@@ -14,11 +14,11 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 175cdb8596f95949bf59bb759389a3d9bccb1b21 Changes.ttl
+SHA1 3ea7bc890abc28c32cdb4413762ee0869cad4c18 Changes.ttl
 SHA1 5dca2ed306e8f808b583e7d0a054fc7f50506878 MANIFEST
 SHA1 5a111d378ef6e012507a0f3c38d2b77c4b177f23 META.yml
 SHA1 e971ba5cb9f3f5bcfa3f91bf12b7589bd4ce0867 Makefile.PL
-SHA1 59b7c15d4389117ae9527c23a6c9d65b78522e87 README
+SHA1 d5f35f57b9b9f128236a2d25c27aed0228009b5b README
 SHA1 d49ee0e3d3bd2500f0353a7d058bfb3b802455ce bin/rdf_init_store.pl
 SHA1 5c8080b12c8d74dbec699486658d0a78c10b2d15 bin/rdf_parse_turtle.pl
 SHA1 19bb75ad6c986f4c2c9a94232c06ed0117be8dd9 bin/rdf_store_add_file.pl
@@ -29,11 +29,11 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 3f66388e66af2037d67d391663fda63ae34d60ec lib/RDF/Trine.pm
+SHA1 936b3334d584da5d4f24c84126988b860bb49a09 lib/RDF/Trine.pm
 SHA1 e697bb67b36ce05297c0b8193955a15d0a566343 lib/RDF/Trine/Error.pm
 SHA1 438d9afe89fff802ac94935e8a06b84e611ba50f lib/RDF/Trine/Iterator.pm
 SHA1 f9545fe495a29ebe211e1c68b3a403be66ecd9c2 lib/RDF/Trine/Iterator/Bindings.pm
-SHA1 32c291db5bb6a67b3883e43c22e830d670919d8f lib/RDF/Trine/Iterator/Bindings/Materialized.pm
+SHA1 741c9fbb1ed8e11662b15e8da20964656bf8abd1 lib/RDF/Trine/Iterator/Bindings/Materialized.pm
 SHA1 5107ba4396c44027e690de9947e21ad2527e8ccf lib/RDF/Trine/Iterator/Boolean.pm
 SHA1 eb944cc56ea9272efa335eb8c269ebc381b1fa8f lib/RDF/Trine/Iterator/Graph.pm
 SHA1 abea445be78d4efe352fbfb2558c1beec634c848 lib/RDF/Trine/Iterator/Graph/Materialized.pm
@@ -43,7 +43,7 @@ SHA1 c54f94c1987ac4cdeb636d2e0b80fd8de96727c8 lib/RDF/Trine/Model/Union.pm
 SHA1 a5c00487c2b72a61ce5902677101e77f3e82214d lib/RDF/Trine/Namespace.pm
 SHA1 742ea4e0baf61837a568aca1db0b75dce49a2d41 lib/RDF/Trine/Node.pm
 SHA1 a7e5aee90b948e04c462fe05724ad2ef53709b5b lib/RDF/Trine/Node/Blank.pm
-SHA1 308507849b03665e2003c0a9b8432f00ad1c3b1d lib/RDF/Trine/Node/Literal.pm
+SHA1 129180122383cecb6903a4bbdc0e938b044e8e18 lib/RDF/Trine/Node/Literal.pm
 SHA1 995dd37aab37c9790eee3a8e481f6e2fa0100699 lib/RDF/Trine/Node/Resource.pm
 SHA1 23b8c7e3d1685ceabb370aff8de0f0804215566d lib/RDF/Trine/Node/Variable.pm
 SHA1 fe458f5e787e60143419605a57a63122ec06afa9 lib/RDF/Trine/Parser.pm
@@ -297,7 +297,7 @@ SHA1 e2614660f9b8f39eff75d3d6865b5afc10916521 t/store-triple_sql.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFHzZHahPK6VMqoyC0RAqguAKCA9DuugK0d6iK9agfFlx4FuIEf8ACgsLC3
-G02YxL99wlllMIOa1gWhHUU=
-=dkq5
+iD8DBQFH0ge8hPK6VMqoyC0RAm0pAKCsfPCFpfApA4Qte9OlO4qruMQh7gCffomp
+rqhZUpAe3H7MGC+aOq+jQW0=
+=xV1e
 -----END PGP SIGNATURE-----
