@@ -15,7 +15,7 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 3ea7bc890abc28c32cdb4413762ee0869cad4c18 Changes.ttl
-SHA1 5dca2ed306e8f808b583e7d0a054fc7f50506878 MANIFEST
+SHA1 7b40858331f4f663a9f2de2a1d64b37cb65e3a8c MANIFEST
 SHA1 5a111d378ef6e012507a0f3c38d2b77c4b177f23 META.yml
 SHA1 e971ba5cb9f3f5bcfa3f91bf12b7589bd4ce0867 Makefile.PL
 SHA1 d5f35f57b9b9f128236a2d25c27aed0228009b5b README
@@ -279,7 +279,6 @@ SHA1 295342abee33b92912a11a6ba4d7b0f3e2f8fc49 t/data/turtle/test-24.out
 SHA1 445ee20d387fc1b3f0e16b4e19cf40644325601f t/data/turtle/test-24.ttl
 SHA1 084b67277a1e3f8d19a75506d62894d78ad78f77 t/data/turtle/test-25.out
 SHA1 da1c9ab6b7731a9dbfcf96ddee77c63c54838a48 t/data/turtle/test-25.ttl
-SHA1 c67349c64d106a0538d794ba27fab9ba134b30cb t/iterator-bloom.t
 SHA1 7d4b449bcc0a97acb880514c15a5c81ddfb4c566 t/iterator-materialized.t
 SHA1 10973b73ee2be05752742157eecfe379515bc6bd t/iterator-thaw.t
 SHA1 e379125410c78e97a5e331c7ba5f337468291b5e t/iterator.t
@@ -297,7 +296,7 @@ SHA1 e2614660f9b8f39eff75d3d6865b5afc10916521 t/store-triple_sql.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH0ge8hPK6VMqoyC0RAm0pAKCsfPCFpfApA4Qte9OlO4qruMQh7gCffomp
-rqhZUpAe3H7MGC+aOq+jQW0=
-=xV1e
+iD8DBQFH0giohPK6VMqoyC0RAlkbAJ9VRno+FyPHPYpOw7yr0t2fYFlEBwCfTRCD
++518PeVGXY8EZUQKi6aMzDI=
+=uof7
 -----END PGP SIGNATURE-----
