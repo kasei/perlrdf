@@ -206,6 +206,7 @@ sub execute {
 		### function), then fall back on making the call without the filter.
 		try {
 			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
+# 				local($RDF::Trine::Iterator::debug)	= 1;
 				my $m		= $stream->materialize;
 				
 				my @vars	= $triple->referenced_variables;
@@ -220,10 +221,10 @@ sub execute {
 					$new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
 					throw RDF::Query::Error unless ($new);
 				} otherwise {
-					warn "*** Wasn't able to use :bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
+					warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
 					$new	= $triple->execute( $query, $bridge, $bound, $context, %args );
 				};
-				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $m, $new, %args );
+				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $m, $new, %args, query => $query, bridge => $bridge );
 				$handled	= 1;
 			}
 		};
@@ -231,7 +232,7 @@ sub execute {
 		unless ($handled) {
 			my $new	= $triple->execute( $query, $bridge, $bound, $context, %args );
 			if ($stream) {
-				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $new, %args )
+				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $new, %args, query => $query, bridge => $bridge )
 			} else {
 				$stream	= $new;
 			}

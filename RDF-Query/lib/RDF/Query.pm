@@ -70,12 +70,13 @@ use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
-use RDF::Query::Functions;	# all the built-in functions including:
-							#     datatype casting, language ops, logical ops,
-							#     numeric ops, datetime ops, and node type testing
-							# also, custom functions including:
-							#     jena:sha1sum, jena:now, jena:langeq, jena:listMember
-							#     ldodds:Distance, kasei:warn
+require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
+								# all the built-in functions including:
+								#     datatype casting, language ops, logical ops,
+								#     numeric ops, datetime ops, and node type testing
+								# also, custom functions including:
+								#     jena:sha1sum, jena:now, jena:langeq, jena:listMember
+								#     ldodds:Distance, kasei:warn
 use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
@@ -238,13 +239,18 @@ sub execute {
 	} else {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
-
+	
 	warn "got bridge $bridge" if ($debug);
 	
 	$self->load_data();
 	my ($pattern, $cpattern)	= $self->fixup();
 	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	my @vars	= $self->variables( $parsed );
+	
+	my @funcs	= $pattern->referenced_functions;
+	foreach my $f (@funcs) {
+		$self->run_hook( 'http://kasei.us/code/rdf-query/hooks/function_init', $f );
+	}
 	
 	# RUN THE QUERY!
 
@@ -269,7 +275,8 @@ sub execute {
 	} elsif ($parsed->{'method'} eq 'ASK') {
 		$stream	= $self->ask( $stream );
 	}
-
+	
+	warn "going to call post-execute hook" if ($debug);
 	$self->run_hook( 'http://kasei.us/code/rdf-query/hooks/post-execute', $bridge, $stream );
 	
 	if (wantarray) {

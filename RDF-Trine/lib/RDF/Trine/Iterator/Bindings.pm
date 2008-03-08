@@ -386,10 +386,30 @@ END
 		
 		last if ($max_result_size and ++$count >= $max_result_size);
 	} continue { $self->next_result }
-	$xml	.= <<"EOT";
-</results>
-</sparql>
-EOT
+	$xml	.= "</results>\n";
+	
+	if (my $extra = $self->extra_result_data) {
+		warn 'post-xml nodemap: ' . Dumper($extra);
+		foreach my $tag (keys %$extra) {
+			$xml	.= qq[<extra name="${tag}">\n];
+			my $value	= $extra->{ $tag };
+			foreach my $e (@$value) {
+				foreach my $k (keys %$e) {
+					my $v		= $e->{ $k };
+					my @values	= @$v;
+					foreach ($k, @values) {
+						s/&/&amp;/g;
+						s/</&lt;/g;
+						s/"/&quot;/g;
+					}
+					$xml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
+				}
+			}
+			$xml	.= "</extra>\n";
+		}
+	}
+	
+	$xml	.= "</sparql>\n";
 	return $xml;
 }
 

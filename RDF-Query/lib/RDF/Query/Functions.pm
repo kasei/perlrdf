@@ -18,6 +18,7 @@ no warnings 'redefine';
 
 use Scalar::Util qw(blessed reftype looks_like_number);
 
+use RDF::Query;
 use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
@@ -728,18 +729,18 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 		my $query	= shift;
 		my $bridge	= shift;
 		my $stream	= shift;
-		if ($query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }) {
-			foreach my $map (@{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' } }) {
-				my ($node, $string)	= @$map;
-				warn "adding node map: " . $node->as_string . ": " . $string . "\n";
-			}
-		}
+		warn "bloom filter got result stream\n" if ($debug);
+		my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
+		$stream->add_extra_result_data('bnode-map', $nodemap);
 	}
 	RDF::Query->add_hook('http://kasei.us/code/rdf-query/hooks/function_init', sub {
 		my $query		= shift;
 		my $function	= shift;
-		if ($function eq $BLOOM_URL) {
-			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
+		warn "function init: " . $function->uri_value if ($debug);
+		$query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }	= {};
+		if ($function->uri_value eq $BLOOM_URL) {
+			warn "adding bloom filter result stream hook" if ($debug);
+			$query->add_hook( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
 		}
 	});
 	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
@@ -764,7 +765,8 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 			my $ok	= $bloom->check( $string );
 			warn "-> ok\n" if ($ok and $debug);
 			if ($ok) {
-				push( @{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' } }, [ $value, $string ] );
+				push( @{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }{ $value->as_string } }, $string );
+				warn Dumper($query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' });
 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 			}
 		}
