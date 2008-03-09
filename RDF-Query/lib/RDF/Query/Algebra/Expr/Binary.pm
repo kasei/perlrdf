@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Expr::Binary
+# RDF::Query::Expression::Binary
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Expr::Binary - Algebra class for binary expressions
+RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =cut
 
-package RDF::Query::Algebra::Expr::Binary;
+package RDF::Query::Expression::Binary;
 
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra::Expr);
+use base qw(RDF::Query::Expression);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);

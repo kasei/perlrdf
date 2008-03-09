@@ -532,29 +532,29 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:logical-and
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - sparql:logical-or
-          - !!perl/array:RDF::Query::Algebra::Expr::Binary
+          - !!perl/array:RDF::Query::Expression::Binary
             - ==
             - !!perl/array:RDF::Query::Node::Variable
               - pred
             - !!perl/array:RDF::Query::Node::Resource
               - URI
               - http://purl.org/dc/terms/spatial
-          - !!perl/array:RDF::Query::Algebra::Expr::Binary
+          - !!perl/array:RDF::Query::Expression::Binary
             - ==
             - !!perl/array:RDF::Query::Node::Variable
               - pred
             - !!perl/array:RDF::Query::Node::Resource
               - URI
               - http://xmlns.com/foaf/0.1/based_near
-        - !!perl/array:RDF::Query::Algebra::Expr::Binary
+        - !!perl/array:RDF::Query::Expression::Binary
           - '>'
           - !!perl/array:RDF::Query::Node::Variable
             - lat
@@ -563,7 +563,7 @@ __END__
             - 52.988674
             - ~
             - http://www.w3.org/2001/XMLSchema#decimal
-        - !!perl/array:RDF::Query::Algebra::Expr::Binary
+        - !!perl/array:RDF::Query::Expression::Binary
           - <
           - !!perl/array:RDF::Query::Node::Variable
             - lat
@@ -619,7 +619,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:regex
@@ -677,11 +677,11 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
         - !!perl/array:RDF::Query::Node::Variable
           - pred
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://example.com/homepagepred
@@ -731,11 +731,11 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
         - !!perl/array:RDF::Query::Node::Variable
           - pred
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - func:homepagepred
@@ -784,9 +784,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - sparql:lang
@@ -832,7 +832,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:langmatches
@@ -880,7 +880,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:isliteral
@@ -923,9 +923,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - sparql:datatype
@@ -1565,9 +1565,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - <
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://kasei.us/e/ns/geo#distance
@@ -1637,9 +1637,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - <
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://kasei.us/e/ns/geo#distance
@@ -1655,7 +1655,7 @@ __END__
             - -71.392
             - ~
             - http://www.w3.org/2001/XMLSchema#decimal
-        - !!perl/array:RDF::Query::Algebra::Expr
+        - !!perl/array:RDF::Query::Expression
           - +
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
@@ -1716,9 +1716,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - <
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://kasei.us/e/ns/geo#distance
@@ -1734,7 +1734,7 @@ __END__
             - -71.392
             - ~
             - http://www.w3.org/2001/XMLSchema#decimal
-        - !!perl/array:RDF::Query::Algebra::Expr
+        - !!perl/array:RDF::Query::Expression
           - '*'
           - !!perl/array:RDF::Query::Node::Literal
             - LITERAL
@@ -1796,7 +1796,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:regex
@@ -1807,9 +1807,9 @@ __END__
           - 'Providence, RI'
       - !!perl/array:RDF::Query::Algebra::Filter
         - FILTER
-        - !!perl/array:RDF::Query::Algebra::Expr::Binary
+        - !!perl/array:RDF::Query::Expression::Binary
           - <
-          - !!perl/array:RDF::Query::Algebra::Expr::Function
+          - !!perl/array:RDF::Query::Expression::Function
             - !!perl/array:RDF::Query::Node::Resource
               - URI
               - http://kasei.us/e/ns/geo#distance
@@ -2587,7 +2587,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - <=
         - !!perl/array:RDF::Query::Node::Literal
           - LITERAL
@@ -2626,7 +2626,7 @@ __END__
     orderby:
       -
         - ASC
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://www.w3.org/2001/XMLSchema#decimal
@@ -2967,7 +2967,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - '>'
         - !!perl/array:RDF::Query::Node::Variable
           - lat
@@ -3023,7 +3023,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:isiri
@@ -3129,7 +3129,7 @@ __END__
     orderby:
       -
         - ASC
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://example.com/foo
@@ -4242,11 +4242,11 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:regex
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - sparql:str
@@ -4285,13 +4285,13 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr::Function
+      - !!perl/array:RDF::Query::Expression::Function
         - !!perl/array:RDF::Query::Node::Resource
           - URI
           - sparql:logical-and
-        - !!perl/array:RDF::Query::Algebra::Expr::Unary
+        - !!perl/array:RDF::Query::Expression::Unary
           - '!'
-          - !!perl/array:RDF::Query::Algebra::Expr::Function
+          - !!perl/array:RDF::Query::Expression::Function
             - !!perl/array:RDF::Query::Node::Resource
               - URI
               - sparql:sameterm
@@ -4299,7 +4299,7 @@ __END__
               - v1
             - !!perl/array:RDF::Query::Node::Variable
               - v2
-        - !!perl/array:RDF::Query::Algebra::Expr::Binary
+        - !!perl/array:RDF::Query::Expression::Binary
           - ==
           - !!perl/array:RDF::Query::Node::Variable
             - v1
@@ -4384,7 +4384,7 @@ __END__
             - v
       - !!perl/array:RDF::Query::Algebra::Filter
         - FILTER
-        - !!perl/array:RDF::Query::Algebra::Expr
+        - !!perl/array:RDF::Query::Expression
           - ==
           - !!perl/array:RDF::Query::Node::Variable
             - v
@@ -4732,7 +4732,7 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
         - !!perl/array:RDF::Query::Node::Variable
           - v1
@@ -4777,9 +4777,9 @@ __END__
   triples:
     - !!perl/array:RDF::Query::Algebra::Filter
       - FILTER
-      - !!perl/array:RDF::Query::Algebra::Expr
+      - !!perl/array:RDF::Query::Expression
         - ==
-        - !!perl/array:RDF::Query::Algebra::Expr
+        - !!perl/array:RDF::Query::Expression
           - -
           - !!perl/array:RDF::Query::Node::Variable
             - o
@@ -4924,7 +4924,7 @@ __END__
     orderby:
       -
         - DESC
-        - !!perl/array:RDF::Query::Algebra::Expr
+        - !!perl/array:RDF::Query::Expression
           - +
           - !!perl/array:RDF::Query::Node::Variable
             - o
@@ -4935,7 +4935,7 @@ __END__
             - http://www.w3.org/2001/XMLSchema#integer
       -
         - ASC
-        - !!perl/array:RDF::Query::Algebra::Expr::Function
+        - !!perl/array:RDF::Query::Expression::Function
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - http://example.org/ns#func2

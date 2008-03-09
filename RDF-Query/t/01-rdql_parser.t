@@ -106,7 +106,7 @@ END
                                                                       'URI',
                                                                       'http://purl.org/dc/terms/spatial'
                                                                     ], 'RDF::Query::Node::Resource' )
-                                                           ], 'RDF::Query::Algebra::Expr::Binary' ),
+                                                           ], 'RDF::Query::Expression::Binary' ),
                                                     bless( [
                                                              '==',
                                                              bless( [
@@ -116,8 +116,8 @@ END
                                                                       'URI',
                                                                       'http://xmlns.com/foaf/0.1/based_near'
                                                                     ], 'RDF::Query::Node::Resource' )
-                                                           ], 'RDF::Query::Algebra::Expr::Binary' )
-                                                  ], 'RDF::Query::Algebra::Expr::Function' ),
+                                                           ], 'RDF::Query::Expression::Binary' )
+                                                  ], 'RDF::Query::Expression::Function' ),
                                            bless( [
                                                     '>',
                                                     bless( [
@@ -129,8 +129,8 @@ END
                                                              undef,
                                                              'http://www.w3.org/2001/XMLSchema#float'
                                                            ], 'RDF::Query::Node::Literal' )
-                                                  ], 'RDF::Query::Algebra::Expr::Binary' )
-                                         ], 'RDF::Query::Algebra::Expr::Function' ),
+                                                  ], 'RDF::Query::Expression::Binary' )
+                                         ], 'RDF::Query::Expression::Function' ),
                                   bless( [
                                            bless( [
                                                     bless( [
@@ -202,7 +202,7 @@ END
                                                     'LITERAL',
                                                     'kasei'
                                                   ], 'RDF::Query::Node::Literal' )
-                                         ], 'RDF::Query::Algebra::Expr::Function' ),
+                                         ], 'RDF::Query::Expression::Function' ),
                                   bless( [
                                            bless( [
                                                     bless( [

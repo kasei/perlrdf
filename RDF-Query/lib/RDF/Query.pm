@@ -863,7 +863,7 @@ sub call_function {
 	my $uri		= shift;
 	warn "trying to get function from $uri" if ($debug);
 	
-	my $filter			= RDF::Query::Algebra::Expr::Function->new( $uri, @_ );
+	my $filter			= RDF::Query::Expression::Function->new( $uri, @_ );
 	return $filter->evaluate( $self, $bridge, $bound );
 }
 

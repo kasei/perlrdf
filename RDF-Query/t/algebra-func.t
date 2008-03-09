@@ -60,9 +60,9 @@ my $lenus	= RDF::Query::Node::Literal->new( 'en-us' );
 my $va		= RDF::Query::Node::Variable->new( 'a' );
 my $vb		= RDF::Query::Node::Variable->new( 'b' );
 
-my $un		= 'RDF::Query::Algebra::Expr::Unary';
-my $bin		= 'RDF::Query::Algebra::Expr::Binary';
-my $func	= 'RDF::Query::Algebra::Expr::Function';
+my $un		= 'RDF::Query::Expression::Unary';
+my $bin		= 'RDF::Query::Expression::Binary';
+my $func	= 'RDF::Query::Expression::Function';
 my $xsd		= 'http://www.w3.org/2001/XMLSchema#';
 
 local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;

@@ -290,7 +290,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my ($bool1, $bool2, $error);
 	try {
 		my $arg1 	= $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg1 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -299,7 +299,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	};
 	try {
 		my $arg2 	= $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg2 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -328,7 +328,7 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	my ($bool1, $bool2, $error);
 	try {
 		my $arg1 = $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg1 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -336,7 +336,7 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	};
 	try {
 		my $arg2 = $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg2 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -712,7 +712,7 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $value	= shift;
-	my $func	= RDF::Query::Algebra::Expr::Function->new( 'sparql:str', $value );
+	my $func	= RDF::Query::Expression::Function->new( 'sparql:str', $value );
 	
 	my $string	= Dumper( $func->evaluate( undef, undef, {} ) );
 	no warnings 'uninitialized';

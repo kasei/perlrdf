@@ -231,7 +231,7 @@ sub fixup {
 	my $ns		= shift;
 	
 	my $expr	= $self->expr;
-	if (blessed($expr) and $expr->isa('RDF::Query::Algebra::Expr::Function')) {
+	if (blessed($expr) and $expr->isa('RDF::Query::Expression::Function')) {
 		$self->expr( $expr->fixup( $bridge, $base, $ns ) );
 	} else {
 		my @constraints	= ($expr);

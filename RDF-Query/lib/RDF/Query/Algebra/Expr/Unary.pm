@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Expr::Unary
+# RDF::Query::Expression::Unary
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Expr::Unary - Algebra class for unary expressions
+RDF::Query::Expression::Unary - Class for unary expressions
 
 =cut
 
-package RDF::Query::Algebra::Expr::Unary;
+package RDF::Query::Expression::Unary;
 
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra::Expr);
+use base qw(RDF::Query::Expression);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -95,7 +95,7 @@ sub evaluate {
 	} elsif ($op eq '-') {
 		$value	= -1 * $l->numeric_value;
 	} elsif ($op eq '!') {
-		my $alg		= RDF::Query::Algebra::Expr::Function->new( "sparql:ebv", $data );
+		my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $data );
 		my $bool	= $alg->evaluate( $query, $bridge, $bound );
 		if ($bool->literal_value eq 'true') {
 			return RDF::Query::Node::Literal->new( 'false', undef, 'http://www.w3.org/2001/XMLSchema#boolean' );

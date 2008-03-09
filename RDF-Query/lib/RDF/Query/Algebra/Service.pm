@@ -121,7 +121,7 @@ sub add_bloom {
 	warn "Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query";
 	my $frozen	= $bloom->freeze;
 	my $literal	= RDF::Query::Node::Literal->new( $frozen );
-	my $expr	= RDF::Query::Algebra::Expr::Function->new( $iri, $var, $literal );
+	my $expr	= RDF::Query::Expression::Function->new( $iri, $var, $literal );
 	my $filter	= RDF::Query::Algebra::Filter->new( $expr, $pattern );
 	return $class->new( $self->endpoint, $filter );
 }
