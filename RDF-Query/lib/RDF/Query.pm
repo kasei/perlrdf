@@ -93,7 +93,7 @@ BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
 	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION		= '2.000_03';
+	$VERSION		= '2.000_04';
 	$DEFAULT_PARSER	= 'sparql';
 }
 

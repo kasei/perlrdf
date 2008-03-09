@@ -87,43 +87,47 @@ sub test_models_and_classes {
 		if (not $@) {
 			require RDF::Query::Model::RDFTrine;
 			
-			my $dsn		= $ENV{DBI_DSN} || 'DBI:mysql:database=test';
-			my $user	= $ENV{DBI_USER} || 'test';
-			my $pass	= $ENV{DBI_PASS} || 'test';
-			
-			my $model	= eval {
-				my $store	= RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass);
-				my $model	= RDF::Trine::Model->new( $store );
-			};
-			if (not $@) {
-				{
-					eval "use RDF::Redland";
-					if ($@) {
-						warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Trine::Store";
-						return @models;
-					}
-					my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
-					my $storage	= RDF::Redland::Storage->new("mysql", $model->_store->model_name, { host => 'localhost', database=> 'test', user => 'test', password => 'test' });
-					my $model	= RDF::Redland::Model->new($storage, "");
-					my $parser	= RDF::Redland::Parser->new("rdfxml");
-					$parser->parse_into_model($_, $_, $model) for (@data);
-				}
+			if ($ENV{RDFQUERY_DBI_DATABASE} and $ENV{RDFQUERY_DBI_USER} and $ENV{RDFQUERY_DBI_PASS}) {
+				my $dsn		= "DBI:mysql:database=$ENV{RDFQUERY_DBI_DATABASE}";
+				my $user	= $ENV{RDFQUERY_DBI_USER} || 'test';
+				my $pass	= $ENV{RDFQUERY_DBI_PASS} || 'test';
 				
-				my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-				my $data	= {
-								bridge		=> $bridge,
-								modelobj	=> $model,
-								class		=> 'RDF::Query::Model::RDFTrine',
-								model		=> 'RDF::Trine::Store::DBI',
-								statement	=> 'RDF::Trine::Statement',
-								node		=> 'RDF::Trine::Node',
-								resource	=> 'RDF::Trine::Node::Resource',
-								literal		=> 'RDF::Trine::Node::Literal',
-								blank		=> 'RDF::Trine::Node::Blank',
-							};
-				push(@models, $data);
+				my $model	= eval {
+					my $store	= RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass);
+					my $model	= RDF::Trine::Model->new( $store );
+				};
+				if (not $@) {
+					{
+						eval "use RDF::Redland";
+						if ($@) {
+							warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Trine::Store";
+							return @models;
+						}
+						my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
+						my $storage	= RDF::Redland::Storage->new("mysql", $model->_store->model_name, { host => 'localhost', database=> $ENV{RDFQUERY_DBI_DATABASE}, user => $ENV{RDFQUERY_DBI_USER}, password => $ENV{RDFQUERY_DBI_PASS} });
+						my $model	= RDF::Redland::Model->new($storage, "");
+						my $parser	= RDF::Redland::Parser->new("rdfxml");
+						$parser->parse_into_model($_, $_, $model) for (@data);
+					}
+					
+					my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
+					my $data	= {
+									bridge		=> $bridge,
+									modelobj	=> $model,
+									class		=> 'RDF::Query::Model::RDFTrine',
+									model		=> 'RDF::Trine::Store::DBI',
+									statement	=> 'RDF::Trine::Statement',
+									node		=> 'RDF::Trine::Node',
+									resource	=> 'RDF::Trine::Node::Resource',
+									literal		=> 'RDF::Trine::Node::Literal',
+									blank		=> 'RDF::Trine::Node::Blank',
+								};
+					push(@models, $data);
+				} else {
+					warn "Couldn't connect to mysql: $dsn, $user, $pass" if ($RDF::Query::debug);
+				}
 			} else {
-				warn "Couldn't connect to mysql: $dsn, $user, $pass" if ($RDF::Query::debug);
+				warn "RDF::Trine::Store::DBI not used. To use, set the environment variables RDFQUERY_DBI_DATABASE, RDFQUERY_DBI_USER and RDFQUERY_DBI_PASS." if ($RDF::Query::debug);
 			}
 		} else {
 			warn "RDF::Trine::Store::DBI not loaded: $@\n" if ($RDF::Query::debug);
