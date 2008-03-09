@@ -76,6 +76,7 @@ require RDF::Query::Functions;	# all the built-in functions including:
 								# also, custom functions including:
 								#     jena:sha1sum, jena:now, jena:langeq, jena:listMember
 								#     ldodds:Distance, kasei:warn
+use RDF::Query::Expression;
 use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
