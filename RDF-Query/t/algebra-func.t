@@ -816,8 +816,11 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 }
 
 {
+	eval "use Geo::Distance 0.09;";
+	my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
 	# ldodds:Distance
-	{
+	SKIP: {
+		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
 		my @args	= map { RDF::Query::Node::Literal->new($_, undef, 'http://www.w3.org/2001/XMLSchema#float') } qw(34.015673 -118.496947 41.8351 -71.3971);
 		my $TEST	= "ldodds:Distance";
 		my $alg		= $func->new( "java:com.ldodds.sparql.Distance", @args );
