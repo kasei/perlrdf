@@ -701,7 +701,7 @@ sub _sql_for_expr {
 	### None of these should affect the context directly, since the expression
 	### might be a child of another expression (e.g. "isliteral(?node) || isresource(?node)")
 	
-	if ($expr->isa('RDF::Query::Algebra::Expr::Function')) {
+	if ($expr->isa('RDF::Query::Expression::Function')) {
 		my $func	= $expr->uri->uri_value;
 		my @args	= $expr->arguments;
 		if ($func eq 'sparql:isliteral' and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
