@@ -31,6 +31,7 @@ our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
 ######################################################################
@@ -199,6 +200,8 @@ sub execute {
 		
 		my $handled	= 0;
 		
+		our %SERVICE_BLOOM_IGNORE;	# keep track of which service calls throw an error so we don't keep trying it...
+		
 		### cooperate with ::Algebra::Service so that if we've already got a stream
 		### of results from previous patterns, and the next pattern is a remote
 		### service call, we can try to send along a bloom filter function.
@@ -206,22 +209,26 @@ sub execute {
 		### function), then fall back on making the call without the filter.
 		try {
 			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
-# 				local($RDF::Trine::Iterator::debug)	= 1;
-				my $m		= $stream->materialize;
-				
-				my @vars	= $triple->referenced_variables;
-				my %svars	= map { $_ => 1 } $stream->binding_names;
-				my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
-				
-				my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
-				
-				my $pattern	= $triple->add_bloom( $var, $f );
-				my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
-				throw RDF::Query::Error unless ($new);
-				$stream	= $self->join_bnode_streams( $m, $new, $query, $bridge, $bound );
-				$handled	= 1;
+				unless ($SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }) {
+	# 				local($RDF::Trine::Iterator::debug)	= 1;
+					$stream		= $stream->materialize;
+					my $m		= $stream;
+					
+					my @vars	= $triple->referenced_variables;
+					my %svars	= map { $_ => 1 } $stream->binding_names;
+					my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
+					
+					my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
+					
+					my $pattern	= $triple->add_bloom( $var, $f );
+					my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
+					throw RDF::Query::Error unless ($new);
+					$stream	= $self->join_bnode_streams( $m, $new, $query, $bridge, $bound );
+					$handled	= 1;
+				}
 			}
 		} otherwise {
+			$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
 			warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
 		};
 		

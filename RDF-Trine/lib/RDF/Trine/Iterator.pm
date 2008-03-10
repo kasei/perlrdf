@@ -225,8 +225,8 @@ Returns the next item in the stream.
 
 =cut
 
-sub next { $_[0]->next_result }
-sub next_result {
+sub next_result { $_[0]->next }
+sub next {
 	my $self	= shift;
 	return if ($self->{_finished});
 	

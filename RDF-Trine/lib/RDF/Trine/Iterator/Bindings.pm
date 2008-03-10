@@ -39,9 +39,8 @@ use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
 our ($REVISION, $VERSION, $debug);
-use constant DEBUG	=> 0;
 BEGIN {
-	$debug		= DEBUG;
+	$debug		= 0;
 	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
 	$VERSION	= '1.000';
 }
@@ -149,7 +148,7 @@ sub join_streams {
 		my $a_sort		= join(',', $a->sorted_by);
 		my $b_sort		= join(',', $b->sorted_by);
 		
-		if (DEBUG) {
+		if ($debug) {
 			warn '---------------------------';
 			warn 'REQUESTED SORT in JOIN: ' . Dumper($req_sort);
 			warn 'JOIN STREAM SORTED BY: ' . Dumper($a_sort);
@@ -157,17 +156,17 @@ sub join_streams {
 		}
 		my $actual_sort;
 		if (substr( $a_sort, 0, length($req_sort) ) eq $req_sort) {
-			warn "first stream is already sorted. using it in the outer loop.\n" if (DEBUG);
+			warn "first stream is already sorted. using it in the outer loop.\n" if ($debug);
 		} elsif (substr( $b_sort, 0, length($req_sort) ) eq $req_sort) {
-			warn "second stream is already sorted. using it in the outer loop.\n" if (DEBUG);
+			warn "second stream is already sorted. using it in the outer loop.\n" if ($debug);
 			($a,$b)	= ($b,$a);
 		} else {
 			my $a_common	= join('!', $a_sort, $req_sort);
 			my $b_common	= join('!', $b_sort, $req_sort);
 			if ($a_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $a_sort and $req_sort?
-				warn "first stream is closely sorted ($1).\n" if (DEBUG);
+				warn "first stream is closely sorted ($1).\n" if ($debug);
 			} elsif ($b_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $b_sort and $req_sort?
-				warn "second stream is closely sorted ($1).\n" if (DEBUG);
+				warn "second stream is closely sorted ($1).\n" if ($debug);
 				($a,$b)	= ($b,$a);
 			}
 		}
@@ -175,7 +174,7 @@ sub join_streams {
 	}
 	
 	my $stream	= $self->SUPER::join_streams( $a, $b, %args );
-	warn "JOINED stream is sorted by: " . join(',', @join_sorted_by) . "\n" if (DEBUG);
+	warn "JOINED stream is sorted by: " . join(',', @join_sorted_by) . "\n" if ($debug);
 	$stream->{sorted_by}	= \@join_sorted_by;
 	return $stream;
 }
@@ -389,7 +388,6 @@ END
 	$xml	.= "</results>\n";
 	
 	if (my $extra = $self->extra_result_data) {
-		warn 'post-xml nodemap: ' . Dumper($extra);
 		foreach my $tag (keys %$extra) {
 			$xml	.= qq[<extra name="${tag}">\n];
 			my $value	= $extra->{ $tag };
