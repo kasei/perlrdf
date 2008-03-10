@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Expr
+# RDF::Query::Expression
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,11 +6,11 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Expr - Algebra class for Expr expressions
+RDF::Query::Expression - Class for Expr expressions
 
 =cut
 
-package RDF::Query::Algebra::Expr;
+package RDF::Query::Expression;
 
 use strict;
 use warnings;

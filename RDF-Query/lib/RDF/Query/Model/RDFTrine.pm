@@ -14,6 +14,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 use LWP::UserAgent;
 use Encode;
 
+use RDF::Trine 0.102;
 use RDF::Trine::Model;
 use RDF::Trine::Parser;
 use RDF::Trine::Iterator;

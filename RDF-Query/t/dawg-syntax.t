@@ -169,7 +169,6 @@ sub add_to_model {
 						};
 			
 			$data		=~ s/^(.*)<rdf:RDF/<rdf:RDF/m;
-			$bridge->ignore_contexts;
 			$bridge->add_string( $data, $file );
 		}
 	} else {

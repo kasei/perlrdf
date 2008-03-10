@@ -585,7 +585,7 @@ sub expr2sql {
 			no warnings 'uninitialized';
 			$add_where->( qq(${col}) );
 		}
-	} elsif ($blessed and $expr->isa('RDF::Query::Algebra::Expr::Function')) {
+	} elsif ($blessed and $expr->isa('RDF::Query::Expression::Function')) {
 		my $uri	= $expr->uri->uri_value;
 		my $func	= $self->get_function( $uri );
 		if ($func) {
@@ -605,14 +605,14 @@ sub expr2sql {
 		} else {
 			throw RDF::Query::Error::CompilationError( -text => "Unknown custom function $uri in FILTER." );
 		}
-	} elsif ($blessed and $expr->isa('RDF::Query::Algebra::Expr')) {
+	} elsif ($blessed and $expr->isa('RDF::Query::Expression')) {
 		my $op		= $expr->op;
 		my @args	= $expr->operands;
 		
 		if ($op eq '!') {
-			if ($args[0]->isa('RDF::Query::Algebra::Expr::Function')) {
+			if ($args[0]->isa('RDF::Query::Expression::Function')) {
 				if ($args[0]->uri->uri_value eq 'sparql:isbound') {
-					my $expr	= RDF::Query::Algebra::Expr::Function->new(
+					my $expr	= RDF::Query::Expression::Function->new(
 									RDF::Query::Node::Resource->new('rdfquery:isNotBound'),
 									$args[0]->arguments
 								);

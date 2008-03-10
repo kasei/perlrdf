@@ -1,4 +1,4 @@
-# RDF::Query::Algebra::Expr::Function
+# RDF::Query::Expression::Function
 # -------------
 # $Revision: 121 $
 # $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
@@ -6,16 +6,16 @@
 
 =head1 NAME
 
-RDF::Query::Algebra::Expr::Function - Algebra class for Function expressions
+RDF::Query::Expression::Function - Class for Function expressions
 
 =cut
 
-package RDF::Query::Algebra::Expr::Function;
+package RDF::Query::Expression::Function;
 
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra::Expr);
+use base qw(RDF::Query::Expression);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);

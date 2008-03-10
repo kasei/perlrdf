@@ -1347,6 +1347,9 @@ sub _RelationalExpression {
 	
 	$self->__consume_ws_opt;
 	if ($self->_test(qr/[!<>]?=|[<>]/)) {
+		if ($self->_test( $r_IRI_REF )) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: IRI found where expression expected";
+		}
 		my @list	= splice(@{ $self->{stack} });
 		my $op	= $self->_eat(qr/[!<>]?=|[<>]/);
 		$op		= '==' if ($op eq '=');

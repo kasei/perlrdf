@@ -29,10 +29,11 @@ use List::MoreUtils qw(uniq);
 
 
 use RDF::Query::Algebra::BasicGraphPattern;
-use RDF::Query::Algebra::Expr;
-use RDF::Query::Algebra::Expr::Nary;
-use RDF::Query::Algebra::Expr::Binary;
-use RDF::Query::Algebra::Expr::Unary;
+use RDF::Query::Expression;
+use RDF::Query::Expression::Nary;
+use RDF::Query::Expression::Binary;
+use RDF::Query::Expression::Unary;
+use RDF::Query::Expression::Function;
 use RDF::Query::Algebra::OldFilter;
 use RDF::Query::Algebra::Filter;
 use RDF::Query::Algebra::GroupGraphPattern;
@@ -43,7 +44,6 @@ use RDF::Query::Algebra::Union;
 use RDF::Query::Algebra::NamedGraph;
 use RDF::Query::Algebra::Service;
 use RDF::Query::Algebra::TimeGraph;
-use RDF::Query::Algebra::Expr::Function;
 use RDF::Query::Algebra::Aggregate;
 
 =item C<< referenced_blanks >>

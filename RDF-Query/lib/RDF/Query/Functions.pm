@@ -16,12 +16,13 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use Scalar::Util qw(blessed reftype looks_like_number);
+use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
 use RDF::Query;
 use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
+use I18N::LangTags;
 use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
@@ -291,7 +292,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my ($bool1, $bool2, $error);
 	try {
 		my $arg1 	= $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg1 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -300,7 +301,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	};
 	try {
 		my $arg2 	= $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg2 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -329,7 +330,7 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	my ($bool1, $bool2, $error);
 	try {
 		my $arg1 = $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg1 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -337,7 +338,7 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	};
 	try {
 		my $arg2 = $args->();
-		my $func	= RDF::Query::Algebra::Expr::Function->new( $bool, $arg2 );
+		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
 		my $value	= $func->evaluate( $query, $bridge, {} );
 		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
 	} otherwise {
@@ -507,6 +508,9 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 	
 	my $text	= $node->literal_value;
 	my $pattern	= $match->literal_value;
+	if (index($pattern, '(?{') != -1 or index($pattern, '(??{') != -1) {
+		throw RDF::Query::Error::FilterEvaluationError ( -text => 'REGEX() called with unsafe ?{} pattern' );
+	}
 	if (@_) {
 		my $data	= shift;
 		my $flags	= $data->literal_value;
@@ -521,25 +525,25 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 		: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 };
 
-# fn:compare
-$RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionscompare"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:str';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# fn:not
-$RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsnot"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:str';
-	return (0 != ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb)));
-};
+# # fn:compare
+# $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionscompare"}	= sub {
+# 	my $query	= shift;
+# 	my $bridge	= shift;
+# 	my $nodea	= shift;
+# 	my $nodeb	= shift;
+# 	my $cast	= 'sop:str';
+# 	return ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb));
+# };
+# 
+# # fn:not
+# $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsnot"}	= sub {
+# 	my $query	= shift;
+# 	my $bridge	= shift;
+# 	my $nodea	= shift;
+# 	my $nodeb	= shift;
+# 	my $cast	= 'sop:str';
+# 	return (0 != ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb)));
+# };
 
 # fn:matches
 $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub {
@@ -562,7 +566,7 @@ $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub
 	return undef if (index($pattern, '(?{') != -1);
 	return undef if (index($pattern, '(??{') != -1);
 	my $flags	= blessed($f) ? $f->literal_value : '';
-
+	
 	my $matches;
 	if ($flags) {
 		$pattern	= "(?${flags}:${pattern})";
@@ -620,7 +624,6 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
-	require I18N::LangTags;
 	my $node	= shift;
 	my $lang	= shift;
 	my $litlang	= $node->literal_value_language;
@@ -713,7 +716,7 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $value	= shift;
-	my $func	= RDF::Query::Algebra::Expr::Function->new( 'sparql:str', $value );
+	my $func	= RDF::Query::Expression::Function->new( 'sparql:str', $value );
 	
 	my $string	= Dumper( $func->evaluate( undef, undef, {} ) );
 	no warnings 'uninitialized';
@@ -725,7 +728,7 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 ### func:bloom( ?var, "frozen-bloom-filter" ) => true iff str(?var) is in the bloom filter.
 {
 	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
-	sub BLOOM_ADD_NODE_MAP_TO_STREAM {
+	sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
 		my $query	= shift;
 		my $bridge	= shift;
 		my $stream	= shift;
@@ -733,16 +736,14 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 		my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
 		$stream->add_extra_result_data('bnode-map', $nodemap);
 	}
-	RDF::Query->add_hook('http://kasei.us/code/rdf-query/hooks/function_init', sub {
+	push( @{ $RDF::Query::hooks{ 'http://kasei.us/code/rdf-query/hooks/function_init' } }, sub {
 		my $query		= shift;
 		my $function	= shift;
-		warn "function init: " . $function->uri_value if ($debug);
-		$query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }	= {};
 		if ($function->uri_value eq $BLOOM_URL) {
-			warn "adding bloom filter result stream hook" if ($debug);
-			$query->add_hook( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
+			$query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }	||= {};
+			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&_BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
 		}
-	});
+	} );
 	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
 		my $query	= shift;
 		my $bridge	= shift;
@@ -765,8 +766,8 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 			my $ok	= $bloom->check( $string );
 			warn "-> ok\n" if ($ok and $debug);
 			if ($ok) {
-				push( @{ $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' }{ $value->as_string } }, $string );
-				warn Dumper($query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' });
+				my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
+				push( @{ $nodemap->{ $value->as_string } }, $string );
 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 			}
 		}

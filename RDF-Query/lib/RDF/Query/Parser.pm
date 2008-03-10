@@ -180,7 +180,7 @@ sub new_unary_expression {
 	my $self	= shift;
 	my $op		= shift;
 	my $operand	= shift;
-	return RDF::Query::Algebra::Expr::Unary->new( $op, $operand );
+	return RDF::Query::Expression::Unary->new( $op, $operand );
 }
 
 =item C<new_binary_expression ( $operator, @operands )>
@@ -193,7 +193,7 @@ sub new_binary_expression {
 	my $self		= shift;
 	my $op			= shift;
 	my @operands	= @_[0,1];
-	return RDF::Query::Algebra::Expr::Binary->new( $op, @operands );
+	return RDF::Query::Expression::Binary->new( $op, @operands );
 }
 
 =item C<new_nary_expression ( $operator, @operands )>
@@ -206,7 +206,7 @@ sub new_nary_expression {
 	my $self		= shift;
 	my $op			= shift;
 	my @operands	= @_;
-	return RDF::Query::Algebra::Expr::Binary->new( $op, @operands );
+	return RDF::Query::Expression::Binary->new( $op, @operands );
 }
 
 =item C<new_logical_expression ( $operator, @operands )>
@@ -220,7 +220,7 @@ sub new_logical_expression {
 	my $op			= shift;
 	my @operands	= @_;
 	die $op;
-	return RDF::Query::Algebra::Expr->new( $op, @operands );
+	return RDF::Query::Expression->new( $op, @operands );
 }
 
 =item C<new_function_expression ( $function, @operands )>
@@ -236,7 +236,7 @@ sub new_function_expression {
 	unless (blessed($function)) {
 		$function	= RDF::Query::Node::Resource->new( $function );
 	}
-	return RDF::Query::Algebra::Expr::Function->new( $function, @operands );
+	return RDF::Query::Expression::Function->new( $function, @operands );
 }
 
 =item C<new_filter ( $filter_expr, $pattern )>

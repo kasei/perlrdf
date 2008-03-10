@@ -220,7 +220,7 @@ sub execute {
 	
 	my $expr		= $self->expr;
 	my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my $filter		= RDF::Query::Algebra::Expr::Function->new( $bool, $expr );
+	my $filter		= RDF::Query::Expression::Function->new( $bool, $expr );
 	my $pattern		= $self->pattern;
 	my $stream		= sgrep {
 						my $bound	= $_;

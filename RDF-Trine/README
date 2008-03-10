@@ -50,6 +50,23 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.102 (2008-03-07)
+
+     * Added length() method to Materialized bindings iterator class.
+     * Removed bloom filter construction from bindings iterator (RDF::Query code now does this itself).
+     * Fixed escaping of backslashes in Literal node serialization.
+
+  Version 0.101 (2008-03-04)
+
+     * Added an RDF/XML parser based on RDF::Core::Parser.
+     * Added Bloom filter support for Materialized bindings iterators.
+     * Fixed IRI workaround using the URI module.
+     * Turtle parser now uses Data::UUID for unique names.
+     * Fixed turtle parser bug for Verb testing.
+     * Added RDF::Trine::Statement::Quad::from_redland method.
+     * DBI store now constrains variable node types based on position in a statement.
+     * Added support for BOUND(), ISLITERAL(), ISURI() and ISIRI() functions in DBI store.
+
   Version 0.100 (2008-02-18)
 
      * Initial public release.

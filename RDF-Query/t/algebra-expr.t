@@ -41,8 +41,8 @@ my $dt1		= RDF::Query::Node::Literal->new( '2008-01-01T00:00:00Z', undef, 'http:
 my $cv		= RDF::Query::Node::Literal->new( '1', undef, 'http://example.org/mytype' );
 my $ct		= RDF::Query::Node::Literal->new( 'true', undef, 'http://example.org/mytype' );
 
-my $un	= 'RDF::Query::Algebra::Expr::Unary';
-my $bin	= 'RDF::Query::Algebra::Expr::Binary';
+my $un	= 'RDF::Query::Expression::Unary';
+my $bin	= 'RDF::Query::Expression::Binary';
 
 {
 	# NUMERIC OPERATORS

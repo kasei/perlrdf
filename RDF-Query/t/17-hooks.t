@@ -37,19 +37,18 @@ END
 		my $stream	= $bridge->get_statements( undef, $long, undef );
 #		my @stmts	= $model->find_statements( $st );
 #		foreach my $stmt (@stmts) {
-		while (my $stmt = $stream->()) {
+		while (my $stmt = $stream->next) {
 			my $l	= $bridge->literal_value( $bridge->object( $stmt ) );
 			my $dt	= $bridge->literal_datatype( $bridge->object( $stmt ) );
 			$l		= sprintf( '%0.6f', ++$l );
-			
 			$bridge->remove_statement( $stmt );
-			
+
 			my $lit	= $bridge->new_literal( $l, undef, $dt );
 			my $add	= $bridge->new_statement( $bridge->subject($stmt), $bridge->predicate($stmt), $lit );
 			$bridge->add_statement( $add );
 		}
 	} );
-	
+
 	my $count	= 0;
 	my $stream	= $query->execute();
 	my $bridge	= $query->bridge;
