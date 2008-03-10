@@ -18,7 +18,7 @@ SHA1 3ea7bc890abc28c32cdb4413762ee0869cad4c18 Changes.ttl
 SHA1 7b40858331f4f663a9f2de2a1d64b37cb65e3a8c MANIFEST
 SHA1 5a111d378ef6e012507a0f3c38d2b77c4b177f23 META.yml
 SHA1 e971ba5cb9f3f5bcfa3f91bf12b7589bd4ce0867 Makefile.PL
-SHA1 d5f35f57b9b9f128236a2d25c27aed0228009b5b README
+SHA1 b158d650eed94294a752ea73a5d48ef7629e1899 README
 SHA1 d49ee0e3d3bd2500f0353a7d058bfb3b802455ce bin/rdf_init_store.pl
 SHA1 5c8080b12c8d74dbec699486658d0a78c10b2d15 bin/rdf_parse_turtle.pl
 SHA1 19bb75ad6c986f4c2c9a94232c06ed0117be8dd9 bin/rdf_store_add_file.pl
@@ -29,7 +29,7 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 936b3334d584da5d4f24c84126988b860bb49a09 lib/RDF/Trine.pm
+SHA1 d780889be12e42c86cd46291ef6344d1902dc443 lib/RDF/Trine.pm
 SHA1 e697bb67b36ce05297c0b8193955a15d0a566343 lib/RDF/Trine/Error.pm
 SHA1 438d9afe89fff802ac94935e8a06b84e611ba50f lib/RDF/Trine/Iterator.pm
 SHA1 f9545fe495a29ebe211e1c68b3a403be66ecd9c2 lib/RDF/Trine/Iterator/Bindings.pm
@@ -53,7 +53,7 @@ SHA1 b9129e4d6e02cd8005ec813f9839ce2ec5d0c509 lib/RDF/Trine/Parser/Turtle.pm
 SHA1 5213663d0f0b652eb399aefefb244c76ed0860a3 lib/RDF/Trine/Pattern.pm
 SHA1 4bbae34da27b0a7925e7fc211bc2af4b86db78f3 lib/RDF/Trine/Statement.pm
 SHA1 e2c61b0bc39ec3847b8cf766c9cb3d13ed7832ff lib/RDF/Trine/Statement/Quad.pm
-SHA1 fa574bf7a93f18ee6910d78b283c247dac1d06a1 lib/RDF/Trine/Store/DBI.pm
+SHA1 bec4ef53ff16b7f06d9ce813e7da0df32226d831 lib/RDF/Trine/Store/DBI.pm
 SHA1 21ef5be132b87719729ad6cfb37130ea8040d401 t/00.load.t
 SHA1 b61163d986da50ea388324ce2d552dc922e41c09 t/data/rdfxml/bad-00.nt
 SHA1 41ed4443a2de8a8c5903b8d818812527ee4c2341 t/data/rdfxml/bad-00.rdf
@@ -292,11 +292,11 @@ SHA1 7badd9f3536ff0a34997d518fe0eb51aaba24982 t/parser-turtle.t
 SHA1 6da39b48ce64b584e4c3274bff96fc76ff484820 t/pod-coverage.t
 SHA1 0190346d7072d458c8a10a45c19f86db641dcc48 t/pod.t
 SHA1 30bd563286d8ecab58027068d884a5c87e9441c6 t/store-context.t
-SHA1 e2614660f9b8f39eff75d3d6865b5afc10916521 t/store-triple_sql.t
+SHA1 a1af3e16000d19180a470d7bdad90e9729d89650 t/store-triple_sql.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH0giohPK6VMqoyC0RAlkbAJ9VRno+FyPHPYpOw7yr0t2fYFlEBwCfTRCD
-+518PeVGXY8EZUQKi6aMzDI=
-=uof7
+iD8DBQFH1Zh7hPK6VMqoyC0RAtTzAJ9jmaMTgYFODGEsRefq72ZnF5ByvQCfW/BG
+ZwX0dU0xFlZIZYv+aVkzyDk=
+=kSng
 -----END PGP SIGNATURE-----

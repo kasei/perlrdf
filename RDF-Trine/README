@@ -50,6 +50,10 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.103 (2008-03-10)
+
+     * Updated to recognize (renamed) RDF::Query::Expression class.
+
   Version 0.102 (2008-03-07)
 
      * Added length() method to Materialized bindings iterator class.
