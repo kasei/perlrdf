@@ -75,7 +75,7 @@ sub referenced_functions {
 	my @list;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg)) {
-			if ($arg->isa('RDF::Query::Algebra::Expr::Function')) {
+			if ($arg->isa('RDF::Query::Expression::Function')) {
 				push(@list, $arg->uri);
 			} elsif ($arg->isa('RDF::Query::Algebra')) {
 				my @funcs	= $arg->referenced_functions;
