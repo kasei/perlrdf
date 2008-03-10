@@ -15,15 +15,14 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 a56446d9da0d8a1463e92edfa736c1601641b4db Changes.ttl
-SHA1 4e402faefa06a81890c730c84ca4e0fa059941a4 MANIFEST
-SHA1 9522197bca243bcdd8d1072cfbe80883e1188d3d META.yml
+SHA1 3f56dbc0c663563f470f7ad54d58cfb1ed5641a8 MANIFEST
+SHA1 8e1b7fd335c608e057d3b65a0d0ac9f191487ca0 META.yml
 SHA1 a284d85a6dfb2b5af3a9fa89c061b52acfc01970 Makefile.PL
-SHA1 a8ec1156a7822c8cd53526b5e1ef1958c48c5111 README
-SHA1 bf81a081888a8242fa5b07b95d525f1fd4d35637 README.html
+SHA1 d9a21092666412426d30e6d6f7cd8e7e8b822ac5 README
+SHA1 42133da6091b3167d62dbd6888ecc3f1be08cfd6 README.html
 SHA1 8e2b50ac8c0ae349b8d6b20fd0030764d8756c79 bin/deparse.pl
 SHA1 9feee6cb90bff63eef06ac623f7983876d58533d bin/failing_earl_tests.sh
 SHA1 623b596b2c6bb16bd481fb7478ce6df33ff7084c bin/generate_parsers.sh
-SHA1 0209e44d872120084f9046508a94dc04e73edda2 bin/harness.pl
 SHA1 01c8cfa8d67c9d46b1f0288ce9e759782a6da090 bin/open-test-files.sh
 SHA1 c3b0ab54f2ca8f1fd44a1d57cd2ebbe7f9fe1a74 bin/parse.pl
 SHA1 0b7d2af82ec39047f6a43d23f18daa45fd00b56e bin/parse_profile.pl
@@ -48,7 +47,7 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 c879cfdc32fc6c0c9ceada30b5181fd4eab90dbf lib/RDF/Query.pm
+SHA1 d27b6a2455b4f6022c86556980ad840e909b09c1 lib/RDF/Query.pm
 SHA1 84c14b753a4adb2338a098cf13b0240462df2e09 lib/RDF/Query/Algebra.pm
 SHA1 47da874128e37daf12c1a352328e4ff16d77c63e lib/RDF/Query/Algebra/Aggregate.pm
 SHA1 32a0a545ebf7cb815d1d231ca5b45a9dcda1462f lib/RDF/Query/Algebra/BasicGraphPattern.pm
@@ -69,7 +68,7 @@ SHA1 10cb83e031e62241b36489d8be24a65d7ea33a1b lib/RDF/Query/Expression/Binary.pm
 SHA1 839e59f790d048a6a5dc1da3076709082b35ef3e lib/RDF/Query/Expression/Function.pm
 SHA1 7bd411cc38df92a963acd254eab68e2ff08fb1c3 lib/RDF/Query/Expression/Nary.pm
 SHA1 3c5803d6df664f85b228fa0bb0338de6d658333e lib/RDF/Query/Expression/Unary.pm
-SHA1 cc9325ed25891187e720eae63ef6f75a2ca5a951 lib/RDF/Query/Functions.pm
+SHA1 de7f35fec416f8aa500b995bec18152e39597bd8 lib/RDF/Query/Functions.pm
 SHA1 5819b1155c35b58178ec2f548243d7bf877ffa42 lib/RDF/Query/Model.pm
 SHA1 57c60b72b61da7a94a33c42b85d6fdbe14e33eb6 lib/RDF/Query/Model/RDFCore.pm
 SHA1 952da1c7c32150a0943ea671172706377f78f4a5 lib/RDF/Query/Model/RDFTrine.pm
@@ -129,7 +128,7 @@ SHA1 0a85e863f2e60959cb0060e6ac45f36b191f6ff9 t/sha1.js.asc
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH01MbhPK6VMqoyC0RAsjQAJkBswnykyCoIF4Ns5ch9973pqGOJQCeLpCj
-b/sPL7c/fcpdBdOdDSeNIYY=
-=WGqb
+iD8DBQFH1I+GhPK6VMqoyC0RAlU/AJ9xuQtybiQd7OSu42s8j/fcwECsxwCghgzj
+UeuUVCwTrJxYMndaeP2tw60=
+=rWbA
 -----END PGP SIGNATURE-----
