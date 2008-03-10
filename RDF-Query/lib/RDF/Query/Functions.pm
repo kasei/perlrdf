@@ -21,6 +21,7 @@ use Scalar::Util qw(blessed reftype looks_like_number);
 use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
+use I18N::LangTags;
 use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
@@ -506,6 +507,9 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 	
 	my $text	= $node->literal_value;
 	my $pattern	= $match->literal_value;
+	if (index($pattern, '(?{') != -1 or index($pattern, '(??{') != -1) {
+		throw RDF::Query::Error::FilterEvaluationError ( -text => 'REGEX() called with unsafe ?{} pattern' );
+	}
 	if (@_) {
 		my $data	= shift;
 		my $flags	= $data->literal_value;
@@ -520,25 +524,25 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 		: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 };
 
-# fn:compare
-$RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionscompare"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:str';
-	return ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb));
-};
-
-# fn:not
-$RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsnot"}	= sub {
-	my $query	= shift;
-	my $bridge	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	my $cast	= 'sop:str';
-	return (0 != ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb)));
-};
+# # fn:compare
+# $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionscompare"}	= sub {
+# 	my $query	= shift;
+# 	my $bridge	= shift;
+# 	my $nodea	= shift;
+# 	my $nodeb	= shift;
+# 	my $cast	= 'sop:str';
+# 	return ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb));
+# };
+# 
+# # fn:not
+# $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsnot"}	= sub {
+# 	my $query	= shift;
+# 	my $bridge	= shift;
+# 	my $nodea	= shift;
+# 	my $nodeb	= shift;
+# 	my $cast	= 'sop:str';
+# 	return (0 != ($RDF::Query::functions{$cast}->($query, $nodea) cmp $RDF::Query::functions{$cast}->($query, $nodeb)));
+# };
 
 # fn:matches
 $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub {
@@ -561,7 +565,7 @@ $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub
 	return undef if (index($pattern, '(?{') != -1);
 	return undef if (index($pattern, '(??{') != -1);
 	my $flags	= blessed($f) ? $f->literal_value : '';
-
+	
 	my $matches;
 	if ($flags) {
 		$pattern	= "(?${flags}:${pattern})";
@@ -619,7 +623,6 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
-	require I18N::LangTags;
 	my $node	= shift;
 	my $lang	= shift;
 	my $litlang	= $node->literal_value_language;

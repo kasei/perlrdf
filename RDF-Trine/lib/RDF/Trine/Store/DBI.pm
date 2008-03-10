@@ -294,7 +294,7 @@ sub add_statement {
 	my $context	= shift;
 	
 	my $dbh		= $self->dbh;
-	Carp::confess unless (blessed($stmt));
+# 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
@@ -383,7 +383,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-	Carp::confess unless (blessed($node));
+# 	Carp::confess unless (blessed($node));
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -835,7 +835,8 @@ using the same algorithm that Redland's mysql storage backend uses.
 
 =cut
 
-sub _mysql_hash {
+sub _mysql_hash;
+sub _mysql_hash_pp {
 	my $data	= shift;
 	my @data	= unpack('C*', md5( $data ));
 	my $sum		= Math::BigInt->new('0');
@@ -850,6 +851,14 @@ sub _mysql_hash {
 #	warn "= $sum\n";
 	$sum	=~ s/\D//;	# get rid of the extraneous '+' that pops up under perl 5.6
 	return $sum;
+}
+
+BEGIN {
+	eval "use RDF::Trine::XS;";
+	no strict 'refs';
+	*{ '_mysql_hash' }	= (RDF::Trine::XS->can('hash'))
+		? \&RDF::Trine::XS::hash
+		: \&_mysql_hash_pp;
 }
 
 =item C<< _mysql_node_hash ( $node ) >>
@@ -884,8 +893,8 @@ sub _mysql_node_hash {
 	} else {
 		return undef;
 	}
-	
-	my $hash	= _mysql_hash( $data );
+	my $hash;
+	$hash	= _mysql_hash( $data );
 	return $hash;
 }
 
@@ -934,7 +943,7 @@ Returns the name of the underlying model.
 
 sub model_name {
 	my $self	= shift;
-	Carp::confess unless (blessed($self));
+# 	Carp::confess unless (blessed($self));
 	return $self->{model_name};
 }
 

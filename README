@@ -12,9 +12,3 @@ Currently, the project includes:
   * RDF::Trine::Namespace - A convenience class for easily constructing RDF node
     objects from URI namespaces.
   * RDF::Endpoint - A SPARQL endpoint based on RDF::Query.
-
-
-
-Note, the RDF::Base code is included in the repository, but isn't currently
-being supported. It has probably experienced some bitrot, and is mostly replaced
-by RDF::Store::DBI.

@@ -10,17 +10,17 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.000_03, released 7 March 2008.
+This document describes RDF::Query version 2.000_05, released 9 March 2008.
 
 =head1 SYNOPSIS
 
  my $query = new RDF::Query ( $rdql, undef, undef, 'rdql' );
  my @rows = $query->execute( $model );
  
- my $query = new RDF::Query ( $sparql, undef, undef, 'sparql' );
+ my $query = new RDF::Query ( $sparql );
  my $iterator = $query->execute( $model );
  while (my $row = $iterator->next) {
-   ...
+   print $row->{ var }->as_string;
  }
 
 =head1 DESCRIPTION
@@ -29,27 +29,60 @@ RDF::Query allows RDQL and SPARQL queries to be run against an RDF model, return
 of matching results.
 
 See L<http://www.w3.org/TR/rdf-sparql-query/> for more information on SPARQL.
+
 See L<http://www.w3.org/Submission/2004/SUBM-RDQL-20040109/> for more information on RDQL.
 
-=head1 REQUIRES
+=head1 CHANGES IN VERSION 2.000
 
-L<RDF::Redland|RDF::Redland> or L<RDF::Core|RDF::Core>
+There are many changes in the code between the 1.x and 2.x releases. Most of these
+changes will only affect queries that should have raised errors in the first place
+(SPARQL parsing, queries that use undefined namespaces, etc.). Beyond these changes,
+however, there are some significant API changes that will affect all users:
 
-L<Parse::RecDescent|Parse::RecDescent> (for RDF::Core)
+=over 4
 
-L<LWP|LWP>
+=item Use of RDF::Trine objects
 
-L<DateTime::Format::W3CDTF|DateTime::Format::W3CDTF>
+All nodes and statements returned by RDF::Query are now RDF::Trine objects
+(more specifically, RDF::Trine::Node and RDF::Trine::Statement objects). This
+differes from RDF::Query 1.x where nodes and statements were of the same type
+as the underlying model (Redland nodes from a Redland model and RDF::Core nodes
+from an RDF::Core model).
 
-L<Scalar::Util|Scalar::Util>
+In the past, it was possible to execute a query and not know what type of nodes
+were going to be returned, leading to overly verbose code that required examining
+all nodes and statements with the bridge object. This new API brings consistency
+to both the execution model and client code, greatly simplifying interaction
+with query results.
 
-L<I18N::LangTags|I18N::LangTags>
+=item Binding Result Values
 
-L<Storable|Storable>
+Binding result values returned by calling C<< $iterator->next >> are now HASH
+references (instead of ARRAY references), keyed by variable name. Where prior
+code might use this code (modulo model definition and namespace declarations):
 
-L<List::Utils|List::Utils>
+  my $sparql = 'SELECT ?name ?homepage WHERE { [ foaf:name ?name ; foaf:homepage ?homepage ] }';
+  my $query = RDF::Query->new( $sparql );
+  my $iterator = $query->execute( $model );
+  while (my $row = $iterator->()) {
+    my ($name, $homepage) = @$row;
+    # ...
+  }
 
-L<RDF::Trine::Iterator|RDF::Trine::Iterator>
+New code using RDF::Query 2.000 and later should instead use:
+
+  my $sparql = 'SELECT ?name ?homepage WHERE { [ foaf:name ?name ; foaf:homepage ?homepage ] }';
+  my $query = RDF::Query->new( $sparql );
+  my $iterator = $query->execute( $model );
+  while (my $row = $iterator->next) {
+    my $name = $row->{ name };
+    my $homepage = $row->{ homepage };
+    # ...
+  }
+
+(Also notice the new method calling syntax for retrieving rows.)
+
+=back
 
 =cut
 
@@ -93,7 +126,7 @@ BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
 	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION		= '2.000_04';
+	$VERSION		= '2.000_05';
 	$DEFAULT_PARSER	= 'sparql';
 }
 
@@ -106,10 +139,13 @@ BEGIN {
 
 =item C<new ( $query, $baseuri, $languri, $lang )>
 
-Returns a new RDF::Query object for the query specified.
-The query language used will be set if $languri or $lang
-is passed as the URI or name of the query language, otherwise
-the query defaults to SPARQL.
+Returns a new RDF::Query object for the specified C<$query>.
+The query language defaults to SPARQL, but may be set specifically by
+specifying either C<$languri> or C<$lang>, whose acceptable values are:
+
+  $lang: 'rdql', 'sparql', 'tsparql', or 'sparqlp'
+
+  $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
 
 =cut
 sub new {
@@ -137,9 +173,6 @@ sub new {
 	
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
-#	my $parser	= ($lang eq 'rdql' or $languri eq 'http://jena.hpl.hp.com/2003/07/query/RDQL')
-#				? RDF::Query::Parser::RDQL->new()
-#				: RDF::Query::Parser::SPARQL->new();
 	my $parsed	= $parser->parse( $query, $baseuri );
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
@@ -185,10 +218,10 @@ sub new {
 
 =item C<get ( $model )>
 
-Executes the query using the specified model,
-and returns the first row found.
+Executes the query using the specified model, and returns the first matching row as a LIST of values.
 
 =cut
+
 sub get {
 	my $self	= shift;
 	my $stream	= $self->execute( @_ );
@@ -215,7 +248,6 @@ sub execute {
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
-	local($::NO_BRIDGE)	= 0;
 	$self->{parsed}	= dclone( $self->{parsed_orig} );
 	my $parsed	= $self->{parsed};
 	
@@ -1350,7 +1382,6 @@ Returns the model bridge of the default graph.
 =cut
 
 sub bridge {
-	Carp::confess if ($::NO_BRIDGE);
 	my $self	= shift;
 	if (@_) {
 		$self->{bridge}	= shift;
@@ -1488,7 +1519,44 @@ __END__
 
 =back
 
-=head1 Defined Hooks
+=head1 REQUIRES
+
+=over 4
+
+=item * L<RDF::Trine|RDF::Trine>
+
+=item * L<DateTime|DateTime>
+
+=item * L<DateTime::Format::W3CDTF|DateTime::Format::W3CDTF>
+
+=item * L<Error|Error>
+
+=item * L<I18N::LangTags|I18N::LangTags>
+
+=item * L<JSON|JSON>
+
+=item * L<List::Util|List::Util>
+
+=item * L<List::MoreUtils|List::MoreUtils>
+
+=item * L<LWP|LWP>
+
+=item * L<Parse::RecDescent|Parse::RecDescent>
+
+=item * L<Scalar::Util|Scalar::Util>
+
+=item * L<Set::Scalar|Set::Scalar>
+
+=item * L<Storable|Storable>
+
+=item * L<RDF::Redland|RDF::Redland> or L<RDF::Core|RDF::Core> for optional model support.
+
+=back
+
+=head1 DEFINED HOOKS
+
+The following hook URIs are defined and may be used to extend the query engine
+functionality using the C<< add_hook >> method:
 
 =over 4
 
@@ -1502,37 +1570,15 @@ Args: ( $query, $bridge )
 C<$query> is the RDF::Query object.
 C<$bridge> is the model bridge (RDF::Query::Model::*) object.
 
-=back
+=item http://kasei.us/code/rdf-query/hooks/post-execute
 
-=head1 Supported Built-in Operators and Functions
+Called immediately before returning a result iterator from the execute method.
 
-=over 4
+Args: ( $query, $bridge, $iterator )
 
-=item * REGEX, BOUND, ISURI, ISBLANK, ISLITERAL
-
-=item * Data-typed literals: DATATYPE(string)
-
-=item * Language-typed literals: LANG(string), LANGMATCHES(string, lang)
-
-=item * Casting functions: xsd:dateTime, xsd:string
-
-=item * dateTime-equal, dateTime-greater-than
-
-=back
-
-=head1 TODO
-
-=over 4
-
-=item * Built-in Operators and Functions
-
-L<http://www.w3.org/TR/rdf-sparql-query/#StandardOperations>
-
-Casting functions: xsd:{boolean,double,float,decimal,integer}, rdf:{URIRef,Literal}, STR
-
-XPath functions: numeric-equal, numeric-less-than, numeric-greater-than, numeric-multiply, numeric-divide, numeric-add, numeric-subtract, not, matches
-
-SPARQL operators: bound, isURI, isBlank, isLiteral, str, lang, datatype, logical-or, logical-and
+C<$query> is the RDF::Query object.
+C<$bridge> is the model bridge (RDF::Query::Model::*) object.
+C<$iterator> is a RDF::Trine::Iterator object.
 
 =back
 

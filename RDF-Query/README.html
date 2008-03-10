@@ -18,16 +18,29 @@
 	<h2>Requirements</h2>
 		<p>To install RDF::Query you'll need the following perl modules installed:</p>
 		<ul>
-			<li>RDF::Core <em>or</em> RDF::Redland</li>
-			<li>Parse::RecDescent</li>
+			<li>DateTime</li>
 			<li>DateTime::Format::W3CDTF</li>
-			<li>JSON</li>
+			<li>Digest::SHA1</li>
 			<li>Error</li>
+			<li>I18N::LangTags</li>
+			<li>JSON</li>
+			<li>List::Util</li>
+			<li>List::MoreUtils</li>
+			<li>LWP</li>
+			<li>Parse::RecDescent</li>
+			<li>Parse::RecDescent</li>
+			<li>RDF::Trine</li>
+			<li>Scalar::Util</li>
+			<li>Set::Scalar</li>
 			<li>Storable</li>
+			<li>URI</li>
 		</ul>
 		<p>The following additional modules are recommended for some functionality:</p>
 		<ul>
-			<li>LWP::Simple</li>
+			<li>RDF::Core</li>
+			<li>RDF::Redland</li>
+			<li>JavaScript</li>
+			<li>Geo::Distance</li>
 		</ul>
 	<h2 id="installing">Installing RDF::Query</h2>
 		<p>To install, run:</p>
@@ -38,6 +51,35 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
+		<h3 id="v2_000">Version 2.000 (2008-XX-XX)</h3>
+			<ul>
+				<li>Moved RDF::Query::Stream into RDF::Trine::Iterator namespace.</li>
+				<li>Reshuffled SPARQL parsers tests.</li>
+				<li>Added support for RDF::Trine::Model.</li>
+				<li>RDF::Trine::Iterator can serialize to XML and JSON natively; Updated tests accordingly.</li>
+				<li>rdf namespace is only added by default for RDQL.</li>
+				<li>Fixed bug where the wrong bridge object would be returned for queries with FROM clauses.</li>
+				<li>Moved query_more code to Algebra classes.</li>
+				<li>Added RDF::Query::pattern method to return the GGP algebra pattern for the query.</li>
+				<li>Added RDF::Query::as_sparql method to serialize query as SPARQL string.</li>
+				<li>Removed unused RDF::Query::set_named_graph_query method.</li>
+				<li>Fixed bug where triples from a FROM clause were loaded into the underlying persistent store.</li>
+				<li>Added POD to RDF::Query::Node classes.</li>
+				<li>Added equal method to RDF::Query::Node classes.</li>
+				<li>RDF::Query::Node::Blank constructor now optionally produces identifiers.</li>
+				<li>Merged tSPARQL parsing code into new SPARQLP parser.</li>
+				<li>Added definite_variables method to RDF::Query::Algebra classes.</li>
+				<li>Triple class now serializes rdf:type shortcut 'a' appropriately.</li>
+				<li>Removed 'VAR' type from ::Node::Variable object structure.</li>
+				<li>Updated code to always expect a HASH reference from ::Bindings iterator.</li>
+				<li>Added more (sparql and see) serialization tests.</li>
+				<li>Removed old fixup code, replaced by ::Algebra fixup methods.</li>
+				<li>Moved FROM clause data loading to its own method.</li>
+				<li>Started removing old code (RDF::Base, direct DBI use, AUTOLOAD, profiling).</li>
+				<li>Moved general count_statements() method into bridge superclass.</li>
+				<li>Fixed SQL compiler to work with ::Algebra and ::Node classes.</li>
+				<li>Added as_native method to bridge superclass for converting ::Node objects to bridge-native objects.</li>
+			</ul>
 		<h3 id="v1_501">Version 1.501 (2007-11-15)</h3>
 			<ul>
 				<li>Fixed CONSTRUCT+OPTIONAL bug.</li>

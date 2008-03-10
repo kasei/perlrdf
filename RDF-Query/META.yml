@@ -3,7 +3,7 @@ meta-spec:
   version: 1.3
   url: http://module-build.sourceforge.net/META-spec-v1.3.html
 name: RDF-Query
-version: 2.000_03
+version: 2.000_05
 abstract: A pure-perl impelmentation of the RDF query languages SPARQL and RDQL.
 author:
   - Gregory Todd Williams <gwilliams@cpan.org>
@@ -21,18 +21,18 @@ no_index:
     - inc
     - t
 recommends:
-  LWP::Simple: 0
   RDF::Redland: 1
+  RDF::Core: 0
   JavaScript: 0
-  Getopt::Simple: 0
-  Digest::SHA1: 0
   Geo::Distance: 0.09
 requires:
+  Digest::SHA1: 0
+  LWP::Simple: 0
   DateTime::Format::W3CDTF: 0
   Error: 0
+  I18N::LangTags: 0
   JSON: 2
   Parse::RecDescent: 0
-  RDF::Core: 0
   Scalar::Util: 0
   Storable: 0
   URI: 0
