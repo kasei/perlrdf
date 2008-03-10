@@ -276,7 +276,6 @@ sub execute {
 									} (keys %$bindings);
 						return \%cast;
 					} RDF::Trine::Iterator->from_string( $content );
-	warn 'SERVICE got stream: ' . Dumper($stream);
 	return $stream;
 }
 
