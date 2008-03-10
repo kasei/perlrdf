@@ -39,7 +39,7 @@ use XML::Twig;
 use Data::Dumper;
 use Carp qw(carp);
 use List::MoreUtils qw(uniq);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 
 use RDF::Trine::Node;
 
@@ -236,14 +236,6 @@ sub next_result {
 		$self->{_finished}	= 1;
 	}
 
-	my $args	= $self->_args;
-# 	if ($args->{named}) {
-# 		if ($self->_bridge->supports('named_graph')) {
-# 			my $bridge	= $self->_bridge;
-# 			$args->{context}	= $bridge->get_context( $self->{_stream}, %$args );
-# 		}
-# 	}
-	
 	$self->{_open}	= 1;
 	$self->{_row}	= $value;
 	return $value;
@@ -303,22 +295,6 @@ sub close {
 	undef( $self->{ _stream } );
 	return;
 }
-
-# =item C<< context >>
-# 
-# Returns the context node of the current result (if applicable).
-# 
-# =cut
-# 
-# sub context {
-# 	my $self	= shift;
-# 	my $args	= $self->_args;
-# 	my $bridge	= $args->{bridge};
-# 	my $stream	= $self->{_stream};
-# 	my $context	= $bridge->get_context( $stream, %$args );
-# 	return $context;
-# }
-
 
 =item C<< concat ( $stream ) >>
 
@@ -549,7 +525,7 @@ sub construct_args {
 	my $self	= shift;
 	my $type	= $self->type;
 	my $args	= $self->_args || {};
-	return ($type, []);
+	return ($type, [], %$args);
 }
 
 =begin private
@@ -616,13 +592,13 @@ sub add_extra_result_data {
 	my $self	= shift;
 	my $tag		= shift;
 	my $data	= shift;
-	my $extra	= $self->_args->{ extra_result_data };
-	push( @{ $extra->{ $tag } }, $data );
+	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
 }
 
 sub extra_result_data {
 	my $self	= shift;
-	my $extra	= $self->_args->{ extra_result_data } || {};
+	my $args	= $self->_args;
+	my $extra	= $args->{ extra_result_data };
 	return $extra;
 }
 
