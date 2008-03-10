@@ -10,6 +10,7 @@ bin/tparse.pl
 bin/timport.pl
 Changes.ttl
 data/about.xrdf
+data/bnode-person.rdf
 data/Flower-2.rdf
 data/foaf.xrdf
 data/temporal.rdf
