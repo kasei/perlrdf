@@ -292,11 +292,11 @@ SHA1 7badd9f3536ff0a34997d518fe0eb51aaba24982 t/parser-turtle.t
 SHA1 6da39b48ce64b584e4c3274bff96fc76ff484820 t/pod-coverage.t
 SHA1 0190346d7072d458c8a10a45c19f86db641dcc48 t/pod.t
 SHA1 30bd563286d8ecab58027068d884a5c87e9441c6 t/store-context.t
-SHA1 a1af3e16000d19180a470d7bdad90e9729d89650 t/store-triple_sql.t
+SHA1 afc944ae9e587bf9ce6e6d6f28b7cf8d3abe23c8 t/store-triple_sql.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH1Zh7hPK6VMqoyC0RAtTzAJ9jmaMTgYFODGEsRefq72ZnF5ByvQCfW/BG
-ZwX0dU0xFlZIZYv+aVkzyDk=
-=kSng
+iD8DBQFH1ZvhhPK6VMqoyC0RAr5zAJ9sTGQB/EnwO4Gm6KpqNwK5LhdW7QCgrCIK
+6LwftLKtvxrSH762W1QA88U=
+=dqgO
 -----END PGP SIGNATURE-----
