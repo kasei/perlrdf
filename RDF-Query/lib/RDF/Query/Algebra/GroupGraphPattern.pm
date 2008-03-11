@@ -31,6 +31,7 @@ our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
 ######################################################################
@@ -199,6 +200,8 @@ sub execute {
 		
 		my $handled	= 0;
 		
+		our %SERVICE_BLOOM_IGNORE;	# keep track of which service calls throw an error so we don't keep trying it...
+		
 		### cooperate with ::Algebra::Service so that if we've already got a stream
 		### of results from previous patterns, and the next pattern is a remote
 		### service call, we can try to send along a bloom filter function.
@@ -206,26 +209,27 @@ sub execute {
 		### function), then fall back on making the call without the filter.
 		try {
 			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
-				my $m		= $stream->materialize;
-				
-				my @vars	= $triple->referenced_variables;
-				my %svars	= map { $_ => 1 } $stream->binding_names;
-				my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
-				
-				my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
-				
-				my $new;
-				try {
+				unless ($SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }) {
+	# 				local($RDF::Trine::Iterator::debug)	= 1;
+					$stream		= $stream->materialize;
+					my $m		= $stream;
+					
+					my @vars	= $triple->referenced_variables;
+					my %svars	= map { $_ => 1 } $stream->binding_names;
+					my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
+					
+					my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
+					
 					my $pattern	= $triple->add_bloom( $var, $f );
-					$new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
+					my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
 					throw RDF::Query::Error unless ($new);
-				} otherwise {
-					warn "*** Wasn't able to use :bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
-					$new	= $triple->execute( $query, $bridge, $bound, $context, %args );
-				};
-				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $m, $new, %args );
-				$handled	= 1;
+					$stream	= $self->join_bnode_streams( $m, $new, $query, $bridge, $bound );
+					$handled	= 1;
+				}
 			}
+		} otherwise {
+			$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
+			warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
 		};
 		
 		unless ($handled) {
@@ -243,6 +247,108 @@ sub execute {
 	}
 	
 	return $stream;
+}
+
+=item C<< join_bnode_streams ( $streamA, $streamB, $query, $bridge ) >>
+
+A modified inner-loop join that relies on there being bnode identity hints in
+the data returned by C<< $streamB->extra_result_data >>. These hints are
+combined with locally computed identity values for the items from C<< $streamA >>
+and the streams are merged using a natural join where equality is computed
+either on direct node equality or on any intersection of the identity hints.
+
+The identity hints and locally computed identity values are computed using
+Functional and InverseFunctional property values using N3 syntax. For example,
+a blank node '(r1)' might have identity hints using foaf:mbox_sha1sum such as:
+
+  $extra_result_data = {
+      'bnode-map' => [ {
+          '(r1)' => ['!<http://xmlns.com/foaf/0.1/mbox_sha1sum>"26fb6400147dcccfda59717ff861db9cb97ac5ec"']
+      } ]
+  };
+
+=cut
+
+sub join_bnode_streams {
+	my $self	= shift;
+	my $astream	= shift;
+	my $bstream	= shift;
+	my $query	= shift;
+	my $bridge	= shift;
+	
+	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
+	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
+	
+	################################################
+	### BNODE MAP STUFF
+	my $b_extra	= $bstream->extra_result_data || {};
+	my (%b_map);
+	foreach my $h (@{ $b_extra->{'bnode-map'} || [] }) {
+		foreach my $id (keys %$h) {
+			my @values	= @{ $h->{ $id } };
+			push( @{ $b_map{ $id } }, @values );
+		}
+	}
+	my $b_map	= (%b_map) ? \%b_map : undef;
+	################################################
+	
+	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
+	my $a		= $astream->project( @names );
+	my $b		= $bstream->project( @names );
+	
+	my @results;
+	my @data	= $b->get_all();
+	no warnings 'uninitialized';
+	while (my $rowa = $a->next) {
+		LOOP: foreach my $rowb (@data) {
+			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+			my %keysa	= map {$_=>1} (keys %$rowa);
+			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
+			foreach my $key (@shared) {
+				my $val_a	= $rowa->{ $key };
+				my $val_b	= $rowb->{ $key };
+				my $defined	= 0;
+				foreach my $n ($val_a, $val_b) {
+					$defined++ if (defined($n));
+				}
+				if ($defined == 2) {
+					my $equal	= $val_a->equal( $val_b );
+					if (not $equal) {
+						my $names	= $b_map->{ $val_b->as_string };
+						if ($names) {
+							my $bnames	= Set::Scalar->new( @{ $names } );
+							my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
+							if ($debug) {
+								warn "anames: $anames\n";
+								warn "bnames: $bnames\n";
+							}
+							if (my $int = $anames->intersection( $bnames )) {
+								warn "node equality based on $int" if ($debug);
+								$equal	= 1;
+							}
+						}
+					}
+					
+					unless ($equal) {
+						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
+						next LOOP;
+					}
+				}
+			}
+			
+			my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
+			if ($debug) {
+				warn "JOINED:\n";
+				foreach my $key (keys %$row) {
+					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
+				}
+			}
+			push(@results, $row);
+		}
+	}
+	
+	my $args	= $astream->_args;
+	return $astream->_new( \@results, 'bindings', \@names, %$args );
 }
 
 1;

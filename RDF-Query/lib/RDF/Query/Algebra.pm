@@ -64,6 +64,28 @@ sub referenced_blanks {
 	return uniq(@list);
 }
 
+=item C<< referenced_functions >>
+
+Returns a list of the Function URIs used in this algebra expression.
+
+=cut
+
+sub referenced_functions {
+	my $self	= shift;
+	my @list;
+	foreach my $arg ($self->construct_args) {
+		if (blessed($arg)) {
+			if ($arg->isa('RDF::Query::Expression::Function')) {
+				push(@list, $arg->uri);
+			} elsif ($arg->isa('RDF::Query::Algebra')) {
+				my @funcs	= $arg->referenced_functions;
+				push(@list, @funcs);
+			}
+		}
+	}
+	return uniq(@list);
+}
+
 =item C<< check_duplicate_blanks >>
 
 Returns true if blank nodes respect the SPARQL rule of no blank-label re-use

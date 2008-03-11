@@ -118,7 +118,7 @@ sub add_bloom {
 	
 	my $pattern	= $self->pattern;
 	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom');
-	warn "Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query";
+	warn "Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query" if ($debug);
 	my $frozen	= $bloom->freeze;
 	my $literal	= RDF::Query::Node::Literal->new( $frozen );
 	my $expr	= RDF::Query::Expression::Function->new( $iri, $var, $literal );
@@ -268,8 +268,14 @@ sub execute {
 		throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 	}
 	my $content		= $resp->content;
-	warn $content;
-	my $stream		= RDF::Trine::Iterator->from_string( $content );
+	my $stream		= smap {
+						my $bindings	= $_;
+						return undef unless ($bindings);
+						my %cast	= map {
+										$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
+									} (keys %$bindings);
+						return \%cast;
+					} RDF::Trine::Iterator->from_string( $content );
 	return $stream;
 }
 

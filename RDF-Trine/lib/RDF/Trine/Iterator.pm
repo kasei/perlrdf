@@ -39,7 +39,7 @@ use XML::Twig;
 use Data::Dumper;
 use Carp qw(carp);
 use List::MoreUtils qw(uniq);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 
 use RDF::Trine::Node;
 
@@ -183,6 +183,7 @@ sub from_string {
 	my $value;
 	my @results;
 	my $result	= {};
+	my (%extrakeys, %extra);
 	
 	my $twig	= XML::Twig->new(
 		twig_handlers => {
@@ -197,6 +198,8 @@ sub from_string {
 							$value	= RDF::Trine::Node::Literal->new( $_->text, $lang, $dt )
 						},
 			boolean		=> sub { $bool	= ($_->text eq 'true') ? 1 : 0 },
+			extra		=> sub { push( @{ $extra{ $_->att('name') } }, { %extrakeys } ); %extrakeys = (); },
+			extrakey	=> sub { push(@{ $extrakeys{ $_->att('id') } }, $_->text); },
 		},
 	);
 	$twig->parse( $string );
@@ -204,7 +207,13 @@ sub from_string {
 	if (defined($bool)) {
 		return RDF::Trine::Iterator::Boolean->new( [$bool] );
 	} else {
-		return RDF::Trine::Iterator::Bindings->new( \@results, \@vars );
+		my $bindings	= RDF::Trine::Iterator::Bindings->new( \@results, \@vars, extra_result_data => \%extra );
+# 		foreach my $tag (keys %extra) {
+# 			foreach my $value (@{ $extra{ $tag } }) {
+# 				$bindings->add_extra_result_data( $tag, $value );
+# 			}
+# 		}
+		return $bindings;
 	}
 }
 
@@ -216,8 +225,8 @@ Returns the next item in the stream.
 
 =cut
 
-sub next { $_[0]->next_result }
-sub next_result {
+sub next_result { $_[0]->next }
+sub next {
 	my $self	= shift;
 	return if ($self->{_finished});
 	
@@ -227,14 +236,6 @@ sub next_result {
 		$self->{_finished}	= 1;
 	}
 
-	my $args	= $self->_args;
-# 	if ($args->{named}) {
-# 		if ($self->_bridge->supports('named_graph')) {
-# 			my $bridge	= $self->_bridge;
-# 			$args->{context}	= $bridge->get_context( $self->{_stream}, %$args );
-# 		}
-# 	}
-	
 	$self->{_open}	= 1;
 	$self->{_row}	= $value;
 	return $value;
@@ -294,22 +295,6 @@ sub close {
 	undef( $self->{ _stream } );
 	return;
 }
-
-# =item C<< context >>
-# 
-# Returns the context node of the current result (if applicable).
-# 
-# =cut
-# 
-# sub context {
-# 	my $self	= shift;
-# 	my $args	= $self->_args;
-# 	my $bridge	= $args->{bridge};
-# 	my $stream	= $self->{_stream};
-# 	my $context	= $bridge->get_context( $stream, %$args );
-# 	return $context;
-# }
-
 
 =item C<< concat ( $stream ) >>
 
@@ -388,6 +373,27 @@ sub join_streams {
 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
 	
+	################################################
+	### BNODE MAP STUFF
+	my $a_extra	= $astream->extra_result_data || {};
+	my $b_extra	= $bstream->extra_result_data || {};
+	my (%a_map, %b_map);
+	foreach my $h (@{ $a_extra->{'bnode-map'} || [] }) {
+		foreach my $id (keys %$h) {
+			my @values	= @{ $h->{ $id } };
+			push( @{ $a_map{ $id } }, @values );
+		}
+	}
+	foreach my $h (@{ $b_extra->{'bnode-map'} || [] }) {
+		foreach my $id (keys %$h) {
+			my @values	= @{ $h->{ $id } };
+			push( @{ $b_map{ $id } }, @values );
+		}
+	}
+	my $a_map	= (%a_map) ? \%a_map : undef;
+	my $b_map	= (%b_map) ? \%b_map : undef;
+	################################################
+	
 	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
 	my $b		= $bstream->project( @names );
@@ -397,7 +403,7 @@ sub join_streams {
 	no warnings 'uninitialized';
 	while (my $rowa = $a->next) {
 		LOOP: foreach my $rowb (@data) {
-			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=',$_,$row->{$_}->as_string) } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
 			my %keysa	= map {$_=>1} (keys %$rowa);
 			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
 			foreach my $key (@shared) {
@@ -408,7 +414,35 @@ sub join_streams {
 					$defined++ if (defined($n));
 				}
 				if ($defined == 2) {
-					unless ($val_a->equal($val_b)) {
+					my $equal	= $val_a->equal( $val_b );
+					if (not $equal) {
+						my $query 	= $args{ query };
+						my $bridge	= $args{ bridge };
+						if ($query and $bridge) {
+							warn 'join values and bnode maps: ' . Dumper($val_a, $val_b, $a_map, $b_map) if ($a_map or $b_map);
+							if ($a_map and $val_a->isa('RDF::Trine::Node::Blank')) {
+								my $anames	= Set::Scalar->new( @{ $a_map{ $val_a->blank_identifier } } );
+								my $bnames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_b, $query, $bridge, {} ) );
+								if (my $int = $anames->intersection( $bnames )) {
+									warn "node equality based on $int";
+									$equal	= 1;
+								}
+							} elsif ($b_map and $val_b->isa('RDF::Trine::Node::Blank')) {
+								my $bnames	= Set::Scalar->new( @{ $b_map{ $val_b->blank_identifier } } );
+								my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
+								warn "anames: $anames\n";
+								warn "bnames: $bnames\n";
+								if (my $int = $anames->intersection( $bnames )) {
+									warn "node equality based on $int";
+									$equal	= 1;
+								}
+							}
+						} else {
+							Carp::cluck "no query,bridge in args" if ($debug);
+						}
+					}
+					
+					unless ($equal) {
 						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
 						next LOOP;
 					}
@@ -491,7 +525,7 @@ sub construct_args {
 	my $self	= shift;
 	my $type	= $self->type;
 	my $args	= $self->_args || {};
-	return ($type, []);
+	return ($type, [], %$args);
 }
 
 =begin private
@@ -549,6 +583,24 @@ sub _stream {
 	return $self->{_stream};
 }
 
+
+=item C<< add_extra_result_data ( $tag, \%data ) >>
+
+=cut
+
+sub add_extra_result_data {
+	my $self	= shift;
+	my $tag		= shift;
+	my $data	= shift;
+	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
+}
+
+sub extra_result_data {
+	my $self	= shift;
+	my $args	= $self->_args;
+	my $extra	= $args->{ extra_result_data };
+	return $extra;
+}
 
 
 
