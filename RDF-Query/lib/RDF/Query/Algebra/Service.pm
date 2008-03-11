@@ -334,17 +334,11 @@ sub _names_for_node {
 	warn "  " x $depth . "name for node " . $node->as_string . "...\n" if ($debug);
 	
 	my @names;
+	my $parser	= RDF::Query::Parser::SPARQL->new();
 	if ($node->isa('RDF::Trine::Node::Blank')) {
-		my $n		= RDF::Query::Node::Variable->new('n');
-		my $p		= RDF::Query::Node::Variable->new('p');
-		my $o		= RDF::Query::Node::Variable->new('o');
-		
-		my $type	= RDF::Query::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 		{
-			our $sa		||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#sameAs');
-			my $s		= RDF::Query::Algebra::Triple->new( $n, $sa, $o );
-			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s );
-			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			our $sa		||= $parser->parse_pattern( '{ ?n <http://www.w3.org/2002/07/owl#sameAs> ?o }' );
+			my $iter	= $sa->execute( $query, $bridge, { n => $node } );
 			
 			while (my $row = $iter->next) {
 				my ($p, $o)	= @{ $row }{qw(p o)};
@@ -353,11 +347,8 @@ sub _names_for_node {
 		}
 		
 		{
-			our $fp		||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#FunctionalProperty');
-			my $s1		= RDF::Query::Algebra::Triple->new( $p, $type, $fp );
-			my $s2		= RDF::Query::Algebra::Triple->new( $o, $p, $n );
-			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s1, $s2 );
-			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			our $fp		||= $parser->parse_pattern( '{ ?o ?p ?n . ?p a <http://www.w3.org/2002/07/owl#FunctionalProperty> }' );
+			my $iter	= $fp->execute( $query, $bridge, { n => $node } );
 			
 			while (my $row = $iter->next) {
 				my ($p, $o)	= @{ $row }{qw(p o)};
@@ -366,11 +357,8 @@ sub _names_for_node {
 		}
 		
 		{
-			our $ifp	||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#InverseFunctionalProperty');
-			my $s1		= RDF::Query::Algebra::Triple->new( $p, $type, $ifp );
-			my $s2		= RDF::Query::Algebra::Triple->new( $n, $p, $o );
-			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s1, $s2 );
-			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			our $ifp	||= $parser->parse_pattern( '{ ?n ?p ?o . ?p a <http://www.w3.org/2002/07/owl#InverseFunctionalProperty> }' );
+			my $iter	= $ifp->execute( $query, $bridge, { n => $node } );
 			
 			while (my $row = $iter->next) {
 				my ($p, $o)	= @{ $row }{qw(p o)};
