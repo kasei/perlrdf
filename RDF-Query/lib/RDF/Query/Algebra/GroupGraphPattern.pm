@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
@@ -218,7 +218,8 @@ sub execute {
 					my %svars	= map { $_ => 1 } $stream->binding_names;
 					my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
 					
-					my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, 0.001 );
+					my $error	= $query->{_bloom_filter_error} || $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE || 0.001;
+					my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, $error );
 					
 					my $pattern	= $triple->add_bloom( $var, $f );
 					my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );

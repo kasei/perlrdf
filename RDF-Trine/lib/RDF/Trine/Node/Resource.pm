@@ -114,13 +114,19 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $uri		= $self->uri_value;
-	my $ns		= $context->{namespaces};
 	
 	if (ref($uri) and reftype($uri) eq 'ARRAY') {
 		my ($ns, $local)	= @$uri;
 		$ns	= '' if ($ns eq '__DEFAULT__');
 		return join(':', $ns, $local);
 	} else {
+		my $ns		= $context->{namespaces} || {};
+		while (my ($k, $v) = each(%$ns)) {
+			if (index($uri, $v) == 0) {
+				my $qname	= join(':', $k, substr($uri, length($v)));
+				return $qname;
+			}
+		}
 		my $string	= qq(<${uri}>);
 		foreach my $n (keys %$ns) {
 			if (substr($uri, 0, length($ns->{ $n })) eq $ns->{ $n }) {

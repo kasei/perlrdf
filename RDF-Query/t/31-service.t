@@ -54,9 +54,13 @@ END
 {
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
 	
+	my $bf		= Bloom::Filter->new( capacity => 2, error_rate => $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE );
 	### This filter contains greg and adam, identified by a primaryTopic page and an email sha1sum, respectively:
-	### !<http://xmlns.com/foaf/0.1/mbox_sha1sum>"26fb6400147dcccfda59717ff861db9cb97ac5ec"
-	### ^<http://xmlns.com/foaf/0.1/primaryTopic><http://kasei.us/>
+	$bf->add('!<http://xmlns.com/foaf/0.1/mbox_sha1sum>"26fb6400147dcccfda59717ff861db9cb97ac5ec"');
+	$bf->add('^<http://xmlns.com/foaf/0.1/primaryTopic><http://kasei.us/>');
+	my $filter	= $bf->freeze;
+	$filter		=~ s/\n/\\n/g;
+	
 	my $sparql	= <<"END";
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -65,7 +69,7 @@ END
 		FROM <$file>
 		WHERE {
 			?p a foaf:Person ; foaf:name ?name .
-			FILTER k:bloom( ?p, "AAAAAgAAAB0AAAACAAAACgAAAAQAAAAFZJREZxMt9AekxG8jP9HulJISKVbFzR2rP9boeVledzCy\\nIqE/jWf8NvjRYRUwLjAwMQ==\\n" ) .
+			FILTER k:bloom( ?p, "${filter}" ) .
 		}
 END
 	{

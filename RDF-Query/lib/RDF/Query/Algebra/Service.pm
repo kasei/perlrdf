@@ -28,9 +28,10 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION, $debug, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$debug		= 0;
+	$BLOOM_FILTER_ERROR_RATE	= 0.1;
 	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
 }
 
@@ -258,7 +259,15 @@ sub execute {
 	my $endpoint	= $self->endpoint;
 	my $pattern		= $self->pattern;
 	
-	my $sparql		= sprintf("SELECT DISTINCT * WHERE %s", $pattern->as_sparql( {}, '' ));
+	my %ns			= (%{ $query->{parsed}{namespaces} });
+	my $trial		= 'k';
+	$trial++ while (exists($ns{ $trial }));
+	$ns{ $trial }	= 'http://kasei.us/code/rdf-query/functions/';
+	
+	my $sparql		= join("\n",
+						(map { sprintf("PREFIX %s: <%s>", $_, $ns{$_}) } (keys %ns)),
+						sprintf("SELECT DISTINCT * WHERE %s", $pattern->as_sparql( { namespaces => \%ns }, '' ))
+					);
 	warn "SERVICE REQUEST $endpoint: $sparql\n" if ($debug);
 	
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
