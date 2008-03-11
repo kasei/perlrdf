@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 149;
+use Test::More tests => 155;
 
 use YAML;
 use Data::Dumper;
@@ -38,8 +38,64 @@ foreach (@data) {
 }
 
 
-sub _____ERRORS______ {}
 
+sub _____PATTERNS______ {}
+##### PATTERNS
+
+{
+	my $pattern	= $parser->parse_pattern( "{ ?s ?p ?o }" );
+	isa_ok( $pattern, 'RDF::Query::Algebra::GroupGraphPattern' );
+	my $expect	= bless( [
+					bless( [
+						bless( [
+							bless( [ 's' ], 'RDF::Query::Node::Variable' ),
+							bless( [ 'p' ], 'RDF::Query::Node::Variable' ),
+							bless( [ 'o' ], 'RDF::Query::Node::Variable' )
+						], 'RDF::Query::Algebra::Triple' )
+					], 'RDF::Query::Algebra::BasicGraphPattern' )
+				], 'RDF::Query::Algebra::GroupGraphPattern' );
+	is_deeply( $pattern, $expect, 'GGP with variables' );
+}
+
+{
+	my $pattern	= $parser->parse_pattern( "{ ?s a ?o }" );
+	isa_ok( $pattern, 'RDF::Query::Algebra::GroupGraphPattern' );
+	my $expect	= bless( [
+					bless( [
+						bless( [
+							bless( [ 's' ], 'RDF::Query::Node::Variable' ),
+							bless( [ 'URI', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' ], 'RDF::Query::Node::Resource' ),
+							bless( [ 'o' ], 'RDF::Query::Node::Variable' )
+						], 'RDF::Query::Algebra::Triple' )
+					], 'RDF::Query::Algebra::BasicGraphPattern' )
+				], 'RDF::Query::Algebra::GroupGraphPattern' );
+	is_deeply( $pattern, $expect, 'GGP with variables and Verb' );
+}
+
+{
+	my $pattern	= $parser->parse_pattern( "{ ?s a foaf:Person ; foaf:name ?o }", undef, { foaf => 'http://xmlns.com/foaf/0.1/' } );
+	isa_ok( $pattern, 'RDF::Query::Algebra::GroupGraphPattern' );
+	my $expect	= bless( [
+					bless( [
+						bless( [
+							bless( [ 's' ], 'RDF::Query::Node::Variable' ),
+							bless( [ 'URI', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' ], 'RDF::Query::Node::Resource' ),
+							bless( [ 'URI', 'http://xmlns.com/foaf/0.1/Person' ], 'RDF::Query::Node::Resource' ),
+						], 'RDF::Query::Algebra::Triple' ),
+						bless( [
+							bless( [ 's' ], 'RDF::Query::Node::Variable' ),
+							bless( [ 'URI', 'http://xmlns.com/foaf/0.1/name' ], 'RDF::Query::Node::Resource' ),
+							bless( [ 'o' ], 'RDF::Query::Node::Variable' )
+						], 'RDF::Query::Algebra::Triple' )
+					], 'RDF::Query::Algebra::BasicGraphPattern' )
+				], 'RDF::Query::Algebra::GroupGraphPattern' );
+	is_deeply( $pattern, $expect, 'GGP with multiple triples and QName' );
+}
+
+
+
+
+sub _____ERRORS______ {}
 ##### ERRORS
 
 {
