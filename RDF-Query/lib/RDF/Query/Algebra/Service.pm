@@ -341,6 +341,18 @@ sub _names_for_node {
 		
 		my $type	= RDF::Query::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 		{
+			our $sa		||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#sameAs');
+			my $s		= RDF::Query::Algebra::Triple->new( $n, $sa, $o );
+			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $s );
+			my $iter	= $bgp->execute( $query, $bridge, { n => $node } );
+			
+			while (my $row = $iter->next) {
+				my ($p, $o)	= @{ $row }{qw(p o)};
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '=' . $p->sse ));
+			}
+		}
+		
+		{
 			our $fp		||= RDF::Query::Node::Resource->new('http://www.w3.org/2002/07/owl#FunctionalProperty');
 			my $s1		= RDF::Query::Algebra::Triple->new( $p, $type, $fp );
 			my $s2		= RDF::Query::Algebra::Triple->new( $o, $p, $n );
