@@ -249,6 +249,25 @@ sub execute {
 	return $stream;
 }
 
+=item C<< join_bnode_streams ( $streamA, $streamB, $query, $bridge ) >>
+
+A modified inner-loop join that relies on there being bnode identity hints in
+the data returned by C<< $streamB->extra_result_data >>. These hints are
+combined with locally computed identity values for the items from C<< $streamA >>
+and the streams are merged using a natural join where equality is computed
+either on direct node equality or on any intersection of the identity hints.
+
+The identity hints and locally computed identity values are computed using
+Functional and InverseFunctional property values using N3 syntax. For example,
+a blank node '(r1)' might have identity hints using foaf:mbox_sha1sum such as:
+
+  $extra_result_data = {
+      'bnode-map' => [ {
+          '(r1)' => ['!<http://xmlns.com/foaf/0.1/mbox_sha1sum>"26fb6400147dcccfda59717ff861db9cb97ac5ec"']
+      } ]
+  };
+
+=cut
 
 sub join_bnode_streams {
 	my $self	= shift;
