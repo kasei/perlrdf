@@ -185,9 +185,11 @@ sub from_string {
 	my $result	= {};
 	my (%extrakeys, %extra);
 	
+	my $link;
 	my $twig	= XML::Twig->new(
 		twig_handlers => {
 			variable	=> sub { push(@vars, $_->att('name')) },
+			'link'		=> sub { $link = $_->att('href') },
 			binding		=> sub { $result->{ $_->att('name') }	= $value; },
 			result		=> sub { push(@results, $result); $result	= {}; },
 			bnode		=> sub { $value	= RDF::Trine::Node::Blank->new( $_->text ) },
@@ -198,11 +200,21 @@ sub from_string {
 							$value	= RDF::Trine::Node::Literal->new( $_->text, $lang, $dt )
 						},
 			boolean		=> sub { $bool	= ($_->text eq 'true') ? 1 : 0 },
-			extra		=> sub { push( @{ $extra{ $_->att('name') } }, { %extrakeys } ); %extrakeys = (); },
-			extrakey	=> sub { push(@{ $extrakeys{ $_->att('id') } }, $_->text); },
 		},
 	);
 	$twig->parse( $string );
+	
+	if ($link and $link =~ m<^data:text/xml,%3Cextra>) {
+		my $u		= URI->new( $link );
+		my $data	= $u->data;
+		my $twig	= XML::Twig->new(
+			twig_handlers => {
+				extra		=> sub { push( @{ $extra{ $_->att('name') } }, { %extrakeys } ); %extrakeys = (); },
+				extrakey	=> sub { push(@{ $extrakeys{ $_->att('id') } }, $_->text); },
+			},
+		);
+		$twig->parse( $data );
+	}
 	
 	if (defined($bool)) {
 		return RDF::Trine::Iterator::Boolean->new( [$bool] );

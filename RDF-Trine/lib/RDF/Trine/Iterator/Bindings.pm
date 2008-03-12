@@ -365,31 +365,25 @@ sub as_xml {
 	
 	my $count	= 0;
 	my $t	= join("\n\t", map { qq(<variable name="$_"/>) } @variables);
-	my $xml	= <<"END";
-<?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2001/sw/DataAccess/rf1/result2">
-<head>
-	${t}
-</head>
-<results>
-END
+	my $head	= $t;
+	my $results	= '';
 	while (!$self->finished) {
 		my @row;
-		$xml	.= "\t\t<result>\n";
+		$results	.= "\t\t<result>\n";
 		for (my $i = 0; $i < $width; $i++) {
-			my $name		= $self->binding_name($i);
-			my $value		= $self->binding_value($i);
-			$xml	.= "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
+			my $name	= $self->binding_name($i);
+			my $value	= $self->binding_value($i);
+			$results	.= "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
 		}
-		$xml	.= "\t\t</result>\n";
+		$results	.= "\t\t</result>\n";
 		
 		last if ($max_result_size and ++$count >= $max_result_size);
 	} continue { $self->next_result }
-	$xml	.= "</results>\n";
 	
 	if (my $extra = $self->extra_result_data) {
+		my $extraxml	= '';
 		foreach my $tag (keys %$extra) {
-			$xml	.= qq[<extra name="${tag}">\n];
+			$extraxml	.= qq[<extra name="${tag}">\n];
 			my $value	= $extra->{ $tag };
 			foreach my $e (@$value) {
 				foreach my $k (keys %$e) {
@@ -400,14 +394,33 @@ END
 						s/</&lt;/g;
 						s/"/&quot;/g;
 					}
-					$xml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
+					$extraxml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
 				}
 			}
-			$xml	.= "</extra>\n";
+			$extraxml	.= "</extra>\n";
 		}
+		my $u	= URI->new('data:');
+		$u->media_type('text/xml');
+		$u->data($extraxml);
+		my $uri	= "$u";
+		$uri	=~ s/&/&amp;/g;
+		$uri	=~ s/</&lt;/g;
+		$uri	=~ s/'/&apos;/g;
+		$uri	=~ s/"/&quot;/g;
+		$head	.= qq[\n\t<link href="$uri" />\n];
 	}
 	
-	$xml	.= "</sparql>\n";
+	my $xml	= <<"END";
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2001/sw/DataAccess/rf1/result2">
+<head>
+	${head}
+</head>
+<results>
+	${results}
+</results>
+</sparql>
+END
 	return $xml;
 }
 

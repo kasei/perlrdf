@@ -77,7 +77,7 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
 		my $stream	= $query->execute();
 		my $xml		= $stream->as_xml;
-		like( $xml, qr#<extrakey id="[^"]+">!&lt;http://xmlns.com/foaf/0.1/mbox_sha1sum>&quot;26fb6400147dcccfda59717ff861db9cb97ac5ec&quot;</extrakey>#sm, 'xml serialization has good looking bnode map' );
+		like( $xml, qr#<link href="data:text/xml,%3Cextra%20name=%22bnode-map#sm, 'xml serialization has good looking bnode map' );
 	}
 	{
 		print "# bgp using default graph (local rdf) with k:bloom FILTER\n";
