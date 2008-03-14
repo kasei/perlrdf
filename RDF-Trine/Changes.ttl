@@ -9,6 +9,22 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+<http://kasei.us/code/files/RDF-Trine-0.104.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.103.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.104" ;
+                        doap:created      "2008-03-14" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated SPARQL XML Results namespace declaration in RDF::Trine::Iterator serialization methods." ;
+                        asc:addition      "Added extra_result_data methods to add data to the XML Results <link/> header tag." ;
+                        asc:update        "RDF::Trine::Node::Resource now serializes to QName when passed valid namespace data." ;
+                        asc:update        "Fixed xml results serialization for style." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.102.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.101.tar.gz> ;

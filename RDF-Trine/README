@@ -50,6 +50,13 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.104 (2008-03-14)
+
+     * Updated SPARQL XML Results namespace declaration in RDF::Trine::Iterator serialization methods.
+     * Added extra_result_data methods to add data to the XML Results <link/> header tag.
+     * RDF::Trine::Node::Resource now serializes to QName when passed valid namespace data.
+     * Fixed xml results serialization for style.
+
   Version 0.103 (2008-03-10)
 
      * Updated to recognize (renamed) RDF::Query::Expression class.
