@@ -53,6 +53,7 @@
 	<h2 id="changelog">Version History</h2>
 		<h3 id="v2_000">Version 2.000 (2008-XX-XX)</h3>
 			<ul>
+				<li>RDF::Query now uses RDF::Trine package for common classes (nodes, statements, iterators).</li>
 				<li>Moved RDF::Query::Stream into RDF::Trine::Iterator namespace.</li>
 				<li>Reshuffled SPARQL parsers tests.</li>
 				<li>Added support for RDF::Trine::Model.</li>
@@ -79,6 +80,9 @@
 				<li>Moved general count_statements() method into bridge superclass.</li>
 				<li>Fixed SQL compiler to work with ::Algebra and ::Node classes.</li>
 				<li>Added as_native method to bridge superclass for converting ::Node objects to bridge-native objects.</li>
+				<li>Updated document namespace declaration for SPARQL XML Results.</li>
+				<li>Added support for SERVICE queries (ala ARQ) with Bloom filter semijoins.</li>
+				<li>Moved Expression classes out of the Algebra hierarchy and into their own space (RDF::Query::Expression).</li>
 			</ul>
 		<h3 id="v1_501">Version 1.501 (2007-11-15)</h3>
 			<ul>
