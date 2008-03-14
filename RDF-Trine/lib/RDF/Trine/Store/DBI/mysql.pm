@@ -125,14 +125,9 @@ sub _add_node {
 		}
 	}
 	
-	my $sql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
+	my $sql	= "INSERT IGNORE INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 	my $sth	= $dbh->prepare( $sql );
-	$sth->execute( @values{ @cols } );
-	unless ($sth->fetch) {
-		my $sql	= "INSERT INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
-		my $sth	= $dbh->prepare( $sql );
-		$sth->execute( map "$_", @values{ @cols } );
-	}
+	$sth->execute( map "$_", @values{ @cols } );
 }
 
 1; # Magic true value required at end of module

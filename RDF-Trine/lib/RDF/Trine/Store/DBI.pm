@@ -297,7 +297,6 @@ sub add_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $context	= shift;
-	Carp::confess;
 	my $dbh		= $self->dbh;
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
