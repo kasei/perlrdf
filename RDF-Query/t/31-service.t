@@ -11,13 +11,13 @@ eval { require LWP::Simple };
 if ($@) {
 	plan skip_all => "LWP::Simple is not available for loading <http://...> URLs";
 	return;
-} elsif (not exists $ENV{RDFQUERY_NO_NETWORK}) {
-	plan tests => $tests;
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
+} elsif (not exists $ENV{RDFQUERY_NO_NETWORK}) {
+	plan tests => $tests;
 } else {
-	plan skip_all => 'No network. Unset RDFQUERY_NO_NETWORK to run these tests.';
+	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and unset RDFQUERY_NO_NETWORK to run these tests.';
 	return;
 }
 
