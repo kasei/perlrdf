@@ -101,6 +101,8 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
+
+use RDF::Trine 0.104;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
