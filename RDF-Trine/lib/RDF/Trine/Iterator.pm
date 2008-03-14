@@ -607,6 +607,10 @@ sub add_extra_result_data {
 	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
 }
 
+=item C<< extra_result_data >>
+
+=cut
+
 sub extra_result_data {
 	my $self	= shift;
 	my $args	= $self->_args;
