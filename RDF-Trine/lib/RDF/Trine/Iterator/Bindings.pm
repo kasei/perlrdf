@@ -417,8 +417,7 @@ sub as_xml {
 	${head}
 </head>
 <results>
-	${results}
-</results>
+${results}</results>
 </sparql>
 END
 	return $xml;

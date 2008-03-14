@@ -38,9 +38,9 @@ END
 		my $stream	= $query->execute( $model );
 		ok( $stream->is_bindings, 'Bindings result' );
 		my $xml		= $stream->as_xml;
-		is( $xml, <<"END", 'XML Bindings Results formatting' );
+		my $expect	= <<"END";
 <?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2001/sw/DataAccess/rf1/result2">
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head>
 	<variable name="person"/>
 	<variable name="homepage"/>
@@ -53,6 +53,7 @@ END
 </results>
 </sparql>
 END
+		is( $xml, $expect, 'XML Bindings Results formatting' );
 	}
 	
 	SKIP: {
@@ -67,10 +68,7 @@ END
 		like( $xml, qr%<boolean>true</boolean>%sm, 'XML Boolean Results formatting' );
 	}
 	
-	TODO: {
-		### XXX Remove the eval {} below when removing the TODO.
-		local $TODO	= 'This model does not support xml serialization yet' unless (RDF::Query->supports( $model, 'xml' ));
-		
+	{
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
