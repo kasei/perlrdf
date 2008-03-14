@@ -97,19 +97,14 @@ sub test_models_and_classes {
 					my $model	= RDF::Trine::Model->new( $store );
 				};
 				if (not $@) {
-					{
-						eval "use RDF::Redland";
-						if ($@) {
-							warn "RDF::Redland is currently needed to parse RDF/XML for RDF::Trine::Store";
-							return @models;
-						}
-						my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
-						my $storage	= RDF::Redland::Storage->new("mysql", $model->_store->model_name, { host => 'localhost', database=> $ENV{RDFQUERY_DBI_DATABASE}, user => $ENV{RDFQUERY_DBI_USER}, password => $ENV{RDFQUERY_DBI_PASS} });
-						my $model	= RDF::Redland::Model->new($storage, "");
-						my $parser	= RDF::Redland::Parser->new("rdfxml");
-						$parser->parse_into_model($_, $_, $model) for (@data);
+					my $parser	= RDF::Trine::Parser->new('rdfxml');
+					my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
+					foreach my $i (0 .. $#files) {
+						my $file	= $files[ $i ];
+						my $uri		= $uris[ $i ];
+						my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+						$parser->parse( $uri, $content, $handler );
 					}
-					
 					my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
 					my $data	= {
 									bridge		=> $bridge,
