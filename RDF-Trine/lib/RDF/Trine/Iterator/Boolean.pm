@@ -92,7 +92,7 @@ sub as_xml {
 	my $value	= $self->get_boolean ? 'true' : 'false';
 	my $xml	= <<"END";
 <?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2001/sw/DataAccess/rf1/result2">
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head></head>
 <results>
 	<boolean>${value}</boolean>
