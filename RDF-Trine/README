@@ -50,6 +50,10 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.105 (2008-03-XX)
+
+     * Removed use of File::Slurp in parser tests.
+
   Version 0.104 (2008-03-14)
 
      * Updated SPARQL XML Results namespace declaration in RDF::Trine::Iterator serialization methods.

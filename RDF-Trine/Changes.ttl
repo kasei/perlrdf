@@ -9,6 +9,19 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+<http://kasei.us/code/files/RDF-Trine-0.105.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.104.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.105" ;
+                        doap:created      "2008-03-XX" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Removed use of File::Slurp in parser tests." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.104.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.103.tar.gz> ;
