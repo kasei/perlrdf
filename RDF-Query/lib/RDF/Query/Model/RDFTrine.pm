@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= do { my $REV = (qw$Revision: 174 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= '2.000';
 }
 
 ######################################################################

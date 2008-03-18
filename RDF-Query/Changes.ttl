@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "2.000" ;
-                        doap:created      "2008-XX-XX" ;
+                        doap:created      "2008-03-18" ;
                         ];
         asc:changes     [
                         asc:addition      "RDF::Query now uses RDF::Trine package for common classes (nodes, statements, iterators)." ;

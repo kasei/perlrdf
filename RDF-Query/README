@@ -41,7 +41,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.000 (2008-XX-XX)
+  Version 2.000 (2008-03-18)
 
      * RDF::Query now uses RDF::Trine package for common classes (nodes, statements, iterators).
      * Moved RDF::Query::Stream into RDF::Trine::Iterator namespace.
