@@ -127,11 +127,11 @@ sub parse_into_model {
 	my $uri		= shift;
 	my $input	= shift;
 	my $model	= shift;
-	local($self->{handle_triple})	= sub {
+	my $handler	= sub {
 		my $st	= shift;
 		$model->add_statement( $st );
 	};
-	return $self->parse( $uri, $input );
+	return $self->parse( $uri, $input, $handler );
 }
 
 sub _eat_re {

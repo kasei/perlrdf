@@ -141,7 +141,7 @@ sub _debug {
 	my $self	= shift;
 	my $stream	= $self->as_stream;
 	while (my $s = $stream->next) {
-		warn $s->as_string;
+		warn '[DEBUG] ' . $s->as_string . "\n";
 	}
 }
 

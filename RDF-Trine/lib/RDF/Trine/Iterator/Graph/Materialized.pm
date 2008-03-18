@@ -60,6 +60,9 @@ array containing individual results.
 sub new {
 	my $class	= shift;
 	my $data	= shift || [];
+	Carp::confess unless (scalar(@_) % 2 == 0);
+	my %args	= @_;
+	
 	if (reftype($data) eq 'CODE') {
 		my @data;
 		while (my $d = $data->()) {
@@ -67,12 +70,10 @@ sub new {
 		}
 		$data	= \@data;
 	}
+	
 	Carp::confess unless (reftype($data) eq 'ARRAY');
-	Carp::confess unless (scalar(@_) % 2 == 0);
-	my %args	= @_;
 	
 	my $type	= 'graph';
-	
 	my $index	= 0;
 	my $stream	= sub {
 		my $data	= $data->[ $index++ ];
@@ -112,6 +113,17 @@ sub next {
 		$self->{_finished}	= 0;
 	}
 	return $data;
+}
+
+=item C<< length >>
+
+Returns the number of elements in the iterator.
+
+=cut
+
+sub length {
+	my $self	= shift;
+	return scalar(@{ $self->{ _data } });
 }
 
 1;
