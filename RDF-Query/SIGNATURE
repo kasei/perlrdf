@@ -14,12 +14,12 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 482ac3a8d89ccf90bc1f6c1d8cc3adc07ee50d55 Changes.ttl
+SHA1 373068e3654e70e8fefdb660cf97e3280cfe37c6 Changes.ttl
 SHA1 3f56dbc0c663563f470f7ad54d58cfb1ed5641a8 MANIFEST
 SHA1 63343498b963740bdc92db4aa26a60271abec82a META.yml
 SHA1 d942feb80f03f227365e8f2a9d065f29ce3706ea Makefile.PL
-SHA1 91054ac53426c7aa9b01d3c023ae3164f99684d2 README
-SHA1 a5da67dce3b1da19e084d83f738ce7974a9f4c7c README.html
+SHA1 bfc4bf4b6be1c5fd18b641accf1df2e803a54d19 README
+SHA1 5650e131cd39472f19f5c410f4b8b799a0180bf0 README.html
 SHA1 8e2b50ac8c0ae349b8d6b20fd0030764d8756c79 bin/deparse.pl
 SHA1 9feee6cb90bff63eef06ac623f7983876d58533d bin/failing_earl_tests.sh
 SHA1 623b596b2c6bb16bd481fb7478ce6df33ff7084c bin/generate_parsers.sh
@@ -47,7 +47,7 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 642041082927311fc7e421c740166e72de43ffa4 lib/RDF/Query.pm
+SHA1 1cd8401575f9ad5482ab9578924eb03b25acd7f0 lib/RDF/Query.pm
 SHA1 06165638847e952e7c8ded4d747e4f060cbd0766 lib/RDF/Query/Algebra.pm
 SHA1 19bada5bf2132ac77848171aaee7a912bb564d2c lib/RDF/Query/Algebra/Aggregate.pm
 SHA1 82c2505acc163b2bd28154d5bf2be0cf64ccf50c lib/RDF/Query/Algebra/BasicGraphPattern.pm
@@ -128,7 +128,7 @@ SHA1 0a85e863f2e60959cb0060e6ac45f36b191f6ff9 t/sha1.js.asc
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH4Ev7hPK6VMqoyC0RArZnAJ93D3gjpHp7nFTCW9mBxObxf37fdwCeMqHf
-qeWdm6v1fQ47zCzykGbzaMs=
-=4/h2
+iD8DBQFH4U2ahPK6VMqoyC0RArzjAJ0fKjnT725ixFgjMk8JwQ8iM8GddwCeIps1
+pK7RvsOg3qOeCDpTGqskx3U=
+=BjN+
 -----END PGP SIGNATURE-----

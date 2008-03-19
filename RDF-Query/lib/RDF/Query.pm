@@ -10,7 +10,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.000, released 18 March 2008.
+This document describes RDF::Query version 2.000, released 19 March 2008.
 
 =head1 SYNOPSIS
 
