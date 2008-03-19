@@ -50,7 +50,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.105 (2008-03-XX)
+  Version 0.105 (2008-03-19)
 
      * Removed use of File::Slurp in parser tests.
 

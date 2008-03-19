@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "0.105" ;
-                        doap:created      "2008-03-XX" ;
+                        doap:created      "2008-03-19" ;
                         ];
         asc:changes     [
                         asc:update        "Removed use of File::Slurp in parser tests." ;
