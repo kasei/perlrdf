@@ -11,7 +11,7 @@ my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => 1 + (4 * scalar(@models));
+plan tests => 1 + (16 * scalar(@models));
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -42,7 +42,7 @@ END
 		is( $count, 1, 'one aggreate' );
 	}
 	
-	if (0) {
+	{
 		my $query	= new RDF::Query ( <<"END" );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -69,35 +69,35 @@ END
 		is( $count, 1, 'one aggreate' );
 	}
 	
-	if (0) {
+	{
 		my $query	= new RDF::Query ( <<"END" );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX dcterms: <http://purl.org/dc/terms/>
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 			SELECT ?place ?date
 			WHERE {
 				[] a foaf:Image ;
 					dcterms:spatial [ foaf:name ?place ] ;
-					dc:date ?date
+					dc:date ?date .
+				FILTER( DATATYPE(?date) = xsd:dateTime )
 			}
 			ORDER BY DESC(?place)
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		$query->aggregate( ['place'], begin => ['MIN', 'date'], end => ['MAX', 'date'] );
+		$query->aggregate( [], begin => ['MIN', 'date'], end => ['MAX', 'date'] );
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		my @expect	= ( ['Providence, RI', ''] );
 		while (my $row = $stream->next) {
-			use Data::Dumper;
-			warn Dumper($row);
-# 			my $wide	= $row->{wide};
-# 			my $narrow	= $row->{narrow};
-# 			ok( $bridge->is_literal( $wide ), 'literal aggregate' );
-# 			ok( $bridge->is_literal( $narrow ), 'literal aggregate' );
-# 			is( $bridge->literal_value( $wide ), 4.5, 'wide (MIN) aperture' );
-# 			is( $bridge->literal_value( $narrow ), 11, 'narrow (MAX) aperture' );
+			my $begin	= $row->{begin};
+			my $end	= 	$row->{end};
+			ok( $bridge->is_literal( $begin ), 'literal aggregate' );
+			ok( $bridge->is_literal( $end ), 'literal aggregate' );
+			is( $bridge->literal_value( $begin ), '2004-09-06T15:19:20+01:00', 'beginning date of photos' );
+			is( $bridge->literal_value( $end ), '2005-04-07T18:27:56-04:00', 'ending date of photos' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate' );

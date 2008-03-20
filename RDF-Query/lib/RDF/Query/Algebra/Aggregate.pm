@@ -219,6 +219,7 @@ sub execute {
 	my @aggregators;
 	my %groups;
 	my @groupby		= $self->groupby;
+	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	foreach my $data ($self->ops) {
 		my ($alias, $op, $col)	= @$data;
 		if ($op eq 'COUNT') {
@@ -236,8 +237,7 @@ sub execute {
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
-					my $cmp	= $query->check_constraints( {}, [ '>', $row->{ $col }, $aggregates{ $alias }{ $group } ], bridge => $bridge );
-					if ($cmp) {
+					if ($row->{ $col } > $aggregates{ $alias }{ $group }) {
 						$aggregates{ $alias }{ $group }	= $row->{ $col };
 					}
 				} else {
@@ -251,9 +251,7 @@ sub execute {
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
-					my $cmp	= $query->check_constraints( {}, [ '<', $row->{ $col }, $aggregates{ $alias }{ $group } ], bridge => $bridge );
-					warn "MIN: " . Dumper($cmp, $row->{ $col }, $aggregates{ $alias }{ $group });
-					if ($cmp) {
+					if ($row->{ $col } < $aggregates{ $alias }{ $group }) {
 						$aggregates{ $alias }{ $group }	= $row->{ $col };
 					}
 				} else {
