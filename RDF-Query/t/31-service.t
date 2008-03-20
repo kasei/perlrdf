@@ -14,10 +14,10 @@ if ($@) {
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} elsif (not exists $ENV{RDFQUERY_NO_NETWORK}) {
+} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
 	plan tests => $tests;
 } else {
-	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and unset RDFQUERY_NO_NETWORK to run these tests.';
+	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and set RDFQUERY_NETWORK_TESTS to run these tests.';
 	return;
 }
 

@@ -75,7 +75,6 @@ t/02-file.t
 t/02-net.t
 t/03-coverage.t
 t/04-constraints.t
-t/05-stress.t
 t/06-ask.t
 t/06-construct.t
 t/06-describe.t
@@ -101,6 +100,7 @@ t/28-time_intervals.t
 t/29-serialize.t
 t/30-aggregate.t
 t/31-service.t
+t/32-select_expr.t
 t/algebra.t
 t/algebra-expr.t
 t/algebra-func.t

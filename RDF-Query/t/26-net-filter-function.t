@@ -13,7 +13,12 @@ my (@data)	= test_models_and_classes( @files );
 
 my $tests	= 6;
 use Test::More;
-plan tests => 1 + scalar(@data) * $tests;
+if (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
+	plan tests => 1 + scalar(@data) * $tests;
+} else {
+	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
+	return;
+}
 
 use_ok( 'RDF::Query' );
 
