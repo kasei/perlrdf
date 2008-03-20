@@ -142,8 +142,8 @@ sub get_statements {
 	my @vars	= $triple->referenced_variables;
 	
 	local($self->{context_variable_count})	= 0;
+	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
 	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
-#	warn $sql;
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -758,7 +758,7 @@ sub _sql_for_triple {
 	unless ($quad) {
 		if (defined($ctx)) {
 			$self->_add_sql_node_clause( "${table}.Context", $ctx, $context );
-		} else {
+		} elsif ($self->{join_context_nodes}) {
 			$self->_add_sql_node_clause( "${table}.Context", RDF::Trine::Node::Variable->new( 'sql_ctx_' . ++$self->{ context_variable_count } ), $context );
 		}
 	}
