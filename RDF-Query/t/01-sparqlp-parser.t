@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 156;
+use Test::More tests => 158;
 
 use YAML;
 use Data::Dumper;

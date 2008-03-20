@@ -38,15 +38,33 @@ BEGIN {
 
 =cut
 
+=item C<< name >>
+
+Returns the variable name of the aliased expression.
+
+=cut
+
 sub name {
 	my $self	= shift;
 	return $self->alias->name;
 }
 
+=item C<< alias >>
+
+Returns the variable object of the aliased expression.
+
+=cut
+
 sub alias {
 	my $self	= shift;
 	return $self->op;
 }
+
+=item C<< expression >>
+
+Returns the expression object of the aliased expression.
+
+=cut
 
 sub expression {
 	my $self	= shift;
