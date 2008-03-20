@@ -289,9 +289,29 @@ sub execute {
 	my $sorted		= $self->sort_rows( $stream, $parsed );
 	
 	warn "performing projection" if ($debug);
-	my $projected	= $sorted->project( @vars );
-	$stream			= $projected;
-#	$stream->bridge( $bridge );
+	my $expr	= 0;
+	foreach my $v (@{ $parsed->{'variables'} }) {
+		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
+	}
+	
+	if ($expr) {
+		my $projected	= smap {
+							my $row = $_;
+							my $new	= {};
+							foreach my $v (@{ $parsed->{'variables'} }) {
+								if ($v->isa('RDF::Query::Expression::Alias')) {
+									$new->{ $v->name }	= $v->evaluate( $self, $bridge, $row );
+								} else {
+									$new->{ $v->name }	= $row->{ $v->name };
+								}
+							}
+							$new;
+						} $sorted;
+		$stream			= $projected;
+	} else {
+		my $projected	= $sorted->project( @vars );
+		$stream			= $projected;
+	}
 
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -1366,7 +1386,10 @@ Returns a list of the ordered variables the query is selecting.
 sub variables {
 	my $self	= shift;
 	my $parsed	= shift || $self->parsed;
-	my @vars	= map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } @{ $parsed->{'variables'} };
+	my @vars	= map { $_->name }
+					grep {
+						$_->isa('RDF::Query::Node::Variable') or $_->isa('RDF::Query::Expression::Alias')
+					} @{ $parsed->{'variables'} };
 	return @vars;
 }
 

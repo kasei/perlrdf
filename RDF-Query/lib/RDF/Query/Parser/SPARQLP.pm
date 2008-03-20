@@ -133,6 +133,38 @@ sub _BlankNodePropertyListMaybeEmpty {
 	$self->_add_stack( $subj );
 }
 
+sub _BrackettedAliasExpression {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	$self->_Expression;
+	my ($expr)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat('AS');
+	$self->__consume_ws_opt;
+	$self->_Var;
+	my ($var)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat(')');
+	
+	my $alias	= $self->new_alias_expression( $var, $expr );
+	$self->_add_stack( $alias );
+}
+
+sub __SelectVar_test {
+	my $self	= shift;
+	return ($self->_test('(') or $self->SUPER::__SelectVar_test);
+}
+
+sub __SelectVar {
+	my $self	= shift;
+	my $star	= 0;
+	if ($self->_test('(')) {
+		$self->_BrackettedAliasExpression;
+	} else {
+		$self->SUPER::__SelectVar;
+	}
+}
 
 
 
