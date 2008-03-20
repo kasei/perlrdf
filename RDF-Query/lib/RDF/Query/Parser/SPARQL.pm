@@ -450,20 +450,7 @@ sub _SelectQuery {
 		$self->{build}{options}{lc($mod)}	= 1;
 	}
 	
-	my $star	= 0;
-	if ($self->_test('*')) {
-		$self->_eat('*');
-		$star	= 1;
-		$self->__consume_ws_opt;
-	} else {
-		$self->_Var;
-		$self->__consume_ws_opt;
-		while ($self->{tokens} =~ m'^[?$]') {
-			$self->_Var;
-			$self->__consume_ws_opt;
-		}
-		$self->{build}{variables}	= [ splice(@{ $self->{stack} }) ];
-	}
+	my $star	= $self->__SelectVars;
 	
 	$self->_DatasetClause();
 	
@@ -475,7 +462,7 @@ sub _SelectQuery {
 		my @vars	= uniq( map { $_->referenced_variables } @$triples );
 		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
 	}
-	
+
 	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 # 	%mod		= (%mod, %somod);
@@ -490,6 +477,38 @@ sub _SelectQuery {
 # 	);
 # 	
 # 	return %query;
+}
+
+sub __SelectVars {
+	my $self	= shift;
+	my $star	= 0;
+	if ($self->_test('*')) {
+		$self->_eat('*');
+		$star	= 1;
+		$self->__consume_ws_opt;
+	} else {
+		my @vars;
+		$self->__SelectVar;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->__SelectVar_test) {
+			$self->__SelectVar;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		$self->{build}{variables}	= \@vars;
+	}
+	return $star;
+}
+
+sub __SelectVar_test {
+	my $self	= shift;
+	return $self->{tokens} =~ m'^[?$]';
+}
+
+sub __SelectVar {
+	my $self	= shift;
+	$self->_Var;
 }
 
 # [6] ConstructQuery ::= 'CONSTRUCT' ConstructTemplate DatasetClause* WhereClause SolutionModifier

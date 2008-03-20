@@ -28,12 +28,14 @@ use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
 
 
-use RDF::Query::Algebra::BasicGraphPattern;
 use RDF::Query::Expression;
+use RDF::Query::Expression::Alias;
 use RDF::Query::Expression::Nary;
 use RDF::Query::Expression::Binary;
 use RDF::Query::Expression::Unary;
 use RDF::Query::Expression::Function;
+
+use RDF::Query::Algebra::BasicGraphPattern;
 use RDF::Query::Algebra::OldFilter;
 use RDF::Query::Algebra::Filter;
 use RDF::Query::Algebra::GroupGraphPattern;

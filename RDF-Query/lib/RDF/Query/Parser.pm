@@ -239,6 +239,19 @@ sub new_function_expression {
 	return RDF::Query::Expression::Function->new( $function, @operands );
 }
 
+=item C<new_alias_expression ( $alias, $expression )>
+
+Returns a new alias expression structure.
+
+=cut
+
+sub new_alias_expression {
+	my $self		= shift;
+	my $var			= shift;
+	my $expr		= shift;
+	return RDF::Query::Expression::Alias->new( $var, $expr );
+}
+
 =item C<new_filter ( $filter_expr, $pattern )>
 
 Returns a new filter structure.

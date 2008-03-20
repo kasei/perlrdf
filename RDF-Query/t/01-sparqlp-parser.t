@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 156;
+use Test::More tests => 158;
 
 use YAML;
 use Data::Dumper;
@@ -5333,3 +5333,71 @@ __END__
   variables:
     -
       - name
+---
+- select expression (node plus constant)
+- |
+  SELECT (?o + 1 AS ?q)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - s
+          - !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Variable
+            - o
+  variables:
+    - !!perl/array:RDF::Query::Expression::Alias
+      - !!perl/array:RDF::Query::Node::Variable
+        - q
+      - !!perl/array:RDF::Query::Expression::Binary
+        - +
+        - !!perl/array:RDF::Query::Node::Variable
+          - o
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - 1
+          - ~
+          - http://www.w3.org/2001/XMLSchema#integer
+---
+- select node and expression
+- |
+  SELECT ?p (?o + 1 AS ?q)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - s
+          - !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Variable
+            - o
+  variables:
+    -
+      - p
+    - !!perl/array:RDF::Query::Expression::Alias
+      - !!perl/array:RDF::Query::Node::Variable
+        - q
+      - !!perl/array:RDF::Query::Expression::Binary
+        - +
+        - !!perl/array:RDF::Query::Node::Variable
+          - o
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - 1
+          - ~
+          - http://www.w3.org/2001/XMLSchema#integer
