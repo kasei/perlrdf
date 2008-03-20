@@ -376,8 +376,13 @@ sub describe {
 	my @nodes;
 	my %seen;
 	while (my $row = $stream->next) {
-		foreach my $node (values %$row) {
-			push(@nodes, $node) unless ($seen{ $bridge->as_string( $node ) }++);
+		foreach my $v (@{ $self->{parsed}{variables} }) {
+			if ($v->isa('RDF::Query::Node::Variable')) {
+				my $node	= $row->{ $v->name };
+				push(@nodes, $node) unless ($seen{ $bridge->as_string( $node ) }++);
+			} elsif ($v->isa('RDF::Query::Node::Resource')) {
+				push(@nodes, $v) unless ($seen{ $bridge->as_string( $v ) }++);
+			}
 		}
 	}
 	
