@@ -102,6 +102,7 @@ t/30-aggregate.t
 t/31-service.t
 t/32-select_expr.t
 t/33-computed_statements.t
+t/34-servicedescription.t
 t/algebra.t
 t/algebra-expr.t
 t/algebra-func.t

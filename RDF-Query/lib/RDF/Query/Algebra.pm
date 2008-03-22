@@ -150,6 +150,30 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
+=item C<< bind_variables ( \%bound ) >>
+
+Returns a new algebra pattern with variables named in %bound replaced by their corresponding bound values.
+
+=cut
+
+sub bind_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $bound	= shift;
+	my @args;
+	foreach my $arg ($self->construct_args) {
+		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
+			push(@args, $arg->bind_variables( $bound ));
+		} elsif (blessed($arg) and $arg->isa('RDF::Trine::Node::Variable') and exists($bound->{ $arg->name })) {
+			push(@args, $bound->{ $arg->name });
+		} else {
+			push(@args, $arg);
+		}
+	}
+	return $class->new( @args );
+}
+
+
 1;
 
 __END__

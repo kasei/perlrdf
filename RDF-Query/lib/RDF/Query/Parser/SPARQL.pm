@@ -173,6 +173,48 @@ sub parse_pattern {
 	return $data->{triples}[0];
 }
 
+=item C<< parse_expr ( $pattern, $base_uri, \%namespaces ) >>
+
+Parses the C<< $pattern >>, using the given C<< $base_uri >> and returns a
+RDF::Query::Expression pattern.
+
+=cut
+
+sub parse_expr {
+	my $self	= shift;
+	my $input	= shift;
+	my $baseuri	= shift;
+	my $ns		= shift;
+	
+	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
+	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
+	
+	delete $self->{error};
+	local($self->{namespaces})				= $ns;
+	local($self->{blank_ids})				= 1;
+	local($self->{baseURI})					= $baseuri;
+	local($self->{tokens})					= $input;
+	local($self->{stack})					= [];
+	local($self->{filters})					= [];
+	local($self->{pattern_container_stack})	= [];
+	my $triples								= $self->_push_pattern_container();
+	$self->{build}							= { sources => [], triples => $triples };
+	if ($baseuri) {
+		$self->{build}{base}	= $baseuri;
+	}
+	
+	try {
+		$self->_Expression();
+	} catch RDF::Query::Error with {
+		my $e	= shift;
+		$self->{build}	= undef;
+		$self->{error}	= $e->text;
+	};
+	
+	my $data	= splice(@{ $self->{stack} });
+	return $data;
+}
+
 =item C<< error >>
 
 Returns the error encountered during the last parse.

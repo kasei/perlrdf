@@ -1,0 +1,83 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sd: <http://darq.sf.net/dose/0.1#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+# definition of an endpoint
+[] a sd:Service ;
+	rdfs:label "DBpedia" ;
+	rdfs:comment "Service for DBpedia data" ;
+
+	# the endpoint url
+	sd:url <http://dbpedia.org/sparql> ;
+
+	# capabilities of the endpoint
+	sd:capability [ 
+		# the endpoint stores triples with predicate rdf:type
+		sd:predicate rdf:type ; 
+	
+		# Restriction on the subject/object
+		# Every legal SPARQL filter expression is allowed.
+		# only queries for the type http://xmlns.com/foaf/0.1/Person 
+		# are allowed
+	
+		sd:sofilter "REGEX(STR(?object),'http://xmlns.com/foaf/0.1/Person')" ; 
+		# could also use ?subject 
+	
+		# statistical information
+	
+		# number of triples that will be returned by
+		# a "?s a foaf:Person ; ?p ?o" query
+		sd:triples 3683409 ; 
+		
+		# other propeties are:
+		# Selectivity of a triple pattern, when object/subject is bound
+		# sd:objectSelectivity (default=1)
+		# sd:subjectSelectivity (default=1/x, 
+		# where x is the value given by sd:triples)
+	];
+
+	sd:capability [ 
+		
+		# the endpoint stores triples with predicate foaf:name
+		sd:predicate foaf:name ; 
+	
+		# no filter on subject or object
+		sd:sofilter "" ; 
+	
+		# statistical information
+	
+		# there are 18000 triples with predicate foaf:name
+		sd:triples 18000 ; 
+	
+		# if the object in the triple pattern is bound 
+		# (e.g. ?s foaf:name 'Bastian Quilitz") the result size will be
+		# reduced by factor 0.02. (on average)
+		sd:objectSelectivity "0.02"^^xsd:double ;
+	
+	] ;
+
+	sd:capability [ 
+		sd:predicate foaf:mbox ; 
+		sd:sofilter "" ; 
+		sd:triples 18000 ; 
+		sd:objectSelectivity 5.5E-5 
+	] ;
+	
+
+	# whether the service is definitive or not
+	# sd:isDefinitive (default=false)
+	# sd:isDefinitive "true"^^xsd:boolean ;
+	
+	# limitations on access patterns
+	# the query for this service must either contain a triple pattern 
+	# with predicate foaf:name and a bound object or 
+	# a pattern with predicate foaf:mbox and a bound object.
+	# not shown here: sd:subjectBinding -> subject must be bound
+	sd:requiredBindings [ sd:objectBinding foaf:name ] ;
+	sd:requiredBindings [ sd:objectBinding foaf:mbox ] ;
+
+	# total number of triples in the store
+	sd:totalTriples 58787090; 
+	.
