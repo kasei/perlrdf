@@ -29,9 +29,9 @@ warn RDF::Query->error unless ($query);
 
 my $stream	= $query->execute;
 while (my $row = $stream->()) {
-	my ($friend)	= @{ $row };
-	if ($query->bridge->is_literal( $friend )) {
-		my $name	= $query->bridge->literal_value( $friend );
+	my $friend	= $row->{nick};
+	if ($friend->is_literal) {
+		my $name	= $friend->literal_value;
 		print "$nick knows $name\n";
 	}
 }
