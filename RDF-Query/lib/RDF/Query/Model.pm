@@ -392,7 +392,45 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements {
 	my $self	= shift;
-	return $self->_get_statements( @_ );
+	my $s		= shift;
+	my $p		= shift;
+	my $o		= shift;
+	my $iter	= $self->_get_statements( $s, $p, $o );
+	if (@_) {
+		my $query	= shift;
+		my $bound	= shift;
+		if (my $extra_iter = $self->get_computed_statements( $s, $p, $o, $query, $bound )) {
+			$iter	= $iter->concat( $extra_iter );
+		}
+	}
+	return $iter;
+}
+
+=item C<< get_computed_statements ( $subject, $predicate, $object, $query, \%bound ) >>
+
+Returns a stream object of all computed statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub get_computed_statements {
+	my $self	= shift;
+	my $s		= shift;
+	my $p		= shift;
+	my $o		= shift;
+	my $query	= shift;
+	my $bound	= shift;
+	my $comps	= $query->get_computed_statement_generators;
+	my $iter;
+	foreach my $c (@$comps) {
+		my $new	= $c->( $query, $self, $bound, $s, $p, $o );
+		if ($new and not($iter)) {
+			$iter	= $new;
+		} elsif ($new) {
+			$iter	= $iter->concat( $new );
+		}
+	}
+	return $iter;
 }
 
 =item C<< get_named_statements ( $subject, $predicate, $object, $context ) >>
@@ -409,7 +447,12 @@ sub get_named_statements {
 	my $p		= shift;
 	my $o		= shift;
 	my $c		= shift;
-	return $self->_get_named_statements( $s, $p, $o, $c );
+	my $iter	= $self->_get_named_statements( $s, $p, $o, $c );
+	if (@_) {
+		my $query	= shift;
+		my $bound	= shift;
+	}
+	return $iter;
 }
 
 

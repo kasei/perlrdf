@@ -202,8 +202,8 @@ sub execute {
 	# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 	
 	my $statements	= (@graph)
-					? $bridge->get_named_statements( @triple, @graph )
-					: $bridge->get_statements( @triple );
+					? $bridge->get_named_statements( @triple[0,1,2], $graph[0], $query, $bound )
+					: $bridge->get_statements( @triple[0,1,2], $query, $bound );
 	if ($dup_var) {
 		# there's a node in the triple pattern that is repeated (like (?a ?b ?b)), but since get_statements() can't
 		# directly make that query, we're stuck filtering the triples after we get the stream back.

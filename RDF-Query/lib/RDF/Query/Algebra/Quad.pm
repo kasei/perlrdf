@@ -133,7 +133,7 @@ sub execute {
 	my %args		= @_;
 	
 	our $indent;
-	my @triple		= $self->nodes;
+	my @quad		= $self->nodes;
 	
 	my %bind;
 	my $vars	= 0;
@@ -147,7 +147,7 @@ sub execute {
 	my @dups;
 	for my $idx (0 .. 3) {
 		warn "looking at triple " . $methodmap[ $idx ] if ($debug);
-		my $data	= $triple[$idx];
+		my $data	= $quad[$idx];
 		if (blessed($data)) {
 			if ($data->isa('RDF::Query::Node::Variable') or $data->isa('RDF::Query::Node::Blank')) {
 				my $tmpvar	= ($data->isa('RDF::Query::Node::Variable'))
@@ -160,11 +160,11 @@ sub execute {
 				my $val		= $bound->{ $tmpvar };
 				if ($bridge->is_node($val)) {
 					warn "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" if ($debug);
-					$triple[$idx]	= $val;
+					$quad[$idx]	= $val;
 				} else {
 					++$vars;
 					warn "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" if ($debug);
-					$triple[$idx]	= undef;
+					$quad[$idx]	= undef;
 					$vars[$idx]		= $tmpvar;
 					$methods[$idx]	= $methodmap[ $idx ];
 				}
@@ -176,8 +176,9 @@ sub execute {
 	my $stream;
 	my @streams;
 	
-	warn "QUAD EXECUTING: " . Dumper(\@triple) if ($debug);
-	my $statements	= $bridge->get_named_statements( @triple );
+	warn "QUAD EXECUTING: " . Dumper(\@quad) if ($debug);
+	my ($s, $p, $o, $c)	= @quad;
+	my $statements	= $bridge->get_named_statements( $s, $p, $o, $c, $query, $bound );
 	warn "-> statements stream: $statements\n" if ($debug);
 	
 	if ($dup_var) {

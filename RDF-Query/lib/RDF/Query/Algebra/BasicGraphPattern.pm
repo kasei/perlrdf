@@ -218,7 +218,7 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
-	if ($bridge->can('unify_bgp')) {
+	if ($bridge->can('unify_bgp') and not(scalar(@{$query->get_computed_statement_generators}))) {
 		return $bridge->unify_bgp( $self, $bound, $context, %args );
 	} else {
 		my (@triples)	= $self->triples;

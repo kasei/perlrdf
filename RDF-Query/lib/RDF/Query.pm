@@ -386,8 +386,8 @@ sub describe {
 	$self->{'describe_nodes'}	= [];
 	foreach my $node (@nodes) {
 		push(@{ $self->{'describe_nodes'} }, $node);
-		push(@streams, $bridge->get_statements( $node, undef, undef ));
-		push(@streams, $bridge->get_statements( undef, undef, $node ));
+		push(@streams, $bridge->get_statements( $node, undef, undef, $self, {} ));
+		push(@streams, $bridge->get_statements( undef, undef, $node, $self, {} ));
 	}
 	
 	my $ret	= sub {
@@ -941,6 +941,33 @@ sub call_function {
 	return $filter->evaluate( $self, $bridge, $bound );
 }
 
+=item C<< add_computed_statement_generator ( \&generator ) >>
+
+Adds a statement generator to the query object. This statement generator
+will be called as
+C<< $generator->( $query, $bridge, \%bound, $s, $p, $o, $c ) >>
+and is expected to return an RDF::Trine::Iterator::Graph object.
+
+=cut
+
+sub add_computed_statement_generator {
+	my $self	= shift;
+	my $gen		= shift;
+	push( @{ $self->{'computed_statement_generators'} }, $gen );
+}
+
+=item C<< get_computed_statement_generators >>
+
+Returns an ARRAY reference of computed statement generator closures.
+
+=cut
+
+sub get_computed_statement_generators {
+	my $self	= shift;
+	my $comps	= $self->{'computed_statement_generators'} || [];
+	return $comps;
+}
+
 
 =item C<< net_filter_function ( $uri ) >>
 
@@ -966,7 +993,7 @@ sub net_filter_function {
 	
 	my $func	= do {
 		my $pred	= $bridge->new_resource('http://www.mindswap.org/~gtw/sparql#function');
-		my $stream	= $bridge->get_statements( $subj, $pred, undef );
+		my $stream	= $bridge->get_statements( $subj, $pred, undef, $self, {} );
 		my $st		= $stream->();
 		my $obj		= $bridge->object( $st );
 		my $func	= $bridge->literal_value( $obj );
@@ -974,7 +1001,7 @@ sub net_filter_function {
 	
 	my $impl	= do {
 		my $pred	= $bridge->new_resource('http://www.mindswap.org/~gtw/sparql#source');
-		my $stream	= $bridge->get_statements( $subj, $pred, undef );
+		my $stream	= $bridge->get_statements( $subj, $pred, undef, $self, {} );
 		my $st		= $stream->();
 		my $obj		= $bridge->object( $st );
 		my $impl	= $bridge->uri_value( $obj );

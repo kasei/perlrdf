@@ -36,10 +36,7 @@ END
 		my $model	= $bridge->model;
 		
 		my $long	= $bridge->new_resource('http://www.w3.org/2003/01/geo/wgs84_pos#long');
-#		my $st		= $bridge->new_statement( undef, $long, undef );
 		my $stream	= $bridge->get_statements( undef, $long, undef );
-#		my @stmts	= $model->find_statements( $st );
-#		foreach my $stmt (@stmts) {
 		while (my $stmt = $stream->next) {
 			my $l	= $bridge->literal_value( $bridge->object( $stmt ) );
 			my $dt	= $bridge->literal_datatype( $bridge->object( $stmt ) );

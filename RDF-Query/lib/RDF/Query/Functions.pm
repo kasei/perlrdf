@@ -648,13 +648,13 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 		if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 		} else {
-			my $stream	= $bridge->get_statements( $list, $first, undef );
+			my $stream	= $bridge->get_statements( $list, $first, undef, $query, {} );
 			while (my $stmt = $stream->next()) {
 				my $member	= $stmt->object;
 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
 			}
 			
-			my $stmt	= $bridge->get_statements( $list, $rest, undef )->next();
+			my $stmt	= $bridge->get_statements( $list, $rest, undef, $query, {} )->next();
 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
 			
 			my $tail	= $stmt->object;
