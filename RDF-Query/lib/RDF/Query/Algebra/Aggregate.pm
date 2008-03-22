@@ -17,6 +17,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
+use Scalar::Util qw(blessed);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
@@ -215,9 +216,10 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
+	my %seen;
+	my %groups;
 	my %aggregates;
 	my @aggregators;
-	my %groups;
 	my @groupby		= $self->groupby;
 	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	foreach my $data ($self->ops) {
@@ -230,6 +232,17 @@ sub execute {
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				$aggregates{ $alias }{ $group }++;
 			});
+		} elsif ($op eq 'COUNT-DISTINCT') {
+			push(@aggregators, sub {
+				my $row		= shift;
+				my @group	= @{ $row }{ @groupby };
+				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+				
+				my @cols	= (blessed($col) ? $col->name : keys %$row);
+				my $values	= join('<<<', @{ $row }{ @cols });
+				$aggregates{ $alias }{ $group }++ unless ($seen{ $values }++);
+			});
 		} elsif ($op eq 'MAX') {
 			push(@aggregators, sub {
 				my $row		= shift;
@@ -237,11 +250,11 @@ sub execute {
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
-					if ($row->{ $col } > $aggregates{ $alias }{ $group }) {
-						$aggregates{ $alias }{ $group }	= $row->{ $col };
+					if ($row->{ $col->name } > $aggregates{ $alias }{ $group }) {
+						$aggregates{ $alias }{ $group }	= $row->{ $col->name };
 					}
 				} else {
-					$aggregates{ $alias }{ $group }	= $row->{ $col };
+					$aggregates{ $alias }{ $group }	= $row->{ $col->name };
 				}
 			});
 		} elsif ($op eq 'MIN') {
@@ -251,11 +264,11 @@ sub execute {
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
-					if ($row->{ $col } < $aggregates{ $alias }{ $group }) {
-						$aggregates{ $alias }{ $group }	= $row->{ $col };
+					if ($row->{ $col->name } < $aggregates{ $alias }{ $group }) {
+						$aggregates{ $alias }{ $group }	= $row->{ $col->name };
 					}
 				} else {
-					$aggregates{ $alias }{ $group }	= $row->{ $col };
+					$aggregates{ $alias }{ $group }	= $row->{ $col->name };
 				}
 			});
 		} else {
@@ -275,11 +288,11 @@ sub execute {
 	
 	my @rows;
 	foreach my $group (keys %groups) {
-		my $row	= $groups{ $group };
-		my %row	= %$row;
+		my $row		= $groups{ $group };
+		my %row		= %$row;
 		foreach my $agg (keys %aggregates) {
 			my $value		= $aggregates{ $agg }{ $group };
-			$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value );
+			$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#decimal' );
 		}
 		push(@rows, \%row);
 	}

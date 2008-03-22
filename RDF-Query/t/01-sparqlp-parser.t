@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 158;
+use Test::More tests => 162;
 
 use YAML;
 use Data::Dumper;
@@ -5401,3 +5401,133 @@ __END__
           - 1
           - ~
           - http://www.w3.org/2001/XMLSchema#integer
+---
+- 'aggregates: select count *'
+- |
+  SELECT count(*)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      - []
+      -
+        - 'COUNT(*)'
+        -
+          - COUNT
+          - '*'
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - 'COUNT(*)'
+---
+- 'aggregates: select count ?o'
+- |
+  SELECT count(?o)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      - []
+      -
+        - COUNT(?o)
+        -
+          - COUNT
+          - !!perl/array:RDF::Query::Node::Variable
+            - o
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - COUNT(?o)
+---
+- 'aggregates: select count distinct ?o'
+- |
+  SELECT count(distinct ?o)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      - []
+      -
+        - COUNT(DISTINCT ?o)
+        -
+          - COUNT-DISTINCT
+          - !!perl/array:RDF::Query::Node::Variable
+            - o
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - COUNT(DISTINCT ?o)
+---
+- 'aggregates: select count distinct ?o + 1'
+- |
+  SELECT count(distinct ?o + 1)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      - []
+      -
+        - COUNT(DISTINCT (?o + 1))
+        -
+          - COUNT-DISTINCT
+          - !!perl/array:RDF::Query::Expression::Binary
+            - +
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - COUNT(DISTINCT (?o + 1))

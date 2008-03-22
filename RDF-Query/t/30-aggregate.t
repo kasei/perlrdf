@@ -11,7 +11,7 @@ my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => 1 + (16 * scalar(@models));
+plan tests => 1 + (25 * scalar(@models));
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -30,7 +30,7 @@ foreach my $model (@models) {
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		$query->aggregate( ['p'], count => ['COUNT', 'knows'] );
+		$query->aggregate( ['p'], count => ['COUNT', RDF::Query::Node::Variable->new('knows')] );
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
@@ -54,7 +54,7 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		$query->aggregate( [], wide => ['MIN', 'aperture'], narrow => ['MAX', 'aperture'] );
+		$query->aggregate( [], wide => ['MIN', RDF::Query::Node::Variable->new('aperture')], narrow => ['MAX', RDF::Query::Node::Variable->new('aperture')] );
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
@@ -87,7 +87,7 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		$query->aggregate( [], begin => ['MIN', 'date'], end => ['MAX', 'date'] );
+		$query->aggregate( [], begin => ['MIN', RDF::Query::Node::Variable->new('date')], end => ['MAX', RDF::Query::Node::Variable->new('date')] );
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		my @expect	= ( ['Providence, RI', ''] );
@@ -101,6 +101,68 @@ END
 			$count++;
 		}
 		is( $count, 1, 'one aggreate' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT COUNT(?aperture)
+			WHERE {
+				?image a foaf:Image ; exif:fNumber ?aperture
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			is_deeply( $row, { 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'value for count apertures' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT COUNT(DISTINCT ?aperture)
+			WHERE {
+				?image a foaf:Image ; exif:fNumber ?aperture
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			is_deeply( $row, { 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'value for count distinct apertures' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT MIN(?mbox)
+			WHERE {
+				[ a foaf:Person ; foaf:mbox_sha1sum ?mbox ]
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			is_deeply( $row, { 'MIN(?mbox)' => $bridge->new_literal('19fc9d0234848371668cf10a1b71ac9bd4236806') }, 'value for min mbox_sha1sum' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
 	}
 	
 }

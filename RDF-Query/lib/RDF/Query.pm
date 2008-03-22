@@ -299,11 +299,7 @@ sub execute {
 							my $row = $_;
 							my $new	= {};
 							foreach my $v (@{ $parsed->{'variables'} }) {
-								if ($v->isa('RDF::Query::Expression::Alias')) {
-									$new->{ $v->name }	= $v->evaluate( $self, $bridge, $row );
-								} else {
-									$new->{ $v->name }	= $row->{ $v->name };
-								}
+								$new->{ $v->name }	= $self->var_or_expr_value( $row, $v );
 							}
 							$new;
 						} $sorted;
@@ -820,14 +816,8 @@ sub fixup {
 	my $parsed	= $self->parsed;
 	my $base	= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
-# 	if ($base) {
-# 		foreach my $ns (keys %$namespaces) {
-# 			warn $namespaces->{ $ns };
-# 		}
-# 	}
 	my $native	= $pattern->fixup( $bridge, $base, $namespaces );
 	$self->{known_variables}	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
-#	$parsed->{'method'}	||= 'SELECT';
 	
 	## CONSTRUCT HAS IMPLICIT VARIABLES
 	if ($parsed->{'method'} eq 'CONSTRUCT') {
@@ -842,17 +832,34 @@ sub fixup {
 	return $native;
 }
 
+=begin private
 
-sub _true {
-	my $self	= shift;
-	my $bridge	= shift || $self->bridge;
-	return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-}
+=item C<< var_or_expr_value ( $bridge, \%bound, $value ) >>
 
-sub _false {
+Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
+If  C<< $value >> is  a node object, it is simply returned. If it is an
+RDF::Query::Node::Variable object, the corresponding value in C<< \%bound >>
+is returned. If it is an RDF::Query::Expression::Alias object, the expression
+is evaluated using C<< \%bound >>, and the resulting value is returned.
+
+=end private
+
+=cut
+
+sub var_or_expr_value {
 	my $self	= shift;
-	my $bridge	= shift || $self->bridge;
-	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	my $bridge	= $self->bridge;
+	my $bound	= shift;
+	my $v		= shift;
+	if ($v->isa('RDF::Query::Expression::Alias')) {
+		return $v->evaluate( $self, $bridge, $bound );
+	} elsif ($v->isa('RDF::Query::Node::Variable')) {
+		return $bound->{ $v->name };
+	} elsif ($v->isa('RDF::Query::Node')) {
+		return $v;
+	} else {
+		throw RDF::Query::Error -text => 'Not an expression or node value';
+	}
 }
 
 

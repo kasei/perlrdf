@@ -188,6 +188,21 @@ sub datetime {
 	}
 }
 
+=item C<< as_sparql >>
+
+Returns the SPARQL string for this node.
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	if ($self->is_numeric_type) {
+		return $self->literal_value;
+	} else {
+		return $self->SUPER::as_sparql;
+	}
+}
+
 =item C<< is_numeric_type >>
 
 Returns true if the literal is a known (xsd) numeric type.
