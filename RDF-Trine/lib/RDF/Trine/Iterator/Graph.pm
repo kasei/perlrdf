@@ -61,7 +61,7 @@ $type should be one of: bindings, boolean, graph.
 sub new {
 	my $class		= shift;
 	my $stream		= shift || sub { undef };
-	Carp::confess unless (scalar(@_) % 2 == 0);
+# 	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args		= @_;
 	
 	my $type		= 'graph';
@@ -94,9 +94,7 @@ sub as_bindings {
 	}
 	foreach my $i (0 .. $#nodes) {
 		my $n	= $nodes[ $i ];
-		if (blessed($n) and $n->isa( 'RDF::Trine::Node::Variable' )) {
-			$bindings{ $n->name }	= $names[ $i ];
-		}
+		$bindings{ $n->name }	= $names[ $i ];
 	}
 	my $context	= $nodes[ 3 ]->name;
 	
@@ -236,7 +234,7 @@ Returns a JSON serialization of the stream data.
 
 sub as_json {
 	my $self			= shift;
-	my $max_result_size	= shift || 0;
+	my $max_result_size	= shift;
 	throw RDF::Trine::Error::SerializationError ( -text => 'There is no JSON serialization specified for graph query results' );
 }
 
