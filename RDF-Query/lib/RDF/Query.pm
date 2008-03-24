@@ -299,7 +299,7 @@ sub execute {
 							my $row = $_;
 							my $new	= {};
 							foreach my $v (@{ $parsed->{'variables'} }) {
-								$new->{ $v->name }	= $self->var_or_expr_value( $row, $v );
+								$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
 							}
 							$new;
 						} $sorted;
@@ -839,7 +839,7 @@ sub fixup {
 Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
 If  C<< $value >> is  a node object, it is simply returned. If it is an
 RDF::Query::Node::Variable object, the corresponding value in C<< \%bound >>
-is returned. If it is an RDF::Query::Expression::Alias object, the expression
+is returned. If it is an RDF::Query::Expression object, the expression
 is evaluated using C<< \%bound >>, and the resulting value is returned.
 
 =end private
@@ -848,10 +848,10 @@ is evaluated using C<< \%bound >>, and the resulting value is returned.
 
 sub var_or_expr_value {
 	my $self	= shift;
-	my $bridge	= $self->bridge;
+	my $bridge	= shift;
 	my $bound	= shift;
 	my $v		= shift;
-	if ($v->isa('RDF::Query::Expression::Alias')) {
+	if ($v->isa('RDF::Query::Expression')) {
 		return $v->evaluate( $self, $bridge, $bound );
 	} elsif ($v->isa('RDF::Query::Node::Variable')) {
 		return $bound->{ $v->name };
