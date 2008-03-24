@@ -1,5 +1,6 @@
-use Test::More tests => 5;
+use Test::More tests => 6;
 
+use utf8;
 use_ok( 'RDF::Trine::XS' );
 
 {
@@ -12,6 +13,12 @@ use_ok( 'RDF::Trine::XS' );
 	my $value	= 'Lkasei<>';
 	my $hash	= RDF::Trine::XS::hash( $value );
 	is( $hash, '12775641923308277283', 'literal hash' );
+}
+
+{
+	my $value	= 'L神崎正英<ja>';
+	my $hash	= RDF::Trine::XS::hash( $value );
+	is( $hash, '4303572462241715163', 'unicode literal hash' );
 }
 
 {

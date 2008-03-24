@@ -32,7 +32,7 @@ our ($VERSION, $debug, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$debug		= 0;
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= '2.000';
 }
 
 ######################################################################

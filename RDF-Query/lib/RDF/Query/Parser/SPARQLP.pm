@@ -29,7 +29,7 @@ package RDF::Query::Parser::SPARQLP;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION	= '1.000';
+our $VERSION		= '2.000';
 
 use URI;
 use Data::Dumper;
@@ -41,6 +41,21 @@ use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
 
+sub _Query {
+	my $self	= shift;
+	$self->SUPER::_Query;
+	my $aggdata	= delete( $self->{build}{__aggregate} );
+	if ($aggdata) {
+		my @groupby;
+		
+		use Data::Dumper;
+		my $pattern	= $self->{build}{triples};
+		my $ggp		= shift(@$pattern);
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, \@groupby, %{ $aggdata } );
+		push(@{ $self->{build}{triples} }, $agg);
+		push(@{ $self->{build}{variables} }, map { RDF::Query::Node::Variable->new($_) } (keys %$aggdata));
+	}
+}
 
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
@@ -133,6 +148,87 @@ sub _BlankNodePropertyListMaybeEmpty {
 	$self->_add_stack( $subj );
 }
 
+sub _BrackettedAliasExpression {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	$self->_Expression;
+	my ($expr)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat('AS');
+	$self->__consume_ws_opt;
+	$self->_Var;
+	my ($var)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat(')');
+	
+	my $alias	= $self->new_alias_expression( $var, $expr );
+	$self->_add_stack( $alias );
+}
+
+sub __SelectVar_test {
+	my $self	= shift;
+	local($self->{__aggregate_call_ok})	= 1;
+	return ($self->_test( qr/[(]|COUNT|MAX|MIN/i) or $self->SUPER::__SelectVar_test);
+}
+
+sub __SelectVar {
+	my $self	= shift;
+	local($self->{__aggregate_call_ok})	= 1;
+	if ($self->_test('(')) {
+		$self->_BrackettedAliasExpression;
+	} elsif ($self->_test( qr/COUNT|MAX|MIN/i )) {
+		$self->__Aggregate;
+	} else {
+		$self->SUPER::__SelectVar;
+	}
+}
+
+sub __Aggregate {
+	my $self	= shift;
+	my $op	= uc( $self->_eat( qr/COUNT|MAX|MIN/i ) );
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	my $expr;
+	my $distinct	= 0;
+	if ($self->_test('*')) {
+		$expr	= $self->_eat('*');
+	} else {
+		if ($op eq 'COUNT' and $self->_test( qr/DISTINCT/i )) {
+			$self->_eat( qr/DISTINCT\s*/i );
+			$distinct	= 1;
+		}
+		$self->_Expression;
+		($expr)	= splice(@{ $self->{stack} });
+	}
+	$self->__consume_ws_opt;
+	
+	my $arg	= blessed($expr) ? $expr->as_sparql : $expr;
+	if ($distinct) {
+		$arg	= 'DISTINCT ' . $arg;
+	}
+	my $name	= sprintf('%s(%s)', $op, $arg);
+	$self->_eat(')');
+	
+	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), $expr ];
+}
+
+sub _BuiltInCall_test {
+	my $self	= shift;
+	if ($self->{__aggregate_call_ok}) {
+		return 1 if ($self->_test(qr/COUNT|MAX|MIN/i));
+	}
+	return $self->SUPER::_BuiltInCall_test;
+}
+
+sub _BuiltInCall {
+	my $self	= shift;
+	if ($self->{__aggregate_call_ok} and $self->_test(qr/COUNT|MAX|MIN/i)) {
+		$self->__Aggregate;
+	} else {
+		$self->SUPER::_BuiltInCall;
+	}
+}
 
 
 

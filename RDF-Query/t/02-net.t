@@ -12,12 +12,12 @@ my @models	= test_models( @files );
 
 eval { require LWP::Simple };
 if ($@) {
-	plan skip_all => "LWP::Simple is not available for loading <http://...> URLs";
+	plan skip_all => "LWP::Simple is not available for loading URLs";
 	return;
-} elsif (not exists $ENV{RDFQUERY_NO_NETWORK}) {
+} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
 	plan tests => 1 + (5 * scalar(@models));
 } else {
-	plan skip_all => 'No network. Unset RDFQUERY_NO_NETWORK to run these tests.';
+	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
 	return;
 }
 

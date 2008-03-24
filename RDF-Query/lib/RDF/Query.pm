@@ -10,7 +10,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.000_05, released 9 March 2008.
+This document describes RDF::Query version 2.000, released 19 March 2008.
 
 =head1 SYNOPSIS
 
@@ -101,6 +101,8 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
+
+use RDF::Trine 0.104;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
@@ -127,7 +129,7 @@ BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
 	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION		= '2.000_05';
+	$VERSION		= '2.000';
 	$DEFAULT_PARSER	= 'sparql';
 }
 
@@ -287,9 +289,25 @@ sub execute {
 	my $sorted		= $self->sort_rows( $stream, $parsed );
 	
 	warn "performing projection" if ($debug);
-	my $projected	= $sorted->project( @vars );
-	$stream			= $projected;
-#	$stream->bridge( $bridge );
+	my $expr	= 0;
+	foreach my $v (@{ $parsed->{'variables'} }) {
+		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
+	}
+	
+	if ($expr) {
+		my $projected	= smap {
+							my $row = $_;
+							my $new	= {};
+							foreach my $v (@{ $parsed->{'variables'} }) {
+								$new->{ $v->name }	= $self->var_or_expr_value( $row, $v );
+							}
+							$new;
+						} $sorted;
+		$stream			= $projected;
+	} else {
+		my $projected	= $sorted->project( @vars );
+		$stream			= $projected;
+	}
 
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -354,8 +372,13 @@ sub describe {
 	my @nodes;
 	my %seen;
 	while (my $row = $stream->next) {
-		foreach my $node (values %$row) {
-			push(@nodes, $node) unless ($seen{ $bridge->as_string( $node ) }++);
+		foreach my $v (@{ $self->{parsed}{variables} }) {
+			if ($v->isa('RDF::Query::Node::Variable')) {
+				my $node	= $row->{ $v->name };
+				push(@nodes, $node) unless ($seen{ $bridge->as_string( $node ) }++);
+			} elsif ($v->isa('RDF::Query::Node::Resource')) {
+				push(@nodes, $v) unless ($seen{ $bridge->as_string( $v ) }++);
+			}
 		}
 	}
 	
@@ -793,14 +816,8 @@ sub fixup {
 	my $parsed	= $self->parsed;
 	my $base	= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
-# 	if ($base) {
-# 		foreach my $ns (keys %$namespaces) {
-# 			warn $namespaces->{ $ns };
-# 		}
-# 	}
 	my $native	= $pattern->fixup( $bridge, $base, $namespaces );
 	$self->{known_variables}	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
-#	$parsed->{'method'}	||= 'SELECT';
 	
 	## CONSTRUCT HAS IMPLICIT VARIABLES
 	if ($parsed->{'method'} eq 'CONSTRUCT') {
@@ -815,17 +832,34 @@ sub fixup {
 	return $native;
 }
 
+=begin private
 
-sub _true {
-	my $self	= shift;
-	my $bridge	= shift || $self->bridge;
-	return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-}
+=item C<< var_or_expr_value ( $bridge, \%bound, $value ) >>
 
-sub _false {
+Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
+If  C<< $value >> is  a node object, it is simply returned. If it is an
+RDF::Query::Node::Variable object, the corresponding value in C<< \%bound >>
+is returned. If it is an RDF::Query::Expression::Alias object, the expression
+is evaluated using C<< \%bound >>, and the resulting value is returned.
+
+=end private
+
+=cut
+
+sub var_or_expr_value {
 	my $self	= shift;
-	my $bridge	= shift || $self->bridge;
-	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	my $bridge	= $self->bridge;
+	my $bound	= shift;
+	my $v		= shift;
+	if ($v->isa('RDF::Query::Expression::Alias')) {
+		return $v->evaluate( $self, $bridge, $bound );
+	} elsif ($v->isa('RDF::Query::Node::Variable')) {
+		return $bound->{ $v->name };
+	} elsif ($v->isa('RDF::Query::Node')) {
+		return $v;
+	} else {
+		throw RDF::Query::Error -text => 'Not an expression or node value';
+	}
 }
 
 
@@ -1364,7 +1398,10 @@ Returns a list of the ordered variables the query is selecting.
 sub variables {
 	my $self	= shift;
 	my $parsed	= shift || $self->parsed;
-	my @vars	= map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } @{ $parsed->{'variables'} };
+	my @vars	= map { $_->name }
+					grep {
+						$_->isa('RDF::Query::Node::Variable') or $_->isa('RDF::Query::Expression::Alias')
+					} @{ $parsed->{'variables'} };
 	return @vars;
 }
 

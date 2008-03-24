@@ -42,7 +42,7 @@ our ($REVISION, $VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$REVISION	= do { my $REV = (qw$Revision: 127 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= 1.001;
+	$VERSION	= '2.000';
 }
 
 ######################################################################

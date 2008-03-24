@@ -32,7 +32,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION		= '2.000';
 }
 
 ######################################################################
@@ -237,6 +237,19 @@ sub new_function_expression {
 		$function	= RDF::Query::Node::Resource->new( $function );
 	}
 	return RDF::Query::Expression::Function->new( $function, @operands );
+}
+
+=item C<new_alias_expression ( $alias, $expression )>
+
+Returns a new alias expression structure.
+
+=cut
+
+sub new_alias_expression {
+	my $self		= shift;
+	my $var			= shift;
+	my $expr		= shift;
+	return RDF::Query::Expression::Alias->new( $var, $expr );
 }
 
 =item C<new_filter ( $filter_expr, $pattern )>

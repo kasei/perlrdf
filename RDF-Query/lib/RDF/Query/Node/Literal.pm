@@ -29,7 +29,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $LAZY_COMPARISONS);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= '2.000';
 }
 
 ######################################################################
@@ -185,6 +185,21 @@ sub datetime {
 		my $dt		= eval { $f->parse_datetime( $value ) };
 		$INSIDE_OUT_DATES{ $addr }	= $dt;
 		return $dt;
+	}
+}
+
+=item C<< as_sparql >>
+
+Returns the SPARQL string for this node.
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	if ($self->is_numeric_type) {
+		return $self->literal_value;
+	} else {
+		return $self->SUPER::as_sparql;
 	}
 }
 

@@ -31,7 +31,7 @@
 			<exif:make>NIKON CORPORATION</exif:make>
 			<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
 			<dc:creator>Greg Williams</dc:creator>
-			<exif:fNumber>11</exif:fNumber>
+			<exif:fNumber rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">11</exif:fNumber>
 			<exif:model>NIKON D70</exif:model>
 			<exif:exposureTime>1/500</exif:exposureTime>
 			<dc:description></dc:description>
@@ -66,7 +66,7 @@
 			</foaf:Person>
 		</foaf:maker>
 		<dc:creator>Greg Williams</dc:creator>
-		<exif:fNumber>4.5</exif:fNumber>
+		<exif:fNumber rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">4.5</exif:fNumber>
 		<exif:model>Nikon D70</exif:model>
 		<exif:exposureTime>1/60</exif:exposureTime>
 		<dc:date>2005-04-07T18:27:37-04:00</dc:date>
@@ -79,7 +79,7 @@
 		<exif:make>NIKON CORPORATION</exif:make>
 		<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
 		<dc:creator>Greg Williams</dc:creator>
-		<exif:fNumber>4.5</exif:fNumber>
+		<exif:fNumber rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">4.5</exif:fNumber>
 		<exif:model>Nikon D70</exif:model>
 		<exif:exposureTime>1/60</exif:exposureTime>
 		<dc:date>2005-04-07T18:27:50-04:00</dc:date>
@@ -92,7 +92,7 @@
 		<exif:make>NIKON CORPORATION</exif:make>
 		<foaf:maker rdf:resource="http://kasei.us/about/foaf.xrdf#greg"/>
 		<dc:creator>Greg Williams</dc:creator>
-		<exif:fNumber>4.5</exif:fNumber>
+		<exif:fNumber rdf:datatype="http://www.w3.org/2001/XMLSchema#decimal">4.5</exif:fNumber>
 		<exif:model>Nikon D70</exif:model>
 		<exif:exposureTime>1/80</exif:exposureTime>
 		<dc:date rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2005-04-07T18:27:56-04:00</dc:date>

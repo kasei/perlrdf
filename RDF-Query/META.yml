@@ -37,9 +37,8 @@ requires:
   Storable: 0
   URI: 0
   List::MoreUtils: 0
-  RDF::Trine::Iterator: 1
   Set::Scalar: 0
-  RDF::Trine: 0.102
+  RDF::Trine: 0.104
 resources:
   homepage: http://kasei.us/code/rdf-query/
   Repository: http://code.google.com/p/perlrdf/source

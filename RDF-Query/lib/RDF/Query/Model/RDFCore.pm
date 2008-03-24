@@ -27,7 +27,7 @@ use RDF::Trine::Statement::Quad;
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= do { my $REV = (qw$Revision: 301 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= '2.000';
 }
 
 ######################################################################

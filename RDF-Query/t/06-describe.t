@@ -9,7 +9,7 @@ require "models.pl";
 
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf);
 my @models	= test_models( @files );
-my $tests	= 1 + (scalar(@models) * 72);
+my $tests	= 1 + (scalar(@models) * 81);
 plan tests => $tests;
 
 use_ok( 'RDF::Query' );
@@ -29,13 +29,13 @@ END
 		ok( $stream->is_graph, "Stream is graph result" );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
-		while (my $stmt = $stream->()) {
+		while (my $stmt = $stream->next) {
 			my $p	= $bridge->predicate( $stmt );
 			my $s	= $bridge->as_string( $p );
 			ok( $s, $s );
 			++$count;
 		}
-		is( $count, 33 );
+		is( $count, 33, 'describe person expected graph size' );
 	}
 	
 	{
@@ -51,12 +51,30 @@ END
 		ok( $stream->is_graph, "Stream is graph result" );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
-		while (my $stmt = $stream->()) {
+		while (my $stmt = $stream->next) {
 			my $p	= $bridge->predicate( $stmt );
 			my $s	= $bridge->as_string( $p );
 			ok( $s, $s );
 			++$count;
 		}
-		is( $count, 33 );
+		is( $count, 33, 'describe person expected graph size' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
+			DESCRIBE <http://kasei.us/about/foaf.xrdf>
+END
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		ok( $stream->is_graph, "Stream is graph result" );
+		isa_ok( $stream, 'RDF::Trine::Iterator', 'describe resource returns graph iterator' );
+		my $count	= 0;
+		while (my $stmt = $stream->next) {
+			my $p	= $stmt->predicate;
+			like( $p->uri_value, qr<^(http://xmlns.com/foaf/0.1/maker|http://www.w3.org/1999/02/22-rdf-syntax-ns#type|http://xmlns.com/wot/0.1/assurance|http://purl.org/dc/elements/1.1/(title|description|date))$>, 'expected predicate' );
+			++$count;
+		}
+		is( $count, 6, 'describe resource expected graph size' );
 	}
 }

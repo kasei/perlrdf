@@ -10,6 +10,48 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.000.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.501.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.000" ;
+                        doap:created      "2008-03-19" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "RDF::Query now uses RDF::Trine package for common classes (nodes, statements, iterators)." ;
+                        asc:addition      "Added support for RDF::Trine::Model." ;
+                        asc:addition      "RDF::Trine::Iterator can serialize to XML and JSON natively; Updated tests accordingly." ;
+                        asc:addition      "Added RDF::Query::pattern method to return the GGP algebra pattern for the query." ;
+                        asc:addition      "Added RDF::Query::as_sparql method to serialize query as SPARQL string." ;
+                        asc:addition      "Added POD to RDF::Query::Node classes." ;
+                        asc:addition      "Added equal method to RDF::Query::Node classes." ;
+                        asc:addition      "Added definite_variables method to RDF::Query::Algebra classes." ;
+                        asc:addition      "Added more (sparql and see) serialization tests." ;
+                        asc:addition      "Added as_native method to bridge superclass for converting ::Node objects to bridge-native objects." ;
+                        asc:addition      "Added support for SERVICE queries (ala ARQ) with Bloom filter semijoins." ;
+                        asc:update        "Moved RDF::Query::Stream into RDF::Trine::Iterator namespace." ;
+                        asc:update        "Reshuffled SPARQL parsers tests." ;
+                        asc:update        "rdf namespace is only added by default for RDQL." ;
+                        asc:update        "Fixed bug where the wrong bridge object would be returned for queries with FROM clauses." ;
+                        asc:update        "Moved query_more code to Algebra classes." ;
+                        asc:update        "Removed unused RDF::Query::set_named_graph_query method." ;
+                        asc:update        "Fixed bug where triples from a FROM clause were loaded into the underlying persistent store." ;
+                        asc:update        "RDF::Query::Node::Blank constructor now optionally produces identifiers." ;
+                        asc:update        "Merged tSPARQL parsing code into new SPARQLP parser." ;
+                        asc:update        "Triple class now serializes rdf:type shortcut 'a' appropriately." ;
+                        asc:update        "Removed 'VAR' type from ::Node::Variable object structure." ;
+                        asc:update        "Updated code to always expect a HASH reference from ::Bindings iterator." ;
+                        asc:update        "Removed old fixup code, replaced by ::Algebra fixup methods." ;
+                        asc:update        "Moved FROM clause data loading to its own method." ;
+                        asc:update        "Started removing old code (RDF::Base, direct DBI use, AUTOLOAD, profiling)." ;
+                        asc:update        "Moved general count_statements() method into bridge superclass." ;
+                        asc:update        "Fixed SQL compiler to work with ::Algebra and ::Node classes." ;
+                        asc:update        "Updated document namespace declaration for SPARQL XML Results." ;
+                        asc:update        "Moved Expression classes out of the Algebra hierarchy and into their own space (RDF::Query::Expression)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-1.501.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-1.500.tar.gz> ;

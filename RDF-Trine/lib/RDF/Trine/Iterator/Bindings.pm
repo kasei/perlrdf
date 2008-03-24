@@ -534,13 +534,12 @@ sub as_xml {
 	
 	my $xml	= <<"END";
 <?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2001/sw/DataAccess/rf1/result2">
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head>
 	${head}
 </head>
 <results>
-	${results}
-</results>
+${results}</results>
 </sparql>
 END
 	return $xml;

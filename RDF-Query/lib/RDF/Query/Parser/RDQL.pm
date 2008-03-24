@@ -30,7 +30,7 @@ BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
 	$debug		= 1;
-	$VERSION	= do { my $REV = (qw$Revision: 298 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= '2.000';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
 }

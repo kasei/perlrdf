@@ -14,12 +14,12 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 a56446d9da0d8a1463e92edfa736c1601641b4db Changes.ttl
+SHA1 373068e3654e70e8fefdb660cf97e3280cfe37c6 Changes.ttl
 SHA1 3f56dbc0c663563f470f7ad54d58cfb1ed5641a8 MANIFEST
-SHA1 8e1b7fd335c608e057d3b65a0d0ac9f191487ca0 META.yml
-SHA1 a284d85a6dfb2b5af3a9fa89c061b52acfc01970 Makefile.PL
-SHA1 d9a21092666412426d30e6d6f7cd8e7e8b822ac5 README
-SHA1 42133da6091b3167d62dbd6888ecc3f1be08cfd6 README.html
+SHA1 63343498b963740bdc92db4aa26a60271abec82a META.yml
+SHA1 d942feb80f03f227365e8f2a9d065f29ce3706ea Makefile.PL
+SHA1 bfc4bf4b6be1c5fd18b641accf1df2e803a54d19 README
+SHA1 5650e131cd39472f19f5c410f4b8b799a0180bf0 README.html
 SHA1 8e2b50ac8c0ae349b8d6b20fd0030764d8756c79 bin/deparse.pl
 SHA1 9feee6cb90bff63eef06ac623f7983876d58533d bin/failing_earl_tests.sh
 SHA1 623b596b2c6bb16bd481fb7478ce6df33ff7084c bin/generate_parsers.sh
@@ -47,45 +47,45 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 d27b6a2455b4f6022c86556980ad840e909b09c1 lib/RDF/Query.pm
-SHA1 84c14b753a4adb2338a098cf13b0240462df2e09 lib/RDF/Query/Algebra.pm
-SHA1 47da874128e37daf12c1a352328e4ff16d77c63e lib/RDF/Query/Algebra/Aggregate.pm
-SHA1 32a0a545ebf7cb815d1d231ca5b45a9dcda1462f lib/RDF/Query/Algebra/BasicGraphPattern.pm
-SHA1 22230c4bad83cb63fa7c7592fecea5d9837b4d85 lib/RDF/Query/Algebra/Filter.pm
-SHA1 07a3f0652714d258f03b9d9086c8b2b2b3e76e6b lib/RDF/Query/Algebra/GroupGraphPattern.pm
-SHA1 87765763a1ab616a62d8fbb86fe1dde883d4576e lib/RDF/Query/Algebra/NamedGraph.pm
-SHA1 58edfe7a7e2ba01965a2b989bd2122a57df943f3 lib/RDF/Query/Algebra/OldFilter.pm
-SHA1 4cea7cf415cac3807613af35be15e68da471fe51 lib/RDF/Query/Algebra/Optional.pm
-SHA1 333f90967a6ec533c5d2b863699d0ce4679f3a93 lib/RDF/Query/Algebra/Quad.pm
-SHA1 97ffa32fbf2097dd8b3cf9c700535623b59e5ba4 lib/RDF/Query/Algebra/Service.pm
-SHA1 49ba24482ec3c999ad74a5014e881a50338a8b67 lib/RDF/Query/Algebra/TimeGraph.pm
-SHA1 9eccb8b43b3e626beac962c93c8979086243aa21 lib/RDF/Query/Algebra/Triple.pm
-SHA1 7120ad4aade53c15e0ee5574b578866dfc7f98b2 lib/RDF/Query/Algebra/Union.pm
-SHA1 7aaa2ea7c5d0d56fd7524cf9191b6880c5b17e62 lib/RDF/Query/Compiler/SQL.pm
-SHA1 7073efec31e7d9fc20f6a34a8e0a8deb7ff5c3c0 lib/RDF/Query/Error.pm
-SHA1 0b149474f4bd04b1de9baf9ae6cfe75bcba5dcd3 lib/RDF/Query/Expression.pm
-SHA1 10cb83e031e62241b36489d8be24a65d7ea33a1b lib/RDF/Query/Expression/Binary.pm
-SHA1 839e59f790d048a6a5dc1da3076709082b35ef3e lib/RDF/Query/Expression/Function.pm
-SHA1 7bd411cc38df92a963acd254eab68e2ff08fb1c3 lib/RDF/Query/Expression/Nary.pm
-SHA1 3c5803d6df664f85b228fa0bb0338de6d658333e lib/RDF/Query/Expression/Unary.pm
-SHA1 de7f35fec416f8aa500b995bec18152e39597bd8 lib/RDF/Query/Functions.pm
-SHA1 5819b1155c35b58178ec2f548243d7bf877ffa42 lib/RDF/Query/Model.pm
-SHA1 57c60b72b61da7a94a33c42b85d6fdbe14e33eb6 lib/RDF/Query/Model/RDFCore.pm
-SHA1 952da1c7c32150a0943ea671172706377f78f4a5 lib/RDF/Query/Model/RDFTrine.pm
-SHA1 e852a956130a2781809673270ca8c4ef5bc00e05 lib/RDF/Query/Model/Redland.pm
+SHA1 1cd8401575f9ad5482ab9578924eb03b25acd7f0 lib/RDF/Query.pm
+SHA1 06165638847e952e7c8ded4d747e4f060cbd0766 lib/RDF/Query/Algebra.pm
+SHA1 19bada5bf2132ac77848171aaee7a912bb564d2c lib/RDF/Query/Algebra/Aggregate.pm
+SHA1 82c2505acc163b2bd28154d5bf2be0cf64ccf50c lib/RDF/Query/Algebra/BasicGraphPattern.pm
+SHA1 4eef661e27c9d8c97c6452f87e66bcd98237c958 lib/RDF/Query/Algebra/Filter.pm
+SHA1 1b3114a5caf470aa3aeba7d67572c3b6348141f9 lib/RDF/Query/Algebra/GroupGraphPattern.pm
+SHA1 6e30180364f04085e129581604aff288e6170f8e lib/RDF/Query/Algebra/NamedGraph.pm
+SHA1 7903854dca2d93d239098fc532a21eaef5f779c2 lib/RDF/Query/Algebra/OldFilter.pm
+SHA1 ace3ca97f802817fe725fd284ef9d1965b488bc7 lib/RDF/Query/Algebra/Optional.pm
+SHA1 853054fe0672f664b481e23599e57f5b783d3941 lib/RDF/Query/Algebra/Quad.pm
+SHA1 0f00e6cacdcc130e46740bf1826e513bae7d52b2 lib/RDF/Query/Algebra/Service.pm
+SHA1 486cdd9f422609fe6ad116e2df6d1fce812aae66 lib/RDF/Query/Algebra/TimeGraph.pm
+SHA1 c42469b5ebd9ad4c8e71b7ae3337d791cac2a4db lib/RDF/Query/Algebra/Triple.pm
+SHA1 3aa7adfff9fded9c971ea3523fe7ed9b972a36de lib/RDF/Query/Algebra/Union.pm
+SHA1 8d7b0119278e7ce293bf928a84453e07136781a6 lib/RDF/Query/Compiler/SQL.pm
+SHA1 13d6b0855c0331a1cb6d8fedebb39584f92a7b77 lib/RDF/Query/Error.pm
+SHA1 f9045770441f7a56fa7dff90f0814c9e58c45e4f lib/RDF/Query/Expression.pm
+SHA1 b2c08f272373a8cf253e45674cdfb4a6b6cf4116 lib/RDF/Query/Expression/Binary.pm
+SHA1 d3c002812db7ec567a583596d3232282a3e08c9d lib/RDF/Query/Expression/Function.pm
+SHA1 ec517a1caa3f4a00bd0f53fbb42330492ad9440c lib/RDF/Query/Expression/Nary.pm
+SHA1 95ad511e4ea90efc330afc87002e846c68c0fbcd lib/RDF/Query/Expression/Unary.pm
+SHA1 efe55844277b3356d68503ad5b0f76e716c601a1 lib/RDF/Query/Functions.pm
+SHA1 04927b1fd039e724018f7d5619fb60b2797af983 lib/RDF/Query/Model.pm
+SHA1 2a426372ade2aecf25f24b40fd99a4705ccb7489 lib/RDF/Query/Model/RDFCore.pm
+SHA1 d2804894ef2967980861c282e46e3bc1cc19dbf6 lib/RDF/Query/Model/RDFTrine.pm
+SHA1 5ec3bd003919c2062aa4ff639146926a10eaef15 lib/RDF/Query/Model/Redland.pm
 SHA1 d000ab5a9e9168cb69df65c9f109c6f7efbfe96b lib/RDF/Query/Node.pm
-SHA1 433cd77e1e1d77b478c73a28058314d2e1241e7c lib/RDF/Query/Node/Blank.pm
-SHA1 109dae6abc383fada7de0c0bac6b1d77a8ff3e35 lib/RDF/Query/Node/Literal.pm
-SHA1 83cf860735b753ee9ef23865e218b92d088ad6bf lib/RDF/Query/Node/Resource.pm
-SHA1 1ac2c58e335cafa4f0d25e1aeb154713ab13682a lib/RDF/Query/Node/Variable.pm
-SHA1 69e8ef35136a845d7a3db573491f1e199400299b lib/RDF/Query/Parser.pm
-SHA1 8ef0d42ec238fa76ffffe8bdee1a6619e4e4a377 lib/RDF/Query/Parser/RDQL.pm
-SHA1 dcf5c44ed9a30117382ea80b65e0b2e55f5bb9d2 lib/RDF/Query/Parser/SPARQL.pm
-SHA1 369550161b27c2a1a4236365f9909d0d30b13dc9 lib/RDF/Query/Parser/SPARQLP.pm
+SHA1 142ab0a475dbb05aa7aca79e285f43b4290ecb41 lib/RDF/Query/Node/Blank.pm
+SHA1 aece3335bb5f667407cc66a92d5cc1e6fb532693 lib/RDF/Query/Node/Literal.pm
+SHA1 120b999e625fac77fcc3b896062c882f60a375b9 lib/RDF/Query/Node/Resource.pm
+SHA1 da3c2402492a08e7445724e5406cfd50e096bcb7 lib/RDF/Query/Node/Variable.pm
+SHA1 4a782ae7224a4cecd9af692d6374d1fb01c2973a lib/RDF/Query/Parser.pm
+SHA1 a2c40123736a877a071b0193a6f82b507fbdd2cb lib/RDF/Query/Parser/RDQL.pm
+SHA1 6fb38b7be374b75b1a1a4e024e7d995c29c02982 lib/RDF/Query/Parser/SPARQL.pm
+SHA1 c9cc0abc603353f5802fe0a446b50df4da975735 lib/RDF/Query/Parser/SPARQLP.pm
 SHA1 af94d853b6e4b89e4292feb4a949521bbeaa1202 lib/RDF/Query/Temporal.pm
 SHA1 3fd735b3d152dba476f08c7a45e18afc18c97c8d t/00-simple.t
 SHA1 fda99c98bc216f5b41eb50eb1ec9b918b86120fd t/01-rdql_parser.t
-SHA1 8558a1792d309bd33c49b9af178520061ef7c565 t/01-sparql_parser.t
+SHA1 d34985596b94856698191188b4895afd2cec51b8 t/01-sparql_parser.t
 SHA1 7b3390bfa18dfddd862245f80d0eb16fdc5db1de t/01-sparqlp-parser.t
 SHA1 1b049dca5a72f2a2b9a5e9cd310aa52277ca0001 t/02-file.t
 SHA1 cbfe88bf9f528c9d108ca1a8d9bad3d86e9b5143 t/02-net.t
@@ -99,7 +99,7 @@ SHA1 63736f505e28ee3a16e18a89aae3de658269aa7e t/06-streams.t
 SHA1 740973454b14267e45aad880df2daa58df0609ac t/07-filters.t
 SHA1 d555056fad0d7779c04deb1c00ec5de84166f406 t/08-optionals.t
 SHA1 175c7eeedec178d92aa1e5029e7fb005f10800d4 t/09-union.t
-SHA1 db661091c96d891132451b939c19b9fa3ce1e482 t/10-sparql_protocol.t
+SHA1 3c5c7d887319ff9b36af350380eed6a04bab888d t/10-sparql_protocol.t
 SHA1 83ef500b3f23710f1ddfec85423ead104e6a7131 t/11-resultforms.t
 SHA1 6596f20d7bc62760bb308343afb25e269d8c54ce t/12-literals.t
 SHA1 8236091c0d5f37dba601cf5cb7f74b7bcbb06b76 t/13-sparql-2_8-syntactic_forms.t
@@ -116,7 +116,7 @@ SHA1 914e9f6353606617119163927f94fbb5b9457069 t/27-timed_graphs.t
 SHA1 85238944d1f23157e64f909be1f31e04945e8945 t/28-time_intervals.t
 SHA1 31550fcbaeba710bf0a6d496659757f82753cde4 t/29-serialize.t
 SHA1 a408513f710e8cc7f6b33fbd20302ca67cefef11 t/30-aggregate.t
-SHA1 84a66601a015069839d3bfdf8c9de0bdf5695343 t/31-service.t
+SHA1 d8d6dab845c38a0b2ff8b33461de48c32a9fcbcd t/31-service.t
 SHA1 a29cfa1435d7e67a62aefe40b7123b1b8e28ed66 t/algebra-expr.t
 SHA1 4c2c29b3e6ae9b0d5a06f7b8e39a6849c66e8f69 t/algebra-func.t
 SHA1 9fa107405068159ca14240ed0b2015e4031fcb30 t/algebra.t
@@ -128,7 +128,7 @@ SHA1 0a85e863f2e60959cb0060e6ac45f36b191f6ff9 t/sha1.js.asc
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFH1I+GhPK6VMqoyC0RAlU/AJ9xuQtybiQd7OSu42s8j/fcwECsxwCghgzj
-UeuUVCwTrJxYMndaeP2tw60=
-=rWbA
+iD8DBQFH4U2ahPK6VMqoyC0RArzjAJ0fKjnT725ixFgjMk8JwQ8iM8GddwCeIps1
+pK7RvsOg3qOeCDpTGqskx3U=
+=BjN+
 -----END PGP SIGNATURE-----
