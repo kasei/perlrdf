@@ -89,16 +89,24 @@ sub as_bindings {
 	my @nodes	= @_;
 	my @names	= qw(subject predicate object context);
 	my %bindings;
+	foreach my $i (0 .. $#names) {
+		$nodes[ $i ]	||= RDF::Trine::Node::Variable->new( $names[ $i ] );
+	}
 	foreach my $i (0 .. $#nodes) {
 		my $n	= $nodes[ $i ];
 		if (blessed($n) and $n->isa( 'RDF::Trine::Node::Variable' )) {
 			$bindings{ $n->name }	= $names[ $i ];
 		}
 	}
+	my $context	= $nodes[ 3 ]->name;
+	
 	my $sub	= sub {
 		my $statement	= $self->next;
 		return undef unless ($statement);
-		my %values		= map { my $method = $bindings{ $_ }; $_ => $statement->$method() } (keys %bindings);
+		my %values		= map {
+			my $method = $bindings{ $_ };
+			$_ => $statement->$method()
+		} grep { ($statement->isa('RDF::Trine::Statement::Quad')) ? 1 : ($_ ne $context) } (keys %bindings);
 		return \%values;
 	};
 	return RDF::Trine::Iterator::Bindings->new( $sub, [ keys %bindings ] );
