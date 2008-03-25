@@ -129,7 +129,7 @@ sub get_pattern {
 			while (@streams > 1) {
 				my $a	= shift(@streams);
 				my $b	= shift(@streams);
-				unshift(@streams, RDF::Trine::Iterator->join_streams( $a, $b ));
+				unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b ));
 			}
 		} else {
 			push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));

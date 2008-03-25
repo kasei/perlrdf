@@ -33,6 +33,6 @@ WriteMakefile(
 					'URI'						=> 0,
 					'XML::CommonNS'				=> 0.04,
 					'XML::Namespace'			=> 0,
-					'XML::Twig'					=> 0,
+					'XML::SAX'					=> 0,
 				},
 );

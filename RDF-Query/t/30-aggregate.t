@@ -165,4 +165,29 @@ END
 		is( $count, 1, 'one aggreate row' );
 	}
 	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT (COUNT(?nick) AS ?count)
+			WHERE {
+				?p a foaf:Person .
+				OPTIONAL {
+					?p foaf:nick ?nick
+				}
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		use Data::Dumper;
+		warn Dumper($query->{parsed});
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			is_deeply( $row, { count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#decimal') } );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
 }

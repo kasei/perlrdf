@@ -57,6 +57,8 @@ use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 
+use RDF::Trine::Store::DBI::mysql;
+
 our $VERSION	= "0.003";
 use constant DEBUG	=> 0;
 our $debug		= DEBUG;
@@ -95,6 +97,9 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
+# 		if ($dsn =~ /^DBI:mysql:/) {
+# 			$class	= 'RDF::Trine::Store::DBI::mysql';
+# 		}
 		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
@@ -292,7 +297,6 @@ sub add_statement {
 	my $self	= shift;
 	my $stmt	= shift;
 	my $context	= shift;
-	
 	my $dbh		= $self->dbh;
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;

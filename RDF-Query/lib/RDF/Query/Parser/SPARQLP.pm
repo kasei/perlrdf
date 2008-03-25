@@ -169,7 +169,7 @@ sub _BrackettedAliasExpression {
 sub __SelectVar_test {
 	my $self	= shift;
 	local($self->{__aggregate_call_ok})	= 1;
-	return ($self->_test( qr/[(]|COUNT|MAX|MIN/i) or $self->SUPER::__SelectVar_test);
+	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->SUPER::__SelectVar_test);
 }
 
 sub __SelectVar {
@@ -177,8 +177,8 @@ sub __SelectVar {
 	local($self->{__aggregate_call_ok})	= 1;
 	if ($self->_test('(')) {
 		$self->_BrackettedAliasExpression;
-	} elsif ($self->_test( qr/COUNT|MAX|MIN/i )) {
-		$self->__Aggregate;
+	} elsif ($self->_BuiltInCall_test) {
+		$self->_BuiltInCall;
 	} else {
 		$self->SUPER::__SelectVar;
 	}
