@@ -90,7 +90,9 @@ sub as_bindings {
 	my @names	= qw(subject predicate object context);
 	my %bindings;
 	foreach my $i (0 .. $#names) {
-		$nodes[ $i ]	||= RDF::Trine::Node::Variable->new( $names[ $i ] );
+		if (not($nodes[ $i ]) or not($nodes[ $i ]->isa('RDF::Trine::Node::Variable'))) {
+			$nodes[ $i ]	= RDF::Trine::Node::Variable->new( $names[ $i ] );
+		}
 	}
 	foreach my $i (0 .. $#nodes) {
 		my $n	= $nodes[ $i ];

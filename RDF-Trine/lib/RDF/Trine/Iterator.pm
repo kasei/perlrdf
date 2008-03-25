@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -35,12 +32,13 @@ use warnings;
 no warnings 'redefine';
 
 use JSON;
-use XML::Twig;
 use Data::Dumper;
 use Carp qw(carp);
 use Scalar::Util qw(blessed reftype refaddr);
 
+use XML::SAX;
 use RDF::Trine::Node;
+use RDF::Trine::Iterator::SAXHandler;
 
 our ($REVISION, $VERSION, $debug, @ISA, @EXPORT_OK);
 use constant DEBUG	=> 0;
@@ -155,7 +153,7 @@ Other options are:
 
 sub to_string {
 	my $self	= shift;
-	my $format	= shift || 'http://www.w3.org/2001/sw/DataAccess/rf1/result2';
+	my $format	= shift || 'http://www.w3.org/2005/sparql-results#';
 	if (ref($format) and $format->isa('RDF::Redland::URI')) {
 		$format	= $format->as_string;
 	}
@@ -176,56 +174,16 @@ Returns a new iterator using the supplied XML in the SPARQL XML Results format.
 sub from_string {
 	my $class	= shift;
 	my $string	= shift;
-	
-	my $bool;
-	my @vars;
-	my $value;
-	my @results;
-	my $result	= {};
-	my (%extrakeys, %extra);
-	
-	my $link;
-	my $twig	= XML::Twig->new(
-		twig_handlers => {
-			variable	=> sub { push(@vars, $_->att('name')) },
-			'link'		=> sub { $link = $_->att('href') },
-			binding		=> sub { $result->{ $_->att('name') }	= $value; },
-			result		=> sub { push(@results, $result); $result	= {}; },
-			bnode		=> sub { $value	= RDF::Trine::Node::Blank->new( $_->text ) },
-			uri			=> sub { $value	= RDF::Trine::Node::Resource->new( $_->text ) },
-			literal		=> sub {
-							my $lang	= $_->att('xml:lang');
-							my $dt		= $_->att('datatype');
-							$value	= RDF::Trine::Node::Literal->new( $_->text, $lang, $dt )
-						},
-			boolean		=> sub { $bool	= ($_->text eq 'true') ? 1 : 0 },
-		},
-	);
-	$twig->parse( $string );
-	
-	if ($link and $link =~ m<^data:text/xml,%3Cextra>) {
-		my $u		= URI->new( $link );
-		my $data	= $u->data;
-		my $twig	= XML::Twig->new(
-			twig_handlers => {
-				extra		=> sub { push( @{ $extra{ $_->att('name') } }, { %extrakeys } ); %extrakeys = (); },
-				extrakey	=> sub { push(@{ $extrakeys{ $_->att('id') } }, $_->text); },
-			},
-		);
-		$twig->parse( $data );
+	unless (ref($string)) {
+		my $data	= $string;
+		open( my $fh, '<', \$data );
+		$string	= $fh;
 	}
-	
-	if (defined($bool)) {
-		return RDF::Trine::Iterator::Boolean->new( [$bool] );
-	} else {
-		my $bindings	= RDF::Trine::Iterator::Bindings->new( \@results, \@vars, extra_result_data => \%extra );
-# 		foreach my $tag (keys %extra) {
-# 			foreach my $value (@{ $extra{ $tag } }) {
-# 				$bindings->add_extra_result_data( $tag, $value );
-# 			}
-# 		}
-		return $bindings;
-	}
+	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	$p->parse_file( $string );
+	my $iter	= $handler->iterator;
+	return $iter;
 }
 
 =item C<< next >>
@@ -630,6 +588,7 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+L<XML::SAX|XML::SAX>
 
 =head1 AUTHOR
 
