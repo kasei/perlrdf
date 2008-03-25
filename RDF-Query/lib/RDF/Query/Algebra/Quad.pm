@@ -39,6 +39,33 @@ BEGIN {
 
 =cut
 
+=item C<< as_sparql >>
+
+Returns the SPARQL string for this alegbra expression.
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	my $context	= shift || {};
+	my $indent	= shift;
+	
+	my $pred	= $self->predicate;
+	if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+		$pred	= 'a';
+	} else {
+		$pred	= $pred->as_sparql( $context );
+	}
+	
+	my $string	= sprintf(
+		"%s %s %s .",
+		$self->subject->as_sparql( $context ),
+		$pred,
+		$self->object->as_sparql( $context ),
+	);
+	return $string;
+}
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.

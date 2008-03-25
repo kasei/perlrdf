@@ -199,7 +199,7 @@ sub as_sparql {
 	if ($self->is_numeric_type) {
 		return $self->literal_value;
 	} else {
-		return $self->SUPER::as_sparql;
+		return $self->sse;
 	}
 }
 

@@ -89,7 +89,7 @@ Returns the node in a string form.
 
 sub as_string {
 	my $self	= shift;
-	return $self->as_sparql;
+	return $self->sse;
 }
 
 =item C<< equal ( $node ) >>

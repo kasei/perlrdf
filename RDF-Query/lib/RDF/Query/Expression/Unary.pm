@@ -66,7 +66,7 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	my $op		= $self->op;
-	return sprintf("$op %s", map { $_->as_sparql( $context, $indent ) } $self->operands);
+	return sprintf("($op %s)", map { $_->as_sparql( $context, $indent ) } $self->operands);
 }
 
 =item C<< evaluate ( $query, $bridge, \%bound ) >>

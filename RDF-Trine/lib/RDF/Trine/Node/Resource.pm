@@ -139,18 +139,6 @@ sub sse {
 	}
 }
 
-=item C<< as_sparql >>
-
-Returns the SPARQL string for this node.
-
-=cut
-
-sub as_sparql {
-	my $self	= shift;
-	my $context	= shift;
-	return $self->sse( $context );
-}
-
 =item C<< as_string >>
 
 Returns a string representation of the node.

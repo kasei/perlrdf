@@ -8,6 +8,10 @@
 
 RDF::Query::Node::Blank - RDF Node class for blank nodes
 
+=head1 METHODS
+
+=over 4
+
 =cut
 
 package RDF::Query::Node::Blank;
@@ -54,11 +58,16 @@ sub _cmp {
 	return $cmp;
 }
 
-=head1 METHODS
+=item C<< as_sparql >>
 
-=over 4
+Returns the SPARQL string for this node.
 
 =cut
+
+sub as_sparql {
+	my $self	= shift;
+	return $self->sse;
+}
 
 
 1;

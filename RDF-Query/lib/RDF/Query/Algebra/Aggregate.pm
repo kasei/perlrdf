@@ -125,14 +125,16 @@ sub sse {
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
 		my ($alias, $op, $col)	= @$data;
-		push(@ops_sse, sprintf('(%s (%s %s))', $alias, $op, $col));
+		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, $col->sse));
 	}
 	
+	my @group	= $self->groupby;
+	my $group	= (@group) ? '(' . join(', ', @group) . ')' : '';
 	return sprintf(
-		'(aggregate %s (%s) %s)',
+		'(aggregate %s %s %s)',
 		$self->pattern->sse( $context ),
-		join(', ', $self->groupby),
-		join(', ', @ops_sse)
+		join(', ', @ops_sse),
+		$group,
 	);
 }
 
@@ -146,7 +148,7 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift;
-	throw RDF::Query::Error -text => "Aggregates can't be serialized as SPARQL";
+	throw RDF::Query::Error::SerializationError -text => "Aggregates can't be serialized as SPARQL";
 }
 
 =item C<< type >>

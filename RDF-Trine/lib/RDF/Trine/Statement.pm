@@ -135,7 +135,7 @@ Returns the statement in a string form.
 
 sub as_string {
 	my $self	= shift;
-	return $self->as_sparql;
+	return $self->sse;
 }
 
 =item C<< sse >>
@@ -153,31 +153,6 @@ sub sse {
 		$self->predicate->sse( $context ),
 		$self->object->sse( $context ),
 	);
-}
-
-=item C<< as_sparql >>
-
-Returns the SPARQL string for this alegbra expression.
-
-=cut
-
-sub as_sparql {
-	my $self	= shift;
-	my $context	= shift || {};
-	my $indent	= shift;
-	
-	my $pred	= $self->predicate->as_sparql( $context );
-	if ($pred eq '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
-		$pred	= 'a';
-	}
-	
-	my $string	= sprintf(
-		"%s %s %s .",
-		$self->subject->as_sparql( $context ),
-		$pred,
-		$self->object->as_sparql( $context ),
-	);
-	return $string;
 }
 
 =item C<< type >>
