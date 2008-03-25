@@ -234,70 +234,87 @@ sub nested_loop_join {
 	my $a		= $astream->project( @names );
 	my $b		= $bstream->project( @names );
 	
-	my @results;
+	
 	my @data	= $b->get_all();
 	no warnings 'uninitialized';
-	while (my $rowa = $a->next) {
-		LOOP: foreach my $rowb (@data) {
-			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
-			my %keysa	= map {$_=>1} (keys %$rowa);
-			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
-			foreach my $key (@shared) {
-				my $val_a	= $rowa->{ $key };
-				my $val_b	= $rowb->{ $key };
-				my $defined	= 0;
-				foreach my $n ($val_a, $val_b) {
-					$defined++ if (defined($n));
-				}
-				if ($defined == 2) {
-					my $equal	= $val_a->equal( $val_b );
-					if (not $equal) {
-						my $query 	= $args{ query };
-						my $bridge	= $args{ bridge };
-						if ($query and $bridge) {
-							warn 'join values and bnode maps: ' . Dumper($val_a, $val_b, $a_map, $b_map) if ($a_map or $b_map);
-							if ($a_map and $val_a->isa('RDF::Trine::Node::Blank')) {
-								my $anames	= Set::Scalar->new( @{ $a_map{ $val_a->blank_identifier } } );
-								my $bnames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_b, $query, $bridge, {} ) );
-								if (my $int = $anames->intersection( $bnames )) {
-									warn "node equality based on $int";
-									$equal	= 1;
+	
+	my $inner_index;
+	my $rowa;
+	my $need_new_a	= 1;
+	my $sub	= sub {
+		OUTER: while (1) {
+			if ($need_new_a) {
+				warn "### fetching new outer tuple" if ($debug);
+				$rowa = $a->next;
+				$inner_index	= 0;
+				$need_new_a		= 0;
+			}
+			warn "OUTER: " . Dumper($rowa) if ($debug);
+			return undef unless ($rowa);
+			LOOP: while ($inner_index <= $#data) {
+				my $rowb	= $data[ $inner_index++ ];
+				warn "- INNER[ $inner_index ]: " . Dumper($rowb) if ($debug);
+				warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+				my %keysa	= map {$_=>1} (keys %$rowa);
+				my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
+				foreach my $key (@shared) {
+					my $val_a	= $rowa->{ $key };
+					my $val_b	= $rowb->{ $key };
+					my $defined	= 0;
+					foreach my $n ($val_a, $val_b) {
+						$defined++ if (defined($n));
+					}
+					if ($defined == 2) {
+						my $equal	= $val_a->equal( $val_b );
+						if (not $equal) {
+							my $query 	= $args{ query };
+							my $bridge	= $args{ bridge };
+							if ($query and $bridge) {
+								warn 'join values and bnode maps: ' . Dumper($val_a, $val_b, $a_map, $b_map) if ($a_map or $b_map);
+								if ($a_map and $val_a->isa('RDF::Trine::Node::Blank')) {
+									my $anames	= Set::Scalar->new( @{ $a_map{ $val_a->blank_identifier } } );
+									my $bnames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_b, $query, $bridge, {} ) );
+									if (my $int = $anames->intersection( $bnames )) {
+										warn "node equality based on $int";
+										$equal	= 1;
+									}
+								} elsif ($b_map and $val_b->isa('RDF::Trine::Node::Blank')) {
+									my $bnames	= Set::Scalar->new( @{ $b_map{ $val_b->blank_identifier } } );
+									my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
+									warn "anames: $anames\n";
+									warn "bnames: $bnames\n";
+									if (my $int = $anames->intersection( $bnames )) {
+										warn "node equality based on $int";
+										$equal	= 1;
+									}
 								}
-							} elsif ($b_map and $val_b->isa('RDF::Trine::Node::Blank')) {
-								my $bnames	= Set::Scalar->new( @{ $b_map{ $val_b->blank_identifier } } );
-								my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
-								warn "anames: $anames\n";
-								warn "bnames: $bnames\n";
-								if (my $int = $anames->intersection( $bnames )) {
-									warn "node equality based on $int";
-									$equal	= 1;
-								}
+							} else {
+								Carp::cluck "no query,bridge in args" if ($debug);
 							}
-						} else {
-							Carp::cluck "no query,bridge in args" if ($debug);
+						}
+						
+						unless ($equal) {
+							warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
+							next LOOP;
 						}
 					}
-					
-					unless ($equal) {
-						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
-						next LOOP;
+				}
+				
+				my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
+				if ($debug) {
+					warn "JOINED:\n";
+					foreach my $key (keys %$row) {
+						warn "$key\t=> " . $row->{ $key }->as_string . "\n";
 					}
 				}
+				return $row;
 			}
-			
-			my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
-			if ($debug) {
-				warn "JOINED:\n";
-				foreach my $key (keys %$row) {
-					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
-				}
-			}
-			push(@results, $row);
+			$need_new_a	= 1;
 		}
-	}
+	};
 	
 	my $args	= $astream->_args;
-	return $astream->_new( \@results, 'bindings', \@names, %$args );
+	return $astream->_new( $sub, 'bindings', \@names, %$args );
 }
 
 
