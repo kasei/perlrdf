@@ -230,7 +230,9 @@ sub execute {
 				my @group	= @{ $row }{ @groupby };
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-				$aggregates{ $alias }{ $group }++;
+				if (exists($row->{ $col->name })) {
+					$aggregates{ $alias }{ $group }++;
+				}
 			});
 		} elsif ($op eq 'COUNT-DISTINCT') {
 			push(@aggregators, sub {

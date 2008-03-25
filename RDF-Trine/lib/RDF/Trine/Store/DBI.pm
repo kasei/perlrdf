@@ -97,9 +97,9 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-		if ($dsn =~ /^DBI:mysql:/) {
-			$class	= 'RDF::Trine::Store::DBI::mysql';
-		}
+# 		if ($dsn =~ /^DBI:mysql:/) {
+# 			$class	= 'RDF::Trine::Store::DBI::mysql';
+# 		}
 		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
