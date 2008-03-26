@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 162;
+use Test::More tests => 164;
 
 use YAML;
 use Data::Dumper;
@@ -5531,3 +5531,103 @@ __END__
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - COUNT(DISTINCT (?o + 1))
+---
+- 'aggregates: select count ?o with alias'
+- |
+  SELECT (count(?o) AS ?count)
+  WHERE {
+    ?s ?p ?o .
+  }
+- method: SELECT
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      - []
+      -
+        - COUNT(?o)
+        -
+          - COUNT
+          - !!perl/array:RDF::Query::Node::Variable
+            - o
+  variables:
+    - !!perl/array:RDF::Query::Expression::Alias
+      - !!perl/array:RDF::Query::Node::Variable
+        - count
+      - !!perl/array:RDF::Query::Node::Variable
+        - COUNT(?o)
+---
+- 'aggregates: select count ?o with alias and group by'
+- |
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?name (COUNT(DISTINCT ?nick) AS ?count)
+  WHERE {
+  	?p a foaf:Person ; foaf:name ?name .
+  	OPTIONAL {
+  		?p foaf:nick ?nick
+  	}
+  }
+  GROUP BY ?name
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Aggregate
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Optional
+          - OPTIONAL
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - &1 !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://xmlns.com/foaf/0.1/Person
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - *1
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://xmlns.com/foaf/0.1/name
+                - !!perl/array:RDF::Query::Node::Variable
+                  - name
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://xmlns.com/foaf/0.1/nick
+                - !!perl/array:RDF::Query::Node::Variable
+                  - nick
+      -
+        - !!perl/array:RDF::Query::Node::Variable
+          - name
+      -
+        - COUNT(DISTINCT ?nick)
+        -
+          - COUNT-DISTINCT
+          - !!perl/array:RDF::Query::Node::Variable
+            - nick
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - name
+    - !!perl/array:RDF::Query::Expression::Alias
+      - !!perl/array:RDF::Query::Node::Variable
+        - count
+      - !!perl/array:RDF::Query::Node::Variable
+        - COUNT(DISTINCT ?nick)

@@ -511,7 +511,7 @@ sub aggregate {
 	my $pattern	= $self->pattern;
 	my $agg		= RDF::Query::Algebra::Aggregate->new( $pattern, $groupby, %aggs );
 	$self->{parsed}{triples}	= [ $agg ];
-	$self->{parsed}{'variables'}	= [ map { RDF::Query::Node::Variable->new( $_ ) } (@$groupby, keys %aggs) ];
+	$self->{parsed}{'variables'}	= [ map { ref($_) ? $_ : RDF::Query::Node::Variable->new( $_ ) } (@$groupby, keys %aggs) ];
 }
 
 =item C<< pattern >>

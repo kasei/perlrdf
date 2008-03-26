@@ -465,18 +465,8 @@ sub _SelectQuery {
 
 	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
-# 	%mod		= (%mod, %somod);
 	
 	$self->{build}{method}		= 'SELECT';
-# 	my %query	= (
-# 		variables	=> $vars,
-# 		method		=> 'SELECT',
-# 		sources		=> \@dataset,
-# 		triples		=> $where,
-# 		%mod,
-# 	);
-# 	
-# 	return %query;
 }
 
 sub __SelectVars {

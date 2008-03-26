@@ -229,28 +229,50 @@ sub execute {
 		if ($op eq 'COUNT') {
 			push(@aggregators, sub {
 				my $row		= shift;
-				my @group	= @{ $row }{ @groupby };
+				my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-				if (exists($row->{ $col->name })) {
+				
+				unless ($groups{ $group }) {
+					my %data;
+					foreach my $i (0 .. $#groupby) {
+						my $group	= $groupby[ $i ];
+						my $key		= $group->can('name') ? $group->name : $group->as_sparql;
+						my $value	= $group[ $i ];
+						$data{ $key }	= $value;
+					}
+					$groups{ $group }	= \%data;
+				}
+				
+				my $should_inc	= 0;
+				if ($col eq '*') {
+					$should_inc	= 1;
+				} else {
+					my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+					$should_inc	= (defined $value) ? 1 : 0;
+				}
+				
+				if ($should_inc) {
 					$aggregates{ $alias }{ $group }++;
 				}
 			});
 		} elsif ($op eq 'COUNT-DISTINCT') {
 			push(@aggregators, sub {
 				my $row		= shift;
-				my @group	= @{ $row }{ @groupby };
+				my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				
 				my @cols	= (blessed($col) ? $col->name : keys %$row);
+				no warnings 'uninitialized';
 				my $values	= join('<<<', @{ $row }{ @cols });
-				$aggregates{ $alias }{ $group }++ unless ($seen{ $values }++);
+				if (exists($row->{ $col->name })) {
+					$aggregates{ $alias }{ $group }++ unless ($seen{ $values }++);
+				}
 			});
 		} elsif ($op eq 'MAX') {
 			push(@aggregators, sub {
 				my $row		= shift;
-				my @group	= @{ $row }{ @groupby };
+				my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
@@ -264,7 +286,7 @@ sub execute {
 		} elsif ($op eq 'MIN') {
 			push(@aggregators, sub {
 				my $row		= shift;
-				my @group	= @{ $row }{ @groupby };
+				my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 				if (exists($aggregates{ $alias }{ $group })) {
@@ -279,7 +301,6 @@ sub execute {
 			throw RDF::Query::Error -text => "Unknown aggregate operator $op";
 		}
 	}
-	
 	
 	
 	$args{ orderby }	= [ map { [ 'ASC', RDF::Query::Node::Variable->new( $_ ) ] } @groupby ];
