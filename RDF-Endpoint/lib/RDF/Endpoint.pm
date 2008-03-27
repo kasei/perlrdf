@@ -321,7 +321,7 @@ sub run_query {
 	}
 	my @types	= (grep { exists($ok{ $_ }) } @accept);
 	
-	my $query	= RDF::Query->new( $sparql );
+	my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
 	unless ($query) {
 		my $error	= RDF::Query->error;
 		return $self->error( $cgi, 400, 'Bad Request', $error );
@@ -334,7 +334,7 @@ sub run_query {
 						(/xml/)
 							? 1
 							: (/json/)
-								? do { ($stream->isa('RDF::SPARQLResults::Graph')) ? 0 : 1 }
+								? do { ($stream->isa('RDF::Trine::Iterator::Graph')) ? 0 : 1 }
 								: 1
 					} @types;
 		if (defined($type)) {
@@ -401,14 +401,14 @@ sub stream_as_html {
 	my $self	= shift;
 	my $stream	= shift;
 	
-	if ($stream->isa('RDF::SPARQLResults::Graph')) {
+	if ($stream->isa('RDF::Trine::Iterator::Graph')) {
 		print "<html><head><title>SPARQL Results</title></head><body>\n";
 		print "</body></html>\n";
-	} elsif ($stream->isa('RDF::SPARQLResults::Boolean')) {
+	} elsif ($stream->isa('RDF::Trine::Iterator::Boolean')) {
 		print "<html><head><title>SPARQL Results</title></head><body>\n";
 		print (($stream->get_boolean) ? "True" : "False");
 		print "</body></html>\n";
-	} elsif ($stream->isa('RDF::SPARQLResults::Bindings')) {
+	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
 		print "<html><head><title>SPARQL Results</title>\n";
 		print <<"END";
 			<style type="text/css">
