@@ -70,7 +70,7 @@ L<Unicode::Escape>
 L<URI>
 L<XML::CommonNS>
 L<XML::Namespace>
-L<XML::Twig>
+L<XML::SAX>
 
 =head1 BUGS AND LIMITATIONS
 

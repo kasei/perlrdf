@@ -40,6 +40,33 @@ BEGIN {
 
 =cut
 
+=item C<< as_sparql >>
+
+Returns the SPARQL string for this alegbra expression.
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	my $context	= shift || {};
+	my $indent	= shift;
+	
+	my $pred	= $self->predicate;
+	if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+		$pred	= 'a';
+	} else {
+		$pred	= $pred->as_sparql( $context );
+	}
+	
+	my $string	= sprintf(
+		"%s %s %s .",
+		$self->subject->as_sparql( $context ),
+		$pred,
+		$self->object->as_sparql( $context ),
+	);
+	return $string;
+}
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.
@@ -53,52 +80,52 @@ sub referenced_blanks {
 	return map { $_->blank_identifier } @blanks;
 }
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
-
-Returns a new algebra pattern where all referenced Resource nodes representing
-QNames (ns:local) are qualified using the supplied %namespaces.
-
-=cut
-
-sub qualify_uris {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $ns		= shift;
-	my $base	= shift;
-	my @nodes;
-	foreach my $n ($self->nodes) {
-		if (blessed($n) and $n->isa('RDF::Query::Node::Resource')) {
-			my $uri	= $n->uri;
-			if (ref($uri)) {
-				my ($n,$l)	= @$uri;
-				unless (exists($ns->{ $n })) {
-					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
-				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
-				push(@nodes, $resolved);
-			} else {
-				push(@nodes, $n);
-			}
-		} elsif (blessed($n) and $n->isa('RDF::Query::Node::Literal')) {
-			my $node	= $n;
-			my $dt	= $node->literal_datatype;
-			if (ref($dt)) {
-				my ($n,$l)	= @$dt;
-				unless (exists($ns->{ $n })) {
-					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
-				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
-				my $lit			= RDF::Query::Node::Literal->new( $node->literal_value, undef, $resolved->uri_value );
-				push(@nodes, $lit);
-			} else {
-				push(@nodes, $node);
-			}
-		} else {
-			push(@nodes, $n);
-		}
-	}
-	return $class->new( @nodes );
-}
+# =item C<< qualify_uris ( \%namespaces, $base ) >>
+# 
+# Returns a new algebra pattern where all referenced Resource nodes representing
+# QNames (ns:local) are qualified using the supplied %namespaces.
+# 
+# =cut
+# 
+# sub qualify_uris {
+# 	my $self	= shift;
+# 	my $class	= ref($self);
+# 	my $ns		= shift;
+# 	my $base	= shift;
+# 	my @nodes;
+# 	foreach my $n ($self->nodes) {
+# 		if (blessed($n) and $n->isa('RDF::Query::Node::Resource')) {
+# 			my $uri	= $n->uri;
+# 			if (ref($uri)) {
+# 				my ($n,$l)	= @$uri;
+# 				unless (exists($ns->{ $n })) {
+# 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
+# 				}
+# 				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+# 				push(@nodes, $resolved);
+# 			} else {
+# 				push(@nodes, $n);
+# 			}
+# 		} elsif (blessed($n) and $n->isa('RDF::Query::Node::Literal')) {
+# 			my $node	= $n;
+# 			my $dt	= $node->literal_datatype;
+# 			if (ref($dt)) {
+# 				my ($n,$l)	= @$dt;
+# 				unless (exists($ns->{ $n })) {
+# 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
+# 				}
+# 				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+# 				my $lit			= RDF::Query::Node::Literal->new( $node->literal_value, undef, $resolved->uri_value );
+# 				push(@nodes, $lit);
+# 			} else {
+# 				push(@nodes, $node);
+# 			}
+# 		} else {
+# 			push(@nodes, $n);
+# 		}
+# 	}
+# 	return $class->new( @nodes );
+# }
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
 
@@ -174,18 +201,18 @@ sub execute {
 	}
 	
 	my @graph;
-	if (blessed($context) and $context->isa('RDF::Query::Node::Variable')) {
-		# if we're in a GRAPH ?var {} block...
-		my $context_var	= $context->name;
-		my $graph		= $bound->{ $context_var };
-		if ($graph) {
-			# and ?var has already been bound, get the bound value and pass that on
-			@graph	= $graph;
-		}
-	} elsif ($bridge->is_node( $context )) {
-		# if we're in a GRAPH <uri> {} block, just pass it on
-		@graph	= $context;
-	}
+# 	if (blessed($context) and $context->isa('RDF::Query::Node::Variable')) {
+# 		# if we're in a GRAPH ?var {} block...
+# 		my $context_var	= $context->name;
+# 		my $graph		= $bound->{ $context_var };
+# 		if ($graph) {
+# 			# and ?var has already been bound, get the bound value and pass that on
+# 			@graph	= $graph;
+# 		}
+# 	} elsif ($bridge->is_node( $context )) {
+# 		# if we're in a GRAPH <uri> {} block, just pass it on
+# 		@graph	= $context;
+# 	}
 	
 	my $stream;
 	my @streams;

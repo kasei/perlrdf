@@ -116,7 +116,7 @@ sub evaluate {
 	my $bridge	= shift;
 	my $bound	= shift;
 	my $expr	= $self->expression;
-	my $value	= $expr->evaluate( $query, $bridge, $bound );
+	my $value	= $query->var_or_expr_value( $bridge, $bound, $expr );
 	return $value;
 }
 

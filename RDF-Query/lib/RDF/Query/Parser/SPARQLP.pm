@@ -40,20 +40,18 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
+our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT/i;
 
 sub _Query {
 	my $self	= shift;
 	$self->SUPER::_Query;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
 	if ($aggdata) {
-		my @groupby;
-		
-		use Data::Dumper;
+		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, \@groupby, %{ $aggdata } );
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, %{ $aggdata } );
 		push(@{ $self->{build}{triples} }, $agg);
-		push(@{ $self->{build}{variables} }, map { RDF::Query::Node::Variable->new($_) } (keys %$aggdata));
 	}
 }
 
@@ -169,7 +167,7 @@ sub _BrackettedAliasExpression {
 sub __SelectVar_test {
 	my $self	= shift;
 	local($self->{__aggregate_call_ok})	= 1;
-	return ($self->_test( qr/[(]|COUNT|MAX|MIN/i) or $self->SUPER::__SelectVar_test);
+	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->SUPER::__SelectVar_test);
 }
 
 sub __SelectVar {
@@ -177,8 +175,8 @@ sub __SelectVar {
 	local($self->{__aggregate_call_ok})	= 1;
 	if ($self->_test('(')) {
 		$self->_BrackettedAliasExpression;
-	} elsif ($self->_test( qr/COUNT|MAX|MIN/i )) {
-		$self->__Aggregate;
+	} elsif ($self->_BuiltInCall_test) {
+		$self->_BuiltInCall;
 	} else {
 		$self->SUPER::__SelectVar;
 	}
@@ -186,7 +184,7 @@ sub __SelectVar {
 
 sub __Aggregate {
 	my $self	= shift;
-	my $op	= uc( $self->_eat( qr/COUNT|MAX|MIN/i ) );
+	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
 	$self->_eat('(');
 	$self->__consume_ws_opt;
 	my $expr;
@@ -211,26 +209,65 @@ sub __Aggregate {
 	$self->_eat(')');
 	
 	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), $expr ];
+	$self->_add_stack( $self->new_variable($name) );
+	
 }
 
 sub _BuiltInCall_test {
 	my $self	= shift;
 	if ($self->{__aggregate_call_ok}) {
-		return 1 if ($self->_test(qr/COUNT|MAX|MIN/i));
+		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return $self->SUPER::_BuiltInCall_test;
 }
 
 sub _BuiltInCall {
 	my $self	= shift;
-	if ($self->{__aggregate_call_ok} and $self->_test(qr/COUNT|MAX|MIN/i)) {
+	if ($self->{__aggregate_call_ok} and $self->_test( $r_AGGREGATE_CALL )) {
 		$self->__Aggregate;
 	} else {
 		$self->SUPER::_BuiltInCall;
 	}
 }
 
+sub _WhereClause {
+	my $self	= shift;
+	$self->SUPER::_WhereClause;
+	
+	$self->__consume_ws_opt;
+	if ($self->_test( qr/GROUP\s+BY/i )) {
+		$self->_eat( qr/GROUP\s+BY/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->__GroupByVar;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->__GroupByVar_test) {
+			$self->__GroupByVar;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		$self->{build}{__group_by}	= \@vars;
+		$self->__consume_ws_opt;
+	}
+}
 
+sub __GroupByVar_test {
+	my $self	= shift;
+	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->SUPER::__SelectVar_test);
+}
+
+sub __GroupByVar {
+	my $self	= shift;
+	if ($self->_test('(')) {
+		$self->_BrackettedAliasExpression;
+	} elsif ($self->_BuiltInCall_test) {
+		$self->_BuiltInCall;
+	} else {
+		$self->SUPER::__SelectVar;
+	}
+}
 
 1;
 

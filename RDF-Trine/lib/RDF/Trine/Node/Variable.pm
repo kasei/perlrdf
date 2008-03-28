@@ -72,17 +72,6 @@ sub sse {
 	return qq(?${name});
 }
 
-=item C<< as_sparql >>
-
-Returns the SPARQL string for this node.
-
-=cut
-
-sub as_sparql {
-	my $self	= shift;
-	return $self->sse;
-}
-
 =item C<< as_string >>
 
 Returns a string representation of the node.

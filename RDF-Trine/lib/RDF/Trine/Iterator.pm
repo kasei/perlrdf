@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -35,13 +32,13 @@ use warnings;
 no warnings 'redefine';
 
 use JSON;
-use XML::Twig;
 use Data::Dumper;
 use Carp qw(carp);
-use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype refaddr);
 
+use XML::SAX;
 use RDF::Trine::Node;
+use RDF::Trine::Iterator::SAXHandler;
 
 our ($REVISION, $VERSION, $debug, @ISA, @EXPORT_OK);
 use constant DEBUG	=> 0;
@@ -156,7 +153,7 @@ Other options are:
 
 sub to_string {
 	my $self	= shift;
-	my $format	= shift || 'http://www.w3.org/2001/sw/DataAccess/rf1/result2';
+	my $format	= shift || 'http://www.w3.org/2005/sparql-results#';
 	if (ref($format) and $format->isa('RDF::Redland::URI')) {
 		$format	= $format->as_string;
 	}
@@ -177,56 +174,16 @@ Returns a new iterator using the supplied XML in the SPARQL XML Results format.
 sub from_string {
 	my $class	= shift;
 	my $string	= shift;
-	
-	my $bool;
-	my @vars;
-	my $value;
-	my @results;
-	my $result	= {};
-	my (%extrakeys, %extra);
-	
-	my $link;
-	my $twig	= XML::Twig->new(
-		twig_handlers => {
-			variable	=> sub { push(@vars, $_->att('name')) },
-			'link'		=> sub { $link = $_->att('href') },
-			binding		=> sub { $result->{ $_->att('name') }	= $value; },
-			result		=> sub { push(@results, $result); $result	= {}; },
-			bnode		=> sub { $value	= RDF::Trine::Node::Blank->new( $_->text ) },
-			uri			=> sub { $value	= RDF::Trine::Node::Resource->new( $_->text ) },
-			literal		=> sub {
-							my $lang	= $_->att('xml:lang');
-							my $dt		= $_->att('datatype');
-							$value	= RDF::Trine::Node::Literal->new( $_->text, $lang, $dt )
-						},
-			boolean		=> sub { $bool	= ($_->text eq 'true') ? 1 : 0 },
-		},
-	);
-	$twig->parse( $string );
-	
-	if ($link and $link =~ m<^data:text/xml,%3Cextra>) {
-		my $u		= URI->new( $link );
-		my $data	= $u->data;
-		my $twig	= XML::Twig->new(
-			twig_handlers => {
-				extra		=> sub { push( @{ $extra{ $_->att('name') } }, { %extrakeys } ); %extrakeys = (); },
-				extrakey	=> sub { push(@{ $extrakeys{ $_->att('id') } }, $_->text); },
-			},
-		);
-		$twig->parse( $data );
+	unless (ref($string)) {
+		my $data	= $string;
+		open( my $fh, '<', \$data );
+		$string	= $fh;
 	}
-	
-	if (defined($bool)) {
-		return RDF::Trine::Iterator::Boolean->new( [$bool] );
-	} else {
-		my $bindings	= RDF::Trine::Iterator::Bindings->new( \@results, \@vars, extra_result_data => \%extra );
-# 		foreach my $tag (keys %extra) {
-# 			foreach my $value (@{ $extra{ $tag } }) {
-# 				$bindings->add_extra_result_data( $tag, $value );
-# 			}
-# 		}
-		return $bindings;
-	}
+	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	$p->parse_file( $string );
+	my $iter	= $handler->iterator;
+	return $iter;
 }
 
 =item C<< next >>
@@ -365,120 +322,6 @@ sub get_all {
 	}
 	return @data;
 }
-
-=item C<< join_streams ( $stream, $stream ) >>
-
-Performs a natural, nested loop join of the two streams, returning a new stream
-of joined results.
-
-=cut
-
-sub join_streams {
-	my $self	= shift;
-	my $astream	= shift;
-	my $bstream	= shift;
-#	my $bridge	= shift;
-	my %args	= @_;
-	
-#	my $debug	= $args{debug};
-	
-	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
-	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
-	
-	################################################
-	### BNODE MAP STUFF
-	my $a_extra	= $astream->extra_result_data || {};
-	my $b_extra	= $bstream->extra_result_data || {};
-	my (%a_map, %b_map);
-	foreach my $h (@{ $a_extra->{'bnode-map'} || [] }) {
-		foreach my $id (keys %$h) {
-			my @values	= @{ $h->{ $id } };
-			push( @{ $a_map{ $id } }, @values );
-		}
-	}
-	foreach my $h (@{ $b_extra->{'bnode-map'} || [] }) {
-		foreach my $id (keys %$h) {
-			my @values	= @{ $h->{ $id } };
-			push( @{ $b_map{ $id } }, @values );
-		}
-	}
-	my $a_map	= (%a_map) ? \%a_map : undef;
-	my $b_map	= (%b_map) ? \%b_map : undef;
-	################################################
-	
-	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
-	my $a		= $astream->project( @names );
-	my $b		= $bstream->project( @names );
-	
-	my @results;
-	my @data	= $b->get_all();
-	no warnings 'uninitialized';
-	while (my $rowa = $a->next) {
-		LOOP: foreach my $rowb (@data) {
-			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
-			my %keysa	= map {$_=>1} (keys %$rowa);
-			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
-			foreach my $key (@shared) {
-				my $val_a	= $rowa->{ $key };
-				my $val_b	= $rowb->{ $key };
-				my $defined	= 0;
-				foreach my $n ($val_a, $val_b) {
-					$defined++ if (defined($n));
-				}
-				if ($defined == 2) {
-					my $equal	= $val_a->equal( $val_b );
-					if (not $equal) {
-						my $query 	= $args{ query };
-						my $bridge	= $args{ bridge };
-						if ($query and $bridge) {
-							warn 'join values and bnode maps: ' . Dumper($val_a, $val_b, $a_map, $b_map) if ($a_map or $b_map);
-							if ($a_map and $val_a->isa('RDF::Trine::Node::Blank')) {
-								my $anames	= Set::Scalar->new( @{ $a_map{ $val_a->blank_identifier } } );
-								my $bnames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_b, $query, $bridge, {} ) );
-								if (my $int = $anames->intersection( $bnames )) {
-									warn "node equality based on $int";
-									$equal	= 1;
-								}
-							} elsif ($b_map and $val_b->isa('RDF::Trine::Node::Blank')) {
-								my $bnames	= Set::Scalar->new( @{ $b_map{ $val_b->blank_identifier } } );
-								my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
-								warn "anames: $anames\n";
-								warn "bnames: $bnames\n";
-								if (my $int = $anames->intersection( $bnames )) {
-									warn "node equality based on $int";
-									$equal	= 1;
-								}
-							}
-						} else {
-							Carp::cluck "no query,bridge in args" if ($debug);
-						}
-					}
-					
-					unless ($equal) {
-						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
-						next LOOP;
-					}
-				}
-			}
-			
-			my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
-			if ($debug) {
-				warn "JOINED:\n";
-				foreach my $key (keys %$row) {
-					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
-				}
-			}
-			push(@results, $row);
-		}
-	}
-	
-	my $args	= $astream->_args;
-	return $astream->_new( \@results, 'bindings', \@names, %$args );
-}
-
-
-
-
 
 =begin private
 
@@ -745,6 +588,7 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+L<XML::SAX|XML::SAX>
 
 =head1 AUTHOR
 

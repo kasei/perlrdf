@@ -30,7 +30,7 @@ requires:
     URI:                           0
     XML::CommonNS:                 0.04
     XML::Namespace:                0
-    XML::Twig:                     0
+    XML::SAX:                      0
 license: perl
 distribution_type: module
 generated_by: Module::Install version 0.63

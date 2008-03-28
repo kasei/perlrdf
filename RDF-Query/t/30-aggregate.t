@@ -11,7 +11,7 @@ my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => 1 + (25 * scalar(@models));
+plan tests => 1 + (36 * scalar(@models));
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -30,7 +30,7 @@ foreach my $model (@models) {
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		$query->aggregate( ['p'], count => ['COUNT', RDF::Query::Node::Variable->new('knows')] );
+		$query->aggregate( [RDF::Query::Node::Variable->new('p')], count => ['COUNT', RDF::Query::Node::Variable->new('knows')] );
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
@@ -163,6 +163,79 @@ END
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT (COUNT(?nick) AS ?count)
+			WHERE {
+				?p a foaf:Person .
+				OPTIONAL {
+					?p foaf:nick ?nick
+				}
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			is_deeply( $row, { count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'COUNT() on sometimes unbound variable' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?name (COUNT(?nick) AS ?count)
+			WHERE {
+				?p a foaf:Person ;
+					foaf:name ?name;
+					foaf:nick ?nick .
+			}
+			GROUP BY ?name
+END
+		isa_ok( $query, 'RDF::Query' );
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		
+		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary Peck' => 1 );
+		while (my $row = $stream->next) {
+			my $name	= $row->{name}->literal_value;
+			my $expect	= $expect{ $name };
+			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for variable GROUP' );
+			$count++;
+		}
+		is( $count, 2, 'two aggreate groups' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?fixedpoint (COUNT(*) AS ?count)
+			WHERE {
+				?image exif:fNumber ?f
+			}
+			GROUP BY (?f * 10 AS ?fixedpoint)
+END
+		isa_ok( $query, 'RDF::Query' );
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		
+		my %expect	= ( '45' => 3, '110' => 1 );
+		while (my $row = $stream->next) {
+			my $f		= $row->{fixedpoint}->literal_value;
+			my $expect	= $expect{ $f };
+			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for expression GROUP' );
+			$count++;
+		}
+		is( $count, 2, 'two aggreate groups' );
 	}
 	
 }
