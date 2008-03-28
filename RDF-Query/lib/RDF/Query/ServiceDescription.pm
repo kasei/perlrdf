@@ -165,7 +165,6 @@ filter, and required predicate, with the following classes:
 
 sub capabilities {
 	my $self	= shift;
-	warn Dumper($self->{capabilities});
 	return $self->{capabilities};
 }
 
@@ -201,27 +200,43 @@ sub computed_statement_generator {
 		my $cap		= $preds{ $puri };
 		return unless ($cap);		# no capability matches this predicate.
 		
+		my $ok		= 1;
 		my $sofilter	= $cap->{ sofilter };
 		if ($sofilter) {
-			my $bound		= { subject => $s, object => $o };
-			my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
-			my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
-			my $value		= $filter->evaluate( $query, $bridge, $bound );
-			my $ok			= ($value->literal_value eq 'true') ? 1 : 0;
+			my %vars		= map { $_ => 1 } $sofilter->referenced_variables;
+			my $runnable	= 1;
+			if ($vars{ subject }) {
+				$runnable	= 0 unless ($bound->{subject});
+			}
+			if ($vars{ object }) {
+				$runnable	= 0 unless ($bound->{object});
+			}
+			if ($runnable) {
+				my $bound		= { subject => $s, object => $o };
+				my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
+				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $nok			= ($value->literal_value eq 'false');
+				$ok				= 0 if ($nok);
+			}
 		}
 		
-		my $st		= RDF::Query::Algebra::Triple->new( $s, $p, $o );
-		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $st );
-		my $service	= RDF::Query::Algebra::Service->new(
-						RDF::Query::Node::Resource->new( $self->url ),
-						$ggp
-					);
-		my $iter	= smap {
-						my $bound	= shift;
-						my $triple	= $st->bind_variables( $bound );
-						$triple;
-					} $service->execute( $query, $bridge, $bound );
-		return $iter;
+		if ($ok) {
+			my $st		= RDF::Query::Algebra::Triple->new( $s, $p, $o );
+			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $st );
+			my $service	= RDF::Query::Algebra::Service->new(
+							RDF::Query::Node::Resource->new( $self->url ),
+							$ggp
+						);
+			my $iter	= smap {
+							my $bound	= shift;
+							my $triple	= $st->bind_variables( $bound );
+							$triple;
+						} $service->execute( $query, $bridge, $bound );
+			return $iter;
+		} else {
+			return undef;
+		}
 	};
 }
 
