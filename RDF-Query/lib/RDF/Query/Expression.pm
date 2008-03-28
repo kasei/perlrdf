@@ -120,7 +120,16 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->operands);
+	my @ops		= $self->operands;
+	my @vars;
+	foreach my $o (@ops) {
+		if ($o->isa('RDF::Query::Node::Variable')) {
+			push(@vars, $o->name);
+		} elsif ($o->isa('RDF::Query::Expression')) {
+			push(@vars, $o->referenced_variables);
+		}
+	}
+	return uniq(@vars);
 }
 
 =item C<< fixup ( $bridge, $base, \%namespaces ) >>
