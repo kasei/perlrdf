@@ -521,6 +521,13 @@ sub smap (&$;$$$) {
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
+	foreach my $i (0 .. $#args) {
+		last unless (scalar(@_));
+		my $new	= shift;
+		if (defined($new)) {
+			$args[ $i ]	= $new;
+		}
+	}
 	my $class	= ref($stream);
 	
 	my $open	= 1;

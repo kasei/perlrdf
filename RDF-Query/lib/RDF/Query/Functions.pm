@@ -26,7 +26,6 @@ use I18N::LangTags;
 use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
-use Storable qw(thaw);
 use Digest::SHA1 qw(sha1_hex);
 use Carp qw(carp croak confess);
 

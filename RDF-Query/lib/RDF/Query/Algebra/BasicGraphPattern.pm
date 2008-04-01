@@ -164,7 +164,7 @@ sub _check_duplicate_blanks {
 	return [keys %seen];
 }
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
 This method replaces generic node objects with bridge-native objects.
@@ -174,13 +174,18 @@ This method replaces generic node objects with bridge-native objects.
 sub fixup {
 	my $self	= shift;
 	my $class	= ref($self);
+	my $query	= shift;
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my @nodes	= map { $_->fixup( $bridge, $base, $ns ) } $self->triples;
-	my $fixed	= $class->new( @nodes );
-	return $fixed;
+	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+		return $opt;
+	} else {
+		my @nodes	= map { $_->fixup( $query, $bridge, $base, $ns ) } $self->triples;
+		my $fixed	= $class->new( @nodes );
+		return $fixed;
+	}
 }
 
 =item C<< clone >>
@@ -218,28 +223,24 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
-	if ($bridge->can('unify_bgp')) {
-		return $bridge->unify_bgp( $self, $bound, $context, %args );
-	} else {
-		my (@triples)	= $self->triples;
-		my @streams;
-		foreach my $triple (@triples) {
-			Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
-			my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
-			push(@streams, $stream);
-		}
-		if (@streams) {
-			while (@streams > 1) {
-				my $a	= shift(@streams);
-				my $b	= shift(@streams);
-				unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b ));
-			}
-		} else {
-			push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
-		}
-		my $stream	= shift(@streams);
-		return $stream;
+	my (@triples)	= $self->triples;
+	my @streams;
+	foreach my $triple (@triples) {
+		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
+		my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
+		push(@streams, $stream);
 	}
+	if (@streams) {
+		while (@streams > 1) {
+			my $a	= shift(@streams);
+			my $b	= shift(@streams);
+			unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b ));
+		}
+	} else {
+		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
+	}
+	my $stream	= shift(@streams);
+	return $stream;
 }
 
 

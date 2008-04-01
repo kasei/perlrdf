@@ -14,9 +14,12 @@ use Scalar::Util qw(blessed reftype refaddr);
 use LWP::UserAgent;
 use Encode;
 
+use RDF::Query::Model::RDFTrine::BasicGraphPattern;
+
 use RDF::Trine 0.102;
 use RDF::Trine::Model;
 use RDF::Trine::Parser;
+use RDF::Trine::Pattern;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Iterator qw(smap);
@@ -433,82 +436,31 @@ sub supports {
 	return 0;
 }
 
-=item C<< unify_bgp ( $bgp, \%bound, $context, %args ) >>
+=item C<< fixup ( $pattern, $query, $base, \%namespaces ) >>
 
-Called with a RDF::Query::Algebra::BasicGraphPattern for execution all-at-once
-instead of making individual execute() calls on all the constituent
-RDF::Query::Algebra::Triple patterns and joining them.
-
-C<< $context >> is currently ignored as the calling code in
-RDF::Query::Algebra::BasicGraphPattern::execute is currently ensuring that
-we do the right thing w.r.t. named graphs. Should probably change in the future
-as named graph support is moved into the model bridge code.
+Called prior to query execution, if the underlying model can optimize
+the execution of C<< $pattern >>, this method returns a optimized
+RDF::Query::Algebra object to replace C<< $pattern >>. Otherwise, returns
+C<< undef >> and the C<< fixup >> method of C<< $pattern >> will be used
+instead.
 
 =cut
 
-sub unify_bgp {
+sub fixup {
 	my $self	= shift;
-	my $bgp		= shift;
-	my $bound	= shift;
-	my $context	= shift;
-	my %args	= @_;
+	my $pattern	= shift;
+	my $query	= shift;
+	my $base	= shift;
+	my $ns		= shift;
 	
-	my $pattern	= $bgp->clone;
-	my @triples	= $pattern->triples;
-	
-	Carp::cluck "attempting to unify bgp: " . Dumper($pattern) if ($debug);
-	
-	if ($RDF::Trine::Store::DBI::debug) {
-		warn $self->{named_graphs};
-	}
-	
-	my $model;
-	my $modeldebug;
-	if (@triples and $triples[0]->isa('RDF::Trine::Statement::Quad')) {
-		$modeldebug	= 'named';
-		$model	= $self->_named_graphs_model;
+	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+		# call fixup on the triples so that they get converted to bridge-native objects
+		my @triples	= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
+		my $pattern	= RDF::Trine::Pattern->new( @triples );
+		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $pattern );
 	} else {
-		$modeldebug	= 'default';
-		$model	= $self->model;
+		return;
 	}
-	
-	foreach my $triple ($pattern->triples) {
-		my @posmap	= ($triple->isa('RDF::Trine::Statement::Quad'))
-					? qw(subject predicate object context)
-					: qw(subject predicate object);
-		foreach my $method (@posmap) {
-			my $node	= $triple->$method();
-			if ($node->isa('RDF::Trine::Node::Blank')) {
-				my $var	= RDF::Trine::Node::Variable->new( '__' . $node->blank_identifier );
-				$triple->$method( $var );
-			}
-		}
-	}
-	
-	# BINDING has to happen after the blank->var substitution above, because
-	# we might have a bound bnode.
-	$pattern	= $pattern->bind_variables( $bound );
-	
-	my @args;
-	if (my $o = $args{ orderby }) {
-		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trine::Node::Variable') } @$o ] );
-	}
-	
-	if ($debug) {
-		warn "unifying with store: " . refaddr( $model->_store ) . "\n";
-		warn "bgp pattern: " . Dumper($pattern);
-		warn "model contains:\n";
-		$model->_debug;
-	}
-	return smap {
-		my $bindings	= $_;
-		return undef unless ($bindings);
-		my %cast	= map {
-						$_ => _cast_to_local( $bindings->{ $_ } )
-					} (keys %$bindings);
-		warn "[$modeldebug]" . Dumper(\%cast) if ($debug);
-		return \%cast;
-	} $model->get_pattern( $pattern, undef, @args );
 }
 
 sub _named_graphs_model {
