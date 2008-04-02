@@ -1,3 +1,24 @@
+# RDF::Trine::Iterator::SAXHandler
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results format
+
+=head1 SYNOPSIS
+
+    use RDF::Trine::Iterator::SAXHandler;
+    my $handler = RDF::Trine::Iterator::SAXHandler->new();
+    my $p = XML::SAX::ParserFactory->parser(Handler => $handler);
+    $p->parse_file( $string );
+    my $iter = $handler->iterator;
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
 package RDF::Trine::Iterator::SAXHandler;
 
 use strict;
@@ -19,6 +40,35 @@ my %extrakeys;
 
 my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
 
+=item C<< iterator >>
+
+Returns the RDF::Trine::Iterator object after parsing is complete.
+
+=cut
+
+sub iterator {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	
+	if (exists( $booleans{ $addr })) {
+		return RDF::Trine::Iterator::Boolean->new( [$booleans{ $addr }] );
+	} else {
+		my $vars	= delete $variables{ $addr };
+		my $results	= delete $results{ $addr };
+		my %args;
+		if (exists $extra{ $addr }) {
+			$args{ extra_result_data }	= delete $extra{ $addr };
+		}
+		return RDF::Trine::Iterator::Bindings->new( $results, $vars, %args );
+	}
+}
+
+=begin private
+
+=item C<< start_element >>
+
+=cut
+
 sub start_element {
 	my $self	= shift;
 	my $el		= shift;
@@ -30,6 +80,10 @@ sub start_element {
 		$strings{ $addr }	= '';
 	}
 }
+
+=item C<< end_element >>
+
+=cut
 
 sub end_element {
 	my $self	= shift;
@@ -82,28 +136,19 @@ sub end_element {
 	}
 }
 
-sub iterator {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	
-	if (exists( $booleans{ $addr })) {
-		return RDF::Trine::Iterator::Boolean->new( [$booleans{ $addr }] );
-	} else {
-		my $vars	= delete $variables{ $addr };
-		my $results	= delete $results{ $addr };
-		my %args;
-		if (exists $extra{ $addr }) {
-			$args{ extra_result_data }	= delete $extra{ $addr };
-		}
-		return RDF::Trine::Iterator::Bindings->new( $results, $vars, %args );
-	}
-}
+=item C<< extra >>
+
+=cut
 
 sub extra {
 	my $self	= shift;
 	my $addr	= refaddr( $self );
 	return $extra{ $addr };
 }
+
+=item C<< characters >>
+
+=cut
 
 sub characters {
 	my $self	= shift;
@@ -138,8 +183,24 @@ sub DESTROY {
 }
 
 
-
-
 1;
 
 __END__
+
+=end private
+
+=back
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
+
+
+=head1 LICENCE AND COPYRIGHT
+
+Copyright (c) 2007, Gregory Todd Williams C<< <gwilliams@cpan.org> >>. All rights reserved.
+
+This module is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself. See L<perlartistic>.
+
+

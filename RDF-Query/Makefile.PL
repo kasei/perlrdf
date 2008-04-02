@@ -39,7 +39,6 @@ WriteMakefile(
 					'Scalar::Util'				=> 0,
 					'Scalar::Util'				=> 0,
 					'Set::Scalar'				=> 0,
-					'Storable'					=> 0,
 					'URI'						=> 0,
 				},
 );

@@ -120,10 +120,19 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } $self->operands);
+	my @ops		= $self->operands;
+	my @vars;
+	foreach my $o (@ops) {
+		if ($o->isa('RDF::Query::Node::Variable')) {
+			push(@vars, $o->name);
+		} elsif ($o->isa('RDF::Query::Expression')) {
+			push(@vars, $o->referenced_variables);
+		}
+	}
+	return uniq(@vars);
 }
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
 This method replaces generic node objects with bridge-native objects.
@@ -133,17 +142,22 @@ This method replaces generic node objects with bridge-native objects.
 sub fixup {
 	my $self	= shift;
 	my $class	= ref($self);
+	my $query	= shift;
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my @operands	= map {
-		($_->isa('RDF::Query::Algebra'))
-			? $_->fixup( $bridge, $base, $ns )
-			: $_
-	} $self->operands;
-	
-	return $class->new( $self->op, @operands );
+	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+		return $opt;
+	} else {
+		my @operands	= map {
+			($_->isa('RDF::Query::Algebra'))
+				? $_->fixup( $query, $bridge, $base, $ns )
+				: $_
+		} $self->operands;
+		
+		return $class->new( $self->op, @operands );
+	}
 }
 
 1;

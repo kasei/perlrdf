@@ -96,13 +96,12 @@ use Carp qw(carp croak confess);
 use Data::Dumper;
 use LWP::UserAgent;
 use I18N::LangTags;
-use Storable qw(dclone);
 use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
-use RDF::Trine 0.104;
+use RDF::Trine 0.105;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
@@ -185,7 +184,6 @@ sub new {
 					dateparser		=> $f,
 					parser			=> $parser,
 					parsed			=> $parsed,
-					parsed_orig		=> $parsed,
 					useragent		=> $ua,
 				}, $class );
 	unless ($parsed->{'triples'}) {
@@ -251,7 +249,6 @@ sub execute {
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
-	$self->{parsed}	= dclone( $self->{parsed_orig} );
 	my $parsed	= $self->{parsed};
 	
 	my $stream;
@@ -261,11 +258,10 @@ sub execute {
 	my $bridge	= $self->{bridge} || $self->get_bridge( $model, %args );
 	if ($bridge) {
 		$self->bridge( $bridge );
+		warn "got bridge $bridge" if ($debug);
 	} else {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
-	
-	warn "got bridge $bridge" if ($debug);
 	
 	$self->load_data();
 	my ($pattern, $cpattern)	= $self->fixup();
@@ -294,20 +290,17 @@ sub execute {
 		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
 	}
 	
-	if ($expr) {
-		my $projected	= smap {
-							my $row = $_;
-							my $new	= {};
-							foreach my $v (@{ $parsed->{'variables'} }) {
-								$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
-							}
-							$new;
-						} $sorted;
-		$stream			= $projected;
-	} else {
-		my $projected	= $sorted->project( @vars );
-		$stream			= $projected;
-	}
+	my @pvarnames	= map { $_->name } grep { not($_->isa('RDF::Query::Node::Resource')) } @{ $parsed->{'variables'} };
+	my $projected	= smap( sub {
+						my $row = $_;
+						my $new	= {};
+						foreach my $v (@{ $parsed->{'variables'} }) {
+							next if ($v->isa('RDF::Query::Node::Resource'));
+							$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
+						}
+						$new
+					}, $sorted, undef, \@pvarnames);
+	$stream			= $projected;
 
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -810,26 +803,29 @@ Does last-minute fix-up on the parse tree. This involves:
 =cut
 
 sub fixup {
-	my $self	= shift;
-	my $pattern	= $self->pattern;
-	my $bridge	= $self->bridge;
-	my $parsed	= $self->parsed;
-	my $base	= $parsed->{base};
+	my $self		= shift;
+	my $pattern		= $self->pattern;
+	my $bridge		= $self->bridge;
+	my $parsed		= $self->parsed;
+	my $base		= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
-	my $native	= $pattern->fixup( $bridge, $base, $namespaces );
-	$self->{known_variables}	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
+	
+	my $native		= $pattern->fixup( $self, $bridge, $base, $namespaces );
 	
 	## CONSTRUCT HAS IMPLICIT VARIABLES
 	if ($parsed->{'method'} eq 'CONSTRUCT') {
+		# project on all the referenced variables in the where pattern so that
+		# they'll be available for the construct pattern:
 		my @vars	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
 		$parsed->{'variables'}	= \@vars;
-		my $cnative	= $self->construct_pattern->fixup( $bridge, $base, $namespaces );
+		
+		# fixup the construct pattern
+		my $cnative	= $self->construct_pattern->fixup( $self, $bridge, $base, $namespaces );
+		
 		return ($native, $cnative);
 	} else {
 		return ($native, undef);
 	}
-	
-	return $native;
 }
 
 =begin private
@@ -1617,8 +1613,6 @@ __END__
 =item * L<Scalar::Util|Scalar::Util>
 
 =item * L<Set::Scalar|Set::Scalar>
-
-=item * L<Storable|Storable>
 
 =item * L<RDF::Redland|RDF::Redland> or L<RDF::Core|RDF::Core> for optional model support.
 

@@ -7,7 +7,6 @@ no warnings 'redefine';
 require Encode;
 use URI::file;
 use Test::More;
-use Storable qw(dclone);
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 

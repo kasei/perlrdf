@@ -34,7 +34,6 @@ requires:
   JSON: 2
   Parse::RecDescent: 0
   Scalar::Util: 0
-  Storable: 0
   URI: 0
   List::MoreUtils: 0
   Set::Scalar: 0

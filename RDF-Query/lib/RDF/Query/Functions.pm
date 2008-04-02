@@ -26,7 +26,6 @@ use I18N::LangTags;
 use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
-use Storable qw(thaw);
 use Digest::SHA1 qw(sha1_hex);
 use Carp qw(carp croak confess);
 
@@ -268,8 +267,12 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#dateTime"}	= sub {
 $RDF::Query::functions{"sparql:str"}	= sub {
 	my $query	= shift;
 	my $bridge	= shift;
-	
 	my $node	= shift;
+	
+	unless (blessed($node)) {
+		throw RDF::Query::Error::TypeError -text => "STR() must be called with either a literal or resource";
+	}
+	
 	if ($node->is_literal) {
 		my $value	= $node->literal_value;
 		return RDF::Query::Node::Literal->new( $value );

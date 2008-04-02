@@ -20,7 +20,6 @@ use URI::Escape;
 use MIME::Base64;
 use Data::Dumper;
 use RDF::Query::Error;
-use Storable qw(freeze);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
@@ -219,7 +218,7 @@ sub qualify_uris {
 }
 
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
 This method replaces generic node objects with bridge-native objects.
@@ -229,15 +228,20 @@ This method replaces generic node objects with bridge-native objects.
 sub fixup {
 	my $self	= shift;
 	my $class	= ref($self);
+	my $query	= shift;
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my $endpoint	= ($self->endpoint->isa('RDF::Query::Node'))
-				? $bridge->as_native( $self->endpoint )
-				: $self->endpoint->fixup( $bridge, $base, $ns );
-	
-	return $class->new( $endpoint, map { $_->fixup( $bridge, $base, $ns ) } ($self->pattern) );
+	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+		return $opt;
+	} else {
+		my $endpoint	= ($self->endpoint->isa('RDF::Query::Node'))
+					? $bridge->as_native( $self->endpoint )
+					: $self->endpoint->fixup( $query, $bridge, $base, $ns );
+		
+		return $class->new( $endpoint, map { $_->fixup( $query, $bridge, $base, $ns ) } ($self->pattern) );
+	}
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>

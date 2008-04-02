@@ -198,7 +198,7 @@ sub qualify_uris {
 }
 
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
 This method replaces generic node objects with bridge-native objects.
@@ -208,16 +208,21 @@ This method replaces generic node objects with bridge-native objects.
 sub fixup {
 	my $self	= shift;
 	my $class	= ref($self);
+	my $query	= shift;
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my $graph	= ($self->graph->isa('RDF::Query::Node'))
-				? $bridge->as_native( $self->graph )
-				: $self->graph->fixup( $bridge, $base, $ns );
-	
-	my $pattern	= $self->pattern->fixup( $bridge, $base, $ns );
-	return $class->new( $graph, $pattern );
+	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+		return $opt;
+	} else {
+		my $graph	= ($self->graph->isa('RDF::Query::Node'))
+					? $bridge->as_native( $self->graph )
+					: $self->graph->fixup( $query, $bridge, $base, $ns );
+		
+		my $pattern	= $self->pattern->fixup( $query, $bridge, $base, $ns );
+		return $class->new( $graph, $pattern );
+	}
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>

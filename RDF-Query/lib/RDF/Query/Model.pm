@@ -484,6 +484,19 @@ sub count_statements {
 	return $count;
 }
 
+=item C<< fixup ( $pattern, $query, $base, \%namespaces ) >>
+
+Called prior to query execution, if the underlying model can optimize
+the execution of C<< $pattern >>, this method returns a optimized
+RDF::Query::Algebra object to replace C<< $pattern >>. Otherwise, returns
+C<< undef >> and the C<< fixup >> method of C<< $pattern >> will be used
+instead.
+
+=cut
+
+sub fixup {
+	return;
+}
 
 =item C<< debug >>
 

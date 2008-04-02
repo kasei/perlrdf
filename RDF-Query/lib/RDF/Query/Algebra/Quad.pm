@@ -127,7 +127,7 @@ sub qualify_uris {
 	return $class->new( @nodes );
 }
 
-=item C<< fixup ( $bridge, $base, \%namespaces ) >>
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
 This method replaces generic node objects with bridge-native objects.
@@ -137,14 +137,19 @@ This method replaces generic node objects with bridge-native objects.
 sub fixup {
 	my $self	= shift;
 	my $class	= ref($self);
+	my $query	= shift;
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
 	
-	my @nodes	= $self->nodes;
-	@nodes	= map { $bridge->as_native( $_, $base, $ns ) } @nodes;
-	my $fixed	= $class->new( @nodes );
-	return $fixed;
+	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+		return $opt;
+	} else {
+		my @nodes	= $self->nodes;
+		@nodes	= map { $bridge->as_native( $_, $base, $ns ) } @nodes;
+		my $fixed	= $class->new( @nodes );
+		return $fixed;
+	}
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
