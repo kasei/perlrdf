@@ -114,9 +114,10 @@ sub run {
 	no warnings 'uninitialized';
 	my $host	= $cgi->server_name;
 	my $port	= $cgi->server_port;
-
-
-	if ($cgi->param('openid.check')) {
+	
+	if ($cgi->param('about')) {
+		$endpoint->about( $cgi );
+	} elsif ($cgi->param('openid.check')) {
 		if (my $setup_url = $csr->user_setup_url) {
 			# redirect/link/popup user to $setup_url
 			warn "setup_url: $setup_url";

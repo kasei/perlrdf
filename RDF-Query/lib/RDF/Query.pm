@@ -878,6 +878,45 @@ sub add_function {
 	}
 }
 
+=item C<< supported_extensions >>
+
+Returns a list of URLs representing extensions to SPARQL that are supported
+by the query engine.
+
+=cut
+
+sub supported_extensions {
+	my $self	= shift;
+	return qw(
+		http://kasei.us/2008/04/sparql-extension/service
+		http://kasei.us/2008/04/sparql-extension/service/bloom_filters
+		http://kasei.us/2008/04/sparql-extension/select_expression
+		http://kasei.us/2008/04/sparql-extension/aggregate
+		http://kasei.us/2008/04/sparql-extension/aggregate/count
+		http://kasei.us/2008/04/sparql-extension/aggregate/count-distinct
+		http://kasei.us/2008/04/sparql-extension/aggregate/min
+		http://kasei.us/2008/04/sparql-extension/aggregate/max
+	);
+}
+
+=item C<< supported_functions >>
+
+Returns a list URLs that may be used as functions in FILTER clauses
+(and the SELECT clause if the SPARQLP parser is used).
+
+=cut
+
+sub supported_functions {
+	my $self	= shift;
+	my @funcs;
+	
+	if (blessed($self)) {
+		push(@funcs, keys %{ $self->{'functions'} });
+	}
+	
+	push(@funcs, keys %RDF::Query::functions);
+	return grep { not(/^sparql:/) } @funcs;
+}
 
 =begin private
 

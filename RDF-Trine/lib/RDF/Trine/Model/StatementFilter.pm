@@ -120,9 +120,10 @@ sub get_pattern {
 		
 		my @streams;
 		foreach my $triple (@triples) {
+			my @vars	= map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $triple->nodes;
 			Carp::confess "not a statement object: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
 			my $stream	= $self->get_statements( $triple->nodes, $context );
-			my $binds	= $stream->as_bindings( $triple->nodes );
+			my $binds	= $stream->as_bindings( $triple->nodes )->project( @vars );
 			push(@streams, $binds);
 		}
 		if (@streams) {

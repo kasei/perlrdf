@@ -1,0 +1,27 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sd: <http://darq.sf.net/dose/0.1#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/#> .
+@prefix sparql: <http://kasei.us/2008/04/sparql#> .
+
+# definition of an endpoint
+<[% endpoint_url %]> a sd:Service ;
+	rdfs:label "SPARQL Endpoint for kasei.us" ;
+	foaf:maker [
+		a foaf:Person ;
+		foaf:name "Gregory Todd Williams" ;
+		foaf:mbox_sha1sum "f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8" ;
+		rdfs:seeAlso <http://kasei.us/about/foaf.xrdf>
+	] ;
+
+	# the endpoint url
+	sd:url <[% endpoint_url %]> ;
+	sd:totalTriples [% triples %] ;
+	sd:isDefinitive "false"^^xsd:boolean ;
+[% FOREACH function = functions %]
+	sparql:extensionFunction <[% function.url %]> ;[% END %]
+[% FOREACH ext = extensions %]
+	sparql:sparqlExtension <[% ext.url %]> ;[% END %]
+	
+	.
