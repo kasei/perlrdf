@@ -455,9 +455,9 @@ sub fixup {
 	
 	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
 		# call fixup on the triples so that they get converted to bridge-native objects
-		my @triples	= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
-		my $pattern	= RDF::Trine::Pattern->new( @triples );
-		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $pattern );
+		my @triples		= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
+		my $tpattern	= RDF::Trine::Pattern->new( @triples );
+		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $tpattern, $pattern );
 	} else {
 		return;
 	}
