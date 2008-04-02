@@ -189,6 +189,8 @@ __END__
 
 =end private
 
+=back
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
