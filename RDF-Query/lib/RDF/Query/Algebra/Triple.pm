@@ -40,6 +40,24 @@ BEGIN {
 
 =cut
 
+=item C<new ( $s, $p, $o )>
+
+Returns a new Triple structure.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @nodes	= @_;
+	my @names	= qw(subject predicate object);
+	foreach my $i (0 .. 2) {
+		unless (defined($nodes[ $i ])) {
+			$nodes[ $i ]	= RDF::Query::Node::Variable->new($names[ $i ]);
+		}
+	}
+	return $class->SUPER::new( @nodes );
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this alegbra expression.

@@ -180,7 +180,6 @@ sub fixup {
 		return $opt;
 	} else {
 		my @triples	= $self->patterns;
-		
 		my $ggp			= $class->new( map { $_->fixup( $query, $bridge, $base, $ns ) } @triples );
 		return $ggp;
 	}

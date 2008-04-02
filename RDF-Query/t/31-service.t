@@ -25,33 +25,6 @@ use RDF::Query;
 
 
 {
-	print "# join using default graph (local rdf) and remote SERVICE (kasei.us), joining on bnode\n";
-	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		SELECT DISTINCT ?name ?nick
-		FROM <$file>
-		WHERE {
-			?p a foaf:Person ; foaf:name ?name .
-			SERVICE <http://kasei.us/sparql> {
-				?p foaf:nick ?nick
-			}
-		}
-END
-	my $stream	= $query->execute();
-	isa_ok( $stream, 'RDF::Trine::Iterator' );
-	my $count	= 0;
-	while (my $d = $stream->next) {
-		isa_ok( $d->{nick}, 'RDF::Query::Node::Literal' );
-		like( $d->{name}->literal_value, qr/^(Adam Pisoni|Gregory Todd Williams)$/, 'got name from local file (joined on a bnode)' );
-		like( $d->{nick}->literal_value, qr/^(wonko)$/, 'got nick from SERVICE (joined on a bnode)' );
-		$count++;
-	}
-	is( $count, 1, 'expected result count' );
-}
-
-{
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
 	
 	my $bf		= Bloom::Filter->new( capacity => 2, error_rate => $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE );
@@ -93,6 +66,33 @@ END
 		}
 		is( $count, 2, 'expected result count' );
 	}
+}
+
+{
+	print "# join using default graph (local rdf) and remote SERVICE (kasei.us), joining on bnode\n";
+	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
+	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		SELECT DISTINCT ?name ?nick
+		FROM <$file>
+		WHERE {
+			?p a foaf:Person ; foaf:name ?name .
+			SERVICE <http://kasei.us/sparql> {
+				?p foaf:nick ?nick
+			}
+		}
+END
+	my $stream	= $query->execute();
+	isa_ok( $stream, 'RDF::Trine::Iterator' );
+	my $count	= 0;
+	while (my $d = $stream->next) {
+		isa_ok( $d->{nick}, 'RDF::Query::Node::Literal' );
+		like( $d->{name}->literal_value, qr/^(Adam Pisoni|Gregory Todd Williams)$/, 'got name from local file (joined on a bnode)' );
+		like( $d->{nick}->literal_value, qr/^(wonko)$/, 'got nick from SERVICE (joined on a bnode)' );
+		$count++;
+	}
+	is( $count, 1, 'expected result count' );
 }
 
 {

@@ -239,8 +239,8 @@ sub fixup {
 		my $endpoint	= ($self->endpoint->isa('RDF::Query::Node'))
 					? $bridge->as_native( $self->endpoint )
 					: $self->endpoint->fixup( $query, $bridge, $base, $ns );
-		
-		return $class->new( $endpoint, map { $_->fixup( $query, $bridge, $base, $ns ) } ($self->pattern) );
+		my $fpattern	= $self->pattern->fixup( $query, $bridge, $base, $ns );
+		return $class->new( $endpoint, $fpattern );
 	}
 }
 
@@ -261,7 +261,6 @@ sub execute {
 	}
 
 	my $endpoint	= $self->endpoint;
-	my $pattern		= $self->pattern;
 	
 	my %ns			= (%{ $query->{parsed}{namespaces} });
 	my $trial		= 'k';
@@ -270,7 +269,7 @@ sub execute {
 	
 	my $sparql		= join("\n",
 						(map { sprintf("PREFIX %s: <%s>", $_, $ns{$_}) } (keys %ns)),
-						sprintf("SELECT DISTINCT * WHERE %s", $pattern->as_sparql( { namespaces => \%ns }, '' ))
+						sprintf("SELECT DISTINCT * WHERE %s", $self->pattern->as_sparql({namespaces => \%ns}, ''))
 					);
 	warn "SERVICE REQUEST $endpoint: $sparql\n" if ($debug);
 	
@@ -281,15 +280,16 @@ sub execute {
 		throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 	}
 	my $content		= $resp->content;
-	my $stream		= smap {
+	my $stream		= RDF::Trine::Iterator->from_string( $content );
+	my $cast		= smap {
 						my $bindings	= $_;
 						return undef unless ($bindings);
 						my %cast	= map {
 										$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
 									} (keys %$bindings);
 						return \%cast;
-					} RDF::Trine::Iterator->from_string( $content );
-	return $stream;
+					} $stream;
+	return $cast;
 }
 
 =item C<< bloom_filter_for_iterator ( $query, $bridge, $bound, $iterator, $variable, $error ) >>

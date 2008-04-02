@@ -189,10 +189,12 @@ sub computed_statement_generator {
 		my $query	= shift;
 		my $bridge	= shift;
 		my $bound	= shift;
-		my $s		= shift;
-		my $p		= shift;
-		my $o		= shift;
-		my $c 		= shift;
+		my $_cast	= $bridge->can('_cast_to_local');
+		my $cast	= sub { my $n = shift; return unless $n; $n->isa('RDF::Query::Node') ? $n : $_cast->( $n ) };
+		my $s		= $cast->( shift );
+		my $p		= $cast->( shift );
+		my $o		= $cast->( shift );
+		my $c 		= $cast->( shift );
 		return undef if ($c);		# named statements can't be retrieved from another endpoint.
 		return undef unless ($p);	# we need a predicate for matching against service capabilities.
 		my $puri	= $p->uri_value;
@@ -228,11 +230,12 @@ sub computed_statement_generator {
 							RDF::Query::Node::Resource->new( $self->url ),
 							$ggp
 						);
+			my $compile	= $service->fixup( $query, $bridge, undef, {} );
 			my $iter	= smap {
 							my $bound	= shift;
 							my $triple	= $st->bind_variables( $bound );
 							$triple;
-						} $service->execute( $query, $bridge, $bound );
+						} $compile->execute( $query, $bridge, $bound );
 			return $iter;
 		} else {
 			return undef;

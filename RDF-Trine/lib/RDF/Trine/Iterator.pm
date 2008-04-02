@@ -409,25 +409,6 @@ sub _row {
 	return $self->{_row};
 }
 
-# =item C<< bridge >>
-# 
-# Returns the model bridge object used for insepcting the objects returned by the stream.
-# 
-# =cut
-# 
-# sub bridge {
-# 	my $self	= shift;
-# 	if (@_) {
-# 		$self->_args->{bridge}	= shift;
-# 	}
-# 	return $self->_args->{bridge};
-# }
-# 
-# sub _bridge {
-# 	my $self	= shift;
-# 	return $self->bridge;
-# }
-
 sub _names {
 	my $self	= shift;
 	return $self->{_names};
