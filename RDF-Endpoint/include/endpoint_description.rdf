@@ -3,10 +3,11 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sd: <http://darq.sf.net/dose/0.1#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/#> .
+@prefix saddle: <http://www.w3.org/2005/03/saddle/#> .
 @prefix sparql: <http://kasei.us/2008/04/sparql#> .
 
 # definition of an endpoint
-<[% endpoint_url %]> a sd:Service ;
+[] a sd:Service ;
 	rdfs:label "SPARQL Endpoint for kasei.us" ;
 	foaf:maker [
 		a foaf:Person ;
@@ -18,7 +19,22 @@
 	# the endpoint url
 	sd:url <[% endpoint_url %]> ;
 	sd:totalTriples [% triples %] ;
-	sd:isDefinitive "false"^^xsd:boolean ;
+	sd:isDefinitive false ;
+	saddle:humanInterface <[% endpoint_url %]> ;
+	saddle:queryLanguage [ saddle:spec <http://www.w3.org/TR/rdf-sparql-query/> ] ;
+	saddle:queryLanguage [ saddle:spec <http://www.w3.org/Submission/RDQL/> ] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/sparql-results+xml";
+		saddle:spec <http://www.w3.org/TR/rdf-sparql-XMLres/>
+	] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/rdf+xml";
+		saddle:spec <http://www.w3.org/TR/rdf-syntax/>
+	] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/sparql-results+json";
+		saddle:spec <http://www.w3.org/TR/rdf-sparql-json-res/>
+	] ;
 [% FOREACH function = functions %]
 	sparql:extensionFunction <[% function.url %]> ;[% END %]
 [% FOREACH ext = extensions %]
