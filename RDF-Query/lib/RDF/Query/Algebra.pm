@@ -153,6 +153,20 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
+sub subpatterns_of_type {
+	my $self	= shift;
+	my $type	= shift;
+	
+	my @patterns;
+	push(@patterns, $self) if ($self->isa($type));
+	foreach my $arg ($self->construct_args) {
+		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
+			push(@patterns, $arg->subpatterns_of_type($type));
+		}
+	}
+	return @patterns;
+}
+
 1;
 
 __END__

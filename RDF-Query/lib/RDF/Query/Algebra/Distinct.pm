@@ -100,11 +100,10 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
-	my $string	= sprintf(
-		"DISTINCT %s",
-		$self->pattern->as_sparql( $context, $indent ),
-	);
-	return $string;
+	# we don't add 'DISTINCT' here because it would be in the wrong place.
+	# RDF::Query::as_sparql() adds it outside the pattern serialization
+	# along with projection and 'SELECT'.
+	return $self->pattern->as_sparql( $context, $indent );
 }
 
 =item C<< type >>

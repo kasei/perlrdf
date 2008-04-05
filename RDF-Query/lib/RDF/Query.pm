@@ -518,6 +518,7 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Sort')
 									or $triples[0]->isa('RDF::Query::Algebra::Limit')
 									or $triples[0]->isa('RDF::Query::Algebra::Offset')
+									or $triples[0]->isa('RDF::Query::Algebra::Distinct')
 								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
@@ -584,7 +585,8 @@ sub as_sparql {
 	
 	my $methoddata;
 	if ($method eq 'SELECT') {
-		my $dist	= ($parsed->{options}{distinct}) ? 'DISTINCT ' : '';
+		my $distp	= $ggp->subpatterns_of_type('RDF::Query::Algebra::Distinct');
+		my $dist	= ($distp) ? 'DISTINCT ' : '';
 		$methoddata	= sprintf("%s %s%s\nWHERE", $method, $dist, $vars);
 	} elsif ($method eq 'ASK') {
 		$methoddata	= $method;
