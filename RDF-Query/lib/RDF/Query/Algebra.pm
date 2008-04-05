@@ -46,6 +46,10 @@ use RDF::Query::Algebra::NamedGraph;
 use RDF::Query::Algebra::Service;
 use RDF::Query::Algebra::TimeGraph;
 use RDF::Query::Algebra::Aggregate;
+use RDF::Query::Algebra::Sort;
+use RDF::Query::Algebra::Limit;
+use RDF::Query::Algebra::Offset;
+use RDF::Query::Algebra::Distinct;
 
 =item C<< referenced_blanks >>
 
