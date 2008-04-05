@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 35;
+use Test::More tests => 36;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -177,6 +177,18 @@ END
 		my $pattern	= $query->pattern;
 		my @bgps	= $pattern->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
 		is( scalar(@bgps), 5, 'count of bgp subpatterns' );
+		is_deeply(
+			$bgps[3],
+			bless( [
+				bless([
+					bless( ['person'], 'RDF::Query::Node::Variable' ),
+					bless( ['URI','http://www.w3.org/1999/02/22-rdf-syntax-ns#type'], 'RDF::Query::Node::Resource' ),
+					bless( ['URI','http://xmlns.com/foaf/0.1/Person'], 'RDF::Query::Node::Resource' )
+				], 'RDF::Query::Algebra::Triple' )
+			], 'RDF::Query::Algebra::BasicGraphPattern' ),
+			'RDF::Query::Algebra::BasicGraphPattern'
+		);
+		
 		my ($optional)	= $pattern->subpatterns_of_type('RDF::Query::Algebra::Optional');
 		my @obgps	= $optional->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
 		is( scalar(@obgps), 5, 'count of bgp subpatterns under optional' );

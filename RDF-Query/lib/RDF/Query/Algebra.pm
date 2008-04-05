@@ -153,6 +153,14 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
+=item C<< subpatterns_of_type ( $type ) >>
+
+Returns a list of Algebra patterns matching C<< $type >> (tested with C<< isa >>).
+This list includes the current algebra object if it matches C<< $type >>, and is
+generated in infix order.
+
+=cut
+
 sub subpatterns_of_type {
 	my $self	= shift;
 	my $type	= shift;
