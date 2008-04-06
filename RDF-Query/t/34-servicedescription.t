@@ -52,7 +52,7 @@ isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 							pred				=> RDF::Query::Node::Resource->new( $foaf->mbox->uri_value ),
 							sofilter			=> undef,
 							size				=> RDF::Query::Node::Literal->new('18000', undef, $xsd->integer->uri_value),
-							object_selectivity	=> RDF::Query::Node::Literal->new('5.5e-05', undef, $xsd->double->uri_value),
+							object_selectivity	=> RDF::Query::Node::Literal->new('5.5E-5', undef, $xsd->double->uri_value),
 						},
 				};
 	my $cap	= $sd->capabilities;
@@ -87,6 +87,24 @@ END
 		WHERE { <http://dbpedia.org/resource/Alan_Turing> dbp:occupation ?job }
 END
 	$query->add_computed_statement_generator( $sd->computed_statement_generator );
+	my $iter	= $query->execute;
+	my $count	= 0;
+	while (my $row = $iter->next) {
+		$count++;
+	}
+	is( $count, 0, 'execution: expected dbp:occupation not in federation description' ); 
+}
+
+{
+	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
+	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
+	my $query	= RDF::Query->new( <<"END" );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		SELECT *
+		WHERE { ?p a foaf:Person }
+END
+	$query->add_service( $ksd );
+	$query->add_service( $sd );
 	my $iter	= $query->execute;
 	my $count	= 0;
 	while (my $row = $iter->next) {

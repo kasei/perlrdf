@@ -1,0 +1,78 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sd: <http://darq.sf.net/dose/0.1#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/#> .
+@prefix saddle: <http://www.w3.org/2005/03/saddle/#> .
+@prefix sparql: <http://kasei.us/2008/04/sparql#> .
+
+# definition of an endpoint
+[] a sd:Service ;
+	rdfs:label "SPARQL Endpoint for kasei.us" ;
+	foaf:maker [
+		a foaf:Person ;
+		foaf:name "Gregory Todd Williams" ;
+		foaf:mbox_sha1sum "f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8" ;
+		rdfs:seeAlso <http://kasei.us/about/foaf.xrdf>
+	] ;
+
+	# the endpoint url
+	sd:url <http://kasei.us/sparql> ;
+	sd:totalTriples 3846 ;
+	sd:isDefinitive false ;
+	saddle:humanInterface <http://kasei.us/sparql> ;
+	saddle:queryLanguage [ saddle:spec <http://www.w3.org/TR/rdf-sparql-query/> ] ;
+	saddle:queryLanguage [ saddle:spec <http://www.w3.org/Submission/RDQL/> ] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/sparql-results+xml";
+		saddle:spec <http://www.w3.org/TR/rdf-sparql-XMLres/>
+	] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/rdf+xml";
+		saddle:spec <http://www.w3.org/TR/rdf-syntax/>
+	] ;
+	saddle:resultFormat [
+		saddle:mediaType "application/sparql-results+json";
+		saddle:spec <http://www.w3.org/TR/rdf-sparql-json-res/>
+	] ;
+
+	sparql:extensionFunction <java:com.hp.hpl.jena.query.function.library.sha1sum> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#dateTime> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#string> ;
+	sparql:extensionFunction <java:com.hp.hpl.jena.query.function.library.langeq> ;
+	sparql:extensionFunction <http://www.w3.org/2005/04/xpath-functionsmatches> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#double> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#decimal> ;
+	sparql:extensionFunction <http://kasei.us/2007/09/functions/warn> ;
+	sparql:extensionFunction <java:com.ldodds.sparql.Distance> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#float> ;
+	sparql:extensionFunction <http://kasei.us/code/rdf-query/functions/bloom> ;
+	sparql:extensionFunction <java:com.hp.hpl.jena.query.function.library.now> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#integer> ;
+	sparql:extensionFunction <java:com.hp.hpl.jena.query.function.library.listMember> ;
+	sparql:extensionFunction <http://www.w3.org/2001/XMLSchema#boolean> ;
+
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/service> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/service/bloom_filters> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/select_expression> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/aggregate> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/aggregate/count> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/aggregate/count-distinct> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/aggregate/min> ;
+	sparql:sparqlExtension <http://kasei.us/2008/04/sparql-extension/aggregate/max> ;
+	
+	# capabilities of the endpoint
+	sd:capability [ 
+		# the endpoint stores triples with predicate rdf:type
+		sd:predicate rdf:type ;
+#		sd:triples 3683409 ;
+	];
+
+	sd:capability [ sd:predicate foaf:name ] ;
+	sd:capability [ sd:predicate foaf:mbox_sha1sum ] ;
+	sd:capability [ sd:predicate foaf:depicts ] ;
+	sd:capability [ sd:predicate foaf:openid ] ;
+	sd:capability [ sd:predicate <http://purl.org/dc/terms/spatial> ] ;
+	sd:capability [ sd:predicate <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ] ;
+	sd:capability [ sd:predicate <http://www.w3.org/2003/01/geo/wgs84_pos#long> ] ;
+	.

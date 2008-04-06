@@ -28,7 +28,7 @@
 		# statistical information
 	
 		# number of triples that will be returned by
-		# a "?s a foaf:Person ; ?p ?o" query
+		# a "?s a foaf:Person ; ?p ?o" query
 		sd:triples 3683409 ; 
 		
 		# other propeties are:

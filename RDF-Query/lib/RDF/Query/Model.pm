@@ -473,8 +473,6 @@ sub count_statements {
 	my $model	= $self->{'model'};
 	my $stream;
 	
-	my %args	= ( bridge => $self, named => 1 );
-	
 	my $iter	= $model->get_statements( @triple, $context );
 	my $count	= 0;
 	while (my $row = $iter->next) {

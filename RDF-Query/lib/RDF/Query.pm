@@ -264,6 +264,24 @@ sub execute {
 	}
 	
 	$self->load_data();
+	
+	if (@{ $self->{services} || [] }) {
+		my %preds;
+		foreach my $sd (@{ $self->{services} }) {
+			my $caps	= $sd->capabilities;
+			foreach my $c (@$caps) {
+				push( @{ $preds{ $c->{pred}->uri_value } }, $sd );
+			}
+		}
+		
+		foreach my $k (keys %preds) {
+			my $services	= join(', ', map { $_->label } @{ $preds{$k} });
+			warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
+		}
+	}
+
+	
+	
 	my ($pattern, $cpattern)	= $self->fixup();
 	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	my @vars	= $self->variables( $parsed );
@@ -1311,6 +1329,13 @@ sub run_hook {
 	foreach my $hook (@$hooks) {
 		$hook->( $self, @args );
 	}
+}
+
+
+sub add_service {
+	my $self	= shift;
+	my $service	= shift;
+	push(@{ $self->{ services } }, $service);
 }
 
 =begin private
