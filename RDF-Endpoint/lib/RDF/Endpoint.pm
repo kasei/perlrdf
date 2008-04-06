@@ -252,6 +252,27 @@ sub admin_index {
 	} );
 }
 
+sub about {
+	my $self	= shift;
+	my $cgi		= shift;
+	
+	my $model	= $self->_model;
+	my $tt		= $self->_template;
+	my $file	= 'endpoint_description.rdf';
+	my $count	= $model->count_statements;
+	
+	my @extensions		= map { { url => $_ } } RDF::Query->supported_extensions;
+	my @functions		= map { { url => $_ } } RDF::Query->supported_functions;
+	print $cgi->header( -type => 'text/plain; charset=utf-8' );
+	my $submit	= $self->submit_url;
+	$tt->process( $file, {
+		endpoint_url	=> $submit,
+		triples			=> $count,
+		functions		=> \@functions,
+		extensions		=> \@extensions,
+	} );
+}
+
 sub save_query {
 	my $self	= shift;
 	my $cgi		= shift;
@@ -338,8 +359,9 @@ sub run_query {
 								: 1
 					} @types;
 		if (defined($type)) {
+			my %header_args	= ( '-X-Endpoint-Description' => $self->endpoint_description_url );
 			if ($type =~ /html/) {
-				print $cgi->header( -type => 'text/html; charset=utf-8' );
+				print $cgi->header( -type => "text/html; charset=utf-8", %header_args );
 				my $total	= 0;
 				my $rtype	= $stream->type;
 				my $rstream	= ($rtype eq 'graph') ? $stream->unique() : $stream;
@@ -365,13 +387,13 @@ sub run_query {
 					feed_url	=> $self->feed_url( $cgi ),
 				} ) or warn $tt->error();
 			} elsif ($type =~ /xml/) {
-				print $cgi->header( -type => "$type; charset=utf-8" );
+				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				print $stream->as_xml;
 			} elsif ($type =~ /json/) {
-				print $cgi->header( -type => "$type; charset=utf-8" );
+				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				print $stream->as_json;
 			} else {
-				print $cgi->header( -type => "text/plain; charset=utf-8" );
+				print $cgi->header( -type => "text/plain; charset=utf-8", %header_args );
 				print $stream->as_xml;
 			}
 			
@@ -542,6 +564,12 @@ sub set_owner_openid {
 	my $dbh		= $self->dbh;
 	my $sth		= $dbh->prepare( 'UPDATE Endpoint SET owner_openid = ? WHERE ID = 1' );
 	$sth->execute( $id );
+}
+
+sub endpoint_description_url {
+	my $self	= shift;
+	my $submit	= $self->submit_url;
+	return "${submit}?about=1"
 }
 
 sub admin_url {

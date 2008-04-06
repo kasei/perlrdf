@@ -279,10 +279,6 @@ sub execute {
 	
 	my $options	= $parsed->{options} || {};		
 	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
-
-	_debug( "got stream: $stream" ) if ($debug);
-	warn "performing sort, unique, and slicing" if ($debug);
-	my $sorted		= $self->sort_rows( $stream, $parsed );
 	
 	warn "performing projection" if ($debug);
 	my $expr	= 0;
@@ -299,7 +295,7 @@ sub execute {
 							$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
 						}
 						$new
-					}, $sorted, undef, \@pvarnames);
+					}, $stream, undef, \@pvarnames);
 	$stream			= $projected;
 
 	if ($parsed->{'method'} eq 'DESCRIBE') {
@@ -517,7 +513,13 @@ sub pattern {
 	my $self	= shift;
 	my $parsed	= $self->parsed;
 	my @triples	= @{ $parsed->{triples} };
-	if (scalar(@triples) == 1 and ($triples[0]->isa('RDF::Query::Algebra::GroupGraphPattern') or $triples[0]->isa('RDF::Query::Algebra::Filter'))) {
+	if (scalar(@triples) == 1 and ($triples[0]->isa('RDF::Query::Algebra::GroupGraphPattern')
+									or $triples[0]->isa('RDF::Query::Algebra::Filter')
+									or $triples[0]->isa('RDF::Query::Algebra::Sort')
+									or $triples[0]->isa('RDF::Query::Algebra::Limit')
+									or $triples[0]->isa('RDF::Query::Algebra::Offset')
+									or $triples[0]->isa('RDF::Query::Algebra::Distinct')
+								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
 	} else {
@@ -583,7 +585,8 @@ sub as_sparql {
 	
 	my $methoddata;
 	if ($method eq 'SELECT') {
-		my $dist	= ($parsed->{options}{distinct}) ? 'DISTINCT ' : '';
+		my $distp	= $ggp->subpatterns_of_type('RDF::Query::Algebra::Distinct');
+		my $dist	= ($distp) ? 'DISTINCT ' : '';
 		$methoddata	= sprintf("%s %s%s\nWHERE", $method, $dist, $vars);
 	} elsif ($method eq 'ASK') {
 		$methoddata	= $method;
@@ -878,6 +881,45 @@ sub add_function {
 	}
 }
 
+=item C<< supported_extensions >>
+
+Returns a list of URLs representing extensions to SPARQL that are supported
+by the query engine.
+
+=cut
+
+sub supported_extensions {
+	my $self	= shift;
+	return qw(
+		http://kasei.us/2008/04/sparql-extension/service
+		http://kasei.us/2008/04/sparql-extension/service/bloom_filters
+		http://kasei.us/2008/04/sparql-extension/select_expression
+		http://kasei.us/2008/04/sparql-extension/aggregate
+		http://kasei.us/2008/04/sparql-extension/aggregate/count
+		http://kasei.us/2008/04/sparql-extension/aggregate/count-distinct
+		http://kasei.us/2008/04/sparql-extension/aggregate/min
+		http://kasei.us/2008/04/sparql-extension/aggregate/max
+	);
+}
+
+=item C<< supported_functions >>
+
+Returns a list URLs that may be used as functions in FILTER clauses
+(and the SELECT clause if the SPARQLP parser is used).
+
+=cut
+
+sub supported_functions {
+	my $self	= shift;
+	my @funcs;
+	
+	if (blessed($self)) {
+		push(@funcs, keys %{ $self->{'functions'} });
+	}
+	
+	push(@funcs, keys %RDF::Query::functions);
+	return grep { not(/^sparql:/) } @funcs;
+}
 
 =begin private
 
@@ -1269,124 +1311,6 @@ sub run_hook {
 	foreach my $hook (@$hooks) {
 		$hook->( $self, @args );
 	}
-}
-
-=begin private
-
-=item C<sort_rows ( $nodes, $parsed )>
-
-Called by C<execute> to handle result forms including:
-	* Sorting results
-	* Distinct results
-	* Limiting result count
-	* Offset in result set
-	
-=end private
-
-=cut
-
-sub sort_rows {
-	my $self	= shift;
-	my $nodes	= shift;
-	my $parsed	= shift;
-	my $bridge	= $self->bridge;
-	my $args		= $parsed->{options} || {};
-	my $limit		= $args->{'limit'};
-	my $unique		= $args->{'distinct'};
-	my $orderby		= $args->{'orderby'};
-	my $offset		= $args->{'offset'} || 0;
-	my @variables	= $self->variables( $parsed );
-	my %colmap		= map { $variables[$_] => $_ } (0 .. $#variables);
-	
-	if ($unique or $orderby or $offset or $limit) {
-		_debug( 'sort_rows column map: ' . Dumper(\%colmap) ) if ($debug);
-	}
-	
-	Carp::confess unless ($nodes);	# XXXassert
-	
-	if ($unique) {
-		my %seen;
-		my $old	= $nodes;
-		$nodes	= sgrep {
-			my $row	= $_;
-			no warnings 'uninitialized';
-			my $key	= join($;, map {$bridge->as_string( $_ )} map { $row->{$_} } @variables);
-			return (not $seen{ $key }++);
-		} $nodes;
-		$nodes->_args->{distinct}++;
-	}
-	
-	if ($orderby) {
-		my $cols		= $args->{'orderby'};
-		
-		my ($req_sort, $actual_sort);
-		eval {
-			$req_sort	= join(',', map { $_->[1]->name => $_->[0] } @$cols);
-			$actual_sort	= join(',', $nodes->sorted_by());
-			if ($debug) {
-				warn "stream is sorted by $actual_sort\n";
-				warn "trying to sort by $req_sort\n";
-			}
-		};
-		
-		if (not($@) and substr($actual_sort, 0, length($req_sort)) eq $req_sort) {
-			warn "Already sorted. Ignoring." if ($debug);
-		} else {
-	#		warn Dumper($data);
-			my ($dir, $data)	= @{ $cols->[0] };
-			if ($dir ne 'ASC' and $dir ne 'DESC') {
-				warn "Direction of sort not recognized: $dir";
-				$dir	= 'ASC';
-			}
-			
-			my $col				= $data;
-			my $colmap_value	= $colmap{$col};
-			_debug( "ordering by $col" ) if ($debug);
-			
-			my @nodes;
-			while (my $node = $nodes->()) {
-				_debug( "node for sorting: " . Dumper($node) ) if ($debug);
-				push(@nodes, $node);
-			}
-			
-			no warnings 'numeric';
-			@nodes	= map {
-						my $bound	= $_;
-						my $value	= $data->isa('RDF::Query::Algebra')
-									? $data->evaluate( $self, $bridge, $bound )
-									: ($data->isa('RDF::Query::Node::Variable'))
-										? $bound->{ $data->name }
-										: $data;
-						[ $_, $value ]
-					} @nodes;
-			
-			{
-				local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
-				use sort 'stable';
-				@nodes	= sort { $a->[1] <=> $b->[1] } @nodes;
-				@nodes	= reverse @nodes if ($dir eq 'DESC');
-			}
-			
-			@nodes	= map { $_->[0] } @nodes;
-	
-	
-			my $type	= $nodes->type;
-			my $names	= [$nodes->binding_names];
-			my $args	= $nodes->_args;
-			my %sorting	= (sorted_by => [$col, $dir]);
-			$nodes		= RDF::Trine::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args, %sorting );
-		}
-	}
-	
-	if ($offset) {
-		$nodes->() while ($offset--);
-	}
-	
-	if (defined($limit)) {
-		$nodes	= sgrep { if ($limit > 0) { $limit--; 1 } else { 0 } } $nodes;
-	}
-	
-	return $nodes;
 }
 
 =begin private

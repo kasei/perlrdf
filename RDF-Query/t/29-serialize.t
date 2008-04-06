@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 23;
+use Test::More tests => 24;
 
 use_ok( 'RDF::Query' );
 
@@ -50,7 +50,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name LIMIT 5 OFFSET 5", 'sparql to sparql with slice' );
+	is( $string, "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . } ORDER BY ?name OFFSET 5 LIMIT 5", 'sparql to sparql with slice' );
 }
 
 {
@@ -141,7 +141,6 @@ END
 	is( $sparql, $again, 'as_sparql: union' );
 }
 
-
 {
 	my $query	= new RDF::Query ( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -154,6 +153,20 @@ END
 	my $sparql	= $query->as_sparql;
 	my $again	= RDF::Query->new( $sparql )->as_sparql;
 	is( $sparql, $again, 'as_sparql: select with filter !BOUND' );
+}
+
+{
+	my $query	= new RDF::Query ( <<"END" );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		SELECT DISTINCT ?name
+		WHERE {
+			?person foaf:name ?name .
+		}
+END
+	my $sparql	= $query->as_sparql;
+	my $qagain	= RDF::Query->new( $sparql );
+	my $again	= $qagain->as_sparql;
+	is( $sparql, $again, 'as_sparql: select DISTINCT' );
 }
 
 {

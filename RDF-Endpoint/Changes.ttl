@@ -1,0 +1,26 @@
+# -*-n3-*-
+
+@prefix dc:      <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix asc:     <http://aaronland.info/ns/changefile/> .
+                                     
+<>
+        dc:description          "Changes for RDF::Endpoint" ;
+        dcterms:references      <http://kasei.us/code/rdf-endpoint/#project> .
+
+<http://kasei.us/code/files/RDF-Endpoint-1.000.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-endpoint/#project> ;
+
+        doap:Version    [
+                        doap:revision     "1.000" ;
+                        doap:created      "2008-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "" ;
+                        ] .
+
+<http://kasei.us/code/rdf-endpoint/#project>
+        a doap:Project ;
+        doap:download-page      <http://search.cpan.org/dist/RDF-Endpoint/> ;
+        doap:download-mirror    <http://kasei.us/code/rdf-endpoint/> .

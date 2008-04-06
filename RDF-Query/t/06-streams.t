@@ -19,7 +19,7 @@ foreach my $model (@models) {
 
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+		my $query	= new RDF::Query ( <<"END" );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT	?name
@@ -41,7 +41,7 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+		my $query	= new RDF::Query ( <<"END" );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT	?name

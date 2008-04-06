@@ -49,7 +49,8 @@ Returns a new BasicGraphPattern structure.
 sub new {
 	my $class	= shift;
 	my $pattern	= shift;
-	return bless( [ $pattern ] );
+	my $orig	= shift;
+	return bless( [ $pattern, $orig ] );
 }
 
 =item C<< construct_args >>
@@ -109,6 +110,15 @@ sub bind_variables {
 	my $bound	= shift;
 	my $pattern	= $self->pattern->bind_variables( $bound );
 	return $class->new( $pattern );
+}
+
+=item C<< as_sparql >>
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	return $self->[1]->as_sparql( @_ );
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>

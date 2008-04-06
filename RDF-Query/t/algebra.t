@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 31;
+use Test::More tests => 36;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -138,4 +138,83 @@ END
 		cmp_ok( $rea, '<', $la, 'resource less-than literal (different value)' );
 	}
 	
+}
+
+
+{
+	# Accessing Subpatterns
+	{
+		my $sparql	= <<"END";
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		SELECT ?name
+		WHERE { [ a foaf:PersonalProfileDocument ; foaf:maker [ a foaf:Person ; foaf:name ?name ] ] }
+END
+		my $query	= RDF::Query->new( $sparql );
+		my $pattern	= $query->pattern;
+		my @triples	= $pattern->subpatterns_of_type('RDF::Query::Algebra::Triple');
+		is( scalar(@triples), 4, 'count of triple subpatterns' );
+	}
+	
+	{
+		my $sparql	= <<"END";
+	PREFIX  foaf:   <http://xmlns.com/foaf/0.1/>
+	PREFIX    ex:   <http://example.org/things#>
+	SELECT ?name ?plan ?dept ?img 
+	WHERE 
+	{ 
+		?person foaf:name ?name  
+		{ ?person ex:healthplan ?plan } UNION { ?person ex:department ?dept } 
+		OPTIONAL { 
+			?person a foaf:Person
+			GRAPH ?g { 
+				[] foaf:name ?name;
+				   foaf:depiction ?img 
+			} 
+		} 
+	}
+END
+		my $query	= RDF::Query->new( $sparql );
+		my $pattern	= $query->pattern;
+		my @bgps	= $pattern->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
+		is( scalar(@bgps), 5, 'count of bgp subpatterns' );
+		is_deeply(
+			$bgps[3],
+			bless( [
+				bless([
+					bless( ['person'], 'RDF::Query::Node::Variable' ),
+					bless( ['URI','http://www.w3.org/1999/02/22-rdf-syntax-ns#type'], 'RDF::Query::Node::Resource' ),
+					bless( ['URI','http://xmlns.com/foaf/0.1/Person'], 'RDF::Query::Node::Resource' )
+				], 'RDF::Query::Algebra::Triple' )
+			], 'RDF::Query::Algebra::BasicGraphPattern' ),
+			'RDF::Query::Algebra::BasicGraphPattern'
+		);
+		
+		my ($optional)	= $pattern->subpatterns_of_type('RDF::Query::Algebra::Optional');
+		my @obgps	= $optional->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
+		is( scalar(@obgps), 5, 'count of bgp subpatterns under optional' );
+		my ($graph)	= $pattern->subpatterns_of_type('RDF::Query::Algebra::NamedGraph');
+		is_deeply(
+			$graph,
+			bless( [ 'GRAPH',
+				bless( ['g'], 'RDF::Query::Node::Variable' ),
+				bless( [
+					bless( [
+						bless( [
+							bless( ['BLANK','a1'], 'RDF::Query::Node::Blank' ),
+							bless( ['URI','http://xmlns.com/foaf/0.1/name'], 'RDF::Query::Node::Resource' ),
+							bless( ['name'], 'RDF::Query::Node::Variable' ),
+							bless( ['g'], 'RDF::Query::Node::Variable' ),
+						], 'RDF::Query::Algebra::Quad' ),
+						bless( [
+							bless( ['BLANK','a1'], 'RDF::Query::Node::Blank' ),
+							bless( ['URI','http://xmlns.com/foaf/0.1/depiction'], 'RDF::Query::Node::Resource' ),
+							bless( ['img'], 'RDF::Query::Node::Variable' ),
+							bless( ['g'], 'RDF::Query::Node::Variable' ),
+						], 'RDF::Query::Algebra::Quad' )
+					], 'RDF::Query::Algebra::BasicGraphPattern' )
+				], 'RDF::Query::Algebra::GroupGraphPattern' )
+			], 'RDF::Query::Algebra::NamedGraph' ),
+			'deep comparison on GRAPH subpattern'
+		);
+	}
 }
