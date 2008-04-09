@@ -200,7 +200,7 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 
-	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
 		return $opt;
 	} else {
 		my $fixed	= $class->new(

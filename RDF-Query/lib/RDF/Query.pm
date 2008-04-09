@@ -265,23 +265,6 @@ sub execute {
 	
 	$self->load_data();
 	
-	if (@{ $self->{services} || [] }) {
-		my %preds;
-		foreach my $sd (@{ $self->{services} }) {
-			my $caps	= $sd->capabilities;
-			foreach my $c (@$caps) {
-				push( @{ $preds{ $c->{pred}->uri_value } }, $sd );
-			}
-		}
-		
-		foreach my $k (keys %preds) {
-			my $services	= join(', ', map { $_->label } @{ $preds{$k} });
-			warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
-		}
-	}
-
-	
-	
 	my ($pattern, $cpattern)	= $self->fixup();
 	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	my @vars	= $self->variables( $parsed );
@@ -831,7 +814,26 @@ sub fixup {
 	my $base		= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
 	
+	my %preds;
+	local($self->{ service_predicates })	= \%preds;
+	if (@{ $self->{services} || [] }) {
+		foreach my $sd (@{ $self->{services} }) {
+			my $caps	= $sd->capabilities;
+			foreach my $c (@$caps) {
+				push( @{ $preds{ $c->{pred}->uri_value } }, $sd );
+			}
+		}
+		
+		foreach my $k (keys %preds) {
+			my $services	= join(', ', map { $_->label } @{ $preds{$k} });
+			warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
+		}
+	} else {
+		delete $self->{ service_predicates };
+	}
+
 	my $native		= $pattern->fixup( $self, $bridge, $base, $namespaces );
+	
 	
 	## CONSTRUCT HAS IMPLICIT VARIABLES
 	if ($parsed->{'method'} eq 'CONSTRUCT') {
@@ -847,6 +849,120 @@ sub fixup {
 	} else {
 		return ($native, undef);
 	}
+}
+
+=item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
+
+Called in the fixup method of ::Algebra classes, returns either an optimized
+::Algebra object ready for execution, or undef (in which case it will be
+prepared for execution by the ::Algebra::* class itself.
+
+=cut
+
+sub algebra_fixup {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $bridge	= shift;
+	my $base	= shift;
+	my $ns		= shift;
+	return if ($self->{force_no_optimization});
+	
+	# optimize BGPs when we're using service descriptions for pattern matching
+	# (instead of local model-based matching). figure out which triples in the
+	# bgp can be sent to which endpoints, and construct appropriate SERVICE
+	# algebra objects to use instead of the BGP.
+	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+		my $preds	= $self->{ service_predicates };
+		if ($preds) {
+			my @join_patterns;		# array of tuples, each containing a service pattern and a list of applicable triples
+			foreach my $sd (@{ $self->{services} }) {
+				my $patterns	= $sd->patterns;
+				foreach my $bgp (@$patterns) {
+					push( @join_patterns, [ $bgp, $sd ] );
+				}
+			}
+			
+			my %service_triples;	# arrays of triples, keyed by service urls
+			my @service_triples;	# array of tuples each containing a triple and a list of applicable services
+			foreach my $triple ($pattern->triples) {
+				my @services;
+				my $pred	= $triple->predicate;
+				if ($pred->isa('RDF::Trine::Node::Variable')) {
+					throw RDF::Query::Error::ExecutionError -text => "Cannot use triples with variable predicates with federation endpoints";
+				} else {
+					my $purl		= $pred->uri_value;
+					my $services	= $preds->{ $purl } || [];
+					if (scalar(@$services) == 0) {
+						throw RDF::Query::Error::ExecutionError -text => "Triple is not described as a capability of any federation endpoint: " . $triple->as_sparql;
+					} else {
+						foreach my $sd (@$services) {
+							push( @{ $service_triples{ $sd->url } }, $triple );
+							push( @services, $sd->url );
+						}
+					}
+					
+					foreach my $service_pat (@join_patterns) {
+						my ($bgp, $sd)	= @$service_pat;
+						if ($bgp->subsumes( $triple )) {
+# 							warn "triple can be added to bgp: " . $triple->as_sparql . "\n" . $bgp->as_sparql;
+							push( @{ $service_pat }, $triple );
+						}
+					}
+					
+				}
+				push( @service_triples, [ $triple, \@services ] );
+			}
+			
+			my @patterns;
+			my %triples_for_single_service;
+			foreach my $data (@service_triples) {
+				my ($triple, $services)	= @$data;
+				my @services	= @$services;
+				my @spatterns;
+				if (scalar(@services) == 1) {
+					push( @{ $triples_for_single_service{ $services[0] } }, $triple );
+				} else {
+					foreach my $surl (@services) {
+						my $serviceurl	= RDF::Query::Node::Resource->new( $surl );
+						my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( $triple );
+						my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
+						push(@spatterns, $service);
+					}
+					while (@spatterns > 1) {
+						my @patterns	= splice( @spatterns, 0, 2, () );
+						my $union	= RDF::Query::Algebra::Union->new( map { RDF::Query::Algebra::GroupGraphPattern->new($_) } @patterns );
+						push(@spatterns, $union );
+					}
+					my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @spatterns );
+					push(@patterns, $ggp);
+				}
+			}
+			foreach my $surl (keys %triples_for_single_service) {
+				my $triples		= $triples_for_single_service{ $surl };
+				warn "triples for only $surl: " . Dumper($triples);
+				my $serviceurl	= RDF::Query::Node::Resource->new( $surl );
+				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$triples );
+				my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
+				unshift(@patterns, $service);
+			}
+			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
+			local($self->{force_no_optimization})	= 1;
+			my $fixed	= $ggp->fixup( $self, $bridge, $base, $ns );
+			warn "replacing BGP: " . $pattern->as_sparql({}, '') . " with: " . $fixed->as_sparql({}, '');
+			
+			foreach my $service_pat (@join_patterns) {
+				my ($bgp, $sd, @triples)	= @$service_pat;
+				my $serviceurl	= RDF::Query::Node::Resource->new( $sd->url );
+				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( RDF::Query::Algebra::BasicGraphPattern->new( @triples ) );
+				my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
+				warn "Triples can be grouped together: \n" . $service->as_sparql( {}, '' );
+			}
+			
+			exit;
+			return $fixed;
+		}
+	}
+	return $bridge->fixup( $pattern, $self, $base, $ns );
 }
 
 =begin private
@@ -1331,6 +1447,12 @@ sub run_hook {
 	}
 }
 
+=item C<< add_service ( $service_description ) >>
+
+Adds the service described by C<< $service_description >> to the query's list
+of data sources.
+
+=cut
 
 sub add_service {
 	my $self	= shift;

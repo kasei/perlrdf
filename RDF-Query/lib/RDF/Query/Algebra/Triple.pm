@@ -1,7 +1,4 @@
 # RDF::Query::Algebra::Triple
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -27,6 +24,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 ######################################################################
 
 our ($VERSION, $debug, $lang, $languri);
+my @node_methods	= qw(subject predicate object);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= '2.000';
@@ -49,10 +47,9 @@ Returns a new Triple structure.
 sub new {
 	my $class	= shift;
 	my @nodes	= @_;
-	my @names	= qw(subject predicate object);
 	foreach my $i (0 .. 2) {
 		unless (defined($nodes[ $i ])) {
-			$nodes[ $i ]	= RDF::Query::Node::Variable->new($names[ $i ]);
+			$nodes[ $i ]	= RDF::Query::Node::Variable->new($node_methods[ $i ]);
 		}
 	}
 	return $class->SUPER::new( @nodes );
@@ -98,6 +95,26 @@ sub referenced_blanks {
 	return map { $_->blank_identifier } @blanks;
 }
 
+=item C<< subsumes ( $pattern ) >>
+
+Returns true if the triple subsumes the pattern, false otherwise.
+
+=cut
+
+sub subsumes {
+	my $self	= shift;
+	my $pattern	= shift;
+	return 0 unless ($pattern->isa('RDF::Trine::Statement'));
+	foreach my $method (@node_methods) {
+		my $snode	= $self->$method();
+		next if ($snode->isa('RDF::Trine::Node::Variable'));
+		my $pnode	= $pattern->$method();
+		next if ($snode->equal( $pnode ));
+		return 0;
+	}
+	return 1;
+}
+
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
@@ -113,7 +130,7 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 	
-	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
 		return $opt;
 	} else {
 		my @nodes	= $self->nodes;
@@ -177,33 +194,8 @@ sub execute {
 	}
 	
 	my @graph;
-# 	if (blessed($context) and $context->isa('RDF::Query::Node::Variable')) {
-# 		# if we're in a GRAPH ?var {} block...
-# 		my $context_var	= $context->name;
-# 		my $graph		= $bound->{ $context_var };
-# 		if ($graph) {
-# 			# and ?var has already been bound, get the bound value and pass that on
-# 			@graph	= $graph;
-# 		}
-# 	} elsif ($bridge->is_node( $context )) {
-# 		# if we're in a GRAPH <uri> {} block, just pass it on
-# 		@graph	= $context;
-# 	}
-	
 	my $stream;
 	my @streams;
-	
-	# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-# 	warn ">>> TRIPLE:\n";
-# 	foreach my $n (@triple, @graph) {
-# 		if (blessed($n)) {
-# 			warn $bridge->as_string( $n ) . "\n";
-# 		} else {
-# 			warn "(undef)\n";
-# 		}
-# 	}
-	# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	
 	my $statements	= (@graph)
 					? $bridge->get_named_statements( @triple[0,1,2], $graph[0], $query, $bound )
 					: $bridge->get_statements( @triple[0,1,2], $query, $bound );

@@ -176,12 +176,39 @@ sub fixup {
 	my $base	= shift;
 	my $ns		= shift;
 	
-	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
+	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
 		return $opt;
 	} else {
 		my @nodes	= map { $_->fixup( $query, $bridge, $base, $ns ) } $self->triples;
 		my $fixed	= $class->new( @nodes );
 		return $fixed;
+	}
+}
+
+=item C<< subsumes ( $pattern ) >>
+
+Returns true if the bgp subsumes the pattern, false otherwise.
+
+=cut
+
+sub subsumes {
+	my $self	= shift;
+	my $pattern	= shift;
+	if ($pattern->isa('RDF::Trine::Statement')) {
+		foreach my $t ($self->triples) {
+			return 1 if ($t->subsumes($pattern));
+		}
+		return 0;
+	} elsif ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+		OUTER: foreach my $p ($pattern->triples) {
+			foreach my $t ($self->triples) {
+				next OUTER if ($t->subsumes($p));
+			}
+			return 0;
+		}
+		return 1;
+	} else {
+		return 0;
 	}
 }
 
