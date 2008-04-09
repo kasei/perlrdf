@@ -3,6 +3,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sd: <http://darq.sf.net/dose/0.1#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix sparql: <http://kasei.us/2008/04/sparql#> .
+@prefix p: <http://dbpedia.org/property/> .
 
 # definition of an endpoint
 [] a sd:Service ;
@@ -79,5 +81,7 @@
 	sd:requiredBindings [ sd:objectBinding foaf:mbox ] ;
 
 	# total number of triples in the store
-	sd:totalTriples 58787090; 
+	sd:totalTriples 58787090 ; 
+
+	sparql:pattern [ a foaf:Person ; p:name [] ; foaf:name [] ; p:field [] ; p:wordnet_type [] ] ;
 	.
