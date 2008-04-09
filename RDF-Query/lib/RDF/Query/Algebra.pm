@@ -176,9 +176,11 @@ sub bind_variables {
 	return $class->new( @args );
 }
 
-=item C<< subpatterns_of_type ( $type ) >>
+=item C<< subpatterns_of_type ( $type [, $block] ) >>
 
 Returns a list of Algebra patterns matching C<< $type >> (tested with C<< isa >>).
+If C<< $block >> is given, then matching stops descending a subtree if the current
+node is of type C<< $block >>, continuing matching on other subtrees.
 This list includes the current algebra object if it matches C<< $type >>, and is
 generated in infix order.
 
@@ -187,6 +189,9 @@ generated in infix order.
 sub subpatterns_of_type {
 	my $self	= shift;
 	my $type	= shift;
+	my $block	= shift;
+	
+	return if ($block and $self->isa($block));
 	
 	my @patterns;
 	push(@patterns, $self) if ($self->isa($type));
