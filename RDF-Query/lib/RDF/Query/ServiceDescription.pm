@@ -41,9 +41,9 @@ sub new {
 	my $infoquery	= RDF::Query->new( <<"END" );
 		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/#>
 		PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 		PREFIX sd: <http://darq.sf.net/dose/0.1#>
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/#>
 		SELECT ?label ?url ?size ?def
 		FROM <$uri>
 		WHERE {
@@ -60,39 +60,79 @@ END
 	return undef unless (defined $label);
 	my $definitive	= (defined($def) ? ($def->literal_value eq 'true' ? 1 : 0) : 0);
 	
-	my $capquery	= RDF::Query->new( <<"END" );
-		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-		PREFIX sd: <http://darq.sf.net/dose/0.1#>
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/#>
-		SELECT DISTINCT ?pred ?sofilter ?ssel ?osel ?triples
-		FROM <$uri>
-		WHERE {
-			[] a sd:Service ;
-				sd:capability ?cap .
-			?cap sd:predicate ?pred .
-			OPTIONAL { ?cap sd:sofilter ?sofilter }
-			OPTIONAL { ?cap sd:objectSelectivity ?osel }
-			OPTIONAL { ?cap sd:subjectSelectivity ?ssel }
-			OPTIONAL { ?cap sd:triples ?triples }
-		}
-END
 	my @capabilities;
-	my $iter	= $capquery->execute();
-	while (my $row = $iter->next) {
-		my ($p, $f, $ss, $os, $t)	= @{ $row }{ qw(pred sofilter ssel osel triples) };
-		my $data						= { pred => $p };
-		$data->{ object_selectivity }	= $os if (defined $os);
-		$data->{ subject_selectivity }	= $ss if (defined $ss);
-		$data->{ size }					= $t if (defined $t);
-		if (defined $f) {
-			my $base;
-			my $parser	= RDF::Query::Parser::SPARQL->new();
-			my $expr	= $parser->parse_expr( $f->literal_value, $base, {} );
-			$data->{ sofilter }			= $expr;
+	{
+		my $capquery	= RDF::Query->new( <<"END" );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/#>
+			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+			PREFIX sd: <http://darq.sf.net/dose/0.1#>
+			SELECT DISTINCT ?pred ?sofilter ?ssel ?osel ?triples
+			FROM <$uri>
+			WHERE {
+				[] a sd:Service ;
+					sd:capability ?cap .
+				?cap sd:predicate ?pred .
+				OPTIONAL { ?cap sd:sofilter ?sofilter }
+				OPTIONAL { ?cap sd:objectSelectivity ?osel }
+				OPTIONAL { ?cap sd:subjectSelectivity ?ssel }
+				OPTIONAL { ?cap sd:triples ?triples }
+			}
+END
+		my $iter	= $capquery->execute();
+		while (my $row = $iter->next) {
+			my ($p, $f, $ss, $os, $t)	= @{ $row }{ qw(pred sofilter ssel osel triples) };
+			my $data						= { pred => $p };
+			$data->{ object_selectivity }	= $os if (defined $os);
+			$data->{ subject_selectivity }	= $ss if (defined $ss);
+			$data->{ size }					= $t if (defined $t);
+			if (defined $f) {
+				my $base;
+				my $parser	= RDF::Query::Parser::SPARQL->new();
+				my $expr	= $parser->parse_expr( $f->literal_value, $base, {} );
+				$data->{ sofilter }			= $expr;
+			}
+			push(@capabilities, $data);
 		}
-		push(@capabilities, $data);
+	}
+	
+	my @patterns;
+	{
+		my $patquery	= RDF::Query->new( <<"END" );
+			PREFIX sd: <http://darq.sf.net/dose/0.1#>
+			PREFIX sparql: <http://kasei.us/2008/04/sparql#>
+			SELECT DISTINCT ?pattern ?pred ?obj
+			FROM <$uri>
+			WHERE {
+				[] sparql:pattern ?pattern .
+				?pattern ?pred ?obj .
+			}
+END
+		my $iter	= $patquery->execute();
+		my $var_id	= 1;
+		my @statements;
+		my %patterns;
+		my %bnode_map;
+		while (my $row = $iter->next) {
+			my @nodes	= @{ $row }{ qw(pattern pred obj) };
+			my $pattern	= $nodes[0];
+			foreach my $i (0 .. $#nodes) {
+				if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+					if (exists($bnode_map{ $nodes[$i]->as_string })) {
+						$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string };
+					} else {
+						$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string }	= RDF::Query::Node::Variable->new('p' . $var_id++);
+					}
+				}
+			}
+			my $st	= RDF::Query::Algebra::Triple->new( @nodes );
+			push(@{ $patterns{ $pattern->as_string } }, $st );
+		}
+		foreach my $k (keys %patterns) {
+			my $bgp	= RDF::Query::Algebra::BasicGraphPattern->new( @{ $patterns{ $k } } );
+			push( @patterns, $bgp );
+		}
 	}
 	
 	my $data	= {
@@ -101,6 +141,7 @@ END
 					size			=> $triples->literal_value,
 					definitive		=> $definitive,
 					capabilities	=> \@capabilities,
+					patterns		=> \@patterns,
 				};
 	my $self	= bless( $data, $class );
 	return $self;
@@ -166,6 +207,18 @@ filter, and required predicate, with the following classes:
 sub capabilities {
 	my $self	= shift;
 	return $self->{capabilities};
+}
+
+=item C<< patterns >>
+
+Returns an ARRAY reference of RDF::Query::Algebra::BasicGraphPattern objects
+representing common patterns used by the endpoint.
+
+=cut
+
+sub patterns {
+	my $self	= shift;
+	return $self->{patterns};
 }
 
 =item C<< computed_statement_generator >>
