@@ -25,9 +25,35 @@ if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 
 use_ok( 'RDF::Query::ServiceDescription' );
 
-my $uri		= URI::file->new_abs( 'data/service.ttl' );
+my $uri	= URI::file->new_abs( 'data/service.ttl' );
 my $sd	= RDF::Query::ServiceDescription->new( $uri );
 isa_ok( $sd, 'RDF::Query::ServiceDescription' );
+
+# {
+# 	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
+# 	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
+# 	my $query	= RDF::Query->new( <<"END" );
+# 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# 		SELECT *
+# 		WHERE {
+# 			?p a foaf:Person ;
+# 				foaf:name ?name ;
+# 				foaf:mbox_sha1sum ?mbox ;
+# 		}
+# END
+# 	$query->add_service( $ksd );
+# 	$query->add_service( $sd );
+# 	my $iter	= $query->execute;
+# 	my $count	= 0;
+# 	while (my $row = $iter->next) {
+# 		use Data::Dumper;
+# 		warn Dumper($row);
+# 		$count++;
+# 	}
+# 	warn 'count: ' . $count;
+# }
+# 
+# exit;
 
 {
 	is( $sd->label, 'DBpedia', 'expected endpoint label' );
@@ -87,24 +113,6 @@ END
 		WHERE { <http://dbpedia.org/resource/Alan_Turing> dbp:occupation ?job }
 END
 	$query->add_computed_statement_generator( $sd->computed_statement_generator );
-	my $iter	= $query->execute;
-	my $count	= 0;
-	while (my $row = $iter->next) {
-		$count++;
-	}
-	is( $count, 0, 'execution: expected dbp:occupation not in federation description' ); 
-}
-
-{
-	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
-	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
-	my $query	= RDF::Query->new( <<"END" );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		SELECT *
-		WHERE { ?p a foaf:Person }
-END
-	$query->add_service( $ksd );
-	$query->add_service( $sd );
 	my $iter	= $query->execute;
 	my $count	= 0;
 	while (my $row = $iter->next) {

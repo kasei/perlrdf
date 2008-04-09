@@ -2,9 +2,13 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix sd: <http://darq.sf.net/dose/0.1#> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix saddle: <http://www.w3.org/2005/03/saddle/#> .
 @prefix sparql: <http://kasei.us/2008/04/sparql#> .
+@prefix geo: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix exif: <http://www.kanzaki.com/ns/exif#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 
 # definition of an endpoint
 [] a sd:Service ;
@@ -19,25 +23,31 @@
 	# the endpoint url
 	sd:url <[% endpoint_url %]> ;
 	sd:totalTriples [% triples %] ;
-	sd:isDefinitive false ;
+	sd:isDefinitive "false"^^xsd:boolean ;
 	saddle:humanInterface <[% endpoint_url %]> ;
-	saddle:queryLanguage [ saddle:spec <http://www.w3.org/TR/rdf-sparql-query/> ] ;
-	saddle:queryLanguage [ saddle:spec <http://www.w3.org/Submission/RDQL/> ] ;
+	saddle:queryLanguage [ rdfs:label "SPARQL" ; saddle:spec <http://www.w3.org/TR/rdf-sparql-query/> ] ;
+	saddle:queryLanguage [ rdfs:label "RDQL" ; saddle:spec <http://www.w3.org/Submission/RDQL/> ] ;
 	saddle:resultFormat [
-		saddle:mediaType "application/sparql-results+xml";
+		rdfs:label "SPARQL Query Results XML" ;
+		saddle:mediaType "application/sparql-results+xml" ;
 		saddle:spec <http://www.w3.org/TR/rdf-sparql-XMLres/>
 	] ;
 	saddle:resultFormat [
-		saddle:mediaType "application/rdf+xml";
+		rdfs:label "RDF/XML" ;
+		saddle:mediaType "application/rdf+xml" ;
 		saddle:spec <http://www.w3.org/TR/rdf-syntax/>
 	] ;
 	saddle:resultFormat [
-		saddle:mediaType "application/sparql-results+json";
+		rdfs:label "SPARQL Query Results JSON" ;
+		saddle:mediaType "application/sparql-results+json" ;
 		saddle:spec <http://www.w3.org/TR/rdf-sparql-json-res/>
 	] ;
 [% FOREACH function = functions %]
 	sparql:extensionFunction <[% function.url %]> ;[% END %]
 [% FOREACH ext = extensions %]
 	sparql:sparqlExtension <[% ext.url %]> ;[% END %]
+	
+	sparql:pattern [ a foaf:Person ; foaf:name [] ; foaf:mbox_sha1sum [] ] ;
+	sparql:pattern [ a foaf:Image ; exif:exposureTime [] ; exif:fNumber [] ; dc:date [] ; foaf:maker [] ; dcterms:spatial [ geo:lat [] ; geo:long [] ] ] ;
 	
 	.
