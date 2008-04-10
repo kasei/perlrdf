@@ -275,12 +275,31 @@ sub execute {
 	
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	my $ua			= $query->useragent;
-	my $resp		= $ua->get( $url );
-	unless ($resp->is_success) {
-		throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
-	}
-	my $content		= $resp->content;
-	my $stream		= RDF::Trine::Iterator->from_string( $content );
+	
+	
+	# we jump through some hoops here to defer the actual execution unti the first
+	# result is pulled from the stream. this has a slight speed hit in general,
+	# but will have a huge benefit when, for example, two service calls are
+	# concatenated with a union.
+	my $stream;
+	my $extra		= {};
+	my @vars		= $self->pattern->referenced_variables;
+	my $results		= RDF::Trine::Iterator::Bindings->new( sub {
+		unless (defined $stream) {
+			my $resp		= $ua->get( $url );
+			unless ($resp->is_success) {
+				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+			}
+			my $content	= $resp->content;
+			$stream		= RDF::Trine::Iterator->from_string( $content );
+			if (my $e = $stream->extra_result_data) {
+				%$extra	= %$e;
+			}
+		}
+		
+		return $stream->next;
+	}, \@vars, extra_result_data => $extra );
+	
 	my $cast		= smap {
 						my $bindings	= $_;
 						return undef unless ($bindings);
@@ -288,7 +307,7 @@ sub execute {
 										$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
 									} (keys %$bindings);
 						return \%cast;
-					} $stream;
+					} $results;
 	return $cast;
 }
 

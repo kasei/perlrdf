@@ -38,6 +38,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 use XML::SAX;
 use RDF::Trine::Node;
+use RDF::Trine::Promise;
 use RDF::Trine::Iterator::SAXHandler;
 
 our ($REVISION, $VERSION, $debug, @ISA, @EXPORT_OK);
@@ -84,7 +85,7 @@ sub new {
 	my $names		= shift || [];
 	my %args		= @_;
 	
-	if (ref($stream) and reftype($stream) eq 'ARRAY') {
+	if (ref($stream) and ref($stream) eq 'ARRAY') {
 		my $array	= $stream;
 		$stream	= sub {
 			return shift(@$array);
@@ -103,6 +104,7 @@ sub new {
 		_stream		=> $stream,
 		_args		=> \%args,
 		_row		=> undef,
+		_peek		=> [],
 #		_source		=> Carp::longmess(),
 	};
 	
@@ -199,7 +201,14 @@ sub next {
 	my $self	= shift;
 	return if ($self->{_finished});
 	
+	if (scalar(@{ $self->{_peek} })) {
+		return shift(@{ $self->{_peek} });
+	}
+	
 	my $stream	= $self->{_stream};
+	if (blessed($stream) and $stream->isa('RDF::Trine::Promise')) {
+		$stream	= $self->{_stream}	= $stream->value;
+	}
 	my $value	= $stream->();
 	unless (defined($value)) {
 		$self->{_finished}	= 1;
@@ -210,6 +219,21 @@ sub next {
 	return $value;
 }
 
+=item C<< peek >>
+
+Returns the next value from the iterator without consuming it. The value will
+remain in queue until the next call to C<< next >>.
+
+=cut
+
+sub peek {
+	my $self	= shift;
+	return if ($self->{_finished});
+	
+	my $value	= $self->next;
+	push( @{ $self->{_peek} }, $value );
+	return $value;
+}
 
 =item C<< current >>
 
@@ -437,6 +461,7 @@ sub add_extra_result_data {
 
 sub extra_result_data {
 	my $self	= shift;
+	$self->peek;
 	my $args	= $self->_args;
 	my $extra	= $args->{ extra_result_data };
 	return $extra;
