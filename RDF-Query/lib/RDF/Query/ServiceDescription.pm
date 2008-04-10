@@ -25,6 +25,7 @@ use URI::file;
 use RDF::Query;
 use RDF::Trine::Iterator qw(smap swatch);
 use Scalar::Util qw(blessed);
+use LWP::UserAgent;
 use Data::Dumper;
 
 =item C<< new ( $url ) >>
@@ -38,6 +39,20 @@ sub new {
 	my $class	= shift;
 	my $uri		= shift;
 	
+	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/$RDF::Query::VERSION" );
+	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+	my $resp	= $ua->get( $uri );
+	unless ($resp->is_success) {
+		warn "No content available from $uri: " . $resp->status_line;
+		return;
+	}
+	my $content	= $resp->content;
+	
+	my $store	= RDF::Trine::Store::DBI->temporary_store();
+	my $model	= RDF::Trine::Model->new( $store );
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	$parser->parse_into_model( $uri, $content, $model );
+	
 	my $infoquery	= RDF::Query->new( <<"END" );
 		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -45,7 +60,6 @@ sub new {
 		PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 		PREFIX sd: <http://darq.sf.net/dose/0.1#>
 		SELECT ?label ?url ?size ?def
-		FROM <$uri>
 		WHERE {
 			?s a sd:Service ;
 				rdfs:label ?label ;
@@ -56,7 +70,7 @@ sub new {
 		}
 		LIMIT 1
 END
-	my ($label, $url, $triples, $def)	= $infoquery->get;
+	my ($label, $url, $triples, $def)	= $infoquery->get( $model );
 	return undef unless (defined $label);
 	my $definitive	= (defined($def) ? ($def->literal_value eq 'true' ? 1 : 0) : 0);
 	
@@ -69,7 +83,6 @@ END
 			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 			PREFIX sd: <http://darq.sf.net/dose/0.1#>
 			SELECT DISTINCT ?pred ?sofilter ?ssel ?osel ?triples
-			FROM <$uri>
 			WHERE {
 				[] a sd:Service ;
 					sd:capability ?cap .
@@ -80,7 +93,7 @@ END
 				OPTIONAL { ?cap sd:triples ?triples }
 			}
 END
-		my $iter	= $capquery->execute();
+		my $iter	= $capquery->execute( $model );
 		while (my $row = $iter->next) {
 			my ($p, $f, $ss, $os, $t)	= @{ $row }{ qw(pred sofilter ssel osel triples) };
 			my $data						= { pred => $p };
@@ -99,38 +112,37 @@ END
 	
 	my @patterns;
 	{
-		my $patquery	= RDF::Query->new( <<"END" );
-			PREFIX sd: <http://darq.sf.net/dose/0.1#>
-			PREFIX sparql: <http://kasei.us/2008/04/sparql#>
-			SELECT DISTINCT ?pattern ?pred ?obj
-			FROM <$uri>
-			WHERE {
-				[] sparql:pattern ?pattern .
-				?pattern ?pred ?obj .
-			}
-END
-		my $iter	= $patquery->execute();
 		my $var_id	= 1;
 		my @statements;
 		my %patterns;
 		my %bnode_map;
-		while (my $row = $iter->next) {
-			my @nodes	= @{ $row }{ qw(pattern pred obj) };
-			my $pattern	= $nodes[0];
-			foreach my $i (0 .. $#nodes) {
-				if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
-					if (exists($bnode_map{ $nodes[$i]->as_string })) {
-						$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string };
-					} else {
-						$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string }	= RDF::Query::Node::Variable->new('p' . $var_id++);
+		
+		my $patterns	= $model->get_statements( undef, RDF::Trine::Node::Resource->new('http://kasei.us/2008/04/sparql#pattern'), undef );
+		while (my $st = $patterns->next) {
+			my $pattern	= $st->object;
+			my @queue	= ($pattern);
+			while (my $subj = shift(@queue)) {
+				my $stream	= $model->get_statements( $subj, undef, undef );
+				while (my $st = $stream->next) {
+					push(@queue, $st->object);
+					my @nodes	= map { RDF::Query::Model::RDFTrine::_cast_to_local($_) } ($subj, $st->predicate, $st->object);
+					foreach my $i (0 .. $#nodes) {
+						if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+							if (exists($bnode_map{ $nodes[$i]->as_string })) {
+								$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string };
+							} else {
+								$nodes[$i]	= $bnode_map{ $nodes[$i]->as_string }	= RDF::Query::Node::Variable->new('p' . $var_id++);
+							}
+						}
 					}
+					my $st	= RDF::Query::Algebra::Triple->new( @nodes );
+					push(@{ $patterns{ $pattern->as_string } }, $st );
 				}
 			}
-			my $st	= RDF::Query::Algebra::Triple->new( @nodes );
-			push(@{ $patterns{ $pattern->as_string } }, $st );
 		}
 		foreach my $k (keys %patterns) {
 			my $bgp	= RDF::Query::Algebra::BasicGraphPattern->new( @{ $patterns{ $k } } );
+			warn "SERVICE BGP: " . $bgp->as_sparql({}, '');
 			push( @patterns, $bgp );
 		}
 	}
