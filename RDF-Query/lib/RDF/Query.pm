@@ -952,6 +952,7 @@ sub algebra_fixup {
 			
 			foreach my $service_pat (@join_patterns) {
 				my ($bgp, $sd, @triples)	= @$service_pat;
+				next unless (@triples);
 				my $serviceurl	= RDF::Query::Node::Resource->new( $sd->url );
 				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( RDF::Query::Algebra::BasicGraphPattern->new( @triples ) );
 				my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
