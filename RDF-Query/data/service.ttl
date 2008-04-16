@@ -66,6 +66,7 @@
 		sd:triples 18000 ; 
 		sd:objectSelectivity 5.5E-5 
 	] ;
+	sd:capability [ sd:predicate <http://purl.org/dc/terms/spatial> ] ;
 	
 
 	# whether the service is definitive or not

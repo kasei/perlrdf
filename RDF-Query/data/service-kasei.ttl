@@ -76,10 +76,11 @@
 	sd:capability [ sd:predicate foaf:mbox_sha1sum ] ;
 	sd:capability [ sd:predicate foaf:depicts ] ;
 	sd:capability [ sd:predicate foaf:openid ] ;
+	sd:capability [ sd:predicate foaf:made ] ;
 	sd:capability [ sd:predicate <http://purl.org/dc/terms/spatial> ] ;
 	sd:capability [ sd:predicate <http://www.w3.org/2003/01/geo/wgs84_pos#lat> ] ;
 	sd:capability [ sd:predicate <http://www.w3.org/2003/01/geo/wgs84_pos#long> ] ;
 
-	sparql:pattern [ a foaf:Person ; foaf:name [] ; foaf:mbox_sha1sum [] ] ;
+	sparql:pattern [ a foaf:Person ; foaf:name [] ; foaf:mbox_sha1sum [] ; foaf:made [] ] ;
 	sparql:pattern [ a foaf:Image ; exif:exposureTime [] ; exif:fNumber [] ; dc:date [] ; foaf:maker [] ; dcterms:spatial [ geo:lat [] ; geo:long [] ] ] ;
 	.
