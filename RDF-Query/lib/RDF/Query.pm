@@ -266,6 +266,16 @@ sub execute {
 	$self->load_data();
 	
 	my ($pattern, $cpattern)	= $self->fixup();
+	
+	if ($debug) {
+		warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
+		warn $self->as_sparql;
+		warn "-----------------------------\n";
+		warn $pattern->as_sparql({}, '');
+		warn "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
+		exit;
+	}
+	
 	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	my @vars	= $self->variables( $parsed );
 	
@@ -824,9 +834,11 @@ sub fixup {
 			}
 		}
 		
-		foreach my $k (keys %preds) {
-			my $services	= join(', ', map { $_->label } @{ $preds{$k} });
-			warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
+		if ($debug) {
+			foreach my $k (keys %preds) {
+				my $services	= join(', ', map { $_->label } @{ $preds{$k} });
+				warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
+			}
 		}
 	} else {
 		delete $self->{ service_predicates };
@@ -939,7 +951,7 @@ sub algebra_fixup {
 			}
 			foreach my $surl (keys %triples_for_single_service) {
 				my $triples		= $triples_for_single_service{ $surl };
-				warn "triples for only $surl: " . Dumper($triples);
+				warn "triples for only $surl: " . Dumper($triples) if ($debug);
 				my $serviceurl	= RDF::Query::Node::Resource->new( $surl );
 				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$triples );
 				my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
@@ -948,18 +960,22 @@ sub algebra_fixup {
 			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
 			local($self->{force_no_optimization})	= 1;
 			my $fixed	= $ggp->fixup( $self, $bridge, $base, $ns );
-			warn "replacing BGP: " . $pattern->as_sparql({}, '') . " with: " . $fixed->as_sparql({}, '');
+			warn "replacing BGP: " . $pattern->as_sparql({}, '') . " with: " . $fixed->as_sparql({}, '') if ($debug);
 			
 			foreach my $service_pat (@join_patterns) {
-				my ($bgp, $sd, @triples)	= @$service_pat;
+				my (undef, $sd, @triples)	= @$service_pat;
 				next unless (@triples);
 				my $serviceurl	= RDF::Query::Node::Resource->new( $sd->url );
-				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( RDF::Query::Algebra::BasicGraphPattern->new( @triples ) );
+				my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+				unless ($bgp->connected) {
+					warn "BGP isn't connected. Ignoring.";
+					next;
+				}
+				my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
 				my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
 				warn "Triples can be grouped together: \n" . $service->as_sparql( {}, '' );
 			}
 			
-			exit;
 			return $fixed;
 		}
 	}

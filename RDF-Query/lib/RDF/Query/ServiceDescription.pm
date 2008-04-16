@@ -13,8 +13,10 @@ RDF::Query::Node - Class for describing federated query data sources.
 
 package RDF::Query::ServiceDescription;
 
+our ($VERSION, $debug);
 BEGIN {
-	our $VERSION	= '2.000';
+	$debug		= 0;
+	$VERSION	= '2.000';
 }
 
 use strict;
@@ -142,7 +144,7 @@ END
 		}
 		foreach my $k (keys %patterns) {
 			my $bgp	= RDF::Query::Algebra::BasicGraphPattern->new( @{ $patterns{ $k } } );
-			warn "SERVICE BGP: " . $bgp->as_sparql({}, '');
+			warn "SERVICE BGP: " . $bgp->as_sparql({}, '') if ($debug);
 			push( @patterns, $bgp );
 		}
 	}

@@ -29,31 +29,35 @@ my $uri	= URI::file->new_abs( 'data/service.ttl' );
 my $sd	= RDF::Query::ServiceDescription->new( $uri );
 isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 
-# {
-# 	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
-# 	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
-# 	my $query	= RDF::Query->new( <<"END" );
-# 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-# 		SELECT *
-# 		WHERE {
-# 			?p a foaf:Person ;
-# 				foaf:name ?name ;
-# 				foaf:mbox_sha1sum ?mbox ;
-# 		}
-# END
-# 	$query->add_service( $ksd );
-# 	$query->add_service( $sd );
-# 	my $iter	= $query->execute;
-# 	my $count	= 0;
-# 	while (my $row = $iter->next) {
-# 		use Data::Dumper;
-# 		warn Dumper($row);
-# 		$count++;
-# 	}
-# 	warn 'count: ' . $count;
-# }
-# 
-# exit;
+{
+	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
+	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
+	my $query	= RDF::Query->new( <<"END" );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		PREFIX dcterms: <http://purl.org/dc/terms/>
+		SELECT *
+		WHERE {
+			?p a foaf:Person ;
+				foaf:name ?name ;
+				foaf:mbox_sha1sum ?mbox ;
+				foaf:made ?x .
+			?x dcterms:spatial ?point .
+		}
+END
+	$query->add_service( $ksd );
+	$query->add_service( $sd );
+	local($RDF::Query::debug)	= 1;
+	my $iter	= $query->execute;
+	my $count	= 0;
+	while (my $row = $iter->next) {
+		use Data::Dumper;
+		warn Dumper($row);
+		$count++;
+	}
+	warn 'count: ' . $count;
+}
+
+exit;
 
 {
 	is( $sd->label, 'DBpedia', 'expected endpoint label' );

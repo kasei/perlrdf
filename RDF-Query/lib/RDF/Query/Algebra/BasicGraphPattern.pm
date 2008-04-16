@@ -185,6 +185,65 @@ sub fixup {
 	}
 }
 
+=item C<< connected >>
+
+Returns true if the pattern is connected through shared variables, fase otherwise.
+
+=cut
+
+sub connected {
+	my $self	= shift;
+	my @triples	= $self->triples;
+	return 1 unless (scalar(@triples) > 1);
+	
+	my %index;
+	my %variables;
+	foreach my $i (0 .. $#triples) {
+		my $t	= $triples[ $i ];
+		$index{ $t->as_string }	= $i;
+		foreach my $n ($t->nodes) {
+			next unless ($n->isa('RDF::Trine::Node::Variable'));
+			push( @{ $variables{ $n->name } }, $t );
+		}
+	}
+	
+	my @connected;
+	foreach my $i (0 .. $#triples) {
+		foreach my $j (0 .. $#triples) {
+			$connected[ $i ][ $j ]	= ($i == $j) ? 1 : 0;
+		}
+	}
+	
+	my %seen;
+	my @queue	= $triples[0];
+	while (my $t = shift(@queue)) {
+		my $string	= $t->as_string;
+		next if ($seen{ $string }++);
+		my @vars	= map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $t->nodes;
+		my @connected_to	= map { @{ $variables{ $_ } } } @vars;
+		foreach my $c (@connected_to) {
+			my $cstring	= $c->as_string;
+			my $i	= $index{$string};
+			
+			my $k		= $index{ $cstring };
+			my @conn	= @{ $connected[$i] };
+			$conn[ $k ]	= 1;
+			foreach my $j (0 .. $#triples) {
+				if ($conn[ $j ] == 1) {
+					$connected[ $k ][ $j ]	= 1;
+					$connected[ $j ][ $k ]	= 1;
+				}
+			}
+			push(@queue, $c);
+		}
+	}
+	
+	foreach my $i (0 .. $#triples) {
+		return 0 unless ($connected[0][$i] == 1);
+	}
+	return 1;
+}
+
 =item C<< subsumes ( $pattern ) >>
 
 Returns true if the bgp subsumes the pattern, false otherwise.
