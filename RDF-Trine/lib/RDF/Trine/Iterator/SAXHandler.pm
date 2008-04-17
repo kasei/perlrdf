@@ -37,6 +37,8 @@ my %booleans;
 my %variables;
 my %extra;
 my %extrakeys;
+my %has_head;
+my %has_end;
 
 my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
 
@@ -51,7 +53,7 @@ sub iterator {
 	my $addr	= refaddr( $self );
 	
 	if (exists( $booleans{ $addr })) {
-		return RDF::Trine::Iterator::Boolean->new( [$booleans{ $addr }] );
+		return $self->iterator_class->new( [$booleans{ $addr }] );
 	} else {
 		my $vars	= delete $variables{ $addr };
 		my $results	= delete $results{ $addr };
@@ -59,8 +61,97 @@ sub iterator {
 		if (exists $extra{ $addr }) {
 			$args{ extra_result_data }	= delete $extra{ $addr };
 		}
-		return RDF::Trine::Iterator::Bindings->new( $results, $vars, %args );
+		return $self->iterator_class->new( $results, $vars, %args );
 	}
+}
+
+=item C<< has_head >>
+
+Returns true if the <head/> element has been completely parsed, false otherwise.
+
+=cut
+
+sub has_head {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	return ($has_head{ $addr }) ? 1 : 0;
+}
+
+=item C<< has_end >>
+
+Returns true if the <sparql/> element (the entire iterator) has been completely
+parsed, false otherwise.
+
+=cut
+
+sub has_end {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	return ($has_end{ $addr }) ? 1 : 0;
+}
+
+=item C<< iterator_class >>
+
+Returns the iterator class appropriate for the parsed results (either
+::Iterator::Boolean or ::Iterator::Bindings).
+
+=cut
+
+sub iterator_class {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	if (exists( $booleans{ $addr })) {
+		return 'RDF::Trine::Iterator::Boolean';
+	} else {
+		return 'RDF::Trine::Iterator::Bindings';
+	}
+}
+
+=item C<< iterator_args >>
+
+Returns the arguments suitable for passing to the iterator constructor after
+the iterator data.
+
+=cut
+
+sub iterator_args {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	
+	if (exists( $booleans{ $addr })) {
+		return;
+	} else {
+		my $vars	= $variables{ $addr };
+		my %args;
+		if (exists $extra{ $addr }) {
+			$args{ extra_result_data }	= delete $extra{ $addr };
+		}
+		return ($vars, %args);
+	}
+}
+
+=item C<< pull_result >>
+
+Returns the next result from the iterator, if available (if it has been parsed yet).
+Otherwise, returns the empty list.
+
+=cut
+
+sub pull_result {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	
+	if (exists( $booleans{ $addr })) {
+		if (exists($booleans{ $addr })) {
+			return [$booleans{ $addr }];
+		}
+	} else {
+		if (scalar(@{ $results{ $addr } || [] })) {
+			my $result	= splice( @{ $results{ $addr } }, 0, 1 );
+			return $result;
+		}
+	}
+	return;
 }
 
 =begin private
@@ -94,7 +185,11 @@ sub end_element {
 	my $taginfo	= shift( @{ $tagstack{ $addr } } );
 	my ($tag, $el)	= @$taginfo;
 	
-	if ($tag eq 'variable') {
+	if ($tag eq 'head') {
+		$has_head{ $addr }	= 1;
+	} elsif ($tag eq 'sparql') {
+		$has_end{ $addr }	= 1;
+	} elsif ($tag eq 'variable') {
 		push( @{ $variables{ $addr } }, $el->{Attributes}{'{}name'}{Value});
 	} elsif ($tag eq 'boolean') {
 		$booleans{ $addr }	= ($string eq 'true') ? 1 : 0;
@@ -180,6 +275,8 @@ sub DESTROY {
 	delete $variables{ $addr };
 	delete $extra{ $addr };
 	delete $extrakeys{ $addr };
+	delete $has_head{ $addr };
+	delete $has_end{ $addr };
 }
 
 

@@ -3,8 +3,9 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 12;
+use Test::More tests => 21;
 
+use IO::Scalar;
 use Data::Dumper;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
@@ -100,4 +101,63 @@ END
 		},
 		'identity hints'
 	);
+}
+
+{
+	use IO::Socket::INET;
+	my $listen	= IO::Socket::INET->new( Listen => 5, LocalAddr => 'localhost', LocalPort => 9000, Proto => 'tcp', ReuseAddr => 1 );
+	my $out		= IO::Socket::INET->new( PeerAddr => 'localhost', PeerPort => 9000, Proto => 'tcp' );
+	my $in		= $listen->accept;
+	$out->send( <<"END" );
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+	<variable name="name"/>
+</head>
+END
+	my $stream	= RDF::Trine::Iterator->from_handle_incremental( $in, 128 );
+	isa_ok( $stream, 'RDF::Trine::Iterator::Bindings' );
+	
+	$out->send( <<"END" );
+<results>
+		<result>
+			<binding name="name"><literal>Alice</literal></binding>
+		</result>
+</results>
+END
+	
+	{
+		my $data	= $stream->next;
+		isa_ok( $data, 'HASH' );
+		isa_ok( $data->{name}, 'RDF::Trine::Node::Literal' );
+		is( $data->{name}->literal_value, 'Alice' );
+	}
+	
+	{
+		my $delay	= 3;
+		my $start	= time();
+		print "# beginning $delay-second timeout test.\n";
+		if (my $pid = fork()) {
+			my $data	= $stream->next;
+			my $end		= time();
+			isa_ok( $data, 'HASH' );
+			isa_ok( $data->{name}, 'RDF::Trine::Node::Literal' );
+			is( $data->{name}->literal_value, 'Bob' );
+			cmp_ok( $end, '>=', ($start + $delay - 1), "good delay of $delay seconds" );
+		} else {
+			sleep $delay;
+			$out->send( <<"END" );
+			<results>
+				<result><binding name="name"><literal>Bob</literal></binding></result>
+			</results>
+END
+			exit;
+		}
+	}
+	
+	$out->send( <<"END" );
+</sparql>
+END
+	my $end	= $stream->next;
+	is( $end, undef, 'expected eos' );
 }

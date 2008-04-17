@@ -186,6 +186,74 @@ sub from_string {
 	return $iter;
 }
 
+=item C<< from_handle_incremental ( $socket, $chunk_size ) >>
+
+Returns a new iterator using the XML content read from C<< $socket >>.
+This call will block until the entire <head/> element is read from the socket,
+with results being read incrementally as the C<< next >> method is called.
+
+=cut
+
+sub from_handle_incremental {
+	my $class		= shift;
+	my $handle		= shift;
+	my $chunk_size	= shift || 1024;
+	
+	eval "
+		require XML::SAX::Expat;
+		require XML::SAX::Expat::Incremental;
+	";
+	if ($@) {
+		die $@;
+	}
+	local($XML::SAX::ParserPackage)	= 'XML::SAX::Expat::Incremental';
+	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
+	$p->parse_start;
+	
+	until ($handler->has_head) {
+		my $buffer;
+		$handle->recv($buffer, $chunk_size);
+		if (my $size = length($buffer)) {
+			warn "read $size bytes\n" if ($debug);
+			$p->parse_more( $buffer );
+		} else {
+			warn "read 0 bytes\n" if ($debug);
+			if ($handle->eof) {
+				warn "-> handle is at eof\n" if ($debug);
+				return undef;
+			}
+			select( undef, undef, undef, 0.25 );
+		}
+	}
+	
+	warn "iterator has head. now returning an iterative stream." if ($debug);
+	
+	my @args	= $handler->iterator_args;
+	my $iter	= sub {
+		my $data;
+		while (not($handler->has_end) and not($data = $handler->pull_result)) {
+			my $buffer;
+			$handle->recv($buffer, $chunk_size);
+			if (my $size = length($buffer)) {
+				warn "read $size bytes\n" if ($debug);
+				$p->parse_more( $buffer );
+			} else {
+				warn "read 0 bytes\n" if ($debug);
+				if ($handle->eof) {
+					warn "-> handle is at eof\n" if ($debug);
+					return undef;
+				}
+				select( undef, undef, undef, 0.25 );
+			}
+		}
+		return $data;
+	};
+	return $handler->iterator_class->new( $iter, @args );
+	
+}
+
+
 =item C<< next >>
 
 =item C<< next_result >>
