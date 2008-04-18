@@ -85,6 +85,7 @@ sub new {
 	my $class	= shift;
 	my $ug		= new Data::UUID;
 	my $uuid	= $ug->to_string( $ug->create() );
+	$uuid		=~ s/-//g;
 	my $self	= bless({
 					bindings		=> {},
 					bnode_id		=> 0,

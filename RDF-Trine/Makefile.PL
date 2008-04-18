@@ -29,6 +29,7 @@ WriteMakefile(
 					'List::Util'				=> 0,
 					'Math::BigInt'				=> 0,
 					'Scalar::Util'				=> 0,
+					'Time::HiRes'				=> 0,
 					'Unicode::Escape'			=> 0,
 					'URI'						=> 0,
 					'XML::CommonNS'				=> 0.04,
