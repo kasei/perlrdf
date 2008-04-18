@@ -3,14 +3,17 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 21;
+use Test::More tests => 32;
 
-use IO::Scalar;
 use Data::Dumper;
+use IO::Socket::INET;
+use Time::HiRes qw(sleep);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Iterator::Bindings;
 use RDF::Trine::Iterator::Boolean;
+
+my $BASE_PORT	= 9015;
 
 {
 	my $string	= <<"END";
@@ -103,10 +106,13 @@ END
 	);
 }
 
-{
-	use IO::Socket::INET;
-	my $listen	= IO::Socket::INET->new( Listen => 5, LocalAddr => 'localhost', LocalPort => 9000, Proto => 'tcp', ReuseAddr => 1 );
-	my $out		= IO::Socket::INET->new( PeerAddr => 'localhost', PeerPort => 9000, Proto => 'tcp' );
+SKIP: {
+	my $port	= $BASE_PORT + 1;
+	my $listen	= IO::Socket::INET->new( Listen => 5, LocalAddr => 'localhost', LocalPort => $port, Proto => 'tcp', ReuseAddr => 1 );
+	unless ($listen) {
+		skip "Can't open loopback socket", 9;
+	}
+	my $out		= IO::Socket::INET->new( PeerAddr => 'localhost', PeerPort => $port, Proto => 'tcp' );
 	my $in		= $listen->accept;
 	$out->send( <<"END" );
 <?xml version="1.0"?>
@@ -151,6 +157,7 @@ END
 				<result><binding name="name"><literal>Bob</literal></binding></result>
 			</results>
 END
+			$out->close;
 			exit;
 		}
 	}
@@ -160,4 +167,62 @@ END
 END
 	my $end	= $stream->next;
 	is( $end, undef, 'expected eos' );
+}
+
+SKIP: {
+	my $port	= $BASE_PORT + 2;
+	my $listen	= IO::Socket::INET->new( Listen => 5, LocalAddr => 'localhost', LocalPort => $port, Proto => 'tcp', ReuseAddr => 1 );
+	unless ($listen) {
+		skip "Can't open loopback socket", 11;
+	}
+	my $out		= IO::Socket::INET->new( PeerAddr => 'localhost', PeerPort => $port, Proto => 'tcp' );
+	my $in		= $listen->accept;
+
+	print "# beginning data-rate test.\n";
+	
+	my $delay	= 2;
+	if (my $pid = fork()) {
+		my $stream	= RDF::Trine::Iterator->from_handle_incremental( $in, 1024 );
+		isa_ok( $stream, 'RDF::Trine::Iterator::Bindings' );
+		my $extra	= $stream->extra_result_data;
+		isa_ok( $extra, 'HASH' );
+		
+		my $handler	= $extra->{Handler};
+		isa_ok( $handler, 'RDF::Trine::Iterator::SAXHandler' );
+		
+		my $lastrate;
+		my $count	= 0;
+		while (my $d = $stream->next) {
+			my $rate	= $handler->rate;
+			if ($count < 5) {
+				isa_ok( $d->{number}, 'RDF::Trine::Node::Literal' );
+			}
+			if ($count++ % 10 == 9) {	# only check after pulling some results so that the data rate has a chance to normalize (instead of starting out as something like 1/0.0015
+				if (defined($lastrate)) {
+					cmp_ok( $rate, '>=', $lastrate, 'increasing data rate' );
+				}
+				$lastrate	= $rate;
+			}
+			last if ($count > 40);
+		}
+	} else {
+		$out->send( <<"END" );
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+	<variable name="number"/>
+</head>
+<results>
+	<result><binding name="number"><literal>0</literal></binding></result>
+END
+		foreach my $i (1 .. 50) {
+			$out->send( <<"END" );
+	<result><binding name="number"><literal>${i}</literal></binding></result>
+END
+			sleep( $delay );
+			$delay	*= 0.8;
+		}
+		$out->close;
+		exit;
+	}
 }

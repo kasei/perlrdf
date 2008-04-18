@@ -27,6 +27,7 @@ use Scalar::Util qw(refaddr);
 use base qw(XML::SAX::Base);
 
 use Data::Dumper;
+use Time::HiRes qw(time);
 
 my %strings;
 my %tagstack;
@@ -39,6 +40,8 @@ my %extra;
 my %extrakeys;
 my %has_head;
 my %has_end;
+my %start_time;
+my %result_count;
 
 my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
 
@@ -123,9 +126,10 @@ sub iterator_args {
 	} else {
 		my $vars	= $variables{ $addr };
 		my %args;
-		if (exists $extra{ $addr }) {
-			$args{ extra_result_data }	= delete $extra{ $addr };
-		}
+		
+		my $extra			= (exists $extra{ $addr }) ? delete $extra{ $addr } : {};
+		$extra->{Handler}	= $self;
+		$args{ extra_result_data }	= $extra;
 		return ($vars, %args);
 	}
 }
@@ -154,6 +158,22 @@ sub pull_result {
 	return;
 }
 
+=item C<< rate >>
+
+Returns the number of results parsed per second for this iterator.
+
+=cut
+
+sub rate {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	my $now		= time;
+	my $start	= $start_time{ $addr };
+	my $dur		= ($now - $start);
+	my $count	= $result_count{ $addr };
+	return ($count / $dur);
+}
+
 =begin private
 
 =item C<< start_element >>
@@ -169,6 +189,10 @@ sub start_element {
 	unshift( @{ $tagstack{ $addr } }, [$tag, $el] );
 	if ($expecting_string{ $tag }) {
 		$strings{ $addr }	= '';
+	}
+	
+	if ($tag eq 'results') {
+		$start_time{ $addr }	= time;
 	}
 }
 
@@ -199,6 +223,7 @@ sub end_element {
 		$bindings{ $addr }{ $name }	= $value;
 	} elsif ($tag eq 'result') {
 		my $result	= delete( $bindings{ $addr } );
+		$result_count{ $addr }++;
 		push( @{ $results{ $addr } }, $result );
 	} elsif ($tag eq 'bnode') {
 		$values{ $addr }	= RDF::Trine::Node::Blank->new( $string );
@@ -277,6 +302,8 @@ sub DESTROY {
 	delete $extrakeys{ $addr };
 	delete $has_head{ $addr };
 	delete $has_end{ $addr };
+	delete $start_time{ $addr };
+	delete $result_count{ $addr };
 }
 
 
