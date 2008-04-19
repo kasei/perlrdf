@@ -1,7 +1,4 @@
 # RDF::Trine::Model::StatementFilter
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -28,9 +25,10 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Iterator qw(sgrep);
 
-our $debug;
+our ($debug, $VERSION);
 BEGIN {
-	$debug	= 0;
+	$debug		= 0;
+	$VERSION	= '0.106';
 }
 
 ################################################################################

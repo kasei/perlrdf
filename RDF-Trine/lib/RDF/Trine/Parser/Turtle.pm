@@ -1,7 +1,4 @@
 # RDF::Trine::Parser::Turtle
-# -------------
-# $Revision: 127 $
-# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -10,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 1.000
+This document describes RDF::Trine::Parser::Turtle version 0.106
 
 =head1 SYNOPSIS
 
@@ -46,7 +43,7 @@ our ($VERSION, $debug, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
 	$debug					= 0;
-	$VERSION				= '1.000';
+	$VERSION				= 0.106;
 	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');

@@ -1,7 +1,4 @@
 # RDF::Trine::Error
-# -------------
-# $Revision: 127 $
-# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -10,7 +7,7 @@ RDF::Trine::Error - Error classes for RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Error version 1.001
+This document describes RDF::Trine::Error version 0.106
 
 =head1 SYNOPSIS
 
@@ -38,11 +35,10 @@ use base qw(Error);
 
 ######################################################################
 
-our ($REVISION, $VERSION, $debug);
+our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$REVISION	= do { my $REV = (qw$Revision: 127 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= 1.001;
+	$VERSION	= 0.106;
 }
 
 ######################################################################

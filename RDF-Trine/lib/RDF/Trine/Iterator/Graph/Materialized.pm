@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator::Graph::Materialized
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -42,12 +39,11 @@ use Data::Dumper;
 use Scalar::Util qw(reftype);
 use base qw(RDF::Trine::Iterator::Graph);
 
-our ($REVISION, $VERSION, $debug);
+our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.000';
+	$VERSION	= 0.106;
 }
 
 =item C<< new ( \@results, %args ) >>

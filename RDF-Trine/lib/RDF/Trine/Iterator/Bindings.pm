@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator::Bindings
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -39,11 +36,10 @@ use RDF::Trine::Iterator::Bindings::Materialized;
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
-our ($REVISION, $VERSION, $debug);
+our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.000';
+	$VERSION	= 0.106;
 }
 
 =item C<new ( \@results, \@names, %args )>

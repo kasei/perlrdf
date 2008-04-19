@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI - [One line description of module's purpose here]
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.002
+This document describes RDF::Trine::Store::DBI version 0.106
 
 
 =head1 SYNOPSIS
@@ -59,7 +59,7 @@ use RDF::Trine::Iterator;
 
 use RDF::Trine::Store::DBI::mysql;
 
-our $VERSION	= "0.003";
+our $VERSION	= "0.106";
 use constant DEBUG	=> 0;
 our $debug		= DEBUG;
 

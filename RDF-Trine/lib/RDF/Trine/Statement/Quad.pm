@@ -1,7 +1,4 @@
 # RDF::Trine::Statement::Quad
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -22,7 +19,7 @@ use base qw(RDF::Trine::Statement);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= do { my $REV = (qw$Revision: 121 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
+	$VERSION	= 0.106;
 }
 
 ######################################################################

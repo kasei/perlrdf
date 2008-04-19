@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator::Graph
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -37,13 +34,17 @@ use RDF::Trine::Iterator qw(sgrep);
 use RDF::Trine::Iterator::Graph::Materialized;
 
 use base qw(RDF::Trine::Iterator);
-our ($REVISION, $VERSION, $debug);
-use constant DEBUG	=> 0;
+
+######################################################################
+
+our ($VERSION, $debug);
 BEGIN {
-	$debug		= DEBUG;
-	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.000';
+	$debug		= 0;
+	$VERSION	= 0.106;
 }
+
+######################################################################
+
 
 =item C<new ( \@results, %args )>
 

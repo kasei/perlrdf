@@ -1,7 +1,4 @@
 # RDF::Trine::Parser
-# -------------
-# $Revision: 127 $
-# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -10,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.001
+This document describes RDF::Trine::Parser version 0.106
 
 =head1 SYNOPSIS
 
@@ -33,6 +30,12 @@ package RDF::Trine::Parser;
 use strict;
 use warnings;
 no warnings 'redefine';
+
+our ($VERSION, $debug);
+BEGIN {
+	$debug		= 0;
+	$VERSION	= 0.106;
+}
 
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;

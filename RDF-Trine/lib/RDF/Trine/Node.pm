@@ -1,7 +1,4 @@
 # RDF::Trine::Node
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -19,8 +16,14 @@ package RDF::Trine::Node;
 use strict;
 use warnings;
 no warnings 'redefine';
-use Scalar::Util qw(blessed);
 
+our ($debug, $VERSION);
+BEGIN {
+	$debug		= 0;
+	$VERSION	= '0.106';
+}
+
+use Scalar::Util qw(blessed);
 use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Literal;
 use RDF::Trine::Node::Resource;
