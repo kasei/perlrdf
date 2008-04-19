@@ -43,7 +43,6 @@ use base qw(RDF::Trine::Iterator::Bindings);
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 
-use Bloom::Filter;
 our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {

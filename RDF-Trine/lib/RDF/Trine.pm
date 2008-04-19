@@ -53,7 +53,6 @@ __END__
 
 =head1 DEPENDENCIES
 
-L<Bloom::Filter>
 L<Data::UUID>
 L<DBI>
 L<DBD::SQLite>
