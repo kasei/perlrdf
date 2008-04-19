@@ -50,6 +50,32 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.106 (2008-04-19)
+
+     * Added a mysql-specific RDF::Trine::Store class (now uses INSERT IGNORE for efficiency).
+     * SQL compiler now doesn't select statement contexts unless called via get_statements (not get_pattern).
+     * RDF::Trine::Iterator::Graph::as_bindings now can be called with no arguments (uses default names).
+     * Moved the nested hash join from ::Iterator to ::Iterator::Bindings.
+     * Added new tests to improve coverage of node and iterator classes.
+     * Added tests for binding iterator cartesian product join.
+     * Pipelined the code for nested loop joins on binding iterators.
+     * Added SPARQL XML Results test for identity hints in <link/> element.
+     * Fixed bug in ::Model::StatementFilter to call join_steams in ::Iterator::Bindings.
+     * Fixed bug in ::Iterator::Graph::as_bindings where not all arguments are ::Node::Variable objects.
+     * Updated SPARQL XML Results namespace for boolean iterators.
+     * Replaced XML::Twig code with new XML::SAX parser (allowing streaming parsing).
+     * Moved as_sparql methods from RDF::Trine:: to RDF::Query:: classes.
+     * RDF::Trine::Iterator::smap now allows overriding default construct_args (e.g. binding names).
+     * Fixed RDF::Trine::Model::StatementFilter::get_pattern to project away unused variables (fixing a bug that caused joining to always fail).
+     * Updated example turtle parser to accept URLs as command line arguments.
+     * Turtle parser now removes dashes from the UUIDs used for blank node IDs.
+     * Added support to incrementally thaw an Iterator from an IO::Socket.
+     * Added RDF::Trine::Iterator::SAXHandler::rate method.
+     * Added Time::HiRes as prerequisite to META.yml and Makefile.PL.
+     * Updated all RDF::Trine modules to use consistent VERSION number for 0.106 release.
+     * Added examples directory (and an example script) to the RDF-Trine package.
+     * Removed Bloom::Filtere from the list of prerequisites (functionality has moved to RDF::Query).
+
   Version 0.105 (2008-03-19)
 
      * Removed use of File::Slurp in parser tests.

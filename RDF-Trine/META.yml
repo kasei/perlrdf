@@ -11,10 +11,10 @@ build_requires:
   Test::More: 0.61
   Test::Exception: 0
 recommends:
+  XML::SAX::Expat::Incremental: 0
   RDF::Redland: 1
   RDF::Core: 0
 requires:
-    Bloom::Filter:                 0
     DBI:                           0
     DBD::SQLite:                   1.14
     Digest::MD5:                   0

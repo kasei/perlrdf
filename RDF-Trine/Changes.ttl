@@ -9,6 +9,41 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+<http://kasei.us/code/files/RDF-Trine-0.106.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.105.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.106" ;
+                        doap:created      "2008-04-19" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added examples directory (and an example script) to the RDF-Trine package." ;
+                        asc:addition    "Added a mysql-specific RDF::Trine::Store class (now uses INSERT IGNORE for efficiency)." ;
+                        asc:addition    "Added new tests to improve coverage of node and iterator classes." ;
+                        asc:addition    "Added tests for binding iterator cartesian product join." ;
+                        asc:addition    "Added SPARQL XML Results test for identity hints in <link/> element." ;
+                        asc:addition    "Added support to incrementally thaw an Iterator from an IO::Socket." ;
+                        asc:addition    "Added RDF::Trine::Iterator::SAXHandler::rate method." ;
+                        asc:addition    "Added Time::HiRes as prerequisite to META.yml and Makefile.PL." ;
+                        asc:update      "Removed Bloom::Filtere from the list of prerequisites (functionality has moved to RDF::Query)." ;
+                        asc:update      "SQL compiler now doesn't select statement contexts unless called via get_statements (not get_pattern)." ;
+                        asc:update      "RDF::Trine::Iterator::Graph::as_bindings now can be called with no arguments (uses default names)." ;
+                        asc:update      "Moved the nested hash join from ::Iterator to ::Iterator::Bindings." ;
+                        asc:update      "Pipelined the code for nested loop joins on binding iterators." ;
+                        asc:update      "Fixed bug in ::Model::StatementFilter to call join_steams in ::Iterator::Bindings." ;
+                        asc:update      "Fixed bug in ::Iterator::Graph::as_bindings where not all arguments are ::Node::Variable objects." ;
+                        asc:update      "Updated SPARQL XML Results namespace for boolean iterators." ;
+                        asc:update      "Replaced XML::Twig code with new XML::SAX parser (allowing streaming parsing)." ;
+                        asc:update      "Moved as_sparql methods from RDF::Trine:: to RDF::Query:: classes." ;
+                        asc:update      "RDF::Trine::Iterator::smap now allows overriding default construct_args (e.g. binding names)." ;
+                        asc:update      "Fixed RDF::Trine::Model::StatementFilter::get_pattern to project away unused variables (fixing a bug that caused joining to always fail)." ;
+                        asc:update      "Updated example turtle parser to accept URLs as command line arguments." ;
+                        asc:update      "Turtle parser now removes dashes from the UUIDs used for blank node IDs." ;
+                        asc:update      "Updated all RDF::Trine modules to use consistent VERSION number for 0.106 release." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.105.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.104.tar.gz> ;
