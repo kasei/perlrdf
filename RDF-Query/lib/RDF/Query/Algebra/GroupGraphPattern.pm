@@ -52,8 +52,11 @@ sub new {
 	my $class		= shift;
 	my @patterns	= @_;
 	my $self	= bless( \@patterns, $class );
-	if (@patterns) {
-		Carp::confess unless blessed($patterns[0]);
+	foreach my $p (@patterns) {
+		unless (blessed($p)) {
+			Carp::cluck;
+			throw RDF::Query::Error::MethodInvocationError -text => "GroupGraphPattern constructor called with unblessed value";
+		}
 	}
 	return $self;
 }

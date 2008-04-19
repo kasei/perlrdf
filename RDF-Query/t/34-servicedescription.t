@@ -23,6 +23,7 @@ if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	return;
 }
 
+use_ok( 'RDF::Query::Federate' );
 use_ok( 'RDF::Query::ServiceDescription' );
 
 my $uri	= URI::file->new_abs( 'data/service.ttl' );
@@ -32,7 +33,7 @@ isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 {
 	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
 	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
-	my $query	= RDF::Query->new( <<"END" );
+	my $query	= RDF::Query::Federate->new( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX dcterms: <http://purl.org/dc/terms/>
 		SELECT *
@@ -46,7 +47,7 @@ isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 END
 	$query->add_service( $ksd );
 	$query->add_service( $sd );
-	local($RDF::Query::debug)	= 1;
+	local($RDF::Query::Federate::debug)	= 1;
 	my $iter	= $query->execute;
 	my $count	= 0;
 	while (my $row = $iter->next) {
@@ -95,7 +96,7 @@ exit;
 }
 
 {
-	my $query	= RDF::Query->new( <<"END" );
+	my $query	= RDF::Query::Federate->new( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT ?name
 		WHERE { <http://dbpedia.org/resource/Alan_Turing> foaf:name ?name . FILTER( LANG(?name) = "de" ) }
@@ -110,7 +111,7 @@ END
 }
 
 {
-	my $query	= RDF::Query->new( <<"END" );
+	my $query	= RDF::Query::Federate->new( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX dbp: <http://dbpedia.org/property/>
 		SELECT ?job
