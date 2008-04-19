@@ -33,6 +33,8 @@ use warnings;
 use URI;
 use XML::Parser;
 use Data::Dumper;
+use Scalar::Util qw(blessed);
+
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Parser::Error qw(:try);
@@ -184,6 +186,9 @@ parsed, will call C<< $model->add_statement( $statement ) >>.
 sub parse_into_model {
 	my $self	= shift;
 	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
 	my $input	= shift;
 	my $model	= shift;
 	return $self->parse( $uri, $input, sub { my $st	= shift; $model->add_statement( $st ) } );
