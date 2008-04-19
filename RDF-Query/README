@@ -41,6 +41,50 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.001 (2008-04-19)
+
+     * Fixed use of "DESCRIBE <resource>" (instead of "DESCRIBE ?var").
+     * Fixed SPARQL serialization of queries with DISTINCT.
+     * Added ::Algebra::subpatterns_of_type method for retrieving all subpatterns of a particular type.
+     * Moved sort_rows() into new ::Algebra classes Sort, Limit, Offset and Distinct.
+     * Updated SQL compiler to handle new ::Algebra classes.
+     * Bumped required RDF::Trine version to 0.106.
+     * Added methods to RDF::Query for retrieving lists of supported SPARQL extensions and extension functions.
+     * RDF::Trine pattern optimization now holds onto the original BGP object for forwarding of calls to as_sparql().
+     * Removed use of Storable module. Query execution no longer clones parse tree before running.
+     * Simplified project operation on query stream in RDF::Query::execute().
+     * fixup() method in ::Algebra and ::Expression now passed the query object as an argument.
+     * Replaced ::RDFTrine::unify_bgp with more general fixup() implementation.
+     * ::Algebra classes now defer to the bridge during fixup() to allow model-specific optimizations.
+     * RDF::Trine::Iterator::smap now allows overriding default construct_args (e.g. binding names).
+     * sparql:str now throws a TypeError if argument isn't bound.
+     * Fixed referenced_variables in RDF::Query::Expression.
+     * Fixed COUNT function to only count bound variables.
+     * Fixed aggregation to work with expressions.
+     * Added support for GROUP BY clauses to aggregation queries.
+     * Removed now unused ::Algebra::OldFilter class.
+     * Added serialization tests for aggregate and union patterns.
+     * Moved as_sparql methods from RDF::Trine:: to RDF::Query:: classes.
+     * Removed context- (quad-) specific code from RDF::Query::Algebra::Triple.
+     * Fixed serialization of BOUND filter functions.
+     * Fixed serialization of unary expressions.
+     * Fixed call to join_streams to use ::Iterator::Bindings instead of ::Iterator.
+     * var_or_expr_value now takes bridge object as an argument.
+     * var_or_expr_value will now accept any RDF::Query::Expression object as an argument.
+     * Added test for using AS syntax for variable renaming: "(?var AS ?newvar)".
+     * Added support for MIN, MAX, COUNT and COUNT-DISTINCT aggregate operators to the SPARQLP parser.
+     * Added COUNT DISTINCT variant aggregate operator.
+     * Aggregates (MIN, MAX, COUNT, COUNT-DISTINCT) now return xsd:decimal values (this shouldn't really happen for non-numeric operands to MIN and MAX...)
+     * Added as_sparql submethod to RDF::Query::Node::Literal to serialize numeric types unquoted.
+     * Added var_or_expr_value method in RDF::Query.
+     * Removed unused _true and _false methods in RDF::Query.
+     * Fixed existing aggregates code and tests.
+     * Removed unused (and bitrotted) t/05-stress.t test.
+     * Made all tests that access the network opt-in with the RDFQUERY_NETWORK_TESTS environment variable.
+     * Updated POD for ::Expression::Alias.
+     * Added tests for select expressions.
+     * Added initial support for selecting expression values.
+
   Version 2.000 (2008-03-19)
 
      * RDF::Query now uses RDF::Trine package for common classes (nodes, statements, iterators).
