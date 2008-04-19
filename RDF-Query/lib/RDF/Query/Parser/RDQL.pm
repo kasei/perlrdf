@@ -1,7 +1,4 @@
 # RDF::Query::Parser::RDQL
-# -------------
-# $Revision: 298 $
-# $Date: 2007-12-03 15:48:55 -0500 (Mon, 03 Dec 2007) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -30,7 +27,7 @@ BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
 	$debug		= 1;
-	$VERSION	= '2.000';
+	$VERSION	= '2.001';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
 }

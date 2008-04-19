@@ -25,7 +25,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.000';
+	$VERSION	= '2.001';
 }
 
 ######################################################################

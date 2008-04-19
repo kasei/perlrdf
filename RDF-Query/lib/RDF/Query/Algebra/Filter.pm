@@ -1,7 +1,4 @@
 # RDF::Query::Algebra::Filter
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -30,7 +27,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.000';
+	$VERSION	= '2.001';
 }
 
 ######################################################################

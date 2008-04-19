@@ -119,12 +119,11 @@ use RDF::Query::Error qw(:try);
 
 ######################################################################
 
-our ($REVISION, $VERSION, $debug, $js_debug, $DEFAULT_PARSER);
+our ($VERSION, $debug, $js_debug, $DEFAULT_PARSER);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug			= DEBUG;
 	$js_debug		= 0;
-	$REVISION		= do { my $REV = (qw$Revision: 306 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
 	$VERSION		= '2.001';
 	$DEFAULT_PARSER	= 'sparql';
 }
