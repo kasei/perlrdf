@@ -39,7 +39,6 @@ foreach (@data) {
 
 
 sub _____ERRORS______ {}
-
 ##### ERRORS
 
 {
@@ -4949,17 +4948,6 @@ __END__
         - ASC
         - !!perl/array:RDF::Query::Node::Variable
           - s
-  sources: []
-  triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Variable
-            - s
-          - !!perl/array:RDF::Query::Node::Variable
-            - p
-          - !!perl/array:RDF::Query::Node::Variable
-            - o
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - s
