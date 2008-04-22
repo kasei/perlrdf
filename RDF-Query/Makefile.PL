@@ -14,6 +14,7 @@ recommends			'Getopt::Simple'			=> 0;
 recommends			'Digest::SHA1'				=> 0;
 recommends			'Geo::Distance'				=> 0.09;
 recommends			'Crypt::GPG'				=> 0;
+recommends			'Bloom::Filter'				=> 0;
 
 build_requires		'Test::JSON'				=> 0;
 build_requires		'Test::More'				=> 0.61;

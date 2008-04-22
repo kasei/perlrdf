@@ -25,6 +25,7 @@ recommends:
   RDF::Core: 0
   JavaScript: 0
   Geo::Distance: 0.09
+  Bloom::Filter: 1
 requires:
   Digest::SHA1: 0
   LWP::Simple: 0
