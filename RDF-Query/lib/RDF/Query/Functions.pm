@@ -726,6 +726,19 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 
 
 ### func:bloom( ?var, "frozen-bloom-filter" ) => true iff str(?var) is in the bloom filter.
+our $BLOOM_FILTER_LOADED;
+BEGIN {
+	$BLOOM_FILTER_LOADED	= do {
+		eval {
+			require Bloom::Filter;
+		};
+		($@)
+			? 0
+			: (Bloom::Filter->can('thaw'))
+				? 1
+				: 0;
+	};
+}
 {
 	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
 	sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
@@ -751,6 +764,10 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 		my $value	= shift;
 		my $filter	= shift;
 		my $bloom;
+		
+		unless ($BLOOM_FILTER_LOADED) {
+			throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
+		}
 		
 		if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
 			$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };
