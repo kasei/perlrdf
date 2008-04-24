@@ -311,7 +311,11 @@ sub _base {
 	$self->_eat('@base');
 	$self->_ws();
 	$self->__consume_ws();
-	$self->{baseURI}	=	$self->_join_uri($self->{baseURI}, $self->_uriref()->uri_value);
+	my $uri	= $self->_uriref();
+	if (ref($uri)) {
+		$uri	= $uri->uri_value;
+	}
+	$self->{baseURI}	=	$self->_join_uri($self->{baseURI}, $uri);
 }
 
 sub _triples_test {
