@@ -947,7 +947,7 @@ sub get_function {
 	
 	if ($func) {
 		return $func;
-	} elsif ($self->{options}{net_filters}) {
+	} elsif (ref($self) and $self->{options}{net_filters}) {
 		return $self->net_filter_function( $uri, %args );
 	}
 	return;

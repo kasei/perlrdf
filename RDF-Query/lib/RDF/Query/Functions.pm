@@ -288,30 +288,29 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
-	my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my ($bool1, $bool2, $error);
-	try {
-		my $arg1 	= $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		warn "error in lhs of logical-or" if ($debug);
-		$error	= shift;
-	};
-	try {
-		my $arg2 	= $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		warn "error in rhs of logical-or" if ($debug);
-		$error	= shift;
-	};
+	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+	my $arg;
+	my $error;
 	
-	if ($bool1 or $bool2) {
-		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	} elsif ($error) {
+	while (1) {
+		my $bool;
+		try {
+			$arg 	= $args->();
+			if (defined($arg)) {
+				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
+				my $value	= $func->evaluate( $query, $bridge, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} otherwise {
+			warn "error in lhs of logical-or" if ($debug);
+			$error	||= shift;
+		};
+		last unless (defined($arg));
+		if ($bool) {
+			return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+	if ($error) {
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -326,31 +325,32 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
-	my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my ($bool1, $bool2, $error);
-	try {
-		my $arg1 = $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		$error	= shift;
-	};
-	try {
-		my $arg2 = $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		$error	= shift;
-	};
+	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+	my $arg;
+	my $error;
 	
-	if ($bool1 and $bool2) {
-		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	} elsif ($error) {
+	while (1) {
+		my $bool;
+		try {
+			$arg 	= $args->();
+			if (defined($arg)) {
+				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
+				my $value	= $func->evaluate( $query, $bridge, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} otherwise {
+			warn "error in lhs of logical-or" if ($debug);
+			$error	||= shift;
+		};
+		last unless (defined($arg));
+		unless ($bool) {
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+	if ($error) {
 		$error->throw;
 	} else {
-		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	}
 };
 

@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 199;
+use Test::More tests => 203;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -730,6 +730,14 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
 	
+	{
+		my $TEST	= "logical-or(F,F,T)";
+		my $alg		= $func->new( "sparql:logical-or", $false, $false, $true );
+		my $value	= $alg->evaluate( undef, undef, {} );
+		isa_ok( $value, 'RDF::Query::Node::Literal' );
+		is( $value->literal_value, 'true', "$TEST value" );
+	}
+	
 }
 
 {
@@ -766,6 +774,13 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
 	
+	{
+		my $TEST	= "logical-and(T,T,F)";
+		my $alg		= $func->new( "sparql:logical-and", $true, $true, $false );
+		my $value	= $alg->evaluate( undef, undef, {} );
+		isa_ok( $value, 'RDF::Query::Node::Literal' );
+		is( $value->literal_value, 'false', "$TEST value" );
+	}
 }
 
 {
