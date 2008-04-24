@@ -105,6 +105,7 @@ END
 		'identity hints'
 	);
 }
+
 SKIP: {
 	eval "use XML::SAX::Expat::Incremental";
 	if ($@) {
@@ -119,11 +120,11 @@ SKIP: {
 		my $out		= IO::Socket::INET->new( PeerAddr => 'localhost', PeerPort => $port, Proto => 'tcp' );
 		my $in		= $listen->accept;
 		$out->send( <<"END" );
-	<?xml version="1.0"?>
-	<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-	<head>
-		<variable name="name"/>
-	</head>
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+	<variable name="name"/>
+</head>
 END
 		my $stream	= RDF::Trine::Iterator->from_handle_incremental( $in, 128 );
 		isa_ok( $stream, 'RDF::Trine::Iterator::Bindings' );
@@ -211,13 +212,13 @@ END
 			}
 		} else {
 			$out->send( <<"END" );
-	<?xml version="1.0"?>
-	<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-	<head>
-		<variable name="number"/>
-	</head>
-	<results>
-		<result><binding name="number"><literal>0</literal></binding></result>
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+	<variable name="number"/>
+</head>
+<results>
+	<result><binding name="number"><literal>0</literal></binding></result>
 END
 			foreach my $i (1 .. 50) {
 				$out->send( <<"END" );
