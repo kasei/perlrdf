@@ -26,7 +26,7 @@ my $dsn;
 if ($server eq 'mysql') {
 	$dsn	= "DBI:mysql:database=${dbname}";
 } elsif ($server eq 'sqlite') {
-	$dsn	= "DBI:sqlite:database=${dbname}";
+	$dsn	= "DBI:SQLite:dbname=${dbname}";
 } else {
 	warn "Unknown server type: $server\n";
 	exit;
