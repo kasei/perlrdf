@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$debug		= 0;
-	$BLOOM_FILTER_ERROR_RATE	= 0.1;
+	$BLOOM_FILTER_ERROR_RATE		= 0.1;
 	$VERSION	= '2.000';
 }
 
@@ -271,7 +271,11 @@ sub execute {
 						(map { sprintf("PREFIX %s: <%s>", $_, $ns{$_}) } (keys %ns)),
 						sprintf("SELECT DISTINCT * WHERE %s", $self->pattern->as_sparql({namespaces => \%ns}, ''))
 					);
-	warn "SERVICE REQUEST $endpoint: $sparql\n" if ($debug);
+	warn "SERVICE REQUEST $endpoint:\n$sparql\n" if ($debug);
+	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
+		warn "SERVICE REQUEST $endpoint:{{{\n$sparql\n}}}\n";
+		throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
+	}
 	
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	my $ua			= $query->useragent;
@@ -327,17 +331,27 @@ sub bloom_filter_for_iterator {
 	my $var		= shift;
 	my $error	= shift;
 	
-	my $length	= $iter->length;
 	my $name	= blessed($var) ? $var->name : $var;
-	my $filter	= Bloom::Filter->new( capacity => $length, error_rate => $error );
 	
+	my @names;
+	my %paths;
+	my $node_count	= 0;
 	while (my $result = $iter->next) {
+		$node_count++;
 		my $node	= $result->{ $name };
-		my @names	= $class->_names_for_node( $node, $query, $bridge, $bound, 0 );
-		foreach my $n (@names) {
-			warn "Adding to bloom filter: '$n'\n" if ($debug);
-			$filter->add( $n );
-		}
+		push(@names, $class->_names_for_node( $node, $query, $bridge, $bound, \%paths, 0 ));
+	}
+
+	my $count	= scalar(@names);
+	my $filter	= Bloom::Filter->new( capacity => $count, error_rate => $error );
+	warn $_ for (@names);
+	$filter->add( $_ ) for (@names);
+	
+	if (1 || $debug) {
+		warn "$node_count total nodes considered\n";
+		warn "Bloom filter has $count total items\n";
+		my @paths	= keys %paths;
+		warn "PATHS:\n" . join("\n", @paths) . "\n";
 	}
 	$iter->reset;
 	return $filter;
@@ -349,6 +363,7 @@ sub _names_for_node {
 	my $query	= shift;
 	my $bridge	= shift;
 	my $bound	= shift;
+	my $paths	= shift;
 	my $depth	= shift || 0;
 	my $pre		= shift || '';
 	my $seen	= shift || {};
@@ -358,14 +373,14 @@ sub _names_for_node {
 	
 	my @names;
 	my $parser	= RDF::Query::Parser::SPARQL->new();
-	if ($node->isa('RDF::Trine::Node::Blank')) {
+	unless ($node->isa('RDF::Trine::Node::Literal')) {
 		{
 			our $sa		||= $parser->parse_pattern( '{ ?n <http://www.w3.org/2002/07/owl#sameAs> ?o }' );
 			my $iter	= $sa->execute( $query, $bridge, { n => $node } );
 			
 			while (my $row = $iter->next) {
-				my ($p, $o)	= @{ $row }{qw(p o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '=' . $p->sse ));
+				my ($n, $o)	= @{ $row }{qw(n o)};
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '=' ));
 			}
 		}
 		
@@ -375,7 +390,7 @@ sub _names_for_node {
 			
 			while (my $row = $iter->next) {
 				my ($p, $o)	= @{ $row }{qw(p o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '^' . $p->sse ));
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '^' . $p->sse ));
 			}
 		}
 		
@@ -385,11 +400,14 @@ sub _names_for_node {
 			
 			while (my $row = $iter->next) {
 				my ($p, $o)	= @{ $row }{qw(p o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $depth + 1, $pre . '!' . $p->sse ));
+				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '!' . $p->sse ));
 			}
 		}
-	} else {
+	}
+	
+	unless ($node->isa('RDF::Trine::Node::Blank')) {
 		my $string	= $pre . $node->as_string;
+		$paths->{ $pre }++;
 		push(@names, $string);
 	}
 	warn "  " x $depth . "-> " . join(', ', @names) . "\n" if ($debug);

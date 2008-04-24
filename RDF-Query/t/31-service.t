@@ -88,7 +88,7 @@ END
 	my $count	= 0;
 	while (my $d = $stream->next) {
 		isa_ok( $d->{nick}, 'RDF::Query::Node::Literal' );
-		like( $d->{name}->literal_value, qr/^(Adam Pisoni|Gregory Todd Williams)$/, 'got name from local file (joined on a bnode)' );
+		like( $d->{name}->literal_value, qr/^(Adam Pisoni)$/, 'got name from local file (joined on a bnode)' );
 		like( $d->{nick}->literal_value, qr/^(wonko)$/, 'got nick from SERVICE (joined on a bnode)' );
 		$count++;
 	}

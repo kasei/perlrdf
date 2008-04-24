@@ -198,6 +198,7 @@ sub evaluate {
 	my $bound	= shift;
 	my $uri		= $self->uri;
 	
+	no warnings 'uninitialized';
 	if ($uri->uri_value =~ /^sparql:logical-(.+)$/) {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw

@@ -219,23 +219,19 @@ sub execute {
 				unless ($SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }) {
 	# 				local($RDF::Trine::Iterator::debug)	= 1;
 					$stream		= $stream->materialize;
-					my $m		= $stream;
-					
-					my @vars	= $triple->referenced_variables;
-					my %svars	= map { $_ => 1 } $stream->binding_names;
-					my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
-					
-					my $error	= $query->{_bloom_filter_error} || $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE || 0.001;
-					my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $m, $var, $error );
-					
-					my $pattern	= $triple->add_bloom( $var, $f );
+					my $pattern	= $self->_bloom_optimized_pattern( $stream, $triple, $query, $bridge, $bound );
 					my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
 					throw RDF::Query::Error unless ($new);
-					$stream	= $self->join_bnode_streams( $m, $new, $query, $bridge, $bound );
+					$stream	= $self->join_bnode_streams( $stream, $new, $query, $bridge, $bound );
 					$handled	= 1;
 				}
 			}
+		} catch RDF::Query::Error::RequestedInterruptError with {
+			my $e	= shift;
+			$e->throw;
 		} otherwise {
+			my $e	= shift;
+			warn "error: " . $e;
 			$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
 			warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
 		};
@@ -255,6 +251,24 @@ sub execute {
 	}
 	
 	return $stream;
+}
+
+sub _bloom_optimized_pattern {
+	my $self	= shift;
+	my $mstream	= shift;
+	my $service	= shift;
+	my $query	= shift;
+	my $bridge	= shift;
+	my $bound	= shift;
+	my @vars	= $service->referenced_variables;
+	my %svars	= map { $_ => 1 } $mstream->binding_names;
+	my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
+	
+	my $error	= $query->{_bloom_filter_error} || $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE || 0.001;
+	my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $mstream, $var, $error );
+	
+	my $pattern	= $service->add_bloom( $var, $f );
+	return $pattern;
 }
 
 =item C<< join_bnode_streams ( $streamA, $streamB, $query, $bridge ) >>
@@ -283,7 +297,7 @@ sub join_bnode_streams {
 	my $bstream	= shift;
 	my $query	= shift;
 	my $bridge	= shift;
-	
+
 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
 	
@@ -298,6 +312,7 @@ sub join_bnode_streams {
 		}
 	}
 	my $b_map	= (%b_map) ? \%b_map : undef;
+	warn 'BNODE MAP: ' . Dumper($b_map) if ($debug);
 	################################################
 	
 	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
@@ -324,6 +339,7 @@ sub join_bnode_streams {
 					if (not $equal) {
 						my $names	= $b_map->{ $val_b->as_string };
 						if ($names) {
+							warn "nodes aren't equal: " . Data::Dumper->Dump([$val_a, $val_b], [qw(val_a val_b)]) if ($debug);
 							my $bnames	= Set::Scalar->new( @{ $names } );
 							my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
 							if ($debug) {
