@@ -58,6 +58,7 @@ use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 
 use RDF::Trine::Store::DBI::mysql;
+use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION	= "0.107";
 use constant DEBUG	=> 0;
@@ -97,9 +98,11 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-# 		if ($dsn =~ /^DBI:mysql:/) {
-# 			$class	= 'RDF::Trine::Store::DBI::mysql';
-# 		}
+		if ($dsn =~ /^DBI:mysql:/) {
+			$class	= 'RDF::Trine::Store::DBI::mysql';
+		} elsif ($dsn =~ /^DBI:Pg:/) {
+			$class	= 'RDF::Trine::Store::DBI::Pg';
+		}
 		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
@@ -159,27 +162,36 @@ sub get_statements {
 		my $temp_var_count	= 1;
 		foreach my $node ($triple->nodes) {
 			if ($node->is_variable) {
-				my $name	= $node->name;
-				my $prefix	= $name . '_';
-				if (defined $row->{ "${prefix}URI" }) {
-					push( @triple, RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } ) );
-				} elsif (defined $row->{ "${prefix}Name" }) {
-					push( @triple, RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } ) );
+				my $nodename	= $node->name;
+				my $uri			= $self->_column_name( $nodename, 'URI' );
+				my $name		= $self->_column_name( $nodename, 'Name' );
+				my $value		= $self->_column_name( $nodename, 'Value' );
+				if (defined( my $u = $row->{ $uri })) {
+					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
+				} elsif (defined( my $n = $row->{ $name })) {
+					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
+				} elsif (defined( my $v = $row->{ $value })) {
+					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
-					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+					push( @triple, undef );
 				}
 			} else {
 				push(@triple, $node);
 			}
 		}
 		if (blessed($context) and $context->is_variable) {
-			my $prefix	= 'sql_ctx_1__';
-			if (defined $row->{ "${prefix}URI" }) {
-				push( @triple, RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } ) );
-			} elsif (defined $row->{ "${prefix}Name" }) {
-				push( @triple, RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } ) );
-			} elsif (defined $row->{ "${prefix}Value" }) {
-				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+			my $nodename	= 'sql_ctx_1_';
+			my $uri			= $self->_column_name( $nodename, 'URI' );
+			my $name		= $self->_column_name( $nodename, 'Name' );
+			my $value		= $self->_column_name( $nodename, 'Value' );
+			if (defined $row->{ $uri }) {
+				push( @triple, RDF::Trine::Node::Resource->new( $row->{ $uri } ) );
+			} elsif (defined $row->{ $name }) {
+				push( @triple, RDF::Trine::Node::Blank->new( $row->{ $name } ) );
+			} elsif (defined $row->{ $value }) {
+				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 			}
 		} elsif ($context) {
 			push( @triple, $context );
@@ -194,6 +206,12 @@ sub get_statements {
 	return RDF::Trine::Iterator::Graph->new( $sub )
 }
 
+sub _column_name {
+	my $self	= shift;
+	my @args	= @_;
+	my $col		= join('_', @args);
+	return $col;
+}
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
@@ -230,16 +248,19 @@ sub get_pattern {
 		return unless $row;
 		
 		my %bindings;
-		foreach my $name (@vars) {
-			my $prefix	= $name . '_';
-			if (defined $row->{ "${prefix}URI" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } );
-			} elsif (defined $row->{ "${prefix}Name" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } );
-			} elsif (defined $row->{ "${prefix}Value" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
+		foreach my $nodename (@vars) {
+			my $uri		= $self->_column_name( $nodename, 'URI' );
+			my $name	= $self->_column_name( $nodename, 'Name' );
+			my $value	= $self->_column_name( $nodename, 'Value' );
+			if (defined( my $u = $row->{ $uri })) {
+				$bindings{ $nodename }	 = RDF::Trine::Node::Resource->new( $u );
+			} elsif (defined( my $n = $row->{ $name })) {
+				$bindings{ $nodename }	 = RDF::Trine::Node::Blank->new( $n );
+			} elsif (defined( my $v = $row->{ $value })) {
+				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
 			} else {
-				$bindings{ $name }	= undef;
+				$bindings{ $nodename }	= undef;
 			}
 		}
 		return \%bindings;
@@ -274,12 +295,16 @@ sub get_contexts {
  	$sth->execute();
  	my $sub		= sub {
  		my $row	= $sth->fetchrow_hashref;
- 		if ($row->{URI}) {
- 			return RDF::Trine::Node::Resource->new( $row->{URI} );
- 		} elsif ($row->{Name}) {
- 			return RDF::Trine::Node::Blank->new( $row->{Name} );
- 		} elsif (defined $row->{Value}) {
- 			return RDF::Trine::Node::Literal->new( @{ $row }{qw(Value Language Datatype)} );
+ 		my $uri		= $self->_column_name( 'URI' );
+ 		my $name	= $self->_column_name( 'Name' );
+ 		my $value	= $self->_column_name( 'Value' );
+ 		if ($row->{ $uri }) {
+ 			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
+ 		} elsif ($row->{ $name }) {
+ 			return RDF::Trine::Node::Blank->new( $row->{ $name } );
+ 		} elsif (defined $row->{ $value }) {
+ 			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+ 			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
  		} else {
  			return;
  		}
@@ -1002,39 +1027,38 @@ sub init {
 	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Literals (
-            ID bigint unsigned PRIMARY KEY,
-            Value longtext NOT NULL,
-            Language text NOT NULL DEFAULT "",
-            Datatype text NOT NULL DEFAULT ""
+        CREATE TABLE Literals (
+            ID NUMERIC(20) PRIMARY KEY,
+            Value text NOT NULL,
+            Language text NOT NULL DEFAULT '',
+            Datatype text NOT NULL DEFAULT ''
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Resources (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Resources (
+            ID NUMERIC(20) PRIMARY KEY,
             URI text NOT NULL
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Bnodes (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Bnodes (
+            ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Models (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Models (
+            ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
     
-    $dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
         CREATE TABLE Statements${id} (
-            Subject bigint unsigned NOT NULL,
-            Predicate bigint unsigned NOT NULL,
-            Object bigint unsigned NOT NULL,
-            Context bigint unsigned NOT NULL DEFAULT 0,
+            Subject NUMERIC(20) NOT NULL,
+            Predicate NUMERIC(20) NOT NULL,
+            Object NUMERIC(20) NOT NULL,
+            Context NUMERIC(20) NOT NULL DEFAULT 0,
             UNIQUE (Subject, Predicate, Object, Context)
         );
 END
@@ -1053,7 +1077,7 @@ sub _cleanup {
 		my $name	= $self->{model_name};
 		my $id		= _mysql_hash( $name );
 		if ($self->{ remove_store }) {
-			$dbh->do( "DROP TABLE IF EXISTS `Statements${id}`;" );
+			$dbh->do( "DROP TABLE `Statements${id}`;" );
 			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
 		}
 	}

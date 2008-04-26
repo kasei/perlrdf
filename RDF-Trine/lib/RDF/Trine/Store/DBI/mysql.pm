@@ -130,6 +130,65 @@ sub _add_node {
 	$sth->execute( map "$_", @values{ @cols } );
 }
 
+=item C<< init >>
+
+Creates the necessary tables in the underlying database.
+
+=cut
+
+sub init {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= _mysql_hash( $name );
+	
+	$dbh->begin_work;
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Literals (
+            ID bigint unsigned PRIMARY KEY,
+            Value longtext NOT NULL,
+            Language text NOT NULL DEFAULT "",
+            Datatype text NOT NULL DEFAULT ""
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Resources (
+            ID bigint unsigned PRIMARY KEY,
+            URI text NOT NULL
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Bnodes (
+            ID bigint unsigned PRIMARY KEY,
+            Name text NOT NULL
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Models (
+            ID bigint unsigned PRIMARY KEY,
+            Name text NOT NULL
+        );
+END
+    
+    $dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE Statements${id} (
+            Subject bigint unsigned NOT NULL,
+            Predicate bigint unsigned NOT NULL,
+            Object bigint unsigned NOT NULL,
+            Context bigint unsigned NOT NULL DEFAULT 0,
+            UNIQUE (Subject, Predicate, Object, Context)
+        );
+END
+
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
+	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
+	
+	$dbh->commit;
+	warn "committed" if (DEBUG);
+}
+
+
 1; # Magic true value required at end of module
 __END__
 

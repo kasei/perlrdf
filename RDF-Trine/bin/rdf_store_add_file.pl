@@ -14,7 +14,7 @@ use RDF::Trine::Statement;
 
 unless (@ARGV >= 6) {
 	print <<"END";
-USAGE: $0 server-type dbname username password model-name file base
+USAGE: $0 server-type dbname username password model-name file base [host]
 
 	server-type can be either 'mysql' or 'sqlite'
 
@@ -30,12 +30,18 @@ my $pass	= shift;
 my $model	= shift;
 my $file	= shift;
 my $base	= shift;
+my $host	= shift;
 
 my $dsn;
 if ($server eq 'mysql') {
 	$dsn	= "DBI:mysql:database=${dbname}";
 } elsif ($server eq 'sqlite') {
 	$dsn	= "DBI:SQLite:dbname=${dbname}";
+} elsif ($server eq 'pg') {
+	$dsn	= "DBI:Pg:dbname=${dbname}";
+	if ($host) {
+		$dsn	.= ';host=' . $host;
+	}
 } else {
 	warn "Unknown server type: $server\n";
 	exit;
