@@ -50,7 +50,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.106 (2008-04-25)
+  Version 0.107 (2008-04-25)
 
      * Added Digest::SHA1 as a requirement for RDF::Trine.
      * Fixed base URI use in Turtle parser.
