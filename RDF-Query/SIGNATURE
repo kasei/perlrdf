@@ -73,7 +73,7 @@ SHA1 92ec4691d9848d128d26848f5000cb3433aba883 lib/RDF/Query/Expression/Binary.pm
 SHA1 e67783e89059060fd21ec56229cd9d6b51bd3daa lib/RDF/Query/Expression/Function.pm
 SHA1 40bcf54a7773eeced706180e8a1f27ef1e9585aa lib/RDF/Query/Expression/Nary.pm
 SHA1 0e3c261b2e2cbf3657e61ca1ecf5ff835ce3e5ff lib/RDF/Query/Expression/Unary.pm
-SHA1 f55360c1f2f09ad27811b4c56c6e592d00376dea lib/RDF/Query/Functions.pm
+SHA1 3ae39a7b5e8fa0724e9a282fbc6832f7e63b0b46 lib/RDF/Query/Functions.pm
 SHA1 7a4cb2fd1bef55b64c71051a43c33a4c55bc5f3b lib/RDF/Query/Model.pm
 SHA1 3dcef7f42932e332c1d37ed1730bc7acf88ad9b4 lib/RDF/Query/Model/RDFCore.pm
 SHA1 4a0123788956d63f5a19910250bbaffbeeaa51ee lib/RDF/Query/Model/RDFTrine.pm
@@ -122,7 +122,7 @@ SHA1 85238944d1f23157e64f909be1f31e04945e8945 t/28-time_intervals.t
 SHA1 942b26128f68659584fcf03b1055d5885d75f3b6 t/29-serialize.t
 SHA1 b25fe04e93887268a847ed264b1a0914509a7437 t/30-aggregate.t
 SHA1 353109c00942cebb2c4fba3436682173583f7177 t/31-service.t
-SHA1 9641cb539356d3267f0bcbcf64dd624c3d9279fe t/32-select_expr.t
+SHA1 4e2ef9d8ac6abd105cf29c72397660bebcb20c22 t/32-select_expr.t
 SHA1 a29cfa1435d7e67a62aefe40b7123b1b8e28ed66 t/algebra-expr.t
 SHA1 b14dae09e83882a1dea7d957344f69b614427e01 t/algebra-func.t
 SHA1 e9c165ba452532a4b7e52eda45c149202d0a5400 t/algebra.t
@@ -134,7 +134,7 @@ SHA1 0a85e863f2e60959cb0060e6ac45f36b191f6ff9 t/sha1.js.asc
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFIEpxphPK6VMqoyC0RArWvAJ41067s5jmbZTeYb3G/NqNXgVZb0wCfQI8o
-mKJ+x2iVm6B7g63pXsQf+nM=
-=EpjE
+iD8DBQFIEqBOhPK6VMqoyC0RAsHsAKCBjfH3UuXYekeXn+EGCtNsVfyvegCgmsL9
+SPwL1nKatwRnW3JerIt+nSk=
+=4beJ
 -----END PGP SIGNATURE-----
