@@ -271,13 +271,16 @@ sub execute {
 						(map { sprintf("PREFIX %s: <%s>", $_, $ns{$_}) } (keys %ns)),
 						sprintf("SELECT DISTINCT * WHERE %s", $self->pattern->as_sparql({namespaces => \%ns}, ''))
 					);
+	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
+	
 	warn "SERVICE REQUEST $endpoint:\n$sparql\n" if ($debug);
 	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
 		warn "SERVICE REQUEST $endpoint:{{{\n$sparql\n}}}\n";
+		warn "QUERY LENGTH: " . length($sparql) . "\n";
+		warn "QUERY URL: $url\n";
 		throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
 	}
 	
-	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	my $ua			= $query->useragent;
 	
 	
