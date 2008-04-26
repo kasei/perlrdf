@@ -64,7 +64,10 @@ END
 		is( $count, 1, 'expecting one statement in model' );
 	}
 
-	{
+	eval "use Geo::Distance 0.09;";
+	my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
+	SKIP: {
+		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 2 ) unless ($GEO_DISTANCE_LOADED);
 		print "# select expression (function)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
 			PREFIX dcterms: <http://purl.org/dc/terms/>

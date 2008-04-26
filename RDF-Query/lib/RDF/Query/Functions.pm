@@ -20,7 +20,6 @@ use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
 use I18N::LangTags;
-use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
 use Digest::SHA1 qw(sha1_hex);
