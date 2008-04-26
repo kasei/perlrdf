@@ -36,7 +36,7 @@ WriteMakefile(
 					'List::MoreUtils'			=> 0,
 					'Parse::RecDescent'			=> 0,
 					'RDF::Core'					=> 0,
-					'RDF::Trine'				=> 0.106,
+					'RDF::Trine'				=> 0.107,
 					'Scalar::Util'				=> 0,
 					'Scalar::Util'				=> 0,
 					'Set::Scalar'				=> 0,

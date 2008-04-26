@@ -41,6 +41,14 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.002 (2008-04-25)
+
+     * Updated Bloom::Filter required version in RDF-Query's Makefile.PL.
+     * Fixed bug in get_function() when called as a class method.
+     * Updated sparql:logical-* functions to accept more than two operands.
+     * Added code to make loading of Bloom::Filter optional.
+     * Added Bloom::Filter to list of recommended modules.
+
   Version 2.001 (2008-04-19)
 
      * Fixed use of "DESCRIBE <resource>" (instead of "DESCRIBE ?var").

@@ -31,7 +31,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Parser);
-our $VERSION		= '2.001';
+our $VERSION		= '2.002';
 
 use URI;
 use Data::Dumper;

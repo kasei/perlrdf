@@ -28,7 +28,7 @@ our ($VERSION, $debug, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$debug		= 0;
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.001';
+	$VERSION	= '2.002';
 }
 
 ######################################################################

@@ -10,6 +10,23 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.002.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.001.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.002" ;
+                        doap:created      "2008-04-25" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated Bloom::Filter required version in RDF-Query's Makefile.PL.
+                        asc:update        "Fixed bug in get_function() when called as a class method.
+                        asc:update        "Updated sparql:logical-* functions to accept more than two operands.
+                        asc:addition      "Added code to make loading of Bloom::Filter optional.
+                        asc:addition      "Added Bloom::Filter to list of recommended modules.
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.001.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.000.tar.gz> ;

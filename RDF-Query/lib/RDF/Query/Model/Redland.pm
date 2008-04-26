@@ -22,7 +22,7 @@ use RDF::Trine::Statement::Quad;
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.001';
+	$VERSION	= '2.002';
 }
 
 ######################################################################

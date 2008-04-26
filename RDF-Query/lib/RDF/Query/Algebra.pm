@@ -14,7 +14,7 @@ RDF::Query::Node - Base class for Algebra expressions
 package RDF::Query::Algebra;
 
 BEGIN {
-	our $VERSION	= '2.001';
+	our $VERSION	= '2.002';
 }
 
 use strict;

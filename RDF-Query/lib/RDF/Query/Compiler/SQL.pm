@@ -31,7 +31,7 @@ my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.001';
+	$VERSION	= '2.002';
 	@NODE_TYPE_TABLES	= (
 							['Resources', 'ljr', 'URI'],
 							['Literals', 'ljl', qw(Value Language Datatype)],
