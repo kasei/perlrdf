@@ -37,5 +37,6 @@ WriteMakefile(
 					'XML::CommonNS'				=> 0.04,
 					'XML::Namespace'			=> 0,
 					'XML::SAX'					=> 0,
+					'XML::Parser'				=> 0,
 				},
 );
