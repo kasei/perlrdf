@@ -50,6 +50,13 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.106 (2008-04-25)
+
+     * Added Digest::SHA1 as a requirement for RDF::Trine.
+     * Fixed base URI use in Turtle parser.
+     * Fixed SQLite DSN in example scripts.
+     * Fixed XML whitespace error in iterator-thaw.t
+
   Version 0.106 (2008-04-19)
 
      * Added a mysql-specific RDF::Trine::Store class (now uses INSERT IGNORE for efficiency).

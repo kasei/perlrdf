@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.106
+This document describes RDF::Trine::Parser::RDFXML version 0.107
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use RDF::Trine::Parser::Error qw(:try);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= 0.106;
+	$VERSION	= 0.107;
 	foreach my $t ('rdfxml', 'application/rdf+xml') {
 		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
 	}

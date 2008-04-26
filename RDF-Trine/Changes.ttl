@@ -9,6 +9,22 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+<http://kasei.us/code/files/RDF-Trine-0.107.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.106.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.107" ;
+                        doap:created      "2008-04-25" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added Digest::SHA1 as a requirement for RDF::Trine." ;
+                        asc:update      "Fixed base URI use in Turtle parser." ;
+                        asc:update      "Fixed SQLite DSN in example scripts." ;
+                        asc:update      "Fixed XML whitespace error in iterator-thaw.t" ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.106.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.105.tar.gz> ;
