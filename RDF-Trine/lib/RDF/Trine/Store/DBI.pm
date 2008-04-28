@@ -553,7 +553,7 @@ sub add_variable_values_joins {
 	my @cols;
 	my $uniq_count	= 0;
 	my (%seen_vars, %seen_joins);
-	foreach my $var (grep { not $seen_vars{ $_ }++ } (@vars, keys %$vars)) {
+	foreach my $var (grep { not $seen_vars{ $_ }++ } (sort (@vars, keys %$vars))) {
 		my $col	= $vars->{ $var };
 		unless ($col) {
 			throw RDF::Trine::Error::CompilationError -text => "*** Nothing is known about the variable ?${var}";
