@@ -264,11 +264,17 @@ sub _bloom_optimized_pattern {
 	my %svars	= map { $_ => 1 } $mstream->binding_names;
 	my $var		= RDF::Query::Node::Variable->new( first { $svars{ $_ } } @vars );
 	
-	my $error	= $query->{_bloom_filter_error} || $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE || 0.001;
+	my $error	= $self->_bloom_filter_error_rate( $query );
 	my $f		= RDF::Query::Algebra::Service->bloom_filter_for_iterator( $query, $bridge, $bound, $mstream, $var, $error );
 	
 	my $pattern	= $service->add_bloom( $var, $f );
 	return $pattern;
+}
+
+sub _bloom_filter_error_rate {
+	my $self	= shift;
+	my $query	= shift;
+	return $query->{_bloom_filter_error} || $RDF::Query::Algebra::Service::BLOOM_FILTER_ERROR_RATE || 0.001;	
 }
 
 =item C<< join_bnode_streams ( $streamA, $streamB, $query, $bridge ) >>
@@ -320,10 +326,14 @@ sub join_bnode_streams {
 	my $b		= $bstream->project( @names );
 	
 	my @results;
-	my @data	= $b->get_all();
+	my @data		= $b->get_all();
+	my $total_rows	= scalar(@data);
+	my @used		= (0) x $total_rows;
 	no warnings 'uninitialized';
 	while (my $rowa = $a->next) {
-		LOOP: foreach my $rowb (@data) {
+		LOOP: foreach my $rowb_index (0 .. $#data) {
+			my $rowb	= $data[ $rowb_index ];
+			$total_rows++;
 			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
 			my %keysa	= map {$_=>1} (keys %$rowa);
 			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
@@ -367,9 +377,22 @@ sub join_bnode_streams {
 					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
 				}
 			}
+			
+			$used[ $rowb_index ]	= 1;
 			push(@results, $row);
 		}
 	}
+	
+	my $false_positives	= 0;
+	LOOP: foreach my $rowb_index (0 .. $#data) {
+		if ($used[ $rowb_index ] == 0) {
+			$false_positives++;
+		}
+	}
+	warn "TOTAL ROWS: $total_rows\n";
+	warn "FALSE POSITIVES: $false_positives\n";
+	warn "FALSE POSITIVE RATE: " . sprintf('%0.2f', ($false_positives / $total_rows)) . "\n";
+	warn "EXPECTED RATE: " . $self->_bloom_filter_error_rate( $query ) . "\n";
 	
 	my $args	= $astream->_args;
 	return $astream->_new( \@results, 'bindings', \@names, %$args );
