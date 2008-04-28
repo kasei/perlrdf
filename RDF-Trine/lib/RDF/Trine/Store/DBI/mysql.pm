@@ -140,7 +140,7 @@ sub init {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
 	my $name	= $self->model_name;
-	my $id		= _mysql_hash( $name );
+	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
