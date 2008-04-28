@@ -230,7 +230,7 @@ sub get_pattern {
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
 			no warnings 'uninitialized';
 			unless ($dir =~ /^(ASC|DESC)$/) {
-				throw Error -text => 'Direction must be ASC or DESC in get_pattern call';
+				throw RDF::Trine::Error::CompilationError -text => 'Direction must be ASC or DESC in get_pattern call';
 			}
 		}
 	}
@@ -616,23 +616,50 @@ sub add_variable_values_joins {
 
 sub _sql_for_pattern {
 	my $self		= shift;
-	my $pattern		= shift;
+	my $pat			= shift;
 	my $ctx_node	= shift;
 	my %args		= @_;
-	my $type		= $pattern->type;
-	my $method		= "_sql_for_" . lc($type);
-	my $context		= {
-						next_alias		=> 0,
-						level			=> 0,
-						statement_table	=> $self->statements_table,
-					};
 	
-	if ($self->can($method)) {
-		$self->$method( $pattern, $ctx_node, $context );
-		return $self->_sql_from_context( $context, %args );
-	} else {
-		throw Error ( -text => "Don't know how to turn a $type into SQL" );
+	my @disjunction;
+	my @patterns	= $pat;
+	my $variables;
+	while (my $p = shift(@patterns)) {
+		if ($p->isa('RDF::Query::Algebra::Union')) {
+			push(@patterns, $p->patterns);
+		} else {
+			my $pvars	= join('#', sort $p->referenced_variables);
+			if (@disjunction) {
+				# if we've already got some UNION patterns, make sure the new
+				# pattern has the same referenced variables (otherwise the
+				# columns of the result are going to come out all screwy
+				unless ($pvars eq $variables) {
+					throw RDF::Trine::Error::CompilationError -text => 'All patterns in a UNION must reference the same variables.';
+				}
+			} else {
+				$variables	= $pvars;
+			}
+			push(@disjunction, $p);
+		}
 	}
+	
+	my @sql;
+	foreach my $pattern (@disjunction) {
+		my $type		= $pattern->type;
+		my $method		= "_sql_for_" . lc($type);
+		my $context		= {
+							next_alias		=> 0,
+							level			=> 0,
+							statement_table	=> $self->statements_table,
+						};
+		
+		if ($self->can($method)) {
+			$self->$method( $pattern, $ctx_node, $context );
+			push(@sql, $self->_sql_from_context( $context, %args ));
+		} else {
+			throw RDF::Trine::Error::CompilationError ( -text => "Don't know how to turn a $type into SQL" );
+		}
+	}
+	return join(' UNION ', @sql);
 }
 
 use constant INDENT	=> "\t";
@@ -854,8 +881,6 @@ sub _sql_for_ggp {
 		$self->$method( $p, $ctx, $context );
 	}
 }
-
-
 
 =item C<< _mysql_hash ( $data ) >>
 

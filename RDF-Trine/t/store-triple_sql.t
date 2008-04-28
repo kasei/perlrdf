@@ -1,4 +1,5 @@
-use Test::More tests => 5;
+use Test::More tests => 7;
+use Test::Exception;
 
 use strict;
 use warnings;
@@ -51,15 +52,40 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
 }
 
+eval "use RDF::Query 2.000; use RDF::Query::Expression;";
+my $RDF_QUERY_LOADED	= ($@) ? 0 : 1;
+
 SKIP: {
-	eval "use RDF::Query 2.000; use RDF::Query::Expression;";
-	if ($@) {
+	if (not($RDF_QUERY_LOADED)) {
 		skip("RDF::Query can't be loaded", 1);
 	} else {
 		my $s		= RDF::Query::Node::Resource->new('http://example/x1');
 		my $p		= RDF::Query::Node::Resource->new('http://purl.org/dc/elements/1.1/title');
 		my $v		= RDF::Query::Node::Variable->new('v');
 		my $l		= RDF::Query::Node::Literal->new('literal');
+		
+		{
+			my $s		= RDF::Query::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
+			my $p1		= RDF::Query::Node::Resource->new('http://xmlns.com/foaf/0.1/made');
+			my $p2		= RDF::Query::Node::Resource->new('http://xmlns.com/foaf/0.1/img');
+			my $v		= RDF::Query::Node::Variable->new('v');
+			my $triple1	= RDF::Query::Algebra::Triple->new($s, $p1, $v);
+			my $triple2	= RDF::Query::Algebra::Triple->new($s, $p2, $v);
+			my $union	= RDF::Query::Algebra::Union->new( $triple1, $triple2 );
+			my $store	= RDF::Trine::Store::DBI->new('endpoint');
+			my $sql		= $store->_sql_for_pattern( $union );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 2954181085641959508 AND s0[.]predicate = 18268311508035964650 UNION SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 2954181085641959508 AND s0[.]predicate = 7452795881103254944$', 'UNION pattern with two triples' );
+		}
+		
+		throws_ok {
+			my $x	= RDF::Query::Node::Variable->new('x');
+			my $triple1	= RDF::Query::Algebra::Triple->new($s, $p, $v);
+			my $triple2	= RDF::Query::Algebra::Triple->new($s, $p, $x);
+			my $union	= RDF::Query::Algebra::Union->new( $triple1, $triple2 );
+			my $store	= RDF::Trine::Store::DBI->new('endpoint');
+			my $sql		= $store->_sql_for_pattern( $union );
+			warn $sql;
+		} 'RDF::Trine::Error::CompilationError', 'UNION block with different referenced variables throws error';
 		
 		{
 			my $triple	= RDF::Query::Algebra::Triple->new($s, $p, $v);
