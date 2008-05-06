@@ -150,9 +150,9 @@ END
 	}
 	
 	my $data	= {
-					label			=> $label->literal_value,
+					label			=> (ref($label) ? $label->literal_value : ''),
 					url				=> $url->uri_value,
-					size			=> $triples->literal_value,
+					size			=> (ref($triples) ? $triples->literal_value : ''),
 					definitive		=> $definitive,
 					capabilities	=> \@capabilities,
 					patterns		=> \@patterns,
