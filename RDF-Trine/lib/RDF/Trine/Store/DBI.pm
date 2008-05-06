@@ -47,7 +47,6 @@ use DBI;
 use Carp;
 use Error;
 use DBI;
-use File::Temp;
 use Scalar::Util qw(blessed reftype refaddr);
 use Digest::MD5 ('md5');
 use Math::BigInt;
@@ -87,9 +86,7 @@ sub new {
 	my %args;
 	if (scalar(@_) == 0) {
 		warn "trying to construct a temporary model" if (DEBUG);
-		my $file	= File::Temp->new;
-		$file->unlink_on_destroy( 1 );
-		my $dsn		= "dbi:SQLite:dbname=" . $file->filename;
+		my $dsn		= "dbi:SQLite:dbname=:memory:";
 		$dbh		= DBI->connect( $dsn, '', '' );
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		warn "got a DBD handle" if (DEBUG);
