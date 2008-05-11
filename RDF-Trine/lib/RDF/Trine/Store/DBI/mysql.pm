@@ -184,6 +184,11 @@ END
 	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
 	
+	$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	
 	$dbh->commit;
 	warn "committed" if (DEBUG);
 }
