@@ -643,11 +643,12 @@ sub _sql_for_pattern {
 	foreach my $pattern (@disjunction) {
 		my $type		= $pattern->type;
 		my $method		= "_sql_for_" . lc($type);
-		my $context		= {
-							next_alias		=> 0,
-							level			=> 0,
-							statement_table	=> $self->statements_table,
-						};
+		my $context		= $self->_new_context;
+# 		my $context		= {
+# 							next_alias		=> 0,
+# 							level			=> 0,
+# 							statement_table	=> $self->statements_table,
+# 						};
 		
 		if ($self->can($method)) {
 			$self->$method( $pattern, $ctx_node, $context );
@@ -657,6 +658,16 @@ sub _sql_for_pattern {
 		}
 	}
 	return join(' UNION ', @sql);
+}
+
+sub _new_context {
+	my $self	= shift;
+	my $context		= {
+						next_alias		=> 0,
+						level			=> 0,
+						statement_table	=> $self->statements_table,
+					};
+	return $context;
 }
 
 use constant INDENT	=> "\t";
@@ -737,8 +748,8 @@ sub _sql_for_filter {
 	my $ctx_node	= shift;
 	my $context		= shift;
 	
-	my $expr	= $filter->expr;
-	my $pattern	= $filter->pattern;
+	my $expr		= $filter->expr;
+	my $pattern		= $filter->pattern;
 	my $type		= $pattern->type;
 	my $method		= "_sql_for_" . lc($type);
 	$self->$method( $pattern, $ctx_node, $context );
@@ -769,10 +780,79 @@ sub _sql_for_expr {
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown function data: " . Dumper($expr);
 		}
+	} elsif ($expr->isa('RDF::Query::Expression::Binary')) {
+		if ($expr->op eq '==') {
+			$self->_sql_for_equality_expr( $expr, $ctx_node, $context );
+		} elsif ($expr->op eq '||') {
+			$self->_sql_for_or_expr( $expr, $ctx_node, $context );
+		} else {
+			throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
+		}
+		
 	} else {
 		throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
 	}
 	return;
+}
+
+sub _sql_for_or_expr {
+	my $self		= shift;
+	my $expr		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	my @args		= $self->_logical_or_operands( $expr );
+	
+	my @disj;
+	foreach my $e (@args) {
+		my $tmp_ctx		= $self->_new_context;
+		$self->_sql_for_expr( $e, $ctx_node, $tmp_ctx );
+		my ($var, $val)	= %{ $tmp_ctx->{vars} };
+		my $existing_col = _get_var( $context, $var );
+		push(@disj, "${existing_col} = $val");
+	}
+	my $disj	= '(' . join(' OR ', @disj) . ')';
+	_add_where( $context, $disj );
+}
+
+sub _logical_or_operands {
+	my $self	= shift;
+	my $expr	= shift;
+	my @args	= $expr->operands;
+	my @ops;
+	foreach my $e (@args) {
+		if ($e->isa('RDF::Query::Expression::Binary') and $e->op eq '||') {
+			push(@ops, $self->_logical_or_operands( $e ));
+		} else {
+			push(@ops, $e);
+		}
+	}
+	return @ops;
+}
+
+sub _sql_for_equality_expr {
+	my $self		= shift;
+	my $expr		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	
+	my @args	= $expr->operands;
+	# make sorted[0] be the variable
+	my @sorted	= sort { $b->isa('RDF::Trine::Node::Variable') } @args;
+	unless ($sorted[0]->isa('RDF::Trine::Node::Variable')) {
+		throw RDF::Trine::Error::CompilationError -text => "No variable in equality test";
+	}
+	unless ($sorted[1]->isa('RDF::Trine::Node') and not($sorted[1]->isa('RDF::Trine::Node::Variable'))) {
+		throw RDF::Trine::Error::CompilationError -text => "No RDFNode in equality test";
+	}
+	
+	my $name	= $sorted[0]->name;
+	my $id		= $self->_mysql_node_hash( $sorted[1] );
+#	$self->_add_sql_node_clause( $id, $sorted[0], $context );
+	if (my $existing_col = _get_var( $context, $name )) {
+		_add_where( $context, "${existing_col} = $id" );
+	} else {
+		_add_var( $context, $name, $id );
+	}
 }
 
 {
