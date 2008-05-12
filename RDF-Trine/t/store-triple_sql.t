@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 12;
 use Test::Exception;
 
 use strict;
@@ -57,7 +57,7 @@ my $RDF_QUERY_LOADED	= ($@) ? 0 : 1;
 
 SKIP: {
 	if (not($RDF_QUERY_LOADED)) {
-		skip("RDF::Query can't be loaded", 7);
+		skip("RDF::Query can't be loaded", 8);
 	} else {
 		my $s		= RDF::Query::Node::Resource->new('http://example/x1');
 		my $p		= RDF::Query::Node::Resource->new('http://purl.org/dc/elements/1.1/title');
@@ -109,12 +109,25 @@ SKIP: {
 		}
 		
 		{
+			my $lit		= RDF::Query::Node::Literal->new('Jan');
+			my $triple	= RDF::Query::Algebra::Triple->new($s, $p, $v);
+			my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( $triple );
+			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
+			my $expr	= RDF::Query::Expression::Binary->new( '==', $v, $lit );
+			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $ggp );
+			my $store	= RDF::Trine::Store::DBI->new('temp');
+			my $sql		= $store->_sql_for_pattern( $filter );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND s0[.]object = 3959637603443298718$', 'GGP with equality test filter' );
+		}
+		
+		{
 			my $jan		= RDF::Query::Node::Literal->new('Jan');
 			my $feb		= RDF::Query::Node::Literal->new('Feb');
 			my $triple	= RDF::Query::Algebra::Triple->new($s, $p, $v);
 			my $expr1	= RDF::Query::Expression::Binary->new( '==', $v, $jan );
 			my $expr2	= RDF::Query::Expression::Binary->new( '==', $v, $feb );
-			my $expr	= RDF::Query::Expression::Binary->new( '||', $expr1, $expr2 );
+			my $logor	= RDF::Query::Node::Resource->new('sparql:logical-or');
+			my $expr	= RDF::Query::Expression::Function->new( $logor, $expr1, $expr2 );
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
@@ -129,8 +142,9 @@ SKIP: {
 			my $expr1	= RDF::Query::Expression::Binary->new( '==', $v, $jan );
 			my $expr2	= RDF::Query::Expression::Binary->new( '==', $v, $feb );
 			my $expr3	= RDF::Query::Expression::Binary->new( '==', $v, $mar );
-			my $expr4	= RDF::Query::Expression::Binary->new( '||', $expr1, $expr2 );
-			my $expr	= RDF::Query::Expression::Binary->new( '||', $expr4, $expr3 );
+			my $logor	= RDF::Query::Node::Resource->new('sparql:logical-or');
+			my $expr4	= RDF::Query::Expression::Function->new( $logor, $expr1, $expr2 );
+			my $expr	= RDF::Query::Expression::Function->new( $logor, $expr4, $expr3 );
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );

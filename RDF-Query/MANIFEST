@@ -57,6 +57,7 @@ lib/RDF/Query/Model.pm
 lib/RDF/Query/Model/RDFCore.pm
 lib/RDF/Query/Model/RDFTrine.pm
 lib/RDF/Query/Model/RDFTrine/BasicGraphPattern.pm
+lib/RDF/Query/Model/RDFTrine/Filter.pm
 lib/RDF/Query/Model/Redland.pm
 lib/RDF/Query/Node.pm
 lib/RDF/Query/Node/Blank.pm

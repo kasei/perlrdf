@@ -13,7 +13,9 @@ use Data::Dumper;
 use Scalar::Util qw(blessed reftype refaddr);
 use LWP::UserAgent;
 use Encode;
+use Error qw(:try);
 
+use RDF::Query::Model::RDFTrine::Filter;
 use RDF::Query::Model::RDFTrine::BasicGraphPattern;
 
 use RDF::Trine 0.102;
@@ -458,6 +460,31 @@ sub fixup {
 		my @triples		= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
 		my $tpattern	= RDF::Trine::Pattern->new( @triples );
 		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $tpattern, $pattern );
+	} elsif ($pattern->isa('RDF::Query::Algebra::Filter')) {
+		my $filter	= $pattern;
+		my $ggp	= $filter->pattern;
+		if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+			warn "pattern is a ggp" if ($debug);
+			my @patterns	= $ggp->patterns;
+			if (scalar(@patterns) == 1 and $patterns[0]->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+				warn "'-> pattern is a bgp" if ($debug);
+				my $bgp	= $patterns[0];
+				my $compiled;
+				try {
+					$self->model->_store->_sql_for_pattern( $filter );
+					$compiled	= RDF::Query::Model::RDFTrine::Filter->new( $filter );
+					warn "    '-> filter can be compiled to RDF::Trine" if ($debug);
+					warn "        '-> " . Dumper($compiled) if ($debug);
+				} otherwise {
+					warn "    '-> filter CANNOT be compiled to RDF::Trine" if ($debug);
+				};
+				return $compiled;
+			} else {
+				return;
+			}
+		} else {
+			return;
+		}
 	} else {
 		return;
 	}

@@ -106,7 +106,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
-	my (@triples)	= ($bgp->isa('RDF::Trine::Statement')) ? $bgp : $bgp->triples;
+	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
+					? $bgp
+					: $bgp->triples;
 	unless (@triples) {
 		throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 	}

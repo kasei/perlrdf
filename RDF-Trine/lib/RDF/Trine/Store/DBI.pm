@@ -60,8 +60,7 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION	= "0.107";
-use constant DEBUG	=> 0;
-our $debug		= DEBUG;
+our $debug		= 0;
 
 
 
@@ -85,11 +84,11 @@ sub new {
 	my $name	= shift || 'model';
 	my %args;
 	if (scalar(@_) == 0) {
-		warn "trying to construct a temporary model" if (DEBUG);
+		warn "trying to construct a temporary model" if ($debug);
 		my $dsn		= "dbi:SQLite:dbname=:memory:";
 		$dbh		= DBI->connect( $dsn, '', '' );
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
-		warn "got a DBD handle" if (DEBUG);
+		warn "got a DBD handle" if ($debug);
 		$dbh		= shift;
 	} else {
 		my $dsn		= shift;
@@ -100,7 +99,7 @@ sub new {
 		} elsif ($dsn =~ /^DBI:Pg:/) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
 		}
-		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
+		warn "Connecting to $dsn ($user, $pass)" if ($debug);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
 	
@@ -237,6 +236,9 @@ sub get_pattern {
 	my %vars	= map { $_ => 1 } @vars;
 	
 	my $sql		= $self->_sql_for_pattern( $pattern, $context, %args );
+	if ($debug) {
+		warn "get_pattern sql: $sql\n" if ($debug);
+	}
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -559,12 +561,19 @@ sub add_variable_values_joins {
 		my $col_table	= (split(/[.]/, $col))[0];
 		my ($count)		= ($col_table =~ /\w(\d+)/);
 		
-		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if (DEBUG);
+		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if ($debug);
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
+		my $restricted	= 0;
+		my @used_ljoins;
 		foreach my $type (reverse sort keys %NODE_TYPE_TABLES) {
-			next if ($context->{restrict}{$var}{$type});
 			my ($table, $alias, @join_cols)	= @{ $NODE_TYPE_TABLES{ $type } };
+			if ($context->{restrict}{$var}{$type}) {
+				$restricted	= 1;
+				next;
+			} else {
+				push(@used_ljoins, "${alias}${uniq_count}.$join_cols[0]");
+			}
 			foreach my $jc (@join_cols) {
 				my $column_real_name	= "${alias}${uniq_count}.${jc}";
 				my $column_alias_name	= "${var}_${jc}";
@@ -603,6 +612,15 @@ sub add_variable_values_joins {
 				$from->[ $i ]	= $f;
 				next;
 			}
+		}
+		
+		if ($restricted) {
+			# if we're restricting the left-joins to only certain types of nodes,
+			# we need to insure that the rows we're getting back actually have data
+			# in the left-joined columns. otherwise, we might end up with data for
+			# a URI, but only left-join with Bnodes (for example), and end up with
+			# NULL values where we aren't expecting them.
+			_add_where( $context, '(' . join(' OR ', map {"$_ IS NOT NULL"} @used_ljoins) . ')' );
 		}
 		
 		$uniq_count++;
@@ -777,14 +795,14 @@ sub _sql_for_expr {
 		} elsif ($func =~ qr/^sparql:isblank$/ and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
 			my $node	= $args[0];
 			_add_restriction( $context, $node, qw(literal resource) );
+		} elsif ($func eq 'sparql:logical-or') {
+			$self->_sql_for_or_expr( $expr, $ctx_node, $context );
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown function data: " . Dumper($expr);
 		}
 	} elsif ($expr->isa('RDF::Query::Expression::Binary')) {
 		if ($expr->op eq '==') {
 			$self->_sql_for_equality_expr( $expr, $ctx_node, $context );
-		} elsif ($expr->op eq '||') {
-			$self->_sql_for_or_expr( $expr, $ctx_node, $context );
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
 		}
@@ -820,7 +838,7 @@ sub _logical_or_operands {
 	my @args	= $expr->operands;
 	my @ops;
 	foreach my $e (@args) {
-		if ($e->isa('RDF::Query::Expression::Binary') and $e->op eq '||') {
+		if ($e->isa('RDF::Query::Expression::Function') and $e->uri->uri_value eq 'sparql:logical-or') {
 			push(@ops, $self->_logical_or_operands( $e ));
 		} else {
 			push(@ops, $e);
@@ -1169,7 +1187,7 @@ END
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
 	
 	$dbh->commit;
-	warn "committed" if (DEBUG);
+	warn "committed" if ($debug);
 }
 
 sub _cleanup {
