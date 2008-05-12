@@ -41,7 +41,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
-	sql_like( $sql, qr'SELECT s0.object AS title_Node, ljr0.URI AS title_URI, ljl0.Value AS title_Value, ljl0.Language AS title_Language, ljl0.Datatype AS title_Datatype, ljb0.Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.object = ljr0.ID[)] LEFT JOIN Literals ljl0 ON [(]s0.object = ljl0.ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0.object = ljb0.ID[)] WHERE s0.subject = 2882409734267140843 AND s0.predicate = 16668832798855018521 AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
+	sql_like( $sql, qr'SELECT s0.object AS title_Node, ljr0.URI AS title_URI, ljl0.Value AS title_Value, ljl0.Language AS title_Language, ljl0.Datatype AS title_Datatype, ljb0.Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.object = ljr0.ID[)] LEFT JOIN Literals ljl0 ON [(]s0.object = ljl0.ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0.object = ljb0.ID[)] WHERE s0.subject = 2882409734267140843 AND s0.predicate = 16668832798855018521 AND s0.Context = 2882409734267140843$', 'triple with context to sql (1)' );
 }
 
 {
@@ -49,7 +49,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
-	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843$', 'triple with context to sql' );
+	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843 AND [(]ljr0[.]URI IS NOT NULL[)]$', 'triple with context to sql (2)' );
 }
 
 eval "use RDF::Query 2.000; use RDF::Query::Expression;";
@@ -71,7 +71,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype FROM Statements14109427105860845629 s0 LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521$', 'triple with isliteral(?node) filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype FROM Statements14109427105860845629 s0 LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND [(]ljl0[.]Value IS NOT NULL[)]$', 'triple with isliteral(?node) filter' );
 		}
 		
 		{
@@ -95,7 +95,7 @@ SKIP: {
 			my $union	= RDF::Query::Algebra::Union->new( $triple1, $triple2 );
 			my $store	= RDF::Trine::Store::DBI->new('endpoint');
 			my $sql		= $store->_sql_for_pattern( $union );
-			sql_like( $sql, qr'SELECT s0[.]subject AS v_Node, ljr0[.]URI AS v_URI, ljb0[.]Name AS v_Name, s0[.]object AS x_Node, ljr1[.]URI AS x_URI, ljl1[.]Value AS x_Value, ljl1[.]Language AS x_Language, ljl1[.]Datatype AS x_Datatype, ljb1[.]Name AS x_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]subject = ljr0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]subject = ljb0[.]ID[)] LEFT JOIN Resources ljr1 ON [(]s0[.]object = ljr1[.]ID[)] LEFT JOIN Literals ljl1 ON [(]s0[.]object = ljl1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]object = ljb1[.]ID[)] WHERE s0[.]predicate = 18268311508035964650 UNION SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name, s0[.]subject AS x_Node, ljr1[.]URI AS x_URI, ljb1[.]Name AS x_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] LEFT JOIN Resources ljr1 ON [(]s0[.]subject = ljr1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]subject = ljb1[.]ID[)] WHERE s0[.]predicate = 7452795881103254944$', 'UNION pattern with reversed variable orderings' );
+			sql_like( $sql, qr'SELECT s0[.]subject AS v_Node, ljr0[.]URI AS v_URI, ljb0[.]Name AS v_Name, s0[.]object AS x_Node, ljr1[.]URI AS x_URI, ljl1[.]Value AS x_Value, ljl1[.]Language AS x_Language, ljl1[.]Datatype AS x_Datatype, ljb1[.]Name AS x_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]subject = ljr0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]subject = ljb0[.]ID[)] LEFT JOIN Resources ljr1 ON [(]s0[.]object = ljr1[.]ID[)] LEFT JOIN Literals ljl1 ON [(]s0[.]object = ljl1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]object = ljb1[.]ID[)] WHERE s0[.]predicate = 18268311508035964650 AND [(]ljr0[.]URI IS NOT NULL OR ljb0[.]Name IS NOT NULL[)] UNION SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name, s0[.]subject AS x_Node, ljr1[.]URI AS x_URI, ljb1[.]Name AS x_Name FROM Statements4926934303433647533 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] LEFT JOIN Resources ljr1 ON [(]s0[.]subject = ljr1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]subject = ljb1[.]ID[)] WHERE s0[.]predicate = 7452795881103254944 AND [(]ljr1[.]URI IS NOT NULL OR ljb1[.]Name IS NOT NULL[)]$', 'UNION pattern with reversed variable orderings' );
 		}
 		
 		{
