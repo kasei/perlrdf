@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator::Boolean
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -31,12 +28,11 @@ no warnings 'redefine';
 use JSON 2.0;
 
 use base qw(RDF::Trine::Iterator);
-our ($REVISION, $VERSION, $debug);
+our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.000';
+	$VERSION	= 0.107;
 }
 
 =item C<new ( \@results, %args )>

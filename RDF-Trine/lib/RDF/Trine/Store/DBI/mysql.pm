@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.002
+This document describes RDF::Trine::Store::DBI::mysql version 0.107
 
 
 =head1 SYNOPSIS
@@ -46,7 +46,7 @@ use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 
-our $VERSION	= "0.003";
+our $VERSION	= "0.107";
 use constant DEBUG	=> 0;
 our $debug		= DEBUG;
 
@@ -129,6 +129,70 @@ sub _add_node {
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( map "$_", @values{ @cols } );
 }
+
+=item C<< init >>
+
+Creates the necessary tables in the underlying database.
+
+=cut
+
+sub init {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
+	
+	$dbh->begin_work;
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Literals (
+            ID bigint unsigned PRIMARY KEY,
+            Value longtext NOT NULL,
+            Language text NOT NULL DEFAULT "",
+            Datatype text NOT NULL DEFAULT ""
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Resources (
+            ID bigint unsigned PRIMARY KEY,
+            URI text NOT NULL
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Bnodes (
+            ID bigint unsigned PRIMARY KEY,
+            Name text NOT NULL
+        );
+END
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE IF NOT EXISTS Models (
+            ID bigint unsigned PRIMARY KEY,
+            Name text NOT NULL
+        );
+END
+    
+    $dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+        CREATE TABLE Statements${id} (
+            Subject bigint unsigned NOT NULL,
+            Predicate bigint unsigned NOT NULL,
+            Object bigint unsigned NOT NULL,
+            Context bigint unsigned NOT NULL DEFAULT 0,
+            UNIQUE (Subject, Predicate, Object, Context)
+        );
+END
+
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
+	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
+	
+	$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
+	
+	$dbh->commit;
+	warn "committed" if (DEBUG);
+}
+
 
 1; # Magic true value required at end of module
 __END__

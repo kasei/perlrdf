@@ -1,7 +1,4 @@
 # RDF::Query::Parser::SPARQL
-# -------------
-# $Revision: 127 $
-# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -29,7 +26,7 @@ package RDF::Query::Parser::SPARQLP;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION		= '2.000';
+our $VERSION		= '2.002';
 
 use URI;
 use Data::Dumper;

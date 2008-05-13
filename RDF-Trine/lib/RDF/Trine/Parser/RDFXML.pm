@@ -1,7 +1,4 @@
 # RDF::Trine::Parser::RDFXML
-# -------------
-# $Revision: 127 $
-# $Date: 2006-02-08 14:53:21 -0500 (Wed, 08 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -10,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 1.000
+This document describes RDF::Trine::Parser::RDFXML version 0.107
 
 =head1 SYNOPSIS
 
@@ -36,16 +33,24 @@ use warnings;
 use URI;
 use XML::Parser;
 use Data::Dumper;
+use Scalar::Util qw(blessed);
+
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Parser::Error qw(:try);
 
-our $debug	= 0;
+######################################################################
+
+our ($VERSION, $debug);
 BEGIN {
+	$debug		= 0;
+	$VERSION	= 0.107;
 	foreach my $t ('rdfxml', 'application/rdf+xml') {
 		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
 	}
 }
+
+######################################################################
 
 use constant XML_NS	 => 'http://www.w3.org/XML/1998/namespace';
 use constant XMLA_LANG => XML_NS . 'lang';
@@ -181,6 +186,9 @@ parsed, will call C<< $model->add_statement( $statement ) >>.
 sub parse_into_model {
 	my $self	= shift;
 	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
 	my $input	= shift;
 	my $model	= shift;
 	return $self->parse( $uri, $input, sub { my $st	= shift; $model->add_statement( $st ) } );

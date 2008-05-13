@@ -1,7 +1,4 @@
 # RDF::Trine::Iterator::Bindings::Materialized
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -46,13 +43,11 @@ use base qw(RDF::Trine::Iterator::Bindings);
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 
-use Bloom::Filter;
-our ($REVISION, $VERSION, $debug);
+our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$REVISION	= do { my $REV = (qw$Revision: 293 $)[1]; sprintf("%0.3f", 1 + ($REV/1000)) };
-	$VERSION	= '1.000';
+	$VERSION	= 0.107;
 }
 
 =item C<< new ( \@results, \@names, %args ) >>

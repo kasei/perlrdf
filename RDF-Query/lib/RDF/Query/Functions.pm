@@ -1,7 +1,4 @@
 # RDF::Query::Functions
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -23,7 +20,6 @@ use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
 use I18N::LangTags;
-use Bloom::Filter;
 use Data::Dumper;
 use MIME::Base64;
 use Digest::SHA1 qw(sha1_hex);
@@ -34,7 +30,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.000';
+	$VERSION	= '2.002';
 }
 
 ######################################################################
@@ -291,30 +287,29 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
-	my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my ($bool1, $bool2, $error);
-	try {
-		my $arg1 	= $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		warn "error in lhs of logical-or" if ($debug);
-		$error	= shift;
-	};
-	try {
-		my $arg2 	= $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		warn "error in rhs of logical-or" if ($debug);
-		$error	= shift;
-	};
+	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+	my $arg;
+	my $error;
 	
-	if ($bool1 or $bool2) {
-		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	} elsif ($error) {
+	while (1) {
+		my $bool;
+		try {
+			$arg 	= $args->();
+			if (defined($arg)) {
+				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
+				my $value	= $func->evaluate( $query, $bridge, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} otherwise {
+			warn "error in lhs of logical-or" if ($debug);
+			$error	||= shift;
+		};
+		last unless (defined($arg));
+		if ($bool) {
+			return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+	if ($error) {
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -329,31 +324,32 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
-	my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my ($bool1, $bool2, $error);
-	try {
-		my $arg1 = $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg1 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool1		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		$error	= shift;
-	};
-	try {
-		my $arg2 = $args->();
-		my $func	= RDF::Query::Expression::Function->new( $bool, $arg2 );
-		my $value	= $func->evaluate( $query, $bridge, {} );
-		$bool2		= ($value->literal_value eq 'true') ? 1 : 0;
-	} otherwise {
-		$error	= shift;
-	};
+	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+	my $arg;
+	my $error;
 	
-	if ($bool1 and $bool2) {
-		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	} elsif ($error) {
+	while (1) {
+		my $bool;
+		try {
+			$arg 	= $args->();
+			if (defined($arg)) {
+				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
+				my $value	= $func->evaluate( $query, $bridge, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} otherwise {
+			warn "error in lhs of logical-or" if ($debug);
+			$error	||= shift;
+		};
+		last unless (defined($arg));
+		unless ($bool) {
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+	if ($error) {
 		$error->throw;
 	} else {
-		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	}
 };
 
@@ -729,6 +725,19 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 
 
 ### func:bloom( ?var, "frozen-bloom-filter" ) => true iff str(?var) is in the bloom filter.
+our $BLOOM_FILTER_LOADED;
+BEGIN {
+	$BLOOM_FILTER_LOADED	= do {
+		eval {
+			require Bloom::Filter;
+		};
+		($@)
+			? 0
+			: (Bloom::Filter->can('thaw'))
+				? 1
+				: 0;
+	};
+}
 {
 	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
 	sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
@@ -754,6 +763,10 @@ $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 		my $value	= shift;
 		my $filter	= shift;
 		my $bloom;
+		
+		unless ($BLOOM_FILTER_LOADED) {
+			throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
+		}
 		
 		if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
 			$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };

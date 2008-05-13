@@ -1,13 +1,13 @@
-# RDF::Query::Model::RDFTrine::BasicGraphPattern
+# RDF::Query::Model::RDFTrine::Filter
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Model::RDFTrine::BasicGraphPattern - Algebra class for BasicGraphPattern patterns
+RDF::Query::Model::RDFTrine::Filter - Algebra class for Filter patterns
 
 =cut
 
-package RDF::Query::Model::RDFTrine::BasicGraphPattern;
+package RDF::Query::Model::RDFTrine::Filter;
 
 use strict;
 use warnings;
@@ -37,17 +37,16 @@ BEGIN {
 
 =cut
 
-=item C<new ( $bgp )>
+=item C<new ( $filter )>
 
-Returns a new BasicGraphPattern structure.
+Returns a new Filter structure for execution by RDF::Trine.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $pattern	= shift;
 	my $orig	= shift;
-	return bless( [ $pattern, $orig ] );
+	return bless( [ $orig ] );
 }
 
 =item C<< construct_args >>
@@ -59,7 +58,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->pattern->triples);
+	return $self->[0]->construct_args( @_ );
 }
 
 =item C<< pattern >>
@@ -70,7 +69,18 @@ Returns the RDF::Trine::Pattern object.
 
 sub pattern {
 	my $self	= shift;
-	return $self->[0];
+	return $self->[0]->pattern( @_ );
+}
+
+=item C<< expr >>
+
+Returns the RDF::Query::Expression object.
+
+=cut
+
+sub expr {
+	my $self	= shift;
+	return $self->[0]->expr( @_ );
 }
 
 =item C<< referenced_variables >>
@@ -81,7 +91,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return $self->pattern->referenced_variables;
+	return $self->[0]->referenced_variables( @_ );
 }
 
 =item C<< definite_variables >>
@@ -92,7 +102,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return $self->pattern->definite_variables;
+	return $self->[0]->definite_variables( @_ );
 }
 
 =item C<< bind_variables ( \%bound ) >>
@@ -105,7 +115,7 @@ sub bind_variables {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $bound	= shift;
-	my $pattern	= $self->pattern->bind_variables( $bound );
+	my $pattern	= $self->[0]->bind_variables( $bound );
 	return $class->new( $pattern );
 }
 
@@ -115,7 +125,7 @@ sub bind_variables {
 
 sub as_sparql {
 	my $self	= shift;
-	return $self->[1]->as_sparql( @_ );
+	return $self->[0]->as_sparql( @_ );
 }
 
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
@@ -130,8 +140,10 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
-	my $pattern		= $self->pattern;
-	my @triples		= $pattern->triples;
+	my $expr		= $self->expr;
+	my $ggp			= $self->pattern;
+	my ($bgp)		= $ggp->patterns;
+	my @triples		= $bgp->triples;
 	
 	my $model;
 	my $modeldebug;
@@ -159,7 +171,7 @@ sub execute {
 	
 	# BINDING has to happen after the blank->var substitution above, because
 	# we might have a bound bnode.
-	$pattern	= $pattern->bind_variables( $bound );
+	my $pattern	= RDF::Query::Algebra::Filter->new( $expr, $bgp->bind_variables( $bound ) );
 	
 	my @args;
 	if (my $o = $args{ orderby }) {
@@ -168,10 +180,12 @@ sub execute {
 	
 	if ($debug) {
 		warn "unifying with store: " . refaddr( $model->_store ) . "\n";
-		warn "bgp pattern: " . Dumper($pattern);
+		warn "filter pattern: " . Dumper($pattern);
 		warn "model contains:\n";
 		$model->_debug;
 	}
+	
+#	local($RDF::Trine::Store::DBI::debug)	= 1;
 	return smap {
 		my $bindings	= $_;
 		return undef unless ($bindings);

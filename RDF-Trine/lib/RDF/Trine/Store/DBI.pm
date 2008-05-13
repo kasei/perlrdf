@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI - [One line description of module's purpose here]
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.002
+This document describes RDF::Trine::Store::DBI version 0.107
 
 
 =head1 SYNOPSIS
@@ -47,7 +47,6 @@ use DBI;
 use Carp;
 use Error;
 use DBI;
-use File::Temp;
 use Scalar::Util qw(blessed reftype refaddr);
 use Digest::MD5 ('md5');
 use Math::BigInt;
@@ -58,10 +57,10 @@ use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 
 use RDF::Trine::Store::DBI::mysql;
+use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.003";
-use constant DEBUG	=> 0;
-our $debug		= DEBUG;
+our $VERSION	= "0.107";
+our $debug		= 0;
 
 
 
@@ -85,22 +84,22 @@ sub new {
 	my $name	= shift || 'model';
 	my %args;
 	if (scalar(@_) == 0) {
-		warn "trying to construct a temporary model" if (DEBUG);
-		my $file	= File::Temp->new;
-		$file->unlink_on_destroy( 1 );
-		my $dsn		= "dbi:SQLite:dbname=" . $file->filename;
+		warn "trying to construct a temporary model" if ($debug);
+		my $dsn		= "dbi:SQLite:dbname=:memory:";
 		$dbh		= DBI->connect( $dsn, '', '' );
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
-		warn "got a DBD handle" if (DEBUG);
+		warn "got a DBD handle" if ($debug);
 		$dbh		= shift;
 	} else {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-# 		if ($dsn =~ /^DBI:mysql:/) {
-# 			$class	= 'RDF::Trine::Store::DBI::mysql';
-# 		}
-		warn "Connecting to $dsn ($user, $pass)" if (DEBUG);
+		if ($dsn =~ /^DBI:mysql:/) {
+			$class	= 'RDF::Trine::Store::DBI::mysql';
+		} elsif ($dsn =~ /^DBI:Pg:/) {
+			$class	= 'RDF::Trine::Store::DBI::Pg';
+		}
+		warn "Connecting to $dsn ($user, $pass)" if ($debug);
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
 	
@@ -159,27 +158,36 @@ sub get_statements {
 		my $temp_var_count	= 1;
 		foreach my $node ($triple->nodes) {
 			if ($node->is_variable) {
-				my $name	= $node->name;
-				my $prefix	= $name . '_';
-				if (defined $row->{ "${prefix}URI" }) {
-					push( @triple, RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } ) );
-				} elsif (defined $row->{ "${prefix}Name" }) {
-					push( @triple, RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } ) );
+				my $nodename	= $node->name;
+				my $uri			= $self->_column_name( $nodename, 'URI' );
+				my $name		= $self->_column_name( $nodename, 'Name' );
+				my $value		= $self->_column_name( $nodename, 'Value' );
+				if (defined( my $u = $row->{ $uri })) {
+					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
+				} elsif (defined( my $n = $row->{ $name })) {
+					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
+				} elsif (defined( my $v = $row->{ $value })) {
+					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
-					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+					push( @triple, undef );
 				}
 			} else {
 				push(@triple, $node);
 			}
 		}
 		if (blessed($context) and $context->is_variable) {
-			my $prefix	= 'sql_ctx_1__';
-			if (defined $row->{ "${prefix}URI" }) {
-				push( @triple, RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } ) );
-			} elsif (defined $row->{ "${prefix}Name" }) {
-				push( @triple, RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } ) );
-			} elsif (defined $row->{ "${prefix}Value" }) {
-				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } ) );
+			my $nodename	= 'sql_ctx_1_';
+			my $uri			= $self->_column_name( $nodename, 'URI' );
+			my $name		= $self->_column_name( $nodename, 'Name' );
+			my $value		= $self->_column_name( $nodename, 'Value' );
+			if (defined $row->{ $uri }) {
+				push( @triple, RDF::Trine::Node::Resource->new( $row->{ $uri } ) );
+			} elsif (defined $row->{ $name }) {
+				push( @triple, RDF::Trine::Node::Blank->new( $row->{ $name } ) );
+			} elsif (defined $row->{ $value }) {
+				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 			}
 		} elsif ($context) {
 			push( @triple, $context );
@@ -194,6 +202,12 @@ sub get_statements {
 	return RDF::Trine::Iterator::Graph->new( $sub )
 }
 
+sub _column_name {
+	my $self	= shift;
+	my @args	= @_;
+	my $col		= join('_', @args);
+	return $col;
+}
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
@@ -212,7 +226,7 @@ sub get_pattern {
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
 			no warnings 'uninitialized';
 			unless ($dir =~ /^(ASC|DESC)$/) {
-				throw Error -text => 'Direction must be ASC or DESC in get_pattern call';
+				throw RDF::Trine::Error::CompilationError -text => 'Direction must be ASC or DESC in get_pattern call';
 			}
 		}
 	}
@@ -222,6 +236,9 @@ sub get_pattern {
 	my %vars	= map { $_ => 1 } @vars;
 	
 	my $sql		= $self->_sql_for_pattern( $pattern, $context, %args );
+	if ($debug) {
+		warn "get_pattern sql: $sql\n" if ($debug);
+	}
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -230,16 +247,19 @@ sub get_pattern {
 		return unless $row;
 		
 		my %bindings;
-		foreach my $name (@vars) {
-			my $prefix	= $name . '_';
-			if (defined $row->{ "${prefix}URI" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Resource->new( $row->{"${prefix}URI" } );
-			} elsif (defined $row->{ "${prefix}Name" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Blank->new( $row->{"${prefix}Name" } );
-			} elsif (defined $row->{ "${prefix}Value" }) {
-				$bindings{ $name }	 = RDF::Trine::Node::Literal->new( @{ $row }{map {"${prefix}$_"} qw(Value Language Datatype) } );
+		foreach my $nodename (@vars) {
+			my $uri		= $self->_column_name( $nodename, 'URI' );
+			my $name	= $self->_column_name( $nodename, 'Name' );
+			my $value	= $self->_column_name( $nodename, 'Value' );
+			if (defined( my $u = $row->{ $uri })) {
+				$bindings{ $nodename }	 = RDF::Trine::Node::Resource->new( $u );
+			} elsif (defined( my $n = $row->{ $name })) {
+				$bindings{ $nodename }	 = RDF::Trine::Node::Blank->new( $n );
+			} elsif (defined( my $v = $row->{ $value })) {
+				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
 			} else {
-				$bindings{ $name }	= undef;
+				$bindings{ $nodename }	= undef;
 			}
 		}
 		return \%bindings;
@@ -274,12 +294,16 @@ sub get_contexts {
  	$sth->execute();
  	my $sub		= sub {
  		my $row	= $sth->fetchrow_hashref;
- 		if ($row->{URI}) {
- 			return RDF::Trine::Node::Resource->new( $row->{URI} );
- 		} elsif ($row->{Name}) {
- 			return RDF::Trine::Node::Blank->new( $row->{Name} );
- 		} elsif (defined $row->{Value}) {
- 			return RDF::Trine::Node::Literal->new( @{ $row }{qw(Value Language Datatype)} );
+ 		my $uri		= $self->_column_name( 'URI' );
+ 		my $name	= $self->_column_name( 'Name' );
+ 		my $value	= $self->_column_name( 'Value' );
+ 		if ($row->{ $uri }) {
+ 			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
+ 		} elsif ($row->{ $name }) {
+ 			return RDF::Trine::Node::Blank->new( $row->{ $name } );
+ 		} elsif (defined $row->{ $value }) {
+ 			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+ 			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
  		} else {
  			return;
  		}
@@ -528,7 +552,7 @@ sub add_variable_values_joins {
 	my @cols;
 	my $uniq_count	= 0;
 	my (%seen_vars, %seen_joins);
-	foreach my $var (grep { not $seen_vars{ $_ }++ } (@vars, keys %$vars)) {
+	foreach my $var (grep { not $seen_vars{ $_ }++ } (sort (@vars, keys %$vars))) {
 		my $col	= $vars->{ $var };
 		unless ($col) {
 			throw RDF::Trine::Error::CompilationError -text => "*** Nothing is known about the variable ?${var}";
@@ -537,12 +561,19 @@ sub add_variable_values_joins {
 		my $col_table	= (split(/[.]/, $col))[0];
 		my ($count)		= ($col_table =~ /\w(\d+)/);
 		
-		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if (DEBUG);
+		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if ($debug);
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
+		my $restricted	= 0;
+		my @used_ljoins;
 		foreach my $type (reverse sort keys %NODE_TYPE_TABLES) {
-			next if ($context->{restrict}{$var}{$type});
 			my ($table, $alias, @join_cols)	= @{ $NODE_TYPE_TABLES{ $type } };
+			if ($context->{restrict}{$var}{$type}) {
+				$restricted	= 1;
+				next;
+			} else {
+				push(@used_ljoins, "${alias}${uniq_count}.$join_cols[0]");
+			}
 			foreach my $jc (@join_cols) {
 				my $column_real_name	= "${alias}${uniq_count}.${jc}";
 				my $column_alias_name	= "${var}_${jc}";
@@ -583,6 +614,15 @@ sub add_variable_values_joins {
 			}
 		}
 		
+		if ($restricted) {
+			# if we're restricting the left-joins to only certain types of nodes,
+			# we need to insure that the rows we're getting back actually have data
+			# in the left-joined columns. otherwise, we might end up with data for
+			# a URI, but only left-join with Bnodes (for example), and end up with
+			# NULL values where we aren't expecting them.
+			_add_where( $context, '(' . join(' OR ', map {"$_ IS NOT NULL"} @used_ljoins) . ')' );
+		}
+		
 		$uniq_count++;
 	}
 	
@@ -591,23 +631,61 @@ sub add_variable_values_joins {
 
 sub _sql_for_pattern {
 	my $self		= shift;
-	my $pattern		= shift;
+	my $pat			= shift;
 	my $ctx_node	= shift;
 	my %args		= @_;
-	my $type		= $pattern->type;
-	my $method		= "_sql_for_" . lc($type);
+	
+	my @disjunction;
+	my @patterns	= $pat;
+	my $variables;
+	while (my $p = shift(@patterns)) {
+		if ($p->isa('RDF::Query::Algebra::Union')) {
+			push(@patterns, $p->patterns);
+		} else {
+			my $pvars	= join('#', sort $p->referenced_variables);
+			if (@disjunction) {
+				# if we've already got some UNION patterns, make sure the new
+				# pattern has the same referenced variables (otherwise the
+				# columns of the result are going to come out all screwy
+				unless ($pvars eq $variables) {
+					throw RDF::Trine::Error::CompilationError -text => 'All patterns in a UNION must reference the same variables.';
+				}
+			} else {
+				$variables	= $pvars;
+			}
+			push(@disjunction, $p);
+		}
+	}
+	
+	my @sql;
+	foreach my $pattern (@disjunction) {
+		my $type		= $pattern->type;
+		my $method		= "_sql_for_" . lc($type);
+		my $context		= $self->_new_context;
+# 		my $context		= {
+# 							next_alias		=> 0,
+# 							level			=> 0,
+# 							statement_table	=> $self->statements_table,
+# 						};
+		
+		if ($self->can($method)) {
+			$self->$method( $pattern, $ctx_node, $context );
+			push(@sql, $self->_sql_from_context( $context, %args ));
+		} else {
+			throw RDF::Trine::Error::CompilationError ( -text => "Don't know how to turn a $type into SQL" );
+		}
+	}
+	return join(' UNION ', @sql);
+}
+
+sub _new_context {
+	my $self	= shift;
 	my $context		= {
 						next_alias		=> 0,
 						level			=> 0,
 						statement_table	=> $self->statements_table,
 					};
-	
-	if ($self->can($method)) {
-		$self->$method( $pattern, $ctx_node, $context );
-		return $self->_sql_from_context( $context, %args );
-	} else {
-		throw Error ( -text => "Don't know how to turn a $type into SQL" );
-	}
+	return $context;
 }
 
 use constant INDENT	=> "\t";
@@ -688,8 +766,8 @@ sub _sql_for_filter {
 	my $ctx_node	= shift;
 	my $context		= shift;
 	
-	my $expr	= $filter->expr;
-	my $pattern	= $filter->pattern;
+	my $expr		= $filter->expr;
+	my $pattern		= $filter->pattern;
 	my $type		= $pattern->type;
 	my $method		= "_sql_for_" . lc($type);
 	$self->$method( $pattern, $ctx_node, $context );
@@ -717,13 +795,82 @@ sub _sql_for_expr {
 		} elsif ($func =~ qr/^sparql:isblank$/ and blessed($args[0]) and $args[0]->isa('RDF::Trine::Node::Variable')) {
 			my $node	= $args[0];
 			_add_restriction( $context, $node, qw(literal resource) );
+		} elsif ($func eq 'sparql:logical-or') {
+			$self->_sql_for_or_expr( $expr, $ctx_node, $context );
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown function data: " . Dumper($expr);
 		}
+	} elsif ($expr->isa('RDF::Query::Expression::Binary')) {
+		if ($expr->op eq '==') {
+			$self->_sql_for_equality_expr( $expr, $ctx_node, $context );
+		} else {
+			throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
+		}
+		
 	} else {
 		throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
 	}
 	return;
+}
+
+sub _sql_for_or_expr {
+	my $self		= shift;
+	my $expr		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	my @args		= $self->_logical_or_operands( $expr );
+	
+	my @disj;
+	foreach my $e (@args) {
+		my $tmp_ctx		= $self->_new_context;
+		$self->_sql_for_expr( $e, $ctx_node, $tmp_ctx );
+		my ($var, $val)	= %{ $tmp_ctx->{vars} };
+		my $existing_col = _get_var( $context, $var );
+		push(@disj, "${existing_col} = $val");
+	}
+	my $disj	= '(' . join(' OR ', @disj) . ')';
+	_add_where( $context, $disj );
+}
+
+sub _logical_or_operands {
+	my $self	= shift;
+	my $expr	= shift;
+	my @args	= $expr->operands;
+	my @ops;
+	foreach my $e (@args) {
+		if ($e->isa('RDF::Query::Expression::Function') and $e->uri->uri_value eq 'sparql:logical-or') {
+			push(@ops, $self->_logical_or_operands( $e ));
+		} else {
+			push(@ops, $e);
+		}
+	}
+	return @ops;
+}
+
+sub _sql_for_equality_expr {
+	my $self		= shift;
+	my $expr		= shift;
+	my $ctx_node	= shift;
+	my $context		= shift;
+	
+	my @args	= $expr->operands;
+	# make sorted[0] be the variable
+	my @sorted	= sort { $b->isa('RDF::Trine::Node::Variable') } @args;
+	unless ($sorted[0]->isa('RDF::Trine::Node::Variable')) {
+		throw RDF::Trine::Error::CompilationError -text => "No variable in equality test";
+	}
+	unless ($sorted[1]->isa('RDF::Trine::Node') and not($sorted[1]->isa('RDF::Trine::Node::Variable'))) {
+		throw RDF::Trine::Error::CompilationError -text => "No RDFNode in equality test";
+	}
+	
+	my $name	= $sorted[0]->name;
+	my $id		= $self->_mysql_node_hash( $sorted[1] );
+#	$self->_add_sql_node_clause( $id, $sorted[0], $context );
+	if (my $existing_col = _get_var( $context, $name )) {
+		_add_where( $context, "${existing_col} = $id" );
+	} else {
+		_add_var( $context, $name, $id );
+	}
 }
 
 {
@@ -829,8 +976,6 @@ sub _sql_for_ggp {
 		$self->$method( $p, $ctx, $context );
 	}
 }
-
-
 
 =item C<< _mysql_hash ( $data ) >>
 
@@ -1002,39 +1147,38 @@ sub init {
 	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Literals (
-            ID bigint unsigned PRIMARY KEY,
-            Value longtext NOT NULL,
-            Language text NOT NULL DEFAULT "",
-            Datatype text NOT NULL DEFAULT ""
+        CREATE TABLE Literals (
+            ID NUMERIC(20) PRIMARY KEY,
+            Value text NOT NULL,
+            Language text NOT NULL DEFAULT '',
+            Datatype text NOT NULL DEFAULT ''
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Resources (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Resources (
+            ID NUMERIC(20) PRIMARY KEY,
             URI text NOT NULL
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Bnodes (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Bnodes (
+            ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Models (
-            ID bigint unsigned PRIMARY KEY,
+        CREATE TABLE Models (
+            ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
     
-    $dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
         CREATE TABLE Statements${id} (
-            Subject bigint unsigned NOT NULL,
-            Predicate bigint unsigned NOT NULL,
-            Object bigint unsigned NOT NULL,
-            Context bigint unsigned NOT NULL DEFAULT 0,
+            Subject NUMERIC(20) NOT NULL,
+            Predicate NUMERIC(20) NOT NULL,
+            Object NUMERIC(20) NOT NULL,
+            Context NUMERIC(20) NOT NULL DEFAULT 0,
             UNIQUE (Subject, Predicate, Object, Context)
         );
 END
@@ -1043,7 +1187,7 @@ END
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
 	
 	$dbh->commit;
-	warn "committed" if (DEBUG);
+	warn "committed" if ($debug);
 }
 
 sub _cleanup {
@@ -1053,7 +1197,7 @@ sub _cleanup {
 		my $name	= $self->{model_name};
 		my $id		= _mysql_hash( $name );
 		if ($self->{ remove_store }) {
-			$dbh->do( "DROP TABLE IF EXISTS `Statements${id}`;" );
+			$dbh->do( "DROP TABLE `Statements${id}`;" );
 			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
 		}
 	}

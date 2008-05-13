@@ -27,7 +27,7 @@ our ($VERSION, $debug, $lang, $languri);
 my @node_methods	= qw(subject predicate object);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.000';
+	$VERSION	= '2.002';
 }
 
 ######################################################################

@@ -1,7 +1,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-use_ok( 'RDF::Trine::Namespace' );
+use_ok( 'RDF::Trine' );
 }
 
-diag( "Testing RDF::Trine::Namespace $RDF::Trine::Namespace::VERSION" );
+diag( "Testing RDF::Trine $RDF::Trine::VERSION" );

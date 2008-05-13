@@ -1,7 +1,4 @@
 # RDF::Trine::Model
-# -------------
-# $Revision: 121 $
-# $Date: 2006-02-06 23:07:43 -0500 (Mon, 06 Feb 2006) $
 # -----------------------------------------------------------------------------
 
 =head1 NAME
@@ -19,8 +16,14 @@ package RDF::Trine::Model;
 use strict;
 use warnings;
 no warnings 'redefine';
-use Scalar::Util qw(blessed);
 
+our ($debug, $VERSION);
+BEGIN {
+	$debug		= 0;
+	$VERSION	= '0.107';
+}
+
+use Scalar::Util qw(blessed);
 use RDF::Trine::Node;
 use RDF::Trine::Store::DBI;
 
@@ -103,7 +106,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
-	my (@triples)	= ($bgp->isa('RDF::Trine::Statement')) ? $bgp : $bgp->triples;
+	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
+					? $bgp
+					: $bgp->triples;
 	unless (@triples) {
 		throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 	}

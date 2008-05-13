@@ -1,7 +1,4 @@
 # RDF::Trine
-# -------------
-# $Revision $
-# $Date $
 # -----------------------------------------------------------------------------
 
 
@@ -11,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.105
+This document describes RDF::Trine version 0.107
 
 =head1 SYNOPSIS
 
@@ -33,8 +30,10 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+our ($debug, $VERSION);
 BEGIN {
-	our $VERSION	= '0.105';
+	$debug		= 0;
+	$VERSION	= '0.107';
 }
 
 use RDF::Trine::Parser;
@@ -54,7 +53,6 @@ __END__
 
 =head1 DEPENDENCIES
 
-L<Bloom::Filter>
 L<Data::UUID>
 L<DBI>
 L<DBD::SQLite>
