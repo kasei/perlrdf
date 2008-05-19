@@ -13,8 +13,10 @@ RDF::Query::Logger - Base class for logging objects
 
 package RDF::Query::Logger;
 
+our ($VERSION, $debug);
 BEGIN {
-	our $VERSION	= '2.002';
+	$debug		= 0;
+	$VERSION	= '2.002';
 }
 
 use strict;
@@ -53,7 +55,7 @@ sub log {
 	if (@_) {
 		my $value	= shift;
 		local($Data::Dumper::Indent)	= 0;
-		warn "setting " . Data::Dumper->Dump([$value], [$key]);
+		warn "setting " . Data::Dumper->Dump([$value], [$key]) if ($debug);
 		$self->{ $key }	= $value;
 	}
 	return $self->{ $key };
@@ -66,9 +68,9 @@ sub log {
 sub push_value {
 	my $self	= shift;
 	my $key		= shift;
-	my $array	= $self->{ $key } || [];
+	my $array	= $self->{ $key } ||= [];
 	my @values	= @_;
-	warn "adding values " . Data::Dumper->Dump([\@values], [$key]);
+	warn "adding values " . Data::Dumper->Dump([\@values], [$key]) if ($debug);
 	push( @$array, @values );
 }
 
@@ -79,16 +81,29 @@ sub push_value {
 sub add_key_value {
 	my $self	= shift;
 	my $key		= shift;
-	my $hash	= $self->{ $key } || {};
+	my $hash	= $self->{ $key } ||= {};
 	my ($k,$v)	= @_;
-	warn "adding key-value " . Data::Dumper->Dump([[$k, $v]], [$key]);
+	warn "adding key-value " . Data::Dumper->Dump([[$k, $v]], [$key]) if ($debug);
 	$hash->{ $k }	= $v;
+}
+
+=item C<< push_key_value ( $key, $k => $v ) >>
+
+=cut
+
+sub push_key_value {
+	my $self	= shift;
+	my $key		= shift;
+	my $hash	= $self->{ $key } ||= {};
+	my ($k,$t)	= @_;
+	warn "pushing key-value " . Data::Dumper->Dump([[$k, $t]], [$key]) if ($debug);
+	push( @{ $hash->{ $k } }, $t );
 }
 
 
 sub DESTROY {
 	my $self	= shift;
-	warn Dumper({ %$self });
+	warn Dumper({ %$self }) if ($debug);
 }
 
 1;

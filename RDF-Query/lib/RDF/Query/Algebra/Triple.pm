@@ -19,6 +19,7 @@ use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
@@ -196,6 +197,8 @@ sub execute {
 	my @graph;
 	my $stream;
 	my @streams;
+	
+	my $t0	= [gettimeofday];
 	my $statements	= (@graph)
 					? $bridge->get_named_statements( @triple[0,1,2], $graph[0], $query, $bound )
 					: $bridge->get_statements( @triple[0,1,2], $query, $bound );
@@ -223,6 +226,15 @@ sub execute {
 		} $statements;
 	}
 	
+	if (my $l = $query->logger) {
+		warn "logging triple execution time" if ($debug);
+		my $elapsed = tv_interval ( $t0 );
+		$l->push_key_value( 'execute_time-triple', $self->as_sparql({}, ''), $elapsed );
+	} else {
+		warn "no logger present for triple execution time" if ($debug);
+	}
+	
+	my $count		= 0;
 	my $bindings	= smap {
 		my $stmt	= $_;
 		
@@ -245,6 +257,9 @@ sub execute {
 			} else {
 				$result->{ $var }	= $stmt->$method();
 			}
+		}
+		if (my $l = $query->logger) {
+			$l->add_key_value( 'cardinality-triple', $self->as_sparql({}, ''), ++$count );
 		}
 		$result;
 	} $statements;

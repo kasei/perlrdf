@@ -182,7 +182,6 @@ sub new {
 					parser			=> $parser,
 					parsed			=> $parsed,
 					useragent		=> $ua,
-					logger			=> RDF::Query::Logger->new(),
 				}, $class );
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
@@ -206,6 +205,13 @@ sub new {
 	}
 	if (defined $options{secretkey}) {
 		$self->{options}{secretkey}	= $options{secretkey};
+	}
+	
+	if ($options{logger}) {
+		warn "got external logger\n";
+		$self->{logger}	= $options{logger};
+	} else {
+		$self->{logger}	= RDF::Query::Logger->new();
 	}
 	
 	# add rdf as a default namespace to RDQL queries

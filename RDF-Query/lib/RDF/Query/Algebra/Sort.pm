@@ -19,6 +19,7 @@ use Set::Scalar;
 use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
+use Time::HiRes qw(gettimeofday tv_interval);
 
 ######################################################################
 
@@ -232,6 +233,7 @@ sub execute {
 	my %colmap		= map { $variables[$_] => $_ } (0 .. $#variables);
 	warn 'sort variable colmap: ' . Dumper(\@variables, \%colmap) if ($debug);
 	
+	my $t0	= [gettimeofday];
 	if (not($@) and substr($actual_sort, 0, length($req_sort)) eq $req_sort) {
 		warn "Already sorted. Ignoring." if ($debug);
 	} else {
@@ -271,6 +273,14 @@ sub execute {
 		my $args	= $stream->_args;
 		my %sorting	= (sorted_by => [$col, $dir]);
 		$stream		= RDF::Trine::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args, %sorting );
+	}
+	
+	if (my $l = $query->logger) {
+		warn "logging sort execution time" if ($debug);
+		my $elapsed = tv_interval ( $t0 );
+		$l->push_key_value( 'execute_time-sort', \@cols, $elapsed );
+	} else {
+		warn "no logger present for sort execution time" if ($debug);
 	}
 	
 	return $stream;

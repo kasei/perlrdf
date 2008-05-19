@@ -17,6 +17,7 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
+use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
@@ -306,8 +307,9 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
-	my (@triples)	= $self->triples;
 	my @streams;
+	my (@triples)	= $self->triples;
+	my $t0			= [gettimeofday];
 	foreach my $triple (@triples) {
 		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
 		my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
@@ -323,6 +325,15 @@ sub execute {
 		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
 	}
 	my $stream	= shift(@streams);
+
+	if (my $l = $query->logger) {
+		warn "logging bgp execution time" if ($debug);
+		my $elapsed = tv_interval ( $t0 );
+		$l->push_key_value( 'execute_time-bgp', $self->as_sparql({}, ''), $elapsed );
+	} else {
+		warn "no logger present for bgp execution time" if ($debug);
+	}
+
 	return $stream;
 }
 

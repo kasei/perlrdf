@@ -20,6 +20,7 @@ use List::Util qw(first);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Query::Error qw(:try);
+use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
@@ -197,8 +198,9 @@ sub execute {
 	my $context		= shift;
 	my %args		= @_;
 	
-	my (@triples)	= $self->patterns;
 	my $stream;
+	my (@triples)	= $self->patterns;
+	my $t0			= [gettimeofday];
 	foreach my $triple (@triples) {
 		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Query::Algebra') or $triple->isa('RDF::Query::Node'));
 		
@@ -249,6 +251,14 @@ sub execute {
 	
 	unless ($stream) {
 		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
+	}
+	
+	if (my $l = $query->logger) {
+		warn "logging ggp execution time" if ($debug);
+		my $elapsed = tv_interval ( $t0 );
+		$l->push_key_value( 'execute_time-ggp', $self->as_sparql({}, ''), $elapsed );
+	} else {
+		warn "no logger present for ggp execution time" if ($debug);
 	}
 	
 	return $stream;

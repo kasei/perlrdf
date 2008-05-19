@@ -16,8 +16,6 @@ RDF::Query::Federate - A subclass of RDF::Query for efficient federated query ex
 
 ...
 
-=back
-
 =cut
 
 package RDF::Query::Federate;
