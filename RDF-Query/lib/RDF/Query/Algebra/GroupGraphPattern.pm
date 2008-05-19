@@ -213,13 +213,17 @@ sub execute {
 		### function), then fall back on making the call without the filter.
 		try {
 			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
-				unless ($SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }) {
+				my $endpoint_url	= $triple->endpoint->uri_value;
+				unless ($SERVICE_BLOOM_IGNORE{ $endpoint_url }) {
 	# 				local($RDF::Trine::Iterator::debug)	= 1;
 					$stream		= $stream->materialize;
 					my $pattern	= $self->_bloom_optimized_pattern( $stream, $triple, $query, $bridge, $bound );
 					my $new	= $pattern->execute( $query, $bridge, $bound, $context, %args );
 					throw RDF::Query::Error unless ($new);
 					$stream	= $self->join_bnode_streams( $stream, $new, $query, $bridge, $bound );
+					if (my $l = $query->logger) {
+						$l->add_key_value( 'endpoint_supports_bloom_filter', $endpoint_url => 1 );
+					}
 					$handled	= 1;
 				}
 			}

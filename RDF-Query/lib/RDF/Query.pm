@@ -116,6 +116,7 @@ use RDF::Query::Parser::SPARQL;
 use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
+use RDF::Query::Logger;
 
 ######################################################################
 
@@ -181,6 +182,7 @@ sub new {
 					parser			=> $parser,
 					parsed			=> $parsed,
 					useragent		=> $ua,
+					logger			=> RDF::Query::Logger->new(),
 				}, $class );
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
@@ -1456,6 +1458,33 @@ sub useragent {
 	return $self->{useragent};
 }
 
+
+=item C<< log ( $key [, $value ] ) >>
+
+If no logger object is associated with this query object, does nothing.
+Otherwise, return or set the corresponding value depending on whether a
+C<< $value >> is specified.
+
+=cut
+
+sub log {
+	my $self	= shift;
+	if (blessed(my $l = $self->{ logger })) {
+		$l->log( @_ );
+	}
+}
+
+
+=item C<< logger >>
+
+Returns the logger object associated with this query object (if present).
+
+=cut
+
+sub logger {
+	my $self	= shift;
+	return $self->{ logger };
+}
 
 =item C<error ()>
 

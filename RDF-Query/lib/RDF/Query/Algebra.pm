@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query::Node - Base class for Algebra expressions
+RDF::Query::Algebra - Base class for Algebra expressions
 
 =head1 METHODS
 

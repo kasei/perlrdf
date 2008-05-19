@@ -258,6 +258,9 @@ sub execute {
 	}
 
 	my $endpoint	= $self->endpoint;
+	if (my $l = $query->logger) {
+		$l->push_value( service_endpoints => $endpoint->uri_value );
+	}
 	
 	my %ns			= (%{ $query->{parsed}{namespaces} });
 	my $trial		= 'k';
@@ -344,10 +347,12 @@ sub bloom_filter_for_iterator {
 
 	my $count	= scalar(@names);
 	my $filter	= Bloom::Filter->new( capacity => $count, error_rate => $error );
-	warn $_ for (@names);
+	if ($debug) {
+		warn $_ for (@names);
+	}
 	$filter->add( $_ ) for (@names);
 	
-	if (1 || $debug) {
+	if ($debug) {
 		warn "$node_count total nodes considered\n";
 		warn "Bloom filter has $count total items\n";
 		my @paths	= keys %paths;
