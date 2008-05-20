@@ -400,10 +400,15 @@ sub join_bnode_streams {
 			$false_positives++;
 		}
 	}
-	warn "TOTAL ROWS: $total_rows\n";
-	warn "FALSE POSITIVES: $false_positives\n";
-	warn "FALSE POSITIVE RATE: " . sprintf('%0.2f', ($false_positives / $total_rows)) . "\n";
-	warn "EXPECTED RATE: " . $self->_bloom_filter_error_rate( $query ) . "\n";
+	
+	if ($debug) {
+		warn "TOTAL ROWS: $total_rows\n";
+		warn "FALSE POSITIVES: $false_positives\n";
+		if ($total_rows) {
+			warn "FALSE POSITIVE RATE: " . sprintf('%0.2f', ($false_positives / $total_rows)) . "\n";
+		}
+		warn "EXPECTED RATE: " . $self->_bloom_filter_error_rate( $query ) . "\n";
+	}
 	
 	my $args	= $astream->_args;
 	return $astream->_new( \@results, 'bindings', \@names, %$args );

@@ -290,7 +290,7 @@ sub execute {
 
 	warn "executing the graph pattern" if ($debug);
 	
-	my $options	= $parsed->{options} || {};		
+	my $options	= $parsed->{options} || {};
 	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
 	
 	warn "performing projection" if ($debug);
