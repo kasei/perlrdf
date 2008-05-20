@@ -5,14 +5,15 @@ no warnings 'redefine';
 use File::Spec;
 
 use RDF::Trine::Namespace qw(rdf foaf);
-my $xsd	= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+my $xsd		= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+my $dcterms	= RDF::Trine::Namespace->new('http://purl.org/dc/terms/');
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 15;
+my $tests	= 19;
 if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
@@ -47,18 +48,118 @@ isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 END
 	$query->add_service( $ksd );
 	$query->add_service( $sd );
-	local($RDF::Query::Federate::debug)	= 1;
-	my $iter	= $query->execute;
-	my $count	= 0;
-	while (my $row = $iter->next) {
-		use Data::Dumper;
-		warn Dumper($row);
-		$count++;
+	my ($pattern)	= $query->fixup();
+	my $sparql		= $pattern->as_sparql({}, '');
+	my $expected	= <<"END";
+{
+	{
+		SERVICE <http://kasei.us/sparql> {
+			?p a <http://xmlns.com/foaf/0.1/Person> .
+			?p <http://xmlns.com/foaf/0.1/name> ?name .
+			?p <http://xmlns.com/foaf/0.1/mbox_sha1sum> ?mbox .
+			?p <http://xmlns.com/foaf/0.1/made> ?x .
+		}
+		{
+			{
+				SERVICE <http://kasei.us/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+			UNION
+			{
+				SERVICE <http://dbpedia.org/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+		}
 	}
-	warn 'count: ' . $count;
+	UNION
+	{
+		SERVICE <http://dbpedia.org/sparql> {
+			?p a <http://xmlns.com/foaf/0.1/Person> .
+			?p <http://xmlns.com/foaf/0.1/name> ?name .
+		}
+		{
+			SERVICE <http://kasei.us/sparql> {
+				?p <http://xmlns.com/foaf/0.1/mbox_sha1sum> ?mbox .
+			}
+		}
+		{
+			SERVICE <http://kasei.us/sparql> {
+				?p <http://xmlns.com/foaf/0.1/made> ?x .
+			}
+		}
+		{
+			{
+				SERVICE <http://kasei.us/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+			UNION
+			{
+				SERVICE <http://dbpedia.org/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+		}
+	}
+	UNION
+	{
+		{
+			{
+				SERVICE <http://kasei.us/sparql> {
+					?p a <http://xmlns.com/foaf/0.1/Person> .
+				}
+			}
+			UNION
+			{
+				SERVICE <http://dbpedia.org/sparql> {
+					?p a <http://xmlns.com/foaf/0.1/Person> .
+				}
+			}
+		}
+		{
+			{
+				SERVICE <http://kasei.us/sparql> {
+					?p <http://xmlns.com/foaf/0.1/name> ?name .
+				}
+			}
+			UNION
+			{
+				SERVICE <http://dbpedia.org/sparql> {
+					?p <http://xmlns.com/foaf/0.1/name> ?name .
+				}
+			}
+		}
+		{
+			SERVICE <http://kasei.us/sparql> {
+				?p <http://xmlns.com/foaf/0.1/mbox_sha1sum> ?mbox .
+			}
+		}
+		{
+			SERVICE <http://kasei.us/sparql> {
+				?p <http://xmlns.com/foaf/0.1/made> ?x .
+			}
+		}
+		{
+			{
+				SERVICE <http://kasei.us/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+			UNION
+			{
+				SERVICE <http://dbpedia.org/sparql> {
+					?x <http://purl.org/dc/terms/spatial> ?point .
+				}
+			}
+		}
+	}
 }
-
-exit;
+END
+	chomp($expected);
+	is( $sparql, $expected, 'optimized (agglomerative) sparql pattern' );
+}
 
 {
 	is( $sd->label, 'DBpedia', 'expected endpoint label' );
@@ -84,6 +185,9 @@ exit;
 							sofilter			=> undef,
 							size				=> RDF::Query::Node::Literal->new('18000', undef, $xsd->integer->uri_value),
 							object_selectivity	=> RDF::Query::Node::Literal->new('5.5E-5', undef, $xsd->double->uri_value),
+						},
+					$dcterms->spatial->uri_value => {
+							pred				=> RDF::Query::Node::Resource->new( $dcterms->spatial->uri_value ),
 						},
 				};
 	my $cap	= $sd->capabilities;

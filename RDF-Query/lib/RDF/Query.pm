@@ -208,7 +208,7 @@ sub new {
 	}
 	
 	if ($options{logger}) {
-		warn "got external logger\n";
+		warn "got external logger\n" if ($debug);
 		$self->{logger}	= $options{logger};
 	}
 	

@@ -72,8 +72,10 @@ sub algebra_fixup {
 			my $simple_ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
 			my @optimized	= $self->_join_services_for_bgp_triples( $pattern, $bridge, $base, $ns, \@patterns );
 			
-			foreach my $i (0 .. $#optimized) {
-				warn "OPTIMIZED $i:\n" . $optimized[$i]->as_sparql({}, '') . "\n---------------\n";
+			if ($debug) {
+				foreach my $i (0 .. $#optimized) {
+					warn "OPTIMIZED $i:\n" . $optimized[$i]->as_sparql({}, '') . "\n---------------\n";
+				}
 			}
 			
 			my @plan		= (@optimized, $simple_ggp);
