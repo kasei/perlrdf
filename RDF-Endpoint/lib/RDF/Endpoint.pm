@@ -57,20 +57,20 @@ sub new {
 		$self->set_identity( $id );
 	}
 	
-	if ($self->authorized_user) {
+# 	if ($self->authorized_user) {
 		$self->{_model}	= RDF::Trine::Model->new( $store );
-	} else {
-		$m->add_rule( sub {
-			my $st	= shift;
-			my $p	= $st->predicate;
-			my $uri	= $p->uri_value;
-			
-			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/mbox');
-			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/phone');
-			return 0 if ($uri =~ m<^http://xmlns.com/foaf/0.1/\w+ChatID$>);
-			return 1;
-		} );
-	}
+# 	} else {
+# 		$m->add_rule( sub {
+# 			my $st	= shift;
+# 			my $p	= $st->predicate;
+# 			my $uri	= $p->uri_value;
+# 			
+# 			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/mbox');
+# 			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/phone');
+# 			return 0 if ($uri =~ m<^http://xmlns.com/foaf/0.1/\w+ChatID$>);
+# 			return 1;
+# 		} );
+# 	}
 	
 	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
 	$self->{_ua}->default_header( 'Accept' => 'application/turtle,application/x-turtle,application/rdf+xml' );
