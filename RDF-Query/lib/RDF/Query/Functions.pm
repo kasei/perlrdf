@@ -776,7 +776,7 @@ BEGIN {
 			$query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter }	= $bloom;
 		}
 		
-		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, 0 );
+		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0 );
 		foreach my $string (@names) {
 			warn "checking bloom filter for --> '$string'\n" if ($debug);
 			my $ok	= $bloom->check( $string );
