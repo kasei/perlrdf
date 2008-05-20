@@ -329,7 +329,7 @@ sub execute {
 	if (my $l = $query->logger) {
 		warn "logging bgp execution time" if ($debug);
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-bgp', $self->as_sparql({}, ''), $elapsed );
+		$l->push_key_value( 'execute_time-bgp', $self->sse, $elapsed );
 	} else {
 		warn "no logger present for bgp execution time" if ($debug);
 	}

@@ -256,7 +256,7 @@ sub execute {
 	if (my $l = $query->logger) {
 		warn "logging ggp execution time" if ($debug);
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-ggp', $self->as_sparql({}, ''), $elapsed );
+		$l->push_key_value( 'execute_time-ggp', $self->sse, $elapsed );
 	} else {
 		warn "no logger present for ggp execution time" if ($debug);
 	}

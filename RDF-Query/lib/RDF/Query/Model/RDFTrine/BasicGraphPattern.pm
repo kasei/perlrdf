@@ -118,6 +118,15 @@ sub as_sparql {
 	return $self->[1]->as_sparql( @_ );
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	return $self->[1]->sse( @_ );
+}
+
 =item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
 
 =cut
