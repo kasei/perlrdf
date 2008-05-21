@@ -173,13 +173,28 @@ Returns an XML serialization of the stream data.
 =cut
 
 sub as_xml {
-	my $self			= shift;
+	my $self	= shift;
 	my $max_result_size	= shift || 0;
-# 	my $bridge			= $self->_bridge;
+	my $string	= '';
+	open( my $fh, '>', \$string );
+	$self->print_xml( $fh, $max_result_size );
+	return $string;
+}
+
+=item C<< print_xml ( $fh, $max_size ) >>
+
+Prints an XML serialization of the stream data to the filehandle $fh.
+
+=cut
+
+sub print_xml {
+	my $self			= shift;
+	my $fh				= shift;
+	my $max_result_size	= shift || 0;
 	my $graph			= $self->unique();
 	
 	my $count	= 0;
-	my $xml		= <<"END";
+	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 END
@@ -197,13 +212,13 @@ END
 					: 'rdf:nodeID="' . $subject->blank_identifier . '"';
 		my $object	= $stmt->object;
 		
-		$xml		.= qq[<rdf:Description $subjstr>\n];
+		print {$fh} qq[<rdf:Description $subjstr>\n];
 		if ($object->is_resource) {
 			my $uri	= $object->uri_value;
-			$xml	.= qq[\t<${local} xmlns="${ns}" rdf:resource="$uri"/>\n];
+			print {$fh} qq[\t<${local} xmlns="${ns}" rdf:resource="$uri"/>\n];
 		} elsif ($object->is_blank) {
 			my $id	= $object->blank_identifier;
-			$xml	.= qq[\t<${local} xmlns="${ns}" rdf:nodeID="$id"/>\n];
+			print {$fh} qq[\t<${local} xmlns="${ns}" rdf:nodeID="$id"/>\n];
 		} else {
 			my $value	= $object->literal_value;
 			# escape < and & and ' and " and >
@@ -221,12 +236,11 @@ END
 				my $dt	= $object->literal_datatype;
 				$tag	.= qq[ rdf:datatype="${dt}"];
 			}
-			$xml	.= qq[\t<${tag}>${value}</${local}>\n];
+			print {$fh} qq[\t<${tag}>${value}</${local}>\n];
 		}
-		$xml		.= qq[</rdf:Description>\n];
+		print {$fh} qq[</rdf:Description>\n];
 	}
-	$xml	.= "</rdf:RDF>\n";
-	return $xml;
+	print {$fh} "</rdf:RDF>\n";
 }
 
 =item C<as_json ( $max_size )>

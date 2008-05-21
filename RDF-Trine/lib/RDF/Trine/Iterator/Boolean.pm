@@ -84,7 +84,7 @@ Returns an XML serialization of the stream data.
 =cut
 
 sub as_xml {
-	my $self			= shift;
+	my $self	= shift;
 	my $value	= $self->get_boolean ? 'true' : 'false';
 	my $xml	= <<"END";
 <?xml version="1.0"?>
@@ -96,6 +96,18 @@ sub as_xml {
 </sparql>
 END
 	return $xml;
+}
+
+=item C<< print_xml ( $fh, $max_size ) >>
+
+Prints an XML serialization of the stream data to the filehandle $fh.
+
+=cut
+
+sub print_xml {
+	my $self	= shift;
+	my $io		= shift;
+	$io->print( $self->as_xml );
 }
 
 =item C<as_json ( $max_size )>

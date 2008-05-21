@@ -489,8 +489,23 @@ Returns an XML serialization of the stream data.
 sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
+	my $string	= '';
+	open( my $fh, '>', \$string );
+	$self->print_xml( $fh, $max_result_size );
+	return $string;
+}
+
+=item C<< print_xml ( $fh, $max_size ) >>
+
+Prints an XML serialization of the stream data to the filehandle $fh.
+
+=cut
+
+sub print_xml {
+	my $self			= shift;
+	my $fh				= shift;
+	my $max_result_size	= shift || 0;
 	my $width			= $self->bindings_count;
-# 	my $bridge			= $self->bridge;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {
@@ -498,24 +513,46 @@ sub as_xml {
 		push(@variables, $name) if $name;
 	}
 	
-	my $count	= 0;
+	print {$fh} <<"END";
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+END
+	
 	my $t	= join("\n\t", map { qq(<variable name="$_"/>) } @variables);
-	my $head	= $t;
-	my $results	= '';
+	
+	my $delay_output	= 0;
+	my $delayed			= '';
+	
+	if ($self->extra_result_data) {
+		$delay_output	= $fh;
+		open( my $tmpfh, '>', \$delayed );
+		$fh				= $tmpfh;
+	} else {
+		print {$fh} "${t}\n";
+	}
+	
+	print {$fh} <<"END";
+</head>
+<results>
+END
+	
+	my $count	= 0;
 	while (!$self->finished) {
 		my @row;
-		$results	.= "\t\t<result>\n";
+		print {$fh} "\t\t<result>\n";
 		for (my $i = 0; $i < $width; $i++) {
 			my $name	= $self->binding_name($i);
 			my $value	= $self->binding_value($i);
-			$results	.= "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
+			print {$fh} "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
 		}
-		$results	.= "\t\t</result>\n";
+		print {$fh} "\t\t</result>\n";
 		
 		last if ($max_result_size and ++$count >= $max_result_size);
 	} continue { $self->next_result }
 	
-	if (my $extra = $self->extra_result_data) {
+	if ($delay_output) {
+		my $extra = $self->extra_result_data;
 		my $extraxml	= '';
 		foreach my $tag (keys %$extra) {
 			$extraxml	.= qq[<extra name="${tag}">\n];
@@ -542,20 +579,15 @@ sub as_xml {
 		$uri	=~ s/</&lt;/g;
 		$uri	=~ s/'/&apos;/g;
 		$uri	=~ s/"/&quot;/g;
-		$head	.= qq[\n\t<link href="$uri" />\n];
+		
+		my $fh	= $delay_output;
+		print {$fh} "${t}\n";
+		print {$fh} qq[\t<link href="$uri" />\n];
+		print {$fh} $delayed;
 	}
 	
-	my $xml	= <<"END";
-<?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-<head>
-	${head}
-</head>
-<results>
-${results}</results>
-</sparql>
-END
-	return $xml;
+	print {$fh} "</results>\n";
+	print {$fh} "</sparql>\n";
 }
 
 =begin private

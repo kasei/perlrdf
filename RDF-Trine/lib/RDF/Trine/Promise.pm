@@ -53,6 +53,12 @@ sub new {
 	return $self;
 }
 
+=item C<< value >>
+
+Returns the promised value.
+
+=cut
+
 sub value {
 	my $self	= shift;
 	if (scalar(@{ $self }) > 1) {
