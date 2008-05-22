@@ -106,8 +106,8 @@ Prints an XML serialization of the stream data to the filehandle $fh.
 
 sub print_xml {
 	my $self	= shift;
-	my $io		= shift;
-	$io->print( $self->as_xml );
+	my $fh		= shift;
+	print {$fh} $self->as_xml;
 }
 
 =item C<as_json ( $max_size )>

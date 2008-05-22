@@ -361,13 +361,19 @@ sub run_query {
 		if (defined($type)) {
 			my %header_args	= ( '-X-Endpoint-Description' => $self->endpoint_description_url );
 			if ($type =~ /html/) {
+				local($Template::Directive::WHILE_MAX)	= 1_000_000_000;
+				local($Template::Directive::OUTPUT)		= 'print';
 				print $cgi->header( -type => "text/html; charset=utf-8", %header_args );
 				my $total	= 0;
 				my $rtype	= $stream->type;
 				my $rstream	= ($rtype eq 'graph') ? $stream->unique() : $stream;
 				$tt->process( $file, {
 					result_type => $rtype,
-					next_result => sub { my $r = $rstream->next_result; $total++ if ($r); return $r },
+					next_result => sub {
+									my $r = $rstream->next_result;
+									$total++ if ($r);
+									return $r
+								},
 					columns		=> sub { $rstream->binding_names },
 					values		=> sub {
 									my $row 	= shift;
