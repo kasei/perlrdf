@@ -388,13 +388,15 @@ sub run_query {
 				} ) or warn $tt->error();
 			} elsif ($type =~ /xml/) {
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
-				print $stream->as_xml;
+				my $outfh	= select();
+				print $stream->print_xml( $outfh );
 			} elsif ($type =~ /json/) {
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				print $stream->as_json;
 			} else {
 				print $cgi->header( -type => "text/plain; charset=utf-8", %header_args );
-				print $stream->as_xml;
+				my $outfh	= select();
+				print $stream->print_xml( $outfh );
 			}
 			
 		} else {
