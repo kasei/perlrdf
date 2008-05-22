@@ -46,6 +46,19 @@ BEGIN {
 
 =over 4
 
+=cut
+
+
+sub new {
+	my $class	= shift;
+	my $query	= shift;
+	my $baseuri	= shift;
+	my $languri	= shift;
+	my $lang	= shift || 'sparqlp';
+	return $class->SUPER::new( $query, $baseuri, $languri, $lang, @_ );
+}
+
+
 =item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
 
 Called in the fixup method of ::Algebra classes, returns either an optimized
