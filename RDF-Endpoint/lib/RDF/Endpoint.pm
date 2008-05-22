@@ -335,7 +335,7 @@ sub run_query {
 					sort { $b->[1] <=> $a->[1] }
 						map { my ($t,$q) = split(/;q=/, $_); $q ||= 1; [ $t,$q ] }
 							sort { index($b, 'html') }
-								split(',', $http_accept);
+								split(/,\s*/, $http_accept);
 	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/sparql-results+json application/json text/html application/xhtml+xml application/sparql-results+xml);
 	if (my $t = $cgi->param('mime-type')) {
 		unshift( @accept, $t );
@@ -395,14 +395,14 @@ sub run_query {
 			} elsif ($type =~ /xml/) {
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				my $outfh	= select();
-				print $stream->print_xml( $outfh );
+				$stream->print_xml( $outfh );
 			} elsif ($type =~ /json/) {
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				print $stream->as_json;
 			} else {
 				print $cgi->header( -type => "text/plain; charset=utf-8", %header_args );
 				my $outfh	= select();
-				print $stream->print_xml( $outfh );
+				$stream->print_xml( $outfh );
 			}
 			
 		} else {

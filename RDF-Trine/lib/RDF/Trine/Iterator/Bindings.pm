@@ -492,6 +492,7 @@ sub as_xml {
 	my $string	= '';
 	open( my $fh, '>', \$string );
 	$self->print_xml( $fh, $max_result_size );
+	close($fh);
 	return $string;
 }
 
@@ -513,6 +514,7 @@ sub print_xml {
 		push(@variables, $name) if $name;
 	}
 	
+	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">

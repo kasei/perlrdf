@@ -194,6 +194,7 @@ sub print_xml {
 	my $graph			= $self->unique();
 	
 	my $count	= 0;
+	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
