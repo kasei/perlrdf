@@ -528,8 +528,7 @@ END
 	
 	if ($self->extra_result_data) {
 		$delay_output	= $fh;
-		open( my $tmpfh, '>', \$delayed );
-		$fh				= $tmpfh;
+		open( $fh, '>', \$delayed );
 	} else {
 		print {$fh} "${t}\n";
 	}
@@ -582,7 +581,7 @@ END
 		$uri	=~ s/'/&apos;/g;
 		$uri	=~ s/"/&quot;/g;
 		
-		my $fh	= $delay_output;
+		$fh		= $delay_output;
 		print {$fh} "${t}\n";
 		print {$fh} qq[\t<link href="$uri" />\n];
 		print {$fh} $delayed;
