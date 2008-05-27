@@ -269,7 +269,7 @@ sub execute {
 	
 	my $sparql		= join("\n",
 						(map { sprintf("PREFIX %s: <%s>", $_, $ns{$_}) } (keys %ns)),
-						sprintf("SELECT DISTINCT * WHERE %s", $self->pattern->as_sparql({namespaces => \%ns}, ''))
+						sprintf("SELECT * WHERE %s", $self->pattern->as_sparql({namespaces => \%ns}, ''))
 					);
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	
@@ -293,12 +293,47 @@ sub execute {
 	my @vars		= $self->pattern->referenced_variables;
 	my $results		= RDF::Trine::Iterator::Bindings->new( sub {
 		unless (defined $stream) {
-			my $resp		= $ua->get( $url );
-			unless ($resp->is_success) {
-				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+			use IO::Socket::INET;
+			my $uri		= URI->new( $url );
+			my $canon	= $uri->canonical;
+			my $path	= substr($canon, index($canon, $uri->host) + length($uri->host));
+			warn $uri->host;
+			warn $uri->port;
+			my $sock	= IO::Socket::INET->new( PeerAddr => $uri->host, PeerPort => ($uri->port || 80), Proto => 'tcp' );
+			my $req		= sprintf("GET %s HTTP/1.1\nHost: %s\nAccept: application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml\n\n", $path, $uri->host);
+			warn $req;
+			$sock->print( $req );
+			
+			my $buffer	= '';
+			my $prelude	= '';
+			while (1) {
+				my $b;
+				$sock->recv($b, 512);
+				$buffer	.= $b;
+				if ($buffer =~ m/(?:\r?\n){2}(.*)/ms) {
+					$prelude	= $1;
+					warn "##############\nGOT HEADER:\n$buffer\n##############\n";
+					warn "PRELUDE:\n$prelude\n##############\n";
+					last;
+				}
 			}
-			my $content	= $resp->content;
-			$stream		= RDF::Trine::Iterator->from_string( $content );
+			
+# 			my $ok	= 0;
+# 			while (defined(my $line = $sock->getline)) {
+# 				$ok	= 1 if ($line =~ m<^HTTP/1.1\s+200>);
+# 				last if ($line =~ m/^\s*$/);
+# 			}
+# 			die unless ($ok);
+			
+			$stream		= RDF::Trine::Iterator->from_handle_incremental( $sock, 2048, $prelude );
+			
+# 			my $resp		= $ua->get( $url );
+# 			unless ($resp->is_success) {
+# 				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+# 			}
+# 			my $content	= $resp->content;
+# 			$stream		= RDF::Trine::Iterator->from_string( $content );
+			
 			if (my $e = $stream->extra_result_data) {
 				%$extra	= %$e;
 			}
