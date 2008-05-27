@@ -7,17 +7,15 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 my $tests	= 25;
-eval { require LWP::Simple };
+eval { require Bloom::Filter };
 if ($@) {
-	plan skip_all => "LWP::Simple is not available for loading <http://...> URLs";
+	plan skip_all => "Bloom::Filter is not available";
 	return;
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
-	plan tests => $tests;
 } else {
-	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and set RDFQUERY_NETWORK_TESTS to run these tests.';
+	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
 }
 

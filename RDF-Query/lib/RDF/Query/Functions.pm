@@ -790,6 +790,42 @@ BEGIN {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	};
 }
+
+$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom/filter"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	
+	my $value	= shift;
+	my $filter	= shift;
+	my $bloom;
+	
+	unless ($BLOOM_FILTER_LOADED) {
+		throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
+	}
+	
+	if (ref($query) and exists( $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter } )) {
+		$bloom	= $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter };
+	} else {
+		my $value	= $filter->literal_value;
+		$bloom	= Bloom::Filter->thaw( $value );
+		if (ref($query)) {
+			$query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter }	= $bloom;
+		}
+	}
+	
+	my $string	= $value->as_string;
+	warn "checking bloom filter for --> '$string'\n" if ($debug);
+	my $ok	= $bloom->check( $string );
+	warn "-> ok\n" if ($ok and $debug);
+	if ($ok) {
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	} else {
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
+};
+
+
+
 1;
 
 __END__

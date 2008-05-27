@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 203;
+use Test::More tests => 210;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -848,9 +848,42 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	}
 }
 
-{
+SKIP: {
 	# kasei:bloom
-	1;
+	eval { require Bloom::Filter };
+	if ($@) {
+		skip('Bloom::Filter is not available', 7);
+	}
+	
+	{
+		my $TEST	= "bloom:filter";
+		my $filter	= RDF::Query::Node::Literal->new( 'AAAAAgAAAAcAAAACAAAAAgAAAAEAAAADklyWOSVq5odsMC4y' );
+		my $alg		= $func->new( "http://kasei.us/code/rdf-query/functions/bloom/filter", $va, $filter );
+		
+		{
+			my $value	= $alg->evaluate( undef, undef, { a => $rea } );
+			isa_ok( $value, 'RDF::Query::Node::Literal' );
+			is( $value->literal_value, 'true', "$TEST value" );
+			is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
+		}
+		
+		{
+			my $value	= $alg->evaluate( undef, undef, { a => $reb } );
+			isa_ok( $value, 'RDF::Query::Node::Literal' );
+			is( $value->literal_value, 'true', "$TEST value" );
+			is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
+		}
+		
+		my @resources	= map { RDF::Query::Node::Resource->new( 'http://localhost/' . $_ ) } ('a' .. 'z', 'A' .. 'Z', 0 .. 9);
+		my $true	= 0;
+		foreach my $r (@resources) {
+			my $value	= $alg->evaluate( undef, undef, { a => $r } );
+			if ($value->literal_value eq 'true') {
+				$true++;
+			}
+		}
+		cmp_ok( $true, '<', scalar(@resources), "$TEST (false)");
+	}
 }
 
 ################################################################################
