@@ -528,7 +528,8 @@ END
 	
 	if ($self->extra_result_data) {
 		$delay_output	= $fh;
-		open( $fh, '>', \$delayed );
+		undef $fh;
+		open( $fh, '>', \$delayed ) or die $!;
 	} else {
 		print {$fh} "${t}\n";
 	}
