@@ -51,6 +51,8 @@ BEGIN {
 
 =item C<< new >>
 
+Returns a new 
+
 =cut
 
 sub new {
@@ -61,11 +63,29 @@ sub new {
 	return $self;
 }
 
+=item C<< serialize_model_to_file ( $file, $model ) >>
+
+Serializes the C<$model> to NTriples, printing the results to the supplied
+C<$file> handle.
+
+=cut
+
 sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
+	my $iter	= $model->as_stream;
+	while (my $st = $iter->next) {
+		my @nodes	= $st->nodes;
+		print {$file} join(' ', map { $_->sse } @nodes) . " .\n";
+	}
 }
+
+=item C<< serialize_model_to_string ( $model ) >>
+
+Serializes the C<$model> to NTriples, returning the result as a string.
+
+=cut
 
 sub serialize_model_to_string {
 	my $self	= shift;
@@ -82,8 +102,6 @@ sub serialize_model_to_string {
 1;
 
 __END__
-
-=end private
 
 =back
 

@@ -210,13 +210,12 @@ sub start_element {
 		# ignore the wrapping rdf:RDF element
 	} else {
 		my $prefix	= $el->{Prefix};
-		my $ns		= $self->get_namespace( $prefix );
-		my $local	= $el->{LocalName};
-		my $uri		= join('', $ns, $local);
-		my @base	= $self->get_base;
-		my $node	= RDF::Trine::Node::Resource->new( $uri, @base );
 		my $expect	= $self->expect;
 		if ($expect == SUBJECT or $expect == OBJECT) {
+			my $ns		= $self->get_namespace( $prefix );
+			my $local	= $el->{LocalName};
+			my $uri		= join('', $ns, $local);
+			my $node	= $self->new_resource( $uri );
 			warn "-> expect SUBJECT or OBJECT" if ($debug);
 			if ($self->expect == OBJECT) {
 				if (defined($self->{characters}) and length(my $string = $self->{characters})) {
@@ -250,11 +249,15 @@ sub start_element {
 		} elsif ($self->expect == COLLECTION) {
 			warn "-> expect COLLECTION" if ($debug);
 		} elsif ($self->expect == PREDICATE) {
+			my $ns		= $self->get_namespace( $prefix );
+			my $local	= $el->{LocalName};
+			my $uri		= join('', $ns, $local);
+			my $node	= $self->new_resource( $uri );
 			warn "-> expect PREDICATE" if ($debug);
 			
 			if ($node->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#li') {
 				my $id	= ++(${ $self }{seqs}[0]);
-				$node	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_' . $id );
+				$node	= $self->new_resource( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#_' . $id );
 			}
 			
 			push( @{ $self->{nodes} }, $node );
@@ -293,9 +296,16 @@ sub start_element {
 				}
 			} elsif (my $data = $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource'}) {
 				# stash the uri away so that we can use it when we get the end_element call for this predicate
-				my $uri	= RDF::Trine::Node::Resource->new( $data->{Value} );
+				my $uri	= $self->new_resource( $data->{Value} );
 				$self->parse_literal_property_attributes( $el, $uri );
 				$self->{'rdf:resource'}	= $uri;
+				$self->new_expect( OBJECT );
+				$self->{chars_ok}	= 1;
+			} elsif (my $data = $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}nodeID'}) {
+				# stash the bnode away so that we can use it when we get the end_element call for this predicate
+				my $bnode	= $self->new_bnode;
+				$self->parse_literal_property_attributes( $el, $uri );
+				$self->{'rdf:resource'}	= $bnode;	# the key 'rdf:resource' is a bit misused here, but both rdf:resource and rdf:nodeID use it for the same purpose, so...
 				$self->new_expect( OBJECT );
 				$self->{chars_ok}	= 1;
 			} elsif (my $node = $self->parse_literal_property_attributes( $el )) {
@@ -321,7 +331,15 @@ sub start_element {
 			my $attr	= $el->{Attributes};
 			
 			if (my $ns = $el->{NamespaceURI}) {
-				$self->{characters}	.= ' xmlns="' . $ns . '"';
+				my $abbr = $el->{Prefix};
+				unless ($self->{defined_literal_namespaces}{$abbr}{$ns}) {
+					$self->{characters}	.= ' xmlns';
+					if (length($abbr)) {
+						$self->{characters}	.= ':' . $abbr;
+					}
+					$self->{characters}	.= '="' . $ns . '"';
+					$self->{defined_literal_namespaces}{$abbr}{$ns}++;
+				}
 			}
 			if (%$attr) {
 				foreach my $k (keys %$attr) {
@@ -377,7 +395,7 @@ sub end_element {
 		$self->{chars_ok}	= 0;
 	} elsif ($expect == OBJECT or ($expect == LITERAL and $self->{literal_depth} == $self->{depth})) {
 		if (exists $self->{'rdf:resource'}) {
-			warn "-> predicate used rdf:resource\n" if ($debug);
+			warn "-> predicate used rdf:resource or rdf:nodeID\n" if ($debug);
 			my $uri	= delete $self->{'rdf:resource'};
 			my $nodes	= $self->{nodes};
 			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $uri );
@@ -398,6 +416,8 @@ sub end_element {
 			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $literal );
 			$self->assert( $st );
 			delete($self->{characters});
+			delete $self->{datatype};
+			delete $self->{defined_literal_namespaces};
 		}
 		
 		if ($self->expect == COLLECTION) {
@@ -446,7 +466,7 @@ sub parse_literal_property_attributes {
 	my $el		= shift;
 	my $node_id	= shift || $self->new_bnode;
 	my @keys	= grep { not(m<[{][}](xmlns|about)>) }
-					grep { not(m<[{]http://www.w3.org/1999/02/22-rdf-syntax-ns#[}](resource|about|ID|datatype)>) }
+					grep { not(m<[{]http://www.w3.org/1999/02/22-rdf-syntax-ns#[}](resource|about|ID|datatype|nodeID)>) }
 					grep { not(m<[{]http://www.w3.org/XML/1998/namespace[}](base|lang)>) }
 					keys %{ $el->{Attributes} };
 	my $asserted	= 0;
@@ -457,16 +477,18 @@ sub parse_literal_property_attributes {
 		my $ns		= $data->{NamespaceURI};
 		unless ($ns) {
 			my $prefix	= $data->{Prefix};
+			next unless (length($ns));
 			$ns			= $self->get_namespace( $prefix );
 		}
+		next if ($ns eq 'http://www.w3.org/XML/1998/namespace');
 		next if ($ns eq 'http://www.w3.org/2000/xmlns/');
 		my $local	= $data->{LocalName};
 		my $uri		= join('', $ns, $local);
 		my $value	= $data->{Value};
-		my $pred	= RDF::Trine::Node::Resource->new( $uri );
+		my $pred	= $self->new_resource( $uri );
 		if ($uri eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
 			# rdf:type is a special case -- it produces a resource instead of a literal
-			my $res		= RDF::Trine::Node::Resource->new( $value );
+			my $res		= $self->new_resource( $value );
 			my $st		= RDF::Trine::Statement->new( $node_id, $pred, $res );
 			$self->assert( $st );
 		} else {
@@ -496,8 +518,8 @@ sub assert {
 	if ($self->{sthandler}) {
 		$self->{sthandler}->( $st );
 		if (defined(my $id = $self->{reify_id}[0])) {
-			my ($base)	= $self->get_base;
-			my $stid	= RDF::Trine::Node::Resource->new( "#$id", $base );
+#			my ($base)	= $self->get_base;
+			my $stid	= $self->new_resource( "#$id" );
 			
 			my $tst	= RDF::Trine::Statement->new( $stid, $rdf->type, $rdf->Statement );
 			my $sst	= RDF::Trine::Statement->new( $stid, $rdf->subject, $st->subject );
@@ -514,13 +536,13 @@ sub node_id {
 	my $self	= shift;
 	my $el		= shift;
 	
-	my @base	= $self->get_base;
+#	my @base	= $self->get_base;
 	if ($el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'}) {
 		my $uri	= $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'}{Value};
-		return RDF::Trine::Node::Resource->new( $uri, @base );
+		return $self->new_resource( $uri );
 	} elsif ($el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}ID'}) {
 		my $uri	= $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}ID'}{Value};
-		return RDF::Trine::Node::Resource->new( '#' . $uri, @base );
+		return $self->new_resource( '#' . $uri );
 	} else {
 		return $self->new_bnode;
 	}
@@ -536,7 +558,7 @@ sub handle_scoped_values {
 		my $base	= '';
 		if (exists($el->{Attributes}{'{http://www.w3.org/XML/1998/namespace}base'})) {
 			my $uri	= $el->{Attributes}{'{http://www.w3.org/XML/1998/namespace}base'}{Value};
-			$base	= RDF::Trine::Node::Resource->new( $uri );
+			$base	= $self->new_resource( $uri );
 		}
 		$self->push_base( $base );
 	}
@@ -656,6 +678,14 @@ sub new_literal {
 		$args[0]	= $lang;
 	}
 	my $literal	= RDF::Trine::Node::Literal->new( $string, @args );
+}
+
+sub new_resource {
+	my $self	= shift;
+	my $uri		= shift;
+	my @base	= $self->get_base;
+	my $res		= RDF::Trine::Node::Resource->new( $uri, @base );
+	return $res;
 }
 
 1;
