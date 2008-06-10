@@ -18,6 +18,7 @@ use URI;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
+use Unicode::Escape;
 
 ######################################################################
 
@@ -124,15 +125,24 @@ sub sse {
 				return $qname;
 			}
 		}
-		my $string	= qq(<${uri}>);
+		
+		my $qname	= 0;
+		my $string	= qq(${uri});
 		foreach my $n (keys %$ns) {
 			if (substr($uri, 0, length($ns->{ $n })) eq $ns->{ $n }) {
 				$string	= join(':', $n, substr($uri, length($ns->{ $n })));
+				$qname	= 1;
 				last;
 			}
 		}
 		
-		return $string;
+		my $escaped	= Unicode::Escape::escape( $string );
+		$escaped	=~ s/\\u([0-9a-fA-F]{4})/"\\u" . uc($1)/ge;
+		if ($qname) {
+			return $escaped;
+		} else {
+			return '<' . $escaped . '>';
+		}
 	}
 }
 
