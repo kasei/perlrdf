@@ -221,17 +221,17 @@ sub compare {
 	my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
 	$file		=~ s/[.]rdf$/.nt/;
 	open( my $fh, '<', $file );
-	my $got		= join("\n", sort split(/\n/, $nt));
-	my $expect	= join("\n", sort grep { not(m/^#/ or m/^\s*$/) } map { my $l = $_; $l =~ s/\r?\n//; $l } <$fh>);
-	
-	### XXX HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-	for ($got, $expect) {
-		s/_:[a-zA-Z0-9]+/_:BLANK/gms;
-	}
-	
-	
+	my $got		= join("\n", sort map { anon($_) } split(/\n/, $nt));
+	my $expect	= join("\n", sort map { anon($_) } grep { not(m/^#/ or m/^\s*$/) } map { my $l = $_; $l =~ s/\r?\n//; $l } <$fh>);
 	
 	chomp($expect);
 	chomp($got);
 	is( $got, $expect, "expected triples: $name" );
+}
+
+	### XXX HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
+sub anon {
+	my $string	= shift;
+	$string	=~ s/_:[a-zA-Z0-9]+/_:BLANK/gms;
+	return $string;
 }

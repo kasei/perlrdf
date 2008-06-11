@@ -24,6 +24,6 @@ _:bar <http://www.w3.org/1999/02/22-rdf-syntax-ns#_4> _:res2 .
 <http://www.w3.org/2000/10/rdf-tests/rdfcore/rdf-containers-syntax-vs-schema/test004.rdf#e4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> .
 <http://www.w3.org/2000/10/rdf-tests/rdfcore/rdf-containers-syntax-vs-schema/test004.rdf#e4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> _:bar .
 <http://www.w3.org/2000/10/rdf-tests/rdfcore/rdf-containers-syntax-vs-schema/test004.rdf#e4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate> <http://www.w3.org/1999/02/22-rdf-syntax-ns#_4> .
-<http://www.w3.org/2000/10/rdf-tests/rdfcore/rdf-containers-syntax-vs-schema/test004.rdf#e4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> _:res2 . 
+<http://www.w3.org/2000/10/rdf-tests/rdfcore/rdf-containers-syntax-vs-schema/test004.rdf#e4> <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> _:res2 .
 _:res2 <http://foo/bar> "foobar" .
 

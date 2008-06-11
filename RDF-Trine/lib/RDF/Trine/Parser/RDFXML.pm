@@ -161,7 +161,7 @@ sub new {
 					chars_ok		=> 0,
 				}, $class );
 	if (my $base = $args{ base }) {
-		unshift( @{ $self->{base} }, $base );
+		$self->push_base( $base );
 	}
 	return $self;
 }
@@ -246,6 +246,7 @@ sub start_element {
 			$self->parse_literal_property_attributes( $el, $node_id );
 			$self->new_expect( PREDICATE );
 			unshift(@{ $self->{seqs} }, 0);
+			warn 'unshifting seq counter: ' . Dumper($self->{seqs}) if ($debug);
 		} elsif ($self->expect == COLLECTION) {
 			warn "-> expect COLLECTION" if ($debug);
 		} elsif ($self->expect == PREDICATE) {
@@ -301,9 +302,10 @@ sub start_element {
 				$self->{'rdf:resource'}	= $uri;
 				$self->new_expect( OBJECT );
 				$self->{chars_ok}	= 1;
-			} elsif (my $data = $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}nodeID'}) {
+			} elsif (my $ndata = $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}nodeID'}) {
+				my $node_name	= $ndata->{Value};
 				# stash the bnode away so that we can use it when we get the end_element call for this predicate
-				my $bnode	= $self->new_bnode;
+				my $bnode	= $self->get_named_bnode( $node_name );
 				$self->parse_literal_property_attributes( $el, $uri );
 				$self->{'rdf:resource'}	= $bnode;	# the key 'rdf:resource' is a bit misused here, but both rdf:resource and rdf:nodeID use it for the same purpose, so...
 				$self->new_expect( OBJECT );
@@ -385,11 +387,13 @@ sub end_element {
 		shift(@{ $self->{reify_id} });
 	} elsif ($expect == PREDICATE) {
 		warn "-> expect PREDICATE" if ($debug);
-		shift(@{ $self->{seqs} });
 		$self->old_expect;
 		if ($self->expect == PREDICATE) {
 			# we're closing a parseType=Resource block, so take off the extra implicit node.
 			pop( @{ $self->{nodes} } );
+		} else {
+			warn 'shifting seq counter: ' . Dumper($self->{seqs}) if ($debug);
+			shift(@{ $self->{seqs} });
 		}
 		$cleanup	= 1;
 		$self->{chars_ok}	= 0;
@@ -440,6 +444,8 @@ sub end_element {
 		}
 		$self->{characters}	.= '</' . $tag . '>';
 		$cleanup	= 0;
+	} else {
+		die "how did we get here?";
 	}
 	
 	if ($cleanup) {
@@ -518,7 +524,6 @@ sub assert {
 	if ($self->{sthandler}) {
 		$self->{sthandler}->( $st );
 		if (defined(my $id = $self->{reify_id}[0])) {
-#			my ($base)	= $self->get_base;
 			my $stid	= $self->new_resource( "#$id" );
 			
 			my $tst	= RDF::Trine::Statement->new( $stid, $rdf->type, $rdf->Statement );
@@ -528,6 +533,7 @@ sub assert {
 			foreach ($tst, $sst, $pst, $ost) {
 				$self->{sthandler}->( $_ );
 			}
+			$self->{reify_id}[0]	= undef;	# now that we've used this reify ID, get rid of it (because we don't want it used again)
 		}
 	}
 }
@@ -536,13 +542,15 @@ sub node_id {
 	my $self	= shift;
 	my $el		= shift;
 	
-#	my @base	= $self->get_base;
 	if ($el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'}) {
 		my $uri	= $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}about'}{Value};
 		return $self->new_resource( $uri );
 	} elsif ($el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}ID'}) {
 		my $uri	= $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}ID'}{Value};
 		return $self->new_resource( '#' . $uri );
+	} elsif ($el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}nodeID'}) {
+		my $name	= $el->{Attributes}{'{http://www.w3.org/1999/02/22-rdf-syntax-ns#}nodeID'}{Value};
+		return $self->get_named_bnode( $name );
 	} else {
 		return $self->new_bnode;
 	}
@@ -593,6 +601,11 @@ sub handle_scoped_values {
 sub push_base {
 	my $self	= shift;
 	my $base	= shift;
+	if ($base) {
+		my $uri		= new URI ($base->uri_value );
+		$uri->fragment( undef );
+		$base	= RDF::Trine::Node::Resource->new( "$uri" );
+	}
 	unshift( @{ $self->{base} }, $base );
 }
 
@@ -655,7 +668,7 @@ sub get_namespace {
 			return $uri;
 		}
 	}
-	Carp::confess "unknown namespace: $prefix";
+	throw RDF::Trine::Parser::Error::ValueError -text => "Unknown namespace: $prefix";
 }
 
 sub new_bnode {
@@ -686,6 +699,12 @@ sub new_resource {
 	my @base	= $self->get_base;
 	my $res		= RDF::Trine::Node::Resource->new( $uri, @base );
 	return $res;
+}
+
+sub get_named_bnode {
+	my $self	= shift;
+	my $name	= shift;
+	return ($self->{named_bnodes}{ $name } ||= $self->new_bnode);
 }
 
 1;
