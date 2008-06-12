@@ -226,7 +226,19 @@ sub start_element {
 				delete($self->{characters});	# get rid of any whitespace we saw before the element
 			}
 			my $node_id	= $self->node_id( $el );
-			if ($self->expect == OBJECT) {
+			
+			if ($self->peek_expect == COLLECTION) {
+				my $list	= $self->new_bnode;
+				warn "adding an OBJECT to a COLLECTION " . $list->sse . "\n" if ($debug);
+				if (my $last = $self->{ collection_last }[0]) {
+					my $st		= RDF::Trine::Statement->new( $last, $rdf->rest, $list );
+					$self->assert( $st );
+				}
+				$self->{ collection_last }[0]	= $list;
+				my $st		= RDF::Trine::Statement->new( $list, $rdf->first, $node_id );
+				$self->assert( $st );
+				$self->{ collection_head }[0]	||= $list;
+			} elsif ($self->expect == OBJECT) {
 				my $nodes	= $self->{nodes};
 				my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $node_id );
 				$self->assert( $st );
@@ -249,6 +261,7 @@ sub start_element {
 			warn 'unshifting seq counter: ' . Dumper($self->{seqs}) if ($debug);
 		} elsif ($self->expect == COLLECTION) {
 			warn "-> expect COLLECTION" if ($debug);
+			die;
 		} elsif ($self->expect == PREDICATE) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};
@@ -291,7 +304,9 @@ sub start_element {
 					$self->new_expect( LITERAL );
 				} elsif ($pt->{Value} eq 'Collection') {
 					my $depth				= $self->{depth};
-					unshift( @{ $self->{collections} }, undef );
+					
+					unshift( @{ $self->{ collection_head } }, undef );
+					unshift( @{ $self->{ collection_last } }, undef );
 					$self->new_expect( COLLECTION );
 					$self->new_expect( OBJECT );
 				}
@@ -425,7 +440,24 @@ sub end_element {
 		}
 		
 		if ($self->expect == COLLECTION) {
-			$self->old_expect;	# get out of the collection
+			# We were expecting an object, but got an end_element instead.
+			# after poping the OBJECT expectation, we see we were expecting objects in a COLLECTION.
+			# so we're ending the COLLECTION here:
+			$self->old_expect;
+			my $nodes	= $self->{nodes};
+			my $head	= $self->{ collection_head }[0] || $rdf->nil;
+			my @nodes	= (@{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $head);
+			my $st		= RDF::Trine::Statement->new( @nodes );
+			$self->assert( $st );
+			
+			if (my $last = $self->{ collection_last }[0]) {
+				my @nodes	= ( $last, $rdf->rest, $rdf->nil );
+				my $st		= RDF::Trine::Statement->new( @nodes );
+				$self->assert( $st );
+			}
+			
+			shift( @{ $self->{ collection_last } } );
+			shift( @{ $self->{ collection_head } } );
 		}
 		
 		$cleanup	= 1;
