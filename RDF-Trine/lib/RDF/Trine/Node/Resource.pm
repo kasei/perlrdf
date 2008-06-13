@@ -62,7 +62,6 @@ sub new {
 		### the URI into an absolute URI, and then replace the breadcrumbs with
 		### the Unicode.
 		
-		
 		my $abs			= URI->new_abs( $uri, $base->uri_value );
 		$uri			= $abs->as_string;
 	}

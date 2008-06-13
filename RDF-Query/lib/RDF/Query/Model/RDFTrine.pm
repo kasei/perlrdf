@@ -258,24 +258,6 @@ sub add_string {
 	my $graph	= RDF::Query::Node::Resource->new( $base );
 	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
 	
-# 	our $USE_RAPPER;
-# 	if ($USE_RAPPER) {
-# 		if ($data !~ m/<rdf:RDF/ms) {
-# 			my ($fh, $filename) = tempfile();
-# 			print $fh $data;
-# 			close($fh);
-# 			$data	= do {
-# 								open(my $fh, '-|', "rapper -q -i turtle -o rdfxml $filename") or die $!;
-# 								local($/)	= undef;
-# 								my $data	= <$fh>;
-# 								my $c		= $self->{counter}++;
-# 								$data		=~ s/nodeID="([^"]+)"/nodeID="r${c}r$1"/smg;
-# 								$data;
-# 							};
-# 			unlink($filename);
-# 		}
-# 	}
-	
 	my $handler	= ($named)
 				? sub { my $st	= shift; $model->add_statement( $st, $graph ) }
 				: sub { my $st	= shift; $model->add_statement( $st ) };
@@ -283,19 +265,6 @@ sub add_string {
 	if ($data =~ m/<rdf:RDF/ms) {
 		my $parser	= RDF::Trine::Parser->new('rdfxml');
 		$parser->parse( $base, $data, $handler );
-# 		
-# 		require RDF::Redland;
-# 		my $uri		= RDF::Redland::URI->new( $base );
-# 		my $parser	= RDF::Redland::Parser->new($format);
-# 		my $stream	= $parser->parse_string_as_stream($data, $uri);
-# 		while ($stream and !$stream->end) {
-# 			my $statement	= $stream->current;
-# 			my $stmt		= ($named)
-# 							? RDF::Query::Algebra::Quad->from_redland( $statement, $graph )
-# 							: RDF::Query::Algebra::Triple->from_redland( $statement );
-# 			$model->add_statement( $stmt );
-# 			$stream->next;
-# 		}
 	} else {
 		my $parser	= RDF::Trine::Parser->new('turtle');
 		$parser->parse( $base, $data, $handler );
