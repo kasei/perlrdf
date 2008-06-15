@@ -49,6 +49,18 @@ BEGIN {
 =cut
 
 
+=item C<new ( $query, $baseuri, $languri, $lang )>
+
+Returns a new RDF::Query::Federate object for the specified C<$query>.
+The query language defaults to SPARQLP, but may be set specifically by
+specifying either C<$languri> or C<$lang>, whose acceptable values are:
+
+  $lang: 'rdql', 'sparql', 'tsparql', or 'sparqlp'
+
+  $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
+
+=cut
+
 sub new {
 	my $class	= shift;
 	my $query	= shift;

@@ -147,6 +147,7 @@ specifying either C<$languri> or C<$lang>, whose acceptable values are:
   $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
 
 =cut
+
 sub new {
 	my $class	= shift;
 	my ($query, $baseuri, $languri, $lang, %options)	= @_;
