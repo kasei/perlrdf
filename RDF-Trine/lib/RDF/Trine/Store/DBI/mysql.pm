@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.107
+This document describes RDF::Trine::Store::DBI::mysql version 0.108
 
 
 =head1 SYNOPSIS
@@ -46,7 +46,7 @@ use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 
-our $VERSION	= "0.107";
+our $VERSION	= "0.108";
 use constant DEBUG	=> 0;
 our $debug		= DEBUG;
 

@@ -39,7 +39,7 @@ use base qw(RDF::Trine::Iterator);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= 0.107;
+	$VERSION	= 0.108;
 }
 
 =item C<new ( \@results, \@names, %args )>

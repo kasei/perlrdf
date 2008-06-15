@@ -4,7 +4,7 @@ RDF::Trine::Parser::Error - Error classes for RDF::Trine::Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Error version 0.107
+This document describes RDF::Trine::Parser::Error version 0.108
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ use base qw(Error);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= 0.107;
+	$VERSION	= 0.108;
 }
 
 ######################################################################

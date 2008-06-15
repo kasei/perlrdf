@@ -32,7 +32,7 @@ our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$VERSION	= 0.107;
+	$VERSION	= 0.108;
 }
 
 =item C<new ( \@results, %args )>

@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.107
+This document describes RDF::Trine::Parser version 0.108
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ no warnings 'redefine';
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= 0.107;
+	$VERSION	= 0.108;
 }
 
 use RDF::Trine::Parser::Turtle;

@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.107
+This document describes RDF::Trine version 0.108
 
 =head1 SYNOPSIS
 
