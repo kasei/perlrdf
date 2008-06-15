@@ -18,7 +18,6 @@ use URI;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
-use Unicode::Escape;
 
 ######################################################################
 
@@ -135,8 +134,7 @@ sub sse {
 			}
 		}
 		
-		my $escaped	= Unicode::Escape::escape( $string );
-		$escaped	=~ s/\\u([0-9a-fA-F]{4})/"\\u" . uc($1)/ge;
+		my $escaped	= $self->_unicode_escape( $string );
 		if ($qname) {
 			return $escaped;
 		} else {

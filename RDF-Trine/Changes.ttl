@@ -9,6 +9,56 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+<http://kasei.us/code/files/RDF-Trine-0.108.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.107.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.108" ;
+                        doap:created      "2008-06-15" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added NTriples serializer module." ;
+                        asc:addition    "Added POD to RDF::Trine::Promise." ;
+                        asc:addition    "Added XML::Parser to list of required modules." ;
+                        asc:addition    "Added a peek method to ::Iterator to support execution deferment like in ::Algebra::Service." ;
+                        asc:addition    "Added RDF::Trine::Promise for general computation deferment." ;
+                        asc:addition    "Added print_xml method to RDF::Trine::Iterator classes." ;
+                        asc:addition    "Added support for Postgres storage." ;
+                        asc:addition    "Replaced RDF::Core-based RDF/XML parser with a new XML::SAX based parser." ;
+                        asc:update      "Removed now unused redland-based RDF/XML test data." ;
+                        asc:update      "Removed unused redland fallback code from RDF::Query::Model::RDFTrine." ;
+                        asc:update      "Removed redland-based RDF/XML parser tests." ;
+                        asc:update      "Updated Turtle grammar to accept uppercase language tags." ;
+                        asc:update      "Fixed COLLECTION support in RDF/XML parser." ;
+                        asc:update      "Fixed RDF/XML parser for nodeID, sequence, reification, and base URI handling." ;
+                        asc:update      "Fixed POD in NTriples serializer." ;
+                        asc:update      "Fixed RDF/XML parser to handle nodeID, arbitrary xml attributes, parseType=\"Literal\" serialization, and base URI handling." ;
+                        asc:update      "Normlized expected NTriples data in W3C RDF/XML test files." ;
+                        asc:update      "Added unicode escaping to Literal and Resource sse serialization." ;
+                        asc:update      "Added W3C RDF/XML data and test script." ;
+                        asc:update      "Fixes to deferring XML serialization for SPARQL bindings." ;
+                        asc:update      "Fixed bug in delaying XML serialization for identity hints header computation." ;
+                        asc:update      "Fixed extra data following xml query results." ;
+                        asc:update      "Fixed strict refs bug in print_xml in iterator classes." ;
+                        asc:update      "Updated tests that started failing after the previous commit (affecting SQL-compilation)." ;
+                        asc:update      "Allow equality test and disjunction filters in patterns that can be compiled to SQL." ;
+                        asc:update      "Fix bug in SQL compilation when restricting left-joins to specific node types (based on functions like isIRI)." ;
+                        asc:update      "Added support to the DBI store for filters for equality tests." ;
+                        asc:update      "Mysql store schema now adds indexes." ;
+                        asc:update      "Improved use of temporary RDF::Trine stores in RDF::Query tests." ;
+                        asc:update      "DBI temporary stores now use an in-memory SQLite database." ;
+                        asc:update      "Fixed bug in RDF::Trine::Store::DBI::mysql (calling _mysql_hash() without qualifying it in the superclass)." ;
+                        asc:update      "Fixed variable ordering bug in UNION to SQL handling by forcing a sorted projection order." ;
+                        asc:update      "Added support to compile normalized UNION (can only be the top-level node or a child of another UNION) patterns to SQL." ;
+                        asc:update      "Made SQL more standards compliant." ;
+                        asc:update      "RDF::Trine::Store::DBI now auto-upgrades to mysql and postgres classes." ;
+                        asc:update      "Fixed unicode escaping by replacing Unicode::Escape calls to hand-rolled code in RDF::Trine::Node." ;
+                        asc:update      "RDF/XML parser now accept more than one top-level resource." ;
+                        asc:update      "RDF/XML parser now accepts URI objects as base uri (not just RDF::Trine::Node::Resource objects)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.107.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.106.tar.gz> ;

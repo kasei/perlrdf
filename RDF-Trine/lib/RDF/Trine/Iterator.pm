@@ -199,6 +199,7 @@ sub from_handle_incremental {
 	my $class		= shift;
 	my $handle		= shift;
 	my $chunk_size	= shift || 1024;
+	my $prelude		= shift || '';
 	
 	eval "
 		require XML::SAX::Expat;
@@ -211,10 +212,22 @@ sub from_handle_incremental {
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
 	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
 	$p->parse_start;
+
+	my $dfh;
+	if ($debug) {
+		open( $dfh, '>>', sprintf('/tmp/recv-%d.xml', ++$::COUNT) ) or die $!;
+		print {$dfh} "########################################################\n";
+	}
+	
+	if (length($prelude)) {
+		print {$dfh} $prelude if ($debug);
+		$p->parse_more( $prelude );
+	}
 	
 	until ($handler->has_head) {
 		my $buffer;
-		$handle->recv($buffer, $chunk_size);
+		$handle->sysread($buffer, $chunk_size);
+		print {$dfh} $buffer if ($debug);
 		if (my $size = length($buffer)) {
 			warn "read $size bytes\n" if ($debug);
 			$p->parse_more( $buffer );
@@ -235,7 +248,8 @@ sub from_handle_incremental {
 		my $data;
 		while (not($handler->has_end) and not($data = $handler->pull_result)) {
 			my $buffer;
-			$handle->recv($buffer, $chunk_size);
+			$handle->sysread($buffer, $chunk_size);
+			print {$dfh} $buffer if ($debug);
 			if (my $size = length($buffer)) {
 				warn "read $size bytes\n" if ($debug);
 				$p->parse_more( $buffer );

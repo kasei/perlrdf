@@ -137,6 +137,7 @@ use warnings;
 use base qw(XML::SAX::Base);
 
 use Data::Dumper;
+use Scalar::Util qw(blessed);
 use RDF::Trine::Namespace qw(rdf);
 
 use constant	NIL			=> 0x00;
@@ -211,6 +212,11 @@ sub start_element {
 	} else {
 		my $prefix	= $el->{Prefix};
 		my $expect	= $self->expect;
+		
+		if ($expect == NIL) {
+			$self->new_expect( $expect = SUBJECT );
+		}
+		
 		if ($expect == SUBJECT or $expect == OBJECT) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};
@@ -634,7 +640,7 @@ sub push_base {
 	my $self	= shift;
 	my $base	= shift;
 	if ($base) {
-		my $uri		= new URI ($base->uri_value );
+		my $uri		= (blessed($base) and $base->isa('URI')) ? $base : new URI ($base->uri_value );
 		$uri->fragment( undef );
 		$base	= RDF::Trine::Node::Resource->new( "$uri" );
 	}

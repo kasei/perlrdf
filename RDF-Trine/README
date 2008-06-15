@@ -50,6 +50,47 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.108 (2008-06-15)
+
+     * Added NTriples serializer module.
+     * Added POD to RDF::Trine::Promise.
+     * Added XML::Parser to list of required modules.
+     * Added a peek method to ::Iterator to support execution deferment like in ::Algebra::Service.
+     * Added RDF::Trine::Promise for general computation deferment.
+     * Added print_xml method to RDF::Trine::Iterator classes.
+     * Added support for Postgres storage.
+     * Replaced RDF::Core-based RDF/XML parser with a new XML::SAX based parser.
+     * Removed now unused redland-based RDF/XML test data.
+     * Removed unused redland fallback code from RDF::Query::Model::RDFTrine.
+     * Removed redland-based RDF/XML parser tests.
+     * Updated Turtle grammar to accept uppercase language tags.
+     * Fixed COLLECTION support in RDF/XML parser.
+     * Fixed RDF/XML parser for nodeID, sequence, reification, and base URI handling.
+     * Fixed POD in NTriples serializer.
+     * Fixed RDF/XML parser to handle nodeID, arbitrary xml attributes, parseType="Literal" serialization, and base URI handling.
+     * Normlized expected NTriples data in W3C RDF/XML test files.
+     * Added unicode escaping to Literal and Resource sse serialization.
+     * Added W3C RDF/XML data and test script.
+     * Fixes to deferring XML serialization for SPARQL bindings.
+     * Fixed bug in delaying XML serialization for identity hints header computation.
+     * Fixed extra data following xml query results.
+     * Fixed strict refs bug in print_xml in iterator classes.
+     * Updated tests that started failing after the previous commit (affecting SQL-compilation).
+     * Allow equality test and disjunction filters in patterns that can be compiled to SQL.
+     * Fix bug in SQL compilation when restricting left-joins to specific node types (based on functions like isIRI).
+     * Added support to the DBI store for filters for equality tests.
+     * Mysql store schema now adds indexes.
+     * Improved use of temporary RDF::Trine stores in RDF::Query tests.
+     * DBI temporary stores now use an in-memory SQLite database.
+     * Fixed bug in RDF::Trine::Store::DBI::mysql (calling _mysql_hash() without qualifying it in the superclass).
+     * Fixed variable ordering bug in UNION to SQL handling by forcing a sorted projection order.
+     * Added support to compile normalized UNION (can only be the top-level node or a child of another UNION) patterns to SQL.
+     * Made SQL more standards compliant.
+     * RDF::Trine::Store::DBI now auto-upgrades to mysql and postgres classes.
+     * Fixed unicode escaping by replacing Unicode::Escape calls to hand-rolled code in RDF::Trine::Node.
+     * RDF/XML parser now accept more than one top-level resource.
+     * RDF/XML parser now accepts URI objects as base uri (not just RDF::Trine::Node::Resource objects).
+
   Version 0.107 (2008-04-25)
 
      * Added Digest::SHA1 as a requirement for RDF::Trine.

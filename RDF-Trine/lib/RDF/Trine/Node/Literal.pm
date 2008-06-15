@@ -14,7 +14,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
-use Unicode::Escape;
 use RDF::Trine::Error;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -111,8 +110,7 @@ sub sse {
 	my $literal	= $self->literal_value;
 	$literal	=~ s/\\/\\\\/g;
 	
-	my $escaped	= Unicode::Escape::escape( $literal );
-	$escaped	=~ s/\\u([0-9a-fA-F]{4})/"\\u" . uc($1)/ge;
+	my $escaped	= $self->_unicode_escape( $literal );
 	$literal	= $escaped;
 	
 	$literal	=~ s/"/\\"/g;
