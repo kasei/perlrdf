@@ -18,7 +18,7 @@ use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap);
+use RDF::Trine::Iterator qw(smap swatch);
 
 ######################################################################
 
@@ -319,7 +319,8 @@ sub execute {
 		while (@streams > 1) {
 			my $a	= shift(@streams);
 			my $b	= shift(@streams);
-			unshift(@streams, RDF::Trine::Iterator::Bindings->join_streams( $a, $b ));
+			my $stream	= RDF::Trine::Iterator::Bindings->join_streams( $a, $b );
+			unshift(@streams, $stream);
 		}
 	} else {
 		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));

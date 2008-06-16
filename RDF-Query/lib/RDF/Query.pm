@@ -292,7 +292,22 @@ sub execute {
 	warn "executing the graph pattern" if ($debug);
 	
 	my $options	= $parsed->{options} || {};
-	$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
+	if (my $b = $self->{parsed}{bindings}) {
+		my $vars	= $b->{vars};
+		my @names	= map { $_->name } @{ $vars };
+		while (my $values = shift(@{ $b->{terms} })) {
+			my %local_bound	= %bound;
+			@local_bound{ @names }	= @{ $values };
+			my $s	= $pattern->execute( $self, $bridge, \%local_bound, undef, %$options );
+			if ($stream) {
+				$stream	= $stream->concat( $s );
+			} else {
+				$stream	= $s;
+			}
+		}
+	} else {
+		$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
+	}
 	
 	warn "performing projection" if ($debug);
 	my $expr	= 0;

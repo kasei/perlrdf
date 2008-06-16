@@ -268,7 +268,15 @@ sub execute {
 		my $r	= $bindings->next;
 		return $r;
 	};
-	return RDF::Trine::Iterator::Bindings->new( $sub, [grep defined, @vars], bridge => $bridge );
+	
+	# add the pre-bound variables to the var list so that the stream has the correct binding_names.
+	my %binding_names;
+	foreach my $n (@vars, (keys %$bound)) {
+		if (defined($n)) {
+			$binding_names{ $n }	= 1;
+		}
+	}
+	return RDF::Trine::Iterator::Bindings->new( $sub, [keys %binding_names], bridge => $bridge );
 }
 
 

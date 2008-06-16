@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 164;
+use Test::More tests => 166;
 
 use YAML;
 use Data::Dumper;
@@ -5623,3 +5623,107 @@ __END__
         - count
       - !!perl/array:RDF::Query::Node::Variable
         - COUNT(DISTINCT ?nick)
+---
+- 'FeDeRate BINDINGS (one var)'
+- |
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?p
+  WHERE {
+  	?p a foaf:Person ; foaf:name ?name .
+  }
+  BINDINGS ?name { ("Gregory Todd Williams") ("Gary Peck") }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - &1 !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/Person
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - *1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/name
+          - !!perl/array:RDF::Query::Node::Variable
+            - name
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - p
+  bindings:
+    vars:
+      - !!perl/array:RDF::Query::Node::Variable
+        - name
+    terms:
+      -
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - Gregory Todd Williams
+      -
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - Gary Peck
+---
+- 'FeDeRate BINDINGS (two var)'
+- |
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?p
+  WHERE {
+  	?p a foaf:Person ; foaf:name ?name ; foaf:mbox_sha1sum ?email .
+  }
+  BINDINGS ?name ?email { ("Gregory Todd Williams" "2057969209f1dfdad832de387cf13e6ff8c93b12") }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - &1 !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/Person
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - *1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/name
+          - !!perl/array:RDF::Query::Node::Variable
+            - name
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - *1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/mbox_sha1sum
+          - !!perl/array:RDF::Query::Node::Variable
+            - email
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - p
+  bindings:
+    terms:
+      -
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - Gregory Todd Williams
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - 2057969209f1dfdad832de387cf13e6ff8c93b12
+    vars:
+      - !!perl/array:RDF::Query::Node::Variable
+        - name
+      - !!perl/array:RDF::Query::Node::Variable
+        - email

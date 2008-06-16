@@ -232,6 +232,33 @@ sub _WhereClause {
 	$self->SUPER::_WhereClause;
 	
 	$self->__consume_ws_opt;
+	if ($self->_test( qr/BINDINGS/i )) {
+		$self->_eat( qr/BINDINGS/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->_test(qr/[\$?]/)) {
+			$self->_Var;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		while ($self->_Binding_test) {
+			$self->_Binding;
+			$self->__consume_ws_opt;
+		}
+		$self->_eat('}');
+		
+		$self->{build}{bindings}{vars}	= \@vars;
+		$self->__consume_ws_opt;
+	}
+
+	$self->__consume_ws_opt;
 	if ($self->_test( qr/GROUP\s+BY/i )) {
 		$self->_eat( qr/GROUP\s+BY/i );
 		
@@ -248,6 +275,31 @@ sub _WhereClause {
 		$self->{build}{__group_by}	= \@vars;
 		$self->__consume_ws_opt;
 	}
+}
+
+sub _Binding_test {
+	my $self	= shift;
+	return $self->_test( '(' );
+}
+
+sub _Binding {
+	my $self	= shift;
+	$self->_eat( '(' );
+	$self->__consume_ws_opt;
+	
+	my @terms;
+	$self->__consume_ws_opt;
+	$self->_VarOrTerm;
+	push( @terms, splice(@{ $self->{stack} }));
+	$self->__consume_ws_opt;
+	while ($self->_VarOrTerm_test) {
+		$self->_VarOrTerm;
+		push( @terms, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	push( @{ $self->{build}{bindings}{terms} }, \@terms );
+	$self->__consume_ws_opt;
+	$self->_eat( ')' );
 }
 
 sub __GroupByVar_test {
