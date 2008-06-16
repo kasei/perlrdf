@@ -188,6 +188,7 @@ sub execute {
 						$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
 					} (keys %$bindings);
 		warn "[$modeldebug]" . Dumper(\%cast) if ($debug);
+		@cast{ keys %$bound }	= values %$bound;
 		return \%cast;
 	} $model->get_pattern( $pattern, undef, @args );
 }
