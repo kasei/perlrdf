@@ -907,7 +907,11 @@ sub _typed {
 	my $datatype	= $type->uri_value;
 	
 	if ($datatype eq "${xsd}integer") {
+		my $plus	= ($value =~ /^[+]/);
 		$value = int($value);
+		if ($plus) {
+			$value	= '+' . $value;
+		}
 	} elsif ($datatype eq "${xsd}double") {
 	  $value = $value;
 	} elsif ($datatype eq "${xsd}decimal") {
