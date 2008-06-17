@@ -14,9 +14,11 @@ if ($@) {
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} else {
-	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS to run these tests.';
+} elsif (not $ENV{RDFQUERY_NETWORK_TESTS}) {
+	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
 	return;
+} else {
+	plan tests => $tests;
 }
 
 use RDF::Query;
