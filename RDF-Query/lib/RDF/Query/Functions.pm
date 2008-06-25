@@ -756,7 +756,7 @@ BEGIN {
 			$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&_BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
 		}
 	} );
-	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom"}	= sub {
+	$RDF::Query::functions{ $BLOOM_URL }	= sub {
 		my $query	= shift;
 		my $bridge	= shift;
 		
@@ -776,7 +776,8 @@ BEGIN {
 			$query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter }	= $bloom;
 		}
 		
-		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0 );
+		my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
+		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
 		foreach my $string (@names) {
 			warn "checking bloom filter for --> '$string'\n" if ($debug);
 			my $ok	= $bloom->check( $string );

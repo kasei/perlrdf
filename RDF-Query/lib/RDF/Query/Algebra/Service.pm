@@ -283,7 +283,6 @@ sub execute {
 	
 	my $ua			= $query->useragent;
 	
-	
 	# we jump through some hoops here to defer the actual execution unti the first
 	# result is pulled from the stream. this has a slight speed hit in general,
 	# but will have a huge benefit when, for example, two service calls are
@@ -328,6 +327,7 @@ sub execute {
 				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 			}
 			my $content	= $resp->content;
+			warn '>>>>>>>>' . $content . '<<<<<<<<<<<<<' if ($debug);
 			$stream		= RDF::Trine::Iterator->from_string( $content );
 			
 			if (my $e = $stream->extra_result_data) {
@@ -405,47 +405,54 @@ sub _names_for_node {
 	my $seen	= shift || {};
 	return if ($depth > 2);
 	
-	warn "  " x $depth . "name for node " . $node->as_string . "...\n" if ($debug);
+	my $nodestring	= $node->as_string;
 	
-	my @names;
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	unless ($node->isa('RDF::Trine::Node::Literal')) {
-		{
-			our $sa		||= $parser->parse_pattern( '{ ?n <http://www.w3.org/2002/07/owl#sameAs> ?o }' );
-			my $iter	= $sa->execute( $query, $bridge, { n => $node } );
+	if (not exists($seen->{ $nodestring })) {
+		warn "  " x $depth . "name for node " . $nodestring . "...\n" if ($debug);
+		my @names;
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		unless ($node->isa('RDF::Trine::Node::Literal')) {
+			{
+				our $sa		||= $parser->parse_pattern( '{ ?n <http://www.w3.org/2002/07/owl#sameAs> ?o }' );
+				my $iter	= $sa->execute( $query, $bridge, { n => $node } );
+				
+				while (my $row = $iter->next) {
+					my ($n, $o)	= @{ $row }{qw(n o)};
+					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '=', $seen ));
+				}
+			}
 			
-			while (my $row = $iter->next) {
-				my ($n, $o)	= @{ $row }{qw(n o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '=' ));
+			{
+				our $fp		||= $parser->parse_pattern( '{ ?o ?p ?n . ?p a <http://www.w3.org/2002/07/owl#FunctionalProperty> }' );
+				my $iter	= $fp->execute( $query, $bridge, { n => $node } );
+				
+				while (my $row = $iter->next) {
+					my ($p, $o)	= @{ $row }{qw(p o)};
+					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '^' . $p->sse, $seen ));
+				}
+			}
+			
+			{
+				our $ifp	||= $parser->parse_pattern( '{ ?n ?p ?o . ?p a <http://www.w3.org/2002/07/owl#InverseFunctionalProperty> }' );
+				my $iter	= $ifp->execute( $query, $bridge, { n => $node } );
+				
+				while (my $row = $iter->next) {
+					my ($p, $o)	= @{ $row }{qw(p o)};
+					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '!' . $p->sse, $seen ));
+				}
 			}
 		}
 		
-		{
-			our $fp		||= $parser->parse_pattern( '{ ?o ?p ?n . ?p a <http://www.w3.org/2002/07/owl#FunctionalProperty> }' );
-			my $iter	= $fp->execute( $query, $bridge, { n => $node } );
-			
-			while (my $row = $iter->next) {
-				my ($p, $o)	= @{ $row }{qw(p o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '^' . $p->sse ));
-			}
+		unless ($node->isa('RDF::Trine::Node::Blank')) {
+			$paths->{ $pre }++;
+			my $string		= $pre . $nodestring;
+			push(@names, $string);
 		}
 		
-		{
-			our $ifp	||= $parser->parse_pattern( '{ ?n ?p ?o . ?p a <http://www.w3.org/2002/07/owl#InverseFunctionalProperty> }' );
-			my $iter	= $ifp->execute( $query, $bridge, { n => $node } );
-			
-			while (my $row = $iter->next) {
-				my ($p, $o)	= @{ $row }{qw(p o)};
-				push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '!' . $p->sse ));
-			}
-		}
+		@{ $seen->{ $nodestring } }{ @names }	= @names;
 	}
 	
-	unless ($node->isa('RDF::Trine::Node::Blank')) {
-		my $string	= $pre . $node->as_string;
-		$paths->{ $pre }++;
-		push(@names, $string);
-	}
+	my @names	= values %{ $seen->{ $nodestring } };
 	warn "  " x $depth . "-> " . join(', ', @names) . "\n" if ($debug);
 	return @names;
 }

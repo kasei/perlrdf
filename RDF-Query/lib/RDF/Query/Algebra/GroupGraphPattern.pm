@@ -214,7 +214,7 @@ sub execute {
 		### if it doesn't work (the remote endpoint may not support the kasei:bloom
 		### function), then fall back on making the call without the filter.
 		try {
-			if ($stream and $triple->isa('RDF::Query::Algebra::Service')) {
+			if ($stream and $triple->isa('RDF::Query::Algebra::Service') and not($triple->pattern->isa('RDF::Query::Algebra::Filter'))) {
 				my $endpoint_url	= $triple->endpoint->uri_value;
 				unless ($SERVICE_BLOOM_IGNORE{ $endpoint_url }) {
 	# 				local($RDF::Trine::Iterator::debug)	= 1;
@@ -242,7 +242,12 @@ sub execute {
 		unless ($handled) {
 			my $new	= $triple->execute( $query, $bridge, $bound, $context, %args );
 			if ($stream) {
-				$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $new, %args )
+				my $e	= $new->extra_result_data;
+				if (ref($e) and $e->{'bnode-map'}) {
+					$stream	= $self->join_bnode_streams( $stream, $new, $query, $bridge, $bound );
+				} else {
+					$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $new, %args )
+				}
 			} else {
 				$stream	= $new;
 			}
@@ -258,7 +263,7 @@ sub execute {
 		my $elapsed = tv_interval ( $t0 );
 		$l->push_key_value( 'execute_time-ggp', $self->sse, $elapsed );
 	} else {
-		warn "no logger present for ggp execution time" if ($debug);
+		warn "no logger present for ggp execution time" if ($debug > 1);
 	}
 	
 	return $stream;

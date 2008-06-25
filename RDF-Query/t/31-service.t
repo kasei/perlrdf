@@ -74,12 +74,14 @@ END
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX k: <http://kasei.us/code/rdf-query/functions/>
 		SELECT DISTINCT ?name ?nick
 		FROM <$file>
 		WHERE {
 			?p a foaf:Person ; foaf:name ?name .
 			SERVICE <http://kasei.us/sparql> {
 				?p foaf:nick ?nick
+				FILTER k:bloom( ?p, "AAAAAgAAAAoAAAACAAAAAwAAAAIAAAADrHIwUxHS+JHlnHcLrQAwLjE=\\n" ) .
 			}
 		}
 END
@@ -118,7 +120,7 @@ END
 	isa_ok( $d->{p}, 'RDF::Trine::Node::Resource' );
 	is( $d->{p}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'expected person uri' );
 	isa_ok( $d->{name}, 'RDF::Trine::Node::Literal' );
-	is( $d->{name}->literal_value, 'Gregory Todd Williams', 'expected person name' );
+	like( $d->{name}->literal_value, qr'Greg(ory Todd)? Williams', 'expected person name' );
 }
 
 {
