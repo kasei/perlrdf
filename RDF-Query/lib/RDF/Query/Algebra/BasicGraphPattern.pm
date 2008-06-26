@@ -102,7 +102,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift;
+	my $indent	= shift || '';
 	my @triples;
 	foreach my $t ($self->triples) {
 		push(@triples, $t->as_sparql( $context, $indent ));

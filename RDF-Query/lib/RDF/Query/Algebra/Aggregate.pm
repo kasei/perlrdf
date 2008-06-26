@@ -122,7 +122,7 @@ sub sse {
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
 		my ($alias, $op, $col)	= @$data;
-		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, $col->sse));
+		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, ($col eq '*' ? '*' : $col->sse)));
 	}
 	
 	my @group	= $self->groupby;
@@ -254,9 +254,7 @@ sub execute {
 					$should_inc	= (defined $value) ? 1 : 0;
 				}
 				
-				if ($should_inc) {
-					$aggregates{ $alias }{ $group }++;
-				}
+				$aggregates{ $alias }{ $group }	+= $should_inc;
 			});
 		} elsif ($op eq 'COUNT-DISTINCT') {
 			push(@aggregators, sub {

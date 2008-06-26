@@ -48,8 +48,8 @@ foreach my $model (@models) {
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 1, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'(triple ?person <http://xmlns.com/foaf/0.1/homepage> ?page)'}, 2, 'Expected triple cardinality' );
-			is( $l->{'cardinality-triple'}{'(triple ?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams")'}, 1, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}, 2, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams" .'}, 1, 'Expected triple cardinality' );
 		}
 		
 		{
@@ -61,7 +61,7 @@ END
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 4, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'(triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)'}, 4, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?p a <http://xmlns.com/foaf/0.1/Person> .'}, 4, 'Expected triple cardinality' );
 		}
 	}
 }
