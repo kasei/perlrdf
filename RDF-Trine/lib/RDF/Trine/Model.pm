@@ -36,7 +36,8 @@ Returns a new model over the supplied rdf store.
 sub new {
 	my $class	= shift;
 	my $store	= shift;
-	my $self	= bless({ store => $store }, $class);
+	my %args	= @_;
+	my $self	= bless({ store => $store, %args }, $class);
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>

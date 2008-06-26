@@ -29,6 +29,7 @@ no warnings 'redefine';
 use Data::Dumper;
 
 use JSON 2.0;
+use Text::Table;
 use Scalar::Util qw(reftype);
 use List::MoreUtils qw(uniq);
 use RDF::Trine::Iterator::Bindings::Materialized;
@@ -477,6 +478,40 @@ sub as_xml {
 	$self->print_xml( $fh, $max_result_size );
 	close($fh);
 	return $string;
+}
+
+=item C<as_string ( $max_size )>
+
+Returns a string table serialization of the stream data.
+
+=cut
+
+sub as_string {
+	my $self			= shift;
+	my $max_result_size	= shift || 0;
+	my @names			= $self->binding_names;
+	my $headers			= \@names;
+	my $rows			= [ map { [ @{$_}{ @names } ] } $self->get_all ];
+
+	my @rule			= qw(- +);
+	my @headers			= \'| ';
+	push @headers => map { $_ => \' | ' } @$headers;
+	pop	@headers;
+	push @headers => (\" |");
+
+	unless ('ARRAY' eq ref $rows && 'ARRAY' eq ref $rows->[0] && @$headers == @{ $rows->[0] }) {
+		die("make_table() rows must be an AoA with rows being same size as headers");
+	}
+	my $table = Text::Table->new(@headers);
+	$table->rule(@rule);
+	$table->body_rule(@rule);
+	$table->load(@$rows);
+
+	return $table->rule(@rule),
+			$table->title,
+			$table->rule(@rule),
+			map({ $table->body($_) } 0 .. @$rows),
+			$table->rule(@rule);
 }
 
 =item C<< print_xml ( $fh, $max_size ) >>

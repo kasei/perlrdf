@@ -111,12 +111,11 @@ sub parse {
 		$self->{saxhandler}->set_handler( $handler );
 	}
 	
-	unless (ref($string)) {
-		my $data	= $string;
-		open( my $fh, '<', \$data );
-		$string	= $fh;
+	if (ref($string)) {
+		$self->{parser}->parse_file( $string );
+	} else {
+		$self->{parser}->parse_string( $string );
 	}
-	$self->{parser}->parse_file( $string );
 	my $nodes	= $self->{saxhandler}{nodes};
 	if ($nodes and scalar(@$nodes)) {
 		warn Dumper($nodes);
