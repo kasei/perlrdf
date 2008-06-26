@@ -14,11 +14,11 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 6b6bbbf441c5161689da8578ee3b40261c52c9aa Changes.ttl
+SHA1 92071f5d074381bac6c149a14f923d4dd7fd6d88 Changes.ttl
 SHA1 3ef02e6e89610ae0dc3d823c8ffe0bfe85c6e56a MANIFEST
-SHA1 9e57829245ed1c565c6647f5cf30a64ff2dca0ac META.yml
-SHA1 add65b3ee047bf4fe692ae8438c66ce038640481 Makefile.PL
-SHA1 9d972323ed35d50b7c3f4038ca44d0383857183b README
+SHA1 60404370f8727b99335976519bf236dd0b56951c META.yml
+SHA1 ee9ae26d7cb378cae1b436da0da2a0aa8be5be55 Makefile.PL
+SHA1 62a35200c197b9b6a3f11b5e285f08eea63a30c5 README
 SHA1 6b250506c12423fc465c493af38c65ef5b310274 bin/rdf_init_store.pl
 SHA1 d1ab274f659e3e88393a9d19acf4339c72d923ad bin/rdf_parse_turtle.pl
 SHA1 52b246facdc770f7242def5cdf81986999a1cab1 bin/rdf_parse_xml.pl
@@ -31,36 +31,36 @@ SHA1 b1a70869c098ba602151631386fc510b5bfd3511 inc/Module/Install/Base.pm
 SHA1 d864f4a0dd148e4651cbe29c54c2ffc94d0f05f7 inc/Module/Install/MakeMaker.pm
 SHA1 176d68fe7c07b6ab7cfe09093078b8127bbde786 inc/Module/Install/Makefile.pm
 SHA1 8b37b38215d14f922b3d5132ce33d11d21d531ba inc/Module/Install/Metadata.pm
-SHA1 6c3b386efa82b64fc3bdfb17e3630f720be91874 lib/RDF/Trine.pm
-SHA1 bbf4006be4961251497a80eef3fd3e8cdce64bf5 lib/RDF/Trine/Error.pm
-SHA1 4e436a79ee53f944e141eb4240daa6d42f88f843 lib/RDF/Trine/Iterator.pm
-SHA1 687697db58fb8dc4ea9e5d301754e74ffed69170 lib/RDF/Trine/Iterator/Bindings.pm
-SHA1 846a40eae969a18e3be786c9eb29ca5a7b04d831 lib/RDF/Trine/Iterator/Bindings/Materialized.pm
-SHA1 a94b2ccf5af1a6159836864b8bfafc2f0cf67441 lib/RDF/Trine/Iterator/Boolean.pm
-SHA1 016c61af14ea760ee082495e26543b1d50c3aaf2 lib/RDF/Trine/Iterator/Graph.pm
-SHA1 ff28d80cd9fa8e93c05871b9d16363c931620da1 lib/RDF/Trine/Iterator/Graph/Materialized.pm
+SHA1 ee069b5f2946d3004f1509c27ae410eeb3f95fc8 lib/RDF/Trine.pm
+SHA1 0cf7f1f5f5e42c4d2c7fcbc4a02f9131eab976f0 lib/RDF/Trine/Error.pm
+SHA1 bf33aa9d582a4c288c3e78c95384d3d4fb086167 lib/RDF/Trine/Iterator.pm
+SHA1 4fe1dd2b99ddaa7aedc1ca9309bd0723fdd7a5aa lib/RDF/Trine/Iterator/Bindings.pm
+SHA1 e7ba9a6efc43663f286c0246142e26ee0724eddb lib/RDF/Trine/Iterator/Bindings/Materialized.pm
+SHA1 319d53776465b4e82ae6b323b982b678803db316 lib/RDF/Trine/Iterator/Boolean.pm
+SHA1 38d01ffe5745339d27657062aec7bda09e120520 lib/RDF/Trine/Iterator/Graph.pm
+SHA1 f50da21ef57defafd62824e38f8bb9e7f72711b2 lib/RDF/Trine/Iterator/Graph/Materialized.pm
 SHA1 6220bc5cbca8e40b3da532d29bbaebdc46fc0ce5 lib/RDF/Trine/Iterator/SAXHandler.pm
-SHA1 d20b8a86e0137d18b0e79f47f721d8b99841bebf lib/RDF/Trine/Model.pm
-SHA1 c378300b21cff29eee65d988b9f201020a42e0cc lib/RDF/Trine/Model/StatementFilter.pm
+SHA1 defd910378dac7e9a6e191de9fc112f45772977b lib/RDF/Trine/Model.pm
+SHA1 be0b71773384e15a2156881081dbaf73e4f693fe lib/RDF/Trine/Model/StatementFilter.pm
 SHA1 3cb9b6786b38bae25775c0c84053d8ed8421176b lib/RDF/Trine/Model/Union.pm
-SHA1 d49804162589aade6304018c4d79e16bc6aea0da lib/RDF/Trine/Namespace.pm
-SHA1 3535eb09403d4ac940d65ff70fc9b383b90d6b87 lib/RDF/Trine/Node.pm
-SHA1 540c1665397d0a973971d19eac615c7ca9ec7c90 lib/RDF/Trine/Node/Blank.pm
-SHA1 1501b2cd9dd5336fc1f067549c0bafd084ce2aff lib/RDF/Trine/Node/Literal.pm
-SHA1 e5a7131fff0e8ef0f7fe6f533c9baa9c8467e40c lib/RDF/Trine/Node/Resource.pm
-SHA1 0c6ab2099f03375fb73df808f6c8ee2d851868d3 lib/RDF/Trine/Node/Variable.pm
-SHA1 0fae6b4f217ba60a896b6f28618016eae844a536 lib/RDF/Trine/Parser.pm
-SHA1 9d187ece206f932f84e5c1ad4525eb88b8c0d6d0 lib/RDF/Trine/Parser/Error.pm
-SHA1 c81fbe9c7f8569b98a3e6b89425b97a3aeb4a0f3 lib/RDF/Trine/Parser/RDFXML.pm
-SHA1 99bea995e1ad860d7f2480a2cd59005ad67ecf60 lib/RDF/Trine/Parser/Turtle.pm
-SHA1 8da50eee157b86da21bd040fed3767f3e17f8620 lib/RDF/Trine/Pattern.pm
+SHA1 b849c580cce1b583924d7cff4aa0e84afa9d2076 lib/RDF/Trine/Namespace.pm
+SHA1 69813a9572e86b077cbf27ce75aad8bb243cb2da lib/RDF/Trine/Node.pm
+SHA1 78fb2d65b27ea164402428b64ab723436d5cd255 lib/RDF/Trine/Node/Blank.pm
+SHA1 60fbb17145fcf7b9bee4af91341023fa7f7e4ac2 lib/RDF/Trine/Node/Literal.pm
+SHA1 064dc4b5cadf93bf7abceb918dc8cffe71994ea2 lib/RDF/Trine/Node/Resource.pm
+SHA1 91a59b842c6b7f81ad0d2a2da9487ee858445b16 lib/RDF/Trine/Node/Variable.pm
+SHA1 4a6af5d7a22093598cacbe8b3c5043afd918344f lib/RDF/Trine/Parser.pm
+SHA1 8d7b75ce78f13f03d18c89e789ba79b5e60abf45 lib/RDF/Trine/Parser/Error.pm
+SHA1 9d2bad99e0fb4f9be5c554ef07bb91aaef6dd42f lib/RDF/Trine/Parser/RDFXML.pm
+SHA1 f8bbc94ef16b1dcf448249e8a2f1bc1be130648a lib/RDF/Trine/Parser/Turtle.pm
+SHA1 8509fc1a2994a83fd62d1885656b076e49efb2a0 lib/RDF/Trine/Pattern.pm
 SHA1 67469ba3f92075a41a59620c28a542113def4bf0 lib/RDF/Trine/Promise.pm
-SHA1 f313a7bbdc3b37f3b1008c86407997404526c2eb lib/RDF/Trine/Serializer/NTriples.pm
-SHA1 c5679d2749aee11a24bce8a1bf239d211e7b8603 lib/RDF/Trine/Statement.pm
-SHA1 4f51d49953e179b662d38c29f0c63d5aca0d4132 lib/RDF/Trine/Statement/Quad.pm
-SHA1 d1f6e86f21fb09eb9086b136c38263e39e390343 lib/RDF/Trine/Store/DBI.pm
-SHA1 7210f03fe48944e187a9e777783ec740c597e3a9 lib/RDF/Trine/Store/DBI/Pg.pm
-SHA1 a810247d993c2df830a0454b12170a64d1f376da lib/RDF/Trine/Store/DBI/mysql.pm
+SHA1 0366942fae51f02d5889dd83341b3b2ddf911677 lib/RDF/Trine/Serializer/NTriples.pm
+SHA1 90ed38649a43b1fc7d6f301b3e4b3daba784ed82 lib/RDF/Trine/Statement.pm
+SHA1 bebac187983139972a7a6da30fb3b0d47b848172 lib/RDF/Trine/Statement/Quad.pm
+SHA1 42b3d01ab6e930685a67cb92604442d31f8511fe lib/RDF/Trine/Store/DBI.pm
+SHA1 1328f316886e5cfb50e97a567795da2d03d130e4 lib/RDF/Trine/Store/DBI/Pg.pm
+SHA1 78afef0d395909f23a38dcd1cc56599c26d2b5cb lib/RDF/Trine/Store/DBI/mysql.pm
 SHA1 d0dafb6d920c4a47915215dcd9384a6f8b35ef3e t/00.load.t
 SHA1 13114d2054fcb5ffca5f9af1834388f80bb2fa33 t/data/rdfxml-w3c/Manifest.rdf
 SHA1 a2bf4493cebc28f0b1cf3d40bc090490e3c738b2 t/data/rdfxml-w3c/amp-in-url/test001.nt
@@ -513,7 +513,7 @@ SHA1 1730c9db7fae11ecd63c52d6039d504ad4726f8f t/store-triple_sql.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (Darwin)
 
-iD8DBQFIVHzOhPK6VMqoyC0RAk1HAKCwmcLo6gab4pxwS0WnPap62tswzQCeLMHT
-sRRYO2CDT3aD15Y9e7K/qRo=
-=zDQE
+iD8DBQFIYv/chPK6VMqoyC0RAg10AJ4q2Gdu9qhK1vopSYS5WIT8S65yugCgsOmh
+EPgXHvrZ64phrfrukfjR4vQ=
+=ugLQ
 -----END PGP SIGNATURE-----

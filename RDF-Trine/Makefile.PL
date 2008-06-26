@@ -38,6 +38,7 @@ WriteMakefile(
 					'XML::CommonNS'				=> 0.04,
 					'XML::Namespace'			=> 0,
 					'XML::SAX'					=> 0,
+					'XML::SAX::Expat'			=> 0,	# we shouldn't need this, but XML::SAX::PurePerl seems to have some major bugs with unicode in some of the RDF/XML syntax examples
 					'XML::Parser'				=> 0,
 				},
 );
