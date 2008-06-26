@@ -33,7 +33,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.108_01';
+	$VERSION	= '0.108_02';
 }
 
 use RDF::Trine::Parser;

@@ -50,7 +50,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.108 (2008-06-15)
+  Version 0.108 (2008-06-XX)
 
      * Added NTriples serializer module.
      * Added POD to RDF::Trine::Promise.
@@ -90,6 +90,12 @@ VERSION HISTORY
      * Fixed unicode escaping by replacing Unicode::Escape calls to hand-rolled code in RDF::Trine::Node.
      * RDF/XML parser now accept more than one top-level resource.
      * RDF/XML parser now accepts URI objects as base uri (not just RDF::Trine::Node::Resource objects).
+     * Added tabular as_string serialization of ::Iterator::Bindings objects.
+     * Added Text::Table as a prerequisite.
+     * Fixed RDF/XML parser handling of strings (versus file handles).
+     * Fixed Turtle parser to properly keep '+' on integer literals.
+     * Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names).
+     * Fixed bindings xml serialization whitespace formatting.
 
   Version 0.107 (2008-04-25)
 
