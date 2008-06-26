@@ -55,7 +55,7 @@ sub log {
 	if (@_) {
 		my $value	= shift;
 		local($Data::Dumper::Indent)	= 0;
-		warn "setting " . Data::Dumper->Dump([$value], [$key]) if ($debug);
+		warn "setting " . Data::Dumper->Dump([$value], [$key]) if ($debug > 1);
 		$self->{ $key }	= $value;
 	}
 	return $self->{ $key };
@@ -70,7 +70,7 @@ sub push_value {
 	my $key		= shift;
 	my $array	= $self->{ $key } ||= [];
 	my @values	= @_;
-	warn "adding values " . Data::Dumper->Dump([\@values], [$key]) if ($debug);
+	warn "adding values " . Data::Dumper->Dump([\@values], [$key]) if ($debug > 1);
 	push( @$array, @values );
 }
 
@@ -83,7 +83,7 @@ sub add_key_value {
 	my $key		= shift;
 	my $hash	= $self->{ $key } ||= {};
 	my ($k,$v)	= @_;
-	warn "adding key-value " . Data::Dumper->Dump([[$k, $v]], [$key]) if ($debug);
+	warn "adding key-value " . Data::Dumper->Dump([[$k, $v]], [$key]) if ($debug > 1);
 	$hash->{ $k }	= $v;
 }
 
@@ -96,7 +96,7 @@ sub push_key_value {
 	my $key		= shift;
 	my $hash	= $self->{ $key } ||= {};
 	my ($k,$t)	= @_;
-	warn "pushing key-value " . Data::Dumper->Dump([[$k, $t]], [$key]) if ($debug);
+	warn "pushing key-value " . Data::Dumper->Dump([[$k, $t]], [$key]) if ($debug > 1);
 	push( @{ $hash->{ $k } }, $t );
 }
 

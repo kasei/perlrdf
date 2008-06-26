@@ -229,7 +229,7 @@ sub execute {
 	if (my $l = $query->logger) {
 		warn "logging triple execution time" if ($debug);
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-triple', $self->sse, $elapsed );
+		$l->push_key_value( 'execute_time-triple', $self->as_sparql, $elapsed );
 	} else {
 		warn "no logger present for triple execution time" if ($debug);
 	}
@@ -259,7 +259,7 @@ sub execute {
 			}
 		}
 		if (my $l = $query->logger) {
-			$l->add_key_value( 'cardinality-triple', $self->sse, ++$count );
+			$l->add_key_value( 'cardinality-triple', $self->as_sparql, ++$count );
 		}
 		$result;
 	} $statements;

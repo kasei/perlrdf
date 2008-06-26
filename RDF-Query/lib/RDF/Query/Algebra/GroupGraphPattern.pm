@@ -119,7 +119,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift;
+	my $indent	= shift || '';
 	
 	my @patterns;
 	foreach my $p ($self->patterns) {
@@ -261,7 +261,7 @@ sub execute {
 	if (my $l = $query->logger) {
 		warn "logging ggp execution time" if ($debug);
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-ggp', $self->sse, $elapsed );
+		$l->push_key_value( 'execute_time-ggp', $self->as_sparql, $elapsed );
 	} else {
 		warn "no logger present for ggp execution time" if ($debug > 1);
 	}
