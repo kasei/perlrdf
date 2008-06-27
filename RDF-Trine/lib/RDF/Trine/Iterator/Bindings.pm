@@ -494,10 +494,10 @@ sub as_string {
 	my $rows			= [ map { [ @{$_}{ @names } ] } $self->get_all ];
 
 	my @rule			= qw(- +);
-	my @headers			= \'| ';
-	push @headers => map { $_ => \' | ' } @$headers;
+	my @headers			= (\q"| ");
+	push @headers => map { $_ => \q" | " } @$headers;
 	pop	@headers;
-	push @headers => (\" |");
+	push @headers => (\q" |");
 
 	unless ('ARRAY' eq ref $rows && 'ARRAY' eq ref $rows->[0] && @$headers == @{ $rows->[0] }) {
 		die("make_table() rows must be an AoA with rows being same size as headers");
