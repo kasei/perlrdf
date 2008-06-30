@@ -59,6 +59,7 @@ VERSION HISTORY
      * Added RDF::Trine::Promise for general computation deferment.
      * Added print_xml method to RDF::Trine::Iterator classes.
      * Added support for Postgres storage.
+     * Added XML::LibXML::SAX as a prerequisite (because XML::SAX::PurePerl can't handle some RDF/XML that uses unicode).
      * Replaced RDF::Core-based RDF/XML parser with a new XML::SAX based parser.
      * Removed now unused redland-based RDF/XML test data.
      * Removed unused redland fallback code from RDF::Query::Model::RDFTrine.
@@ -96,6 +97,7 @@ VERSION HISTORY
      * Fixed Turtle parser to properly keep '+' on integer literals.
      * Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names).
      * Fixed bindings xml serialization whitespace formatting.
+     * Cleaned up ::Iterator::Bindings::as_string serialization code.
 
   Version 0.107 (2008-04-25)
 

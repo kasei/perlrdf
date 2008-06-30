@@ -30,11 +30,12 @@ requires:
     Text::Table:                   0
     Time::HiRes:                   0
     Unicode::Escape:               0
+    Unicode::String:               2.09
     URI:                           0
     XML::CommonNS:                 0.04
     XML::Namespace:                0
     XML::SAX:                      0
-    XML::SAX::Expat:               0
+    XML::LibXML::SAX:              1.66
     XML::Parser:                   0
 license: perl
 distribution_type: module
@@ -45,4 +46,4 @@ no_index:
     - t
 resources:
   homepage: http://kasei.us/code/rdf-trine/
-  Repository: http://code.google.com/p/perlrdf/source
+  Repository: http://github.com/kasei/perlrdf/
