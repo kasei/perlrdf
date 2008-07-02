@@ -20,6 +20,7 @@ use RDF::Query::Error;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+use Storable qw(store_fd fd_retrieve);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
@@ -281,7 +282,6 @@ sub execute {
 		throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
 	}
 	
-	my $ua			= $query->useragent;
 	
 	# we jump through some hoops here to defer the actual execution unti the first
 	# result is pulled from the stream. this has a slight speed hit in general,
@@ -290,53 +290,80 @@ sub execute {
 	my $stream;
 	my $extra		= {};
 	my @vars		= $self->pattern->referenced_variables;
-	my $results		= RDF::Trine::Iterator::Bindings->new( sub {
-		unless (defined $stream) {
-# 			use IO::Socket::INET;
-# 			my $uri		= URI->new( $url );
-# 			my $canon	= $uri->canonical;
-# 			my $path	= substr($canon, index($canon, $uri->host) + length($uri->host));
-# 			warn $uri->host;
-# 			warn $uri->port;
-# 			my $sock	= IO::Socket::INET->new( PeerAddr => $uri->host, PeerPort => ($uri->port || 80), Proto => 'tcp' );
-# # 			my $req		= sprintf("GET %s HTTP/1.1\nHost: %s\nAccept: application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml\n\n", $path, $uri->host);
-# 			my $req		= sprintf("GET %s HTTP/1.0\nAccept: application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml\n\n", $path, $uri->host);
-# 			warn $req;
-# 			$sock->print( $req );
-# 			
-# 			my $buffer	= '';
-# 			my $prelude	= '';
-# 			while (1) {
-# 				my $b;
-# 				$sock->recv($b, 512);
-# # 				$sock->sysread($b, 512);
-# # 				warn ">>>>>>>>>>>>>>> adding: <<$b>>\n";
-# 				$buffer	.= $b;
-# 				if ($buffer =~ m/(?:\r?\n){2}(.*)$/ms) {
-# 					$prelude	= $1;
-# 					warn "##############\nGOT HEADER:\n$buffer\n##############\n";
-# 					warn "PRELUDE:\n$prelude\n##############\n";
-# 					last;
-# 				}
-# 			}
-# 			
-# 			$stream		= RDF::Trine::Iterator->from_handle_incremental( $sock, 2048, $prelude );
-			
-			my $resp	= $ua->get( $url );
-			unless ($resp->is_success) {
-				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
-			}
-			my $content	= $resp->content;
-			warn '>>>>>>>>' . $content . '<<<<<<<<<<<<<' if ($debug);
-			$stream		= RDF::Trine::Iterator->from_string( $content );
-			
-			if (my $e = $stream->extra_result_data) {
-				%$extra	= %$e;
-			}
+	
+	
+	warn "forking in $$\n" if ($debug);
+	my $pid = open my $fh, "-|";
+	die unless defined $pid;
+	unless ($pid) {
+		_get_and_parse_url( $query, $url, $fh, $pid );
+		exit 0;
+	}
+	
+	my $open	= 1;
+	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
+	my $sub	= sub {
+		return unless ($open);
+		my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
+		warn "got result in HEAD: " . Dumper($result) if ($debug);
+		if (not($result) or ref($result) ne 'HASH') {
+			warn "got \\undef signalling end of stream" if ($debug);
+			$open	= 0;
+			return;
 		}
-		
-		return $stream->next;
-	}, \@vars, extra_result_data => $extra );
+#		warn "SERVICE returning " . Dumper($result);
+		return $result;
+	};
+	my $results		= RDF::Trine::Iterator::Bindings->new( $sub, @$args );
+	
+# 	my $ua			= $query->useragent;
+# 	my $results		= RDF::Trine::Iterator::Bindings->new( sub {
+# 		unless (defined $stream) {
+# # 			use IO::Socket::INET;
+# # 			my $uri		= URI->new( $url );
+# # 			my $canon	= $uri->canonical;
+# # 			my $path	= substr($canon, index($canon, $uri->host) + length($uri->host));
+# # 			warn $uri->host;
+# # 			warn $uri->port;
+# # 			my $sock	= IO::Socket::INET->new( PeerAddr => $uri->host, PeerPort => ($uri->port || 80), Proto => 'tcp' );
+# # # 			my $req		= sprintf("GET %s HTTP/1.1\nHost: %s\nAccept: application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml\n\n", $path, $uri->host);
+# # 			my $req		= sprintf("GET %s HTTP/1.0\nAccept: application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml\n\n", $path, $uri->host);
+# # 			warn $req;
+# # 			$sock->print( $req );
+# # 			
+# # 			my $buffer	= '';
+# # 			my $prelude	= '';
+# # 			while (1) {
+# # 				my $b;
+# # 				$sock->recv($b, 512);
+# # # 				$sock->sysread($b, 512);
+# # # 				warn ">>>>>>>>>>>>>>> adding: <<$b>>\n";
+# # 				$buffer	.= $b;
+# # 				if ($buffer =~ m/(?:\r?\n){2}(.*)$/ms) {
+# # 					$prelude	= $1;
+# # 					warn "##############\nGOT HEADER:\n$buffer\n##############\n";
+# # 					warn "PRELUDE:\n$prelude\n##############\n";
+# # 					last;
+# # 				}
+# # 			}
+# # 			
+# # 			$stream		= RDF::Trine::Iterator->from_handle_incremental( $sock, 2048, $prelude );
+# 			
+# 			my $resp	= $ua->get( $url );
+# 			unless ($resp->is_success) {
+# 				throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+# 			}
+# 			my $content	= $resp->content;
+# 			warn '>>>>>>>>' . $content . '<<<<<<<<<<<<<' if ($debug);
+# 			$stream		= RDF::Trine::Iterator->from_string( $content );
+# 			
+# 			if (my $e = $stream->extra_result_data) {
+# 				%$extra	= %$e;
+# 			}
+# 		}
+# 		
+# 		return $stream->next;
+# 	}, \@vars, extra_result_data => $extra );
 	
 	my $cast		= smap {
 						my $bindings	= $_;
@@ -348,6 +375,59 @@ sub execute {
 					} $results;
 	return $cast;
 }
+
+sub _get_and_parse_url {
+	my $query	= shift;
+	my $url		= shift;
+	my $fh		= shift;
+	my $pid		= shift;
+	
+	eval "
+		require XML::SAX::Expat;
+		require XML::SAX::Expat::Incremental;
+	";
+	if ($@) {
+		die $@;
+	}
+	local($XML::SAX::ParserPackage)	= 'XML::SAX::Expat::Incremental';
+	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
+	$p->parse_start;
+	
+	my $has_head	= 0;
+	my $callback	= sub {
+		my $content	= shift;
+		my $resp	= shift;
+		my $proto	= shift;
+		warn "got content in $$: " . Dumper($content) if ($debug > 1);
+		unless ($resp->is_success) {
+			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+		}
+		$p->parse_more( $content );
+		
+		if (not($has_head) and $handler->has_head) {
+			my @args	= $handler->iterator_args;
+			if (exists( $args[2]{Handler} )) {
+				delete $args[2]{Handler};
+			}
+			warn "got args in child: " . Dumper(\@args) if ($debug);
+			$has_head	= 1;
+			store_fd \@args, \*STDOUT or die "PID $pid can't store!\n";
+		}
+		
+		while (my $data = $handler->pull_result) {
+			warn "got result in child: " . Dumper($data) if ($debug);
+			store_fd $data, \*STDOUT or die "PID $pid can't store!\n";
+		}
+	};
+	my $ua			= $query->useragent;
+	$ua->get( $url, ':content_cb' => $callback );
+	store_fd \undef, \*STDOUT;
+}
+
+
+
+
 
 =item C<< bloom_filter_for_iterator ( $query, $bridge, $bound, $iterator, $variable, $error ) >>
 

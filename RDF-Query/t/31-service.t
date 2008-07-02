@@ -23,7 +23,6 @@ if ($@) {
 
 use RDF::Query;
 
-
 {
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
 	
@@ -69,6 +68,32 @@ END
 }
 
 {
+	print "# join using default graph (remote rdf) and remote SERVICE (kasei.us), joining on IRI\n";
+	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		SELECT DISTINCT *
+		FROM <http://kasei.us/about/foaf.xrdf>
+		WHERE {
+			{
+				?p a foaf:Person .
+				FILTER( ISIRI(?p) )
+			}
+			SERVICE <http://kasei.us/sparql> {
+				?p foaf:name ?name
+			}
+		}
+END
+	my $stream	= $query->execute();
+	isa_ok( $stream, 'RDF::Trine::Iterator' );
+	my $d	= $stream->next;
+	isa_ok( $d, 'HASH' );
+	isa_ok( $d->{p}, 'RDF::Trine::Node::Resource' );
+	is( $d->{p}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'expected person uri' );
+	isa_ok( $d->{name}, 'RDF::Trine::Node::Literal' );
+	like( $d->{name}->literal_value, qr'Greg(ory Todd)? Williams', 'expected person name' );
+}
+
+{
 	print "# join using default graph (local rdf) and remote SERVICE (kasei.us), joining on bnode\n";
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
@@ -95,32 +120,6 @@ END
 		$count++;
 	}
 	is( $count, 1, 'expected result count' );
-}
-
-{
-	print "# join using default graph (remote rdf) and remote SERVICE (kasei.us), joining on IRI\n";
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		SELECT DISTINCT *
-		FROM <http://kasei.us/about/foaf.xrdf>
-		WHERE {
-			{
-				?p a foaf:Person .
-				FILTER( ISIRI(?p) )
-			}
-			SERVICE <http://kasei.us/sparql> {
-				?p foaf:name ?name
-			}
-		}
-END
-	my $stream	= $query->execute();
-	isa_ok( $stream, 'RDF::Trine::Iterator' );
-	my $d	= $stream->next;
-	isa_ok( $d, 'HASH' );
-	isa_ok( $d->{p}, 'RDF::Trine::Node::Resource' );
-	is( $d->{p}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'expected person uri' );
-	isa_ok( $d->{name}, 'RDF::Trine::Node::Literal' );
-	like( $d->{name}->literal_value, qr'Greg(ory Todd)? Williams', 'expected person name' );
 }
 
 {
