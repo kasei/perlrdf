@@ -151,7 +151,7 @@ sub pull_result {
 		}
 	} else {
 		if (scalar(@{ $results{ $addr } || [] })) {
-			my $result	= splice( @{ $results{ $addr } }, 0, 1 );
+			my $result	= shift( @{ $results{ $addr } } );
 			return $result;
 		}
 	}
