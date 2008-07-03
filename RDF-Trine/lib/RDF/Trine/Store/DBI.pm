@@ -1205,7 +1205,12 @@ sub _cleanup {
 
 sub DESTROY {
 	my $self	= shift;
-	$self->_cleanup;
+	our $IGNORE_CLEANUP;
+	if ($IGNORE_CLEANUP) {
+		$self->{dbh}->{InactiveDestroy}	= 1;
+	} else {
+		$self->_cleanup;
+	}
 }
 
 1; # Magic true value required at end of module

@@ -85,5 +85,3 @@ END
 	my $d	= shift(@results);
 	isa_ok( $d, 'HASH' );
 }
-
-

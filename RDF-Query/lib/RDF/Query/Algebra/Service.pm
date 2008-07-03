@@ -296,6 +296,7 @@ sub execute {
 	my $pid = open my $fh, "-|";
 	die unless defined $pid;
 	unless ($pid) {
+		$RDF::Trine::Store::DBI::IGNORE_CLEANUP	= 1;
 		_get_and_parse_url( $query, $url, $fh, $pid );
 		exit 0;
 	}
