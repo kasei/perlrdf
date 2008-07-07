@@ -39,10 +39,8 @@ use Data::Dumper;
 use Scalar::Util qw(reftype);
 use base qw(RDF::Trine::Iterator::Graph);
 
-our ($VERSION, $debug);
-use constant DEBUG	=> 0;
+our ($VERSION);
 BEGIN {
-	$debug		= DEBUG;
 	$VERSION	= 0.108;
 }
 

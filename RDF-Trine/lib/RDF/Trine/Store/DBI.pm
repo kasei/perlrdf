@@ -55,12 +55,12 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
+use Log::Log4perl;
 
 use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION	= "0.108";
-our $debug		= 0;
 
 
 
@@ -81,14 +81,16 @@ sub new {
 	my $class	= shift;
 	my $dbh;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
 	my $name	= shift || 'model';
 	my %args;
 	if (scalar(@_) == 0) {
-		warn "trying to construct a temporary model" if ($debug);
+		$l->trace("trying to construct a temporary model");
 		my $dsn		= "dbi:SQLite:dbname=:memory:";
 		$dbh		= DBI->connect( $dsn, '', '' );
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
-		warn "got a DBD handle" if ($debug);
+		$l->trace("got a DBD handle");
 		$dbh		= shift;
 	} else {
 		my $dsn		= shift;
@@ -99,7 +101,7 @@ sub new {
 		} elsif ($dsn =~ /^DBI:Pg:/) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
 		}
-		warn "Connecting to $dsn ($user, $pass)" if ($debug);
+		$l->trace("Connecting to $dsn ($user, $pass)");
 		$dbh		= DBI->connect( $dsn, $user, $pass );
 	}
 	
@@ -221,6 +223,7 @@ sub get_pattern {
 	my $context	= shift;
 	my %args	= @_;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	if (my $o = $args{ orderby }) {
 		my @ordering	= @$o;
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
@@ -236,9 +239,9 @@ sub get_pattern {
 	my %vars	= map { $_ => 1 } @vars;
 	
 	my $sql		= $self->_sql_for_pattern( $pattern, $context, %args );
-	if ($debug) {
-		warn "get_pattern sql: $sql\n" if ($debug);
-	}
+	
+	$l->debug("get_pattern sql: $sql\n");
+	
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	
@@ -289,7 +292,7 @@ sub get_contexts {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
- 	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM ${stable} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
+	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM ${stable} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
  	my $sth		= $dbh->prepare( $sql );
  	$sth->execute();
  	my $sub		= sub {
@@ -540,6 +543,8 @@ sub add_variable_values_joins {
 	my $context	= shift;
 	my $varhash	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
 	my @vars	= keys %$varhash;
 	my %select_vars	= map { $_ => 1 } @vars;
 	my %variable_value_cols;
@@ -561,7 +566,7 @@ sub add_variable_values_joins {
 		my $col_table	= (split(/[.]/, $col))[0];
 		my ($count)		= ($col_table =~ /\w(\d+)/);
 		
-		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if ($debug);
+		$l->info("var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count");
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
 		my $restricted	= 0;
@@ -1187,7 +1192,6 @@ END
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
 	
 	$dbh->commit;
-	warn "committed" if ($debug);
 }
 
 sub _cleanup {

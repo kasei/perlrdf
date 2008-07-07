@@ -5,6 +5,7 @@ no warnings 'redefine';
 use URI::file;
 use Test::More tests => 17;
 
+use RDF::Trine;
 use RDF::Trine::Node;
 use_ok( 'RDF::Trine::Iterator' );
 

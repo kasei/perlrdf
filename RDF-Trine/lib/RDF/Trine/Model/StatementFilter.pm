@@ -25,9 +25,8 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Iterator qw(sgrep);
 
-our ($debug, $VERSION);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '0.108';
 }
 

@@ -28,10 +28,8 @@ no warnings 'redefine';
 use JSON 2.0;
 
 use base qw(RDF::Trine::Iterator);
-our ($VERSION, $debug);
-use constant DEBUG	=> 0;
+our ($VERSION);
 BEGIN {
-	$debug		= DEBUG;
 	$VERSION	= 0.108;
 }
 

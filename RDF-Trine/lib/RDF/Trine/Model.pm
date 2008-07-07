@@ -17,13 +17,13 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($debug, $VERSION);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '0.108';
 }
 
 use Scalar::Util qw(blessed);
+use Log::Log4perl;
 use RDF::Trine::Node;
 use RDF::Trine::Store::DBI;
 
@@ -146,8 +146,9 @@ sub _store {
 sub _debug {
 	my $self	= shift;
 	my $stream	= $self->as_stream;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
 	while (my $s = $stream->next) {
-		warn '[DEBUG] ' . $s->as_string . "\n";
+		$l->debug('[model]' . $s->as_string);
 	}
 }
 

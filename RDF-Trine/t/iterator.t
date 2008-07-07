@@ -6,6 +6,7 @@ use URI::file;
 use Test::More tests => 57;
 
 use Data::Dumper;
+use RDF::Trine;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Iterator::Bindings;

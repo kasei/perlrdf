@@ -41,9 +41,8 @@ use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 1;
 	$VERSION	= 0.108;
 }
 

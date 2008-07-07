@@ -34,10 +34,8 @@ use Data::Dumper;
 use Carp qw(carp);
 use Scalar::Util qw(blessed reftype refaddr);
 
-our ($VERSION, $debug);
-use constant DEBUG	=> 0;
+our ($VERSION);
 BEGIN {
-	$debug		= DEBUG;
 	$VERSION	= '1.000';
 }
 

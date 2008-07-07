@@ -14,15 +14,15 @@ use warnings;
 no warnings 'redefine';
 
 use Data::Dumper;
+use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 1;
 	$VERSION	= 0.108;
 }
 
@@ -153,10 +153,12 @@ triple store.
 sub subsumes {
 	my $self	= shift;
 	my $st		= shift;
+	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
 	my @triples	= $self->triples;
 	foreach my $t (@triples) {
 		if ($t->subsumes( $st )) {
-			warn $self->sse . " \x{2292} " . $st->sse if ($debug);
+			$l->debug($self->sse . " \x{2292} " . $st->sse);
 			return 1;
 		}
 	}

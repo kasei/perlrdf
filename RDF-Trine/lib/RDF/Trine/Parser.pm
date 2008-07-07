@@ -31,9 +31,8 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 

@@ -30,6 +30,7 @@ use Data::Dumper;
 
 use JSON 2.0;
 use Text::Table;
+use Log::Log4perl;
 use Scalar::Util qw(reftype);
 use List::MoreUtils qw(uniq);
 use RDF::Trine::Iterator::Bindings::Materialized;
@@ -37,9 +38,8 @@ use RDF::Trine::Iterator::Bindings::Materialized;
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 
@@ -135,10 +135,9 @@ sub join_streams {
 # 	my $bridge	= shift;
 	my %args	= @_;
 	
-#	my $debug	= $args{debug};
-	
 	Carp::confess unless ($a->isa('RDF::Trine::Iterator::Bindings'));
 	Carp::confess unless ($b->isa('RDF::Trine::Iterator::Bindings'));
+	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	my @join_sorted_by;
 	if (my $o = $args{ orderby }) {
@@ -146,25 +145,25 @@ sub join_streams {
 		my $a_sort		= join(',', $a->sorted_by);
 		my $b_sort		= join(',', $b->sorted_by);
 		
-		if ($debug) {
-			warn '---------------------------';
-			warn 'REQUESTED SORT in JOIN: ' . Dumper($req_sort);
-			warn 'JOIN STREAM SORTED BY: ' . Dumper($a_sort);
-			warn 'JOIN STREAM SORTED BY: ' . Dumper($b_sort);
+		if ($l->is_debug) {
+			$l->debug('---------------------------');
+			$l->debug('REQUESTED SORT in JOIN: ' . Dumper($req_sort));
+			$l->debug('JOIN STREAM SORTED BY: ' . Dumper($a_sort));
+			$l->debug('JOIN STREAM SORTED BY: ' . Dumper($b_sort));
 		}
 		my $actual_sort;
 		if (substr( $a_sort, 0, length($req_sort) ) eq $req_sort) {
-			warn "first stream is already sorted. using it in the outer loop.\n" if ($debug);
+			$l->debug("first stream is already sorted. using it in the outer loop.");
 		} elsif (substr( $b_sort, 0, length($req_sort) ) eq $req_sort) {
-			warn "second stream is already sorted. using it in the outer loop.\n" if ($debug);
+			$l->debug("second stream is already sorted. using it in the outer loop.");
 			($a,$b)	= ($b,$a);
 		} else {
 			my $a_common	= join('!', $a_sort, $req_sort);
 			my $b_common	= join('!', $b_sort, $req_sort);
 			if ($a_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $a_sort and $req_sort?
-				warn "first stream is closely sorted ($1).\n" if ($debug);
+				$l->debug("first stream is closely sorted ($1).");
 			} elsif ($b_common =~ qr[^([^!]+)[^!]*!\1]) {	# shared prefix between $b_sort and $req_sort?
-				warn "second stream is closely sorted ($1).\n" if ($debug);
+				$l->debug("second stream is closely sorted ($1).");
 				($a,$b)	= ($b,$a);
 			}
 		}
@@ -172,7 +171,7 @@ sub join_streams {
 	}
 	
 	my $stream	= $self->nested_loop_join( $a, $b, %args );
-	warn "JOINED stream is sorted by: " . join(',', @join_sorted_by) . "\n" if ($debug);
+	$l->debug("JOINED stream is sorted by: " . join(',', @join_sorted_by));
 	$stream->{sorted_by}	= \@join_sorted_by;
 	return $stream;
 }
@@ -201,10 +200,9 @@ sub nested_loop_join {
 #	my $bridge	= shift;
 	my %args	= @_;
 	
-#	my $debug	= $args{debug};
-	
 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
+	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	################################################
 	### BNODE MAP STUFF
@@ -241,17 +239,17 @@ sub nested_loop_join {
 	my $sub	= sub {
 		OUTER: while (1) {
 			if ($need_new_a) {
-				warn "### fetching new outer tuple" if ($debug);
+				$l->debug("### fetching new outer tuple");
 				$rowa = $a->next;
 				$inner_index	= 0;
 				$need_new_a		= 0;
 			}
-			warn "OUTER: " . Dumper($rowa) if ($debug);
+			$l->debug("OUTER: " . Dumper($rowa));
 			return undef unless ($rowa);
 			LOOP: while ($inner_index <= $#data) {
 				my $rowb	= $data[ $inner_index++ ];
-				warn "- INNER[ $inner_index ]: " . Dumper($rowb) if ($debug);
-				warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+				$l->debug("- INNER[ $inner_index ]: " . Dumper($rowb));
+				$l->debug("[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)));
 				my %keysa	= map {$_=>1} (keys %$rowa);
 				my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
 				foreach my $key (@shared) {
@@ -286,22 +284,24 @@ sub nested_loop_join {
 									}
 								}
 							} else {
-								Carp::cluck "no query,bridge in args" if ($debug);
+								if ($l->is_debug) {
+									$l->logcluck("no query,bridge in args");
+								}
 							}
 						}
 						
 						unless ($equal) {
-							warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
+							$l->debug("can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")");
 							next LOOP;
 						}
 					}
 				}
 				
 				my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
-				if ($debug) {
-					warn "JOINED:\n";
+				if ($l->is_debug) {
+					$l->debug("JOINED:");
 					foreach my $key (keys %$row) {
-						warn "$key\t=> " . $row->{ $key }->as_string . "\n";
+						$l->debug("$key\t=> " . $row->{ $key }->as_string);
 					}
 				}
 				return $row;

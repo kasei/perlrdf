@@ -3,11 +3,12 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 3;
+use Test::More tests => 2;
 
 use utf8;
 
-use_ok( 'RDF::Trine::Node' );
+use RDF::Trine;
+use RDF::Trine::Node;
 
 {
 	my $uri	= RDF::Trine::Node::Resource->new('http://kasei.us/#火星');

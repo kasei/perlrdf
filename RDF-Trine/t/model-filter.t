@@ -7,6 +7,7 @@ no warnings 'redefine';
 use Data::Dumper;
 
 use DBI;
+use RDF::Trine;
 use RDF::Trine::Model::StatementFilter;
 use RDF::Trine::Namespace;
 use RDF::Trine::Store::DBI;

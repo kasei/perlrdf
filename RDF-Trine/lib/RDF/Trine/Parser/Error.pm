@@ -32,9 +32,8 @@ use base qw(Error);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 

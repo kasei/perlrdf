@@ -8,6 +8,7 @@ use Test::More tests => 32;
 use Data::Dumper;
 use IO::Socket::INET;
 use Time::HiRes qw(sleep);
+use RDF::Trine;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Iterator::Bindings;

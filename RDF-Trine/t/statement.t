@@ -1,12 +1,13 @@
-use Test::More tests => 17;
+use Test::More tests => 15;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
-use_ok 'RDF::Trine::Statement';
-use_ok 'RDF::Trine::Statement::Quad';
+use RDF::Trine;
+use RDF::Trine::Statement;
+use RDF::Trine::Statement::Quad;
 use RDF::Trine::Namespace;
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');

@@ -43,10 +43,8 @@ use base qw(RDF::Trine::Iterator::Bindings);
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 
-our ($VERSION, $debug);
-use constant DEBUG	=> 0;
+our ($VERSION);
 BEGIN {
-	$debug		= DEBUG;
 	$VERSION	= 0.108;
 }
 

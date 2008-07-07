@@ -33,16 +33,16 @@ no warnings 'redefine';
 
 use URI;
 use Data::UUID;
+use Log::Log4perl;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Parser::Error;
 use Scalar::Util qw(blessed looks_like_number);
 
-our ($VERSION, $debug, $rdf, $xsd);
+our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$debug					= 0;
 	$VERSION				= 0.108;
 	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -135,8 +135,9 @@ sub parse_into_model {
 sub _eat_re {
 	my $self	= shift;
 	my $thing	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		Carp::cluck("no tokens left ($thing)") if ($debug);
+		$l->error("no tokens left ($thing)");
 		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
 	}
 	
@@ -145,15 +146,16 @@ sub _eat_re {
 		substr($self->{tokens}, 0, length($match))	= '';
 		return;
 	}
-	Carp::cluck("Expected ($thing) with remaining: $self->{tokens}") if ($debug);
+	$l->error("Expected ($thing) with remaining: $self->{tokens}");
 	throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 }
 
 sub _eat_re_save {
 	my $self	= shift;
 	my $thing	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		Carp::cluck("no tokens left ($thing)") if ($debug);
+		$l->error("no tokens left ($thing)");
 		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
 	}
 	
@@ -162,15 +164,16 @@ sub _eat_re_save {
 		substr($self->{tokens}, 0, length($match))	= '';
 		return $match;
 	}
-	Carp::cluck("Expected ($thing) with remaining: $self->{tokens}") if ($debug);
+	$l->error("Expected ($thing) with remaining: $self->{tokens}");
 	throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 }
 
 sub _eat {
 	my $self	= shift;
 	my $thing	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		Carp::cluck("no tokens left ($thing)") if ($debug);
+		$l->error("no tokens left ($thing)");
 		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
 	}
 	
@@ -179,7 +182,7 @@ sub _eat {
 		substr($self->{tokens}, 0, length($thing))	= '';
 		return;
 	} else {
-		Carp::cluck("expected: $thing, got: $self->{tokens}") if ($debug);
+		$l->error("expected: $thing, got: $self->{tokens}");
 		throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 	}
 }
@@ -212,8 +215,6 @@ sub _triple {
 	}
 	
 	my $count	= ++$self->{triple_count};
-# 	warn "$count\n" if ($debug);
-#	print join(' ', map { $_->sse } ($s, $p, $o)), '.' . "\n";
 }
 
 sub _turtleDoc {

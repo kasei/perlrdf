@@ -21,9 +21,8 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 

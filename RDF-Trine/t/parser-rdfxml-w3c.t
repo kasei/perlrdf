@@ -6,6 +6,7 @@ use FindBin qw($Bin);
 use File::Spec;
 use File::Find qw(find);
 
+use RDF::Trine;
 use RDF::Trine::Model;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Serializer::NTriples;

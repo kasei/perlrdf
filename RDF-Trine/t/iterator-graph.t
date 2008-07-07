@@ -7,6 +7,7 @@ use Test::More tests => 19;
 use Test::Exception;
 
 use Data::Dumper;
+use RDF::Trine;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Statement;

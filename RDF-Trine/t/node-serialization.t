@@ -3,9 +3,10 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 13;
+use Test::More tests => 12;
 
-use_ok( 'RDF::Trine::Node' );
+use RDF::Trine;
+use RDF::Trine::Node;
 
 {
 	my $literal	= RDF::Trine::Node::Literal->new('foo');

@@ -6,6 +6,7 @@ use warnings;
 no warnings 'redefine';
 
 use DBI;
+use RDF::Trine;
 use RDF::Trine::Model;
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;

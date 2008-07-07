@@ -37,9 +37,8 @@ use base qw(RDF::Trine::Iterator);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 

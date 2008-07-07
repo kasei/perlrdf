@@ -36,6 +36,9 @@ BEGIN {
 	$VERSION	= '0.108_03';
 }
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($ERROR);
+
 use RDF::Trine::Parser;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;

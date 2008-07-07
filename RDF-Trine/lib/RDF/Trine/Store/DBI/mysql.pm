@@ -47,8 +47,6 @@ use base qw(RDF::Trine::Store::DBI);
 use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION	= "0.108";
-use constant DEBUG	=> 0;
-our $debug		= DEBUG;
 
 
 
@@ -190,7 +188,6 @@ END
 	$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
 	
 	$dbh->commit;
-	warn "committed" if (DEBUG);
 }
 
 

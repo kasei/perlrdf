@@ -12,9 +12,9 @@ package RDF::Trine::Statement;
 use strict;
 use warnings;
 no warnings 'redefine';
-use constant DEBUG	=> 0;
 
 use Data::Dumper;
+use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
@@ -22,9 +22,8 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 }
 
@@ -231,14 +230,15 @@ sub subsumes {
 	my @match	= $st->nodes;
 	
 	my %bind;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.statement");
 	foreach my $i (0..2) {
 		my $m	= $match[ $i ];
 		if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
 			my $name	= $nodes[$i]->name;
 			if (exists( $bind{ $name } )) {
-				warn "variable $name has already been bound" if ($debug);
+				$l->debug("variable $name has already been bound");
 				if (not $bind{ $name }->equal( $m )) {
-					warn "-> and " . $bind{$name}->sse . " does not equal " . $m->sse if ($debug);
+					$l->debug("-> and " . $bind{$name}->sse . " does not equal " . $m->sse);
 					return 0;
 				}
 			} else {

@@ -1,5 +1,6 @@
 use Test::More tests => 5;
 
+use RDF::Trine;
 use RDF::Trine::Namespace qw(FOAF DC rdf);
 
 isa_ok( $FOAF, 'RDF::Trine::Namespace' );

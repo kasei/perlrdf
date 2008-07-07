@@ -34,6 +34,7 @@ use URI;
 use Carp;
 use XML::SAX;
 use Data::Dumper;
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 
 use RDF::Trine::Node;
@@ -42,9 +43,8 @@ use RDF::Trine::Parser::Error qw(:try);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= 0.108;
 	foreach my $t ('rdfxml', 'application/rdf+xml') {
 		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
@@ -200,7 +200,9 @@ sub peek_expect {
 sub start_element {
 	my $self	= shift;
 	my $el		= shift;
-	warn 'start_element ' . $el->{Name} if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.rdfxml");
+	
+	$l->trace('start_element ' . $el->{Name});
 	
 	$self->{depth}++;
 	unless ($self->expect == LITERAL) {
@@ -221,7 +223,7 @@ sub start_element {
 			my $local	= $el->{LocalName};
 			my $uri		= join('', $ns, $local);
 			my $node	= $self->new_resource( $uri );
-			warn "-> expect SUBJECT or OBJECT" if ($debug);
+			$l->trace("-> expect SUBJECT or OBJECT");
 			if ($self->expect == OBJECT) {
 				if (defined($self->{characters}) and length(my $string = $self->{characters})) {
 					if ($string =~ /\S/) {
@@ -234,7 +236,7 @@ sub start_element {
 			
 			if ($self->peek_expect == COLLECTION) {
 				my $list	= $self->new_bnode;
-				warn "adding an OBJECT to a COLLECTION " . $list->sse . "\n" if ($debug);
+				$l->trace("adding an OBJECT to a COLLECTION " . $list->sse . "\n");
 				if (my $last = $self->{ collection_last }[0]) {
 					my $st		= RDF::Trine::Statement->new( $last, $rdf->rest, $list );
 					$self->assert( $st );
@@ -250,10 +252,10 @@ sub start_element {
 			}
 			
 			if ($uri eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Description') {
-				warn "got rdf:Description of " . $node_id->as_string if ($debug);
+				$l->trace("got rdf:Description of " . $node_id->as_string);
 			} else {
 				my $type	= $node;
-				warn "got object node " . $node_id->as_string . " of type " . $node->as_string if ($debug);
+				$l->trace("got object node " . $node_id->as_string . " of type " . $node->as_string);
 				# emit an rdf:type statement
 				my $st	= RDF::Trine::Statement->new( $node_id, $rdf->type, $node );
 				$self->assert( $st );
@@ -263,16 +265,16 @@ sub start_element {
 			$self->parse_literal_property_attributes( $el, $node_id );
 			$self->new_expect( PREDICATE );
 			unshift(@{ $self->{seqs} }, 0);
-			warn 'unshifting seq counter: ' . Dumper($self->{seqs}) if ($debug);
+			$l->trace('unshifting seq counter: ' . Dumper($self->{seqs}));
 		} elsif ($self->expect == COLLECTION) {
-			warn "-> expect COLLECTION" if ($debug);
+			$l->trace("-> expect COLLECTION");
 			die;
 		} elsif ($self->expect == PREDICATE) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};
 			my $uri		= join('', $ns, $local);
 			my $node	= $self->new_resource( $uri );
-			warn "-> expect PREDICATE" if ($debug);
+			$l->trace("-> expect PREDICATE");
 			
 			if ($node->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#li') {
 				my $id	= ++(${ $self }{seqs}[0]);
@@ -395,31 +397,32 @@ sub end_element {
 	my $self	= shift;
 	my $el		= shift;
 	$self->{depth}--;
-	warn "($self->{depth}) end_element " . $el->{Name} if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.rdfxml");
+	$l->trace("($self->{depth}) end_element " . $el->{Name});
 	
 	my $cleanup	= 0;
 	my $expect	= $self->expect;
 	if ($expect == SUBJECT) {
-		warn "-> expect SUBJECT" if ($debug);
+		$l->trace("-> expect SUBJECT");
 		$self->old_expect;
 		$cleanup	= 1;
 		$self->{chars_ok}	= 0;
 		shift(@{ $self->{reify_id} });
 	} elsif ($expect == PREDICATE) {
-		warn "-> expect PREDICATE" if ($debug);
+		$l->trace("-> expect PREDICATE");
 		$self->old_expect;
 		if ($self->expect == PREDICATE) {
 			# we're closing a parseType=Resource block, so take off the extra implicit node.
 			pop( @{ $self->{nodes} } );
 		} else {
-			warn 'shifting seq counter: ' . Dumper($self->{seqs}) if ($debug);
+			$l->trace('shifting seq counter: ' . Dumper($self->{seqs}));
 			shift(@{ $self->{seqs} });
 		}
 		$cleanup	= 1;
 		$self->{chars_ok}	= 0;
 	} elsif ($expect == OBJECT or ($expect == LITERAL and $self->{literal_depth} == $self->{depth})) {
 		if (exists $self->{'rdf:resource'}) {
-			warn "-> predicate used rdf:resource or rdf:nodeID\n" if ($debug);
+			$l->trace("-> predicate used rdf:resource or rdf:nodeID\n");
 			my $uri	= delete $self->{'rdf:resource'};
 			my $nodes	= $self->{nodes};
 			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $uri );
@@ -427,15 +430,12 @@ sub end_element {
 			$self->assert( $st );
 		}
 		
-		warn "-> expect OBJECT" if ($debug);
+		$l->trace("-> expect OBJECT");
 		$self->old_expect;
 		if (defined($self->{characters})) {
 			my $string	= $self->{characters};
 			my $literal	= $self->new_literal( $string );
-			if ($debug) {
-				Carp::cluck "new literal: " . $literal->as_string;
-				warn 'node stack: ' . Dumper($self->{nodes});
-			}
+			$l->trace('node stack: ' . Dumper($self->{nodes}));
 			my $nodes	= $self->{nodes};
 			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $literal );
 			$self->assert( $st );
@@ -471,7 +471,7 @@ sub end_element {
 	} elsif ($expect == COLLECTION) {
 		shift( @{ $self->{collections} } );
 		$self->old_expect;
-		warn "-> expect COLLECTION" if ($debug);
+		$l->trace("-> expect COLLECTION");
 	} elsif ($expect == LITERAL) {
 		my $tag;
 		if ($el->{Prefix}) {
@@ -497,8 +497,9 @@ sub characters {
 	my $self	= shift;
 	my $data	= shift;
 	my $expect	= $self->expect;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.rdfxml");
 	if ($expect == LITERAL or ($expect == OBJECT and $self->{chars_ok})) {
-		warn "got character data ($expect): <<$data->{Data}>>\n" if ($debug);
+		$l->trace("got character data ($expect): <<$data->{Data}>>\n");
 		my $chars	= $data->{Data};
 		$self->{characters}	.= $chars;
 	}
@@ -554,9 +555,8 @@ sub set_handler {
 sub assert {
 	my $self	= shift;
 	my $st		= shift;
-	if ($debug) {
-		warn '[rdfxml parser] ' . $st->as_string . "\n";
-	}
+	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.rdfxml");
+	$l->debug('[rdfxml parser] ' . $st->as_string);
 	
 	if ($self->{sthandler}) {
 		$self->{sthandler}->( $st );

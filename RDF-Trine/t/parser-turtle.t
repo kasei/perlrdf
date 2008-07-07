@@ -3,7 +3,9 @@ use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
 
-use_ok( 'RDF::Trine::Parser' );
+use RDF::Trine;
+use RDF::Trine::Parser;
+
 
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle' );
 my @good	= glob("${path}/test*.ttl");
@@ -19,6 +21,7 @@ foreach my $file (@good) {
 	} $test;
 }
 
+_SILENCE();
 foreach my $file (@bad) {
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
@@ -27,4 +30,14 @@ foreach my $file (@bad) {
 		my $parser	= RDF::Trine::Parser->new('turtle');
 		$parser->parse( $url, $data );
 	} 'RDF::Trine::Parser::Error::ValueError', $test;
+}
+
+
+sub _SILENCE {
+	Log::Log4perl->init( {
+		"log4perl.rootLogger"				=> "FATAL, screen",
+		"log4perl.appender.screen"			=> "Log::Log4perl::Appender::Screen",
+		"log4perl.appender.screen.stderr"	=> 1,
+		"log4perl.appender.screen.layout"	=> 'Log::Log4perl::Layout::SimpleLayout',
+	} );
 }

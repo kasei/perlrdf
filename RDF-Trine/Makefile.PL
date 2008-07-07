@@ -29,6 +29,7 @@ WriteMakefile(
 					'LWP::UserAgent'			=> 0,
 					'List::MoreUtils'			=> 0,
 					'List::Util'				=> 0,
+					'Log::Log4perl'				=> 0,
 					'Math::BigInt'				=> 0,
 					'Scalar::Util'				=> 0,
 					'Text::Table'				=> 0,
