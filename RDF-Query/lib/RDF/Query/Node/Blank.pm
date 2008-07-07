@@ -24,9 +24,8 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -45,13 +44,14 @@ use overload	'<=>'	=> \&_cmp,
 sub _cmp {
 	my $nodea	= shift;
 	my $nodeb	= shift;
-	warn "blank comparison: " . Dumper($nodea, $nodeb) if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query.node.blank");
+	$l->debug("blank comparison: " . Dumper($nodea, $nodeb));
 	return 1 unless blessed($nodeb);
 	return -1 if ($nodeb->isa('RDF::Query::Node::Literal'));
 	return -1 if ($nodeb->isa('RDF::Query::Node::Resource'));
 	return 1 unless ($nodeb->isa('RDF::Query::Node::Blank'));
 	my $cmp	= $nodea->blank_identifier cmp $nodeb->blank_identifier;
-	warn "-> $cmp\n" if ($debug);
+	$l->debug("-> $cmp");
 	return $cmp;
 }
 

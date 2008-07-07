@@ -13,9 +13,9 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
-use constant DEBUG	=> 0;
 
 use Data::Dumper;
+use Log::Log4perl;
 use RDF::Query::Error;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
@@ -24,9 +24,8 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -233,6 +232,7 @@ sub execute {
 	my $bound		= shift;
 	my $outer_ctx	= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.namedgraph");
 	
 	if ($outer_ctx) {
 		throw RDF::Query::Error::QueryPatternError ( -text => "Can't use nested named graphs" );
@@ -241,7 +241,8 @@ sub execute {
 	my $context			= $self->graph;
 	my $named_triples	= $self->pattern;
 	
-	_debug( 'named triples: ' . Dumper($named_triples), 1 ) if (DEBUG);
+	
+	$l->debug( 'named triples: ' . Dumper($named_triples) );
 	my $nstream	= $named_triples->execute( $query, $bridge, $bound, $context, %args );
 	return $nstream;
 }

@@ -7,6 +7,7 @@ use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak confess);
 
+use Log::Log4perl;
 use File::Spec;
 use File::Temp qw(tempfile);
 use Data::Dumper;
@@ -28,9 +29,8 @@ use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -328,12 +328,13 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
 	
 	my $model	= $self->model;
 	my @nodes	= map { blessed($_) ? $_ : $self->new_variable() } @triple;
-	if ($debug) {
-		warn "statement pattern: " . Dumper(\@nodes);
-		warn "model contains:\n";
+	if ($l->is_debug) {
+		$l->debug("statement pattern: " . Dumper(\@nodes));
+		$l->debug("model contains:");
 		$model->_debug;
 	}
 	my $stream	= smap { _cast_triple_to_local( $_ ) } $model->get_statements( @nodes );
@@ -423,6 +424,7 @@ sub fixup {
 	my $query	= shift;
 	my $base	= shift;
 	my $ns		= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
 	
 	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern') and not(scalar(@{$query->get_computed_statement_generators}))) {
 		# call fixup on the triples so that they get converted to bridge-native objects
@@ -433,19 +435,19 @@ sub fixup {
 		my $filter	= $pattern;
 		my $ggp	= $filter->pattern;
 		if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
-			warn "pattern is a ggp" if ($debug);
+			$l->debug("pattern is a ggp");
 			my @patterns	= $ggp->patterns;
 			if (scalar(@patterns) == 1 and $patterns[0]->isa('RDF::Query::Algebra::BasicGraphPattern')) {
-				warn "'-> pattern is a bgp" if ($debug);
+				$l->debug("'-> pattern is a bgp");
 				my $bgp	= $patterns[0];
 				my $compiled;
 				try {
 					$self->model->_store->_sql_for_pattern( $filter );
 					$compiled	= RDF::Query::Model::RDFTrine::Filter->new( $filter );
-					warn "    '-> filter can be compiled to RDF::Trine" if ($debug);
-					warn "        '-> " . Dumper($compiled) if ($debug);
+					$l->debug("    '-> filter can be compiled to RDF::Trine");
+					$l->debug("        '-> " . Dumper($compiled));
 				} otherwise {
-					warn "    '-> filter CANNOT be compiled to RDF::Trine" if ($debug);
+					$l->debug("    '-> filter CANNOT be compiled to RDF::Trine");
 				};
 				return $compiled;
 			} else {

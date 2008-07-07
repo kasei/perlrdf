@@ -22,9 +22,8 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -160,8 +159,9 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l			= Log::Log4perl->get_logger("rdf.query.algebra.quad");
 	
-	our $indent;
+	our $indent		= '';
 	my @quad		= $self->nodes;
 	
 	my %bind;
@@ -175,7 +175,7 @@ sub execute {
 	my $dup_var	= 0;
 	my @dups;
 	for my $idx (0 .. 3) {
-		warn "looking at triple " . $methodmap[ $idx ] if ($debug);
+		$l->debug("looking at triple " . $methodmap[ $idx ]);
 		my $data	= $quad[$idx];
 		if (blessed($data)) {
 			if ($data->isa('RDF::Query::Node::Variable') or $data->isa('RDF::Query::Node::Blank')) {
@@ -188,11 +188,11 @@ sub execute {
 				}
 				my $val		= $bound->{ $tmpvar };
 				if ($bridge->is_node($val)) {
-					warn "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" if ($debug);
+					$l->debug("${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ));
 					$quad[$idx]	= $val;
 				} else {
 					++$vars;
-					warn "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" if ($debug);
+					$l->debug("${indent}-> found variable $tmpvar (we've seen $vars variables already)");
 					$quad[$idx]	= undef;
 					$vars[$idx]		= $tmpvar;
 					$methods[$idx]	= $methodmap[ $idx ];
@@ -205,10 +205,10 @@ sub execute {
 	my $stream;
 	my @streams;
 	
-	warn "QUAD EXECUTING: " . Dumper(\@quad) if ($debug);
+	$l->debug("QUAD EXECUTING: " . Dumper(\@quad));
 	my ($s, $p, $o, $c)	= @quad;
 	my $statements	= $bridge->get_named_statements( $s, $p, $o, $c, $query, $bound );
-	warn "-> statements stream: $statements\n" if ($debug);
+	$l->debug("-> statements stream: $statements");
 	
 	if ($dup_var) {
 		# there's a node in the triple pattern that is repeated (like (?a ?b ?b)), but since get_statements() can't
@@ -243,14 +243,14 @@ sub execute {
 			my $method	= $methods[ $_ ];
 			next unless (defined($var));
 			
-			warn "${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ) . "\n" if ($debug);
+			$l->debug("${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ));
 			if (defined($bound->{$var})) {
-				warn "${indent}-> uh oh. $var has been defined more than once.\n" if ($debug);
+				$l->debug("${indent}-> uh oh. $var has been defined more than once.\n");
 				if ($bridge->as_string( $stmt->$method() ) eq $bridge->as_string( $bound->{$var} )) {
-					warn "${indent}-> the two values match. problem avoided.\n" if ($debug);
+					$l->debug("${indent}-> the two values match. problem avoided.");
 				} else {
-					warn "${indent}-> the two values don't match. this triple won't work.\n" if ($debug);
-					warn "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ) . "\n" if ($debug);
+					$l->debug("${indent}-> the two values don't match. this triple won't work.");
+					$l->debug("${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ) . "\n");
 					return ();
 				}
 			} else {

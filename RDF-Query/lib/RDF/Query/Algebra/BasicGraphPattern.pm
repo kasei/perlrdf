@@ -15,6 +15,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
+use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
@@ -22,9 +23,8 @@ use RDF::Trine::Iterator qw(smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -306,6 +306,7 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.basicgraphpattern");
 	
 	my @streams;
 	my (@triples)	= $self->triples;
@@ -327,12 +328,12 @@ sub execute {
 	}
 	my $stream	= shift(@streams);
 
-	if (my $l = $query->logger) {
-		warn "logging bgp execution time" if ($debug);
+	if (my $log = $query->logger) {
+		$l->debug("logging bgp execution time");
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-bgp', $self->as_sparql, $elapsed );
+		$log->push_key_value( 'execute_time-bgp', $self->as_sparql, $elapsed );
 	} else {
-		warn "no logger present for bgp execution time" if ($debug);
+		$l->debug("no logger present for bgp execution time");
 	}
 
 	return $stream;

@@ -19,6 +19,7 @@ use RDF::Query;
 use RDF::Query::Model::RDFTrine;
 use RDF::Query::Error qw(:try);
 
+use Log::Log4perl;
 use I18N::LangTags;
 use Data::Dumper;
 use MIME::Base64;
@@ -27,9 +28,9 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION, $l);
 BEGIN {
-	$debug		= 0;
+	$l			= Log::Log4perl->get_logger("rdf.query.functions");
 	$VERSION	= '2.002';
 }
 
@@ -301,7 +302,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			warn "error in lhs of logical-or" if ($debug);
+			$l->debug("error in lhs of logical-or");
 			$error	||= shift;
 		};
 		last unless (defined($arg));
@@ -338,7 +339,7 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			warn "error in lhs of logical-or" if ($debug);
+			$l->debug("error in lhs of logical-or");
 			$error	||= shift;
 		};
 		last unless (defined($arg));
@@ -484,10 +485,10 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 			throw RDF::Query::Error::TypeError ( -text => "cannot call datatype() on a language-tagged literal" );
 		} elsif ($node->has_datatype) {
 			my $type	= $node->literal_datatype;
-			warn "datatype => $type" if ($debug);
+			$l->debug("datatype => $type");
 			return RDF::Query::Node::Resource->new($type);
 		} else {
-			warn 'datatype => string' if ($debug);
+			$l->debug('datatype => string');
 			return RDF::Query::Node::Resource->new('http://www.w3.org/2001/XMLSchema#string');
 		}
 	} else {
@@ -744,7 +745,7 @@ BEGIN {
 		my $query	= shift;
 		my $bridge	= shift;
 		my $stream	= shift;
-		warn "bloom filter got result stream\n" if ($debug);
+		$l->debug("bloom filter got result stream\n");
 		my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
 		$stream->add_extra_result_data('bnode-map', $nodemap);
 	}
@@ -779,9 +780,9 @@ BEGIN {
 		my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
 		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
 		foreach my $string (@names) {
-			warn "checking bloom filter for --> '$string'\n" if ($debug);
+			$l->debug("checking bloom filter for --> '$string'\n");
 			my $ok	= $bloom->check( $string );
-			warn "-> ok\n" if ($ok and $debug);
+			$l->debug("-> ok") if ($ok);
 			if ($ok) {
 				my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
 				push( @{ $nodemap->{ $value->as_string } }, $string );
@@ -815,9 +816,9 @@ $RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom/filter"}	
 	}
 	
 	my $string	= $value->as_string;
-	warn "checking bloom filter for --> '$string'\n" if ($debug);
+	$l->debug("checking bloom filter for --> '$string'\n");
 	my $ok	= $bloom->check( $string );
-	warn "-> ok\n" if ($ok and $debug);
+	$l->debug("-> ok") if ($ok);
 	if ($ok) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {

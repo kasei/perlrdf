@@ -14,6 +14,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use List::Util qw(first);
@@ -197,6 +198,7 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.groupgraphpattern");
 	
 	my $stream;
 	my (@triples)	= $self->patterns;
@@ -234,9 +236,8 @@ sub execute {
 			$e->throw;
 		} otherwise {
 			my $e	= shift;
-			warn "error: " . $e;
 			$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
-			warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
+			$l->debug("*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n");
 		};
 		
 		unless ($handled) {
@@ -258,10 +259,10 @@ sub execute {
 		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
 	}
 	
-	if (my $l = $query->logger) {
-		warn "logging ggp execution time" if ($debug);
+	if (my $log = $query->logger) {
+		$l->debug("logging ggp execution time");
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-ggp', $self->as_sparql, $elapsed );
+		$log->push_key_value( 'execute_time-ggp', $self->as_sparql, $elapsed );
 	} else {
 		warn "no logger present for ggp execution time" if ($debug > 1);
 	}
@@ -319,6 +320,7 @@ sub join_bnode_streams {
 	my $bstream	= shift;
 	my $query	= shift;
 	my $bridge	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.groupgraphpattern");
 
 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
@@ -334,7 +336,7 @@ sub join_bnode_streams {
 		}
 	}
 	my $b_map	= (%b_map) ? \%b_map : undef;
-	warn 'BNODE MAP: ' . Dumper($b_map) if ($debug);
+	$l->debug('BNODE MAP: ' . Dumper($b_map));
 	################################################
 	
 	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
@@ -350,7 +352,7 @@ sub join_bnode_streams {
 		LOOP: foreach my $rowb_index (0 .. $#data) {
 			my $rowb	= $data[ $rowb_index ];
 			$total_rows++;
-			warn "[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n" if ($debug);
+			$l->debug("[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)) . "\n");
 			my %keysa	= map {$_=>1} (keys %$rowa);
 			my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
 			foreach my $key (@shared) {
@@ -365,7 +367,7 @@ sub join_bnode_streams {
 					if (not $equal) {
 						my $names	= $b_map->{ $val_b->as_string };
 						if ($names) {
-							warn "nodes aren't equal: " . Data::Dumper->Dump([$val_a, $val_b], [qw(val_a val_b)]) if ($debug);
+							$l->debug("nodes aren't equal: " . Data::Dumper->Dump([$val_a, $val_b], [qw(val_a val_b)]));
 							my $bnames	= Set::Scalar->new( @{ $names } );
 							my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
 							if ($debug) {
@@ -373,24 +375,24 @@ sub join_bnode_streams {
 								warn "bnames: $bnames\n";
 							}
 							if (my $int = $anames->intersection( $bnames )) {
-								warn "node equality based on $int" if ($debug);
+								$l->debug("node equality based on $int");
 								$equal	= 1;
 							}
 						}
 					}
 					
 					unless ($equal) {
-						warn "can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")" if ($debug);
+						$l->debug("can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")");
 						next LOOP;
 					}
 				}
 			}
 			
 			my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
-			if ($debug) {
-				warn "JOINED:\n";
+			if ($l->is_debug) {
+				$l->debug("JOINED:");
 				foreach my $key (keys %$row) {
-					warn "$key\t=> " . $row->{ $key }->as_string . "\n";
+					$l->debug("$key\t=> " . $row->{ $key }->as_string);
 				}
 			}
 			
@@ -406,13 +408,13 @@ sub join_bnode_streams {
 		}
 	}
 	
-	if ($debug) {
-		warn "TOTAL ROWS: $total_rows\n";
-		warn "FALSE POSITIVES: $false_positives\n";
+	if ($l->is_debug) {
+		$l->debug("TOTAL ROWS: $total_rows");
+		$l->debug("FALSE POSITIVES: $false_positives");
 		if ($total_rows) {
-			warn "FALSE POSITIVE RATE: " . sprintf('%0.2f', ($false_positives / $total_rows)) . "\n";
+			$l->debug("FALSE POSITIVE RATE: " . sprintf('%0.2f', ($false_positives / $total_rows)));
 		}
-		warn "EXPECTED RATE: " . $self->_bloom_filter_error_rate( $query ) . "\n";
+		$l->debug("EXPECTED RATE: " . $self->_bloom_filter_error_rate( $query ));
 	}
 	
 	my $args	= $astream->_args;

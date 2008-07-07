@@ -14,6 +14,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
+use Log::Log4perl;
 use Data::Dumper;
 use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype refaddr);
@@ -23,9 +24,8 @@ use RDF::Trine::Iterator qw(smap);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -139,6 +139,7 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
 	
 	my $expr		= $self->expr;
 	my $ggp			= $self->pattern;
@@ -178,10 +179,10 @@ sub execute {
 		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trine::Node::Variable') } @$o ] );
 	}
 	
-	if ($debug) {
-		warn "unifying with store: " . refaddr( $model->_store ) . "\n";
-		warn "filter pattern: " . Dumper($pattern);
-		warn "model contains:\n";
+	if ($l->is_debug) {
+		$l->debug("unifying with store: " . refaddr( $model->_store ));
+		$l->debug("filter pattern: " . Dumper($pattern));
+		$l->debug("model contains:");
 		$model->_debug;
 	}
 	
@@ -192,7 +193,7 @@ sub execute {
 		my %cast	= map {
 						$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
 					} (keys %$bindings);
-		warn "[$modeldebug]" . Dumper(\%cast) if ($debug);
+		$l->debug("[$modeldebug]" . Dumper(\%cast));
 		return \%cast;
 	} $model->get_pattern( $pattern, undef, @args );
 }

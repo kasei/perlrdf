@@ -23,9 +23,8 @@ use RDF::Trine::Iterator qw(sgrep);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 

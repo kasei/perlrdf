@@ -21,9 +21,8 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 1;
 	$VERSION	= '2.002';
 }
 
@@ -503,11 +502,12 @@ model) to STDERR.
 sub debug {
 	my $self	= shift;
 	my $stream	= $self->get_statements( map { $self->new_variable($_) } qw(s p o) );
-	warn "------------------------------\n";
+	my $l		= Log::Log4perl->get_logger("rdf.query.model");
+	$l->debug("------------------------------");
 	while (my $st = $stream->next) {
-		warn $self->as_string( $st );
+		$l->debug($self->as_string( $st ));
 	}
-	warn "------------------------------\n";
+	$l->debug("------------------------------");
 }
 
 

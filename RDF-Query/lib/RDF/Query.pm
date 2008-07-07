@@ -98,6 +98,9 @@ use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($ERROR);
+
 use RDF::Trine 0.108;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
@@ -120,11 +123,8 @@ use RDF::Query::Logger;
 
 ######################################################################
 
-our ($VERSION, $debug, $js_debug, $DEFAULT_PARSER);
-use constant DEBUG	=> 0;
+our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$debug			= DEBUG;
-	$js_debug		= 0;
 	$VERSION		= '2.002';
 	$DEFAULT_PARSER	= 'sparql';
 }
@@ -153,6 +153,7 @@ sub new {
 	my ($query, $baseuri, $languri, $lang, %options)	= @_;
 	$class->clear_error;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query");
 	my $f	= DateTime::Format::W3CDTF->new;
 	no warnings 'uninitialized';
 	
@@ -186,7 +187,7 @@ sub new {
 				}, $class );
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
-		warn $parser->error if ($debug);
+		$l->debug($parser->error);
 		return;
 	}
 	
@@ -209,7 +210,7 @@ sub new {
 	}
 	
 	if ($options{logger}) {
-		warn "got external logger\n" if ($debug);
+		$l->debug("got external logger");
 		$self->{logger}	= $options{logger};
 	}
 	
@@ -248,7 +249,8 @@ sub execute {
 	my $self	= shift;
 	my $model	= shift;
 	my %args	= @_;
-	warn "executing query with model $model" if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	$l->debug("executing query with model " . ($model or ''));
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	
@@ -261,7 +263,7 @@ sub execute {
 	my $bridge	= $self->{bridge} || $self->get_bridge( $model, %args );
 	if ($bridge) {
 		$self->bridge( $bridge );
-		warn "got bridge $bridge" if ($debug);
+		$l->debug("got bridge $bridge");
 	} else {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
@@ -270,12 +272,12 @@ sub execute {
 	
 	my ($pattern, $cpattern)	= $self->fixup();
 	
-	if ($debug) {
-		warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
-		warn $self->as_sparql;
-		warn "-----------------------------\n";
-		warn $pattern->as_sparql({}, '');
-		warn "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
+	if ($l->is_trace) {
+		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		$l->trace($self->as_sparql);
+		$l->trace("-----------------------------");
+		$l->trace($pattern->as_sparql({}, ''));
+		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		exit;
 	}
 	
@@ -289,7 +291,7 @@ sub execute {
 	
 	# RUN THE QUERY!
 
-	warn "executing the graph pattern" if ($debug);
+	$l->debug("executing the graph pattern");
 	
 	my $options	= $parsed->{options} || {};
 	if (my $b = $self->{parsed}{bindings}) {
@@ -309,7 +311,7 @@ sub execute {
 		$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
 	}
 	
-	warn "performing projection" if ($debug);
+	$l->debug("performing projection");
 	my $expr	= 0;
 	foreach my $v (@{ $parsed->{'variables'} }) {
 		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
@@ -335,7 +337,7 @@ sub execute {
 		$stream	= $self->ask( $stream );
 	}
 	
-	warn "going to call post-execute hook" if ($debug);
+	$l->debug("going to call post-execute hook");
 	$self->run_hook( 'http://kasei.us/code/rdf-query/hooks/post-execute', $bridge, $stream );
 	
 	if (wantarray) {
@@ -357,6 +359,7 @@ sub execute_with_named_graphs {
 	my $self		= shift;
 	my $model		= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query");
 	$self->{model}	= $model;
 	my $bridge		= $self->get_bridge( $model );
 	if ($bridge) {
@@ -366,7 +369,7 @@ sub execute_with_named_graphs {
 	}
 	
 	foreach my $gdata (@_) {
-		warn "-> adding graph data " . $gdata->uri_value if ($debug);
+		$l->debug("-> adding graph data " . $gdata->uri_value);
 		$self->parse_url( $gdata->uri_value, 1 );
 	}
 	
@@ -689,32 +692,39 @@ Returns the class name of a model backend that is present and loadable on the sy
 sub loadable_bridge_class {
 	my $self	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query");
 	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
 		eval "use RDF::Query::Model::RDFTrine;";
 		if (RDF::Query::Model::RDFTrine->can('new')) {
 			return 'RDF::Query::Model::RDFTrine';
 		} else {
-			warn "RDF::Query::Model::RDFTrine didn't load cleanly" if ($debug);
+			$l->debug("RDF::Query::Model::RDFTrine didn't load cleanly");
 		}
-	} else { warn "RDF::Trine supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
+	} else {
+		$l->debug("RDF::Trine supressed");
+	}
 	
 	if (not $ENV{RDFQUERY_NO_REDLAND}) {
 		eval "use RDF::Query::Model::Redland;";
 		if (RDF::Query::Model::Redland->can('new')) {
 			return 'RDF::Query::Model::Redland';
 		} else {
-			warn "RDF::Query::Model::Redland didn't load cleanly" if ($debug);
+			$l->debug("RDF::Query::Model::Redland didn't load cleanly");
 		}
-	} else { warn "RDF::Redland supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
+	} else {
+		$l->debug("RDF::Redland supressed");
+	}
 	
 	if (not $ENV{RDFQUERY_NO_RDFCORE}) {
 		eval "use RDF::Query::Model::RDFCore;";
 		if (RDF::Query::Model::RDFCore->can('new')) {
 			return 'RDF::Query::Model::RDFCore';
 		} else {
-			warn "RDF::Query::Model::RDFCore didn't load cleanly" if ($debug);
+			$l->debug("RDF::Query::Model::RDFCore didn't load cleanly");
 		}
-	} else { warn "RDF::Core supressed" if ($debug and not $ENV{RDFQUERY_SILENT}) }
+	} else {
+		$l->debug("RDF::Core supressed");
+	}
 	
 	return undef;
 }
@@ -841,6 +851,7 @@ sub fixup {
 	my $parsed		= $self->parsed;
 	my $base		= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
+	my $l		= Log::Log4perl->get_logger("rdf.query");
 	
 	my %preds;
 	local($self->{ service_predicates })	= \%preds;
@@ -852,10 +863,10 @@ sub fixup {
 			}
 		}
 		
-		if ($debug) {
+		if ($l->is_debug) {
 			foreach my $k (keys %preds) {
 				my $services	= join(', ', map { $_->label } @{ $preds{$k} });
-				warn scalar(@{ $preds{$k} }) . " services\t$k\t($services)\n";
+				$l->debug(scalar(@{ $preds{$k} }) . " services\t$k\t($services)");
 			}
 		}
 	} else {
@@ -1005,7 +1016,8 @@ sub get_function {
 	my $self	= shift;
 	my $uri		= shift;
 	my %args	= @_;
-	warn "trying to get function from $uri" if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	$l->debug("trying to get function from $uri");
 	
 	if (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
 		$uri	= $uri->uri_value;
@@ -1042,7 +1054,8 @@ sub call_function {
 	my $bridge	= shift;
 	my $bound	= shift;
 	my $uri		= shift;
-	warn "trying to get function from $uri" if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	$l->debug("trying to get function from $uri");
 	
 	my $filter			= RDF::Query::Expression::Function->new( $uri, @_ );
 	return $filter->evaluate( $self, $bridge, $bound );
@@ -1091,7 +1104,8 @@ sub net_filter_function {
 	my $self	= shift;
 	my $uri		= shift;
 	my %args	= @_;
-	warn "fetching $uri\n" if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	$l->debug("fetching $uri");
 	
 	my $bridge	= $self->new_bridge();
 	$bridge->add_uri( $uri );
@@ -1152,9 +1166,9 @@ sub net_filter_function {
 	return sub {
 		my $query	= shift;
 		my $bridge	= shift;
-		warn "Calling javascript function $func with: " . Dumper(\@_) if ($debug);
+		$l->debug("Calling javascript function $func with: " . Dumper(\@_));
 		my $value	= $cx->call( $func, @_ );
-		warn "--> $value\n" if ($debug);
+		$l->debug("--> $value");
 		return $value;
 	};
 }
@@ -1198,12 +1212,13 @@ sub new_javascript_engine {
 	my $self	= shift;
 	my %args	= @_;
 	my $bridge	= $args{bridge};
+	my $l		= Log::Log4perl->get_logger("rdf.query");
 	
 	my $rt		= JavaScript::Runtime->new();
 	my $cx		= $rt->create_context();
 	my $meta	= $bridge->meta;
-	$cx->bind_function( 'warn' => sub { warn @_ if ($debug || $js_debug) } );
-	$cx->bind_function( '_warn' => sub { warn @_ } );
+	$cx->bind_function( 'warn' => sub { $l->debug(@_) } );
+	$cx->bind_function( '_warn' => sub { $l->debug(@_) } );
 	$cx->bind_function( 'makeTerm' => sub {
 		my $term	= shift;
 		my $lang	= shift;
@@ -1573,42 +1588,14 @@ Debugging function to print out a deparsed (textual) version of a closure.
 =cut
 
 sub _debug_closure {
-	return unless ($debug > 1);
 	my $closure	= shift;
-	require B::Deparse;
-	my $deparse	= B::Deparse->new("-p", "-sC");
-	my $body	= $deparse->coderef2text($closure);
-	warn "--- --- CLOSURE --- ---\n";
-	Carp::cluck $body;
-}
-
-=begin private
-
-=item C<_debug ( $message, $level, $trace )>
-
-Debugging function to print out C<$message> at or above the specified debugging
-C<$level>, with an optional stack C<$trace>.
-	
-=end private
-
-=cut
-
-sub _debug {
-	my $mesg	= shift;
-	my $level	= shift	|| 1;
-	my $trace	= shift || 0;
-	my ($package, $filename, $line, $sub, $hasargs, $wantarray, $evaltext, $is_require, $hints, $bitmask)	= caller(1);
-	
-	$sub		=~ s/^.*://;
-	chomp($mesg);
-	my $output	= join(' ', $mesg, 'at', $filename, $line); # . "\n";
-	if ($debug >= $level) {
-		carp $output;
-		if ($trace) {
-			unless ($filename =~ m/Redland/) {
-				warn Carp::longmess();
-			}
-		}
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	if ($l->is_trace) {
+		require B::Deparse;
+		my $deparse	= B::Deparse->new("-p", "-sC");
+		my $body	= $deparse->coderef2text($closure);
+		$l->trace("--- --- CLOSURE --- ---");
+		$l->logcluck($body);
 	}
 }
 

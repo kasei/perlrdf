@@ -15,6 +15,7 @@ no warnings 'redefine';
 
 use RDF::Query::Error qw(:try);
 
+use Log::Log4perl;
 use List::Util qw(first);
 use Data::Dumper;
 use Math::BigInt;
@@ -28,9 +29,8 @@ use RDF::Query::Error qw(:try);
 ######################################################################
 
 my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 	@NODE_TYPE_TABLES	= (
 							['Resources', 'ljr', 'URI'],
@@ -60,10 +60,11 @@ sub new {
 	my $class	= shift;
 	my $parsed	= shift;
 	my $model	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.compiler.sql");
 	my $stable;
 	if ($model) {
 		my $mhash	= _mysql_hash( $model );
-		warn "Model: $model => $mhash\n" if ($debug);
+		$l->debug("Model: $model => $mhash\n");
 		$stable		= "Statements${mhash}";
 	} else {
 		$stable		= 'Statements';
@@ -256,6 +257,7 @@ contain the node values (for literals, resources, and blank nodes).
 
 sub add_variable_values_joins {
 	my $self	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	my $parsed	= $self->{parsed};
 	my @vars	= map { $_->name } @{ $parsed->{variables} };
 	my %select_vars	= map { $_ => 1 } @vars;
@@ -277,7 +279,7 @@ sub add_variable_values_joins {
 		my $col_table	= (split(/[.]/, $col))[0];
 		my ($count)		= ($col_table =~ /\w(\d+)/);
 		
-		warn "var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n" if ($debug);
+		$l->debug("var: $var\t\tcol: $col\t\tcount: $count\t\tunique count: $uniq_count\n");
 		
 		push(@cols, "${col} AS ${var}_Node") if ($select_vars{ $var });
 		foreach (@NODE_TYPE_TABLES) {

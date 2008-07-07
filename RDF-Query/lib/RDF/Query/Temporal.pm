@@ -16,12 +16,6 @@ use base qw(RDF::Query);
 
 use Scalar::Util qw(blessed);
 
-our ($debug);
-use constant DEBUG	=> 0;
-BEGIN {
-	$debug		= DEBUG;
-}
-
 =begin private
 
 =item C<query_more_time ( bound => \%bound, triples => \@triples )>

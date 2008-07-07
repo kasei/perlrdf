@@ -21,9 +21,8 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 

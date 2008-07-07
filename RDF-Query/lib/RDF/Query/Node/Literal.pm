@@ -18,14 +18,14 @@ use DateTime;
 use RDF::Query;
 use RDF::Query::Error;
 use Data::Dumper;
+use Log::Log4perl;
 use Scalar::Util qw(blessed refaddr looks_like_number);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug, $LAZY_COMPARISONS);
+our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -54,8 +54,8 @@ sub _cmp {
 	my $nodeb	= shift;
 	my $op	= shift;
 	
-	warn '-------------------------------' if ($debug);
-	warn 'literal comparison: ' . Dumper($nodea, $nodeb) if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query.node.literal");
+	$l->debug('literal comparison: ' . Dumper($nodea, $nodeb));
 	
 	return 1 unless blessed($nodeb);
 	return 1 if ($nodeb->isa('RDF::Query::Node::Blank'));
@@ -69,18 +69,18 @@ sub _cmp {
 	my $numericcmp	= ($nodea->is_numeric_type and $nodeb->is_numeric_type);
 
 	if ($datecmp) {
-		warn 'datecmp' if ($debug);
+		$l->trace('datecmp');
 		my $datea	= $nodea->datetime;
 		my $dateb	= $nodeb->datetime;
 		return DateTime->compare( $datea, $dateb );
 	} elsif ($numericcmp) {
-		warn 'both numeric cmp' if ($debug);
+		$l->trace('both numeric cmp');
 		return $nodea->numeric_value <=> $nodeb->numeric_value;
 	} else {
-		warn 'other cmp' if ($debug);
+		$l->trace('other cmp');
 		
 		if ($nodea->has_language and $nodeb->has_language) {
-			warn "both have language" if ($debug);
+			$l->trace('both have language');
 			my $lc	= lc($nodea->literal_value_language) cmp lc($nodeb->literal_value_language);
 			my $vc	= $nodea->literal_value cmp $nodeb->literal_value;
 			my $c;
@@ -89,13 +89,13 @@ sub _cmp {
 			} elsif ($lc == 0) {
 				$c	= $vc;
 			} else {
-				warn "Attempt to compare literals with differing languages." if ($debug);
+				$l->debug("Attempt to compare literals with differing languages.");
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare literals with differing languages.";
 			}
-			warn "-> $c" if ($debug);
+			$l->trace("-> $c");
 			return $c;
 		} elsif (($nodea->has_datatype and $dta eq 'http://www.w3.org/2001/XMLSchema#string') or ($nodeb->has_datatype and $dtb eq 'http://www.w3.org/2001/XMLSchema#string')) {
-			warn "one is xsd:string" if ($debug);
+			$l->trace("one is xsd:string");
 			no warnings 'uninitialized';
 			my ($na, $nb)	= sort {
 								(blessed($b) and $b->isa('RDF::Query::Node::Literal'))
@@ -113,10 +113,10 @@ sub _cmp {
 			} else {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare typed-literal with xsd:string.";
 			}
-			warn "-> $c" if ($debug);
+			$l->trace("-> $c");
 			return $c;
 		} elsif ($nodea->has_datatype and $nodeb->has_datatype) {
-			warn "both have datatype" if ($debug);
+			$l->trace("both have datatype");
 			my $dc	= $nodea->literal_datatype cmp $nodeb->literal_datatype;
 			my $vc	= $nodea->literal_value cmp $nodeb->literal_value;
 			my $c;
@@ -129,37 +129,37 @@ sub _cmp {
 				} elsif ($dc == 0) {
 					$c	= $vc;
 				} else {
-					warn "Attempt to compare literals with different datatypes." if ($debug);
+					$l->debug("Attempt to compare literals with different datatypes.");
 					throw RDF::Query::Error::TypeError -text => "Attempt to compare literals with differing datatypes.";
 				}
-				warn "-> $c" if ($debug);
+				$l->trace("-> $c");
 				return $c;
 			}
 		} elsif ($nodea->has_language or $nodeb->has_language) {
-			warn "one has language" if ($debug);
+			$l->trace("one has language");
 			if ($LAZY_COMPARISONS) {
 				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but will make the sort stable
-				warn "-> $c" if ($debug);
+				$l->trace("-> $c");
 				return $c;
 			} else {
 				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but stable sorting
-				warn "-> $c" if ($debug);
+				$l->trace("-> $c");
 				return $c;
 			}
 		} elsif ($nodea->has_datatype or $nodeb->has_datatype) {
-			warn "one has datatype" if ($debug);
+			$l->trace("one has datatype");
 			if ($LAZY_COMPARISONS) {
 				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but will make the sort stable
-				warn "-> $c" if ($debug);
+				$l->trace("-> $c");
 				return $c;
 			} else {
-				warn "Attempt to compare typed-literal with plain-literal" if ($debug);
+				$l->debug("Attempt to compare typed-literal with plain-literal");
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare typed-literal with plain-literal";
 			}
 		} else {
-			warn "something else" if ($debug);
+			$l->trace("something else");
 			my $vcmp	= $nodea->literal_value cmp $nodeb->literal_value;
-			warn "-> $vcmp" if ($debug);
+			$l->trace("-> $vcmp");
 			return $vcmp;
 		}
 	}

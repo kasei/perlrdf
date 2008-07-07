@@ -13,9 +13,9 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra RDF::Trine::Statement);
-use constant DEBUG	=> 0;
 
 use Data::Dumper;
+use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
@@ -24,10 +24,9 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -152,8 +151,9 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l			= Log::Log4perl->get_logger("rdf.query.algebra.triple");
 	
-	our $indent;
+	our $indent		= '';
 	my @triple		= $self->nodes;
 	
 	my %bind;
@@ -167,7 +167,7 @@ sub execute {
 	my $dup_var	= 0;
 	my @dups;
 	for my $idx (0 .. 2) {
-		_debug( "looking at triple " . $methodmap[ $idx ] ) if (DEBUG);
+		$l->trace( "looking at triple " . $methodmap[ $idx ]);
 		my $data	= $triple[$idx];
 		if (blessed($data)) {
 			if ($data->isa('RDF::Query::Node::Variable') or $data->isa('RDF::Query::Node::Blank')) {
@@ -180,11 +180,11 @@ sub execute {
 				}
 				my $val		= $bound->{ $tmpvar };
 				if ($bridge->is_node($val)) {
-					_debug( "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" ) if (DEBUG);
+					$l->trace( "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" );
 					$triple[$idx]	= $val;
 				} else {
 					++$vars;
-					_debug( "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" ) if (DEBUG);
+					$l->trace( "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" );
 					$triple[$idx]	= undef;
 					$vars[$idx]		= $tmpvar;
 					$methods[$idx]	= $methodmap[ $idx ];
@@ -226,12 +226,12 @@ sub execute {
 		} $statements;
 	}
 	
-	if (my $l = $query->logger) {
-		warn "logging triple execution time" if ($debug);
+	if (my $log = $query->logger) {
+		$l->debug("logging triple execution time");
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-triple', $self->as_sparql, $elapsed );
+		$log->push_key_value( 'execute_time-triple', $self->as_sparql, $elapsed );
 	} else {
-		warn "no logger present for triple execution time" if ($debug);
+		$l->debug("no logger present for triple execution time");
 	}
 	
 	my $count		= 0;
@@ -244,14 +244,14 @@ sub execute {
 			my $method	= $methods[ $_ ];
 			next unless (defined($var));
 			
-			_debug( "${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ) . "\n" ) if (DEBUG);
+			$l->trace("${indent}-> got variable $var = " . $bridge->as_string( $stmt->$method() ));
 			if (defined($bound->{$var})) {
-				_debug( "${indent}-> uh oh. $var has been defined more than once.\n" ) if (DEBUG);
+				$l->trace( "${indent}-> uh oh. $var has been defined more than once.");
 				if ($bridge->as_string( $stmt->$method() ) eq $bridge->as_string( $bound->{$var} )) {
-					_debug( "${indent}-> the two values match. problem avoided.\n" ) if (DEBUG);
+					$l->trace( "${indent}-> the two values match. problem avoided.");
 				} else {
-					_debug( "${indent}-> the two values don't match. this triple won't work.\n" ) if (DEBUG);
-					_debug( "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ) . "\n" ) if (DEBUG);
+					$l->trace( "${indent}-> the two values don't match. this triple won't work.");
+					$l->trace( "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ));
 					return ();
 				}
 			} else {

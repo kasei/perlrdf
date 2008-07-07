@@ -13,6 +13,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Algebra);
 
+use Log::Log4perl;
 use URI::Escape;
 use MIME::Base64;
 use Data::Dumper;
@@ -25,9 +26,8 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug, $BLOOM_FILTER_ERROR_RATE);
+our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
-	$debug		= 0;
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
 	$VERSION	= '2.002';
 }
@@ -109,6 +109,7 @@ sub add_bloom {
 	my $class	= ref($self);
 	my $var		= shift;
 	my $bloom	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	unless (blessed($var)) {
 		$var	= RDF::Query::Node::Variable->new( $var );
@@ -116,7 +117,7 @@ sub add_bloom {
 	
 	my $pattern	= $self->pattern;
 	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom/filter');
-	warn "Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query" if ($debug);
+	$l->debug("Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query");
 	my $frozen	= $bloom->freeze;
 	my $literal	= RDF::Query::Node::Literal->new( $frozen );
 	my $expr	= RDF::Query::Expression::Function->new( $iri, $var, $literal );
@@ -253,14 +254,15 @@ sub execute {
 	my $bound		= shift;
 	my $outer_ctx	= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	if ($outer_ctx) {
 		throw RDF::Query::Error::QueryPatternError ( -text => "Can't use nested SERVICE graphs" );
 	}
 
 	my $endpoint	= $self->endpoint;
-	if (my $l = $query->logger) {
-		$l->push_value( service_endpoints => $endpoint->uri_value );
+	if (my $log = $query->logger) {
+		$log->push_value( service_endpoints => $endpoint->uri_value );
 	}
 	
 	my %ns			= (%{ $query->{parsed}{namespaces} });
@@ -274,7 +276,7 @@ sub execute {
 					);
 	my $url			= $endpoint->uri_value . '?query=' . uri_escape($sparql);
 	
-	warn "SERVICE REQUEST $endpoint:\n$sparql\n" if ($debug);
+	$l->debug("SERVICE REQUEST $endpoint:\n$sparql\n");
 	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
 		warn "SERVICE REQUEST $endpoint:{{{\n$sparql\n}}}\n";
 		warn "QUERY LENGTH: " . length($sparql) . "\n";
@@ -292,7 +294,7 @@ sub execute {
 	my @vars		= $self->pattern->referenced_variables;
 	
 	
-	warn "forking in $$\n" if ($debug);
+	$l->debug("forking in $$\n");
 	my $pid = open my $fh, "-|";
 	die unless defined $pid;
 	unless ($pid) {
@@ -306,9 +308,9 @@ sub execute {
 	my $sub	= sub {
 		return unless ($open);
 		my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
-		warn "got result in HEAD: " . Dumper($result) if ($debug);
+		$l->debug("got result in HEAD: " . Dumper($result));
 		if (not($result) or ref($result) ne 'HASH') {
-			warn "got \\undef signalling end of stream" if ($debug);
+			$l->debug("got \\undef signalling end of stream");
 			$open	= 0;
 			return;
 		}
@@ -382,6 +384,7 @@ sub _get_and_parse_url {
 	my $url		= shift;
 	my $fh		= shift;
 	my $pid		= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	eval "
 		require XML::SAX::Expat;
@@ -400,7 +403,7 @@ sub _get_and_parse_url {
 		my $content	= shift;
 		my $resp	= shift;
 		my $proto	= shift;
-		warn "got content in $$: " . Dumper($content) if ($debug > 1);
+		$l->trace("got content in $$: " . Dumper($content));
 		unless ($resp->is_success) {
 			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 		}
@@ -411,13 +414,13 @@ sub _get_and_parse_url {
 			if (exists( $args[2]{Handler} )) {
 				delete $args[2]{Handler};
 			}
-			warn "got args in child: " . Dumper(\@args) if ($debug);
+			$l->debug("got args in child: " . Dumper(\@args));
 			$has_head	= 1;
 			store_fd \@args, \*STDOUT or die "PID $pid can't store!\n";
 		}
 		
 		while (my $data = $handler->pull_result) {
-			warn "got result in child: " . Dumper($data) if ($debug);
+			$l->debug("got result in child: " . Dumper($data));
 			store_fd $data, \*STDOUT or die "PID $pid can't store!\n";
 		}
 	};
@@ -445,6 +448,7 @@ sub bloom_filter_for_iterator {
 	my $iter	= shift;
 	my $var		= shift;
 	my $error	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	my $name	= blessed($var) ? $var->name : $var;
 	
@@ -459,16 +463,16 @@ sub bloom_filter_for_iterator {
 
 	my $count	= scalar(@names);
 	my $filter	= Bloom::Filter->new( capacity => $count, error_rate => $error );
-	if ($debug) {
-		warn $_ for (@names);
+	if ($l->is_debug) {
+		$l->debug($_);
 	}
 	$filter->add( $_ ) for (@names);
 	
-	if ($debug) {
-		warn "$node_count total nodes considered\n";
-		warn "Bloom filter has $count total items\n";
+	if ($l->is_debug) {
+		$l->debug("$node_count total nodes considered");
+		$l->debug( "Bloom filter has $count total items");
 		my @paths	= keys %paths;
-		warn "PATHS:\n" . join("\n", @paths) . "\n";
+		$l->debug("PATHS:\n" . join("\n", @paths));
 	}
 	$iter->reset;
 	return $filter;
@@ -485,11 +489,12 @@ sub _names_for_node {
 	my $pre		= shift || '';
 	my $seen	= shift || {};
 	return if ($depth > 2);
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	my $nodestring	= $node->as_string;
 	
 	if (not exists($seen->{ $nodestring })) {
-		warn "  " x $depth . "name for node " . $nodestring . "...\n" if ($debug);
+		$l->debug("  " x $depth . "name for node " . $nodestring . "...");
 		my @names;
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		unless ($node->isa('RDF::Trine::Node::Literal')) {
@@ -534,7 +539,7 @@ sub _names_for_node {
 	}
 	
 	my @names	= values %{ $seen->{ $nodestring } };
-	warn "  " x $depth . "-> " . join(', ', @names) . "\n" if ($debug);
+	$l->debug("  " x $depth . "-> " . join(', ', @names) . "\n");
 	return @names;
 }
 

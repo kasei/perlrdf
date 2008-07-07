@@ -16,15 +16,15 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -197,17 +197,18 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.union");
 	
 	my @names;
 	my @streams;
 	foreach my $u_triples ($self->first, $self->second) {
 		my $stream	= $u_triples->execute( $query, $bridge, $bound, $context, %args );
 		
-		if ($debug) {
+		if ($l->is_debug) {
 			$stream		= $stream->materialize;
-			warn "union stream:\n";
+			$l->debug("union stream:");
 			while (my $b = $stream->next) {
-				warn "BINDING: " . join(', ', map { my $v = $b->{$_}; join('=', $_, (blessed($v) ? $v->sse : '')) } (keys %$b));
+				$l->debug("BINDING: " . join(', ', map { my $v = $b->{$_}; join('=', $_, (blessed($v) ? $v->sse : '')) } (keys %$b)));
 			}
 			$stream->reset;
 		}

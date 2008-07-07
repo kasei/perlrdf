@@ -13,9 +13,8 @@ RDF::Query::Node - Class for describing federated query data sources.
 
 package RDF::Query::ServiceDescription;
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.000';
 }
 
@@ -41,6 +40,7 @@ sub new {
 	my $class	= shift;
 	my $uri		= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/$RDF::Query::VERSION" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	my $resp	= $ua->get( $uri );
@@ -144,7 +144,7 @@ END
 		}
 		foreach my $k (keys %patterns) {
 			my $bgp	= RDF::Query::Algebra::BasicGraphPattern->new( @{ $patterns{ $k } } );
-			warn "SERVICE BGP: " . $bgp->as_sparql({}, '') if ($debug);
+			$l->debug("SERVICE BGP: " . $bgp->as_sparql({}, ''));
 			push( @patterns, $bgp );
 		}
 	}

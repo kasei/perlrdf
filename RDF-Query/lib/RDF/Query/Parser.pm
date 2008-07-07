@@ -26,9 +26,8 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION		= '2.002';
 }
 
@@ -277,6 +276,7 @@ RDF::Query::Error::ParseError object. Otherwise returns C<undef>.
 sub fail {
 	my $self	= shift;
 	my $error	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.parser");
 	
 	no warnings 'uninitialized';
 	my $parsed	= substr($self->{input}, 0, $self->{position});
@@ -287,8 +287,6 @@ sub fail {
 	
 	$self->set_error( "Syntax error; $error at $line:$col (near '$rest')" );
 	if ($self->{commit}) {
-		Carp::cluck if ($rest =~ /a ann/);
-		Carp::cluck if ($RDF::Query::Parser::debug > 1);
 		throw RDF::Query::Error::ParseError( -text => "$error at $line:$col (near '$rest')" );
 	} else {
 		return undef;

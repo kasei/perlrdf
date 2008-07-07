@@ -16,6 +16,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
@@ -23,9 +24,8 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -214,6 +214,7 @@ sub execute {
 	my $bound		= shift;
 	my $context		= shift;
 	my %args		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.sort");
 	
 	my $stream		= $self->pattern->execute( $query, $bridge, $bound, $context, %args );
 	my @cols		= $self->orderby;
@@ -223,19 +224,17 @@ sub execute {
 	eval {
 		$req_sort	= join(',', map { $_->[1]->name => $_->[0] } @cols);
 		$actual_sort	= join(',', $stream->sorted_by());
-		if ($debug) {
-			warn "stream is sorted by $actual_sort\n";
-			warn "trying to sort by $req_sort\n";
-		}
+		$l->debug("stream is sorted by $actual_sort");
+		$l->debug("trying to sort by $req_sort");
 	};
 	
 	my @variables	= $self->pattern->referenced_variables;
 	my %colmap		= map { $variables[$_] => $_ } (0 .. $#variables);
-	warn 'sort variable colmap: ' . Dumper(\@variables, \%colmap) if ($debug);
+	$l->debug('sort variable colmap: ' . Dumper(\@variables, \%colmap));
 	
 	my $t0	= [gettimeofday];
 	if (not($@) and substr($actual_sort, 0, length($req_sort)) eq $req_sort) {
-		warn "Already sorted. Ignoring." if ($debug);
+		$l->debug("Already sorted. Ignoring.");
 	} else {
 		my ($dir, $data)	= @{ $cols[0] };
 		if ($dir ne 'ASC' and $dir ne 'DESC') {
@@ -275,12 +274,12 @@ sub execute {
 		$stream		= RDF::Trine::Iterator::Bindings->new( sub { shift(@nodes) }, $names, %$args, %sorting );
 	}
 	
-	if (my $l = $query->logger) {
-		warn "logging sort execution time" if ($debug);
+	if (my $log = $query->logger) {
+		$l->debug("logging sort execution time");
 		my $elapsed = tv_interval ( $t0 );
-		$l->push_key_value( 'execute_time-sort', \@cols, $elapsed );
+		$log->push_key_value( 'execute_time-sort', \@cols, $elapsed );
 	} else {
-		warn "no logger present for sort execution time" if ($debug);
+		$l->debug("no logger present for sort execution time");
 	}
 	
 	return $stream;

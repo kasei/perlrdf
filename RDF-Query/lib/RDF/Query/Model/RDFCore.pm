@@ -7,6 +7,7 @@ use base qw(RDF::Query::Model);
 
 use Carp qw(carp croak);
 
+use Log::Log4perl;
 use Data::Dumper;
 use File::Spec;
 use File::Temp qw(tempfile);
@@ -24,9 +25,8 @@ use RDF::Trine::Statement::Quad;
 
 ######################################################################
 
-our ($VERSION, $debug);
+our ($VERSION);
 BEGIN {
-	$debug		= 0;
 	$VERSION	= '2.002';
 }
 
@@ -496,15 +496,18 @@ model) to STDERR.
 sub debug {
 	my $self	= shift;
 	my $model	= shift || $self->model;
-	my $stream	= $model->getStmts();
-	warn "------------------------------\n";
-	my $statement	= $stream->getFirst;
-	while (defined $statement) {
-		print STDERR $statement->getLabel . "\n";
-		$statement = $stream->getNext
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdfcore");
+	if ($l->is_debug) {
+		my $stream	= $model->getStmts();
+		$l->debug("------------------------------");
+		my $statement	= $stream->getFirst;
+		while (defined $statement) {
+			$l->debug($statement->getLabel);
+			$statement = $stream->getNext
+		}
+		$stream->close;
+		$l->debug("------------------------------");
 	}
-	$stream->close;
-	warn "------------------------------\n";
 }
 
 sub _named_graph_models {

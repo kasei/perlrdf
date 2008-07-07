@@ -26,16 +26,15 @@ no warnings 'redefine';
 use base qw(RDF::Query);
 
 use Data::Dumper;
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use RDF::Query::ServiceDescription;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 ######################################################################
 
-our ($VERSION, $debug);
-use constant DEBUG	=> 0;
+our ($VERSION);
 BEGIN {
-	$debug			= DEBUG;
 	$VERSION		= '2.000';
 }
 
@@ -85,6 +84,7 @@ sub algebra_fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.federate");
 	return if ($self->{force_no_optimization});
 	
 	# optimize BGPs when we're using service descriptions for pattern matching
@@ -97,9 +97,9 @@ sub algebra_fixup {
 			my $simple_ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
 			my @optimized	= $self->_join_services_for_bgp_triples( $pattern, $bridge, $base, $ns, \@patterns );
 			
-			if ($debug) {
+			if ($l->is_debug) {
 				foreach my $i (0 .. $#optimized) {
-					warn "OPTIMIZED $i:\n" . $optimized[$i]->as_sparql({}, '') . "\n---------------\n";
+					$l->debug("OPTIMIZED $i:\n" . $optimized[$i]->as_sparql({}, '') . "\n---------------\n");
 				}
 			}
 			
@@ -120,7 +120,7 @@ sub algebra_fixup {
 			
 			my $bgp	= "\n" . $pattern->as_sparql({}, '');
 			$bgp	=~ s/\n/\n\t/g;
-			warn "replacing BGP =====> {$bgp\n}\n\ WITH =====>\n" . $fixed->as_sparql({}, '') if ($debug);
+			$l->debug("replacing BGP =====> {$bgp\n}\n\ WITH =====>\n" . $fixed->as_sparql({}, ''));
 			return $fixed;
 		}
 	}
@@ -135,6 +135,7 @@ sub _join_services_for_bgp_triples {
 	my $base	= shift;
 	my $ns		= shift;
 	my $simplep	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.federate");
 	
 	my @join_patterns;		# array of tuples, each containing a service pattern and a list of applicable triples
 	foreach my $sd (@{ $self->{services} }) {
@@ -149,7 +150,7 @@ sub _join_services_for_bgp_triples {
 		my $triple	= $triples[ $i ];
 		my $simple	= $simplep->[ $i ];
 		
-		warn "looking at triple: " . $triple->as_sparql({}, '') if ($debug);
+		$l->debug("looking at triple: " . $triple->as_sparql({}, ''));
 		
 		my @services;
 		my $pred	= $triple->predicate;
@@ -159,10 +160,10 @@ sub _join_services_for_bgp_triples {
 			foreach my $service_pat (@join_patterns) {
 				my ($bgp, $sd)	= @$service_pat;
 				if ($bgp->subsumes( $triple )) {
-					warn "triple {" . $triple->as_sparql({}, "\t") . "} is subsumed by bgp: {" . $bgp->as_sparql({}, "\t") . "}\n" if ($debug);
+					$l->debug("triple {" . $triple->as_sparql({}, "\t") . "} is subsumed by bgp: {" . $bgp->as_sparql({}, "\t") . "}\n");
 					push( @{ $service_pat->[2] }, $triple );
 				} else {
-					warn "triple {" . $triple->as_sparql({}, "\t") . "} IS NOT subsumed by bgp: {" . $bgp->as_sparql({}, "\t") . "}\n" if ($debug);
+					$l->debug("triple {" . $triple->as_sparql({}, "\t") . "} IS NOT subsumed by bgp: {" . $bgp->as_sparql({}, "\t") . "}\n");
 					push( @{ $service_pat->[3] }, $simple );
 				}
 			}
@@ -173,20 +174,20 @@ sub _join_services_for_bgp_triples {
 	my @patterns;
 	foreach my $service_pat (@join_patterns) {
 		my (undef, $sd, $join_triples, $simple_triples)	= @$service_pat;
-		warn "=====> SERVICE <" . $sd->url . ">\n" if ($debug);
-		warn Dumper({ $sd->url => [$join_triples] }) if ($debug);
+		$l->debug("=====> SERVICE <" . $sd->url . ">\n");
+		$l->debug(Dumper({ $sd->url => [$join_triples] }));
 		my @triples	= @$join_triples;
 		
 		next unless (scalar(@triples) > 1);
 		my $serviceurl	= RDF::Query::Node::Resource->new( $sd->url );
 		my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
 		unless ($bgp->connected) {
-			warn "BGP isn't connected. Ignoring." if ($debug);
+			$l->debug("BGP isn't connected. Ignoring.");
 			next;
 		}
 		my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
 		my $service		= RDF::Query::Algebra::Service->new( $serviceurl, $ggp );
-		warn "Triples can be grouped together: \n" . $service->as_sparql( {}, '' ) if ($debug);
+		$l->debug("Triples can be grouped together: \n" . $service->as_sparql( {}, '' ));
 		
 		my $fullggp		= RDF::Query::Algebra::GroupGraphPattern->new( $service, @$simple_triples );
 		push(@patterns, $fullggp);

@@ -42,7 +42,6 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
 use List::MoreUtils qw(uniq);
 
-our $debug		= 0;
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
@@ -317,7 +316,10 @@ sub _syntax_error {
 		}
 	}
 	
-	Carp::cluck( "eating $thing with input <<$self->{tokens}>>" ) if ($debug);
+	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
+	if ($l->is_debug) {
+		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
+	}
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -415,7 +417,10 @@ sub _Query {
 	} elsif ($self->_test(qr/ASK/i)) {
 		$self->_AskQuery();
 	} else {
-		Carp::cluck( "with input <<$self->{tokens}>>" ) if ($debug);
+		my $l		= Log::Log4perl->get_logger("rdf.query");
+		if ($l->is_debug) {
+			$l->logcluck("Syntax error: Expected query type with input <<$self->{tokens}>>");
+		}
 		throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 	}
 	

@@ -22,11 +22,10 @@ use Scalar::Util qw(blessed);
 
 ######################################################################
 
-our ($VERSION, $debug, $lang, $languri);
+our ($VERSION, $lang, $languri);
 BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
-	$debug		= 1;
 	$VERSION	= '2.002';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
