@@ -28,6 +28,8 @@ use base qw(RDF::Query);
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
+
+use RDF::Query;
 use RDF::Query::ServiceDescription;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
@@ -120,7 +122,7 @@ sub algebra_fixup {
 			
 			my $bgp	= "\n" . $pattern->as_sparql({}, '');
 			$bgp	=~ s/\n/\n\t/g;
-			$l->debug("replacing BGP =====> {$bgp\n}\n\ WITH =====>\n" . $fixed->as_sparql({}, ''));
+			$l->info("replacing BGP =====> {$bgp\n}\n\ WITH =====>\n" . $fixed->as_sparql({}, ''));
 			return $fixed;
 		}
 	}
