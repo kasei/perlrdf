@@ -98,6 +98,7 @@ VERSION HISTORY
      * Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names).
      * Fixed bindings xml serialization whitespace formatting.
      * Cleaned up ::Iterator::Bindings::as_string serialization code.
+     * Replaced use of splice() with shift() in ::Iterator::SAXHandler::pull_result.
 
   Version 0.107 (2008-04-25)
 
