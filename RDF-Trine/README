@@ -50,7 +50,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.108 (2008-06-XX)
+  Version 0.108 (2008-07-14)
 
      * Added NTriples serializer module.
      * Added POD to RDF::Trine::Promise.

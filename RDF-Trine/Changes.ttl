@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "0.108" ;
-                        doap:created      "2008-06-15" ;
+                        doap:created      "2008-07-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added NTriples serializer module." ;
