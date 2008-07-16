@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 166;
+use Test::More tests => 168;
 
 use YAML;
 use Data::Dumper;
@@ -5727,3 +5727,90 @@ __END__
         - name
       - !!perl/array:RDF::Query::Node::Variable
         - email
+---
+- 'ARQ simple path: foaf:knows x3'
+- |
+  # Find the names of people 2 "foaf:knows" links away.
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?name
+  { ?x foaf:mbox <mailto:alice@example> .
+    ?x foaf:knows/foaf:knows/foaf:name ?name .
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/mbox
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - mailto:alice@example
+        - !!perl/array:RDF::Query::Algebra::Path
+          - !!perl/array:RDF::Query::Node::Variable
+            - x
+          -
+            - /
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/knows
+            -
+              - /
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/knows
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://xmlns.com/foaf/0.1/name
+          - !!perl/array:RDF::Query::Node::Variable
+            - name
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - name
+---
+- 'ARQ simple path: transitive foaf:knows'
+- |
+  # Find the names of people any number of "foaf:knows" links away.
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?name
+  { ?x foaf:mbox <mailto:alice@example> .
+    ?x foaf:knows+ ?name .
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/mbox
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - mailto:alice@example
+        - !!perl/array:RDF::Query::Algebra::Path
+          - !!perl/array:RDF::Query::Node::Variable
+            - x
+          -
+            - '{'
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/knows
+            - 1
+          - !!perl/array:RDF::Query::Node::Variable
+            - name
+  variables:
+    - !!perl/array:RDF::Query::Node::Variable
+      - name

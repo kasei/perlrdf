@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "0.108" ;
-                        doap:created      "2008-06-15" ;
+                        doap:created      "2008-07-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added NTriples serializer module." ;
@@ -64,6 +64,7 @@
                         asc:update      "Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names)." ;
                         asc:update      "Fixed bindings xml serialization whitespace formatting." ;
                         asc:update      "Cleaned up ::Iterator::Bindings::as_string serialization code." ;
+                        asc:update      "Replaced use of splice() with shift() in ::Iterator::SAXHandler::pull_result." ;
                         ] .
 
 

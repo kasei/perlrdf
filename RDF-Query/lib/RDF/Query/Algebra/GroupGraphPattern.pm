@@ -215,8 +215,8 @@ sub execute {
 		### service call, we can try to send along a bloom filter function.
 		### if it doesn't work (the remote endpoint may not support the kasei:bloom
 		### function), then fall back on making the call without the filter.
-		try {
-			if ($stream and $triple->isa('RDF::Query::Algebra::Service') and not($triple->pattern->isa('RDF::Query::Algebra::Filter'))) {
+		if ($stream and $triple->isa('RDF::Query::Algebra::Service') and not($triple->pattern->isa('RDF::Query::Algebra::Filter'))) {
+			try {
 				my $endpoint_url	= $triple->endpoint->uri_value;
 				unless ($SERVICE_BLOOM_IGNORE{ $endpoint_url }) {
 	# 				local($RDF::Trine::Iterator::debug)	= 1;
@@ -230,15 +230,16 @@ sub execute {
 					}
 					$handled	= 1;
 				}
-			}
-		} catch RDF::Query::Error::RequestedInterruptError with {
-			my $e	= shift;
-			$e->throw;
-		} otherwise {
-			my $e	= shift;
-			$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
-			$l->debug("*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n");
-		};
+			} catch RDF::Query::Error::RequestedInterruptError with {
+				my $e	= shift;
+				$e->throw;
+			} otherwise {
+				my $e	= shift;
+				warn "error: " . $e;
+				$SERVICE_BLOOM_IGNORE{ $triple->endpoint->uri_value }	= 1;
+				warn "*** Wasn't able to use k:bloom as a FILTER restriction in SERVICE call.\n" if ($debug);
+			};
+		}
 		
 		unless ($handled) {
 			my $new	= $triple->execute( $query, $bridge, $bound, $context, %args );

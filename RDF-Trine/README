@@ -50,7 +50,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.108 (2008-06-XX)
+  Version 0.108 (2008-07-14)
 
      * Added NTriples serializer module.
      * Added POD to RDF::Trine::Promise.
@@ -98,6 +98,7 @@ VERSION HISTORY
      * Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names).
      * Fixed bindings xml serialization whitespace formatting.
      * Cleaned up ::Iterator::Bindings::as_string serialization code.
+     * Replaced use of splice() with shift() in ::Iterator::SAXHandler::pull_result.
 
   Version 0.107 (2008-04-25)
 
