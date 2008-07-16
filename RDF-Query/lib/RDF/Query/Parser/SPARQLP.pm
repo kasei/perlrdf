@@ -34,7 +34,7 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
-use Scalar::Util qw(blessed looks_like_number);
+use Scalar::Util qw(blessed looks_like_number reftype);
 use List::MoreUtils qw(uniq);
 
 our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT/i;
@@ -317,6 +317,149 @@ sub __GroupByVar {
 		$self->SUPER::__SelectVar;
 	}
 }
+
+
+
+################################################################################
+### ARQ Property Paths
+### http://jena.sourceforge.net/ARQ/property_paths.html
+
+# verb test is the same as normal with the addition of parens for path groups and caret for reverse
+sub _Verb_test {
+	my $self	= shift;
+	if ($self->_test(qr/[(^]/)) {
+		return 1;
+	} else {
+		return $self->SUPER::_Verb_test;
+	}
+}
+
+
+sub __strip_path_identifier {
+	my $node	= shift;
+	if (reftype($node) eq 'ARRAY' and $node->[0] eq 'PATH') {
+		# strip the 'PATH' identifier off the front of the pattern
+		$node	= $node->[1];
+	}
+	return $node;
+}
+
+sub _Verb {
+	my $self	= shift;
+	
+	my $path	= 0;
+	if ($self->_test(qr/\(/)) {
+		$path	= 1;
+		$self->_eat('(');
+		$self->__consume_ws_opt;
+		$self->_Verb;
+		my $verb	= __strip_path_identifier( splice( @{ $self->{stack} } ) );
+		
+		# keep the parens so we can round-trip serialization easily
+		$self->_add_stack( [ '(', $verb ] );
+		$self->__consume_ws_opt;
+		$self->_eat(')');
+	} elsif ($self->_test(qr/\^/)) {
+		$path	= 1;
+		$self->_eat('^');
+		$self->__consume_ws_opt;
+		$self->SUPER::_Verb;
+		my $verb	= splice( @{ $self->{stack} } );
+		$self->_add_stack( [ '^', $verb ] );
+	} else {
+		$self->SUPER::_Verb;
+	}
+	
+	my ($verb)	= __strip_path_identifier( splice( @{ $self->{stack} } ) );
+	
+	BLOCK: {
+		if ($path or $self->_test(qr#[*?+{/^|]#)) {
+			# unary operators
+			if ($self->_test(qr#[*?+{]#)) {
+				if ($self->_test(qr/[+][0-9.]/)) {
+					# the '+' should belong to the INTEGER or DECIMAL that follows the predicate
+					# so break out, and leave the '+' to be parsed later
+					last BLOCK;
+				}
+				my ($unop) = $self->_eat(qr#[*?+{]#);
+				if ($unop eq '{') {
+					# RANGE and EXACT ops. Use '{' for ranges (including unbounded)
+					# and 'x' for exact repetitions. So 'elt*' is ['{',elt,0] while
+					# 'elt{2}' is ['x',elt,2]
+					my $exact;
+					my @range	= $self->_eat(qr/(\d+)/);
+					if ($self->_test(',')) {
+						$exact	= 0;	# range (vs. exact)
+						$self->_eat(',');
+						if ($self->_test(qr/\d/)) {
+							my ($to)	= $self->_eat(qr/(\d+)/);
+							push(@range, $to);
+						}
+					} else {
+						$exact	= 1;	# exact (vs. range)
+					}
+					$self->_eat('}');
+					my $op	= ($exact ? 'x' : '{');
+					$verb	= [ $op, $verb, @range ];
+				} elsif ($unop eq '*') {
+					# kleene star is equivalent to {0,}
+					$verb	= [ '{', $verb, 0 ];
+				} elsif ($unop eq '?') {
+					# ? is equivalent to {0,1}
+					$verb	= [ '{', $verb, 0, 1 ];
+				} elsif ($unop eq '+') {
+					# + is equivalent to {1,}
+					$verb	= [ '{', $verb, 1 ];
+				}
+			}
+			
+			$self->__consume_ws_opt;
+			
+			# binary operators
+			while ($self->_test(qr#[/^|]#)) {
+				my ($binop) = $self->_eat(qr#[/^|]#);
+				$self->__consume_ws_opt;
+				$self->_Verb;
+				my ($rhs)	= __strip_path_identifier( splice( @{ $self->{stack} } ) );
+				$verb		= [ $binop, $verb, $rhs ];
+			}
+			
+			$self->_add_stack( ['PATH', $verb] );
+			return;
+		}
+	}
+	
+	$self->_add_stack( $verb );
+}
+
+sub _TriplesBlock {
+	my $self	= shift;
+	$self->_push_pattern_container;
+	$self->__TriplesBlock;
+	my @triples		= @{ $self->_pop_pattern_container };
+	
+	my @paths;
+	for (my $i = $#triples; $i >= 0; $i--) {
+		my $t	= $triples[$i];
+		my $p	= $t->predicate;
+		if (reftype($p) eq 'ARRAY' and $p->[0] eq 'PATH') {
+			splice(@triples, $i, 1);
+			my $start	= $t->subject;
+			my $end		= $t->object;
+			my $path	= RDF::Query::Algebra::Path->new( $start, $p->[1], $end );
+			push(@paths, $path);
+		}
+	}
+	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+	if (@paths) {
+		my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( $bgp, @paths );
+		$self->_add_patterns( $ggp );
+	} else {
+		$self->_add_patterns( $bgp );
+	}
+}
+
+
 
 1;
 
