@@ -7,7 +7,7 @@ RDF::Trine::Promise - Promise object
 
 =head1 VERSION
 
-This document describes RDF::Trine::Promise version 1.000.
+This document describes RDF::Trine::Promise version 0.108.
 
 
 =head1 SYNOPSIS
@@ -38,7 +38,7 @@ our ($VERSION, $debug);
 use constant DEBUG	=> 0;
 BEGIN {
 	$debug		= DEBUG;
-	$VERSION	= '1.000';
+	$VERSION	= '0.108';
 }
 
 =item C<new ( \&closure )>
