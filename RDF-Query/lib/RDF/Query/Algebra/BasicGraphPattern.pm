@@ -272,6 +272,42 @@ sub subsumes {
 	}
 }
 
+=item C<< bf () >>
+
+Returns a string representing the state of the nodes of the triple (bound or free).
+
+=cut
+
+sub bf {
+	my $self	= shift;
+	my @bf;
+	my %var_to_num;
+	my %use_count;
+	my $counter	= 1;
+	foreach my $t ($self->triples) {
+		my $bf	= $t->bf;
+		if ($bf =~ /f/) {
+			$bf	= '';
+			foreach my $n ($t->nodes) {
+				if ($n->isa('RDF::Query::Node::Variable')) {
+					my $name	= $n->name;
+					my $num		= ($var_to_num{ $name } ||= $counter++);
+					$use_count{ $name }++;
+					$bf	.= "{${num}}";
+				} else {
+					$bf	.= 'b';
+				}
+			}
+		}
+		push(@bf, $bf);
+	}
+	my $bf	= join(',',@bf);
+	if ($counter <= 10) {
+		$bf	=~ s/[{}]//g;
+	}
+	return $bf;
+}
+
 =item C<< clone >>
 
 =cut

@@ -115,6 +115,23 @@ sub subsumes {
 	return 1;
 }
 
+=item C<< bf () >>
+
+Returns a string representing the state of the nodes of the triple (bound or free).
+
+=cut
+
+sub bf {
+	my $self	= shift;
+	my $bf		= '';
+	foreach my $n ($self->nodes) {
+		$bf		.= ($n->isa('RDF::Query::Node::Variable'))
+				? 'f'
+				: 'b';
+	}
+	return $bf;
+}
+
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
