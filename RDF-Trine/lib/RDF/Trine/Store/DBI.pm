@@ -45,7 +45,6 @@ no warnings 'redefine';
 
 use DBI;
 use Carp;
-use Error;
 use DBI;
 use Scalar::Util qw(blessed reftype refaddr);
 use Digest::MD5 ('md5');
@@ -57,6 +56,7 @@ use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 use Log::Log4perl;
 
+use RDF::Trine::Error;
 use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::Pg;
 
@@ -103,6 +103,9 @@ sub new {
 		}
 		$l->trace("Connecting to $dsn ($user, $pass)");
 		$dbh		= DBI->connect( $dsn, $user, $pass );
+		unless ($dbh) {
+			throw RDF::Trine::Error::DatabaseError -text => "Couldn't connect to database: " . DBI->errstr;
+		}
 	}
 	
 	my $self	= bless( {

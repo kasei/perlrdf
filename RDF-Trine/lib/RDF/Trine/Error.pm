@@ -58,6 +58,10 @@ package RDF::Trine::Error::SerializationError;
 
 use base qw(RDF::Trine::Error);
 
+package RDF::Trine::Error::DatabaseError;
+
+use base qw(RDF::Trine::Error);
+
 
 1;
 
