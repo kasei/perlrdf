@@ -498,20 +498,29 @@ sub as_string {
 	push @headers => map { $_ => \q" | " } @$headers;
 	pop	@headers;
 	push @headers => (\q" |");
-
-	unless ('ARRAY' eq ref $rows && 'ARRAY' eq ref $rows->[0] && @$headers == @{ $rows->[0] }) {
+	
+	unless ('ARRAY' eq ref $rows) {
 		die("make_table() rows must be an AoA with rows being same size as headers");
 	}
-	my $table = Text::Table->new(@headers);
-	$table->rule(@rule);
-	$table->body_rule(@rule);
-	$table->load(@$rows);
-
-	return $table->rule(@rule),
-			$table->title,
-			$table->rule(@rule),
-			map({ $table->body($_) } 0 .. @$rows),
+	
+	if ('ARRAY' eq ref $rows->[0]) {
+		if (@$headers == @{ $rows->[0] }) {
+			my $table = Text::Table->new(@headers);
 			$table->rule(@rule);
+			$table->body_rule(@rule);
+			$table->load(@$rows);
+		
+			return $table->rule(@rule),
+					$table->title,
+					$table->rule(@rule),
+					map({ $table->body($_) } 0 .. @$rows),
+					$table->rule(@rule);
+		} else {
+			die("make_table() rows must be an AoA with rows being same size as headers");
+		}
+	} else {
+		return '';
+	}
 }
 
 =item C<< print_xml ( $fh, $max_size ) >>
