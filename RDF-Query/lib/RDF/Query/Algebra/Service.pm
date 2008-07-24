@@ -385,6 +385,7 @@ sub _get_and_parse_url {
 	my $fh		= shift;
 	my $pid		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
+#	warn "forked child retrieving content from $url";
 	
 	eval "
 		require XML::SAX::Expat;
@@ -403,7 +404,7 @@ sub _get_and_parse_url {
 		my $content	= shift;
 		my $resp	= shift;
 		my $proto	= shift;
-		$l->trace("got content in $$: " . Dumper($content));
+#		warn ("got content in $$: " . Dumper($content));
 		unless ($resp->is_success) {
 			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 		}
@@ -414,13 +415,13 @@ sub _get_and_parse_url {
 			if (exists( $args[2]{Handler} )) {
 				delete $args[2]{Handler};
 			}
-			$l->debug("got args in child: " . Dumper(\@args));
+#			warn ("got args in child: " . Dumper(\@args));
 			$has_head	= 1;
 			store_fd \@args, \*STDOUT or die "PID $pid can't store!\n";
 		}
 		
 		while (my $data = $handler->pull_result) {
-			$l->debug("got result in child: " . Dumper($data));
+#			warn ("got result in child: " . Dumper($data));
 			store_fd $data, \*STDOUT or die "PID $pid can't store!\n";
 		}
 	};
