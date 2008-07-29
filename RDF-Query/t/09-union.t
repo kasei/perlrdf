@@ -6,12 +6,23 @@ use Test::More;
 use lib qw(. t);
 require "models.pl";
 
+use RDF::Query;
+
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.algebra.union          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf);
 my @models	= test_models( @files );
-my $tests	= 1 + (scalar(@models) * 26);
+my $tests	= (scalar(@models) * 26);
 plan tests => $tests;
 
-use_ok( 'RDF::Query' );
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";

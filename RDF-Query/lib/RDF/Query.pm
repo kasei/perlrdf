@@ -214,6 +214,11 @@ sub new {
 		$self->{logger}	= $options{logger};
 	}
 	
+	if ($options{costmodel}) {
+		$l->debug("got cost model");
+		$self->{costmodel}	= $options{costmodel};
+	}
+	
 	# add rdf as a default namespace to RDQL queries
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
@@ -1520,6 +1525,17 @@ Returns the logger object associated with this query object (if present).
 sub logger {
 	my $self	= shift;
 	return $self->{ logger };
+}
+
+=item C<< costmodel >>
+
+Returns the RDF::Query::CostModel object associated with this query object (if present).
+
+=cut
+
+sub costmodel {
+	my $self	= shift;
+	return $self->{ costmodel };
 }
 
 =item C<error ()>

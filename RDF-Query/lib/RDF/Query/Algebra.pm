@@ -20,10 +20,11 @@ BEGIN {
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use Set::Scalar;
 use Scalar::Util qw(blessed);
 use List::MoreUtils qw(uniq);
-
+use Data::Dumper;
 
 use RDF::Query::Expression;
 use RDF::Query::Expression::Alias;
@@ -199,6 +200,95 @@ sub subpatterns_of_type {
 		}
 	}
 	return @patterns;
+}
+
+=item C<< nested_loop_local_join ( $outer_iterator, $inner_algebra, $query, $bridge, $bound, $context ) >>
+
+Performs a natural, nested loop join, returning a new stream of joined results.
+
+Items from C<< $outer_iterator >> are used as bound values to successive calls
+to C<< $inner_algebra->execute >>.
+
+=cut
+
+sub nested_loop_local_join {
+	my $self	= shift;
+	my $outer	= shift;
+	my $inner	= shift;
+	my $query	= shift;
+	my $bridge	= shift;
+	my $bound	= shift || {};
+	my $context	= shift;
+	my %args	= @_;
+	
+	Carp::confess unless ($outer->isa('RDF::Trine::Iterator::Bindings'));
+	Carp::confess unless ($inner->isa('RDF::Query::Algebra'));
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra");
+	
+	my $a		= $outer;
+	
+	no warnings 'uninitialized';
+	
+	my $rowa;
+	my $inner_iter;
+	my $need_new_a	= 1;
+	my $sub	= sub {
+		OUTER: while (1) {
+			if ($need_new_a) {
+				$rowa = $a->next or return undef;
+				$l->debug("*** new outer tuple");
+				$l->debug("OUTER: " . Dumper($rowa));
+				my %tmpbound;
+				foreach my $h ($bound, $rowa) {
+					foreach my $k (keys %$h) {
+						if (defined($h->{ $k })) {
+							$tmpbound{ $k }	= $h->{ $k };
+						}
+					}
+				}
+				$l->debug("executing inner pattern " . $inner->as_sparql . " with bound values: " . '{' . join(', ', map { join('=', $_, ($tmpbound{$_}) ? $tmpbound{$_}->as_string : '(undef)') } (keys %tmpbound)) . '}' );
+				$inner_iter		= $inner->execute( $query, $bridge, \%tmpbound, $context, %args ); #->project( @names );
+				$need_new_a		= 0;
+			}
+			$l->debug("OUTER: " . Dumper($rowa));
+			return undef unless ($rowa);
+			LOOP: while (my $rowb = $inner_iter->next) {
+				$l->debug("- INNER: " . Dumper($rowb));
+				$l->debug("[--JOIN--] " . join(' ', map { my $row = $_; '{' . join(', ', map { join('=', $_, ($row->{$_}) ? $row->{$_}->as_string : '(undef)') } (keys %$row)) . '}' } ($rowa, $rowb)));
+				my %keysa	= map {$_=>1} (keys %$rowa);
+				my @shared	= grep { $keysa{ $_ } } (keys %$rowb);
+				foreach my $key (@shared) {
+					my $val_a	= $rowa->{ $key };
+					my $val_b	= $rowb->{ $key };
+					my $defined	= 0;
+					foreach my $n ($val_a, $val_b) {
+						$defined++ if (defined($n));
+					}
+					if ($defined == 2) {
+						my $equal	= $val_a->equal( $val_b );
+						unless ($equal) {
+							$l->debug("can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")");
+							next LOOP;
+						}
+					}
+				}
+				
+				my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
+				if ($l->is_debug) {
+					$l->debug("JOINED:");
+					foreach my $key (keys %$row) {
+						$l->debug("$key\t=> " . $row->{ $key }->as_string);
+					}
+				}
+				return $row;
+			}
+			$need_new_a	= 1;
+		}
+	};
+	
+	my @names	= uniq( $outer->binding_names, $inner->referenced_variables );
+	my $args	= $outer->_args;
+	return $outer->_new( $sub, 'bindings', \@names, %$args );
 }
 
 1;

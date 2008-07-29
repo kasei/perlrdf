@@ -267,8 +267,17 @@ sub _get_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	
-	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
+	for my $i (0, 1) {
+		my $node	= $triple[ $i ];
+		if (blessed($node) and $node->isa('RDF::Trine::Node::Literal')) {
+			# we have to check this manually, because (as of 2008.7.29) RDF::Core
+			# will die if we try to get statements with a literal in the subject
+			# or predicate position.
+			return RDF::Trine::Iterator::Graph->new( [] );
+		}
+	}
 	
+	@triple		= map { _cast_to_rdfcore( $_ ) } @triple;
 	my $enum	= $self->{'model'}->getStmts( @triple );
 	my $stmt	= $enum->getNext;
 	my $finished	= 0;

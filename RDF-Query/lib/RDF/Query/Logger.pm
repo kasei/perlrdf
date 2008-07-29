@@ -103,11 +103,46 @@ sub push_key_value {
 	push( @{ $hash->{ $k } }, $t );
 }
 
+=item C<< get_value ( $key ) >>
 
-sub DESTROY {
+Returns the value (not necessarily a scalar -- could be an ARRAY) for the given key.
+
+=cut
+
+sub get_value {
 	my $self	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.query.logger");
-	$l->debug(Dumper({ %$self }));
+	my $key		= shift;
+	my $value	= $self->{ $key };
+	return $value;
+}
+
+=item C<< get_statistics ( $key, $subkey ) >>
+
+Returns the average and std. dev. of the values for the given keys.
+
+=cut
+
+sub get_statistics {
+	my $self	= shift;
+	my $key		= shift;
+	my $k		= shift;
+	return unless (exists $self->{ $key }{ $k });
+	my @values	= @{ $self->{ $key }{ $k } };
+	my $sum		= 0;
+	my $count	= 0;
+	foreach my $v (@values) {
+		$count++;
+		$sum	+= $v;
+	}
+	my $avg	= ($sum / $count);
+	
+	my $stddevsum	= 0;
+	foreach my $v (@values) {
+		my $n	= ($v - $avg) ** 2;
+		$stddevsum	+= $n;
+	}
+	my $stddev	= sqrt( (1 / $count) * $stddevsum );
+	return ($avg, $stddev);
 }
 
 1;

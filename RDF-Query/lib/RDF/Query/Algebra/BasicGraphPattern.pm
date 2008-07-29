@@ -19,7 +19,7 @@ use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap swatch);
+use RDF::Trine::Iterator qw(smap swatch sfinally);
 
 ######################################################################
 
@@ -181,6 +181,10 @@ sub fixup {
 		return $opt;
 	} else {
 		my @nodes	= map { $_->fixup( $query, $bridge, $base, $ns ) } $self->triples;
+		if (my $cm = $query->costmodel) {
+			# execute triple patterns that have the least cost first (minimizing intermediate results)
+			@nodes	= map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [ $_, $cm->cost($_) ] } @nodes;
+		}
 		my $fixed	= $class->new( @nodes );
 		return $fixed;
 	}
@@ -347,23 +351,30 @@ sub execute {
 	my @streams;
 	my (@triples)	= $self->triples;
 	my $t0			= [gettimeofday];
-	foreach my $triple (@triples) {
-		Carp::confess "not an algebra or rdf node: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
-		my $stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
-		push(@streams, $stream);
-	}
-	if (@streams) {
-		while (@streams > 1) {
-			my $a	= shift(@streams);
-			my $b	= shift(@streams);
-			my $stream	= RDF::Trine::Iterator::Bindings->join_streams( $a, $b );
-			unshift(@streams, $stream);
+	
+	my $stream;
+	if (@triples) {
+		my $triple	= shift(@triples);
+		$stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
+		foreach my $t (@triples) {
+			$stream	= RDF::Query::Algebra->nested_loop_local_join( $stream, $t, $query, $bridge, $bound, $context, %args );
+# 			my $ts	= $t->execute( $query, $bridge, $bound, $context, %args );
+# 			$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $ts );
 		}
 	} else {
-		push(@streams, RDF::Trine::Iterator::Bindings->new([{}], []));
+		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
 	}
-	my $stream	= shift(@streams);
-
+	
+	my $count	= 0;
+	$stream	= sfinally {
+		if (my $log = $query->logger) {
+			$log->push_key_value( 'cardinality-bgp', $self->as_sparql, $count );
+			if (my $bf = $self->bf) {
+				$log->push_key_value( 'cardinality-bf-bgp', $bf, $count );
+			}
+		}
+	} swatch { $count++ } $stream;
+	
 	if (my $log = $query->logger) {
 		$l->debug("logging bgp execution time");
 		my $elapsed = tv_interval ( $t0 );

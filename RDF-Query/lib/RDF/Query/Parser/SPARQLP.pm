@@ -373,7 +373,11 @@ sub _Verb {
 	my ($verb)	= __strip_path_identifier( splice( @{ $self->{stack} } ) );
 	
 	BLOCK: {
-		if ($path or $self->_test(qr#[*?+{/^|]#)) {
+		# XXX we should match a '?' here, too, but it can mistake a variable for
+		# XXX a path modifier (as in { ?s a ?o }), and then fail to match the variable
+		# XXX (since the '?' has been eaten). This has to be fixed by updating the
+		# XXX parser to do proper tokenizing.
+		if ($path or $self->_test(qr#[*+{/^|]#)) {
 			# unary operators
 			if ($self->_test(qr#[*?+{]#)) {
 				if ($self->_test(qr/[+][0-9.]/)) {

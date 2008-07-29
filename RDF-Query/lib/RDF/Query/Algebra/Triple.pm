@@ -20,7 +20,7 @@ use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap sgrep swatch);
+use RDF::Trine::Iterator qw(smap sgrep swatch sfinally);
 
 ######################################################################
 
@@ -199,6 +199,8 @@ sub execute {
 				if ($bridge->is_node($val)) {
 					$l->trace( "${indent}-> already have value for $tmpvar: " . $bridge->as_string( $val ) . "\n" );
 					$triple[$idx]	= $val;
+					$vars[$idx]		= $tmpvar;
+					$methods[$idx]	= $methodmap[ $idx ];
 				} else {
 					++$vars;
 					$l->trace( "${indent}-> found variable $tmpvar (we've seen $vars variables already)\n" );
@@ -252,6 +254,8 @@ sub execute {
 	}
 	
 	my $count		= 0;
+	my $bf			= $self->bf;
+	my $sparql		= $self->as_sparql;
 	my $bindings	= smap {
 		my $stmt	= $_;
 		
@@ -268,17 +272,15 @@ sub execute {
 					$l->trace( "${indent}-> the two values match. problem avoided.");
 				} else {
 					$l->trace( "${indent}-> the two values don't match. this triple won't work.");
-					$l->trace( "${indent}-> the existing value is" . $bridge->as_string( $bound->{$var} ));
+					$l->trace( "${indent}-> the existing value is " . $bridge->as_string( $bound->{$var} ));
 					return ();
 				}
 			} else {
 				$result->{ $var }	= $stmt->$method();
 			}
 		}
-		if (my $l = $query->logger) {
-			$l->add_key_value( 'cardinality-triple', $self->as_sparql, ++$count );
-		}
-		$result;
+		$count++;
+		return $result;
 	} $statements;
 	
 	my $sub	= sub {
@@ -293,7 +295,17 @@ sub execute {
 			$binding_names{ $n }	= 1;
 		}
 	}
-	return RDF::Trine::Iterator::Bindings->new( $sub, [keys %binding_names], bridge => $bridge );
+	
+	my $iter	= RDF::Trine::Iterator::Bindings->new( $sub, [keys %binding_names], bridge => $bridge );
+	$iter	= sfinally {
+		if (my $log = $query->logger) {
+			$log->push_key_value( 'cardinality-triple', $self->as_sparql, $count );
+			if (my $bf = $self->bf) {
+				$log->push_key_value( 'cardinality-bf-triple', $bf, $count );
+			}
+		}
+	} $iter;
+	return $iter;
 }
 
 

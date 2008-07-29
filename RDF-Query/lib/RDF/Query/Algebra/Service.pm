@@ -239,7 +239,16 @@ sub fixup {
 					? $bridge->as_native( $self->endpoint )
 					: $self->endpoint->fixup( $query, $bridge, $base, $ns );
 		my $fpattern	= $self->pattern->fixup( $query, $bridge, $base, $ns );
-		return $class->new( $endpoint, $fpattern );
+		my $service		= $class->new( $endpoint, $fpattern );
+		
+		if ($self->pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+			my ($bgp)	= $self->pattern->patterns;
+			if ($bgp->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+				my $bf	= $bgp->bf;
+				$service->[3]{ 'log-service-pattern' }	= $bf;
+			}
+		}
+		return $service;
 	}
 }
 
@@ -254,7 +263,7 @@ sub execute {
 	my $bound		= shift;
 	my $outer_ctx	= shift;
 	my %args		= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
+	my $l			= Log::Log4perl->get_logger("rdf.query.algebra.service");
 	
 	if ($outer_ctx) {
 		throw RDF::Query::Error::QueryPatternError ( -text => "Can't use nested SERVICE graphs" );
@@ -303,6 +312,7 @@ sub execute {
 		exit 0;
 	}
 	
+	my $count	= 0;
 	my $open	= 1;
 	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
 	my $sub	= sub {
@@ -311,10 +321,17 @@ sub execute {
 		$l->debug("got result in HEAD: " . Dumper($result));
 		if (not($result) or ref($result) ne 'HASH') {
 			$l->debug("got \\undef signalling end of stream");
+			if (my $log = $query->logger) {
+				$log->push_key_value( 'cardinality-service', $self->as_sparql, $count );
+				if (my $bf = $self->[3]{ 'log-service-pattern' }) {
+					$log->push_key_value( 'cardinality-bf-service-' . $endpoint->uri_value, $bf, $count );
+				}
+			}
 			$open	= 0;
 			return;
 		}
 #		warn "SERVICE returning " . Dumper($result);
+		$count++;
 		return $result;
 	};
 	my $results		= RDF::Trine::Iterator::Bindings->new( $sub, @$args );
@@ -384,7 +401,6 @@ sub _get_and_parse_url {
 	my $url		= shift;
 	my $fh		= shift;
 	my $pid		= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
 #	warn "forked child retrieving content from $url";
 	
 	eval "

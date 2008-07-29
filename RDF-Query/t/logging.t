@@ -8,6 +8,17 @@ use Test::More;
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.costmodel          = TRACE, Screen
+# 	log4perl.category.rdf.query.algebra.service          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 my $model_tests		= 5;
 my $nomodel_tests	= 2;
 my $file	= 'data/foaf.xrdf';
@@ -48,8 +59,8 @@ foreach my $model (@models) {
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 1, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}, 2, 'Expected triple cardinality' );
-			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams" .'}, 1, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}[0], 1, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams" .'}[0], 1, 'Expected triple cardinality' );
 		}
 		
 		{
@@ -61,7 +72,7 @@ END
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 4, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'?p a <http://xmlns.com/foaf/0.1/Person> .'}, 4, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?p a <http://xmlns.com/foaf/0.1/Person> .'}[0], 4, 'Expected triple cardinality' );
 		}
 	}
 }
@@ -84,4 +95,31 @@ END
 	is( scalar(@results), 1, 'Got one result' );
 	my $d	= shift(@results);
 	isa_ok( $d, 'HASH' );
+	use Data::Dumper;
+	warn Dumper($l);
 }
+
+
+{
+	print "# SERVICE call\n";
+	my $l	= new RDF::Query::Logger;
+	{
+		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person } }
+END
+		my @results	= $query->execute();
+	}
+	{
+		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?s a foaf:Image } }
+END
+		my @results	= $query->execute();
+	}
+	warn Dumper([ keys %$l ]);
+	my ($a,$s)	= $l->get_statistics( 'cardinality-bf-service-http://kasei.us/sparql', '1bb' );
+	warn Dumper($a, $s);
+}
+
+
