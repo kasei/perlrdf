@@ -95,31 +95,31 @@ END
 	is( scalar(@results), 1, 'Got one result' );
 	my $d	= shift(@results);
 	isa_ok( $d, 'HASH' );
-	use Data::Dumper;
-	warn Dumper($l);
+# 	use Data::Dumper;
+# 	warn Dumper($l);
 }
 
 
-{
-	print "# SERVICE call\n";
-	my $l	= new RDF::Query::Logger;
-	{
-		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person } }
-END
-		my @results	= $query->execute();
-	}
-	{
-		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?s a foaf:Image } }
-END
-		my @results	= $query->execute();
-	}
-	warn Dumper([ keys %$l ]);
-	my ($a,$s)	= $l->get_statistics( 'cardinality-bf-service-http://kasei.us/sparql', '1bb' );
-	warn Dumper($a, $s);
-}
+# {
+# 	print "# SERVICE call\n";
+# 	my $l	= new RDF::Query::Logger;
+# 	{
+# 		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
+# 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# 			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person } }
+# END
+# 		my @results	= $query->execute();
+# 	}
+# 	{
+# 		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
+# 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# 			SELECT DISTINCT * WHERE { SERVICE <http://kasei.us/sparql> { ?s a foaf:Image } }
+# END
+# 		my @results	= $query->execute();
+# 	}
+# 	warn Dumper([ keys %$l ]);
+# 	my ($a,$s)	= $l->get_statistics( 'cardinality-bf-service-http://kasei.us/sparql', '1bb' );
+# 	warn Dumper($a, $s);
+# }
 
 
