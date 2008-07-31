@@ -665,6 +665,10 @@ sub swatch (&$) {
 	return $s;
 }
 
+=item C<sfinally { EXPR } $stream>
+
+=cut
+
 sub sfinally (&$) {
 	my $block	= shift;
 	my $stream	= shift;

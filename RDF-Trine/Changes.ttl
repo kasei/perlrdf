@@ -68,6 +68,23 @@
                         ] .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.108.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.108.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.109" ;
+                        doap:created      "2008-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added ::Iterator::sfinally." ;
+                        asc:addition    "Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup." ;
+                        asc:update      "::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle." ;
+                        asc:update      "::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying)." ;
+                        asc:update      "Moved all debugging over to use Log::Log4perl." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.107.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.106.tar.gz> ;

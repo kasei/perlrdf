@@ -50,6 +50,14 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.109 (2008-XX-XX)
+
+     * Added ::Iterator::sfinally.
+     * Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup.
+     * ::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle.
+     * ::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying).
+     * Moved all debugging over to use Log::Log4perl.
+
   Version 0.108 (2008-07-14)
 
      * Added NTriples serializer module.
