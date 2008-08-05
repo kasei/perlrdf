@@ -17,6 +17,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Data::Dumper;
 use Scalar::Util qw(blessed);
 use Storable qw(store_fd fd_retrieve);
 use URI::Escape;
@@ -56,8 +57,6 @@ sub execute ($) {
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query	= $context->query;
 	
-use IO::All;
-	io('error.log')->append("*** starting service fork\n");
 	my $pid = open my $fh, "-|";
 	die unless defined $pid;
 	unless ($pid) {
@@ -104,7 +103,6 @@ sub next {
 	}
 	$self->[3]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
-	warn "result $self->[3]{'count'}: " . $row;
 	return $row;
 };
 
@@ -130,7 +128,6 @@ sub _get_and_parse_url {
 	my $fh		= shift;
 	my $pid		= shift;
 	my $query	= $context->query;
-	io('error.log')->append("forked child retrieving content from $url\n");
 
 	eval "
 		require XML::SAX::Expat;
@@ -149,7 +146,6 @@ sub _get_and_parse_url {
 		my $content	= shift;
 		my $resp	= shift;
 		my $proto	= shift;
-		io('error.log')->append("got content in $$: " . Dumper($content));
 		unless ($resp->is_success) {
 			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
 		}
@@ -160,13 +156,11 @@ sub _get_and_parse_url {
 			if (exists( $args[2]{Handler} )) {
 				delete $args[2]{Handler};
 			}
-			io('error.log')->append("got args in child: " . Dumper(\@args));
 			$has_head	= 1;
 			store_fd \@args, \*STDOUT or die "PID $pid can't store!\n";
 		}
 		
 		while (my $data = $handler->pull_result) {
-			io('error.log')->append("got result in child: " . Dumper($data));
 			store_fd $data, \*STDOUT or die "PID $pid can't store!\n";
 		}
 	};

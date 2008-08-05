@@ -140,8 +140,7 @@ foreach my $data (@models) {
 			my $count	= 0;
 			$plan->execute( $context );
 			while (my $row = $plan->next) {
-#				isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
-				warn $row;
+				isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
 				$count++;
 			}
 			is( $count, 19, "expected result count for SERVICE (pass $pass)" );
