@@ -101,6 +101,10 @@ sub execute ($) {
 	}
 }
 
+=item C<< next >>
+
+=cut
+
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
@@ -128,6 +132,10 @@ sub next {
 	}
 	return;
 }
+
+=item C<< close >>
+
+=cut
 
 sub close {
 	my $self	= shift;

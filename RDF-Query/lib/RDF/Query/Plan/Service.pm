@@ -80,6 +80,10 @@ use IO::All;
 	}
 }
 
+=item C<< next >>
+
+=cut
+
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
@@ -103,6 +107,10 @@ sub next {
 	warn "result $self->[3]{'count'}: " . $row;
 	return $row;
 };
+
+=item C<< close >>
+
+=cut
 
 sub close {
 	my $self	= shift;

@@ -31,6 +31,13 @@ sub new {
 	return $self;
 }
 
+=item C<< join ( $row ) >>
+
+Returns a new VariableBindings object based on the join of this object and C<< $row >>.
+If the two variable binding objects cannot be joined, returns undef.
+
+=cut
+
 sub join {
 	my $self	= shift;
 	my $class	= ref($self);
@@ -56,6 +63,12 @@ sub join {
 	my $row	= { (map { $_ => $self->{$_} } grep { defined($self->{$_}) } keys %$self), (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa) };
 	return $class->new( $row );
 }
+
+=item C<< as_string >>
+
+Returns a string representation of the variable bindings.
+
+=cut
 
 sub as_string {
 	my $self	= shift;

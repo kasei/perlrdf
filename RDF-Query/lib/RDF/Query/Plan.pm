@@ -51,6 +51,12 @@ sub close {
 	$self->state( CLOSED );
 }
 
+=item C<< state ( [ $state ] ) >>
+
+Returns the current state of the plan (either READY, OPEN, or CLOSED).
+If C<< $state >> is provided, updates the plan to a new state.
+
+=cut
 
 sub state {
 	my $self	= shift;
