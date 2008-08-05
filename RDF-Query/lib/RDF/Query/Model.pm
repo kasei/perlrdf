@@ -416,17 +416,19 @@ sub get_computed_statements {
 	my $o		= shift;
 	my $query	= shift;
 	my $bound	= shift;
-	my $comps	= $query->get_computed_statement_generators;
 	my $iter;
-	foreach my $c (@$comps) {
-		my $new	= $c->( $query, $self, $bound, $s, $p, $o );
-		if ($new and not($iter)) {
-			$iter	= $new;
-		} elsif ($new) {
-			$iter	= $iter->concat( $new );
+	if (blessed($query)) {
+		my $comps	= $query->get_computed_statement_generators;
+		foreach my $c (@$comps) {
+			my $new	= $c->( $query, $self, $bound, $s, $p, $o );
+			if ($new and not($iter)) {
+				$iter	= $new;
+			} elsif ($new) {
+				$iter	= $iter->concat( $new );
+			}
 		}
+		return $iter;
 	}
-	return $iter;
 }
 
 =item C<< get_named_statements ( $subject, $predicate, $object, $context ) >>
