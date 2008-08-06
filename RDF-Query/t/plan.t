@@ -20,7 +20,7 @@ BEGIN { require "models.pl"; }
 # ] );
 ################################################################################
 
-my $model_tests		= 122;
+my $model_tests		= 86;
 my $file	= 'data/foaf.xrdf';
 my %named	= map { $_ => URI::file->new_abs( File::Spec->rel2abs("data/named_graphs/$_") ) } qw(alice.rdf bob.rdf meta.rdf repeats1.rdf repeats2.rdf);
 my @models	= test_models_and_classes($file);
@@ -32,11 +32,8 @@ if ($@) {
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
-	plan tests => scalar(@models) * $model_tests;
 } else {
-	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and set RDFQUERY_NETWORK_TESTS to run these tests.';
-	return;
+	plan tests => scalar(@models) * $model_tests;
 }
 
 use RDF::Query;
@@ -210,18 +207,21 @@ foreach my $data (@models) {
 			$plan->close;
 		}
 	}
-
-	{
+	
+	SKIP: {
+		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
 		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
 			$plan->execute( $context );
 			while (my $row = $plan->next) {
-				isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+				if ($count == 0) {
+					isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+				}
 				$count++;
 			}
-			is( $count, 19, "expected result count for SERVICE (pass $pass)" );
+			cmp_ok( $count, '>', 1, "positive result count for SERVICE (pass $pass)" );
 			$plan->close;
 		}
 	}
