@@ -64,6 +64,29 @@ sub join {
 	return $class->new( $row );
 }
 
+=item C<< variables >>
+
+=cut
+
+sub variables {
+	my $self	= shift;
+	return (keys %$self);
+}
+
+=item C<< project ( @keys ) >>
+
+Returns a new binding with values for only the keys listed.
+
+=cut
+
+sub project {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @keys	= @_;
+	my %data	= map { $_ => $self->{ $_ } } @keys;
+	return $class->new( \%data );
+}
+
 =item C<< as_string >>
 
 Returns a string representation of the variable bindings.

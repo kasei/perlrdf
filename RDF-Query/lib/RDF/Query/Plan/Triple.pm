@@ -22,7 +22,7 @@ use Scalar::Util qw(blessed);
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( $triple ) >>
+=item C<< new ( @triple ) >>
 
 =cut
 
@@ -46,14 +46,17 @@ sub new {
 	my %counts;
 	my $dup_var;
 	foreach my $idx (0 .. 2) {
-		my $var	= $triple[ $idx ];
-		if (blessed($var) and ($var->isa('RDF::Trine::Node::Variable') or $var->isa('RDF::Trine::Node::Blank'))) {
-			my $name	= ($var->isa('RDF::Trine::Node::Blank')) ? '__' . $var->blank_identifier : $var->name;
+		my $node	= $triple[ $idx ];
+		if (blessed($node) and ($node->isa('RDF::Trine::Node::Variable') or $node->isa('RDF::Trine::Node::Blank'))) {
+			my $name	= ($node->isa('RDF::Trine::Node::Blank')) ? '__' . $node->blank_identifier : $node->name;
 			$var_to_position{ $name }	= $methodmap[ $idx ];
 			$counts{ $name }++;
 			if ($counts{ $name } >= 2) {
 				$dup_var	= $name;
 			}
+			push(@{ $self->[4]{bridge_triple} }, RDF::Trine::Node::Variable->new( $name ));
+		} else {
+			push(@{ $self->[4]{bridge_triple} }, $node);
 		}
 	}
 	
@@ -87,9 +90,9 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "BGP plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
 	}
-	my @triple	= @{ $self }[ 1 .. 3 ];
+	my @triple	= @{ $self->[4]{bridge_triple} };
 	my $bridge	= $context->model;
 	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
 	
@@ -108,7 +111,7 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open TRIPLE";
 	}
 	my $iter	= $self->[4]{iter};
 	LOOP: while (my $row = $iter->next) {
@@ -128,7 +131,8 @@ sub next {
 			my $method	= $self->[4]{mappings}{ $key };
 			$binding->{ $key }	= $row->$method();
 		}
-		return RDF::Query::VariableBindings->new( $binding );
+		my $bindings	= RDF::Query::VariableBindings->new( $binding );
+		return $bindings;
 	}
 	return;
 }
@@ -140,7 +144,7 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open BGP";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
 	delete $self->[4]{iter};
 	delete $self->[4]{iter};
