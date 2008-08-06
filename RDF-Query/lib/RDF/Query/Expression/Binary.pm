@@ -85,7 +85,7 @@ sub evaluate {
 	my ($lhs, $rhs)	= map {
 						$_->isa('RDF::Query::Algebra')
 							? $_->evaluate( $query, $bridge, $bound )
-							: ($_->isa('RDF::Query::Node::Variable'))
+							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
 	} @operands;

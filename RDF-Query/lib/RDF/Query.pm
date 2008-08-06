@@ -936,11 +936,12 @@ sub var_or_expr_value {
 	my $v		= shift;
 	if ($v->isa('RDF::Query::Expression')) {
 		return $v->evaluate( $self, $bridge, $bound );
-	} elsif ($v->isa('RDF::Query::Node::Variable')) {
+	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
 	} elsif ($v->isa('RDF::Query::Node')) {
 		return $v;
 	} else {
+		warn Dumper($v, $bound);
 		throw RDF::Query::Error -text => 'Not an expression or node value';
 	}
 }

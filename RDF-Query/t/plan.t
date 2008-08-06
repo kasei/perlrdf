@@ -39,6 +39,7 @@ if ($@) {
 use RDF::Query;
 use RDF::Trine::Namespace qw(rdf foaf);
 
+use RDF::Query::Plan::Sort;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Project;
 use RDF::Query::Plan::Offset;
@@ -273,24 +274,74 @@ foreach my $data (@models) {
 	}
 	
 	{
-		# offset: { _:s a ?type }
+		# simple variable sort with numerics
 		my $s		= RDF::Trine::Node::Blank->new('s');
-		my $var		= RDF::Trine::Node::Variable->new('type');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->type, $var );
-		my $proj	= RDF::Query::Plan::Project->new( $plan_a, ['type'] );
-		my $dist	= RDF::Query::Plan::Distinct->new( $proj );
-		my $plan	= RDF::Query::Plan::Offset->new( $dist, 2 );
+		my $var		= RDF::Trine::Node::Variable->new('v');
+		my $triple	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
+		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
 		
-		foreach my $pass (1..2) {
+		foreach my $data ([0 => [1,2,3]], [1 => [3,2,1]]) {
+			my ($order, $expect)	= @$data;
+			my $dir		= ($order) ? 'DESC' : 'ASC';
+			my $plan	= RDF::Query::Plan::Sort->new( $proj, [$var, $order] );
 			my $count	= 0;
 			$plan->execute( $context );
-			while (my $row = $plan->next) {
-				isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
-				like( $row->{type}, qr[(Property|Person|PersonalProfileDocument)>$], 'expected predicate URI' );
-				$count++;
-			}
-			is( $count, 1, "expected result count for offset (pass $pass)" );
+			my @rows	= $plan->get_all;
+			my @values	= map { $_->{ v }->literal_value } @rows;
+			is_deeply( \@values, $expect, "expected $dir sort values on numerics" );
 			$plan->close;
 		}
+	}
+	
+	{
+		# simple variable sort with plain literals
+		my $s		= RDF::Trine::Node::Blank->new('s');
+		my $var		= RDF::Trine::Node::Variable->new('v');
+		my $triple	= RDF::Query::Plan::Triple->new( $s, $foaf->name, $var );
+		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
+		my $expr	= RDF::Query::Expression::Function->new( 'sparql:str', $var );
+		
+		my @expect	= ('Gary Peck', 'Gregory Todd Williams', 'Lauren Bradford', 'Liz Farrand Dubeck');
+		foreach my $data ([0 => [@expect]], [1 => [reverse @expect]]) {
+			my ($order, $expect)	= @$data;
+			my $dir		= ($order) ? 'DESC' : 'ASC';
+			my $plan	= RDF::Query::Plan::Sort->new( $proj, [$expr, $order] );
+			my $count	= 0;
+			$plan->execute( $context );
+			my @rows	= $plan->get_all;
+			my @values	= map { $_->{ v }->literal_value } @rows;
+			is_deeply( \@values, $expect, "expected $dir sort values on plain literals" );
+			$plan->close;
+		}
+	}
+	
+	{
+		# sort with multiple expressions
+		my $s		= RDF::Trine::Node::Blank->new('s');
+		my $s2		= RDF::Trine::Node::Blank->new('s2');
+		my $var		= RDF::Trine::Node::Variable->new('v');
+		my $name	= RDF::Trine::Node::Variable->new('name');
+		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
+		my $plan_b	= RDF::Query::Plan::Triple->new( $s2, $foaf->name, $name );
+		my $join	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
+		my $proj	= RDF::Query::Plan::Project->new( $join, [qw(v name)] );
+		my $expr1	= RDF::Query::Expression::Binary->new(
+						'*',
+						RDF::Query::Expression::Function->new( 'http://www.w3.org/2001/XMLSchema#integer', $var ),
+						RDF::Query::Node::Literal->new('-1', undef, 'http://www.w3.org/2001/XMLSchema#integer')
+					);
+		my $expr2	= RDF::Query::Expression::Function->new( 'sparql:str', $name );
+		my $plan	= RDF::Query::Plan::Sort->new( $proj, [$expr1, 0], [$expr2, 1] );
+		
+		my @expect_v	= (3,2,1);
+		my @expect_name	= reverse('Gary Peck', 'Gregory Todd Williams', 'Lauren Bradford', 'Liz Farrand Dubeck');
+		
+		$plan->execute( $context );
+		my @rows	= $plan->get_all;
+		my @v		= map { $_->{ v }->literal_value } @rows;
+		my @names	= map { $_->{ name }->literal_value } @rows;
+		is_deeply( \@v, [map { ($_)x4 } @expect_v], "expected primary sort values on numerics" );
+		is_deeply( \@names, [(@expect_name)x3], "expected secondary sort values on plain literals" );
+		$plan->close;
 	}
 }

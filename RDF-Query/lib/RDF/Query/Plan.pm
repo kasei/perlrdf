@@ -42,6 +42,24 @@ sub execute ($);
 
 sub next;
 
+=item C<< get_all >>
+
+Returns all remaining rows.
+
+=cut
+
+sub get_all {
+	my $self	= shift;
+	unless ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "get_all can't be called on an unopen plan";
+	}
+	my @rows;
+	while (my $row = $self->next) {
+		push(@rows, $row);
+	}
+	return @rows;
+}
+
 =item C<< close >>
 
 =cut

@@ -58,7 +58,7 @@ sub new {
 	my $class	= shift;
 	my $uri		= shift;
 	my @args	= @_;
-	unless (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
+	unless (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
 		$uri	= RDF::Query::Node::Resource->new( $uri );
 	}
 	return $class->SUPER::new( $uri, @args );
@@ -205,7 +205,7 @@ sub evaluate {
 						return unless (defined $value);
 						return $value->isa('RDF::Query::Algebra')
 							? $value->evaluate( $query, $bridge, $bound )
-							: ($value->isa('RDF::Query::Node::Variable'))
+							: ($value->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $value->name }
 								: $value
 					};
@@ -216,7 +216,7 @@ sub evaluate {
 		my @args	= map {
 						$_->isa('RDF::Query::Algebra')
 							? $_->evaluate( $query, $bridge, $bound )
-							: ($_->isa('RDF::Query::Node::Variable'))
+							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
 					} $self->arguments;
