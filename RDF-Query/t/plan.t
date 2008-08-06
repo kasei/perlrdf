@@ -39,15 +39,7 @@ if ($@) {
 use RDF::Query;
 use RDF::Trine::Namespace qw(rdf foaf);
 
-use RDF::Query::Plan::Sort;
-use RDF::Query::Plan::Service;
-use RDF::Query::Plan::Project;
-use RDF::Query::Plan::Offset;
-use RDF::Query::Plan::Union;
-use RDF::Query::Plan::Triple;
-use RDF::Query::Plan::Quad;
-use RDF::Query::Plan::Distinct;
-use RDF::Query::Plan::Join::NestedLoop;
+use RDF::Query::Plan;
 
 foreach my $data (@models) {
 	my $bridge	= $data->{bridge};

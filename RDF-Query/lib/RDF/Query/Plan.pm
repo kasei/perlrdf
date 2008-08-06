@@ -16,6 +16,16 @@ package RDF::Query::Plan;
 use strict;
 use warnings;
 
+use RDF::Query::Plan::Distinct;
+use RDF::Query::Plan::Join::NestedLoop;
+use RDF::Query::Plan::Offset;
+use RDF::Query::Plan::Project;
+use RDF::Query::Plan::Quad;
+use RDF::Query::Plan::Service;
+use RDF::Query::Plan::Sort;
+use RDF::Query::Plan::Triple;
+use RDF::Query::Plan::Union;
+
 use constant READY		=> 0x01;
 use constant OPEN		=> 0x02;
 use constant CLOSED		=> 0x04;
