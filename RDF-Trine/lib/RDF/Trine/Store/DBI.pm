@@ -182,7 +182,7 @@ sub get_statements {
 			}
 		}
 		if (blessed($context) and $context->is_variable) {
-			my $nodename	= 'sql_ctx_1_';
+			my $nodename	= $context->name; #'sql_ctx_1_';
 			my $uri			= $self->_column_name( $nodename, 'URI' );
 			my $name		= $self->_column_name( $nodename, 'Name' );
 			my $value		= $self->_column_name( $nodename, 'Value' );
@@ -193,11 +193,11 @@ sub get_statements {
 			} elsif (defined $row->{ $value }) {
 				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
 				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
+			} else {
 			}
 		} elsif ($context) {
 			push( @triple, $context );
 		}
-		
 		my $triple	= (@triple == 3)
 					? RDF::Trine::Statement->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
