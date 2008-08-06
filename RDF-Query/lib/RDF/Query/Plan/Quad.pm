@@ -1,0 +1,168 @@
+# RDF::Query::Plan::Quad
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Query::Plan::Quad - Executable query plan for Quads.
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+package RDF::Query::Plan::Quad;
+
+use strict;
+use warnings;
+use base qw(RDF::Query::Plan);
+
+use Scalar::Util qw(blessed);
+
+use RDF::Query::ExecutionContext;
+use RDF::Query::VariableBindings;
+
+=item C<< new ( @quad ) >>
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @quad	= @_;
+	my $self	= $class->SUPER::new( @quad );
+	
+	### the next two loops look for repeated variables because some backends
+	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
+	### from { ?a ?b ?c }. if we find repeated variables (there can be at most
+	### two since there are only four nodes in a quad), we save the positions
+	### in the quad that hold the variable(s), and the code in next() will filter
+	### out any results that don't have the same value in those positions.
+	###
+	### in the first pass, we also set up the mapping that will let us pull out
+	### values from the result quads to construct result bindings.
+	
+	my %var_to_position;
+	my @methodmap	= qw(subject predicate object context);
+	my %counts;
+	my @dup_vars;
+	foreach my $idx (0 .. 3) {
+		my $node	= $quad[ $idx ];
+		if (blessed($node) and ($node->isa('RDF::Trine::Node::Variable') or $node->isa('RDF::Trine::Node::Blank'))) {
+			my $name	= ($node->isa('RDF::Trine::Node::Blank')) ? '__' . $node->blank_identifier : $node->name;
+			$var_to_position{ $name }	= $methodmap[ $idx ];
+			$counts{ $name }++;
+			if ($counts{ $name } >= 2) {
+				push(@dup_vars, $name);
+			}
+			push(@{ $self->[5]{bridge_quad} }, RDF::Trine::Node::Variable->new( $name ));
+		} else {
+			push(@{ $self->[5]{bridge_quad} }, $node);
+		}
+	}
+	
+	my %positions;
+	if (@dup_vars) {
+		foreach my $dup_var (@dup_vars) {
+			foreach my $idx (0 .. 3) {
+				my $var	= $quad[ $idx ];
+				if (blessed($var) and ($var->isa('RDF::Trine::Node::Variable') or $var->isa('RDF::Trine::Node::Blank'))) {
+					my $name	= ($var->isa('RDF::Trine::Node::Blank')) ? '__' . $var->blank_identifier : $var->name;
+					if ($name eq $dup_var) {
+						push(@{ $positions{ $dup_var } }, $methodmap[ $idx ]);
+					}
+				}
+			}
+		}
+	}
+	
+	$self->[5]{mappings}	= \%var_to_position;
+	
+	if (%positions) {
+		$self->[5]{dups}	= \%positions;
+	}
+	
+	return $self;
+}
+
+=item C<< execute ( $execution_context ) >>
+
+=cut
+
+sub execute ($) {
+	my $self	= shift;
+	my $context	= shift;
+	if ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "QUAD plan can't be executed while already open";
+	}
+	my @quad	= @{ $self->[5]{bridge_quad} };
+	my $bridge	= $context->model;
+	my $iter	= $bridge->get_named_statements( @quad, $context->query, $context->bound );
+	
+	if (blessed($iter)) {
+		$self->[5]{iter}	= $iter;
+		$self->state( $self->OPEN );
+	} else {
+		warn "no iterator in execute()";
+	}
+}
+
+=item C<< next >>
+
+=cut
+
+sub next {
+	my $self	= shift;
+	unless ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open QUAD";
+	}
+	my $iter	= $self->[5]{iter};
+	LOOP: while (my $row = $iter->next) {
+		if (my $data = $self->[5]{dups}) {
+			foreach my $pos (values %$data) {
+				my @pos	= @$pos;
+				my $first_method	= shift(@pos);
+				my $first			= $row->$first_method();
+				foreach my $p (@pos) {
+					unless ($first->equal( $row->$p() )) {
+						next LOOP;
+					}
+				}
+			}
+		}
+		
+		my $binding	= {};
+		foreach my $key (keys %{ $self->[5]{mappings} }) {
+			my $method	= $self->[5]{mappings}{ $key };
+			$binding->{ $key }	= $row->$method();
+		}
+		my $bindings	= RDF::Query::VariableBindings->new( $binding );
+		return $bindings;
+	}
+	return;
+}
+
+=item C<< close >>
+
+=cut
+
+sub close {
+	my $self	= shift;
+	unless ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open QUAD";
+	}
+	delete $self->[5]{iter};
+	delete $self->[5]{iter};
+	$self->SUPER::close();
+}
+
+1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+ Gregory Todd Williams <gwilliams@cpan.org>
+
+=cut
