@@ -109,6 +109,17 @@ sub _cmp_rows {
 	return 0;
 }
 
+=item C<< pattern >>
+
+Returns the query plan that will be used to produce the data to be sorted.
+
+=cut
+
+sub pattern {
+	my $self	= shift;
+	return $self->[1];
+}
+
 1;
 
 __END__

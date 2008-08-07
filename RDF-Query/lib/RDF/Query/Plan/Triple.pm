@@ -54,9 +54,6 @@ sub new {
 			if ($counts{ $name } >= 2) {
 				$dup_var	= $name;
 			}
-			push(@{ $self->[4]{bridge_triple} }, $node);
-		} else {
-			push(@{ $self->[4]{bridge_triple} }, $node);
 		}
 	}
 	
@@ -92,7 +89,7 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
 	}
-	my @triple	= @{ $self->[4]{bridge_triple} };
+	my @triple	= @{ $self }[ 1,2,3 ];
 	my $bridge	= $context->model;
 	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
 	

@@ -16,8 +16,12 @@ package RDF::Query::Plan::Join::NestedLoop;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan::Join);
-
 use Scalar::Util qw(blessed);
+use Data::Dumper;
+
+BEGIN {
+	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::NestedLoop' }++;
+}
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
@@ -28,8 +32,10 @@ use RDF::Query::VariableBindings;
 
 sub new {
 	my $class	= shift;
-	my ($lhs, $rhs)	= @_;
-	my $self	= $class->SUPER::new( $lhs, $rhs );
+	my $lhs		= shift;
+	my $rhs		= shift;
+	my $opt		= shift || 0;
+	my $self	= $class->SUPER::new( $lhs, $rhs, $opt );
 	return $self;
 }
 

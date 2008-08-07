@@ -78,6 +78,18 @@ sub bf {
 	return $bf;
 }
 
+=item C<< join_classes >>
+
+Returns the class names of all available join algorithms.
+
+=cut
+
+sub join_classes {
+	my $class	= shift;
+	our %JOIN_CLASSES;
+	return keys %JOIN_CLASSES;
+}
+
 1;
 
 __END__
