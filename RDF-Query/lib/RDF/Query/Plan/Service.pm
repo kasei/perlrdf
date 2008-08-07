@@ -37,7 +37,7 @@ sub new {
 	if (@_) {
 		# extra args (like the bound/free stuff for logging
 		my %args	= @_;
-		$self->[3]	= \%args;
+		@{ $self->[0] }{ keys %args }	= values %args;
 	}
 	return $self;
 }
@@ -69,10 +69,10 @@ sub execute ($) {
 	my $open	= 1;
 	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
 	if (ref($args)) {
-		$self->[3]{args}	= $args;
-		$self->[3]{fh}		= $fh;
-		$self->[3]{'open'}	= 1;
-		$self->[3]{'count'}	= 0;
+		$self->[0]{args}	= $args;
+		$self->[0]{fh}		= $fh;
+		$self->[0]{'open'}	= 1;
+		$self->[0]{'count'}	= 0;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -88,20 +88,20 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SERVICE";
 	}
-	return undef unless ($self->[3]{'open'});
-	my $fh	= $self->[3]{fh};
+	return undef unless ($self->[0]{'open'});
+	my $fh	= $self->[0]{fh};
 	my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
 	if (not($result) or ref($result) ne 'HASH') {
-		if (my $log = $self->[3]{logger}) {
-			$log->push_key_value( 'cardinality-service', $self->[2], $self->[3]{'count'} );
-			if (my $bf = $self->[3]{ 'log-service-pattern' }) {
-				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[3]{'count'} );
+		if (my $log = $self->[0]{logger}) {
+			$log->push_key_value( 'cardinality-service', $self->[2], $self->[0]{'count'} );
+			if (my $bf = $self->[0]{ 'log-service-pattern' }) {
+				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[0]{'count'} );
 			}
 		}
-		$self->[3]{'open'}	= 0;
+		$self->[0]{'open'}	= 0;
 		return undef;
 	}
-	$self->[3]{'count'}++;
+	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
 	return $row;
 };
@@ -115,9 +115,10 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
-	delete $self->[4]{fh};
-	delete $self->[4]{'open'};
-	delete $self->[4]{count};
+	delete $self->[0]{args};
+	delete $self->[0]{fh};
+	delete $self->[0]{'open'};
+	delete $self->[0]{count};
 	$self->SUPER::close();
 }
 
@@ -186,6 +187,7 @@ sub pattern {
 	my $self	= shift;
 	return $self->[2];
 }
+
 
 1;
 

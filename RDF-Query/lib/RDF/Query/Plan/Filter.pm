@@ -49,7 +49,7 @@ sub execute ($) {
 		my $filter	= RDF::Query::Expression::Function->new( $bool, $expr );
 		my $query	= $context->query;
 		my $bridge	= $context->model;
-		$self->[3]{filter}	= sub {
+		$self->[0]{filter}	= sub {
 			my $bool	= 0;
 			eval {
 				my $value	= $filter->evaluate( $query, $bridge, shift );
@@ -72,7 +72,7 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open FILTER";
 	}
 	my $plan	= $self->[1];
-	my $filter	= $self->[3]{filter};
+	my $filter	= $self->[0]{filter};
 	while (1) {
 		my $row	= $plan->next;
 		return undef unless ($row);
@@ -91,7 +91,7 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open FILTER";
 	}
-	delete $self->[3]{filter};
+	delete $self->[0]{filter};
 	$self->[1]->close();
 	$self->SUPER::close();
 }

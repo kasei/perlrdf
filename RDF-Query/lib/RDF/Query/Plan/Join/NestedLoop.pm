@@ -58,10 +58,10 @@ sub execute ($) {
 	}
 	$self->lhs->execute( $context );
 	if ($self->lhs->state == $self->OPEN) {
-		$self->[4]{inner}			= \@inner;
-		$self->[4]{outer}			= $self->lhs;
-		$self->[4]{inner_index}		= 0;
-		$self->[4]{needs_new_outer}	= 1;
+		$self->[0]{inner}			= \@inner;
+		$self->[0]{outer}			= $self->lhs;
+		$self->[0]{inner_index}		= 0;
+		$self->[0]{needs_new_outer}	= 1;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -78,17 +78,17 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open NestedLoop join";
 	}
-	my $outer	= $self->[4]{outer};
-	my $inner	= $self->[4]{inner};
+	my $outer	= $self->[0]{outer};
+	my $inner	= $self->[0]{inner};
 	
 	while (1) {
-		if ($self->[4]{needs_new_outer}) {
-			$self->[4]{outer_row}	= $outer->next;
-			if (ref($self->[4]{outer_row})) {
-				$self->[4]{needs_new_outer}	= 0;
-				$self->[4]{inner_index}		= 0;
+		if ($self->[0]{needs_new_outer}) {
+			$self->[0]{outer_row}	= $outer->next;
+			if (ref($self->[0]{outer_row})) {
+				$self->[0]{needs_new_outer}	= 0;
+				$self->[0]{inner_index}		= 0;
 				use Data::Dumper;
-	#			warn "got new outer row: " . Dumper($self->[4]{outer_row});
+	#			warn "got new outer row: " . Dumper($self->[0]{outer_row});
 			} else {
 				# we've exhausted the outer iterator. we're now done.
 	#			warn "exhausted";
@@ -96,17 +96,17 @@ sub next {
 			}
 		}
 		
-		while ($self->[4]{inner_index} < scalar(@$inner)) {
-			my $inner_row	= $inner->[ $self->[4]{inner_index}++ ];
+		while ($self->[0]{inner_index} < scalar(@$inner)) {
+			my $inner_row	= $inner->[ $self->[0]{inner_index}++ ];
 	#		warn "using inner row: " . Dumper($inner_row);
-			if (my $joined = $inner_row->join( $self->[4]{outer_row} )) {
+			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 #				warn "-> joined\n";
 				return $joined;
 			} else {
 #				warn "-> didn't join\n";
 			}
 		}
-		$self->[4]{needs_new_outer}	= 1;
+		$self->[0]{needs_new_outer}	= 1;
 	}
 }
 
@@ -119,10 +119,10 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open NestedLoop join";
 	}
-	delete $self->[4]{inner};
-	delete $self->[4]{outer};
-	delete $self->[4]{inner_index};
-	delete $self->[4]{needs_new_outer};
+	delete $self->[0]{inner};
+	delete $self->[0]{outer};
+	delete $self->[0]{inner_index};
+	delete $self->[0]{needs_new_outer};
 	$self->lhs->close();
 	$self->rhs->close();
 	$self->SUPER::close();

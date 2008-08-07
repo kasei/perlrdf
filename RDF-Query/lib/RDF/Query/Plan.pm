@@ -40,7 +40,7 @@ use constant CLOSED		=> 0x04;
 sub new {
 	my $class	= shift;
 	my @args	= @_;
-	return bless( [ $class->READY, @args ], $class );
+	return bless( [ { __state => $class->READY }, @args ], $class );
 }
 
 =item C<< execute ( $execution_context ) >>
@@ -92,9 +92,9 @@ If C<< $state >> is provided, updates the plan to a new state.
 sub state {
 	my $self	= shift;
 	if (scalar(@_)) {
-		$self->[0]	= shift;
+		$self->[0]{__state}	= shift;
 	}
-	return $self->[0];
+	return $self->[0]{__state};
 }
 
 sub DESTROY {

@@ -48,9 +48,9 @@ sub execute ($) {
 	$iter->execute( $context );
 	
 	if ($iter->state == $self->OPEN) {
-		$self->[2]{iter}	= $iter;
-		$self->[2]{idx}		= 0;
-		$self->[2]{context}	= $context;
+		$self->[0]{iter}	= $iter;
+		$self->[0]{idx}		= 0;
+		$self->[0]{context}	= $context;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -66,17 +66,17 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
 	}
-	my $iter	= $self->[2]{iter};
+	my $iter	= $self->[0]{iter};
 	my $row		= $iter->next;
 	if ($row) {
 		return $row;
 	} else {
-		return undef unless ($self->[2]{idx} < $#{ $self->[1] });
+		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
 		$iter->close();
-		my $iter	= $self->[1][ ++$self->[2]{idx} ];
-		$iter->execute( $self->[2]{context} );
+		my $iter	= $self->[1][ ++$self->[0]{idx} ];
+		$iter->execute( $self->[0]{context} );
 		if ($iter->state == $self->OPEN) {
-			$self->[2]{iter}	= $iter;
+			$self->[0]{iter}	= $iter;
 			return $self->next;
 		} else {
 			throw RDF::Query::Error::ExecutionError -text => "execute() on RHS of UNION failed during next()";
@@ -93,8 +93,8 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open BGP";
 	}
-	$self->[2]{iter}->close();
-	delete $self->[2]{iter};
+	$self->[0]{iter}->close();
+	delete $self->[0]{iter};
 	$self->SUPER::close();
 }
 

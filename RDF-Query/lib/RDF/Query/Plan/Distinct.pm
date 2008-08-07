@@ -42,7 +42,7 @@ sub execute ($) {
 	$plan->execute( $context );
 
 	if ($plan->state == $self->OPEN) {
-		$self->[2]{seen}	= {};
+		$self->[0]{seen}	= {};
 		$self->state( $self->OPEN );
 	} else {
 		warn "could not execute plan in distinct";
@@ -62,7 +62,7 @@ sub next {
 	while (1) {
 		my $row	= $plan->next;
 		return undef unless ($row);
-		if (not $self->[2]{seen}{ $row->as_string }++) {
+		if (not $self->[0]{seen}{ $row->as_string }++) {
 			return $row;
 		}
 	}
@@ -77,7 +77,7 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open DISTINCT";
 	}
-	delete $self->[2]{seen};
+	delete $self->[0]{seen};
 	$self->[1]->close();
 	$self->SUPER::close();
 }

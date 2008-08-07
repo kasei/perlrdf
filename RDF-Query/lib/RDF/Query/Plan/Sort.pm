@@ -49,7 +49,7 @@ sub execute ($) {
 		
 		use sort 'stable';
 		@rows		= sort { _cmp_rows( $context, $exprs, $a, $b ) } @rows;
-		$self->[3]{rows}	= \@rows;
+		$self->[0]{rows}	= \@rows;
 		$self->state( $self->OPEN );
 	} else {
 		warn "could not execute plan in distinct";
@@ -65,7 +65,7 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SORT";
 	}
-	return shift(@{ $self->[3]{rows} });
+	return shift(@{ $self->[0]{rows} });
 }
 
 =item C<< close >>
@@ -77,7 +77,7 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SORT";
 	}
-	delete $self->[3]{rows};
+	delete $self->[0]{rows};
 	$self->[1]->close();
 	$self->SUPER::close();
 }

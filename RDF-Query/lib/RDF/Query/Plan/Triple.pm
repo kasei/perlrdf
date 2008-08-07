@@ -70,10 +70,10 @@ sub new {
 		}
 	}
 	
-	$self->[4]{mappings}	= \%var_to_position;
+	$self->[0]{mappings}	= \%var_to_position;
 	
 	if (@positions) {
-		$self->[4]{dups}	= \@positions;
+		$self->[0]{dups}	= \@positions;
 	}
 	
 	return $self;
@@ -94,7 +94,7 @@ sub execute ($) {
 	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
 	
 	if (blessed($iter)) {
-		$self->[4]{iter}	= $iter;
+		$self->[0]{iter}	= $iter;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -110,9 +110,9 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open TRIPLE";
 	}
-	my $iter	= $self->[4]{iter};
+	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
-		if (my $pos = $self->[4]{dups}) {
+		if (my $pos = $self->[0]{dups}) {
 			my @pos	= @$pos;
 			my $first_method	= shift(@pos);
 			my $first			= $row->$first_method();
@@ -124,8 +124,8 @@ sub next {
 		}
 		
 		my $binding	= {};
-		foreach my $key (keys %{ $self->[4]{mappings} }) {
-			my $method	= $self->[4]{mappings}{ $key };
+		foreach my $key (keys %{ $self->[0]{mappings} }) {
+			my $method	= $self->[0]{mappings}{ $key };
 			$binding->{ $key }	= $row->$method();
 		}
 		my $bindings	= RDF::Query::VariableBindings->new( $binding );
@@ -143,8 +143,8 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
-	delete $self->[4]{iter};
-	delete $self->[4]{iter};
+	delete $self->[0]{iter};
+	delete $self->[0]{iter};
 	$self->SUPER::close();
 }
 
