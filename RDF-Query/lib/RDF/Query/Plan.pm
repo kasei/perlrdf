@@ -106,7 +106,7 @@ sub DESTROY {
 
 ################################################################################
 
-=item C<< generate_plans ( $algebra ) >>
+=item C<< generate_plans ( $algebra, $execution_context ) >>
 
 Returns a list of equivalent query plan objects for the given algebra object.
 
@@ -116,6 +116,7 @@ sub generate_plans {
 	my $self	= shift;
 	my $class	= ref($self) || $self;
 	my $algebra	= shift;
+	my $context	= shift;
 	unless (blessed($algebra) and $algebra->isa('RDF::Query::Algebra')) {
 		Carp::cluck;
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
@@ -124,11 +125,11 @@ sub generate_plans {
 	my $aclass	= ref($algebra);
 	my ($type)	= ($aclass =~ m<::(\w+)$>);
 	if ($type eq 'Distinct') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;
 		return @plans;
 	} elsif ($type eq 'Filter') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my $expr	= $algebra->expr;
 		my @plans	= map { RDF::Query::Plan::Filter->new( $_, $expr ) } @base;
 		return @plans;
@@ -136,9 +137,9 @@ sub generate_plans {
 		my $method	= ($type eq 'BasicGraphPattern') ? 'triples' : 'patterns';
 		my @triples	= $algebra->$method();
 		if (scalar(@triples) == 1) {
-			return $self->generate_plans( @triples );
+			return $self->generate_plans( @triples, $context );
 		} else {
-			my @base_plans	= map { [ $self->generate_plans( $_ ) ] } @triples;
+			my @base_plans	= map { [ $self->generate_plans( $_, $context ) ] } @triples;
 			my @join_types	= RDF::Query::Plan::Join->join_classes;
 			# XXX this is currently only considering left-deep trees. maybe it should produce all trees?
 			my @plans		= @{ shift(@base_plans) };
@@ -159,35 +160,42 @@ sub generate_plans {
 			return @plans;
 		}
 	} elsif ($type eq 'Limit') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my @plans	= map { RDF::Query::Plan::Limit->new( $_, $algebra->limit ) } @base;
 		return @plans;
 	} elsif ($type eq 'NamedGraph') {
-		# XXX we should be changing triples to quads in $algebra->pattern here
-		my @plans	= $self->generate_plans( $algebra->pattern );
+		my @plans	= $self->generate_plans( $algebra->pattern, $context );
 		return @plans;
 	} elsif ($type eq 'Offset') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my @plans	= map { RDF::Query::Plan::Offset->new( $_, $algebra->offset ) } @base;
 		return @plans;
 	} elsif ($type eq 'Optional') {
 		# just like a BGP or GGP, but we have to pass the optional flag to the join constructor
 		my @patterns	= ($algebra->pattern, $algebra->optional);
-		my @base_plans	= map { [ $self->generate_plans( $_ ) ] } @patterns;
-		# XXX make all possible join plans here (all join trees *and* all join algorithms)
-		while (scalar(@base_plans) > 1) {
-			my $a		= shift(@base_plans);
-			my $b		= shift(@base_plans);
-			my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $a->[0], $b->[0], 1 );
-			unshift( @base_plans, $plan );
+		my @base_plans	= map { [ $self->generate_plans( $_, $context ) ] } @patterns;
+		my @join_types	= RDF::Query::Plan::Join->join_classes;
+		# XXX this is currently only considering left-deep trees. maybe it should produce all trees?
+		my @plans;
+		my $base_a	= shift(@base_plans);
+		my $base_b	= shift(@base_plans);
+		foreach my $i (0 .. $#{ $base_a }) {
+			foreach my $j (0 .. $#{ $base_b }) {
+				my $a	= $base_a->[ $i ];
+				my $b	= $base_b->[ $j ];
+				foreach my $join_type (@join_types) {
+					my $plan	= $join_type->new( $a, $b, 1 );
+					push( @plans, $plan );
+				}
+			}
 		}
-		return @base_plans;
+		return @plans;
 	} elsif ($type eq 'Service') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my @plans	= map { RDF::Query::Plan::Service->new( $_, $algebra->endpoint ) } @base;
 		return @plans;
 	} elsif ($type eq 'Sort') {
-		my @base	= $self->generate_plans( $algebra->pattern );
+		my @base	= $self->generate_plans( $algebra->pattern, $context );
 		my @order	= $algebra->orderby;
 		my @neworder;
 		foreach my $o (@order) {
@@ -210,7 +218,7 @@ sub generate_plans {
 		my $plan	= $pclass->new( @nodes );
 		return $plan;
 	} elsif ($type eq 'Union') {
-		my @plans	= map { [ $self->generate_plans( $_ ) ] } $algebra->patterns;
+		my @plans	= map { [ $self->generate_plans( $_, $context ) ] } $algebra->patterns;
 		# XXX
 		my $plan	= RDF::Query::Plan::Union->new( map { $_->[0] } @plans );
 		return $plan;

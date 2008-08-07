@@ -20,8 +20,8 @@ BEGIN { require "models.pl"; }
 # ] );
 ################################################################################
 
-my $model_tests		= 87;
-my $nomodel_tests	= 9;
+my $model_tests		= 107;
+my $nomodel_tests	= 0;
 my $file	= 'data/foaf.xrdf';
 my %named	= map { $_ => URI::file->new_abs( File::Spec->rel2abs("data/named_graphs/$_") ) } qw(alice.rdf bob.rdf meta.rdf repeats1.rdf repeats2.rdf);
 my @models	= test_models_and_classes($file);
@@ -44,53 +44,6 @@ use RDF::Query::Plan;
 
 ################################################################################
 
-{
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
-	my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person }', undef, $ns)->patterns;
-	my ($t)		= $bgp->triples;
-	my ($plan)	= RDF::Query::Plan->generate_plans( $t );
-	isa_ok( $plan, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-}
-
-{
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
-	my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
-	my ($plan)	= RDF::Query::Plan->generate_plans( $bgp );
-	isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-	isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-	isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-}
-
-{
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name }' );
-	my $algebra	= $parsed->{triples}[0];
-	my ($plan)	= RDF::Query::Plan->generate_plans( $algebra );
-	isa_ok( $plan, 'RDF::Query::Plan::Triple', 'ggp algebra to plan' );
-}
-
-{
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name } ORDER BY ?name' );
-	my $algebra	= $parsed->{triples}[0];
-	my ($plan)	= RDF::Query::Plan->generate_plans( $algebra );
-	isa_ok( $plan, 'RDF::Query::Plan::Sort', 'sort algebra to plan' );
-	isa_ok( $plan->pattern, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-}
-
-{
-	my $parser	= RDF::Query::Parser::SPARQL->new();
-	my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name . FILTER(?name = "Greg") }' );
-	my $algebra	= $parsed->{triples}[0];
-	my ($plan)	= RDF::Query::Plan->generate_plans( $algebra );
-	isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
-	isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-}
-
-################################################################################
-
 foreach my $data (@models) {
 	my $bridge	= $data->{bridge};
 	my $model	= $data->{modelobj};
@@ -104,6 +57,53 @@ foreach my $data (@models) {
 					bound	=> {},
 					model	=> $bridge,
 				);
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
+		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person }', undef, $ns)->patterns;
+		my ($t)		= $bgp->triples;
+		my ($plan)	= RDF::Query::Plan->generate_plans( $t, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+	}
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
+		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
+		my ($plan)	= RDF::Query::Plan->generate_plans( $bgp, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
+		isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+		isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+	}
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'ggp algebra to plan' );
+	}
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name } ORDER BY ?name' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Sort', 'sort algebra to plan' );
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+	}
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name . FILTER(?name = "Greg") }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
+	}
+	
+	############################################################################
 	
 	{
 		# simple triple
@@ -169,6 +169,26 @@ foreach my $data (@models) {
 	}
 	
 	{
+		# simple quad converted from algebra
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { GRAPH ?c { ?p foaf:name ?name } }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		
+		my $count	= 0;
+		$plan->execute( $context );
+		while (my $row = $plan->next) {
+			isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+			my $name	= lc($row->{name}->literal_value);
+			like( $row->{name}, qr#(Alice|Bob)#i, 'expected person name from named graph' );
+			like( $row->{c}, qr#${name}[.]rdf>$#, 'graph name matches person name' );
+			$count++;
+		}
+		$plan->close;
+		is( $count, 2, "expected result count for quad (?p foaf:name ?name ?c)" );
+	}
+	
+	{
 		# repeats of the same variable in one quad
 		my @quad	= (
 			RDF::Trine::Node::Variable->new('prop'),
@@ -215,6 +235,7 @@ foreach my $data (@models) {
 	}
 
 	{
+		# nested loop join
 		my $var	= RDF::Trine::Node::Variable->new('p');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
@@ -235,6 +256,26 @@ foreach my $data (@models) {
 	}
 
 	{
+		# OPTIONAL nested loop join
+		my $var	= RDF::Trine::Node::Variable->new('p');
+		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b, 1 );
+		
+		foreach my $pass (1..2) {
+			my $count	= 0;
+			$plan->execute( $context );
+			my @rows	= $plan->get_all;
+			my @names	= map { $_->literal_value } grep { defined($_) } map { $_->{name} } @rows;
+			my @pages	= map { $_->uri_value } grep { defined($_) } map { $_->{page} } @rows;
+			is( scalar(@names), 4, 'expected result count for names in OPTIONAL join' );
+			is( scalar(@pages), 2, 'expected result count for homepages in OPTIONAL join' );
+			$plan->close;
+		}
+	}
+
+	{
+		# union
 		my $var		= RDF::Trine::Node::Variable->new('s');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->PersonalProfileDocument );

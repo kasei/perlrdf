@@ -62,6 +62,7 @@ sub execute ($) {
 		$self->[0]{outer}			= $self->lhs;
 		$self->[0]{inner_index}		= 0;
 		$self->[0]{needs_new_outer}	= 1;
+		$self->[0]{inner_count}		= 0;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -80,6 +81,7 @@ sub next {
 	}
 	my $outer	= $self->[0]{outer};
 	my $inner	= $self->[0]{inner};
+	my $opt		= $self->[3];
 	
 	while (1) {
 		if ($self->[0]{needs_new_outer}) {
@@ -87,6 +89,7 @@ sub next {
 			if (ref($self->[0]{outer_row})) {
 				$self->[0]{needs_new_outer}	= 0;
 				$self->[0]{inner_index}		= 0;
+				$self->[0]{inner_count}		= 0;
 				use Data::Dumper;
 	#			warn "got new outer row: " . Dumper($self->[0]{outer_row});
 			} else {
@@ -101,12 +104,17 @@ sub next {
 	#		warn "using inner row: " . Dumper($inner_row);
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 #				warn "-> joined\n";
+				$self->[0]{inner_count}++;
 				return $joined;
 			} else {
 #				warn "-> didn't join\n";
 			}
 		}
+		
 		$self->[0]{needs_new_outer}	= 1;
+		if ($opt and $self->[0]{inner_count} == 0) {
+			return $self->[0]{outer_row};
+		}
 	}
 }
 
@@ -123,6 +131,7 @@ sub close {
 	delete $self->[0]{outer};
 	delete $self->[0]{inner_index};
 	delete $self->[0]{needs_new_outer};
+	delete $self->[0]{inner_count};
 	$self->lhs->close();
 	$self->rhs->close();
 	$self->SUPER::close();
