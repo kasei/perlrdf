@@ -176,6 +176,17 @@ sub _get_and_parse_url {
 	store_fd \undef, \*STDOUT;
 }
 
+=item C<< pattern >>
+
+Returns the query plan that will be sent to the remote service.
+
+=cut
+
+sub pattern {
+	my $self	= shift;
+	return $self->[2];
+}
+
 1;
 
 __END__

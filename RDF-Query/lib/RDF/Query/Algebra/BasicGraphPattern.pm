@@ -368,9 +368,9 @@ sub execute {
 	my $count	= 0;
 	$stream	= sfinally {
 		if (my $log = $query->logger) {
-			$log->push_key_value( 'cardinality-bgp', $self->as_sparql, $count );
+			$log->push_key_value( 'cardinality-nestedloop', $self->as_sparql, $count );
 			if (my $bf = $self->bf) {
-				$log->push_key_value( 'cardinality-bf-bgp', $bf, $count );
+				$log->push_key_value( 'cardinality-bf-nestedloop', $bf, $count );
 			}
 		}
 	} swatch { $count++ } $stream;
@@ -378,7 +378,7 @@ sub execute {
 	if (my $log = $query->logger) {
 		$l->debug("logging bgp execution time");
 		my $elapsed = tv_interval ( $t0 );
-		$log->push_key_value( 'execute_time-bgp', $self->as_sparql, $elapsed );
+		$log->push_key_value( 'execute_time-nestedloop', $self->as_sparql, $elapsed );
 	} else {
 		$l->debug("no logger present for bgp execution time");
 	}

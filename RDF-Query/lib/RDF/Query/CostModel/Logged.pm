@@ -56,11 +56,11 @@ sub logger {
 	return $self->{l};
 }
 
-sub _cost_bgp {
+sub _cost_nestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $bgp->as_sparql );
+	$l->debug( 'Computing COST: ' . Dumper($bgp) );
 	return $self->_cardinality( $bgp );
 }
 
@@ -68,7 +68,7 @@ sub _cost_triple {
 	my $self	= shift;
 	my $triple	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $triple->as_sparql );
+	$l->debug( 'Computing COST: ' . Dumper($triple) );
 	return $self->_cardinality( $triple );
 }
 
@@ -97,23 +97,24 @@ sub _cardinality_service {
 	die;
 }
 
-sub _cardinality_bgp {
+sub _cardinality_nestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
-	my @triples	= $pattern->triples;
+	my @triples	= ($pattern->lhs, $pattern->rhs);
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf;
 	my @bf		= split(/,/, $bf);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	
+	$l->debug( "looking for cardinality-bf-nestedloop -> $bf" );
 	my $logger		= $self->logger;
-	my ($card, $sd)	= $logger->get_statistics( 'cardinality-bf-bgp', $bf );
+	my ($card, $sd)	= $logger->get_statistics( 'cardinality-bf-nestedloop', $bf );
 	if ($card) {
 		$l->debug( "Expected cardinality of $bf BGP is : " . $card . " (with stddev of $sd)" );
 		return $card;
 	} else {
 		$l->debug('falling back on naive costmodel');
-		return $self->{n}->_cardinality_bgp( $pattern );
+		return $self->{n}->_cardinality_nestedloop( $pattern );
 	}
 }
 

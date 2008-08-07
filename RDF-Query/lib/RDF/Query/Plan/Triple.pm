@@ -47,14 +47,14 @@ sub new {
 	my $dup_var;
 	foreach my $idx (0 .. 2) {
 		my $node	= $triple[ $idx ];
-		if (blessed($node) and ($node->isa('RDF::Trine::Node::Variable') or $node->isa('RDF::Trine::Node::Blank'))) {
-			my $name	= ($node->isa('RDF::Trine::Node::Blank')) ? '__' . $node->blank_identifier : $node->name;
+		if (blessed($node) and $node->isa('RDF::Trine::Node::Variable')) {
+			my $name	= $node->name;
 			$var_to_position{ $name }	= $methodmap[ $idx ];
 			$counts{ $name }++;
 			if ($counts{ $name } >= 2) {
 				$dup_var	= $name;
 			}
-			push(@{ $self->[4]{bridge_triple} }, RDF::Trine::Node::Variable->new( $name ));
+			push(@{ $self->[4]{bridge_triple} }, $node);
 		} else {
 			push(@{ $self->[4]{bridge_triple} }, $node);
 		}
@@ -64,8 +64,8 @@ sub new {
 	if (defined($dup_var)) {
 		foreach my $idx (0 .. 2) {
 			my $var	= $triple[ $idx ];
-			if (blessed($var) and ($var->isa('RDF::Trine::Node::Variable') or $var->isa('RDF::Trine::Node::Blank'))) {
-				my $name	= ($var->isa('RDF::Trine::Node::Blank')) ? '__' . $var->blank_identifier : $var->name;
+			if (blessed($var) and $var->isa('RDF::Trine::Node::Variable')) {
+				my $name	= $var->name;
 				if ($name eq $dup_var) {
 					push(@positions, $methodmap[ $idx ]);
 				}
@@ -149,6 +149,32 @@ sub close {
 	delete $self->[4]{iter};
 	delete $self->[4]{iter};
 	$self->SUPER::close();
+}
+
+=item C<< nodes () >>
+
+=cut
+
+sub nodes {
+	my $self	= shift;
+	return @{ $self }[1,2,3];
+}
+
+=item C<< bf () >>
+
+Returns a string representing the state of the nodes of the triple (bound or free).
+
+=cut
+
+sub bf {
+	my $self	= shift;
+	my $bf		= '';
+	foreach my $n (@{ $self }[1,2,3]) {
+		$bf		.= ($n->isa('RDF::Trine::Node::Variable'))
+				? 'f'
+				: 'b';
+	}
+	return $bf;
 }
 
 1;

@@ -120,6 +120,7 @@ use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Logger;
+use  RDF::Query::Plan;
 
 ######################################################################
 

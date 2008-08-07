@@ -41,11 +41,19 @@ sub new {
 }
 
 
-sub _cost_bgp {
+sub _cost_service {
+	my $self	= shift;
+	my $plan	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . Dumper($plan) );
+	return 2 * $self->cost( $plan->pattern );
+}
+
+sub _cost_nestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $bgp->as_sparql );
+	$l->debug( 'Computing COST: ' . Dumper($bgp) );
 	return $self->_cardinality( $bgp );
 }
 
@@ -53,7 +61,7 @@ sub _cost_triple {
 	my $self	= shift;
 	my $triple	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $triple->as_sparql );
+	$l->debug( 'Computing COST: ' . Dumper($triple) );
 	return $self->_cardinality( $triple );
 }
 
@@ -72,10 +80,10 @@ sub _cardinality_triple {
 	return int($card + .5 * ($card <=> 0));
 }
 
-sub _cardinality_bgp {
+sub _cardinality_nestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
-	my @triples	= $pattern->triples;
+	my @triples	= ($pattern->rhs, $pattern->lhs);
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf;
 	my @bf		= split(/,/, $bf);
@@ -97,7 +105,7 @@ sub _cardinality_bgp {
 		
 		if ($f != $actually_free) {
 			my $diff	= $f - $actually_free;
-			$l->debug("- BGP triple {" . $t->as_sparql . "} has $diff variables that will be bound by previous triples.");
+			$l->debug("- BGP triple {" . Dumper($t) . "} has $diff variables that will be bound by previous triples.");
 		}
 		
 		my $r		= $actually_free / 3;

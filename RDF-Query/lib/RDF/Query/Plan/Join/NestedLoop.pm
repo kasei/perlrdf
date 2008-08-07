@@ -122,28 +122,6 @@ sub close {
 	$self->SUPER::close();
 }
 
-=item C<< lhs >>
-
-Returns the left-hand-side plan to the join.
-
-=cut
-
-sub lhs {
-	my $self	= shift;
-	return $self->[1];
-}
-
-=item C<< rhs >>
-
-Returns the right-hand-side plan to the join.
-
-=cut
-
-sub rhs {
-	my $self	= shift;
-	return $self->[2];
-}
-
 1;
 
 __END__

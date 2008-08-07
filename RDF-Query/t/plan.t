@@ -242,9 +242,9 @@ foreach my $data (@models) {
 	
 	{
 		# { _:s rdf:first [] ; ?p [] }
-		my $s	= RDF::Trine::Node::Blank->new('s');
-		my $f	= RDF::Trine::Node::Blank->new('f');
-		my $r	= RDF::Trine::Node::Blank->new('r');
+		my $s	= RDF::Trine::Node::Variable->new('__s');
+		my $f	= RDF::Trine::Node::Variable->new('__f');
+		my $r	= RDF::Trine::Node::Variable->new('__r');
 		my $p	= RDF::Trine::Node::Variable->new('p');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $f );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $s, $p, $r );
@@ -267,7 +267,7 @@ foreach my $data (@models) {
 	
 	{
 		# simple variable sort with numerics
-		my $s		= RDF::Trine::Node::Blank->new('s');
+		my $s		= RDF::Trine::Node::Variable->new('__s');
 		my $var		= RDF::Trine::Node::Variable->new('v');
 		my $triple	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
 		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
@@ -287,7 +287,7 @@ foreach my $data (@models) {
 	
 	{
 		# simple variable sort with plain literals
-		my $s		= RDF::Trine::Node::Blank->new('s');
+		my $s		= RDF::Trine::Node::Variable->new('__s');
 		my $var		= RDF::Trine::Node::Variable->new('v');
 		my $triple	= RDF::Query::Plan::Triple->new( $s, $foaf->name, $var );
 		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
@@ -309,8 +309,8 @@ foreach my $data (@models) {
 	
 	{
 		# sort with multiple expressions
-		my $s		= RDF::Trine::Node::Blank->new('s');
-		my $s2		= RDF::Trine::Node::Blank->new('s2');
+		my $s		= RDF::Trine::Node::Variable->new('__s');
+		my $s2		= RDF::Trine::Node::Variable->new('__s2');
 		my $var		= RDF::Trine::Node::Variable->new('v');
 		my $name	= RDF::Trine::Node::Variable->new('name');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
