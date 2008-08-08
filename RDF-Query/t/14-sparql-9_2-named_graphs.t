@@ -9,6 +9,16 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.store.dbi          = TRACE, Screen
+# 	log4perl.category.rdf.query.model          = TRACE, Screen
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 my @models	= test_models();
 
 my $tests	= 58;
@@ -140,7 +150,6 @@ END
 			
 			my $count	= 0;
 			my $stream	= $query->execute( $model );
-			
 			
 			while (my $row = $stream->current) {
 				$stream->next;

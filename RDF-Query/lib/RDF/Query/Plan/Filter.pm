@@ -50,9 +50,10 @@ sub execute ($) {
 		my $query	= $context->query;
 		my $bridge	= $context->model;
 		$self->[0]{filter}	= sub {
+			my $row		= shift;
 			my $bool	= 0;
 			eval {
-				my $value	= $filter->evaluate( $query, $bridge, shift );
+				my $value	= $filter->evaluate( $query, $bridge, $row );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			};
 			return $bool;
@@ -60,6 +61,7 @@ sub execute ($) {
 	} else {
 		warn "could not execute plan in filter";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -106,6 +108,29 @@ sub pattern {
 	my $self	= shift;
 	return $self->[1];
 }
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	my $self	= shift;
+	return $self->pattern->distinct;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	my $self	= shift;
+	return $self->pattern->ordered;
+}
+
 
 1;
 

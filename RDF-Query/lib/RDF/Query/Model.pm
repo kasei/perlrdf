@@ -504,9 +504,14 @@ model) to STDERR.
 sub debug {
 	my $self	= shift;
 	my $stream	= $self->get_statements( map { $self->new_variable($_) } qw(s p o) );
+	my $nstream	= $self->get_named_statements( map { $self->new_variable($_) } qw(s p o c) );
 	my $l		= Log::Log4perl->get_logger("rdf.query.model");
-	$l->debug("------------------------------");
+	$l->debug("DEFAULT GRAPH ------------------------------");
 	while (my $st = $stream->next) {
+		$l->debug($self->as_string( $st ));
+	}
+	$l->debug("NAMED GRAPH ------------------------------");
+	while (my $st = $nstream->next) {
 		$l->debug($self->as_string( $st ));
 	}
 	$l->debug("------------------------------");

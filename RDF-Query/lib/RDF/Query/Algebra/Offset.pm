@@ -194,6 +194,17 @@ sub execute {
 	return sgrep { $count++ >= $offset } $stream;
 }
 
+=item C<< is_solution_modifier >>
+
+Returns true if this node is a solution modifier.
+
+=cut
+
+sub is_solution_modifier {
+	return 1;
+}
+
+
 
 1;
 

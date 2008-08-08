@@ -243,6 +243,12 @@ sub parse {
 	my $parsed	= $parser->query( $query );
 	
 	if ($parsed) {
+		my $pattern	= $parsed->{triples}[0];
+		if (blessed($pattern)) {
+			my $ns		= $parsed->{namespaces};
+			my $fixed	= $pattern->qualify_uris( $ns );
+			$parsed->{triples}[0]	= $fixed;
+		}
 		return $parsed;
 	} else {
 		return $self->fail( "Failed to parse: '$query'" );

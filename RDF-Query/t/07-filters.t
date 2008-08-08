@@ -62,7 +62,7 @@ END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($image, $thing, $ttype, $tname)	= @{ $row }{qw(image thing type name)};
 			my $url		= $bridge->uri_value( $image );
 			my $node	= $bridge->as_string( $thing );
@@ -114,7 +114,7 @@ END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n)	= @{ $row }{qw(person name)};
 			ok( $query->bridge->isa_node( $p ), $query->bridge->as_string( $p ) . ' is a node' );
@@ -165,7 +165,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $bridge	= $query->bridge;
 		my $count	= 0;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($image, $point, $pname, $lat, $lon)	= @{ $row }{qw(image point name lat long)};
 			my $url		= $bridge->uri_value( $image );
 			my $name	= $bridge->literal_value( $pname );
@@ -253,7 +253,7 @@ END
 		
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($node)	= @{ $row }{qw(p)};
 			my $uri	= $query->bridge->uri_value( $node );
 			is( $uri, 'http://kasei.us/about/foaf.xrdf#greg', 'jena:sha1sum' );
@@ -276,7 +276,7 @@ END
 		
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($node)	= @{ $row }{qw(p)};
 			my $uri	= $query->bridge->uri_value( $node );
 			is( $uri, 'http://kasei.us/about/foaf.xrdf#greg', 'xpath:matches' );
@@ -337,7 +337,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		my %expect	= map {$_=>1} (1..3);
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($data)	= @{ $row }{qw(data)};
 			ok( $query->bridge->isa_literal( $data ), "literal list member" );
 			ok( exists($expect{ $query->bridge->literal_value( $data ) }), , "expected literal value" );

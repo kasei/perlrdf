@@ -62,7 +62,7 @@ my $mfname	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/
 {
 	print "# Positive Syntax Tests\n";
 	my $stream	= $bridge->get_statements( undef, $type, $pos );
-	while (my $statement = $stream->()) {
+	while (my $statement = $stream->next) {
 		my $test		= $bridge->subject( $statement );
 		no warnings 'uninitialized';
 		next unless ($bridge->uri_value( $test ) =~ /$PATTERN/);	# XXX
@@ -83,7 +83,7 @@ my $mfname	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/
 {
 	print "# Negative Syntax Tests\n";
 	my $stream	= $bridge->get_statements( undef, $type, $neg );
-	while (my $statement = $stream->()) {
+	while (my $statement = $stream->next) {
 		my $test		= $bridge->subject( $statement );
 		no warnings 'uninitialized';
 		next unless ($bridge->uri_value( $test ) =~ /$PATTERN/);	# XXX

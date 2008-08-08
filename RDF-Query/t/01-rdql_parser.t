@@ -19,46 +19,40 @@ isa_ok( $parser, 'RDF::Query::Parser::RDQL' );
 			dcterms FOR <http://purl.org/dc/terms/>,
 			geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
 END
-	my $correct	= {
+	my $correct = {
 					method			=> 'SELECT',
 					'variables' => [['page']],
 					'namespaces' => {'dcterms' => 'http://purl.org/dc/terms/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#','foaf' => 'http://xmlns.com/foaf/0.1/','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#'},
 					'sources' => undef,
 					'triples' => [
-                         bless( [
-                                  bless( [
-                                           bless( [
-                                                    'person'
-                                                  ], 'RDF::Query::Node::Variable' ),
-                                           bless( [
-                                                    'URI',
-                                                    [
-                                                      'foaf',
-                                                      'name'
-                                                    ]
-                                                  ], 'RDF::Query::Node::Resource' ),
-                                           bless( [
-                                                    'LITERAL',
-                                                    'Gregory Todd Williams'
-                                                  ], 'RDF::Query::Node::Literal' )
-                                         ], 'RDF::Query::Algebra::Triple' ),
-                                  bless( [
-                                           bless( [
-                                                    'person'
-                                                  ], 'RDF::Query::Node::Variable' ),
-                                           bless( [
-                                                    'URI',
-                                                    [
-                                                      'foaf',
-                                                      'homepage'
-                                                    ]
-                                                  ], 'RDF::Query::Node::Resource' ),
-                                           bless( [
-                                                    'page'
-                                                  ], 'RDF::Query::Node::Variable' )
-                                         ], 'RDF::Query::Algebra::Triple' )
-                                ], 'RDF::Query::Algebra::GroupGraphPattern' )
-                       ]
+						 bless( [
+								  bless( [
+										   bless( [
+													'person'
+												  ], 'RDF::Query::Node::Variable' ),
+										   bless( [
+													'URI',
+													'http://xmlns.com/foaf/0.1/name',
+												  ], 'RDF::Query::Node::Resource' ),
+										   bless( [
+													'LITERAL',
+													'Gregory Todd Williams'
+												  ], 'RDF::Query::Node::Literal' )
+										 ], 'RDF::Query::Algebra::Triple' ),
+								  bless( [
+										   bless( [
+													'person'
+												  ], 'RDF::Query::Node::Variable' ),
+										   bless( [
+													'URI',
+													'http://xmlns.com/foaf/0.1/homepage',
+												  ], 'RDF::Query::Node::Resource' ),
+										   bless( [
+													'page'
+												  ], 'RDF::Query::Node::Variable' )
+										 ], 'RDF::Query::Algebra::Triple' )
+								], 'RDF::Query::Algebra::GroupGraphPattern' )
+					   ]
 				};
 	my $parsed	= $parser->parse( $rdql );
 	is_deeply( $parsed, $correct, 'SELECT, WHERE, USING' );
@@ -82,85 +76,82 @@ END
 				dcterms FOR <http://purl.org/dc/terms/>,
 				geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
 END
-	my $correct	= {
+	my $correct = {
 		method			=> 'SELECT',
 		'triples'		=> [
-                         bless( [
-                                  'FILTER',
-                                  bless( [
-                                           bless( [
-                                                    'URI',
-                                                    'sparql:logical-and'
-                                                  ], 'RDF::Query::Node::Resource' ),
-                                           bless( [
-                                                    bless( [
-                                                             'URI',
-                                                             'sparql:logical-or'
-                                                           ], 'RDF::Query::Node::Resource' ),
-                                                    bless( [
-                                                             '==',
-                                                             bless( [
-                                                                      'pred'
-                                                                    ], 'RDF::Query::Node::Variable' ),
-                                                             bless( [
-                                                                      'URI',
-                                                                      'http://purl.org/dc/terms/spatial'
-                                                                    ], 'RDF::Query::Node::Resource' )
-                                                           ], 'RDF::Query::Expression::Binary' ),
-                                                    bless( [
-                                                             '==',
-                                                             bless( [
-                                                                      'pred'
-                                                                    ], 'RDF::Query::Node::Variable' ),
-                                                             bless( [
-                                                                      'URI',
-                                                                      'http://xmlns.com/foaf/0.1/based_near'
-                                                                    ], 'RDF::Query::Node::Resource' )
-                                                           ], 'RDF::Query::Expression::Binary' )
-                                                  ], 'RDF::Query::Expression::Function' ),
-                                           bless( [
-                                                    '>',
-                                                    bless( [
-                                                             'lat'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'LITERAL',
-                                                             '52.988674',
-                                                             undef,
-                                                             'http://www.w3.org/2001/XMLSchema#float'
-                                                           ], 'RDF::Query::Node::Literal' )
-                                                  ], 'RDF::Query::Expression::Binary' )
-                                         ], 'RDF::Query::Expression::Function' ),
-                                  bless( [
-                                           bless( [
-                                                    bless( [
-                                                             'point'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'URI',
-                                                             [
-                                                               'geo',
-                                                               'lat'
-                                                             ]
-                                                           ], 'RDF::Query::Node::Resource' ),
-                                                    bless( [
-                                                             'lat'
-                                                           ], 'RDF::Query::Node::Variable' )
-                                                  ], 'RDF::Query::Algebra::Triple' ),
-                                           bless( [
-                                                    bless( [
-                                                             'image'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'pred'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'point'
-                                                           ], 'RDF::Query::Node::Variable' )
-                                                  ], 'RDF::Query::Algebra::Triple' )
-                                         ], 'RDF::Query::Algebra::GroupGraphPattern' )
-                                ], 'RDF::Query::Algebra::Filter' )
-                       ],
+						 bless( [
+								  'FILTER',
+								  bless( [
+										   bless( [
+													'URI',
+													'sparql:logical-and'
+												  ], 'RDF::Query::Node::Resource' ),
+										   bless( [
+													bless( [
+															 'URI',
+															 'sparql:logical-or'
+														   ], 'RDF::Query::Node::Resource' ),
+													bless( [
+															 '==',
+															 bless( [
+																	  'pred'
+																	], 'RDF::Query::Node::Variable' ),
+															 bless( [
+																	  'URI',
+																	  'http://purl.org/dc/terms/spatial'
+																	], 'RDF::Query::Node::Resource' )
+														   ], 'RDF::Query::Expression::Binary' ),
+													bless( [
+															 '==',
+															 bless( [
+																	  'pred'
+																	], 'RDF::Query::Node::Variable' ),
+															 bless( [
+																	  'URI',
+																	  'http://xmlns.com/foaf/0.1/based_near'
+																	], 'RDF::Query::Node::Resource' )
+														   ], 'RDF::Query::Expression::Binary' )
+												  ], 'RDF::Query::Expression::Function' ),
+										   bless( [
+													'>',
+													bless( [
+															 'lat'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'LITERAL',
+															 '52.988674',
+															 undef,
+															 'http://www.w3.org/2001/XMLSchema#float'
+														   ], 'RDF::Query::Node::Literal' )
+												  ], 'RDF::Query::Expression::Binary' )
+										 ], 'RDF::Query::Expression::Function' ),
+								  bless( [
+										   bless( [
+													bless( [
+															 'point'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'URI',
+															 'http://www.w3.org/2003/01/geo/wgs84_pos#lat',
+														   ], 'RDF::Query::Node::Resource' ),
+													bless( [
+															 'lat'
+														   ], 'RDF::Query::Node::Variable' )
+												  ], 'RDF::Query::Algebra::Triple' ),
+										   bless( [
+													bless( [
+															 'image'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'pred'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'point'
+														   ], 'RDF::Query::Node::Variable' )
+												  ], 'RDF::Query::Algebra::Triple' )
+										 ], 'RDF::Query::Algebra::GroupGraphPattern' )
+								], 'RDF::Query::Algebra::Filter' )
+					   ],
 		'sources'		=> undef,
 		'namespaces'	=> {'foaf' => 'http://xmlns.com/foaf/0.1/','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#','dcterms' => 'http://purl.org/dc/terms/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
 		'variables'		=> [['image'],['point'],['lat']]
@@ -185,59 +176,53 @@ END
 				dcterms FOR <http://purl.org/dc/terms/>,
 				geo FOR <http://www.w3.org/2003/01/geo/wgs84_pos#>
 END
-	my $correct	= {
+	my $correct = {
 					method			=> 'SELECT',
 					'triples'		=> [
-                         bless( [
-                                  'FILTER',
-                                  bless( [
-                                           bless( [
-                                                    'URI',
-                                                    'sparql:regex'
-                                                  ], 'RDF::Query::Node::Resource' ),
-                                           bless( [
-                                                    'homepage'
-                                                  ], 'RDF::Query::Node::Variable' ),
-                                           bless( [
-                                                    'LITERAL',
-                                                    'kasei'
-                                                  ], 'RDF::Query::Node::Literal' )
-                                         ], 'RDF::Query::Expression::Function' ),
-                                  bless( [
-                                           bless( [
-                                                    bless( [
-                                                             'person'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'URI',
-                                                             [
-                                                               'foaf',
-                                                               'name'
-                                                             ]
-                                                           ], 'RDF::Query::Node::Resource' ),
-                                                    bless( [
-                                                             'LITERAL',
-                                                             'Gregory Todd Williams'
-                                                           ], 'RDF::Query::Node::Literal' )
-                                                  ], 'RDF::Query::Algebra::Triple' ),
-                                           bless( [
-                                                    bless( [
-                                                             'person'
-                                                           ], 'RDF::Query::Node::Variable' ),
-                                                    bless( [
-                                                             'URI',
-                                                             [
-                                                               'foaf',
-                                                               'homepage'
-                                                             ]
-                                                           ], 'RDF::Query::Node::Resource' ),
-                                                    bless( [
-                                                             'homepage'
-                                                           ], 'RDF::Query::Node::Variable' )
-                                                  ], 'RDF::Query::Algebra::Triple' )
-                                         ], 'RDF::Query::Algebra::GroupGraphPattern' )
-                                ], 'RDF::Query::Algebra::Filter' )
-                       ],
+						 bless( [
+								  'FILTER',
+								  bless( [
+										   bless( [
+													'URI',
+													'sparql:regex'
+												  ], 'RDF::Query::Node::Resource' ),
+										   bless( [
+													'homepage'
+												  ], 'RDF::Query::Node::Variable' ),
+										   bless( [
+													'LITERAL',
+													'kasei'
+												  ], 'RDF::Query::Node::Literal' )
+										 ], 'RDF::Query::Expression::Function' ),
+								  bless( [
+										   bless( [
+													bless( [
+															 'person'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'URI',
+															 'http://xmlns.com/foaf/0.1/name',
+														   ], 'RDF::Query::Node::Resource' ),
+													bless( [
+															 'LITERAL',
+															 'Gregory Todd Williams'
+														   ], 'RDF::Query::Node::Literal' )
+												  ], 'RDF::Query::Algebra::Triple' ),
+										   bless( [
+													bless( [
+															 'person'
+														   ], 'RDF::Query::Node::Variable' ),
+													bless( [
+															 'URI',
+															 'http://xmlns.com/foaf/0.1/homepage',
+														   ], 'RDF::Query::Node::Resource' ),
+													bless( [
+															 'homepage'
+														   ], 'RDF::Query::Node::Variable' )
+												  ], 'RDF::Query::Algebra::Triple' )
+										 ], 'RDF::Query::Algebra::GroupGraphPattern' )
+								], 'RDF::Query::Algebra::Filter' )
+					   ],
 					'namespaces'	=> {'foaf' => 'http://xmlns.com/foaf/0.1/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#','dcterms' => 'http://purl.org/dc/terms/'},
 					'sources'		=> undef,
 					'variables'		=> [bless(['person'], 'RDF::Query::Node::Variable'),bless(['homepage'], 'RDF::Query::Node::Variable')]

@@ -27,19 +27,49 @@ sub new {
 	return $self;
 }
 
+=item C<< model >>
+
+=cut
+
 sub model {
 	my $self	= shift;
 	return $self->{model};
 }
+
+=item C<< query >>
+
+=cut
 
 sub query {
 	my $self	= shift;
 	return $self->{query};
 }
 
+=item C<< bound >>
+
+=cut
+
 sub bound {
 	my $self	= shift;
 	return $self->{bound} || {};
+}
+
+=item C<< base >>
+
+=cut
+
+sub base {
+	my $self	= shift;
+	return $self->{base} || {};
+}
+
+=item C<< ns >>
+
+=cut
+
+sub ns {
+	my $self	= shift;
+	return $self->{ns} || {};
 }
 
 1;

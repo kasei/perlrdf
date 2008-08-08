@@ -68,6 +68,7 @@ sub execute ($) {
 		warn "no iterator in execute()";
 	}
 #	warn '########################################';
+	$self;
 }
 
 =item C<< next >>

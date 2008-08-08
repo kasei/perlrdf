@@ -48,7 +48,7 @@ END
 		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
-		while (my $stmt = $stream->()) {
+		while (my $stmt = $stream->next) {
 			my $p	= $bridge->predicate( $stmt );
 			my $s	= $bridge->as_string( $p );
 			like( $s, qr#foaf/0.1/(name|made)#, "predicate looks good: $s" );

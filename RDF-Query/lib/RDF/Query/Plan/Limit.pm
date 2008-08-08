@@ -1,9 +1,9 @@
-# RDF::Query::Plan::Distinct
+# RDF::Query::Plan::Limit
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Distinct - Executable query plan for Distincts.
+RDF::Query::Plan::Limit - Executable query plan for Limits.
 
 =head1 METHODS
 
@@ -11,20 +11,21 @@ RDF::Query::Plan::Distinct - Executable query plan for Distincts.
 
 =cut
 
-package RDF::Query::Plan::Distinct;
+package RDF::Query::Plan::Limit;
 
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
-=item C<< new ( $plan ) >>
+=item C<< new ( $plan, $limit ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $plan	= shift;
-	my $self	= $class->SUPER::new( $plan );
+	my $limit	= shift;
+	my $self	= $class->SUPER::new( $plan, $limit );
 	return $self;
 }
 
@@ -36,16 +37,16 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "DISTINCT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "LIMIT plan can't be executed while already open";
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
 
 	if ($plan->state == $self->OPEN) {
-		$self->[0]{seen}	= {};
 		$self->state( $self->OPEN );
+		$self->[0]{count}	= 0;
 	} else {
-		warn "could not execute plan in distinct";
+		warn "could not execute plan in LIMIT";
 	}
 	$self;
 }
@@ -57,16 +58,14 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open DISTINCT";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open LIMIT";
 	}
+	return undef if ($self->[0]{count} >= $self->[2]);
 	my $plan	= $self->[1];
-	while (1) {
-		my $row	= $plan->next;
-		return undef unless ($row);
-		if (not $self->[0]{seen}{ $row->as_string }++) {
-			return $row;
-		}
-	}
+	my $row		= $plan->next;
+	return undef unless ($row);
+	$self->[0]{count}++;
+	return $row;
 }
 
 =item C<< close >>
@@ -76,16 +75,16 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open DISTINCT";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open LIMIT";
 	}
-	delete $self->[0]{seen};
+	delete $self->[0]{count};
 	$self->[1]->close();
 	$self->SUPER::close();
 }
 
 =item C<< pattern >>
 
-Returns the query plan that will be used to produce the data to be made distinct.
+Returns the query plan that will be used to produce the data to be filtered.
 
 =cut
 
@@ -101,7 +100,8 @@ Returns true if the pattern is guaranteed to return distinct results.
 =cut
 
 sub distinct {
-	return 1;
+	my $self	= shift;
+	return $self->pattern->distinct;
 }
 
 =item C<< ordered >>

@@ -145,6 +145,13 @@ sub qualify_uris {
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
 			push(@args, $arg->qualify_uris( $ns, $base ));
+		} elsif (blessed($arg) and $arg->isa('RDF::Query::Node::Resource')) {
+			my $uri	= $arg->uri_value;
+			if (ref($uri)) {
+				$uri	= join('', $ns->{ $uri->[0] }, $uri->[1]);
+				$arg	= RDF::Query::Node::Resource->new( $uri );
+			}
+			push(@args, $arg);
 		} else {
 			push(@args, $arg);
 		}
@@ -173,6 +180,16 @@ sub bind_variables {
 		}
 	}
 	return $class->new( @args );
+}
+
+=item C<< is_solution_modifier >>
+
+Returns true if this node is a solution modifier.
+
+=cut
+
+sub is_solution_modifier {
+	return 0;
 }
 
 =item C<< subpatterns_of_type ( $type [, $block] ) >>

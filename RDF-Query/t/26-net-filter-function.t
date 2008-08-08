@@ -52,7 +52,7 @@ END
 			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql', net_filters => 1 );
 			my $stream	= $query->execute( $model );
 			my $count	= 0;
-			while (my $row = $stream->()) {
+			while (my $row = $stream->next) {
 				my ($image, $point, $pname, $lat, $lon)	= @{ $row };
 				my $url		= $bridge->uri_value( $image );
 				my $name	= $bridge->literal_value( $pname );

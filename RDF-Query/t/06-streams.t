@@ -52,7 +52,7 @@ END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count;
-		while (my $row = $stream->()) {
+		while (my $row = $stream->next) {
 			my ($node)	= $row->{name};
 			my $name	= $query->bridge->as_string( $node );
 			ok( $name, $name );

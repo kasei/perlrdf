@@ -54,6 +54,7 @@ sub execute ($) {
 	} else {
 		warn "could not execute plan in distinct";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -118,6 +119,30 @@ Returns the query plan that will be used to produce the data to be sorted.
 sub pattern {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	my $self	= shift;
+	return $self->pattern->distinct;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	my $self	= shift;
+	my $sort	= $self->[2];
+	
+	return [ map { [ $_->[0], ($_->[1] ? 'DESC' : 'ASC') ] } @$sort ];
 }
 
 1;

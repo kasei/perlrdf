@@ -47,16 +47,13 @@ sub new {
 	my @dup_vars;
 	foreach my $idx (0 .. 3) {
 		my $node	= $quad[ $idx ];
-		if (blessed($node) and ($node->isa('RDF::Trine::Node::Variable') or $node->isa('RDF::Trine::Node::Blank'))) {
-			my $name	= ($node->isa('RDF::Trine::Node::Blank')) ? '__' . $node->blank_identifier : $node->name;
+		if (blessed($node) and $node->isa('RDF::Trine::Node::Variable')) {
+			my $name	= $node->name;
 			$var_to_position{ $name }	= $methodmap[ $idx ];
 			$counts{ $name }++;
 			if ($counts{ $name } >= 2) {
 				push(@dup_vars, $name);
 			}
-			push(@{ $self->[5]{bridge_quad} }, RDF::Trine::Node::Variable->new( $name ));
-		} else {
-			push(@{ $self->[5]{bridge_quad} }, $node);
 		}
 	}
 	
@@ -94,7 +91,16 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "QUAD plan can't be executed while already open";
 	}
-	my @quad	= @{ $self->[5]{bridge_quad} };
+	my @quad	= @{ $self }[ 1..4 ];
+	my $bound	= $context->bound;
+	if (%$bound) {
+		foreach my $i (0 .. $#quad) {
+			next unless ($quad[$i]->isa('RDF::Trine::Node::Variable'));
+			next unless (blessed($bound->{ $quad[$i]->name }));
+			$quad[ $i ]	= $bound->{ $quad[$i]->name };
+		}
+	}
+	
 	my $bridge	= $context->model;
 	my $iter	= $bridge->get_named_statements( @quad, $context->query, $context->bound );
 	
@@ -104,6 +110,7 @@ sub execute ($) {
 	} else {
 		warn "no iterator in execute()";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -154,6 +161,27 @@ sub close {
 	delete $self->[5]{iter};
 	$self->SUPER::close();
 }
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	return 0;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	return [];
+}
+
 
 1;
 

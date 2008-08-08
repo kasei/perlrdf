@@ -419,7 +419,7 @@ sub get_expected_results {
 		my $p_variable	= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable');
 		my $t_rs		= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet');
 		my $rss			= smap { $bridge->subject($_) } $bridge->get_statements( undef, $p_type, $t_rs );
-		my $rs			= $rss->();
+		my $rs			= $rss->next;
 		
 		if (my $bool = get_first_as_string( $bridge, $rs, $p_boolean )) {
 			return $bool;
@@ -453,7 +453,7 @@ sub model_to_arrayref {
 	my $stream	= $bridge->get_statements();
 	{
 		my %bnode_map;
-		while(my $statement = $stream->()) {
+		while(my $statement = $stream->next) {
 			my $s			= $bridge->subject( $statement );
 			my $p			= $bridge->predicate( $statement );
 			my $o			= $bridge->object( $statement );
@@ -705,7 +705,7 @@ sub get_first_obj {
 	foreach my $pred (@preds) {
 		my $stream	= $bridge->get_statements( $node, $pred, undef );
 		my $targets	= smap { $bridge->object( $_ ) } $stream;
-		while (my $node = $targets->()) {
+		while (my $node = $targets->next) {
 			return $node if ($node);
 		}
 	}

@@ -25,15 +25,16 @@ use URI::Escape;
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( $endpoint, $sparql ) >>
+=item C<< new ( $endpoint, $plan, $sparql ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $url		= shift;
+	my $plan	= shift;
 	my $sparql	= shift;
-	my $self	= $class->SUPER::new( $url, $sparql );
+	my $self	= $class->SUPER::new( $url, $plan, $sparql );
 	if (@_) {
 		# extra args (like the bound/free stuff for logging
 		my %args	= @_;
@@ -53,30 +54,51 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "SERVICE plan can't be executed while already open";
 	}
 	my $endpoint	= $self->[1];
-	my $sparql		= $self->[2];
+	my $sparql		= $self->[3];
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query	= $context->query;
 	
-	my $pid = open my $fh, "-|";
-	die unless defined $pid;
-	unless ($pid) {
-		$RDF::Trine::Store::DBI::IGNORE_CLEANUP	= 1;
-		$self->_get_and_parse_url( $context, $url, $fh, $pid );
-		exit 0;
-	}
+# 	my $serial	= 0;
+# 	my ($fh, $write);
+# 	if ($serial) {
+# 		pipe($fh, $write);
+# 		my $stdout	= select();
+# 		select($write);
+# 		$self->_get_and_parse_url( $context, $url, $write, $$ );
+# 		warn '*********';
+# 		select($stdout);
+# 		warn '*********';
+# 	} else {
+# 		my $pid = open $fh, "-|";
+# 		die unless defined $pid;
+# 		unless ($pid) {
+# 			$RDF::Trine::Store::DBI::IGNORE_CLEANUP	= 1;
+# 			$self->_get_and_parse_url( $context, $url, $fh, $pid );
+# 			exit 0;
+# 		}
+# 	}
+# 		warn '*********';
+# 	
+# 	my $count	= 0;
+# 	my $open	= 1;
+# 	warn '<<<<';
+# 	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
+# 	warn '>>>>';
+# 	if (ref($args)) {
 	
-	my $count	= 0;
-	my $open	= 1;
-	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
-	if (ref($args)) {
-		$self->[0]{args}	= $args;
-		$self->[0]{fh}		= $fh;
+	my $iter	= $self->_get_iterator( $context, $url );
+	if ($iter) {
+# 		$self->[0]{args}	= $args;
+# 		$self->[0]{fh}		= $fh;
+# 		$self->[0]{'write'}	= $write;
+		$self->[0]{iter}	= $iter;
 		$self->[0]{'open'}	= 1;
 		$self->[0]{'count'}	= 0;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -89,18 +111,23 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SERVICE";
 	}
 	return undef unless ($self->[0]{'open'});
-	my $fh	= $self->[0]{fh};
-	my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
-	if (not($result) or ref($result) ne 'HASH') {
-		if (my $log = $self->[0]{logger}) {
-			$log->push_key_value( 'cardinality-service', $self->[2], $self->[0]{'count'} );
-			if (my $bf = $self->[0]{ 'log-service-pattern' }) {
-				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[0]{'count'} );
-			}
-		}
-		$self->[0]{'open'}	= 0;
-		return undef;
-	}
+# 	my $fh	= $self->[0]{fh};
+# 	warn 'calling fd_retrieve';
+# 	my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
+# 	warn 'got result: ' . Dumper($result);
+# 	if (not($result) or ref($result) ne 'HASH') {
+# 		if (my $log = $self->[0]{logger}) {
+# 			$log->push_key_value( 'cardinality-service', $self->[3], $self->[0]{'count'} );
+# 			if (my $bf = $self->[0]{ 'log-service-pattern' }) {
+# 				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[0]{'count'} );
+# 			}
+# 		}
+# 		$self->[0]{'open'}	= 0;
+# 		return undef;
+# 	}
+	my $iter	= $self->[0]{iter};
+	my $result	= $iter->next;
+	return undef unless $result;
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
 	return $row;
@@ -116,10 +143,37 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
 	delete $self->[0]{args};
-	delete $self->[0]{fh};
-	delete $self->[0]{'open'};
+	my $fh	= delete $self->[0]{fh};
+# 	1 while (<$fh>);
+# 	delete $self->[0]{'write'};
+# 	delete $self->[0]{'open'};
 	delete $self->[0]{count};
 	$self->SUPER::close();
+}
+
+sub _get_iterator {
+	my $self	= shift;
+	my $context	= shift;
+	my $url		= shift;
+	my $query	= $context->query;
+	
+	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	
+	
+	my $ua			= ($query)
+					? $query->useragent
+					: do {
+						my $u = LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+						$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+						$u;
+					};
+
+	my $response	= $ua->get( $url );
+	if ($response->is_success) {
+		$p->parse_string( $response->content );
+		return $handler->iterator;
+	}
 }
 
 sub _get_and_parse_url {
@@ -158,11 +212,11 @@ sub _get_and_parse_url {
 				delete $args[2]{Handler};
 			}
 			$has_head	= 1;
-			store_fd \@args, \*STDOUT or die "PID $pid can't store!\n";
+			store_fd \@args, $fh or die "PID $pid can't store!\n";
 		}
 		
 		while (my $data = $handler->pull_result) {
-			store_fd $data, \*STDOUT or die "PID $pid can't store!\n";
+			store_fd $data, $fh or die "PID $pid can't store!\n";
 		}
 	};
 	my $ua			= ($query)
@@ -174,18 +228,55 @@ sub _get_and_parse_url {
 					};
 
 	$ua->get( $url, ':content_cb' => $callback );
-	store_fd \undef, \*STDOUT;
+	store_fd \undef, $fh or die "can't store end-of-stream";
+}
+
+=item C<< sparql >>
+
+Returns the SPARQL query (as a string) that will be sent to the remote endpoint.
+
+=cut
+
+sub sparql {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< pattern >>
 
-Returns the query plan that will be sent to the remote service.
+Returns the query plan that will be used in the remote service call.
 
 =cut
 
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	my $self	= shift;
+	# XXX this could be set at construction time, if we want to trust the remote
+	# XXX endpoint to return DISTINCT results (when appropriate).
+	return 0;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	my $self	= shift;
+	# XXX this could be set at construction time, if we want to trust the remote
+	# XXX endpoint to return ORDERED results (when appropriate).
+	return 0;
 }
 
 

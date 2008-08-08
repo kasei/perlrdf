@@ -143,6 +143,8 @@ sub as_string {
 		return qq[($id)];
 	} elsif (blessed($node) and $node->isa('RDF::Query::Algebra::Triple')) {
 		return $node->as_sparql;
+	} elsif (blessed($node) and $node->isa('RDF::Query::Algebra::Quad')) {
+		return $node->as_string;
 	} else {
 		return;
 	}

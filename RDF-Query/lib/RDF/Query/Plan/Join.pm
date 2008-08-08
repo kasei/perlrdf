@@ -90,6 +90,26 @@ sub join_classes {
 	return keys %JOIN_CLASSES;
 }
 
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	return 0;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	return 0;
+}
+
 1;
 
 __END__

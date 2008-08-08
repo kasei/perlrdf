@@ -262,7 +262,6 @@ sub execute {
 	
 	my $parsed	= $self->{parsed};
 	
-	my $stream;
 	$self->{model}		= $model;
 	
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
@@ -275,8 +274,36 @@ sub execute {
 	}
 	
 	$self->load_data();
+	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	
+	my $context	= RDF::Query::ExecutionContext->new(
+					bound	=> \%bound,
+					model	=> $bridge,
+					query	=> $self,
+					base	=> $parsed->{base},
+					ns		=> $parsed->{namespaces},
+				);
 	my ($pattern, $cpattern)	= $self->fixup();
+	
+	my $algebra					= $self->pattern;
+	my %constant_plan;
+	if (my $b = $self->{parsed}{bindings}) {
+		my $vars	= $b->{vars};
+		my $values	= $b->{terms};
+		my @names	= map { $_->name } @{ $vars };
+		my @constants;
+		while (my $values = shift(@{ $b->{terms} })) {
+			my %bound;
+			@bound{ @names }	= @{ $values };
+			my $bound			= RDF::Query::VariableBindings->new( \%bound );
+			push(@constants, $bound);
+		}
+		my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
+		%constant_plan		= ( constants => [ $constant_plan ] );
+	}
+	
+	my @pvarnames	= map { $_->name } grep { not($_->isa('RDF::Query::Node::Resource')) } @{ $parsed->{'variables'} };
+	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@pvarnames, %constant_plan );
 	
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
@@ -287,7 +314,6 @@ sub execute {
 		exit;
 	}
 	
-	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	my @vars	= $self->variables( $parsed );
 	
 	my @funcs	= $pattern->referenced_functions;
@@ -300,22 +326,9 @@ sub execute {
 	$l->debug("executing the graph pattern");
 	
 	my $options	= $parsed->{options} || {};
-	if (my $b = $self->{parsed}{bindings}) {
-		my $vars	= $b->{vars};
-		my @names	= map { $_->name } @{ $vars };
-		while (my $values = shift(@{ $b->{terms} })) {
-			my %local_bound	= %bound;
-			@local_bound{ @names }	= @{ $values };
-			my $s	= $pattern->execute( $self, $bridge, \%local_bound, undef, %$options );
-			if ($stream) {
-				$stream	= $stream->concat( $s );
-			} else {
-				$stream	= $s;
-			}
-		}
-	} else {
-		$stream		= $pattern->execute( $self, $bridge, \%bound, undef, %$options );
-	}
+
+	$plan->execute( $context );
+	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
 	
 	$l->debug("performing projection");
 	my $expr	= 0;
@@ -323,17 +336,16 @@ sub execute {
 		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
 	}
 	
-	my @pvarnames	= map { $_->name } grep { not($_->isa('RDF::Query::Node::Resource')) } @{ $parsed->{'variables'} };
-	my $projected	= smap( sub {
-						my $row = $_;
-						my $new	= {};
-						foreach my $v (@{ $parsed->{'variables'} }) {
-							next if ($v->isa('RDF::Query::Node::Resource'));
-							$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
-						}
-						$new
-					}, $stream, undef, \@pvarnames);
-	$stream			= $projected;
+# 	my $projected	= smap( sub {
+# 						my $row = $_;
+# 						my $new	= RDF::Query::VariableBindings->new({});
+# 						foreach my $v (@{ $parsed->{'variables'} }) {
+# 							next if ($v->isa('RDF::Query::Node::Resource'));
+# 							$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
+# 						}
+# 						$new
+# 					}, $stream, undef, \@pvarnames);
+# 	$stream			= $projected;
 
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -812,7 +824,7 @@ sub load_data {
 	my $sources	= $parsed->{'sources'};
 	if (ref($sources) and reftype($sources) eq 'ARRAY') {
 		my $need_new_bridge	= 1;
-		my $named_query	= 0;
+		my $named_query		= 0;
 		
 		# put non-named sources first, because they will cause a new bridge to be
 		# constructed. subsequent named data will then be loaded into the correct

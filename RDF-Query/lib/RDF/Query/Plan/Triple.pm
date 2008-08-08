@@ -90,6 +90,15 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
 	}
 	my @triple	= @{ $self }[ 1,2,3 ];
+	my $bound	= $context->bound;
+	if (%$bound) {
+		foreach my $i (0 .. $#triple) {
+			next unless ($triple[$i]->isa('RDF::Trine::Node::Variable'));
+			next unless (blessed($bound->{ $triple[$i]->name }));
+			$triple[ $i ]	= $bound->{ $triple[$i]->name };
+		}
+	}
+	
 	my $bridge	= $context->model;
 	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
 	
@@ -99,6 +108,7 @@ sub execute ($) {
 	} else {
 		warn "no iterator in execute()";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -173,6 +183,27 @@ sub bf {
 	}
 	return $bf;
 }
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	return 0;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	return [];
+}
+
 
 1;
 

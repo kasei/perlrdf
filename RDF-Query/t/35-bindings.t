@@ -67,7 +67,7 @@ END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		while (my $d = $stream->next) {
-			warn Dumper($d);
+			$count++;
 		}
 		is( $count, 0, 'expected result count' );
 	}

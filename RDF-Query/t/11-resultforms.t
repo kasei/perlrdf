@@ -35,7 +35,7 @@ END
 			my $bridge	= $query->bridge;
 			isa_ok( $stream, 'RDF::Trine::Iterator' );
 			my ($count, $last);
-			while (my $row = $stream->()) {
+			while (my $row = $stream->next) {
 				my ($p, $node)	= @{ $row }{qw(p name)};
 				my $name	= $bridge->literal_value( $node );
 				$seen{ $name }++;

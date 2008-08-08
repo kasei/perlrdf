@@ -11,8 +11,7 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.costmodel          = TRACE, Screen
-# 	log4perl.category.rdf.query.algebra.service          = TRACE, Screen
+# 	log4perl.category.rdf.query.parser          = TRACE, Screen
 # 	
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
@@ -294,7 +293,12 @@ foreach my $data (@models) {
 	
 	SKIP: {
 		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
-		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
+
+		my $var	= RDF::Trine::Node::Variable->new('p');
+		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
+		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -305,7 +309,28 @@ foreach my $data (@models) {
 				}
 				$count++;
 			}
-			cmp_ok( $count, '>', 1, "positive result count for SERVICE (pass $pass)" );
+			cmp_ok( $count, '>', 1, "positive result count for SERVICE plan (pass $pass)" );
+			$plan->close;
+		}
+	}
+
+	SKIP: {
+		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
+		my $parser	= RDF::Query::Parser::SPARQLP->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person ; foaf:homepage ?page } }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		
+		foreach my $pass (1..2) {
+			my $count	= 0;
+			$plan->execute( $context );
+			while (my $row = $plan->next) {
+				if ($count == 0) {
+					isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+				}
+				$count++;
+			}
+			cmp_ok( $count, '>', 1, "positive result count for generated SERVICE plan (pass $pass)" );
 			$plan->close;
 		}
 	}

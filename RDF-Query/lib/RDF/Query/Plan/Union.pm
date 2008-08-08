@@ -55,6 +55,7 @@ sub execute ($) {
 	} else {
 		warn "no iterator in execute()";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -96,6 +97,26 @@ sub close {
 	$self->[0]{iter}->close();
 	delete $self->[0]{iter};
 	$self->SUPER::close();
+}
+
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
+
+=cut
+
+sub distinct {
+	return 0;
+}
+
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	return [];
 }
 
 1;
