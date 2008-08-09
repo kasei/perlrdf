@@ -25,7 +25,13 @@ sub new {
 	my $class	= shift;
 	my $plan	= shift;
 	my $keys	= shift;
-	my $self	= $class->SUPER::new( $plan, $keys );
+	my (@vars, @exprs);
+	foreach my $k (@$keys) {
+		push(@exprs, $k) if ($k->isa('RDF::Query::Expression'));
+		push(@vars, $k->name) if ($k->isa('RDF::Query::Node::Variable'));
+		push(@vars, $k) if (not(ref($k)));
+	}
+	my $self	= $class->SUPER::new( $plan, \@vars, \@exprs );
 	return $self;
 }
 
@@ -41,8 +47,9 @@ sub execute ($) {
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
-
+	
 	if ($plan->state == $self->OPEN) {
+		$self->[0]{context}	= $context;
 		$self->state( $self->OPEN );
 	} else {
 		warn "could not execute plan in PROJECT";
@@ -64,7 +71,23 @@ sub next {
 	return undef unless ($row);
 	
 	my $keys	= $self->[2];
-	return $row->project( @{ $keys } );
+	my $exprs	= $self->[3];
+	my $query	= $self->[0]{context}->query;
+	my $bridge	= $self->[0]{context}->model;
+	
+	my $proj	= $row->project( @{ $keys } );
+	foreach my $e (@$exprs) {
+		my $name;
+		if ($e->isa('RDF::Query::Expression::Alias')) {
+			$name	= $e->name;
+			$e		= $e->expression;
+		} else {
+			$name	= $e->sse;
+		}
+		$proj->{ $name }	= $query->var_or_expr_value( $bridge, $row, $e );
+	}
+	
+	return $proj;
 }
 
 =item C<< close >>
@@ -76,6 +99,7 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open PROJECT";
 	}
+	delete $self->[0]{context};
 	$self->[1]->close();
 	$self->SUPER::close();
 }

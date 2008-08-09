@@ -72,10 +72,10 @@ sub new {
 		}
 	}
 	
-	$self->[5]{mappings}	= \%var_to_position;
+	$self->[0]{mappings}	= \%var_to_position;
 	
 	if (%positions) {
-		$self->[5]{dups}	= \%positions;
+		$self->[0]{dups}	= \%positions;
 	}
 	
 	return $self;
@@ -105,7 +105,8 @@ sub execute ($) {
 	my $iter	= $bridge->get_named_statements( @quad, $context->query, $context->bound );
 	
 	if (blessed($iter)) {
-		$self->[5]{iter}	= $iter;
+		$self->[0]{iter}	= $iter;
+		$self->[0]{bound}	= $bound;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -122,9 +123,9 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open QUAD";
 	}
-	my $iter	= $self->[5]{iter};
+	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
-		if (my $data = $self->[5]{dups}) {
+		if (my $data = $self->[0]{dups}) {
 			foreach my $pos (values %$data) {
 				my @pos	= @$pos;
 				my $first_method	= shift(@pos);
@@ -138,11 +139,13 @@ sub next {
 		}
 		
 		my $binding	= {};
-		foreach my $key (keys %{ $self->[5]{mappings} }) {
-			my $method	= $self->[5]{mappings}{ $key };
+		foreach my $key (keys %{ $self->[0]{mappings} }) {
+			my $method	= $self->[0]{mappings}{ $key };
 			$binding->{ $key }	= $row->$method();
 		}
+		my $pre_bound	= $self->[0]{bound};
 		my $bindings	= RDF::Query::VariableBindings->new( $binding );
+		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		return $bindings;
 	}
 	return;
@@ -157,8 +160,8 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open QUAD";
 	}
-	delete $self->[5]{iter};
-	delete $self->[5]{iter};
+	delete $self->[0]{iter};
+	delete $self->[0]{bound};
 	$self->SUPER::close();
 }
 

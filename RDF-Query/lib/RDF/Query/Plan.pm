@@ -17,11 +17,14 @@ use strict;
 use warnings;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
+use RDF::Query::Error qw(:try);
 
+use RDF::Query::Plan::BasicGraphPattern;
 use RDF::Query::Plan::Constant;
 use RDF::Query::Plan::Distinct;
 use RDF::Query::Plan::Filter;
 use RDF::Query::Plan::Join::NestedLoop;
+use RDF::Query::Plan::Join::PushDownNestedLoop;
 use RDF::Query::Plan::Limit;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
@@ -30,6 +33,9 @@ use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
 use RDF::Query::Plan::Triple;
 use RDF::Query::Plan::Union;
+
+use RDF::Trine::Statement;
+use RDF::Trine::Statement::Quad;
 
 use constant READY		=> 0x01;
 use constant OPEN		=> 0x02;
@@ -101,7 +107,7 @@ sub state {
 
 sub DESTROY {
 	my $self	= shift;
-	if ($self->state != CLOSED) {
+	if ($self->state == OPEN) {
 		$self->close;
 	}
 }
@@ -119,6 +125,7 @@ sub generate_plans {
 	my $class	= ref($self) || $self;
 	my $algebra	= shift;
 	my $context	= shift;
+	my $model	= $context->model;
 	my %args	= @_;
 	unless (blessed($algebra) and $algebra->isa('RDF::Query::Algebra')) {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
@@ -128,6 +135,10 @@ sub generate_plans {
 	unless ($algebra->is_solution_modifier) {
 		# we're below all the solution modifiers, so now's the time to add any constant data
 		$constant	= delete $args{ constants };
+	}
+	
+	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
+		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away
 		$project	= delete $args{ project };
 	}
 	
@@ -144,8 +155,29 @@ sub generate_plans {
 		my @plans	= map { RDF::Query::Plan::Filter->new( $_, $expr ) } @base;
 		@return_plans	= @plans;
 	} elsif ($type eq 'BasicGraphPattern' or $type eq 'GroupGraphPattern') {
+		my $query	= $context->query;
+		my $csg		= (blessed($query) and scalar(@{ $query->get_computed_statement_generators })) ? 1 : 0;
 		my $method	= ($type eq 'BasicGraphPattern') ? 'triples' : 'patterns';
 		my @triples	= $algebra->$method();
+# 		if ($type eq 'BasicGraphPattern' and $model->supports('basic_graph_pattern') and not($csg) and scalar(@triples) > 1) {
+# 			my @plan_triples;
+# 			foreach my $t (@triples) {
+# 				my @nodes	= $t->nodes;
+# 				foreach my $i (0 .. $#nodes) {
+# 					if ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
+# 						$nodes[$i]	= _make_blank_distinguished_variable( $nodes[$i] );
+# 					}
+# 				}
+# 				if (scalar(@nodes) == 4) {
+# 					push(@plan_triples, RDF::Trine::Statement::Quad->new( @nodes ));
+# 				} else {
+# 					push(@plan_triples, RDF::Trine::Statement->new( @nodes ));
+# 				}
+# 			}
+# 			my $plan		= RDF::Query::Plan::BasicGraphPattern->new( @triples );
+# 			@return_plans	= ($plan);
+# 		}
+		
 		if (scalar(@triples) == 0) {
 			my $v		= RDF::Query::VariableBindings->new( {} );
 			my $plan	= RDF::Query::Plan::Constant->new( $v );
@@ -165,8 +197,12 @@ sub generate_plans {
 						my $a	= $base_a->[ $i ];
 						my $b	= $base_b->[ $j ];
 						foreach my $join_type (@join_types) {
-							my $plan	= $join_type->new( $a, $b );
-							push( @plans, $plan );
+							try {
+								my $plan	= $join_type->new( $a, $b );
+								push( @plans, $plan );
+							} catch RDF::Query::Error::MethodInvocationError with {
+#								warn "caught MethodInvocationError.";
+							};
 						}
 					}
 				}
@@ -198,8 +234,12 @@ sub generate_plans {
 				my $a	= $base_a->[ $i ];
 				my $b	= $base_b->[ $j ];
 				foreach my $join_type (@join_types) {
-					my $plan	= $join_type->new( $a, $b, 1 );
-					push( @plans, $plan );
+					try {
+						my $plan	= $join_type->new( $a, $b, 1 );
+						push( @plans, $plan );
+					} catch RDF::Query::Error::MethodInvocationError with {
+#						warn "caught MethodInvocationError.";
+					};
 				}
 			}
 		}
@@ -232,9 +272,7 @@ sub generate_plans {
 		my @nodes	= $algebra->nodes;
 		foreach my $i (0 .. $#nodes) {
 			if ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
-				my $id		= $nodes[$i]->blank_identifier;
-				my $name	= '__ndv_' . $id;
-				$nodes[$i]	= RDF::Trine::Node::Variable->new( $name );
+				$nodes[$i]	= _make_blank_distinguished_variable( $nodes[$i] );
 			}
 		}
 		my $pclass	= (scalar(@nodes) == 4) ? 'RDF::Query::Plan::Quad' : 'RDF::Query::Plan::Triple';
@@ -255,8 +293,12 @@ sub generate_plans {
 			my @join_types	= RDF::Query::Plan::Join->join_classes;
 			foreach my $p (@plans) {
 				foreach my $join_type (@join_types) {
-					my $plan	= $join_type->new( $p, $c );
-					push( @return_plans, $plan );
+					try {
+						my $plan	= $join_type->new( $p, $c );
+						push( @return_plans, $plan );
+					} catch RDF::Query::Error::MethodInvocationError with {
+#						warn "caught MethodInvocationError.";
+					};
 				}
 			}
 		}
@@ -269,6 +311,13 @@ sub generate_plans {
 	return @return_plans;
 }
 
+sub _make_blank_distinguished_variable {
+	my $blank	= shift;
+	my $id		= $blank->blank_identifier;
+	my $name	= '__ndv_' . $id;
+	my $var		= RDF::Trine::Node::Variable->new( $name );
+	return $var;
+}
 
 1;
 

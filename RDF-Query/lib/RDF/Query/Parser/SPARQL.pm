@@ -510,17 +510,17 @@ sub _SelectQuery {
 	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
-	if ($self->{build}{options}{distinct}) {
-		delete $self->{build}{options}{distinct};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $sort	= RDF::Query::Algebra::Distinct->new( $pattern );
-		push(@{ $self->{build}{triples} }, $sort);
-	}
-	
 	if ($self->{build}{options}{orderby}) {
 		my $order	= delete $self->{build}{options}{orderby};
 		my $pattern	= pop(@{ $self->{build}{triples} });
 		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+	
+	if ($self->{build}{options}{distinct}) {
+		delete $self->{build}{options}{distinct};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Distinct->new( $pattern );
 		push(@{ $self->{build}{triples} }, $sort);
 	}
 	

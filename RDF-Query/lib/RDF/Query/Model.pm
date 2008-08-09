@@ -402,6 +402,20 @@ sub get_statements {
 	return $iter;
 }
 
+=item C<< get_basic_graph_pattern ( $execution_context, @triples ) >>
+
+Returns a stream object of all variable bindings matching the specified RDF::Trine::Statement objects.
+
+=cut
+
+sub get_basic_graph_pattern {
+	my $self	= shift;
+	my $context	= shift;
+	my @triples	= @_;
+	my $iter	= $self->_get_basic_graph_pattern( @triples );
+	return $iter;
+}
+
 =item C<< get_computed_statements ( $subject, $predicate, $object, $query, \%bound ) >>
 
 Returns a stream object of all computed statements matching the specified subject,

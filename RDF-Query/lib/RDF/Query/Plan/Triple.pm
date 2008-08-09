@@ -104,6 +104,7 @@ sub execute ($) {
 	
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
+		$self->[0]{bound}	= $bound;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -138,7 +139,9 @@ sub next {
 			my $method	= $self->[0]{mappings}{ $key };
 			$binding->{ $key }	= $row->$method();
 		}
+		my $pre_bound	= $self->[0]{bound};
 		my $bindings	= RDF::Query::VariableBindings->new( $binding );
+		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		return $bindings;
 	}
 	return;
@@ -151,6 +154,7 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
+		Carp::cluck;
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
 	delete $self->[0]{iter};

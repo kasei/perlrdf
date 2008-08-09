@@ -19,8 +19,6 @@ BEGIN { require "models.pl"; }
 # ] );
 ################################################################################
 
-my $model_tests		= 107;
-my $nomodel_tests	= 0;
 my $file	= 'data/foaf.xrdf';
 my %named	= map { $_ => URI::file->new_abs( File::Spec->rel2abs("data/named_graphs/$_") ) } qw(alice.rdf bob.rdf meta.rdf repeats1.rdf repeats2.rdf);
 my @models	= test_models_and_classes($file);
@@ -33,7 +31,7 @@ if ($@) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
 } else {
-	plan tests => scalar(@models) * $model_tests + $nomodel_tests;
+	plan qw(no_plan); #tests => scalar(@models) * $model_tests + $nomodel_tests;
 }
 
 use RDF::Query;
@@ -71,9 +69,13 @@ foreach my $data (@models) {
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $bgp, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-		isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-		isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+# 		if ($bridge->supports('basic_graph_pattern')) {
+# 			isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'triple algebra to plan' );
+# 		} else {
+			isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
+			isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+			isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+# 		}
 	}
 	
 	{
@@ -99,7 +101,11 @@ foreach my $data (@models) {
 		my $algebra	= $parsed->{triples}[0];
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
-		isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
+# 		if ($bridge->supports('basic_graph_pattern')) {
+# 			isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
+# 		} else {
+			isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
+# 		}
 	}
 	
 	############################################################################
@@ -259,7 +265,7 @@ foreach my $data (@models) {
 		my $var	= RDF::Trine::Node::Variable->new('p');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
-		my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b, 1 );
+		my $plan	= RDF::Query::Plan::Join::PushDownNestedLoop->new( $plan_a, $plan_b, 1 );
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -458,7 +464,7 @@ foreach my $data (@models) {
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($algebra)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:firstName ?name . FILTER(?name = "Gregory") }', undef, $ns);
-		my ($join)	= RDF::Query::Plan->generate_plans( $algebra );
+		my ($join)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		my $plan	= RDF::Query::Plan::Project->new( $join, [qw(name)] );
 		
 		$plan->execute( $context );

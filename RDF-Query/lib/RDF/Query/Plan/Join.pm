@@ -20,6 +20,10 @@ use base qw(RDF::Query::Plan);
 use Scalar::Util qw(blessed);
 use RDF::Query::ExecutionContext;
 
+=item C<< new ( $lhs, $rhs, $optional ) >>
+
+=cut
+
 =item C<< lhs >>
 
 Returns the left-hand-side plan to the join.

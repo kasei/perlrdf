@@ -362,6 +362,28 @@ sub _get_named_statements {
 	return $stream;
 }
 
+=item C<< _get_basic_graph_pattern ( @triples ) >>
+
+Returns a stream object of all variable bindings matching the specified RDF::Trine::Statement objects.
+
+=cut
+
+sub _get_basic_graph_pattern {
+	my $self	= shift;
+	my @triples	= @_;
+	my $model	= ($triples[0]->isa('RDF::Trine::Statement::Quad'))
+				? $self->_named_graphs_model
+				: $self->model;
+	my $pattern	= RDF::Trine::Pattern->new( @triples );
+	my $stream	= smap {
+					foreach my $k (keys %$_) {
+						$_->{ $k }	= _cast_to_local($_->{ $k })
+					}
+					$_
+				} $model->get_pattern( $pattern );
+	return $stream;
+}
+
 =item C<< add_statement ( $statement ) >>
 
 Adds the specified C<$statement> to the underlying model.
@@ -403,6 +425,7 @@ Possible features include:
 sub supports {
 	my $self	= shift;
 	my $feature	= shift;
+	return 1 if ($feature eq 'basic_graph_pattern');
 	return 1 if ($feature eq 'temp_model');
 	return 1 if ($feature eq 'named_graph');
 	return 1 if ($feature eq 'named_graphs');

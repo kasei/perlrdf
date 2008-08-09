@@ -27,6 +27,18 @@ sub new {
 	return $self;
 }
 
+=item C<< copy ( %new_args ) >>
+
+=cut
+
+sub copy {
+	my $self	= shift;
+	my %args	= @_;
+	my $class	= ref($self);
+	my %data	= %{ $self };
+	return $class->new( %data, %args );
+}
+
 =item C<< model >>
 
 =cut

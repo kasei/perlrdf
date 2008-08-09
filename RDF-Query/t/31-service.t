@@ -93,7 +93,8 @@ END
 	like( $d->{name}->literal_value, qr'Greg(ory Todd)? Williams', 'expected person name' );
 }
 
-{
+TODO: {
+	local($TODO)	= 'bnode joining based on bloom filter identities needs to be fixed in the plan generation code';
 	print "# join using default graph (local rdf) and remote SERVICE (kasei.us), joining on bnode\n";
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );

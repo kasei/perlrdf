@@ -13,7 +13,7 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 19;
+my $tests	= 20;
 if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
@@ -207,11 +207,14 @@ END
 END
 	$query->add_computed_statement_generator( $sd->computed_statement_generator );
 	my $iter	= $query->execute;
+	my $count	= 0;
 	while (my $row = $iter->next) {
 		isa_ok( $row, 'HASH' );
 		my $name	= $row->{name};
 		is( $name->literal_value, "Alan Turing", 'execution: expected foaf:name in federation description' );
+		$count++;
 	}
+	cmp_ok( $count, '>', 0, 'got results from dbpedia' );
 }
 
 {

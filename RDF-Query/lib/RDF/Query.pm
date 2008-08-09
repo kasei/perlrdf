@@ -302,8 +302,8 @@ sub execute {
 		%constant_plan		= ( constants => [ $constant_plan ] );
 	}
 	
-	my @pvarnames	= map { $_->name } grep { not($_->isa('RDF::Query::Node::Resource')) } @{ $parsed->{'variables'} };
-	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@pvarnames, %constant_plan );
+	my @project		= @{ $parsed->{'variables'} };
+	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@project, %constant_plan );
 	
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
