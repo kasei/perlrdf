@@ -249,6 +249,10 @@ sub parse {
 			my $fixed	= $pattern->qualify_uris( $ns );
 			$parsed->{triples}[0]	= $fixed;
 		}
+		$pattern	= RDF::Query::Algebra::Project->new( $parsed->{triples}[0], $parsed->{variables} );
+		$parsed->{triples}[0]	= $pattern;
+		
+		
 		return $parsed;
 	} else {
 		return $self->fail( "Failed to parse: '$query'" );

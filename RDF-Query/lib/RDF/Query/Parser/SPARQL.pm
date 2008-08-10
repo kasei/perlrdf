@@ -517,6 +517,14 @@ sub _SelectQuery {
 		push(@{ $self->{build}{triples} }, $sort);
 	}
 	
+	
+	unless ($star) {
+		my $vars	= $self->{build}{variables};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
+	
 	if ($self->{build}{options}{distinct}) {
 		delete $self->{build}{options}{distinct};
 		my $pattern	= pop(@{ $self->{build}{triples} });

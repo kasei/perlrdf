@@ -49,6 +49,7 @@ use RDF::Query::Algebra::Limit;
 use RDF::Query::Algebra::Offset;
 use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
+use RDF::Query::Algebra::Project;
 
 =item C<< referenced_blanks >>
 

@@ -131,11 +131,12 @@ sub generate_plans {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
 	}
 	
-	my ($constant, $project);
-	unless ($algebra->is_solution_modifier) {
-		# we're below all the solution modifiers, so now's the time to add any constant data
-		$constant	= delete $args{ constants };
-	}
+	my ($project);
+	my $constant	= $args{ constants };
+# 	unless ($algebra->isa('RDF::Query::Algebra::Project') or not ($algebra->is_solution_modifier)) {
+# 		# we're below all the solution modifiers, so now's the time to add any constant data
+# 		$constant	= delete $args{ constants };
+# 	}
 	
 	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
 		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away
@@ -244,6 +245,25 @@ sub generate_plans {
 			}
 		}
 		@return_plans	= @plans;
+	} elsif ($type eq 'Project') {
+		my $pattern	= $algebra->pattern;
+		my $vars	= $algebra->vars;
+		my @base	= $self->generate_plans( $pattern, $context, %args );
+		
+		if ($constant) {
+			warn "doing CONSTANT join before PROJECT";
+			# if there's constant data to be joined, we better do it now in case
+			# the project gets rid of variables needed for the join
+			my @plans	= splice( @base );
+			@base		= $self->_add_constant_join( $constant, @plans );
+			$constant	= undef;
+		}
+		
+		my @plans;
+		foreach my $plan (@base) {
+			push(@plans, RDF::Query::Plan::Project->new( $plan, $vars ));
+		}
+		@return_plans	= @plans;
 	} elsif ($type eq 'Service') {
 		my $pattern	= $algebra->pattern;
 		my @base	= $self->generate_plans( $pattern, $context, %args );
@@ -287,27 +307,32 @@ sub generate_plans {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
 	}
 	
-	if ($constant) {
-		foreach my $c (@$constant) {
-			my @plans		= splice(@return_plans);
-			my @join_types	= RDF::Query::Plan::Join->join_classes;
-			foreach my $p (@plans) {
-				foreach my $join_type (@join_types) {
-					try {
-						my $plan	= $join_type->new( $p, $c );
-						push( @return_plans, $plan );
-					} catch RDF::Query::Error::MethodInvocationError with {
-#						warn "caught MethodInvocationError.";
-					};
-				}
+	if ($constant and scalar(@$constant)) {
+		my @plans		= splice( @return_plans );
+		@return_plans	= $self->_add_constant_join( $constant, @plans );
+	}
+	
+	return @return_plans;
+}
+
+sub _add_constant_join {
+	my $self		= shift;
+	my $constant	= shift;
+	my @return_plans	= @_;
+	my @join_types	= RDF::Query::Plan::Join->join_classes;
+	while (my $const = shift(@$constant)) {
+		my @plans	= splice(@return_plans);
+		foreach my $p (@plans) {
+			foreach my $join_type (@join_types) {
+				try {
+					my $plan	= $join_type->new( $p, $const );
+					push( @return_plans, $plan );
+				} catch RDF::Query::Error::MethodInvocationError with {
+	#						warn "caught MethodInvocationError.";
+				};
 			}
 		}
 	}
-	
-	if ($project) {
-		@return_plans	= map { RDF::Query::Plan::Project->new( $_, $project ) } @return_plans;
-	}
-	
 	return @return_plans;
 }
 

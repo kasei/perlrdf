@@ -406,9 +406,8 @@ sub query_plan {
 		%constant_plan		= ( constants => [ $constant_plan ] );
 	}
 	
-	my @project		= @{ $parsed->{'variables'} };
 	my $algebra		= $self->pattern;
-	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@project, %constant_plan );
+	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
 	return $plan;
 }
 
