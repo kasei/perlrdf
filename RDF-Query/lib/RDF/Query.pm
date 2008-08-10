@@ -285,26 +285,7 @@ sub execute {
 				);
 	my ($pattern, $cpattern)	= $self->fixup();
 	
-	my $algebra					= $self->pattern;
-	my %constant_plan;
-	if (my $b = $self->{parsed}{bindings}) {
-		my $vars	= $b->{vars};
-		my $values	= $b->{terms};
-		my @names	= map { $_->name } @{ $vars };
-		my @constants;
-		while (my $values = shift(@{ $b->{terms} })) {
-			my %bound;
-			@bound{ @names }	= @{ $values };
-			my $bound			= RDF::Query::VariableBindings->new( \%bound );
-			push(@constants, $bound);
-		}
-		my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
-		%constant_plan		= ( constants => [ $constant_plan ] );
-	}
-	
-	my @project		= @{ $parsed->{'variables'} };
-	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@project, %constant_plan );
-	
+	my $plan		= $self->query_plan( $context );
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
@@ -392,6 +373,43 @@ sub execute_with_named_graphs {
 	}
 	
 	return $self->execute( $model );
+}
+
+=begin private
+
+=item C<< query_plan ( $execution_context ) >>
+
+Returns a RDF::Query::Plan object that is (hopefully) the optimal QEP for the
+current query.
+
+=end private
+
+=cut
+
+sub query_plan {
+	my $self	= shift;
+	my $context	= shift;
+	my $parsed	= $self->{parsed};
+	my %constant_plan;
+	if (my $b = $self->{parsed}{bindings}) {
+		my $vars	= $b->{vars};
+		my $values	= $b->{terms};
+		my @names	= map { $_->name } @{ $vars };
+		my @constants;
+		while (my $values = shift(@{ $b->{terms} })) {
+			my %bound;
+			@bound{ @names }	= @{ $values };
+			my $bound			= RDF::Query::VariableBindings->new( \%bound );
+			push(@constants, $bound);
+		}
+		my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
+		%constant_plan		= ( constants => [ $constant_plan ] );
+	}
+	
+	my @project		= @{ $parsed->{'variables'} };
+	my $algebra		= $self->pattern;
+	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, project => \@project, %constant_plan );
+	return $plan;
 }
 
 =begin private
