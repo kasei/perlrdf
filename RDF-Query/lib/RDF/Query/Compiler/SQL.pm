@@ -497,6 +497,9 @@ sub patterns2sql {
 			$self->{options}{orderby}	= [ $triple->orderby ];
 			my $pattern	= $triple->pattern;
 			$self->patterns2sql( [ $pattern ], $level, %args );
+		} elsif ($triple->isa('RDF::Query::Algebra::Project')) {
+			my $pattern	= $triple->pattern;
+			$self->patterns2sql( [ $pattern ], $level, %args );
 		} else {
 			throw RDF::Query::Error::CompilationError( -text => "Unknown pattern type '$triple' in SQL compilation." );
 		}
