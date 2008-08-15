@@ -25,7 +25,16 @@ use URI::Escape;
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( $endpoint, $plan, $sparql ) >>
+=item C<< new ( $endpoint, $plan, $sparql, [ \%logging_keys ] ) >>
+
+Returns a new SERVICE (remote endpoint call) query plan object. C<<$endpoint>>
+is the URL of the endpoint (as a string). C<<$plan>> is the query plan
+representing the query to be sent to the remote endpoint (needed for cost
+estimates). C<<$sparql>> is the serialized SPARQL query to be sent to the remote
+endpoint. Finally, if present, C<<%logging_keys>> is a HASH containing the keys
+to use in logging the execution of this plan. Valid HASH keys are:
+
+ * bf - The bound/free string representing C<<$plan>>
 
 =cut
 
@@ -34,12 +43,14 @@ sub new {
 	my $url		= shift;
 	my $plan	= shift;
 	my $sparql	= shift;
+	my $keys	= shift || {};
 	my $self	= $class->SUPER::new( $url, $plan, $sparql );
-	if (@_) {
-		# extra args (like the bound/free stuff for logging
-		my %args	= @_;
-		@{ $self->[0] }{ keys %args }	= values %args;
-	}
+	$self->[0]{logging_keys}	= $keys;
+# 	if (@_) {
+# 		# extra args (like the bound/free stuff for logging
+# 		my %args	= @_;
+# 		@{ $self->[0] }{ keys %args }	= values %args;
+# 	}
 	return $self;
 }
 
@@ -53,8 +64,8 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SERVICE plan can't be executed while already open";
 	}
-	my $endpoint	= $self->[1];
-	my $sparql		= $self->[3];
+	my $endpoint	= $self->endpoint;
+	my $sparql		= $self->sparql;
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query	= $context->query;
 	
@@ -94,6 +105,10 @@ sub execute ($) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{'open'}	= 1;
 		$self->[0]{'count'}	= 0;
+		$self->[0]{logger}	= $context->logger;
+		if (my $log = $self->[0]{logger}) {
+			$log->push_value( service_endpoints => $endpoint );
+		}
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -143,11 +158,20 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
 	delete $self->[0]{args};
+	if (my $log = delete $self->[0]{logger}) {
+		my $endpoint	= $self->endpoint;
+		my $sparql		= $self->sparql;
+		my $count		= $self->[0]{count};
+		$log->push_key_value( 'cardinality-service-' . $endpoint, $sparql, $count );
+		if (my $bf = $self->logging_keys->{ 'bf' }) {
+			$log->push_key_value( 'cardinality-bf-service-' . $endpoint, $bf, $count );
+		}
+	}
+	delete $self->[0]{count};
 	my $fh	= delete $self->[0]{fh};
 # 	1 while (<$fh>);
 # 	delete $self->[0]{'write'};
 # 	delete $self->[0]{'open'};
-	delete $self->[0]{count};
 	$self->SUPER::close();
 }
 
@@ -176,59 +200,68 @@ sub _get_iterator {
 	}
 }
 
-sub _get_and_parse_url {
+# sub _get_and_parse_url {
+# 	my $self	= shift;
+# 	my $context	= shift;
+# 	my $url		= shift;
+# 	my $fh		= shift;
+# 	my $pid		= shift;
+# 	my $query	= $context->query;
+# 
+# 	eval "
+# 		require XML::SAX::Expat;
+# 		require XML::SAX::Expat::Incremental;
+# 	";
+# 	if ($@) {
+# 		die $@;
+# 	}
+# 	local($XML::SAX::ParserPackage)	= 'XML::SAX::Expat::Incremental';
+# 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+# 	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
+# 	$p->parse_start;
+# 	
+# 	my $has_head	= 0;
+# 	my $callback	= sub {
+# 		my $content	= shift;
+# 		my $resp	= shift;
+# 		my $proto	= shift;
+# 		unless ($resp->is_success) {
+# 			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
+# 		}
+# 		$p->parse_more( $content );
+# 		
+# 		if (not($has_head) and $handler->has_head) {
+# 			my @args	= $handler->iterator_args;
+# 			if (exists( $args[2]{Handler} )) {
+# 				delete $args[2]{Handler};
+# 			}
+# 			$has_head	= 1;
+# 			store_fd \@args, $fh or die "PID $pid can't store!\n";
+# 		}
+# 		
+# 		while (my $data = $handler->pull_result) {
+# 			store_fd $data, $fh or die "PID $pid can't store!\n";
+# 		}
+# 	};
+# 	my $ua			= ($query)
+# 					? $query->useragent
+# 					: do {
+# 						my $u = LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+# 						$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+# 						$u;
+# 					};
+# 
+# 	$ua->get( $url, ':content_cb' => $callback );
+# 	store_fd \undef, $fh or die "can't store end-of-stream";
+# }
+
+=item C<< endpoint >>
+
+=cut
+
+sub endpoint {
 	my $self	= shift;
-	my $context	= shift;
-	my $url		= shift;
-	my $fh		= shift;
-	my $pid		= shift;
-	my $query	= $context->query;
-
-	eval "
-		require XML::SAX::Expat;
-		require XML::SAX::Expat::Incremental;
-	";
-	if ($@) {
-		die $@;
-	}
-	local($XML::SAX::ParserPackage)	= 'XML::SAX::Expat::Incremental';
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
-	$p->parse_start;
-	
-	my $has_head	= 0;
-	my $callback	= sub {
-		my $content	= shift;
-		my $resp	= shift;
-		my $proto	= shift;
-		unless ($resp->is_success) {
-			throw RDF::Query::Error -text => "SERVICE query couldn't get remote content: " . $resp->status_line;
-		}
-		$p->parse_more( $content );
-		
-		if (not($has_head) and $handler->has_head) {
-			my @args	= $handler->iterator_args;
-			if (exists( $args[2]{Handler} )) {
-				delete $args[2]{Handler};
-			}
-			$has_head	= 1;
-			store_fd \@args, $fh or die "PID $pid can't store!\n";
-		}
-		
-		while (my $data = $handler->pull_result) {
-			store_fd $data, $fh or die "PID $pid can't store!\n";
-		}
-	};
-	my $ua			= ($query)
-					? $query->useragent
-					: do {
-						my $u = LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
-						$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
-						$u;
-					};
-
-	$ua->get( $url, ':content_cb' => $callback );
-	store_fd \undef, $fh or die "can't store end-of-stream";
+	return $self->[1];
 }
 
 =item C<< sparql >>

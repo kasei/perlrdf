@@ -18,7 +18,8 @@ if ($@) {
 	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
 	return;
 } else {
-	plan tests => $tests;
+	plan qw(no_plan);	# XXX remove this when bnode joining is fixed (the TODO test below).
+#	plan tests => $tests;
 }
 
 use RDF::Query;

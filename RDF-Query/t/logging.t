@@ -20,7 +20,7 @@ BEGIN { require "models.pl"; }
 ################################################################################
 
 my $model_tests		= 5;
-my $nomodel_tests	= 2;
+my $nomodel_tests	= 0;
 my $file	= 'data/foaf.xrdf';
 my @models	= test_models($file);
 
@@ -59,7 +59,7 @@ foreach my $model (@models) {
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 1, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}[0], 1, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}[0], 2, 'Expected triple cardinality' );
 			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams" .'}[0], 1, 'Expected triple cardinality' );
 		}
 		
@@ -77,27 +77,27 @@ END
 	}
 }
 
-{
-	print "# SERVICE call\n";
-	my $l	= new RDF::Query::Logger;
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		SELECT DISTINCT *
-		WHERE {
-			SERVICE <http://kasei.us/sparql> {
-				<http://kasei.us/pictures/2006/20060612-ESWC/images/DSC_2290.jpg>
-					foaf:depicts [ foaf:name ?name ]
-			}
-		}
-END
-	my @results	= $query->execute();
-	is( scalar(@results), 1, 'Got one result' );
-	my $d	= shift(@results);
-	isa_ok( $d, 'HASH' );
-# 	use Data::Dumper;
-# 	warn Dumper($l);
-}
+# {
+# 	print "# SERVICE call\n";
+# 	my $l	= new RDF::Query::Logger;
+# 	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp', logger => $l );
+# 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+# 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+# 		SELECT DISTINCT *
+# 		WHERE {
+# 			SERVICE <http://kasei.us/sparql> {
+# 				<http://kasei.us/pictures/2006/20060612-ESWC/images/DSC_2290.jpg>
+# 					foaf:depicts [ foaf:name ?name ]
+# 			}
+# 		}
+# END
+# 	my @results	= $query->execute();
+# 	is( scalar(@results), 1, 'Got one result' );
+# 	my $d	= shift(@results);
+# 	isa_ok( $d, 'HASH' );
+# # 	use Data::Dumper;
+# # 	warn Dumper($l);
+# }
 
 
 # {

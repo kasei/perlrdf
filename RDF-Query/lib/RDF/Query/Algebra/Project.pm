@@ -71,6 +71,9 @@ Returns the pattern to be sorted.
 
 sub pattern {
 	my $self	= shift;
+	if (@_) {
+		$self->[0]	= shift;
+	}
 	return $self->[0];
 }
 
@@ -95,9 +98,13 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	
-	my $vars	= join(' ', map { ($_->isa('RDF::Query::Node::Variable')) ? '?' . $_->name : $_->sse( $context ) } @{ $self->vars });
+	my $vars	= join(' ',
+					map {
+						($_->isa('RDF::Query::Node::Variable')) ? '?' . $_->name : $_->sse( $context )
+					} @{ $self->vars }
+				);
 	return sprintf(
-		'(project %s %s)',
+		'(project %s (%s))',
 		$self->pattern->sse( $context ),
 		$vars
 	);

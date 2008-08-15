@@ -96,9 +96,7 @@ Returns the filter pattern.
 sub pattern {
 	my $self	= shift;
 	if (@_) {
-		my $pattern	= shift;
-		Carp::confess unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern'));
-		$self->[2]	= $pattern;
+		$self->[2]	= shift;
 	}
 	return $self->[2];
 }

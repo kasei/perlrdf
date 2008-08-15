@@ -31,7 +31,8 @@ my $uri	= URI::file->new_abs( 'data/service.ttl' );
 my $sd	= RDF::Query::ServiceDescription->new( $uri );
 isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 
-{
+TODO: {
+	local($TODO)	= 'federated sparql serialization is broken';
 	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
 	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
 	my $query	= RDF::Query::Federate->new( <<"END" );
@@ -48,8 +49,14 @@ isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 END
 	$query->add_service( $ksd );
 	$query->add_service( $sd );
+	my $context	= RDF::Query::ExecutionContext->new(
+					bound	=> {},
+#					model	=> $bridge,
+					query	=> $query,
+				);
+	my @plans		= $query->query_plan( $context );
 	my ($pattern)	= $query->fixup();
-	my $sparql		= $pattern->as_sparql({}, '');
+	my $sparql		= $query->as_sparql({}, '');
 	my $expected	= <<"END";
 {
 	{

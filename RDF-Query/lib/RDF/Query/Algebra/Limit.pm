@@ -71,6 +71,9 @@ Returns the pattern to be sorted.
 
 sub pattern {
 	my $self	= shift;
+	if (@_) {
+		$self->[0]	= shift;
+	}
 	return $self->[0];
 }
 

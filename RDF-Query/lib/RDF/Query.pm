@@ -282,15 +282,19 @@ sub execute {
 					query	=> $self,
 					base	=> $parsed->{base},
 					ns		=> $parsed->{namespaces},
+					logger	=> $self->logger,
 				);
-	my ($pattern, $cpattern)	= $self->fixup();
+	my $pattern	= $self->pattern;
+	my $cpattern	= $self->fixup();
 	
 	my $plan		= $self->query_plan( $context );
+	unless ($plan) {
+		throw RDF::Query::Error::CompilationError -text => "Query didn't produce a valid execution plan";
+	}
+	
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
-		$l->trace("-----------------------------");
-		$l->trace($pattern->as_sparql({}, ''));
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		exit;
 	}
@@ -317,17 +321,6 @@ sub execute {
 		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
 	}
 	
-# 	my $projected	= smap( sub {
-# 						my $row = $_;
-# 						my $new	= RDF::Query::VariableBindings->new({});
-# 						foreach my $v (@{ $parsed->{'variables'} }) {
-# 							next if ($v->isa('RDF::Query::Node::Resource'));
-# 							$new->{ $v->name }	= $self->var_or_expr_value( $bridge, $row, $v );
-# 						}
-# 						$new
-# 					}, $stream, undef, \@pvarnames);
-# 	$stream			= $projected;
-
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
 	} elsif ($parsed->{'method'} eq 'CONSTRUCT') {
@@ -407,8 +400,8 @@ sub query_plan {
 	}
 	
 	my $algebra		= $self->pattern;
-	my ($plan)		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
-	return $plan;
+	my @plans		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
+	return (wantarray) ? @plans : $plans[0];
 }
 
 =begin private
@@ -565,8 +558,31 @@ sub aggregate {
 	my $groupby	= shift;
 	my %aggs	= @_;
 	my $pattern	= $self->pattern;
-	my $agg		= RDF::Query::Algebra::Aggregate->new( $pattern, $groupby, %aggs );
-	$self->{parsed}{triples}	= [ $agg ];
+	my $p		= $pattern;
+	if ($p->isa('RDF::Query::Algebra::Project')) {
+		$pattern	= $p	= $p->pattern;
+	}
+	if ($p->is_solution_modifier) {
+		while ($p->pattern->is_solution_modifier) {
+			if ($p->pattern->isa('RDF::Query::Algebra::Project')) {
+				$p->pattern( $p->pattern->pattern );
+			}
+			$p	= $p->pattern;
+		}
+	}
+	
+	my $head	= ($p->is_solution_modifier) ? 1 : 0;
+	my $child	= ($head) ? $p->pattern : $p;
+	my $agg		= RDF::Query::Algebra::Aggregate->new( $child, $groupby, %aggs );
+	
+	my $top;
+	if ($head) {
+		$p->pattern( $agg );
+		$top	= $pattern;
+	} else {
+		$top	= $agg;
+	}
+	$self->{parsed}{triples}	= [ $top ];
 	$self->{parsed}{'variables'}	= [ map { ref($_) ? $_ : RDF::Query::Node::Variable->new( $_ ) } (@$groupby, keys %aggs) ];
 }
 
@@ -586,6 +602,7 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Limit')
 									or $triples[0]->isa('RDF::Query::Algebra::Offset')
 									or $triples[0]->isa('RDF::Query::Algebra::Distinct')
+									or $triples[0]->isa('RDF::Query::Algebra::Project')
 								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
@@ -886,32 +903,8 @@ sub fixup {
 	my $parsed		= $self->parsed;
 	my $base		= $parsed->{base};
 	my $namespaces	= $parsed->{namespaces};
-	my $l		= Log::Log4perl->get_logger("rdf.query");
+	my $l			= Log::Log4perl->get_logger("rdf.query");
 	
-	my %preds;
-	local($self->{ service_predicates })	= \%preds;
-	if (@{ $self->{services} || [] }) {
-		foreach my $sd (@{ $self->{services} }) {
-			my $caps	= $sd->capabilities;
-			foreach my $c (@$caps) {
-				push( @{ $preds{ $c->{pred}->uri_value } }, $sd );
-			}
-		}
-		
-		if ($l->is_debug) {
-			foreach my $k (keys %preds) {
-				my $services	= join(', ', map { $_->label } @{ $preds{$k} });
-				$l->debug(scalar(@{ $preds{$k} }) . " services\t$k\t($services)");
-			}
-		}
-	} else {
-		delete $self->{ service_predicates };
-	}
-
-	my $native		= $pattern->fixup( $self, $bridge, $base, $namespaces );
-	
-	
-	## CONSTRUCT HAS IMPLICIT VARIABLES
 	if ($parsed->{'method'} eq 'CONSTRUCT') {
 		# project on all the referenced variables in the where pattern so that
 		# they'll be available for the construct pattern:
@@ -921,9 +914,9 @@ sub fixup {
 		# fixup the construct pattern
 		my $cnative	= $self->construct_pattern->fixup( $self, $bridge, $base, $namespaces );
 		
-		return ($native, $cnative);
+		return $cnative;
 	} else {
-		return ($native, undef);
+		return;
 	}
 }
 
@@ -1431,19 +1424,6 @@ sub run_hook {
 	foreach my $hook (@$hooks) {
 		$hook->( $self, @args );
 	}
-}
-
-=item C<< add_service ( $service_description ) >>
-
-Adds the service described by C<< $service_description >> to the query's list
-of data sources.
-
-=cut
-
-sub add_service {
-	my $self	= shift;
-	my $service	= shift;
-	push(@{ $self->{ services } }, $service);
 }
 
 =begin private

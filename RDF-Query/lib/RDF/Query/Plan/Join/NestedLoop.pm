@@ -16,8 +16,10 @@ package RDF::Query::Plan::Join::NestedLoop;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan::Join);
+
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
-use Data::Dumper;
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use RDF::Query::Error qw(:try);
 
@@ -28,7 +30,7 @@ BEGIN {
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( $lhs, $rhs ) >>
+=item C<< new ( $lhs, $rhs, $opt, [ \%logging_keys ] ) >>
 
 =cut
 
@@ -37,10 +39,12 @@ sub new {
 	my $lhs		= shift;
 	my $rhs		= shift;
 	my $opt		= shift;
+	my $keys	= shift;
 	if ($opt) {
 		throw RDF::Query::Error::MethodInvocationError -text => "NestedLoop join does not support optional joins (use PushDownNestedLoop instead)";
 	}
 	my $self	= $class->SUPER::new( $lhs, $rhs );
+	$self->[0]{logging_keys}	= $keys;
 	return $self;
 }
 
@@ -55,6 +59,7 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "NestedLoop join plan can't be executed while already open";
 	}
 	
+	$self->[0]{start_time}	= [gettimeofday];
 	my @inner;
 	$self->rhs->execute( $context );
 	while (my $row = $self->rhs->next) {
@@ -68,6 +73,8 @@ sub execute ($) {
 		$self->[0]{inner_index}		= 0;
 		$self->[0]{needs_new_outer}	= 1;
 		$self->[0]{inner_count}		= 0;
+		$self->[0]{count}			= 0;
+		$self->[0]{logger}			= $context->logger;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -95,7 +102,6 @@ sub next {
 				$self->[0]{needs_new_outer}	= 0;
 				$self->[0]{inner_index}		= 0;
 				$self->[0]{inner_count}		= 0;
-				use Data::Dumper;
 	#			warn "got new outer row: " . Dumper($self->[0]{outer_row});
 			} else {
 				# we've exhausted the outer iterator. we're now done.
@@ -110,6 +116,7 @@ sub next {
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
+				$self->[0]{count}++;
 				return $joined;
 			} else {
 #				warn "-> didn't join\n";
@@ -128,6 +135,25 @@ sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open NestedLoop join";
+	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.nestedloop");
+	my $t0		= delete $self->[0]{start_time};
+	my $count	= delete $self->[0]{count};
+	if (my $log = delete $self->[0]{logger}) {
+		$l->debug("logging nestedloop join execution statistics");
+		my $elapsed = tv_interval ( $t0 );
+		if (my $sparql = $self->logging_keys->{sparql}) {
+			$l->debug("- SPARQL: $sparql");
+			$log->push_key_value( 'execute_time-nestedloop', $sparql, $elapsed );
+			$log->push_key_value( 'cardinality-nestedloop', $sparql, $count );
+			$l->debug("- elapsed: $elapsed");
+			$l->debug("- count: $count");
+		}
+		if (my $bf = $self->logging_keys->{bf}) {
+			$l->debug("- bf: $bf");
+			$log->push_key_value( 'cardinality-bf-nestedloop', $bf, $count );
+		}
 	}
 	delete $self->[0]{inner};
 	delete $self->[0]{outer};

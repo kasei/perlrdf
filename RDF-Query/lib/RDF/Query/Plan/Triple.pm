@@ -17,7 +17,9 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
+use Time::HiRes qw(gettimeofday tv_interval);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
@@ -28,8 +30,10 @@ use RDF::Query::VariableBindings;
 
 sub new {
 	my $class	= shift;
-	my @triple	= @_;
+	my @triple	= splice(@_, 0, 3);
+	my $keys	= shift || {};
 	my $self	= $class->SUPER::new( @triple );
+	$self->[0]{logging_keys}	= $keys;
 	
 	### the next two loops look for repeated variables because some backends
 	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
@@ -89,6 +93,8 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
 	}
+	
+	$self->[0]{start_time}	= [gettimeofday];
 	my @triple	= @{ $self }[ 1,2,3 ];
 	my $bound	= $context->bound;
 	if (%$bound) {
@@ -105,6 +111,8 @@ sub execute ($) {
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;
+		$self->[0]{logger}	= $context->logger;
+		$self->[0]{count}	= 0;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -142,6 +150,7 @@ sub next {
 		my $pre_bound	= $self->[0]{bound};
 		my $bindings	= RDF::Query::VariableBindings->new( $binding );
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
+		$self->[0]{count}++;
 		return $bindings;
 	}
 	return;
@@ -157,7 +166,25 @@ sub close {
 		Carp::cluck;
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
-	delete $self->[0]{iter};
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
+	my $t0		= delete $self->[0]{start_time};
+	my $count	= delete $self->[0]{count};
+	if (my $log = delete $self->[0]{logger}) {
+		$l->debug("logging triple execution statistics");
+		my $elapsed = tv_interval ( $t0 );
+		if (my $sparql = $self->logging_keys->{sparql}) {
+			$l->debug("- SPARQL: $sparql");
+			$log->push_key_value( 'execute_time-triple', $sparql, $elapsed );
+			$log->push_key_value( 'cardinality-triple', $sparql, $count );
+			$l->debug("- elapsed: $elapsed");
+			$l->debug("- count: $count");
+		}
+		if (my $bf = $self->logging_keys->{bf}) {
+			$l->debug("- bf: $bf");
+			$log->push_key_value( 'cardinality-bf-triple', $bf, $count );
+		}
+	}
 	delete $self->[0]{iter};
 	$self->SUPER::close();
 }

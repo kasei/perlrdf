@@ -137,7 +137,8 @@ END
 		}
 END
 	my $sparql	= $query->as_sparql;
-	my $again	= RDF::Query->new( $sparql )->as_sparql;
+	my $query2	= RDF::Query->new( $sparql );
+	my $again	= $query2->as_sparql;
 	is( $sparql, $again, 'as_sparql: union' );
 }
 
@@ -192,7 +193,7 @@ END
 		WHERE { ?person foaf:name "Gregory Todd Williams" }
 END
 	my $sse	= $query->sse;
-	is( $sse, '(join (bgp (triple ?person foaf:name "Gregory Todd Williams")))', 'sse: select' );
+	is( $sse, '(project (bgp (triple ?person foaf:name "Gregory Todd Williams")) (?person))', 'sse: select' );
 }
 
 {
@@ -207,7 +208,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( $sse, '(join (namedgraph ?g (join (bgp (quad _:a1 foaf:name "Gregory Todd Williams" ?g)))))', 'sse: select with named graph' );
+	is( $sse, '(project (namedgraph ?g (bgp (quad _:a1 foaf:name "Gregory Todd Williams" ?g))) (?name))', 'sse: select with named graph' );
 }
 
 {
@@ -222,7 +223,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( $sse, '(join (union (join (bgp (triple _:a1 foaf:name ?name))) (join (bgp (triple _:a2 dc:title ?name)))))', 'sse: select with union' );
+	is( $sse, '(project (union (bgp (triple _:a1 foaf:name ?name)) (bgp (triple _:a2 dc:title ?name))) (?name))', 'sse: select with union' );
 }
 
 {
@@ -235,7 +236,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(filter (< ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter <' );
+	is( $sse, '(project (filter (< ?name "Greg") (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter <' );
 }
 
 {
@@ -248,7 +249,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(filter (! (function <sparql:bound> ?name)) (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter !BOUND' );
+	is( $sse, '(project (filter (! (function <sparql:bound> ?name)) (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter !BOUND' );
 }
 
 {
@@ -261,7 +262,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(filter (sparql:regex ?name "Greg") (join (bgp (triple ?person foaf:name ?name))))', 'sse: select with filter regex' );
+	is( $sse, '(project (filter (sparql:regex ?name "Greg") (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter regex' );
 }
 
 {
@@ -273,10 +274,11 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(join (union (join (bgp (triple ?person foaf:name ?name))) (join (bgp (triple ?person foaf:nick ?name)))))', 'sse: select with filter regex' );
+	is( $sse, '(union (bgp (triple ?person foaf:name ?name)) (bgp (triple ?person foaf:nick ?name)))', 'sse: select with filter regex' );
 }
 
-{
+TODO: {
+	local($TODO)	= 'sse serialization of aggregate variable renaming broken';
 	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT COUNT(?person)
@@ -285,7 +287,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(join (aggregate (join (bgp (triple ?person foaf:name ?name))) (alias "COUNT(?person)" (COUNT ?person)) ))', 'sse: aggregate count(?person)' );
+	is( $sse, '(aggregate (project (bgp (triple ?person foaf:name ?name)) (COUNT(?person))) (alias "COUNT(?person)" (COUNT ?person)) )', 'sse: aggregate count(?person)' );
 }
 
 

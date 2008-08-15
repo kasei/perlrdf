@@ -84,6 +84,15 @@ sub ns {
 	return $self->{ns} || {};
 }
 
+=item C<< logger >>
+
+=cut
+
+sub logger {
+	my $self	= shift;
+	return $self->{logger};
+}
+
 1;
 
 __END__

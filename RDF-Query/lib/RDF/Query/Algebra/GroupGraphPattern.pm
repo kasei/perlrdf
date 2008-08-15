@@ -105,10 +105,15 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	
-	return sprintf(
-		'(join %s)',
-		join(' ', map { $_->sse( $context ) } $self->patterns)
-	);
+	my @patterns	= $self->patterns;
+	if (scalar(@patterns) == 1) {
+		return $patterns[0]->sse( $context );
+	} else {
+		return sprintf(
+			'(join %s)',
+			join(' ', map { $_->sse( $context ) } @patterns)
+		);
+	}
 }
 
 =item C<< as_sparql >>
@@ -127,7 +132,7 @@ sub as_sparql {
 		push(@patterns, $p->as_sparql( $context, "$indent\t" ));
 	}
 	my $patterns	= join("\n${indent}\t", @patterns);
-	my $string	= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
+	my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
 	return $string;
 }
 

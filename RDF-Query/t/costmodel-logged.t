@@ -17,11 +17,11 @@ use Data::Dumper;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.costmodel          = TRACE, Screen
-# 	
-# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-# 	log4perl.appender.Screen.stderr  = 0
-# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# 	log4perl.category.rdf.query.costmodel		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.join		= TRACE, Screen
+# 	log4perl.appender.Screen					= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr				= 0
+# 	log4perl.appender.Screen.layout				= Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
 
@@ -86,23 +86,23 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 	# COST OF TRIPLE
 	{
 		# <p> a foaf:Person
-		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Resource->new('p'), $rdf->type, $foaf->Person, );
+		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Resource->new('p'), $rdf->type, $foaf->Person, { bf => 'bbb' });
 		my $cost		= $costmodel->cost( $triple );
 		is( $cost, 1, 'Cost of all-bound triple' );
 	}
 	
 	{
 		# ?p a foaf:Person
-		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, );
+		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, { bf => '1bb' } );
 		my $cost		= $costmodel->cost( $triple );
 		is( $cost, 4, 'Cost of 2-bound triple' );
 	}
 	
 	{
 		# ?p a ?type
-		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, RDF::Trine::Node::Variable->new('type'), );
+		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, RDF::Trine::Node::Variable->new('type'), { bf => '1b2' } );
 		my $cost		= $costmodel->cost( $triple );
-		is( $cost, 0.5, 'Cost of 1-bound triple' );
+		is( $cost, 2, 'Cost of 1-bound triple' );
 	}
 }
 

@@ -30,6 +30,7 @@ use Log::Log4perl;
 use Scalar::Util qw(blessed);
 
 use RDF::Query;
+use RDF::Query::Federate::Plan;
 use RDF::Query::ServiceDescription;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
@@ -70,6 +71,30 @@ sub new {
 	my $lang	= shift || 'sparqlp';
 	return $class->SUPER::new( $query, $baseuri, $languri, $lang, @_ );
 }
+
+
+=item C<< add_service ( $service_description ) >>
+
+Adds the service described by C<< $service_description >> to the query's list
+of data sources.
+
+=cut
+
+sub add_service {
+	my $self	= shift;
+	my $service	= shift;
+	push(@{ $self->{ services } }, $service);
+}
+
+=item C<< services >>
+
+=cut
+
+sub services {
+	my $self	= shift;
+	return @{ $self->{ services } || [] };
+}
+
 
 
 =item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
