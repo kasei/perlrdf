@@ -94,6 +94,9 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
 	}
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
+	$l->trace( "executing RDF::Query::Plan::Triple" );
+	
 	$self->[0]{start_time}	= [gettimeofday];
 	my @triple	= @{ $self }[ 1,2,3 ];
 	my $bound	= $context->bound;
@@ -129,9 +132,13 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open TRIPLE";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
 	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
+		$l->trace( "- got triple from model: " . $row->as_string );
 		if (my $pos = $self->[0]{dups}) {
+			$l->trace( "- checking for duplicate variables in triple" );
 			my @pos	= @$pos;
 			my $first_method	= shift(@pos);
 			my $first			= $row->$first_method();

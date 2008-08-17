@@ -46,8 +46,8 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "BGP plan cann't be executed twice";
 	}
 	
-	use Data::Dumper;
-	warn Dumper($self);
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.basicgraphpattern");
+	$l->trace( "executing RDF::Query::Plan::BasicGraphPattern" );
 	
 	my @bound_triples;
 	my $bound	= $context->bound;

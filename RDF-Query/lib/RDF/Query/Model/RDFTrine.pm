@@ -231,16 +231,17 @@ sub add_uri {
 	my $named		= shift;
 	my $format		= shift || 'guess';
 	
-	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+	my $ua			= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
 	
-	my $resp	= $ua->get( $uri );
+	my $resp		= $ua->get( $uri );
 	unless ($resp->is_success) {
 		warn "No content available from $uri: " . $resp->status_line;
 		return;
 	}
-	my $content	= $resp->content;
-	$self->add_string( $content, $uri, $named, $format );
+	my $data		= $resp->content;
+	$data			= decode_utf8( $data );
+	$self->add_string( $data, $uri, $named, $format );
 }
 
 =item C<add_string ( $data, $base_uri, $named, $format )>

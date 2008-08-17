@@ -110,7 +110,8 @@ sub parse {
 	}
 	local($self->{baseURI})	= $uri;
 	local($self->{tokens})	= $input;
-	return $self->_turtleDoc();
+	$self->_turtleDoc();
+	return;
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model ) >>
@@ -182,7 +183,8 @@ sub _eat {
 		substr($self->{tokens}, 0, length($thing))	= '';
 		return;
 	} else {
-		$l->error("expected: $thing, got: $self->{tokens}");
+		
+		$l->logcluck("expected: $thing, got: $self->{tokens}");
 		throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
 	}
 }
@@ -560,7 +562,7 @@ sub _blank {
 	my $self	= shift;
 	### nodeID | '[]' | '[' ws* predicateObjectList ws* ']' | collection
 	if ($self->_nodeID_test) {
-		return $self->__bNode($self->_nodeID());
+		return $self->__bNode( $self->__anonimize_bnode_id( $self->_nodeID() ) );
 	} elsif ($self->_test('[]')) {
 		$self->_eat('[]');
 		return $self->__bNode( $self->__generate_bnode_id() );
@@ -677,9 +679,11 @@ sub _resource {
 	my $self	= shift;
 	### uriref | qname
 	if ($self->_uriref_test()) {
-		return $self->__URI($self->_join_uri($self->{baseURI}, $self->_uriref()));
+		return $self->__URI($self->_uriref(), $self->{baseURI});
 	} else {
-		return $self->__URI($self->_join_uri($self->{baseURI}, $self->_qname()));
+		my $qname	= $self->_qname();
+		my $base	= $self->{baseURI};
+		return $self->__URI($qname, $base);
 	}
 }
 
@@ -876,7 +880,8 @@ sub _parse_short {
 		s/\\r/\r/g;
 		s/\\n/\n/g;
 	}
-	return Unicode::Escape::escape( $s );
+	return '' unless length($s);
+	return Unicode::Escape::unescape( $s );
 }
 
 sub _parse_long {
@@ -888,7 +893,8 @@ sub _parse_long {
 		s/\\r/\r/g;
 		s/\\n/\n/g;
 	}
-	return Unicode::Escape::escape( $s );
+	return '' unless length($s);
+	return Unicode::Escape::unescape( $s );
 }
 
 sub _join_uri {
@@ -907,26 +913,25 @@ sub _typed {
 	my $type		= shift;
 	my $datatype	= $type->uri_value;
 	
-	if ($datatype eq "${xsd}integer") {
-		my $plus	= ($value =~ /^[+]/);
-		$value = int($value);
-		if ($plus) {
-			$value	= '+' . $value;
-		}
-	} elsif ($datatype eq "${xsd}double") {
-	  $value = $value;
-	} elsif ($datatype eq "${xsd}decimal") {
-		$value = $value;
-# 	  context = decimal.Context(17, decimal.ROUND_HALF_DOWN)
-# 	  try: $value = str($value.quantize($value, context=context))
-# 	  except decimal.InvalidOperation: 
-# 		 $value = str($value.normalize(context))
-		$value	=~ s/[.]0//;
+	if ($datatype eq "${xsd}decimal") {
+		$value	=~ s/[.]0+$//;
 		if ($value !~ /[.]/) {
 			$value = $value . '.0';
 		}
 	}
 	return RDF::Trine::Node::Literal->new($value, undef, $datatype)
+}
+
+sub __anonimize_bnode_id {
+	my $self	= shift;
+	my $id		= shift;
+	if (my $aid = $self->{ bnode_map }{ $id }) {
+		return $aid;
+	} else {
+		my $aid	= $self->__generate_bnode_id;
+		$self->{ bnode_map }{ $id }	= $aid;
+		return $aid;
+	}
 }
 
 sub __generate_bnode_id {
@@ -944,7 +949,9 @@ sub __consume_ws {
 
 sub __URI {
 	my $self	= shift;
-	return RDF::Trine::Node::Resource->new( @_ )
+	my $uri		= shift;
+	my $base	= shift;
+	return RDF::Trine::Node::Resource->new( $uri, $base )
 }
 
 sub __bNode {
@@ -972,7 +979,6 @@ sub __startswith {
 		return 0;
 	}
 }
-
 
 1;
 

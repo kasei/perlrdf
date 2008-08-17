@@ -18,6 +18,15 @@ use RDF::Trine::Iterator qw(smap);
 use RDF::Core;
 use RDF::Query::Model::RDFCore;
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.parser		= TRACE, Screen
+# 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr			= 0
+# 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 our $debug			= 0;
 our $debug_results	= 0;
 if ($] < 5.007003) {
@@ -43,7 +52,7 @@ plan qw(no_plan);
 require "t/dawg/earl.pl";
 	
 my $PATTERN		= shift(@ARGV) || '';
-my $BNODE_RE	= qr/^(r|genid)\d+[r0-9]*$/;
+my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 
 no warnings 'once';
 $RDF::Query::Model::RDFCore::USE_RAPPER	= 1;
@@ -56,7 +65,7 @@ warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
 my ($bridge, $model)	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
-
+print "# Using model object from " . ref($model) . "\n";
 
 {
 	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');

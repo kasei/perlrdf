@@ -43,6 +43,7 @@ Returns a new Resource structure.
 sub new {
 	my $class	= shift;
 	my $uri		= shift;
+	my $base	= shift;
 	
 	my @uni;
 	my $count	= 0;
@@ -53,14 +54,20 @@ sub new {
 		$count++;
 	}
 	
-	if (defined($_[0])) {
-		my $base	= shift;
+	if (defined($base)) {
+		my $buri	= ref($base) ? $base->uri_value : $base;
+		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+			my $text	= $1;
+			push(@uni, $text);
+			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
+			$count++;
+		}
 		### We have to work around the URI module not accepting IRIs. If there's
 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
 		### the URI into an absolute URI, and then replace the breadcrumbs with
 		### the Unicode.
 		
-		my $abs			= URI->new_abs( $uri, $base->uri_value );
+		my $abs			= URI->new_abs( $uri, $buri );
 		$uri			= $abs->as_string;
 	}
 

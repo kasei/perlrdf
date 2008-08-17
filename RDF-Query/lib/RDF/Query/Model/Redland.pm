@@ -124,15 +124,15 @@ sub add_uri {
 	my $model		= $self->{model};
 	my $parser		= RDF::Redland::Parser->new($format);
 	
-	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
+	my $ua			= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
 	
-	my $resp	= $ua->get( $uri );
+	my $resp		= $ua->get( $uri );
 	unless ($resp->is_success) {
 		warn "No content available from $uri: " . $resp->status_line;
 		return;
 	}
-	my $data	= $resp->content;
+	my $data		= $resp->content;
 	$data			= decode_utf8( $data );
 	$self->add_string( $data, $uri, $named, $format );
 }

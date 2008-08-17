@@ -75,6 +75,7 @@ sub _cmp {
 		return DateTime->compare( $datea, $dateb );
 	} elsif ($numericcmp) {
 		$l->trace('both numeric cmp');
+		return 0 if ($nodea->equal( $nodeb ));	# if the nodes are identical, return true (even if the lexical values don't appear to be numeric). i.e., "xyz"^^xsd:integer should equal itself, even though it's not a valid integer.
 		return $nodea->numeric_value <=> $nodeb->numeric_value;
 	} else {
 		$l->trace('other cmp');
