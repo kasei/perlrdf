@@ -29,18 +29,37 @@ use Scalar::Util qw(blessed);
 use LWP::UserAgent;
 use Data::Dumper;
 
-=item C<< new ( $url ) >>
-
-Creates a new service description object using the DARQ-style service description
-data located at C<< $url >>.
+=item C<< new ( $service_uri, %data ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $uri		= shift;
+	my %data	= @_;
+	my $data	= {
+					url			=> $uri,
+					label		=> "SPARQL Endpoint $uri",
+					definitive	=> 0,
+					%data,
+				};
+	my $self	= bless( $data, $class );
+	return $self;
+}
+
+=item C<< new_from_uri ( $url ) >>
+
+Creates a new service description object using the DARQ-style service description
+data located at C<< $url >>.
+
+=cut
+
+sub new_from_uri {
+	my $class	= shift;
+	my $uri		= shift;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
+	my ($label, $url, $triples, $definitive, @capabilities, @patterns);
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/$RDF::Query::VERSION" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	my $resp	= $ua->get( $uri );
@@ -72,11 +91,10 @@ sub new {
 		}
 		LIMIT 1
 END
-	my ($label, $url, $triples, $def)	= $infoquery->get( $model );
+	($label, $url, $triples, my $def)	= $infoquery->get( $model );
 	return undef unless (defined $label);
-	my $definitive	= (defined($def) ? ($def->literal_value eq 'true' ? 1 : 0) : 0);
+	$definitive	= (defined($def) ? ($def->literal_value eq 'true' ? 1 : 0) : 0);
 	
-	my @capabilities;
 	{
 		my $capquery	= RDF::Query->new( <<"END" );
 			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -112,7 +130,6 @@ END
 		}
 	}
 	
-	my @patterns;
 	{
 		my $var_id	= 1;
 		my @statements;
@@ -267,7 +284,11 @@ sub computed_statement_generator {
 		my $puri	= $p->uri_value;
 		
 		my $cap		= $preds{ $puri };
-		return unless ($cap);		# no capability matches this predicate.
+		if ($self->definitive) {
+			return unless ($cap);		# no capability matches this predicate.
+		} else {
+			$cap	||= {};
+		}
 		
 		my $ok		= 1;
 		my $sofilter	= $cap->{ sofilter };
@@ -297,12 +318,17 @@ sub computed_statement_generator {
 							RDF::Query::Node::Resource->new( $self->url ),
 							$ggp
 						);
-			my $compile	= $service->fixup( $query, $bridge, undef, {} );
+			my $context	= RDF::Query::ExecutionContext->new(
+							bound	=> {},
+#							model	=> $bridge,
+						);
+			my ($plan)	= RDF::Query::Plan->generate_plans( $service, $context );
+			$plan->execute( $context );
 			my $iter	= smap {
 							my $bound	= shift;
 							my $triple	= $st->bind_variables( $bound );
 							$triple;
-						} $compile->execute( $query, $bridge, $bound );
+						} RDF::Trine::Iterator::Bindings->new( sub { return $plan->next } );
 			return $iter;
 		} else {
 			return undef;

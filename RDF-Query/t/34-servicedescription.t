@@ -28,13 +28,13 @@ use_ok( 'RDF::Query::Federate' );
 use_ok( 'RDF::Query::ServiceDescription' );
 
 my $uri	= URI::file->new_abs( 'data/service.ttl' );
-my $sd	= RDF::Query::ServiceDescription->new( $uri );
+my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
 isa_ok( $sd, 'RDF::Query::ServiceDescription' );
 
 TODO: {
 	local($TODO)	= 'federated sparql serialization is broken';
 	my $uri		= URI::file->new_abs( 'data/service-kasei.ttl' );
-	my $ksd		= RDF::Query::ServiceDescription->new( $uri );
+	my $ksd		= RDF::Query::ServiceDescription->new_from_uri( $uri );
 	my $query	= RDF::Query::Federate->new( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX dcterms: <http://purl.org/dc/terms/>
