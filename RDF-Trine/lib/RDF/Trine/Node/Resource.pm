@@ -55,7 +55,7 @@ sub new {
 	}
 	
 	if (defined($base)) {
-		my $buri	= ref($base) ? $base->uri_value : $base;
+		my $buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
 			my $text	= $1;
 			push(@uni, $text);
