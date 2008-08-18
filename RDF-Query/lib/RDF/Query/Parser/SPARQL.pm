@@ -516,35 +516,7 @@ sub _SelectQuery {
 		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
 		push(@{ $self->{build}{triples} }, $sort);
 	}
-	
-	
-	unless ($star) {
-		my $vars	= $self->{build}{variables};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
-		push(@{ $self->{build}{triples} }, $proj);
-	}
-	
-	if ($self->{build}{options}{distinct}) {
-		delete $self->{build}{options}{distinct};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $sort	= RDF::Query::Algebra::Distinct->new( $pattern );
-		push(@{ $self->{build}{triples} }, $sort);
-	}
-	
-	if (exists $self->{build}{options}{offset}) {
-		my $offset		= delete $self->{build}{options}{offset};
-		my $pattern		= pop(@{ $self->{build}{triples} });
-		my $offseted	= RDF::Query::Algebra::Offset->new( $pattern, $offset );
-		push(@{ $self->{build}{triples} }, $offseted);
-	}
-	
-	if (exists $self->{build}{options}{limit}) {
-		my $limit	= delete $self->{build}{options}{limit};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $limited	= RDF::Query::Algebra::Limit->new( $pattern, $limit );
-		push(@{ $self->{build}{triples} }, $limited);
-	}
+	$self->__solution_modifiers( $star );
 	
 	delete $self->{build}{options};
 	$self->{build}{method}		= 'SELECT';
@@ -1867,6 +1839,38 @@ sub _NIL {
 	$self->_eat( $r_NIL );
 	my $nil	= RDF::Query::Node::Resource->new( $rdf->nil->uri_value );
 	$self->_add_stack( $nil );
+}
+
+sub __solution_modifiers {
+	my $self	= shift;
+	my $star	= shift;
+	unless ($star) {
+		my $vars	= $self->{build}{variables};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
+	
+	if ($self->{build}{options}{distinct}) {
+		delete $self->{build}{options}{distinct};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Distinct->new( $pattern );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+	
+	if (exists $self->{build}{options}{offset}) {
+		my $offset		= delete $self->{build}{options}{offset};
+		my $pattern		= pop(@{ $self->{build}{triples} });
+		my $offseted	= RDF::Query::Algebra::Offset->new( $pattern, $offset );
+		push(@{ $self->{build}{triples} }, $offseted);
+	}
+	
+	if (exists $self->{build}{options}{limit}) {
+		my $limit	= delete $self->{build}{options}{limit};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $limited	= RDF::Query::Algebra::Limit->new( $pattern, $limit );
+		push(@{ $self->{build}{triples} }, $limited);
+	}
 }
 
 1;

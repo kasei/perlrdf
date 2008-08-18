@@ -39,9 +39,8 @@ use List::MoreUtils qw(uniq);
 
 our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT/i;
 
-sub _Query {
+sub __solution_modifiers {
 	my $self	= shift;
-	$self->SUPER::_Query;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
 	if ($aggdata) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
@@ -50,6 +49,7 @@ sub _Query {
 		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, %{ $aggdata } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
+	$self->SUPER::__solution_modifiers( @_ );
 }
 
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern

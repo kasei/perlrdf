@@ -5,15 +5,27 @@ no warnings 'redefine';
 use URI::file;
 
 use lib qw(. t);
+use RDF::Query;
 BEGIN { require "models.pl"; }
+
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.plan.project	= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.aggregate	= TRACE, Screen
+# 	
+# 	log4perl.appender.Screen					= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr				= 0
+# 	log4perl.appender.Screen.layout				= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 
 my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => 1 + (36 * scalar(@models));
+plan tests => (36 * scalar(@models));
 
-use_ok( 'RDF::Query' );
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
@@ -118,7 +130,8 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			is_deeply( $row, { 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'value for count apertures' );
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			is_deeply( $row, $expect, 'value for count apertures' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );
@@ -139,7 +152,8 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			is_deeply( $row, { 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'value for count distinct apertures' );
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			is_deeply( $row, $expect, 'value for count distinct apertures' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );
@@ -159,7 +173,8 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			is_deeply( $row, { 'MIN(?mbox)' => $bridge->new_literal('19fc9d0234848371668cf10a1b71ac9bd4236806') }, 'value for min mbox_sha1sum' );
+			my $expect	= RDF::Query::VariableBindings->new({ 'MIN(?mbox)' => $bridge->new_literal('19fc9d0234848371668cf10a1b71ac9bd4236806') });
+			is_deeply( $row, $expect, 'value for min mbox_sha1sum' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );
@@ -181,7 +196,8 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			is_deeply( $row, { count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#decimal') }, 'COUNT() on sometimes unbound variable' );
+			my $expect	= RDF::Query::VariableBindings->new({ count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			is_deeply( $row, $expect, 'COUNT() on sometimes unbound variable' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );
@@ -205,6 +221,7 @@ END
 		
 		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary Peck' => 1 );
 		while (my $row = $stream->next) {
+			use Data::Dumper;
 			my $name	= $row->{name}->literal_value;
 			my $expect	= $expect{ $name };
 			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for variable GROUP' );

@@ -66,9 +66,12 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.project");
 	my $plan	= $self->[1];
 	my $row		= $plan->next;
 	return undef unless ($row);
+	$l->debug( "project on row $row" );
 	
 	my $keys	= $self->[2];
 	my $exprs	= $self->[3];
@@ -77,14 +80,19 @@ sub next {
 	
 	my $proj	= $row->project( @{ $keys } );
 	foreach my $e (@$exprs) {
+		my $var_or_expr;
 		my $name;
 		if ($e->isa('RDF::Query::Expression::Alias')) {
-			$name	= $e->name;
-			$e		= $e->expression;
+			$name			= $e->name;
+			$var_or_expr	= $e->expression;
+			$l->debug( "- project alias " . $var_or_expr->sse . " -> $name" );
 		} else {
-			$name	= $e->sse;
+			$name			= $e->sse;
+			$var_or_expr	= $e;
 		}
-		$proj->{ $name }	= $query->var_or_expr_value( $bridge, $row, $e );
+		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
+		$l->debug( "- project value $name -> $value" );
+		$proj->{ $name }	= $value;
 	}
 	
 	return $proj;

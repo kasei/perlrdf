@@ -44,6 +44,7 @@ sub execute ($) {
 	my $plan	= $self->[1];
 	$plan->execute( $context );
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.aggregate");
 	if ($plan->state == $self->OPEN) {
 		my $query	= $context->query;
 		my $bridge	= $context->model;
@@ -59,6 +60,7 @@ sub execute ($) {
 			my ($alias, $op, $col)	= @$data;
 			if ($op eq 'COUNT') {
 				push(@aggregators, sub {
+					$l->debug("- aggregate op: COUNT");
 					my $row		= shift;
 					warn 'groupby: ' . Dumper(\@groupby) if ($::debug);
 					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
@@ -91,6 +93,7 @@ sub execute ($) {
 				});
 			} elsif ($op eq 'COUNT-DISTINCT') {
 				push(@aggregators, sub {
+					$l->debug("- aggregate op: COUNT-DISTINCT");
 					my $row		= shift;
 					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
@@ -105,6 +108,7 @@ sub execute ($) {
 				});
 			} elsif ($op eq 'MAX') {
 				push(@aggregators, sub {
+					$l->debug("- aggregate op: MAX");
 					my $row		= shift;
 					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
@@ -119,6 +123,7 @@ sub execute ($) {
 				});
 			} elsif ($op eq 'MIN') {
 				push(@aggregators, sub {
+					$l->debug("- aggregate op: MIN");
 					my $row		= shift;
 					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
@@ -137,6 +142,7 @@ sub execute ($) {
 		}
 		
 		while (my $row = $plan->next) {
+			$l->debug("aggregate on $row");
 			foreach my $agg (@aggregators) {
 				$agg->( $row );
 			}
@@ -150,7 +156,10 @@ sub execute ($) {
 				my $value		= $aggregates{ $agg }{ $group };
 				$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#decimal' );
 			}
-			push(@rows, RDF::Query::VariableBindings->new( \%row ));
+			
+			my $vars	= RDF::Query::VariableBindings->new( \%row );
+			$l->debug("aggregate row: $vars");
+			push(@rows, $vars);
 		}
 		
 		if ($::debug) {
