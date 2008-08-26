@@ -10,11 +10,12 @@ use RDF::Endpoint;
 use Data::Dumper;
 use LWPx::ParanoidAgent;
 use Digest::SHA1 qw(sha1_hex);
+use Apache2::Const qw(OK);
 
 my $secret			= q<G"dEMXI9N,:d'J;A>;
 my $salt			= q<$*C@>;
 
-sub handler ($$) {
+sub handler : method {
 	my $class	= shift;
 	my $r		= shift;
 	my $dsn		= $r->dir_config( 'EndpointDBServer' );
@@ -41,6 +42,7 @@ sub handler ($$) {
 	
 	$endpoint->{_r}	= $r;
 	$endpoint->run( $cgi );
+	return OK;
 }
 
 sub new {
