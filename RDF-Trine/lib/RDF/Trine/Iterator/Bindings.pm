@@ -569,7 +569,7 @@ END
 		print {$fh} "\t\t</result>\n";
 		
 		last if ($max_result_size and ++$count >= $max_result_size);
-	} continue { $self->next_result }
+	}
 	
 	if ($delay_output) {
 		my $extra = $self->extra_result_data;
