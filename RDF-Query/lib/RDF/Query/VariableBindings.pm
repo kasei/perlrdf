@@ -43,20 +43,17 @@ sub join {
 	my $class	= ref($self);
 	my $rowa	= shift;
 	
-	my %keysa	= map {$_=>1} (keys %$self);
-	my @shared	= grep { $keysa{ $_ } } (keys %$rowa);
+	my %keysa;
+	my @keysa	= keys %$self;
+	@keysa{ @keysa }	= (1) x scalar(@keysa);
+	my @shared	= grep { exists $keysa{ $_ } } (keys %$rowa);
 	foreach my $key (@shared) {
 		my $val_a	= $self->{ $key };
 		my $val_b	= $rowa->{ $key };
-		my $defined	= 0;
-		foreach my $n ($val_a, $val_b) {
-			$defined++ if (defined($n));
-		}
-		if ($defined == 2) {
-			my $equal	= $val_a->equal( $val_b );
-			unless ($equal) {
-				return undef;
-			}
+		next unless (defined($val_a) and defined($val_b));
+		my $equal	= $val_a->equal( $val_b );
+		unless ($equal) {
+			return undef;
 		}
 	}
 	
