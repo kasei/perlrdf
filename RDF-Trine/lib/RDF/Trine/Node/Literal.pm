@@ -184,8 +184,7 @@ Returns true if the two nodes are equal, false otherwise.
 sub equal {
 	my $self	= shift;
 	my $node	= shift;
-	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node'));
-	return 0 unless ($self->type eq $node->type);
+	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Literal'));
 	return 0 unless ($self->literal_value eq $node->literal_value);
 	if ($self->literal_datatype or $node->literal_datatype) {
 		no warnings 'uninitialized';

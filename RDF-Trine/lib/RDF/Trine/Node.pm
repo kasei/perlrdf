@@ -110,13 +110,13 @@ sub _unicode_escape {
 	# based on Unicode::Escape, but without running the string through Encode:: first.
 	my $self	= shift;
 	my $str		= shift;
-    my $us		= Unicode::String->new($str);
-    my $rslt = '';
-    while (my $uchar = $us->chop) {
-        my $utf8 = $uchar->utf8;
-        $rslt = (($utf8 =~ /[\x80-\xff]/) ? '\\u'.uc(unpack('H4', $uchar->utf16be)) : $utf8) . $rslt;
-    }
-    return $rslt;
+	my $us		= Unicode::String->new($str);
+	my $rslt	= '';
+	while (my $uchar = $us->chop) {
+		my $utf8 = $uchar->utf8;
+		$rslt = (($utf8 =~ /[\x80-\xff]/) ? '\\u'.uc(unpack('H4', $uchar->utf16be)) : $utf8) . $rslt;
+	}
+	return $rslt;
 }
 
 

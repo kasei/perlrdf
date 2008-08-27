@@ -39,7 +39,6 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 use XML::SAX;
 use RDF::Trine::Node;
-use RDF::Trine::Promise;
 use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
@@ -282,9 +281,6 @@ sub next {
 	}
 	
 	my $stream	= $self->{_stream};
-	if (blessed($stream) and $stream->isa('RDF::Trine::Promise')) {
-		$stream	= $self->{_stream}	= $stream->value;
-	}
 	my $value	= $stream->();
 	unless (defined($value)) {
 		$self->{_finished}	= 1;

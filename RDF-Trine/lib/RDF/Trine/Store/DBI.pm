@@ -58,6 +58,7 @@ use Log::Log4perl;
 
 use RDF::Trine::Error;
 use RDF::Trine::Store::DBI::mysql;
+use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION	= "0.108";
@@ -89,6 +90,7 @@ sub new {
 		$l->trace("trying to construct a temporary model");
 		my $dsn		= "dbi:SQLite:dbname=:memory:";
 		$dbh		= DBI->connect( $dsn, '', '' );
+		$class		= 'RDF::Trine::Store::DBI::SQLite';
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		$l->trace("got a DBD handle");
 		$dbh		= shift;
@@ -100,6 +102,8 @@ sub new {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
 		} elsif ($dsn =~ /^DBI:Pg:/) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
+		} elsif ($dsn =~ /^DBI:SQLite:/) {
+			$class	= 'RDF::Trine::Store::DBI::SQLite';
 		}
 		$l->trace("Connecting to $dsn ($user, $pass)");
 		$dbh		= DBI->connect( $dsn, $user, $pass );
