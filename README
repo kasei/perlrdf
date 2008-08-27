@@ -4,9 +4,9 @@ Currently, the project includes:
 
   * RDF::Query, a SPARQL (and RDQL) query engine supporting RDF::Redland,
     RDF::Core, and RDF::Store.
-  * RDF::Trine::Parser - A native parser for Turtle (with RDF/XML expected soon).
-  * RDF::Trine::Store::DBI, an RDF Store for MySQL and SQLite, based on the
-    Redland schema.
+  * RDF::Trine::Parser - A native parser for RDF/XML and Turtle.
+  * RDF::Trine::Store::DBI, an RDF Store for MySQL, PostgreSQL and SQLite, based
+    on the Redland schema.
   * RDF::Trine::Iterator, iterator classes for variable bindings and RDF
     statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
   * RDF::Trine::Namespace - A convenience class for easily constructing RDF node
