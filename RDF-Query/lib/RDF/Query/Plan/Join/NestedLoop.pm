@@ -43,7 +43,7 @@ sub new {
 	if ($opt) {
 		throw RDF::Query::Error::MethodInvocationError -text => "NestedLoop join does not support optional joins (use PushDownNestedLoop instead)";
 	}
-	my $self	= $class->SUPER::new( $lhs, $rhs );
+	my $self	= $class->SUPER::new( $lhs, $rhs, $opt );
 	$self->[0]{logging_keys}	= $keys;
 	return $self;
 }
@@ -163,6 +163,18 @@ sub close {
 	$self->lhs->close();
 	$self->rhs->close();
 	$self->SUPER::close();
+}
+
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(nested-loop-join\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
 }
 
 1;

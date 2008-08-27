@@ -131,6 +131,18 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(filter\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->[2]->sse( $context, "${indent}${more}" ), $self->pattern->sse( $context, "${indent}${more}" ));
+}
+
 
 1;
 

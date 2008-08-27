@@ -145,6 +145,18 @@ sub ordered {
 	return [ map { [ $_->[0], ($_->[1] ? 'DESC' : 'ASC') ] } @$sort ];
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(sort\n${indent}${more}(%s)\n${indent}${more}%s\n${indent})", join(' ', map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[2] }), $self->pattern->sse( $context, "${indent}${more}" ));
+}
+
 1;
 
 __END__

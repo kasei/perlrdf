@@ -401,7 +401,25 @@ sub query_plan {
 	
 	my $algebra		= $self->pattern;
 	my @plans		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
-	return (wantarray) ? @plans : $plans[0];
+	if (wantarray) {
+		return @plans;
+	} else {
+		return $self->prune_plans( @plans );
+	}
+}
+
+=begin private
+
+=item C<< prune_plans ( @plans ) >>
+
+=end private
+
+=cut
+
+sub prune_plans {
+	my $self	= shift;
+	my @plans	= @_;
+	return $plans[ 0 ];
 }
 
 =begin private

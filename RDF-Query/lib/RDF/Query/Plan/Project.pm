@@ -145,6 +145,18 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(project\n${indent}${more}(%s)\n${indent}${more}%s\n${indent})", join(' ', @{$self->[1]}, map { $_->sse( $context, "${indent}${more}" ) } @{$self->[2]}), $self->pattern->sse( $context, "${indent}${more}" ));
+}
+
 
 1;
 

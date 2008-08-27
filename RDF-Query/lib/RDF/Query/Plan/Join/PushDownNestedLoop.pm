@@ -35,8 +35,11 @@ sub new {
 	my $lhs		= shift;
 	my $rhs		= shift;
 	my $opt		= shift || 0;
-	unless ($opt) {
-		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support non-optional joins due to bottom-up variable scoping rules (use NestedLoop instead)";
+	if (not($opt) and $rhs->isa('RDF::Query::Plan::Join') and $rhs->optional) {
+		# we can't push down results to an optional pattern because of the
+		# bottom up semantics. see dawg test algebra/manifest#join-scope-1
+		# for example.
+		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support optional patterns as RHS due to bottom-up variable scoping rules (use NestedLoop instead)";
 	}
 	my $self	= $class->SUPER::new( $lhs, $rhs, $opt );
 	return $self;
@@ -143,6 +146,18 @@ sub close {
 	delete $self->[0]{inner_count};
 	$self->lhs->close();
 	$self->SUPER::close();
+}
+
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(pushdown-nested-loop-join\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
 }
 
 1;

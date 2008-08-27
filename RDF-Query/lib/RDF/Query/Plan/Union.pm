@@ -119,6 +119,14 @@ sub ordered {
 	return [];
 }
 
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(union\n${indent}${more}%s\n${indent}${more}%s\n${indent})", map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[1] });
+}
+
 1;
 
 __END__

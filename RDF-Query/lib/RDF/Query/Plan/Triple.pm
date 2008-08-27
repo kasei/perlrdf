@@ -242,6 +242,18 @@ sub ordered {
 	return [];
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(triple %s %s %s)", map { $_->sse( $context, "${indent}${more}" ) } @{ $self }[1..3]);
+}
+
 
 1;
 

@@ -312,6 +312,18 @@ sub ordered {
 	return 0;
 }
 
+=item C<< sse >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf("(service\n${indent}${more}<%s>\n${indent}${more}%s\n${indent})", $self->endpoint, $self->sparql);
+}
+
 
 1;
 

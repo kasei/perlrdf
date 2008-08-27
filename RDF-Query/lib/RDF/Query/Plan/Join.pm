@@ -46,6 +46,15 @@ sub rhs {
 	return $self->[2];
 }
 
+=item C<< optional >>
+
+=cut
+
+sub optional {
+	my $self	= shift;
+	return $self->[3];
+}
+
 =item C<< bf () >>
 
 Returns a string representing the state of the nodes of the triple (bound or free).
@@ -91,7 +100,7 @@ Returns the class names of all available join algorithms.
 sub join_classes {
 	my $class	= shift;
 	our %JOIN_CLASSES;
-	return keys %JOIN_CLASSES;
+	return reverse sort keys %JOIN_CLASSES;
 }
 
 =item C<< distinct >>
