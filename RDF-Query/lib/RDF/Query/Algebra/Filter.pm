@@ -127,7 +127,7 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift;
+	my $indent	= shift || '';
 	
 	my $expr	= $self->expr;
 	my $filter_sparql	= $expr->as_sparql( $context, $indent );

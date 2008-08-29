@@ -16,6 +16,7 @@ package RDF::Query::Plan;
 use strict;
 use warnings;
 use Data::Dumper;
+use List::Util qw(reduce);
 use Scalar::Util qw(blessed);
 use RDF::Query::Error qw(:try);
 
@@ -147,10 +148,12 @@ sub generate_plans {
 	my $context	= shift;
 	my $model	= $context->model;
 	my %args	= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.plan");
 	unless (blessed($algebra) and $algebra->isa('RDF::Query::Algebra')) {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
 	}
 	
+	$l->trace("generating query plan for $algebra");
 	my ($project);
 	my $constant	= $args{ constants };
 # 	unless ($algebra->isa('RDF::Query::Algebra::Project') or not ($algebra->is_solution_modifier)) {
@@ -319,6 +322,19 @@ sub generate_plans {
 	return @return_plans;
 }
 
+=item C<< prune_plans ( $context, @plans ) >>
+
+=cut
+
+sub prune_plans {
+	my $self	= shift;
+	my $context	= shift;
+	my @plans	= @_;
+	my $cm		= $context->costmodel;
+	my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, $cm->cost($_) ] } @plans;
+	return $plan;
+}
+
 sub _triple_join_plans {
 	my $self	= shift;
 	my $context	= shift;
@@ -329,7 +345,8 @@ sub _triple_join_plans {
 	my @join_types	= RDF::Query::Plan::Join->join_classes;
 	
 	my @plans;
-	foreach my $i (0 .. $#{ $triples }) {
+	my @slice	= ($context->optimize) ? (0 .. $#{ $triples }) : (0);
+	foreach my $i (@slice) {
 		my @triples		= @$triples;
 		# pick a triple to use as the LHS
 		my ($t)	= splice( @triples, $i, 1 );
@@ -370,7 +387,9 @@ sub _triple_join_plans {
 		}
 	}
 	
-	return @plans;
+	my $cm		= $context->costmodel;
+	my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, ($cm ? $cm->cost($_->[0]) : 0) ] } @plans;
+	return $plan;
 }
 
 sub _add_constant_join {

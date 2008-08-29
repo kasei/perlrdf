@@ -165,6 +165,32 @@ sub close {
 	$self->SUPER::close();
 }
 
+=item C<< nodes () >>
+
+=cut
+
+sub nodes {
+	my $self	= shift;
+	return @{ $self }[1,2,3,4];
+}
+
+=item C<< bf () >>
+
+Returns a string representing the state of the nodes of the triple (bound or free).
+
+=cut
+
+sub bf {
+	my $self	= shift;
+	my $bf		= '';
+	foreach my $n (@{ $self }[1,2,3,4]) {
+		$bf		.= ($n->isa('RDF::Trine::Node::Variable'))
+				? 'f'
+				: 'b';
+	}
+	return $bf;
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -185,7 +211,7 @@ sub ordered {
 	return [];
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 

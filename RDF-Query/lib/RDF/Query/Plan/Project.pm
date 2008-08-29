@@ -145,7 +145,7 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 
@@ -154,7 +154,7 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(project\n${indent}${more}(%s)\n${indent}${more}%s\n${indent})", join(' ', @{$self->[1]}, map { $_->sse( $context, "${indent}${more}" ) } @{$self->[2]}), $self->pattern->sse( $context, "${indent}${more}" ));
+	return sprintf("(project (%s)\n${indent}${more}%s\n${indent})", join(' ', @{$self->[1]}, map { $_->sse( $context, "${indent}${more}" ) } @{$self->[2]}), $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
 

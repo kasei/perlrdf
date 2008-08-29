@@ -92,7 +92,8 @@ sub _cardinality {
 	my $method	= "_cardinality_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("computing cardinality of $type pattern");
-	return $self->$method( $pattern );
+	my $cardinality	= $self->$method( $pattern );
+	return $cardinality;
 }
 
 

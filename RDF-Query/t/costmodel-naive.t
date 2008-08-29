@@ -36,7 +36,7 @@ for my $size (1_000) {
 			# <p> a foaf:Person
 			my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Resource->new('p'), $rdf->type, $foaf->Person, );
 			my $cost		= $costmodel->cost( $triple );
-			is( $cost, 1, 'Cost of all-bound triple' );
+			is( $cost, 1, 'Cost of 3-bound triple' );
 		}
 		
 		{
@@ -63,7 +63,7 @@ for my $size (1_000) {
 			my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 			# this should really be 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
 			my $cost		= $costmodel->cost( $bgp );
-			is( $cost, 100, 'Cost of a 1bb,1b2 BGP' );
+			is( $cost, 200, 'Cost of a 1bb,1b2 BGP' );
 		}
 		
 		{
@@ -73,7 +73,7 @@ for my $size (1_000) {
 			my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 			# 10 * 10
 			my $cost		= $costmodel->cost( $bgp );
-			is( $cost, 100, 'Cost of a 1bb,2bb BGP' );
+			is( $cost, 200, 'Cost of a 1bb,2bb BGP' );
 		}
 	}
 
@@ -87,7 +87,7 @@ for my $size (1_000) {
 			my $service		= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $bgp );
 			# this should really be 2 * 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
 			my $cost		= $costmodel->cost( $service );
-			is( $cost, 200, 'Cost of a 1bb,1b2 SERVICE' );
+			is( $cost, 400, 'Cost of a 1bb,1b2 SERVICE' );
 		}
 	}
 }

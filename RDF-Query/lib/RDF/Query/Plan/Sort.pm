@@ -145,7 +145,7 @@ sub ordered {
 	return [ map { [ $_->[0], ($_->[1] ? 'DESC' : 'ASC') ] } @$sort ];
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 

@@ -97,6 +97,20 @@ sub as_string {
 	return $string;
 }
 
+=item C<< sse ( \%context, $indent ) >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my @keys	= keys %$self;
+	return sprintf('(row %s)', CORE::join(' ', map { '[' . CORE::join(' ', '?' . $_, ($self->{$_}) ? $self->{$_}->as_string : ()) . ']' } (@keys)));
+}
+
+
 1;
 
 __END__

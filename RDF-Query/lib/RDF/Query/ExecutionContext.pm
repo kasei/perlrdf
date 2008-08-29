@@ -93,6 +93,24 @@ sub logger {
 	return $self->{logger};
 }
 
+=item C<< costmodel >>
+
+=cut
+
+sub costmodel {
+	my $self	= shift;
+	return $self->{costmodel};
+}
+
+=item C<< optimize >>
+
+=cut
+
+sub optimize {
+	my $self	= shift;
+	return $self->{optimize};
+}
+
 1;
 
 __END__

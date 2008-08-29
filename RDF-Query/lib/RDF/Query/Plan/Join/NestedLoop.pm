@@ -165,7 +165,7 @@ sub close {
 	$self->SUPER::close();
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 
@@ -174,7 +174,8 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(nested-loop-join\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
+	my $jtype	= $self->optional ? 'leftjoin' : 'join';
+	return sprintf("(nestedloop-${jtype}\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
 }
 
 1;

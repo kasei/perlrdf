@@ -120,7 +120,8 @@ use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Logger;
-use  RDF::Query::Plan;
+use RDF::Query::Plan;
+use RDF::Query::CostModel::Naive;
 
 ######################################################################
 
@@ -218,6 +219,8 @@ sub new {
 	if ($options{costmodel}) {
 		$l->debug("got cost model");
 		$self->{costmodel}	= $options{costmodel};
+	} else {
+		$self->{costmodel}	= RDF::Query::CostModel::Naive->new();
 	}
 	
 	# add rdf as a default namespace to RDQL queries
@@ -273,21 +276,27 @@ sub execute {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
+	$l->trace("loading data");
 	$self->load_data();
 	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
 	
+	$l->trace("constructing ExecutionContext");
 	my $context	= RDF::Query::ExecutionContext->new(
-					bound	=> \%bound,
-					model	=> $bridge,
-					query	=> $self,
-					base	=> $parsed->{base},
-					ns		=> $parsed->{namespaces},
-					logger	=> $self->logger,
+					bound		=> \%bound,
+					model		=> $bridge,
+					query		=> $self,
+					base		=> $parsed->{base},
+					ns			=> $parsed->{namespaces},
+					logger		=> $self->logger,
+					costmodel	=> $self->costmodel,
 				);
 	my $pattern	= $self->pattern;
+	$l->trace("calling fixup()");
 	my $cpattern	= $self->fixup();
 	
+	$l->trace("getting QEP...");
 	my $plan		= $self->query_plan( $context );
+	$l->trace("-> done.");
 	unless ($plan) {
 		throw RDF::Query::Error::CompilationError -text => "Query didn't produce a valid execution plan";
 	}

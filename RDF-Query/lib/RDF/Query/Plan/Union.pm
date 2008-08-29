@@ -99,6 +99,28 @@ sub close {
 	$self->SUPER::close();
 }
 
+=item C<< lhs >>
+
+Returns the left-hand-side plan to the union.
+
+=cut
+
+sub lhs {
+	my $self	= shift;
+	return $self->[1][0];
+}
+
+=item C<< rhs >>
+
+Returns the right-hand-side plan to the union.
+
+=cut
+
+sub rhs {
+	my $self	= shift;
+	return $self->[1][1];
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -118,6 +140,10 @@ Returns true if the pattern is guaranteed to return ordered results.
 sub ordered {
 	return [];
 }
+
+=item C<< sse ( $context, $indent ) >>
+
+=cut
 
 sub sse {
 	my $self	= shift;

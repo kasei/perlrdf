@@ -312,7 +312,7 @@ sub ordered {
 	return 0;
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 

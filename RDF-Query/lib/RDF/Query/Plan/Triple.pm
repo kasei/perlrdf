@@ -188,7 +188,7 @@ sub close {
 			$l->debug("- count: $count");
 		}
 		if (my $bf = $self->logging_keys->{bf}) {
-			$l->debug("- bf: $bf");
+			$l->debug("- cardinality-bf-triple: $bf: $count");
 			$log->push_key_value( 'cardinality-bf-triple', $bf, $count );
 		}
 	}
@@ -242,7 +242,7 @@ sub ordered {
 	return [];
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 

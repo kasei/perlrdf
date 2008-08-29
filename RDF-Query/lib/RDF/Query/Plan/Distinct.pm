@@ -115,7 +115,7 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 

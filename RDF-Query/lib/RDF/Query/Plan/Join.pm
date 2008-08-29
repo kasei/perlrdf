@@ -68,6 +68,9 @@ sub bf {
 	my %use_count;
 	my $counter	= 1;
 	foreach my $t ($self->lhs, $self->rhs) {
+		unless ($t->can('bf')) {
+			throw RDF::Query::Error::ExecutionError -text => "Cannot compute bf for $t during join";
+		}
 		my $bf	= $t->bf;
 		if ($bf =~ /f/) {
 			$bf	= '';
@@ -84,11 +87,13 @@ sub bf {
 		}
 		push(@bf, $bf);
 	}
-	my $bf	= join(',',@bf);
 	if ($counter <= 10) {
-		$bf	=~ s/[{}]//g;
+		for (@bf) {
+			s/[{}]//g;
+		}
 	}
-	return $bf;
+	my $bf	= join(',',@bf);
+	return wantarray ? @bf : $bf;
 }
 
 =item C<< join_classes >>

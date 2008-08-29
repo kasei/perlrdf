@@ -71,6 +71,15 @@ sub close {
 	$self->SUPER::close();
 }
 
+=item C<< size >>
+
+=cut
+
+sub size {
+	my $self	= shift;
+	return scalar( @{ $self->[1] } );
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -92,6 +101,21 @@ sub ordered {
 	# XXX could check constant data to determine if it's ordered
 	return [];
 }
+
+=item C<< sse ( \%context, $indent ) >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my $binds	= $self->[1];
+	return sprintf("(table\n${indent}${more}%s\n${indent})", join("\n${indent}${more}", map { $_->sse( $context, "${indent}${more}" ) } @$binds));
+}
+
+
 
 
 1;

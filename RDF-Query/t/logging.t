@@ -59,7 +59,7 @@ foreach my $model (@models) {
 END
 			my @results	= $query->execute( $model );
 			is( scalar(@results), 1, 'Expected result count' );
-			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}[0], 2, 'Expected triple cardinality' );
+			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/homepage> ?page .'}[0], 1, 'Expected triple cardinality' );
 			is( $l->{'cardinality-triple'}{'?person <http://xmlns.com/foaf/0.1/name> "Gregory Todd Williams" .'}[0], 1, 'Expected triple cardinality' );
 		}
 		

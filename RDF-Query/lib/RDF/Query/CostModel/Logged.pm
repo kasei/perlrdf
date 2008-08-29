@@ -60,7 +60,7 @@ sub _cost_nestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . Dumper($bgp) );
+	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
 	return $self->_cardinality( $bgp );
 }
 
@@ -68,7 +68,7 @@ sub _cost_triple {
 	my $self	= shift;
 	my $triple	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . Dumper($triple) );
+	$l->debug( 'Computing COST: ' . $triple->sse( {}, '' ) );
 	return $self->_cardinality( $triple );
 }
 
