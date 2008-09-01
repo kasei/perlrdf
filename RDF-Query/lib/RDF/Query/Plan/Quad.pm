@@ -223,6 +223,25 @@ sub sse {
 	return sprintf("(quad %s %s %s %s)", map { $_->sse( $context, "${indent}${more}" ) } @{ $self }[1..4]);
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	$g->add_node( "$self", label => "Quad" );
+	my @names	= qw(subject predicate object context);
+	foreach my $i (0 .. 3) {
+		my $n	= $self->[ $i + 1 ];
+		my $rel	= $names[ $i ];
+		my $str	= $n->sse( {}, '' );
+		$g->add_node( "${self}$n", label => $str );
+		$g->add_edge( "$self" => "${self}$n", label => $names[ $i ] );
+	} 
+	return "$self";
+}
+
 
 1;
 

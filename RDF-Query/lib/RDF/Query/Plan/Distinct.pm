@@ -127,6 +127,19 @@ sub sse {
 	return sprintf("(distinct\n${indent}${more}%s\n${indent}\n${indent})", $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my $c		= $self->pattern->graph( $g );
+	$g->add_node( "$self", label => "Distinct" );
+	$g->add_edge( "$self", $c );
+	return "$self";
+}
+
 
 1;
 

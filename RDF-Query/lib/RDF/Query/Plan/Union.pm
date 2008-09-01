@@ -153,6 +153,20 @@ sub sse {
 	return sprintf("(union\n${indent}${more}%s\n${indent}${more}%s\n${indent})", map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[1] });
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
+	$g->add_node( "$self", label => "Union" );
+	$g->add_edge( "$self", $l );
+	$g->add_edge( "$self", $r );
+	return "$self";
+}
+
 1;
 
 __END__

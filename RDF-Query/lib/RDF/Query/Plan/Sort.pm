@@ -157,6 +157,21 @@ sub sse {
 	return sprintf("(sort\n${indent}${more}(%s)\n${indent}${more}%s\n${indent})", join(' ', map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[2] }), $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my $c		= $self->pattern->graph( $g );
+	my $expr	= join(' ', map { $_->sse( {}, "" ) } @{ $self->[2] });
+	$g->add_node( "$self", label => "Sort ($expr)" );
+	$g->add_edge( "$self", $c );
+	return "$self";
+}
+
+
 1;
 
 __END__

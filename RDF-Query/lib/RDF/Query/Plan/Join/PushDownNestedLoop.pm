@@ -161,6 +161,20 @@ sub sse {
 	return sprintf("(pushdown-nestedloop-${jtype}\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
+	$g->add_node( "$self", label => "Join (PDNL)" );
+	$g->add_edge( "$self", $l );
+	$g->add_edge( "$self", $r );
+	return "$self";
+}
+
 1;
 
 __END__

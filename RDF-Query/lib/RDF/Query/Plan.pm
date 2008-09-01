@@ -345,7 +345,8 @@ sub _triple_join_plans {
 	my @join_types	= RDF::Query::Plan::Join->join_classes;
 	
 	my @plans;
-	my @slice	= ($context->optimize) ? (0 .. $#{ $triples }) : (0);
+	my $opt		= $context->optimize;
+	my @slice	= ($opt) ? (0 .. $#{ $triples }) : (0);
 	foreach my $i (@slice) {
 		my @triples		= @$triples;
 		# pick a triple to use as the LHS
@@ -387,9 +388,13 @@ sub _triple_join_plans {
 		}
 	}
 	
-	my $cm		= $context->costmodel;
-	my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, ($cm ? $cm->cost($_->[0]) : 0) ] } @plans;
-	return $plan;
+	if ($opt) {
+		return @plans;
+	} else {
+		my $cm		= $context->costmodel;
+		my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, ($cm ? $cm->cost($_->[0]) : 0) ] } @plans;
+		return $plan;
+	}
 }
 
 sub _add_constant_join {

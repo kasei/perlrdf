@@ -157,6 +157,21 @@ sub sse {
 	return sprintf("(project (%s)\n${indent}${more}%s\n${indent})", join(' ', @{$self->[1]}, map { $_->sse( $context, "${indent}${more}" ) } @{$self->[2]}), $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my $c		= $self->pattern->graph( $g );
+	my $expr	= join(' ', @{$self->[1]}, map { $_->sse( {}, "" ) } @{$self->[2]});
+	$g->add_node( "$self", label => "Project ($expr)" );
+	$g->add_edge( "$self", $c );
+	return "$self";
+}
+
+
 
 1;
 

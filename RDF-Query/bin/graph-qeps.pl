@@ -28,6 +28,7 @@ my @models	= test_models( @files );
 use RDF::Query;
 use RDF::Query::CostModel::Naive;
 
+use GraphViz;
 use List::Util qw(first);
 use Time::HiRes qw(tv_interval gettimeofday);
 use Benchmark;
@@ -67,6 +68,12 @@ my %plans;
 foreach my $i (0 .. $#plans) {
 	my $name	= "plan $i";
 	warn "$name: " . $plans[ $i ]->sse( {}, ' 'x8 ) . "\n";
+	my $g		= new GraphViz;
+	my $plan	= $plans[ $i ];
+	$plan->graph( $g );
+	open( my $fh, '>', "qep-${i}.png" ) or die $!;
+	print {$fh} $g->as_png;
+	close($fh);
 	
 	$plans{ $name }	= sub {
 		local($query->{plan_index})	= $i;
@@ -75,7 +82,7 @@ foreach my $i (0 .. $#plans) {
 	};
 }
 
-timethese( 20, \%plans );
+timethese( 5, \%plans );
 
 package RDF::Query::Benchmark;
 
@@ -87,5 +94,6 @@ sub prune_plans {
 	my $self	= shift;
 	my @plans	= @_;
 	my $index	= $self->{ plan_index };
-	return $plans[ $index ];
+	my $plan	= $plans[ $index ];
+	return $plan;
 }

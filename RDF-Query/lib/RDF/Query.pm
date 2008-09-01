@@ -223,6 +223,13 @@ sub new {
 		$self->{costmodel}	= RDF::Query::CostModel::Naive->new();
 	}
 	
+	if (my $opt = $options{optimize}) {
+		$l->debug("got optimization flag: $opt");
+		$self->{optimize}	= $opt;
+	} else {
+		$self->{optimize}	= 0;
+	}
+	
 	# add rdf as a default namespace to RDQL queries
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
@@ -289,6 +296,7 @@ sub execute {
 					ns			=> $parsed->{namespaces},
 					logger		=> $self->logger,
 					costmodel	=> $self->costmodel,
+					optimize	=> $self->{optimize},
 				);
 	my $pattern	= $self->pattern;
 	$l->trace("calling fixup()");

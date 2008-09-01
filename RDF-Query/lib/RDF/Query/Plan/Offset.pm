@@ -126,6 +126,19 @@ sub sse {
 	return sprintf("(offset\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->[2], $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my $c		= $self->pattern->graph( $g );
+	$g->add_node( "$self", label => "Offset ($self->[2])" );
+	$g->add_edge( "$self", $c );
+	return "$self";
+}
+
 
 1;
 
