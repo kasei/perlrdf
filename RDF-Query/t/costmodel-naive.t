@@ -84,7 +84,7 @@ for my $size (1_000) {
 			my $triple_a	= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, );
 			my $triple_b	= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name'), );
 			my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
-			my $service		= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $bgp );
+			my $service		= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $bgp, 'SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name }' );
 			# this should really be 2 * 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
 			my $cost		= $costmodel->cost( $service );
 			is( $cost, 400, 'Cost of a 1bb,1b2 SERVICE' );

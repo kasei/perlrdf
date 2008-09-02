@@ -22,6 +22,7 @@ use Scalar::Util qw(blessed);
 use Storable qw(store_fd fd_retrieve);
 use URI::Escape;
 
+use RDF::Query::Error qw(:try);
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
@@ -43,6 +44,9 @@ sub new {
 	my $url		= shift;
 	my $plan	= shift;
 	my $sparql	= shift;
+	unless ($sparql) {
+		throw RDF::Query::Error::MethodInvocationError -text => "SERVICE plan constructor requires a serialized SPARQL query argument";
+	}
 	my $keys	= shift || {};
 	my $self	= $class->SUPER::new( $url, $plan, $sparql );
 	$self->[0]{logging_keys}	= $keys;
