@@ -28,10 +28,17 @@ my $expr	= RDF::Query::Expression::Binary->new( '<', $vb, $l3 );
 my $filter	= RDF::Query::Algebra::Filter->new( $expr, $bgp );
 my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $filter );
 
-# and add a LIMIT clause
+# add a LIMIT clause
 my $limit	= RDF::Query::Algebra::Limit->new( $filter, 5 );
 
-printf("SELECT * WHERE %s\n", $limit->as_sparql);
+# and a PROJECT to get the variable list
+my $proj	= RDF::Query::Algebra::Project->new( $limit, [map {RDF::Query::Node::Variable->new($_) } qw(a b)] );
+
+# you still need to add the method (SELECT) yourself. at some point, the code
+# from RDF::Query::describe, RDF::Query::construct and RDF::Query::ask will be
+# moved into ::Algebra subclasses, and then we won't need to do this manually.
+# until then, just tag on 'SELECT ' onto the front of the query string.
+print 'SELECT ' . $proj->as_sparql;
 
 # should print:
 # SELECT * WHERE {
