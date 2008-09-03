@@ -1844,12 +1844,11 @@ sub _NIL {
 sub __solution_modifiers {
 	my $self	= shift;
 	my $star	= shift;
-	unless ($star) {
-		my $vars	= $self->{build}{variables};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
-		push(@{ $self->{build}{triples} }, $proj);
-	}
+	
+	my $vars	= $self->{build}{variables};
+	my $pattern	= pop(@{ $self->{build}{triples} });
+	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+	push(@{ $self->{build}{triples} }, $proj);
 	
 	if ($self->{build}{options}{distinct}) {
 		delete $self->{build}{options}{distinct};

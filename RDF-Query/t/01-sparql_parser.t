@@ -2575,15 +2575,21 @@ __END__
   namespaces: {}
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Variable
-            - a
-          - !!perl/array:RDF::Query::Node::Variable
-            - a
-          - !!perl/array:RDF::Query::Node::Variable
-            - b
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - a
+            - !!perl/array:RDF::Query::Node::Variable
+              - a
+            - !!perl/array:RDF::Query::Node::Variable
+              - b
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - a
+        - !!perl/array:RDF::Query::Node::Variable
+          - b
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - a
@@ -2928,16 +2934,22 @@ __END__
     __DEFAULT__: http://example.org/data/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/data/x
-          - !!perl/array:RDF::Query::Node::Variable
-            - p
-          - !!perl/array:RDF::Query::Node::Variable
-            - q
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/data/x
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - q
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
+        - !!perl/array:RDF::Query::Node::Variable
+          - q
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - p
@@ -3754,22 +3766,26 @@ __END__
     __DEFAULT__: http://example/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::Filter
-      - FILTER
-      - !!perl/array:RDF::Query::Node::Variable
-        - x
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example/ns#s
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example/ns#p
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example/ns#o
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Filter
+        - FILTER
+        - !!perl/array:RDF::Query::Node::Variable
+          - x
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example/ns#s
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example/ns#p
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example/ns#o
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - x
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - x
@@ -3785,18 +3801,20 @@ __END__
     __DEFAULT__: http://example/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example/ns#s
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example/ns#p
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example/ns#o
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example/ns#s
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example/ns#p
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example/ns#o
+      - &1 []
   variables: []
 ---
 - (DAWG) syn-11.rq
@@ -3812,32 +3830,40 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::Filter
-      - FILTER
-      - !!perl/array:RDF::Query::Node::Literal
-        - LITERAL
-        - true
-        - ~
-        - http://www.w3.org/2001/XMLSchema#boolean
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Blank
-              - BLANK
-              - a
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
-            - !!perl/array:RDF::Query::Node::Variable
-              - v
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Blank
-              - BLANK
-              - a1
-            - !!perl/array:RDF::Query::Node::Variable
-              - q
-            - !!perl/array:RDF::Query::Node::Blank
-              - BLANK
-              - a
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Filter
+        - FILTER
+        - !!perl/array:RDF::Query::Node::Literal
+          - LITERAL
+          - true
+          - ~
+          - http://www.w3.org/2001/XMLSchema#boolean
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Blank
+                - BLANK
+                - a
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Variable
+                - v
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Blank
+                - BLANK
+                - a1
+              - !!perl/array:RDF::Query::Node::Variable
+                - q
+              - !!perl/array:RDF::Query::Node::Blank
+                - BLANK
+                - a
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
+        - !!perl/array:RDF::Query::Node::Variable
+          - v
+        - !!perl/array:RDF::Query::Node::Variable
+          - q
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - p
@@ -3913,32 +3939,38 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - &1 !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-          - !!perl/array:RDF::Query::Node::Variable
-            - z
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Variable
-            - x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#p
-          - *1
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - &1 !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
+            - !!perl/array:RDF::Query::Node::Variable
+              - z
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#p
+            - *1
+      - &2
+        - !!perl/array:RDF::Query::Node::Variable
+          - z
+        - !!perl/array:RDF::Query::Node::Variable
+          - x
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - z
@@ -3955,18 +3987,20 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#_1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#p.rdf
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#z.z
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#_1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#p.rdf
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#z.z
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-qname-08.rq
@@ -3982,18 +4016,20 @@ __END__
     x.y: http://example.org/x#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#a.b
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/x#
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#a.b
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/x#
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#
+      - &1 []
   base: !!perl/array:RDF::Query::Node::Resource
     - URI
     - http://example.org/
@@ -4009,20 +4045,22 @@ __END__
     __DEFAULT__: http://example.org/#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 123
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 123
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &1 []
   base: !!perl/array:RDF::Query::Node::Resource
     - URI
     - http://example.org/
@@ -4038,20 +4076,22 @@ __END__
     __DEFAULT__: http://example.org/#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 123.
-            - ~
-            - http://www.w3.org/2001/XMLSchema#decimal
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 123.
+              - ~
+              - http://www.w3.org/2001/XMLSchema#decimal
+      - &1 []
   base: !!perl/array:RDF::Query::Node::Resource
     - URI
     - http://example.org/
@@ -4067,18 +4107,20 @@ __END__
     __DEFAULT__: http://example.org/#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - Long'''Literal
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - Long'''Literal
+      - &1 []
   base: !!perl/array:RDF::Query::Node::Resource
     - URI
     - http://example.org/
@@ -4094,18 +4136,20 @@ __END__
     __DEFAULT__: http://example.org/#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/#p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - Long"""Literal
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/#p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - Long"""Literal
+      - &1 []
   base: !!perl/array:RDF::Query::Node::Resource
     - URI
     - http://example.org/
@@ -4118,20 +4162,22 @@ __END__
   namespaces: {}
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - a
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - b
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - +1.0
-            - ~
-            - http://www.w3.org/2001/XMLSchema#decimal
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - a
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - b
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - +1.0
+              - ~
+              - http://www.w3.org/2001/XMLSchema#decimal
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-general-09.rq
@@ -4141,20 +4187,22 @@ __END__
   namespaces: {}
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - a
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - b
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1.0e0
-            - ~
-            - http://www.w3.org/2001/XMLSchema#double
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - a
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - b
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1.0e0
+              - ~
+              - http://www.w3.org/2001/XMLSchema#double
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-general-10.rq
@@ -4164,20 +4212,22 @@ __END__
   namespaces: {}
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - a
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - b
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - +1.0e+1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#double
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - a
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - b
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - +1.0e+1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#double
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-lists-03.rq
@@ -4190,20 +4240,22 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-lists-04.rq
@@ -4216,56 +4268,54 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - &1 !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-          - &2 !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a2
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *2
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 2
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *2
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - &1 !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a1
+            - &2 !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - &3 !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
+            - &4 !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a2
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *4
+            - *2
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 2
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *4
+            - *3
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &5 []
   variables: []
 ---
 - (DAWG) syntax-lists-02.rq
@@ -4277,20 +4327,22 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &1 []
   variables: []
 ---
 - (DAWG) syntax-lists-04.rq
@@ -4303,56 +4355,54 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - &1 !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-          - &2 !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a2
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *2
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 2
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *2
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - *1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 1
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - &1 !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a1
+            - &2 !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#first
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - &3 !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#rest
+            - &4 !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a2
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *4
+            - *2
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 2
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *4
+            - *3
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#nil
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - *1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 1
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &5 []
   variables: []
 ---
 - (DAWG) dawg-eval
@@ -4415,55 +4465,57 @@ __END__
     __DEFAULT__: http://example.org/things#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::Filter
-      - FILTER
-      - !!perl/array:RDF::Query::Expression::Function
-        - !!perl/array:RDF::Query::Node::Resource
-          - URI
-          - sparql:logical-and
-        - !!perl/array:RDF::Query::Expression::Unary
-          - '!'
-          - !!perl/array:RDF::Query::Expression::Function
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - sparql:sameterm
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Filter
+        - FILTER
+        - !!perl/array:RDF::Query::Expression::Function
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - sparql:logical-and
+          - !!perl/array:RDF::Query::Expression::Unary
+            - '!'
+            - !!perl/array:RDF::Query::Expression::Function
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - sparql:sameterm
+              - !!perl/array:RDF::Query::Node::Variable
+                - v1
+              - !!perl/array:RDF::Query::Node::Variable
+                - v2
+          - !!perl/array:RDF::Query::Expression::Binary
+            - ==
             - !!perl/array:RDF::Query::Node::Variable
               - v1
             - !!perl/array:RDF::Query::Node::Variable
               - v2
-        - !!perl/array:RDF::Query::Expression::Binary
-          - ==
-          - !!perl/array:RDF::Query::Node::Variable
-            - v1
-          - !!perl/array:RDF::Query::Node::Variable
-            - v2
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - x1
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example.org/things#p
-            - !!perl/array:RDF::Query::Node::Variable
-              - v1
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - x2
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example.org/things#p
-            - !!perl/array:RDF::Query::Node::Variable
-              - v2
-  variables:
-    - !!perl/array:RDF::Query::Node::Variable
-      - x1
-    - !!perl/array:RDF::Query::Node::Variable
-      - v1
-    - !!perl/array:RDF::Query::Node::Variable
-      - x2
-    - !!perl/array:RDF::Query::Node::Variable
-      - v2
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x1
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/things#p
+              - !!perl/array:RDF::Query::Node::Variable
+                - v1
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x2
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/things#p
+              - !!perl/array:RDF::Query::Node::Variable
+                - v2
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - x1
+        - !!perl/array:RDF::Query::Node::Variable
+          - v1
+        - !!perl/array:RDF::Query::Node::Variable
+          - x2
+        - !!perl/array:RDF::Query::Node::Variable
+          - v2
+  variables: *1
 ---
 - (DAWG) dawg-eval: basic/manifest#term-8
 - |
@@ -4477,19 +4529,23 @@ __END__
     xsd: http://www.w3.org/2001/XMLSchema#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#x
-          - !!perl/array:RDF::Query::Node::Variable
-            - p
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - +5
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#x
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - +5
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - p
@@ -4699,39 +4755,47 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::Union
-        - UNION
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Blank
-                - BLANK
-                - a
-              - !!perl/array:RDF::Query::Node::Variable
-                - p
-              - !!perl/array:RDF::Query::Node::Variable
-                - v
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Blank
-                - BLANK
-                - a
-              - !!perl/array:RDF::Query::Node::Variable
-                - q
-              - !!perl/array:RDF::Query::Node::Blank
-                - BLANK
-                - a
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Blank
-                - BLANK
-                - b
-              - !!perl/array:RDF::Query::Node::Variable
-                - q
-              - !!perl/array:RDF::Query::Node::Blank
-                - BLANK
-                - c
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Union
+          - UNION
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Blank
+                  - BLANK
+                  - a
+                - !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Variable
+                  - v
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Blank
+                  - BLANK
+                  - a
+                - !!perl/array:RDF::Query::Node::Variable
+                  - q
+                - !!perl/array:RDF::Query::Node::Blank
+                  - BLANK
+                  - a
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Blank
+                  - BLANK
+                  - b
+                - !!perl/array:RDF::Query::Node::Variable
+                  - q
+                - !!perl/array:RDF::Query::Node::Blank
+                  - BLANK
+                  - c
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
+        - !!perl/array:RDF::Query::Node::Variable
+          - v
+        - !!perl/array:RDF::Query::Node::Variable
+          - q
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - p
@@ -4754,58 +4818,62 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::Optional
-        - OPTIONAL
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#x
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#y
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#z
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Variable
-            - a
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#b
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#c
-      - !!perl/array:RDF::Query::Algebra::Union
-        - UNION
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#x1
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#y1
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#z1
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#x2
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#y2
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#z2
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Optional
+          - OPTIONAL
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#x
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#y
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#z
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - a
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#b
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#c
+        - !!perl/array:RDF::Query::Algebra::Union
+          - UNION
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#x1
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#y1
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#z1
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#x2
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#y2
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#z2
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - a
   variables:
     - !!perl/array:RDF::Query::Node::Variable
       - a
@@ -4820,37 +4888,39 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::Optional
-        - OPTIONAL
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#a
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#b
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#c
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Variable
-            - x
-          - !!perl/array:RDF::Query::Node::Variable
-            - y
-          - !!perl/array:RDF::Query::Node::Variable
-            - z
-  variables:
-    - !!perl/array:RDF::Query::Node::Variable
-      - x
-    - !!perl/array:RDF::Query::Node::Variable
-      - y
-    - !!perl/array:RDF::Query::Node::Variable
-      - z
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Optional
+          - OPTIONAL
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#a
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#b
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#c
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Variable
+              - y
+            - !!perl/array:RDF::Query::Node::Variable
+              - z
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - x
+        - !!perl/array:RDF::Query::Node::Variable
+          - y
+        - !!perl/array:RDF::Query::Node::Variable
+          - z
+  variables: *1
 ---
 - (DAWG) dawg-syntax: expr-equals/manifest#eq-2-1
 - |
@@ -4966,29 +5036,31 @@ __END__
     a: http://example.org/ns2#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns2#
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#a
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#
-  variables: []
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns2#
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#a
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#
+      - &1 []
+  variables: *1
 ---
 - (DAWG) dawg-syntax: syntax-union-02.rq
 - |
@@ -5002,55 +5074,57 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::Union
-        - UNION
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
         - !!perl/array:RDF::Query::Algebra::Union
           - UNION
+          - !!perl/array:RDF::Query::Algebra::Union
+            - UNION
+            - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+              - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+                - !!perl/array:RDF::Query::Algebra::Triple
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - s
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - p
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - o
+            - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+              - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+                - !!perl/array:RDF::Query::Algebra::Triple
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - a
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - b
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - c
           - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
             - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
               - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - r
                 - !!perl/array:RDF::Query::Node::Variable
                   - s
                 - !!perl/array:RDF::Query::Node::Variable
-                  - p
-                - !!perl/array:RDF::Query::Node::Variable
-                  - o
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Triple
-                - !!perl/array:RDF::Query::Node::Variable
-                  - a
-                - !!perl/array:RDF::Query::Node::Variable
-                  - b
-                - !!perl/array:RDF::Query::Node::Variable
-                  - c
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - r
-              - !!perl/array:RDF::Query::Node::Variable
-                - s
-              - !!perl/array:RDF::Query::Node::Variable
-                - t
-  variables:
-    - !!perl/array:RDF::Query::Node::Variable
-      - s
-    - !!perl/array:RDF::Query::Node::Variable
-      - p
-    - !!perl/array:RDF::Query::Node::Variable
-      - o
-    - !!perl/array:RDF::Query::Node::Variable
-      - a
-    - !!perl/array:RDF::Query::Node::Variable
-      - b
-    - !!perl/array:RDF::Query::Node::Variable
-      - c
-    - !!perl/array:RDF::Query::Node::Variable
-      - r
-    - !!perl/array:RDF::Query::Node::Variable
-      - t
+                  - t
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - s
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
+        - !!perl/array:RDF::Query::Node::Variable
+          - o
+        - !!perl/array:RDF::Query::Node::Variable
+          - a
+        - !!perl/array:RDF::Query::Node::Variable
+          - b
+        - !!perl/array:RDF::Query::Node::Variable
+          - c
+        - !!perl/array:RDF::Query::Node::Variable
+          - r
+        - !!perl/array:RDF::Query::Node::Variable
+          - t
+  variables: *1
 ---
 - (DAWG) dawg-syntax: syntax-order-06.rq
 - |
@@ -5064,46 +5138,48 @@ __END__
     __DEFAULT__: http://example.org/ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::Sort
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - s
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Sort
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - s
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Variable
+                - o
+        -
+          - DESC
+          - !!perl/array:RDF::Query::Expression::Binary
+            - +
             - !!perl/array:RDF::Query::Node::Variable
               - o
-      -
-        - DESC
-        - !!perl/array:RDF::Query::Expression::Binary
-          - +
+            - !!perl/array:RDF::Query::Node::Literal
+              - LITERAL
+              - 57
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+        -
+          - ASC
+          - !!perl/array:RDF::Query::Expression::Function
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#func2
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+        -
+          - ASC
           - !!perl/array:RDF::Query::Node::Variable
-            - o
-          - !!perl/array:RDF::Query::Node::Literal
-            - LITERAL
-            - 57
-            - ~
-            - http://www.w3.org/2001/XMLSchema#integer
-      -
-        - ASC
-        - !!perl/array:RDF::Query::Expression::Function
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/ns#func2
-          - !!perl/array:RDF::Query::Node::Variable
-            - o
-      -
-        - ASC
+            - s
+      - &1
         - !!perl/array:RDF::Query::Node::Variable
           - s
-  variables:
-    - !!perl/array:RDF::Query::Node::Variable
-      - s
-    - !!perl/array:RDF::Query::Node::Variable
-      - p
-    - !!perl/array:RDF::Query::Node::Variable
-      - o
+        - !!perl/array:RDF::Query::Node::Variable
+          - p
+        - !!perl/array:RDF::Query::Node::Variable
+          - o
+  variables: *1
 ---
 - (DAWG) dawg-syntax: syntax-bnode-02.rq
 - |
@@ -5116,18 +5192,20 @@ __END__
     __DEFAULT__: http://example.org/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a1
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example.org/p
-          - !!perl/array:RDF::Query::Node::Blank
-            - BLANK
-            - a2
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a1
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/p
+            - !!perl/array:RDF::Query::Node::Blank
+              - BLANK
+              - a2
+      - &1 []
   variables: []
 ---
 - (DAWG) dawg-syntax: syntax-esc-04.rq
@@ -5140,17 +5218,19 @@ __END__
     __DEFAULT__: http://example/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Triple
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - x
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - http://example/p
-          - !!perl/array:RDF::Query::Node::Variable
-            - xxx
-  variables:
-    - !!perl/array:RDF::Query::Node::Variable
-      - xxx
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example/p
+            - !!perl/array:RDF::Query::Node::Variable
+              - xxx
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - xxx
+  variables: *1

@@ -121,7 +121,21 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
-	return $self->pattern->as_sparql( $context, $indent );
+	my $vlist	= $self->vars;
+	my (@vars);
+	foreach my $k (@$vlist) {
+		if ($k->isa('RDF::Query::Expression')) {
+			push(@vars, $k->sse({}, ''));
+		} elsif ($k->isa('RDF::Query::Node::Variable')) {
+			push(@vars, '?' . $k->name);
+		} else {
+			push(@vars, $k);
+		}
+	}
+	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
+	my $svars	= join(' ', sort @vars);
+	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
+	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
 }
 
 =item C<< type >>

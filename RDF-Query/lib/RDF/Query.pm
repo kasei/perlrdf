@@ -138,7 +138,9 @@ BEGIN {
 
 =over 4
 
-=item C<new ( $query, $baseuri, $languri, $lang )>
+=item C<< new ( $query, \%options ) >>
+
+=item C<< new ( $query, $baseuri, $languri, $lang, %options ) >>
 
 Returns a new RDF::Query object for the specified C<$query>.
 The query language defaults to SPARQL, but may be set specifically by
@@ -152,7 +154,15 @@ specifying either C<$languri> or C<$lang>, whose acceptable values are:
 
 sub new {
 	my $class	= shift;
-	my ($query, $baseuri, $languri, $lang, %options)	= @_;
+	my $query	= shift;
+
+	my ($baseuri, $languri, $lang, %options);
+	if (@_ and ref($_[0])) {
+		%options	= %{ shift() };
+		$lang		= $options{ lang };
+	} else {
+		($baseuri, $languri, $lang, %options)	= @_;
+	}
 	$class->clear_error;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
@@ -702,11 +712,9 @@ sub as_sparql {
 	}
 	my $mod	= join("\n", @mod);
 	
-	my $methoddata;
+	my $methoddata	= '';
 	if ($method eq 'SELECT') {
-		my $distp	= $ggp->subpatterns_of_type('RDF::Query::Algebra::Distinct');
-		my $dist	= ($distp) ? 'DISTINCT ' : '';
-		$methoddata	= sprintf("%s %s%s\nWHERE", $method, $dist, $vars);
+		$methoddata	= $method;
 	} elsif ($method eq 'ASK') {
 		$methoddata	= $method;
 	} elsif ($method eq 'CONSTRUCT') {

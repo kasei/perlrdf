@@ -81,7 +81,7 @@ foreach my $data (@models) {
 	{
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name }' );
-		my $algebra	= $parsed->{triples}[0];
+		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'ggp algebra to plan' );
 	}
@@ -89,7 +89,7 @@ foreach my $data (@models) {
 	{
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name } ORDER BY ?name' );
-		my $algebra	= $parsed->{triples}[0];
+		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Sort', 'sort algebra to plan' );
 		isa_ok( $plan->pattern, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
@@ -98,7 +98,7 @@ foreach my $data (@models) {
 	{
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name . FILTER(?name = "Greg") }' );
-		my $algebra	= $parsed->{triples}[0];
+		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
 # 		if ($bridge->supports('basic_graph_pattern')) {

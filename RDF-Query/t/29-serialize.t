@@ -60,7 +60,8 @@ use_ok( 'RDF::Query' );
 		USING foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 	my $sparql	= $query->as_sparql;
-	my $again	= RDF::Query->new( $sparql )->as_sparql;
+	my $query2	= RDF::Query->new( $sparql );
+	my $again	= $query2->as_sparql;
 	is( $sparql, $again, 'as_sparql: rdql round trip: select' );
 }
 
@@ -274,7 +275,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(union (bgp (triple ?person foaf:name ?name)) (bgp (triple ?person foaf:nick ?name)))', 'sse: select with filter regex' );
+	is( $sse, '(project (union (bgp (triple ?person foaf:name ?name)) (bgp (triple ?person foaf:nick ?name))) (?person ?name))', 'sse: select with filter regex' );
 }
 
 TODO: {
