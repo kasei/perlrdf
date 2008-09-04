@@ -331,7 +331,7 @@ sub prune_plans {
 	my $context	= shift;
 	my @plans	= @_;
 	my $cm		= $context->costmodel;
-	my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, $cm->cost($_) ] } @plans;
+	my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, $cm->cost($_, $context) ] } @plans;
 	return $plan;
 }
 
@@ -392,7 +392,7 @@ sub _triple_join_plans {
 		return @plans;
 	} else {
 		my $cm		= $context->costmodel;
-		my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, ($cm ? $cm->cost($_->[0]) : 0) ] } @plans;
+		my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, ($cm ? $cm->cost($_->[0], $context) : 0) ] } @plans;
 		return $plan;
 	}
 }

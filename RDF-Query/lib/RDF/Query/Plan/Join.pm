@@ -63,6 +63,7 @@ Returns a string representing the state of the nodes of the triple (bound or fre
 
 sub bf {
 	my $self	= shift;
+	my $context	= shift;
 	my @bf;
 	my %var_to_num;
 	my %use_count;
@@ -71,7 +72,7 @@ sub bf {
 		unless ($t->can('bf')) {
 			throw RDF::Query::Error::ExecutionError -text => "Cannot compute bf for $t during join";
 		}
-		my $bf	= $t->bf;
+		my $bf	= $t->bf( $context );
 		if ($bf =~ /f/) {
 			$bf	= '';
 			foreach my $n ($t->nodes) {

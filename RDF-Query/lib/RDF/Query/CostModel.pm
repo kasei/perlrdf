@@ -58,11 +58,12 @@ SPARQL algebra pattern.
 sub cost {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
 	my $method	= "_cost_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("computing cost of $type pattern");
-	return $self->$method( $pattern );
+	return $self->$method( $pattern, $context );
 }
 
 
@@ -88,11 +89,12 @@ sub _max {
 sub _cardinality {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
 	my $method	= "_cardinality_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("computing cardinality of $type pattern");
-	my $cardinality	= $self->$method( $pattern );
+	my $cardinality	= $self->$method( $pattern, $context );
 	return $cardinality;
 }
 

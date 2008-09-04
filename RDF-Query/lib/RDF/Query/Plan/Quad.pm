@@ -182,11 +182,19 @@ Returns a string representing the state of the nodes of the triple (bound or fre
 
 sub bf {
 	my $self	= shift;
+	my $context	= shift;
 	my $bf		= '';
+	my $bound	= $context->bound;
 	foreach my $n (@{ $self }[1,2,3,4]) {
-		$bf		.= ($n->isa('RDF::Trine::Node::Variable'))
-				? 'f'
-				: 'b';
+		if ($n->isa('RDF::Trine::Node::Variable')) {
+			if (my $b = $bound->{ $n->name }) {
+				$bf	= 'b';
+			} else {
+				$bf	= 'f';
+			}
+		} else {
+			$bf	= 'b';
+		}
 	}
 	return $bf;
 }

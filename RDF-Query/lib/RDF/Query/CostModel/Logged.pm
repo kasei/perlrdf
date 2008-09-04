@@ -59,17 +59,19 @@ sub logger {
 sub _cost_nestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp );
+	return $self->_cardinality( $bgp, $context );
 }
 
 sub _cost_triple {
 	my $self	= shift;
 	my $triple	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $triple->sse( {}, '' ) );
-	return $self->_cardinality( $triple );
+	return $self->_cardinality( $triple, $context );
 }
 
 ################################################################################
@@ -77,6 +79,7 @@ sub _cost_triple {
 sub _cardinality_triple {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf;
 	my $f		= ($bf =~ tr/f//);
@@ -90,18 +93,21 @@ sub _cardinality_triple {
 		return $card;
 	} else {
 		$l->debug('falling back on naive costmodel');
-		return $self->{n}->_cardinality_triple( $pattern );
+		return $self->{n}->_cardinality_triple( $pattern, $context );
 	}
 }
 
 sub _cardinality_service {
 	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
 	die;
 }
 
 sub _cardinality_nestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my @triples	= ($pattern->lhs, $pattern->rhs);
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf;
@@ -116,7 +122,7 @@ sub _cardinality_nestedloop {
 		return $card;
 	} else {
 		$l->debug('falling back on naive costmodel');
-		return $self->{n}->_cardinality_nestedloop( $pattern );
+		return $self->{n}->_cardinality_nestedloop( $pattern, $context );
 	}
 }
 

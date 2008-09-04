@@ -46,81 +46,101 @@ sub new {
 sub _cost_service {
 	my $self	= shift;
 	my $plan	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
 sub _cost_union {
 	my $self	= shift;
 	my $plan	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->cost( $plan->lhs ) + $self->cost( $plan->rhs );
+	return $self->cost( $plan->lhs, $context ) + $self->cost( $plan->rhs, $context );
 }
 
 sub _cost_filter {
 	my $self	= shift;
 	my $plan	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
 sub _cost_project {
 	my $self	= shift;
 	my $plan	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
 sub _cost_constant {
 	my $self	= shift;
-	my $pattern		= shift;
+	my $pattern	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $pattern->sse( {}, '' ) );
-	return $self->_cardinality( $pattern );
+	return $self->_cardinality( $pattern, $context );
 }
 
 sub _cost_nestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp ) + $self->cost( $bgp->lhs ) + $self->cost( $bgp->rhs );
+	return $self->_cardinality( $bgp, $context ) + $self->cost( $bgp->lhs, $context ) + $self->cost( $bgp->rhs, $context );
 }
 
 sub _cost_pushdownnestedloop {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp ) + $self->cost( $bgp->lhs ) + ($self->_cardinality( $bgp->lhs ) * $self->cost( $bgp->rhs ));
+	my $lhscost	= $self->cost( $bgp->lhs, $context );
+	
+	$context->pushstack();
+	my $bound	= $context->bound;
+	# XXX we need a list of the variables that will be bound by the LHS, so that
+	# XXX we can set them in the context and know they will be bound during cost computation. 
+	$context->bound( { %$bound } );
+	my $rhscost	= $self->_cardinality( $bgp->lhs, $context ) * $self->cost( $bgp->rhs, $context );
+	$context->popstack();
+	
+	return  $lhscost + $rhscost;
 }
 
 sub _cost_triple {
 	my $self	= shift;
 	my $triple	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $triple->sse( {}, '' ) );
-	return $self->_cardinality( $triple );
+	return $self->_cardinality( $triple, $context );
 }
 
 sub _cost_quad {
 	my $self	= shift;
 	my $quad	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $quad->sse( {}, '' ) );
-	return $self->_cardinality( $quad );
+	return $self->_cardinality( $quad, $context );
 }
 
 sub _cost_distinct {
 	my $self	= shift;
 	my $plan	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
 ################################################################################
@@ -128,8 +148,9 @@ sub _cost_distinct {
 sub _cardinality_triple {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my $size	= $self->_size;
-	my $bf		= $pattern->bf;
+	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 3;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
@@ -143,8 +164,9 @@ sub _cardinality_triple {
 sub _cardinality_quad {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my $size	= $self->_size;
-	my $bf		= $pattern->bf;
+	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 4;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
@@ -158,41 +180,47 @@ sub _cardinality_quad {
 sub _cardinality_filter {
 	my $self	= shift;
 	my $pattern	= shift;
-	return $self->_cardinality( $pattern->pattern );
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );
 }
 
 sub _cardinality_distinct {
 	my $self	= shift;
 	my $pattern	= shift;
-	return $self->_cardinality( $pattern->pattern );
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );
 }
 
 sub _cardinality_project {
 	my $self	= shift;
 	my $pattern	= shift;
-	return $self->_cardinality( $pattern->pattern );
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );
 }
 
 sub _cardinality_service {
 	my $self	= shift;
 	my $pattern	= shift;
-	return $self->_cardinality( $pattern->pattern );	# XXX this isn't really right. it uses the local data to estimate the cardinality of the remote query...
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );	# XXX this isn't really right. it uses the local data to estimate the cardinality of the remote query...
 }
 
 sub _cardinality_union {
 	my $self	= shift;
 	my $pattern	= shift;
-	return $self->_cardinality( $pattern->lhs ) + $self->_cardinality( $pattern->rhs );
+	my $context	= shift;
+	return $self->_cardinality( $pattern->lhs, $context ) + $self->_cardinality( $pattern->rhs, $context );
 }
 
 sub _cardinality_nestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my $size	= $self->_size;
 
 	my $cardinality;
 	try {
-		my @bf		= $pattern->bf;
+		my @bf		= $pattern->bf( $context );
 		my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 		my @triples	= ($pattern->rhs, $pattern->lhs);
 		
@@ -222,15 +250,15 @@ sub _cardinality_nestedloop {
 		$l->debug( 'Cardinality of BGP is : ' . $card );
 		
 		# round the cardinality to an integer
-		$cardinality	= int($card + .5 * ($card <=> 0)) * 2;	# XXX hack multiplier. need to figure out what the actual cost of this is based on the cardinality of both sides
+		$cardinality	= int($card + .5 * ($card <=> 0));
 	} catch RDF::Query::Error::ExecutionError with {
-		my $lhs	= $self->_cardinality( $pattern->lhs );
+		my $lhs	= $self->_cardinality( $pattern->lhs, $context );
 		unless (defined($lhs)) {
 			warn "Computing cardinality of LHS of NestedLoop join failed";
 			throw RDF::Query::Error::ExecutionError -text => "Computing cardinality of LHS of NestedLoop join failed";
 		}
 		
-		my $rhs	= $self->_cardinality( $pattern->rhs );
+		my $rhs	= $self->_cardinality( $pattern->rhs, $context );
 		unless (defined($rhs)) {
 			warn "Computing cardinality of RHS of NestedLoop join failed";
 			throw RDF::Query::Error::ExecutionError -text => "Computing cardinality of RHS of NestedLoop join failed";
@@ -244,12 +272,13 @@ sub _cardinality_nestedloop {
 sub _cardinality_pushdownnestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my @triples	= ($pattern->rhs, $pattern->lhs);
 	my $size	= $self->_size;
 	
 	my $cardinality;
 	try {
-		my @bf		= $pattern->bf;
+		my @bf		= $pattern->bf( $context );
 		my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 		
 		my %seen_frees;
@@ -278,14 +307,14 @@ sub _cardinality_pushdownnestedloop {
 		$l->debug( 'Cardinality of BGP is : ' . $card );
 		
 		# round the cardinality to an integer
-		$cardinality	= int($card + .5 * ($card <=> 0)) * 1.5;	# XXX hack multiplier. need to figure out what the actual cost of this is based on the cardinality and the overhead of the RHS
+		$cardinality	= int($card + .5 * ($card <=> 0));
 	} catch RDF::Query::Error::ExecutionError with {
-		my $lhs	= $self->_cardinality( $pattern->lhs );
+		my $lhs	= $self->_cardinality( $pattern->lhs, $context );
 		unless (defined($lhs)) {
 			throw RDF::Query::Error::ExecutionError -text => "Computing cardinality of LHS of PushDownNestedLoop join failed";
 		}
 		
-		my $rhs	= $self->_cardinality( $pattern->rhs );
+		my $rhs	= $self->_cardinality( $pattern->rhs, $context );
 		unless (defined($rhs)) {
 			throw RDF::Query::Error::ExecutionError -text => "Computing cardinality of RHS of PushDownNestedLoop join failed";
 		}
@@ -298,6 +327,7 @@ sub _cardinality_pushdownnestedloop {
 sub _cardinality_constant {
 	my $self	= shift;
 	my $pattern	= shift;
+	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $card	= $pattern->size;
 	$l->trace('Cardinality of Constant is ' . $card);
