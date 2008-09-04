@@ -264,27 +264,24 @@ sub get {
 	}
 }
 
-=item C<execute ( $model, %args )>
+=item C<< prepare ( $model ) >>
 
-Executes the query using the specified model. If called in a list
-context, returns an array of rows, otherwise returns an iterator.
+Prepares the query, constructing a query execution plan, and returns a list
+containing ($plan, $context). To execute the plan, call
+C<< execute_plan( $plan, $context ) >>.
 
 =cut
 
-sub execute {
+sub prepare {
 	my $self	= shift;
 	my $model	= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
-	$l->debug("executing query with model " . ($model or ''));
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
-	
+	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
 	my $parsed	= $self->{parsed};
 	
-	$self->{model}		= $model;
-	
-	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
 	my $bridge	= $self->{bridge} || $self->get_bridge( $model, %args );
 	if ($bridge) {
 		$self->bridge( $bridge );
@@ -308,25 +305,64 @@ sub execute {
 					costmodel	=> $self->costmodel,
 					optimize	=> $self->{optimize},
 				);
-	my $pattern	= $self->pattern;
-	$l->trace("calling fixup()");
-	my $cpattern	= $self->fixup();
+	
+	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
 	my $plan		= $self->query_plan( $context );
 	$l->trace("-> done.");
+	
 	unless ($plan) {
 		throw RDF::Query::Error::CompilationError -text => "Query didn't produce a valid execution plan";
 	}
 	
+	return ($plan, $context);
+}
+
+=item C<execute ( $model, %args )>
+
+Executes the query using the specified model. If called in a list
+context, returns an array of rows, otherwise returns an iterator.
+
+=cut
+
+sub execute {
+	my $self	= shift;
+	my $model	= shift;
+	my %args	= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	$l->debug("executing query with model " . ($model or ''));
+	
+	my ($plan, $context)	= $self->prepare( $model, %args );
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		exit;
 	}
-	
+	return $self->execute_plan( $plan, $context );
+}
+
+=item C<< execute_plan ( $context ) >>
+
+Executes the query using the supplied ExecutionContext. If called in a list
+context, returns an array of rows, otherwise returns an iterator.
+
+=cut
+
+sub execute_plan {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $bridge	= $context->model;
+	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+	
+	my $pattern	= $self->pattern;
+	$l->trace("calling fixup()");
+	my $cpattern	= $self->fixup();
 	
 	my @funcs	= $pattern->referenced_functions;
 	foreach my $f (@funcs) {

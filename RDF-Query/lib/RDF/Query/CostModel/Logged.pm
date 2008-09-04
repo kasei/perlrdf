@@ -72,6 +72,8 @@ sub _cost_triple {
 	return $self->_cardinality( $triple );
 }
 
+################################################################################
+
 sub _cardinality_triple {
 	my $self	= shift;
 	my $pattern	= shift;

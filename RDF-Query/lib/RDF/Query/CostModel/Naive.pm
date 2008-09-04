@@ -48,7 +48,7 @@ sub _cost_service {
 	my $plan	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return 2 * $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
 }
 
 sub _cost_union {
@@ -64,7 +64,15 @@ sub _cost_filter {
 	my $plan	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return 2 * $self->cost( $plan->pattern );
+	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+}
+
+sub _cost_project {
+	my $self	= shift;
+	my $plan	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
 }
 
 sub _cost_constant {
@@ -80,7 +88,7 @@ sub _cost_nestedloop {
 	my $bgp		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp );
+	return $self->_cardinality( $bgp ) + $self->cost( $bgp->lhs ) + $self->cost( $bgp->rhs );
 }
 
 sub _cost_pushdownnestedloop {
@@ -88,7 +96,7 @@ sub _cost_pushdownnestedloop {
 	my $bgp		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp );
+	return $self->_cardinality( $bgp ) + $self->cost( $bgp->lhs ) + ($self->_cardinality( $bgp->lhs ) * $self->cost( $bgp->rhs ));
 }
 
 sub _cost_triple {
@@ -106,6 +114,16 @@ sub _cost_quad {
 	$l->debug( 'Computing COST: ' . $quad->sse( {}, '' ) );
 	return $self->_cardinality( $quad );
 }
+
+sub _cost_distinct {
+	my $self	= shift;
+	my $plan	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	return $self->_cardinality( $plan ) + $self->cost( $plan->pattern );
+}
+
+################################################################################
 
 sub _cardinality_triple {
 	my $self	= shift;
@@ -138,6 +156,18 @@ sub _cardinality_quad {
 }
 
 sub _cardinality_filter {
+	my $self	= shift;
+	my $pattern	= shift;
+	return $self->_cardinality( $pattern->pattern );
+}
+
+sub _cardinality_distinct {
+	my $self	= shift;
+	my $pattern	= shift;
+	return $self->_cardinality( $pattern->pattern );
+}
+
+sub _cardinality_project {
 	my $self	= shift;
 	my $pattern	= shift;
 	return $self->_cardinality( $pattern->pattern );

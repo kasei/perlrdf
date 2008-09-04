@@ -102,7 +102,7 @@ END
 sub query {
 	my $sparql	= shift;
 	my %args	= @_;
-	my $query	= new RDF::Query ( $sparql, undef, undef, 'sparql', %args );
+	my $query	= new RDF::Query ( $sparql, undef, undef, 'sparql', %args, , optimize => 1 );
 	my $stream	= $query->execute( $model );
 	my @res		= $stream->get_all;
 }

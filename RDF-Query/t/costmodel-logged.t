@@ -102,7 +102,7 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		# ?p a ?type
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, RDF::Trine::Node::Variable->new('type'), { bf => '1b2' } );
 		my $cost		= $costmodel->cost( $triple );
-		is( $cost, 0.5, 'Cost of 1-bound triple' );
+		is( $cost, 2, 'Cost of 1-bound triple' );
 	}
 }
 

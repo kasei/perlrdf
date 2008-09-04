@@ -154,7 +154,11 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(project (%s)\n${indent}${more}%s\n${indent})", join(' ', @{$self->[1]}, map { $_->sse( $context, "${indent}${more}" ) } @{$self->[2]}), $self->pattern->sse( $context, "${indent}${more}" ));
+	my $vars	= join(' ',
+					@{$self->[2]},
+					map { $_->sse( $context, "${indent}${more}" ) } @{$self->[3]}
+				);
+	return sprintf("(project (%s)\n${indent}${more}%s\n${indent})", $vars, $self->pattern->sse( $context, "${indent}${more}" ));
 }
 
 =item C<< graph ( $g ) >>
