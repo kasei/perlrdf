@@ -23,7 +23,7 @@ use warnings;
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	my $self	= bless( { %args }, $class );
+	my $self	= bless( [{ %args }], $class );
 	return $self;
 }
 
@@ -35,8 +35,30 @@ sub copy {
 	my $self	= shift;
 	my %args	= @_;
 	my $class	= ref($self);
-	my %data	= %{ $self };
-	return $class->new( %data, %args );
+	my @data;
+	foreach my $i (0 .. $#{ $self }) {
+		push(@data, { %{ $self->[$i] } });
+	}
+	@{ $data[0] }{ keys %args }	= values %args;
+	return bless( \@data, $class );
+}
+
+=item C<< pushstack >>
+
+=cut
+
+sub pushstack {
+	my $self	= shift;
+	unshift( @{ $self }, {} );
+}
+
+=item C<< popstack >>
+
+=cut
+
+sub popstack {
+	my $self	= shift;
+	shift( @{ $self } );
 }
 
 =item C<< model >>
@@ -45,7 +67,7 @@ sub copy {
 
 sub model {
 	my $self	= shift;
-	return $self->{model};
+	return $self->_get_value( 'model', @_ );
 }
 
 =item C<< query >>
@@ -54,7 +76,7 @@ sub model {
 
 sub query {
 	my $self	= shift;
-	return $self->{query};
+	return $self->_get_value( 'query', @_ );
 }
 
 =item C<< bound >>
@@ -63,7 +85,7 @@ sub query {
 
 sub bound {
 	my $self	= shift;
-	return $self->{bound} || {};
+	return $self->_get_value( 'bound', @_ ) || {};
 }
 
 =item C<< base >>
@@ -72,7 +94,7 @@ sub bound {
 
 sub base {
 	my $self	= shift;
-	return $self->{base} || {};
+	return $self->_get_value( 'base', @_ ) || {};
 }
 
 =item C<< ns >>
@@ -81,7 +103,7 @@ sub base {
 
 sub ns {
 	my $self	= shift;
-	return $self->{ns} || {};
+	return $self->_get_value( 'ns', @_ ) || {};
 }
 
 =item C<< logger >>
@@ -90,7 +112,7 @@ sub ns {
 
 sub logger {
 	my $self	= shift;
-	return $self->{logger};
+	return $self->_get_value( 'logger', @_ );
 }
 
 =item C<< costmodel >>
@@ -99,7 +121,7 @@ sub logger {
 
 sub costmodel {
 	my $self	= shift;
-	return $self->{costmodel};
+	return $self->_get_value( 'costmodel', @_ );
 }
 
 =item C<< optimize >>
@@ -108,7 +130,21 @@ sub costmodel {
 
 sub optimize {
 	my $self	= shift;
-	return $self->{optimize};
+	return $self->_get_value( 'optimize', @_ );
+}
+
+sub _get_value {
+	my $self	= shift;
+	my $key		= shift;
+	if (@_) {
+		$self->[0]{ $key }	= shift;
+	}
+	foreach my $i (0 .. $#{ $self }) {
+		if (exists($self->[ $i ]{ $key })) {
+			return $self->[ $i ]{ $key };
+		}
+	}
+	return;
 }
 
 1;
