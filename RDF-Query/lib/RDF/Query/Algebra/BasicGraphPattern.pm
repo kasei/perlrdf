@@ -335,57 +335,6 @@ sub bind_variables {
 	return $class->new( map { $_->bind_variables( $bound ) } $self->triples );
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.basicgraphpattern");
-	
-	my @streams;
-	my (@triples)	= $self->triples;
-	my $t0			= [gettimeofday];
-	
-	my $stream;
-	if (@triples) {
-		my $triple	= shift(@triples);
-		$stream	= $triple->execute( $query, $bridge, $bound, $context, %args );
-		foreach my $t (@triples) {
-			$stream	= RDF::Query::Algebra->nested_loop_local_join( $stream, $t, $query, $bridge, $bound, $context, %args );
-# 			my $ts	= $t->execute( $query, $bridge, $bound, $context, %args );
-# 			$stream	= RDF::Trine::Iterator::Bindings->join_streams( $stream, $ts );
-		}
-	} else {
-		$stream	= RDF::Trine::Iterator::Bindings->new([{}], []);
-	}
-	
-	my $count	= 0;
-	$stream	= sfinally {
-		if (my $log = $query->logger) {
-			$log->push_key_value( 'cardinality-nestedloop', $self->as_sparql, $count );
-			if (my $bf = $self->bf) {
-				$log->push_key_value( 'cardinality-bf-nestedloop', $bf, $count );
-			}
-		}
-	} swatch { $count++ } $stream;
-	
-	if (my $log = $query->logger) {
-		$l->debug("logging bgp execution time");
-		my $elapsed = tv_interval ( $t0 );
-		$log->push_key_value( 'execute_time-nestedloop', $self->as_sparql, $elapsed );
-	} else {
-		$l->debug("no logger present for bgp execution time");
-	}
-
-	return $stream;
-}
-
 
 1;
 

@@ -205,33 +205,6 @@ sub fixup {
 	}
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	
-	my $expr		= $self->expr;
-	my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
-	my $filter		= RDF::Query::Expression::Function->new( $bool, $expr );
-	my $pattern		= $self->pattern;
-	my $stream		= sgrep {
-						my $bound	= $_;
-						my $bool	= 0;
-						eval {
-							my $value	= $filter->evaluate( $query, $bridge, $bound );
-							$bool	= ($value->literal_value eq 'true') ? 1 : 0;
-						};
-						return $bool;
-					} $pattern->execute( $query, $bridge, $bound, $context, %args );
-}
-
 =item C<< is_solution_modifier >>
 
 Returns true if this node is a solution modifier.

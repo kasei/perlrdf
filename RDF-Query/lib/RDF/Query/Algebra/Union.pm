@@ -186,47 +186,6 @@ sub fixup {
 	}
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.union");
-	
-	my @names;
-	my @streams;
-	foreach my $u_triples ($self->first, $self->second) {
-		my $stream	= $u_triples->execute( $query, $bridge, $bound, $context, %args );
-		
-		if ($l->is_debug) {
-			$stream		= $stream->materialize;
-			$l->debug("union stream:");
-			while (my $b = $stream->next) {
-				$l->debug("BINDING: " . join(', ', map { my $v = $b->{$_}; join('=', $_, (blessed($v) ? $v->sse : '')) } (keys %$b)));
-			}
-			$stream->reset;
-		}
-		
-		push(@names, $stream->binding_names);
-		push(@streams, $stream);
-	}
-	
-	@streams	= map { $_->project( @names ) } @streams;
-	my $stream	= shift(@streams);
-	while (@streams) {
-		$stream	= $stream->concat( shift(@streams), undef, \@names );
-	}
-	
-	return $stream;
-}
-
-
 1;
 
 __END__

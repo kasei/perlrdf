@@ -221,32 +221,6 @@ sub fixup {
 	}
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $outer_ctx	= shift;
-	my %args		= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.namedgraph");
-	
-	if ($outer_ctx) {
-		throw RDF::Query::Error::QueryPatternError ( -text => "Can't use nested named graphs" );
-	}
-
-	my $context			= $self->graph;
-	my $named_triples	= $self->pattern;
-	
-	
-	$l->debug( 'named triples: ' . Dumper($named_triples) );
-	my $nstream	= $named_triples->execute( $query, $bridge, $bound, $context, %args );
-	return $nstream;
-}
-
 1;
 
 __END__

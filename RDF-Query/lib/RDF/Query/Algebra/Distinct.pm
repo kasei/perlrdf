@@ -159,33 +159,6 @@ sub fixup {
 	}
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	
-	my $stream		= $self->pattern->execute( $query, $bridge, $bound, $context, %args );
-	
-	my %seen;
-	my @variables	= $query->variables;
-	$stream	= sgrep {
-		my $row	= $_;
-		no warnings 'uninitialized';
-		my $key	= join($;, map {$bridge->as_string( $_ )} map { $row->{$_} } @variables);
-		return (not $seen{ $key }++);
-	} $stream;
-	
-	return $stream;
-}
-
-
 =item C<< is_solution_modifier >>
 
 Returns true if this node is a solution modifier.

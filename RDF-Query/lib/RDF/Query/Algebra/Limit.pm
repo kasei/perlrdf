@@ -178,25 +178,6 @@ sub fixup {
 	}
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
-
-=cut
-
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	
-	my $limit		= $self->limit;
-	my $stream		= $self->pattern->execute( $query, $bridge, $bound, $context, %args );
-	
-	my $count		= 0;
-	return sgrep { $count++ < $limit } $stream;
-}
-
 =item C<< is_solution_modifier >>
 
 Returns true if this node is a solution modifier.
