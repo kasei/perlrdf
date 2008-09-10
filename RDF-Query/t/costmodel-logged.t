@@ -73,13 +73,16 @@ END
 	}
 }
 ################################################################################
-	
+
 
 {
 	my $costmodel	= RDF::Query::CostModel::Logged->new();
 	isa_ok( $costmodel, 'RDF::Query::CostModel' );
 }
 
+my $context	= RDF::Query::ExecutionContext->new(
+				bound	=> {},
+			);
 my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 
 {
@@ -87,37 +90,36 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 	{
 		# <p> a foaf:Person
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Resource->new('p'), $rdf->type, $foaf->Person, { bf => 'bbb' });
-		my $cost		= $costmodel->cost( $triple );
+		my $cost		= $costmodel->cost( $triple, $context );
 		is( $cost, 1, 'Cost of 3-bound triple' );
 	}
 	
 	{
 		# ?p a foaf:Person
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, { bf => '1bb' } );
-		my $cost		= $costmodel->cost( $triple );
+		my $cost		= $costmodel->cost( $triple, $context );
 		is( $cost, 4, 'Cost of 2-bound triple' );
 	}
 	
 	{
 		# ?p a ?type
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, RDF::Trine::Node::Variable->new('type'), { bf => '1b2' } );
-		my $cost		= $costmodel->cost( $triple );
-		is( $cost, 2, 'Cost of 1-bound triple' );
+		my $cost		= $costmodel->cost( $triple, $context );
+		is( $cost, 0.5, 'Cost of 1-bound triple' );
 	}
 }
 
 
 {
 	# COST OF BGP
-	TODO: {
-		local($TODO)	= 'Need to accurately compute cost of pushdown joins for BGPs.';
+	{
 		# { ?p a foaf:Person ; foaf:name ?name }
 		my $triple_a	= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, );
 		my $triple_b	= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name'), );
 		my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 		# this should really be 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
-		my $cost		= $costmodel->cost( $bgp );
-		is( $cost, 2, 'Cost of a 1bb,1b2 BGP' );
+		my $cost		= $costmodel->cost( $bgp, $context );
+		is( $cost, 10_004.5, 'Cost of a 1bb,1b2 BGP' );
 	}
 	
 	{
@@ -126,8 +128,8 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		my $triple_b	= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('b'), $rdf->type, $foaf->Person, );
 		my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 		# 10 * 10
-		my $cost		= $costmodel->cost( $bgp );
-		is( $cost, 20_000, 'Cost of a 1bb,2bb BGP' );
+		my $cost		= $costmodel->cost( $bgp, $context );
+		is( $cost, 10_008, 'Cost of a 1bb,2bb BGP' );
 	}
 }
 

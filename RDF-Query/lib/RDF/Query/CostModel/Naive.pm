@@ -49,7 +49,10 @@ sub _cost_service {
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
-	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
+	my $card	= $self->_cardinality( $plan, $context );
+	my $cost	= $self->cost( $plan->pattern, $context );
+	$l->debug( sprintf('COST of Service is %d + %d', $card, $cost) );
+	return $card + $cost;
 }
 
 sub _cost_union {
@@ -94,7 +97,11 @@ sub _cost_nestedloop {
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
-	return $self->_cardinality( $bgp, $context ) + $self->cost( $bgp->lhs, $context ) + $self->cost( $bgp->rhs, $context );
+	my $lhscost	= $self->cost( $bgp->lhs, $context );
+	my $rhscost	= $self->cost( $bgp->rhs, $context );
+	my $card	= $self->_cardinality( $bgp, $context );
+	$l->debug( sprintf('COST of NestedLoop is %d + (%d + %d)', $card, $lhscost, $rhscost) );
+	return $card + $lhscost + $rhscost;
 }
 
 sub _cost_pushdownnestedloop {
@@ -106,11 +113,19 @@ sub _cost_pushdownnestedloop {
 	my $lhscost	= $self->cost( $bgp->lhs, $context );
 	
 	$context->pushstack();
-	my $bound	= $context->bound;
-	# XXX we need a list of the variables that will be bound by the LHS, so that
-	# XXX we can set them in the context and know they will be bound during cost computation. 
-	$context->bound( { %$bound } );
-	my $rhscost	= $self->_cardinality( $bgp->lhs, $context ) * $self->cost( $bgp->rhs, $context );
+	my $bound	= { %{ $context->bound } };
+	$context->bound( $bound );
+	
+	my $lhs		= $bgp->lhs;
+	my @vars	= $lhs->referenced_variables;
+	foreach my $name (@vars) {
+		$bound->{ $name }	= RDF::Query::Node::Blank->new();	# temporary bound variable to that the costs compute correctly
+	}
+	
+	my $lhscard 		= $self->_cardinality( $bgp->lhs, $context );
+	my $single_rhscost	= $self->cost( $bgp->rhs, $context );
+	$l->debug( sprintf('COST of PushDownNestedLoop is %d + (%d * %d)', $lhscost, $lhscard, $single_rhscost) );
+	my $rhscost			= $lhscard * $single_rhscost;
 	$context->popstack();
 	
 	return  $lhscost + $rhscost;
@@ -149,11 +164,13 @@ sub _cardinality_triple {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 3;
-	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( "Pattern has bf representation '$bf'" );
+	$l->debug( "There are $f of 3 free variables" );
 	my $card	= ($self->_size ** $r);
 	$l->debug( 'Cardinality of triple is : ' . $card );
 	
@@ -165,11 +182,13 @@ sub _cardinality_quad {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $size	= $self->_size;
 	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 4;
-	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( "Pattern has bf representation '$bf'" );
+	$l->debug( "There are $f of 4 free variables" );
 	my $card	= ($self->_size ** $r);
 	$l->debug( 'Cardinality of quad is : ' . $card );
 	
@@ -218,10 +237,10 @@ sub _cardinality_nestedloop {
 	my $context	= shift;
 	my $size	= $self->_size;
 
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $cardinality;
 	try {
 		my @bf		= $pattern->bf( $context );
-		my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 		my @triples	= ($pattern->rhs, $pattern->lhs);
 		
 		my %seen_frees;
@@ -247,7 +266,7 @@ sub _cardinality_nestedloop {
 			my $tcard	= ($self->_size ** $r);
 			$card		*= $tcard;
 		}
-		$l->debug( 'Cardinality of BGP is : ' . $card );
+		$l->debug( 'Cardinality of NestedLoop join is : ' . $card );
 		
 		# round the cardinality to an integer
 		$cardinality	= int($card + .5 * ($card <=> 0));
@@ -276,10 +295,10 @@ sub _cardinality_pushdownnestedloop {
 	my @triples	= ($pattern->rhs, $pattern->lhs);
 	my $size	= $self->_size;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $cardinality;
 	try {
 		my @bf		= $pattern->bf( $context );
-		my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 		
 		my %seen_frees;
 		my $card	= 1;
@@ -304,7 +323,7 @@ sub _cardinality_pushdownnestedloop {
 			my $tcard	= ($self->_size ** $r);
 			$card		*= $tcard;
 		}
-		$l->debug( 'Cardinality of BGP is : ' . $card );
+		$l->debug( 'Cardinality of PushDownNestedLoop is : ' . $card );
 		
 		# round the cardinality to an integer
 		$cardinality	= int($card + .5 * ($card <=> 0));

@@ -24,6 +24,21 @@ use RDF::Query::ExecutionContext;
 
 =cut
 
+sub new {
+	my $class	= shift;
+	my $lhs		= shift;
+	my $rhs		= shift;
+	my $opt		= shift;
+	my $self	= $class->SUPER::new( $lhs, $rhs, $opt, @_ );
+	
+	my %vars;
+	foreach my $v ($lhs->referenced_variables, $rhs->referenced_variables) {
+		$vars{ $v }++;
+	}
+	$self->[0]{referenced_variables}	= [ keys %vars ];
+	return $self;
+}
+
 =item C<< lhs >>
 
 Returns the left-hand-side plan to the join.

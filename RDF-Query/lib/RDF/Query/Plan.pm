@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use List::Util qw(reduce);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 use RDF::Query::Error qw(:try);
 
 use RDF::Query::Plan::Aggregate;
@@ -125,6 +125,17 @@ sub sse {
 	die "sse not implemented on $self";
 }
 
+=item C<< referenced_variables >>
+
+Returns a list of variable names that are referenced by this plan.
+
+=cut
+
+sub referenced_variables {
+	my $self	= shift;
+	my $refs	= $self->[0]{referenced_variables};
+	return @{ $refs };
+}
 
 sub DESTROY {
 	my $self	= shift;

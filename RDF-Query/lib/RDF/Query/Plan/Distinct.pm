@@ -25,6 +25,7 @@ sub new {
 	my $class	= shift;
 	my $plan	= shift;
 	my $self	= $class->SUPER::new( $plan );
+	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
 

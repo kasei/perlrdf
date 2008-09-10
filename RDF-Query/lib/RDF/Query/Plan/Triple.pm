@@ -60,6 +60,7 @@ sub new {
 			}
 		}
 	}
+	$self->[0]{referenced_variables}	= [ keys %counts ];
 	
 	my @positions;
 	if (defined($dup_var)) {
@@ -219,12 +220,12 @@ sub bf {
 	foreach my $n (@{ $self }[1,2,3]) {
 		if ($n->isa('RDF::Trine::Node::Variable')) {
 			if (my $b = $bound->{ $n->name }) {
-				$bf	= 'b';
+				$bf	.= 'b';
 			} else {
-				$bf	= 'f';
+				$bf	.= 'f';
 			}
 		} else {
-			$bf	= 'b';
+			$bf	.= 'b';
 		}
 	}
 	return $bf;
@@ -280,7 +281,6 @@ sub graph {
 	} 
 	return "$self";
 }
-
 
 1;
 

@@ -30,6 +30,11 @@ sub new {
 	my $class	= shift;
 	my ($lhs, $rhs)	= @_;
 	my $self	= $class->SUPER::new( [ $lhs, $rhs ] );
+	my %vars;
+	foreach my $v ($lhs->referenced_variables, $rhs->referenced_variables) {
+		$vars{ $v }++;
+	}
+	$self->[0]{referenced_variables}	= [ keys %vars ];
 	return $self;
 }
 

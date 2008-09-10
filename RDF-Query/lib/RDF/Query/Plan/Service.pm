@@ -49,6 +49,7 @@ sub new {
 	}
 	my $keys	= shift || {};
 	my $self	= $class->SUPER::new( $url, $plan, $sparql );
+	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	$self->[0]{logging_keys}	= $keys;
 # 	if (@_) {
 # 		# extra args (like the bound/free stuff for logging

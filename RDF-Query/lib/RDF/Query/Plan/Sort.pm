@@ -26,6 +26,7 @@ sub new {
 	my $plan	= shift;
 	my @exprs	= @_;
 	my $self	= $class->SUPER::new( $plan, \@exprs );
+	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
 

@@ -32,6 +32,7 @@ sub new {
 		push(@vars, $k) if (not(ref($k)));
 	}
 	my $self	= $class->SUPER::new( $plan, \@vars, \@exprs );
+	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
 

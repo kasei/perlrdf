@@ -44,6 +44,7 @@ sub new {
 		throw RDF::Query::Error::MethodInvocationError -text => "NestedLoop join does not support optional joins (use PushDownNestedLoop instead)";
 	}
 	my $self	= $class->SUPER::new( $lhs, $rhs, $opt );
+	
 	$self->[0]{logging_keys}	= $keys;
 	return $self;
 }

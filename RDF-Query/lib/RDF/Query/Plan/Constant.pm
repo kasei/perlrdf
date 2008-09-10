@@ -25,6 +25,7 @@ sub new {
 	my $class	= shift;
 	my @binds	= @_;
 	my $self	= $class->SUPER::new( \@binds );
+	$self->[0]{referenced_variables}	= [ keys %{ $binds[0] } ];
 	return $self;
 }
 
