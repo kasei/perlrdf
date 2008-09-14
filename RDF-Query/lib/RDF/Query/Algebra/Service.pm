@@ -510,6 +510,10 @@ sub _names_for_node {
 	
 	my $nodestring	= $node->as_string;
 	
+	my $context	= RDF::Query::ExecutionContext->new(
+					bound	=> $bound,
+					model	=> $bridge,
+				);
 	if (not exists($seen->{ $nodestring })) {
 		$l->debug("  " x $depth . "name for node " . $nodestring . "...");
 		my @names;
@@ -517,9 +521,10 @@ sub _names_for_node {
 		unless ($node->isa('RDF::Trine::Node::Literal')) {
 			{
 				our $sa		||= $parser->parse_pattern( '{ ?n <http://www.w3.org/2002/07/owl#sameAs> ?o }' );
-				my $iter	= $sa->execute( $query, $bridge, { n => $node } );
-				
-				while (my $row = $iter->next) {
+				my ($plan)	= RDF::Query::Plan->generate_plans( $sa, $context );
+				local($context->bound->{n})	= $node;
+				$plan->execute( $context );
+				while (my $row = $plan->next) {
 					my ($n, $o)	= @{ $row }{qw(n o)};
 					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '=', $seen ));
 				}
@@ -527,9 +532,10 @@ sub _names_for_node {
 			
 			{
 				our $fp		||= $parser->parse_pattern( '{ ?o ?p ?n . ?p a <http://www.w3.org/2002/07/owl#FunctionalProperty> }' );
-				my $iter	= $fp->execute( $query, $bridge, { n => $node } );
-				
-				while (my $row = $iter->next) {
+				my ($plan)	= RDF::Query::Plan->generate_plans( $fp, $context );
+				local($context->bound->{n})	= $node;
+				$plan->execute( $context );
+				while (my $row = $plan->next) {
 					my ($p, $o)	= @{ $row }{qw(p o)};
 					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '^' . $p->sse, $seen ));
 				}
@@ -537,9 +543,10 @@ sub _names_for_node {
 			
 			{
 				our $ifp	||= $parser->parse_pattern( '{ ?n ?p ?o . ?p a <http://www.w3.org/2002/07/owl#InverseFunctionalProperty> }' );
-				my $iter	= $ifp->execute( $query, $bridge, { n => $node } );
-				
-				while (my $row = $iter->next) {
+				my ($plan)	= RDF::Query::Plan->generate_plans( $ifp, $context );
+				local($context->bound->{n})	= $node;
+				$plan->execute( $context );
+				while (my $row = $plan->next) {
 					my ($p, $o)	= @{ $row }{qw(p o)};
 					push(@names, $class->_names_for_node( $o, $query, $bridge, $bound, $paths, $depth + 1, $pre . '!' . $p->sse, $seen ));
 				}
@@ -553,6 +560,8 @@ sub _names_for_node {
 		}
 		
 		@{ $seen->{ $nodestring } }{ @names }	= @names;
+	} else {
+		$l->debug("identity names for node have been computed before");
 	}
 	
 	my @names	= values %{ $seen->{ $nodestring } };

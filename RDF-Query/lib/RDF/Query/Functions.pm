@@ -766,8 +766,11 @@ BEGIN {
 		my $bloom;
 		
 		unless ($BLOOM_FILTER_LOADED) {
+			$l->warn("Cannot compute bloom filter because Bloom::Filter is not available");
 			throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
 		}
+		
+		$l->debug("k:bloom being executed with node " . $value);
 		
 		if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
 			$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };
@@ -779,6 +782,7 @@ BEGIN {
 		
 		my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
 		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
+		$l->debug("- " . scalar(@names) . " identity names for node");
 		foreach my $string (@names) {
 			$l->debug("checking bloom filter for --> '$string'\n");
 			my $ok	= $bloom->check( $string );

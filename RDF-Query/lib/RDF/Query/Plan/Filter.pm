@@ -42,12 +42,14 @@ sub execute ($) {
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
-
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.filter");
+	
 	if ($plan->state == $self->OPEN) {
 		$self->state( $self->OPEN );
 		my $expr	= $self->[2];
 		my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
 		my $filter	= RDF::Query::Expression::Function->new( $bool, $expr );
+		$l->debug("filter constructed for " . $expr->sse({}, ''));
 		my $query	= $context->query;
 		my $bridge	= $context->model;
 		$self->[0]{filter}	= sub {
