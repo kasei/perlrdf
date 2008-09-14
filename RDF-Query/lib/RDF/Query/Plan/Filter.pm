@@ -76,11 +76,19 @@ sub next {
 	}
 	my $plan	= $self->[1];
 	my $filter	= $self->[0]{filter};
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.filter");
 	while (1) {
 		my $row	= $plan->next;
-		return undef unless ($row);
+		unless ($row) {
+			$l->debug("no remaining rows in filter");
+			return;
+		}
+		$l->debug("filter processing bindings $row");
 		if ($filter->( $row )) {
+			$l->debug( "- filter returned true on row" );
 			return $row;
+		} else {
+			$l->debug( "- filter returned false on row" );
 		}
 	}
 }

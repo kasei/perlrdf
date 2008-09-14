@@ -155,7 +155,11 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(sort\n${indent}${more}(%s)\n${indent}${more}%s\n${indent})", join(' ', map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[2] }), $self->pattern->sse( $context, "${indent}${more}" ));
+	my $pattern	= $self->pattern->sse( $context, "${indent}${more}" );
+	my @exprs	= @{ $self->[2] };
+	my $exprs	= join(' ', map { sprintf("(%s %s)", ($_->[1] ? 'desc' : 'asc'), $_->[0]->sse( $context, "${indent}${more}" ) ) } @exprs);
+	my $sse		= sprintf("(order (%s)\n${indent}${more}%s\n${indent})", $exprs, $pattern);
+	return $sse;
 }
 
 =item C<< graph ( $g ) >>

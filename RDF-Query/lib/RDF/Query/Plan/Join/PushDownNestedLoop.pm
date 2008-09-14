@@ -83,6 +83,7 @@ sub next {
 	my $inner	= $self->rhs;
 	my $opt		= $self->[3];
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.pushdownnestedloop");
 	while (1) {
 		if ($self->[0]{needs_new_outer}) {
 			$self->[0]{outer_row}	= $outer->next;
@@ -109,6 +110,7 @@ sub next {
 		while (my $inner_row = $self->[0]{inner}->next) {
 #			warn "using inner row: " . Dumper($inner_row);
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
+				$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				return $joined;
@@ -116,7 +118,7 @@ sub next {
 				if ($opt) {
 					return $self->[0]{outer_row};
 				}
-#				warn "-> didn't join\n";
+				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
 			}
 		}
 		

@@ -180,7 +180,7 @@ sub new {
 					'http://www.w3.org/TR/rdf-sparql-query/'	=> 'RDF::Query::Parser::SPARQL',
 				);
 	
-	if ($baseuri and not blessed($baseuri)) {
+	if ($baseuri) {
 		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
 	}
 	
@@ -464,10 +464,14 @@ sub query_plan {
 	
 	my $algebra		= $self->pattern;
 	my @plans		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
 		return @plans;
 	} else {
-		return $self->prune_plans( @plans );
+		my ($plan)	= $self->prune_plans( @plans );
+		$l->debug("using query plan: " . $plan->sse({}, ''));
+		return $plan;
 	}
 }
 
@@ -565,17 +569,15 @@ sub construct {
 		TRIPLE: foreach my $triple ($ctriples->patterns) {
 			my @triple	= $triple->nodes;
 			for my $i (0 .. 2) {
-				if (blessed($triple[$i]) and $triple[$i]->isa('RDF::Query::Node')) {
-					if ($triple[$i]->isa('RDF::Query::Node::Variable')) {
-						my $name	= $triple[$i]->name;
-						$triple[$i]	= $row->{ $name };
-					} elsif ($triple[$i]->isa('RDF::Query::Node::Blank')) {
-						my $id	= $triple[$i]->blank_identifier;
-						unless (exists($blank_map{ $id })) {
-							$blank_map{ $id }	= $self->bridge->new_blank();
-						}
-						$triple[$i]	= $blank_map{ $id };
+				if ($triple[$i]->isa('RDF::Query::Node::Variable')) {
+					my $name	= $triple[$i]->name;
+					$triple[$i]	= $row->{ $name };
+				} elsif ($triple[$i]->isa('RDF::Query::Node::Blank')) {
+					my $id	= $triple[$i]->blank_identifier;
+					unless (exists($blank_map{ $id })) {
+						$blank_map{ $id }	= $self->bridge->new_blank();
 					}
+					$triple[$i]	= $blank_map{ $id };
 				}
 			}
 			
@@ -901,13 +903,13 @@ sub get_bridge {
 	my $bridge;
 	if (not $model) {
 		$bridge	= $self->new_bridge();
-	} elsif (blessed($model) and ($model->isa('RDF::Trine::Model'))) {
+	} elsif (($model->isa('RDF::Trine::Model'))) {
 		require RDF::Query::Model::RDFTrine;
 		$bridge	= RDF::Query::Model::RDFTrine->new( $model, parsed => $parsed );
-	} elsif (blessed($model) and $model->isa('RDF::Redland::Model')) {
+	} elsif ($model->isa('RDF::Redland::Model')) {
 		require RDF::Query::Model::Redland;
 		$bridge	= RDF::Query::Model::Redland->new( $model, parsed => $parsed );
-	} elsif (blessed($model) and $model->isa('RDF::Core::Model')) {
+	} elsif ($model->isa('RDF::Core::Model')) {
 		require RDF::Query::Model::RDFCore;
 		$bridge	= RDF::Query::Model::RDFCore->new( $model, parsed => $parsed );
 	} else {

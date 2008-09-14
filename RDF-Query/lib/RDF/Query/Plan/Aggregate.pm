@@ -64,10 +64,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: COUNT");
 					my $row		= shift;
-					warn 'groupby: ' . Dumper(\@groupby) if ($::debug);
 					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
 					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					warn $group if ($::debug);
 					
 					unless ($groups{ $group }) {
 						my %data;
@@ -78,16 +76,13 @@ sub execute ($) {
 							$data{ $key }	= $value;
 						}
 						$groups{ $group }	= \%data;
-						warn 'group: ' . Dumper(\%groups) if ($::debug);
 					}
 					
 					my $should_inc	= 0;
 					if ($col eq '*') {
 						$should_inc	= 1;
 					} else {
-						warn 'expr value: ' . Dumper($row, $col) if ($::debug);
 						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
-						warn 'value: ' . Dumper($value) if ($::debug);
 						$should_inc	= (defined $value) ? 1 : 0;
 					}
 					
@@ -164,10 +159,6 @@ sub execute ($) {
 			push(@rows, $vars);
 		}
 		
-		if ($::debug) {
-			use Data::Dumper;
-			warn 'rows: ' . Dumper(\@rows);
-		}
 		$self->[0]{rows}	= \@rows;
 		$self->state( $self->OPEN );
 	} else {
@@ -211,6 +202,33 @@ Returns the query plan that will be used to produce the data to be sorted.
 sub pattern {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< sse ( \%context, $indent ) >>
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my $pattern	= $self->pattern->sse( $context, "${indent}${more}" );
+	my @groupby	= @{ $self->[2] };
+	my @ops		= @{ $self->[3] };
+	my $groupby	= join(' ', map { $_->sse( $context, "${indent}${more}" ) } @groupby);
+	my $ops		= join(' ', map {
+					sprintf(
+						"(%s %s %s)",
+						$_->[0],
+						$_->[1],
+						blessed($_->[2])
+							? $_->[2]->sse( $context, "${indent}${more}" )
+							: $_->[2]
+					)
+				} @ops);
+	my $sse		= sprintf("(aggregate (%s) (%s)\n${indent}${more}%s\n${indent})", $groupby, $ops, $pattern);
+	return $sse;
 }
 
 =item C<< distinct >>

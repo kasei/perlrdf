@@ -137,7 +137,7 @@ sub next {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
 	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
-		$l->trace( "- got triple from model: " . $row->as_string );
+		$l->debug( "- got triple from model: " . $row->as_string );
 		if (my $pos = $self->[0]{dups}) {
 			$l->trace( "- checking for duplicate variables in triple" );
 			my @pos	= @$pos;

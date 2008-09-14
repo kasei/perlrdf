@@ -6,6 +6,15 @@ use Test::More;
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
+################################################################################
+Log::Log4perl::init( \q[
+	log4perl.category.rdf.query.plan	= DEBUG, Screen
+	log4perl.appender.Screen			= Log::Log4perl::Appender::Screen
+	log4perl.appender.Screen.stderr		= 0
+	log4perl.appender.Screen.layout		= Log::Log4perl::Layout::SimpleLayout
+] );
+################################################################################
+
 my $tests	= 25;
 eval { require Bloom::Filter };
 if ($@) {
@@ -45,7 +54,7 @@ use RDF::Query;
 			FILTER k:bloom( ?p, "${filter}" ) .
 		}
 END
-	{
+	if (0){
 		print "# bgp using default graph (local rdf) with k:bloom FILTER produces bnode identity hints in XML results\n";
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
 		my $stream	= $query->execute();
@@ -66,6 +75,7 @@ END
 		}
 		is( $count, 2, 'expected result count' );
 	}
+	exit;
 }
 
 {

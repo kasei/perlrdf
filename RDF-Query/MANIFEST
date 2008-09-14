@@ -1,6 +1,5 @@
 bin/deparse.pl
 bin/failing_earl_tests.sh
-bin/generate_parsers.sh
 bin/open-test-files.sh
 bin/parse_profile.pl
 bin/parse.pl

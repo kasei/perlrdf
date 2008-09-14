@@ -92,8 +92,8 @@ Returns a string representation of the variable bindings.
 
 sub as_string {
 	my $self	= shift;
-	my @keys	= keys %$self;
-	my $string	= sprintf('{ %s }', CORE::join(', ', map { CORE::join('=', $_, ($self->{$_}) ? $self->{$_}->as_string : '(undef)') } (@keys)));
+	my @keys	= sort keys %$self;
+	my $string	= sprintf('{ %s }', CORE::join(', ', map { CORE::join('=', $_, ($self->{$_}) ? $self->{$_}->as_string : '()') } (@keys)));
 	return $string;
 }
 
@@ -106,7 +106,7 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	my @keys	= keys %$self;
+	my @keys	= sort keys %$self;
 	return sprintf('(row %s)', CORE::join(' ', map { '[' . CORE::join(' ', '?' . $_, ($self->{$_}) ? $self->{$_}->as_string : ()) . ']' } (@keys)));
 }
 

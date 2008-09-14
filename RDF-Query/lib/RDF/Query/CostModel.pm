@@ -62,8 +62,10 @@ sub cost {
 	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
 	my $method	= "_cost_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->trace("computing cost of $type pattern");
-	return $self->$method( $pattern, $context );
+	$l->trace("Computing cost of $type pattern...");
+	my $cost	= $self->$method( $pattern, $context );
+	$l->trace("- got cost $cost");
+	return $cost;
 }
 
 
@@ -93,8 +95,9 @@ sub _cardinality {
 	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
 	my $method	= "_cardinality_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->trace("computing cardinality of $type pattern");
+	$l->trace("Computing cardinality of $type pattern...");
 	my $cardinality	= $self->$method( $pattern, $context );
+	$l->trace("- got cardinality $cardinality");
 	return $cardinality;
 }
 

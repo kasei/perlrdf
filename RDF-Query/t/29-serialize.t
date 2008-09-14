@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 24;
+use Test::More tests => 28;
 
 use_ok( 'RDF::Query' );
 
@@ -291,5 +291,32 @@ END
 	is( $sse, '(aggregate (project (bgp (triple ?person foaf:name ?name)) (COUNT(?person))) (alias "COUNT(?person)" (COUNT ?person)) )', 'sse: aggregate count(?person)' );
 }
 
+################################################################################
+### VARIABLEBINDINGS TESTS
+{
+	my $a		= RDF::Query::Node::Literal->new('a');
+	my $b		= RDF::Query::Node::Resource->new('http://b/');
+	my $c		= RDF::Query::Node::Blank->new('c');
+	
+	{
+		my $binding	= RDF::Query::VariableBindings->new({ 'a' => $a });
+		is( "$binding", '{ a="a" }', 'variable binding (literal)' );
+	}
+	
+	{
+		my $binding	= RDF::Query::VariableBindings->new({ 'b' => $b });
+		is( "$binding", '{ b=<http://b/> }', 'variable binding (resource)' );
+	}
+	
+	{
+		my $binding	= RDF::Query::VariableBindings->new({ 'c' => $c });
+		is( "$binding", '{ c=(c) }', 'variable binding (blank)' );
+	}
+	
+	{
+		my $binding	= RDF::Query::VariableBindings->new({ 'a' => $a, b => undef, c => $c });
+		is( "$binding", '{ a="a", b=(), c=(c) }', 'variable binding (literal, blank, (undef))' );
+	}
+}
 
 __END__

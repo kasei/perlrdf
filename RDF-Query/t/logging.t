@@ -10,12 +10,12 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.costmodel          = TRACE, Screen
-# 	log4perl.category.rdf.query.algebra.service          = TRACE, Screen
+# 	log4perl.category.rdf.query.costmodel		= TRACE, Screen
+# 	log4perl.category.rdf.query.algebra.service	= TRACE, Screen
 # 	
-# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-# 	log4perl.appender.Screen.stderr  = 0
-# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# 	log4perl.appender.Screen					= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr				= 0
+# 	log4perl.appender.Screen.layout				= Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
 

@@ -82,12 +82,13 @@ sub _cost_pushdownnestedloop {
 	$context->bound( $bound );
 	
 	my $lhs		= $bgp->lhs;
+	my $lhscard = $self->_cardinality( $bgp->lhs, $context );
+	
 	my @vars	= $lhs->referenced_variables;
 	foreach my $name (@vars) {
 		$bound->{ $name }	= RDF::Query::Node::Blank->new();	# temporary bound variable to that the costs compute correctly
 	}
 	
-	my $lhscard 		= $self->_cardinality( $bgp->lhs, $context );
 	my $single_rhscost	= $self->cost( $bgp->rhs, $context );
 	$l->debug( sprintf('Logged COST of PushDownNestedLoop is %d + (%d * %d)', $lhscost, $lhscard, $single_rhscost) );
 	my $rhscost			= $lhscard * $single_rhscost;
@@ -117,6 +118,7 @@ sub _cardinality_triple {
 	my $r		= $f / 3;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	
+	$l->trace( "Computing cardinality of triple $bf: " . $pattern->sse({}, '') );
 	my $logger		= $self->logger;
 	my ($card, $sd)	= $logger->get_statistics( 'cardinality-bf-triple', $bf );
 	if ($card) {

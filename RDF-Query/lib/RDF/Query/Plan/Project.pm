@@ -71,7 +71,10 @@ sub next {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.project");
 	my $plan	= $self->[1];
 	my $row		= $plan->next;
-	return undef unless ($row);
+	unless ($row) {
+		$l->debug("no remaining rows in project");
+		return;
+	}
 	$l->debug( "project on row $row" );
 	
 	my $keys	= $self->[2];

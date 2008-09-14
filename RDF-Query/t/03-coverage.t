@@ -35,7 +35,7 @@ END
 
 	{
 		print "# using RDQL language URI\n" if ($verbose);
-		my $query	= new RDF::Query ( <<"END", undef, 'http://jena.hpl.hp.com/2003/07/query/RDQL', undef );
+		my $query	= new RDF::Query ( <<"END", { lang => 'rdql' } );
 			SELECT
 				?person
 			WHERE
