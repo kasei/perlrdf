@@ -281,6 +281,7 @@ sub prepare {
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
 	my $parsed	= $self->{parsed};
+	my @vars	= $self->variables( $parsed );
 	
 	my $bridge	= $self->{bridge} || $self->get_bridge( $model, %args );
 	if ($bridge) {
@@ -292,18 +293,19 @@ sub prepare {
 	
 	$l->trace("loading data");
 	$self->load_data();
-	$bridge		= $self->bridge();	# reload the bridge object, because fixup might have changed it.
+	$bridge		= $self->bridge();	# reload the bridge object, because load_data might have changed it.
 	
 	$l->trace("constructing ExecutionContext");
 	my $context	= RDF::Query::ExecutionContext->new(
-					bound		=> \%bound,
-					model		=> $bridge,
-					query		=> $self,
-					base		=> $parsed->{base},
-					ns			=> $parsed->{namespaces},
-					logger		=> $self->logger,
-					costmodel	=> $self->costmodel,
-					optimize	=> $self->{optimize},
+					bound				=> \%bound,
+					model				=> $bridge,
+					query				=> $self,
+					base				=> $parsed->{base},
+					ns					=> $parsed->{namespaces},
+					logger				=> $self->logger,
+					costmodel			=> $self->costmodel,
+					optimize			=> $self->{optimize},
+					requested_variables	=> \@vars,
 				);
 	
 	$self->{model}		= $model;
@@ -311,6 +313,21 @@ sub prepare {
 	$l->trace("getting QEP...");
 	my $plan		= $self->query_plan( $context );
 	$l->trace("-> done.");
+	
+	# XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	# XXX this should be changed so that the parser emits ::Algebra::Construct
+	# XXX objects, and the plan generator turns those into ::Plan::Construct
+	# XXX objects.
+	if ($parsed->{'method'} eq 'CONSTRUCT') {
+		my $base		= $parsed->{base};
+		my $namespaces	= $parsed->{namespaces};
+		my $pattern		= $self->pattern;
+		my @vars		= map { RDF::Query::Node::Variable->new( $_ ) } $pattern->referenced_variables;
+		$parsed->{'variables'}	= \@vars;
+		my $cpattern	= $self->construct_pattern->fixup( $self, $bridge, $base, $namespaces );
+		my @triples		= $cpattern->subpatterns_of_type('RDF::Query::Algebra::Triple');
+		$plan			= RDF::Query::Plan::Construct->new( $plan, \@triples );
+	}
 	
 	unless ($plan) {
 		throw RDF::Query::Error::CompilationError -text => "Query didn't produce a valid execution plan";
@@ -361,8 +378,8 @@ sub execute_plan {
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	
 	my $pattern	= $self->pattern;
-	$l->trace("calling fixup()");
-	my $cpattern	= $self->fixup();
+# 	$l->trace("calling fixup()");
+# 	my $cpattern	= $self->fixup();
 	
 	my @funcs	= $pattern->referenced_functions;
 	foreach my $f (@funcs) {
@@ -376,7 +393,8 @@ sub execute_plan {
 	my $options	= $parsed->{options} || {};
 
 	$plan->execute( $context );
-	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
+	my $stream	= $plan->as_iterator( $context );
+# 	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
 	
 	$l->debug("performing projection");
 	my $expr	= 0;
@@ -386,8 +404,8 @@ sub execute_plan {
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
-	} elsif ($parsed->{'method'} eq 'CONSTRUCT') {
-		$stream	= $self->construct( $stream, $cpattern, $parsed );
+# 	} elsif ($parsed->{'method'} eq 'CONSTRUCT') {
+# 		$stream	= $self->construct( $stream, $cpattern, $parsed );
 	} elsif ($parsed->{'method'} eq 'ASK') {
 		$stream	= $self->ask( $stream );
 	}
@@ -538,79 +556,6 @@ sub describe {
 	return RDF::Trine::Iterator::Graph->new( $ret, bridge => $bridge );
 }
 
-=begin private
-
-=item C<construct ( $stream )>
-
-Takes a stream of matching statements and constructs a result graph matching the
-uery's CONSTRUCT graph patterns.
-
-=end private
-
-=cut
-
-sub construct {
-	my $self		= shift;
-	my $stream		= shift;
-	my $ctriples	= shift;
-	my $parsed		= shift;
-	my $bridge		= $self->bridge;
-	my @streams;
-	
-	my %seen;
-	my %variable_map;
-	foreach my $var_count (0 .. $#{ $parsed->{'variables'} }) {
-		$variable_map{ $parsed->{'variables'}[ $var_count ]->name }	= $var_count;
-	}
-	
-	while (my $row = $stream->next) {
-		my %blank_map;
-		my @triples;	# XXX move @triples out of the while block, and only push one stream below (just before the continue{})
-		TRIPLE: foreach my $triple ($ctriples->patterns) {
-			my @triple	= $triple->nodes;
-			for my $i (0 .. 2) {
-				if ($triple[$i]->isa('RDF::Query::Node::Variable')) {
-					my $name	= $triple[$i]->name;
-					$triple[$i]	= $row->{ $name };
-				} elsif ($triple[$i]->isa('RDF::Query::Node::Blank')) {
-					my $id	= $triple[$i]->blank_identifier;
-					unless (exists($blank_map{ $id })) {
-						$blank_map{ $id }	= $self->bridge->new_blank();
-					}
-					$triple[$i]	= $blank_map{ $id };
-				}
-			}
-			
-			my $ok	= 1;
-			foreach (@triple) {
-				if (not blessed($_)) {
-					$ok	= 0;
-					# next TRIPLE;
-				}
-			}
-			next unless ($ok); # (replaces 'next TRIPLE' inside the foreach above)
-			
-			my $st	= $bridge->new_statement( @triple );
-			push(@triples, $st);
-		}
-		push(@streams, RDF::Trine::Iterator::Graph->new( sub { shift(@triples) } ));
-	}
-	
-	
-	my $ret	= sub {
-		while (@streams) {
-			my $val	= $streams[0]->next;
-			if (defined $val) {
-				return $val;
-			} else {
-				shift(@streams);
-				return undef if (not @streams);
-			}
-		}
-		return undef;
-	};
-	return RDF::Trine::Iterator::Graph->new( $ret, bridge => $bridge );
-}
 
 =begin private
 
@@ -962,44 +907,6 @@ sub load_data {
 	}
 }
 
-
-=begin private
-
-=item C<fixup ()>
-
-Does last-minute fix-up on the parse tree. This involves:
-
-	* Loading any external files into the model.
-	* Converting URIs and strings to model-specific objects.
-	* Fixing variable list in the case of 'SELECT *' queries.
-
-=end private
-
-=cut
-
-sub fixup {
-	my $self		= shift;
-	my $pattern		= $self->pattern;
-	my $bridge		= $self->bridge;
-	my $parsed		= $self->parsed;
-	my $base		= $parsed->{base};
-	my $namespaces	= $parsed->{namespaces};
-	my $l			= Log::Log4perl->get_logger("rdf.query");
-	
-	if ($parsed->{'method'} eq 'CONSTRUCT') {
-		# project on all the referenced variables in the where pattern so that
-		# they'll be available for the construct pattern:
-		my @vars	= map { RDF::Query::Node::Variable->new($_) } $pattern->referenced_variables;
-		$parsed->{'variables'}	= \@vars;
-		
-		# fixup the construct pattern
-		my $cnative	= $self->construct_pattern->fixup( $self, $bridge, $base, $namespaces );
-		
-		return $cnative;
-	} else {
-		return;
-	}
-}
 
 =item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
 

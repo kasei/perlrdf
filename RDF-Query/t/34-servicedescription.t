@@ -55,7 +55,6 @@ END
 					query	=> $query,
 				);
 	my @plans		= $query->query_plan( $context );
-	my ($pattern)	= $query->fixup();
 	my $sparql		= $query->as_sparql({}, '');
 	my $expected	= <<"END";
 {

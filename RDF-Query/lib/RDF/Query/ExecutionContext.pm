@@ -124,6 +124,15 @@ sub costmodel {
 	return $self->_get_value( 'costmodel', @_ );
 }
 
+=item C<< requested_variables >>
+
+=cut
+
+sub requested_variables {
+	my $self	= shift;
+	return $self->_get_value( 'requested_variables', @_ );
+}
+
 =item C<< optimize >>
 
 =cut

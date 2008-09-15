@@ -473,5 +473,28 @@ foreach my $data (@models) {
 		is_deeply( \@v, ['Gregory'], "expected filtered values on literals" );
 		$plan->close;
 	}
+	
+	{
+		# construct
+		my $parser	= RDF::Query::Parser::SPARQL->new();
+		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
+		my ($algebra)	= $parser->parse_pattern('{ ?p foaf:firstName ?name }', undef, $ns);
+		my ($pat)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		my $st		= RDF::Trine::Statement->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $plan	= RDF::Query::Plan::Construct->new( $pat, [ $st ] );
+		
+		$plan->execute( $context );
+		my $count	= 0;
+		while (my $row = $plan->next) {
+			isa_ok( $row, 'RDF::Trine::Statement' );
+			my $pred	= $row->predicate();
+			my $obj		= $row->object();
+			is( $pred->as_string, '<http://xmlns.com/foaf/0.1/name>', 'expected CONSTRUCT predicate' );
+			like( $obj->as_string, qr<"(.+)">, 'expected CONSTRUCT object' );
+			$count++;
+		}
+		is( $count, 4, 'expected CONSTRUCT triple count' );
+		$plan->close;
+	}
 }
 

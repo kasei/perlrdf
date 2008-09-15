@@ -171,25 +171,24 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		Carp::cluck;
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
+# 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
 	my $t0		= delete $self->[0]{start_time};
 	my $count	= delete $self->[0]{count};
 	if (my $log = delete $self->[0]{logger}) {
-		$l->debug("logging triple execution statistics");
+# 		$l->debug("logging triple execution statistics");
 		my $elapsed = tv_interval ( $t0 );
 		if (my $sparql = $self->logging_keys->{sparql}) {
-			$l->debug("- SPARQL: $sparql");
+# 			$l->debug("- SPARQL: $sparql");
 			$log->push_key_value( 'execute_time-triple', $sparql, $elapsed );
 			$log->push_key_value( 'cardinality-triple', $sparql, $count );
-			$l->debug("- elapsed: $elapsed");
-			$l->debug("- count: $count");
+# 			$l->debug("- elapsed: $elapsed");
+# 			$l->debug("- count: $count");
 		}
 		if (my $bf = $self->logging_keys->{bf}) {
-			$l->debug("- cardinality-bf-triple: $bf: $count");
+# 			$l->debug("- cardinality-bf-triple: $bf: $count");
 			$log->push_key_value( 'cardinality-bf-triple', $bf, $count );
 		}
 	}

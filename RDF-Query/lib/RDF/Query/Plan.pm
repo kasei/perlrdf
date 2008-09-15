@@ -23,6 +23,7 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Plan::Aggregate;
 use RDF::Query::Plan::BasicGraphPattern;
 use RDF::Query::Plan::Constant;
+use RDF::Query::Plan::Construct;
 use RDF::Query::Plan::Distinct;
 use RDF::Query::Plan::Filter;
 use RDF::Query::Plan::Join::NestedLoop;
@@ -135,6 +136,20 @@ sub referenced_variables {
 	my $self	= shift;
 	my $refs	= $self->[0]{referenced_variables};
 	return @{ $refs };
+}
+
+=item C<< as_iterator ( $context ) >>
+
+Returns an RDF::Trine::Iterator object for the current (already executed) plan.
+
+=cut
+
+sub as_iterator {
+	my $self	= shift;
+	my $context	= shift;
+	my $vars	= $context->requested_variables;
+	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $self->next }, $vars, distinct => $self->distinct, sorted_by => $self->ordered );
+	return $stream;
 }
 
 sub DESTROY {
