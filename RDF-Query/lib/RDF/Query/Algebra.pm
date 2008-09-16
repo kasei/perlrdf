@@ -34,6 +34,7 @@ use RDF::Query::Expression::Unary;
 use RDF::Query::Expression::Function;
 
 use RDF::Query::Algebra::BasicGraphPattern;
+use RDF::Query::Algebra::Construct;
 use RDF::Query::Algebra::Filter;
 use RDF::Query::Algebra::GroupGraphPattern;
 use RDF::Query::Algebra::Optional;

@@ -1,0 +1,197 @@
+# RDF::Query::Algebra::Construct
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Query::Algebra::Construct - Algebra class for construct query results
+
+=cut
+
+package RDF::Query::Algebra::Construct;
+
+use strict;
+use warnings;
+no warnings 'redefine';
+use base qw(RDF::Query::Algebra);
+
+use Data::Dumper;
+use Set::Scalar;
+use Scalar::Util qw(blessed);
+use List::MoreUtils qw(uniq);
+use Carp qw(carp croak confess);
+use RDF::Trine::Iterator qw(sgrep);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.002';
+}
+
+######################################################################
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+=item C<< new ( $query_pattern, \@construct_triples ) >>
+
+Returns a new Sort structure.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $pattern	= shift;
+	my $triples	= shift;
+	return bless( [ $pattern, $triples ], $class );
+}
+
+=item C<< construct_args >>
+
+Returns a list of arguments that, passed to this class' constructor,
+will produce a clone of this algebra pattern.
+
+=cut
+
+sub construct_args {
+	my $self	= shift;
+	my $pattern	= $self->pattern;
+	my $triples	= $self->triples;
+	return ($pattern, $triples);
+}
+
+=item C<< pattern >>
+
+Returns the pattern used to produce the variable bindings used in graph construction.
+
+=cut
+
+sub pattern {
+	my $self	= shift;
+	if (@_) {
+		$self->[0]	= shift;
+	}
+	return $self->[0];
+}
+
+=item C<< triples >>
+
+Returns an ARRAY ref of triples to be used in graph construction.
+
+=cut
+
+sub triples {
+	my $self	= shift;
+	if (@_) {
+		$self->[1]	= shift;
+	}
+	return $self->[1];
+}
+
+=item C<< sse >>
+
+Returns the SSE string for this alegbra expression.
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	die;
+	return sprintf(
+		'(construct %s)',
+		$self->pattern->sse( $context ),
+	);
+}
+
+=item C<< as_sparql >>
+
+Returns the SPARQL string for this alegbra expression.
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $triples	= $self->triples;
+	my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( @$triples );
+	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
+
+	my $string	= sprintf(
+		"CONSTRUCT %s\n${indent}WHERE %s",
+		$ggp->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( $context, $indent ),
+	);
+	return $string;
+}
+
+=item C<< type >>
+
+Returns the type of this algebra expression.
+
+=cut
+
+sub type {
+	return 'CONSTRUCT';
+}
+
+=item C<< referenced_variables >>
+
+Returns a list of the variable names used in this algebra expression.
+
+=cut
+
+sub referenced_variables {
+	my $self	= shift;
+	return uniq($self->pattern->referenced_variables);
+}
+
+=item C<< definite_variables >>
+
+Returns a list of the variable names that will be bound after evaluating this algebra expression.
+
+=cut
+
+sub definite_variables {
+	my $self	= shift;
+	return $self->pattern->definite_variables;
+}
+
+=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
+
+Returns a new pattern that is ready for execution using the given bridge.
+This method replaces generic node objects with bridge-native objects.
+
+=cut
+
+sub fixup {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $query	= shift;
+	my $bridge	= shift;
+	my $base	= shift;
+	my $ns		= shift;
+	
+	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
+		return $opt;
+	} else {
+		return $class->new( $self->pattern->fixup( $query, $bridge, $base, $ns ) );
+	}
+}
+
+
+1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+ Gregory Todd Williams <gwilliams@cpan.org>
+
+=cut

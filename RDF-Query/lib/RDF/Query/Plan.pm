@@ -201,6 +201,11 @@ sub generate_plans {
 		my @ops		= $algebra->ops;
 		my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, @ops ) } @base;
 		@return_plans	= @plans;
+	} elsif ($type eq 'Construct') {
+		my $triples	= $algebra->triples;
+		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
+		my @plans	= map { RDF::Query::Plan::Construct->new( $_, $triples ) } @base;
+		@return_plans	= @plans;
 	} elsif ($type eq 'Distinct') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;

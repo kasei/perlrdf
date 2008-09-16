@@ -3381,25 +3381,26 @@ __END__
     foaf: http://xmlns.com/foaf/0.1/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+    - !!perl/array:RDF::Query::Algebra::Construct
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - person
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/firstName
+            - !!perl/array:RDF::Query::Node::Variable
+              - name
+      -
         - !!perl/array:RDF::Query::Algebra::Triple
           - !!perl/array:RDF::Query::Node::Variable
             - person
           - !!perl/array:RDF::Query::Node::Resource
             - URI
-            - http://xmlns.com/foaf/0.1/firstName
+            - http://xmlns.com/foaf/0.1/name
           - !!perl/array:RDF::Query::Node::Variable
             - name
-  construct_triples:
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/name
-      -
-        - name
 ---
 - construct with two construct triples
 - |
@@ -3411,34 +3412,35 @@ __END__
     foaf: http://xmlns.com/foaf/0.1/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+    - !!perl/array:RDF::Query::Algebra::Construct
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - person
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/firstName
+            - !!perl/array:RDF::Query::Node::Variable
+              - name
+      -
         - !!perl/array:RDF::Query::Algebra::Triple
           - !!perl/array:RDF::Query::Node::Variable
             - person
           - !!perl/array:RDF::Query::Node::Resource
             - URI
-            - http://xmlns.com/foaf/0.1/firstName
+            - http://xmlns.com/foaf/0.1/name
           - !!perl/array:RDF::Query::Node::Variable
             - name
-  construct_triples:
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/name
-      -
-        - name
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/Person
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - person
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/Person
 ---
 - construct with three construct triples
 - |
@@ -3450,8 +3452,35 @@ __END__
     foaf: http://xmlns.com/foaf/0.1/
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+    - !!perl/array:RDF::Query::Algebra::Construct
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - person
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://xmlns.com/foaf/0.1/firstName
+            - !!perl/array:RDF::Query::Node::Variable
+              - name
+      -
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - person
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/Person
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - person
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://xmlns.com/foaf/0.1/name
+          - !!perl/array:RDF::Query::Node::Variable
+            - name
         - !!perl/array:RDF::Query::Algebra::Triple
           - !!perl/array:RDF::Query::Node::Variable
             - person
@@ -3460,32 +3489,6 @@ __END__
             - http://xmlns.com/foaf/0.1/firstName
           - !!perl/array:RDF::Query::Node::Variable
             - name
-  construct_triples:
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/Person
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/name
-      -
-        - name
-    - !!perl/array:RDF::Query::Algebra::Triple
-      -
-        - person
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://xmlns.com/foaf/0.1/firstName
-      -
-        - name
 ---
 - select with triple-optional-triple
 - |
@@ -3839,39 +3842,40 @@ __END__
     rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-      - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+    - !!perl/array:RDF::Query::Algebra::Construct
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      -
         - !!perl/array:RDF::Query::Algebra::Triple
+          - &1 !!perl/array:RDF::Query::Node::Blank
+            - BLANK
+            - a1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#subject
           - !!perl/array:RDF::Query::Node::Variable
             - s
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - *1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate
           - !!perl/array:RDF::Query::Node::Variable
             - p
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - *1
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - http://www.w3.org/1999/02/22-rdf-syntax-ns#object
           - !!perl/array:RDF::Query::Node::Variable
             - o
-  construct_triples:
-    - !!perl/array:RDF::Query::Algebra::Triple
-      - &1 !!perl/array:RDF::Query::Node::Blank
-        - BLANK
-        - a1
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://www.w3.org/1999/02/22-rdf-syntax-ns#subject
-      -
-        - s
-    - !!perl/array:RDF::Query::Algebra::Triple
-      - *1
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate
-      -
-        - p
-    - !!perl/array:RDF::Query::Algebra::Triple
-      - *1
-      - !!perl/array:RDF::Query::Node::Resource
-        - URI
-        - http://www.w3.org/1999/02/22-rdf-syntax-ns#object
-      -
-        - o
 ---
 - (DAWG) syntax-lists-02.rq
 - |

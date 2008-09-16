@@ -314,21 +314,6 @@ sub prepare {
 	my $plan		= $self->query_plan( $context );
 	$l->trace("-> done.");
 	
-	# XXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-	# XXX this should be changed so that the parser emits ::Algebra::Construct
-	# XXX objects, and the plan generator turns those into ::Plan::Construct
-	# XXX objects.
-	if ($parsed->{'method'} eq 'CONSTRUCT') {
-		my $base		= $parsed->{base};
-		my $namespaces	= $parsed->{namespaces};
-		my $pattern		= $self->pattern;
-		my @vars		= map { RDF::Query::Node::Variable->new( $_ ) } $pattern->referenced_variables;
-		$parsed->{'variables'}	= \@vars;
-		my $cpattern	= $self->construct_pattern->fixup( $self, $bridge, $base, $namespaces );
-		my @triples		= $cpattern->subpatterns_of_type('RDF::Query::Algebra::Triple');
-		$plan			= RDF::Query::Plan::Construct->new( $plan, \@triples );
-	}
-	
 	unless ($plan) {
 		throw RDF::Query::Error::CompilationError -text => "Query didn't produce a valid execution plan";
 	}
@@ -404,8 +389,6 @@ sub execute_plan {
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
-# 	} elsif ($parsed->{'method'} eq 'CONSTRUCT') {
-# 		$stream	= $self->construct( $stream, $cpattern, $parsed );
 	} elsif ($parsed->{'method'} eq 'ASK') {
 		$stream	= $self->ask( $stream );
 	}
@@ -631,26 +614,13 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Offset')
 									or $triples[0]->isa('RDF::Query::Algebra::Distinct')
 									or $triples[0]->isa('RDF::Query::Algebra::Project')
+									or $triples[0]->isa('RDF::Query::Algebra::Construct')
 								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
 	} else {
 		return RDF::Query::Algebra::GroupGraphPattern->new( @triples );
 	}
-}
-
-=item C<< construct_pattern >>
-
-Returns the RDF::Query::Algebra::GroupGraphPattern algebra pattern for this query's CONSTRUCT block.
-
-=cut
-
-sub construct_pattern {
-	my $self	= shift;
-	my $parsed	= $self->parsed;
-	my @triples	= @{ $parsed->{construct_triples} };
-	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @triples );
-	return $ggp;
 }
 
 =item C<< as_sparql >>
@@ -700,13 +670,7 @@ sub as_sparql {
 		$methoddata	= $method;
 	} elsif ($method eq 'ASK') {
 		$methoddata	= $method;
-	} elsif ($method eq 'CONSTRUCT') {
-		my $ctriples	= $parsed->{construct_triples};
-		my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$ctriples );
-		$methoddata		= sprintf("%s %s\nWHERE", $method, $ggp->as_sparql( $context, '' ));
 	} elsif ($method eq 'DESCRIBE') {
-		my $ctriples	= $parsed->{construct_triples};
-		my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @$ctriples );
 		$methoddata		= sprintf("%s %s\nWHERE", $method, $vars);
 	}
 	

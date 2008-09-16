@@ -565,6 +565,11 @@ sub _ConstructQuery {
 	$self->__consume_ws_opt;
 	$self->_WhereClause;
 	$self->_SolutionModifier();
+	
+	my $pattern		= $self->{build}{triples}[0];
+	my $triples		= delete $self->{build}{construct_triples};
+	my $construct	= RDF::Query::Algebra::Construct->new( $pattern, $triples );
+	$self->{build}{triples}[0]	= $construct;
 	$self->{build}{method}		= 'CONSTRUCT';
 }
 
