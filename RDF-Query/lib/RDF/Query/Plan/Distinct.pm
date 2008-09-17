@@ -136,7 +136,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Distinct" );
+	$g->add_node( "$self", label => "Distinct" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

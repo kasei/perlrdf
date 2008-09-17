@@ -166,7 +166,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
-	$g->add_node( "$self", label => "Union" );
+	$g->add_node( "$self", label => "Union" . $self->graph_labels );
 	$g->add_edge( "$self", $l );
 	$g->add_edge( "$self", $r );
 	return "$self";

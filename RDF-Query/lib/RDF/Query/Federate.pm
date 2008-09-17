@@ -288,6 +288,21 @@ sub _services_for_bgp_triples {
 	return @patterns;
 }
 
+=begin private
+
+=item C<< plan_class >>
+
+Returns the class name for Plan generation. This method should be overloaded by
+RDF::Query subclasses if the subclass also provides a subclass of RDF::Query::Plan.
+
+=end private
+
+=cut
+
+sub plan_class {
+	return 'RDF::Query::Federate::Plan';
+}
+
 
 1;
 

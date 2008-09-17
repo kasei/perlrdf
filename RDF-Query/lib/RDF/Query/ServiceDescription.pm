@@ -339,7 +339,71 @@ sub computed_statement_generator {
 
 
 
-
+sub answers_triple_pattern {
+	my $self	= shift;
+	my $triple	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
+	$l->debug( 'checking triple for service compatability: ' . $triple->sse );
+	
+	my $p = $triple->predicate;
+	unless ($p->isa('RDF::Trine::Node::Variable')) {	# if predicate is bound (not a variable)
+		my $puri	= $p->uri_value;
+		my $caps	= $self->capabilities;
+		my %preds	= map { $_->{pred}->uri_value => $_ } @$caps;
+		my $cap		= $preds{ $puri };
+		if ($self->definitive) {
+			return 0 unless ($cap);		# no capability matches this predicate.
+		} else {
+			# if the description isn't definitive, we conservatively assume
+			# that it can answer any pattern.
+			$cap	||= {};
+		}
+		
+		my $ok		= 1;
+		my $sofilter	= $cap->{ sofilter };
+		if ($sofilter) {
+			my %vars		= map { $_ => 1 } $sofilter->referenced_variables;
+			my $runnable	= 1;
+			if ($vars{ subject }) {
+				unless ($triple->subject) {
+					$l->debug( "triple pattern doesn't match the subject filter" );
+					$runnable	= 0;
+				}
+			}
+			if ($vars{ object }) {
+				unless ($triple->object) {
+					$l->debug( "triple pattern doesn't match the object filter" );
+					$runnable	= 0;
+				}
+			}
+			if ($runnable) {
+				my $bridge		= RDF::Query->new_bridge;
+				my $bound		= { subject => $triple->subject, object => $triple->object };
+				my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
+				
+				# XXX "ASK {}" is just a simple query just so we have a valid RDF::Query
+				# XXX object to pass to $filter->evaluate below evaluating a filter really
+				# XXX shouldn't require a query object in this case, since it's not going
+				# XXX to even touch a datastore, but the code needs to be changed to allow
+				# XXX for that.
+				my $query		= RDF::Query->new("ASK {}");
+				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $nok			= ($value->literal_value eq 'false');
+				if ($nok) {
+					$l->debug( "triple pattern doesn't match the sofilter" );
+					$ok	= 0;
+				}
+			}
+		}
+		
+		return $ok;
+	} else {
+		# predicate is a variable in the triple pattern. can we matchit based on sparql:pattern?
+		warn "service doesn't handle triple based on predicate\n";
+		return 0;
+	}
+}
 
 
 

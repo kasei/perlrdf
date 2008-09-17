@@ -135,7 +135,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Offset ($self->[2])" );
+	$g->add_node( "$self", label => "Offset ($self->[2])" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

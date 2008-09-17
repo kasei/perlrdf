@@ -179,7 +179,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Construct" );
+	$g->add_node( "$self", label => "Construct" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

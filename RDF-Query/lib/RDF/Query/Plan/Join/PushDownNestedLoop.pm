@@ -170,8 +170,9 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
+	my $jtype	= $self->optional ? 'Left Join' : 'Join';
 	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
-	$g->add_node( "$self", label => "Join (PDNL)" );
+	$g->add_node( "$self", label => "$jtype (Bind)" . $self->graph_labels );
 	$g->add_edge( "$self", $l );
 	$g->add_edge( "$self", $r );
 	return "$self";

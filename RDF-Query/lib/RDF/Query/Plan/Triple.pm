@@ -205,6 +205,12 @@ sub nodes {
 	return @{ $self }[1,2,3];
 }
 
+sub triple {
+	my $self	= shift;
+	my @nodes	= $self->nodes;
+	return RDF::Trine::Statement->new( @nodes );
+}
+
 =item C<< bf () >>
 
 Returns a string representing the state of the nodes of the triple (bound or free).
@@ -269,7 +275,8 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	$g->add_node( "$self", label => "Triple" );
+	my $label	= $self->graph_labels;
+	$g->add_node( "$self", label => "Triple" . $self->graph_labels );
 	my @names	= qw(subject predicate object);
 	foreach my $i (0 .. 2) {
 		my $n	= $self->[ $i + 1 ];

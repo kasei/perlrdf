@@ -74,6 +74,7 @@
 
 	sd:capability [ sd:predicate foaf:name ] ;
 	sd:capability [ sd:predicate foaf:mbox_sha1sum ] ;
+	sd:capability [ sd:predicate foaf:mbox ] ;
 	sd:capability [ sd:predicate foaf:depicts ] ;
 	sd:capability [ sd:predicate foaf:openid ] ;
 	sd:capability [ sd:predicate foaf:made ] ;

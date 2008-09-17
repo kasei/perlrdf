@@ -152,6 +152,37 @@ sub as_iterator {
 	return $stream;
 }
 
+=item C<< label ( $label => $value ) >>
+
+=cut
+
+sub label {
+	my $self	= shift;
+	my $label	= shift;
+	if (@_) {
+		my $value	= shift;
+		$self->[0]{labels}{ $label }	= $value;
+	}
+	return $self->[0]{labels}{ $label };
+}
+
+=item C<< graph_labels >>
+
+=cut
+
+sub graph_labels {
+	my $self	= shift;
+	my @labels;
+	foreach my $k (keys %{ $self->[0]{labels} || {} }) {
+		my $v	= $self->label( $k );
+		local($Data::Dumper::Indent)	= 0;
+		my $l	= Data::Dumper->Dump([$v], [$k]);
+		push(@labels, $l);
+	}
+	my $label	= join(", ", @labels);
+	return ' ' . $label;
+}
+
 sub DESTROY {
 	my $self	= shift;
 	if ($self->state == OPEN) {

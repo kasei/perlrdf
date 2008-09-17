@@ -464,7 +464,8 @@ sub query_plan {
 	}
 	
 	my $algebra		= $self->pattern;
-	my @plans		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
+	my $pclass		= $self->plan_class;
+	my @plans		= $pclass->generate_plans( $algebra, $context, %constant_plan );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
@@ -474,6 +475,21 @@ sub query_plan {
 		$l->debug("using query plan: " . $plan->sse({}, ''));
 		return $plan;
 	}
+}
+
+=begin private
+
+=item C<< plan_class >>
+
+Returns the class name for Plan generation. This method should be overloaded by
+RDF::Query subclasses if the subclass also provides a subclass of RDF::Query::Plan.
+
+=end private
+
+=cut
+
+sub plan_class {
+	return 'RDF::Query::Plan';
 }
 
 =begin private

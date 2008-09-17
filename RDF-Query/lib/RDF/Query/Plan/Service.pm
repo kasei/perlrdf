@@ -336,7 +336,7 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	$g->add_node( "$self", label => "Service (" . $self->endpoint . ")" );
+	$g->add_node( "$self", label => "Service (" . $self->endpoint . ")" . $self->graph_labels );
 	$g->add_node( "${self}-sparql", label => $self->sparql );
 	$g->add_edge( "$self" => "${self}-sparql" );
 	return "$self";

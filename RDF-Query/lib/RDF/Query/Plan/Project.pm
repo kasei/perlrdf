@@ -17,6 +17,8 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Scalar::Util qw(blessed);
+
 =item C<< new ( $plan, \@keys ) >>
 
 =cut
@@ -173,8 +175,8 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	my $expr	= join(' ', @{$self->[1]}, map { $_->sse( {}, "" ) } @{$self->[2]});
-	$g->add_node( "$self", label => "Project ($expr)" );
+	my $expr	= join(' ', @{$self->[2]}, map { blessed($_) ? $_->sse( {}, "" ) : $_ } @{$self->[3]});
+	$g->add_node( "$self", label => "Project ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }
