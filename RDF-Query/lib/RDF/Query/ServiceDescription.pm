@@ -337,7 +337,12 @@ sub computed_statement_generator {
 }
 
 
+=item C<< answers_triple_pattern ( $triple ) >>
 
+Returns true if the service described by this object can answer queries
+comprised of the supplied triple pattern.
+
+=cut
 
 sub answers_triple_pattern {
 	my $self	= shift;

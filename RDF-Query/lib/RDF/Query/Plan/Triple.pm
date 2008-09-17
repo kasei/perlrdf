@@ -196,7 +196,9 @@ sub close {
 	$self->SUPER::close();
 }
 
-=item C<< nodes () >>
+=item C<< nodes >>
+
+Returns a list of the three node objects that comprise the triple pattern this plan will return.
 
 =cut
 
@@ -204,6 +206,12 @@ sub nodes {
 	my $self	= shift;
 	return @{ $self }[1,2,3];
 }
+
+=item C<< triple >>
+
+Returns a RDF::Trine::Statement object representing the triple pattern this plan will return.
+
+=cut
 
 sub triple {
 	my $self	= shift;

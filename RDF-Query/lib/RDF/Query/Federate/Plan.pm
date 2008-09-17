@@ -43,6 +43,13 @@ sub generate_plans {
 	return @plans;
 }
 
+=item C<< label_plan_with_services ( $plan, $context ) >>
+
+Labels the supplied plan object with the URIs of applicable services that are
+capable of answering the query represented by the plan.
+
+=cut
+
 sub label_plan_with_services {
 	my $self	= shift;
 	my $plan	= shift;
