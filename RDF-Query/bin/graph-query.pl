@@ -9,7 +9,7 @@ require "t/models.pl";
 
 unless (@ARGV) {
 	print <<"END";
-USAGE: perl $0 query.rq data.rdf
+USAGE: perl $0 query.rq [ service.rdf, ... ]
 
 Graph the QEP produced for a query.
 
@@ -20,7 +20,7 @@ END
 my $qfile	= shift;
 my $sparql	= do { open(my $fh, '<', $qfile) or die $!; local($/) = undef; <$fh> };
 my @files	= @ARGV;
-my @models	= test_models( @files );
+my @models	= test_models();
 
 use RDF::Query::Federate;
 use RDF::Query::CostModel::Naive;
@@ -43,7 +43,7 @@ my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
 my $query	= RDF::Query::Federate->new( $sparql, {  optimize => 1 } );
 warn RDF::Query->error unless ($query);
 
-foreach my $file (qw(data/service.ttl data/service-kasei.ttl)) {
+foreach my $file (@files) {
 	my $uri	= URI::file->new_abs( $file );
 	my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
 	$query->add_service( $sd );
@@ -55,6 +55,7 @@ $plan->graph( $g );
 open( my $fh, '>', "qep.png" ) or die $!;
 print {$fh} $g->as_png;
 close($fh);
+warn $plan->sse({}, '');
 
 if (my $opener = $ENV{PNG_VIEWER}) {
 	system($opener, 'qep.png');
