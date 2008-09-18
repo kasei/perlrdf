@@ -437,7 +437,7 @@ sub _triple_join_plans {
 								my $sparql		= $ggp->as_sparql;
 								$logging_keys{ sparql }	= $sparql;
 							}
-							my $plan	= $join_type->new( $a, $b, 0, \%logging_keys );
+							my $plan	= $join_type->new( $b, $a, 0, \%logging_keys );
 							push( @plans, [ $plan, [ @algebras ] ] );
 						} catch RDF::Query::Error::MethodInvocationError with {
 			#				warn "caught MethodInvocationError.";
