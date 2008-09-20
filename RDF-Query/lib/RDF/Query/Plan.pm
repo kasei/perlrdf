@@ -35,6 +35,7 @@ use RDF::Query::Plan::Quad;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
 use RDF::Query::Plan::Triple;
+use RDF::Query::Plan::ThresholdUnion;
 use RDF::Query::Plan::Union;
 
 use RDF::Trine::Statement;
@@ -174,6 +175,7 @@ sub graph_labels {
 	my $self	= shift;
 	my @labels;
 	foreach my $k (keys %{ $self->[0]{labels} || {} }) {
+		next if ($k eq 'algebra');
 		my $v	= $self->label( $k );
 		local($Data::Dumper::Indent)	= 0;
 		my $l	= Data::Dumper->Dump([$v], [$k]);
@@ -379,6 +381,10 @@ sub generate_plans {
 	if ($constant and scalar(@$constant)) {
 		my @plans		= splice( @return_plans );
 		@return_plans	= $self->_add_constant_join( $constant, @plans );
+	}
+	
+	foreach my $p (@return_plans) {
+		$p->label( algebra => $algebra );
 	}
 	
 	return @return_plans;

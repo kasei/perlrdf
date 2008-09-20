@@ -59,6 +59,24 @@ sub new {
 	return $self;
 }
 
+sub new_from_plan {
+	my $class	= shift;
+	my $url		= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $pattern	= $plan->label( 'algebra' );
+	unless ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+		$pattern	= RDF::Query::Algebra::GroupGraphPattern->new( $pattern );
+	}
+	my $ns		= $context->ns;
+	my $sparql	= join("\n",
+						(map { sprintf("PREFIX %s: <%s>", $_, $ns->{$_}) } (keys %$ns)),
+						sprintf("SELECT * WHERE %s", $pattern->as_sparql({namespaces => $ns}, ''))
+					);
+	my $service	= $class->new( $url, $plan, $sparql, @_ );
+	return $service;
+}
+
 =item C<< execute ( $execution_context ) >>
 
 =cut
@@ -326,7 +344,13 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(service\n${indent}${more}<%s>\n${indent}${more}%s\n${indent})", $self->endpoint, $self->sparql);
+	my $sparql	= $self->sparql;
+	$sparql		=~ s/\\/\\\\/g;
+	$sparql		=~ s/"/\\"/g;
+	$sparql		=~ s/\n/\\n/g;
+	$sparql		=~ s/\t/\\t/g;
+	$sparql		= qq<"$sparql">;
+	return sprintf("(service\n${indent}${more}<%s>\n${indent}${more}%s\n${indent})", $self->endpoint, $sparql);
 }
 
 =item C<< graph ( $g ) >>
