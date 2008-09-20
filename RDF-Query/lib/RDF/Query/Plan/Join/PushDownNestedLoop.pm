@@ -160,7 +160,7 @@ sub sse {
 	my $indent	= shift;
 	my $more	= '    ';
 	my $jtype	= $self->optional ? 'leftjoin' : 'join';
-	return sprintf("(pushdown-nestedloop-${jtype}\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
+	return sprintf("(bind-${jtype}\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
 }
 
 =item C<< graph ( $g ) >>
