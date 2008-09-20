@@ -35,12 +35,47 @@ sub generate_plans {
 	my $context	= shift;
 	my %args	= @_;
 	
+	my @optimistic_plans;
 	my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
 	foreach my $plan (@plans) {
 		$self->label_plan_with_services( $plan, $context );
+		push(@optimistic_plans, $plan);
+		if ($plan->isa('RDF::Query::Plan::Triple')) {
+		} else {
+			my @fplans	= $self->optimistic_plan( $plan, $context );
+			if (@fplans) {
+				my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
+				$oplan->label( services => $plan->label( 'services' ) );
+				push(@optimistic_plans, $oplan);
+			}
+		}
 	}
 	
-	return @plans;
+	return @optimistic_plans;
+}
+
+=item C<< optimistic_plan ( $plan, $context ) >>
+
+Returns a set of optimistic query plans that may be used to provide subsets of
+the results expected from $plan. This method only makes the root node of $plan
+optimistic, assuming that it has been called previously for the sub-nodes.
+
+=cut
+
+sub optimistic_plan {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $servs	= $plan->label( 'services' );
+	
+	my @opt_plans;
+	if (ref($servs) and scalar(@$servs)) {
+		foreach my $url (@$servs) {
+			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
+			push(@opt_plans, $service);
+		}
+	}
+	return @opt_plans;
 }
 
 =item C<< label_plan_with_services ( $plan, $context ) >>
@@ -68,14 +103,19 @@ sub label_plan_with_services {
 		
 		if (@services) {
 			$_->debug( "SERVICES that can handle pattern: " . $plan->triple->sse . "\n\t" . join("\n\t", map { $_->url } @services) ) for (@l);
+			$plan->label( services => [ map { $_->url } @services ] );
 		}
-		$plan->label( services => [ map { $_->url } @services ] );
 	} elsif ($plan->isa('RDF::Query::Plan::Join')) {
 		$self->label_plan_with_services($_, $context) for ($plan->lhs, $plan->rhs);
 		my $lhs	= $plan->lhs->label( 'services' ) || [];
 		my $rhs	= $plan->rhs->label( 'services' ) || [];
 		my $set	= Set::Scalar->new(@$lhs)->intersection(Set::Scalar->new(@$rhs));
-		$plan->label( services => [ $set->members ] );
+		if (my @members = $set->members) {
+			$plan->label( services => [ @members ] );
+		}
+	} elsif ($plan->isa('RDF::Query::Plan::ThresholdUnion')) {
+		my $dplan	= $plan->default;
+		$self->label_plan_with_services($dplan, $context);
 	}
 }
 
