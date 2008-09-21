@@ -59,6 +59,16 @@ sub new {
 	return $self;
 }
 
+=item C<< new_from_plan ( $endpoint, $plan, $context ) >>
+
+Returns a new SERVICE query plan object. C<<$endpoint>> is the URL of the endpoint
+(as a string). C<<$plan>> is the query plan representing the query to be sent to
+the remote endpoint. The exact SPARQL serialization that will be used is obtained
+by getting the originating RDF::Query::Algebra object from C<<$plan>>, and serializing
+it (with the aid of the RDF::Query::ExecutionContext object C<<$context>>).
+
+=cut
+
 sub new_from_plan {
 	my $class	= shift;
 	my $url		= shift;
