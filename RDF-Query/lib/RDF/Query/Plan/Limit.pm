@@ -94,6 +94,17 @@ sub pattern {
 	return $self->[1];
 }
 
+=item C<< limit >>
+
+Returns the limit size.
+
+=cut
+
+sub limit {
+	my $self	= shift;
+	return $self->[2];
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.

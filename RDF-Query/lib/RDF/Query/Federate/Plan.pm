@@ -40,9 +40,8 @@ sub generate_plans {
 	foreach my $plan (@plans) {
 		$self->label_plan_with_services( $plan, $context );
 		push(@optimistic_plans, $plan);
-		if ($plan->isa('RDF::Query::Plan::Triple')) {
-		} else {
-			my @fplans	= $self->optimistic_plan( $plan, $context );
+		unless ($plan->isa('RDF::Query::Plan::Triple')) {
+			my @fplans	= $self->optimistic_plans( $plan, $context );
 			if (@fplans) {
 				my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
 				$oplan->label( services => $plan->label( 'services' ) );
@@ -54,7 +53,7 @@ sub generate_plans {
 	return @optimistic_plans;
 }
 
-=item C<< optimistic_plan ( $plan, $context ) >>
+=item C<< optimistic_plans ( $plan, $context ) >>
 
 Returns a set of optimistic query plans that may be used to provide subsets of
 the results expected from $plan. This method only makes the root node of $plan
@@ -62,7 +61,7 @@ optimistic, assuming that it has been called previously for the sub-nodes.
 
 =cut
 
-sub optimistic_plan {
+sub optimistic_plans {
 	my $self	= shift;
 	my $plan	= shift;
 	my $context	= shift;

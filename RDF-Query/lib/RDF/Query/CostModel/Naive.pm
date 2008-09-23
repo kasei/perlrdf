@@ -55,6 +55,18 @@ sub _cost_service {
 	return $card + $cost;
 }
 
+sub _cost_thresholdunion {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	my $cost	= $self->cost( $plan->default, $context );
+	my @oplans	= $plan->optimistic;
+	$cost		-= scalar(@oplans);
+	return $cost;
+}
+
 sub _cost_union {
 	my $self	= shift;
 	my $plan	= shift;
@@ -71,6 +83,18 @@ sub _cost_filter {
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
+}
+
+sub _cost_limit {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	my $card	= $self->_cardinality( $plan->pattern, $context );
+	my $limit	= $plan->limit;
+	my $lcard	= ($limit < $card) ? $limit : $card;
+	return $lcard + $self->cost( $plan->pattern, $context );
 }
 
 sub _cost_project {
@@ -229,6 +253,15 @@ sub _cardinality_union {
 	my $pattern	= shift;
 	my $context	= shift;
 	return $self->_cardinality( $pattern->lhs, $context ) + $self->_cardinality( $pattern->rhs, $context );
+}
+
+sub _cardinality_thresholdunion {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	my @opt		= $pattern->optimistic;
+	return $self->_cardinality( $pattern->default, $context );	# XXX
+#	return scalar(@opt) * $self->_cardinality( $pattern->default, $context );
 }
 
 sub _cardinality_nestedloop {

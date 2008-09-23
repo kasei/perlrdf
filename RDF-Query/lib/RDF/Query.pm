@@ -345,7 +345,7 @@ sub execute {
 	return $self->execute_plan( $plan, $context );
 }
 
-=item C<< execute_plan ( $context ) >>
+=item C<< execute_plan ( $plan, $context ) >>
 
 Executes the query using the supplied ExecutionContext. If called in a list
 context, returns an array of rows, otherwise returns an iterator.
@@ -471,7 +471,7 @@ sub query_plan {
 	if (wantarray) {
 		return @plans;
 	} else {
-		my ($plan)	= $self->prune_plans( @plans );
+		my ($plan)	= $self->prune_plans( $context, @plans );
 		$l->debug("using query plan: " . $plan->sse({}, ''));
 		return $plan;
 	}
@@ -494,7 +494,7 @@ sub plan_class {
 
 =begin private
 
-=item C<< prune_plans ( @plans ) >>
+=item C<< prune_plans ( $context, @plans ) >>
 
 =end private
 
@@ -502,8 +502,9 @@ sub plan_class {
 
 sub prune_plans {
 	my $self	= shift;
+	my $context	= shift;
 	my @plans	= @_;
-	return $plans[ 0 ];
+	return $self->plan_class->prune_plans( $context, @plans );
 }
 
 =begin private

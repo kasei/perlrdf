@@ -116,6 +116,15 @@ sub children {
 	return @{ $self->[1] };
 }
 
+=item C<< optimistic >>
+
+=cut
+
+sub optimistic {
+	my $self	= shift;
+	return @{ $self->[1] }[ 0 .. $#{ $self->[1] } - 1 ];
+}
+
 =item C<< default >>
 
 =cut
