@@ -76,7 +76,27 @@ sub _cost_union {
 	return $self->cost( $plan->lhs, $context ) + $self->cost( $plan->rhs, $context );
 }
 
+sub _cost_sort {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	my $card	= $self->_cardinality( $plan->pattern, $context );
+	my $scost	= $card * (log($card)/log(2));
+	return $scost + $self->cost( $plan->pattern, $context );
+}
+
 sub _cost_filter {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
+}
+
+sub _cost_construct {
 	my $self	= shift;
 	my $plan	= shift;
 	my $context	= shift;
@@ -95,6 +115,16 @@ sub _cost_limit {
 	my $limit	= $plan->limit;
 	my $lcard	= ($limit < $card) ? $limit : $card;
 	return $lcard + $self->cost( $plan->pattern, $context );
+}
+
+sub _cost_offset {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	my $card	= $self->_cardinality( $plan->pattern, $context );
+	return $card + $self->cost( $plan->pattern, $context );
 }
 
 sub _cost_project {
@@ -239,6 +269,30 @@ sub _cardinality_project {
 	my $pattern	= shift;
 	my $context	= shift;
 	return $self->_cardinality( $pattern->pattern, $context );
+}
+
+sub _cardinality_offset {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	my $o		= $pattern->offset;
+	my $card	= $self->_cardinality( $pattern->pattern, $context ) - $o;
+	return ($card < 0) ? 0 : $card;
+}
+
+sub _cardinality_sort {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );
+}
+
+sub _cardinality_construct {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	my $triples	= $pattern->triples;
+	return scalar(@$triples) * $self->_cardinality( $pattern->pattern, $context );
 }
 
 sub _cardinality_service {

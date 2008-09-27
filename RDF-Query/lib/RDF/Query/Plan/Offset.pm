@@ -45,7 +45,7 @@ sub execute ($) {
 
 	if ($plan->state == $self->OPEN) {
 		$self->state( $self->OPEN );
-		for (my $i = 0; $i < $self->[2]; $i++) {
+		for (my $i = 0; $i < $self->offset; $i++) {
 			my $row	= $plan->next;
 		}
 	} else {
@@ -91,6 +91,17 @@ Returns the query plan that will be used to produce the data to be offset.
 sub pattern {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< offset >>
+
+Returns the number of results that are discarded as offset.
+
+=cut
+
+sub offset {
+	my $self	= shift;
+	return $self->[2];
 }
 
 =item C<< distinct >>
