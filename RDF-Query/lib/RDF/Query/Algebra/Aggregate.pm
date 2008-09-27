@@ -116,19 +116,21 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
 		my ($alias, $op, $col)	= @$data;
-		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, ($col eq '*' ? '*' : $col->sse)));
+		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, ($col eq '*' ? '*' : $col->sse( $context, "${prefix}${indent}" ))));
 	}
 	
 	my @group	= $self->groupby;
 	my $group	= (@group) ? '(' . join(', ', @group) . ')' : '';
 	return sprintf(
-		'(aggregate %s %s %s)',
-		$self->pattern->sse( $context ),
+		'(aggregate\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(', ', @ops_sse),
 		$group,
 	);

@@ -97,6 +97,8 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	my $vars	= join(' ',
 					map {
@@ -104,9 +106,9 @@ sub sse {
 					} @{ $self->vars }
 				);
 	return sprintf(
-		'(project %s (%s))',
-		$self->pattern->sse( $context ),
-		$vars
+		"(project (%s)\n${prefix}${indent}%s)",
+		$vars,
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }
 

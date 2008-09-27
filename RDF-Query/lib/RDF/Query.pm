@@ -160,6 +160,7 @@ sub new {
 	if (@_ and ref($_[0])) {
 		%options	= %{ shift() };
 		$lang		= $options{ lang };
+		$baseuri	= $options{ base };
 	} else {
 		($baseuri, $languri, $lang, %options)	= @_;
 	}
@@ -714,8 +715,26 @@ sub sse {
 	my $parsed	= $self->parsed;
 	
 	my $ggp		= $self->pattern;
-	my $context	= { namespaces => $self->{parsed}{namespaces} };
-	my $sse	= $ggp->sse( $context, '' );
+	my $ns		= $parsed->{namespaces};
+	my $nscount	= scalar(@{ [ keys %$ns ] });
+	my $base	= $parsed->{base};
+	
+	my $indent	= '  ';
+	my $context	= { namespaces => $ns, indent => $indent };
+	my $indentcount	= 0;
+	$indentcount++ if ($base);
+	$indentcount++ if ($nscount);
+	my $prefix	= $indent x $indentcount;
+	
+	my $sse	= $ggp->sse( $context, $prefix );
+	
+	if ($nscount) {
+		$sse		= sprintf("(prefix (%s)\n${prefix}%s)", join("\n${indent}" . ' 'x9, map { "(${_}: <$ns->{$_}>)" } (sort keys %$ns)), $sse);
+	}
+	
+	if ($base) {
+		$sse	= sprintf("(base <%s>\n${indent}%s)", $base->uri_value, $sse);
+	}
 	
 	chomp($sse);
 	return $sse;

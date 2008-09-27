@@ -110,11 +110,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(filter %s %s)',
-		$self->expr->sse( $context ),
-		$self->pattern->sse( $context ),
+		"(filter %s\n${prefix}${indent}%s)",
+		$self->expr->sse( $context, "${prefix}${indent}" ),
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }
 

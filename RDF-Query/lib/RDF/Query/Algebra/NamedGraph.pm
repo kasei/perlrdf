@@ -98,11 +98,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(namedgraph %s %s)',
-		$self->graph->sse( $context ),
-		$self->pattern->sse( $context )
+		"(namedgraph\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+		$self->graph->sse( $context, "${prefix}${indent}" ),
+		$self->pattern->sse( $context, "${prefix}${indent}" )
 	);
 }
 
