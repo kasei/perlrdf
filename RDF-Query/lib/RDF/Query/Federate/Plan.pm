@@ -39,14 +39,16 @@ sub generate_plans {
 	my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
 	foreach my $plan (@plans) {
 		$self->label_plan_with_services( $plan, $context );
-		push(@optimistic_plans, $plan);
-		unless ($plan->isa('RDF::Query::Plan::Triple')) {
+		if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
 			my @fplans	= $self->optimistic_plans( $plan, $context );
 			if (@fplans) {
 				my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
 				$oplan->label( services => $plan->label( 'services' ) );
 				push(@optimistic_plans, $oplan);
 			}
+		}
+		unless (@optimistic_plans) {
+			push(@optimistic_plans, $plan);
 		}
 	}
 	
@@ -72,6 +74,9 @@ sub optimistic_plans {
 		foreach my $url (@$servs) {
 			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
 			push(@opt_plans, $service);
+		}
+		unless (@opt_plans) {
+			warn "no optimistic plans found for plan " . $plan->sse({}, '');
 		}
 	}
 	return @opt_plans;
