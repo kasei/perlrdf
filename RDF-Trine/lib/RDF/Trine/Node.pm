@@ -106,6 +106,48 @@ sub equal {
 	return 0;
 }
 
+sub from_sse {
+	my $class	= shift;
+	my $context	= $_[1];
+	for ($_[0]) {
+		if (my ($iri) = m/^<([^>]+)>/o) {
+			s/^<([^>]+)>\s*//;
+			return RDF::Trine::Node::Resource->new( $iri );
+		} elsif (my ($lit) = m/^"(([^"\\]+|\\([\\"nt]))+)"/o) {
+			my @args;
+			s/^"(([^"\\]+|\\([\\"nt]))+)"//;
+			if (my ($lang) = m/[@](\S+)/) {
+				s/[@](\S+)\s*//;
+				$args[0]	= $lang;
+			} elsif (m/^\Q^^\E/) {
+				s/^\Q^^\E//;
+				my ($dt)	= $class->from_sse( $_, $context );
+				$args[1]	= $dt->uri_value;
+			}
+			$lit	=~ s/\\(.)/eval "\"\\$1\""/ge;
+			return RDF::Trine::Node::Literal->new( $lit, @args );
+		} elsif (my ($id1) = m/^[(]([^)]+)[)]/) {
+			s/^[(]([^)]+)[)]\s*//;
+			return RDF::Trine::Node::Blank->new( $id1 );
+		} elsif (my ($id2) = m/^_:(\S+)/) {
+			s/^_:(\S+)\s*//;
+			return RDF::Trine::Node::Blank->new( $id2 );
+		} elsif (my ($pn, $ln) = m/^(\S*):(\S*)/o) {
+			if ($pn eq '') {
+				$pn	= '__DEFAULT__';
+			}
+			if (my $ns = $context->{namespaces}{ $pn }) {
+				s/^(\S+):(\S+)\s*//;
+				return RDF::Trine::Node::Resource->new( join('', $ns, $ln) );
+			} else {
+				throw RDF::Trine::Error -text => "No such namespace '$pn' while parsing SSE QName: >>$_<<";
+			}
+		} else {
+			throw RDF::Trine::Error -text => "Cannot parse SSE node from SSE string: >>$_<<";
+		}
+	}
+}
+
 sub _unicode_escape {
 	# based on Unicode::Escape, but without running the string through Encode:: first.
 	my $self	= shift;

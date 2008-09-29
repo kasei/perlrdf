@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 29;
+use Test::More tests => 32;
 
 use_ok( 'RDF::Query' );
 
@@ -300,6 +300,21 @@ END
 END
 	my $sse	= $query->sse;
 	is( _CLEAN_WS($sse), '(base <http://xmlns.com/> (prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (BGP (triple ?person foaf:name "Gregory Todd Williams")))))', 'sse: select' );
+}
+
+{
+	my $sse	= '(triple _:a foaf:name "foo\\\\\\tbar\\nbaz"^^<foo://bar>)';
+	my $ctx	= { namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } };
+	my $st	= RDF::Query::Algebra::Triple->from_sse( my $string = $sse, $ctx );
+	is( $st->sse( $ctx ), $sse, 'sse: parse triple' );
+}
+
+{
+	my $sse	= '(BGP (triple _:a foaf:name "foo\\\\\\tbar\\nbaz"^^<foo://bar>))';
+	my $ctx	= { namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } };
+	my $bgp	= RDF::Query::Algebra->from_sse( my $string = $sse, $ctx );
+	isa_ok( $bgp, 'RDF::Query::Algebra::BasicGraphPattern' );
+	is( _CLEAN_WS($bgp->sse( $ctx )), $sse, 'sse: parse BGP' );
 }
 
 ################################################################################

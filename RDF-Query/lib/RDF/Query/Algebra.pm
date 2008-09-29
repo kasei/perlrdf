@@ -52,6 +52,25 @@ use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
 use RDF::Query::Algebra::Project;
 
+use constant SSE_TAGS	=> {
+	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',
+	'constant'				=> 'RDF::Query::Algebra::Constant',
+	'construct'				=> 'RDF::Query::Algebra::Construct',
+	'distinct'				=> 'RDF::Query::Algebra::Distinct',
+	'filter'				=> 'RDF::Query::Algebra::Filter',
+	'limit'					=> 'RDF::Query::Algebra::Limit',
+	'namedgraph'			=> 'RDF::Query::Algebra::NamedGraph',
+	'offset'				=> 'RDF::Query::Algebra::Offset',
+	'project'				=> 'RDF::Query::Algebra::Project',
+	'quad'					=> 'RDF::Query::Algebra::Quad',
+	'service'				=> 'RDF::Query::Algebra::Service',
+	'sort'					=> 'RDF::Query::Algebra::Sort',
+	'triple'				=> 'RDF::Query::Algebra::Triple',
+	'union'					=> 'RDF::Query::Algebra::Union',
+	'join'					=> 'RDF::Query::Algebra::GroupGraphPattern',
+	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
+};
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.
@@ -308,6 +327,41 @@ sub nested_loop_local_join {
 	my @names	= uniq( $outer->binding_names, $inner->referenced_variables );
 	my $args	= $outer->_args;
 	return $outer->_new( $sub, 'bindings', \@names, %$args );
+}
+
+=item C<< from_sse ( $sse, \%context ) >>
+
+Given an SSE serialization, returns the corresponding algebra expression.
+
+=cut
+
+sub from_sse {
+	my $class	= shift;
+	my $context	= $_[1];
+	if (substr($_[0], 0, 1) eq '(') {
+		for ($_[0]) {
+			if (my ($tag) = m/^[(](\w+)/) {
+				if (my $class = SSE_TAGS->{ $tag }) {
+					if ($class->can('_from_sse')) {
+						return $class->_from_sse( $_, $context );
+					} else {
+						s/^[(](\w+)\s*//;
+						my @nodes;
+						while (my $alg = $class->from_sse( $_, $context )) {
+							push(@nodes, $alg);
+						}
+						return $class->new( @nodes );
+					}
+				} else {
+					throw RDF::Query::Error -text => "Unknown SSE tag '$tag' in SSE string: >>$_<<";
+				}
+			} else {
+				throw RDF::Trine::Error -text => "Cannot parse pattern from SSE string: >>$_<<";
+			}
+		}
+	} else {
+		return;
+	}
 }
 
 1;

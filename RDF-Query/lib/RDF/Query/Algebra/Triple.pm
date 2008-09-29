@@ -157,6 +157,10 @@ sub fixup {
 	}
 }
 
+sub _from_sse {
+	my $class	= shift;
+	return RDF::Trine::Statement->from_sse( @_ );
+}
 
 1;
 
