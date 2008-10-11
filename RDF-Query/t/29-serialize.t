@@ -195,6 +195,8 @@ END
 END
 	my $sse	= $query->sse;
 	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (BGP (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select' );
+	my $alg	= RDF::Query::Algebra->from_sse( my $string = $sse );
+	is( _CLEAN_WS($alg->sse), _CLEAN_WS($sse), 'sse: re-serialization of expression' );
 }
 
 {
