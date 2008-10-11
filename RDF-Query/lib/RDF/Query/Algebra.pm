@@ -341,6 +341,20 @@ sub from_sse {
 	if (substr($_[0], 0, 1) eq '(') {
 		for ($_[0]) {
 			if (my ($tag) = m/^[(](\w+)/) {
+				if ($tag eq 'prefix') {
+					s/^[(]prefix\s*[(]\s*//;
+					my $c	= { %{ $context || {} } };
+					while (my ($ns, $iri) = m/^[(](\S+):\s*<([^>]+)>[)]/) {
+						s/^[(](\S+):\s*<([^>]+)>[)]\s*//;
+						$c->{namespaces}{ $ns }	= $iri;
+						$context	= $c;
+					}
+					s/^[)]\s*//;
+					my $alg	= $class->from_sse( $_, $c );
+					s/^[)]\s*//;
+					return $alg;
+				}
+				
 				if (my $class = SSE_TAGS->{ $tag }) {
 					if ($class->can('_from_sse')) {
 						return $class->_from_sse( $_, $context );
