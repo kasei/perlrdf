@@ -19,7 +19,7 @@ use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap swatch sfinally);
+use RDF::Trine::Iterator qw(smap swatch);
 
 ######################################################################
 
