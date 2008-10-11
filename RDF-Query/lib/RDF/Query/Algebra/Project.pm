@@ -112,6 +112,37 @@ sub sse {
 	);
 }
 
+sub _from_sse {
+	my $class	= shift;
+	my $context	= $_[1];
+	for ($_[0]) {
+		if (m/^[(]project\s+[(]\s*/) {
+			my @nodes;
+			s/^[(]project\s+[(]\s*//;
+			do {
+				push(@nodes, RDF::Trine::Node->from_sse( $_[0], $context ));
+			} until (m/\s*[)]/);
+			if (m/^\s*[)]/) {
+				s/^\s*[)]\s*//;
+			} else {
+				throw RDF::Trine::Error -text => "Cannot parse end-of-project-vars from SSE string: >>$_<<";
+			}
+			
+			my ($pattern)	= RDF::Query::Algebra->from_sse( $context, $_[0] );
+			
+			if (m/^\s*[)]/) {
+				s/^\s*[)]\s*//;
+				warn "project: " . Dumper(\@nodes);
+				return RDF::Query::Algebra::Project->new( $pattern, \@nodes );
+			} else {
+				throw RDF::Trine::Error -text => "Cannot parse end-of-project from SSE string: >>$_<<";
+			}
+		} else {
+			throw RDF::Trine::Error -text => "Cannot parse project from SSE string: >>$_<<";
+		}
+	}
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this alegbra expression.
