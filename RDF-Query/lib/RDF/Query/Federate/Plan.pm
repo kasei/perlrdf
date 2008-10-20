@@ -18,6 +18,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Data::Dumper;
+use Set::Scalar;
 use Scalar::Util qw(blessed);
 use RDF::Query::Error qw(:try);
 
@@ -32,83 +33,94 @@ sub generate_plans {
 	my $class	= ref($self) || $self;
 	my $algebra	= shift;
 	my $context	= shift;
-	my $model	= $context->model;
 	my %args	= @_;
-	unless (blessed($algebra) and $algebra->isa('RDF::Query::Algebra')) {
-		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
+	
+	my @optimistic_plans;
+	my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
+	foreach my $plan (@plans) {
+		$self->label_plan_with_services( $plan, $context );
+		if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
+			my @fplans	= $self->optimistic_plans( $plan, $context );
+			if (@fplans) {
+				my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
+				$oplan->label( services => $plan->label( 'services' ) );
+				push(@optimistic_plans, $oplan);
+			}
+		}
+		unless (@optimistic_plans) {
+			push(@optimistic_plans, $plan);
+		}
 	}
 	
-	my @return_plans;
-	my $aclass	= ref($algebra);
-	my ($type)	= ($aclass =~ m<::(\w+)$>);
-	if ($type eq 'BasicGraphPattern') {
-		my @base_plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->triples;
-		my @join_types	= RDF::Query::Plan::Join->join_classes;
-		# XXX this is currently only considering left-deep trees. maybe it should produce all trees?
-		my @plans		= @{ shift(@base_plans) };
-		while (scalar(@base_plans)) {
-			my $base_a	= [ splice( @plans ) ];
-			my $base_b	= shift(@base_plans);
-			foreach my $i (0 .. $#{ $base_a }) {
-				my ($sd, $algebra, $plan)	= @{ $base_a->[$i] };
-				foreach my $j (0 .. $#{ $base_b }) {
-					my $a	= $base_a->[ $i ];
-					my $b	= $base_b->[ $j ];
-					foreach my $join_type (@join_types) {
-						try {
-							my $plan	= $join_type->new( $a, $b );
-							push( @plans, $plan );
-						} catch RDF::Query::Error::MethodInvocationError with {
-#								warn "caught MethodInvocationError.";
-						};
-					}
-				}
-			}
-		}
-		@return_plans	= @plans;
-	} elsif ($type eq 'Triple') {
-		my $query	= $context->query;
-		my @sds		= $query->services;
-		my @base	= $self->SUPER::generate_plans( $algebra, $context );
-		foreach my $p (@base) {
-			foreach my $sd (@sds) {
-				push(@return_plans, [ $sd, $algebra, $p ]);
-			}
-		}
-	} else {
-		return $self->SUPER::generate_plans( $algebra, $context, %args );
-	}
+	return @optimistic_plans;
+}
+
+=item C<< optimistic_plans ( $plan, $context ) >>
+
+Returns a set of optimistic query plans that may be used to provide subsets of
+the results expected from $plan. This method only makes the root node of $plan
+optimistic, assuming that it has been called previously for the sub-nodes.
+
+=cut
+
+sub optimistic_plans {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $servs	= $plan->label( 'services' );
 	
-	return @return_plans;
-}
-
-sub _add_constant_join {
-	my $self		= shift;
-	my $constant	= shift;
-	my @return_plans	= @_;
-	my @join_types	= RDF::Query::Plan::Join->join_classes;
-	while (my $const = shift(@$constant)) {
-		my @plans	= splice(@return_plans);
-		foreach my $p (@plans) {
-			foreach my $join_type (@join_types) {
-				try {
-					my $plan	= $join_type->new( $p, $const );
-					push( @return_plans, $plan );
-				} catch RDF::Query::Error::MethodInvocationError with {
-	#						warn "caught MethodInvocationError.";
-				};
-			}
+	my @opt_plans;
+	if (ref($servs) and scalar(@$servs)) {
+		foreach my $url (@$servs) {
+			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
+			push(@opt_plans, $service);
+		}
+		unless (@opt_plans) {
+			warn "no optimistic plans found for plan " . $plan->sse({}, '');
 		}
 	}
-	return @return_plans;
+	return @opt_plans;
 }
 
-sub _make_blank_distinguished_variable {
-	my $blank	= shift;
-	my $id		= $blank->blank_identifier;
-	my $name	= '__ndv_' . $id;
-	my $var		= RDF::Trine::Node::Variable->new( $name );
-	return $var;
+=item C<< label_plan_with_services ( $plan, $context ) >>
+
+Labels the supplied plan object with the URIs of applicable services that are
+capable of answering the query represented by the plan.
+
+=cut
+
+sub label_plan_with_services {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $query	= $context->query;
+	my @sds		= $query->services;
+	my @l		= map { Log::Log4perl->get_logger($_) } qw(rdf.query.federate.plan rdf.query.plan);
+	
+	if ($plan->isa('RDF::Query::Plan::Triple')) {
+		my @services;
+		foreach my $sd (@sds) {
+			if ($sd->answers_triple_pattern( $plan->triple )) {
+				push(@services, $sd);
+			}
+		}
+		
+		if (@services) {
+			$_->debug( "SERVICES that can handle pattern: " . $plan->triple->sse . "\n\t" . join("\n\t", map { $_->url } @services) ) for (@l);
+			$plan->label( services => [ map { $_->url } @services ] );
+		}
+	} elsif ($plan->isa('RDF::Query::Plan::Join')) {
+		$self->label_plan_with_services($_, $context) for ($plan->lhs, $plan->rhs);
+		my $lhs	= $plan->lhs->label( 'services' ) || [];
+		my $rhs	= $plan->rhs->label( 'services' ) || [];
+		my $set	= Set::Scalar->new(@$lhs)->intersection(Set::Scalar->new(@$rhs));
+		if (my @members = $set->members) {
+			$plan->label( services => [ @members ] );
+		}
+	} elsif ($plan->isa('RDF::Query::Plan::ThresholdUnion')) {
+		my $dplan	= $plan->default;
+		$self->label_plan_with_services($dplan, $context);
+	}
 }
 
 1;

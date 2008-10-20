@@ -188,12 +188,28 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
+	my $jtype	= $self->optional ? 'Left Join' : 'Join';
 	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
-	$g->add_node( "$self", label => "Join (NL)" );
+	$g->add_node( "$self", label => "$jtype (NL)" . $self->graph_labels );
 	$g->add_edge( "$self", $l );
 	$g->add_edge( "$self", $r );
 	return "$self";
 }
+
+
+package RDF::Query::Plan::Join::NestedLoop::Left;
+
+use strict;
+use warnings;
+use base qw(RDF::Query::Plan::Join::NestedLoop);
+
+sub new {
+	my $class	= shift;
+	my $lhs		= shift;
+	my $rhs		= shift;
+	return $class->SUPER::new( $lhs, $rhs, 1 );
+}
+
 
 1;
 

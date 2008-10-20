@@ -160,6 +160,7 @@ sub new {
 	if (@_ and ref($_[0])) {
 		%options	= %{ shift() };
 		$lang		= $options{ lang };
+		$baseuri	= $options{ base };
 	} else {
 		($baseuri, $languri, $lang, %options)	= @_;
 	}
@@ -306,6 +307,7 @@ sub prepare {
 					costmodel			=> $self->costmodel,
 					optimize			=> $self->{optimize},
 					requested_variables	=> \@vars,
+					model_optimize		=> 1,
 				);
 	
 	$self->{model}		= $model;
@@ -345,7 +347,7 @@ sub execute {
 	return $self->execute_plan( $plan, $context );
 }
 
-=item C<< execute_plan ( $context ) >>
+=item C<< execute_plan ( $plan, $context ) >>
 
 Executes the query using the supplied ExecutionContext. If called in a list
 context, returns an array of rows, otherwise returns an iterator.
@@ -464,13 +466,14 @@ sub query_plan {
 	}
 	
 	my $algebra		= $self->pattern;
-	my @plans		= RDF::Query::Plan->generate_plans( $algebra, $context, %constant_plan );
+	my $pclass		= $self->plan_class;
+	my @plans		= $pclass->generate_plans( $algebra, $context, %constant_plan );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
 		return @plans;
 	} else {
-		my ($plan)	= $self->prune_plans( @plans );
+		my ($plan)	= $self->prune_plans( $context, @plans );
 		$l->debug("using query plan: " . $plan->sse({}, ''));
 		return $plan;
 	}
@@ -478,7 +481,22 @@ sub query_plan {
 
 =begin private
 
-=item C<< prune_plans ( @plans ) >>
+=item C<< plan_class >>
+
+Returns the class name for Plan generation. This method should be overloaded by
+RDF::Query subclasses if the subclass also provides a subclass of RDF::Query::Plan.
+
+=end private
+
+=cut
+
+sub plan_class {
+	return 'RDF::Query::Plan';
+}
+
+=begin private
+
+=item C<< prune_plans ( $context, @plans ) >>
 
 =end private
 
@@ -486,8 +504,9 @@ sub query_plan {
 
 sub prune_plans {
 	my $self	= shift;
+	my $context	= shift;
 	my @plans	= @_;
-	return $plans[ 0 ];
+	return $self->plan_class->prune_plans( $context, @plans );
 }
 
 =begin private
@@ -697,8 +716,26 @@ sub sse {
 	my $parsed	= $self->parsed;
 	
 	my $ggp		= $self->pattern;
-	my $context	= { namespaces => $self->{parsed}{namespaces} };
-	my $sse	= $ggp->sse( $context, '' );
+	my $ns		= $parsed->{namespaces};
+	my $nscount	= scalar(@{ [ keys %$ns ] });
+	my $base	= $parsed->{base};
+	
+	my $indent	= '  ';
+	my $context	= { namespaces => $ns, indent => $indent };
+	my $indentcount	= 0;
+	$indentcount++ if ($base);
+	$indentcount++ if ($nscount);
+	my $prefix	= $indent x $indentcount;
+	
+	my $sse	= $ggp->sse( $context, $prefix );
+	
+	if ($nscount) {
+		$sse		= sprintf("(prefix (%s)\n${prefix}%s)", join("\n${indent}" . ' 'x9, map { "(${_}: <$ns->{$_}>)" } (sort keys %$ns)), $sse);
+	}
+	
+	if ($base) {
+		$sse	= sprintf("(base <%s>\n${indent}%s)", $base->uri_value, $sse);
+	}
 	
 	chomp($sse);
 	return $sse;

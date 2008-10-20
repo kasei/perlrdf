@@ -90,11 +90,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(leftjoin %s %s)',
-		$self->pattern->sse( $context ),
-		$self->optional->sse( $context )
+		"(leftjoin\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
+		$self->optional->sse( $context, "${prefix}${indent}" )
 	);
 }
 

@@ -1,9 +1,9 @@
-# RDF::Query::Plan::Union
+# RDF::Query::Plan::ThresholdUnion
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Union - Executable query plan for unions.
+RDF::Query::Plan::ThresholdUnion - Executable query plan for unions.
 
 =head1 METHODS
 
@@ -11,7 +11,7 @@ RDF::Query::Plan::Union - Executable query plan for unions.
 
 =cut
 
-package RDF::Query::Plan::Union;
+package RDF::Query::Plan::ThresholdUnion;
 
 use strict;
 use warnings;
@@ -22,17 +22,19 @@ use Scalar::Util qw(blessed);
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( $lhs, $rhs ) >>
+=item C<< new ( @plans ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my ($lhs, $rhs)	= @_;
-	my $self	= $class->SUPER::new( [ $lhs, $rhs ] );
+	my @plans	= @_;
+	my $self	= $class->SUPER::new( \@plans );
 	my %vars;
-	foreach my $v ($lhs->referenced_variables, $rhs->referenced_variables) {
-		$vars{ $v }++;
+	foreach my $plan (@plans) {
+		foreach my $v ($plan->referenced_variables) {
+			$vars{ $v }++;
+		}
 	}
 	$self->[0]{referenced_variables}	= [ keys %vars ];
 	return $self;
@@ -46,7 +48,7 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "BGP plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "ThresholdUnion plan can't be executed while already open";
 	}
 	
 	my $iter	= $self->[1][0];
@@ -70,7 +72,7 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open ThresholdUnion";
 	}
 	my $iter	= $self->[0]{iter};
 	my $row		= $iter->next;
@@ -79,13 +81,14 @@ sub next {
 	} else {
 		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
 		$iter->close();
-		my $iter	= $self->[1][ ++$self->[0]{idx} ];
+		my $index	= ++$self->[0]{idx};
+		my $iter	= $self->[1][ $index ];
 		$iter->execute( $self->[0]{context} );
 		if ($iter->state == $self->OPEN) {
 			$self->[0]{iter}	= $iter;
 			return $self->next;
 		} else {
-			throw RDF::Query::Error::ExecutionError -text => "execute() on RHS of UNION failed during next()";
+			throw RDF::Query::Error::ExecutionError -text => "execute() on child [${index}] of UNION failed during next()";
 		}
 	}
 }
@@ -97,33 +100,38 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open BGP";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open ThresholdUnion";
 	}
 	$self->[0]{iter}->close();
 	delete $self->[0]{iter};
 	$self->SUPER::close();
 }
 
-=item C<< lhs >>
-
-Returns the left-hand-side plan to the union.
+=item C<< children >>
 
 =cut
 
-sub lhs {
+sub children {
 	my $self	= shift;
-	return $self->[1][0];
+	return @{ $self->[1] };
 }
 
-=item C<< rhs >>
-
-Returns the right-hand-side plan to the union.
+=item C<< optimistic >>
 
 =cut
 
-sub rhs {
+sub optimistic {
 	my $self	= shift;
-	return $self->[1][1];
+	return @{ $self->[1] }[ 0 .. $#{ $self->[1] } - 1 ];
+}
+
+=item C<< default >>
+
+=cut
+
+sub default {
+	my $self	= shift;
+	return $self->[1][ $#{ $self->[1] } ];
 }
 
 =item C<< distinct >>
@@ -155,7 +163,7 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	my $more	= '    ';
-	return sprintf("(union\n${indent}${more}%s\n${indent}${more}%s\n${indent})", map { $_->sse( $context, "${indent}${more}" ) } @{ $self->[1] });
+	return sprintf("(threshold-union\n${indent}${more}%s\n${indent})", join("\n${indent}${more}", map { $_->sse( $context, "${indent}${more}" ) } $self->children));
 }
 
 =item C<< graph ( $g ) >>
@@ -165,10 +173,9 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	my ($l, $r)	= map { $_->graph( $g ) } ($self->lhs, $self->rhs);
-	$g->add_node( "$self", label => "Union" . $self->graph_labels );
-	$g->add_edge( "$self", $l );
-	$g->add_edge( "$self", $r );
+	my (@children)	= map { $_->graph( $g ) } ($self->children);
+	$g->add_node( "$self", label => "Threshold Union" . $self->graph_labels );
+	$g->add_edge( "$self", $_ ) for (@children);
 	return "$self";
 }
 

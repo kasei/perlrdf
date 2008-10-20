@@ -20,7 +20,7 @@ use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap sgrep swatch sfinally);
+use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
@@ -157,6 +157,10 @@ sub fixup {
 	}
 }
 
+sub _from_sse {
+	my $class	= shift;
+	return RDF::Trine::Statement->from_sse( @_ );
+}
 
 1;
 

@@ -97,12 +97,24 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
-	return sprintf(
-		'(limit %s %s)',
-		$self->pattern->sse( $context ),
-		$self->limit,
-	);
+	if ($self->pattern->isa('RDF::Query::Algebra::Offset')) {
+		my $l	= $self->limit;
+		my $o	= $self->pattern->offset;
+		return sprintf(
+			"(slice %d %d\n${prefix}${indent}%s)",
+			$o, $l,
+			$self->pattern->pattern->sse( $context, "${prefix}${indent}" ),
+		);
+	} else {
+		return sprintf(
+			"(limit %s\n${prefix}${indent}%s)",
+			$self->limit,
+			$self->pattern->sse( $context, "${prefix}${indent}" ),
+		);
+	}
 }
 
 =item C<< as_sparql >>

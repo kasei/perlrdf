@@ -19,7 +19,7 @@ use Log::Log4perl;
 use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
-use RDF::Trine::Iterator qw(smap swatch sfinally);
+use RDF::Trine::Iterator qw(smap swatch);
 
 ######################################################################
 
@@ -86,10 +86,12 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent} || '';
 	
 	return sprintf(
-		'(bgp %s)',
-		join(' ', map { $_->sse( $context ) } $self->triples)
+		"(BGP\n${prefix}${indent}%s)",
+		join("\n${prefix}${indent}", map { $_->sse( $context ) } $self->triples)
 	);
 }
 

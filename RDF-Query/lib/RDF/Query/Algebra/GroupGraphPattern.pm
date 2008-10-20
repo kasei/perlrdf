@@ -104,14 +104,16 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	my @patterns	= $self->patterns;
 	if (scalar(@patterns) == 1) {
-		return $patterns[0]->sse( $context );
+		return $patterns[0]->sse( $context, $prefix );
 	} else {
 		return sprintf(
-			'(join %s)',
-			join(' ', map { $_->sse( $context ) } @patterns)
+			"(join\n${prefix}${indent}%s)",
+			join("\n${prefix}${indent}", map { $_->sse( $context, "${prefix}${indent}" ) } @patterns)
 		);
 	}
 }

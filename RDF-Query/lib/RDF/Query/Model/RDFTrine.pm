@@ -452,12 +452,13 @@ sub fixup {
 	my $ns		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
 	
-	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern') and not(scalar(@{$query->get_computed_statement_generators}))) {
-		# call fixup on the triples so that they get converted to bridge-native objects
-		my @triples		= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
-		my $tpattern	= RDF::Trine::Pattern->new( @triples );
-		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $tpattern, $pattern );
-	} elsif ($pattern->isa('RDF::Query::Algebra::Filter')) {
+# 	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern') and not(scalar(@{$query->get_computed_statement_generators}))) {
+# 		# call fixup on the triples so that they get converted to bridge-native objects
+# 		my @triples		= map { $_->fixup( $query, $self, $base, $ns ) } $pattern->triples;
+# 		my $tpattern	= RDF::Trine::Pattern->new( @triples );
+# 		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( $tpattern, $pattern );
+# 	} elsif ($pattern->isa('RDF::Query::Algebra::Filter')) {
+	if ($pattern->isa('RDF::Query::Algebra::Filter')) {
 		my $filter	= $pattern;
 		my $ggp	= $filter->pattern;
 		if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
@@ -485,6 +486,59 @@ sub fixup {
 	} else {
 		return;
 	}
+}
+
+=item C<< cost_naive ( $bgp, $context ) >>
+
+=cut
+
+sub cost_naive {
+	my $self	= shift;
+	my $costmodel	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	if ($pattern->isa('RDF::Query::Model::RDFTrine::BasicGraphPattern')) {
+		# XXX hacked constant. this should do something more like ARQ's naive variable counting cost computation.
+		my $card	= $self->cardinality_naive( $costmodel, $pattern, $context );
+		return $card;
+	}
+	return;
+}
+
+=item C<< cardinality_naive ( $bgp, $context ) >>
+
+=cut
+
+sub cardinality_naive {
+	my $self	= shift;
+	my $costmodel	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	if ($pattern->isa('RDF::Query::Model::RDFTrine::BasicGraphPattern')) {
+		# XXX hacked constant. this should do something more like ARQ's naive variable counting cost computation.
+		my @t		= $pattern->triples;
+		my $size	= 0.5 * $costmodel->_size;
+		return $size ** scalar(@t);
+	}
+	return;
+}
+
+=item C<< generate_plans ( $algebra, $context ) >>
+
+=cut
+
+sub generate_plans {
+	my $self	= shift;
+	my $class	= ref($self) || $self;
+	my $algebra	= shift;
+	my $context	= shift;
+	my $model	= $context->model;
+	my %args	= @_;
+	if ($algebra->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+		my @triples	= $algebra->triples;
+		return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( @triples );
+	}
+	return;
 }
 
 sub _named_graphs_model {

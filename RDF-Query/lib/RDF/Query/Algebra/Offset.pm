@@ -97,11 +97,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(offset %s %s)',
-		$self->pattern->sse( $context ),
+		"(offset %s\n${prefix}${indent}%s)",
 		$self->offset,
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }
 

@@ -71,7 +71,7 @@
 
 	# whether the service is definitive or not
 	# sd:isDefinitive (default=false)
-	# sd:isDefinitive "true"^^xsd:boolean ;
+	sd:isDefinitive "true"^^xsd:boolean ;
 	
 	# limitations on access patterns
 	# the query for this service must either contain a triple pattern 

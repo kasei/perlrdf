@@ -196,13 +196,27 @@ sub close {
 	$self->SUPER::close();
 }
 
-=item C<< nodes () >>
+=item C<< nodes >>
+
+Returns a list of the three node objects that comprise the triple pattern this plan will return.
 
 =cut
 
 sub nodes {
 	my $self	= shift;
 	return @{ $self }[1,2,3];
+}
+
+=item C<< triple >>
+
+Returns a RDF::Trine::Statement object representing the triple pattern this plan will return.
+
+=cut
+
+sub triple {
+	my $self	= shift;
+	my @nodes	= $self->nodes;
+	return RDF::Trine::Statement->new( @nodes );
 }
 
 =item C<< bf () >>
@@ -269,7 +283,8 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	$g->add_node( "$self", label => "Triple" );
+	my $label	= $self->graph_labels;
+	$g->add_node( "$self", label => "Triple" . $self->graph_labels );
 	my @names	= qw(subject predicate object);
 	foreach my $i (0 .. 2) {
 		my $n	= $self->[ $i + 1 ];

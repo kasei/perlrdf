@@ -99,17 +99,19 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	my @order_sse;
 	my @orderby	= $self->orderby;
 	foreach my $o (@orderby) {
 		my ($dir, $val)	= @$o;
-		push(@order_sse, sprintf("($dir %s)", $val->sse( $context )));
+		push(@order_sse, sprintf("($dir %s)", $val->sse( $context, "${prefix}${indent}" )));
 	}
 	
 	return sprintf(
-		'(sort %s %s)',
-		$self->pattern->sse( $context ),
+		'(sort\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(' ', @order_sse),
 	);
 }

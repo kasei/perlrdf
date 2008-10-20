@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 28;
+use Test::More tests => 32;
 
 use_ok( 'RDF::Query' );
 
@@ -194,7 +194,9 @@ END
 		WHERE { ?person foaf:name "Gregory Todd Williams" }
 END
 	my $sse	= $query->sse;
-	is( $sse, '(project (bgp (triple ?person foaf:name "Gregory Todd Williams")) (?person))', 'sse: select' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (BGP (triple ?person foaf:name "Gregory Todd Williams"))))', 'sse: select' );
+# 	my $alg	= RDF::Query::Algebra->from_sse( my $string = $sse );
+# 	is( _CLEAN_WS($alg->sse), _CLEAN_WS($sse), 'sse: re-serialization of expression' );
 }
 
 {
@@ -209,7 +211,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( $sse, '(project (namedgraph ?g (bgp (quad _:a1 foaf:name "Gregory Todd Williams" ?g))) (?name))', 'sse: select with named graph' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?name) (namedgraph ?g (BGP (quad _:a1 foaf:name "Gregory Todd Williams" ?g)))))', 'sse: select with named graph' );
 }
 
 {
@@ -224,7 +226,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( $sse, '(project (union (bgp (triple _:a1 foaf:name ?name)) (bgp (triple _:a2 dc:title ?name))) (?name))', 'sse: select with union' );
+	is( _CLEAN_WS($sse), '(prefix ((dc: <http://purl.org/dc/elements/1.1/>) (foaf: <http://xmlns.com/foaf/0.1/>)) (project (?name) (union (BGP (triple _:a1 foaf:name ?name)) (BGP (triple _:a2 dc:title ?name)))))', 'sse: select with union' );
 }
 
 {
@@ -237,7 +239,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(project (filter (< ?name "Greg") (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter <' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (filter (< ?name "Greg") (BGP (triple ?person foaf:name ?name)))))', 'sse: select with filter <' );
 }
 
 {
@@ -250,7 +252,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(project (filter (! (function <sparql:bound> ?name)) (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter !BOUND' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (filter (! (bound ?name)) (BGP (triple ?person foaf:name ?name)))))', 'sse: select with filter !BOUND' );
 }
 
 {
@@ -263,7 +265,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(project (filter (sparql:regex ?name "Greg") (bgp (triple ?person foaf:name ?name))) (?person))', 'sse: select with filter regex' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (filter (regex ?name "Greg") (BGP (triple ?person foaf:name ?name)))))', 'sse: select with filter regex' );
 }
 
 {
@@ -275,7 +277,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(project (union (bgp (triple ?person foaf:name ?name)) (bgp (triple ?person foaf:nick ?name))) (?person ?name))', 'sse: select with filter regex' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person ?name) (union (BGP (triple ?person foaf:name ?name)) (BGP (triple ?person foaf:nick ?name)))))', 'sse: select with filter regex' );
 }
 
 TODO: {
@@ -288,7 +290,33 @@ TODO: {
 		}
 END
 	my $sse		= $query->sse;
-	is( $sse, '(aggregate (project (bgp (triple ?person foaf:name ?name)) (COUNT(?person))) (alias "COUNT(?person)" (COUNT ?person)) )', 'sse: aggregate count(?person)' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (alias "COUNT(?person)" (COUNT ?person)) (aggregate (BGP (triple ?person foaf:name ?name)) (COUNT(?person)))))', 'sse: aggregate count(?person)' );
+}
+
+{
+	my $query	= new RDF::Query ( <<"END" );
+		BASE <http://xmlns.com/>
+		PREFIX foaf: </foaf/0.1/>
+		SELECT ?person
+		WHERE { ?person foaf:name "Gregory Todd Williams" }
+END
+	my $sse	= $query->sse;
+	is( _CLEAN_WS($sse), '(base <http://xmlns.com/> (prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (BGP (triple ?person foaf:name "Gregory Todd Williams")))))', 'sse: select' );
+}
+
+{
+	my $sse	= '(triple _:a foaf:name "foo\\\\\\tbar\\nbaz"^^<foo://bar>)';
+	my $ctx	= { namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } };
+	my $st	= RDF::Query::Algebra::Triple->from_sse( my $string = $sse, $ctx );
+	is( $st->sse( $ctx ), $sse, 'sse: parse triple' );
+}
+
+{
+	my $sse	= '(BGP (triple _:a foaf:name "foo\\\\\\tbar\\nbaz"^^<foo://bar>))';
+	my $ctx	= { namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } };
+	my $bgp	= RDF::Query::Algebra->from_sse( my $string = $sse, $ctx );
+	isa_ok( $bgp, 'RDF::Query::Algebra::BasicGraphPattern' );
+	is( _CLEAN_WS($bgp->sse( $ctx )), $sse, 'sse: parse BGP' );
 }
 
 ################################################################################
@@ -319,4 +347,12 @@ END
 	}
 }
 
+
+sub _CLEAN_WS {
+	my $string	= shift;
+	for ($string) {
+		s/\s+/ /g;
+	}
+	return $string;
+}
 __END__

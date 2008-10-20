@@ -97,15 +97,16 @@ sub sse {
 	my $context	= shift;
 	
 	my $uri		= $self->uri->uri_value;
-	if ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|is(Bound|URI|IRI|Blank|Literal))/i) {
+	if ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
+		my $func	= $2;
 		return sprintf(
 			'(%s %s)',
-			$uri,
+			$func,
 			join(' ', map { $_->sse( $context ) } $self->arguments),
 		);
 	} else {
 		return sprintf(
-			'(function %s %s)',
+			'(%s %s)',
 			$self->uri->sse( $context ),
 			join(' ', map { $_->sse( $context ) } $self->arguments),
 		);

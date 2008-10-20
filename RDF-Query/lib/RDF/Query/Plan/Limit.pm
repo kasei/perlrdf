@@ -94,6 +94,17 @@ sub pattern {
 	return $self->[1];
 }
 
+=item C<< limit >>
+
+Returns the limit size.
+
+=cut
+
+sub limit {
+	my $self	= shift;
+	return $self->[2];
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -136,7 +147,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Limit ($self->[2])" );
+	$g->add_node( "$self", label => "Limit ($self->[2])" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

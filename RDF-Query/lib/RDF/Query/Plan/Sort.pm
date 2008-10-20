@@ -171,7 +171,7 @@ sub graph {
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
 	my $expr	= join(' ', map { $_->sse( {}, "" ) } @{ $self->[2] });
-	$g->add_node( "$self", label => "Sort ($expr)" );
+	$g->add_node( "$self", label => "Sort ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

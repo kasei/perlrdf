@@ -84,10 +84,12 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(distinct %s)',
-		$self->pattern->sse( $context ),
+		'(distinct\n${prefix}${indent}%s)',
+		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }
 

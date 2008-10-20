@@ -171,7 +171,7 @@ END
 	is( $sd->label, 'DBpedia', 'expected endpoint label' );
 	is( $sd->url, 'http://dbpedia.org/sparql', 'expected endpoint uri' );
 	is( $sd->size, 58_787_090, 'expected triple size');
-	is( $sd->definitive, 0, 'expected definitive flag');
+	is( $sd->definitive, 1, 'expected definitive flag');
 	
 	my $o		= RDF::Query::Node::Variable->new('object');
 	my $expect	= {

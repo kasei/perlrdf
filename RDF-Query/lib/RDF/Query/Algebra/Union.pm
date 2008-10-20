@@ -104,11 +104,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(union %s %s)',
-		$self->first->sse( $context ),
-		$self->second->sse( $context )
+		"(union\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+		$self->first->sse( $context, "${prefix}${indent}" ),
+		$self->second->sse( $context, "${prefix}${indent}" )
 	);
 }
 

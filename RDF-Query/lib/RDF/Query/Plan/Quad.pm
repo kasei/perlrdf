@@ -239,7 +239,7 @@ sub sse {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	$g->add_node( "$self", label => "Quad" );
+	$g->add_node( "$self", label => "Quad" . $self->graph_labels );
 	my @names	= qw(subject predicate object context);
 	foreach my $i (0 .. 3) {
 		my $n	= $self->[ $i + 1 ];

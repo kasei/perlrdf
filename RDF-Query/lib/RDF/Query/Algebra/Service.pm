@@ -134,11 +134,13 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(service %s %s)',
-		$self->endpoint->sse( $context ),
-		$self->pattern->sse( $context )
+		'(service\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		$self->endpoint->sse( $context, "${prefix}${indent}" ),
+		$self->pattern->sse( $context, "${prefix}${indent}" )
 	);
 }
 

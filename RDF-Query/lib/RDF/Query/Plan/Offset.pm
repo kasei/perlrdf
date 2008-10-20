@@ -45,7 +45,7 @@ sub execute ($) {
 
 	if ($plan->state == $self->OPEN) {
 		$self->state( $self->OPEN );
-		for (my $i = 0; $i < $self->[2]; $i++) {
+		for (my $i = 0; $i < $self->offset; $i++) {
 			my $row	= $plan->next;
 		}
 	} else {
@@ -93,6 +93,17 @@ sub pattern {
 	return $self->[1];
 }
 
+=item C<< offset >>
+
+Returns the number of results that are discarded as offset.
+
+=cut
+
+sub offset {
+	my $self	= shift;
+	return $self->[2];
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -135,7 +146,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Offset ($self->[2])" );
+	$g->add_node( "$self", label => "Offset ($self->[2])" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }
