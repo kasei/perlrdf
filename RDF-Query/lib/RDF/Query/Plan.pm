@@ -228,26 +228,34 @@ sub generate_plans {
 	my @return_plans;
 	my $aclass	= ref($algebra);
 	my ($type)	= ($aclass =~ m<::(\w+)$>);
+	
+	
+	if ($context->model_optimize) {
+		if (blessed($model) and $model->can('generate_plans')) {
+			push(@return_plans, $model->generate_plans( $algebra, $context, %args ));
+		}
+	}
+	
 	if ($type eq 'Aggregate') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @groups	= $algebra->groupby;
 		my @ops		= $algebra->ops;
 		my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, @ops ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Construct') {
 		my $triples	= $algebra->triples;
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Construct->new( $_, $triples ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Distinct') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Filter') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my $expr	= $algebra->expr;
 		my @plans	= map { RDF::Query::Plan::Filter->new( $_, $expr ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'BasicGraphPattern' or $type eq 'GroupGraphPattern') {
 		my $query	= $context->query;
 		my $csg		= (blessed($query) and scalar(@{ $query->get_computed_statement_generators })) ? 1 : 0;
@@ -275,23 +283,23 @@ sub generate_plans {
 		if (scalar(@triples) == 0) {
 			my $v		= RDF::Query::VariableBindings->new( {} );
 			my $plan	= RDF::Query::Plan::Constant->new( $v );
-			@return_plans	= $plan;
+			push(@return_plans, $plan);
 		} elsif (scalar(@triples) == 1) {
-			@return_plans	= $self->generate_plans( @triples, $context, %args );
+			push(@return_plans, $self->generate_plans( @triples, $context, %args ));
 		} else {
-			@return_plans	= map { $_->[0] } $self->_triple_join_plans( $context, \@triples, %args, method => $method );
+			push(@return_plans, map { $_->[0] } $self->_triple_join_plans( $context, \@triples, %args, method => $method ));
 		}
 	} elsif ($type eq 'Limit') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Limit->new( $_, $algebra->limit ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'NamedGraph') {
 		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Offset') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Offset->new( $_, $algebra->offset ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Optional') {
 		# just like a BGP or GGP, but we have to pass the optional flag to the join constructor
 		my @patterns	= ($algebra->pattern, $algebra->optional);
@@ -315,7 +323,7 @@ sub generate_plans {
 				}
 			}
 		}
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Project') {
 		my $pattern	= $algebra->pattern;
 		my $vars	= $algebra->vars;
@@ -333,7 +341,7 @@ sub generate_plans {
 		foreach my $plan (@base) {
 			push(@plans, RDF::Query::Plan::Project->new( $plan, $vars ));
 		}
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Service') {
 		my $pattern	= $algebra->pattern;
 		my @base	= $self->generate_plans( $pattern, $context, %args );
@@ -346,7 +354,7 @@ sub generate_plans {
 							);
 			push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
 		}
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Sort') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @order	= $algebra->orderby;
@@ -357,7 +365,7 @@ sub generate_plans {
 			push(@neworder, [$expr, $dir]);
 		}
 		my @plans	= map { RDF::Query::Plan::Sort->new( $_, @neworder ) } @base;
-		@return_plans	= @plans;
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Triple' or $type eq 'Quad') {
 		my @nodes	= $algebra->nodes;
 		foreach my $i (0 .. $#nodes) {
@@ -368,12 +376,12 @@ sub generate_plans {
 		my $plan	= (scalar(@nodes) == 4)
 					? RDF::Query::Plan::Quad->new( @nodes, { sparql => $algebra->as_sparql } )
 					: RDF::Query::Plan::Triple->new( @nodes, { sparql => $algebra->as_sparql, bf => $algebra->bf } );
-		@return_plans	= $plan;
+		push(@return_plans, $plan);
 	} elsif ($type eq 'Union') {
 		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
 		# XXX
 		my $plan	= RDF::Query::Plan::Union->new( map { $_->[0] } @plans );
-		@return_plans	= $plan;
+		push(@return_plans, $plan);
 	} else {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
 	}

@@ -59,7 +59,13 @@ sub cost {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
-	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
+	my $model	= $context->model;
+	if (blessed($model) and ref((my ($code) = ($model->can('cost_naive') || $model->can('cost')))[0])) {
+		if (defined(my $c = $model->$code( $self, $pattern, $context ))) {
+			return $c;
+		}
+	}
+	my ($type)	= (ref($pattern) =~ /::Plan.*::(\w+)$/);
 	my $method	= "_cost_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("Computing cost of $type pattern...");
@@ -92,7 +98,13 @@ sub _cardinality {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
-	my ($type)	= (ref($pattern) =~ /::(\w+)$/);
+	my $model	= $context->model;
+	if (blessed($model) and ref((my ($code) = ($model->can('cardinality_naive') || $model->can('cardinality')))[0])) {
+		if (defined(my $c = $model->$code( $self, $pattern, $context ))) {
+			return $c;
+		}
+	}
+	my ($type)	= (ref($pattern) =~ /::Plan.*::(\w+)$/);
 	my $method	= "_cardinality_" . lc($type);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("Computing cardinality of $type pattern...");

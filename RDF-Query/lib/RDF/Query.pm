@@ -307,6 +307,7 @@ sub prepare {
 					costmodel			=> $self->costmodel,
 					optimize			=> $self->{optimize},
 					requested_variables	=> \@vars,
+					model_optimize		=> 1,
 				);
 	
 	$self->{model}		= $model;

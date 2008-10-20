@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query::Model::RDFTrine::BasicGraphPattern - Algebra class for BasicGraphPattern patterns
+RDF::Query::Model::RDFTrine::BasicGraphPattern - Plan class for BasicGraphPattern patterns
 
 =cut
 
@@ -12,15 +12,11 @@ package RDF::Query::Model::RDFTrine::BasicGraphPattern;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra);
+use base qw(RDF::Query::Plan);
 
-use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
-use Scalar::Util qw(blessed reftype refaddr);
-use Carp qw(carp croak confess);
-
-use RDF::Trine::Iterator qw(smap);
+use Scalar::Util qw(blessed);
+use RDF::Trine::Statement;
 
 ######################################################################
 
@@ -37,163 +33,149 @@ BEGIN {
 
 =cut
 
-=item C<new ( $bgp )>
-
-Returns a new BasicGraphPattern structure.
+=item C<< new ( @triples ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $pattern	= shift;
-	my $orig	= shift;
-	return bless( [ $pattern, $orig ] );
+	my @triples	= map {
+					my @nodes	= $_->nodes;
+					(scalar(@nodes) == 4)
+						? RDF::Trine::Statement::Quad->new( @nodes )
+						: RDF::Trine::Statement->new( @nodes )
+				} @_;
+	my %vars;
+	foreach my $t (@triples) {
+		$vars{ $_ }++ foreach ($t->referenced_variables);
+	}
+	my $self	= $class->SUPER::new( \@triples );
+	$self->[0]{referenced_variables}	= [ keys %vars ];
+	return $self;
 }
 
-=item C<< construct_args >>
-
-Returns a list of arguments that, passed to this class' constructor,
-will produce a clone of this algebra pattern.
+=item C<< triples >>
 
 =cut
 
-sub construct_args {
+sub triples {
 	my $self	= shift;
-	return ($self->pattern->triples);
+	return @{ $self->[1] };
 }
 
-=item C<< pattern >>
-
-Returns the RDF::Trine::Pattern object.
+=item C<< execute ( $execution_context ) >>
 
 =cut
 
-sub pattern {
+sub execute ($) {
 	my $self	= shift;
-	return $self->[0];
+	my $context	= shift;
+	unless ($self->state == $self->READY) {
+		throw RDF::Query::Error::ExecutionError -text => "BGP plan cann't be executed twice";
+	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.basicgraphpattern");
+	$l->trace( "executing RDF::Query::Plan::BasicGraphPattern" );
+	
+	my @bound_triples;
+	my $bound	= $context->bound;
+	if (%$bound) {
+		$self->[0]{bound}	= $bound;
+		my @triples	= @{ $self->[1] };
+		foreach my $j (0 .. $#triples) {
+			my @nodes	= $triples[$j]->nodes;
+			foreach my $i (0 .. $#nodes) {
+				next unless ($nodes[$i]->isa('RDF::Trine::Node::Variable'));
+				next unless (blessed($bound->{ $nodes[$i]->name }));
+# 				warn "pre-bound variable found: " . $nodes[$i]->name;
+				$nodes[$i]	= $bound->{ $nodes[$i]->name };
+			}
+			my $triple	= RDF::Trine::Statement->new( @nodes );
+			push(@bound_triples, $triple);
+		}
+	} else {
+		@bound_triples	= @{ $self->[1] };
+	}
+	
+	my $bridge	= $context->model;
+	my $iter	= $bridge->get_basic_graph_pattern( $context, @bound_triples );
+	
+	if (blessed($iter)) {
+		$self->[0]{iter}	= $iter;
+		$self->state( $self->OPEN );
+	} else {
+		warn "no iterator in execute()";
+	}
 }
 
-=item C<< referenced_variables >>
-
-Returns a list of the variable names used in this algebra expression.
+=item C<< next >>
 
 =cut
 
-sub referenced_variables {
+sub next {
 	my $self	= shift;
-	return $self->pattern->referenced_variables;
+	unless ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
+	}
+	
+	my $iter	= $self->[0]{iter};
+	my $row		= $iter->next;
+	return undef unless ($row);
+	if (my $bound = $self->[0]{bound}) {
+		@{ $row }{ keys %$bound }	= values %$bound;
+	}
+	my $result	= RDF::Query::VariableBindings->new( $row );
+	return $result;
 }
 
-=item C<< definite_variables >>
-
-Returns a list of the variable names that will be bound after evaluating this algebra expression.
+=item C<< close >>
 
 =cut
 
-sub definite_variables {
+sub close {
 	my $self	= shift;
-	return $self->pattern->definite_variables;
+	unless ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open BGP";
+	}
+	
+	delete $self->[0]{iter};
+	$self->SUPER::close();
 }
 
-=item C<< bind_variables ( \%bound ) >>
-
-Returns a new algebra pattern with variables named in %bound replaced by their corresponding bound values.
-
-=cut
-
-sub bind_variables {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $bound	= shift;
-	my $pattern	= $self->pattern->bind_variables( $bound );
-	return $class->new( $pattern );
-}
-
-=item C<< as_sparql >>
-
-=cut
-
-sub as_sparql {
-	my $self	= shift;
-	return $self->[1]->as_sparql( @_ );
-}
-
-=item C<< sse >>
+=item C<< sse ( \%context, $indent ) >>
 
 =cut
 
 sub sse {
 	my $self	= shift;
-	return $self->[1]->sse( @_ );
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	return sprintf(
+		"(rdftrine-BGP\n${indent}${indent}%s)",
+		join("\n${indent}${indent}", map { $_->sse( $context ) } $self->triples)
+	);
 }
 
-=item C<< execute ( $query, $bridge, \%bound, $context, %args ) >>
+=item C<< distinct >>
+
+Returns true if the pattern is guaranteed to return distinct results.
 
 =cut
 
-sub execute {
-	my $self		= shift;
-	my $query		= shift;
-	my $bridge		= shift;
-	my $bound		= shift;
-	my $context		= shift;
-	my %args		= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
-	
-	my $pattern		= $self->pattern;
-	my @triples		= $pattern->triples;
-	
-	my $model;
-	my $modeldebug;
-	if (@triples and $triples[0]->isa('RDF::Trine::Statement::Quad')) {
-		$modeldebug	= 'named';
-		$model	= $bridge->_named_graphs_model;
-	} else {
-		$modeldebug	= 'default';
-		$model	= $bridge->model;
-	}
-	
-	# blank->var substitution
-	foreach my $triple (@triples) {
-		my @posmap	= ($triple->isa('RDF::Trine::Statement::Quad'))
-					? qw(subject predicate object context)
-					: qw(subject predicate object);
-		foreach my $method (@posmap) {
-			my $node	= $triple->$method();
-			if ($node->isa('RDF::Trine::Node::Blank')) {
-				my $var	= RDF::Trine::Node::Variable->new( '__' . $node->blank_identifier );
-				$triple->$method( $var );
-			}
-		}
-	}
-	
-	# BINDING has to happen after the blank->var substitution above, because
-	# we might have a bound bnode.
-	$pattern	= $pattern->bind_variables( $bound );
-	
-	my @args;
-	if (my $o = $args{ orderby }) {
-		push( @args, orderby => [ map { $_->[1]->name => $_->[0] } grep { blessed($_->[1]) and $_->[1]->isa('RDF::Trine::Node::Variable') } @$o ] );
-	}
-	
-	if ($l->is_debug) {
-		$l->debug("unifying with store: " . refaddr( $model->_store ));
-		$l->debug("bgp pattern: " . Dumper($pattern));
-		$l->debug("model contains:");
-		$model->_debug;
-	}
-	return smap {
-		my $bindings	= $_;
-		return undef unless ($bindings);
-		my %cast	= map {
-						$_ => RDF::Query::Model::RDFTrine::_cast_to_local( $bindings->{ $_ } )
-					} (keys %$bindings);
-		$l->debug("[$modeldebug]" . Dumper(\%cast));
-		@cast{ keys %$bound }	= values %$bound;
-		return \%cast;
-	} $model->get_pattern( $pattern, undef, @args );
+sub distinct {
+	return 0;
 }
 
+=item C<< ordered >>
+
+Returns true if the pattern is guaranteed to return ordered results.
+
+=cut
+
+sub ordered {
+	return [];
+}
 
 1;
 
