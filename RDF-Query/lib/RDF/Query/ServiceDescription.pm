@@ -268,6 +268,7 @@ sub computed_statement_generator {
 	my $self	= shift;
 	my $caps	= $self->capabilities;
 	my %preds	= map { $_->{pred}->uri_value => $_ } @$caps;
+	my $l			= Log::Log4perl->get_logger("rdf.query.servicedescription");
 	
 	return sub {
 		my $query	= shift;
@@ -296,10 +297,16 @@ sub computed_statement_generator {
 			my %vars		= map { $_ => 1 } $sofilter->referenced_variables;
 			my $runnable	= 1;
 			if ($vars{ subject }) {
-				$runnable	= 0 unless ($bound->{subject});
+				unless ($bound->{subject}) {
+					$runnable	= 0;
+					$l->debug( "statement generator isn't runnable: subject is not bound" );
+				}
 			}
 			if ($vars{ object }) {
-				$runnable	= 0 unless ($bound->{object});
+				unless ($bound->{object}) {
+					$runnable	= 0;
+					$l->debug( "statement generator isn't runnable: object is not bound" );
+				}
 			}
 			if ($runnable) {
 				my $bound		= { subject => $s, object => $o };
@@ -307,12 +314,16 @@ sub computed_statement_generator {
 				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
 				my $value		= $filter->evaluate( $query, $bridge, $bound );
 				my $nok			= ($value->literal_value eq 'false');
-				$ok				= 0 if ($nok);
+				if ($nok) {
+					$ok	= 0;
+					$l->debug( "statement generator didn't pass sofilter: " . $sofilter->sse({}, '') );
+				}
 			}
 		}
 		
 		if ($ok) {
 			my $st		= RDF::Query::Algebra::Triple->new( $s, $p, $o );
+			$l->debug( "running statement generator for " . $st->sse({}, '') );
 			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $st );
 			my $service	= RDF::Query::Algebra::Service->new(
 							RDF::Query::Node::Resource->new( $self->url ),

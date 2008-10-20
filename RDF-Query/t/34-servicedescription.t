@@ -27,6 +27,16 @@ if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 use_ok( 'RDF::Query::Federate' );
 use_ok( 'RDF::Query::ServiceDescription' );
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.servicedescription	= DEBUG, Screen
+# 	log4perl.category.rdf.query.plan.service		= DEBUG, Screen
+# 	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr					= 0
+# 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 my $uri	= URI::file->new_abs( 'data/service.ttl' );
 my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
 isa_ok( $sd, 'RDF::Query::ServiceDescription' );

@@ -43,6 +43,15 @@ sub new {
 }
 
 
+sub _cost_aggregate {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	return $self->cost( $plan->pattern, $context );
+}
+
 sub _cost_service {
 	my $self	= shift;
 	my $plan	= shift;
@@ -293,6 +302,20 @@ sub _cardinality_construct {
 	my $context	= shift;
 	my $triples	= $pattern->triples;
 	return scalar(@$triples) * $self->_cardinality( $pattern->pattern, $context );
+}
+
+sub _cardinality_aggregate {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my @group	= $plan->groupby;
+	if (@group) {
+		my $card	= $self->_cardinality( $plan->pattern, $context );
+		# XXX should instead be based on estimate of how many distinct values the groupby implies
+		return int( $card ** 0.5 );
+	} else {
+		return 1;
+	}
 }
 
 sub _cardinality_service {

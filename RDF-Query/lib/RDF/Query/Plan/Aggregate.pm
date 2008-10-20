@@ -195,13 +195,24 @@ sub close {
 
 =item C<< pattern >>
 
-Returns the query plan that will be used to produce the data to be sorted.
+Returns the query plan that will be used to produce the aggregated data.
 
 =cut
 
 sub pattern {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< groupby >>
+
+Returns the grouping arguments that will be used to produce the aggregated data.
+
+=cut
+
+sub groupby {
+	my $self	= shift;
+	return @{ $self->[2] || [] };
 }
 
 =item C<< sse ( \%context, $indent ) >>

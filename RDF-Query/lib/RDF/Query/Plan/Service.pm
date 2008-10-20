@@ -97,10 +97,14 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SERVICE plan can't be executed while already open";
 	}
+	my $l			= Log::Log4perl->get_logger("rdf.query.plan.service");
+	$l->debug('SERVICE execute');
 	my $endpoint	= $self->endpoint;
 	my $sparql		= $self->sparql;
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
-	my $query	= $context->query;
+	my $query		= $context->query;
+	
+	$l->debug( 'SERVICE URL: ' . $url );
 	
 # 	my $serial	= 0;
 # 	my ($fh, $write);
