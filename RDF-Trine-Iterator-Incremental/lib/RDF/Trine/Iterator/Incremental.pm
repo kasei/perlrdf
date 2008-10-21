@@ -5,6 +5,24 @@
 
 RDF::Trine::Iterator::Incremental - Incremental Parser for SPARQL XML Results Format
 
+=head1 VERSION
+
+This document describes RDF::Trine::Iterator::Incremental version 0.100
+
+=head1 SYNOPSIS
+
+  use RDF::Trine::Iterator::Incremental;
+  my $in = IO::Socket::INET->new( ... );
+  my $stream = RDF::Trine::Iterator::Incremental->new( $in, 128 );
+  
+  while (my $data = $stream->next) {
+    ...
+  }
+
+=head1 DESCRIPTION
+
+...
+
 =head1 METHODS
 
 =over 4
@@ -15,7 +33,17 @@ package RDF::Trine::Iterator::Incremental;
 
 use strict;
 use warnings;
+use XML::SAX::Expat::Incremental;
 use base qw(RDF::Trine::Iterator);
+
+our ($debug, $VERSION);
+BEGIN {
+	$debug		= 0;
+	$VERSION	= '0.100';
+}
+
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init($ERROR);
 
 =item C<< new ( $socket, $chunk_size ) >>
 
@@ -31,19 +59,12 @@ sub new {
 	my $chunk_size	= shift || 1024;
 	my $prelude		= shift || '';
 	
-	eval "
-		require XML::SAX::Expat;
-		require XML::SAX::Expat::Incremental;
-	";
-	if ($@) {
-		die $@;
-	}
 	local($XML::SAX::ParserPackage)	= 'XML::SAX::Expat::Incremental';
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
 	my $p	= XML::SAX::Expat::Incremental->new( Handler => $handler );
 	$p->parse_start;
 
-	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator");
+	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.incremental");
 	
 	if (length($prelude)) {
 		$l->debug($prelude);
@@ -103,5 +124,11 @@ __END__
 =head1 AUTHOR
 
  Gregory Todd Williams <gwilliams@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2007 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

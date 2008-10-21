@@ -1,0 +1,45 @@
+RDF::Trine::Iterator::Incremental - Incremental Parser for SPARQL XML Results Format
+
+   RDF::Trine::Iterator::Incremental provides incremental parsing support to the
+   SPARQL XML Results Format parser provided in RDF::Trine::Iterator. This support
+   relies on the XML::SAX::Expat::Incremental module.
+
+REQUIREMENTS
+
+	To install RDF::Trine::Iterator::Incremental you'll need the following perl
+	modules installed:
+
+     * RDF::Trine
+     * Log::Log4perl
+     * XML::SAX::Expat::Incremental
+
+	The following additional modules are optional:
+
+     * Test::More
+     * Test::Exception
+
+INSTALLATION
+
+   To install, run:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+VERSION HISTORY
+
+  Version 0.100 (2008-XX-XX)
+
+     * Initial public release.
+
+COPYRIGHT
+
+   Copyright (C) 2008 Gregory Williams. All rights reserved.
+   This program is free software; you can redistribute it and/or
+   modify it under the same terms as Perl itself.
+
+AUTHOR
+
+	Gregory Todd Williams <gwilliams@cpan.org>
+

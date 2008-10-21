@@ -20,5 +20,6 @@ WriteMakefile(
     PREREQ_PM			=> {
 					'RDF::Trine::Iterator'			=> 0.109,
 					'XML::SAX::Expat::Incremental'	=> 0,
+					'Log::Log4perl'					=> 0,
 				},
 );

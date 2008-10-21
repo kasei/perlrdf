@@ -15,6 +15,7 @@ recommends:
 requires:
     RDF::Trine::Iterator: 0.109
     XML::SAX::Expat::Incremental: 0
+    Log::Log4perl: 0
 license: perl
 distribution_type: module
 generated_by: Module::Install version 0.63
