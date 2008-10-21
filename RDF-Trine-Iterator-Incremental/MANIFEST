@@ -10,3 +10,5 @@ MANIFEST			This list of files
 META.yml
 README
 t/incremental.t
+t/pod.t
+t/pod-coverage.t
