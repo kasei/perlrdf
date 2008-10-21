@@ -151,6 +151,12 @@ sub sse {
 	);
 }
 
+=item C<< from_sse ( $string, $context ) >>
+
+Parses the supplied SSE-encoded string and returns a RDF::Trine::Statement object.
+
+=cut
+
 sub from_sse {
 	my $class	= shift;
 	my $context	= $_[1];

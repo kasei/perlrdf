@@ -7,8 +7,6 @@ use inc::Module::Install;
 
 license				'perl';
 
-recommends			'XML::SAX::Expat::Incremental'	=> 0;
-
 build_requires		'Test::JSON'				=> 0;
 build_requires		'Test::More'				=> 0.61;
 build_requires		'Test::Exception'			=> 0;
