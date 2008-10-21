@@ -52,7 +52,24 @@ VERSION HISTORY
 
   Version 0.109 (2008-XX-XX)
 
-     * Added ::Iterator::sfinally.
+     * Removed incremental parsing code from RDF-Trine package.
+     * Added POD to from_sse methods in ::Node and ::Statement.
+     * Added parsing of variables to RDF::Trine::Node::from_sse.
+     * Small changes to ::Iterator and ::Trine::Node::Literal for efficiency.
+     * Whitespace updates to ::Trine::Node.
+     * Added SQLite-specific ::Store::DBI subclass so that indexes are created properly.
+     * Fixed bug in RDF::Trine::Iterator::Bindings::print_xml that dropped every other row.
+     * Updated RDF::Trine::Node::Resource to work with URI objects.
+     * rdf_parse_turtle.pl now warns on any parser error.
+     * RDF::Trine::Node::Resource now escapes unicode in base URIs (now just relative URI part) before calling URI->new_abs.
+     * Turtle parser now makes universal IDs for all blank node (even those with given IDs like _:xyz).
+     * Fixed Unicode unescaping in Turtle parser's handling of string literals.
+     * Turtle parser now doesn't modify the lexical value of numeric typed literals.
+     * Fixed ::Store::DBI handling of Quads in get_statements (had been broken because RDF::Query bypasses it by using get_pattern).
+     * Fixed bug in ::Iterator::Bindings::print_xml that would drop every other result.
+     * Updated VERSION numbers and docs for RDF::Trine for 0.109_01 candidate release.
+     * ::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle.
+     * ::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying).
      * Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup.
      * ::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle.
      * ::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying).

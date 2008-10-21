@@ -33,7 +33,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.109_01';
+	$VERSION	= '0.109_02';
 }
 
 use Log::Log4perl qw(:easy);

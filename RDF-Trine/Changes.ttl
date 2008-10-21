@@ -9,6 +9,41 @@
         dc:description          "Changes for RDF::Trine" ;
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
+
+<http://kasei.us/code/files/RDF-Trine-0.109.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.108.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.109" ;
+                        doap:created      "2008-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup." ;
+                        asc:addition    "Added SQLite-specific ::Store::DBI subclass so that indexes are created properly." ;
+                        asc:addition    "Added POD to from_sse methods in ::Node and ::Statement." ;
+                        asc:addition    "Added parsing of variables to RDF::Trine::Node::from_sse." ;
+                        asc:update      "Removed incremental parsing code from RDF-Trine package." ;
+                        asc:update      "Small changes to ::Iterator and ::Trine::Node::Literal for efficiency." ;
+                        asc:update      "Whitespace updates to ::Trine::Node." ;
+                        asc:update      "Fixed bug in RDF::Trine::Iterator::Bindings::print_xml that dropped every other row." ;
+                        asc:update      "Updated RDF::Trine::Node::Resource to work with URI objects." ;
+                        asc:update      "rdf_parse_turtle.pl now warns on any parser error." ;
+                        asc:update      "RDF::Trine::Node::Resource now escapes unicode in base URIs (now just relative URI part) before calling URI->new_abs." ;
+                        asc:update      "Turtle parser now makes universal IDs for all blank node (even those with given IDs like _:xyz)." ;
+                        asc:update      "Fixed Unicode unescaping in Turtle parser's handling of string literals." ;
+                        asc:update      "Turtle parser now doesn't modify the lexical value of numeric typed literals." ;
+                        asc:update      "Fixed ::Store::DBI handling of Quads in get_statements (had been broken because RDF::Query bypasses it by using get_pattern)." ;
+                        asc:update      "Fixed bug in ::Iterator::Bindings::print_xml that would drop every other result." ;
+                        asc:update      "Updated VERSION numbers and docs for RDF::Trine for 0.109_01 candidate release." ;
+                        asc:update      "::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle." ;
+                        asc:update      "::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying)." ;
+                        asc:update      "::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle." ;
+                        asc:update      "::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying)." ;
+                        asc:update      "Moved all debugging over to use Log::Log4perl." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.108.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.107.tar.gz> ;
@@ -25,10 +60,13 @@
                         asc:addition    "Added RDF::Trine::Promise for general computation deferment." ;
                         asc:addition    "Added print_xml method to RDF::Trine::Iterator classes." ;
                         asc:addition    "Added support for Postgres storage." ;
-                        asc:addition    "Replaced RDF::Core-based RDF/XML parser with a new XML::SAX based parser." ;
-                        asc:addition    "Added tabular as_string serialization of ::Iterator::Bindings objects." ;
+                        asc:addition    "Added XML::LibXML::SAX as a prerequisite (because XML::SAX::PurePerl can't handle some RDF/XML that uses unicode)." ;
+                        asc:addition    "Added unicode escaping to Literal and Resource sse serialization." ;
+                        asc:addition    "Added W3C RDF/XML data and test script." ;
+                        asc:addition    "Added support to the DBI store for filters for equality tests." ;
+                        asc:addition    "Added support to compile normalized UNION (can only be the top-level node or a child of another UNION) patterns to SQL." ;
                         asc:addition    "Added Text::Table as a prerequisite." ;
-                        asc:addition	"Added XML::LibXML::SAX as a prerequisite (because XML::SAX::PurePerl can't handle some RDF/XML that uses unicode)." ;
+                        asc:update      "Replaced RDF::Core-based RDF/XML parser with a new XML::SAX based parser." ;
                         asc:update      "Removed now unused redland-based RDF/XML test data." ;
                         asc:update      "Removed unused redland fallback code from RDF::Query::Model::RDFTrine." ;
                         asc:update      "Removed redland-based RDF/XML parser tests." ;
@@ -38,8 +76,6 @@
                         asc:update      "Fixed POD in NTriples serializer." ;
                         asc:update      "Fixed RDF/XML parser to handle nodeID, arbitrary xml attributes, parseType=\"Literal\" serialization, and base URI handling." ;
                         asc:update      "Normlized expected NTriples data in W3C RDF/XML test files." ;
-                        asc:update      "Added unicode escaping to Literal and Resource sse serialization." ;
-                        asc:update      "Added W3C RDF/XML data and test script." ;
                         asc:update      "Fixes to deferring XML serialization for SPARQL bindings." ;
                         asc:update      "Fixed bug in delaying XML serialization for identity hints header computation." ;
                         asc:update      "Fixed extra data following xml query results." ;
@@ -47,41 +83,23 @@
                         asc:update      "Updated tests that started failing after the previous commit (affecting SQL-compilation)." ;
                         asc:update      "Allow equality test and disjunction filters in patterns that can be compiled to SQL." ;
                         asc:update      "Fix bug in SQL compilation when restricting left-joins to specific node types (based on functions like isIRI)." ;
-                        asc:update      "Added support to the DBI store for filters for equality tests." ;
                         asc:update      "Mysql store schema now adds indexes." ;
                         asc:update      "Improved use of temporary RDF::Trine stores in RDF::Query tests." ;
                         asc:update      "DBI temporary stores now use an in-memory SQLite database." ;
                         asc:update      "Fixed bug in RDF::Trine::Store::DBI::mysql (calling _mysql_hash() without qualifying it in the superclass)." ;
                         asc:update      "Fixed variable ordering bug in UNION to SQL handling by forcing a sorted projection order." ;
-                        asc:update      "Added support to compile normalized UNION (can only be the top-level node or a child of another UNION) patterns to SQL." ;
                         asc:update      "Made SQL more standards compliant." ;
                         asc:update      "RDF::Trine::Store::DBI now auto-upgrades to mysql and postgres classes." ;
                         asc:update      "Fixed unicode escaping by replacing Unicode::Escape calls to hand-rolled code in RDF::Trine::Node." ;
                         asc:update      "RDF/XML parser now accept more than one top-level resource." ;
                         asc:update      "RDF/XML parser now accepts URI objects as base uri (not just RDF::Trine::Node::Resource objects)." ;
+                        asc:update      "Added tabular as_string serialization of ::Iterator::Bindings objects." ;
                         asc:update      "Fixed RDF/XML parser handling of strings (versus file handles)." ;
                         asc:update      "Fixed Turtle parser to properly keep '+' on integer literals." ;
                         asc:update      "Fixed bindings_count so it doesn't pull a result from the stream (basing the count on binding_names)." ;
                         asc:update      "Fixed bindings xml serialization whitespace formatting." ;
                         asc:update      "Cleaned up ::Iterator::Bindings::as_string serialization code." ;
                         asc:update      "Replaced use of splice() with shift() in ::Iterator::SAXHandler::pull_result." ;
-                        ] .
-
-
-<http://kasei.us/code/files/RDF-Trine-0.108.tar.gz>
-        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
-        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.108.tar.gz> ;
-
-        doap:Version    [
-                        doap:revision     "0.109" ;
-                        doap:created      "2008-XX-XX" ;
-                        ];
-        asc:changes     [
-                        asc:addition    "Added ::Iterator::sfinally." ;
-                        asc:addition    "Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup." ;
-                        asc:update      "::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle." ;
-                        asc:update      "::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying)." ;
-                        asc:update      "Moved all debugging over to use Log::Log4perl." ;
                         ] .
 
 
