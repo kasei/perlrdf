@@ -1,0 +1,27 @@
+--- #YAML:1.0
+meta-spec:
+  version: 1.3
+  url: http://module-build.sourceforge.net/META-spec-v1.3.html
+name:         RDF-Trine-Iterator-Incremental
+version: 0.109_01
+author:
+  - Gregory Todd Williams <gwilliams@cpan.org>
+build_requires:
+  Test::More: 0.61
+  Test::Exception: 0
+recommends:
+  RDF::Redland: 1
+  RDF::Core: 0
+requires:
+    RDF::Trine::Iterator: 0.109
+    XML::SAX::Expat::Incremental: 0
+license: perl
+distribution_type: module
+generated_by: Module::Install version 0.63
+no_index:
+  directory:
+    - inc
+    - t
+resources:
+  homepage: http://kasei.us/code/rdf-trine/
+  Repository: http://github.com/kasei/perlrdf/
