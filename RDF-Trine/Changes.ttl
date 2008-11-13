@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.109" ;
-                        doap:created      "2008-XX-XX" ;
+                        doap:created      "2008-11-XX" ;
                         ];
         asc:changes     [
                         asc:addition    "Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup." ;
@@ -41,6 +41,7 @@
                         asc:update      "::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle." ;
                         asc:update      "::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying)." ;
                         asc:update      "Moved all debugging over to use Log::Log4perl." ;
+                        asc:update      "Updated prerequisite list (removed Digest::SHA1 and XML::Parser, and added missing modules)." ;
                         ] .
 
 

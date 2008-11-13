@@ -17,6 +17,7 @@ REQUIREMENTS
 
 	To install RDF::Trine you'll need the following perl modules installed:
 
+     * Data::UUID
      * DBI
      * DBD::SQLite
      * Digest::MD5
@@ -25,15 +26,23 @@ REQUIREMENTS
      * LWP::UserAgent
      * List::MoreUtils
      * List::Util
+     * Log::Log4perl
+     * Math::BigInt
      * Scalar::Util
+     * Text::Table
+     * Time::HiRes
      * Unicode::Escape
+     * Unicode::String
      * URI
      * XML::CommonNS
      * XML::Namespace
-     * XML::Twig
+     * XML::SAX
+     * XML::LibXML::SAX
+
 
 	The following additional modules are optional:
 
+     * DBD::Pg
      * DBD::Mysql
      * Test::More
      * Test::JSON
@@ -50,7 +59,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.109 (2008-XX-XX)
+  Version 0.109 (2008-11-XX)
 
      * Removed incremental parsing code from RDF-Trine package.
      * Added POD to from_sse methods in ::Node and ::Statement.
@@ -74,6 +83,7 @@ VERSION HISTORY
      * ::Store::DBI now throws an error if call to DBI->connect doesn't return a database handle.
      * ::Iterator::Bindings::as_string now returns '' when there are no rows (instead of dying).
      * Moved all debugging over to use Log::Log4perl.
+     * Updated prerequisite list (removed Digest::SHA1 and XML::Parser, and added missing modules).
 
   Version 0.108 (2008-07-14)
 

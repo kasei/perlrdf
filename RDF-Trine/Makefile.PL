@@ -21,7 +21,6 @@ WriteMakefile(
 					'DBI'						=> 0,
 					'DBD::SQLite'				=> 1.14,
 					'Digest::MD5'				=> 0,
-					'Digest::SHA1'				=> 0,
 					'Error'						=> 0,
 					'JSON'						=> 2,
 					'LWP::UserAgent'			=> 0,
@@ -39,6 +38,5 @@ WriteMakefile(
 					'XML::Namespace'			=> 0,
 					'XML::SAX'					=> 0,
 					'XML::LibXML::SAX'			=> 1.66,	# we shouldn't need this, but XML::SAX::PurePerl seems to have some major bugs with unicode in some of the RDF/XML syntax examples
-					'XML::Parser'				=> 0,
 				},
 );

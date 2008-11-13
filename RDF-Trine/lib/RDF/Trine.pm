@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.109_01
+This document describes RDF::Trine version 0.109_03
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.109_02';
+	$VERSION	= '0.109_03';
 }
 
 use Log::Log4perl qw(:easy);
@@ -65,13 +65,18 @@ L<JSON>
 L<LWP::UserAgent>
 L<List::MoreUtils>
 L<List::Util>
+L<Log::Log4perl>
 L<Math::BigInt>
 L<Scalar::Util>
+L<Text::Table>
+L<Time::HiRes>
 L<Unicode::Escape>
+L<Unicode::String>
 L<URI>
 L<XML::CommonNS>
 L<XML::Namespace>
 L<XML::SAX>
+L<XML::LibXML::SAX>
 
 =head1 BUGS AND LIMITATIONS
 
