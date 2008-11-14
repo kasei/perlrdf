@@ -59,7 +59,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.109 (2008-11-XX)
+  Version 0.109 (2008-11-14)
 
      * Removed incremental parsing code from RDF-Trine package.
      * Added POD to from_sse methods in ::Node and ::Statement.

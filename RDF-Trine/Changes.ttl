@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.109" ;
-                        doap:created      "2008-11-XX" ;
+                        doap:created      "2008-11-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added $IGNORE_CLEANUP to ::Store::DBI to allow preventing DBI cleanup." ;
