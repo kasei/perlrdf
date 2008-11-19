@@ -17,5 +17,5 @@ my $query	= RDF::Query->new( $input, { lang => 'sparqlp', @args } );
 if ($query) {
 	print $query->sse . "\n";
 } else {
-	warn $query->error;
+	warn RDF::Query->error;
 }
