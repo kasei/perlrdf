@@ -18,7 +18,7 @@ use base qw(RDF::Trine::Statement);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= 0.108;
+	$VERSION	= 0.109;
 }
 
 ######################################################################

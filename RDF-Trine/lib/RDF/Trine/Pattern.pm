@@ -23,7 +23,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= 0.108;
+	$VERSION	= 0.109;
 }
 
 ######################################################################

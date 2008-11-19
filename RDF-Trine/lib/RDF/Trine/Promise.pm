@@ -7,7 +7,7 @@ RDF::Trine::Promise - Promise object
 
 =head1 VERSION
 
-This document describes RDF::Trine::Promise version 0.108.
+This document describes RDF::Trine::Promise version 0.109.
 
 
 =head1 SYNOPSIS
@@ -36,7 +36,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.108';
+	$VERSION	= '0.109';
 }
 
 =item C<new ( \&closure )>
