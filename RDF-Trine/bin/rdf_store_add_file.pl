@@ -71,16 +71,18 @@ if ($file =~ qr[^http(s?)://]) {
 	}
 }
 
-my $format	= 'guess';
-my $baseuri		= RDF::Redland::URI->new( $base );
-my $basenode	= RDF::Trine::Node::Resource->new( $base );
-my $parser		= RDF::Redland::Parser->new( $format );
-my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
-while ($stream and !$stream->end) {
-	my $statement	= $stream->current;
-	my $stmt		= RDF::Trine::Statement->from_redland( $statement );
-	$store->add_statement( $stmt, $basenode );
-	$stream->next;
-}
+# my $format	= 'guess';
+# my $baseuri		= RDF::Redland::URI->new( $base );
+# my $basenode	= RDF::Trine::Node::Resource->new( $base );
+# my $parser		= RDF::Redland::Parser->new( $format );
+# my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
+# while ($stream and !$stream->end) {
+# 	my $statement	= $stream->current;
+# 	my $stmt		= RDF::Trine::Statement->from_redland( $statement );
+# 	$store->add_statement( $stmt, $basenode );
+# 	$stream->next;
+# }
+# 
 
-
+my $parser	= RDF::Trine::Parser::RDFXML->new();
+$parser->parse_into_model( $base, $data, $store );

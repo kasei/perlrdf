@@ -30,6 +30,7 @@ package RDF::Trine::Parser::Turtle;
 use strict;
 use warnings;
 no warnings 'redefine';
+no warnings 'once';
 
 use URI;
 use Data::UUID;

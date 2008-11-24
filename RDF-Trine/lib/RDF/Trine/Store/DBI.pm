@@ -1191,7 +1191,7 @@ END
             Predicate NUMERIC(20) NOT NULL,
             Object NUMERIC(20) NOT NULL,
             Context NUMERIC(20) NOT NULL DEFAULT 0,
-            UNIQUE (Subject, Predicate, Object, Context)
+            PRIMARY KEY (Subject, Predicate, Object, Context)
         );
 END
 
