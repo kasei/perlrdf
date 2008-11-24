@@ -234,6 +234,8 @@ sub _get_iterator {
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
 		return $handler->iterator;
+	} else {
+		throw RDF::Query::Error::ExecutionError -text => "error making remote SPARQL call: " . $response->status_line;
 	}
 }
 

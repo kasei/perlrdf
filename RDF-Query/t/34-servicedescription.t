@@ -219,7 +219,7 @@ END
 	my $query	= RDF::Query::Federate->new( <<"END" );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT ?name
-		WHERE { <http://dbpedia.org/resource/Alan_Turing> foaf:name ?name . FILTER( LANG(?name) = "de" ) }
+		WHERE { <http://dbpedia.org/resource/Alan_Turing> foaf:name ?name . FILTER( LANG(?name) = "" ) }
 END
 	$query->add_computed_statement_generator( $sd->computed_statement_generator );
 	my $iter	= $query->execute;

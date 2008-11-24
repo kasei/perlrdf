@@ -297,28 +297,28 @@ foreach my $data (@models) {
 		}
 	}
 	
-	SKIP: {
-		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
-
-		my $var	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
-		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
-		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
-		
-		foreach my $pass (1..2) {
-			my $count	= 0;
-			$plan->execute( $context );
-			while (my $row = $plan->next) {
-				if ($count == 0) {
-					isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
-				}
-				$count++;
-			}
-			cmp_ok( $count, '>', 1, "positive result count for SERVICE plan (pass $pass)" );
-			$plan->close;
-		}
-	}
+# 	SKIP: {
+# 		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
+# 
+# 		my $var	= RDF::Trine::Node::Variable->new('p');
+# 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+# 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+# 		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
+# 		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
+# 		
+# 		foreach my $pass (1..2) {
+# 			my $count	= 0;
+# 			$plan->execute( $context );
+# 			while (my $row = $plan->next) {
+# 				if ($count == 0) {
+# 					isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+# 				}
+# 				$count++;
+# 			}
+# 			cmp_ok( $count, '>', 1, "positive result count for SERVICE plan (pass $pass)" );
+# 			$plan->close;
+# 		}
+# 	}
 
 	SKIP: {
 		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
@@ -328,16 +328,23 @@ foreach my $data (@models) {
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		
 		foreach my $pass (1..2) {
+			my $skip	= 2;
 			my $count	= 0;
-			$plan->execute( $context );
-			while (my $row = $plan->next) {
-				if ($count == 0) {
-					isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+			try {
+				$plan->execute( $context );
+				while (my $row = $plan->next) {
+					if ($count == 0) {
+						isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
+					}
+					$count++;
 				}
-				$count++;
-			}
-			cmp_ok( $count, '>', 1, "positive result count for generated SERVICE plan (pass $pass)" );
-			$plan->close;
+				cmp_ok( $count, '>', 1, "positive result count for generated SERVICE plan (pass $pass)" );
+				$plan->close;
+				$skip--;
+			} catch RDF::Query::Error::ExecutionError with {
+				my $e;
+				skip $e->text, $skip;
+			};
 		}
 	}
 

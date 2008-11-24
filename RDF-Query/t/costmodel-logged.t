@@ -108,14 +108,14 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		# ?p a foaf:Person
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person, { bf => '1bb' } );
 		my $cost		= $costmodel->cost( $triple, $context );
-		is( $cost, 4, 'Cost of 2-bound triple' );
+		is( $cost, 2.5, 'Cost of 2-bound triple' );
 	}
 	
 	{
 		# ?p a ?type
 		my $triple		= RDF::Query::Plan::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, RDF::Trine::Node::Variable->new('type'), { bf => '1b2' } );
 		my $cost		= $costmodel->cost( $triple, $context );
-		is( $cost, 1.6, 'Cost of 1-bound triple' );
+		is( $cost, 4, 'Cost of 1-bound triple' );
 	}
 }
 
@@ -129,7 +129,7 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 		# this should really be 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
 		my $cost		= $costmodel->cost( $bgp, $context );
-		is( $cost, 10_005.6, 'Cost of a 1bb,1b2 BGP' );
+		is( $cost, 10_006.5, 'Cost of a 1bb,1b2 BGP' );
 	}
 	
 	{
@@ -139,7 +139,7 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		my $bgp			= RDF::Query::Plan::Join::PushDownNestedLoop->new( $triple_a, $triple_b );
 		# this should really be 10 * 10, since the binding of ?p will hopefully propagate to the second triple pattern (but this isn't done in the current implementation)
 		my $cost		= $costmodel->cost( $bgp, $context );
-		is( $cost, 404, 'Cost of a 1bb,1b2 BGP (push down)' );
+		is( $cost, 252.5, 'Cost of a 1bb,1b2 BGP (push down)' );
 	}
 	
 	{
@@ -149,7 +149,7 @@ my $costmodel	= RDF::Query::CostModel::Logged->new( $l );
 		my $bgp			= RDF::Query::Plan::Join::NestedLoop->new( $triple_a, $triple_b );
 		# 10 * 10
 		my $cost		= $costmodel->cost( $bgp, $context );
-		is( $cost, 10_008, 'Cost of a 1bb,2bb BGP' );
+		is( $cost, 10_005, 'Cost of a 1bb,2bb BGP' );
 	}
 }
 
