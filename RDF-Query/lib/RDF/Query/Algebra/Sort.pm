@@ -110,7 +110,7 @@ sub sse {
 	}
 	
 	return sprintf(
-		'(sort\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		"(sort\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(' ', @order_sse),
 	);

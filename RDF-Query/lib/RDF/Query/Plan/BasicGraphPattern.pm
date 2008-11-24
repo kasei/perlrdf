@@ -42,8 +42,8 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
-	unless ($self->state == $self->READY) {
-		throw RDF::Query::Error::ExecutionError -text => "BGP plan cann't be executed twice";
+	if ($self->state == $self->OPEN) {
+		throw RDF::Query::Error::ExecutionError -text => "BGP plan can't be executed twice";
 	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.basicgraphpattern");

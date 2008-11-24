@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
@@ -73,19 +73,28 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
 	}
 	my $iter	= $self->[0]{iter};
+	return undef unless ($iter);
 	my $row		= $iter->next;
 	if ($row) {
 		return $row;
 	} else {
-		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
-		$iter->close();
-		my $iter	= $self->[1][ ++$self->[0]{idx} ];
-		$iter->execute( $self->[0]{context} );
-		if ($iter->state == $self->OPEN) {
-			$self->[0]{iter}	= $iter;
-			return $self->next;
+		$self->[0]{iter}	= undef;
+		if ($self->[0]{idx} < $#{ $self->[1] }) {
+			$iter->close();
+			$self->[0]{idx}++;
+			my $index	= $self->[0]{idx};
+			my $iter	= $self->[1][ $index ];
+			$iter->execute( $self->[0]{context} );
+			if ($iter->state == $self->OPEN) {
+				$self->[0]{iter}	= $iter;
+				return $self->next;
+			} else {
+				throw RDF::Query::Error::ExecutionError -text => "execute() on RHS of UNION failed during next()";
+			}
 		} else {
-			throw RDF::Query::Error::ExecutionError -text => "execute() on RHS of UNION failed during next()";
+			$iter->close();
+			delete $self->[0]{iter};
+			return undef;
 		}
 	}
 }
@@ -99,8 +108,11 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open BGP";
 	}
-	$self->[0]{iter}->close();
-	delete $self->[0]{iter};
+	if (my $iter = $self->[0]{iter}) {
+		$iter->close();
+		delete $self->[0]{iter};
+		delete $self->[0]{idx};
+	}
 	$self->SUPER::close();
 }
 
