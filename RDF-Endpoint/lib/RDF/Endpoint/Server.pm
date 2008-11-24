@@ -24,10 +24,10 @@ sub new {
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
 	my $self		= $class->SUPER::new( $port );
 	my $endpoint	= RDF::Endpoint->new(
-						$model,
 						$dsn,
 						$user,
 						$pass,
+						$model,
 						IncludePath => $incpath,
 						AdminURL	=> "http://${hostname}/${prefix}admin/",
 						SubmitURL	=> "http://${hostname}/${prefix}sparql",
@@ -54,7 +54,17 @@ sub handle_request {
 	if ($path =~ qr'^/sparql') {
 		my $sparql	= $cgi->param('query');
 		if ($sparql) {
+			print "HTTP/1.1 200 OK\n";
+			my $content	= '';
+			open( my $fh, '>', \$content );
+			my $out	= select( $fh );
 			$endpoint->run_query( $cgi, $sparql );
+			select($out);
+			close($fh);
+			use bytes;
+			
+			print "Content-Length: " . length($content) . "\n";
+			print $content;
 		} else {
 			$self->error( 400, 'Bad Request', 'No query.' );
 		}
@@ -74,7 +84,17 @@ sub handle_request {
 				$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
 			}
 		} elsif ($path =~ qr[^${prefix}/index.html$]) {
+			my $content	= '';
+			open( my $fh, '>', \$content );
+			my $out	= select( $fh );
 			$endpoint->query_page( $cgi, $prefix );
+			select($out);
+			close($fh);
+			use bytes;
+			
+			print "HTTP/1.1 200 OK\n";
+			print "Content-Length: " . length($content) . "\n";
+			print $content;
 		} else {
 			$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
 		}

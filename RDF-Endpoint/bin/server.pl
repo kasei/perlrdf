@@ -11,10 +11,10 @@ $ENV{TMPDIR}	= '/tmp';
 my $cgi	= CGI->new;
 my $s	= RDF::Endpoint::Server->new(
 			Port		=> 8082,
-			DBServer	=> $ENV{DBServer} || 'DBI:mysql:database=test',
-			DBUser		=> $ENV{DBUser} || 'test',
-			DBPass		=> $ENV{DBPass} || 'test',
-			Model		=> 'endpoint',
+			DBServer	=> $ENV{RDFQUERY_DBI_DATABASE} || 'DBI:mysql:database=test',
+			DBUser		=> $ENV{RDFQUERY_DBI_USER} || 'test',
+			DBPass		=> $ENV{RDFQUERY_DBI_PASS} || 'test',
+			Model		=> $ENV{RDFQUERY_DBI_MODEL} || 'endpoint',
 			Prefix		=> '',
 			CGI			=> $cgi,
 		);

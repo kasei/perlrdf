@@ -134,10 +134,12 @@ sub query_page {
 	my $submit	= $self->submit_url;
 	
 	my $login	= $self->_login_crumb;
+	my $content;
 	$tt->process( $file, {
 					submit_url	=> $submit,
 					login		=> $login,
-				} ) || die $tt->error();
+				}, \$content ) || die $tt->error();
+	print $content;
 }
 
 sub _login_crumb {
@@ -362,11 +364,11 @@ sub run_query {
 			my %header_args	= ( '-X-Endpoint-Description' => $self->endpoint_description_url );
 			if ($type =~ /html/) {
 				local($Template::Directive::WHILE_MAX)	= 1_000_000_000;
-				local($Template::Directive::OUTPUT)		= 'print';
 				print $cgi->header( -type => "text/html; charset=utf-8", %header_args );
 				my $total	= 0;
 				my $rtype	= $stream->type;
 				my $rstream	= ($rtype eq 'graph') ? $stream->unique() : $stream;
+				my $content;
 				$tt->process( $file, {
 					result_type => $rtype,
 					next_result => sub {
@@ -391,7 +393,8 @@ sub run_query {
 								},
 					total		=> sub { $total },
 					feed_url	=> $self->feed_url( $cgi ),
-				} ) or warn $tt->error();
+				}, \$content ) or warn $tt->error();
+				print $content;
 			} elsif ($type =~ /xml/) {
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				my $outfh	= select();
