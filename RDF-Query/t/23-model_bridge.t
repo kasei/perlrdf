@@ -24,8 +24,14 @@ foreach my $data (@models) {
 	my $model	= $data->{ modelobj };
 	
 	foreach my $other (@models) {
-		next if ($other->{class} eq $class);
-		throws_ok { $class->new($other->{modelobj}) } 'RDF::Query::Error::MethodInvocationError', 'constructor throws exception with wrong model';
+		next if (refaddr($other) == refaddr($data));
+		if ($other->{class} eq $class) {
+			SKIP: {
+				skip "ignoring distinct models with same model class", 1;
+			}
+		} else {
+			throws_ok { $class->new($other->{modelobj}) } 'RDF::Query::Error::MethodInvocationError', 'constructor throws exception with wrong model';
+		}
 	}
 	
 	print "\n#################################\n";
