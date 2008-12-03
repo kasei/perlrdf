@@ -119,7 +119,8 @@ sub get_statements {
 	if ($defined == 3) {
 		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
 		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
-		if (any { $_ == $ids[2] } @$list) {
+# 		if (any { $_ == $ids[2] } @$list) {
+		if ($self->page_contains_node( $list, $ids[2] )) {
 			return RDF::Trine::Iterator::Graph->new( [ RDF::Trine::Statement->new( @nodes ) ] );
 		} else {
 			return RDF::Trine::Iterator::Graph->new( [] );
@@ -391,11 +392,8 @@ sub add_statement {
 			my ($second, $third)	= @$order;
 			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
-			if (any { $_ == $id3 } @$list) {
-			} else {
-				@$list	= sort { $a <=> $b } (@$list, $id3);
+			if ($self->add_node_to_page( $list, $id3 )) {
 				$added++;
-#				warn sprintf( "%7d statements\n", $self->{size} ) if ($self->{size} % 10000 == 0);
 			}
 		}
 	}
@@ -426,12 +424,10 @@ sub remove_statement {
 			my ($second, $third)	= @$order;
 			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
-# 			warn "removing $first-$second-$third $id1-$id2-$id3 from list [" . join(', ', @$list) . "]\n";
-			my $osize	= scalar(@$list);
-			@$list		= grep { $_ != $id3 } @$list;
-			if ($osize != scalar(@$list)) {
+			if ($self->remove_node_from_page( $list, $id3 )) {
 				$removed++;
 			}
+# 			warn "removing $first-$second-$third $id1-$id2-$id3 from list [" . join(', ', @$list) . "]\n";
 # 			warn "\t- remaining: [" . join(', ', @$list) . "]\n";
 		}
 	}
@@ -486,7 +482,7 @@ sub count_statements {
 	} else {
 		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
 		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
-		return (any { $_ == $keys[5] } @$list)
+		return ($self->page_contains_node( $list, $keys[5] ))	# any { $_ == $keys[5] } @$list)
 			? 1
 			: 0;
 	}
@@ -509,8 +505,35 @@ sub _count_statements {
 	}
 }
 
+sub _node2id {
+	my $self	= shift;
+	my $node	= shift;
+	return undef unless (blessed($node));
+	return undef if ($node->isa('RDF::Trine::Node::Variable'));
+	if (exists( $self->{ node2id }{ $node->as_string } )) {
+		return $self->{ node2id }{ $node->as_string };
+	} else {
+		my $id	= ($self->{ node2id }{ $node->as_string } = $self->{ next_id }++);
+		$self->{ id2node }{ $id }	= $node;
+		return $id
+	}
+}
+
+sub _id2node {
+	my $self	= shift;
+	my $id		= shift;
+	if (exists( $self->{ id2node }{ $id } )) {
+		return $self->{ id2node }{ $id };
+	} else {
+		return undef;
+	}
+}
+
+
 ################################################################################
-### the methods below are the only ones that directly manipulate the index structure
+### The methods below are the only ones that directly access and manipulate the
+### index structure. The terminal node lists, however, are manipulated by other
+### methods (add_statement, remove_statement, etc.).
 
 sub index_root {
 	my $self	= shift;
@@ -595,39 +618,46 @@ sub index_values {
 	return sort { $a <=> $b } keys %$index;
 }
 
-sub new_list_page {
-	return [];
+sub page_contains_node {
+	my $self	= shift;
+	my $list	= shift;
+	my $id		= shift;
+	return (any { $_ == $id } @$list) ? 1 : 0;
+}
+
+sub add_node_to_page {
+	my $self	= shift;
+	my $list	= shift;
+	my $id		= shift;
+	if (any { $_ == $id } @$list) {
+		return 0;
+	} else {
+		@$list	= sort { $a <=> $b } (@$list, $id);
+		return 1;
+	}
+}
+
+sub remove_node_from_page {
+	my $self	= shift;
+	my $list	= shift;
+	my $id		= shift;
+	if ($self->page_contains_node( $list, $id )) {
+		@$list		= grep { $_ != $id } @$list;
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 sub new_index_page {
 	return { __type => 'index' };
-};
+}
+
+sub new_list_page {
+	return [];
+}
 
 ################################################################################
-
-sub _node2id {
-	my $self	= shift;
-	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef if ($node->isa('RDF::Trine::Node::Variable'));
-	if (exists( $self->{ node2id }{ $node->as_string } )) {
-		return $self->{ node2id }{ $node->as_string };
-	} else {
-		my $id	= ($self->{ node2id }{ $node->as_string } = $self->{ next_id }++);
-		$self->{ id2node }{ $id }	= $node;
-		return $id
-	}
-}
-
-sub _id2node {
-	my $self	= shift;
-	my $id		= shift;
-	if (exists( $self->{ id2node }{ $id } )) {
-		return $self->{ id2node }{ $id };
-	} else {
-		return undef;
-	}
-}
 
 1;
 
