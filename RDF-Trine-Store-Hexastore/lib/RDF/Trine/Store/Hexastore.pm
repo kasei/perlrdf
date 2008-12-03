@@ -140,7 +140,7 @@ sub get_statements {
 		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
 		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
 		
-		my @local_list	= @{ $list || [] };
+		my @local_list	= $self->node_values( $list );
 		my $sub		= sub {
 			return undef unless (scalar(@local_list));
 			my $id	= shift(@local_list);
@@ -185,7 +185,7 @@ sub get_statements {
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
 				my $list	= $self->index_from_pair( $index, $ukeys[0], $ukey1 );
-				@local_list	= @{ $list };
+				@local_list	= $self->node_values( $list );
 				if ($check_dup) {
 					@local_list	= grep { $_ == $ukey1 } @local_list;
 				}
@@ -251,7 +251,7 @@ sub get_statements {
 # 				warn "*** using predicate $pid\n";
 				my $index	= $self->index_from_pair( $subj, $sid, $order_keys[1] );
 				my $list	= $self->node_list_from_id( $index, $pid );
-				@local_list	= @$list;
+				@local_list	= $self->node_values( $list );
 				if ($max == 3) {
 					@local_list	= grep { $_ == $pid } @local_list;
 				}
@@ -478,7 +478,7 @@ sub count_statements {
 	} elsif (4 == scalar(@keys)) {
 		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
 		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
-		return scalar(@$list);
+		return $self->node_count( $list );
 	} else {
 		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
 		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
@@ -493,7 +493,7 @@ sub _count_statements {
 	my $data	= shift;
 	my @ukeys	= @_;
 	if (1 >= scalar(@ukeys)) {
-		return scalar(@$data);
+		return $self->node_count( $data );
 	} else {
 		my $count	= 0;
 		my $ukey	= shift(@ukeys);
@@ -618,6 +618,18 @@ sub index_values {
 	return sort { $a <=> $b } keys %$index;
 }
 
+sub node_count {
+	my $self	= shift;
+	my $list	= shift;
+	return scalar(@$list);
+}
+
+sub node_values {
+	my $self	= shift;
+	my $list	= shift;
+	return @$list;
+}
+
 sub page_contains_node {
 	my $self	= shift;
 	my $list	= shift;
@@ -629,7 +641,7 @@ sub add_node_to_page {
 	my $self	= shift;
 	my $list	= shift;
 	my $id		= shift;
-	if (any { $_ == $id } @$list) {
+	if ($self->page_contains_node( $list, $id )) {
 		return 0;
 	} else {
 		@$list	= sort { $a <=> $b } (@$list, $id);
@@ -642,7 +654,7 @@ sub remove_node_from_page {
 	my $list	= shift;
 	my $id		= shift;
 	if ($self->page_contains_node( $list, $id )) {
-		@$list		= grep { $_ != $id } @$list;
+		@$list	= grep { $_ != $id } @$list;
 		return 1;
 	} else {
 		return 0;
