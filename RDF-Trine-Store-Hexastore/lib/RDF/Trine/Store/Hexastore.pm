@@ -573,6 +573,9 @@ sub _get_terminal_list {
 	}
 }
 
+#########################################
+#########################################
+#########################################
 sub add_list_page {
 	my $self	= shift;
 	my $index	= shift;
@@ -617,6 +620,9 @@ sub index_values {
 	my $index	= shift;
 	return sort { $a <=> $b } keys %$index;
 }
+#########################################
+#########################################
+#########################################
 
 sub node_count {
 	my $self	= shift;
@@ -627,7 +633,11 @@ sub node_count {
 sub node_values {
 	my $self	= shift;
 	my $list	= shift;
-	return @$list;
+	if (ref($list)) {
+		return @$list;
+	} else {
+		return;
+	}
 }
 
 sub page_contains_node {
