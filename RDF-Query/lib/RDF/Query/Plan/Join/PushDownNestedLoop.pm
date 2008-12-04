@@ -99,6 +99,9 @@ sub next {
 				@bound{ keys %$outer }	= values %$outer;
 				my $copy	= $context->copy( bound => \%bound );
 #				warn "executing inner plan with bound: " . Dumper(\%bound);
+				if ($inner->state == $inner->OPEN) {
+					$inner->close();
+				}
 				$self->[0]{inner}			= $inner->execute( $copy );
 			} else {
 				# we've exhausted the outer iterator. we're now done.

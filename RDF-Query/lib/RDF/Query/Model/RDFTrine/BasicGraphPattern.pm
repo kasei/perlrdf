@@ -177,6 +177,39 @@ sub ordered {
 	return [];
 }
 
+=item C<< graph ( $g ) >>
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	my $g		= shift;
+	my $label	= $self->graph_labels;
+	
+	$g->add_node( "$self", label => "BasicGraphPattern" . $self->graph_labels );
+	
+	my @triples	= $self->triples;
+	foreach my $t (@triples) {
+		$g->add_node( "$t", label => "Triple" );
+		$g->add_edge( "$self" => "$t" );
+		my @names	= qw(subject predicate object);
+		foreach my $i (0 .. 2) {
+			my $rel	= $names[ $i ];
+			my $n	= $t->$rel();
+			my $str	= $n->sse( {}, '' );
+			if (0) {	# this will use shared vertices for the nodes of all the BGP's triples (but can result in dense, complex graphs
+				$g->add_node( "${self}$str", label => $str );
+				$g->add_edge( "$t" => "${self}$str", label => $names[ $i ] );
+			} else {
+				$g->add_node( "${self}$n", label => $str );
+				$g->add_edge( "$t" => "${self}$n", label => $names[ $i ] );
+			}
+		}
+	}
+	return "$self";
+}
+
+
 1;
 
 __END__

@@ -5,6 +5,7 @@ use warnings;
 use URI::file;
 use Test::More;
 use Data::Dumper;
+use RDF::Query::Error qw(:try);
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }
@@ -342,7 +343,7 @@ foreach my $data (@models) {
 				$plan->close;
 				$skip--;
 			} catch RDF::Query::Error::ExecutionError with {
-				my $e;
+				my $e	= shift;
 				skip $e->text, $skip;
 			};
 		}
