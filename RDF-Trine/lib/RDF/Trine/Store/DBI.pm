@@ -1156,9 +1156,10 @@ sub init {
 	my $dbh		= $self->dbh;
 	my $name	= $self->model_name;
 	my $id		= _mysql_hash( $name );
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
 	$dbh->begin_work;
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Literals (
             ID NUMERIC(20) PRIMARY KEY,
             Value text NOT NULL,
@@ -1166,26 +1167,26 @@ sub init {
             Datatype text NOT NULL DEFAULT ''
         );
 END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Resources (
             ID NUMERIC(20) PRIMARY KEY,
             URI text NOT NULL
         );
 END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Bnodes (
             ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Models (
             ID NUMERIC(20) PRIMARY KEY,
             Name text NOT NULL
         );
 END
     
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Statements${id} (
             Subject NUMERIC(20) NOT NULL,
             Predicate NUMERIC(20) NOT NULL,
@@ -1195,10 +1196,10 @@ END
         );
 END
 
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
-	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	
-	$dbh->commit;
+	$dbh->commit or die $dbh->errstr;
 }
 
 sub _cleanup {

@@ -38,6 +38,7 @@ lib/RDF/Trine/Promise.pm
 lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
+lib/RDF/Trine/Store.pm
 lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
