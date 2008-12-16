@@ -23,6 +23,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 package RDF::Trine::Iterator::Bindings;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -495,7 +496,7 @@ sub as_string {
 
 	my @rule			= qw(- +);
 	my @headers			= (\q"| ");
-	push @headers => map { $_ => \q" | " } @$headers;
+	push(@headers, map { $_ => \q" | " } @$headers);
 	pop	@headers;
 	push @headers => (\q" |");
 	
@@ -510,11 +511,13 @@ sub as_string {
 			$table->body_rule(@rule);
 			$table->load(@$rows);
 		
-			return $table->rule(@rule),
+			return join('',
+					$table->rule(@rule),
 					$table->title,
 					$table->rule(@rule),
 					map({ $table->body($_) } 0 .. @$rows),
-					$table->rule(@rule);
+					$table->rule(@rule)
+				);
 		} else {
 			die("make_table() rows must be an AoA with rows being same size as headers");
 		}
