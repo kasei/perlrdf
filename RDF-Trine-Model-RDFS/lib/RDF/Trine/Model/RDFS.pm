@@ -5,6 +5,14 @@
 
 RDF::Trine::Model::RDFS - RDF Model supporting RDFS inferencing.
 
+=head1 SYNOPSIS
+
+ use RDF::Trine::Model::RDFS;
+ my $model	= RDF::Trine::Model::RDFS->new( $store );
+ $model->run_inference;
+ # ... do stuff here
+ $model->clear_inference;
+
 =head1 METHODS
 
 =over 4
@@ -23,12 +31,13 @@ our $RDFS_INFER_CONTEXT_URI	= 'http://kasei.us/code/rdf-trine/inference#rdfs';
 use constant USE_CHAINING	=> 1;
 
 # RDFS RULES
+my @rules					= qw(Property domain range Subj_Resource Obj_Resource subProp_Trans subProp Class_Resource subClass subClass_Trans member Datatype);
 my %rules					= (
-								Property			=> ['?s ?p ?o'												=> '?p a rdf:Property'],
-								domain				=> ['?p rdfs:domain ?c . ?s ?p ?o'							=> '?s a ?c'],
-								range				=> ['?p rdfs:range ?c . ?s ?p ?o'							=> '?o a ?c'],
-								Subj_Resource		=> ['?s ?p ?o'												=> '?s a rdfs:Resource'],
-								Obj_Resource		=> ['?s ?p ?o'												=> '?o a rdfs:Resource'],
+								Property			=> ['[] ?p []'												=> '?p a rdf:Property'],
+								domain				=> ['?p rdfs:domain ?c . ?s ?p []'							=> '?s a ?c'],
+								range				=> ['?p rdfs:range ?c . [] ?p ?o'							=> '?o a ?c'],
+								Subj_Resource		=> ['?s [] []'												=> '?s a rdfs:Resource'],
+								Obj_Resource		=> ['[] [] ?o . FILTER(!ISLITERAL(?o))'						=> '?o a rdfs:Resource'],
 								subProp_Trans		=> ['?q rdfs:subPropertyOf ?r. ?p rdfs:subPropertyOf ?q'	=> '?p rdfs:subPropertyOf ?r'],
 								subProp				=> ['?p rdfs:subPropertyOf ?r . ?s ?p ?o'					=> '?s ?r ?o'],
 								Class_Resource		=> ['?c a rdfs:Class'										=> '?c rdfs:subClassOf rdfs:Resource'],
@@ -64,21 +73,28 @@ sub run_inference {
 	my $self		= shift;
 	my $context		= RDF::Trine::Node::Resource->new( $RDFS_INFER_CONTEXT_URI );
 	
-	my @rules_to_run	= keys(%rules);
+	my @rules_to_run	= @rules;
+	my $round	= 1;
 	while (1) {
+		printf("=====================> [%d]\n", $round++);
 		my %next_rules;
 		my $size	= $self->count_statements;
 		foreach my $rule_name (@rules_to_run) {
+			printf("------> [$rule_name]\n");
+			my $rsize	= $self->count_statements;
 			my $rule	= $rules{ $rule_name };
 			my ($body, $head)	= @$rule;
 			my $sparql	= "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> CONSTRUCT { $head } WHERE { $body }";
 			my $query	= RDF::Query->new( $sparql );
 			my $iter	= $query->execute( $self );
 			while (my $st = $iter->next) {
-				$self->add_statement( $st, $context );
+				if ($self->count_statements( $st->nodes ) == 0) {
+					print $st->as_string . "\n";
+					$self->add_statement( $st, $context );
+				}
 			}
 			if (USE_CHAINING) {
-				if ($size != $self->count_statements) {
+				if ($rsize != $self->count_statements) {
 					$next_rules{ $_ }++ foreach (@{ $chaining_rules{ $rule_name } });
 				}
 			}
@@ -87,9 +103,10 @@ sub run_inference {
 			last;
 		}
 		if (USE_CHAINING) {
+			# only run the rules that might produce new triples based on the triples we just got through adding
 			@rules_to_run	= keys %next_rules;
 		} else {
-			@rules_to_run	= keys %rules;
+			@rules_to_run	= @rules;
 		}
 	}
 }
