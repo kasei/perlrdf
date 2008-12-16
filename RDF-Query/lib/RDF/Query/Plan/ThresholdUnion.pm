@@ -154,16 +154,40 @@ sub ordered {
 	return [];
 }
 
-=item C<< sse ( $context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'threshold-union';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	return sprintf("(threshold-union\n${indent}${more}%s\n${indent})", join("\n${indent}${more}", map { $_->sse( $context, "${indent}${more}" ) } $self->children));
+	return qw(*P);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my $exprs	= $self->[2];
+	return ($self->children);
 }
 
 =item C<< graph ( $g ) >>

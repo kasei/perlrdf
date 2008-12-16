@@ -23,9 +23,9 @@ use base qw(RDF::Query::Plan);
 
 sub new {
 	my $class	= shift;
-	my $plan	= shift;
 	my $expr	= shift;
-	my $self	= $class->SUPER::new( $plan, $expr );
+	my $plan	= shift;
+	my $self	= $class->SUPER::new( $expr, $plan );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
@@ -40,13 +40,13 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "FILTER plan can't be executed while already open";
 	}
-	my $plan	= $self->[1];
+	my $plan	= $self->[2];
 	$plan->execute( $context );
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.filter");
 	
 	if ($plan->state == $self->OPEN) {
 		$self->state( $self->OPEN );
-		my $expr	= $self->[2];
+		my $expr	= $self->[1];
 		my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
 		my $filter	= RDF::Query::Expression::Function->new( $bool, $expr );
 		$l->debug("filter constructed for " . $expr->sse({}, ''));
@@ -76,7 +76,7 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open FILTER";
 	}
-	my $plan	= $self->[1];
+	my $plan	= $self->[2];
 	my $filter	= $self->[0]{filter};
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.filter");
 	while (1) {
@@ -105,7 +105,7 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open FILTER";
 	}
 	delete $self->[0]{filter};
-	$self->[1]->close();
+	$self->[2]->close();
 	$self->SUPER::close();
 }
 
@@ -117,7 +117,7 @@ Returns the query plan that will be used to produce the data to be filtered.
 
 sub pattern {
 	my $self	= shift;
-	return $self->[1];
+	return $self->[2];
 }
 
 =item C<< distinct >>
@@ -142,18 +142,41 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
-	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	return sprintf("(filter\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->[2]->sse( $context, "${indent}${more}" ), $self->pattern->sse( $context, "${indent}${more}" ));
+sub plan_node_name {
+	return 'filter';
 }
 
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
+	my $self	= shift;
+	return qw(E P);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my $expr	= $self->[1];
+	return ($expr, $self->pattern);
+}
 
 1;
 

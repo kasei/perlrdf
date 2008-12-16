@@ -153,17 +153,16 @@ sub close {
 	$self->SUPER::close();
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
 	my $jtype	= $self->optional ? 'leftjoin' : 'join';
-	return sprintf("(bind-${jtype}\n${indent}${more}%s\n${indent}${more}%s\n${indent})", $self->lhs->sse( $context, "${indent}${more}" ), $self->rhs->sse( $context, "${indent}${more}" ));
+	return "bind-$jtype";
 }
 
 =item C<< graph ( $g ) >>

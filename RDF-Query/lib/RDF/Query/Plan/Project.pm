@@ -151,20 +151,41 @@ sub ordered {
 	return $self->pattern->ordered;
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'project';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	my $vars	= join(' ',
-					@{$self->[2]},
-					map { $_->sse( $context, "${indent}${more}" ) } @{$self->[3]}
-				);
-	return sprintf("(project (%s)\n${indent}${more}%s\n${indent})", $vars, $self->pattern->sse( $context, "${indent}${more}" ));
+	return qw(\J P);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
+	my @exprs	= @{$self->[3]};
+	return ([ @vars, @exprs ], $self->pattern);
 }
 
 =item C<< graph ( $g ) >>

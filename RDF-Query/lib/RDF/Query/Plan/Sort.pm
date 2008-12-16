@@ -25,6 +25,9 @@ sub new {
 	my $class	= shift;
 	my $plan	= shift;
 	my @exprs	= @_;
+	foreach my $e (@exprs) {
+		$e->[1]	||= 0;
+	}
 	my $self	= $class->SUPER::new( $plan, \@exprs );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
@@ -146,20 +149,40 @@ sub ordered {
 	return [ map { [ $_->[0], ($_->[1] ? 'DESC' : 'ASC') ] } @$sort ];
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'order';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	my $pattern	= $self->pattern->sse( $context, "${indent}${more}" );
-	my @exprs	= @{ $self->[2] };
-	my $exprs	= join(' ', map { sprintf("(%s %s)", ($_->[1] ? 'desc' : 'asc'), $_->[0]->sse( $context, "${indent}${more}" ) ) } @exprs);
-	my $sse		= sprintf("(order (%s)\n${indent}${more}%s\n${indent})", $exprs, $pattern);
-	return $sse;
+	return qw(P *\wE);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my $exprs	= $self->[2];
+	return ($self->pattern, map { [ ($_->[1] == 0 ? 'asc' : 'desc'), $_->[0] ] } @$exprs);
 }
 
 =item C<< graph ( $g ) >>

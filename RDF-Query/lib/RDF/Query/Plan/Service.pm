@@ -351,22 +351,40 @@ sub ordered {
 	return 0;
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'service';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	my $sparql	= $self->sparql;
-	$sparql		=~ s/\\/\\\\/g;
-	$sparql		=~ s/"/\\"/g;
-	$sparql		=~ s/\n/\\n/g;
-	$sparql		=~ s/\t/\\t/g;
-	$sparql		= qq<"$sparql">;
-	return sprintf("(service\n${indent}${more}<%s>\n${indent}${more}%s\n${indent})", $self->endpoint, $sparql);
+	return qw(u s);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my $expr	= $self->[2];
+	return ($self->endpoint, $self->sparql);
 }
 
 =item C<< graph ( $g ) >>

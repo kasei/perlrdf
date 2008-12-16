@@ -215,31 +215,41 @@ sub groupby {
 	return @{ $self->[2] || [] };
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'aggregate';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	my $pattern	= $self->pattern->sse( $context, "${indent}${more}" );
-	my @groupby	= @{ $self->[2] };
+	return qw(P \E *\ssW);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my @group	= $self->groupby;
 	my @ops		= @{ $self->[3] };
-	my $groupby	= join(' ', map { $_->sse( $context, "${indent}${more}" ) } @groupby);
-	my $ops		= join(' ', map {
-					sprintf(
-						"(%s %s %s)",
-						$_->[0],
-						$_->[1],
-						blessed($_->[2])
-							? $_->[2]->sse( $context, "${indent}${more}" )
-							: $_->[2]
-					)
-				} @ops);
-	my $sse		= sprintf("(aggregate (%s) (%s)\n${indent}${more}%s\n${indent})", $groupby, $ops, $pattern);
-	return $sse;
+	return ($self->pattern, \@group, map { [@$_] } @ops);
 }
 
 =item C<< distinct >>

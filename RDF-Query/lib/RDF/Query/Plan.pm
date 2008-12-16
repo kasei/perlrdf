@@ -124,7 +124,110 @@ sub logging_keys {
 
 sub sse {
 	my $self	= shift;
-	die "sse not implemented on $self";
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my @proto	= $self->plan_prototype;
+	my @data	= $self->plan_node_data;
+	my $name	= $self->plan_node_name;
+	
+	my @args;
+	my $list	= \@data;
+	foreach my $i (0 .. $#proto) {
+		my $p	= $proto[ $i ];
+		push(@args, $self->_sse( $context, $indent, $more, $p, $list ));
+	}
+	return "(${name} " . join(' ', @args) . ")";
+}
+
+sub _sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= shift;
+	my $p		= shift;
+	my $list	= shift;
+	if ($p =~ m/^[PTNWEJVibswu]$/) {
+		my $v	= shift(@$list);
+		return $self->_sse_atom($context, $indent, $more, $p, $v);
+	} elsif (substr($p, 0, 1) eq '\\') {
+		my $rest	= substr($p, 1);
+		my $v		= shift(@$list);
+		my @args;
+		while (@$v) {
+			push(@args, $self->_sse( $context, $indent, $more, $rest, $v ));
+		}
+		return '(' . join(' ', @args) . ')';
+	} elsif (substr($p, 0, 1) eq '*') {
+		my $rest	= substr($p, 1);
+		my @args;
+		while (@$list) {
+			push(@args, $self->_sse( $context, $indent, $more, $rest, $list ));
+		}
+		no warnings 'uninitialized';
+		return join("\n${indent}${more}", @args);
+	} elsif ($p =~ m/^[PTNWEJVibswu\\*]{2,}$/) {
+		my @args;
+		foreach my $p2 (split(//, $p)) {
+			my $v	= shift(@$list);
+			push(@args, $self->_sse($context, $indent, $more, $p2, [$v]));
+		}
+		return '(' . join(' ', @args) . ')';
+	} else {
+		die "unrecognized plan node prototype '$p'";
+	}
+}
+
+sub _sse_atom {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= shift;
+	my $p		= shift;
+	my $v		= shift;
+	no warnings 'uninitialized';
+	if ($p eq 's') {
+		for ($v) {
+			s/\\/\\\\/g;
+			s/"/\\"/g;
+			s/\n/\\n/g;
+			s/\t/\\t/g;
+		}
+		return qq["$v"];
+	} elsif ($p eq 'w') {
+		return $v;
+	} elsif ($p eq 'u') {
+		return qq[<$v>];
+	} elsif ($p eq 'i') {
+		return $v;
+	} elsif ($p eq 'b') {
+		return $v;
+	} elsif ($p eq 'W') {
+		if (blessed($v)) {
+			return $v->sse( $context, "${indent}${more}" );
+		} else {
+			return $v;
+		}
+	} elsif ($p =~ m/^[PNETV]$/) {
+		return $v->sse( $context, "${indent}${more}" );
+	} elsif ($p eq 'J') {
+		if ($v->isa('RDF::Query::Node::Variable')) {
+			return $v->name;
+		} else {
+			return $v->sse( $context, "${indent}${more}" );
+		}
+	}
+}
+
+=item C<< serialize >>
+
+Return a serialization of the query plan.
+
+=cut
+
+sub serialize {
+	my $self	= shift;
+	
 }
 
 =item C<< referenced_variables >>
@@ -254,7 +357,7 @@ sub generate_plans {
 	} elsif ($type eq 'Filter') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my $expr	= $algebra->expr;
-		my @plans	= map { RDF::Query::Plan::Filter->new( $_, $expr ) } @base;
+		my @plans	= map { RDF::Query::Plan::Filter->new( $expr, $_ ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'BasicGraphPattern' or $type eq 'GroupGraphPattern') {
 		my $query	= $context->query;
@@ -291,14 +394,14 @@ sub generate_plans {
 		}
 	} elsif ($type eq 'Limit') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
-		my @plans	= map { RDF::Query::Plan::Limit->new( $_, $algebra->limit ) } @base;
+		my @plans	= map { RDF::Query::Plan::Limit->new( $algebra->limit, $_ ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'NamedGraph') {
 		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Offset') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
-		my @plans	= map { RDF::Query::Plan::Offset->new( $_, $algebra->offset ) } @base;
+		my @plans	= map { RDF::Query::Plan::Offset->new( $algebra->offset, $_ ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Optional') {
 		# just like a BGP or GGP, but we have to pass the optional flag to the join constructor
@@ -505,6 +608,48 @@ sub _make_blank_distinguished_variable {
 	my $var		= RDF::Trine::Node::Variable->new( $name );
 	return $var;
 }
+
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
+
+=cut
+
+sub plan_node_name;
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. These identifiers are recognized:
+
+* 'P' - A RDF::Query::Plan object
+* 'T' - An RDF::Trine::Statement object
+* 'Q' - An RDF::Trine::Statement::Quad object
+* 'N' - An RDF node
+* 'W' - An RDF node or wildcard ('*')
+* 'E' - An expression (either an RDF::Query::Expression object or an RDF node)
+* 'J' - A valid Project node (an RDF::Query::Expression object or an Variable node)
+* 'V' - A variable binding set (an object of type RDF::Query::VariableBindings)
+* 'u' - A valid URI string
+* 'i' - An integer
+* 'b' - A boolean integer value (0 or 1)
+* 's' - A string
+* 'w' - A bareword string
+* '\X' - An array reference of X nodes (where X is another identifier scalar)
+* '*X' - A list of X nodes (where X is another identifier scalar)
+
+=cut
+
+sub plan_prototype;
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data;
 
 1;
 

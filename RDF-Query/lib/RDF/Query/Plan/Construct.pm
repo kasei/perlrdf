@@ -16,6 +16,8 @@ package RDF::Query::Plan::Construct;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+
+use Log::Log4perl;
 use Scalar::Util qw(blessed);
 
 =item C<< new ( $plan, \@triples ) >>
@@ -26,6 +28,11 @@ sub new {
 	my $class	= shift;
 	my $plan	= shift;
 	my $triples	= shift;
+	
+	unless (@$triples) {
+		throw RDF::Query::Error::MethodInvocationError -text => "No triples passed to ::Plan::Construct constructor";
+	}
+	
 	my $self	= $class->SUPER::new( $plan, $triples );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
@@ -41,6 +48,10 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "CONSTRUCT plan can't be executed while already open";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.construct");
+	$l->trace( "executing RDF::Query::Plan::Construct" );
+	
 	my $plan	= $self->pattern;
 	$plan->execute( $context );
 
@@ -63,6 +74,8 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open CONSTRUCT";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
 	my $plan	= $self->[1];
 	while (1) {
 		while (scalar(@{ $self->[0]{triples} })) {
@@ -70,8 +83,12 @@ sub next {
 		}
 		my $row	= $plan->next;
 		return undef unless ($row);
+		
+		$l->debug( "- got construct bindings from pattern: " . $row->as_string );
 		my $triples	= $self->triples;
+		
 		foreach my $t (@$triples) {
+			$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
 			my @triple	= $t->nodes;
 			for my $i (0 .. 2) {
 				if ($triple[$i]->isa('RDF::Trine::Node::Variable')) {
@@ -159,16 +176,39 @@ sub ordered {
 	return [];
 }
 
-=item C<< sse ( \%context, $indent ) >>
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
 
 =cut
 
-sub sse {
+sub plan_node_name {
+	return 'construct';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	my $more	= '    ';
-	return sprintf("(construct\n${indent}${more}%s\n${indent}\n${indent})", $self->pattern->sse( $context, "${indent}${more}" ));
+	return qw(P \T);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	return ($self->pattern, [ @{ $self->triples } ]);
 }
 
 =item C<< graph ( $g ) >>

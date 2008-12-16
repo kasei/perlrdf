@@ -42,6 +42,39 @@ use RDF::Query::Plan;
 
 ################################################################################
 
+{
+	{
+		my $var		= RDF::Trine::Node::Variable->new('s');
+		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $plan	= RDF::Query::Plan::Limit->new( 2, $triple );
+		is( _CLEAN_WS($plan->sse), '(limit 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))' ) or die;
+	}
+
+	{
+		my $var		= RDF::Trine::Node::Variable->new('s');
+		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $plan	= RDF::Query::Plan::Offset->new( 2, $triple );
+		is( _CLEAN_WS($plan->sse), '(offset 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))' ) or die;
+	}
+
+	{
+		my $var	= RDF::Trine::Node::Variable->new('p');
+		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $plan	= RDF::Query::Plan::ThresholdUnion->new( $plan_a, $plan_b );
+		is( _CLEAN_WS($plan->sse), '(threshold-union (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: threshold-union' ) or die;
+	}
+
+	{
+		my $var	= RDF::Trine::Node::Variable->new('p');
+		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
+		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
+		is( _CLEAN_WS($plan->sse), '(service <http://kasei.us/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }")', 'sse: service' ) or die;
+	}
+}
+
 foreach my $data (@models) {
 	my $bridge	= $data->{bridge};
 	my $model	= $data->{modelobj};
@@ -57,12 +90,21 @@ foreach my $data (@models) {
 				);
 	
 	{
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparqlp' } );
+PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
+END
+		my ($plan, $context)	= $query->prepare();
+		is( _CLEAN_WS($plan->sse), '(project (p name) (bind-join (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?name) (table (row [?name "Gregory"]) (row [?name "Gary"]))))', 'sse: constant' ) or die;
+	}
+	
+	{
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person }', undef, $ns)->patterns;
 		my ($t)		= $bgp->triples;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $t, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+		is( $plan->sse, '(triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)', 'sse: triple plan' ) or die;
 	}
 	
 	{
@@ -94,6 +136,7 @@ foreach my $data (@models) {
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Sort', 'sort algebra to plan' );
 		isa_ok( $plan->pattern, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(order (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) ((asc ?name)))', 'sse: sort' ) or die;
 	}
 	
 	{
@@ -107,6 +150,7 @@ foreach my $data (@models) {
 # 		} else {
 			isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
 # 		}
+		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (nestedloop-join (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)))', 'sse: filter' ) or die;
 	}
 	
 	############################################################################
@@ -160,6 +204,7 @@ foreach my $data (@models) {
 			RDF::Trine::Node::Variable->new('c'),
 		);
 		my $plan	= RDF::Query::Plan::Quad->new( @quad );
+		is( _CLEAN_WS($plan->sse), '(quad ?p <http://xmlns.com/foaf/0.1/name> ?name ?c)', 'sse: quad' ) or die;
 		
 		my $count	= 0;
 		$plan->execute( $context );
@@ -246,6 +291,7 @@ foreach my $data (@models) {
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
+		is( _CLEAN_WS($plan->sse), '(nestedloop-join (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: nestedloop-join' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -267,6 +313,7 @@ foreach my $data (@models) {
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
 		my $plan	= RDF::Query::Plan::Join::PushDownNestedLoop->new( $plan_a, $plan_b, 1 );
+		is( _CLEAN_WS($plan->sse), '(bind-leftjoin (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page))', 'sse: bind-leftjoin' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -286,6 +333,7 @@ foreach my $data (@models) {
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->PersonalProfileDocument );
 		my $plan	= RDF::Query::Plan::Union->new( $plan_a, $plan_b );
+		is( _CLEAN_WS($plan->sse), '(union (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/PersonalProfileDocument>))' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -355,6 +403,7 @@ foreach my $data (@models) {
 		my $p	= RDF::Trine::Node::Variable->new('p');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $p, $foaf->Person );
 		my $plan	= RDF::Query::Plan::Project->new( $plan_a, ['p'] );
+		is( _CLEAN_WS($plan->sse), '(project (p) (triple ?s ?p <http://xmlns.com/foaf/0.1/Person>))', 'sse: project' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -381,7 +430,8 @@ foreach my $data (@models) {
 		my $join	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
 		my $proj	= RDF::Query::Plan::Project->new( $join, ['p'] );
 		my $plan	= RDF::Query::Plan::Distinct->new( $proj );
-		
+		is( _CLEAN_WS($plan->sse), '(distinct (project (p) (nestedloop-join (triple ?__s <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> ?__f) (triple ?__s ?p ?__r))))', 'sse: distinct-project-join' ) or die;
+
 		foreach my $pass (1..2) {
 			my $count	= 0;
 			$plan->execute( $context );
@@ -490,6 +540,7 @@ foreach my $data (@models) {
 		my ($pat)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		my $st		= RDF::Trine::Statement->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $plan	= RDF::Query::Plan::Construct->new( $pat, [ $st ] );
+		is( _CLEAN_WS($plan->sse), '(construct (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?name) ((triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: construct' ) or die;
 		
 		$plan->execute( $context );
 		my $count	= 0;
@@ -506,3 +557,12 @@ foreach my $data (@models) {
 	}
 }
 
+
+
+sub _CLEAN_WS {
+	my $string	= shift;
+	for ($string) {
+		s/\s+/ /g;
+	}
+	return $string;
+}
