@@ -103,11 +103,11 @@ L<XML::Namespace>
 No bugs have been reported.
 
 Please report any bugs or feature requests to
-C<greg@evilfunhouse.com>.
+C<< <gwilliams@cpan.org> >>.
 
 =head1 AUTHOR
 
-Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 
 =head1 COPYRIGHT

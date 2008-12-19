@@ -16,7 +16,23 @@ This document describes RDF::Trine version 0.109
 
 =head1 DESCRIPTION
 
-...
+RDF::Trine provides an RDF framework with an emphasis on extensibility, API
+stability, and the presence of a test suite. The package consists of several
+components:
+
+=over 4
+
+=item * RDF::Trine::Model - RDF model providing access to a triple store.
+
+=item * RDF::Trine::Parser - Native RDF parsers (currently for Turtle only).
+
+=item * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the Redland schema.
+
+=item * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
+
+=item * RDF::Trine::Namespace - A convenience class for easily constructing RDF node objects from URI namespaces.
+
+=back
 
 =head1 METHODS
 
@@ -83,11 +99,11 @@ L<XML::LibXML::SAX>
 No bugs have been reported.
 
 Please report any bugs or feature requests to
-C<greg@evilfunhouse.com>.
+C<< <gwilliams@cpan.org> >>.
 
 =head1 AUTHOR
 
-Gregory Todd Williams  C<< <greg@evilfunhouse.com> >>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 
 =head1 COPYRIGHT
