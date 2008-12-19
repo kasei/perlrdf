@@ -5,7 +5,7 @@ use warnings;
 no warnings 'redefine';
 
 use lib qw(. t lib .. ../t ../lib);
-require "t/models.pl";
+use RDF::Query;
 
 unless (@ARGV) {
 	print <<"END";
@@ -19,9 +19,6 @@ END
 
 my $qfile	= shift;
 my $sparql	= do { open(my $fh, '<', $qfile) or die $!; local($/) = undef; <$fh> };
-
-use RDF::Query::Federate;
-use RDF::Query::CostModel::Naive;
 
 use GraphViz;
 use List::Util qw(first);
@@ -37,7 +34,7 @@ use Benchmark;
 # ] );
 ################################################################################
 
-my $query	= RDF::Query::Federate->new( $sparql, {  optimize => 0 } );
+my $query	= RDF::Query->new( $sparql, {  optimize => 0 } );
 warn RDF::Query->error unless ($query);
 
 my ($bgp)	= $query->pattern->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
