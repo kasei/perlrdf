@@ -80,9 +80,12 @@ resources and blanks).
 =cut
 
 sub meta {
+	my $self	= shift;
+	
 	return {
 		class		=> __PACKAGE__,
 		model		=> 'RDF::Core::Model',
+		store		=> 'RDF::Core::Storage',
 		statement	=> 'RDF::Core::Statement',
 		node		=> 'RDF::Core::Node',
 		resource	=> 'RDF::Core::Resource',

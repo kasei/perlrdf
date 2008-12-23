@@ -78,9 +78,13 @@ resources and blanks).
 =cut
 
 sub meta {
+	my $self	= shift;
+	my $model	= ref($self->model);
+	my $store	= ref($self->model->_store);
 	return {
 		class		=> __PACKAGE__,
-		model		=> 'RDF::Trine::Store::DBI',
+		model		=> $model,
+		store		=> $store,
 		statement	=> 'RDF::Query::Algebra::Triple',
 		node		=> 'RDF::Trine::Node',
 		resource	=> 'RDF::Trine::Node::Resource',
@@ -411,11 +415,50 @@ sub remove_statement {
 	$model->remove_statement( $stmt );
 }
 
+=item C<count_statements ($subject, $predicate, $object)>
+
+Returns a stream object of all statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_statements {
+	my $self	= shift;
+	return $self->model->count_statements( @_ );
+}
+
+=item C<node_count ( $subj, $pred, $obj )>
+
+Returns a number representing the frequency of statements in the
+model matching the given triple. This number is used in cost analysis
+for query optimization, and has a range of [0, 1] where zero represents
+no matching triples in the model and one represents matching all triples
+in the model.
+
+=cut
+
+sub node_count {
+	my $self	= shift;
+	my @nodes	= @_[0..2];
+	foreach my $i (0..2) {
+		if (blessed($nodes[$i]) and $nodes[$i]->isa('RDF::Trine::Node::Variable')) {
+			$nodes[$i]	= undef;
+		}
+	}
+	my $model	= $self->model;
+	my $total	= $self->count_statements();
+	
+	my $count	= $self->count_statements( @nodes );
+	return 0 unless ($total);
+	return $count / $total;
+}
+
 =item C<supports ($feature)>
 
 Returns true if the underlying model supports the named C<$feature>.
 Possible features include:
 
+	* basic_graph_pattern
 	* named_graph
 	* node_counts
 	* temp_model
@@ -426,6 +469,10 @@ Possible features include:
 sub supports {
 	my $self	= shift;
 	my $feature	= shift;
+	my $meta	= $self->meta;
+	if ($meta->{store} eq 'RDF::Trine::Store::Hexastore') {
+		return 1 if ($feature eq 'node_counts');
+	}
 	return 1 if ($feature eq 'basic_graph_pattern');
 	return 1 if ($feature eq 'temp_model');
 	return 1 if ($feature eq 'named_graph');

@@ -69,9 +69,11 @@ resources and blanks).
 =cut
 
 sub meta {
+	my $self	= shift;
 	return {
 		class		=> __PACKAGE__,
 		model		=> 'RDF::Redland::Model',
+		store		=> 'RDF::Redland::Storage',
 		statement	=> 'RDF::Redland::Statement',
 		node		=> 'RDF::Redland::Node',
 		resource	=> 'RDF::Redland::Node',

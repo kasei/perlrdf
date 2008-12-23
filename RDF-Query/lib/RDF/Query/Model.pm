@@ -494,6 +494,25 @@ sub count_statements {
 	return $count;
 }
 
+=item C<node_count ( $subj, $pred, $obj )>
+
+Returns a number representing the frequency of statements in the
+model matching the given triple. This number is used in cost analysis
+for query optimization, and has a range of [0, 1] where zero represents
+no matching triples in the model and one represents matching all triples
+in the model.
+
+=cut
+
+sub node_count {
+	my $self	= shift;
+	my $model	= $self->model;
+	my $total	= $self->count_statements();
+	my $count	= $self->count_statements( @_ );
+	return 0 unless ($total);
+	return $count / $total;
+}
+
 =item C<< fixup ( $pattern, $query, $base, \%namespaces ) >>
 
 Called prior to query execution, if the underlying model can optimize

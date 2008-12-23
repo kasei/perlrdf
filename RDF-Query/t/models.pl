@@ -35,17 +35,9 @@ sub test_models_and_classes {
 				$parser->parse_into_model( $uri, $content, $model );
 			}
 			my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-			my $data	= {
-							bridge		=> $bridge,
-							modelobj	=> $model,
-							class		=> 'RDF::Query::Model::RDFTrine',
-							model		=> 'RDF::Trine::Store::Hexastore',
-							statement	=> 'RDF::Trine::Statement',
-							node		=> 'RDF::Trine::Node',
-							resource	=> 'RDF::Trine::Node::Resource',
-							literal		=> 'RDF::Trine::Node::Literal',
-							blank		=> 'RDF::Trine::Node::Blank',
-						};
+			my $data	= $bridge->meta;
+			$data->{ bridge }	= $bridge;
+			$data->{ modelobj }	= $model;
 			push(@models, $data);
 		} else {
 			warn "RDF::Trine::Store::Hexastore not loaded: $@\n" if ($RDF::Query::debug);
@@ -62,18 +54,9 @@ sub test_models_and_classes {
 			my $parser	= new RDF::Redland::Parser("rdfxml");
 			$parser->parse_into_model($_, $_, $model) for (@data);
 			my $bridge	= RDF::Query::Model::Redland->new( $model );
-			
-			my $data	= {
-							bridge		=> $bridge,
-							modelobj	=> $model,
-							class		=> 'RDF::Query::Model::Redland',
-							model		=> 'RDF::Redland::Model',
-							statement	=> 'RDF::Redland::Statement',
-							node		=> 'RDF::Redland::Node',
-							resource	=> 'RDF::Redland::Node',
-							literal		=> 'RDF::Redland::Node',
-							blank		=> 'RDF::Redland::Node',
-						};
+			my $data	= $bridge->meta;
+			$data->{ bridge }	= $bridge;
+			$data->{ modelobj }	= $model;
 			push(@models, $data);
 		} else {
 			warn "RDF::Redland not loaded: $@\n" if ($RDF::Query::debug);
@@ -99,17 +82,9 @@ sub test_models_and_classes {
 				$parser->parse;
 			}
 			my $bridge	= RDF::Query::Model::RDFCore->new( $model );
-			my $data	= {
-							bridge		=> $bridge,
-							modelobj	=> $model,
-							class		=> 'RDF::Query::Model::RDFCore',
-							model		=> 'RDF::Core::Model',
-							statement	=> 'RDF::Core::Statement',
-							node		=> 'RDF::Core::Node',
-							resource	=> 'RDF::Core::Resource',
-							literal		=> 'RDF::Core::Literal',
-							blank		=> 'RDF::Core::Node',
-						};
+			my $data	= $bridge->meta;
+			$data->{ bridge }	= $bridge;
+			$data->{ modelobj }	= $model;
 			push(@models, $data);
 		} else {
 			warn "RDF::Core not loaded: $@\n" if ($RDF::Query::debug);
@@ -147,17 +122,9 @@ sub test_models_and_classes {
 					$parser->parse( $uri, $content, $handler );
 				}
 				my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-				my $data	= {
-								bridge		=> $bridge,
-								modelobj	=> $model,
-								class		=> 'RDF::Query::Model::RDFTrine',
-								model		=> 'RDF::Trine::Store::DBI',
-								statement	=> 'RDF::Trine::Statement',
-								node		=> 'RDF::Trine::Node',
-								resource	=> 'RDF::Trine::Node::Resource',
-								literal		=> 'RDF::Trine::Node::Literal',
-								blank		=> 'RDF::Trine::Node::Blank',
-							};
+				my $data	= $bridge->meta;
+				$data->{ bridge }	= $bridge;
+				$data->{ modelobj }	= $model;
 				push(@models, $data);
 			} else {
 				warn "Couldn't connect to database: $dsn, $user, $pass" if ($RDF::Query::debug);
