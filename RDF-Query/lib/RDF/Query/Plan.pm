@@ -19,6 +19,7 @@ use Data::Dumper;
 use List::Util qw(reduce);
 use Scalar::Util qw(blessed reftype);
 use RDF::Query::Error qw(:try);
+use RDF::Query::BGPOptimizer;
 
 use RDF::Query::Plan::Aggregate;
 use RDF::Query::Plan::BasicGraphPattern;
@@ -391,7 +392,8 @@ sub generate_plans {
 			push(@return_plans, $self->generate_plans( @triples, $context, %args ));
 		} else {
 			if ($context->optimize and $model->supports('node_counts')) {
-				push(@return_plans, map { $_->[0] } $self->_triple_join_plans_opt( $context, \@triples, %args, method => $method ));
+				my @ordered	= RDF::Query::BGPOptimizer->ordered_triples( $context, @triples );
+				push(@return_plans, map { $_->[0] } $self->_triple_join_plans_opt( $context, \@ordered, %args, method => $method ));
 			} else {
 				push(@return_plans, map { $_->[0] } $self->_triple_join_plans( $context, \@triples, %args, method => $method ));
 			}
@@ -592,50 +594,65 @@ sub _triple_join_plans_opt {
 	
 	my $model		= $context->model;
 	my $method		= $args{ method };
-#	my @join_types	= RDF::Query::Plan::Join->join_classes;
+	my @join_types	= RDF::Query::Plan::Join->join_classes;
+	
+	my @tplans	= map { my $t = $_; [ map { [ $_, [$t] ] } $self->generate_plans( $t, $context, %args ) ] } @$triples;
+	my @lhs_plans	= @{ shift(@tplans) };
 	
 	my @plans;
-	my @triples	= map { $_->[0] } sort { $b->[1] <=> $a->[1] } map { [ $_, $model->node_count( $_->nodes ) ] } @$triples;
-	
-	my $t	= shift(@triples);
-	my @lhs_plans	= map { [ $_, [$t] ] } $self->generate_plans( $t, $context, %args );
-	if (@triples) {
-		my @rhs_plans	= $self->_triple_join_plans_opt( $context, \@triples, %args );
-		foreach my $i (0 .. $#lhs_plans) {
-			foreach my $j (0 .. $#rhs_plans) {
-				my $a			= $lhs_plans[ $i ][0];
-				my $b			= $rhs_plans[ $j ][0];
-				my $algebra_a	= $lhs_plans[ $i ][1];
-				my $algebra_b	= $rhs_plans[ $j ][1];
-#				foreach my $join_type (@join_types) {
-					try {
-						my @algebras	= (@$algebra_a, @$algebra_b);
-						my %logging_keys;
-						if ($method eq 'triples') {
-							my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @algebras );
-							my $sparql		= $bgp->as_sparql;
-							my $bf			= $bgp->bf;
-							$logging_keys{ bf }		= $bf;
-							$logging_keys{ sparql }	= $sparql;
-						} else {
-							my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @algebras );
-							my $sparql		= $ggp->as_sparql;
-							$logging_keys{ sparql }	= $sparql;
-						}
-#						my $plan	= $join_type->new( $b, $a, 0, \%logging_keys );
-						my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $b, $a, 0, \%logging_keys );
-						push( @plans, [ $plan, [ @algebras ] ] );
-					} catch RDF::Query::Error::MethodInvocationError with {
-		#				warn "caught MethodInvocationError.";
-					};
-#				}
+	while (@tplans) {
+		my @tmp_plans;
+		my @rhs_plans	= @{ shift(@tplans) };
+		foreach my $rhs (@rhs_plans) {
+			foreach my $lhs (@lhs_plans) {
+				foreach my $join_type (@join_types) {
+					my %logging_keys;
+					my @algebra	= ( @{ $lhs->[1] }, @{ $rhs->[1] } );
+					my $plan	= $join_type->new( $lhs->[0], $rhs->[0], 0, \%logging_keys );
+					push(@tmp_plans, [ $plan, \@algebra ]);
+				}
 			}
 		}
-	} else {
-		@plans	= @lhs_plans;
+		@lhs_plans	= @tmp_plans;
 	}
-	
+	@plans	= @lhs_plans;
 	return @plans;
+	
+# 	if (@tplans) {
+# 		my @rhs_plans	= $self->_triple_join_plans_opt( $context, \@triples, %args );
+# 		foreach my $i (0 .. $#lhs_plans) {
+# 			foreach my $j (0 .. $#rhs_plans) {
+# 				my $a			= $lhs_plans[ $i ][0];
+# 				my $b			= $rhs_plans[ $j ][0];
+# 				my $algebra_a	= $lhs_plans[ $i ][1];
+# 				my $algebra_b	= $rhs_plans[ $j ][1];
+# #				foreach my $join_type (@join_types) {
+# 					try {
+# 						my @algebras	= (@$algebra_a, @$algebra_b);
+# 						my %logging_keys;
+# 						if ($method eq 'triples') {
+# 							my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @algebras );
+# 							my $sparql		= $bgp->as_sparql;
+# 							my $bf			= $bgp->bf;
+# 							$logging_keys{ bf }		= $bf;
+# 							$logging_keys{ sparql }	= $sparql;
+# 						} else {
+# 							my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @algebras );
+# 							my $sparql		= $ggp->as_sparql;
+# 							$logging_keys{ sparql }	= $sparql;
+# 						}
+# #						my $plan	= $join_type->new( $b, $a, 0, \%logging_keys );
+# 						my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $b, $a, 0, \%logging_keys );
+# 						push( @plans, [ $plan, [ @algebras ] ] );
+# 					} catch RDF::Query::Error::MethodInvocationError with {
+# 		#				warn "caught MethodInvocationError.";
+# 					};
+# #				}
+# 			}
+# 		}
+# 	} else {
+# 		@plans	= @lhs_plans;
+# 	}
 }
 
 sub _add_constant_join {

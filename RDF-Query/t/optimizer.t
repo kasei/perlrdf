@@ -32,7 +32,6 @@ foreach my $data (@models) {
 	next unless ($bridge->supports('node_counts'));
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
-	warn "model supports node counts";
 	
 	my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 	
