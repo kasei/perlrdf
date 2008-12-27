@@ -627,7 +627,7 @@ sub index_values {
 sub node_count {
 	my $self	= shift;
 	my $list	= shift;
-	return scalar(@$list);
+	return scalar(@{ $list || [] });
 }
 
 sub node_values {
