@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More qw(no_plan); #tests => 36;
+use Test::More; # qw(no_plan); #tests => 36;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 use RDF::Query;
@@ -26,12 +26,18 @@ BEGIN { require "models.pl"; }
 my @files	= map { "data/$_" } qw(foaf.xrdf);
 my @models	= test_models_and_classes( @files );
 
+my $used_models	= 0;
 foreach my $data (@models) {
 	my $bridge	= $data->{bridge};
 	my $model	= $data->{modelobj};
 	next unless ($bridge->supports('node_counts'));
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
+	
+	unless ($used_models) {
+		plan qw(no_plan);
+		$used_models++;
+	}
 	
 	my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 	
@@ -141,4 +147,8 @@ END
 			unlike( $sse, qr=seeAlso>.*nick>.*type>.*schoolHomepage>=, 'BGP join ordering without frequency-optimization' );
 		}
 	}
+}
+
+unless ($used_models) {
+	plan skip_all => "No models available that support direct selectivity counting";
 }
