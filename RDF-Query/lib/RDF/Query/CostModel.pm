@@ -48,7 +48,7 @@ sub new {
 	return $self;
 }
 
-=item C<< cost ( $pattern ) >>
+=item C<< cost ( $pattern, $context ) >>
 
 Returns the cost (based on the expected time of execution) of the supplied
 SPARQL algebra pattern.
@@ -60,14 +60,18 @@ sub cost {
 	my $pattern	= shift;
 	my $context	= shift;
 	my $model	= $context->model;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	
 	if (blessed($model) and ref((my ($code) = ($model->can('cost_naive') || $model->can('cost')))[0])) {
 		if (defined(my $c = $model->$code( $self, $pattern, $context ))) {
+			my $type	= ref($pattern);
+			$l->trace("Computing cost of $type pattern with model-specific cost function...");
 			return $c;
 		}
 	}
+	
 	my ($type)	= (ref($pattern) =~ /::Plan.*::(\w+)$/);
 	my $method	= "_cost_" . lc($type);
-	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	$l->trace("Computing cost of $type pattern...");
 	my $cost	= $self->$method( $pattern, $context );
 	$l->trace("- got cost $cost");

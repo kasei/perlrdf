@@ -33,11 +33,19 @@ sub ordered_triples {
 	my $context	= shift;
 	my @triples	= @_;
 	
-	my $model		= $context->model;
+	my $model	= $context->model;
+	my $cm		= $context->costmodel;
+	
+	unless (blessed($cm)) {
+		throw RDF::Query::Error::ExecutionError -text => "No CostModel object found in ExecutionContext during BGPOptimizer call";
+	}
 	
 	my %vars;
 	my %seen;
-	my @weighted	= map { [ $_, $model->node_count( $_->nodes ) ] } @triples;
+	my @weighted	= map {
+		my $triple		= RDF::Query::Plan::Triple->new( $_->nodes );
+		[ $_, $cm->cost( $triple, $context ) ]
+	} @triples;
 	my %triples		= map { refaddr($_->[0]) => $_ } @weighted;
 	my @ordered	= sort { $a->[1] <=> $b->[1] } @weighted;
 	

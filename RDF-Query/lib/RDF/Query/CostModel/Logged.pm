@@ -112,7 +112,7 @@ sub _cardinality_triple {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 3;
@@ -142,7 +142,7 @@ sub _cardinality_nestedloop {
 	my $pattern	= shift;
 	my $context	= shift;
 	my @triples	= ($pattern->lhs, $pattern->rhs);
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	my $bf		= $pattern->bf( $context );
 	my @bf		= split(/,/, $bf);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
@@ -164,7 +164,7 @@ sub _cardinality_pushdownnestedloop {
 	my $pattern	= shift;
 	my $context	= shift;
 	my @triples	= ($pattern->lhs, $pattern->rhs);
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	my $bf		= $pattern->bf( $context );
 	my @bf		= split(/,/, $bf);
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");

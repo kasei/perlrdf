@@ -79,18 +79,23 @@ resources and blanks).
 
 sub meta {
 	my $self	= shift;
-	my $model	= ref($self->model);
-	my $store	= ref($self->model->_store);
-	return {
+	my $meta	= {
 		class		=> __PACKAGE__,
-		model		=> $model,
-		store		=> $store,
 		statement	=> 'RDF::Query::Algebra::Triple',
 		node		=> 'RDF::Trine::Node',
 		resource	=> 'RDF::Trine::Node::Resource',
 		literal		=> 'RDF::Trine::Node::Literal',
 		blank		=> 'RDF::Trine::Node::Blank',
 	};
+	
+	if (blessed($self)) {
+		$meta->{ model }	= ref($self->model);
+		$meta->{ store }	= ref($self->model->_store);
+	} else {
+		$meta->{ model }	= 'RDF::Trine::Model';
+		$meta->{ store }	= 'RDF::Trine::Store';
+	}
+	return $meta;
 }
 
 =item C<model ()>
@@ -101,6 +106,9 @@ Returns the underlying model object.
 
 sub model {
 	my $self	= shift;
+	unless (blessed($self)) {
+		throw RDF::Query::Error::MethodInvocationError -text => "RDF::Query::Model::RDFTrine::model() cannot be called as a class method";
+	}
 	return $self->{'model'};
 }
 

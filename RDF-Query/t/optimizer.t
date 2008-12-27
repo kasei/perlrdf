@@ -16,7 +16,7 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan			= DEBUG, Screen
+# 	log4perl.category.rdf.query.costmodel		= DEBUG, Screen
 # 	log4perl.appender.Screen					= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr				= 0
 # 	log4perl.appender.Screen.layout				= Log::Log4perl::Layout::SimpleLayout
@@ -61,6 +61,7 @@ foreach my $data (@models) {
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound		=> {},
 							model		=> $bridge,
+							costmodel	=> RDF::Query::CostModel::Counted->new(),
 							optimize	=> 1,
 						);
 			my $parser	= RDF::Query::Parser::SPARQL->new();
@@ -79,6 +80,7 @@ foreach my $data (@models) {
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound		=> {},
 							model		=> $bridge,
+							costmodel	=> RDF::Query::CostModel::Counted->new(),
 							optimize	=> 0,
 						);
 			my $parser	= RDF::Query::Parser::SPARQL->new();
@@ -99,6 +101,7 @@ foreach my $data (@models) {
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound		=> {},
 							model		=> $bridge,
+							costmodel	=> RDF::Query::CostModel::Counted->new(),
 							optimize	=> 1,
 						);
 			my $parser	= RDF::Query::Parser::SPARQL->new();
@@ -120,6 +123,7 @@ END
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound		=> {},
 							model		=> $bridge,
+							costmodel	=> RDF::Query::CostModel::Counted->new(),
 							optimize	=> 0,
 						);
 			my $parser	= RDF::Query::Parser::SPARQL->new();

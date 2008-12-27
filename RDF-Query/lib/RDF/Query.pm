@@ -122,6 +122,7 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Logger;
 use RDF::Query::Plan;
 use RDF::Query::CostModel::Naive;
+use RDF::Query::CostModel::Counted;
 
 ######################################################################
 

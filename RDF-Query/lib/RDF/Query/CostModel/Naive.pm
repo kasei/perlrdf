@@ -228,13 +228,13 @@ sub _cardinality_triple {
 	my $pattern	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 3;
 	$l->debug( "Pattern has bf representation '$bf'" );
 	$l->debug( "There are $f of 3 free variables" );
-	my $card	= ($self->_size ** $r);
+	my $card	= ($size ** $r);
 	$l->debug( 'Cardinality of triple is : ' . $card );
 	
 	# round the cardinality to an integer
@@ -246,13 +246,13 @@ sub _cardinality_quad {
 	my $pattern	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	my $bf		= $pattern->bf( $context );
 	my $f		= ($bf =~ tr/f//);
 	my $r		= $f / 4;
 	$l->debug( "Pattern has bf representation '$bf'" );
 	$l->debug( "There are $f of 4 free variables" );
-	my $card	= ($self->_size ** $r);
+	my $card	= ($size ** $r);
 	$l->debug( 'Cardinality of quad is : ' . $card );
 	
 	# round the cardinality to an integer
@@ -345,7 +345,7 @@ sub _cardinality_nestedloop {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $context	= shift;
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $cardinality;
@@ -373,7 +373,7 @@ sub _cardinality_nestedloop {
 			}
 			
 			my $r		= $actually_free / 3;
-			my $tcard	= ($self->_size ** $r);
+			my $tcard	= ($size ** $r);
 			$card		*= $tcard;
 		}
 		$l->debug( 'Cardinality of NestedLoop join is : ' . $card );
@@ -403,7 +403,7 @@ sub _cardinality_pushdownnestedloop {
 	my $pattern	= shift;
 	my $context	= shift;
 	my @triples	= ($pattern->rhs, $pattern->lhs);
-	my $size	= $self->_size;
+	my $size	= $self->_size( $context );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
 	my $cardinality;
@@ -430,7 +430,7 @@ sub _cardinality_pushdownnestedloop {
 			}
 			
 			my $r		= $actually_free / 3;
-			my $tcard	= ($self->_size ** $r);
+			my $tcard	= ($size ** $r);
 			$card		*= $tcard;
 		}
 		$l->debug( 'Cardinality of PushDownNestedLoop is : ' . $card );
