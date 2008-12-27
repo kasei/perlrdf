@@ -96,6 +96,15 @@ sub _cost_sort {
 	return $scost + $self->cost( $plan->pattern, $context );
 }
 
+sub _cost_not {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context ) + $self->cost( $plan->not_pattern, $context );
+}
+
 sub _cost_filter {
 	my $self	= shift;
 	my $plan	= shift;
@@ -257,6 +266,13 @@ sub _cardinality_quad {
 	
 	# round the cardinality to an integer
 	return int($card + .5 * ($card <=> 0));
+}
+
+sub _cardinality_not {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	return $self->_cardinality( $pattern->pattern, $context );
 }
 
 sub _cardinality_filter {

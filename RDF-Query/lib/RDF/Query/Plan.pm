@@ -30,6 +30,7 @@ use RDF::Query::Plan::Filter;
 use RDF::Query::Plan::Join::NestedLoop;
 use RDF::Query::Plan::Join::PushDownNestedLoop;
 use RDF::Query::Plan::Limit;
+use RDF::Query::Plan::Not;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
 use RDF::Query::Plan::Quad;
@@ -355,6 +356,14 @@ sub generate_plans {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;
 		push(@return_plans, @plans);
+	} elsif ($type eq 'Not') {
+		my @patt	= $self->generate_plans( $algebra->pattern, $context, %args );
+		my @npatt	= $self->generate_plans( $algebra->not_pattern, $context, %args );
+		foreach my $p (@patt) {
+			foreach my $n (@npatt) {
+				push(@return_plans, RDF::Query::Plan::Not->new( $p, $n ));
+			}
+		}
 	} elsif ($type eq 'Filter') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my $expr	= $algebra->expr;

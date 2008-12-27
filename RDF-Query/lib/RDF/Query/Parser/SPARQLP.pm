@@ -55,7 +55,7 @@ sub __solution_modifiers {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return 1 if $self->_test(qr/SERVICE|TIME/i);
+	return 1 if $self->_test(qr/NOT|SERVICE|TIME/i);
 	return $self->SUPER::_GraphPatternNotTriples_test;
 }
 
@@ -65,6 +65,8 @@ sub _GraphPatternNotTriples {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/TIME/i)) {
 		$self->_TimeGraphPattern;
+	} elsif ($self->_NotGraphPattern_test) {
+		$self->_NotGraphPattern;
 	} else {
 		$self->SUPER::_GraphPatternNotTriples;
 	}
@@ -123,6 +125,16 @@ sub __handle_GraphPatternNotTriples {
 	my ($class, @args)	= @$data;
 	if ($class eq 'RDF::Query::Algebra::Service') {
 	} elsif ($class eq 'RDF::Query::Algebra::TimeGraph') {
+	} elsif ($class eq 'RDF::Query::Algebra::Not') {
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		my $not	= $class->new( $ggp, @args );
+		$self->_add_patterns( $not );
 	} else {
 		$self->SUPER::__handle_GraphPatternNotTriples( $data );
 	}
@@ -461,6 +473,22 @@ sub _TriplesBlock {
 	} else {
 		$self->_add_patterns( $bgp );
 	}
+}
+
+# NotGraphPattern ::= 'NOT' GroupGraphPattern
+sub _NotGraphPattern_test {
+	my $self	= shift;
+	return $self->_test( qr/NOT/i );
+}
+
+sub _NotGraphPattern {
+	my $self	= shift;
+	$self->_eat( qr/NOT/i );
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	my $opt		= ['RDF::Query::Algebra::Not', $ggp];
+	$self->_add_stack( $opt );
 }
 
 
