@@ -42,9 +42,9 @@
 		
 		<foaf:knows>
 			<foaf:Person rdf:nodeID="gary">
-				<foaf:name xml:lang="en">Gary Peck</foaf:name>
+				<foaf:name xml:lang="en">Gary P</foaf:name>
 				<foaf:firstName>Gary</foaf:firstName>
-				<foaf:surname>Peck</foaf:surname>
+				<foaf:surname>P</foaf:surname>
 				<foaf:nick>tylix</foaf:nick>
 				<foaf:mbox_sha1sum>2057969209f1dfdad832de387cf13e6ff8c93b12</foaf:mbox_sha1sum>
 				<foaf:homepage rdf:resource="http://www.realify.com/~gary/"/>
@@ -55,9 +55,9 @@
 		</foaf:knows>
 		<foaf:knows>
 			<foaf:Person rdf:ID="lauren">
-				<foaf:name>Lauren Bradford</foaf:name>
+				<foaf:name>Lauren B</foaf:name>
 				<foaf:firstName>Lauren</foaf:firstName>
-				<foaf:surname>Bradford</foaf:surname>
+				<foaf:surname>B</foaf:surname>
 				<foaf:mbox_sha1sum>f272c39785d651d0776093f3d28aadfd0719e787</foaf:mbox_sha1sum>
 				<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
 				<foaf:schoolHomepage rdf:resource="http://www.mit.edu/"/>
@@ -65,9 +65,9 @@
 		</foaf:knows>
 		<foaf:knows>
 			<foaf:Person rdf:ID="liz">
-				<foaf:name>Liz Farrand Dubeck</foaf:name>
+				<foaf:name>Liz F</foaf:name>
 				<foaf:firstName>Elizabeth</foaf:firstName>
-				<foaf:surname>Dubeck</foaf:surname>
+				<foaf:surname>F</foaf:surname>
 				<foaf:mbox_sha1sum>f8677979059b73385c9d14cadf7d1e3652b205a8</foaf:mbox_sha1sum>
 				<foaf:schoolHomepage rdf:resource="http://www.samohi.smmusd.org/"/>
 				<foaf:schoolHomepage rdf:resource="http://www.yale.edu/"/>

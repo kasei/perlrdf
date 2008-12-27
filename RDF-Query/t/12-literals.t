@@ -22,7 +22,7 @@ foreach my $model (@models) {
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT	?person ?homepage
 			WHERE	{
-						?person foaf:name "Gary Peck"@en ; foaf:homepage ?homepage .
+						?person foaf:name "Gary P"@en ; foaf:homepage ?homepage .
 					}
 END
 		my $stream	= $query->execute( $model );

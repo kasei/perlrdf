@@ -23,7 +23,7 @@ foreach my $model (@models) {
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT	?person ?nick
 			WHERE	{
-						?person foaf:name "Lauren Bradford" .
+						?person foaf:name "Lauren B" .
 						OPTIONAL { ?person foaf:nick ?nick }
 					}
 END
@@ -132,7 +132,7 @@ END
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT	?person ?nick
 			WHERE	{
-						?person foaf:name "Lauren Bradford" .
+						?person foaf:name "Lauren B" .
 						OPTIONAL { ?person foaf:nick ?nick } .
 						FILTER BOUND(?nick) .
 					}

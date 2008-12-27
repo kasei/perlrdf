@@ -363,7 +363,7 @@ END
 			WHERE	{ ?person :name ?name }
 END
 		my $bridge		= $query->get_bridge( $model );
-		my ($id, $name)	= ('lauren', 'Lauren Bradford');
+		my ($id, $name)	= ('lauren', 'Lauren B');
 		my $person	= $bridge->new_resource( "http://kasei.us/about/foaf.xrdf#${id}" );
 		my $stream	= $query->execute( $model, bind => { person => $person } );
 		my $count	= 0;

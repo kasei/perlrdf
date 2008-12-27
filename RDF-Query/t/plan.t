@@ -473,7 +473,7 @@ END
 		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
 		my $expr	= RDF::Query::Expression::Function->new( 'sparql:str', $var );
 		
-		my @expect	= ('Gary Peck', 'Gregory Todd Williams', 'Lauren Bradford', 'Liz Farrand Dubeck');
+		my @expect	= ('Gary P', 'Gregory Todd Williams', 'Lauren B', 'Liz F');
 		foreach my $data ([0 => [@expect]], [1 => [reverse @expect]]) {
 			my ($order, $expect)	= @$data;
 			my $dir		= ($order) ? 'DESC' : 'ASC';
@@ -506,7 +506,7 @@ END
 		my $plan	= RDF::Query::Plan::Sort->new( $proj, [$expr1, 0], [$expr2, 1] );
 		
 		my @expect_v	= (3,2,1);
-		my @expect_name	= reverse('Gary Peck', 'Gregory Todd Williams', 'Lauren Bradford', 'Liz Farrand Dubeck');
+		my @expect_name	= reverse('Gary P', 'Gregory Todd Williams', 'Lauren B', 'Liz F');
 		
 		$plan->execute( $context );
 		my @rows	= $plan->get_all;

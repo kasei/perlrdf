@@ -2142,7 +2142,7 @@ __END__
   		PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
   		SELECT	?person ?homepage
   		WHERE	{
-  					?person foaf:name "Gary Peck"@en ; foaf:homepage ?homepage .
+  					?person foaf:name "Gary P"@en ; foaf:homepage ?homepage .
   				}
 - method: SELECT
   namespaces:
@@ -2160,7 +2160,7 @@ __END__
               - http://xmlns.com/foaf/0.1/name
             - !!perl/array:RDF::Query::Node::Literal
               - LITERAL
-              - Gary Peck
+              - Gary P
               - en
               - ~
           - !!perl/array:RDF::Query::Algebra::Triple

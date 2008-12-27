@@ -66,7 +66,7 @@ END
 				my ($p, $n)	= @{ $row }{qw(person name)};
 				my $person	= $query->bridge->as_string( $p );
 				my $name	= $query->bridge->literal_value( $n );
-				is( $name, 'Gary Peck', "english name: $name" );
+				is( $name, 'Gary P', "english name: $name" );
 				$count++;
 			}
 			is( $count, 1, "1 person found with an english-typed name" );
@@ -93,7 +93,7 @@ END
 				my ($p, $n)	= @{ $row }{qw(person name)};
 				my $person	= $query->bridge->as_string( $p );
 				my $name	= $query->bridge->literal_value( $n );
-				is( $name, 'Gary Peck', "english name: $name" );
+				is( $name, 'Gary P', "english name: $name" );
 				$count++;
 			}
 			is( $count, 1, "1 person found with an english-typed name" );

@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 168;
+use Test::More tests => 169;
 
 use YAML;
 use Data::Dumper;
@@ -2085,7 +2085,7 @@ __END__
   		PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
   		SELECT	?person ?homepage
   		WHERE	{
-  					?person foaf:name "Gary Peck"@en ; foaf:homepage ?homepage .
+  					?person foaf:name "Gary P"@en ; foaf:homepage ?homepage .
   				}
 - method: SELECT
   namespaces:
@@ -2103,7 +2103,7 @@ __END__
               - http://xmlns.com/foaf/0.1/name
             - !!perl/array:RDF::Query::Node::Literal
               - LITERAL
-              - Gary Peck
+              - Gary P
               - en
               - ~
           - !!perl/array:RDF::Query::Algebra::Triple
@@ -5847,7 +5847,7 @@ __END__
   WHERE {
   	?p a foaf:Person ; foaf:name ?name .
   }
-  BINDINGS ?name { ("Gregory Todd Williams") ("Gary Peck") }
+  BINDINGS ?name { ("Gregory Todd Williams") ("Gary P") }
 - method: SELECT
   namespaces:
     foaf: http://xmlns.com/foaf/0.1/
@@ -5888,7 +5888,7 @@ __END__
       -
         - !!perl/array:RDF::Query::Node::Literal
           - LITERAL
-          - Gary Peck
+          - Gary P
 ---
 - 'FeDeRate BINDINGS (two var)'
 - |
@@ -6034,6 +6034,50 @@ __END__
               - 1
             - !!perl/array:RDF::Query::Node::Variable
               - name
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - name
+  variables: *1
+---
+- NOT block
+- |
+  PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+  SELECT ?name
+  {
+    ?p a foaf:Person .
+    NOT {
+      ?p foaf:mbox ?email .
+    }
+  }
+- method: SELECT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::Not
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://xmlns.com/foaf/0.1/Person
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://xmlns.com/foaf/0.1/mbox
+                - !!perl/array:RDF::Query::Node::Variable
+                  - email
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - name

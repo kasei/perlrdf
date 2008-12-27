@@ -219,7 +219,7 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		
-		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary Peck' => 1 );
+		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary P' => 1 );
 		while (my $row = $stream->next) {
 			use Data::Dumper;
 			my $name	= $row->{name}->literal_value;
