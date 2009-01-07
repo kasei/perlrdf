@@ -59,6 +59,17 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.110 (2009-XX-XX)
+
+     * Added RDF::Trine::Store base class with default implementation of get_pattern().
+     * Updated bin/rdf_store_add_file.pl to use the RDF::Trine parser, not Redland's parser.
+     * Added POD description to RDF::Trine package.
+     * Updated VERSION variables to 0.109 (forgotten during the last release).
+     * Updated ::Iterator::Bindings::as_string to join lines with empty string (had been returning a list).
+     * Added debug tracing code to ::Store::DBI.
+     * Updated schema in ::Store::DBI::mysql to use utf8 charset and collation, and use a pkey instead of a unique.
+     * RDF::Trine::Store::get_pattern now passes through optional @args (used for order-by).
+
   Version 0.109 (2008-11-14)
 
      * Removed incremental parsing code from RDF-Trine package.
