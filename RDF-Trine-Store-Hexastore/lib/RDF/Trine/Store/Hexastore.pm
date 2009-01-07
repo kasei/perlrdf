@@ -68,7 +68,7 @@ object for the underlying database.
 sub new {
 	my $class	= shift;
 	my $self	= bless({
-		data		=> $class->new_index_page,
+		data		=> $class->_new_index_page,
 		node2id		=> {},
 		id2node		=> {},
 		next_id		=> 1,
@@ -77,11 +77,24 @@ sub new {
 	return $self;
 }
 
+=item C<< store ( $filename ) >>
+
+Write the triples data to a file specified by C<< $filename >>.
+This data may be read back in with the C<< load >> method.
+
+=cut
+
 sub store {
 	my $self	= shift;
 	my $fname	= shift;
 	nstore( $self, $fname );
 }
+
+=item C<< load ( $filename ) >>
+
+Returns a new Hexastore object with triples data from the specified file.
+
+=cut
 
 sub load {
 	my $class	= shift;
@@ -90,6 +103,8 @@ sub load {
 }
 
 =item C<< temporary_store >>
+
+Returns a temporary (empty) triple store.
 
 =cut
 
@@ -107,20 +122,30 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements {
 	my $self	= shift;
-	my @nodes	= @_[0..2];
+	my @nodes	= splice(@_, 0, 3);
+	my $context	= shift;
+	my %args	= @_;
+	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
+	
 	my $defined	= 0;
-	foreach my $node (@nodes) {
+	my %variable_map;
+	foreach my $i (0 .. 2) {
+		my $node	= $nodes[ $i ];
+		my $pos		= (NODES)[ $i ];
 		$defined++ if (defined($node) and not($node->isa('RDF::Trine::Node::Variable')));
+		if (blessed($node) and $node->isa('RDF::Trine::Node::Variable')) {
+			$variable_map{ $node->name }	= $pos;
+		}
 	}
 	
 	my @ids		= map { $self->_node2id( $_ ) } @nodes;
 	my @names	= NODES;
 	my @keys	= mesh @names, @ids;
 	if ($defined == 3) {
-		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
-		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
+		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
 # 		if (any { $_ == $ids[2] } @$list) {
-		if ($self->page_contains_node( $list, $ids[2] )) {
+		if ($self->_page_contains_node( $list, $ids[2] )) {
 			return RDF::Trine::Iterator::Graph->new( [ RDF::Trine::Statement->new( @nodes ) ] );
 		} else {
 			return RDF::Trine::Iterator::Graph->new( [] );
@@ -137,10 +162,10 @@ sub get_statements {
 		}
 		@keys	= map { $_ => $self->_node2id( $nodes[ NODEMAP->{ $_ } ] ) } @dkeys;
 		
-		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
-		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
+		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
 		
-		my @local_list	= $self->node_values( $list );
+		my @local_list	= $self->_node_values( $list );
 		my $sub		= sub {
 			return undef unless (scalar(@local_list));
 			my $id	= shift(@local_list);
@@ -173,10 +198,19 @@ sub get_statements {
 		}
 		@keys		= ($dkey => $self->_node2id( $nodes[ NODEMAP->{ $dkey } ] ));
 		
-		my $index	= $self->index_from_pair( $self->index_root, @keys );
-		my $ukeys1	= $self->index_values_from_key( $index, $ukeys[0] );
-		my @ukeys1	= $self->index_values( $ukeys1 );
+		my $rev	= 0;
+		if (@orderby) {
+			$rev	= 1 if ($orderby[1] eq 'DESC');
+ 			my $sortkey	= $variable_map{ $orderby[0] };
+ 			if ($sortkey ne $ukeys[0]) {
+ 				@ukeys	= reverse(@ukeys);
+ 			}
+		}
 		
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys );
+		my $ukeys1	= $self->_index_values_from_key( $index, $ukeys[0] );
+		my @ukeys1	= $self->_index_values( $ukeys1, $rev );
+
 		my @local_list;
 		my $ukey1;
 		my $sub		= sub {
@@ -184,8 +218,8 @@ sub get_statements {
  				return undef unless (scalar(@ukeys1));
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
-				my $list	= $self->index_from_pair( $index, $ukeys[0], $ukey1 );
-				@local_list	= $self->node_values( $list );
+				my $list	= $self->_index_from_pair( $index, $ukeys[0], $ukey1 );
+				@local_list	= $self->_node_values( $list );
 				if ($check_dup) {
 					@local_list	= grep { $_ == $ukey1 } @local_list;
 				}
@@ -216,8 +250,18 @@ sub get_statements {
 		}
 # 		warn Dumper($dup_pos, $dup_var, $max, \%dup_var_pos);
 		
-		my $final_key	= 'object';
-		my @order_keys	= qw(subject predicate);
+		my $rev	= 0;
+		my (@order_keys, $final_key);
+ 		if (@orderby) {
+			$rev	= 1 if ($orderby[1] eq 'DESC');
+ 			my $sortkey	= $variable_map{ $orderby[0] };
+ 			my @nodes	= ($sortkey, grep { $_ ne $sortkey } NODES);
+ 			@order_keys	= @nodes[0,1];
+ 			$final_key	= $nodes[2];
+		} else {
+			$final_key	= 'object';
+			@order_keys	= qw(subject predicate);
+		}
 		if ($max > 1) {
 			@order_keys	= @{ $dup_var_pos{ $dup_var } };
 			my %order_keys	= map { $_ => 1 } @order_keys;
@@ -227,10 +271,9 @@ sub get_statements {
 				$final_key		= first { not($order_keys{ $_ }) } @names;
 			}
 		}
-# 		warn '========> ' . Dumper(\@order_keys, $final_key);
 		
-		my $subj	= $self->index_values_from_key( $self->index_root, $order_keys[0] );
-		my @skeys	= $self->index_values( $subj );
+		my $subj	= $self->_index_values_from_key( $self->_index_root, $order_keys[0] );
+		my @skeys	= $self->_index_values( $subj, $rev );
 		my ($sid, $pid);
 		my @pkeys;
 		my @local_list;
@@ -249,9 +292,9 @@ sub get_statements {
 				}
 				$pid	= shift(@pkeys);
 # 				warn "*** using predicate $pid\n";
-				my $index	= $self->index_from_pair( $subj, $sid, $order_keys[1] );
-				my $list	= $self->node_list_from_id( $index, $pid );
-				@local_list	= $self->node_values( $list );
+				my $index	= $self->_index_from_pair( $subj, $sid, $order_keys[1] );
+				my $list	= $self->_node_list_from_id( $index, $pid );
+				@local_list	= $self->_node_values( $list );
 				if ($max == 3) {
 					@local_list	= grep { $_ == $pid } @local_list;
 				}
@@ -288,10 +331,15 @@ sub get_pattern {
 		my @v2	= $t2->referenced_variables;
 		my @shared	= grep { exists($v1{$_}) } @v2;
 		if (@shared) {
+# 			warn 'there is a shared variable -- we can use a merge-join';
 			# there is a shared variable -- we can use a merge-join
 			my $shrkey	= $shared[0];
+# 			warn "- $shrkey\n";
+# 			warn $t2->as_string;
 			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			
+			
 			$i1->next;
 			$i2->next;
 			
@@ -304,23 +352,37 @@ sub get_pattern {
 					my $match_value	= $i1->current->{ $shrkey };
 					while ($match_value == $i2->current->{ $shrkey }) {
 						push( @matching_i2_rows, $i2->current );
-						last unless($i2->next);
+						unless ($i2->next) {
+#							warn "no more from i2";
+							last;
+						}
 					}
 					
 					while ($match_value == $i1->current->{ $shrkey }) {
 						foreach my $i2_row (@matching_i2_rows) {
-							push( @results, $self->_join( $i1->current, $i2_row ) );
+							my $new	= $self->_join( $i1->current, $i2_row );
+							push( @results, $new );
 						}
-						last unless ($i1->next);
+						unless ($i1->next) {
+#							warn "no more from i1";
+							last;
+						}
 					}
 				} elsif ($i1->current->{ $shrkey } < $i2->current->{ $shrkey }) {
+					my $i1v	= $i1->current->{ $shrkey };
+					my $i2v	= $i2->current->{ $shrkey };
+					warn "keys don't match: $i1v <=> $i2v\n";
 					$i1->next;
 				} else { # ($i1->current->{ $shrkey } > $i2->current->{ $shrkey })
+					my $i1v	= $i1->current->{ $shrkey };
+					my $i2v	= $i2->current->{ $shrkey };
+					warn "keys don't match: $i1v <=> $i2v\n";
 					$i2->next;
 				}
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
+			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ) );
@@ -392,7 +454,7 @@ sub add_statement {
 			my ($second, $third)	= @$order;
 			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
-			if ($self->add_node_to_page( $list, $id3 )) {
+			if ($self->_add_node_to_page( $list, $id3 )) {
 				$added++;
 			}
 		}
@@ -424,7 +486,7 @@ sub remove_statement {
 			my ($second, $third)	= @$order;
 			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
-			if ($self->remove_node_from_page( $list, $id3 )) {
+			if ($self->_remove_node_from_page( $list, $id3 )) {
 				$removed++;
 			}
 # 			warn "removing $first-$second-$third $id1-$id2-$id3 from list [" . join(', ', @$list) . "]\n";
@@ -473,16 +535,16 @@ sub count_statements {
 	if (0 == scalar(@keys)) {
 		return $self->{ size };
 	} elsif (2 == scalar(@keys)) {
-		my $index	= $self->index_from_pair( $self->index_root, @keys );
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys );
 		return $self->_count_statements( $index, @ukeys );
 	} elsif (4 == scalar(@keys)) {
-		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
-		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
-		return $self->node_count( $list );
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
+		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
+		return $self->_node_count( $list );
 	} else {
-		my $index	= $self->index_from_pair( $self->index_root, @keys[ 0,1 ] );
-		my $list	= $self->index_from_pair( $index, @keys[ 2,3 ] );
-		return ($self->page_contains_node( $list, $keys[5] ))	# any { $_ == $keys[5] } @$list)
+		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
+		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
+		return ($self->_page_contains_node( $list, $keys[5] ))	# any { $_ == $keys[5] } @$list)
 			? 1
 			: 0;
 	}
@@ -493,7 +555,7 @@ sub _count_statements {
 	my $data	= shift;
 	my @ukeys	= @_;
 	if (1 >= scalar(@ukeys)) {
-		return $self->node_count( $data );
+		return $self->_node_count( $data );
 	} else {
 		my $count	= 0;
 		my $ukey	= shift(@ukeys);
@@ -535,7 +597,7 @@ sub _id2node {
 ### index structure. The terminal node lists, however, are manipulated by other
 ### methods (add_statement, remove_statement, etc.).
 
-sub index_root {
+sub _index_root {
 	my $self	= shift;
 	return $self->{'data'};
 }
@@ -546,29 +608,29 @@ sub _get_terminal_list {
 	my $id1		= shift;
 	my $second	= shift;
 	my $id2		= shift;
-	my $index	= $self->index_from_pair( $self->index_root, $first, $id1 );
-	my $page	= $self->index_from_pair( $index, $second, $id2 );
+	my $index	= $self->_index_from_pair( $self->_index_root, $first, $id1 );
+	my $page	= $self->_index_from_pair( $index, $second, $id2 );
 	if (ref($page)) {
 		return $page;
 	} else {
 		my ($k1, $k2)	= sort { $a->[0] cmp $b->[0] } ([$first, $id1], [$second, $id2]);
-		my $index	= $self->index_from_pair( $self->index_root, $k1->[0], $k1->[1] );
+		my $index	= $self->_index_from_pair( $self->_index_root, $k1->[0], $k1->[1] );
 		unless ($index) {
-			$index	= $self->add_index_page( $self->index_root, $k1->[0], $k1->[1] );
+			$index	= $self->_add_index_page( $self->_index_root, $k1->[0], $k1->[1] );
 		}
 		
-		my $list	= $self->index_from_pair( $index, $k2->[0], $k2->[1] );
+		my $list	= $self->_index_from_pair( $index, $k2->[0], $k2->[1] );
 		unless ($list) {
-			$list	= $self->add_list_page( $index, $k2->[0], $k2->[1] );
+			$list	= $self->_add_list_page( $index, $k2->[0], $k2->[1] );
 		}
 		
 		###
 		
-		my $index2	= $self->index_from_pair( $self->index_root, $k2->[0], $k2->[1] );
+		my $index2	= $self->_index_from_pair( $self->_index_root, $k2->[0], $k2->[1] );
 		unless ($index2) {
-			$index2	= $self->add_index_page( $self->index_root, $k2->[0], $k2->[1] );
+			$index2	= $self->_add_index_page( $self->_index_root, $k2->[0], $k2->[1] );
 		}
-		$self->add_list_page( $index2, $k1->[0], $k1->[1], $list );
+		$self->_add_list_page( $index2, $k1->[0], $k1->[1], $list );
 		return $list;
 	}
 }
@@ -576,24 +638,24 @@ sub _get_terminal_list {
 #########################################
 #########################################
 #########################################
-sub add_list_page {
+sub _add_list_page {
 	my $self	= shift;
 	my $index	= shift;
 	my $key		= shift;
 	my $value	= shift;
-	my $list	= shift || $self->new_list_page;
+	my $list	= shift || $self->_new_list_page;
 	$index->{ $key }{ $value }	= $list;
 }
 
-sub add_index_page {
+sub _add_index_page {
 	my $self	= shift;
 	my $index	= shift;
 	my $key		= shift;
 	my $value	= shift;
-	$index->{ $key }{ $value }	= $self->new_index_page;
+	$index->{ $key }{ $value }	= $self->_new_index_page;
 }
 
-sub index_from_pair {
+sub _index_from_pair {
 	my $self	= shift;
 	my $index	= shift;
 	my $key		= shift;
@@ -601,36 +663,41 @@ sub index_from_pair {
 	return $index->{ $key }{ $val };
 }
 
-sub node_list_from_id {
+sub _node_list_from_id {
 	my $self	= shift;
 	my $index	= shift;
 	my $id		= shift;
 	return $index->{ $id };
 }
 
-sub index_values_from_key {
+sub _index_values_from_key {
 	my $self	= shift;
 	my $index	= shift;
 	my $key		= shift;
 	return $index->{ $key };
 }
 
-sub index_values {
+sub _index_values {
 	my $self	= shift;
 	my $index	= shift;
-	return sort { $a <=> $b } keys %$index;
+	my $rev		= shift;
+	if ($rev) {
+		return sort { $b <=> $a } keys %$index;
+	} else {
+		return sort { $a <=> $b } keys %$index;
+	}
 }
 #########################################
 #########################################
 #########################################
 
-sub node_count {
+sub _node_count {
 	my $self	= shift;
 	my $list	= shift;
 	return scalar(@{ $list || [] });
 }
 
-sub node_values {
+sub _node_values {
 	my $self	= shift;
 	my $list	= shift;
 	if (ref($list)) {
@@ -640,18 +707,18 @@ sub node_values {
 	}
 }
 
-sub page_contains_node {
+sub _page_contains_node {
 	my $self	= shift;
 	my $list	= shift;
 	my $id		= shift;
 	return (any { $_ == $id } @$list) ? 1 : 0;
 }
 
-sub add_node_to_page {
+sub _add_node_to_page {
 	my $self	= shift;
 	my $list	= shift;
 	my $id		= shift;
-	if ($self->page_contains_node( $list, $id )) {
+	if ($self->_page_contains_node( $list, $id )) {
 		return 0;
 	} else {
 		@$list	= sort { $a <=> $b } (@$list, $id);
@@ -659,11 +726,11 @@ sub add_node_to_page {
 	}
 }
 
-sub remove_node_from_page {
+sub _remove_node_from_page {
 	my $self	= shift;
 	my $list	= shift;
 	my $id		= shift;
-	if ($self->page_contains_node( $list, $id )) {
+	if ($self->_page_contains_node( $list, $id )) {
 		@$list	= grep { $_ != $id } @$list;
 		return 1;
 	} else {
@@ -671,11 +738,11 @@ sub remove_node_from_page {
 	}
 }
 
-sub new_index_page {
+sub _new_index_page {
 	return { __type => 'index' };
 }
 
-sub new_list_page {
+sub _new_list_page {
 	return [];
 }
 
