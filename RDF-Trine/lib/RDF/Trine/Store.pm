@@ -64,6 +64,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	
 	my @triples	= $bgp->triples;
 	if (1 == scalar(@triples)) {
 		my $t		= shift(@triples);
@@ -75,7 +78,7 @@ sub get_pattern {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
 		}
-		my $iter	= $self->get_statements( @nodes );
+		my $iter	= $self->get_statements( @nodes, $context, @args );
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
@@ -86,8 +89,8 @@ sub get_pattern {
 		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
 		my $t		= shift(@triples);
-		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ) );
-		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ) );
+		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
 		while (my $row = $rhs->next) {
 			push(@inner, $row);
