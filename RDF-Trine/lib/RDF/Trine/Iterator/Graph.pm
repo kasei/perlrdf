@@ -39,7 +39,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= 0.109;
+	$VERSION	= '0.110_01';
 }
 
 ######################################################################

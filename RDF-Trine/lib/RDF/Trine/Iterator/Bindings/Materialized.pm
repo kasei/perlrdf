@@ -45,7 +45,7 @@ use Scalar::Util qw(blessed reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= 0.109;
+	$VERSION	= '0.110_01';
 }
 
 =item C<< new ( \@results, \@names, %args ) >>

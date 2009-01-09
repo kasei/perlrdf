@@ -23,7 +23,6 @@
                         asc:addition    "Added POD description to RDF::Trine package." ;
                         asc:addition    "Added debug tracing code to ::Store::DBI." ;
                         asc:update      "Updated bin/rdf_store_add_file.pl to use the RDF::Trine parser, not Redland's parser." ;
-                        asc:update      "Updated VERSION variables to 0.109 (forgotten during the last release)." ;
                         asc:update      "Updated ::Iterator::Bindings::as_string to join lines with empty string (had been returning a list)." ;
                         asc:update      "Updated schema in ::Store::DBI::mysql to use utf8 charset and collation, and use a pkey instead of a unique." ;
                         asc:update      "RDF::Trine::Store::get_pattern now passes through optional @args (used for order-by)." ;
