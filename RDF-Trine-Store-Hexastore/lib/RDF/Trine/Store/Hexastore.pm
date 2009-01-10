@@ -591,6 +591,10 @@ sub _id2node {
 	}
 }
 
+sub _seen_nodes {
+	my $self	= shift;
+	return values %{ $self->{ id2node } };
+}
 
 ################################################################################
 ### The methods below are the only ones that directly access and manipulate the
