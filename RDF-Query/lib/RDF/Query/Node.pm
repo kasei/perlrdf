@@ -39,19 +39,14 @@ sub is_variable {
 	return (blessed($self) and $self->isa('RDF::Query::Node::Variable'));
 }
 
-sub compare {
-	my $a	= shift;
-	my $b	= shift;
-	warn 'compare';
-	for ($a, $b) {
-		unless ($_->isa('RDF::Query::Node')) {
-			$_	= RDF::Query::Node->from_trine( $_ );
-		}
-	}
-	
-	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
-	return $a <=> $b;
-}
+=item C<< from_trine ( $node ) >>
+
+Returns a new RDF::Query::Node object with the same value as $node, a
+RDF::Trine::Node object. This essentially promotes C<< $node >> to a
+node object with extra functionality provided by the RDF::Query package
+(like SPARQL-defined ordering).
+
+=cut
 
 sub from_trine {
 	my $class	= shift;
@@ -68,6 +63,35 @@ sub from_trine {
 		die Dumper($n);
 	}
 }
+
+=back
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< compare ( $node_a, $node_b ) >>
+
+Returns -1, 0, or 1 if $node_a sorts less than, equal to, or greater than
+$node_b in the defined SPARQL ordering, respectively. This function may be
+used as the function argument to C<<sort>>.
+
+=cut
+
+sub compare {
+	my $a	= shift;
+	my $b	= shift;
+	warn 'compare';
+	for ($a, $b) {
+		unless ($_->isa('RDF::Query::Node')) {
+			$_	= RDF::Query::Node->from_trine( $_ );
+		}
+	}
+	
+	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
+	return $a <=> $b;
+}
+
 
 1;
 

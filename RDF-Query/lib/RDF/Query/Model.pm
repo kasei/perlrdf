@@ -160,9 +160,31 @@ Returns a string version of the node object.
 sub as_string {
 	my $self	= shift;
 	my $node	= shift;
-	return undef unless (blessed($node));
-	my $string	= $node->as_string;
-	return $string;
+	return unless blessed($node);
+	if ($self->isa_resource( $node )) {
+		my $uri	= $node->uri_value;
+		return qq<[$uri]>;
+	} elsif ($self->isa_literal( $node )) {
+		my $value	= $self->literal_value( $node );
+		my $lang	= $self->literal_value_language( $node );
+		my $dt		= $self->literal_datatype( $node );
+		if ($lang) {
+			return qq["$value"\@${lang}];
+		} elsif ($dt) {
+			return qq["$value"^^<$dt>];
+		} else {
+			return qq["$value"];
+		}
+	} elsif ($self->isa_blank( $node )) {
+		my $id	= $self->blank_identifier( $node );
+		return qq[($id)];
+	} elsif (blessed($node) and $node->isa('RDF::Query::Algebra::Triple')) {
+		return $node->as_sparql;
+	} elsif (blessed($node) and $node->isa('RDF::Query::Algebra::Quad')) {
+		return $node->as_string;
+	} else {
+		return;
+	}
 }
 
 =item C<is_node ( $node )>
@@ -309,6 +331,22 @@ sub blank_identifier {
 	return undef unless ($self->is_blank($node));
 	return $node->blank_identifier;
 }
+
+=item C<< equals ( $node_a, $node_b ) >>
+
+Returns true if C<$node_a> and C<$node_b> are equal
+
+=cut
+
+sub equals {
+	my $self	= shift;
+	my $nodea	= shift;
+	my $nodeb	= shift;
+	return 1 if (not(defined($nodea)) and not(defined($nodeb)));
+	return 0 unless blessed($nodea);
+	return $nodea->equal( $nodeb );
+}
+
 
 =item C<< subject ( $statement ) >>
 

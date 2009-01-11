@@ -93,22 +93,6 @@ sub model {
 	return $self->{'model'};
 }
 
-=item C<< equals ( $node_a, $node_b ) >>
-
-Returns true if C<$node_a> and C<$node_b> are equal
-
-=cut
-
-sub equals {
-	my $self	= shift;
-	my $nodea	= shift;
-	my $nodeb	= shift;
-	return 1 if (not(defined($nodea)) and not(defined($nodeb)));
-	return 0 unless blessed($nodea);
-	return $nodea->equal( $nodeb );
-}
-
-
 =item C<add_uri ( $uri, $named, $format )>
 
 Addsd the contents of the specified C<$uri> to the model.
