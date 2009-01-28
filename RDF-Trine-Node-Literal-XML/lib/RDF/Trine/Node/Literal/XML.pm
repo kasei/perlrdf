@@ -14,7 +14,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node::Literal);
 
-use RDF::Trine::Error;
+use RDF::Trine::Error qw(:try);
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak confess);
@@ -37,7 +37,14 @@ BEGIN {
 
 =item C<new ( $string, $lang, $datatype )>
 
-Returns a new Literal structure.
+Returns a new XML Literal object. This method follows the same API as the
+RDF::Trine::Node::Literal constructor, but:
+
+* $string must be a valid XML fragment
+* $lang must be undef
+* $datatype must be 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'
+
+If these conditions are not met, this method throws a RDF::Trine::Error exception.
 
 =cut
 
@@ -63,6 +70,12 @@ sub new {
 	return $self;
 }
 
+=item C<< new_from_element ( $el ) >>
+
+Returns a new XML Literal object using the XML::LibXML::Element C<< $el >>.
+
+=cut
+
 sub new_from_element {
 	my $class	= shift;
 	my $el		= shift;
@@ -71,6 +84,14 @@ sub new_from_element {
 	$XML_FRAGMENTS{ refaddr( $self ) }	= $el;
 	return $self;
 }
+
+=item C<< xml_element >>
+
+Returns the XML::LibXML::Element object for the XML Literal. If this XML Literal
+object was constructed with C<< new >>, this element contains the '<rdf-wrapper>'
+parent-XML-element, otherwise it is the element object passed to C<< new_from_element >>.
+
+=cut
 
 sub xml_element {
 	my $self	= shift;
