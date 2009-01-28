@@ -58,7 +58,7 @@ sub new {
 		throw RDF::Trine::Error -text => "Cannot create an XMLLiteral object without rdf:XMLLiteral datatype";
 	}
 	
-	my $self	= $class->SUPER::new( $literal, $lang, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
+	my $self	= $class->SUPER::_new( $literal, $lang, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
 	
 	my $parser = XML::LibXML->new();
 	my $doc = eval { $parser->parse_string( "<rdf-wrapper>${literal}</rdf-wrapper>" ) };
