@@ -5,21 +5,76 @@ void head_test (void);
 void vector_test (void);
 void terminal_test (void);
 void memory_test (void);
+void index_test ( void );
 
 int main ( void ) {
+	index_test();
 //	head_test();
 //	vector_test();
 //	terminal_test();
-	memory_test();
+//	memory_test();
 	return 0;
+}
+
+void index_test (void) {
+	hx_index* index	= hx_new_index( HX_INDEX_ORDER_SOP );
+	fprintf( stderr, "index size: %d\n", sizeof( hx_index ) );
+	hx_index_debug( index );
+	hx_index_add_triple( index, (rdf_node) 1, (rdf_node) 2, (rdf_node) 3 );
+	hx_index_debug( index );
+	
+	for (int i = 0; i < 4; i++) {
+		for (int j = 4; j <= 6; j++) {
+			for (int k = 7; k <= 8; k++) {
+				hx_index_add_triple( index, (rdf_node) i, (rdf_node) j, (rdf_node) k );
+			}
+		}
+	}
+	hx_index_debug( index );
+	fprintf( stderr, "total triples: %d\n", (int) hx_index_triples_count( index ) );
+	
+	fprintf( stderr, "iterator test...\n" );
+	{
+		hx_iter* iter	= hx_new_iter( index );
+		if (!hx_iter_finished( iter )) {
+			rdf_node s, p, o;
+			hx_iter_current( iter, &s, &p, &o );
+			fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
+		}
+		hx_free_iter( iter );
+	}
+	
+	fprintf( stderr, "removing triples matching {0,4,*}...\n" );
+	hx_index_remove_triple( index, (rdf_node) 0, (rdf_node) 4, (rdf_node) 7 );
+	hx_index_remove_triple( index, (rdf_node) 0, (rdf_node) 4, (rdf_node) 8 );
+	fprintf( stderr, "total triples: %d\n", (int) hx_index_triples_count( index ) );
+
+	fprintf( stderr, "second iterator test...\n" );
+	{
+		int count	= 0;
+		hx_iter* iter	= hx_new_iter( index );
+		while (!hx_iter_finished( iter )) {
+			count++;
+			rdf_node s, p, o;
+			hx_iter_current( iter, &s, &p, &o );
+			fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
+			hx_iter_next( iter );
+		}
+		hx_free_iter( iter );
+		fprintf( stderr, "got %d triples from iterator\n", count );
+	}
+	
+	
+	
+	hx_free_index( index );
 }
 
 void memory_test (void) {
 	hx_head* h	= hx_new_head();
-	for (int i = 0; i < 100000; i++) {
+	for (int i = 10000; i > 0; i--) {
 		hx_vector* v	= hx_new_vector();
 		hx_head_add_vector( h, (rdf_node) i, v );
-		for (int j = 0; j < 20; j++) {
+		for (int j = 200; j > 0; j--) {
 			hx_terminal* t	= hx_new_terminal();
 			hx_vector_add_terminal( v, (rdf_node) j, t );
 			for (int k = 0; k < 25; k++) {

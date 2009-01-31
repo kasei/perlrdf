@@ -1,3 +1,6 @@
+#ifndef _HEXASTORE_H
+#define _HEXASTORE_H
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -9,74 +12,43 @@
 #include <string.h>
 #include <unistd.h>
 
-#define HEAD_LIST_ALLOC_SIZE				4096
-#define VECTOR_LIST_ALLOC_SIZE				64
-#define TERMINAL_LIST_ALLOC_SIZE			32
+#include "hexastore_types.h"
+#include "index.h"
+#include "terminal.h"
+#include "vector.h"
+#include "head.h"
 
-typedef uint64_t list_size_t;
-typedef uint64_t rdf_node;
+enum {
+	RDF_ITER_FLAGS_BOUND_A	= 1,
+	RDF_ITER_FLAGS_BOUND_B	= 2,
+	RDF_ITER_FLAGS_BOUND_C	= 4,
+};
 
-typedef struct {
-	list_size_t allocated;
-	list_size_t used;
-	rdf_node* ptr;
-	int refcount;
-} hx_terminal;
-
-typedef struct {
-	rdf_node node;
-	hx_terminal* terminal;
-} hx_vector_item;
+static const int RDF_ITER_TYPE_MASK	= 0x07;
+static const int RDF_ITER_TYPE_FFF	= 0;
+static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
+static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
-	list_size_t allocated;
-	list_size_t used;
-	hx_vector_item* ptr;
-} hx_vector;
-
-typedef struct {
-	rdf_node node;
+	hx_index* index;
+	int flags;
+	size_t a_index;
+	size_t b_index;
+	size_t c_index;
+	hx_head* head;
 	hx_vector* vector;
-} hx_head_item;
+	hx_terminal* terminal;
+	int started;
+	int finished;
+} hx_iter;
 
-typedef struct {
-	list_size_t allocated;
-	list_size_t used;
-	hx_head_item* ptr;
-	int order[3];
-} hx_head;
+hx_iter* hx_new_iter ( hx_index* index );
+hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a );
+hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
+int hx_free_iter ( hx_iter* iter );
 
+int hx_iter_finished ( hx_iter* iter );
+int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o );
+int hx_iter_next ( hx_iter* iter );
 
-// new and free operations for: head, vector, and terminal list
-hx_terminal* hx_new_terminal ( void );
-int hx_free_terminal ( hx_terminal* list );
-hx_vector* hx_new_vector ( void );
-int hx_free_vector ( hx_vector* list );
-hx_head* hx_new_head ( void );
-int hx_free_head ( hx_head* head );
-
-// terminal list operations
-int hx_terminal_debug ( const char* header, hx_terminal* t, int newline );
-int hx_terminal_add_node ( hx_terminal* t, rdf_node n );
-int hx_terminal_remove_node ( hx_terminal* t, rdf_node n );
-int hx_terminal_binary_search ( const hx_terminal* t, const rdf_node n, int* index );
-list_size_t hx_terminal_size ( hx_terminal* t );
-size_t hx_terminal_memory_size ( hx_terminal* t );
-
-// vector operations
-int hx_vector_debug ( const char* header, hx_vector* v );
-int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t );
-int hx_vector_remove_terminal ( hx_vector* v, rdf_node n );
-int hx_vector_binary_search ( const hx_vector* v, const rdf_node n, int* index );
-list_size_t hx_vector_size ( hx_vector* v );
-uint64_t hx_vector_triples_count ( hx_vector* v );
-size_t hx_vector_memory_size ( hx_vector* v );
-
-// head operations
-int hx_head_debug ( const char* header, hx_head* h );
-int hx_head_binary_search ( const hx_head* h, const rdf_node n, int* index );
-int hx_head_add_vector ( hx_head* h, rdf_node n, hx_vector* v );
-int hx_head_remove_vector ( hx_head* h, rdf_node n );
-list_size_t hx_head_size ( hx_head* h );
-uint64_t hx_head_triples_count ( hx_head* h );
-size_t hx_head_memory_size ( hx_head* h );
+#endif
