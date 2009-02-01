@@ -36,8 +36,8 @@ typedef struct {
 hx_vector* hx_new_vector ( void );
 int hx_free_vector ( hx_vector* list );
 
-int hx_vector_debug ( const char* header, hx_vector* v );
-int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t );
+int hx_vector_debug ( const char* header, const hx_vector* v );
+int hx_vector_add_terminal ( hx_vector* v, const rdf_node n, hx_terminal* t );
 hx_terminal* hx_vector_get_terminal ( hx_vector* v, rdf_node n );
 int hx_vector_remove_terminal ( hx_vector* v, rdf_node n );
 int hx_vector_binary_search ( const hx_vector* v, const rdf_node n, int* index );

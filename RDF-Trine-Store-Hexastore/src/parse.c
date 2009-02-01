@@ -23,7 +23,7 @@ int main (int argc, char** argv) {
 	unsigned char *uri_string;
 	raptor_uri *uri, *base_uri;
 	
-	if (argc < 3) {
+	if (argc < 2) {
 		help(argc, argv);
 		exit(1);
 	}

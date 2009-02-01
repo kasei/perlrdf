@@ -15,9 +15,8 @@ hx_terminal* hx_new_terminal( void ) {
 
 int hx_free_terminal ( hx_terminal* list ) {
 //	fprintf( stderr, "freeing terminal %p\n", list );
-	list->refcount--;
 //	fprintf( stderr, "refcount is now %d\n", list->refcount );
-	if (list->refcount == 0) {
+	if (list->refcount <= 0) {
 		if (list->ptr != NULL) {
 //			fprintf( stderr, "free(list->ptr) called\n" );
 			free( list->ptr );
@@ -53,6 +52,7 @@ int hx_terminal_add_node ( hx_terminal* t, rdf_node n ) {
 	int r	= hx_terminal_binary_search( t, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.
+		return 1;
 	} else {
 		// not found. need to add at index i
 //		fprintf( stderr, "list add [used: %d, allocated: %d]\n", (int) t->used, (int) t->allocated );

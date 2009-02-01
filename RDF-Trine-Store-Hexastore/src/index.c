@@ -13,7 +13,7 @@ hx_index* hx_new_index ( int* index_order ) {
 }
 
 int hx_free_index ( hx_index* i ) {
-	free( i->head );
+	hx_free_head( i->head );
 	free( i );
 	return 0;
 }
@@ -21,11 +21,23 @@ int hx_free_index ( hx_index* i ) {
 // XXX replace the use of ->used, etc. with iterators (preserves abstraction)
 int hx_index_debug ( hx_index* index ) {
 	hx_head* h	= index->head;
-	fprintf( stderr, "index: %p\n  -> head: %p\n  -> order [%d, %d, %d]\n  -> triples:\n", index, h, index->order[0], index->order[1], index->order[2] );
+	fprintf(
+		stderr,
+		"index: %p\n  -> head: %p\n  -> order [%d, %d, %d]\n  -> triples:\n",
+		(void*) index,
+		(void*) h,
+		(int) index->order[0],
+		(int) index->order[1],
+		(int) index->order[2]
+	);
 	rdf_node triple_ordered[3];
-	for (int i = 0; i < h->used; i++) {
-		hx_vector* v	= h->ptr[i].vector;
-		triple_ordered[ index->order[ 0 ] ]	= h->ptr[i].node;
+	
+	hx_head_iter* hiter	= hx_head_new_iter( h );
+	int i	= 0;
+	while (!hx_head_iter_finished( hiter )) {
+		hx_vector* v;
+		hx_head_iter_current( hiter, &(triple_ordered[ index->order[ 0 ] ]), &v );
+		
 		for (int j = 0; j < v->used; j++) {
 			hx_terminal* t	= v->ptr[j].terminal;
 			triple_ordered[ index->order[ 1 ] ]	= v->ptr[j].node;
@@ -35,7 +47,11 @@ int hx_index_debug ( hx_index* index ) {
 				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
 			}
 		}
+		
+		hx_head_iter_next( hiter );
+		i++;
 	}
+	hx_free_head_iter( hiter );
 	
 	return 0;
 }
@@ -52,10 +68,11 @@ int hx_index_add_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o ) 
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
 	hx_head* h	= index->head;
-	hx_vector* v;
+	hx_vector* v	= NULL;
 	hx_terminal* t;
 	
 	if ((v = hx_head_get_vector( h, index_ordered[0] )) == NULL) {
+//		fprintf( stderr, "adding missing vector for node %d\n", (int) index_ordered[0] );
 		v	= hx_new_vector();
 		hx_head_add_vector( h, index_ordered[0], v );
 	}
@@ -78,7 +95,7 @@ int hx_index_remove_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o
 	for (int i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
-	fprintf( stderr, "remove_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
+//	fprintf( stderr, "remove_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
 	hx_head* h	= index->head;
 	hx_vector* v;

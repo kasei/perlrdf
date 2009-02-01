@@ -16,19 +16,16 @@ hx_vector* hx_new_vector( void ) {
 int hx_free_vector ( hx_vector* vector ) {
 //	fprintf( stderr, "freeing vector %p\n", vector );
 	for (int i = 0; i < vector->used; i++) {
+		(vector->ptr[ i ].terminal->refcount)--;
 		hx_free_terminal( vector->ptr[ i ].terminal );
 	}
-	if (vector->ptr != NULL) {
-//		fprintf( stderr, "free(vector->ptr) called\n" );
-		free( vector->ptr );
-	}
-//	fprintf( stderr, "free(vector) called\n" );
+	free( vector->ptr );
 	free( vector );
 	return 0;
 }
 
-int hx_vector_debug ( const char* header, hx_vector* v ) {
-	fprintf( stderr, "%s[\n", header );
+int hx_vector_debug ( const char* header, const hx_vector* v ) {
+	fprintf( stderr, "%s (%d/%d)[\n", header, (int) v->used, (int) v->allocated );
 	for(int i = 0; i < v->used; i++) {
 		fprintf( stderr, "%s  %d", header, (int) v->ptr[ i ].node );
 		hx_terminal_debug( " -> ", v->ptr[ i ].terminal, 0 );
@@ -38,7 +35,7 @@ int hx_vector_debug ( const char* header, hx_vector* v ) {
 	return 0;
 }
 
-int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t ) {
+int hx_vector_add_terminal ( hx_vector* v, const rdf_node n, hx_terminal* t ) {
 	int i;
 	
 	if (n == (rdf_node) 0) {
@@ -49,6 +46,7 @@ int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t ) {
 	int r	= hx_vector_binary_search( v, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.
+		return 1;
 	} else {
 		// not found. need to add at index i
 //		fprintf( stderr, "vector add [used: %d, allocated: %d]\n", (int) v->used, (int) v->allocated );
@@ -63,6 +61,7 @@ int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t ) {
 		v->ptr[i].terminal	= t;
 		(v->ptr[i].terminal->refcount)++;
 //		fprintf( stderr, "refcount of terminal list is now %d\n", (int) v->ptr[i].terminal->refcount );
+//		fprintf( stderr, "*** (hx_vector_add_terminal) increasing used count\n" );
 		v->used++;
 	}
 	return 0;
@@ -86,10 +85,12 @@ int hx_vector_remove_terminal ( hx_vector* v, rdf_node n ) {
 	} else {
 		// found. need to remove at index i
 //		fprintf( stderr, "removing terminal list %d from vector\n", (int) n );
+		(v->ptr[ i ].terminal->refcount)--;
 		hx_free_terminal( v->ptr[ i ].terminal );
 		for (int k = i; k < v->used; k++) {
 			v->ptr[ k ]	= v->ptr[ k + 1 ];
 		}
+//		fprintf( stderr, "*** (hx_vector_add_terminal) decreasing used count\n" );
 		v->used--;
 	}
 	return 0;
@@ -119,6 +120,9 @@ size_t hx_vector_memory_size ( hx_vector* v ) {
 int hx_vector_binary_search ( const hx_vector* v, const rdf_node n, int* index ) {
 	int low		= 0;
 	int high	= v->used - 1;
+//	fprintf( stderr, "hx_vector_binary_search: %p\n", (void*) v );
+//	hx_vector_debug( "*** ", v );
+	
 	while (low <= high) {
 		int mid	= low + (high - low) / 2;
 		if (v->ptr[mid].node > n) {
@@ -152,7 +156,7 @@ int _hx_vector_grow( hx_vector* v ) {
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector ) {
 	if (vector == NULL) {
 		fprintf( stderr, "*** NULL vector passed to hx_vector_new_iter" );
-		vector->used	= 1;
+		return NULL;
 	}
 	hx_vector_iter* iter	= (hx_vector_iter*) calloc( 1, sizeof( hx_vector_iter ) );
 	iter->started		= 0;
@@ -174,8 +178,8 @@ int hx_vector_iter_finished ( hx_vector_iter* iter ) {
 }
 
 int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
-	fprintf( stderr, "_hx_vector_iter_prime_first_result( %p )\n", (void*) iter );
-	fprintf( stderr, "vector: %p\n", (void*) iter->vector );
+// 	fprintf( stderr, "_hx_vector_iter_prime_first_result( %p )\n", (void*) iter );
+// 	fprintf( stderr, "vector: %p\n", (void*) iter->vector );
 	iter->started	= 1;
 	iter->index		= 0;
 	if (iter->vector->used == 0) {

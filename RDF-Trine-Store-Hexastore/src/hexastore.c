@@ -21,7 +21,14 @@ hx_iter* hx_new_iter ( hx_index* index ) {
 }
 
 int hx_free_iter ( hx_iter* iter ) {
+	if (iter->head_iter != NULL)
+		hx_free_head_iter( iter->head_iter );
+	if (iter->vector_iter != NULL)
+		hx_free_vector_iter( iter->vector_iter );
+	if (iter->terminal_iter != NULL)
+		hx_free_terminal_iter( iter->terminal_iter );
 	free( iter );
+	return 0;
 }
 
 int hx_iter_finished ( hx_iter* iter ) {
@@ -65,6 +72,8 @@ int _hx_iter_prime_first_result( hx_iter* iter ) {
 	hx_index* index	= iter->index;
 	iter->head_iter	= hx_head_new_iter( index->head );
 	if (hx_head_iter_finished( iter->head_iter )) {
+		hx_free_head_iter( iter->head_iter );
+		iter->head_iter	= NULL;
 		iter->finished	= 1;
 		return 1;
 	} else {
@@ -74,12 +83,18 @@ int _hx_iter_prime_first_result( hx_iter* iter ) {
 		iter->vector_iter	= hx_vector_new_iter( v );
 		
 		if (hx_vector_iter_finished( iter->vector_iter )) {
+			hx_free_vector_iter( iter->vector_iter );
+			iter->vector_iter	= NULL;
 			iter->finished	= 1;
 			return 1;
 		} else {
-			iter->terminal_iter	= hx_terminal_new_iter( index->head->ptr[0].vector->ptr[0].terminal );
+			hx_terminal* t;
+			hx_vector_iter_current( iter->vector_iter, &n, &t );
+			iter->terminal_iter	= hx_terminal_new_iter( t );
 			
 			if (hx_terminal_iter_finished( iter->terminal_iter )) {
+				hx_free_terminal_iter( iter->terminal_iter );
+				iter->terminal_iter	= NULL;
 				iter->finished	= 1;
 				return 1;
 			}
@@ -98,9 +113,15 @@ int hx_iter_next ( hx_iter* iter ) {
 	
 	if (hx_terminal_iter_finished( iter->terminal_iter )) {
 		// need to go to the next terminal
+		hx_free_terminal_iter( iter->terminal_iter );
+		iter->terminal_iter	= NULL;
 		if (hx_vector_iter_finished( iter->vector_iter )) {
 			// need to go to the next vector
+			hx_free_vector_iter( iter->vector_iter );
+			iter->vector_iter	= NULL;
 			if (hx_head_iter_finished( iter->head_iter )) {
+				hx_free_head_iter( iter->head_iter );
+				iter->head_iter	= NULL;
 				// iterator is exhausted.
 				iter->finished	= 1;
 				return 1;

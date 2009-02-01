@@ -12,6 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "avl.h"
 #include "hexastore_types.h"
 #include "vector.h"
 
@@ -21,23 +22,19 @@ typedef struct {
 } hx_head_item;
 
 typedef struct {
-	list_size_t allocated;
-	list_size_t used;
-	hx_head_item* ptr;
+	struct avl_table* tree;
 } hx_head;
 
 typedef struct {
 	hx_head* head;
-	size_t index;
-	int started;
-	int finished;
+	struct avl_traverser t;
 } hx_head_iter;
 
 hx_head* hx_new_head ( void );
 int hx_free_head ( hx_head* head );
 
 int hx_head_debug ( const char* header, hx_head* h );
-int hx_head_binary_search ( const hx_head* h, const rdf_node n, int* index );
+// int hx_head_binary_search ( const hx_head* h, const rdf_node n, int* index );
 int hx_head_add_vector ( hx_head* h, rdf_node n, hx_vector* v );
 hx_vector* hx_head_get_vector ( hx_head* h, rdf_node n );
 int hx_head_remove_vector ( hx_head* h, rdf_node n );
