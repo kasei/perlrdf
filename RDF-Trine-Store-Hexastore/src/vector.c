@@ -177,7 +177,7 @@ int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
 	return 0;
 }
 
-int hx_vector_iter_current ( hx_vector_iter* iter, hx_terminal** t ) {
+int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node* n, hx_terminal** t ) {
 	if (iter->started == 0) {
 		_hx_vector_iter_prime_first_result( iter );
 	}
@@ -185,6 +185,7 @@ int hx_vector_iter_current ( hx_vector_iter* iter, hx_terminal** t ) {
 		return 1;
 	} else {
 		*t	= iter->vector->ptr[ iter->index ].terminal;
+		*n	= iter->vector->ptr[ iter->index ].node;
 		return 0;
 	}
 }

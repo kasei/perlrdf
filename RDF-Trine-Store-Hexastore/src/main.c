@@ -9,9 +9,9 @@ void memory_test (void);
 void index_test ( void );
 
 int main ( void ) {
-//	index_test();
+	index_test();
 //	head_test();
-	vector_test();
+//	vector_test();
 //	terminal_test();
 //	memory_test();
 	return 0;
@@ -186,7 +186,9 @@ void vector_test (void) {
 	hx_vector_iter* iter	= hx_vector_new_iter( v );
 	while (!hx_vector_iter_finished( iter )) {
 		hx_terminal* t;
-		hx_vector_iter_current( iter, &t );
+		rdf_node n;
+		hx_vector_iter_current( iter, &n, &t );
+		fprintf( stderr, "%d ", (int) n );
 		hx_terminal_debug( "-> ", t, 1 );
 		hx_vector_iter_next( iter );
 	}

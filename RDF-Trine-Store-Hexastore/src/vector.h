@@ -48,7 +48,7 @@ size_t hx_vector_memory_size ( hx_vector* v );
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector );
 int hx_free_vector_iter ( hx_vector_iter* iter );
 int hx_vector_iter_finished ( hx_vector_iter* iter );
-int hx_vector_iter_current ( hx_vector_iter* iter, hx_terminal** t );
+int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node* n, hx_terminal** t );
 int hx_vector_iter_next ( hx_vector_iter* iter );
 
 #endif
