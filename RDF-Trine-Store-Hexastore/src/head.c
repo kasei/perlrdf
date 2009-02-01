@@ -56,6 +56,12 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 
 int hx_head_add_vector ( hx_head* h, rdf_node n, hx_vector* v ) {
 	int i;
+	
+	if (n == (rdf_node) 0) {
+		fprintf( stderr, "*** rdf_node cannot be zero in hx_head_add_vector\n" );
+		return 1;
+	}
+	
 	int r	= hx_head_binary_search( h, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.

@@ -38,6 +38,12 @@ int hx_vector_debug ( const char* header, hx_vector* v ) {
 
 int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t ) {
 	int i;
+	
+	if (n == (rdf_node) 0) {
+		fprintf( stderr, "*** rdf_node cannot be zero in hx_vector_add_terminal\n" );
+		return 1;
+	}
+	
 	int r	= hx_vector_binary_search( v, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.

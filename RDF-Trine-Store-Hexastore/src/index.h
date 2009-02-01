@@ -34,5 +34,6 @@ int hx_index_debug ( hx_index* index );
 int hx_index_add_triple ( hx_index* i, rdf_node s, rdf_node p, rdf_node o );
 int hx_index_remove_triple ( hx_index* i, rdf_node s, rdf_node p, rdf_node o );
 uint64_t hx_index_triples_count ( hx_index* index );
+size_t hx_index_memory_size ( hx_index* i );
 
 #endif

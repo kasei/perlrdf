@@ -1,9 +1,11 @@
 CFLAGS	=	-std=c99 -pedantic # -Werror -Wall
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -lcrypto
-# INC		=	-L/Users/samofool/Library/__G5_local/lib
 
 all: main
+
+parse: parse.c hexastore.o index.o terminal.o vector.o head.o
+	$(CC) $(INC) $(LIBS) parse.c hexastore.o index.o terminal.o vector.o head.o -o parse
 
 main: main.c hexastore.o index.o terminal.o vector.o head.o
 	$(CC) $(INC) main.c hexastore.o index.o terminal.o vector.o head.o

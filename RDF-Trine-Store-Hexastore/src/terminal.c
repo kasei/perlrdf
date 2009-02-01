@@ -43,6 +43,12 @@ int hx_terminal_debug ( const char* header, hx_terminal* t, int newline ) {
 
 int hx_terminal_add_node ( hx_terminal* t, rdf_node n ) {
 	int i;
+	
+	if (n == (rdf_node) 0) {
+		fprintf( stderr, "*** rdf_node cannot be zero in hx_terminal_add_node\n" );
+		return 1;
+	}
+	
 	int r	= hx_terminal_binary_search( t, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.

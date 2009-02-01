@@ -48,7 +48,7 @@ int hx_index_add_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o ) 
 	for (int i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
-	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
+//	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
 	hx_head* h	= index->head;
 	hx_vector* v;
@@ -112,3 +112,7 @@ uint64_t hx_index_triples_count ( hx_index* index ) {
 	return hx_head_triples_count( index->head );
 }
 
+size_t hx_index_memory_size ( hx_index* i ) {
+	uint64_t size	= sizeof( hx_index ) + hx_head_memory_size( i->head );
+	return size;
+}
