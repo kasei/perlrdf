@@ -1,0 +1,4 @@
+TYPEMAP
+hx_index * T_PTROBJ
+hx_iter * T_PTROBJ
+
