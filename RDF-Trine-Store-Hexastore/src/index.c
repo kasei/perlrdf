@@ -18,6 +18,7 @@ int hx_free_index ( hx_index* i ) {
 	return 0;
 }
 
+// XXX replace the use of ->used, etc. with iterators (preserves abstraction)
 int hx_index_debug ( hx_index* index ) {
 	hx_head* h	= index->head;
 	fprintf( stderr, "index: %p\n  -> head: %p\n  -> order [%d, %d, %d]\n  -> triples:\n", index, h, index->order[0], index->order[1], index->order[2] );

@@ -5,12 +5,12 @@ int _hx_vector_iter_prime_first_result( hx_vector_iter* iter );
 
 
 hx_vector* hx_new_vector( void ) {
-	hx_vector* head	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
+	hx_vector* vector	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
 	hx_vector_item* p	= (hx_vector_item*) calloc( VECTOR_LIST_ALLOC_SIZE, sizeof( hx_vector_item ) );
-	head->ptr		= p;
-	head->allocated	= VECTOR_LIST_ALLOC_SIZE;
-	head->used		= 0;
-	return head;
+	vector->ptr		= p;
+	vector->allocated	= VECTOR_LIST_ALLOC_SIZE;
+	vector->used		= 0;
+	return vector;
 }
 
 int hx_free_vector ( hx_vector* vector ) {
@@ -149,6 +149,10 @@ int _hx_vector_grow( hx_vector* v ) {
 
 
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector ) {
+	if (vector == NULL) {
+		fprintf( stderr, "*** NULL vector passed to hx_vector_new_iter" );
+		vector->used	= 1;
+	}
 	hx_vector_iter* iter	= (hx_vector_iter*) calloc( 1, sizeof( hx_vector_iter ) );
 	iter->started		= 0;
 	iter->finished		= 0;
@@ -168,6 +172,8 @@ int hx_vector_iter_finished ( hx_vector_iter* iter ) {
 }
 
 int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
+	fprintf( stderr, "_hx_vector_iter_prime_first_result( %p )\n", iter );
+	fprintf( stderr, "vector: %p\n", iter->vector );
 	iter->started	= 1;
 	iter->index		= 0;
 	if (iter->vector->used == 0) {

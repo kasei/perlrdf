@@ -26,6 +26,13 @@ typedef struct {
 	hx_head_item* ptr;
 } hx_head;
 
+typedef struct {
+	hx_head* head;
+	size_t index;
+	int started;
+	int finished;
+} hx_head_iter;
+
 hx_head* hx_new_head ( void );
 int hx_free_head ( hx_head* head );
 
@@ -37,5 +44,11 @@ int hx_head_remove_vector ( hx_head* h, rdf_node n );
 list_size_t hx_head_size ( hx_head* h );
 uint64_t hx_head_triples_count ( hx_head* h );
 size_t hx_head_memory_size ( hx_head* h );
+
+hx_head_iter* hx_head_new_iter ( hx_head* head );
+int hx_free_head_iter ( hx_head_iter* iter );
+int hx_head_iter_finished ( hx_head_iter* iter );
+int hx_head_iter_current ( hx_head_iter* iter, rdf_node* n, hx_vector** v );
+int hx_head_iter_next ( hx_head_iter* iter );
 
 #endif

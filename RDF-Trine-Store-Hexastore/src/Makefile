@@ -1,4 +1,4 @@
-CFLAGS	=	-std=c99 -pedantic # -Werror -Wall
+CFLAGS	=	-std=c99 -pedantic -ggdb # -Werror -Wall
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -lcrypto
 

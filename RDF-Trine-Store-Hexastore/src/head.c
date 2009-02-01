@@ -1,6 +1,7 @@
 #include "head.h"
 
 int _hx_head_grow( hx_head* h );
+int _hx_head_iter_prime_first_result( hx_head_iter* iter );
 
 hx_head* hx_new_head( void ) {
 	hx_head* head	= (hx_head*) calloc( 1, sizeof( hx_head ) );
@@ -140,3 +141,66 @@ size_t hx_head_memory_size ( hx_head* h ) {
 	}
 	return size;
 }
+
+
+hx_head_iter* hx_head_new_iter ( hx_head* head ) {
+	hx_head_iter* iter	= (hx_head_iter*) calloc( 1, sizeof( hx_head_iter ) );
+	iter->started		= 0;
+	iter->finished		= 0;
+	iter->head		= head;
+	return iter;
+}
+
+int hx_free_head_iter ( hx_head_iter* iter ) {
+	free( iter );
+}
+
+int hx_head_iter_finished ( hx_head_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_head_iter_prime_first_result( iter );
+	}
+	return iter->finished;
+}
+
+int _hx_head_iter_prime_first_result( hx_head_iter* iter ) {
+	iter->started	= 1;
+	iter->index		= 0;
+	if (iter->head->used == 0) {
+		iter->finished	= 1;
+		return 1;
+	}
+	return 0;
+}
+
+int hx_head_iter_current ( hx_head_iter* iter, rdf_node* n, hx_vector** v ) {
+	if (iter->started == 0) {
+		_hx_head_iter_prime_first_result( iter );
+	}
+	if (iter->finished == 1) {
+		return 1;
+	} else {
+		*v	= iter->head->ptr[ iter->index ].vector;
+		*n	= iter->head->ptr[ iter->index ].node;
+		return 0;
+	}
+}
+
+int hx_head_iter_next ( hx_head_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_head_iter_prime_first_result( iter );
+		if (iter->finished == 1) {
+			return 1;
+		}
+	}
+	
+	if (iter->index >= (iter->head->used - 1)) {
+		// head is exhausted
+		iter->finished	= 1;
+		iter->head	= NULL;
+		return 1;
+	} else {
+		iter->index++;
+		return 0;
+	}
+}
+

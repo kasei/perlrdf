@@ -43,12 +43,13 @@ int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
 	hx_index* index	= iter->index;
 //	fprintf( stderr, "index: %p\n", iter->index );
 //	fprintf( stderr, "hx_iter_current: getting first node\n" );
-	triple_ordered[ index->order[ 0 ] ]	= iter->head->ptr[ iter->a_index ].node;
-
+	hx_vector* v;
+	hx_head_iter_current( iter->head_iter, &(triple_ordered[ index->order[ 0 ] ]), &v );
+	
 //	fprintf( stderr, "hx_iter_current: getting second node\n" );
 	hx_terminal* t;
 	hx_vector_iter_current( iter->vector_iter, &(triple_ordered[ index->order[ 1 ] ]), &t );
-
+	
 //	fprintf( stderr, "hx_iter_current: getting third node\n" );
 	hx_terminal_iter_current( iter->terminal_iter, &(triple_ordered[ index->order[ 2 ] ]) );
 	
@@ -62,10 +63,15 @@ int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
 int _hx_iter_prime_first_result( hx_iter* iter ) {
 	iter->started	= 1;
 	hx_index* index	= iter->index;
-	iter->head		= index->head;
-	if (iter->head->used > 0) {
-		iter->a_index	= 0;
-		iter->vector_iter	= hx_vector_new_iter( index->head->ptr[0].vector );
+	iter->head_iter	= hx_head_new_iter( index->head );
+	if (hx_head_iter_finished( iter->head_iter )) {
+		iter->finished	= 1;
+		return 1;
+	} else {
+		rdf_node n;
+		hx_vector* v;
+		hx_head_iter_current( iter->head_iter, &n, &v );
+		iter->vector_iter	= hx_vector_new_iter( v );
 		
 		if (hx_vector_iter_finished( iter->vector_iter )) {
 			iter->finished	= 1;
@@ -78,9 +84,6 @@ int _hx_iter_prime_first_result( hx_iter* iter ) {
 				return 1;
 			}
 		}
-	} else {
-		iter->finished	= 1;
-		return 1;
 	}
 	return 0;
 }
@@ -97,32 +100,61 @@ int hx_iter_next ( hx_iter* iter ) {
 		// need to go to the next terminal
 		if (hx_vector_iter_finished( iter->vector_iter )) {
 			// need to go to the next vector
-			if (iter->a_index >= (iter->head->used - 1)) {
-				// no more triples!
-				iter->finished		= 1;
-				iter->head			= NULL;
-				iter->vector_iter	= NULL;
-				iter->terminal_iter	= NULL;
+			if (hx_head_iter_finished( iter->head_iter )) {
+				// iterator is exhausted.
+				iter->finished	= 1;
 				return 1;
 			} else {
-				iter->a_index++;
-				iter->vector_iter	= hx_vector_new_iter( iter->head->ptr[ iter->a_index ].vector );
-				
+				// need to go to the next vector in the head
+				hx_head_iter_next( iter->head_iter );
+				if (hx_head_iter_finished( iter->head_iter )) {
+					iter->finished	= 1;
+					return 1;
+				} else {
+					// and replace the vector and terminal iterators
+					if (iter->terminal_iter != NULL) {
+						hx_free_terminal_iter( iter->terminal_iter );
+						iter->terminal_iter	= NULL;
+					}
+					if (iter->vector_iter != NULL) {
+						hx_free_vector_iter( iter->vector_iter );
+						iter->vector_iter	= NULL;
+					}
+					rdf_node n;
+					hx_vector *v;
+					hx_terminal *t;
+					hx_head_iter_current( iter->head_iter, &n, &v );
+					iter->vector_iter	= hx_vector_new_iter( v );
+	
+					hx_vector_iter_current( iter->vector_iter, &n, &t );
+					iter->terminal_iter	= hx_terminal_new_iter( t );
+				}
+			}
+		} else {
+			// need to go to the next terminal in the vector
+			hx_vector_iter_next( iter->vector_iter );
+			if (hx_vector_iter_finished( iter->vector_iter )) {
+				iter->finished	= 1;
+				return 1;
+			} else {
+				// and replace the terminal iterator
+				if (iter->terminal_iter != NULL) {
+					hx_free_terminal_iter( iter->terminal_iter );
+					iter->terminal_iter	= NULL;
+				}
 				rdf_node n;
 				hx_terminal* t;
 				hx_vector_iter_current( iter->vector_iter, &n, &t );
 				iter->terminal_iter	= hx_terminal_new_iter( t );
 			}
-		} else {
-			hx_vector_iter_next( iter->vector_iter );
-			rdf_node n;
-			hx_terminal* t;
-			hx_vector_iter_current( iter->vector_iter, &n, &t );
-			iter->terminal_iter	= hx_terminal_new_iter( t );
 		}
 	} else {
-//		fprintf( stderr, "hx_iter_next: there are remaining nodes in the terminal (moving from %d/%d)\n", iter->c_index, iter->terminal->used );
+		// need to go to the next node in the terminal
 		hx_terminal_iter_next( iter->terminal_iter );
+		if (hx_terminal_iter_finished( iter->terminal_iter )) {
+			iter->finished	= 1;
+			return 1;
+		}
 	}
 	
 	return 0;
@@ -133,6 +165,4 @@ int hx_iter_next ( hx_iter* iter ) {
 
 hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a );
 hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
-
-
 

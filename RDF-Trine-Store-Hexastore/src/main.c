@@ -107,7 +107,7 @@ void head_test (void) {
 		hx_terminal* l	= hx_new_terminal();
 		hx_vector_add_terminal( v, (rdf_node) 3, l );
 		hx_head_debug( "", h );
-		for (int i = 0; i < 8; i++) {
+		for (int i = 1; i < 8; i++) {
 			hx_terminal_add_node( l, (rdf_node) i );
 		}
 		hx_head_debug( "", h );
@@ -134,6 +134,33 @@ void head_test (void) {
 		hx_head_remove_vector( h, (rdf_node) i );
 	}
 	fprintf( stderr, "size: %d\n", (int) hx_head_size( h ) );
+	
+	
+	
+	
+	for (int k = 1; k < 3; k++) {
+		hx_vector* v	= hx_new_vector();
+		for (int i = 1; i <= 10; i++) {
+			hx_terminal* l	= hx_new_terminal();
+			for (int j = 1; j < (1 + rand() % 10); j++) {
+				hx_terminal_add_node( l, (rdf_node) j );
+			}
+			hx_vector_add_terminal( v, (rdf_node) i, l );
+		}
+		hx_head_add_vector( h, (rdf_node) k, v );
+	}
+	
+	fprintf( stderr, "head iter test...\n" );
+	hx_head_iter* iter	= hx_head_new_iter( h );
+	while (!hx_head_iter_finished( iter )) {
+		hx_vector* v;
+		rdf_node n;
+		hx_head_iter_current( iter, &n, &v );
+		fprintf( stderr, "%d ", (int) n );
+		hx_vector_debug( "----> ", v );
+		fprintf( stderr, "<----------------------->\n" );
+		hx_head_iter_next( iter );
+	}
 	
 	hx_free_head( h );
 }

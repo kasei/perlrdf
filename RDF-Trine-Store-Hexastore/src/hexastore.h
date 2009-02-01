@@ -32,8 +32,7 @@ static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOU
 typedef struct {
 	hx_index* index;
 	int flags;
-	size_t a_index;
-	hx_head* head;
+	hx_head_iter* head_iter;
 	hx_vector_iter* vector_iter;
 	hx_terminal_iter* terminal_iter;
 	int started;
