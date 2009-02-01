@@ -1,6 +1,7 @@
 #include "vector.h"
 
 int _hx_vector_grow( hx_vector* t );
+int _hx_vector_iter_prime_first_result( hx_vector_iter* iter );
 
 
 hx_vector* hx_new_vector( void ) {
@@ -144,5 +145,66 @@ int _hx_vector_grow( hx_vector* v ) {
 	v->ptr		= newp;
 	v->allocated	= (list_size_t) size;
 	return 0;
+}
+
+
+hx_vector_iter* hx_vector_new_iter ( hx_vector* vector ) {
+	hx_vector_iter* iter	= (hx_vector_iter*) calloc( 1, sizeof( hx_vector_iter ) );
+	iter->started		= 0;
+	iter->finished		= 0;
+	iter->vector		= vector;
+	return iter;
+}
+
+int hx_free_vector_iter ( hx_vector_iter* iter ) {
+	free( iter );
+}
+
+int hx_vector_iter_finished ( hx_vector_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_vector_iter_prime_first_result( iter );
+	}
+	return iter->finished;
+}
+
+int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
+	iter->started	= 1;
+	iter->index		= 0;
+	if (iter->vector->used == 0) {
+		iter->finished	= 1;
+		return 1;
+	}
+	return 0;
+}
+
+int hx_vector_iter_current ( hx_vector_iter* iter, hx_terminal** t ) {
+	if (iter->started == 0) {
+		_hx_vector_iter_prime_first_result( iter );
+	}
+	if (iter->finished == 1) {
+		return 1;
+	} else {
+		*t	= iter->vector->ptr[ iter->index ].terminal;
+		return 0;
+	}
+}
+
+int hx_vector_iter_next ( hx_vector_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_vector_iter_prime_first_result( iter );
+		if (iter->finished == 1) {
+			return 1;
+		}
+	}
+	
+	if (iter->index >= (iter->vector->used - 1)) {
+		// vector is exhausted
+		iter->finished	= 1;
+		iter->vector	= NULL;
+		return 1;
+	} else {
+		iter->index++;
+		return 0;
+	}
 }
 

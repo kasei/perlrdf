@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "hexastore.h"
 
 void head_test (void);
@@ -10,8 +11,8 @@ void index_test ( void );
 int main ( void ) {
 //	index_test();
 //	head_test();
-//	vector_test();
-	terminal_test();
+	vector_test();
+//	terminal_test();
 //	memory_test();
 	return 0;
 }
@@ -171,6 +172,24 @@ void vector_test (void) {
 		hx_vector_remove_terminal( v, (rdf_node) i );
 	}
 	fprintf( stderr, "size: %d\n", (int) hx_vector_size( v ) );
+	
+	
+	
+	for (int i = 1; i <= 10; i++) {
+		hx_terminal* l	= hx_new_terminal();
+		for (int j = 1; j < (1 + rand() % 10); j++) {
+			hx_terminal_add_node( l, (rdf_node) j );
+		}
+		hx_vector_add_terminal( v, (rdf_node) i, l );
+	}
+	
+	hx_vector_iter* iter	= hx_vector_new_iter( v );
+	while (!hx_vector_iter_finished( iter )) {
+		hx_terminal* t;
+		hx_vector_iter_current( iter, &t );
+		hx_terminal_debug( "-> ", t, 1 );
+		hx_vector_iter_next( iter );
+	}
 	
 	hx_free_vector( v );
 }

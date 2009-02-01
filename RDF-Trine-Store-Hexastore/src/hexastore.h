@@ -34,10 +34,9 @@ typedef struct {
 	int flags;
 	size_t a_index;
 	size_t b_index;
-	size_t c_index;
 	hx_head* head;
 	hx_vector* vector;
-	hx_terminal* terminal;
+	hx_terminal_iter* terminal_iter;
 	int started;
 	int finished;
 } hx_iter;

@@ -49,7 +49,7 @@ int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
 	triple_ordered[ index->order[ 1 ] ]	= iter->vector->ptr[ iter->b_index ].node;
 
 //	fprintf( stderr, "hx_iter_current: getting third node\n" );
-	triple_ordered[ index->order[ 2 ] ]	= iter->terminal->ptr[ iter->c_index ];
+	hx_terminal_iter_current( iter->terminal_iter, &(triple_ordered[ index->order[ 2 ] ]) );
 	
 //	fprintf( stderr, "hx_iter_current: got nodes\n" );
 	*s	= triple_ordered[0];
@@ -68,11 +68,9 @@ int _hx_iter_prime_first_result( hx_iter* iter ) {
 		
 		if (iter->vector->used > 0) {
 			iter->b_index	= 0;
-			iter->terminal	= index->head->ptr[0].vector->ptr[0].terminal;
+			iter->terminal_iter	= hx_terminal_new_iter( index->head->ptr[0].vector->ptr[0].terminal );
 			
-			if (iter->terminal->used > 0) {
-				iter->c_index		= 0;
-			} else {
+			if (hx_terminal_iter_finished( iter->terminal_iter )) {
 				iter->finished	= 1;
 				return 1;
 			}
@@ -95,7 +93,7 @@ int hx_iter_next ( hx_iter* iter ) {
 		}
 	}
 	
-	if (iter->c_index >= (iter->terminal->used - 1)) {
+	if (hx_terminal_iter_finished( iter->terminal_iter )) {
 		// need to go to the next terminal
 		if (iter->b_index >= (iter->vector->used - 1)) {
 			// need to go to the next vector
@@ -104,23 +102,21 @@ int hx_iter_next ( hx_iter* iter ) {
 				iter->finished	= 1;
 				iter->head		= NULL;
 				iter->vector	= NULL;
-				iter->terminal	= NULL;
+				iter->terminal_iter	= NULL;
 				return 1;
 			} else {
 				iter->a_index++;
 				iter->b_index	= 0;
-				iter->c_index	= 0;
 				iter->vector	= iter->head->ptr[ iter->a_index ].vector;
-				iter->terminal	= iter->vector->ptr[ iter->b_index ].terminal;
+				iter->terminal_iter	= hx_terminal_new_iter( iter->vector->ptr[ iter->b_index ].terminal );
 			}
 		} else {
 			iter->b_index++;
-			iter->c_index	= 0;
-			iter->terminal	= iter->vector->ptr[ iter->b_index ].terminal;
+			iter->terminal_iter	= hx_terminal_new_iter( iter->vector->ptr[ iter->b_index ].terminal );
 		}
 	} else {
 //		fprintf( stderr, "hx_iter_next: there are remaining nodes in the terminal (moving from %d/%d)\n", iter->c_index, iter->terminal->used );
-		iter->c_index++;
+		hx_terminal_iter_next( iter->terminal_iter );
 	}
 	
 	return 0;
