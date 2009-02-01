@@ -35,6 +35,7 @@ int hx_vector_debug ( const char* header, hx_vector* v ) {
 		fprintf( stderr, ",\n" );
 	}
 	fprintf( stderr, "%s]\n", header );
+	return 0;
 }
 
 int hx_vector_add_terminal ( hx_vector* v, rdf_node n, hx_terminal* t ) {
@@ -162,6 +163,7 @@ hx_vector_iter* hx_vector_new_iter ( hx_vector* vector ) {
 
 int hx_free_vector_iter ( hx_vector_iter* iter ) {
 	free( iter );
+	return 0;
 }
 
 int hx_vector_iter_finished ( hx_vector_iter* iter ) {
@@ -172,8 +174,8 @@ int hx_vector_iter_finished ( hx_vector_iter* iter ) {
 }
 
 int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
-	fprintf( stderr, "_hx_vector_iter_prime_first_result( %p )\n", iter );
-	fprintf( stderr, "vector: %p\n", iter->vector );
+	fprintf( stderr, "_hx_vector_iter_prime_first_result( %p )\n", (void*) iter );
+	fprintf( stderr, "vector: %p\n", (void*) iter->vector );
 	iter->started	= 1;
 	iter->index		= 0;
 	if (iter->vector->used == 0) {

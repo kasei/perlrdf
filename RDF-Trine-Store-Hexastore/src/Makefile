@@ -1,4 +1,4 @@
-CFLAGS	=	-std=c99 -pedantic -ggdb # -Werror -Wall
+CFLAGS	=	-std=c99 -pedantic -ggdb -Werror -Wall
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -lcrypto
 
@@ -6,6 +6,12 @@ all: main
 
 parse: parse.c hexastore.o index.o terminal.o vector.o head.o
 	$(CC) $(INC) $(LIBS) parse.c hexastore.o index.o terminal.o vector.o head.o -o parse
+
+avl-test: avl-test.c avl.o
+	$(CC) $(INC) avl-test.c avl.o
+
+avl.o: avl.c avl.h
+	$(CC) $(INC) -c avl.c
 
 main: main.c hexastore.o index.o terminal.o vector.o head.o
 	$(CC) $(INC) main.c hexastore.o index.o terminal.o vector.o head.o
