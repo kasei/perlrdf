@@ -8,10 +8,10 @@ void memory_test (void);
 void index_test ( void );
 
 int main ( void ) {
-	index_test();
+//	index_test();
 //	head_test();
 //	vector_test();
-//	terminal_test();
+	terminal_test();
 //	memory_test();
 	return 0;
 }
@@ -23,7 +23,7 @@ void index_test (void) {
 	hx_index_add_triple( index, (rdf_node) 1, (rdf_node) 2, (rdf_node) 3 );
 	hx_index_debug( index );
 	
-	for (int i = 0; i < 4; i++) {
+	for (int i = 1; i < 4; i++) {
 		for (int j = 4; j <= 6; j++) {
 			for (int k = 7; k <= 8; k++) {
 				hx_index_add_triple( index, (rdf_node) i, (rdf_node) j, (rdf_node) k );
@@ -77,7 +77,7 @@ void memory_test (void) {
 		for (int j = 200; j > 0; j--) {
 			hx_terminal* t	= hx_new_terminal();
 			hx_vector_add_terminal( v, (rdf_node) j, t );
-			for (int k = 0; k < 25; k++) {
+			for (int k = 1; k < 25; k++) {
 //				fprintf( stdout, "%d %d %d\n", (int) i, (int) j, (int) k );
 				hx_terminal_add_node( t, (rdf_node) k );
 			}
@@ -213,7 +213,7 @@ void terminal_test (void) {
 	hx_terminal_debug( "- ", l, 1 );
 	
 	printf( "grow test...\n" );
-	for (int i = 0; i < 260; i++) {
+	for (int i = 1; i < 260; i++) {
 		hx_terminal_add_node( l, (rdf_node) i );
 		hx_terminal_debug( "- ", l, 1 );
 	}
@@ -230,6 +230,17 @@ void terminal_test (void) {
 	for (int i = 200; i < 260; i++) {
 		hx_terminal_remove_node( l, (rdf_node) i );
 		hx_terminal_debug( "- ", l, 1 );
+	}
+	
+	for (int i = 1; i < 25; i++) {
+		hx_terminal_add_node( l, (rdf_node) i );
+	}
+	hx_terminal_iter* iter	= hx_terminal_new_iter( l );
+	while (!hx_terminal_iter_finished( iter )) {
+		rdf_node n;
+		hx_terminal_iter_current( iter, &n );
+		fprintf( stderr, "-> %d\n", (int) n );
+		hx_terminal_iter_next( iter );
 	}
 	
 	hx_free_terminal( l );

@@ -123,10 +123,6 @@ int hx_iter_next ( hx_iter* iter ) {
 		iter->c_index++;
 	}
 	
-	
-	
-	
-	
 	return 0;
 }
 
@@ -135,22 +131,6 @@ int hx_iter_next ( hx_iter* iter ) {
 
 hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a );
 hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

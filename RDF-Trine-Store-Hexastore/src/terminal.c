@@ -1,6 +1,7 @@
 #include "terminal.h"
 
 int _hx_terminal_grow( hx_terminal* t );
+int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter );
 
 hx_terminal* hx_new_terminal( void ) {
 	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
@@ -132,5 +133,66 @@ int hx_terminal_binary_search ( const hx_terminal* t, const rdf_node n, int* ind
 	}
 	*index	= low;
 	return -1;
+}
+
+
+hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal ) {
+	hx_terminal_iter* iter	= (hx_terminal_iter*) calloc( 1, sizeof( hx_terminal_iter ) );
+	iter->started		= 0;
+	iter->finished		= 0;
+	iter->terminal		= terminal;
+	return iter;
+}
+
+int hx_free_terminal_iter ( hx_terminal_iter* iter ) {
+	free( iter );
+}
+
+int hx_terminal_iter_finished ( hx_terminal_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_terminal_iter_prime_first_result( iter );
+	}
+	return iter->finished;
+}
+
+int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter ) {
+	iter->started	= 1;
+	iter->index		= 0;
+	if (iter->terminal->used == 0) {
+		iter->finished	= 1;
+		return 1;
+	}
+	return 0;
+}
+
+int hx_terminal_iter_current ( hx_terminal_iter* iter, rdf_node* n ) {
+	if (iter->started == 0) {
+		_hx_terminal_iter_prime_first_result( iter );
+	}
+	if (iter->finished == 1) {
+		return 1;
+	} else {
+		*n	= iter->terminal->ptr[ iter->index ];
+		return 0;
+	}
+}
+
+int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_terminal_iter_prime_first_result( iter );
+		if (iter->finished == 1) {
+			return 1;
+		}
+	}
+	
+	if (iter->index >= (iter->terminal->used - 1)) {
+		// terminal is exhausted
+		iter->finished	= 1;
+		iter->terminal	= NULL;
+		return 1;
+	} else {
+		iter->index++;
+		return 0;
+	}
 }
 
