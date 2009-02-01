@@ -16,9 +16,21 @@ hx_iter* hx_new_iter ( hx_index* index ) {
 	iter->flags			= 0;
 	iter->started		= 0;
 	iter->finished		= 0;
+	iter->node_mask_a	= (rdf_node) 0;
+	iter->node_mask_b	= (rdf_node) 0;
+	iter->node_mask_c	= (rdf_node) 0;
 	iter->index			= index;
 	return iter;
 }
+
+hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a ) {
+	hx_iter* iter	= hx_new_iter( index );
+	iter->node_mask_a	= a;
+	return iter;
+}
+
+hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
+
 
 int hx_free_iter ( hx_iter* iter ) {
 	if (iter->head_iter != NULL)
@@ -70,6 +82,7 @@ int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
 int _hx_iter_prime_first_result( hx_iter* iter ) {
 	iter->started	= 1;
 	hx_index* index	= iter->index;
+	
 	iter->head_iter	= hx_head_new_iter( index->head );
 	if (hx_head_iter_finished( iter->head_iter )) {
 		hx_free_head_iter( iter->head_iter );
@@ -181,9 +194,4 @@ int hx_iter_next ( hx_iter* iter ) {
 	return 0;
 }
 
-
-
-
-hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a );
-hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
 

@@ -1,4 +1,4 @@
-CFLAGS	=	-std=c99 -pedantic -ggdb -Wall # -Werror
+CFLAGS	=	-DAVL_ALLOC_COUNT -std=c99 -pedantic -ggdb -Wall # -Werror
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -lcrypto
 
@@ -32,6 +32,7 @@ head.o: head.c head.h vector.h terminal.h avl.h
 	$(CC) $(INC) -c head.c
 
 clean:
+	rm -f parse
 	rm -f *.o
 	rm -f a.out
 	rm -rf a.out.dSYM

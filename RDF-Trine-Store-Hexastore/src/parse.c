@@ -48,8 +48,8 @@ int main (int argc, char** argv) {
 	size_t megs			= bytes / (1024 * 1024);
 	uint64_t triples	= hx_index_triples_count( index );
 	int mtriples		= (int) (triples / 1000000);
-	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, mtriples );
-	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", bytes, megs );
+	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
+	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
 	hx_free_index( index );
 	return 0;
 }

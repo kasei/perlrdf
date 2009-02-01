@@ -1,10 +1,42 @@
 #include "head.h"
 
-int _hx_head_item_cmp ( const void* a, const void* b, void* param );
+#ifdef AVL_ALLOC_COUNT
+struct my_allocator {
+	void *(*libavl_malloc) (struct libavl_allocator *, size_t libavl_size);
+	void (*libavl_free) (struct libavl_allocator *, void *libavl_block);
+	size_t count;
+};
+void* my_libavl_malloc (struct libavl_allocator * libavl_allocator, size_t libavl_size) {
+	struct my_allocator* a	= (struct my_allocator*) libavl_allocator;
+	a->count	+= libavl_size;
+	return malloc( libavl_size );
+}
+void my_libavl_free (struct libavl_allocator * libavl_allocator, void *libavl_block) {
+	free( libavl_block );
+}
 
+struct my_allocator libavl_allocator_counting = {
+	my_libavl_malloc,
+	my_libavl_free,
+	(size_t) 0
+};
+#endif
+
+
+
+
+
+
+int _hx_head_item_cmp ( const void* a, const void* b, void* param );
 hx_head* hx_new_head( void ) {
 	hx_head* head	= (hx_head*) calloc( 1, sizeof( hx_head ) );
+
+#ifdef AVL_ALLOC_COUNT
+	head->tree		= avl_create( _hx_head_item_cmp, NULL, &libavl_allocator_counting );
+#else
 	head->tree		= avl_create( _hx_head_item_cmp, NULL, &avl_allocator_default );
+#endif
+	
 	return head;
 }
 
@@ -100,12 +132,17 @@ uint64_t hx_head_triples_count ( hx_head* h ) {
 }
 
 size_t hx_head_memory_size ( hx_head* h ) {
-	fprintf( stderr, "memory size isnt' accurate for AVL-based indices\n" );
+	fprintf( stderr, "*** memory size isn't accurate for AVL-based indices\n" );
 	uint64_t size	= sizeof( hx_head );
+#ifdef AVL_ALLOC_COUNT
+	fprintf( stderr, "libavl memory requests: %d\n", (int) libavl_allocator_counting.count );
+	size	+= libavl_allocator_counting.count;
+#endif
 	struct avl_traverser iter;
 	avl_t_init( &iter, h->tree );
 	hx_head_item* item;
 	while ((item = (hx_head_item*) avl_t_next( &iter )) != NULL) {
+		size	+= sizeof( hx_head_item );
 		size	+= hx_vector_memory_size( item->vector );
 	}
 	return size;

@@ -17,6 +17,30 @@ int main ( void ) {
 	return 0;
 }
 
+void memory_test (void) {
+	hx_head* h	= hx_new_head();
+	for (int i = 100; i > 0; i--) {
+		hx_vector* v	= hx_new_vector();
+		hx_head_add_vector( h, (rdf_node) i, v );
+		for (int j = 200; j > 0; j--) {
+			hx_terminal* t	= hx_new_terminal();
+			hx_vector_add_terminal( v, (rdf_node) j, t );
+			for (int k = 1; k < 25; k++) {
+//				fprintf( stdout, "%d %d %d\n", (int) i, (int) j, (int) k );
+				hx_terminal_add_node( t, (rdf_node) k );
+			}
+		}
+	}
+	
+	size_t bytes		= hx_head_memory_size( h );
+	size_t megs			= bytes / (1024 * 1024);
+	uint64_t triples	= hx_head_triples_count( h );
+	int mtriples		= (int) (triples / 1000000);
+	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
+	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
+	hx_free_head( h );
+}
+
 void index_test (void) {
 	hx_index* index	= hx_new_index( HX_INDEX_ORDER_SOP );
 	fprintf( stderr, "index size: %d\n", (int) sizeof( hx_index ) );
@@ -66,30 +90,6 @@ void index_test (void) {
 	}
 	
 	hx_free_index( index );
-}
-
-void memory_test (void) {
-	hx_head* h	= hx_new_head();
-	for (int i = 100; i > 0; i--) {
-		hx_vector* v	= hx_new_vector();
-		hx_head_add_vector( h, (rdf_node) i, v );
-		for (int j = 200; j > 0; j--) {
-			hx_terminal* t	= hx_new_terminal();
-			hx_vector_add_terminal( v, (rdf_node) j, t );
-			for (int k = 1; k < 25; k++) {
-//				fprintf( stdout, "%d %d %d\n", (int) i, (int) j, (int) k );
-				hx_terminal_add_node( t, (rdf_node) k );
-			}
-		}
-	}
-	
-	size_t bytes		= hx_head_memory_size( h );
-	size_t megs			= bytes / (1024 * 1024);
-	uint64_t triples	= hx_head_triples_count( h );
-	int mtriples		= (int) (triples / 1000000);
-	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
-	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
-	hx_free_head( h );
 }
 
 void head_test (void) {
