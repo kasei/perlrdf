@@ -6,8 +6,8 @@
 
 void help (int argc, char** argv);
 int main (int argc, char** argv);
-int GTW_get_triple_identifiers( hx_index* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o );
-rdf_node GTW_identifier_for_node( hx_index* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
+int GTW_get_triple_identifiers( hx_hexastore* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o );
+rdf_node GTW_identifier_for_node( hx_hexastore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
 void GTW_handle_triple(void* user_data, const raptor_statement* triple);
 static int count	= 0;
 
@@ -18,7 +18,7 @@ void help (int argc, char** argv) {
 int main (int argc, char** argv) {
 	const char* rdf_filename	= NULL;
 	const char* type			= "rdfxml";
-	hx_index* index;
+	hx_hexastore* index;
 	raptor_parser* rdf_parser;
 	unsigned char *uri_string;
 	raptor_uri *uri, *base_uri;
@@ -32,7 +32,7 @@ int main (int argc, char** argv) {
 	if (argc > 2)
 		type		= argv[2];
 	
-	index	= hx_new_index( HX_INDEX_ORDER_SPO );
+	index	= hx_new_hexastore();
 	printf( "hx_index: %p\n", (void*) index );
 	
 	rdf_parser	= NULL;
@@ -44,25 +44,25 @@ int main (int argc, char** argv) {
 	base_uri	= raptor_uri_copy(uri);
 	raptor_parse_file(rdf_parser, uri, base_uri);
 	
-	size_t bytes		= hx_index_memory_size( index );
+	size_t bytes		= hx_index_memory_size( index->spo );
 	size_t megs			= bytes / (1024 * 1024);
-	uint64_t triples	= hx_index_triples_count( index );
+	uint64_t triples	= hx_index_triples_count( index->spo );
 	int mtriples		= (int) (triples / 1000000);
 	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
 	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
-	hx_free_index( index );
+	hx_free_hexastore( index );
 	return 0;
 }
 
 
-int GTW_get_triple_identifiers( hx_index* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o ) {
+int GTW_get_triple_identifiers( hx_hexastore* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o ) {
 	*s	= GTW_identifier_for_node( index, (void*) triple->subject, triple->subject_type, NULL, NULL );
 	*p	= GTW_identifier_for_node( index, (void*) triple->predicate, triple->predicate_type, NULL, NULL );
 	*o	= GTW_identifier_for_node( index, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
 	return 0;
 }
 
-rdf_node GTW_identifier_for_node( hx_index* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
+rdf_node GTW_identifier_for_node( hx_hexastore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
 	rdf_node id	= 0;
 	char node_type;
 	char* value;
@@ -127,11 +127,11 @@ rdf_node GTW_identifier_for_node( hx_index* index, void* node, raptor_identifier
 }
 
 void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
-	hx_index* index	= (hx_index*) user_data;
+	hx_hexastore* index	= (hx_hexastore*) user_data;
 	rdf_node s, p, o;
 	
 	GTW_get_triple_identifiers( index, triple, &s, &p, &o );
-	hx_index_add_triple( index, s, p, o );
+	hx_add_triple( index, s, p, o );
 	if ((++count % 25000) == 0)
 		fprintf( stderr, "%d\n", count );
 }
