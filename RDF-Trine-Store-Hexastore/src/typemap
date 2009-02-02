@@ -1,4 +1,5 @@
 TYPEMAP
 hx_index * T_PTROBJ
 hx_iter * T_PTROBJ
+rdf_triple * T_PTROBJ
 

@@ -15,7 +15,7 @@ recommends			'ExtUtils::ParseXS'			=> 0;
 WriteMakefile(
     NAME                		=> 'RDF::Trine::Store::HexastoreXS',
 	AUTHOR						=> 'Gregory Todd Williams <gwilliams@cpan.org>',
-	CCFLAGS						=> '-std=c99 -arch i386 -arch ppc -arch ppc64 -arch x86_64',
+	CCFLAGS						=> '-std=c99 -arch i386 -arch ppc -arch ppc64 -arch x86_64 -ggdb',
     VERSION_FROM        		=> 'lib/RDF/Trine/Store/HexastoreXS.pm',
     ABSTRACT_FROM       		=> 'lib/RDF/Trine/Store/HexastoreXS.pm',
     LIBS						=> ['-lraptor -lcrypto'],

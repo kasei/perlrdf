@@ -102,6 +102,10 @@ hx_vector* hx_head_get_vector ( hx_head* h, rdf_node n ) {
 	if (item == NULL) {
 		return NULL;
 	} else {
+// 		fprintf( stderr, "hx_head_get_vector %d\n", (int) n );
+// 		fprintf( stderr, "-> %p\n", (void*) item );
+// 		fprintf( stderr, "-> %d\n", (int) item->node );
+// 		fprintf( stderr, "-> %p\n", (void*) item->vector );
 		hx_vector* v	= item->vector;
 		return v;
 	}
@@ -187,8 +191,21 @@ int hx_head_iter_next ( hx_head_iter* iter ) {
 }
 
 int _hx_head_item_cmp ( const void* a, const void* b, void* param ) {
-	hx_head_item *ia, *ib;
-	ia	= (hx_head_item*) a;
-	ib	= (hx_head_item*) b;
-	return (ia->node - ib->node);
+	rdf_node *ia, *ib;
+	ia	= (rdf_node*) a;
+	ib	= (rdf_node*) b;
+	return (*ia - *ib);
 }
+
+int hx_head_iter_seek( hx_head_iter* iter, rdf_node n ) {
+	hx_head_item* item	= (hx_head_item*) avl_t_find( &(iter->t), iter->head->tree, &n );
+	if (item == NULL) {
+		fprintf( stderr, "hx_head_iter_seek: didn't find item %d\n", (int) n );
+		return 1;
+	} else {
+		fprintf( stderr, "hx_head_iter_seek: found item %d\n", (int) n );
+		return 0;
+	}
+}
+
+

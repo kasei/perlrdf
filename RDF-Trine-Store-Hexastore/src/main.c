@@ -7,14 +7,113 @@ void vector_test (void);
 void terminal_test (void);
 void memory_test (void);
 void index_test ( void );
+void hexastore_test ( void );
 
 int main ( void ) {
-	index_test();
-	head_test();
-	vector_test();
-	terminal_test();
-	memory_test();
+	hexastore_test();
+// 	index_test();
+// 	head_test();
+// 	vector_test();
+// 	terminal_test();
+// 	memory_test();
 	return 0;
+}
+
+void hexastore_test ( void ) {
+	if (0) {
+		hx_hexastore* hx	= hx_new_hexastore();
+		
+		{
+			int count	= 0;
+			for (int i = 1; i <= 100; i++) {
+				for (int j = 1; j <= 100; j++) {
+					for (int k = 1; k <= 100; k++) {
+						count++;
+						hx_add_triple( hx, (rdf_node) i, (rdf_node) j, (rdf_node) k );
+					}
+				}
+			}
+			fprintf( stderr, "finished loading %d triples\n", count );
+		}
+		sleep(2);
+		
+		if (0) {
+			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+			while (!hx_index_iter_finished( iter )) {
+				rdf_node s, p, o;
+				hx_index_iter_current( iter, &s, &p, &o );
+				fprintf( stderr, "%d, %d, %d\n", (int) s, (int) p, (int) o );
+				hx_index_iter_next( iter );
+			}
+			hx_free_index_iter( iter );
+		}
+		fprintf( stderr, "**************************\n" );
+		{
+			int count	= 0;
+			for (int i = 1; i <= 9; i++) {
+				for (int j = 1; j <= 9; j++) {
+					for (int k = 1; k <= 9; k++) {
+						count++;
+						hx_remove_triple( hx, (rdf_node) i, (rdf_node) j, (rdf_node) k );
+					}
+				}
+			}
+			fprintf( stderr, "removed %d triples\n", count );
+		}
+		fprintf( stderr, "**************************\n" );
+	
+	
+		{
+			int count	= 1;
+			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+			while (!hx_index_iter_finished( iter )) {
+				rdf_node s, p, o;
+				hx_index_iter_current( iter, &s, &p, &o );
+				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+				hx_index_iter_next( iter );
+			}
+			hx_free_index_iter( iter );
+		}
+		
+		hx_free_hexastore( hx );
+	}
+	
+	{
+		hx_hexastore* hx	= hx_new_hexastore();
+		for (int i = 1; i <= 10; i++) {
+			for (int j = 1; j <= 10; j++) {
+				for (int k = 1; k <= 10; k++) {
+					hx_add_triple( hx, (rdf_node) i, (rdf_node) j, (rdf_node) k );
+				}
+			}
+		}
+
+		{
+			fprintf( stderr, "iter (4,*,*) ordered by object...\n" );
+			int count	= 1;
+			hx_index_iter* iter	= hx_get_statements( hx, (rdf_node) 4, (rdf_node) 0, (rdf_node) 0, HX_OBJECT );
+			while (!hx_index_iter_finished( iter )) {
+				rdf_node s, p, o;
+				hx_index_iter_current( iter, &s, &p, &o );
+				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+				hx_index_iter_next( iter );
+			}
+			hx_free_index_iter( iter );
+		}
+		{
+			fprintf( stderr, "iter (*,*,9) ordered by predicate...\n" );
+			int count	= 1;
+			hx_index_iter* iter	= hx_get_statements( hx, (rdf_node) 0, (rdf_node) 0, (rdf_node) 9, HX_PREDICATE );
+			while (!hx_index_iter_finished( iter )) {
+				rdf_node s, p, o;
+				hx_index_iter_current( iter, &s, &p, &o );
+				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+				hx_index_iter_next( iter );
+			}
+			hx_free_index_iter( iter );
+		}
+		hx_free_hexastore( hx );
+	}
 }
 
 void memory_test (void) {
@@ -60,13 +159,13 @@ void index_test (void) {
 	
 	fprintf( stderr, "iterator test...\n" );
 	{
-		hx_iter* iter	= hx_new_iter( index );
-		if (!hx_iter_finished( iter )) {
+		hx_index_iter* iter	= hx_index_new_iter( index );
+		if (!hx_index_iter_finished( iter )) {
 			rdf_node s, p, o;
-			hx_iter_current( iter, &s, &p, &o );
+			hx_index_iter_current( iter, &s, &p, &o );
 			fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
 		}
-		hx_free_iter( iter );
+		hx_free_index_iter( iter );
 	}
 	
 	fprintf( stderr, "removing triples matching {0,4,*}...\n" );
@@ -77,15 +176,15 @@ void index_test (void) {
 	fprintf( stderr, "second iterator test...\n" );
 	{
 		int count	= 0;
-		hx_iter* iter	= hx_new_iter( index );
-		while (!hx_iter_finished( iter )) {
+		hx_index_iter* iter	= hx_index_new_iter( index );
+		while (!hx_index_iter_finished( iter )) {
 			count++;
 			rdf_node s, p, o;
-			hx_iter_current( iter, &s, &p, &o );
+			hx_index_iter_current( iter, &s, &p, &o );
 			fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
-			hx_iter_next( iter );
+			hx_index_iter_next( iter );
 		}
-		hx_free_iter( iter );
+		hx_free_index_iter( iter );
 		fprintf( stderr, "got %d triples from iterator\n", count );
 	}
 	

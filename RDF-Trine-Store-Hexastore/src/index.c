@@ -1,5 +1,19 @@
 #include "index.h"
 
+int _hx_index_iter_prime_first_result( hx_index_iter* iter );
+
+
+/**
+
+	Arguments index_order = {a,b,c} map the positions of a triple to the
+	ordering of the index.
+	
+	(a,b,c) = (0,1,2)	==> (s,p,o) index
+	(a,b,c) = (1,0,2)	==> (p,s,o) index
+	(a,b,c) = (2,1,0)	==> (o,p,s) index
+
+**/
+
 hx_index* hx_new_index ( int* index_order ) {
 	int a	= index_order[0];
 	int b	= index_order[1];
@@ -95,7 +109,6 @@ int hx_index_remove_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o
 	for (int i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
-//	fprintf( stderr, "remove_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
 	hx_head* h	= index->head;
 	hx_vector* v;
@@ -134,3 +147,209 @@ size_t hx_index_memory_size ( hx_index* i ) {
 	uint64_t size	= sizeof( hx_index ) + hx_head_memory_size( i->head );
 	return size;
 }
+
+hx_index_iter* hx_index_new_iter ( hx_index* index ) {
+	hx_index_iter* iter	= (hx_index_iter*) calloc( 1, sizeof( hx_index_iter ) );
+	iter->flags			= 0;
+	iter->started		= 0;
+	iter->finished		= 0;
+	iter->node_mask_a	= (rdf_node) 0;
+	iter->node_mask_b	= (rdf_node) 0;
+	iter->node_mask_c	= (rdf_node) 0;
+	iter->index			= index;
+	return iter;
+}
+
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node a, rdf_node b, rdf_node c ) {
+	hx_index_iter* iter	= hx_index_new_iter( index );
+	iter->node_mask_a	= a;
+	iter->node_mask_b	= b;
+	iter->node_mask_c	= c;
+	return iter;
+}
+
+int hx_free_index_iter ( hx_index_iter* iter ) {
+	if (iter->head_iter != NULL)
+		hx_free_head_iter( iter->head_iter );
+	if (iter->vector_iter != NULL)
+		hx_free_vector_iter( iter->vector_iter );
+	if (iter->terminal_iter != NULL)
+		hx_free_terminal_iter( iter->terminal_iter );
+	free( iter );
+	return 0;
+}
+
+int hx_index_iter_finished ( hx_index_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_index_iter_prime_first_result( iter );
+	}
+	return iter->finished;
+}
+
+int hx_index_iter_current ( hx_index_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
+	if (iter->started == 0) {
+		_hx_index_iter_prime_first_result( iter );
+	}
+	if (iter->finished == 1) {
+		return 1;
+	}
+	
+	rdf_node triple_ordered[3];
+//	fprintf( stderr, "iter: %p\n", iter );
+	hx_index* index	= iter->index;
+//	fprintf( stderr, "index: %p\n", iter->index );
+	hx_vector* v;
+	
+// 	fprintf( stderr, "triple position %d comes from the head\n", index->order[0] );
+	hx_head_iter_current( iter->head_iter, &(triple_ordered[ index->order[0] ]), &v );
+	
+	hx_terminal* t;
+// 	fprintf( stderr, "triple position %d comes from the vector\n", index->order[1] );
+	hx_vector_iter_current( iter->vector_iter, &(triple_ordered[ index->order[1] ]), &t );
+	
+// 	fprintf( stderr, "triple position %d comes from the terminal\n", index->order[2] );
+	hx_terminal_iter_current( iter->terminal_iter, &(triple_ordered[ index->order[2] ]) );
+	
+	*s	= triple_ordered[0];
+	*p	= triple_ordered[1];
+	*o	= triple_ordered[2];
+// 	fprintf( stderr, "hx_iter_current: got nodes (%d, %d, %d)\n", (int) *s, (int) *p, (int) *o );
+	return 0;
+}
+
+int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
+	iter->started	= 1;
+	hx_index* index	= iter->index;
+	
+	iter->head_iter	= hx_head_new_iter( index->head );
+	if (iter->node_mask_a != (rdf_node) 0) {
+		if (hx_head_iter_seek( iter->head_iter, iter->node_mask_a ) != 0) {
+			iter->finished	= 1;
+			return 1;
+		}
+	}
+	
+	if (hx_head_iter_finished( iter->head_iter )) {
+		hx_free_head_iter( iter->head_iter );
+		iter->head_iter	= NULL;
+		iter->finished	= 1;
+		return 1;
+	} else {
+		rdf_node n;
+		hx_vector* v;
+		hx_head_iter_current( iter->head_iter, &n, &v );
+		iter->vector_iter	= hx_vector_new_iter( v );
+		if (iter->node_mask_b != (rdf_node) 0) {
+			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
+				iter->finished	= 1;
+				return 1;
+			}
+		}
+		
+		if (hx_vector_iter_finished( iter->vector_iter )) {
+			hx_free_vector_iter( iter->vector_iter );
+			iter->vector_iter	= NULL;
+			iter->finished	= 1;
+			return 1;
+		} else {
+			hx_terminal* t;
+			hx_vector_iter_current( iter->vector_iter, &n, &t );
+			iter->terminal_iter	= hx_terminal_new_iter( t );
+			if (iter->node_mask_c != (rdf_node) 0) {
+				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
+					iter->finished	= 1;
+					return 1;
+				}
+			}
+			
+			if (hx_terminal_iter_finished( iter->terminal_iter )) {
+				hx_free_terminal_iter( iter->terminal_iter );
+				iter->terminal_iter	= NULL;
+				iter->finished	= 1;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+int hx_index_iter_next ( hx_index_iter* iter ) {
+	if (iter->started == 0) {
+		_hx_index_iter_prime_first_result( iter );
+		if (iter->finished == 1) {
+			return 1;
+		}
+	}
+	
+	int hr, vr, tr;
+NEXTTERMINAL:
+	tr	= hx_terminal_iter_next( iter->terminal_iter );
+	if (tr == 0 && (iter->node_mask_c == (rdf_node) 0)) {
+//		fprintf( stderr, "got next terminal\n" );
+		return 0;
+	} else {
+NEXTVECTOR:
+		vr	= hx_vector_iter_next( iter->vector_iter );
+		if (vr == 0 && (iter->node_mask_b == (rdf_node) 0)) {
+//			fprintf( stderr, "got next vector\n" );
+			hx_free_terminal_iter( iter->terminal_iter );
+			iter->terminal_iter	= NULL;
+			
+			// set up terminal iterator
+			rdf_node n;
+			hx_terminal* t;
+			hx_vector_iter_current( iter->vector_iter, &n, &t );
+			iter->terminal_iter	= hx_terminal_new_iter( t );
+			if (iter->node_mask_c != (rdf_node) 0) {
+				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
+					goto NEXTVECTOR;
+				}
+			}
+			return 0;
+		} else {
+NEXTHEAD:
+			hr	= hx_head_iter_next( iter->head_iter );
+			if (hr == 0 && (iter->node_mask_a == (rdf_node) 0)) {
+//				fprintf( stderr, "got next head\n" );
+				hx_free_terminal_iter( iter->terminal_iter );
+				iter->terminal_iter	= NULL;
+				hx_free_vector_iter( iter->vector_iter );
+				iter->vector_iter	= NULL;
+				
+				// set up vector and terminal iterators
+				rdf_node n;
+				hx_vector* v;
+				hx_terminal* t;
+				hx_head_iter_current( iter->head_iter, &n, &v );
+				iter->vector_iter	= hx_vector_new_iter( v );
+				if (iter->node_mask_b != (rdf_node) 0) {
+					if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
+						goto NEXTHEAD;
+					}
+				}
+				
+				hx_vector_iter_current( iter->vector_iter, &n, &t );
+				iter->terminal_iter	= hx_terminal_new_iter( t );
+				if (iter->node_mask_c != (rdf_node) 0) {
+					if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
+						goto NEXTVECTOR;
+					}
+				}
+				return 0;
+			} else {
+				hx_free_head_iter( iter->head_iter );
+				iter->head_iter	= NULL;
+				hx_free_vector_iter( iter->vector_iter );
+				iter->vector_iter	= NULL;
+				hx_free_terminal_iter( iter->terminal_iter );
+				iter->terminal_iter	= NULL;
+				iter->finished	= 1;
+				return 1;
+			}
+		}
+	}
+	
+	return 0;
+}
+
+

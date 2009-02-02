@@ -13,4 +13,8 @@
 typedef uint64_t list_size_t;
 typedef uint64_t rdf_node;
 
+#define HX_SUBJECT		0
+#define HX_PREDICATE	1
+#define HX_OBJECT		2
+
 #endif

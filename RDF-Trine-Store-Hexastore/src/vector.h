@@ -50,5 +50,6 @@ int hx_free_vector_iter ( hx_vector_iter* iter );
 int hx_vector_iter_finished ( hx_vector_iter* iter );
 int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node* n, hx_terminal** t );
 int hx_vector_iter_next ( hx_vector_iter* iter );
+int hx_vector_iter_seek( hx_vector_iter* iter, rdf_node n );
 
 #endif

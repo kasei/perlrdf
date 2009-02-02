@@ -30,23 +30,18 @@ static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
 static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
-	hx_index* index;
-	int flags;
-	rdf_node node_mask_a, node_mask_b, node_mask_c;
-	hx_head_iter* head_iter;
-	hx_vector_iter* vector_iter;
-	hx_terminal_iter* terminal_iter;
-	int started;
-	int finished;
-} hx_iter;
+	hx_index* spo;
+	hx_index* sop;
+	hx_index* pso;
+	hx_index* pos;
+	hx_index* osp;
+	hx_index* ops;
+} hx_hexastore;
 
-hx_iter* hx_new_iter ( hx_index* index );
-hx_iter* hx_new_iter1 ( hx_index* index, rdf_node a );
-hx_iter* hx_new_iter2 ( hx_index* index, rdf_node a, rdf_node b );
-int hx_free_iter ( hx_iter* iter );
-
-int hx_iter_finished ( hx_iter* iter );
-int hx_iter_current ( hx_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o );
-int hx_iter_next ( hx_iter* iter );
+hx_hexastore* hx_new_hexastore ( void );
+int hx_free_hexastore ( hx_hexastore* hx );
+int hx_add_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o );
+int hx_remove_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o );
+hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o, int order_position );
 
 #endif

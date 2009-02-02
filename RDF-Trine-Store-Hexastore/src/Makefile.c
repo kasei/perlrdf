@@ -1,4 +1,4 @@
-CFLAGS	=	-DAVL_ALLOC_COUNT -std=c99 -pedantic -ggdb -Wall # -Werror
+CFLAGS	=	-std=c99 -pedantic -ggdb -Wall # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -lcrypto
 

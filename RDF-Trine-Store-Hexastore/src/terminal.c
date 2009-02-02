@@ -39,6 +39,7 @@ int hx_terminal_debug ( const char* header, hx_terminal* t, int newline ) {
 	fprintf( stderr, "]" );
 	if (newline > 0)
 		fprintf( stderr, "\n" );
+	return 0;
 }
 
 int hx_terminal_add_node ( hx_terminal* t, rdf_node n ) {
@@ -146,6 +147,7 @@ hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal ) {
 
 int hx_free_terminal_iter ( hx_terminal_iter* iter ) {
 	free( iter );
+	return 0;
 }
 
 int hx_terminal_iter_finished ( hx_terminal_iter* iter ) {
@@ -195,4 +197,19 @@ int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
 		return 0;
 	}
 }
+
+int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node n ) {
+	int i;
+	int r	= hx_terminal_binary_search( iter->terminal, n, &i );
+	if (r == 0) {
+//		fprintf( stderr, "hx_terminal_iter_seek: found in list at index %d\n", i );
+		iter->started	= 1;
+		iter->index		= i;
+		return 0;
+	} else {
+//		fprintf( stderr, "hx_terminal_iter_seek: didn't find in list\n" );
+		return 1;
+	}
+}
+
 

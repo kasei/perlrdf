@@ -47,5 +47,6 @@ int hx_free_head_iter ( hx_head_iter* iter );
 int hx_head_iter_finished ( hx_head_iter* iter );
 int hx_head_iter_current ( hx_head_iter* iter, rdf_node* n, hx_vector** v );
 int hx_head_iter_next ( hx_head_iter* iter );
+int hx_head_iter_seek( hx_head_iter* iter, rdf_node n );
 
 #endif

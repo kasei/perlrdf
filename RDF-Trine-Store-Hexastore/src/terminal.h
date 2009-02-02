@@ -44,5 +44,6 @@ int hx_free_terminal_iter ( hx_terminal_iter* iter );
 int hx_terminal_iter_finished ( hx_terminal_iter* iter );
 int hx_terminal_iter_current ( hx_terminal_iter* iter, rdf_node* n );
 int hx_terminal_iter_next ( hx_terminal_iter* iter );
+int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node n );
 
 #endif
