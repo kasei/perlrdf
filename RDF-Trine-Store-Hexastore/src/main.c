@@ -20,14 +20,14 @@ int main ( void ) {
 }
 
 void hexastore_test ( void ) {
-	if (0) {
+	if (1) {
 		hx_hexastore* hx	= hx_new_hexastore();
 		
 		{
 			int count	= 0;
-			for (int i = 1; i <= 100; i++) {
-				for (int j = 1; j <= 100; j++) {
-					for (int k = 1; k <= 100; k++) {
+			for (int i = 1; i <= 400; i++) {
+				for (int j = 1; j <= 200; j++) {
+					for (int k = 1; k <= 200; k++) {
 						count++;
 						hx_add_triple( hx, (rdf_node) i, (rdf_node) j, (rdf_node) k );
 					}
@@ -35,7 +35,7 @@ void hexastore_test ( void ) {
 			}
 			fprintf( stderr, "finished loading %d triples\n", count );
 		}
-		sleep(2);
+		sleep(30);
 		
 		if (0) {
 			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
@@ -78,7 +78,7 @@ void hexastore_test ( void ) {
 		hx_free_hexastore( hx );
 	}
 	
-	{
+	if (0) {
 		hx_hexastore* hx	= hx_new_hexastore();
 		for (int i = 1; i <= 10; i++) {
 			for (int j = 1; j <= 10; j++) {
@@ -125,7 +125,7 @@ void memory_test (void) {
 			hx_terminal* t	= hx_new_terminal();
 			hx_vector_add_terminal( v, (rdf_node) j, t );
 			for (int k = 1; k < 25; k++) {
-//				fprintf( stdout, "%d %d %d\n", (int) i, (int) j, (int) k );
+//				fprintf( stderr, "%d %d %d\n", (int) i, (int) j, (int) k );
 				hx_terminal_add_node( t, (rdf_node) k );
 			}
 		}
@@ -135,8 +135,8 @@ void memory_test (void) {
 	size_t megs			= bytes / (1024 * 1024);
 	uint64_t triples	= hx_head_triples_count( h );
 	int mtriples		= (int) (triples / 1000000);
-	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
-	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
+	fprintf( stderr, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
+	fprintf( stderr, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
 	hx_free_head( h );
 }
 
