@@ -45,7 +45,7 @@ int hx_remove_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o ) {
 hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o, int order_position ) {
 	int index_order[3];
 	int i	= 0;
-	int used[3];
+	int used[3]	= { 0, 0, 0 };
 	if (s != (rdf_node) 0) {
 		index_order[ i++ ]	= HX_SUBJECT;
 		used[0]++;
