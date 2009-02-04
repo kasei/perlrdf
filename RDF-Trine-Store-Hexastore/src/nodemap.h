@@ -28,4 +28,7 @@ int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr );
 rdf_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr );
 char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node_id id );
 
+int hx_nodemap_write( hx_nodemap* t, FILE* f );
+hx_nodemap* hx_nodemap_read( FILE* f, int buffer );
+
 #endif

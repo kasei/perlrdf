@@ -36,7 +36,7 @@ hx_head* hx_new_head( void ) {
 #else
 	head->tree		= avl_create( _hx_head_item_cmp, NULL, &avl_allocator_default );
 #endif
-	
+// 	fprintf( stderr, ">>> allocated tree %p\n", (void*) head->tree );
 	return head;
 }
 
@@ -47,28 +47,11 @@ void _hx_free_head_item (void *avl_item, void *avl_param) {
 }
 
 int hx_free_head ( hx_head* head ) {
+// 	fprintf( stderr, "<<< freeing tree %p\n", (void*) head->tree );
 	avl_destroy( head->tree, _hx_free_head_item );
 	free( head );
 	return 0;
 }
-
-// int hx_head_binary_search ( const hx_head* h, const rdf_node_id n, int* index ) {
-// 	int low		= 0;
-// 	int high	= h->used - 1;
-// 	while (low <= high) {
-// 		int mid	= low + (high - low) / 2;
-// 		if (h->ptr[mid].node > n) {
-// 			high	= mid - 1;
-// 		} else if (h->ptr[mid].node < n) {
-// 			low	= mid + 1;
-// 		} else {
-// 			*index	= mid;
-// 			return 0;
-// 		}
-// 	}
-// 	*index	= low;
-// 	return -1;
-// }
 
 int hx_head_debug ( const char* header, hx_head* h ) {
 	char indent[ strlen(header) * 2 + 5 ];
@@ -239,7 +222,7 @@ hx_head* hx_head_read( FILE* f, int buffer ) {
 	if (read == 0) {
 		return NULL;
 	} else {
-		hx_head* h			= hx_new_head();
+		hx_head* h	= hx_new_head();
 		for (int i = 0; i < used; i++) {
 			rdf_node_id n;
 			hx_vector* v;

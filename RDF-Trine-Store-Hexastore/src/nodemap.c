@@ -107,3 +107,54 @@ char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node_id id ) {
 		return item->string;
 	}
 }
+
+int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
+	fputc( 'N', f );
+	size_t used	= avl_count( m->id2node );
+	fwrite( &used, sizeof( size_t ), 1, f );
+	fwrite( &( m->next_id ), sizeof( rdf_node_id ), 1, f );
+
+	struct avl_traverser iter;
+	avl_t_init( &iter, m->id2node );
+	hx_nodemap_item* item;
+	
+	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+		size_t len	= strlen( item->string );
+		fwrite( &( item->id ), sizeof( rdf_node_id ), 1, f );
+		fwrite( &len, sizeof( size_t ), 1, f );
+		fwrite( item->string, 1, len + 1, f );
+	}
+
+	return 0;
+}
+
+hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
+	size_t used, read;
+	rdf_node_id next_id;
+	int c	= fgetc( f );
+	if (c != 'N') {
+		fprintf( stderr, "*** Bad header cookie trying to read nodemap from file.\n" );
+		return NULL;
+	}
+	
+	hx_nodemap* m	= hx_new_nodemap();
+	read	= fread( &used, sizeof( size_t ), 1, f );
+	read	= fread( &next_id, sizeof( rdf_node_id ), 1, f );
+	m->next_id	= next_id;
+	for (int i = 0; i < used; i++) {
+		size_t len;
+		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
+		if ((read = fread( &( item->id ), sizeof( rdf_node_id ), 1, f )) == 0) {
+			fprintf( stderr, "*** Failed to read item rdf_node_id\n" );
+		}
+		if ((read = fread( &len, sizeof( size_t ), 1, f )) == 0) {
+			fprintf( stderr, "*** Failed to read item length\n" );
+		}
+		item->string	= (char*) malloc( len + 1 );
+		fread( item->string, len + 1, 1, f );
+		avl_insert( m->node2id, item );
+		avl_insert( m->id2node, item );
+	}
+	return m;
+}
+

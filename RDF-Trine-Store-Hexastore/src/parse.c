@@ -10,7 +10,6 @@ typedef struct {
 } triplestore;
 
 
-char* node_string ( const char* nodestr );
 void help (int argc, char** argv);
 int main (int argc, char** argv);
 int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, rdf_node_id* s, rdf_node_id* p, rdf_node_id* o );
@@ -66,6 +65,11 @@ int main (int argc, char** argv) {
 	
 	if (hx_write( index.h, f ) != 0) {
 		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
+		return 1;
+	}
+	
+	if (hx_nodemap_write( index.m, f ) != 0) {
+		fprintf( stderr, "*** Couldn't write nodemap to disk.\n" );
 		return 1;
 	}
 	
@@ -156,23 +160,3 @@ void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
 		fprintf( stderr, "\rparsed %d triples", count );
 }
 
-char* node_string ( const char* nodestr ) {
-	int len			= strlen( nodestr ) + 1 + 2;
-	char* string	= (char*) malloc( len );
-	const char* value		= &(nodestr[1]);
-	switch (*nodestr) {
-		case 'R':
-			sprintf( string, "<%s>", value );
-			len	+= 2;
-			break;
-		case 'L':
-			sprintf( string, "\"%s\"", value );
-			len	+= 2;
-			break;
-		case 'B':
-			sprintf( string, "_:%s", value );
-			len	+= 2;
-			break;
-	};
-	return string;
-}
