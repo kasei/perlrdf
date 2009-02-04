@@ -45,6 +45,9 @@ list_size_t hx_vector_size ( hx_vector* v );
 uint64_t hx_vector_triples_count ( hx_vector* v );
 size_t hx_vector_memory_size ( hx_vector* v );
 
+int hx_vector_write( hx_vector* t, FILE* f );
+hx_vector* hx_vector_read( FILE* f, int buffer );
+
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector );
 int hx_free_vector_iter ( hx_vector_iter* iter );
 int hx_vector_iter_finished ( hx_vector_iter* iter );

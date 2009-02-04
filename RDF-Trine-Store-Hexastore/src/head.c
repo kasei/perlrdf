@@ -200,12 +200,59 @@ int _hx_head_item_cmp ( const void* a, const void* b, void* param ) {
 int hx_head_iter_seek( hx_head_iter* iter, rdf_node n ) {
 	hx_head_item* item	= (hx_head_item*) avl_t_find( &(iter->t), iter->head->tree, &n );
 	if (item == NULL) {
-		fprintf( stderr, "hx_head_iter_seek: didn't find item %d\n", (int) n );
+// 		fprintf( stderr, "hx_head_iter_seek: didn't find item %d\n", (int) n );
 		return 1;
 	} else {
-		fprintf( stderr, "hx_head_iter_seek: found item %d\n", (int) n );
+// 		fprintf( stderr, "hx_head_iter_seek: found item %d\n", (int) n );
 		return 0;
 	}
 }
 
+
+int hx_head_write( hx_head* h, FILE* f ) {
+	fputc( 'H', f );
+	list_size_t used	= (list_size_t) avl_count( h->tree );
+	fwrite( &used, sizeof( list_size_t ), 1, f );
+	hx_head_iter* iter	= hx_head_new_iter( h );
+	while (!hx_head_iter_finished( iter )) {
+		rdf_node n;
+		hx_vector* v;
+		hx_head_iter_current( iter, &n, &v );
+		fwrite( &n, sizeof( rdf_node ), 1, f );
+		hx_vector_write( v, f );
+		hx_head_iter_next( iter );
+	}
+	hx_free_head_iter( iter );
+	return 0;
+}
+
+hx_head* hx_head_read( FILE* f, int buffer ) {
+	size_t read;
+	list_size_t used;
+	int c	= fgetc( f );
+	if (c != 'H') {
+		fprintf( stderr, "*** Bad header cookie trying to read head from file.\n" );
+		return NULL;
+	}
+	
+	read	= fread( &used, sizeof( list_size_t ), 1, f );
+	if (read == 0) {
+		return NULL;
+	} else {
+		hx_head* h			= hx_new_head();
+		for (int i = 0; i < used; i++) {
+			rdf_node n;
+			hx_vector* v;
+			read	= fread( &n, sizeof( rdf_node ), 1, f );
+			if (read == 0 || (v = hx_vector_read( f, buffer )) == NULL) {
+				fprintf( stderr, "*** NULL vector returned while trying to read head from file.\n" );
+				hx_free_head( h );
+				return NULL;
+			} else {
+				hx_head_add_vector( h, n, v );
+			}
+		}
+		return h;
+	}
+}
 

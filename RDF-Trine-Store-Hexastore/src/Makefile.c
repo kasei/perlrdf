@@ -2,10 +2,13 @@ CFLAGS	=	-std=c99 -pedantic -ggdb -Wall # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor
 
-all: main
+all: main parse print
 
 parse: parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 	$(CC) $(INC) $(LIBS) -o parse parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+
+print: print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+	$(CC) $(INC) $(LIBS) -o print print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 
 avl-test: avl-test.c avl.o
 	$(CC) $(INC) avl-test.c avl.o
@@ -35,9 +38,7 @@ nodemap.o: nodemap.c nodemap.h avl.h
 	$(CC) $(INC) -c nodemap.c
 
 clean:
-	rm -f parse
+	rm -f parse print a.out
 	rm -f *.o
-	rm -f a.out
-	rm -rf a.out.dSYM
-	rm -rf parse.dSYM
+	rm -rf a.out.dSYM parse.dSYM print.dSYM
 

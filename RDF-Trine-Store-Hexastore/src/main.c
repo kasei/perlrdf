@@ -10,9 +10,13 @@ void memory_test (void);
 void index_test ( void );
 void hexastore_test ( void );
 void nodemap_test ( void );
+void terminal_store_test ( void );
+void vector_store_test ( void );
 
 int main ( void ) {
-	nodemap_test();
+//	terminal_store_test();
+	vector_store_test();
+//	nodemap_test();
 //	hexastore_test();
 // 	index_test();
 // 	head_test();
@@ -20,6 +24,126 @@ int main ( void ) {
 // 	terminal_test();
 // 	memory_test();
 	return 0;
+}
+
+void vector_store_test ( void ) {
+	if (1) {
+		int writecount	= 0;
+		{
+			FILE* f;
+			hx_vector* v	= hx_new_vector();
+			for (int j = 10; j > 5; j--) {
+				hx_terminal* t	= hx_new_terminal();
+				for (int i = j; i > 0; i--) {
+					writecount++;
+					hx_terminal_add_node( t, (rdf_node) i );
+				}
+				hx_vector_add_terminal( v, (rdf_node) j, t );
+			}
+			fprintf( stderr, "\nfinished loading %d triples\n", writecount );
+			fprintf( stderr, "writing vector to file...\n" );
+			f	= fopen( "vector.dat", "w" );
+			if (f == NULL) {
+				perror( "*** Failed to open file vector.dat for writing: " );
+				exit(1);
+			}
+			hx_vector_write( v, f );
+			fclose( f );
+		}
+		
+		{
+			int readcount	= 0;
+			int expected	= 6;
+			FILE* f;
+			f	= fopen( "vector.dat", "r" );
+			if (f == NULL) {
+				perror( "*** Failed to open file vector.dat for reading: " );
+				exit(1);
+			}
+			fprintf( stderr, "Reading vector from file...\n" );
+			hx_vector* v	= hx_vector_read( f, 0 );
+			hx_vector_iter* iter	= hx_vector_new_iter( v );
+			while (!hx_vector_iter_finished( iter )) {
+				rdf_node n;
+				hx_terminal* t;
+				hx_vector_iter_current( iter, &n, &t );
+				fprintf( stderr, "%d ", (int) n );
+				hx_terminal_debug( "-> ", t, 1 );
+				if (n == expected) {
+					fprintf( stdout, "ok # expected vector for node %d\n", (int) n );
+				} else {
+					fprintf( stdout, "not ok # unexpected vector for node %d does not match expected node %d\n", (int) n, (int) expected );
+				}
+				expected++;
+				readcount	+= hx_terminal_size( t );
+				hx_vector_iter_next( iter );
+			}
+			if (readcount == writecount) {
+				fprintf( stdout, "ok # read the same number of values as written\n" );
+			} else {
+				fprintf( stdout, "not ok # read different number of values (%d) than written (%d)\n", (int) readcount, (int) writecount );
+			}
+			hx_free_vector_iter( iter );
+			hx_free_vector( v );
+			unlink( "vector.dat" );
+		}
+	}	
+}
+
+void terminal_store_test ( void ) {
+	if (1) {
+		int writecount	= 0;
+		{
+			FILE* f;
+			hx_terminal* t	= hx_new_terminal();
+			for (int i = 100; i > 50; i--) {
+				writecount++;
+				hx_terminal_add_node( t, (rdf_node) i );
+			}
+			fprintf( stderr, "\nfinished loading %d triples\n", writecount );
+			fprintf( stderr, "writing terminal to file...\n" );
+			f	= fopen( "terminal.dat", "w" );
+			if (f == NULL) {
+				perror( "*** Failed to open file terminal.dat for writing: " );
+				exit(1);
+			}
+			hx_terminal_write( t, f );
+			fclose( f );
+		}
+		
+		{
+			int readcount	= 0;
+			int expected	= 51;
+			FILE* f;
+			f	= fopen( "terminal.dat", "r" );
+			if (f == NULL) {
+				perror( "*** Failed to open file terminal.dat for reading: " );
+				exit(1);
+			}
+			hx_terminal* t	= hx_terminal_read( f, 0 );
+			hx_terminal_iter* iter	= hx_terminal_new_iter( t );
+			while (!hx_terminal_iter_finished( iter )) {
+				rdf_node n;
+				hx_terminal_iter_current( iter, &n );
+				if (n == expected) {
+					fprintf( stdout, "ok # expected value %d\n", (int) n );
+				} else {
+					fprintf( stdout, "not ok # unexpected value %d does not equal expected %d\n", (int) n, (int) expected );
+				}
+				expected++;
+				readcount++;
+				hx_terminal_iter_next( iter );
+			}
+			if (readcount == writecount) {
+				fprintf( stdout, "ok # read the same number of values as written\n" );
+			} else {
+				fprintf( stdout, "not ok # read different number of values than written\n" );
+			}
+			hx_free_terminal_iter( iter );
+			hx_free_terminal( t );
+			unlink( "terminal.dat" );
+		}
+	}	
 }
 
 void nodemap_test ( void ) {

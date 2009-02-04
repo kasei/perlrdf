@@ -19,33 +19,40 @@ void GTW_handle_triple(void* user_data, const raptor_statement* triple);
 static int count	= 0;
 
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s data.rdf [mime-type] [predicate]\n\n", argv[0] );
+	fprintf( stderr, "Usage: %s data.rdf hexastore.out [mime-type]\n\n", argv[0] );
 }
 
 int main (int argc, char** argv) {
 	const char* rdf_filename	= NULL;
-	const char* type			= "rdfxml";
+	const char* output_filename	= NULL;
+	const char* type			= "ntriples";
 	triplestore index;
 	char* pred					= NULL;
 	raptor_parser* rdf_parser;
 	unsigned char *uri_string;
 	raptor_uri *uri, *base_uri;
 	
-	if (argc < 2) {
+	if (argc < 3) {
 		help(argc, argv);
 		exit(1);
 	}
 	
 	rdf_filename	= argv[1];
-	if (argc > 2)
-		type		= argv[2];
+	output_filename	= argv[2];
 	if (argc > 3)
-		pred		= argv[3];
+		type		= argv[3];
+	if (argc > 4)
+		pred		= argv[4];
 	
 	index.h	= hx_new_hexastore();
 	index.m	= hx_new_nodemap();
-	
 	printf( "hx_index: %p\n", (void*) &index );
+	
+	FILE* f	= fopen( output_filename, "w" );
+	if (f == NULL) {
+		perror( "Failed to open hexastore file for writing: " );
+		return 1;
+	}
 	
 	rdf_parser	= NULL;
 	raptor_init();
@@ -57,41 +64,17 @@ int main (int argc, char** argv) {
 	raptor_parse_file(rdf_parser, uri, base_uri);
 	fprintf( stderr, "\n" );
 	
-	size_t bytes		= hx_index_memory_size( index.h->spo );
-	size_t megs			= bytes / (1024 * 1024);
-	uint64_t triples	= hx_index_triples_count( index.h->spo );
-	int mtriples		= (int) (triples / 1000000);
-	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
-	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
-	
-	if (pred != NULL) {
-		char* nodestr	= malloc( strlen( pred ) + 2 );
-		sprintf( nodestr, "R%s", pred );
-		rdf_node id	= hx_nodemap_get_node_id( index.m, nodestr );
-		free( nodestr );
-		
-		fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
-		int count	= 1;
-		hx_index_iter* iter	= hx_get_statements( index.h, (rdf_node) 0, id, (rdf_node) 0, HX_SUBJECT );
-		while (!hx_index_iter_finished( iter )) {
-			rdf_node s, p, o;
-			hx_index_iter_current( iter, &s, &p, &o );
-			
-			char* ss	= node_string( hx_nodemap_get_node_string( index.m, s ) );
-			char* sp	= node_string( hx_nodemap_get_node_string( index.m, p ) );
-			char* so	= node_string( hx_nodemap_get_node_string( index.m, o ) );
-			
-			fprintf( stderr, "[%d] %s, %s, %s\n", count++, ss, sp, so );
-			
-			free( ss );
-			free( sp );
-			free( so );
-			
-			hx_index_iter_next( iter );
-		}
-		hx_free_index_iter( iter );
+	if (hx_write( index.h, f ) != 0) {
+		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
+		return 1;
 	}
 	
+// 	size_t bytes		= hx_index_memory_size( index.h->spo );
+// 	size_t megs			= bytes / (1024 * 1024);
+// 	uint64_t triples	= hx_index_triples_count( index.h->spo );
+// 	int mtriples		= (int) (triples / 1000000);
+// 	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
+// 	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
 	
 	hx_free_hexastore( index.h );
 	hx_free_nodemap( index.m );

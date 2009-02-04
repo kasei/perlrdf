@@ -353,3 +353,26 @@ NEXTHEAD:
 }
 
 
+int hx_index_write( hx_index* i, FILE* f ) {
+	fputc( 'I', f );
+	fwrite( i->order, sizeof( int ), 3, f );
+	return hx_head_write( i->head, f );
+}
+
+hx_index* hx_index_read( FILE* f, int buffer ) {
+	size_t read;
+	int c	= fgetc( f );
+	if (c != 'I') {
+		fprintf( stderr, "*** Bad header cookie trying to read index from file.\n" );
+		return NULL;
+	}
+	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index ) );
+	read	= fread( i->order, sizeof( int ), 3, f );
+	if (read == 0 || (i->head = hx_head_read( f, buffer )) == NULL) {
+		free( i );
+		return NULL;
+	} else {
+		return i;
+	}
+}
+

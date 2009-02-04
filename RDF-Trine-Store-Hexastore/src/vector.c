@@ -234,3 +234,54 @@ int hx_vector_iter_seek( hx_vector_iter* iter, rdf_node n ) {
 		return 1;
 	}
 }
+
+int hx_vector_write( hx_vector* v, FILE* f ) {
+	fputc( 'V', f );
+	fwrite( &( v->used ), sizeof( list_size_t ), 1, f );
+	for (int i = 0; i < v->used; i++) {
+		fwrite( &( v->ptr[i].node ), sizeof( rdf_node ), 1, f );
+		hx_terminal_write( v->ptr[i].terminal, f );
+	}
+	return 0;
+}
+
+hx_vector* hx_vector_read( FILE* f, int buffer ) {
+	size_t read;
+	list_size_t used;
+	int c	= fgetc( f );
+	if (c != 'V') {
+		fprintf( stderr, "*** Bad header cookie trying to read vector from file.\n" );
+		return NULL;
+	}
+	
+	read	= fread( &used, sizeof( list_size_t ), 1, f );
+	if (read == 0) {
+		return NULL;
+	} else {
+		list_size_t allocated;
+		if (buffer == 0) {
+			allocated	= used;
+		} else {
+			allocated	= used * 1.5;
+		}
+		
+		hx_vector* vector	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
+		hx_vector_item* p	= (hx_vector_item*) calloc( allocated, sizeof( hx_vector_item ) );
+		vector->ptr			= p;
+		vector->allocated	= allocated;
+		vector->used		= 0;
+		
+		for (int i = 0; i < used; i++) {
+			read	= fread( &( vector->ptr[i].node ), sizeof( rdf_node ), 1, f );
+			if (read == 0 || (vector->ptr[i].terminal	= hx_terminal_read( f, buffer )) == NULL) {
+				fprintf( stderr, "*** NULL terminal returned while trying to read vector from file.\n" );
+				hx_free_vector( vector );
+				return NULL;
+			} else {
+				vector->used++;
+			}
+		}
+		return vector;
+	}
+}
+

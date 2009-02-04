@@ -39,11 +39,15 @@ int hx_terminal_binary_search ( const hx_terminal* t, const rdf_node n, int* ind
 list_size_t hx_terminal_size ( hx_terminal* t );
 size_t hx_terminal_memory_size ( hx_terminal* t );
 
+int hx_terminal_write( hx_terminal* t, FILE* f );
+hx_terminal* hx_terminal_read( FILE* f, int buffer );
+
 hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal );
 int hx_free_terminal_iter ( hx_terminal_iter* iter );
 int hx_terminal_iter_finished ( hx_terminal_iter* iter );
 int hx_terminal_iter_current ( hx_terminal_iter* iter, rdf_node* n );
 int hx_terminal_iter_next ( hx_terminal_iter* iter );
 int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node n );
+
 
 #endif

@@ -88,30 +88,30 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_
 		case 0:
 			switch (index_order[1]) {
 				case 1:
-					fprintf( stderr, "using spo index\n" );
+// 					fprintf( stderr, "using spo index\n" );
 					index	= hx->spo;
 				case 2:
-					fprintf( stderr, "using sop index\n" );
+// 					fprintf( stderr, "using sop index\n" );
 					index	= hx->sop;
 			}
 			break;
 		case 1:
 			switch (index_order[1]) {
 				case 0:
-					fprintf( stderr, "using pso index\n" );
+// 					fprintf( stderr, "using pso index\n" );
 					index	= hx->pso;
 				case 2:
-					fprintf( stderr, "using pos index\n" );
+// 					fprintf( stderr, "using pos index\n" );
 					index	= hx->pos;
 			}
 			break;
 		case 2:
 			switch (index_order[1]) {
 				case 0:
-					fprintf( stderr, "using osp index\n" );
+// 					fprintf( stderr, "using osp index\n" );
 					index	= hx->osp;
 				case 1:
-					fprintf( stderr, "using ops index\n" );
+// 					fprintf( stderr, "using ops index\n" );
 					index	= hx->ops;
 			}
 			break;
@@ -120,5 +120,45 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_
 	rdf_node triple_ordered[3]	= { s, p, o };
 	hx_index_iter* iter	= hx_index_new_iter1( index, triple_ordered[index->order[0]], triple_ordered[index->order[1]], triple_ordered[index->order[2]] );
 	return iter;
+}
+
+int hx_write( hx_hexastore* h, FILE* f ) {
+	fputc( 'X', f );
+	if ((
+		(hx_index_write( h->spo, f )) ||
+		(hx_index_write( h->sop, f )) ||
+		(hx_index_write( h->pso, f )) ||
+		(hx_index_write( h->pos, f )) ||
+		(hx_index_write( h->osp, f )) ||
+		(hx_index_write( h->ops, f ))
+		) != 0) {
+		fprintf( stderr, "*** Error while writing hexastore indices to disk.\n" );
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+hx_hexastore* hx_read( FILE* f, int buffer ) {
+	size_t read;
+	int c	= fgetc( f );
+	if (c != 'X') {
+		fprintf( stderr, "*** Bad header cookie trying to read hexastore from file.\n" );
+		return NULL;
+	}
+	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx->spo	= hx_index_read( f, buffer );
+	hx->sop	= hx_index_read( f, buffer );
+	hx->pso	= hx_index_read( f, buffer );
+	hx->pos	= hx_index_read( f, buffer );
+	hx->osp	= hx_index_read( f, buffer );
+	hx->ops	= hx_index_read( f, buffer );
+	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
+		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
+		free( hx );
+		return NULL;
+	} else {
+		return hx;
+	}
 }
 

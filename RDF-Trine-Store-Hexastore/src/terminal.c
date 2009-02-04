@@ -213,3 +213,44 @@ int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node n ) {
 }
 
 
+int hx_terminal_write( hx_terminal* t, FILE* f ) {
+	fputc( 'T', f );
+	fwrite( &( t->used ), sizeof( list_size_t ), 1, f );
+	fwrite( t->ptr, sizeof( rdf_node ), t->used, f );
+	return 0;
+}
+
+hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
+	list_size_t used;
+	int c	= fgetc( f );
+	if (c != 'T') {
+		fprintf( stderr, "*** Bad header cookie trying to read terminal from file.\n" );
+		return NULL;
+	}
+	
+	size_t read	= fread( &used, sizeof( list_size_t ), 1, f );
+	if (read == 0) {
+		return NULL;
+	} else {
+		list_size_t allocated;
+		if (buffer == 0) {
+			allocated	= used;
+		} else {
+			allocated	= used * 1.5;
+		}
+		
+		hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
+		rdf_node* p	= (rdf_node*) calloc( allocated, sizeof( rdf_node ) );
+		terminal->ptr		= p;
+		terminal->allocated	= allocated;
+		terminal->used		= used;
+		terminal->refcount	= 0;
+		size_t ptr_read	= fread( terminal->ptr, sizeof( rdf_node ), used, f );
+		if (ptr_read == 0) {
+			hx_free_terminal( terminal );
+			return NULL;
+		} else {
+			return terminal;
+		}
+	}
+}

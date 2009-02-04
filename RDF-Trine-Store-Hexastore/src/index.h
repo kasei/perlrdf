@@ -47,6 +47,9 @@ int hx_index_remove_triple ( hx_index* i, rdf_node s, rdf_node p, rdf_node o );
 uint64_t hx_index_triples_count ( hx_index* index );
 size_t hx_index_memory_size ( hx_index* i );
 
+int hx_index_write( hx_index* t, FILE* f );
+hx_index* hx_index_read( FILE* f, int buffer );
+
 hx_index_iter* hx_index_new_iter ( hx_index* index );
 hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node a, rdf_node b, rdf_node c );
 int hx_free_index_iter ( hx_index_iter* iter );

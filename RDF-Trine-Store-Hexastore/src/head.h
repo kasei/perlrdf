@@ -42,6 +42,9 @@ list_size_t hx_head_size ( hx_head* h );
 uint64_t hx_head_triples_count ( hx_head* h );
 size_t hx_head_memory_size ( hx_head* h );
 
+int hx_head_write( hx_head* t, FILE* f );
+hx_head* hx_head_read( FILE* f, int buffer );
+
 hx_head_iter* hx_head_new_iter ( hx_head* head );
 int hx_free_head_iter ( hx_head_iter* iter );
 int hx_head_iter_finished ( hx_head_iter* iter );
