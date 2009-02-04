@@ -31,7 +31,7 @@ int main (int argc, char** argv) {
 		int count	= 1;
 		hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 		while (!hx_index_iter_finished( iter )) {
-			rdf_node s, p, o;
+			rdf_node_id s, p, o;
 			hx_index_iter_current( iter, &s, &p, &o );
 			fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
 			hx_index_iter_next( iter );
@@ -39,12 +39,12 @@ int main (int argc, char** argv) {
 		hx_free_index_iter( iter );
 		hx_free_hexastore( hx );
 	} else {
-		rdf_node id	= (rdf_node) atoll( pred );
+		rdf_node_id id	= (rdf_node_id) atoll( pred );
 		fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
-		hx_index_iter* iter	= hx_get_statements( hx, (rdf_node) 0, id, (rdf_node) 0, HX_SUBJECT );
+		hx_index_iter* iter	= hx_get_statements( hx, (rdf_node_id) 0, id, (rdf_node_id) 0, HX_SUBJECT );
 		int count	= 1;
 		while (!hx_index_iter_finished( iter )) {
-			rdf_node s, p, o;
+			rdf_node_id s, p, o;
 			hx_index_iter_current( iter, &s, &p, &o );
 			fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
 			

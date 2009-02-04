@@ -22,7 +22,7 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 	return 0;
 }
 
-int hx_add_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o ) {
+int hx_add_triple( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o ) {
 	hx_index_add_triple( hx->spo, s, p, o );
 	hx_index_add_triple( hx->sop, s, p, o );
 	hx_index_add_triple( hx->pso, s, p, o );
@@ -32,7 +32,7 @@ int hx_add_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o ) {
 	return 0;
 }
 
-int hx_remove_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o ) {
+int hx_remove_triple( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o ) {
 	hx_index_remove_triple( hx->spo, s, p, o );
 	hx_index_remove_triple( hx->sop, s, p, o );
 	hx_index_remove_triple( hx->pso, s, p, o );
@@ -42,19 +42,19 @@ int hx_remove_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o ) {
 	return 0;
 }
 
-hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o, int order_position ) {
+hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o, int order_position ) {
 	int index_order[3];
 	int i	= 0;
 	int used[3]	= { 0, 0, 0 };
-	if (s != (rdf_node) 0) {
+	if (s != (rdf_node_id) 0) {
 		index_order[ i++ ]	= HX_SUBJECT;
 		used[0]++;
 	}
-	if (p != (rdf_node) 0) {
+	if (p != (rdf_node_id) 0) {
 		index_order[ i++ ]	= HX_PREDICATE;
 		used[1]++;
 	}
-	if (o != (rdf_node) 0) {
+	if (o != (rdf_node_id) 0) {
 		index_order[ i++ ]	= HX_OBJECT;
 		used[2]++;
 	}
@@ -117,7 +117,7 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_
 			break;
 	}
 	
-	rdf_node triple_ordered[3]	= { s, p, o };
+	rdf_node_id triple_ordered[3]	= { s, p, o };
 	hx_index_iter* iter	= hx_index_new_iter1( index, triple_ordered[index->order[0]], triple_ordered[index->order[1]], triple_ordered[index->order[2]] );
 	return iter;
 }

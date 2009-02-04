@@ -44,7 +44,7 @@ int hx_index_debug ( hx_index* index ) {
 		(int) index->order[1],
 		(int) index->order[2]
 	);
-	rdf_node triple_ordered[3];
+	rdf_node_id triple_ordered[3];
 	
 	hx_head_iter* hiter	= hx_head_new_iter( h );
 	int i	= 0;
@@ -56,7 +56,7 @@ int hx_index_debug ( hx_index* index ) {
 			hx_terminal* t	= v->ptr[j].terminal;
 			triple_ordered[ index->order[ 1 ] ]	= v->ptr[j].node;
 			for (int k = 0; k < t->used;  k++) {
-				rdf_node n	= t->ptr[k];
+				rdf_node_id n	= t->ptr[k];
 				triple_ordered[ index->order[ 2 ] ]	= n;
 				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
 			}
@@ -70,12 +70,12 @@ int hx_index_debug ( hx_index* index ) {
 	return 0;
 }
 
-int hx_index_add_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o ) {
-	rdf_node triple_ordered[3];
+int hx_index_add_triple ( hx_index* index, rdf_node_id s, rdf_node_id p, rdf_node_id o ) {
+	rdf_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
-	rdf_node index_ordered[3];
+	rdf_node_id index_ordered[3];
 	for (int i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
@@ -100,12 +100,12 @@ int hx_index_add_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o ) 
 	return 0;
 }
 
-int hx_index_remove_triple ( hx_index* index, rdf_node s, rdf_node p, rdf_node o ) {
-	rdf_node triple_ordered[3];
+int hx_index_remove_triple ( hx_index* index, rdf_node_id s, rdf_node_id p, rdf_node_id o ) {
+	rdf_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
 	triple_ordered[2]	= o;
-	rdf_node index_ordered[3];
+	rdf_node_id index_ordered[3];
 	for (int i = 0; i < 3; i++) {
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
@@ -153,14 +153,14 @@ hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 	iter->flags			= 0;
 	iter->started		= 0;
 	iter->finished		= 0;
-	iter->node_mask_a	= (rdf_node) 0;
-	iter->node_mask_b	= (rdf_node) 0;
-	iter->node_mask_c	= (rdf_node) 0;
+	iter->node_mask_a	= (rdf_node_id) 0;
+	iter->node_mask_b	= (rdf_node_id) 0;
+	iter->node_mask_c	= (rdf_node_id) 0;
 	iter->index			= index;
 	return iter;
 }
 
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node a, rdf_node b, rdf_node c ) {
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node_id a, rdf_node_id b, rdf_node_id c ) {
 	hx_index_iter* iter	= hx_index_new_iter( index );
 	iter->node_mask_a	= a;
 	iter->node_mask_b	= b;
@@ -186,7 +186,7 @@ int hx_index_iter_finished ( hx_index_iter* iter ) {
 	return iter->finished;
 }
 
-int hx_index_iter_current ( hx_index_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o ) {
+int hx_index_iter_current ( hx_index_iter* iter, rdf_node_id* s, rdf_node_id* p, rdf_node_id* o ) {
 	if (iter->started == 0) {
 		_hx_index_iter_prime_first_result( iter );
 	}
@@ -194,7 +194,7 @@ int hx_index_iter_current ( hx_index_iter* iter, rdf_node* s, rdf_node* p, rdf_n
 		return 1;
 	}
 	
-	rdf_node triple_ordered[3];
+	rdf_node_id triple_ordered[3];
 //	fprintf( stderr, "iter: %p\n", iter );
 	hx_index* index	= iter->index;
 //	fprintf( stderr, "index: %p\n", iter->index );
@@ -222,7 +222,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 	hx_index* index	= iter->index;
 	
 	iter->head_iter	= hx_head_new_iter( index->head );
-	if (iter->node_mask_a != (rdf_node) 0) {
+	if (iter->node_mask_a != (rdf_node_id) 0) {
 		if (hx_head_iter_seek( iter->head_iter, iter->node_mask_a ) != 0) {
 			iter->finished	= 1;
 			return 1;
@@ -235,11 +235,11 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		iter->finished	= 1;
 		return 1;
 	} else {
-		rdf_node n;
+		rdf_node_id n;
 		hx_vector* v;
 		hx_head_iter_current( iter->head_iter, &n, &v );
 		iter->vector_iter	= hx_vector_new_iter( v );
-		if (iter->node_mask_b != (rdf_node) 0) {
+		if (iter->node_mask_b != (rdf_node_id) 0) {
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
 				iter->finished	= 1;
 				return 1;
@@ -255,7 +255,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 			hx_terminal* t;
 			hx_vector_iter_current( iter->vector_iter, &n, &t );
 			iter->terminal_iter	= hx_terminal_new_iter( t );
-			if (iter->node_mask_c != (rdf_node) 0) {
+			if (iter->node_mask_c != (rdf_node_id) 0) {
 				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 					iter->finished	= 1;
 					return 1;
@@ -284,23 +284,23 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 	int hr, vr, tr;
 NEXTTERMINAL:
 	tr	= hx_terminal_iter_next( iter->terminal_iter );
-	if (tr == 0 && (iter->node_mask_c == (rdf_node) 0)) {
+	if (tr == 0 && (iter->node_mask_c == (rdf_node_id) 0)) {
 //		fprintf( stderr, "got next terminal\n" );
 		return 0;
 	} else {
 NEXTVECTOR:
 		vr	= hx_vector_iter_next( iter->vector_iter );
-		if (vr == 0 && (iter->node_mask_b == (rdf_node) 0)) {
+		if (vr == 0 && (iter->node_mask_b == (rdf_node_id) 0)) {
 //			fprintf( stderr, "got next vector\n" );
 			hx_free_terminal_iter( iter->terminal_iter );
 			iter->terminal_iter	= NULL;
 			
 			// set up terminal iterator
-			rdf_node n;
+			rdf_node_id n;
 			hx_terminal* t;
 			hx_vector_iter_current( iter->vector_iter, &n, &t );
 			iter->terminal_iter	= hx_terminal_new_iter( t );
-			if (iter->node_mask_c != (rdf_node) 0) {
+			if (iter->node_mask_c != (rdf_node_id) 0) {
 				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 					goto NEXTVECTOR;
 				}
@@ -309,7 +309,7 @@ NEXTVECTOR:
 		} else {
 NEXTHEAD:
 			hr	= hx_head_iter_next( iter->head_iter );
-			if (hr == 0 && (iter->node_mask_a == (rdf_node) 0)) {
+			if (hr == 0 && (iter->node_mask_a == (rdf_node_id) 0)) {
 //				fprintf( stderr, "got next head\n" );
 				hx_free_terminal_iter( iter->terminal_iter );
 				iter->terminal_iter	= NULL;
@@ -317,12 +317,12 @@ NEXTHEAD:
 				iter->vector_iter	= NULL;
 				
 				// set up vector and terminal iterators
-				rdf_node n;
+				rdf_node_id n;
 				hx_vector* v;
 				hx_terminal* t;
 				hx_head_iter_current( iter->head_iter, &n, &v );
 				iter->vector_iter	= hx_vector_new_iter( v );
-				if (iter->node_mask_b != (rdf_node) 0) {
+				if (iter->node_mask_b != (rdf_node_id) 0) {
 					if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
 						goto NEXTHEAD;
 					}
@@ -330,7 +330,7 @@ NEXTHEAD:
 				
 				hx_vector_iter_current( iter->vector_iter, &n, &t );
 				iter->terminal_iter	= hx_terminal_new_iter( t );
-				if (iter->node_mask_c != (rdf_node) 0) {
+				if (iter->node_mask_c != (rdf_node_id) 0) {
 					if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 						goto NEXTVECTOR;
 					}

@@ -23,7 +23,7 @@ typedef struct {
 typedef struct {
 	hx_index* index;
 	int flags;
-	rdf_node node_mask_a, node_mask_b, node_mask_c;
+	rdf_node_id node_mask_a, node_mask_b, node_mask_c;
 	hx_head_iter* head_iter;
 	hx_vector_iter* vector_iter;
 	hx_terminal_iter* terminal_iter;
@@ -42,8 +42,8 @@ static int HX_INDEX_ORDER_OPS[3]	= { HX_OBJECT, HX_PREDICATE, HX_SUBJECT };
 hx_index* hx_new_index ( int* index_order );
 int hx_free_index ( hx_index* index );
 int hx_index_debug ( hx_index* index );
-int hx_index_add_triple ( hx_index* i, rdf_node s, rdf_node p, rdf_node o );
-int hx_index_remove_triple ( hx_index* i, rdf_node s, rdf_node p, rdf_node o );
+int hx_index_add_triple ( hx_index* i, rdf_node_id s, rdf_node_id p, rdf_node_id o );
+int hx_index_remove_triple ( hx_index* i, rdf_node_id s, rdf_node_id p, rdf_node_id o );
 uint64_t hx_index_triples_count ( hx_index* index );
 size_t hx_index_memory_size ( hx_index* i );
 
@@ -51,11 +51,11 @@ int hx_index_write( hx_index* t, FILE* f );
 hx_index* hx_index_read( FILE* f, int buffer );
 
 hx_index_iter* hx_index_new_iter ( hx_index* index );
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node a, rdf_node b, rdf_node c );
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, rdf_node_id a, rdf_node_id b, rdf_node_id c );
 int hx_free_index_iter ( hx_index_iter* iter );
 
 int hx_index_iter_finished ( hx_index_iter* iter );
-int hx_index_iter_current ( hx_index_iter* iter, rdf_node* s, rdf_node* p, rdf_node* o );
+int hx_index_iter_current ( hx_index_iter* iter, rdf_node_id* s, rdf_node_id* p, rdf_node_id* o );
 int hx_index_iter_next ( hx_index_iter* iter );
 
 

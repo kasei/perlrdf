@@ -40,9 +40,9 @@ typedef struct {
 
 hx_hexastore* hx_new_hexastore ( void );
 int hx_free_hexastore ( hx_hexastore* hx );
-int hx_add_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o );
-int hx_remove_triple( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o );
-hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node s, rdf_node p, rdf_node o, int order_position );
+int hx_add_triple( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o );
+int hx_remove_triple( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o );
+hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node_id s, rdf_node_id p, rdf_node_id o, int order_position );
 
 int hx_write( hx_hexastore* h, FILE* f );
 hx_hexastore* hx_read( FILE* f, int buffer );

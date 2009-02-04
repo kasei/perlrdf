@@ -13,8 +13,8 @@ typedef struct {
 char* node_string ( const char* nodestr );
 void help (int argc, char** argv);
 int main (int argc, char** argv);
-int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o );
-rdf_node GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
+int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, rdf_node_id* s, rdf_node_id* p, rdf_node_id* o );
+rdf_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
 void GTW_handle_triple(void* user_data, const raptor_statement* triple);
 static int count	= 0;
 
@@ -82,15 +82,15 @@ int main (int argc, char** argv) {
 }
 
 
-int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, rdf_node* s, rdf_node* p, rdf_node* o ) {
+int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, rdf_node_id* s, rdf_node_id* p, rdf_node_id* o ) {
 	*s	= GTW_identifier_for_node( index, (void*) triple->subject, triple->subject_type, NULL, NULL );
 	*p	= GTW_identifier_for_node( index, (void*) triple->predicate, triple->predicate_type, NULL, NULL );
 	*o	= GTW_identifier_for_node( index, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
 	return 0;
 }
 
-rdf_node GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
-	rdf_node id	= 0;
+rdf_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
+	rdf_node_id id	= 0;
 	char node_type;
 	char* value;
 	int needs_free	= 0;
@@ -148,7 +148,7 @@ rdf_node GTW_identifier_for_node( triplestore* index, void* node, raptor_identif
 
 void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
 	triplestore* index	= (triplestore*) user_data;
-	rdf_node s, p, o;
+	rdf_node_id s, p, o;
 	
 	GTW_get_triple_identifiers( index, triple, &s, &p, &o );
 	hx_add_triple( index->h, s, p, o );

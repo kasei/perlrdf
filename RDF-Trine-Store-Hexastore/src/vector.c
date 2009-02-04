@@ -35,11 +35,11 @@ int hx_vector_debug ( const char* header, const hx_vector* v ) {
 	return 0;
 }
 
-int hx_vector_add_terminal ( hx_vector* v, const rdf_node n, hx_terminal* t ) {
+int hx_vector_add_terminal ( hx_vector* v, const rdf_node_id n, hx_terminal* t ) {
 	int i;
 	
-	if (n == (rdf_node) 0) {
-		fprintf( stderr, "*** rdf_node cannot be zero in hx_vector_add_terminal\n" );
+	if (n == (rdf_node_id) 0) {
+		fprintf( stderr, "*** rdf_node_id cannot be zero in hx_vector_add_terminal\n" );
 		return 1;
 	}
 	
@@ -67,7 +67,7 @@ int hx_vector_add_terminal ( hx_vector* v, const rdf_node n, hx_terminal* t ) {
 	return 0;
 }
 
-hx_terminal* hx_vector_get_terminal ( hx_vector* v, rdf_node n ) {
+hx_terminal* hx_vector_get_terminal ( hx_vector* v, rdf_node_id n ) {
 	int i;
 	int r	= hx_vector_binary_search( v, n, &i );
 	if (r == 0) {
@@ -77,7 +77,7 @@ hx_terminal* hx_vector_get_terminal ( hx_vector* v, rdf_node n ) {
 	}
 }
 
-int hx_vector_remove_terminal ( hx_vector* v, rdf_node n ) {
+int hx_vector_remove_terminal ( hx_vector* v, rdf_node_id n ) {
 	int i;
 	int r	= hx_vector_binary_search( v, n, &i );
 	if (r == -1) {
@@ -117,7 +117,7 @@ size_t hx_vector_memory_size ( hx_vector* v ) {
 	return size;
 }
 
-int hx_vector_binary_search ( const hx_vector* v, const rdf_node n, int* index ) {
+int hx_vector_binary_search ( const hx_vector* v, const rdf_node_id n, int* index ) {
 	int low		= 0;
 	int high	= v->used - 1;
 //	fprintf( stderr, "hx_vector_binary_search: %p\n", (void*) v );
@@ -189,7 +189,7 @@ int _hx_vector_iter_prime_first_result( hx_vector_iter* iter ) {
 	return 0;
 }
 
-int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node* n, hx_terminal** t ) {
+int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node_id* n, hx_terminal** t ) {
 	if (iter->started == 0) {
 		_hx_vector_iter_prime_first_result( iter );
 	}
@@ -221,7 +221,7 @@ int hx_vector_iter_next ( hx_vector_iter* iter ) {
 	}
 }
 
-int hx_vector_iter_seek( hx_vector_iter* iter, rdf_node n ) {
+int hx_vector_iter_seek( hx_vector_iter* iter, rdf_node_id n ) {
 	int i;
 	int r	= hx_vector_binary_search( iter->vector, n, &i );
 	if (r == 0) {
@@ -239,7 +239,7 @@ int hx_vector_write( hx_vector* v, FILE* f ) {
 	fputc( 'V', f );
 	fwrite( &( v->used ), sizeof( list_size_t ), 1, f );
 	for (int i = 0; i < v->used; i++) {
-		fwrite( &( v->ptr[i].node ), sizeof( rdf_node ), 1, f );
+		fwrite( &( v->ptr[i].node ), sizeof( rdf_node_id ), 1, f );
 		hx_terminal_write( v->ptr[i].terminal, f );
 	}
 	return 0;
@@ -272,7 +272,7 @@ hx_vector* hx_vector_read( FILE* f, int buffer ) {
 		vector->used		= 0;
 		
 		for (int i = 0; i < used; i++) {
-			read	= fread( &( vector->ptr[i].node ), sizeof( rdf_node ), 1, f );
+			read	= fread( &( vector->ptr[i].node ), sizeof( rdf_node_id ), 1, f );
 			if (read == 0 || (vector->ptr[i].terminal	= hx_terminal_read( f, buffer )) == NULL) {
 				fprintf( stderr, "*** NULL terminal returned while trying to read vector from file.\n" );
 				hx_free_vector( vector );

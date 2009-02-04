@@ -52,7 +52,7 @@ int hx_free_head ( hx_head* head ) {
 	return 0;
 }
 
-// int hx_head_binary_search ( const hx_head* h, const rdf_node n, int* index ) {
+// int hx_head_binary_search ( const hx_head* h, const rdf_node_id n, int* index ) {
 // 	int low		= 0;
 // 	int high	= h->used - 1;
 // 	while (low <= high) {
@@ -87,7 +87,7 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 	return 0;
 }
 
-int hx_head_add_vector ( hx_head* h, rdf_node n, hx_vector* v ) {
+int hx_head_add_vector ( hx_head* h, rdf_node_id n, hx_vector* v ) {
 	hx_head_item* item	= (hx_head_item*) calloc( 1, sizeof( hx_head_item ) );
 	item->node		= n;
 	item->vector	= v;
@@ -97,7 +97,7 @@ int hx_head_add_vector ( hx_head* h, rdf_node n, hx_vector* v ) {
 	return 0;
 }
 
-hx_vector* hx_head_get_vector ( hx_head* h, rdf_node n ) {
+hx_vector* hx_head_get_vector ( hx_head* h, rdf_node_id n ) {
 	hx_head_item* item	= (hx_head_item*) avl_find( h->tree, &n );
 	if (item == NULL) {
 		return NULL;
@@ -111,7 +111,7 @@ hx_vector* hx_head_get_vector ( hx_head* h, rdf_node n ) {
 	}
 }
 
-int hx_head_remove_vector ( hx_head* h, rdf_node n ) {
+int hx_head_remove_vector ( hx_head* h, rdf_node_id n ) {
 	hx_head_item* item	= avl_delete( h->tree, &n );
 	if (item != NULL) {
 		_hx_free_head_item( item, NULL );
@@ -171,7 +171,7 @@ int hx_head_iter_finished ( hx_head_iter* iter ) {
 	return (avl_t_cur( &(iter->t) ) == NULL) ? 1 : 0;
 }
 
-int hx_head_iter_current ( hx_head_iter* iter, rdf_node* n, hx_vector** v ) {
+int hx_head_iter_current ( hx_head_iter* iter, rdf_node_id* n, hx_vector** v ) {
 	hx_head_item* item	= avl_t_cur( &(iter->t) );
 	if (item == NULL) {
 		return 1;
@@ -191,13 +191,13 @@ int hx_head_iter_next ( hx_head_iter* iter ) {
 }
 
 int _hx_head_item_cmp ( const void* a, const void* b, void* param ) {
-	rdf_node *ia, *ib;
-	ia	= (rdf_node*) a;
-	ib	= (rdf_node*) b;
+	rdf_node_id *ia, *ib;
+	ia	= (rdf_node_id*) a;
+	ib	= (rdf_node_id*) b;
 	return (*ia - *ib);
 }
 
-int hx_head_iter_seek( hx_head_iter* iter, rdf_node n ) {
+int hx_head_iter_seek( hx_head_iter* iter, rdf_node_id n ) {
 	hx_head_item* item	= (hx_head_item*) avl_t_find( &(iter->t), iter->head->tree, &n );
 	if (item == NULL) {
 // 		fprintf( stderr, "hx_head_iter_seek: didn't find item %d\n", (int) n );
@@ -215,10 +215,10 @@ int hx_head_write( hx_head* h, FILE* f ) {
 	fwrite( &used, sizeof( list_size_t ), 1, f );
 	hx_head_iter* iter	= hx_head_new_iter( h );
 	while (!hx_head_iter_finished( iter )) {
-		rdf_node n;
+		rdf_node_id n;
 		hx_vector* v;
 		hx_head_iter_current( iter, &n, &v );
-		fwrite( &n, sizeof( rdf_node ), 1, f );
+		fwrite( &n, sizeof( rdf_node_id ), 1, f );
 		hx_vector_write( v, f );
 		hx_head_iter_next( iter );
 	}
@@ -241,9 +241,9 @@ hx_head* hx_head_read( FILE* f, int buffer ) {
 	} else {
 		hx_head* h			= hx_new_head();
 		for (int i = 0; i < used; i++) {
-			rdf_node n;
+			rdf_node_id n;
 			hx_vector* v;
-			read	= fread( &n, sizeof( rdf_node ), 1, f );
+			read	= fread( &n, sizeof( rdf_node_id ), 1, f );
 			if (read == 0 || (v = hx_vector_read( f, buffer )) == NULL) {
 				fprintf( stderr, "*** NULL vector returned while trying to read head from file.\n" );
 				hx_free_head( h );

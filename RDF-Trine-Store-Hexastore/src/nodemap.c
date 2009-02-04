@@ -25,7 +25,7 @@ hx_nodemap* hx_new_nodemap( void ) {
 	hx_nodemap* m	= (hx_nodemap*) calloc( 1, sizeof( hx_nodemap ) );
 	m->id2node		= avl_create( _hx_node_cmp_id, NULL, &avl_allocator_default );
 	m->node2id		= avl_create( _hx_node_cmp_str, NULL, &avl_allocator_default );
-	m->next_id		= (rdf_node) 1;
+	m->next_id		= (rdf_node_id) 1;
 	return m;
 }
 
@@ -36,7 +36,7 @@ int hx_free_nodemap ( hx_nodemap* m ) {
 	return 0;
 }
 
-rdf_node hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
+rdf_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
 	hx_nodemap_item i;
 	i.string	= nodestr;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
@@ -56,7 +56,7 @@ rdf_node hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-int hx_nodemap_remove_node_id ( hx_nodemap* m, rdf_node id ) {
+int hx_nodemap_remove_node_id ( hx_nodemap* m, rdf_node_id id ) {
 	hx_nodemap_item i;
 	i.id	= id;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_delete( m->id2node, &i );
@@ -82,18 +82,18 @@ int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-rdf_node hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
+rdf_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
 	hx_nodemap_item i;
 	i.string	= nodestr;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
-		return (rdf_node) 0;
+		return (rdf_node_id) 0;
 	} else {
 		return item->id;
 	}
 }
 
-char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node id ) {
+char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node_id id ) {
 	hx_nodemap_item i;
 	i.id		= id;
 	i.string	= NULL;
