@@ -1,5 +1,6 @@
 #include "nodemap.h"
 
+int _sparql_sort_cmp (const void * a, const void * b);
 int _hx_node_cmp_id ( const void* a, const void* b, void* param ) {
 	hx_nodemap_item* ia	= (hx_nodemap_item*) a;
 	hx_nodemap_item* ib	= (hx_nodemap_item*) b;
@@ -156,5 +157,53 @@ hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
 		avl_insert( m->id2node, item );
 	}
 	return m;
+}
+
+hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
+	size_t count	= avl_count( map->id2node );
+	char** node_handles	= calloc( count, sizeof( char* ) );
+	int i	= 0;
+	struct avl_traverser iter;
+	avl_t_init( &iter, map->id2node );
+	hx_nodemap_item* item;
+	
+	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+		node_handles[ i++ ]	= item->string;
+	}
+	qsort( node_handles, i, sizeof( char* ), _sparql_sort_cmp );
+	hx_nodemap* sorted	= hx_new_nodemap();
+	for (int j = 0; j < i; j++) {
+		hx_nodemap_add_node( sorted, node_handles[ j ] );
+	}
+	free( node_handles );
+	return sorted;
+}
+
+int _sparql_sort_cmp (const void * a, const void * b) {
+	char* va	= *( (char**) a );
+	char* vb	= *( (char**) b );
+	if (*va == *vb) {
+		if (*va == 'B') {
+			return strcmp( va, vb );
+		} else if (*va == 'R') {
+			return strcmp( va, vb );
+		} else if (*va == 'L') {
+			// XXX need to deal with language and datatype literals
+			return strcmp( va, vb );
+		} else {
+			fprintf( stderr, "*** Unknown node type %c in _sparql_sort_cmp\n", *va );
+			return 0;
+		}
+	} else {
+		if (*va == 'B')
+			return -1;
+		if (*va == 'L')
+			return 1;
+		if (*vb == 'B')
+			return 1;
+		if (*vb == 'L')
+			return -1;
+	}
+	return 0;
 }
 

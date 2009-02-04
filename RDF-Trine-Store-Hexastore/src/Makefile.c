@@ -2,13 +2,16 @@ CFLAGS	=	-std=c99 -pedantic -ggdb -Wall # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 
-all: main parse print
+all: main parse print optimize
 
 main: main.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 	$(CC) $(INC) main.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 
 parse: parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 	$(CC) $(INC) $(LIBS) -o parse parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+
+optimize: optimize.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+	$(CC) $(INC) $(LIBS) -o optimize optimize.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 
 print: print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
 	$(CC) $(INC) $(LIBS) -o print print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
@@ -35,7 +38,7 @@ nodemap.o: nodemap.c nodemap.h avl.h hexastore_types.h
 	$(CC) $(INC) -c nodemap.c
 
 clean:
-	rm -f parse print a.out
+	rm -f parse print optimize a.out
 	rm -f *.o
-	rm -rf a.out.dSYM parse.dSYM print.dSYM
+	rm -rf a.out.dSYM parse.dSYM print.dSYM optimize.dSYM
 
