@@ -10,8 +10,8 @@
 #define VECTOR_LIST_ALLOC_SIZE				64
 #define TERMINAL_LIST_ALLOC_SIZE			32
 
-typedef uint64_t list_size_t;
-typedef uint64_t rdf_node;
+typedef int64_t list_size_t;
+typedef int64_t rdf_node;
 
 #define HX_SUBJECT		0
 #define HX_PREDICATE	1

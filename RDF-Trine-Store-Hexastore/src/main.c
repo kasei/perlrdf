@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "hexastore.h"
+#include "nodemap.h"
 
 void head_test (void);
 void vector_test (void);
@@ -8,15 +9,37 @@ void terminal_test (void);
 void memory_test (void);
 void index_test ( void );
 void hexastore_test ( void );
+void nodemap_test ( void );
 
 int main ( void ) {
-	hexastore_test();
+	nodemap_test();
+//	hexastore_test();
 // 	index_test();
 // 	head_test();
 // 	vector_test();
 // 	terminal_test();
 // 	memory_test();
 	return 0;
+}
+
+void nodemap_test ( void ) {
+	hx_nodemap*	m	= hx_new_nodemap();
+	char s[2];
+	for (char c = 'a'; c <= 'z'; c++) {
+		sprintf( s, "%c", c );
+		hx_nodemap_add_node( m, s );
+	}
+	
+	for (char c = 'z'; c >= 'a'; c--) {
+		sprintf( s, "%c", c );
+		rdf_node n	= hx_nodemap_get_node_id( m, s );
+		fprintf( stderr, "%c -> %d\n", c, (int) n );
+	}
+	
+	char* nodestr	= hx_nodemap_get_node_string( m, (rdf_node) 7 );
+	fprintf( stderr, "%d -> '%s' (%p)", 7, nodestr, nodestr );
+	
+	hx_free_nodemap( m );
 }
 
 void hexastore_test ( void ) {
@@ -26,14 +49,16 @@ void hexastore_test ( void ) {
 		{
 			int count	= 0;
 			for (int i = 1; i <= 400; i++) {
-				for (int j = 1; j <= 200; j++) {
-					for (int k = 1; k <= 200; k++) {
+				for (int j = 1; j <= 100; j++) {
+					for (int k = 1; k <= 50; k++) {
 						count++;
 						hx_add_triple( hx, (rdf_node) i, (rdf_node) j, (rdf_node) k );
+						if (count % 25000 == 0)
+							fprintf( stderr, "\rloaded %d triples", count );
 					}
 				}
 			}
-			fprintf( stderr, "finished loading %d triples\n", count );
+			fprintf( stderr, "\nfinished loading %d triples\n", count );
 		}
 		sleep(30);
 		
@@ -47,7 +72,7 @@ void hexastore_test ( void ) {
 			}
 			hx_free_index_iter( iter );
 		}
-		fprintf( stderr, "**************************\n" );
+		fprintf( stderr, "removing triples...\n" );
 		{
 			int count	= 0;
 			for (int i = 1; i <= 9; i++) {
@@ -60,9 +85,8 @@ void hexastore_test ( void ) {
 			}
 			fprintf( stderr, "removed %d triples\n", count );
 		}
-		fprintf( stderr, "**************************\n" );
 	
-	
+		fprintf( stderr, "full iterator...\n" );
 		{
 			int count	= 1;
 			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
@@ -104,6 +128,18 @@ void hexastore_test ( void ) {
 			fprintf( stderr, "iter (*,*,9) ordered by predicate...\n" );
 			int count	= 1;
 			hx_index_iter* iter	= hx_get_statements( hx, (rdf_node) 0, (rdf_node) 0, (rdf_node) 9, HX_PREDICATE );
+			while (!hx_index_iter_finished( iter )) {
+				rdf_node s, p, o;
+				hx_index_iter_current( iter, &s, &p, &o );
+				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+				hx_index_iter_next( iter );
+			}
+			hx_free_index_iter( iter );
+		}
+		{
+			fprintf( stderr, "iter (*,*,*) ordered by predicate...\n" );
+			int count	= 1;
+			hx_index_iter* iter	= hx_get_statements( hx, (rdf_node) 0, (rdf_node) 0, (rdf_node) 0, HX_PREDICATE );
 			while (!hx_index_iter_finished( iter )) {
 				rdf_node s, p, o;
 				hx_index_iter_current( iter, &s, &p, &o );
