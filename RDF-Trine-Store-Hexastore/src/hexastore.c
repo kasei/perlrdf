@@ -88,11 +88,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node_id s, rdf_node_id p
 		case 0:
 			switch (index_order[1]) {
 				case 1:
-					fprintf( stderr, "using spo index\n" );
+// 					fprintf( stderr, "using spo index\n" );
 					index	= hx->spo;
 					break;
 				case 2:
-					fprintf( stderr, "using sop index\n" );
+// 					fprintf( stderr, "using sop index\n" );
 					index	= hx->sop;
 					break;
 			}
@@ -100,11 +100,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node_id s, rdf_node_id p
 		case 1:
 			switch (index_order[1]) {
 				case 0:
-					fprintf( stderr, "using pso index\n" );
+// 					fprintf( stderr, "using pso index\n" );
 					index	= hx->pso;
 					break;
 				case 2:
-					fprintf( stderr, "using pos index\n" );
+// 					fprintf( stderr, "using pos index\n" );
 					index	= hx->pos;
 					break;
 			}
@@ -112,11 +112,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, rdf_node_id s, rdf_node_id p
 		case 2:
 			switch (index_order[1]) {
 				case 0:
-					fprintf( stderr, "using osp index\n" );
+// 					fprintf( stderr, "using osp index\n" );
 					index	= hx->osp;
 					break;
 				case 1:
-					fprintf( stderr, "using ops index\n" );
+// 					fprintf( stderr, "using ops index\n" );
 					index	= hx->ops;
 					break;
 			}
