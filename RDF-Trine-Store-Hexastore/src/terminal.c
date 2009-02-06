@@ -5,7 +5,7 @@ int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter );
 
 hx_terminal* hx_new_terminal( void ) {
 	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
-	rdf_node_id* p	= (rdf_node_id*) calloc( TERMINAL_LIST_ALLOC_SIZE, sizeof( rdf_node_id ) );
+	hx_node_id* p	= (hx_node_id*) calloc( TERMINAL_LIST_ALLOC_SIZE, sizeof( hx_node_id ) );
 	terminal->ptr		= p;
 	terminal->allocated	= TERMINAL_LIST_ALLOC_SIZE;
 	terminal->used		= 0;
@@ -42,11 +42,11 @@ int hx_terminal_debug ( const char* header, hx_terminal* t, int newline ) {
 	return 0;
 }
 
-int hx_terminal_add_node ( hx_terminal* t, rdf_node_id n ) {
+int hx_terminal_add_node ( hx_terminal* t, hx_node_id n ) {
 	int i;
 	
-	if (n == (rdf_node_id) 0) {
-		fprintf( stderr, "*** rdf_node_id cannot be zero in hx_terminal_add_node\n" );
+	if (n == (hx_node_id) 0) {
+		fprintf( stderr, "*** hx_node_id cannot be zero in hx_terminal_add_node\n" );
 		return 1;
 	}
 	
@@ -70,7 +70,7 @@ int hx_terminal_add_node ( hx_terminal* t, rdf_node_id n ) {
 	return 0;
 }
 
-int hx_terminal_contains_node ( hx_terminal* t, rdf_node_id n ) {
+int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n ) {
 	int i;
 	int r	= hx_terminal_binary_search( t, n, &i );
 	if (r == 0) {
@@ -80,7 +80,7 @@ int hx_terminal_contains_node ( hx_terminal* t, rdf_node_id n ) {
 	}
 }
 
-int hx_terminal_remove_node ( hx_terminal* t, rdf_node_id n ) {
+int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n ) {
 	int i;
 	int r	= hx_terminal_binary_search( t, n, &i );
 	if (r == -1) {
@@ -98,7 +98,7 @@ int hx_terminal_remove_node ( hx_terminal* t, rdf_node_id n ) {
 int _hx_terminal_grow( hx_terminal* t ) {
 	size_t size		= t->allocated * 2;
 //	fprintf( stderr, "growing terminal from %d to %d entries\n", (int) t->allocated, (int) size );
-	rdf_node_id* newp	= (rdf_node_id*) calloc( size, sizeof( rdf_node_id ) );
+	hx_node_id* newp	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	for (int i = 0; i < t->used; i++) {
 		newp[ i ]	= t->ptr[ i ];
 	}
@@ -114,11 +114,11 @@ list_size_t hx_terminal_size ( hx_terminal* t ) {
 }
 
 size_t hx_terminal_memory_size ( hx_terminal* t ) {
-	list_size_t size	= sizeof( hx_terminal ) + (t->used * sizeof( rdf_node_id ));
+	list_size_t size	= sizeof( hx_terminal ) + (t->used * sizeof( hx_node_id ));
 	return size;
 }
 
-int hx_terminal_binary_search ( const hx_terminal* t, const rdf_node_id n, int* index ) {
+int hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index ) {
 	int low		= 0;
 	int high	= t->used - 1;
 	while (low <= high) {
@@ -167,7 +167,7 @@ int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter ) {
 	return 0;
 }
 
-int hx_terminal_iter_current ( hx_terminal_iter* iter, rdf_node_id* n ) {
+int hx_terminal_iter_current ( hx_terminal_iter* iter, hx_node_id* n ) {
 	if (iter->started == 0) {
 		_hx_terminal_iter_prime_first_result( iter );
 	}
@@ -198,7 +198,7 @@ int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
 	}
 }
 
-int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node_id n ) {
+int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n ) {
 	int i;
 	int r	= hx_terminal_binary_search( iter->terminal, n, &i );
 	if (r == 0) {
@@ -216,7 +216,7 @@ int hx_terminal_iter_seek( hx_terminal_iter* iter, rdf_node_id n ) {
 int hx_terminal_write( hx_terminal* t, FILE* f ) {
 	fputc( 'T', f );
 	fwrite( &( t->used ), sizeof( list_size_t ), 1, f );
-	fwrite( t->ptr, sizeof( rdf_node_id ), t->used, f );
+	fwrite( t->ptr, sizeof( hx_node_id ), t->used, f );
 	return 0;
 }
 
@@ -240,12 +240,12 @@ hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
 		}
 		
 		hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
-		rdf_node_id* p	= (rdf_node_id*) calloc( allocated, sizeof( rdf_node_id ) );
+		hx_node_id* p	= (hx_node_id*) calloc( allocated, sizeof( hx_node_id ) );
 		terminal->ptr		= p;
 		terminal->allocated	= allocated;
 		terminal->used		= used;
 		terminal->refcount	= 0;
-		size_t ptr_read	= fread( terminal->ptr, sizeof( rdf_node_id ), used, f );
+		size_t ptr_read	= fread( terminal->ptr, sizeof( hx_node_id ), used, f );
 		if (ptr_read == 0) {
 			hx_free_terminal( terminal );
 			return NULL;

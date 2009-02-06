@@ -3,7 +3,7 @@
 #include "hexastore.h"
 #include "nodemap.h"
 
-void print_triple ( hx_nodemap* map, rdf_node_id s, rdf_node_id p, rdf_node_id o, int count );
+void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
 char* node_string ( const char* nodestr );
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s hexastore.dat [pred]\n\n", argv[0] );
@@ -35,7 +35,7 @@ int main (int argc, char** argv) {
 		int count	= 1;
 		hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 		while (!hx_index_iter_finished( iter )) {
-			rdf_node_id s, p, o;
+			hx_node_id s, p, o;
 			hx_index_iter_current( iter, &s, &p, &o );
 			print_triple( map, s, p, o, count++ );
 			hx_index_iter_next( iter );
@@ -44,15 +44,15 @@ int main (int argc, char** argv) {
 	} else {
 		char* predstr	= (char*) malloc( strlen( pred ) + 2 );
 		sprintf( predstr, "R%s", pred );
-		rdf_node_id id	= hx_nodemap_get_node_id( map, predstr );
+		hx_node_id id	= hx_nodemap_get_node_id( map, predstr );
 		free(predstr);
 		
 		if (id > 0) {
 			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
-			hx_index_iter* iter	= hx_get_statements( hx, (rdf_node_id) 0, id, (rdf_node_id) 0, HX_SUBJECT );
+			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, id, (hx_node_id) 0, HX_SUBJECT );
 			int count	= 1;
 			while (!hx_index_iter_finished( iter )) {
-				rdf_node_id s, p, o;
+				hx_node_id s, p, o;
 				hx_index_iter_current( iter, &s, &p, &o );
 				print_triple( map, s, p, o, count++ );
 				hx_index_iter_next( iter );
@@ -89,7 +89,7 @@ char* node_string ( const char* nodestr ) {
 	return string;
 }
 
-void print_triple ( hx_nodemap* map, rdf_node_id s, rdf_node_id p, rdf_node_id o, int count ) {
+void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
 // 	fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
 	char* ss	= node_string( hx_nodemap_get_node_string( map, s ) );
 	char* sp	= node_string( hx_nodemap_get_node_string( map, p ) );

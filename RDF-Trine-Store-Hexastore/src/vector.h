@@ -16,7 +16,7 @@
 #include "terminal.h"
 
 typedef struct {
-	rdf_node_id node;
+	hx_node_id node;
 	hx_terminal* terminal;
 } hx_vector_item;
 
@@ -37,10 +37,10 @@ hx_vector* hx_new_vector ( void );
 int hx_free_vector ( hx_vector* list );
 
 int hx_vector_debug ( const char* header, const hx_vector* v );
-int hx_vector_add_terminal ( hx_vector* v, const rdf_node_id n, hx_terminal* t );
-hx_terminal* hx_vector_get_terminal ( hx_vector* v, rdf_node_id n );
-int hx_vector_remove_terminal ( hx_vector* v, rdf_node_id n );
-int hx_vector_binary_search ( const hx_vector* v, const rdf_node_id n, int* index );
+int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t );
+hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n );
+int hx_vector_remove_terminal ( hx_vector* v, hx_node_id n );
+int hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index );
 list_size_t hx_vector_size ( hx_vector* v );
 uint64_t hx_vector_triples_count ( hx_vector* v );
 size_t hx_vector_memory_size ( hx_vector* v );
@@ -51,8 +51,8 @@ hx_vector* hx_vector_read( FILE* f, int buffer );
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector );
 int hx_free_vector_iter ( hx_vector_iter* iter );
 int hx_vector_iter_finished ( hx_vector_iter* iter );
-int hx_vector_iter_current ( hx_vector_iter* iter, rdf_node_id* n, hx_terminal** t );
+int hx_vector_iter_current ( hx_vector_iter* iter, hx_node_id* n, hx_terminal** t );
 int hx_vector_iter_next ( hx_vector_iter* iter );
-int hx_vector_iter_seek( hx_vector_iter* iter, rdf_node_id n );
+int hx_vector_iter_seek( hx_vector_iter* iter, hx_node_id n );
 
 #endif

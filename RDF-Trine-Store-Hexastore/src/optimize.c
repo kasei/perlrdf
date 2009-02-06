@@ -3,7 +3,7 @@
 #include "hexastore.h"
 #include "nodemap.h"
 
-rdf_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, rdf_node_id id );
+hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id );
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s in.dat out.dat\n\n", argv[0] );
 }
@@ -45,10 +45,10 @@ int main (int argc, char** argv) {
 	hx_hexastore* shx	= hx_new_hexastore();
 	hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 	while (!hx_index_iter_finished( iter )) {
-		rdf_node_id s, p, o;
+		hx_node_id s, p, o;
 		hx_index_iter_current( iter, &s, &p, &o );
 		
-		rdf_node_id ns, np, no;
+		hx_node_id ns, np, no;
 		ns	= map_old_to_new_id( map, smap, s );
 		np	= map_old_to_new_id( map, smap, p );
 		no	= map_old_to_new_id( map, smap, o );
@@ -97,9 +97,9 @@ char* node_string ( const char* nodestr ) {
 	return string;
 }
 
-rdf_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, rdf_node_id id ) {
+hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id ) {
 	char* string		= hx_nodemap_get_node_string( old, id );
-	rdf_node_id newid	= hx_nodemap_get_node_id( new, string );
+	hx_node_id newid	= hx_nodemap_get_node_id( new, string );
 	return newid;
 }
 

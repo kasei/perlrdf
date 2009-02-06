@@ -34,6 +34,9 @@ vector.o: vector.c vector.h terminal.h hexastore_types.h
 head.o: head.c head.h vector.h terminal.h avl.h hexastore_types.h
 	$(CC) $(INC) -c head.c
 
+node.o: node.c node.h hexastore_types.h
+	$(CC) $(INC) -c node.c
+	
 nodemap.o: nodemap.c nodemap.h avl.h hexastore_types.h
 	$(CC) $(INC) -c nodemap.c
 

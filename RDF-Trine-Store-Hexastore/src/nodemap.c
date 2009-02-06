@@ -26,7 +26,7 @@ hx_nodemap* hx_new_nodemap( void ) {
 	hx_nodemap* m	= (hx_nodemap*) calloc( 1, sizeof( hx_nodemap ) );
 	m->id2node		= avl_create( _hx_node_cmp_id, NULL, &avl_allocator_default );
 	m->node2id		= avl_create( _hx_node_cmp_str, NULL, &avl_allocator_default );
-	m->next_id		= (rdf_node_id) 1;
+	m->next_id		= (hx_node_id) 1;
 	return m;
 }
 
@@ -37,7 +37,7 @@ int hx_free_nodemap ( hx_nodemap* m ) {
 	return 0;
 }
 
-rdf_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
+hx_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
 	hx_nodemap_item i;
 	i.string	= nodestr;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
@@ -57,7 +57,7 @@ rdf_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-int hx_nodemap_remove_node_id ( hx_nodemap* m, rdf_node_id id ) {
+int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id ) {
 	hx_nodemap_item i;
 	i.id	= id;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_delete( m->id2node, &i );
@@ -83,18 +83,18 @@ int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-rdf_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
+hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
 	hx_nodemap_item i;
 	i.string	= nodestr;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
-		return (rdf_node_id) 0;
+		return (hx_node_id) 0;
 	} else {
 		return item->id;
 	}
 }
 
-char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node_id id ) {
+char* hx_nodemap_get_node_string ( hx_nodemap* m, hx_node_id id ) {
 	hx_nodemap_item i;
 	i.id		= id;
 	i.string	= NULL;
@@ -110,10 +110,10 @@ char* hx_nodemap_get_node_string ( hx_nodemap* m, rdf_node_id id ) {
 }
 
 int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
-	fputc( 'N', f );
+	fputc( 'M', f );
 	size_t used	= avl_count( m->id2node );
 	fwrite( &used, sizeof( size_t ), 1, f );
-	fwrite( &( m->next_id ), sizeof( rdf_node_id ), 1, f );
+	fwrite( &( m->next_id ), sizeof( hx_node_id ), 1, f );
 
 	struct avl_traverser iter;
 	avl_t_init( &iter, m->id2node );
@@ -121,7 +121,7 @@ int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
 	
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		size_t len	= strlen( item->string );
-		fwrite( &( item->id ), sizeof( rdf_node_id ), 1, f );
+		fwrite( &( item->id ), sizeof( hx_node_id ), 1, f );
 		fwrite( &len, sizeof( size_t ), 1, f );
 		fwrite( item->string, 1, len + 1, f );
 	}
@@ -131,22 +131,22 @@ int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
 
 hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
 	size_t used, read;
-	rdf_node_id next_id;
+	hx_node_id next_id;
 	int c	= fgetc( f );
-	if (c != 'N') {
+	if (c != 'M') {
 		fprintf( stderr, "*** Bad header cookie trying to read nodemap from file.\n" );
 		return NULL;
 	}
 	
 	hx_nodemap* m	= hx_new_nodemap();
 	read	= fread( &used, sizeof( size_t ), 1, f );
-	read	= fread( &next_id, sizeof( rdf_node_id ), 1, f );
+	read	= fread( &next_id, sizeof( hx_node_id ), 1, f );
 	m->next_id	= next_id;
 	for (int i = 0; i < used; i++) {
 		size_t len;
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
-		if ((read = fread( &( item->id ), sizeof( rdf_node_id ), 1, f )) == 0) {
-			fprintf( stderr, "*** Failed to read item rdf_node_id\n" );
+		if ((read = fread( &( item->id ), sizeof( hx_node_id ), 1, f )) == 0) {
+			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
 		}
 		if ((read = fread( &len, sizeof( size_t ), 1, f )) == 0) {
 			fprintf( stderr, "*** Failed to read item length\n" );
