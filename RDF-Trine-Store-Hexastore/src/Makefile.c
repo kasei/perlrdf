@@ -1,20 +1,21 @@
 CFLAGS	=	-std=c99 -pedantic -ggdb -Wall # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o
 
 all: main parse print optimize
 
-main: main.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
-	$(CC) $(INC) main.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+main: main.c $(OBJECTS)
+	$(CC) $(INC) main.c $(OBJECTS)
 
-parse: parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
-	$(CC) $(INC) $(LIBS) -o parse parse.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+parse: parse.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
 
-optimize: optimize.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
-	$(CC) $(INC) $(LIBS) -o optimize optimize.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+optimize: optimize.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o optimize optimize.c $(OBJECTS)
 
-print: print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
-	$(CC) $(INC) $(LIBS) -o print print.c hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o
+print: print.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o print print.c $(OBJECTS)
 
 avl.o: avl.c avl.h hexastore_types.h
 	$(CC) $(INC) -c avl.c

@@ -1,6 +1,6 @@
 #include "nodemap.h"
 
-int _sparql_sort_cmp (const void * a, const void * b);
+// int _sparql_sort_cmp (const void * a, const void * b);
 int _hx_node_cmp_id ( const void* a, const void* b, void* param ) {
 	hx_nodemap_item* ia	= (hx_nodemap_item*) a;
 	hx_nodemap_item* ib	= (hx_nodemap_item*) b;
@@ -11,14 +11,13 @@ int _hx_node_cmp_id ( const void* a, const void* b, void* param ) {
 int _hx_node_cmp_str ( const void* a, const void* b, void* param ) {
 	hx_nodemap_item* ia	= (hx_nodemap_item*) a;
 	hx_nodemap_item* ib	= (hx_nodemap_item*) b;
-// 	fprintf( stderr, "hx_node_cmp_str( %s, %s )\n", ia->string, ib->string );
-	return strcmp(ia->string, ib->string);
+	return hx_node_cmp(ia->node, ib->node);
 }
 
 void _hx_free_node_item (void *avl_item, void *avl_param) {
 	hx_nodemap_item* i	= (hx_nodemap_item*) avl_item;
-	if (i->string != NULL)
-		free( i->string );
+	if (i->node != NULL)
+		hx_free_node( i->node );
 	free( i );
 }
 
@@ -37,19 +36,19 @@ int hx_free_nodemap ( hx_nodemap* m ) {
 	return 0;
 }
 
-hx_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr ) {
+hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
+	hx_node* node	= hx_node_copy( n );
 	hx_nodemap_item i;
-	i.string	= nodestr;
+	i.node	= node;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
 // 		fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
 		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
-		item->string	= malloc( strlen( nodestr ) + 1 );
-		strcpy( item->string, nodestr );
-		item->id		= m->next_id++;
+		item->node	= node;
+		item->id	= m->next_id++;
 		avl_insert( m->node2id, item );
 		avl_insert( m->id2node, item );
-// 		fprintf( stderr, "*** new item %d -> %s\n", (int) item->id, item->string );
+// 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
 		return item->id;
 	} else {
 // 		fprintf( stderr, "nodemap key '%s' alread exists\n", nodestr );
@@ -70,9 +69,9 @@ int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id ) {
 	}
 }
 
-int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr ) {
+int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n ) {
 	hx_nodemap_item i;
-	i.string	= nodestr;
+	i.node	= n;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_delete( m->node2id, &i );
 	if (item != NULL) {
 		avl_delete( m->id2node, item );
@@ -83,9 +82,9 @@ int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
+hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* node ) {
 	hx_nodemap_item i;
-	i.string	= nodestr;
+	i.node	= node;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
 		return (hx_node_id) 0;
@@ -94,18 +93,18 @@ hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr ) {
 	}
 }
 
-char* hx_nodemap_get_node_string ( hx_nodemap* m, hx_node_id id ) {
+hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id ) {
 	hx_nodemap_item i;
-	i.id		= id;
-	i.string	= NULL;
-// 	fprintf( stderr, "hx_nodemap_get_node_string( %p, %d )\n", (void*) m, (int) id );
+	i.id	= id;
+	i.node	= NULL;
+// 	fprintf( stderr, "hx_nodemap_get_node( %p, %d )\n", (void*) m, (int) id );
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->id2node, &i );
 	if (item == NULL) {
 // 		fprintf( stderr, "*** node %d string not found\n", (int) id );
 		return NULL;
 	} else {
 // 		fprintf( stderr, "*** node %d string: '%s'\n", (int) id, item->string );
-		return item->string;
+		return item->node;
 	}
 }
 
@@ -120,10 +119,8 @@ int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
 	hx_nodemap_item* item;
 	
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
-		size_t len	= strlen( item->string );
 		fwrite( &( item->id ), sizeof( hx_node_id ), 1, f );
-		fwrite( &len, sizeof( size_t ), 1, f );
-		fwrite( item->string, 1, len + 1, f );
+		hx_node_write( item->node, f );
 	}
 
 	return 0;
@@ -143,16 +140,11 @@ hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
 	read	= fread( &next_id, sizeof( hx_node_id ), 1, f );
 	m->next_id	= next_id;
 	for (int i = 0; i < used; i++) {
-		size_t len;
 		hx_nodemap_item* item	= (hx_nodemap_item*) malloc( sizeof( hx_nodemap_item ) );
 		if ((read = fread( &( item->id ), sizeof( hx_node_id ), 1, f )) == 0) {
 			fprintf( stderr, "*** Failed to read item hx_node_id\n" );
 		}
-		if ((read = fread( &len, sizeof( size_t ), 1, f )) == 0) {
-			fprintf( stderr, "*** Failed to read item length\n" );
-		}
-		item->string	= (char*) malloc( len + 1 );
-		fread( item->string, len + 1, 1, f );
+		item->node	= hx_node_read( f, 0 );
 		avl_insert( m->node2id, item );
 		avl_insert( m->id2node, item );
 	}
@@ -161,49 +153,21 @@ hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
 
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	size_t count	= avl_count( map->id2node );
-	char** node_handles	= calloc( count, sizeof( char* ) );
+	hx_node** node_handles	= calloc( count, sizeof( hx_node* ) );
 	int i	= 0;
 	struct avl_traverser iter;
 	avl_t_init( &iter, map->id2node );
 	hx_nodemap_item* item;
 	
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
-		node_handles[ i++ ]	= item->string;
+		node_handles[ i++ ]	= item->node;
 	}
-	qsort( node_handles, i, sizeof( char* ), _sparql_sort_cmp );
+	qsort( node_handles, i, sizeof( char* ), hx_node_cmp );
 	hx_nodemap* sorted	= hx_new_nodemap();
 	for (int j = 0; j < i; j++) {
 		hx_nodemap_add_node( sorted, node_handles[ j ] );
 	}
 	free( node_handles );
 	return sorted;
-}
-
-int _sparql_sort_cmp (const void * a, const void * b) {
-	char* va	= *( (char**) a );
-	char* vb	= *( (char**) b );
-	if (*va == *vb) {
-		if (*va == 'B') {
-			return strcmp( va, vb );
-		} else if (*va == 'R') {
-			return strcmp( va, vb );
-		} else if (*va == 'L') {
-			// XXX need to deal with language and datatype literals
-			return strcmp( va, vb );
-		} else {
-			fprintf( stderr, "*** Unknown node type %c in _sparql_sort_cmp\n", *va );
-			return 0;
-		}
-	} else {
-		if (*va == 'B')
-			return -1;
-		if (*va == 'L')
-			return 1;
-		if (*vb == 'B')
-			return 1;
-		if (*vb == 'L')
-			return -1;
-	}
-	return 0;
 }
 

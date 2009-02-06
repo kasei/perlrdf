@@ -160,8 +160,11 @@ void nodemap_test ( void ) {
 		fprintf( stderr, "%c -> %d\n", c, (int) n );
 	}
 	
-	char* nodestr	= hx_nodemap_get_node_string( m, (hx_node_id) 7 );
+	hx_node* node	= hx_nodemap_get_node( m, (hx_node_id) 7 );
+	char* nodestr	= NULL;
+	hx_node_string( node, &nodestr );
 	fprintf( stderr, "%d -> '%s' (%p)", 7, nodestr, nodestr );
+	free( nodestr );
 	
 	hx_free_nodemap( m );
 }

@@ -98,8 +98,8 @@ char* node_string ( const char* nodestr ) {
 }
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id ) {
-	char* string		= hx_nodemap_get_node_string( old, id );
-	hx_node_id newid	= hx_nodemap_get_node_id( new, string );
+	hx_node* node		= hx_nodemap_get_node( old, id );
+	hx_node_id newid	= hx_nodemap_get_node_id( new, node );
 	return newid;
 }
 

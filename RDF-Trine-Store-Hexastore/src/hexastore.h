@@ -43,6 +43,7 @@ int hx_free_hexastore ( hx_hexastore* hx );
 int hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position );
+uint64_t hx_triples_count( hx_hexastore* hx );
 
 int hx_write( hx_hexastore* h, FILE* f );
 hx_hexastore* hx_read( FILE* f, int buffer );

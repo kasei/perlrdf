@@ -3,6 +3,7 @@
 #include <raptor.h>
 #include "hexastore.h"
 #include "nodemap.h"
+#include "node.h"
 
 typedef struct {
 	hx_hexastore* h;
@@ -100,15 +101,18 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 	int needs_free	= 0;
 	char* language	= NULL;
 	char* datatype	= NULL;
+	hx_node* newnode;
 	
 	switch (type) {
 		case RAPTOR_IDENTIFIER_TYPE_RESOURCE:
 		case RAPTOR_IDENTIFIER_TYPE_PREDICATE:
 			value		= (char*) raptor_uri_as_string((raptor_uri*)node);
+			newnode		= hx_new_node_resource( value );
 			node_type	= 'R';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_ANONYMOUS:
 			value		= (char*) node;
+			newnode		= hx_new_node_blank( value );
 			node_type	= 'B';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_LITERAL:
@@ -116,19 +120,25 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 			node_type	= 'L';
 			if(lang && type == RAPTOR_IDENTIFIER_TYPE_LITERAL) {
 				language	= (char*) lang;
+				newnode		= hx_new_node_lang_literal( value, language );
 			} else if (dt) {
 				datatype	= (char*) raptor_uri_as_string((raptor_uri*) dt);
+				newnode		= hx_new_node_dt_literal( value, datatype );
+			} else {
+				newnode		= hx_new_node_literal( value );
 			}
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_XML_LITERAL:
 			value		= (char*) node;
 			datatype	= "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
 			node_type	= 'L';
+			newnode		= hx_new_node_dt_literal( value, datatype );
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_ORDINAL:
 			needs_free	= 1;
 			value		= (char*) malloc( 64 );
 			sprintf( value, "http://www.w3.org/1999/02/22-rdf-syntax-ns#_%d", *((int*) node) );
+			newnode		= hx_new_node_resource( value );
 			node_type	= 'R';
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_UNKNOWN:
@@ -138,10 +148,10 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 	}
 	
 	
-	char* nodestr	= malloc( strlen( value ) + 2 );
-	sprintf( nodestr, "%c%s", node_type, value );
-	id	= hx_nodemap_add_node( index->m, nodestr );
-	free( nodestr );
+// 	char* nodestr	= malloc( strlen( value ) + 2 );
+// 	sprintf( nodestr, "%c%s", node_type, value );
+	id	= hx_nodemap_add_node( index->m, newnode );
+// 	free( nodestr );
 	
 	if (needs_free) {
 		free( value );

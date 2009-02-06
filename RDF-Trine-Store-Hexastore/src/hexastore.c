@@ -128,6 +128,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 	return iter;
 }
 
+uint64_t hx_triples_count ( hx_hexastore* hx ) {
+	hx_index* i	= hx->spo;
+	return hx_index_triples_count( i );
+}
+
 int hx_write( hx_hexastore* h, FILE* f ) {
 	fputc( 'X', f );
 	if ((

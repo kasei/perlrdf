@@ -4,7 +4,6 @@
 #include "nodemap.h"
 
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
-char* node_string ( const char* nodestr );
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s hexastore.dat [pred]\n\n", argv[0] );
 }
@@ -41,11 +40,12 @@ int main (int argc, char** argv) {
 			hx_index_iter_next( iter );
 		}
 		hx_free_index_iter( iter );
+	} else if (strcmp( pred, "-c" ) == 0) {
+		
 	} else {
-		char* predstr	= (char*) malloc( strlen( pred ) + 2 );
-		sprintf( predstr, "R%s", pred );
-		hx_node_id id	= hx_nodemap_get_node_id( map, predstr );
-		free(predstr);
+		hx_node* pnode	= hx_new_node_resource( pred );
+		hx_node_id id	= hx_nodemap_get_node_id( map, pnode );
+		hx_free_node( pnode );
 		
 		if (id > 0) {
 			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
@@ -68,32 +68,15 @@ int main (int argc, char** argv) {
 	return 0;
 }
 
-char* node_string ( const char* nodestr ) {
-	int len			= strlen( nodestr ) + 1 + 2;
-	char* string	= (char*) malloc( len );
-	const char* value		= &(nodestr[1]);
-	switch (*nodestr) {
-		case 'R':
-			sprintf( string, "<%s>", value );
-			len	+= 2;
-			break;
-		case 'L':
-			sprintf( string, "\"%s\"", value );
-			len	+= 2;
-			break;
-		case 'B':
-			sprintf( string, "_:%s", value );
-			len	+= 2;
-			break;
-	};
-	return string;
-}
-
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count ) {
 // 	fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-	char* ss	= node_string( hx_nodemap_get_node_string( map, s ) );
-	char* sp	= node_string( hx_nodemap_get_node_string( map, p ) );
-	char* so	= node_string( hx_nodemap_get_node_string( map, o ) );
+	hx_node* sn	= hx_nodemap_get_node( map, s );
+	hx_node* pn	= hx_nodemap_get_node( map, p );
+	hx_node* on	= hx_nodemap_get_node( map, o );
+	char *ss, *sp, *so;
+	hx_node_string( sn, &ss );
+	hx_node_string( pn, &sp );
+	hx_node_string( on, &so );
 	if (count > 0) {
 		fprintf( stdout, "[%d] ", count );
 	}

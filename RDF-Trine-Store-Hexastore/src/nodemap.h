@@ -5,6 +5,7 @@
 #include <string.h>
 #include "hexastore_types.h"
 #include "avl.h"
+#include "node.h"
 
 typedef struct avl_table avl;
 typedef struct {
@@ -15,17 +16,17 @@ typedef struct {
 
 typedef struct {
 	hx_node_id id;
-	char* string;
+	hx_node* node;
 } hx_nodemap_item;
 
 hx_nodemap* hx_new_nodemap( void );
 int hx_free_nodemap ( hx_nodemap* m );
 
-hx_node_id hx_nodemap_add_node ( hx_nodemap* m, char* nodestr );
+hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n );
 int hx_nodemap_remove_node_id ( hx_nodemap* m, hx_node_id id );
-int hx_nodemap_remove_node_string ( hx_nodemap* m, char* nodestr );
-hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, char* nodestr );
-char* hx_nodemap_get_node_string ( hx_nodemap* m, hx_node_id id );
+int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n );
+hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* n );
+hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id );
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
