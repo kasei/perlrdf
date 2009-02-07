@@ -41,7 +41,7 @@ int main (int argc, char** argv) {
 		}
 		hx_free_index_iter( iter );
 	} else if (strcmp( pred, "-c" ) == 0) {
-		
+		fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
 	} else {
 		hx_node* pnode	= hx_new_node_resource( pred );
 		hx_node_id id	= hx_nodemap_get_node_id( map, pnode );
