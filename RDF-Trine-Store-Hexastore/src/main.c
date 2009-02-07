@@ -151,13 +151,17 @@ void nodemap_test ( void ) {
 	char s[2];
 	for (char c = 'a'; c <= 'z'; c++) {
 		sprintf( s, "%c", c );
-		hx_nodemap_add_node( m, s );
+		hx_node* n	= (hx_node*) hx_new_node_literal( s );
+		hx_nodemap_add_node( m, n );
+		hx_free_node( n );
 	}
 	
 	for (char c = 'z'; c >= 'a'; c--) {
 		sprintf( s, "%c", c );
-		hx_node_id n	= hx_nodemap_get_node_id( m, s );
+		hx_node* node	= (hx_node*) hx_new_node_literal( s );
+		hx_node_id n	= hx_nodemap_get_node_id( m, node );
 		fprintf( stderr, "%c -> %d\n", c, (int) n );
+		hx_free_node( node );
 	}
 	
 	hx_node* node	= hx_nodemap_get_node( m, (hx_node_id) 7 );

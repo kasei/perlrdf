@@ -120,10 +120,10 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 			node_type	= 'L';
 			if(lang && type == RAPTOR_IDENTIFIER_TYPE_LITERAL) {
 				language	= (char*) lang;
-				newnode		= hx_new_node_lang_literal( value, language );
+				newnode		= (hx_node*) hx_new_node_lang_literal( value, language );
 			} else if (dt) {
 				datatype	= (char*) raptor_uri_as_string((raptor_uri*) dt);
-				newnode		= hx_new_node_dt_literal( value, datatype );
+				newnode		= (hx_node*) hx_new_node_dt_literal( value, datatype );
 			} else {
 				newnode		= hx_new_node_literal( value );
 			}
@@ -132,7 +132,7 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 			value		= (char*) node;
 			datatype	= "http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral";
 			node_type	= 'L';
-			newnode		= hx_new_node_dt_literal( value, datatype );
+			newnode		= (hx_node*) hx_new_node_dt_literal( value, datatype );
 			break;
 		case RAPTOR_IDENTIFIER_TYPE_ORDINAL:
 			needs_free	= 1;

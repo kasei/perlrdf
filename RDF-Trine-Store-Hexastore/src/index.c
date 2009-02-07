@@ -282,7 +282,7 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 	}
 	
 	int hr, vr, tr;
-NEXTTERMINAL:
+// NEXTTERMINAL:
 	tr	= hx_terminal_iter_next( iter->terminal_iter );
 	if (tr == 0 && (iter->node_mask_c == (hx_node_id) 0)) {
 //		fprintf( stderr, "got next terminal\n" );

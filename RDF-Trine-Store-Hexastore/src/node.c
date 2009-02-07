@@ -322,9 +322,9 @@ hx_node* hx_node_read( FILE* f, int buffer ) {
 				read	= fread( extra, 1, used, f );
 			}
 			if (c == 'G') {
-				node	= hx_new_node_lang_literal( value, extra );
+				node	= (hx_node*) hx_new_node_lang_literal( value, extra );
 			} else if (c == 'D') {
-				node	= hx_new_node_dt_literal( value, extra );
+				node	= (hx_node*) hx_new_node_dt_literal( value, extra );
 			} else {
 				node	= hx_new_node_literal( value );
 			}
