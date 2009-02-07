@@ -71,6 +71,10 @@ int hx_index_debug ( hx_index* index ) {
 }
 
 int hx_index_add_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	return hx_index_add_triple_terminal( index, s, p, o, NULL );
+}
+
+int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** r_terminal ) {
 	hx_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
@@ -97,6 +101,33 @@ int hx_index_add_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_i
 	}
 	
 	hx_terminal_add_node( t, index_ordered[2] );
+	if (r_terminal != NULL) {
+		*r_terminal	= t;
+	}
+	return 0;
+}
+
+int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	hx_node_id triple_ordered[3];
+	triple_ordered[0]	= s;
+	triple_ordered[1]	= p;
+	triple_ordered[2]	= o;
+	hx_node_id index_ordered[3];
+	for (int i = 0; i < 3; i++) {
+		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
+	}
+//	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
+	
+	hx_head* h	= index->head;
+	hx_vector* v	= NULL;
+	
+	if ((v = hx_head_get_vector( h, index_ordered[0] )) == NULL) {
+//		fprintf( stderr, "adding missing vector for node %d\n", (int) index_ordered[0] );
+		v	= hx_new_vector();
+		hx_head_add_vector( h, index_ordered[0], v );
+	}
+	
+	hx_vector_add_terminal( v, index_ordered[1], t );
 	return 0;
 }
 

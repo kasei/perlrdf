@@ -1,5 +1,7 @@
 #include "hexastore.h"
 
+void* _hx_add_triple_threaded (void* arg);
+
 hx_hexastore* hx_new_hexastore ( void ) {
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
 	hx->spo			= hx_new_index( HX_INDEX_ORDER_SPO );
@@ -23,13 +25,64 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 }
 
 int hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
-	hx_index_add_triple( hx->spo, s, p, o );
-	hx_index_add_triple( hx->sop, s, p, o );
-	hx_index_add_triple( hx->pso, s, p, o );
-	hx_index_add_triple( hx->pos, s, p, o );
-	hx_index_add_triple( hx->osp, s, p, o );
-	hx_index_add_triple( hx->ops, s, p, o );
+	hx_terminal* t;
+	hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
+	hx_index_add_triple_with_terminal( hx->pso, t, s, p, o );
+
+	hx_index_add_triple_terminal( hx->sop, s, p, o, &t );
+	hx_index_add_triple_with_terminal( hx->osp, t, s, p, o );
+
+	hx_index_add_triple_terminal( hx->pos, s, p, o, &t );
+	hx_index_add_triple_with_terminal( hx->ops, t, s, p, o );
+	
 	return 0;
+}
+
+int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
+	if (count < THREADED_BATCH_SIZE) {
+		for (int i = 0; i < count; i++) {
+			hx_add_triple( hx, triples[i].subject, triples[i].predicate, triples[i].object );
+		}
+	} else {
+		pthread_t threads[3];
+		hx_thread_info tinfo[3];
+		for (int i = 0; i < 3; i++) {
+			tinfo[i].count		= count;
+			tinfo[i].triples	= triples;
+		}
+
+		{
+			tinfo[0].index		= hx->spo;
+			tinfo[0].secondary	= hx->pso;
+			
+			tinfo[1].index		= hx->sop;
+			tinfo[1].secondary	= hx->osp;
+			
+			tinfo[2].index		= hx->pos;
+			tinfo[2].secondary	= hx->ops;
+			
+			for (int i = 0; i < 3; i++) {
+				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
+			}
+			for (int i = 0; i < 3; i++) {
+				pthread_join(threads[i], NULL);
+			}
+		}
+	}
+	return 0;
+}
+
+void* _hx_add_triple_threaded (void* arg) {
+	hx_thread_info* tinfo	= (hx_thread_info*) arg;
+	for (int i = 0; i < tinfo->count; i++) {
+		hx_node_id s	= tinfo->triples[i].subject;
+		hx_node_id p	= tinfo->triples[i].predicate;
+		hx_node_id o	= tinfo->triples[i].object;
+		hx_terminal* t;
+		hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
+		hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o );
+	}
+	return NULL;
 }
 
 int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {

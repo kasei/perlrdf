@@ -5,23 +5,26 @@
 #include "nodemap.h"
 #include "node.h"
 
+#define TRIPLES_BATCH_SIZE	25000
 typedef struct {
 	hx_hexastore* h;
 	hx_nodemap* m;
+	hx_triple triples[ TRIPLES_BATCH_SIZE ];
+	int count;
 } triplestore;
-
 
 void help (int argc, char** argv);
 int main (int argc, char** argv);
 int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, hx_node_id* s, hx_node_id* p, hx_node_id* o );
 hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
 void GTW_handle_triple(void* user_data, const raptor_statement* triple);
+int add_triples_batch ( triplestore* index );
+
 static int count	= 0;
 
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s data.rdf hexastore.out [mime-type]\n\n", argv[0] );
 }
-
 int main (int argc, char** argv) {
 	const char* rdf_filename	= NULL;
 	const char* output_filename	= NULL;
@@ -44,6 +47,7 @@ int main (int argc, char** argv) {
 	if (argc > 4)
 		pred		= argv[4];
 	
+	index.count		= 0;
 	index.h	= hx_new_hexastore();
 	index.m	= hx_new_nodemap();
 	printf( "hx_index: %p\n", (void*) &index );
@@ -62,6 +66,10 @@ int main (int argc, char** argv) {
 	uri			= raptor_new_uri(uri_string);
 	base_uri	= raptor_uri_copy(uri);
 	raptor_parse_file(rdf_parser, uri, base_uri);
+	if (index.count > 0) {
+		add_triples_batch( &index );
+	}
+
 	fprintf( stderr, "\n" );
 	
 	if (hx_write( index.h, f ) != 0) {
@@ -73,13 +81,6 @@ int main (int argc, char** argv) {
 		fprintf( stderr, "*** Couldn't write nodemap to disk.\n" );
 		return 1;
 	}
-	
-// 	size_t bytes		= hx_index_memory_size( index.h->spo );
-// 	size_t megs			= bytes / (1024 * 1024);
-// 	uint64_t triples	= hx_index_triples_count( index.h->spo );
-// 	int mtriples		= (int) (triples / 1000000);
-// 	fprintf( stdout, "total triples: %d (%dM)\n", (int) triples, (int) mtriples );
-// 	fprintf( stdout, "total memory size: %d bytes (%d megs)\n", (int) bytes, (int) megs );
 	
 	hx_free_hexastore( index.h );
 	hx_free_nodemap( index.m );
@@ -93,7 +94,6 @@ int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* trip
 	*o	= GTW_identifier_for_node( index, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
 	return 0;
 }
-
 hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
 	hx_node_id id	= 0;
 	char node_type;
@@ -159,14 +159,28 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 	}
 	return id;
 }
-
 void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
 	triplestore* index	= (triplestore*) user_data;
 	hx_node_id s, p, o;
 	
 	GTW_get_triple_identifiers( index, triple, &s, &p, &o );
-	hx_add_triple( index->h, s, p, o );
+	if (index->count >= TRIPLES_BATCH_SIZE) {
+		add_triples_batch( index );
+	}
+	
+	int i	= index->count++;
+	index->triples[ i ].subject		= s;
+	index->triples[ i ].predicate	= p;
+	index->triples[ i ].object		= o;
+//	hx_add_triple( index->h, s, p, o );
 	if ((++count % 25000) == 0)
 		fprintf( stderr, "\rparsed %d triples", count );
 }
 
+int add_triples_batch ( triplestore* index ) {
+	if (index->count > 0) {
+		hx_add_triples( index->h, index->triples, index->count );
+		index->count	= 0;
+	}
+	return 0;
+}
