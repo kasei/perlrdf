@@ -99,7 +99,10 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 	int index_order[3];
 	int i		= 0;
 	int vars	= 0;
+//	fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
 	int used[3]	= { 0, 0, 0 };
+	hx_node_id triple[3]	= { s, p, o };
+	
 	if (s > (hx_node_id) 0) {
 		index_order[ i++ ]	= HX_SUBJECT;
 		used[0]++;
@@ -119,7 +122,7 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 		vars++;
 	}
 	
-	if (i < 3 && !(used[order_position])) {
+	if (i < 3 && !(used[order_position]) && triple[order_position] != (hx_node_id) 0) {
 		index_order[ i++ ]	= order_position;
 		used[order_position]++;
 	}

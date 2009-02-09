@@ -203,15 +203,15 @@ hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id a, hx_node_id b,
 	iter->node_mask_c	= c;
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
-	if (b == a) {
+	if (b == a && a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );
 		iter->node_dup_b	= HX_INDEX_ITER_DUP_A;
 	}
 	
-	if (c == a) {
+	if (c == a && a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/obj triples\n" );
 		iter->node_dup_c	= HX_INDEX_ITER_DUP_A;
-	} else if (c == b) {
+	} else if (c == b && b != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated pred/obj triples\n" );
 		iter->node_dup_c	= HX_INDEX_ITER_DUP_B;
 	}
@@ -249,14 +249,12 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 	hx_index* index	= iter->index;
 //	fprintf( stderr, "index: %p\n", iter->index );
 	hx_vector* v;
-	
 // 	fprintf( stderr, "triple position %d comes from the head\n", index->order[0] );
 	hx_head_iter_current( iter->head_iter, &(triple_ordered[ index->order[0] ]), &v );
 	
 	hx_terminal* t;
 // 	fprintf( stderr, "triple position %d comes from the vector\n", index->order[1] );
 	hx_vector_iter_current( iter->vector_iter, &(triple_ordered[ index->order[1] ]), &t );
-	
 // 	fprintf( stderr, "triple position %d comes from the terminal\n", index->order[2] );
 	hx_terminal_iter_current( iter->terminal_iter, &(triple_ordered[ index->order[2] ]) );
 	
@@ -270,7 +268,6 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 	iter->started	= 1;
 	hx_index* index	= iter->index;
-	
 // 	fprintf( stderr, "_hx_index_iter_prime_first_result( %p )\n", (void*) iter );
 	iter->head_iter	= hx_head_new_iter( index->head );
 	if (iter->node_mask_a > (hx_node_id) 0) {
@@ -347,14 +344,14 @@ int _hx_index_iter_next_head ( hx_index_iter* iter ) {
 	int hr;
 NEXTHEAD:
 	hr	= hx_head_iter_next( iter->head_iter );
-	if (hr == 0 && (iter->node_mask_a <= (hx_node_id) 0)) {
+	if (hr == 0 && (iter->node_mask_a < (hx_node_id) 0)) {
 // 		fprintf( stderr, "got next head\n" );
 		hx_free_terminal_iter( iter->terminal_iter );
 		iter->terminal_iter	= NULL;
 		hx_free_vector_iter( iter->vector_iter );
 		iter->vector_iter	= NULL;
 		
-// set up vector and terminal iterators
+		// set up vector and terminal iterators
 		hx_node_id n;
 		hx_vector* v;
 		hx_terminal* t;
@@ -392,7 +389,7 @@ int _hx_index_iter_next_vector ( hx_index_iter* iter ) {
 	int vr;
 NEXTVECTOR:
 	vr	= hx_vector_iter_next( iter->vector_iter );
-	if (vr == 0 && (iter->node_mask_b <= (hx_node_id) 0)) {
+	if (vr == 0 && (iter->node_mask_b < (hx_node_id) 0)) {
 // 		fprintf( stderr, "got next vector\n" );
 		hx_free_terminal_iter( iter->terminal_iter );
 		iter->terminal_iter	= NULL;
@@ -422,16 +419,18 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 			return 1;
 		}
 	}
-	
 // 	fprintf( stderr, "hx_index_iter_next( %p )\n", (void*) iter );
 	
-	int hr, vr, tr;
+	int tr;
 // NEXTTERMINAL:
 	tr	= hx_terminal_iter_next( iter->terminal_iter );
-	if (tr == 0 && (iter->node_mask_c <= (hx_node_id) 0)) {
-// 		fprintf( stderr, "got next terminal\n" );
+	if (tr == 0 && (iter->node_mask_c < (hx_node_id) 0)) {
+//		fprintf( stderr, "got next terminal\n" );
 		return 0;
 	} else {
+//		fprintf( stderr, "node_mask_c == %d\n", (int) iter->node_mask_c );
+//		fprintf( stderr, "tr == %d\n", tr );
+//		fprintf( stderr, "no next terminal... getting next vector\n" );
 		int r	= _hx_index_iter_next_vector( iter );
 		if (r != 0) {
 			return r;
@@ -452,7 +451,7 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 	size_t read;
 	int c	= fgetc( f );
 	if (c != 'I') {
-		fprintf( stderr, "*** Bad header cookie trying to read index from file.\n" );
+//		fprintf( stderr, "*** Bad header cookie trying to read index from file.\n" );
 		return NULL;
 	}
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index ) );
