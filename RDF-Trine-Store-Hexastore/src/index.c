@@ -1,7 +1,8 @@
 #include "index.h"
 
 int _hx_index_iter_prime_first_result( hx_index_iter* iter );
-
+int _hx_index_iter_next_head ( hx_index_iter* iter );
+int _hx_index_iter_next_vector ( hx_index_iter* iter );
 
 /**
 
@@ -349,6 +350,92 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 	return 1;
 }
 
+int _hx_index_iter_next_head ( hx_index_iter* iter ) {
+	int hr;
+NEXTHEAD:
+	hr	= hx_head_iter_next( iter->head_iter );
+	if (hr == 0 && (iter->node_mask_a <= (hx_node_id) 0)) {
+// 		fprintf( stderr, "got next head\n" );
+		hx_free_terminal_iter( iter->terminal_iter );
+		iter->terminal_iter	= NULL;
+		hx_free_vector_iter( iter->vector_iter );
+		iter->vector_iter	= NULL;
+		
+// set up vector and terminal iterators
+		hx_node_id n;
+		hx_vector* v;
+		hx_terminal* t;
+		hx_head_iter_current( iter->head_iter, &n, &v );
+		if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
+// 			fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
+			iter->node_mask_b	= n;
+		}
+		if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
+// 			fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
+			iter->node_mask_c	= n;
+		}
+		iter->vector_iter	= hx_vector_new_iter( v );
+		if (iter->node_mask_b > (hx_node_id) 0) {
+			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
+				goto NEXTHEAD;
+			}
+		}
+		
+		hx_vector_iter_current( iter->vector_iter, &n, &t );
+		if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
+// 			fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
+			iter->node_mask_c	= n;
+		}
+		iter->terminal_iter	= hx_terminal_new_iter( t );
+		if (iter->node_mask_c > (hx_node_id) 0) {
+			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
+				_hx_index_iter_next_vector( iter );
+			}
+		}
+		return 0;
+	} else {
+		hx_free_head_iter( iter->head_iter );
+		iter->head_iter	= NULL;
+		hx_free_vector_iter( iter->vector_iter );
+		iter->vector_iter	= NULL;
+		hx_free_terminal_iter( iter->terminal_iter );
+		iter->terminal_iter	= NULL;
+		iter->finished	= 1;
+		return 1;
+	}
+}
+
+int _hx_index_iter_next_vector ( hx_index_iter* iter ) {
+	int vr;
+NEXTVECTOR:
+	vr	= hx_vector_iter_next( iter->vector_iter );
+	if (vr == 0 && (iter->node_mask_b <= (hx_node_id) 0)) {
+// 		fprintf( stderr, "got next vector\n" );
+		hx_free_terminal_iter( iter->terminal_iter );
+		iter->terminal_iter	= NULL;
+		
+		// set up terminal iterator
+		hx_node_id n;
+		hx_terminal* t;
+		hx_vector_iter_current( iter->vector_iter, &n, &t );
+// 		fprintf( stderr, "Got a new vector item: %d\n", (int) n );
+		if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
+// 			fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
+			iter->node_mask_c	= n;
+		}
+		iter->terminal_iter	= hx_terminal_new_iter( t );
+		if (iter->node_mask_c > (hx_node_id) 0) {
+			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
+				goto NEXTVECTOR;
+			}
+		}
+		return 1;
+	} else {
+		return _hx_index_iter_next_head( iter );
+	}
+	return 0;
+}
+
 int hx_index_iter_next ( hx_index_iter* iter ) {
 	if (iter->started == 0) {
 		_hx_index_iter_prime_first_result( iter );
@@ -366,81 +453,9 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 // 		fprintf( stderr, "got next terminal\n" );
 		return 0;
 	} else {
-NEXTVECTOR:
-		vr	= hx_vector_iter_next( iter->vector_iter );
-		if (vr == 0 && (iter->node_mask_b <= (hx_node_id) 0)) {
-// 			fprintf( stderr, "got next vector\n" );
-			hx_free_terminal_iter( iter->terminal_iter );
-			iter->terminal_iter	= NULL;
-			
-			// set up terminal iterator
-			hx_node_id n;
-			hx_terminal* t;
-			hx_vector_iter_current( iter->vector_iter, &n, &t );
-// 			fprintf( stderr, "Got a new vector item: %d\n", (int) n );
-			if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
-// 				fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
-				iter->node_mask_c	= n;
-			}
-			iter->terminal_iter	= hx_terminal_new_iter( t );
-			if (iter->node_mask_c > (hx_node_id) 0) {
-				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
-					goto NEXTVECTOR;
-				}
-			}
-			return 0;
-		} else {
-NEXTHEAD:
-			hr	= hx_head_iter_next( iter->head_iter );
-			if (hr == 0 && (iter->node_mask_a <= (hx_node_id) 0)) {
-// 				fprintf( stderr, "got next head\n" );
-				hx_free_terminal_iter( iter->terminal_iter );
-				iter->terminal_iter	= NULL;
-				hx_free_vector_iter( iter->vector_iter );
-				iter->vector_iter	= NULL;
-				
-				// set up vector and terminal iterators
-				hx_node_id n;
-				hx_vector* v;
-				hx_terminal* t;
-				hx_head_iter_current( iter->head_iter, &n, &v );
-				if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
-// 					fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
-					iter->node_mask_b	= n;
-				}
-				if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
-// 					fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
-					iter->node_mask_c	= n;
-				}
-				iter->vector_iter	= hx_vector_new_iter( v );
-				if (iter->node_mask_b > (hx_node_id) 0) {
-					if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
-						goto NEXTHEAD;
-					}
-				}
-				
-				hx_vector_iter_current( iter->vector_iter, &n, &t );
-				if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
-// 					fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
-					iter->node_mask_c	= n;
-				}
-				iter->terminal_iter	= hx_terminal_new_iter( t );
-				if (iter->node_mask_c > (hx_node_id) 0) {
-					if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
-						goto NEXTVECTOR;
-					}
-				}
-				return 0;
-			} else {
-				hx_free_head_iter( iter->head_iter );
-				iter->head_iter	= NULL;
-				hx_free_vector_iter( iter->vector_iter );
-				iter->vector_iter	= NULL;
-				hx_free_terminal_iter( iter->terminal_iter );
-				iter->terminal_iter	= NULL;
-				iter->finished	= 1;
-				return 1;
-			}
+		int r	= _hx_index_iter_next_vector( iter );
+		if (r != 0) {
+			return r;
 		}
 	}
 	
