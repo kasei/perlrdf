@@ -20,10 +20,19 @@ typedef struct {
 	hx_head* head;
 } hx_index;
 
+enum {
+	HX_INDEX_ITER_DUP_NONE	= 0,
+	HX_INDEX_ITER_DUP_A		= 1,
+	HX_INDEX_ITER_DUP_B		= 2,
+	HX_INDEX_ITER_DUP_C		= 3
+};
+
 typedef struct {
 	hx_index* index;
 	int flags;
 	hx_node_id node_mask_a, node_mask_b, node_mask_c;
+	int node_dup_b;
+	int node_dup_c;
 	hx_head_iter* head_iter;
 	hx_vector_iter* vector_iter;
 	hx_terminal_iter* terminal_iter;

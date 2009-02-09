@@ -3,14 +3,20 @@
 #include "hexastore.h"
 #include "nodemap.h"
 
+hx_node_id node_id_for_string ( char* string, hx_nodemap* map );
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
+
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s hexastore.dat [pred]\n\n", argv[0] );
+	fprintf( stderr, "Usage:\n" );
+	fprintf( stderr, "\t%s hexastore.dat -c\n", argv[0] );
+	fprintf( stderr, "\t%s hexastore.dat -p pred\n", argv[0] );
+	fprintf( stderr, "\t%s hexastore.dat subj pred obj\n", argv[0] );
+	fprintf( stderr, "\n\n" );
 }
 
 int main (int argc, char** argv) {
 	const char* filename	= NULL;
-	char* pred					= NULL;
+	char* arg				= NULL;
 	
 	if (argc < 2) {
 		help(argc, argv);
@@ -19,7 +25,7 @@ int main (int argc, char** argv) {
 
 	filename	= argv[1];
 	if (argc > 2)
-		pred		= argv[2];
+		arg		= argv[2];
 	
 	FILE* f	= fopen( filename, "r" );
 	if (f == NULL) {
@@ -30,7 +36,7 @@ int main (int argc, char** argv) {
 	hx_hexastore* hx	= hx_read( f, 0 );
 	hx_nodemap* map		= hx_nodemap_read( f, 0 );
 	
-	if (pred == NULL) {
+	if (arg == NULL) {
 		int count	= 1;
 		hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 		while (!hx_index_iter_finished( iter )) {
@@ -40,16 +46,21 @@ int main (int argc, char** argv) {
 			hx_index_iter_next( iter );
 		}
 		hx_free_index_iter( iter );
-	} else if (strcmp( pred, "-c" ) == 0) {
+	} else if (strcmp( arg, "-c" ) == 0) {
 		fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
-	} else {
+	} else if (strcmp( arg, "-p" ) == 0) {
+		if (argc != 4) {
+			help(argc, argv);
+			exit(1);
+		}
+		char* pred	= argv[3];
 		hx_node* pnode	= hx_new_node_resource( pred );
 		hx_node_id id	= hx_nodemap_get_node_id( map, pnode );
 		hx_free_node( pnode );
 		
 		if (id > 0) {
 			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
-			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, id, (hx_node_id) 0, HX_SUBJECT );
+			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) -1, id, (hx_node_id) -2, HX_SUBJECT );
 			int count	= 1;
 			while (!hx_index_iter_finished( iter )) {
 				hx_node_id s, p, o;
@@ -61,6 +72,28 @@ int main (int argc, char** argv) {
 		} else {
 			fprintf( stderr, "No such predicate found: '%s'.\n", pred );
 		}
+	} else {
+		if (argc != 5) {
+			help(argc, argv);
+			exit(1);
+		}
+		char* subj	= arg;
+		char* pred	= argv[3];
+		char* obj	= argv[4];
+		
+		hx_node_id sid	= node_id_for_string( subj, map );
+		hx_node_id pid	= node_id_for_string( pred, map );
+		hx_node_id oid	= node_id_for_string( obj, map );
+		fprintf( stderr, "iter (%d,%d,%d) ordered by subject...\n", (int) sid, (int) pid, (int) oid );
+		hx_index_iter* iter	= hx_get_statements( hx, sid, pid, oid, HX_SUBJECT );
+		int count	= 1;
+		while (!hx_index_iter_finished( iter )) {
+			hx_node_id s, p, o;
+			hx_index_iter_current( iter, &s, &p, &o );
+			print_triple( map, s, p, o, count++ );
+			hx_index_iter_next( iter );
+		}
+		hx_free_index_iter( iter );
 	}
 	
 	hx_free_hexastore( hx );
@@ -84,4 +117,25 @@ void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, i
 	free( ss );
 	free( sp );
 	free( so );
+}
+
+hx_node_id node_id_for_string ( char* string, hx_nodemap* map ) {
+	static int var_id	= -100;
+	hx_node_id id;
+	hx_node* node;
+	if (strcmp( string, "-" ) == 0) {
+		id	= (hx_node_id) var_id--;
+	} else if (strcmp( string, "0" ) == 0) {
+		id	= (hx_node_id) 0;
+	} else if (*string == '-') {
+		id	= 0 - atoi( string+1 );
+	} else {
+		node	= hx_new_node_resource( string );
+		id		= hx_nodemap_get_node_id( map, node );
+		hx_free_node( node );
+		if (id <= 0) {
+			fprintf( stderr, "No such subject found: '%s'.\n", string );
+		}
+	}
+	return id;
 }

@@ -97,23 +97,31 @@ int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o
 
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position ) {
 	int index_order[3];
-	int i	= 0;
+	int i		= 0;
+	int vars	= 0;
 	int used[3]	= { 0, 0, 0 };
-	if (s != (hx_node_id) 0) {
+	if (s > (hx_node_id) 0) {
 		index_order[ i++ ]	= HX_SUBJECT;
 		used[0]++;
+	} else if (s < (hx_node_id) 0) {
+		vars++;
 	}
-	if (p != (hx_node_id) 0) {
+	if (p > (hx_node_id) 0) {
 		index_order[ i++ ]	= HX_PREDICATE;
 		used[1]++;
+	} else if (p < (hx_node_id) 0) {
+		vars++;
 	}
-	if (o != (hx_node_id) 0) {
+	if (o > (hx_node_id) 0) {
 		index_order[ i++ ]	= HX_OBJECT;
 		used[2]++;
+	} else if (o < (hx_node_id) 0) {
+		vars++;
 	}
 	
-	if (i < 3) {
+	if (i < 3 && !(used[order_position])) {
 		index_order[ i++ ]	= order_position;
+		used[order_position]++;
 	}
 	
 	if (i == 0) {
@@ -141,11 +149,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 		case 0:
 			switch (index_order[1]) {
 				case 1:
-// 					fprintf( stderr, "using spo index\n" );
+ 					fprintf( stderr, "using spo index\n" );
 					index	= hx->spo;
 					break;
 				case 2:
-// 					fprintf( stderr, "using sop index\n" );
+ 					fprintf( stderr, "using sop index\n" );
 					index	= hx->sop;
 					break;
 			}
@@ -153,11 +161,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 		case 1:
 			switch (index_order[1]) {
 				case 0:
-// 					fprintf( stderr, "using pso index\n" );
+ 					fprintf( stderr, "using pso index\n" );
 					index	= hx->pso;
 					break;
 				case 2:
-// 					fprintf( stderr, "using pos index\n" );
+ 					fprintf( stderr, "using pos index\n" );
 					index	= hx->pos;
 					break;
 			}
@@ -165,11 +173,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 		case 2:
 			switch (index_order[1]) {
 				case 0:
-// 					fprintf( stderr, "using osp index\n" );
+ 					fprintf( stderr, "using osp index\n" );
 					index	= hx->osp;
 					break;
 				case 1:
-// 					fprintf( stderr, "using ops index\n" );
+ 					fprintf( stderr, "using ops index\n" );
 					index	= hx->ops;
 					break;
 			}
@@ -177,7 +185,10 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 	}
 	
 	hx_node_id triple_ordered[3]	= { s, p, o };
-	hx_index_iter* iter	= hx_index_new_iter1( index, triple_ordered[index->order[0]], triple_ordered[index->order[1]], triple_ordered[index->order[2]] );
+	hx_node_id a	= triple_ordered[index->order[0]];
+	hx_node_id b	= triple_ordered[index->order[1]];
+	hx_node_id c	= triple_ordered[index->order[2]];
+	hx_index_iter* iter	= hx_index_new_iter1( index, a, b, c );
 	return iter;
 }
 
