@@ -4,6 +4,10 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter );
 int _hx_index_iter_next_head ( hx_index_iter* iter );
 int _hx_index_iter_next_vector ( hx_index_iter* iter );
 
+int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n );
+int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n );
+
+
 /**
 
 	Arguments index_order = {a,b,c} map the positions of a triple to the
@@ -281,14 +285,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		hx_node_id n;
 		hx_vector* v;
 		hx_head_iter_current( iter->head_iter, &n, &v );
-		if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
-// 			fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
-			iter->node_mask_b	= n;
-		}
-		if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
-// 			fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
-			iter->node_mask_c	= n;
-		}
+		_hx_index_got_head_trigger( iter, n );
 		
 		if (iter->node_mask_a > (hx_node_id) 0 && n != iter->node_mask_a) {
 			break;
@@ -308,11 +305,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		while (!hx_vector_iter_finished( iter->vector_iter )) {
 			hx_terminal* t;
 			hx_vector_iter_current( iter->vector_iter, &n, &t );
-// 			fprintf( stderr, "Got a new vector item: %d\n", (int) n );
-			if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
-// 				fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
-				iter->node_mask_c	= n;
-			}
+			_hx_index_got_vector_trigger( iter, n );
 			if (iter->node_mask_b > (hx_node_id) 0 && n != iter->node_mask_b) {
 				break;
 			}
@@ -366,14 +359,7 @@ NEXTHEAD:
 		hx_vector* v;
 		hx_terminal* t;
 		hx_head_iter_current( iter->head_iter, &n, &v );
-		if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
-// 			fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
-			iter->node_mask_b	= n;
-		}
-		if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
-// 			fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
-			iter->node_mask_c	= n;
-		}
+		_hx_index_got_head_trigger( iter, n );
 		iter->vector_iter	= hx_vector_new_iter( v );
 		if (iter->node_mask_b > (hx_node_id) 0) {
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
@@ -382,10 +368,7 @@ NEXTHEAD:
 		}
 		
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
-		if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
-// 			fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
-			iter->node_mask_c	= n;
-		}
+		_hx_index_got_vector_trigger( iter, n );
 		iter->terminal_iter	= hx_terminal_new_iter( t );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
@@ -418,11 +401,7 @@ NEXTVECTOR:
 		hx_node_id n;
 		hx_terminal* t;
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
-// 		fprintf( stderr, "Got a new vector item: %d\n", (int) n );
-		if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
-// 			fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
-			iter->node_mask_c	= n;
-		}
+		_hx_index_got_vector_trigger( iter, n );
 		iter->terminal_iter	= hx_terminal_new_iter( t );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
@@ -486,3 +465,20 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 	}
 }
 
+int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n ) {
+	if (HX_INDEX_ITER_DUP_A == iter->node_dup_b) {
+// 		fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
+		iter->node_mask_b	= n;
+	}
+		if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
+// 		fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
+			iter->node_mask_c	= n;
+		}
+}
+
+int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
+	if (HX_INDEX_ITER_DUP_B == iter->node_dup_c) {
+// 		fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
+		iter->node_mask_c	= n;
+	}
+}
