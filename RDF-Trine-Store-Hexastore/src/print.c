@@ -54,12 +54,9 @@ int main (int argc, char** argv) {
 			exit(1);
 		}
 		char* pred	= argv[3];
-		hx_node* pnode	= hx_new_node_resource( pred );
-		hx_node_id id	= hx_nodemap_get_node_id( map, pnode );
-		hx_free_node( pnode );
-		
+		hx_node_id id	= node_id_for_string( pred, map );
 		if (id > 0) {
-			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
+//			fprintf( stderr, "iter (*,%d,*) ordered by subject...\n", (int) id );
 			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) -1, id, (hx_node_id) -2, HX_SUBJECT );
 			int count	= 1;
 			while (!hx_index_iter_finished( iter )) {
@@ -69,8 +66,6 @@ int main (int argc, char** argv) {
 				hx_index_iter_next( iter );
 			}
 			hx_free_index_iter( iter );
-		} else {
-			fprintf( stderr, "No such predicate found: '%s'.\n", pred );
 		}
 	} else {
 		if (argc != 5) {
@@ -84,7 +79,7 @@ int main (int argc, char** argv) {
 		hx_node_id sid	= node_id_for_string( subj, map );
 		hx_node_id pid	= node_id_for_string( pred, map );
 		hx_node_id oid	= node_id_for_string( obj, map );
-		fprintf( stderr, "iter (%d,%d,%d) ordered by subject...\n", (int) sid, (int) pid, (int) oid );
+//		fprintf( stderr, "iter (%d,%d,%d) ordered by subject...\n", (int) sid, (int) pid, (int) oid );
 		hx_index_iter* iter	= hx_get_statements( hx, sid, pid, oid, HX_SUBJECT );
 		int count	= 1;
 		while (!hx_index_iter_finished( iter )) {
