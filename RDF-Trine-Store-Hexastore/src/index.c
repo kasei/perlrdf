@@ -180,7 +180,7 @@ uint64_t hx_index_triples_count ( hx_index* index ) {
 }
 
 size_t hx_index_memory_size ( hx_index* i ) {
-	uint64_t size	= sizeof( hx_index ) + hx_head_memory_size( i->head );
+	size_t size	= sizeof( hx_index ) + hx_head_memory_size( i->head );
 	return size;
 }
 
@@ -470,10 +470,11 @@ int _hx_index_got_head_trigger ( hx_index_iter* iter, hx_node_id n ) {
 // 		fprintf( stderr, "Got a new head item... masking vector values to %d...\n", (int) n );
 		iter->node_mask_b	= n;
 	}
-		if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
+	if (HX_INDEX_ITER_DUP_A == iter->node_dup_c) {
 // 		fprintf( stderr, "Got a new head item... masking object values to %d...\n", (int) n );
-			iter->node_mask_c	= n;
-		}
+		iter->node_mask_c	= n;
+	}
+	return 0;
 }
 
 int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
@@ -481,4 +482,5 @@ int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
 // 		fprintf( stderr, "Got a new vector item... masking object values to %d...\n", (int) n );
 		iter->node_mask_c	= n;
 	}
+	return 0;
 }
