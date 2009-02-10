@@ -2,13 +2,11 @@
 #include <stdio.h>
 #include <raptor.h>
 #include "hexastore.h"
-#include "nodemap.h"
 #include "node.h"
 
 #define TRIPLES_BATCH_SIZE	25000
 typedef struct {
-	hx_hexastore* h;
-	hx_nodemap* m;
+	hx_hexastore* hx;
 	hx_triple triples[ TRIPLES_BATCH_SIZE ];
 	int count;
 } triplestore;
@@ -48,8 +46,7 @@ int main (int argc, char** argv) {
 		pred		= argv[4];
 	
 	index.count		= 0;
-	index.h	= hx_new_hexastore();
-	index.m	= hx_new_nodemap();
+	index.hx	= hx_new_hexastore();
 	printf( "hx_index: %p\n", (void*) &index );
 	
 	FILE* f	= fopen( output_filename, "w" );
@@ -72,18 +69,12 @@ int main (int argc, char** argv) {
 
 	fprintf( stderr, "\n" );
 	
-	if (hx_write( index.h, f ) != 0) {
+	if (hx_write( index.hx, f ) != 0) {
 		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 		return 1;
 	}
 	
-	if (hx_nodemap_write( index.m, f ) != 0) {
-		fprintf( stderr, "*** Couldn't write nodemap to disk.\n" );
-		return 1;
-	}
-	
-	hx_free_hexastore( index.h );
-	hx_free_nodemap( index.m );
+	hx_free_hexastore( index.hx );
 	return 0;
 }
 
@@ -150,7 +141,8 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 	
 // 	char* nodestr	= malloc( strlen( value ) + 2 );
 // 	sprintf( nodestr, "%c%s", node_type, value );
-	id	= hx_nodemap_add_node( index->m, newnode );
+	
+	id	= hx_nodemap_add_node( hx_get_nodemap( index->hx ), newnode );
 // 	free( nodestr );
 	
 	if (needs_free) {
@@ -172,14 +164,14 @@ void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
 	index->triples[ i ].subject		= s;
 	index->triples[ i ].predicate	= p;
 	index->triples[ i ].object		= o;
-//	hx_add_triple( index->h, s, p, o );
+//	hx_add_triple( index->hx, s, p, o );
 	if ((++count % 25000) == 0)
 		fprintf( stderr, "\rparsed %d triples", count );
 }
 
 int add_triples_batch ( triplestore* index ) {
 	if (index->count > 0) {
-		hx_add_triples( index->h, index->triples, index->count );
+		hx_add_triples( index->hx, index->triples, index->count );
 		index->count	= 0;
 	}
 	return 0;

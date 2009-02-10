@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "hexastore.h"
-#include "nodemap.h"
 
 hx_node_id node_id_for_string ( char* string, hx_nodemap* map );
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
@@ -36,7 +35,7 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_hexastore* hx	= hx_read( f, 0 );
-	hx_nodemap* map		= hx_nodemap_read( f, 0 );
+	hx_nodemap* map		= hx_get_nodemap( hx );;
 	
 	if (arg == NULL) {
 		int count	= 1;
@@ -170,7 +169,6 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_free_hexastore( hx );
-	hx_free_nodemap( map );
 	return 0;
 }
 

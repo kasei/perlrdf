@@ -4,6 +4,7 @@ void* _hx_add_triple_threaded (void* arg);
 
 hx_hexastore* hx_new_hexastore ( void ) {
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx->map			= hx_new_nodemap();
 	hx->spo			= hx_new_index( HX_INDEX_ORDER_SPO );
 	hx->sop			= hx_new_index( HX_INDEX_ORDER_SOP );
 	hx->pso			= hx_new_index( HX_INDEX_ORDER_PSO );
@@ -14,6 +15,7 @@ hx_hexastore* hx_new_hexastore ( void ) {
 }
 
 int hx_free_hexastore ( hx_hexastore* hx ) {
+	hx_free_nodemap( hx->map );
 	hx_free_index( hx->spo );
 	hx_free_index( hx->sop );
 	hx_free_index( hx->pso );
@@ -22,6 +24,10 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 	hx_free_index( hx->ops );
 	free( hx );
 	return 0;
+}
+
+hx_nodemap* hx_get_nodemap ( hx_hexastore* hx ) {
+	return hx->map;
 }
 
 int hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
@@ -241,6 +247,10 @@ uint64_t hx_triples_count ( hx_hexastore* hx ) {
 
 int hx_write( hx_hexastore* h, FILE* f ) {
 	fputc( 'X', f );
+	if (hx_nodemap_write( h->map, f ) != 0) {
+		fprintf( stderr, "*** Error while writing hexastore nodemap to disk.\n" );
+		return 1;
+	}
 	if ((
 		(hx_index_write( h->spo, f )) ||
 		(hx_index_write( h->sop, f )) ||
@@ -264,6 +274,13 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 		return NULL;
 	}
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx->map	= hx_nodemap_read( f, buffer );
+	if (hx->map == NULL) {
+		fprintf( stderr, "*** NULL nodemap returned while trying to read hexastore from disk.\n" );
+		free( hx );
+		return NULL;
+	}
+	
 	hx->spo	= hx_index_read( f, buffer );
 	hx->sop	= hx_index_read( f, buffer );
 	hx->pso	= hx_index_read( f, buffer );

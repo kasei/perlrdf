@@ -15,6 +15,7 @@
 
 #include "hexastore_types.h"
 #include "variablebindings.h"
+#include "nodemap.h"
 #include "index.h"
 #include "terminal.h"
 #include "vector.h"
@@ -34,6 +35,7 @@ static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
 static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
+	hx_nodemap* map;
 	hx_index* spo;
 	hx_index* sop;
 	hx_index* pso;
@@ -65,6 +67,8 @@ int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o
 int hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes );
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position );
 uint64_t hx_triples_count( hx_hexastore* hx );
+
+hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 
 int _hx_iter_vb_finished ( void* iter );
 int _hx_iter_vb_current ( void* iter, void* results );

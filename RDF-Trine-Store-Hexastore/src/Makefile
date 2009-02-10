@@ -20,7 +20,7 @@ print: print.c $(OBJECTS)
 avl.o: avl.c avl.h hexastore_types.h
 	$(CC) $(INC) -c avl.c
 
-hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastore_types.h variablebindings.h
+hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastore_types.h variablebindings.h nodemap.h
 	$(CC) $(INC) -c hexastore.c
 
 index.o: index.c index.h terminal.h vector.h head.h hexastore_types.h
