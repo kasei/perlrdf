@@ -5,11 +5,12 @@ int _hx_vector_iter_prime_first_result( hx_vector_iter* iter );
 
 
 hx_vector* hx_new_vector( void ) {
-	hx_vector* vector	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
-	hx_vector_item* p	= (hx_vector_item*) calloc( VECTOR_LIST_ALLOC_SIZE, sizeof( hx_vector_item ) );
-	vector->ptr		= p;
-	vector->allocated	= VECTOR_LIST_ALLOC_SIZE;
-	vector->used		= 0;
+	hx_vector* vector		= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
+	hx_vector_item* p		= (hx_vector_item*) calloc( VECTOR_LIST_ALLOC_SIZE, sizeof( hx_vector_item ) );
+	vector->ptr				= p;
+	vector->allocated		= VECTOR_LIST_ALLOC_SIZE;
+	vector->used			= 0;
+	vector->triples_count	= 0;
 	return vector;
 }
 
@@ -107,6 +108,10 @@ uint64_t hx_vector_triples_count ( hx_vector* v ) {
 		count	+= c;
 	}
 	return count;
+}
+
+void hx_vector_triples_count_add ( hx_vector* v, int c ) {
+	v->triples_count	+= c;
 }
 
 size_t hx_vector_memory_size ( hx_vector* v ) {

@@ -105,14 +105,19 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, 
 		hx_vector_add_terminal( v, index_ordered[1], t );
 	}
 	
-	hx_terminal_add_node( t, index_ordered[2] );
+	int added	= hx_terminal_add_node( t, index_ordered[2] );
+	if (added == 0) {
+		hx_head_triples_count_add( h, 1);
+		hx_vector_triples_count_add( v, 1 );
+	}
+	
 	if (r_terminal != NULL) {
 		*r_terminal	= t;
 	}
 	return 0;
 }
 
-int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o ) {
+int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int added ) {
 	hx_node_id triple_ordered[3];
 	triple_ordered[0]	= s;
 	triple_ordered[1]	= p;
@@ -133,6 +138,11 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node
 	}
 	
 	hx_vector_add_terminal( v, index_ordered[1], t );
+	if (added == 0) {
+		hx_head_triples_count_add( h, 1);
+		hx_vector_triples_count_add( v, 1 );
+	}
+	
 	return 0;
 }
 

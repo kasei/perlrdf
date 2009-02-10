@@ -22,6 +22,7 @@ typedef struct {
 } hx_head_item;
 
 typedef struct {
+	uint64_t triples_count;
 	struct avl_table* tree;
 } hx_head;
 
@@ -40,6 +41,8 @@ hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n );
 int hx_head_remove_vector ( hx_head* h, hx_node_id n );
 list_size_t hx_head_size ( hx_head* h );
 uint64_t hx_head_triples_count ( hx_head* h );
+void hx_head_triples_count_add ( hx_head* h, int c );
+
 size_t hx_head_memory_size ( hx_head* h );
 
 int hx_head_write( hx_head* t, FILE* f );

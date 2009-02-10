@@ -26,14 +26,21 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 
 int hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_terminal* t;
-	hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
-	hx_index_add_triple_with_terminal( hx->pso, t, s, p, o );
+	
+	{
+		int added	= hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
+	}
 
-	hx_index_add_triple_terminal( hx->sop, s, p, o, &t );
-	hx_index_add_triple_with_terminal( hx->osp, t, s, p, o );
-
-	hx_index_add_triple_terminal( hx->pos, s, p, o, &t );
-	hx_index_add_triple_with_terminal( hx->ops, t, s, p, o );
+	{
+		int added	= hx_index_add_triple_terminal( hx->sop, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->osp, t, s, p, o, added );
+	}
+	
+	{
+		int added	= hx_index_add_triple_terminal( hx->pos, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->ops, t, s, p, o, added );
+	}
 	
 	return 0;
 }
@@ -79,8 +86,8 @@ void* _hx_add_triple_threaded (void* arg) {
 		hx_node_id p	= tinfo->triples[i].predicate;
 		hx_node_id o	= tinfo->triples[i].object;
 		hx_terminal* t;
-		hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
-		hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o );
+		int added	= hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
+		hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o, added );
 	}
 	return NULL;
 }
@@ -96,37 +103,63 @@ int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o
 }
 
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position ) {
-	int index_order[3];
 	int i		= 0;
 	int vars	= 0;
-//	fprintf( stderr, "{ %d, %d, %d }\n", (int) s, (int) p, (int) o );
+//	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
 	int used[3]	= { 0, 0, 0 };
 	hx_node_id triple[3]	= { s, p, o };
+	int index_order[3]		= { 0xdeadbeef, 0xdeadbeef, 0xdeadbeef };
+	char* pnames[3]			= { "SUBJECT", "PREDICATE", "OBJECT" };
 	
 	if (s > (hx_node_id) 0) {
+//		fprintf( stderr, "- bound subject\n" );
 		index_order[ i++ ]	= HX_SUBJECT;
-		used[0]++;
+		used[ HX_SUBJECT ]++;
 	} else if (s < (hx_node_id) 0) {
 		vars++;
 	}
 	if (p > (hx_node_id) 0) {
+//		fprintf( stderr, "- bound predicate\n" );
 		index_order[ i++ ]	= HX_PREDICATE;
-		used[1]++;
+		used[ HX_PREDICATE ]++;
 	} else if (p < (hx_node_id) 0) {
 		vars++;
 	}
 	if (o > (hx_node_id) 0) {
+//		fprintf( stderr, "- bound object\n" );
 		index_order[ i++ ]	= HX_OBJECT;
-		used[2]++;
+		used[ HX_OBJECT ]++;
 	} else if (o < (hx_node_id) 0) {
 		vars++;
 	}
 	
+//	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
 	if (i < 3 && !(used[order_position]) && triple[order_position] != (hx_node_id) 0) {
+//		fprintf( stderr, "requested ordering position: %s\n", pnames[order_position] );
 		index_order[ i++ ]	= order_position;
 		used[order_position]++;
 	}
+//	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
 	
+	// check for any duplicated variables. if they haven't been added to the index order, add them now:
+	for (int j = 0; j < 3; j++) {
+		if (!(used[j])) {
+			int current_chosen	= i;
+//			fprintf( stderr, "checking if %s (%d) matches already chosen nodes:\n", pnames[j], (int) triple[j] );
+			for (int k = 0; k < current_chosen; k++) {
+//				fprintf( stderr, "- %s (%d)?\n", pnames[k], triple[ index_order[k] ] );
+				if (triple[index_order[k]] == triple[j] && triple[j] != (hx_node_id) 0) {
+//					fprintf( stderr, "*** MATCHED\n" );
+					if (i < 3) {
+						index_order[ i++ ]	= j;
+						used[ j ]++;
+					}
+				}
+			}
+		}
+	}
+	
+	// add any remaining triple positions to the index order:
 	if (i == 0) {
 		for (int j = 0; j < 3; j++) {
 			if (j != order_position) {

@@ -37,6 +37,7 @@ hx_head* hx_new_head( void ) {
 	head->tree		= avl_create( _hx_head_item_cmp, NULL, &avl_allocator_default );
 #endif
 // 	fprintf( stderr, ">>> allocated tree %p\n", (void*) head->tree );
+	head->triples_count	= 0;
 	return head;
 }
 
@@ -116,6 +117,10 @@ uint64_t hx_head_triples_count ( hx_head* h ) {
 		count	+= c;
 	}
 	return count;
+}
+
+void hx_head_triples_count_add ( hx_head* h, int c ) {
+	h->triples_count	+= c;
 }
 
 size_t hx_head_memory_size ( hx_head* h ) {
