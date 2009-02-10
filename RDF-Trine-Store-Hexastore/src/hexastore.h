@@ -14,6 +14,7 @@
 #include <pthread.h>
 
 #include "hexastore_types.h"
+#include "variablebindings.h"
 #include "index.h"
 #include "terminal.h"
 #include "vector.h"
@@ -48,6 +49,14 @@ typedef struct {
 	int count;
 } hx_thread_info;
 
+typedef struct {
+	hx_index_iter* iter;
+	int size;
+	char** names;
+	int* triple_pos_to_index;
+	char *subject, *predicate, *object;
+} _hx_iter_vb_info;
+
 hx_hexastore* hx_new_hexastore ( void );
 int hx_free_hexastore ( hx_hexastore* hx );
 int hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
@@ -56,6 +65,12 @@ int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o
 int hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes );
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position );
 uint64_t hx_triples_count( hx_hexastore* hx );
+
+int _hx_iter_vb_finished ( void* iter );
+int _hx_iter_vb_current ( void* iter, void* results );
+int _hx_iter_vb_next ( void* iter );	
+int _hx_iter_vb_free ( void* iter );
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 
 int hx_write( hx_hexastore* h, FILE* f );
 hx_hexastore* hx_read( FILE* f, int buffer );

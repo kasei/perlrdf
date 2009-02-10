@@ -11,6 +11,7 @@ void help (int argc, char** argv) {
 	fprintf( stderr, "\t%s hexastore.dat -c\n", argv[0] );
 	fprintf( stderr, "\t%s hexastore.dat -c subj pred obj\n", argv[0] );
 	fprintf( stderr, "\t%s hexastore.dat -p pred\n", argv[0] );
+	fprintf( stderr, "\t%s hexastore.dat -b subj pred obj\n", argv[0] );
 	fprintf( stderr, "\t%s hexastore.dat subj pred obj\n", argv[0] );
 	fprintf( stderr, "\n\n" );
 }
@@ -108,6 +109,34 @@ int main (int argc, char** argv) {
 			}
 			hx_free_index_iter( iter );
 		}
+	} else if (strcmp( arg, "-b" ) == 0) {
+		if (argc != 6) {
+			help(argc, argv);
+			exit(1);
+		}
+		char* subj	= argv[3];
+		char* pred	= argv[4];
+		char* obj	= argv[5];
+		
+		hx_node_id sid	= node_id_for_string( subj, map );
+		hx_node_id pid	= node_id_for_string( pred, map );
+		hx_node_id oid	= node_id_for_string( obj, map );
+		
+		hx_index_iter* titer	= hx_get_statements( hx, sid, pid, oid, HX_SUBJECT );
+		char* s	= (sid == 0) ? NULL : "subj";
+		char* p	= (pid == 0) ? NULL : "pred";
+		char* o	= (oid == 0) ? NULL : "obj";
+		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o );
+		int count	= 1;
+		while (!hx_variablebindings_iter_finished( iter )) {
+			hx_variablebindings* b;
+			hx_node_id s, p, o;
+			hx_variablebindings_iter_current( iter, &b );
+			hx_variablebindings_debug( b, map );
+			hx_free_variablebindings( b, 0 );
+			hx_variablebindings_iter_next( iter );
+		}
+		hx_free_variablebindings_iter( iter, 0 );
 	} else {
 		if (argc != 5) {
 			help(argc, argv);

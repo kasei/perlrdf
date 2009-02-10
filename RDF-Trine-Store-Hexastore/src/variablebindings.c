@@ -49,78 +49,33 @@ hx_node_id hx_variablebindings_node_for_binding ( hx_variablebindings* b, int co
 	return b->nodes[ column ];
 }
 
-hx_variablebindings_iter* hx_variablebindings_new_iterator_triples ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name ) {
-	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) calloc( 1, sizeof( hx_variablebindings_iter ) );
-	iter->type	= 'I';
-	iter->size	= 0;
-	if (subj_name != NULL)
-		iter->size++;
-	if (pred_name != NULL)
-		iter->size++;
-	if (obj_name != NULL)
-		iter->size++;
-	
-	int j	= 0;
-	iter->names		= calloc( iter->size, sizeof( char* ) );
-	iter->indexes	= calloc( iter->size, sizeof( int ) );
-	if (subj_name != NULL) {
-		int idx	= j++;
-		iter->names[ idx ]		= subj_name;
-		iter->indexes[ idx ]	= 0;
-	}
-	if (pred_name != NULL) {
-		int idx	= j++;
-		iter->names[ idx ]		= pred_name;
-		iter->indexes[ idx ]	= 1;
-	}
-	if (obj_name != NULL) {
-		int idx	= j++;
-		iter->names[ idx ]		= obj_name;
-		iter->indexes[ idx ]	= 2;
-	}
-	
-	iter->ptr	= (void*) i;
+
+
+hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_iter_vtable* vtable, void* ptr ) {
+	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
+	iter->vtable	= vtable;
+	iter->ptr		= ptr;
 	return iter;
 }
 
-int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter ) {
-	if (iter->type == 'I') {
-		hx_free_index_iter( (hx_index_iter*) iter->ptr );
+int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable ) {
+	iter->vtable->free( iter->ptr );
+	if (free_vtable) {
+		free( iter->vtable );
 	}
 	free( iter );
 	return 0;
 }
 
 int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter ) {
-	if (iter->type == 'I') {
-		hx_index_iter* i	= (hx_index_iter*) iter->ptr;
-		return hx_index_iter_finished( i );
-	}
-	return 0;
+	return iter->vtable->finished( iter->ptr );
 }
 
 int hx_variablebindings_iter_current ( hx_variablebindings_iter* iter, hx_variablebindings** b ) {
-	if (iter->type == 'I') {
-		hx_index_iter* i	= (hx_index_iter*) iter->ptr;
-		hx_node_id* nodes	= calloc( iter->size, sizeof( hx_node_id ) );
-		hx_node_id n[3];
-		hx_index_iter_current( i, &(n[0]), &(n[1]), &(n[2]) );
-		int j	= 0;
-		for (int j = 0; j < iter->size; j++) {
-			nodes[j]	= n[ iter->indexes[j] ];
-		}
-		
-		*b	= hx_new_variablebindings( iter->size, iter->names, nodes );
-		return 0;
-	}
-	return 0;
+	return iter->vtable->current( iter->ptr, b );
 }
 
 int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter ) {
-	if (iter->type == 'I') {
-		hx_index_iter* i	= (hx_index_iter*) iter->ptr;
-		return hx_index_iter_next( i );
-	}
-	return 0;
+	return iter->vtable->next( iter->ptr );
 }
 
