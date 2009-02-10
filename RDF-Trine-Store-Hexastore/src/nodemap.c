@@ -16,8 +16,9 @@ int _hx_node_cmp_str ( const void* a, const void* b, void* param ) {
 
 void _hx_free_node_item (void *avl_item, void *avl_param) {
 	hx_nodemap_item* i	= (hx_nodemap_item*) avl_item;
-	if (i->node != NULL)
+	if (i->node != NULL) {
 		hx_free_node( i->node );
+	}
 	free( i );
 }
 
@@ -42,7 +43,11 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 	i.node	= node;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
+// 		char* nodestr;
+// 		hx_node_string( node, &nodestr );
 // 		fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
+// 		free(nodestr);
+		
 		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
 		item->node	= node;
 		item->id	= m->next_id++;
@@ -51,7 +56,11 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 // 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
 		return item->id;
 	} else {
+// 		char* nodestr;
+// 		hx_node_string( node, &nodestr );
 // 		fprintf( stderr, "nodemap key '%s' alread exists\n", nodestr );
+// 		free( nodestr );
+		hx_free_node( node );
 		return item->id;
 	}
 }

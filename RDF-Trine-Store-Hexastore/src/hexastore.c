@@ -102,7 +102,7 @@ int hx_remove_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o
 	return 0;
 }
 
-hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position ) {
+int hx_get_ordered_index( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position, hx_index** index, hx_node_id* nodes ) {
 	int i		= 0;
 	int vars	= 0;
 //	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
@@ -180,17 +180,16 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 		}
 	}
 	
-	hx_index* index;
 	switch (index_order[0]) {
 		case 0:
 			switch (index_order[1]) {
 				case 1:
 //					fprintf( stderr, "using spo index\n" );
-					index	= hx->spo;
+					*index	= hx->spo;
 					break;
 				case 2:
 //					fprintf( stderr, "using sop index\n" );
-					index	= hx->sop;
+					*index	= hx->sop;
 					break;
 			}
 			break;
@@ -198,11 +197,11 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 			switch (index_order[1]) {
 				case 0:
 //					fprintf( stderr, "using pso index\n" );
-					index	= hx->pso;
+					*index	= hx->pso;
 					break;
 				case 2:
 //					fprintf( stderr, "using pos index\n" );
-					index	= hx->pos;
+					*index	= hx->pos;
 					break;
 			}
 			break;
@@ -210,21 +209,28 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, 
 			switch (index_order[1]) {
 				case 0:
 //					fprintf( stderr, "using osp index\n" );
-					index	= hx->osp;
+					*index	= hx->osp;
 					break;
 				case 1:
 //					fprintf( stderr, "using ops index\n" );
-					index	= hx->ops;
+					*index	= hx->ops;
 					break;
 			}
 			break;
 	}
 	
 	hx_node_id triple_ordered[3]	= { s, p, o };
-	hx_node_id a	= triple_ordered[index->order[0]];
-	hx_node_id b	= triple_ordered[index->order[1]];
-	hx_node_id c	= triple_ordered[index->order[2]];
-	hx_index_iter* iter	= hx_index_new_iter1( index, a, b, c );
+	nodes[0]	= triple_ordered[ (*index)->order[0] ];
+	nodes[1]	= triple_ordered[ (*index)->order[1] ];
+	nodes[2]	= triple_ordered[ (*index)->order[2] ];
+	return 0;
+}
+
+hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o, int order_position ) {
+	hx_node_id index_ordered[3];
+	hx_index* index;
+	hx_get_ordered_index( hx, s, p, o, order_position, &index, index_ordered );
+	hx_index_iter* iter	= hx_index_new_iter1( index, index_ordered[0], index_ordered[1], index_ordered[2] );
 	return iter;
 }
 

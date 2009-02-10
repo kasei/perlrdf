@@ -9,6 +9,7 @@ void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, i
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage:\n" );
 	fprintf( stderr, "\t%s hexastore.dat -c\n", argv[0] );
+	fprintf( stderr, "\t%s hexastore.dat -c subj pred obj\n", argv[0] );
 	fprintf( stderr, "\t%s hexastore.dat -p pred\n", argv[0] );
 	fprintf( stderr, "\t%s hexastore.dat subj pred obj\n", argv[0] );
 	fprintf( stderr, "\n\n" );
@@ -47,7 +48,47 @@ int main (int argc, char** argv) {
 		}
 		hx_free_index_iter( iter );
 	} else if (strcmp( arg, "-c" ) == 0) {
-		fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
+		if (argc == 4) {
+			char* str	= argv[3];
+			
+			hx_node_id id	= node_id_for_string( str, map );
+			for (int i = 0; i < 3; i++) {
+				hx_index* index;
+				hx_node_id index_ordered[3];
+				hx_node_id triple[3]	= { 0, 0, 0 };
+				triple[i]	= id;
+				hx_get_ordered_index( hx, triple[0], triple[1], triple[2], HX_SUBJECT, &index, index_ordered );
+				hx_head* head	= index->head;
+				hx_vector* vector	= hx_head_get_vector( head, index_ordered[0] );
+				
+				fprintf( stdout, "{" );
+				for (int z = 0; z < 3; z++) {
+					if (triple[z] > (hx_node_id) 0) {
+						char* string;
+						hx_node* node	= hx_nodemap_get_node( map, triple[z] );
+						if (node == NULL) {
+							fprintf( stderr, "*** No such node %d\n", (int) triple[z] );
+						} else {
+							hx_node_string( node, &string );
+							fprintf( stdout, " %s", string );
+						}
+					} else {
+						fprintf( stdout, "_" );
+					}
+					if (z < 2) {
+						fprintf( stdout, ", " );
+					}
+				}
+				fprintf( stdout, " } -> " );
+				if (vector != NULL) {
+					fprintf( stdout, "%d triples\n", (int) hx_vector_triples_count( vector ) );
+				} else {
+					fprintf( stdout, "0 triples\n" );
+				}
+			}
+		} else {
+			fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
+		}
 	} else if (strcmp( arg, "-p" ) == 0) {
 		if (argc != 4) {
 			help(argc, argv);

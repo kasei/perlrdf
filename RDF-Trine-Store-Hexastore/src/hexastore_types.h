@@ -22,4 +22,6 @@ typedef struct {
 #define HX_PREDICATE	1
 #define HX_OBJECT		2
 
+static char* HX_POSITION_NAMES[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
+
 #endif

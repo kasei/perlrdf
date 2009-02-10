@@ -56,7 +56,7 @@ int hx_free_head ( hx_head* head ) {
 
 int hx_head_debug ( const char* header, hx_head* h ) {
 	char indent[ strlen(header) * 2 + 5 ];
-	fprintf( stderr, "%s{{\n", header );
+	fprintf( stderr, "%s [%d]{{\n", header, (int) h->triples_count );
 	sprintf( indent, "%s%s  ", header, header );
 
 	struct avl_traverser iter;
@@ -108,15 +108,16 @@ list_size_t hx_head_size ( hx_head* h ) {
 }
 
 uint64_t hx_head_triples_count ( hx_head* h ) {
-	uint64_t count	= 0;
-	struct avl_traverser iter;
-	avl_t_init( &iter, h->tree );
-	hx_head_item* item;
-	while ((item = (hx_head_item*) avl_t_next( &iter )) != NULL) {
-		uint64_t c	= hx_vector_triples_count( item->vector );
-		count	+= c;
-	}
-	return count;
+	return h->triples_count;
+// 	uint64_t count	= 0;
+// 	struct avl_traverser iter;
+// 	avl_t_init( &iter, h->tree );
+// 	hx_head_item* item;
+// 	while ((item = (hx_head_item*) avl_t_next( &iter )) != NULL) {
+// 		uint64_t c	= hx_vector_triples_count( item->vector );
+// 		count	+= c;
+// 	}
+// 	return count;
 }
 
 void hx_head_triples_count_add ( hx_head* h, int c ) {
@@ -201,6 +202,7 @@ int hx_head_write( hx_head* h, FILE* f ) {
 	fputc( 'H', f );
 	list_size_t used	= (list_size_t) avl_count( h->tree );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
+	fwrite( &( h->triples_count ), sizeof( uint64_t ), 1, f );
 	hx_head_iter* iter	= hx_head_new_iter( h );
 	while (!hx_head_iter_finished( iter )) {
 		hx_node_id n;
@@ -228,6 +230,10 @@ hx_head* hx_head_read( FILE* f, int buffer ) {
 		return NULL;
 	} else {
 		hx_head* h	= hx_new_head();
+		read	= fread( &(h->triples_count), sizeof( uint64_t ), 1, f );
+		if (read == 0) {
+			return NULL;
+		}
 		for (int i = 0; i < used; i++) {
 			hx_node_id n;
 			hx_vector* v;

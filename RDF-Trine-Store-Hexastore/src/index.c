@@ -170,7 +170,11 @@ int hx_index_remove_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_nod
 		return 1;
 	}
 	
-	hx_terminal_remove_node( t, index_ordered[2] );
+	int removed	= hx_terminal_remove_node( t, index_ordered[2] );
+	if (removed == 0) {
+		hx_head_triples_count_add( h, -1 );
+		hx_vector_triples_count_add( v, -1 );
+	}
 	
 	if (hx_terminal_size( t ) == 0) {
 		// no more nodes in this terminal list... remove it from the vector.

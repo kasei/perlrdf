@@ -1,6 +1,6 @@
 CFLAGS	=	-std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
-LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
+LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o
 
 all: test parse print optimize
@@ -9,7 +9,7 @@ test: test.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o test test.c $(OBJECTS)
 
 parse: parse.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o parse -lraptor parse.c $(OBJECTS)
 
 optimize: optimize.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o optimize optimize.c $(OBJECTS)

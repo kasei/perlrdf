@@ -9,10 +9,14 @@ hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_i
 }
 
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
-	free( b->nodes );
 	if (free_names > 0) {
+		for (int i = 0; i < b->size; i++) {
+			free( b->names[ i ] );
+		}
 		free( b->names );
 	}
+	free( b->nodes );
+	free( b );
 	return 0;
 }
 
@@ -23,14 +27,18 @@ void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m ) {
 	for (int i = 0; i < b->size; i++) {
 		hx_node_id id	= b->nodes[ i ];
 		node	= hx_nodemap_get_node( m, id );
+		if (node == NULL) {
+			fprintf( stderr, "*** Node %d doesn't exist in nodemap.\n", (int) id );
+		}
 		hx_node_string( node, &string );
 		fprintf( stderr, "%s = %s", b->names[i], string );
+		free( string );
 		if (i < (b->size - 1)) {
 			fprintf( stderr, "," );
 		}
 		fprintf( stderr, " " );
 	}
-	fprintf( stderr, " }" );
+	fprintf( stderr, " }\n" );
 }
 
 char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column ) {

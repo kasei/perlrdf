@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
+#include "variablebindings.h"
 
 void head_test (void);
 void vector_test (void);
@@ -12,18 +13,49 @@ void hexastore_test ( void );
 void nodemap_test ( void );
 void terminal_store_test ( void );
 void vector_store_test ( void );
+void bindings_test (void);
 
-int main ( void ) {
+int main ( int argc, char** argv ) {
+	bindings_test();
 //	terminal_store_test();
-	vector_store_test();
+//	vector_store_test();
 //	nodemap_test();
 //	hexastore_test();
 // 	index_test();
-// 	head_test();
+//	head_test();
 // 	vector_test();
 // 	terminal_test();
 // 	memory_test();
 	return 0;
+}
+
+void bindings_test (void) {
+	char** names	= calloc( 3, sizeof( char* ) );
+	names[0]		= malloc(2);
+	names[1]		= malloc(8);
+	names[2]		= malloc(6);
+	sprintf( names[0], "x" );
+	sprintf( names[1], "squared" );
+	sprintf( names[2], "cubed" );
+	hx_nodemap* map	= hx_new_nodemap();
+	for (int i = 0; i < 10; i++) {
+		hx_node_id* values	= calloc( 3, sizeof( hx_node_id ) );
+		for (int p = 0; p < 3; p++) {
+			int value	= i;
+			for (int j = 0; j < p; j++)
+				value	= value * i;
+			char x[10];
+			sprintf( x, "%d", value );
+			hx_node* node	= hx_new_node_literal( x );
+			values[p]	= hx_nodemap_add_node ( map, node );
+			hx_free_node( node );
+		}
+		
+		hx_variablebindings* b	= hx_new_variablebindings( 3, names, values );
+		hx_variablebindings_debug( b, map );
+		hx_free_variablebindings( b, (i == 9) );
+	}
+	hx_free_nodemap( map );
 }
 
 void vector_store_test ( void ) {

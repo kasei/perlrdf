@@ -85,6 +85,7 @@ int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n ) {
 	int r	= hx_terminal_binary_search( t, n, &i );
 	if (r == -1) {
 		// not in list. do nothing.
+		return 1;
 	} else {
 		// found. need to remove at index i
 		for (int k = i; k < t->used; k++) {

@@ -102,12 +102,13 @@ list_size_t hx_vector_size ( hx_vector* v ) {
 }
 
 uint64_t hx_vector_triples_count ( hx_vector* v ) {
-	uint64_t count	= 0;
-	for (int i = 0; i < v->used; i++) {
-		uint64_t c	= hx_terminal_size( v->ptr[ i ].terminal );
-		count	+= c;
-	}
-	return count;
+	return v->triples_count;
+// 	uint64_t count	= 0;
+// 	for (int i = 0; i < v->used; i++) {
+// 		uint64_t c	= hx_terminal_size( v->ptr[ i ].terminal );
+// 		count	+= c;
+// 	}
+// 	return count;
 }
 
 void hx_vector_triples_count_add ( hx_vector* v, int c ) {
@@ -243,6 +244,7 @@ int hx_vector_iter_seek( hx_vector_iter* iter, hx_node_id n ) {
 int hx_vector_write( hx_vector* v, FILE* f ) {
 	fputc( 'V', f );
 	fwrite( &( v->used ), sizeof( list_size_t ), 1, f );
+	fwrite( &( v->triples_count ), sizeof( uint64_t ), 1, f );
 	for (int i = 0; i < v->used; i++) {
 		fwrite( &( v->ptr[i].node ), sizeof( hx_node_id ), 1, f );
 		hx_terminal_write( v->ptr[i].terminal, f );
@@ -263,6 +265,7 @@ hx_vector* hx_vector_read( FILE* f, int buffer ) {
 	if (read == 0) {
 		return NULL;
 	} else {
+
 		list_size_t allocated;
 		if (buffer == 0) {
 			allocated	= used;
@@ -272,6 +275,10 @@ hx_vector* hx_vector_read( FILE* f, int buffer ) {
 		
 		hx_vector* vector	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
 		hx_vector_item* p	= (hx_vector_item*) calloc( allocated, sizeof( hx_vector_item ) );
+		read	= fread( &(vector->triples_count), sizeof( uint64_t ), 1, f );
+		if (read == 0) {
+			return NULL;
+		}
 		vector->ptr			= p;
 		vector->allocated	= allocated;
 		vector->used		= 0;
