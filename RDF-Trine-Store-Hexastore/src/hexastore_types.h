@@ -18,13 +18,6 @@ typedef struct {
 	hx_node_id object;
 } hx_triple;
 
-typedef struct {
-	int (*finished) ( void* iter );
-	int (*current) ( void* iter, void* results );
-	int (*next) ( void* iter );	
-	int (*free) ( void* iter );
-} hx_iter_vtable;
-
 #define HX_SUBJECT		0
 #define HX_PREDICATE	1
 #define HX_OBJECT		2

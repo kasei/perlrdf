@@ -280,12 +280,13 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 }
 
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name ) {
-	hx_iter_vtable* vtable	= malloc( sizeof( hx_iter_vtable ) );
+	hx_variablebindings_iter_vtable* vtable	= malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_iter_vb_finished;
 	vtable->current		= _hx_iter_vb_current;
 	vtable->next		= _hx_iter_vb_next;
 	vtable->free		= _hx_iter_vb_free;
-	
+	vtable->names		= _hx_iter_vb_names;
+	vtable->columns		= _hx_iter_vb_columns;
 	
 	int size	= 0;
 	if (subj_name != NULL)
@@ -319,7 +320,6 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 		info->names[ idx ]		= obj_name;
 		info->triple_pos_to_index[ idx ]	= 2;
 	}
-	fprintf( stderr, "vb iter: (size %d) (sname %s) (pname %s) (oname %s)\n", info->size, subj_name, pred_name, obj_name );
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return iter;
 }
@@ -357,4 +357,14 @@ int _hx_iter_vb_free ( void* data ) {
 	free( info->names );
 	free( info->triple_pos_to_index );
 	free( info );
+}
+
+int _hx_iter_vb_columns ( void* data ) {
+	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
+	return info->size;
+}
+
+char** _hx_iter_vb_names ( void* data ) {
+	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
+	return info->names;
 }

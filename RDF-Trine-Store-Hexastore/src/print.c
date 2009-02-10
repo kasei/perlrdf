@@ -128,11 +128,19 @@ int main (int argc, char** argv) {
 		char* o	= (oid == 0) ? NULL : "obj";
 		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o );
 		int count	= 1;
+		
+		
+		int size		= hx_variablebindings_iter_columns( iter );
+		char** names	= hx_variablebindings_iter_names( iter );
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;
 			hx_node_id s, p, o;
 			hx_variablebindings_iter_current( iter, &b );
-			hx_variablebindings_debug( b, map );
+			char* string;
+			hx_variablebindings_string( b, map, &string );
+			fprintf( stdout, "%s\n", string );
+			free( string );
+			
 			hx_free_variablebindings( b, 0 );
 			hx_variablebindings_iter_next( iter );
 		}
