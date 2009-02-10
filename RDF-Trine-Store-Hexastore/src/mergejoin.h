@@ -43,4 +43,7 @@ char** _hx_mergejoin_iter_vb_names ( void* iter );
 
 hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs, int lhs_index, hx_variablebindings_iter* rhs, int rhs_index );
 
+
+void hx_mergejoin_run ( void* data, hx_nodemap* map ); // XXX
+
 #endif

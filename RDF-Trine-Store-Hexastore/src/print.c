@@ -162,29 +162,31 @@ int main (int argc, char** argv) {
 		hx_node_id kid	= node_id_for_string( "http://xmlns.com/foaf/0.1/knows", map );
 		hx_node_id tid	= node_id_for_string( to, map );
 
-		hx_index_iter* titer_a	= hx_get_statements( hx, fid, kid, -1, HX_OBJECT );
+		hx_index_iter* titer_a	= hx_get_statements( hx, fid, kid, -99, HX_OBJECT );
 		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "from", NULL, "friend" );
 		
-		hx_index_iter* titer_b	= hx_get_statements( hx, -1, kid, tid, HX_SUBJECT );
+		hx_index_iter* titer_b	= hx_get_statements( hx, -98, kid, tid, HX_SUBJECT );
 		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "friend", NULL, "to" );
 		
 		char** as	= hx_variablebindings_iter_names( iter_a );
 		char** bs	= hx_variablebindings_iter_names( iter_b );
 		fprintf( stderr, "joining A(%s) X B(%s)\n", as[1], bs[0] );
-		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, 1, iter_b, 0 );
 		
-		while (!hx_variablebindings_iter_finished( iter )) {
-			hx_variablebindings* b;
-			hx_node_id s, p, o;
-			hx_variablebindings_iter_current( iter, &b );
-			char* string;
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "%s\n", string );
-			free( string );
-			
-			hx_free_variablebindings( b, 0 );
-			hx_variablebindings_iter_next( iter );
-		}
+ 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, 1, iter_b, 0 );
+		hx_mergejoin_run( iter->ptr, map );
+		
+// 		while (!hx_variablebindings_iter_finished( iter )) {
+// 			hx_variablebindings* b;
+// 			hx_node_id s, p, o;
+// 			hx_variablebindings_iter_current( iter, &b );
+// 			char* string;
+// 			hx_variablebindings_string( b, map, &string );
+// 			fprintf( stdout, "%s\n", string );
+// 			free( string );
+// 			
+// 			hx_free_variablebindings( b, 0 );
+// 			hx_variablebindings_iter_next( iter );
+// 		}
 		
 		hx_free_variablebindings_iter( iter, 1 );
 	} else if (strcmp( arg, "-star" ) == 0) {
@@ -201,19 +203,20 @@ int main (int argc, char** argv) {
 		char** bs	= hx_variablebindings_iter_names( iter_b );
 		fprintf( stderr, "joining A(%s) X B(%s)\n", as[0], bs[0] );
 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, 0, iter_b, 0 );
+		hx_mergejoin_run( iter->ptr, map );
 		
-		while (!hx_variablebindings_iter_finished( iter )) {
-			hx_variablebindings* b;
-			hx_node_id s, p, o;
-			hx_variablebindings_iter_current( iter, &b );
-			char* string;
-			hx_variablebindings_string( b, map, &string );
-			fprintf( stdout, "%s\n", string );
-			free( string );
-			
-			hx_free_variablebindings( b, 0 );
-			hx_variablebindings_iter_next( iter );
-		}
+// 		while (!hx_variablebindings_iter_finished( iter )) {
+// 			hx_variablebindings* b;
+// 			hx_node_id s, p, o;
+// 			hx_variablebindings_iter_current( iter, &b );
+// 			char* string;
+// 			hx_variablebindings_string( b, map, &string );
+// 			fprintf( stdout, "%s\n", string );
+// 			free( string );
+// 			
+// 			hx_free_variablebindings( b, 0 );
+// 			hx_variablebindings_iter_next( iter );
+// 		}
 		
 		hx_free_variablebindings_iter( iter, 1 );
 	} else {

@@ -76,6 +76,10 @@ void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m ) {
 	free( string );
 }
 
+char** hx_variablebindings_names ( hx_variablebindings* b ) {
+	return b->names;
+}
+
 int hx_variablebindings_size ( hx_variablebindings* b ) {
 	return b->size;
 }
