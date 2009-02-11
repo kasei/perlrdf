@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "hexastore.h"
+#include "nodemap.h"
+#include "mergejoin.h"
 
 hx_node_id node_id_for_string ( char* string, hx_nodemap* map );
 void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, int count );
@@ -89,6 +91,14 @@ int main (int argc, char** argv) {
 		} else {
 			fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
 		}
+	} else if (strcmp( arg, "-id" ) == 0) {
+		if (argc != 4) {
+			help(argc, argv);
+			exit(1);
+		}
+		char* uri	= argv[3];
+		hx_node_id id	= node_id_for_string( uri, map );
+		fprintf( stdout, "<%s> == %d\n", uri, (int) id );
 	} else if (strcmp( arg, "-p" ) == 0) {
 		if (argc != 4) {
 			help(argc, argv);
@@ -129,7 +139,7 @@ int main (int argc, char** argv) {
 		int count	= 1;
 		
 		
-		int size		= hx_variablebindings_iter_columns( iter );
+		int size		= hx_variablebindings_iter_size( iter );
 		char** names	= hx_variablebindings_iter_names( iter );
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;
@@ -144,6 +154,77 @@ int main (int argc, char** argv) {
 			hx_variablebindings_iter_next( iter );
 		}
 		hx_free_variablebindings_iter( iter, 0 );
+	} else if (strcmp( arg, "-path" ) == 0) {
+		char* from	= argv[3];
+		char* to	= argv[4];
+		
+		hx_node_id fid	= node_id_for_string( from, map );
+		hx_node_id kid	= node_id_for_string( "http://xmlns.com/foaf/0.1/knows", map );
+		hx_node_id tid	= node_id_for_string( to, map );
+
+		hx_index_iter* titer_a	= hx_get_statements( hx, fid, kid, -99, HX_OBJECT );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "from", NULL, "friend" );
+		
+		hx_index_iter* titer_b	= hx_get_statements( hx, -98, kid, tid, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "friend", NULL, "to" );
+		
+		char** as	= hx_variablebindings_iter_names( iter_a );
+		char** bs	= hx_variablebindings_iter_names( iter_b );
+		
+		int ai	= hx_variablebindings_column_index( iter_a, "friend" );
+		int bi	= hx_variablebindings_column_index( iter_b, "friend" );
+		
+		fprintf( stderr, "joining A(%s) X B(%s)\n", as[ ai ], bs[ bi ] );
+		
+ 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, ai, iter_b, bi );
+		
+		while (!hx_variablebindings_iter_finished( iter )) {
+			hx_variablebindings* b;
+			hx_node_id s, p, o;
+			hx_variablebindings_iter_current( iter, &b );
+			char* string;
+			hx_variablebindings_string( b, map, &string );
+			fprintf( stdout, "%s\n", string );
+			free( string );
+			
+			hx_free_variablebindings( b, 0 );
+			hx_variablebindings_iter_next( iter );
+		}
+		
+		hx_free_variablebindings_iter( iter, 1 );
+	} else if (strcmp( arg, "-star" ) == 0) {
+		char* uri	= argv[3];
+		hx_node_id id	= node_id_for_string( uri, map );
+
+		hx_index_iter* titer_a	= hx_get_statements( hx, id, -1, -2, HX_SUBJECT );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "subj", "p1", "o1" );
+		
+		hx_index_iter* titer_b	= hx_get_statements( hx, id, -1, -2, HX_SUBJECT );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "subj", "p2", "o2" );
+		
+		char** as	= hx_variablebindings_iter_names( iter_a );
+		char** bs	= hx_variablebindings_iter_names( iter_b );
+		
+		int ai	= hx_variablebindings_column_index( iter_a, "subj" );
+		int bi	= hx_variablebindings_column_index( iter_b, "subj" );
+		
+		fprintf( stderr, "joining A(%s) X B(%s)\n", as[ai], bs[bi] );
+		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, 0, iter_b, 0 );
+		
+		while (!hx_variablebindings_iter_finished( iter )) {
+			hx_variablebindings* b;
+			hx_node_id s, p, o;
+			hx_variablebindings_iter_current( iter, &b );
+			char* string;
+			hx_variablebindings_string( b, map, &string );
+			fprintf( stdout, "%s\n", string );
+			free( string );
+			
+			hx_free_variablebindings( b, 0 );
+			hx_variablebindings_iter_next( iter );
+		}
+		
+		hx_free_variablebindings_iter( iter, 1 );
 	} else {
 		if (argc != 5) {
 			help(argc, argv);

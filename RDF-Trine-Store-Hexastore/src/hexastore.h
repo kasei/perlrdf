@@ -74,7 +74,7 @@ int _hx_iter_vb_finished ( void* iter );
 int _hx_iter_vb_current ( void* iter, void* results );
 int _hx_iter_vb_next ( void* iter );	
 int _hx_iter_vb_free ( void* iter );
-int _hx_iter_vb_columns ( void* iter );
+int _hx_iter_vb_size ( void* iter );
 char** _hx_iter_vb_names ( void* iter );
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 
