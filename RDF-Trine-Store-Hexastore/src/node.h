@@ -30,20 +30,24 @@
 typedef struct {
 	char type;
 	char* value;
+	int number;
 } hx_node;
 
 typedef struct {
 	char type;
 	char* value;
+	int number;
 	char* lang;
 } hx_node_lang_literal;
 
 typedef struct {
 	char type;
 	char* value;
+	int number;
 	char* dt;
 } hx_node_dt_literal;
 
+hx_node* hx_new_node_variable ( int value );
 hx_node* hx_new_node_resource ( char* value );
 hx_node* hx_new_node_blank ( char* value );
 hx_node* hx_new_node_literal ( char* value );
@@ -54,6 +58,7 @@ int hx_free_node( hx_node* n );
 
 size_t hx_node_alloc_size( hx_node* n );
 
+int hx_node_is_variable ( hx_node* n );
 int hx_node_is_literal ( hx_node* n );
 int hx_node_is_lang_literal ( hx_node* n );
 int hx_node_is_dt_literal ( hx_node* n );
@@ -61,6 +66,7 @@ int hx_node_is_resource ( hx_node* n );
 int hx_node_is_blank ( hx_node* n );
 
 char* hx_node_value ( hx_node* n );
+int hx_node_number ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );
 char* hx_node_dt ( hx_node_dt_literal* n );
 int hx_node_string ( hx_node* n, char** string );

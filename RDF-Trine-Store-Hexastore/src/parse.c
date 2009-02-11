@@ -13,8 +13,8 @@ typedef struct {
 
 void help (int argc, char** argv);
 int main (int argc, char** argv);
-int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, hx_node_id* s, hx_node_id* p, hx_node_id* o );
-hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
+int GTW_get_triple_nodes( triplestore* index, const raptor_statement* triple, hx_node** s, hx_node** p, hx_node** o );
+hx_node* GTW_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt );
 void GTW_handle_triple(void* user_data, const raptor_statement* triple);
 int add_triples_batch ( triplestore* index );
 
@@ -79,13 +79,13 @@ int main (int argc, char** argv) {
 }
 
 
-int GTW_get_triple_identifiers( triplestore* index, const raptor_statement* triple, hx_node_id* s, hx_node_id* p, hx_node_id* o ) {
-	*s	= GTW_identifier_for_node( index, (void*) triple->subject, triple->subject_type, NULL, NULL );
-	*p	= GTW_identifier_for_node( index, (void*) triple->predicate, triple->predicate_type, NULL, NULL );
-	*o	= GTW_identifier_for_node( index, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
+int GTW_get_triple_nodes( triplestore* index, const raptor_statement* triple, hx_node** s, hx_node** p, hx_node** o ) {
+	*s	= GTW_node( index, (void*) triple->subject, triple->subject_type, NULL, NULL );
+	*p	= GTW_node( index, (void*) triple->predicate, triple->predicate_type, NULL, NULL );
+	*o	= GTW_node( index, (void*) triple->object, triple->object_type, (char*) triple->object_literal_language, triple->object_literal_datatype );
 	return 0;
 }
-hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
+hx_node* GTW_node( triplestore* index, void* node, raptor_identifier_type type, char* lang, raptor_uri* dt ) {
 	hx_node_id id	= 0;
 	char node_type;
 	char* value;
@@ -138,24 +138,25 @@ hx_node_id GTW_identifier_for_node( triplestore* index, void* node, raptor_ident
 			return 0;
 	}
 	
-	
-// 	char* nodestr	= malloc( strlen( value ) + 2 );
-// 	sprintf( nodestr, "%c%s", node_type, value );
-	
 	id	= hx_nodemap_add_node( hx_get_nodemap( index->hx ), newnode );
-// 	free( nodestr );
+	if (0) {
+		char* string;
+		hx_node_string( newnode, &string );
+		fprintf( stderr, "*** '%s' => %d\n", string, (int) id );
+		free(string);
+	}
 	
 	if (needs_free) {
 		free( value );
 		needs_free	= 0;
 	}
-	return id;
+	return newnode;
 }
 void GTW_handle_triple(void* user_data, const raptor_statement* triple)	{
 	triplestore* index	= (triplestore*) user_data;
-	hx_node_id s, p, o;
+	hx_node *s, *p, *o;
 	
-	GTW_get_triple_identifiers( index, triple, &s, &p, &o );
+	GTW_get_triple_nodes( index, triple, &s, &p, &o );
 	if (index->count >= TRIPLES_BATCH_SIZE) {
 		add_triples_batch( index );
 	}

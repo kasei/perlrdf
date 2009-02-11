@@ -1,38 +1,41 @@
 #include "node.h"
 
-hx_node* _hx_new_node ( char type, char* value, int padding ) {
-	if (value == NULL) {
-		fprintf( stderr, "_hx_new_node called with NULL value string\n" );
-	}
+hx_node* _hx_new_node ( char type, char* value, int number, int padding ) {
 	hx_node* n	= (hx_node*) calloc( 1, sizeof( hx_node ) + padding );
 	n->type		= type;
-	n->value	= malloc( strlen( value ) + 1 );
-	if (n->value == NULL) {
-		free( n );
-		return NULL;
+	if (value == NULL) {
+		n->number	= number;
+		n->value	= NULL;
+	} else {
+		n->value	= malloc( strlen( value ) + 1 );
+		strcpy( n->value, value );
 	}
-	strcpy( n->value, value );
+	return n;
+}
+
+hx_node* hx_new_node_variable ( int value ) {
+	hx_node* n	= _hx_new_node( '?', NULL, value, 0 );
 	return n;
 }
 
 hx_node* hx_new_node_resource ( char* value ) {
-	hx_node* n	= _hx_new_node( 'R', value, 0 );
+	hx_node* n	= _hx_new_node( 'R', value, 0, 0 );
 	return n;
 }
 
 hx_node* hx_new_node_blank ( char* value ) {
-	hx_node* n	= _hx_new_node( 'B', value, 0 );
+	hx_node* n	= _hx_new_node( 'B', value, 0, 0 );
 	return n;
 }
 
 hx_node* hx_new_node_literal ( char* value ) {
-	hx_node* n	= _hx_new_node( 'L', value, 0 );
+	hx_node* n	= _hx_new_node( 'L', value, 0, 0 );
 	return n;
 }
 
 hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 	int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
-	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, padding );
+	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, 0, padding );
 	n->lang		= malloc( strlen( lang ) + 1 );
 	if (n->lang == NULL) {
 		free( n->value );
@@ -45,7 +48,7 @@ hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 
 hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 	int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
-	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, padding );
+	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, 0, padding );
 	n->dt		= malloc( strlen( dt ) + 1 );
 	if (n->dt == NULL) {
 		free( n->value );
@@ -88,7 +91,9 @@ int hx_free_node( hx_node* n ) {
 		hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
 		free( d->dt );
 	}
-	free( n->value );
+	if (n->type != '?') {
+		free( n->value );
+	}
 	free( n );
 	return 0;
 }
@@ -110,6 +115,10 @@ size_t hx_node_alloc_size( hx_node* n ) {
 		fprintf( stderr, "*** Unrecognized node type '%c' in hx_node_alloc_size\n", n->type );
 		return 0;
 	}
+}
+
+int hx_node_is_variable ( hx_node* n ) {
+	return (n->type == '?');
 }
 
 int hx_node_is_literal ( hx_node* n ) {
@@ -135,6 +144,10 @@ int hx_node_is_blank ( hx_node* n ) {
 
 char* hx_node_value ( hx_node* n ) {
 	return n->value;
+}
+
+int hx_node_number ( hx_node* n ) {
+	return n->number;
 }
 
 char* hx_node_lang ( hx_node_lang_literal* n ) {
@@ -235,6 +248,7 @@ int hx_node_nodestr( hx_node* n, char** str ) {
 int hx_node_cmp( const void* _a, const void* _b ) {
 	hx_node* a	= (hx_node*) _a;
 	hx_node* b	= (hx_node*) _b;
+	
 	if (a->type == b->type) {
 		if (hx_node_is_blank( a )) {
 			return strcmp( a->value, b->value );

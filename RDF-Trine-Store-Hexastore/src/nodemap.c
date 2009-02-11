@@ -43,10 +43,12 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 	i.node	= node;
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
-// 		char* nodestr;
-// 		hx_node_string( node, &nodestr );
-// 		fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
-// 		free(nodestr);
+		if (0) {
+			char* nodestr;
+			hx_node_string( node, &nodestr );
+			fprintf( stderr, "nodemap adding key '%s'\n", nodestr );
+			free(nodestr);
+		}
 		
 		item	= (hx_nodemap_item*) calloc( 1, sizeof( hx_nodemap_item ) );
 		item->node	= node;
@@ -54,12 +56,14 @@ hx_node_id hx_nodemap_add_node ( hx_nodemap* m, hx_node* n ) {
 		avl_insert( m->node2id, item );
 		avl_insert( m->id2node, item );
 // 		fprintf( stderr, "*** new item %d -> %p\n", (int) item->id, (void*) item->node );
+		
+		if (0) {
+			hx_node_id id	= hx_nodemap_get_node_id( m, node );
+			fprintf( stderr, "*** After adding: %d\n", (int) id );
+		}
+		
 		return item->id;
 	} else {
-// 		char* nodestr;
-// 		hx_node_string( node, &nodestr );
-// 		fprintf( stderr, "nodemap key '%s' alread exists\n", nodestr );
-// 		free( nodestr );
 		hx_free_node( node );
 		return item->id;
 	}
@@ -94,8 +98,15 @@ int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n ) {
 hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* node ) {
 	hx_nodemap_item i;
 	i.node	= node;
+	if (0) {
+		char* nodestr;
+		hx_node_string( node, &nodestr );
+		fprintf( stderr, "nodemap getting id for key '%s'\n", nodestr );
+		free(nodestr);
+	}
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
+		fprintf( stderr, "hx_nodemap_get_node_id: did not find node in nodemap\n" );
 		return (hx_node_id) 0;
 	} else {
 		return item->id;

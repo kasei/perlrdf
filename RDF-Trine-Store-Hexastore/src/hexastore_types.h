@@ -12,11 +12,6 @@
 
 typedef int64_t list_size_t;
 typedef int64_t hx_node_id;
-typedef struct {
-	hx_node_id subject;
-	hx_node_id predicate;
-	hx_node_id object;
-} hx_triple;
 
 #define HX_SUBJECT		0
 #define HX_PREDICATE	1

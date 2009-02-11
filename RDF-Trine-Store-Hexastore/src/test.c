@@ -209,113 +209,113 @@ void nodemap_test ( void ) {
 }
 
 void hexastore_test ( void ) {
-	if (1) {
-		hx_hexastore* hx	= hx_new_hexastore();
-		
-		{
-			int count	= 0;
-			for (int i = 1; i <= 400; i++) {
-				for (int j = 1; j <= 100; j++) {
-					for (int k = 1; k <= 50; k++) {
-						count++;
-						hx_add_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
-						if (count % 25000 == 0)
-							fprintf( stderr, "\rloaded %d triples", count );
-					}
-				}
-			}
-			fprintf( stderr, "\nfinished loading %d triples\n", count );
-		}
-		sleep(30);
-		
-		if (0) {
-			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				fprintf( stderr, "%d, %d, %d\n", (int) s, (int) p, (int) o );
-				hx_index_iter_next( iter );
-			}
-			hx_free_index_iter( iter );
-		}
-		fprintf( stderr, "removing triples...\n" );
-		{
-			int count	= 0;
-			for (int i = 1; i <= 9; i++) {
-				for (int j = 1; j <= 9; j++) {
-					for (int k = 1; k <= 9; k++) {
-						count++;
-						hx_remove_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
-					}
-				}
-			}
-			fprintf( stderr, "removed %d triples\n", count );
-		}
-	
-		fprintf( stderr, "full iterator...\n" );
-		{
-			int count	= 1;
-			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-				hx_index_iter_next( iter );
-			}
-			hx_free_index_iter( iter );
-		}
-		
-		hx_free_hexastore( hx );
-	}
-	
-	if (0) {
-		hx_hexastore* hx	= hx_new_hexastore();
-		for (int i = 1; i <= 10; i++) {
-			for (int j = 1; j <= 10; j++) {
-				for (int k = 1; k <= 10; k++) {
-					hx_add_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
-				}
-			}
-		}
-
-		{
-			fprintf( stderr, "iter (4,*,*) ordered by object...\n" );
-			int count	= 1;
-			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 4, (hx_node_id) 0, (hx_node_id) 0, HX_OBJECT );
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-				hx_index_iter_next( iter );
-			}
-			hx_free_index_iter( iter );
-		}
-		{
-			fprintf( stderr, "iter (*,*,9) ordered by predicate...\n" );
-			int count	= 1;
-			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, (hx_node_id) 0, (hx_node_id) 9, HX_PREDICATE );
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-				hx_index_iter_next( iter );
-			}
-			hx_free_index_iter( iter );
-		}
-		{
-			fprintf( stderr, "iter (*,*,*) ordered by predicate...\n" );
-			int count	= 1;
-			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, (hx_node_id) 0, (hx_node_id) 0, HX_PREDICATE );
-			while (!hx_index_iter_finished( iter )) {
-				hx_node_id s, p, o;
-				hx_index_iter_current( iter, &s, &p, &o );
-				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
-				hx_index_iter_next( iter );
-			}
-			hx_free_index_iter( iter );
-		}
-		hx_free_hexastore( hx );
-	}
+// 	if (1) {
+// 		hx_hexastore* hx	= hx_new_hexastore();
+// 		
+// 		{
+// 			int count	= 0;
+// 			for (int i = 1; i <= 400; i++) {
+// 				for (int j = 1; j <= 100; j++) {
+// 					for (int k = 1; k <= 50; k++) {
+// 						count++;
+// 						hx_add_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
+// 						if (count % 25000 == 0)
+// 							fprintf( stderr, "\rloaded %d triples", count );
+// 					}
+// 				}
+// 			}
+// 			fprintf( stderr, "\nfinished loading %d triples\n", count );
+// 		}
+// 		sleep(30);
+// 		
+// 		if (0) {
+// 			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+// 			while (!hx_index_iter_finished( iter )) {
+// 				hx_node_id s, p, o;
+// 				hx_index_iter_current( iter, &s, &p, &o );
+// 				fprintf( stderr, "%d, %d, %d\n", (int) s, (int) p, (int) o );
+// 				hx_index_iter_next( iter );
+// 			}
+// 			hx_free_index_iter( iter );
+// 		}
+// 		fprintf( stderr, "removing triples...\n" );
+// 		{
+// 			int count	= 0;
+// 			for (int i = 1; i <= 9; i++) {
+// 				for (int j = 1; j <= 9; j++) {
+// 					for (int k = 1; k <= 9; k++) {
+// 						count++;
+// 						hx_remove_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
+// 					}
+// 				}
+// 			}
+// 			fprintf( stderr, "removed %d triples\n", count );
+// 		}
+// 	
+// 		fprintf( stderr, "full iterator...\n" );
+// 		{
+// 			int count	= 1;
+// 			hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+// 			while (!hx_index_iter_finished( iter )) {
+// 				hx_node_id s, p, o;
+// 				hx_index_iter_current( iter, &s, &p, &o );
+// 				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+// 				hx_index_iter_next( iter );
+// 			}
+// 			hx_free_index_iter( iter );
+// 		}
+// 		
+// 		hx_free_hexastore( hx );
+// 	}
+// 	
+// 	if (0) {
+// 		hx_hexastore* hx	= hx_new_hexastore();
+// 		for (int i = 1; i <= 10; i++) {
+// 			for (int j = 1; j <= 10; j++) {
+// 				for (int k = 1; k <= 10; k++) {
+// 					hx_add_triple( hx, (hx_node_id) i, (hx_node_id) j, (hx_node_id) k );
+// 				}
+// 			}
+// 		}
+// 
+// 		{
+// 			fprintf( stderr, "iter (4,*,*) ordered by object...\n" );
+// 			int count	= 1;
+// 			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 4, (hx_node_id) 0, (hx_node_id) 0, HX_OBJECT );
+// 			while (!hx_index_iter_finished( iter )) {
+// 				hx_node_id s, p, o;
+// 				hx_index_iter_current( iter, &s, &p, &o );
+// 				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+// 				hx_index_iter_next( iter );
+// 			}
+// 			hx_free_index_iter( iter );
+// 		}
+// 		{
+// 			fprintf( stderr, "iter (*,*,9) ordered by predicate...\n" );
+// 			int count	= 1;
+// 			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, (hx_node_id) 0, (hx_node_id) 9, HX_PREDICATE );
+// 			while (!hx_index_iter_finished( iter )) {
+// 				hx_node_id s, p, o;
+// 				hx_index_iter_current( iter, &s, &p, &o );
+// 				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+// 				hx_index_iter_next( iter );
+// 			}
+// 			hx_free_index_iter( iter );
+// 		}
+// 		{
+// 			fprintf( stderr, "iter (*,*,*) ordered by predicate...\n" );
+// 			int count	= 1;
+// 			hx_index_iter* iter	= hx_get_statements( hx, (hx_node_id) 0, (hx_node_id) 0, (hx_node_id) 0, HX_PREDICATE );
+// 			while (!hx_index_iter_finished( iter )) {
+// 				hx_node_id s, p, o;
+// 				hx_index_iter_current( iter, &s, &p, &o );
+// 				fprintf( stderr, "[%d] %d, %d, %d\n", count++, (int) s, (int) p, (int) o );
+// 				hx_index_iter_next( iter );
+// 			}
+// 			hx_free_index_iter( iter );
+// 		}
+// 		hx_free_hexastore( hx );
+// 	}
 }
 
 void memory_test (void) {

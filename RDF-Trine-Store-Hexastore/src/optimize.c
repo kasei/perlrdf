@@ -42,17 +42,16 @@ int main (int argc, char** argv) {
 	
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
-	hx_hexastore* shx	= hx_new_hexastore();
+	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( smap );
 	hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
 		hx_index_iter_current( iter, &s, &p, &o );
+		hx_node* sn	= hx_nodemap_get_node( hx->map, s );
+		hx_node* pn	= hx_nodemap_get_node( hx->map, p );
+		hx_node* on	= hx_nodemap_get_node( hx->map, o );
 		
-		hx_node_id ns, np, no;
-		ns	= map_old_to_new_id( map, smap, s );
-		np	= map_old_to_new_id( map, smap, p );
-		no	= map_old_to_new_id( map, smap, o );
-		hx_add_triple( shx, ns, np, no );
+		hx_add_triple( shx, sn, pn, on );
 		hx_index_iter_next( iter );
 		if ((++count % 25000) == 0)
 			fprintf( stderr, "\rfinished %d triples", count );
