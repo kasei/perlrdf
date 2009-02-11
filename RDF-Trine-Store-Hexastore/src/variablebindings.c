@@ -122,10 +122,21 @@ int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter ) {
 	return iter->vtable->next( iter->ptr );
 }
 
-int hx_variablebindings_iter_columns ( hx_variablebindings_iter* iter ) {
-	return iter->vtable->columns( iter->ptr );
+int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter ) {
+	return iter->vtable->size( iter->ptr );
 }
 
 char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter ) {
 	return iter->vtable->names( iter->ptr );
+}
+
+int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column ) {
+	int size		= hx_variablebindings_iter_size( iter );
+	char** names	= hx_variablebindings_iter_names( iter );
+	for (int i = 0; i < size; i++) {
+		if (strcmp(column, names[i]) == 0) {
+			return i;
+		}
+	}
+	return -1;
 }

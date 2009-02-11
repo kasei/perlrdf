@@ -28,7 +28,7 @@ typedef struct {
 	int (*current) ( void* iter, void* results );
 	int (*next) ( void* iter );	
 	int (*free) ( void* iter );
-	int (*columns) ( void* iter );
+	int (*size) ( void* iter );
 	char** (*names) ( void* iter );
 } hx_variablebindings_iter_vtable;
 
@@ -55,7 +55,8 @@ int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vta
 int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter );
 int hx_variablebindings_iter_current ( hx_variablebindings_iter* iter, hx_variablebindings** b );
 int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter );
-int hx_variablebindings_iter_columns ( hx_variablebindings_iter* iter );
+int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter );
 char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter );
+int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column );
 
 #endif

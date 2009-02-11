@@ -286,7 +286,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	vtable->next		= _hx_iter_vb_next;
 	vtable->free		= _hx_iter_vb_free;
 	vtable->names		= _hx_iter_vb_names;
-	vtable->columns		= _hx_iter_vb_columns;
+	vtable->size		= _hx_iter_vb_size;
 	
 	int size	= 0;
 	if (subj_name != NULL)
@@ -359,7 +359,7 @@ int _hx_iter_vb_free ( void* data ) {
 	free( info );
 }
 
-int _hx_iter_vb_columns ( void* data ) {
+int _hx_iter_vb_size ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	return info->size;
 }
