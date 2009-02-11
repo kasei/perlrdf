@@ -50,6 +50,8 @@ char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column 
 hx_node_id hx_variablebindings_node_for_binding ( hx_variablebindings* b, int column );
 char** hx_variablebindings_names ( hx_variablebindings* b );
 
+hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right );
+
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr );
 int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable );
 int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter );

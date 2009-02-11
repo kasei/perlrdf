@@ -92,6 +92,107 @@ hx_node_id hx_variablebindings_node_for_binding ( hx_variablebindings* b, int co
 	return b->nodes[ column ];
 }
 
+int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindings* rhs, char*** merged_names, int* size ) {
+	int lhs_size		= hx_variablebindings_size( lhs );
+	char** lhs_names	= hx_variablebindings_names( lhs );
+	int rhs_size		= hx_variablebindings_size( rhs );
+	char** rhs_names	= hx_variablebindings_names( rhs );
+	int seen_names	= 0;
+	char* names[ lhs_size + rhs_size ];
+	for (int i = 0; i < lhs_size; i++) {
+		char* name	= lhs_names[ i ];
+		int seen	= 0;
+		for (int j = 0; j < seen_names; j++) {
+			if (strcmp( name, names[ j ] ) == 0) {
+				seen	= 1;
+			}
+		}
+		if (!seen) {
+			names[ seen_names++ ]	= name;
+		}
+	}
+	for (int i = 0; i < rhs_size; i++) {
+		char* name	= rhs_names[ i ];
+		int seen	= 0;
+		for (int j = 0; j < seen_names; j++) {
+			if (strcmp( name, names[ j ] ) == 0) {
+				seen	= 1;
+			}
+		}
+		if (!seen) {
+			names[ seen_names++ ]	= name;
+		}
+	}
+	
+	*merged_names	= calloc( seen_names, sizeof( char* ) );
+	for (int i = 0; i < seen_names; i++) {
+		(*merged_names)[ i ]	= names[ i ];
+	}
+	*size	= seen_names;
+	return 0;
+}
+hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right ) {
+	int lhs_size		= hx_variablebindings_size( left );
+	char** lhs_names	= hx_variablebindings_names( left );
+	int rhs_size		= hx_variablebindings_size( right );
+	char** rhs_names	= hx_variablebindings_names( right );
+	int max_size		= (lhs_size > rhs_size) ? lhs_size : rhs_size;
+	
+	int shared_count	= 0;
+	int shared_lhs_index[max_size];
+	char* shared_names[max_size];
+	for (int i = 0; i < lhs_size; i++) {
+		char* lhs_name	= lhs_names[ i ];
+		for (int j = 0; j < rhs_size; j++) {
+			char* rhs_name	= rhs_names[ i ];
+			if (strcmp( lhs_name, rhs_name ) == 0) {
+				int k	= shared_count++;
+				shared_lhs_index[ k ]	= i;
+				shared_names[ k ]	= lhs_name;
+				break;
+			}
+		}
+	}
+	
+	for (int i = 0; i < shared_count; i++) {
+		char* name		= shared_names[i];
+		hx_node_id node	= hx_variablebindings_node_for_binding( left, shared_lhs_index[i] );
+		for (int j = 0; j < rhs_size; j++) {
+			char* rhs_name	= rhs_names[ j ];
+			if (strcmp( name, rhs_name ) == 0) {
+				hx_node_id rnode	= hx_variablebindings_node_for_binding( right, shared_lhs_index[j] );
+				if (node != rnode) {
+					return NULL;
+				}
+			}
+		}
+		
+	}
+	
+	int size;
+	char** names;
+	_hx_variablebindings_join_names( left, right, &names, &size );
+	hx_variablebindings* b;
+	
+	hx_node_id* values	= calloc( size, sizeof( hx_node_id ) );
+	for (int i = 0; i < size; i++) {
+		char* name	= names[ i ];
+		for (int j = 0; j < lhs_size; j++) {
+			if (strcmp( name, lhs_names[j] ) == 0) {
+				values[i]	= hx_variablebindings_node_for_binding( left, j );
+			}
+		}
+		for (int j = 0; j < rhs_size; j++) {
+			if (strcmp( name, rhs_names[j] ) == 0) {
+				values[i]	= hx_variablebindings_node_for_binding( right, j );
+			}
+		}
+	}
+	
+	b	= hx_new_variablebindings( size, names, values );
+	return b;
+}
+
 
 
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr ) {
