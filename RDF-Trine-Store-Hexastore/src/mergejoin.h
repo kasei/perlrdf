@@ -27,7 +27,7 @@ typedef struct {
 	int rhs_index;
 	int finished;
 	int started;
-	
+	hx_variablebindings* current;
 	int lhs_batch_size;
 	int rhs_batch_size;
 	hx_variablebindings** lhs_batch;

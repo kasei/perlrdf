@@ -14,7 +14,12 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 	_hx_mergejoin_get_rhs_batch( info );
 	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
 		if (info->lhs_key == info->rhs_key) {
-			break;
+			hx_variablebindings* left	= info->lhs_batch[ info->lhs_batch_index ];
+			hx_variablebindings* right	= info->rhs_batch[ info->rhs_batch_index ];
+			info->current	= hx_variablebindings_natural_join( left, right );
+			if (info->current != NULL) {
+				break;
+			}
 		} else if (info->lhs_key < info->rhs_key) {
 			_hx_mergejoin_get_lhs_batch( info );
 		} else { // left_key > right_key
@@ -49,10 +54,8 @@ int _hx_mergejoin_iter_vb_current ( void* data, void* results ) {
 		_hx_mergejoin_prime_first_result( info );
 	}
 	
-	hx_variablebindings* lhs_b	= info->lhs_batch[ info->lhs_batch_index ];
-	hx_variablebindings* rhs_b	= info->rhs_batch[ info->rhs_batch_index ];
 	hx_variablebindings** b	= (hx_variablebindings**) results;
-	*b	= hx_mergejoin_join_variablebindings( lhs_b, rhs_b );
+	*b	= info->current;
 	return 0;
 }
 
@@ -63,35 +66,48 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 		_hx_mergejoin_prime_first_result( info );
 	}
 	
-// 	fprintf( stderr, "- incrementing RHS index\n" );
-	info->rhs_batch_index++;
-	if (info->rhs_batch_index >= info->rhs_batch_size) {
-// 		fprintf( stderr, "- end of RHS. incrementing LHS index and resetting RHS index to 0\n" );
-		info->rhs_batch_index	= 0;
-		info->lhs_batch_index++;
-		if (info->lhs_batch_index >= info->lhs_batch_size) {
-// 			fprintf( stderr, "- end of LHS. finding new matching batches...\n" );
-			_hx_mergejoin_get_lhs_batch( info );
-			_hx_mergejoin_get_rhs_batch( info );
-			while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
-				if (info->lhs_key == info->rhs_key) {
-					break;
-				} else if (info->lhs_key < info->rhs_key) {
-					_hx_mergejoin_get_lhs_batch( info );
-				} else { // left_key > right_key
-					_hx_mergejoin_get_rhs_batch( info );
+
+	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
+// 		fprintf( stderr, "- incrementing RHS index\n" );
+		info->rhs_batch_index++;
+		if (info->rhs_batch_index >= info->rhs_batch_size) {
+// 			fprintf( stderr, "- end of RHS. incrementing LHS index and resetting RHS index to 0\n" );
+			info->rhs_batch_index	= 0;
+			info->lhs_batch_index++;
+			if (info->lhs_batch_index >= info->lhs_batch_size) {
+// 				fprintf( stderr, "- end of LHS. finding new matching batches...\n" );
+				_hx_mergejoin_get_lhs_batch( info );
+				_hx_mergejoin_get_rhs_batch( info );
+				while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
+					if (info->lhs_key == info->rhs_key) {
+						break;
+					} else if (info->lhs_key < info->rhs_key) {
+						_hx_mergejoin_get_lhs_batch( info );
+					} else { // left_key > right_key
+						_hx_mergejoin_get_rhs_batch( info );
+					}
+				}
+				if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
+// 					fprintf( stderr, "- no more matching batches. iterator is finished\n" );
+					info->finished	= 1;
+					return 1;
+				} else {
+// 					fprintf( stderr, "- found matching batches on node id %d\n", (int) info->lhs_key );
+					info->lhs_batch_index	= 0;
+					info->rhs_batch_index	= 0;
+//					return 0;
 				}
 			}
-			if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
-// 				fprintf( stderr, "- no more matching batches. iterator is finished\n" );
-				info->finished	= 1;
-				return 1;
-			} else {
-// 				fprintf( stderr, "- found matching batches on node id %d\n", (int) info->lhs_key );
-				info->lhs_batch_index	= 0;
-				info->rhs_batch_index	= 0;
-				return 0;
-			}
+		}
+		
+		hx_variablebindings* left	= info->lhs_batch[ info->lhs_batch_index ];
+		hx_variablebindings* right	= info->rhs_batch[ info->rhs_batch_index ];
+		info->current	= hx_variablebindings_natural_join( left, right );
+		if (info->current != NULL) {
+// 			fprintf( stderr, "- got result with natural join\n" );
+			break;
+		} else {
+// 			fprintf( stderr, "- failed natural join\n" );
 		}
 	}
 	return 0;
@@ -130,6 +146,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs,
 	_hx_mergejoin_join_iter_names( lhs, rhs, &merged_names, &size );
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) calloc( 1, sizeof( _hx_mergejoin_iter_vb_info ) );
 	
+	info->current			= NULL;
 	info->lhs				= lhs;
 	info->lhs_index			= lhs_index;
 	info->rhs				= rhs;
