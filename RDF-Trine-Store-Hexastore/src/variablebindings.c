@@ -197,8 +197,8 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
-	iter->vtable	= vtable;
-	iter->ptr		= ptr;
+	iter->vtable		= vtable;
+	iter->ptr			= ptr;
 	return iter;
 }
 
@@ -240,4 +240,25 @@ int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* col
 		}
 	}
 	return -1;
+}
+
+int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index ) {
+	return iter->vtable->sorted_by( iter->ptr, index );
+}
+
+hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index ) {
+	int size		= hx_variablebindings_iter_size( iter );
+	char** names	= hx_variablebindings_iter_names( iter );
+// 	fprintf( stderr, "requested sorting of iterator on '%s'\n", names[index] );
+	
+	if (hx_variablebindings_iter_is_sorted_by_index(iter, index)) {
+		return iter;
+	} else {
+// 		fprintf( stderr, "*** Sorting of variable binding iterators not implemented yet.\n" ); // XXX
+// 		fprintf( stderr, "\tnames:\n" );
+// 		for (int i = 0; i < size; i++) {
+// 			fprintf( stderr, "\t- %s\n", names[ i ] );
+// 		}
+		return NULL;
+	}
 }

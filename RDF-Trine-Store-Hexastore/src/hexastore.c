@@ -1,6 +1,18 @@
 #include "hexastore.h"
 
+// #define DEBUG_INDEX_SELECTION
+
+
 void* _hx_add_triple_threaded (void* arg);
+int _hx_iter_vb_finished ( void* iter );
+int _hx_iter_vb_current ( void* iter, void* results );
+int _hx_iter_vb_next ( void* iter );	
+int _hx_iter_vb_free ( void* iter );
+int _hx_iter_vb_size ( void* iter );
+int _hx_iter_vb_sorted_by (void* iter, int index );
+char** _hx_iter_vb_names ( void* iter );
+
+/////////////////////
 
 hx_hexastore* hx_new_hexastore ( void ) {
 	hx_nodemap* map	= hx_new_nodemap();
@@ -133,7 +145,9 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
 
-//	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
+#ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
+#endif
 	int used[3]	= { 0, 0, 0 };
 	hx_node_id triple_id[3]	= { s, p, o };
 	hx_node* triple[3]		= { sn, pn, on };
@@ -141,35 +155,46 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 	char* pnames[3]			= { "SUBJECT", "PREDICATE", "OBJECT" };
 	
 	if (s > (hx_node_id) 0) {
-//		fprintf( stderr, "- bound subject\n" );
+#ifdef DEBUG_INDEX_SELECTION
+		fprintf( stderr, "- bound subject\n" );
+#endif
 		index_order[ i++ ]	= HX_SUBJECT;
 		used[ HX_SUBJECT ]++;
 	} else if (s < (hx_node_id) 0) {
 		vars++;
 	}
 	if (p > (hx_node_id) 0) {
-//		fprintf( stderr, "- bound predicate\n" );
+#ifdef DEBUG_INDEX_SELECTION
+		fprintf( stderr, "- bound predicate\n" );
+#endif
 		index_order[ i++ ]	= HX_PREDICATE;
 		used[ HX_PREDICATE ]++;
 	} else if (p < (hx_node_id) 0) {
 		vars++;
 	}
 	if (o > (hx_node_id) 0) {
-//		fprintf( stderr, "- bound object\n" );
+#ifdef DEBUG_INDEX_SELECTION
+		fprintf( stderr, "- bound object\n" );
+#endif
 		index_order[ i++ ]	= HX_OBJECT;
 		used[ HX_OBJECT ]++;
 	} else if (o < (hx_node_id) 0) {
 		vars++;
 	}
 	
-//	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
+#ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
+#endif
 	if (i < 3 && !(used[order_position]) && triple_id[order_position] != (hx_node_id) 0) {
-//		fprintf( stderr, "requested ordering position: %s\n", pnames[order_position] );
+#ifdef DEBUG_INDEX_SELECTION
+		fprintf( stderr, "requested ordering position: %s\n", pnames[order_position] );
+#endif
 		index_order[ i++ ]	= order_position;
 		used[order_position]++;
 	}
-//	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
-	
+#ifdef DEBUG_INDEX_SELECTION
+	fprintf( stderr, "index order: { %d, %d, %d }\n", (int) index_order[0], (int) index_order[1], (int) index_order[2] );
+#endif	
 	// check for any duplicated variables. if they haven't been added to the index order, add them now:
 	for (int j = 0; j < 3; j++) {
 		if (!(used[j])) {
@@ -213,11 +238,15 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 		case 0:
 			switch (index_order[1]) {
 				case 1:
-//					fprintf( stderr, "using spo index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using spo index\n" );
+#endif
 					*index	= hx->spo;
 					break;
 				case 2:
-//					fprintf( stderr, "using sop index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using sop index\n" );
+#endif
 					*index	= hx->sop;
 					break;
 			}
@@ -225,11 +254,15 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 		case 1:
 			switch (index_order[1]) {
 				case 0:
-//					fprintf( stderr, "using pso index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using pso index\n" );
+#endif
 					*index	= hx->pso;
 					break;
 				case 2:
-//					fprintf( stderr, "using pos index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using pos index\n" );
+#endif
 					*index	= hx->pos;
 					break;
 			}
@@ -237,11 +270,15 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 		case 2:
 			switch (index_order[1]) {
 				case 0:
-//					fprintf( stderr, "using osp index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using osp index\n" );
+#endif
 					*index	= hx->osp;
 					break;
 				case 1:
-//					fprintf( stderr, "using ops index\n" );
+#ifdef DEBUG_INDEX_SELECTION
+					fprintf( stderr, "using ops index\n" );
+#endif
 					*index	= hx->ops;
 					break;
 			}
@@ -333,6 +370,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	vtable->free		= _hx_iter_vb_free;
 	vtable->names		= _hx_iter_vb_names;
 	vtable->size		= _hx_iter_vb_size;
+	vtable->sorted_by	= _hx_iter_vb_sorted_by;
 	
 	int size	= 0;
 	if (subj_name != NULL)
@@ -350,22 +388,28 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	info->iter						= i;
 	info->names						= (char**) calloc( size, sizeof( char* ) );
 	info->triple_pos_to_index		= (int*) calloc( size, sizeof( int ) );
+	info->index_to_triple_pos		= (int*) calloc( size, sizeof( int ) );
 	int j	= 0;
 	if (subj_name != NULL) {
 		int idx	= j++;
 		info->names[ idx ]		= subj_name;
 		info->triple_pos_to_index[ idx ]	= 0;
+		info->index_to_triple_pos[ 0 ]		= idx;
 	}
+	
 	if (pred_name != NULL) {
 		int idx	= j++;
 		info->names[ idx ]		= pred_name;
 		info->triple_pos_to_index[ idx ]	= 1;
+		info->index_to_triple_pos[ 1 ]		= idx;
 	}
 	if (obj_name != NULL) {
 		int idx	= j++;
 		info->names[ idx ]		= obj_name;
 		info->triple_pos_to_index[ idx ]	= 2;
+		info->index_to_triple_pos[ 2 ]		= idx;
 	}
+	
 	hx_variablebindings_iter* iter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return iter;
 }
@@ -413,6 +457,13 @@ int _hx_iter_vb_size ( void* data ) {
 char** _hx_iter_vb_names ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	return info->names;
+}
+
+int _hx_iter_vb_sorted_by (void* data, int index ) {
+	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
+	int triple_pos	= info->index_to_triple_pos[ index ];
+// 	fprintf( stderr, "*** checking if index iterator is sorted by %d (triple %s)\n", index, HX_POSITION_NAMES[triple_pos] );
+	return hx_index_iter_is_sorted_by_index( info->iter, triple_pos );
 }
 
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node ) {

@@ -47,7 +47,7 @@ int _hx_mergejoin_iter_vb_free ( void* iter );
 int _hx_mergejoin_iter_vb_size ( void* iter );
 char** _hx_mergejoin_iter_vb_names ( void* iter );
 
-hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs, int lhs_index, hx_variablebindings_iter* rhs, int rhs_index );
+hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs );
 hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right );
 
 

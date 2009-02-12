@@ -134,15 +134,7 @@ int main (int argc, char** argv) {
 		hx_index_iter* titer_b	= hx_get_statements( hx, v2, knode, tnode, HX_SUBJECT );
 		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "friend", NULL, "to" );
 		
-		char** as	= hx_variablebindings_iter_names( iter_a );
-		char** bs	= hx_variablebindings_iter_names( iter_b );
-		
-		int ai	= hx_variablebindings_column_index( iter_a, "friend" );
-		int bi	= hx_variablebindings_column_index( iter_b, "friend" );
-		
-		fprintf( stderr, "joining A(%s) X B(%s)\n", as[ ai ], bs[ bi ] );
-		
- 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, ai, iter_b, bi );
+ 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;
@@ -170,14 +162,7 @@ int main (int argc, char** argv) {
 		hx_index_iter* titer_b	= hx_get_statements( hx, node, v1, v2, HX_SUBJECT );
 		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "subj", "p2", "o2" );
 		
-		char** as	= hx_variablebindings_iter_names( iter_a );
-		char** bs	= hx_variablebindings_iter_names( iter_b );
-		
-		int ai	= hx_variablebindings_column_index( iter_a, "subj" );
-		int bi	= hx_variablebindings_column_index( iter_b, "subj" );
-		
-		fprintf( stderr, "joining A(%s) X B(%s)\n", as[ai], bs[bi] );
-		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, 0, iter_b, 0 );
+		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
 		while (!hx_variablebindings_iter_finished( iter )) {
 			hx_variablebindings* b;

@@ -132,7 +132,40 @@ char** _hx_mergejoin_iter_vb_names ( void* data ) {
 	return info->names;
 }
 
-hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs, int lhs_index, hx_variablebindings_iter* rhs, int rhs_index ) {
+int _hx_mergejoin_iter_sorted_by ( void* data, int index ) {
+	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
+	char* name	= info->names[ index ];
+	int lhs_size		= hx_variablebindings_iter_size( info->lhs );
+	char** lhs_names	= hx_variablebindings_iter_names( info->lhs );
+	int lhs_index		= hx_variablebindings_column_index( info->lhs, name );
+	return (lhs_index == info->lhs_index);
+}
+
+hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs, hx_variablebindings_iter* _rhs ) {
+	int asize		= hx_variablebindings_iter_size( _lhs );
+	char** anames	= hx_variablebindings_iter_names( _lhs );
+	int bsize		= hx_variablebindings_iter_size( _rhs );
+	char** bnames	= hx_variablebindings_iter_names( _rhs );
+	int lhs_index, rhs_index;
+	for (int i = 0; i < asize; i++) {
+		int set	= 0;
+		for (int j = 0; j < bsize; j++) {
+			if (strcmp( anames[i], bnames[j] ) == 0) {
+				lhs_index	= i;
+				rhs_index	= j;
+				set			= 1;
+				break;
+			}
+		}
+		if (set == 1)
+			break;
+	}
+	fprintf( stderr, "joining A(%s) X B(%s)\n", anames[ lhs_index ], bnames[ rhs_index ] );
+	
+	hx_variablebindings_iter* lhs	= hx_variablebindings_sort_iter( _lhs, lhs_index );
+	hx_variablebindings_iter* rhs	= hx_variablebindings_sort_iter( _rhs, rhs_index );
+	
+	
 	hx_variablebindings_iter_vtable* vtable	= malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_mergejoin_iter_vb_finished;
 	vtable->current		= _hx_mergejoin_iter_vb_current;
@@ -140,6 +173,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs,
 	vtable->free		= _hx_mergejoin_iter_vb_free;
 	vtable->names		= _hx_mergejoin_iter_vb_names;
 	vtable->size		= _hx_mergejoin_iter_vb_size;
+	vtable->sorted_by	= _hx_mergejoin_iter_sorted_by;
 	
 	int size;
 	char** merged_names;

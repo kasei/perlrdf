@@ -69,5 +69,6 @@ int hx_index_iter_finished ( hx_index_iter* iter );
 int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, hx_node_id* o );
 int hx_index_iter_next ( hx_index_iter* iter );
 
+int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index );
 
 #endif

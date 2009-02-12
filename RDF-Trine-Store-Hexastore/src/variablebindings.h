@@ -30,6 +30,7 @@ typedef struct {
 	int (*free) ( void* iter );
 	int (*size) ( void* iter );
 	char** (*names) ( void* iter );
+	int (*sorted_by) ( void* iter, int index );
 } hx_variablebindings_iter_vtable;
 
 typedef struct {
@@ -60,5 +61,8 @@ int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter );
 int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter );
 char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter );
 int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column );
+int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index );
+
+hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
 
 #endif

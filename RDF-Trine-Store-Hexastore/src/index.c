@@ -212,11 +212,13 @@ hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 
 hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id a, hx_node_id b, hx_node_id c ) {
 	hx_index_iter* iter	= hx_index_new_iter( index );
-	iter->node_mask_a	= a;
-	iter->node_mask_b	= b;
-	iter->node_mask_c	= c;
+	hx_node_id masks[3]	= { a, b, c };
+	iter->node_mask_a	= masks[ index->order[0] ];
+	iter->node_mask_b	= masks[ index->order[1] ];;
+	iter->node_mask_c	= masks[ index->order[2] ];
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
+	
 	if (b == a && a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );
 		iter->node_dup_b	= HX_INDEX_ITER_DUP_A;
@@ -496,4 +498,22 @@ int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n ) {
 		iter->node_mask_c	= n;
 	}
 	return 0;
+}
+
+int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index ) {
+	hx_node_id masks[3]	= { iter->node_mask_a, iter->node_mask_b, iter->node_mask_c };
+// 	fprintf( stderr, ">>> %d\n", index );
+// 	fprintf( stderr, "*** masks: { %d, %d, %d }\n", (int) masks[0], (int) masks[1], (int) masks[2] );
+// 	fprintf( stderr, "*** order: { %d, %d, %d }\n", iter->index->order[0], iter->index->order[1], iter->index->order[2] );
+	int* order	= iter->index->order;
+	if (index == order[0]) {
+		return 1;
+	} else if (index == order[1]) {
+		return (masks[0] > 0);
+	} else if (index == order[2]) {
+		return (masks[0] > 0 && masks[1] > 0);
+	} else {
+		fprintf( stderr, "*** not a valid triple position index in call to hx_index_iter_is_sorted_by_index\n" );
+		return -1;
+	}
 }
