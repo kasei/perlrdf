@@ -101,12 +101,12 @@ hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* node ) {
 	if (0) {
 		char* nodestr;
 		hx_node_string( node, &nodestr );
-		fprintf( stderr, "nodemap getting id for key '%s'\n", nodestr );
+//		fprintf( stderr, "nodemap getting id for key '%s'\n", nodestr );
 		free(nodestr);
 	}
 	hx_nodemap_item* item	= (hx_nodemap_item*) avl_find( m->node2id, &i );
 	if (item == NULL) {
-		fprintf( stderr, "hx_nodemap_get_node_id: did not find node in nodemap\n" );
+//		fprintf( stderr, "hx_nodemap_get_node_id: did not find node in nodemap\n" );
 		return (hx_node_id) 0;
 	} else {
 		return item->id;

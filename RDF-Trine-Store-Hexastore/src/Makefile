@@ -1,9 +1,9 @@
-CFLAGS	=	-std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable # -Werror -DAVL_ALLOC_COUNT
+CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o
 
-all: test parse print optimize
+all: test parse print optimize tests
 
 test: test.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o test test.c $(OBJECTS)
@@ -16,9 +16,6 @@ optimize: optimize.c $(OBJECTS)
 
 print: print.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o print print.c $(OBJECTS)
-
-avl.o: avl.c avl.h hexastore_types.h
-	$(CC) $(INC) -c avl.c
 
 hexastore.o: hexastore.c hexastore.h index.h head.h vector.h terminal.h hexastore_types.h variablebindings.h nodemap.h
 	$(CC) $(INC) -c hexastore.c
@@ -47,8 +44,26 @@ mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
 
+tests: t/nodemap.t t/node.t
+
+########
+t/node.t: tap.o t/node.c node.h
+	$(CC) $(INC) -o t/node.t t/node.c $(OBJECTS)
+
+t/nodemap.t: tap.o t/nodemap.c nodemap.h
+	$(CC) $(INC) -o t/nodemap.t t/nodemap.c $(OBJECTS)
+
+########
+
+avl.o: avl.c avl.h hexastore_types.h
+	$(CC) $(INC) -c avl.c
+
+tap.o: tap.c tap.h
+	$(CC) $(INC) -c tap.c
+
 clean:
 	rm -f test parse print optimize a.out
 	rm -f *.o
-	rm -rf *.dSYM
+	rm -rf *.dSYM t/*.dSYM
+	rm -f t/*.t
 

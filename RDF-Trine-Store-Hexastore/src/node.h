@@ -14,6 +14,7 @@
 
 
 // node type characters:
+// ?	- Variable
 //	R	- IRI resource
 //	B	- Blank node
 //	L	- Plain literal
