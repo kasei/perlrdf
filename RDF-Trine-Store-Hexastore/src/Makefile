@@ -41,7 +41,7 @@ mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t
 
 ########
 t/node.t: tap.o t/node.c node.h
@@ -58,6 +58,9 @@ t/terminal.t: tap.o t/terminal.c terminal.h
 
 t/vector.t: tap.o t/vector.c vector.h
 	$(CC) $(INC) -o t/vector.t t/vector.c $(OBJECTS)
+
+t/head.t: tap.o t/head.c head.h
+	$(CC) $(INC) -o t/head.t t/head.c $(OBJECTS)
 
 ########
 

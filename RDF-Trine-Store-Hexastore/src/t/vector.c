@@ -6,7 +6,7 @@ void vector_test ( void );
 void vector_iter_test ( void );
 
 int main ( void ) {
-	plan_tests(24);
+	plan_tests(25);
 	vector_test();
 	vector_iter_test();
 	return exit_status();
@@ -59,7 +59,7 @@ void vector_iter_test ( void ) {
 		counter++;
 		hx_vector_iter_next(iter);
 	}
-	
+	ok1( counter == 10 );
 	hx_free_vector_iter( iter );
 	hx_free_vector(v);
 }
