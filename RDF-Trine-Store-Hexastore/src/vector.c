@@ -2,6 +2,7 @@
 
 int _hx_vector_grow( hx_vector* t );
 int _hx_vector_iter_prime_first_result( hx_vector_iter* iter );
+int _hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index );
 
 
 hx_vector* hx_new_vector( void ) {
@@ -44,7 +45,7 @@ int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t ) 
 		return 1;
 	}
 	
-	int r	= hx_vector_binary_search( v, n, &i );
+	int r	= _hx_vector_binary_search( v, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.
 		return 1;
@@ -70,7 +71,7 @@ int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t ) 
 
 hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n ) {
 	int i;
-	int r	= hx_vector_binary_search( v, n, &i );
+	int r	= _hx_vector_binary_search( v, n, &i );
 	if (r == 0) {
 		return v->ptr[i].terminal;
 	} else {
@@ -80,7 +81,7 @@ hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n ) {
 
 int hx_vector_remove_terminal ( hx_vector* v, hx_node_id n ) {
 	int i;
-	int r	= hx_vector_binary_search( v, n, &i );
+	int r	= _hx_vector_binary_search( v, n, &i );
 	if (r == -1) {
 		// not in list. do nothing.
 	} else {
@@ -123,10 +124,10 @@ size_t hx_vector_memory_size ( hx_vector* v ) {
 	return size;
 }
 
-int hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index ) {
+int _hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index ) {
 	int low		= 0;
 	int high	= v->used - 1;
-//	fprintf( stderr, "hx_vector_binary_search: %p\n", (void*) v );
+//	fprintf( stderr, "_hx_vector_binary_search: %p\n", (void*) v );
 //	hx_vector_debug( "*** ", v );
 	
 	while (low <= high) {
@@ -229,7 +230,7 @@ int hx_vector_iter_next ( hx_vector_iter* iter ) {
 
 int hx_vector_iter_seek( hx_vector_iter* iter, hx_node_id n ) {
 	int i;
-	int r	= hx_vector_binary_search( iter->vector, n, &i );
+	int r	= _hx_vector_binary_search( iter->vector, n, &i );
 	if (r == 0) {
 //		fprintf( stderr, "hx_vector_iter_seek: found in list at index %d\n", i );
 		iter->started	= 1;

@@ -3,10 +3,7 @@ CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o
 
-all: test parse print optimize tests
-
-test: test.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o test test.c $(OBJECTS)
+all: parse print optimize tests
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse -lraptor parse.c $(OBJECTS)
@@ -44,7 +41,7 @@ mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
 
-tests: t/nodemap.t t/node.t t/index.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t
 
 ########
 t/node.t: tap.o t/node.c node.h
@@ -55,6 +52,12 @@ t/nodemap.t: tap.o t/nodemap.c nodemap.h
 
 t/index.t: tap.o t/index.c index.h
 	$(CC) $(INC) -o t/index.t t/index.c $(OBJECTS)
+
+t/terminal.t: tap.o t/terminal.c terminal.h
+	$(CC) $(INC) -o t/terminal.t t/terminal.c $(OBJECTS)
+
+t/vector.t: tap.o t/vector.c vector.h
+	$(CC) $(INC) -o t/vector.t t/vector.c $(OBJECTS)
 
 ########
 

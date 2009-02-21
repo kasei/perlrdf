@@ -2,6 +2,7 @@
 
 int _hx_terminal_grow( hx_terminal* t );
 int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter );
+int _hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index );
 
 hx_terminal* hx_new_terminal( void ) {
 	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
@@ -50,7 +51,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_node_id n ) {
 		return 1;
 	}
 	
-	int r	= hx_terminal_binary_search( t, n, &i );
+	int r	= _hx_terminal_binary_search( t, n, &i );
 	if (r == 0) {
 		// already in list. do nothing.
 		return 1;
@@ -72,7 +73,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_node_id n ) {
 
 int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n ) {
 	int i;
-	int r	= hx_terminal_binary_search( t, n, &i );
+	int r	= _hx_terminal_binary_search( t, n, &i );
 	if (r == 0) {
 		return 1;
 	} else {
@@ -82,7 +83,7 @@ int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n ) {
 
 int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n ) {
 	int i;
-	int r	= hx_terminal_binary_search( t, n, &i );
+	int r	= _hx_terminal_binary_search( t, n, &i );
 	if (r == -1) {
 		// not in list. do nothing.
 		return 1;
@@ -119,7 +120,7 @@ size_t hx_terminal_memory_size ( hx_terminal* t ) {
 	return size;
 }
 
-int hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index ) {
+int _hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index ) {
 	int low		= 0;
 	int high	= t->used - 1;
 	while (low <= high) {
@@ -204,7 +205,7 @@ int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
 
 int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n ) {
 	int i;
-	int r	= hx_terminal_binary_search( iter->terminal, n, &i );
+	int r	= _hx_terminal_binary_search( iter->terminal, n, &i );
 	if (r == 0) {
 //		fprintf( stderr, "hx_terminal_iter_seek: found in list at index %d\n", i );
 		iter->started	= 1;

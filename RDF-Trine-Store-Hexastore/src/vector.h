@@ -41,7 +41,6 @@ int hx_vector_debug ( const char* header, const hx_vector* v );
 int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t );
 hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n );
 int hx_vector_remove_terminal ( hx_vector* v, hx_node_id n );
-int hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index );
 list_size_t hx_vector_size ( hx_vector* v );
 uint64_t hx_vector_triples_count ( hx_vector* v );
 void hx_vector_triples_count_add ( hx_vector* v, int c );
