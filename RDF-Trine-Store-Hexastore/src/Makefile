@@ -3,7 +3,10 @@ CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o
 
-all: parse print optimize tests
+all: parse print optimize tests btree
+
+btree: btree.c btree.h hexastore_types.h
+	$(CC) $(INC) -o btree btree.c
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse -lraptor parse.c $(OBJECTS)
@@ -71,7 +74,7 @@ tap.o: tap.c tap.h
 	$(CC) $(INC) -c tap.c
 
 clean:
-	rm -f test parse print optimize a.out
+	rm -f test parse print optimize a.out btree
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
