@@ -24,6 +24,10 @@ lives_ok {
 	my $l		= RDF::Trine::Node::Literal::XML->new( '<foo/>bar', undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
 } 'lives on valid element xml';
 
+lives_ok {
+	my $l	= RDF::Trine::Node::Literal::XML->new( 'baz<bar>baz</bar><foo/>', undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
+} 'lives on valid two-element with content xml';
+
 {
 	my $l	= RDF::Trine::Node::Literal::XML->new( 'foo', undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
 	isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
@@ -55,4 +59,3 @@ lives_ok {
 	is( $l->literal_value, '<a/>', 'expected literal value' );
 	is( $l->literal_datatype, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral', 'expected literal datatype' );
 }
-
