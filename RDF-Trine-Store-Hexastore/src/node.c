@@ -276,7 +276,7 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 
 int hx_node_write( hx_node* n, FILE* f ) {
 	if (n->type == '?') {
-		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
+//		fprintf( stderr, "*** Cannot write variable nodes to a file.\n" );
 		return 1;
 	}
 	fputc( 'N', f );

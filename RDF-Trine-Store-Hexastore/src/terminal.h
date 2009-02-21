@@ -49,5 +49,7 @@ int hx_terminal_iter_current ( hx_terminal_iter* iter, hx_node_id* n );
 int hx_terminal_iter_next ( hx_terminal_iter* iter );
 int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n );
 
+void hx_terminal_iter_debug ( char* header, hx_terminal_iter* iter, int newline );
+
 
 #endif

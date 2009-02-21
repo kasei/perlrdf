@@ -63,7 +63,7 @@ int hx_index_debug ( hx_index* index ) {
 			for (int k = 0; k < t->used;  k++) {
 				hx_node_id n	= t->ptr[k];
 				triple_ordered[ index->order[ 2 ] ]	= n;
-// 				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
+				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
 			}
 		}
 		
@@ -114,7 +114,7 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, 
 	if (r_terminal != NULL) {
 		*r_terminal	= t;
 	}
-	return 0;
+	return added;
 }
 
 int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int added ) {
@@ -143,7 +143,7 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node
 		hx_vector_triples_count_add( v, 1 );
 	}
 	
-	return 0;
+	return added;
 }
 
 int hx_index_remove_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
@@ -210,24 +210,26 @@ hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 	return iter;
 }
 
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id a, hx_node_id b, hx_node_id c ) {
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_index_iter* iter	= hx_index_new_iter( index );
-	hx_node_id masks[3]	= { a, b, c };
+	hx_node_id masks[3]	= { s, p, o };
 	iter->node_mask_a	= masks[ index->order[0] ];
 	iter->node_mask_b	= masks[ index->order[1] ];;
 	iter->node_mask_c	= masks[ index->order[2] ];
 	iter->node_dup_b	= 0;
 	iter->node_dup_c	= 0;
 	
-	if (b == a && a != (hx_node_id) 0) {
+//	fprintf( stderr, "*** index using node masks (in index-order): %d %d %d\n", (int) iter->node_mask_a, (int) iter->node_mask_b, (int) iter->node_mask_c );
+	
+	if (iter->node_mask_b == iter->node_mask_a && iter->node_mask_a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/pred triples\n" );
 		iter->node_dup_b	= HX_INDEX_ITER_DUP_A;
 	}
 	
-	if (c == a && a != (hx_node_id) 0) {
+	if (iter->node_mask_c == iter->node_mask_a && iter->node_mask_a != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated subj/obj triples\n" );
 		iter->node_dup_c	= HX_INDEX_ITER_DUP_A;
-	} else if (c == b && b != (hx_node_id) 0) {
+	} else if (iter->node_mask_c == iter->node_mask_b && iter->node_mask_b != (hx_node_id) 0) {
 // 		fprintf( stderr, "*** Looking for duplicated pred/obj triples\n" );
 		iter->node_dup_c	= HX_INDEX_ITER_DUP_B;
 	}
@@ -287,7 +289,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 // 	fprintf( stderr, "_hx_index_iter_prime_first_result( %p )\n", (void*) iter );
 	iter->head_iter	= hx_head_new_iter( index->head );
 	if (iter->node_mask_a > (hx_node_id) 0) {
-// 		fprintf( stderr, "- head seeking to %d\n", (int) iter->node_mask_a );
+//		fprintf( stderr, "- head seeking to %d\n", (int) iter->node_mask_a );
 		if (hx_head_iter_seek( iter->head_iter, iter->node_mask_a ) != 0) {
 			iter->finished	= 1;
 			return 1;
@@ -306,9 +308,9 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 		
 		iter->vector_iter	= hx_vector_new_iter( v );
 		if (iter->node_mask_b > (hx_node_id) 0) {
-// 			fprintf( stderr, "- vector seeking to %d\n", (int) iter->node_mask_b );
+//			fprintf( stderr, "- vector seeking to %d\n", (int) iter->node_mask_b );
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
-// 				fprintf( stderr, "  - vector doesn't contain node %d\n", (int) iter->node_mask_b );
+//				fprintf( stderr, "  - vector doesn't contain node %d\n", (int) iter->node_mask_b );
 				hx_head_iter_next( iter->head_iter );
 				continue;
 			}
@@ -325,7 +327,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 			
 			iter->terminal_iter	= hx_terminal_new_iter( t );
 			if (iter->node_mask_c > (hx_node_id) 0) {
-// 				fprintf( stderr, "- terminal seeking to %d\n", (int) iter->node_mask_c );
+//				fprintf( stderr, "- terminal seeking to %d\n", (int) iter->node_mask_c );
 				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 					hx_vector_iter_next( iter->vector_iter );
 					continue;
@@ -361,7 +363,7 @@ int _hx_index_iter_next_head ( hx_index_iter* iter ) {
 NEXTHEAD:
 	hr	= hx_head_iter_next( iter->head_iter );
 	if (hr == 0 && (iter->node_mask_a < (hx_node_id) 0)) {
-// 		fprintf( stderr, "got next head\n" );
+//		fprintf( stderr, "got next head\n" );
 		hx_free_terminal_iter( iter->terminal_iter );
 		iter->terminal_iter	= NULL;
 		hx_free_vector_iter( iter->vector_iter );
@@ -390,6 +392,7 @@ NEXTHEAD:
 		}
 		return 0;
 	} else {
+//		fprintf( stderr, "no next head... iterator is finished...\n" );
 		hx_free_head_iter( iter->head_iter );
 		iter->head_iter	= NULL;
 		hx_free_vector_iter( iter->vector_iter );
@@ -406,7 +409,7 @@ int _hx_index_iter_next_vector ( hx_index_iter* iter ) {
 NEXTVECTOR:
 	vr	= hx_vector_iter_next( iter->vector_iter );
 	if (vr == 0 && (iter->node_mask_b < (hx_node_id) 0)) {
-// 		fprintf( stderr, "got next vector\n" );
+//		fprintf( stderr, "got next vector\n" );
 		hx_free_terminal_iter( iter->terminal_iter );
 		iter->terminal_iter	= NULL;
 		
@@ -423,22 +426,25 @@ NEXTVECTOR:
 		}
 		return 1;
 	} else {
+//		fprintf( stderr, "no next vector... getting next head...\n" );
 		return _hx_index_iter_next_head( iter );
 	}
 	return 0;
 }
 
 int hx_index_iter_next ( hx_index_iter* iter ) {
+//	fprintf( stderr, "hx_index_iter_next( %p )\n", (void*) iter );
 	if (iter->started == 0) {
+//		fprintf( stderr, "- iter not started... priming first result...\n" );
 		_hx_index_iter_prime_first_result( iter );
 		if (iter->finished == 1) {
 			return 1;
 		}
 	}
-// 	fprintf( stderr, "hx_index_iter_next( %p )\n", (void*) iter );
 	
 	int tr;
 // NEXTTERMINAL:
+//	hx_terminal_iter_debug( "-> TERMINAL ITERATOR: ", iter->terminal_iter, 1 );
 	tr	= hx_terminal_iter_next( iter->terminal_iter );
 	if (tr == 0 && (iter->node_mask_c < (hx_node_id) 0)) {
 //		fprintf( stderr, "got next terminal\n" );

@@ -182,6 +182,7 @@ int hx_terminal_iter_current ( hx_terminal_iter* iter, hx_node_id* n ) {
 
 int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
 	if (iter->started == 0) {
+//		fprintf( stderr, "terminal not started yet... priming first result...\n" );
 		_hx_terminal_iter_prime_first_result( iter );
 		if (iter->finished == 1) {
 			return 1;
@@ -189,12 +190,14 @@ int hx_terminal_iter_next ( hx_terminal_iter* iter ) {
 	}
 	
 	if (iter->index >= (iter->terminal->used - 1)) {
+//		fprintf( stderr, "terminal is exhausted...\n" );
 		// terminal is exhausted
 		iter->finished	= 1;
 		iter->terminal	= NULL;
 		return 1;
 	} else {
 		iter->index++;
+//		fprintf( stderr, "terminal is now at [%d of %d]\n", iter->index + 1, iter->terminal->used );
 		return 0;
 	}
 }
@@ -254,4 +257,17 @@ hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
 			return terminal;
 		}
 	}
+}
+
+void hx_terminal_iter_debug ( char* header, hx_terminal_iter* iter, int newline ) {
+	hx_terminal* t	= iter->terminal;
+	fprintf( stderr, "%s[", header );
+	for(int i = iter->index; i < t->used; i++) {
+		if (i > 0)
+			fprintf( stderr, ", " );
+		fprintf( stderr, "%d", (int) t->ptr[ i ] );
+	}
+	fprintf( stderr, "]" );
+	if (newline > 0)
+		fprintf( stderr, "\n" );
 }

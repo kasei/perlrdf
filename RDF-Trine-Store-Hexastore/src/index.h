@@ -62,7 +62,7 @@ int hx_index_write( hx_index* t, FILE* f );
 hx_index* hx_index_read( FILE* f, int buffer );
 
 hx_index_iter* hx_index_new_iter ( hx_index* index );
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id a, hx_node_id b, hx_node_id c );
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_free_index_iter ( hx_index_iter* iter );
 
 int hx_index_iter_finished ( hx_index_iter* iter );
