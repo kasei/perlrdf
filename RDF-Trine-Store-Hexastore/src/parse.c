@@ -49,10 +49,13 @@ int main (int argc, char** argv) {
 	index.hx	= hx_new_hexastore();
 	printf( "hx_index: %p\n", (void*) &index );
 	
-	FILE* f	= fopen( output_filename, "w" );
-	if (f == NULL) {
-		perror( "Failed to open hexastore file for writing: " );
-		return 1;
+	FILE* f	= NULL;
+	if (strcmp(output_filename, "/dev/null") != 0) {
+		f	= fopen( output_filename, "w" );
+		if (f == NULL) {
+			perror( "Failed to open hexastore file for writing: " );
+			return 1;
+		}
 	}
 	
 	rdf_parser	= NULL;
@@ -66,12 +69,14 @@ int main (int argc, char** argv) {
 	if (index.count > 0) {
 		add_triples_batch( &index );
 	}
-
+	
 	fprintf( stderr, "\n" );
 	
-	if (hx_write( index.hx, f ) != 0) {
-		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
-		return 1;
+	if (f != NULL) {
+		if (hx_write( index.hx, f ) != 0) {
+			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
+			return 1;
+		}
 	}
 	
 	hx_free_hexastore( index.hx );
