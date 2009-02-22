@@ -52,10 +52,16 @@ typedef struct {
 } hx_triple;
 
 typedef struct {
+	hx_node_id subject;
+	hx_node_id predicate;
+	hx_node_id object;
+} hx_triple_id;
+
+typedef struct {
 	hx_hexastore* hx;
 	hx_index* index;
 	hx_index* secondary;
-	hx_triple* triples;
+	hx_triple_id* triples;
 	int count;
 } hx_thread_info;
 

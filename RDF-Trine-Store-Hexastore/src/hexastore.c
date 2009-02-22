@@ -11,6 +11,7 @@ int _hx_iter_vb_free ( void* iter );
 int _hx_iter_vb_size ( void* iter );
 int _hx_iter_vb_sorted_by (void* iter, int index );
 char** _hx_iter_vb_names ( void* iter );
+int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 
 /////////////////////
 
@@ -49,13 +50,15 @@ hx_nodemap* hx_get_nodemap ( hx_hexastore* hx ) {
 }
 
 int hx_add_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
-	hx_terminal* t;
-	
 	hx_nodemap* map	= hx->map;
 	hx_node_id s	= hx_nodemap_add_node( map, sn );
 	hx_node_id p	= hx_nodemap_add_node( map, pn );
 	hx_node_id o	= hx_nodemap_add_node( map, on );
-	
+	return _hx_add_triple( hx, s, p, o );
+}
+
+int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
+	hx_terminal* t;
 	{
 		int added	= hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
 		hx_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
@@ -80,14 +83,21 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 			hx_add_triple( hx, triples[i].subject, triples[i].predicate, triples[i].object );
 		}
 	} else {
+		hx_triple_id triple_ids[ count ];
+		for (int i = 0; i < count; i++) {
+			triple_ids[i].subject	= hx_nodemap_add_node( hx->map, triples[i].subject );
+			triple_ids[i].predicate	= hx_nodemap_add_node( hx->map, triples[i].predicate );
+			triple_ids[i].object	= hx_nodemap_add_node( hx->map, triples[i].object );
+		}
+		
 		pthread_t threads[3];
 		hx_thread_info tinfo[3];
 		for (int i = 0; i < 3; i++) {
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
-			tinfo[i].triples	= triples;
+			tinfo[i].triples	= triple_ids;
 		}
-
+		
 		{
 			tinfo[0].index		= hx->spo;
 			tinfo[0].secondary	= hx->pso;
@@ -112,12 +122,9 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 void* _hx_add_triple_threaded (void* arg) {
 	hx_thread_info* tinfo	= (hx_thread_info*) arg;
 	for (int i = 0; i < tinfo->count; i++) {
-		hx_node* sn	= tinfo->triples[i].subject;
-		hx_node* pn	= tinfo->triples[i].predicate;
-		hx_node* on	= tinfo->triples[i].object;
-		hx_node_id s	= hx_get_node_id( tinfo->hx, sn );
-		hx_node_id p	= hx_get_node_id( tinfo->hx, pn );
-		hx_node_id o	= hx_get_node_id( tinfo->hx, on );
+		hx_node_id s	= tinfo->triples[i].subject;
+		hx_node_id p	= tinfo->triples[i].predicate;
+		hx_node_id o	= tinfo->triples[i].object;
 		hx_terminal* t;
 		int added	= hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
 		hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o, added );
