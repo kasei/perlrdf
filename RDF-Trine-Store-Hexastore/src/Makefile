@@ -1,12 +1,9 @@
 CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o btree.o
 
-all: parse print optimize tests btree
-
-btree: btree.c btree.h hexastore_types.h
-	$(CC) $(INC) -o btree btree.c
+all: parse print optimize tests
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse -lraptor parse.c $(OBJECTS)
@@ -44,26 +41,32 @@ mergejoin.o: mergejoin.c mergejoin.h hexastore_types.h variablebindings.h
 variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node.h index.h nodemap.h
 	$(CC) $(INC) -c variablebindings.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t
+btree.o: btree.c btree.h hexastore_types.h
+	$(CC) $(INC) -c btree.c
+
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
 
 ########
-t/node.t: tap.o t/node.c node.h
+t/node.t: tap.o t/node.c node.h node.o
 	$(CC) $(INC) -o t/node.t t/node.c $(OBJECTS)
 
-t/nodemap.t: tap.o t/nodemap.c nodemap.h
+t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o
 	$(CC) $(INC) -o t/nodemap.t t/nodemap.c $(OBJECTS)
 
-t/index.t: tap.o t/index.c index.h
+t/index.t: tap.o t/index.c index.h index.o
 	$(CC) $(INC) -o t/index.t t/index.c $(OBJECTS)
 
-t/terminal.t: tap.o t/terminal.c terminal.h
+t/terminal.t: tap.o t/terminal.c terminal.h terminal.o
 	$(CC) $(INC) -o t/terminal.t t/terminal.c $(OBJECTS)
 
-t/vector.t: tap.o t/vector.c vector.h
+t/vector.t: tap.o t/vector.c vector.h vector.o
 	$(CC) $(INC) -o t/vector.t t/vector.c $(OBJECTS)
 
-t/head.t: tap.o t/head.c head.h
+t/head.t: tap.o t/head.c head.h head.o
 	$(CC) $(INC) -o t/head.t t/head.c $(OBJECTS)
+
+t/btree.t: tap.o t/btree.c btree.h btree.o
+	$(CC) $(INC) -o t/btree.t t/btree.c $(OBJECTS)
 
 ########
 
@@ -74,7 +77,7 @@ tap.o: tap.c tap.h
 	$(CC) $(INC) -c tap.c
 
 clean:
-	rm -f test parse print optimize a.out btree
+	rm -f test parse print optimize a.out
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
