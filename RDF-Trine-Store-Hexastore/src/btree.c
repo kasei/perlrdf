@@ -12,8 +12,8 @@ hx_btree_node* _hx_btree_search_page ( hx_btree_world* w, hx_btree_node* root, h
 
 hx_btree_node* hx_new_btree_root ( hx_btree_world* w ) {
 	hx_btree_node* root	= hx_new_btree_node( w );
-	hx_btree_node_set_flag( &w, root, HX_BTREE_NODE_ROOT );
-	hx_btree_node_set_flag( &w, root, HX_BTREE_NODE_LEAF );
+	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_ROOT );
+	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_LEAF );
 	return root;
 }
 
