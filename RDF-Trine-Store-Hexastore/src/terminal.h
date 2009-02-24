@@ -15,6 +15,7 @@
 #include "hexastore_types.h"
 
 typedef struct {
+	hx_world* world;
 	list_size_t allocated;
 	list_size_t used;
 	hx_node_id* ptr;
@@ -28,7 +29,7 @@ typedef struct {
 	int finished;
 } hx_terminal_iter;
 
-hx_terminal* hx_new_terminal ( void );
+hx_terminal* hx_new_terminal ( hx_world* w );
 int hx_free_terminal ( hx_terminal* list );
 
 int hx_terminal_debug ( const char* header, hx_terminal* t, int newline );
@@ -38,7 +39,7 @@ int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n );
 list_size_t hx_terminal_size ( hx_terminal* t );
 
 int hx_terminal_write( hx_terminal* t, FILE* f );
-hx_terminal* hx_terminal_read( FILE* f, int buffer );
+hx_terminal* hx_terminal_read( hx_world* w, FILE* f, int buffer );
 
 hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal );
 int hx_free_terminal_iter ( hx_terminal_iter* iter );

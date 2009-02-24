@@ -21,6 +21,7 @@ typedef struct {
 } hx_vector_item;
 
 typedef struct {
+	hx_world* world;
 	uint64_t triples_count;
 	list_size_t allocated;
 	list_size_t used;
@@ -34,7 +35,7 @@ typedef struct {
 	int finished;
 } hx_vector_iter;
 
-hx_vector* hx_new_vector ( void );
+hx_vector* hx_new_vector ( hx_world* w );
 int hx_free_vector ( hx_vector* list );
 
 int hx_vector_debug ( const char* header, const hx_vector* v );
@@ -46,7 +47,7 @@ uint64_t hx_vector_triples_count ( hx_vector* v );
 void hx_vector_triples_count_add ( hx_vector* v, int c );
 
 int hx_vector_write( hx_vector* t, FILE* f );
-hx_vector* hx_vector_read( FILE* f, int buffer );
+hx_vector* hx_vector_read( hx_world* w, FILE* f, int buffer );
 
 hx_vector_iter* hx_vector_new_iter ( hx_vector* vector );
 int hx_free_vector_iter ( hx_vector_iter* iter );

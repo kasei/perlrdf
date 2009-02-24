@@ -19,4 +19,8 @@ typedef int64_t hx_node_id;
 
 static char* HX_POSITION_NAMES[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
 
+typedef struct {
+	hx_btree_world* b;
+} hx_world;
+
 #endif

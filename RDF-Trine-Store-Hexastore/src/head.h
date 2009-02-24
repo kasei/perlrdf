@@ -22,6 +22,7 @@ typedef struct {
 } hx_head_item;
 
 typedef struct {
+	hx_world* world;
 	uint64_t triples_count;
 	hx_btree_world* world;
 	hx_btree_node* tree;
@@ -32,7 +33,7 @@ typedef struct {
 	hx_btree_iter* t;
 } hx_head_iter;
 
-hx_head* hx_new_head ( void );
+hx_head* hx_new_head ( hx_world* w );
 int hx_free_head ( hx_head* head );
 
 int hx_head_debug ( const char* header, hx_head* h );
@@ -45,7 +46,7 @@ uint64_t hx_head_triples_count ( hx_head* h );
 void hx_head_triples_count_add ( hx_head* h, int c );
 
 int hx_head_write( hx_head* t, FILE* f );
-hx_head* hx_head_read( FILE* f, int buffer );
+hx_head* hx_head_read( hx_world* w, FILE* f, int buffer );
 
 hx_head_iter* hx_head_new_iter ( hx_head* head );
 int hx_free_head_iter ( hx_head_iter* iter );
