@@ -12,7 +12,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "avl.h"
+#include "btree.h"
 #include "hexastore_types.h"
 #include "vector.h"
 
@@ -23,12 +23,13 @@ typedef struct {
 
 typedef struct {
 	uint64_t triples_count;
-	struct avl_table* tree;
+	hx_btree_world* world;
+	hx_btree_node* tree;
 } hx_head;
 
 typedef struct {
 	hx_head* head;
-	struct avl_traverser t;
+	hx_btree_iter* t;
 } hx_head_iter;
 
 hx_head* hx_new_head ( void );
@@ -42,8 +43,6 @@ int hx_head_remove_vector ( hx_head* h, hx_node_id n );
 list_size_t hx_head_size ( hx_head* h );
 uint64_t hx_head_triples_count ( hx_head* h );
 void hx_head_triples_count_add ( hx_head* h, int c );
-
-size_t hx_head_memory_size ( hx_head* h );
 
 int hx_head_write( hx_head* t, FILE* f );
 hx_head* hx_head_read( FILE* f, int buffer );

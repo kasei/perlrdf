@@ -57,11 +57,16 @@ typedef struct {
 	uint32_t index;
 } hx_btree_iter;
 
-typedef void hx_btree_node_visitor ( hx_btree_world* w, hx_btree_node* node, int level );
+typedef void hx_btree_node_visitor ( hx_btree_world* w, hx_btree_node* node, int level, void* param );
+
+hx_btree_world* hx_new_btree_world ( uint32_t flags );
+int hx_free_btree_world ( hx_btree_world* w );
 
 hx_btree_node* hx_new_btree_root ( hx_btree_world* w );
 hx_btree_node* hx_new_btree_node ( hx_btree_world* w );
 int hx_free_btree_node ( hx_btree_world* w, hx_btree_node* node );
+
+list_size_t hx_btree_size ( hx_btree_world* w, hx_btree_node* node );
 
 int hx_btree_node_debug ( char* string, hx_btree_world* w, hx_btree_node* node );
 int hx_btree_node_add_child ( hx_btree_world* w, hx_btree_node* node, hx_node_id n, uint64_t child );
@@ -80,7 +85,7 @@ int hx_btree_node_unset_flag ( hx_btree_world* w, hx_btree_node* node, uint32_t 
 
 uint64_t hx_btree_search ( hx_btree_world* w, hx_btree_node* root, hx_node_id key );
 int hx_btree_insert ( hx_btree_world* w, hx_btree_node** _root, hx_node_id key, uint64_t value );
-void hx_btree_traverse ( hx_btree_world* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level );
+void hx_btree_traverse ( hx_btree_world* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param );
 
 hx_btree_iter* hx_btree_new_iter ( hx_btree_world* w, hx_btree_node* root );
 int hx_free_btree_iter ( hx_btree_iter* iter );

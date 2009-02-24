@@ -116,14 +116,6 @@ void hx_vector_triples_count_add ( hx_vector* v, int c ) {
 	v->triples_count	+= c;
 }
 
-size_t hx_vector_memory_size ( hx_vector* v ) {
-	uint64_t size	= sizeof( hx_vector ) + (v->used * sizeof( hx_vector_item ));
-	for (int i = 0; i < v->used; i++) {
-		size	+= hx_terminal_memory_size( v->ptr[ i ].terminal );
-	}
-	return size;
-}
-
 int _hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index ) {
 	int low		= 0;
 	int high	= v->used - 1;

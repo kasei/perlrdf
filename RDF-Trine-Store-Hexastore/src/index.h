@@ -56,7 +56,6 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, 
 int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int new );
 int hx_index_remove_triple ( hx_index* i, hx_node_id s, hx_node_id p, hx_node_id o );
 uint64_t hx_index_triples_count ( hx_index* index );
-size_t hx_index_memory_size ( hx_index* i );
 
 int hx_index_write( hx_index* t, FILE* f );
 hx_index* hx_index_read( FILE* f, int buffer );

@@ -1,7 +1,8 @@
 #include "btree.h"
 #include <assert.h>
 
-void _hx_btree_debug_leaves (hx_btree_world* w, hx_btree_node* node, int level);
+void _hx_btree_debug_leaves (hx_btree_world* w, hx_btree_node* node, int level, void* param);
+void _hx_btree_count ( hx_btree_world* w, hx_btree_node* node, int level, void* param );
 int _hx_btree_binary_search ( const hx_btree_node* node, const hx_node_id n, int* index );
 hx_btree_node* _hx_btree_int2node ( hx_btree_world* w, uint64_t id );
 uint64_t _hx_btree_node2int ( hx_btree_world* w, hx_btree_node* node );
@@ -9,6 +10,17 @@ int _hx_btree_insert_nonfull( hx_btree_world* w, hx_btree_node* root, hx_node_id
 int _hx_btree_node_split_child( hx_btree_world* w, hx_btree_node* parent, uint32_t index, hx_btree_node* child );
 int _hx_btree_iter_prime ( hx_btree_iter* iter );
 hx_btree_node* _hx_btree_search_page ( hx_btree_world* w, hx_btree_node* root, hx_node_id key );
+
+hx_btree_world* hx_new_btree_world ( uint32_t flags ) {
+	hx_btree_world* w	= (hx_btree_world*) calloc( 1, sizeof( hx_btree_world ) );
+	w->flags			= flags;
+	return w;
+}
+
+int hx_free_btree_world ( hx_btree_world* w ) {
+	free( w );
+	return 0;
+}
 
 hx_btree_node* hx_new_btree_root ( hx_btree_world* w ) {
 	hx_btree_node* root	= hx_new_btree_node( w );
@@ -35,6 +47,12 @@ int hx_free_btree_node ( hx_btree_world* w, hx_btree_node* node ) {
 	}
 	free( node );
 	return 0;
+}
+
+list_size_t hx_btree_size ( hx_btree_world* w, hx_btree_node* node ) {
+	list_size_t count	= 0;
+	hx_btree_traverse( w, node, _hx_btree_count, NULL, 0, &count );
+	return count;
 }
 
 int hx_btree_node_set_parent ( hx_btree_world* w, hx_btree_node* node, hx_btree_node* parent ) {
@@ -298,24 +316,30 @@ uint64_t _hx_btree_node2int ( hx_btree_world* w, hx_btree_node* node ) {
 	}
 }
 
-void hx_btree_traverse ( hx_btree_world* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level ) {
-	if (before != NULL) before( w, node, level );
+void hx_btree_traverse ( hx_btree_world* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param ) {
+	if (before != NULL) before( w, node, level, param );
 	if (!hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
 		for (int i = 0; i < node->used; i++) {
 			hx_btree_node* c	= _hx_btree_int2node( w, node->children[i] );
-			hx_btree_traverse( w, c, before, after, level + 1 );
+			hx_btree_traverse( w, c, before, after, level + 1, param );
 		}
 	}
-	if (after != NULL) after( w, node, level );
+	if (after != NULL) after( w, node, level, after );
 }
 
-void _hx_btree_debug_leaves (hx_btree_world* w, hx_btree_node* node, int level) {
+void _hx_btree_debug_leaves ( hx_btree_world* w, hx_btree_node* node, int level, void* param ) {
 	if (hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
 		fprintf( stderr, "LEVEL %d\n", level );
 		hx_btree_node_debug( "", w, node );
 	}
 }
 
+void _hx_btree_count ( hx_btree_world* w, hx_btree_node* node, int level, void* param ) {
+	list_size_t* count	= (list_size_t*) param;
+	if (hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
+		*count	+= node->used;
+	}
+}
 
 hx_btree_iter* hx_btree_new_iter ( hx_btree_world* w, hx_btree_node* root ) {
 	hx_btree_iter* iter	= (hx_btree_iter*) calloc( 1, sizeof( hx_btree_iter ) );
@@ -370,9 +394,6 @@ int hx_btree_iter_current ( hx_btree_iter* iter, hx_node_id* n, uint64_t* v ) {
 }
 
 int hx_btree_iter_next ( hx_btree_iter* iter ) {
-	if (iter->started == 0) {
-		_hx_btree_iter_prime( iter );
-	}
 	iter->index++;
 	if (iter->index >= iter->page->used) {
 		iter->page	= hx_btree_node_next_neighbor( iter->world, iter->page );
@@ -386,9 +407,15 @@ int hx_btree_iter_next ( hx_btree_iter* iter ) {
 }
 
 int hx_btree_iter_seek( hx_btree_iter* iter, hx_node_id key ) {
+	if (iter->started == 0) {
+		_hx_btree_iter_prime( iter );
+	}
+	
 	hx_btree_node* u	= _hx_btree_search_page( iter->world, iter->root, key );
 	int i;
 	int r	= _hx_btree_binary_search( u, key, &i );
+	iter->page	= u;
+	iter->index	= i;
 	if (r == 0) {
 		return 0;
 	} else {

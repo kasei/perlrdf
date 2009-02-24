@@ -115,11 +115,6 @@ list_size_t hx_terminal_size ( hx_terminal* t ) {
 	return t->used;
 }
 
-size_t hx_terminal_memory_size ( hx_terminal* t ) {
-	list_size_t size	= sizeof( hx_terminal ) + (t->used * sizeof( hx_node_id ));
-	return size;
-}
-
 int _hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index ) {
 	int low		= 0;
 	int high	= t->used - 1;

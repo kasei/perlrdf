@@ -87,13 +87,6 @@ void head_iter_test2 ( void ) {
 }
 
 void head_iter_test3 ( void ) {
-	// seeking on an iterator should leave the iterator in a state so that
-	// the next key is equal to or greater than the sought key.
-	
-	// the current libavl implementation doesn't work this way.
-	// seeking in a head iterator only works if the sought key exists.
-	// this head has even keys between 2-10. seeking to 7 fails as it is odd,
-	// but since 7 isn't found, we can't use the iterator to get 8 and 10.
 	hx_head* h	= hx_new_head();
 	for (int i = 2; i <= 10; i+=2) {
 		hx_vector* v	= _new_vector( i );
@@ -107,9 +100,7 @@ void head_iter_test3 ( void ) {
 		hx_head_iter_next(iter);
 	}
 	
-	todo_start("seeking in head iterators should reposition the iterator even if the sought key doesn't exist");
 	ok1( counter == 2 );
-	todo_end();
 	
 	hx_free_head_iter( iter );
 	hx_free_head(h);

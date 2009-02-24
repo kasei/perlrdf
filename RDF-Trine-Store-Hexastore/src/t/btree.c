@@ -224,7 +224,11 @@ void large_test ( void ) {
 	for (int i = 1; i <= 4000000; i++) {
 		hx_btree_insert( &w, &root, (hx_node_id) i, (uint64_t) 10*i );
 	}
-
+	
+	list_size_t size	= hx_btree_size( &w, root );
+	ok1( 4000000 == size );
+	ok1( 15876 == hx_btree_size( &w, (uint64_t) root->children[0] ) );
+	
 	int counter	= 0;
 	hx_node_id key, last;
 	uint64_t value3;

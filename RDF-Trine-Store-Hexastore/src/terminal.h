@@ -36,7 +36,6 @@ int hx_terminal_add_node ( hx_terminal* t, hx_node_id n );
 int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n );
 int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n );
 list_size_t hx_terminal_size ( hx_terminal* t );
-size_t hx_terminal_memory_size ( hx_terminal* t );
 
 int hx_terminal_write( hx_terminal* t, FILE* f );
 hx_terminal* hx_terminal_read( FILE* f, int buffer );

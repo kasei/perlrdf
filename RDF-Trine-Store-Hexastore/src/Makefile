@@ -1,4 +1,4 @@
-CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable # -Werror -DAVL_ALLOC_COUNT
+CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o btree.o
@@ -26,7 +26,7 @@ terminal.o: terminal.c terminal.h hexastore_types.h
 vector.o: vector.c vector.h terminal.h hexastore_types.h
 	$(CC) $(INC) -c vector.c
 
-head.o: head.c head.h vector.h terminal.h avl.h hexastore_types.h
+head.o: head.c head.h vector.h terminal.h btree.h hexastore_types.h
 	$(CC) $(INC) -c head.c
 
 node.o: node.c node.h hexastore_types.h

@@ -193,11 +193,6 @@ uint64_t hx_index_triples_count ( hx_index* index ) {
 	return hx_head_triples_count( index->head );
 }
 
-size_t hx_index_memory_size ( hx_index* i ) {
-	size_t size	= sizeof( hx_index ) + hx_head_memory_size( i->head );
-	return size;
-}
-
 hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 	hx_index_iter* iter	= (hx_index_iter*) calloc( 1, sizeof( hx_index_iter ) );
 	iter->flags			= 0;
