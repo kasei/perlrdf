@@ -46,7 +46,8 @@ int main (int argc, char** argv) {
 		pred		= argv[4];
 	
 	index.count		= 0;
-	index.hx	= hx_new_hexastore();
+	hx_storage_manager* s	= hx_new_memory_storage_manager();
+	index.hx	= hx_new_hexastore( s );
 	printf( "hx_index: %p\n", (void*) &index );
 	
 	FILE* f	= NULL;
@@ -80,6 +81,7 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_free_hexastore( index.hx );
+	hx_free_storage_manager( s );
 	return 0;
 }
 

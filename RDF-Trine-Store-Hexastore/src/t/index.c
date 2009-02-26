@@ -24,7 +24,8 @@ int main ( void ) {
 }
 
 void spo_test1 ( void ) {
-	hx_index* i	= hx_new_index( HX_INDEX_ORDER_SPO );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_SPO );
 	ok1( i != NULL );
 	
 	hx_node_id s	= (hx_node_id) 1;
@@ -45,10 +46,12 @@ void spo_test1 ( void ) {
 	ok1( hx_index_triples_count( i ) == 0 );
 	
 	hx_free_index(i);
+	hx_free_storage_manager( st );
 }
 
 void spo_test2 ( void ) {
-	hx_index* i	= hx_new_index( HX_INDEX_ORDER_SPO );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_SPO );
 	hx_node_id s, p, o;
 	s	= (hx_node_id) 1;
 	for (p = 1; p <= 10; p++) {
@@ -73,10 +76,12 @@ void spo_test2 ( void ) {
 	ok1( hx_index_triples_count( i ) == 750 );
 	
 	hx_free_index(i);
+	hx_free_storage_manager( st );
 }
 
 void pos_iter_test1 ( void ) {
-	hx_index* i	= hx_new_index( HX_INDEX_ORDER_POS );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_POS );
 	ok1( i != NULL );
 	
 	const int range	= 3;
@@ -117,10 +122,12 @@ void pos_iter_test1 ( void ) {
 	}
 	
 	hx_free_index(i);
+	hx_free_storage_manager( st );
 }
 
 void spo_iter_test1 ( void ) {
-	hx_index* i	= hx_new_index( HX_INDEX_ORDER_SPO );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_SPO );
 	ok1( i != NULL );
 	
 	const int range	= 3;
@@ -161,11 +168,13 @@ void spo_iter_test1 ( void ) {
 	}
 	
 	hx_free_index(i);
+	hx_free_storage_manager( st );
 }
 
 void pso_iter1_test1 ( void ) {
 	diag( "hx_index_new_iter1" );
-	hx_index* i	= hx_new_index( HX_INDEX_ORDER_PSO );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_PSO );
 	ok1( i != NULL );
 	
 	const int range	= 3;
@@ -209,11 +218,13 @@ void pso_iter1_test1 ( void ) {
 	ok1( counter == range * range );
 	
 	hx_free_index(i);
+	hx_free_storage_manager( st );
 }
 
 void shared_terminal_test ( void ) {
-	hx_index* spo	= hx_new_index( HX_INDEX_ORDER_SPO );
-	hx_index* pso	= hx_new_index( HX_INDEX_ORDER_SPO );
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_index* spo	= hx_new_index( st, HX_INDEX_ORDER_SPO );
+	hx_index* pso	= hx_new_index( st, HX_INDEX_ORDER_SPO );
 	
 	hx_node_id s	= (hx_node_id) 1;
 	hx_node_id p	= (hx_node_id) 2;
@@ -235,4 +246,5 @@ void shared_terminal_test ( void ) {
 	
 	hx_free_index(spo);
 	hx_free_index(pso);
+	hx_free_storage_manager( st );
 }

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
+#include "storage.h"
 #include "node.h"
 #include "mergejoin.h"
 
@@ -37,7 +38,9 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_hexastore* hx	= hx_read( f, 0 );
+	hx_storage_manager* s	= hx_new_memory_storage_manager();
+	
+	hx_hexastore* hx	= hx_read( s, f, 0 );
 	hx_nodemap* map		= hx_get_nodemap( hx );;
 	
 	if (arg == NULL) {
@@ -203,6 +206,7 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_free_hexastore( hx );
+	hx_free_storage_manager( s );
 	return 0;
 }
 

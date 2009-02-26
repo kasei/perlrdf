@@ -6,6 +6,7 @@
 #include "hexastore_types.h"
 #include "avl.h"
 #include "node.h"
+#include "storage.h"
 
 typedef struct avl_table avl;
 typedef struct {
@@ -30,6 +31,6 @@ hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id );
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
-hx_nodemap* hx_nodemap_read( FILE* f, int buffer );
+hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
 
 #endif

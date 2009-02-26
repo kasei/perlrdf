@@ -4,13 +4,14 @@ int _hx_terminal_grow( hx_terminal* t );
 int _hx_terminal_iter_prime_first_result( hx_terminal_iter* iter );
 int _hx_terminal_binary_search ( const hx_terminal* t, const hx_node_id n, int* index );
 
-hx_terminal* hx_new_terminal( void ) {
+hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
 	hx_node_id* p	= (hx_node_id*) calloc( TERMINAL_LIST_ALLOC_SIZE, sizeof( hx_node_id ) );
 	terminal->ptr		= p;
 	terminal->allocated	= TERMINAL_LIST_ALLOC_SIZE;
 	terminal->used		= 0;
 	terminal->refcount	= 0;
+	terminal->storage	= s;
 	return terminal;
 }
 
@@ -220,7 +221,7 @@ int hx_terminal_write( hx_terminal* t, FILE* f ) {
 	return 0;
 }
 
-hx_terminal* hx_terminal_read( FILE* f, int buffer ) {
+hx_terminal* hx_terminal_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	list_size_t used;
 	int c	= fgetc( f );
 	if (c != 'T') {

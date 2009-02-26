@@ -146,7 +146,7 @@ int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
 	return 0;
 }
 
-hx_nodemap* hx_nodemap_read( FILE* f, int buffer ) {
+hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	size_t used, read;
 	hx_node_id next_id;
 	int c	= fgetc( f );

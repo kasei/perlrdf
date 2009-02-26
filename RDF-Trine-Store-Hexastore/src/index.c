@@ -19,7 +19,7 @@ int _hx_index_got_vector_trigger ( hx_index_iter* iter, hx_node_id n );
 
 **/
 
-hx_index* hx_new_index ( int* index_order ) {
+hx_index* hx_new_index ( hx_storage_manager* s, int* index_order ) {
 	int a	= index_order[0];
 	int b	= index_order[1];
 	int c	= index_order[2];
@@ -27,7 +27,8 @@ hx_index* hx_new_index ( int* index_order ) {
 	i->order[0]	= a;
 	i->order[1]	= b;
 	i->order[2]	= c;
-	i->head		= hx_new_head();
+	i->head		= hx_new_head( s );
+	i->storage	= s;
 	return i;
 }
 
@@ -96,12 +97,12 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, 
 	
 	if ((v = hx_head_get_vector( h, index_ordered[0] )) == NULL) {
 //		fprintf( stderr, "adding missing vector for node %d\n", (int) index_ordered[0] );
-		v	= hx_new_vector();
+		v	= hx_new_vector( index->storage );
 		hx_head_add_vector( h, index_ordered[0], v );
 	}
 	
 	if ((t = hx_vector_get_terminal( v, index_ordered[1] )) == NULL) {
-		t	= hx_new_terminal();
+		t	= hx_new_terminal( index->storage );
 		hx_vector_add_terminal( v, index_ordered[1], t );
 	}
 	
@@ -133,7 +134,7 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node
 	
 	if ((v = hx_head_get_vector( h, index_ordered[0] )) == NULL) {
 //		fprintf( stderr, "adding missing vector for node %d\n", (int) index_ordered[0] );
-		v	= hx_new_vector();
+		v	= hx_new_vector( index->storage );
 		hx_head_add_vector( h, index_ordered[0], v );
 	}
 	
@@ -464,7 +465,7 @@ int hx_index_write( hx_index* i, FILE* f ) {
 	return hx_head_write( i->head, f );
 }
 
-hx_index* hx_index_read( FILE* f, int buffer ) {
+hx_index* hx_index_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	size_t read;
 	int c	= fgetc( f );
 	if (c != 'I') {
@@ -473,7 +474,7 @@ hx_index* hx_index_read( FILE* f, int buffer ) {
 	}
 	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index ) );
 	read	= fread( i->order, sizeof( int ), 3, f );
-	if (read == 0 || (i->head = hx_head_read( f, buffer )) == NULL) {
+	if (read == 0 || (i->head = hx_head_read( s, f, buffer )) == NULL) {
 		free( i );
 		return NULL;
 	} else {

@@ -15,20 +15,21 @@ int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o )
 
 /////////////////////
 
-hx_hexastore* hx_new_hexastore ( void ) {
+hx_hexastore* hx_new_hexastore ( hx_storage_manager* s ) {
 	hx_nodemap* map	= hx_new_nodemap();
-	return hx_new_hexastore_with_nodemap( map );
+	return hx_new_hexastore_with_nodemap( s, map );
 }
 
-hx_hexastore* hx_new_hexastore_with_nodemap ( hx_nodemap* map ) {
+hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap* map ) {
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx->storage		= s;
 	hx->map			= map;
-	hx->spo			= hx_new_index( HX_INDEX_ORDER_SPO );
-	hx->sop			= hx_new_index( HX_INDEX_ORDER_SOP );
-	hx->pso			= hx_new_index( HX_INDEX_ORDER_PSO );
-	hx->pos			= hx_new_index( HX_INDEX_ORDER_POS );
-	hx->osp			= hx_new_index( HX_INDEX_ORDER_OSP );
-	hx->ops			= hx_new_index( HX_INDEX_ORDER_OPS );
+	hx->spo			= hx_new_index( s, HX_INDEX_ORDER_SPO );
+	hx->sop			= hx_new_index( s, HX_INDEX_ORDER_SOP );
+	hx->pso			= hx_new_index( s, HX_INDEX_ORDER_PSO );
+	hx->pos			= hx_new_index( s, HX_INDEX_ORDER_POS );
+	hx->osp			= hx_new_index( s, HX_INDEX_ORDER_OSP );
+	hx->ops			= hx_new_index( s, HX_INDEX_ORDER_OPS );
 	hx->next_var	= -1;
 	return hx;
 }
@@ -338,7 +339,7 @@ int hx_write( hx_hexastore* h, FILE* f ) {
 	}
 }
 
-hx_hexastore* hx_read( FILE* f, int buffer ) {
+hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	size_t read;
 	int c	= fgetc( f );
 	if (c != 'X') {
@@ -346,7 +347,7 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 		return NULL;
 	}
 	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
-	hx->map	= hx_nodemap_read( f, buffer );
+	hx->map	= hx_nodemap_read( s, f, buffer );
 	if (hx->map == NULL) {
 		fprintf( stderr, "*** NULL nodemap returned while trying to read hexastore from disk.\n" );
 		free( hx );
@@ -354,12 +355,12 @@ hx_hexastore* hx_read( FILE* f, int buffer ) {
 	}
 	
 	hx->next_var	= -1;
-	hx->spo	= hx_index_read( f, buffer );
-	hx->sop	= hx_index_read( f, buffer );
-	hx->pso	= hx_index_read( f, buffer );
-	hx->pos	= hx_index_read( f, buffer );
-	hx->osp	= hx_index_read( f, buffer );
-	hx->ops	= hx_index_read( f, buffer );
+	hx->spo	= hx_index_read( s, f, buffer );
+	hx->sop	= hx_index_read( s, f, buffer );
+	hx->pso	= hx_index_read( s, f, buffer );
+	hx->pos	= hx_index_read( s, f, buffer );
+	hx->osp	= hx_index_read( s, f, buffer );
+	hx->ops	= hx_index_read( s, f, buffer );
 	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
 		free( hx );

@@ -13,11 +13,12 @@ int main ( void ) {
 }
 
 void vector_test ( void ) {
-	hx_vector* v	= hx_new_vector();
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_vector* v	= hx_new_vector( st );
 	ok1( v != NULL );
 	
 	for (int i = 1; i <= 10; i++) {
-		hx_terminal* t	= hx_new_terminal();
+		hx_terminal* t	= hx_new_terminal( st );
 		for (int j = 1; j <= i; j++) {
 			hx_terminal_add_node( t, (hx_node_id) j );
 		}
@@ -32,12 +33,14 @@ void vector_test ( void ) {
 	ok1( t == NULL );
 	
 	hx_free_vector(v);
+	hx_free_storage_manager( st );
 }
 
 void vector_iter_test ( void ) {
-	hx_vector* v	= hx_new_vector();
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_vector* v	= hx_new_vector( st );
 	for (int i = 1; i <= 10; i++) {
-		hx_terminal* t	= hx_new_terminal();
+		hx_terminal* t	= hx_new_terminal( st );
 		for (int j = i; j > 0; j--) {
 			hx_terminal_add_node( t, (hx_node_id) j );
 		}
@@ -62,4 +65,5 @@ void vector_iter_test ( void ) {
 	ok1( counter == 10 );
 	hx_free_vector_iter( iter );
 	hx_free_vector(v);
+	hx_free_storage_manager( st );
 }

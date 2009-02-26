@@ -13,7 +13,8 @@ int main ( void ) {
 }
 
 void terminal_test ( void ) {
-	hx_terminal* t	= hx_new_terminal();
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_terminal* t	= hx_new_terminal( st );
 	ok1( t != NULL );
 	
 	ok1( hx_terminal_size(t) == 0 );
@@ -38,10 +39,12 @@ void terminal_test ( void ) {
 	ok1( hx_terminal_size(t) == 0 );
 	
 	hx_free_terminal(t);
+	hx_free_storage_manager( st );
 }
 
 void terminal_iter_test ( void ) {
-	hx_terminal* t	= hx_new_terminal();
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
+	hx_terminal* t	= hx_new_terminal( st );
 	for (int i = 200; i > 0; i -= 2) {
 		hx_terminal_add_node(t, (hx_node_id) i );
 	}
@@ -64,4 +67,5 @@ void terminal_iter_test ( void ) {
 	
 	hx_free_terminal_iter( iter );
 	hx_free_terminal(t);
+	hx_free_storage_manager( st );
 }

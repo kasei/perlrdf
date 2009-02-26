@@ -20,6 +20,7 @@
 #include "terminal.h"
 #include "vector.h"
 #include "head.h"
+#include "storage.h"
 
 enum {
 	RDF_ITER_FLAGS_BOUND_A	= 1,
@@ -35,7 +36,7 @@ static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
 static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
-	hx_world* world;
+	hx_storage_manager* storage;
 	hx_nodemap* map;
 	hx_index* spo;
 	hx_index* sop;
@@ -75,8 +76,8 @@ typedef struct {
 	char *subject, *predicate, *object;
 } _hx_iter_vb_info;
 
-hx_hexastore* hx_new_hexastore ( hx_world* w );
-hx_hexastore* hx_new_hexastore_with_nodemap ( hx_world* w, hx_nodemap* map );
+hx_hexastore* hx_new_hexastore ( hx_storage_manager* w );
+hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx );
 
 int hx_add_triple( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
@@ -94,6 +95,6 @@ hx_nodemap* hx_get_nodemap ( hx_hexastore* hx );
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name );
 
 int hx_write( hx_hexastore* h, FILE* f );
-hx_hexastore* hx_read( hx_world* w, FILE* f, int buffer );
+hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );
 
 #endif

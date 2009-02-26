@@ -5,13 +5,14 @@ int _hx_vector_iter_prime_first_result( hx_vector_iter* iter );
 int _hx_vector_binary_search ( const hx_vector* v, const hx_node_id n, int* index );
 
 
-hx_vector* hx_new_vector( void ) {
+hx_vector* hx_new_vector( hx_storage_manager* s ) {
 	hx_vector* vector		= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
 	hx_vector_item* p		= (hx_vector_item*) calloc( VECTOR_LIST_ALLOC_SIZE, sizeof( hx_vector_item ) );
 	vector->ptr				= p;
 	vector->allocated		= VECTOR_LIST_ALLOC_SIZE;
 	vector->used			= 0;
 	vector->triples_count	= 0;
+	vector->storage			= s;
 	return vector;
 }
 
@@ -245,7 +246,7 @@ int hx_vector_write( hx_vector* v, FILE* f ) {
 	return 0;
 }
 
-hx_vector* hx_vector_read( FILE* f, int buffer ) {
+hx_vector* hx_vector_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	size_t read;
 	list_size_t used;
 	int c	= fgetc( f );
@@ -278,7 +279,7 @@ hx_vector* hx_vector_read( FILE* f, int buffer ) {
 		
 		for (int i = 0; i < used; i++) {
 			read	= fread( &( vector->ptr[i].node ), sizeof( hx_node_id ), 1, f );
-			if (read == 0 || (vector->ptr[i].terminal	= hx_terminal_read( f, buffer )) == NULL) {
+			if (read == 0 || (vector->ptr[i].terminal	= hx_terminal_read( s, f, buffer )) == NULL) {
 				fprintf( stderr, "*** NULL terminal returned while trying to read vector from file.\n" );
 				hx_free_vector( vector );
 				return NULL;

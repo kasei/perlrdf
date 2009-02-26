@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "hexastore.h"
 #include "nodemap.h"
+#include "storage.h"
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id );
 void help (int argc, char** argv) {
@@ -32,17 +33,19 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
+	hx_storage_manager* s	= hx_new_memory_storage_manager();
+	
 	fprintf( stderr, "reading hexastore from file...\n" );
-	hx_hexastore* hx	= hx_read( inf, 0 );
+	hx_hexastore* hx	= hx_read( s, inf, 0 );
 	fprintf( stderr, "reading nodemap from file...\n" );
-	hx_nodemap* map		= hx_nodemap_read( inf, 0 );
+	hx_nodemap* map		= hx_nodemap_read( s, inf, 0 );
 	
 	fprintf( stderr, "re-sorting nodemap...\n" );
 	hx_nodemap* smap	= hx_nodemap_sparql_order_nodes( map );
 	
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
-	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( smap );
+	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( s, smap );
 	hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
@@ -70,6 +73,7 @@ int main (int argc, char** argv) {
 	
 	hx_free_hexastore( hx );
 	hx_free_nodemap( smap );
+	hx_free_storage_manager( s );
 	fclose( inf );
 	fclose( outf );
 	return 0;

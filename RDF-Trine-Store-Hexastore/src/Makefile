@@ -1,7 +1,7 @@
 CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o btree.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o tap.o btree.o storage.o
 
 all: parse print optimize tests
 
@@ -44,28 +44,31 @@ variablebindings.o: variablebindings.c variablebindings.h hexastore_types.h node
 btree.o: btree.c btree.h hexastore_types.h
 	$(CC) $(INC) -c btree.c
 
+storage.o: storage.c storage.h hexastore_types.h
+	$(CC) $(INC) -c storage.c
+
 tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
 
 ########
-t/node.t: tap.o t/node.c node.h node.o
+t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
 	$(CC) $(INC) -o t/node.t t/node.c $(OBJECTS)
 
-t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o
+t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS)
 	$(CC) $(INC) -o t/nodemap.t t/nodemap.c $(OBJECTS)
 
-t/index.t: tap.o t/index.c index.h index.o
+t/index.t: tap.o t/index.c index.h index.o $(OBJECTS)
 	$(CC) $(INC) -o t/index.t t/index.c $(OBJECTS)
 
-t/terminal.t: tap.o t/terminal.c terminal.h terminal.o
+t/terminal.t: tap.o t/terminal.c terminal.h terminal.o $(OBJECTS)
 	$(CC) $(INC) -o t/terminal.t t/terminal.c $(OBJECTS)
 
-t/vector.t: tap.o t/vector.c vector.h vector.o
+t/vector.t: tap.o t/vector.c vector.h vector.o $(OBJECTS)
 	$(CC) $(INC) -o t/vector.t t/vector.c $(OBJECTS)
 
-t/head.t: tap.o t/head.c head.h head.o
+t/head.t: tap.o t/head.c head.h head.o $(OBJECTS)
 	$(CC) $(INC) -o t/head.t t/head.c $(OBJECTS)
 
-t/btree.t: tap.o t/btree.c btree.h btree.o
+t/btree.t: tap.o t/btree.c btree.h btree.o $(OBJECTS)
 	$(CC) $(INC) -o t/btree.t t/btree.c $(OBJECTS)
 
 ########
