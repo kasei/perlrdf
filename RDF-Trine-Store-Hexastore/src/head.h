@@ -18,11 +18,6 @@
 #include "storage.h"
 
 typedef struct {
-	hx_node_id node;
-	hx_vector* vector;
-} hx_head_item;
-
-typedef struct {
 	hx_storage_manager* storage;
 	uint64_t triples_count;
 	hx_btree_node* tree;

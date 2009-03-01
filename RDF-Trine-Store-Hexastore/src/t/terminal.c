@@ -36,6 +36,7 @@ void terminal_test ( void ) {
 	for (int i = 1; i <= 5000; i++) {
 		hx_terminal_remove_node(t, (hx_node_id) i );
 	}
+	
 	ok1( hx_terminal_size(t) == 0 );
 	
 	hx_free_terminal(t);

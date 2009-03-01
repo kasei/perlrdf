@@ -1,9 +1,7 @@
 #include "head.h"
 
-int _hx_head_item_cmp ( const void* a, const void* b, void* param );
 hx_head* hx_new_head( hx_storage_manager* s ) {
 	hx_head* head	= (hx_head*) calloc( 1, sizeof( hx_head ) );
-
 	head->storage		= s;
 	head->tree		= hx_new_btree_root( s );
 // 	fprintf( stderr, ">>> allocated tree %p\n", (void*) head->tree );
@@ -25,7 +23,6 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 	
 	hx_node_id key;
 	uint64_t value;
-	hx_head_item* item;
 	hx_btree_iter* iter	= hx_btree_new_iter( h->storage, h->tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
@@ -39,7 +36,7 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 }
 
 int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v ) {
-	uint64_t value	= (uint64_t) v;
+	uint64_t value	= hx_storage_id_from_block( h->storage, v );
 	hx_btree_insert( h->storage, &( h->tree ), n, value );
 //	fprintf( stderr, "adding vector: %llu\n", value );
 	return 0;
@@ -53,8 +50,8 @@ hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n ) {
 }
 
 int hx_head_remove_vector ( hx_head* h, hx_node_id n ) {
-	fprintf( stderr, "*** REMOVING NOT IMPLEMENTED YET\n" );
-	return 1;
+	int r	= hx_btree_remove( h->storage, &(h->tree), n );
+	return r;
 }
 
 list_size_t hx_head_size ( hx_head* h ) {
@@ -105,7 +102,7 @@ int hx_head_write( hx_head* h, FILE* f ) {
 	fputc( 'H', f );
 	list_size_t used	= hx_head_size( h );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
-	fwrite( &( h->triples_count ), sizeof( uint64_t ), 1, f );
+	fwrite( &( used ), sizeof( uint64_t ), 1, f );
 	hx_head_iter* iter	= hx_head_new_iter( h );
 	while (!hx_head_iter_finished( iter )) {
 		hx_node_id n;

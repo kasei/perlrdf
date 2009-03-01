@@ -61,11 +61,17 @@ int hx_index_debug ( hx_index* index ) {
 		for (int j = 0; j < v->used; j++) {
 			hx_terminal* t	= v->ptr[j].terminal;
 			triple_ordered[ index->order[ 1 ] ]	= v->ptr[j].node;
-			for (int k = 0; k < t->used;  k++) {
-				hx_node_id n	= t->ptr[k];
+			hx_terminal_iter* titer	= hx_terminal_new_iter( t );
+			while (!hx_terminal_iter_finished( titer )) {
+				hx_node_id n;
+				hx_terminal_iter_current( titer, &n );
+				
 				triple_ordered[ index->order[ 2 ] ]	= n;
 				fprintf( stderr, "\t{ %d, %d, %d }\n", (int) triple_ordered[0], (int) triple_ordered[1], (int) triple_ordered[2] );
+				
+				hx_terminal_iter_next( titer );
 			}
+			hx_free_terminal_iter( titer );
 		}
 		
 		hx_head_iter_next( hiter );
@@ -440,7 +446,6 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 	
 	int tr;
 // NEXTTERMINAL:
-//	hx_terminal_iter_debug( "-> TERMINAL ITERATOR: ", iter->terminal_iter, 1 );
 	tr	= hx_terminal_iter_next( iter->terminal_iter );
 	if (tr == 0 && (iter->node_mask_c < (hx_node_id) 0)) {
 //		fprintf( stderr, "got next terminal\n" );
