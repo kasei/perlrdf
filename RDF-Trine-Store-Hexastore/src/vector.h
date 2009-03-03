@@ -13,26 +13,19 @@
 #include <unistd.h>
 
 #include "hexastore_types.h"
+#include "btree.h"
+#include "storage.h"
 #include "terminal.h"
-
-typedef struct {
-	hx_node_id node;
-	hx_terminal* terminal;
-} hx_vector_item;
 
 typedef struct {
 	hx_storage_manager* storage;
 	uint64_t triples_count;
-	list_size_t allocated;
-	list_size_t used;
-	hx_vector_item* ptr;
+	hx_btree_node* tree;
 } hx_vector;
 
 typedef struct {
 	hx_vector* vector;
-	size_t index;
-	int started;
-	int finished;
+	hx_btree_iter* t;
 } hx_vector_iter;
 
 hx_vector* hx_new_vector ( hx_storage_manager* s );

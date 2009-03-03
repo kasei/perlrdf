@@ -58,9 +58,11 @@ int hx_index_debug ( hx_index* index ) {
 		hx_vector* v;
 		hx_head_iter_current( hiter, &(triple_ordered[ index->order[ 0 ] ]), &v );
 		
-		for (int j = 0; j < v->used; j++) {
-			hx_terminal* t	= v->ptr[j].terminal;
-			triple_ordered[ index->order[ 1 ] ]	= v->ptr[j].node;
+		hx_vector_iter* viter	= hx_vector_new_iter( v );
+		int j = 0;
+		while (!hx_vector_iter_finished( viter )) {
+			hx_terminal* t;
+			hx_vector_iter_current( viter, &(triple_ordered[ index->order[ 1 ] ]), &t );
 			hx_terminal_iter* titer	= hx_terminal_new_iter( t );
 			while (!hx_terminal_iter_finished( titer )) {
 				hx_node_id n;
@@ -72,6 +74,8 @@ int hx_index_debug ( hx_index* index ) {
 				hx_terminal_iter_next( titer );
 			}
 			hx_free_terminal_iter( titer );
+			hx_vector_iter_next( viter );
+			j++;
 		}
 		
 		hx_head_iter_next( hiter );

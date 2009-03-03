@@ -26,10 +26,11 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 	hx_btree_iter* iter	= hx_btree_new_iter( h->storage, h->tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
-		hx_vector* v	= (hx_vector*) value;
+		hx_vector* v	= hx_storage_block_from_id( h->storage, value );
 		fprintf( stderr, "%s  %d", header, (int) key );
 		hx_vector_debug( indent, v );
 		fprintf( stderr, ",\n" );
+		hx_btree_iter_next(iter);
 	}
 	fprintf( stderr, "%s}}\n", header );
 	return 0;
@@ -45,7 +46,7 @@ int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v ) {
 hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n ) {
 	uint64_t vector	= hx_btree_search( h->storage, h->tree, n );
 //	fprintf( stderr, "got vector: %llu\n", vector );
-	hx_vector* v	= (hx_vector*) vector;
+	hx_vector* v	= hx_storage_block_from_id( h->storage, vector );
 	return v;
 }
 
@@ -85,7 +86,7 @@ int hx_head_iter_finished ( hx_head_iter* iter ) {
 int hx_head_iter_current ( hx_head_iter* iter, hx_node_id* n, hx_vector** v ) {
 	uint64_t vector;
 	int r	= hx_btree_iter_current( iter->t, n, &vector );
-	*v		= (hx_vector*) vector;
+	*v		= hx_storage_block_from_id( iter->head->storage, vector );
 	return r;
 }
 
