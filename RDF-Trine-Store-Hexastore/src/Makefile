@@ -51,25 +51,25 @@ tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
 
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
-	$(CC) $(INC) -o t/node.t t/node.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS)
 
 t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS)
-	$(CC) $(INC) -o t/nodemap.t t/nodemap.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/nodemap.t t/nodemap.c $(OBJECTS)
 
 t/index.t: tap.o t/index.c index.h index.o $(OBJECTS)
-	$(CC) $(INC) -o t/index.t t/index.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/index.t t/index.c $(OBJECTS)
 
 t/terminal.t: tap.o t/terminal.c terminal.h terminal.o $(OBJECTS)
-	$(CC) $(INC) -o t/terminal.t t/terminal.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/terminal.t t/terminal.c $(OBJECTS)
 
 t/vector.t: tap.o t/vector.c vector.h vector.o $(OBJECTS)
-	$(CC) $(INC) -o t/vector.t t/vector.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/vector.t t/vector.c $(OBJECTS)
 
 t/head.t: tap.o t/head.c head.h head.o $(OBJECTS)
-	$(CC) $(INC) -o t/head.t t/head.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/head.t t/head.c $(OBJECTS)
 
 t/btree.t: tap.o t/btree.c btree.h btree.o $(OBJECTS)
-	$(CC) $(INC) -o t/btree.t t/btree.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/btree.t t/btree.c $(OBJECTS)
 
 ########
 
