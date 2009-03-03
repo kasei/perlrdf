@@ -3,7 +3,7 @@
 hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
 	terminal->storage		= s;
-	terminal->tree			= hx_new_btree_root( s );
+	terminal->tree			= hx_new_btree( s, TERMINAL_TREE_BRANCHING_SIZE );
 	terminal->refcount		= 0;
 	terminal->triples_count	= 0;
 	return terminal;
@@ -13,7 +13,7 @@ int hx_free_terminal ( hx_terminal* list ) {
 //	fprintf( stderr, "freeing terminal %p\n", list );
 //	fprintf( stderr, "refcount is now %d\n", list->refcount );
 	if (list->refcount <= 0) {
-		hx_free_btree_node( list->storage, list->tree );
+		hx_free_btree( list->storage, list->tree );
 		free( list );
 		return 0;
 	} else {
@@ -49,7 +49,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_node_id n ) {
 		return 1;
 	}
 	
-	int r	= hx_btree_insert( t->storage, &( t->tree ), n, (uint64_t) 1 );
+	int r	= hx_btree_insert( t->storage, t->tree, n, (uint64_t) 1 );
 	if (r == 0) {
 		t->triples_count++;
 	}
@@ -68,9 +68,9 @@ int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n ) {
 }
 
 int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n ) {
-//	fprintf( stderr, "%p\n", t->tree );
-	int r	= hx_btree_remove( t->storage, &(t->tree), n );
-//	fprintf( stderr, "after removing node from terminal, tree root = %p\n", t->tree );
+//	fprintf( stderr, "%p\n", t->tree->root );
+	int r	= hx_btree_remove( t->storage, t->tree, n );
+//	fprintf( stderr, "after removing node from terminal, tree root = %p\n", t->tree->root );
 	if (r == 0) {
 		t->triples_count--;
 	}

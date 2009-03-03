@@ -6,13 +6,44 @@ void _hx_btree_debug_visitor (hx_storage_manager* w, hx_btree_node* node, int le
 
 void _hx_btree_count ( hx_storage_manager* w, hx_btree_node* node, int level, void* param );
 int _hx_btree_binary_search ( const hx_btree_node* node, const hx_node_id n, int* index );
-int _hx_btree_insert_nonfull( hx_storage_manager* w, hx_btree_node* root, hx_node_id key, uint64_t value );
+int _hx_btree_node_insert_nonfull( hx_storage_manager* w, hx_btree_node* root, hx_node_id key, uint64_t value, uint32_t branching_size );
 int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, uint32_t index, hx_btree_node* child );
 int _hx_btree_iter_prime ( hx_btree_iter* iter );
-hx_btree_node* _hx_btree_search_page ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key );
-int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* from, int dir );
-int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_node* b );
+hx_btree_node* _hx_btree_node_search_page ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key );
+int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* from, int dir, uint32_t branching_size );
+int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_node* b, uint32_t branching_size );
 void _hx_btree_node_reset_keys( hx_storage_manager* s, hx_btree_node* parent );
+
+hx_btree* hx_new_btree ( hx_storage_manager* s, uint32_t branching_size ) {
+	hx_btree* tree			= (hx_btree*) hx_storage_new_block( s, sizeof( hx_btree ) );
+	tree->root				= hx_new_btree_root( s );
+	tree->branching_size	= branching_size;
+	return tree;
+}
+
+int hx_free_btree ( hx_storage_manager* s, hx_btree* tree ) {
+	hx_free_btree_node( s, tree->root );
+	free( tree );
+	return 0;
+}
+
+uint64_t hx_btree_search ( hx_storage_manager* s, hx_btree* tree, hx_node_id key ) {
+	return hx_btree_node_search( s, tree->root, key );
+}
+
+int hx_btree_insert ( hx_storage_manager* s, hx_btree* tree, hx_node_id key, uint64_t value ) {
+	return hx_btree_node_insert( s, &( tree->root ), key, value );
+}
+
+int hx_btree_remove ( hx_storage_manager* s, hx_btree* tree, hx_node_id key ) {
+	return hx_btree_node_remove( s, &( tree->root ), key );
+}
+
+void hx_btree_traverse ( hx_storage_manager* s, hx_btree* tree, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param ) {
+	hx_btree_node_traverse( s, tree->root, before, after, level, param );
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 hx_btree_node* hx_new_btree_root ( hx_storage_manager* s ) {
 	hx_btree_node* root	= hx_new_btree_node( s );
@@ -35,7 +66,7 @@ int hx_free_btree_node ( hx_storage_manager* w, hx_btree_node* node ) {
 
 list_size_t hx_btree_size ( hx_storage_manager* w, hx_btree_node* node ) {
 	list_size_t count	= 0;
-	hx_btree_traverse( w, node, _hx_btree_count, NULL, 0, &count );
+	hx_btree_node_traverse( w, node, _hx_btree_count, NULL, 0, &count );
 	return count;
 }
 
@@ -95,7 +126,7 @@ int hx_btree_node_debug ( char* string, hx_storage_manager* w, hx_btree_node* no
 }
 
 int hx_btree_tree_debug ( char* string, hx_storage_manager* w, hx_btree_node* node ) {
-	hx_btree_traverse( w, node, _hx_btree_debug_visitor, NULL, 0, string );
+	hx_btree_node_traverse( w, node, _hx_btree_debug_visitor, NULL, 0, string );
 	return 0;
 }
 
@@ -170,8 +201,8 @@ int hx_btree_node_remove_child ( hx_storage_manager* w, hx_btree_node* node, hx_
 	}
 }
 
-uint64_t hx_btree_search ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key ) {
-	hx_btree_node* u	= _hx_btree_search_page( w, root, key );
+uint64_t hx_btree_node_search ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key ) {
+	hx_btree_node* u	= _hx_btree_node_search_page( w, root, key );
 	int i;
 	int r	= _hx_btree_binary_search( u, key, &i );
 // 	fprintf( stderr, "looking for %d\n", (int) key );
@@ -185,7 +216,7 @@ uint64_t hx_btree_search ( hx_storage_manager* w, hx_btree_node* root, hx_node_i
 	}
 }
 
-hx_btree_node* _hx_btree_search_page ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key ) {
+hx_btree_node* _hx_btree_node_search_page ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key ) {
 	hx_btree_node* u	= root;
 	while (!hx_btree_node_has_flag(w, u, HX_BTREE_NODE_LEAF)) {
 //		fprintf( stderr, "node is not a leaf... (flags: %x)\n", u->flags );
@@ -205,7 +236,7 @@ NEXT:	1;
 	return u;
 }
 
-int hx_btree_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node_id key, uint64_t value ) {
+int hx_btree_node_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node_id key, uint64_t value ) {
 	hx_btree_node* root	= *_root;
 	if (root->used == BRANCHING_SIZE) {
 		hx_btree_node* s	= hx_new_btree_node( w );
@@ -219,13 +250,13 @@ int hx_btree_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node_id k
 			_hx_btree_node_split_child( w, s, 0, root );
 			*_root	= s;
 		}
-		return _hx_btree_insert_nonfull( w, s, key, value );
+		return _hx_btree_node_insert_nonfull( w, s, key, value, BRANCHING_SIZE );
 	} else {
-		return _hx_btree_insert_nonfull( w, root, key, value );
+		return _hx_btree_node_insert_nonfull( w, root, key, value, BRANCHING_SIZE );
 	}
 }
 
-int _hx_btree_insert_nonfull( hx_storage_manager* w, hx_btree_node* node, hx_node_id key, uint64_t value ) {
+int _hx_btree_node_insert_nonfull( hx_storage_manager* w, hx_btree_node* node, hx_node_id key, uint64_t value, uint32_t branching_size ) {
 	if (hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
 		return hx_btree_node_add_child( w, node, key, value );
 	} else {
@@ -243,7 +274,7 @@ int _hx_btree_insert_nonfull( hx_storage_manager* w, hx_btree_node* node, hx_nod
 			u	= hx_storage_block_from_id( w, node->children[ i ] );
 		}
 		
-		if (u->used == BRANCHING_SIZE) {
+		if (u->used == branching_size) {
 			_hx_btree_node_split_child( w, node, i, u );
 			if (key > node->keys[i]) {
 				i++;
@@ -255,17 +286,17 @@ int _hx_btree_insert_nonfull( hx_storage_manager* w, hx_btree_node* node, hx_nod
 			node->keys[i]	= key;
 		}
 		
-		return _hx_btree_insert_nonfull( w, u, key, value );
+		return _hx_btree_node_insert_nonfull( w, u, key, value, branching_size );
 	}
 }
 
-int hx_btree_remove ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key ) {
+int hx_btree_node_remove ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key ) {
 //	fprintf( stderr, "removing node %d from btree...\n", (int) key );
 	// recurse to leaf node
 //	fprintf( stderr, "remove> recurse to leaf node\n" );
 	
 	hx_btree_node* root	= *_root;
-	hx_btree_node* node	= _hx_btree_search_page( s, root, key );
+	hx_btree_node* node	= _hx_btree_node_search_page( s, root, key );
 	int i	= -1;
 	int r	= _hx_btree_binary_search( node, key, &i );
 	
@@ -340,12 +371,12 @@ REMOVE_NODE:
 		int rebalanced	= 0;
 		if (prev != NULL && prev->used > BRANCHING_SIZE/2) {
 //			fprintf( stderr, "remove> rebalancing with previous node\n" );
-			_hx_btree_rebalance( s, node, prev, 1 );
+			_hx_btree_rebalance( s, node, prev, 1, BRANCHING_SIZE );
 			rebalanced	= 1;
 		}
 		if ((!rebalanced) && next != NULL && next->used > BRANCHING_SIZE/2) {
 //			fprintf( stderr, "remove> rebalancing with next node\n" );
-			_hx_btree_rebalance( s, node, next, 0 );
+			_hx_btree_rebalance( s, node, next, 0, BRANCHING_SIZE );
 			rebalanced	= 1;
 		}
 		if (rebalanced == 1) {
@@ -365,14 +396,14 @@ REMOVE_NODE:
 	uint64_t removed_nodeid	= 0;
 	if (prev != NULL && prev->parent == node->parent) {
 //		fprintf( stderr, "remove> merging with previous node (%d)\n", (int) hx_storage_id_from_block( s, prev ) );
-		_hx_btree_merge_nodes( s, node, prev );
+		_hx_btree_merge_nodes( s, node, prev, BRANCHING_SIZE );
 		removed_nodeid	= hx_storage_id_from_block( s, prev );
 		merged	= 1;
 	}
 	if ((!merged) && next != NULL && next->parent == node->parent) {
 //		fprintf( stderr, "remove> merging with next node (%d)\n", (int) hx_storage_id_from_block( s, next ) );
 		removed_nodeid	= hx_storage_id_from_block( s, next );
-		_hx_btree_merge_nodes( s, node, next );
+		_hx_btree_merge_nodes( s, node, next, BRANCHING_SIZE );
 		merged	= 1;
 	}
 	
@@ -406,15 +437,15 @@ REMOVE_NODE:
 // dir specifies from which end of `from' to take from:
 //     dir=0 => shift from the beginning
 //     dir=1 => pop off the end
-int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* from, int dir ) {
-	if (from->used < BRANCHING_SIZE/2) {
+int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* from, int dir, uint32_t branching_size ) {
+	if (from->used < branching_size/2) {
 		fprintf( stderr, "*** trying to rebalance with an already underfull node\n" );
 		return 1;
 	}
 	
 // 	fprintf( stderr, "before rebalancing key count: %d, %d\n", node->used, from->used );
 	
-	int min		= BRANCHING_SIZE/2;
+	int min		= branching_size/2;
 	int extra	= from->used - min;
 	int take	= (extra+1)/2;
 	if (dir == 1) {
@@ -452,13 +483,13 @@ void _hx_btree_node_reset_keys( hx_storage_manager* s, hx_btree_node* parent ) {
 }
 
 // merge data from node b into node a
-int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_node* b ) {
+int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_node* b, uint32_t branching_size ) {
 	if (a->parent != b->parent) {
 		fprintf( stderr, "*** trying to merge nodes with different parents!\n" );
 		return 1;
 	}
 	
-	if ((a->used + b->used) > BRANCHING_SIZE) {
+	if ((a->used + b->used) > branching_size) {
 		fprintf( stderr, "*** trying to merge nodes would result in an overflow!\n" );
 		return 1;
 	}
@@ -470,7 +501,7 @@ int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_nod
 	a->next	= b->next;
 	hx_btree_node* c	= hx_storage_block_from_id( s, a->next );
 	if (c != NULL) {
-		c->prev	= a;
+		c->prev	= hx_storage_id_from_block( s, a );
 	}
 	
 	// refresh the key list (this could be more efficient by only updating the two keys that were possibly affected)
@@ -517,12 +548,12 @@ int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, ui
 	return 0;
 }
 
-void hx_btree_traverse ( hx_storage_manager* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param ) {
+void hx_btree_node_traverse ( hx_storage_manager* w, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param ) {
 	if (before != NULL) before( w, node, level, param );
 	if (!hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
 		for (int i = 0; i < node->used; i++) {
 			hx_btree_node* c	= hx_storage_block_from_id( w, node->children[i] );
-			hx_btree_traverse( w, c, before, after, level + 1, param );
+			hx_btree_node_traverse( w, c, before, after, level + 1, param );
 		}
 	}
 	if (after != NULL) after( w, node, level, param );
@@ -546,7 +577,20 @@ void _hx_btree_count ( hx_storage_manager* w, hx_btree_node* node, int level, vo
 	}
 }
 
-hx_btree_iter* hx_btree_new_iter ( hx_storage_manager* w, hx_btree_node* root ) {
+hx_btree_iter* hx_btree_new_iter ( hx_storage_manager* w, hx_btree* tree ) {
+	hx_btree_node* root	= tree->root;
+	hx_btree_iter* iter	= (hx_btree_iter*) calloc( 1, sizeof( hx_btree_iter ) );
+	iter->storage	= w;
+	iter->started	= 0;
+	iter->finished	= 0;
+	iter->root		= root;
+	iter->page		= NULL;
+	iter->index		= 0;
+	return iter;
+}
+
+// XXX only here because the test program hasn't updated to the new hx_btree api (still using hx_btree_node structs directly)
+hx_btree_iter* _hx_btree_new_iter ( hx_storage_manager* w, hx_btree_node* root ) {
 	hx_btree_iter* iter	= (hx_btree_iter*) calloc( 1, sizeof( hx_btree_iter ) );
 	iter->storage	= w;
 	iter->started	= 0;
@@ -618,7 +662,7 @@ int hx_btree_iter_seek( hx_btree_iter* iter, hx_node_id key ) {
 		_hx_btree_iter_prime( iter );
 	}
 	
-	hx_btree_node* u	= _hx_btree_search_page( iter->storage, iter->root, key );
+	hx_btree_node* u	= _hx_btree_node_search_page( iter->storage, iter->root, key );
 	int i;
 	int r	= _hx_btree_binary_search( u, key, &i );
 	iter->page	= u;

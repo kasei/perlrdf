@@ -6,9 +6,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#define HEAD_LIST_ALLOC_SIZE				4096
-#define VECTOR_LIST_ALLOC_SIZE				64
-#define TERMINAL_LIST_ALLOC_SIZE			32
+#define HEAD_TREE_BRANCHING_SIZE				252
+#define VECTOR_TREE_BRANCHING_SIZE				60
+#define TERMINAL_TREE_BRANCHING_SIZE			4
 
 typedef int64_t list_size_t;
 typedef int64_t hx_node_id;

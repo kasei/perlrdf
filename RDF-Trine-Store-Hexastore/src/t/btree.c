@@ -39,13 +39,13 @@ void new_root_test ( void ) {
 	for (int i = 0; i < BRANCHING_SIZE; i++) {
 		hx_node_id key	= (hx_node_id) i*2;
 		uint64_t value	= (uint64_t) 100 + i;
-		hx_btree_insert( w, &root, key, value );
+		hx_btree_node_insert( w, &root, key, value );
 	}
 	
 	ok1( orig == root ); // root hasn't split yet
 	ok1( root->used == BRANCHING_SIZE );
 	
-	hx_btree_insert( w, &root, (hx_node_id) 7, (uint64_t) 777 );
+	hx_btree_node_insert( w, &root, (hx_node_id) 7, (uint64_t) 777 );
 	ok1( orig != root );
 	ok1( root->used == 2 );
 	
@@ -235,7 +235,7 @@ void large_test ( void ) {
 //	printf( "root: %d (%p)\n", (int) _hx_btree_node2int(w, root), (void*) root );
 	
 	for (int i = 1; i <= 4000000; i++) {
-		hx_btree_insert( w, &root, (hx_node_id) i, (uint64_t) 10*i );
+		hx_btree_node_insert( w, &root, (hx_node_id) i, (uint64_t) 10*i );
 	}
 	
 	list_size_t size	= hx_btree_size( w, root );
@@ -245,7 +245,7 @@ void large_test ( void ) {
 	int counter	= 0;
 	hx_node_id key, last;
 	uint64_t value3;
-	hx_btree_iter* iter	= hx_btree_new_iter( w, root );
+	hx_btree_iter* iter	= _hx_btree_new_iter( w, root );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value3 );
 		if (counter > 0) {
@@ -280,7 +280,7 @@ void small_remove_test ( void ) {
 		
 		for (int i = 0; i < 10; i++) {
 			hx_node_id key	= (hx_node_id) 7 + i;
-			hx_btree_remove( s, &root, key );
+			hx_btree_node_remove( s, &root, key );
 		}
 		ok1( hx_btree_size(s,root) == 0 );
 	}
@@ -292,7 +292,7 @@ void small_remove_test ( void ) {
 		
 		for (int i = 9; i >= 0; i--) {
 			hx_node_id key	= (hx_node_id) 7 + i;
-			hx_btree_remove( s, &root, key );
+			hx_btree_node_remove( s, &root, key );
 		}
 		ok1( hx_btree_size(s,root) == 0 );
 	}
@@ -301,16 +301,16 @@ void small_remove_test ( void ) {
 		// remove in random order
 		_add_data( s, &root, 10, 7 );
 		ok1( hx_btree_size(s,root) == 10 );
-		hx_btree_remove( s, &root, (hx_node_id) 14 );
-		hx_btree_remove( s, &root, (hx_node_id) 10 );
-		hx_btree_remove( s, &root, (hx_node_id) 11 );
-		hx_btree_remove( s, &root, (hx_node_id) 12 );
-		hx_btree_remove( s, &root, (hx_node_id) 16 );
-		hx_btree_remove( s, &root, (hx_node_id) 15 );
-		hx_btree_remove( s, &root, (hx_node_id) 9 );
-		hx_btree_remove( s, &root, (hx_node_id) 8 );
-		hx_btree_remove( s, &root, (hx_node_id) 13 );
-		hx_btree_remove( s, &root, (hx_node_id) 7 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 14 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 10 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 11 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 12 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 16 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 15 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 9 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 8 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 13 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 7 );
 		ok1( hx_btree_size(s,root) == 0 );
 	}
 	
@@ -328,17 +328,17 @@ void medium_remove_test ( void ) {
 		_add_data( s, &root, 253, 1 );
 // 		hx_btree_tree_debug( "tree>\t", s, root );
 		
-		ok1( hx_btree_search( s, root, (hx_node_id) 253 ) > 0 );
+		ok1( hx_btree_node_search( s, root, (hx_node_id) 253 ) > 0 );
 		ok1( hx_btree_size(s,root) == 253 );
-		hx_btree_remove( s, &root, (hx_node_id) 1 );
-		ok1( hx_btree_search( s, root, (hx_node_id) 253 ) > 0 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 1 );
+		ok1( hx_btree_node_search( s, root, (hx_node_id) 253 ) > 0 );
 		ok1( hx_btree_size(s,root) == 252 );
 		
-		hx_btree_remove( s, &root, (hx_node_id) 2 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 2 );
 		ok1( hx_btree_size(s,root) == 251 );
 		
 		for (int i = 1; i <= 253; i++) {
-			hx_btree_remove( s, &root, (hx_node_id) i );
+			hx_btree_node_remove( s, &root, (hx_node_id) i );
 		}
 		ok1( hx_btree_size(s,root) == 0 );
 	}
@@ -358,17 +358,17 @@ void large_remove_test ( void ) {
 // 		hx_btree_tree_debug( "", s, root );
 		ok1( hx_btree_size(s,root) == 5000 );
 		for (int i = 1; i <= 126; i++) {
-			hx_btree_remove( s, &root, (hx_node_id) i );
+			hx_btree_node_remove( s, &root, (hx_node_id) i );
 		}
 // 		fprintf( stderr, "%d\n", (int) hx_btree_size(s,root) );
 		ok1( hx_btree_size(s,root) == 4874 );
 // 		hx_btree_tree_debug( "", s, root );
-		hx_btree_remove( s, &root, (hx_node_id) 127 );
+		hx_btree_node_remove( s, &root, (hx_node_id) 127 );
 // 		fprintf( stderr, "%d\n", (int) hx_btree_size(s,root) );
 		ok1( hx_btree_size(s,root) == 4873 );
 		
 		for (int i = 1; i <= 5000; i++) {
-			hx_btree_remove( s, &root, (hx_node_id) i );
+			hx_btree_node_remove( s, &root, (hx_node_id) i );
 		}
 		ok1( hx_btree_size(s,root) == 0 );
 // 		hx_btree_tree_debug( "", s, root );
@@ -384,6 +384,6 @@ void _add_data ( hx_storage_manager* s, hx_btree_node** root, int count, int add
 	for (int i = 0; i < count; i++) {
 		hx_node_id key	= (hx_node_id) add + i;
 		uint64_t value	= (uint64_t) 100 + i;
-		hx_btree_insert( s, root, key, value );
+		hx_btree_node_insert( s, root, key, value );
 	}
 }

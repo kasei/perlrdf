@@ -20,7 +20,7 @@
 typedef struct {
 	hx_storage_manager* storage;
 	uint64_t triples_count;
-	hx_btree_node* tree;
+	hx_btree* tree;
 } hx_vector;
 
 typedef struct {

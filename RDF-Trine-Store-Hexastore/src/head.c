@@ -3,7 +3,7 @@
 hx_head* hx_new_head( hx_storage_manager* s ) {
 	hx_head* head	= (hx_head*) calloc( 1, sizeof( hx_head ) );
 	head->storage		= s;
-	head->tree		= hx_new_btree_root( s );
+	head->tree		= hx_new_btree( s, HEAD_TREE_BRANCHING_SIZE );
 // 	fprintf( stderr, ">>> allocated tree %p\n", (void*) head->tree );
 	head->triples_count	= 0;
 	return head;
@@ -11,7 +11,7 @@ hx_head* hx_new_head( hx_storage_manager* s ) {
 
 int hx_free_head ( hx_head* head ) {
 // 	fprintf( stderr, "<<< freeing tree %p\n", (void*) head->tree );
-	hx_free_btree_node( head->storage, head->tree );
+	hx_free_btree( head->storage, head->tree );
 	free( head );
 	return 0;
 }
@@ -38,7 +38,7 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 
 int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v ) {
 	uint64_t value	= hx_storage_id_from_block( h->storage, v );
-	hx_btree_insert( h->storage, &( h->tree ), n, value );
+	hx_btree_insert( h->storage, h->tree, n, value );
 //	fprintf( stderr, "adding vector: %llu\n", value );
 	return 0;
 }
@@ -51,12 +51,12 @@ hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n ) {
 }
 
 int hx_head_remove_vector ( hx_head* h, hx_node_id n ) {
-	int r	= hx_btree_remove( h->storage, &(h->tree), n );
+	int r	= hx_btree_remove( h->storage, h->tree, n );
 	return r;
 }
 
 list_size_t hx_head_size ( hx_head* h ) {
-	return hx_btree_size( h->storage, h->tree );
+	return hx_btree_size( h->storage, h->tree->root );
 }
 
 uint64_t hx_head_triples_count ( hx_head* h ) {
