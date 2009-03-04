@@ -67,6 +67,7 @@ void spo_test2 ( void ) {
 		}
 	}
 	ok1( hx_index_triples_count( i ) == 500 );
+	fprintf( stderr, "*** index triples count: %d\n", (int) hx_index_triples_count( i ) );
 
 	for (p = 1; p <= 10; p++) {
 		for (o = 26; o <= 100; o++) {

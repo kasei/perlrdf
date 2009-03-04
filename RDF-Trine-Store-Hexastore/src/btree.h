@@ -15,9 +15,10 @@
 #include "hexastore_types.h"
 #include "storage.h"
 
-// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-// XXX remove this as soon as branching_size is a param of the tree...
-#define BRANCHING_SIZE	252
+typedef struct {
+	hx_node_id key;
+	uint64_t child;
+} hx_btree_child;
 
 typedef struct {
 	uint32_t type;
@@ -26,8 +27,9 @@ typedef struct {
 	uint64_t prev;
 	uint64_t next;
 	uint32_t used;
-	hx_node_id keys[ BRANCHING_SIZE ];
-	uint64_t children[ BRANCHING_SIZE ];
+	hx_btree_child ptr[];
+// 	hx_node_id keys[ BRANCHING_SIZE ];
+// 	uint64_t children[ BRANCHING_SIZE ];
 // 	uint32_t __padding2;
 // 	uint64_t __padding1[3];
 } hx_btree_node;
@@ -41,12 +43,12 @@ typedef struct {
 	int started;
 	int finished;
 	hx_storage_manager* storage;
-	hx_btree_node* root;
+	hx_btree* tree;
 	hx_btree_node* page;
 	uint32_t index;
 } hx_btree_iter;
 
-typedef void hx_btree_node_visitor ( hx_storage_manager* s, hx_btree_node* node, int level, void* param );
+typedef void hx_btree_node_visitor ( hx_storage_manager* s, hx_btree_node* node, int level, uint32_t branching_size, void* param );
 
 hx_btree* hx_new_btree ( hx_storage_manager* s, uint32_t branching_size );
 int hx_free_btree ( hx_storage_manager* s, hx_btree* tree );

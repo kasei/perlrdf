@@ -53,7 +53,7 @@ int hx_vector_remove_terminal ( hx_vector* v, hx_node_id n ) {
 }
 
 list_size_t hx_vector_size ( hx_vector* v ) {
-	return hx_btree_size( v->storage, v->tree->root );
+	return hx_btree_size( v->storage, v->tree );
 }
 
 uint64_t hx_vector_triples_count ( hx_vector* v ) {
