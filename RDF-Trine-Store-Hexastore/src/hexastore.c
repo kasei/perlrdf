@@ -481,7 +481,7 @@ hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node ) {
 	hx_node_id id;
 	hx_nodemap* map	= hx->map;
 	if (hx_node_is_variable( node )) {
-		id	= hx_node_number( node );
+		id	= hx_node_iv( node );
 	} else {
 		id	= hx_nodemap_get_node_id( map, node );
 	}

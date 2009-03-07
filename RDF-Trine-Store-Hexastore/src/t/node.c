@@ -10,7 +10,7 @@ void test_cmp ( void );
 void test_store ( void );
 
 int main ( void ) {
-	plan_tests(100);
+	plan_tests(119);
 	
 	test_variables();
 	test_literals();
@@ -35,7 +35,7 @@ void test_variables ( void ) {
 		ok1( !hx_node_is_blank(v1) );
 		ok1( !hx_node_is_resource(v1) );
 		
-		ok1( hx_node_number(v1) == -1 );
+		ok1( hx_node_iv(v1) == -1 );
 		ok1( hx_node_value(v1) == NULL );
 		
 		hx_free_node(v1);
@@ -51,7 +51,7 @@ void test_variables ( void ) {
 		ok1( !hx_node_is_blank(v2) );
 		ok1( !hx_node_is_resource(v2) );
 		
-		ok1( hx_node_number(v2) == -2 );
+		ok1( hx_node_iv(v2) == -2 );
 		ok1( hx_node_value(v2) == NULL );
 		
 		hx_free_node(v2);
@@ -71,7 +71,7 @@ void test_literals ( void ) {
 		ok1( !hx_node_is_blank(l1) );
 		ok1( !hx_node_is_resource(l1) );
 		
-		ok1( hx_node_number(l1) == 0 );
+		ok1( hx_node_iv(l1) == 0 );
 		ok1( hx_node_value(l1) != NULL );
 		ok1( strcmp(hx_node_value(l1), "foo") == 0 );
 		
@@ -88,7 +88,7 @@ void test_literals ( void ) {
 		ok1( !hx_node_is_blank(l2) );
 		ok1( !hx_node_is_resource(l2) );
 		
-		ok1( hx_node_number(l2) == 0 );
+		ok1( hx_node_iv(l2) == 0 );
 		ok1( hx_node_value(l2) != NULL );
 		ok1( strcmp(hx_node_value(l2), "bar") == 0 );
 		ok1( strcmp(hx_node_lang((hx_node_lang_literal*) l2), "en-us") == 0 );
@@ -106,9 +106,10 @@ void test_literals ( void ) {
 		ok1( !hx_node_is_blank(l3) );
 		ok1( !hx_node_is_resource(l3) );
 		
-		todo_start("XSD value parsing not implemented yet");
-		ok1( hx_node_number(l3) == 7 );
-		todo_end();
+		ok1( hx_node_ivok(l3) == 1 );
+		ok1( hx_node_nvok(l3) == 0 );
+		
+		ok1( hx_node_iv(l3) == 7 );
 		ok1( hx_node_value(l3) != NULL );
 		ok1( strcmp(hx_node_value(l3), "7") == 0 );
 		ok1( strcmp(hx_node_dt((hx_node_dt_literal*) l3), "http://www.w3.org/2001/XMLSchema#integer") == 0 );
@@ -120,6 +121,33 @@ void test_literals ( void ) {
 		ok1( strcmp(hx_node_value(l3), hx_node_value(copy)) == 0 );
 		
 		hx_free_node(l3);
+	}
+	{
+		hx_node* l4	= (hx_node*) hx_new_node_dt_literal("1.2340", "http://www.w3.org/2001/XMLSchema#float");
+		ok1( l4 != NULL );
+		
+		ok1( !hx_node_is_variable(l4) );
+		ok1( hx_node_is_literal(l4) );
+		ok1( !hx_node_is_lang_literal(l4) );
+		ok1( hx_node_is_dt_literal(l4) );
+		ok1( !hx_node_is_blank(l4) );
+		ok1( !hx_node_is_resource(l4) );
+		
+		ok1( hx_node_ivok(l4) == 0 );
+		ok1( hx_node_nvok(l4) == 1 );
+		
+		ok1( hx_node_nv(l4) == 1.234 );
+		ok1( hx_node_value(l4) != NULL );
+		ok1( strcmp(hx_node_value(l4), "1.2340") == 0 );
+		ok1( strcmp(hx_node_dt((hx_node_dt_literal*) l4), "http://www.w3.org/2001/XMLSchema#float") == 0 );
+		
+		hx_node* copy	= hx_node_copy( l4 );
+		ok1( copy != NULL );
+		ok1( copy != l4 );
+		ok1( hx_node_value(l4) != hx_node_value(copy) );
+		ok1( strcmp(hx_node_value(l4), hx_node_value(copy)) == 0 );
+		
+		hx_free_node(l4);
 	}
 }
 
@@ -136,7 +164,7 @@ void test_resources ( void ) {
 		ok1( !hx_node_is_blank(r1) );
 		ok1( hx_node_is_resource(r1) );
 		
-		ok1( hx_node_number(r1) == 0 );
+		ok1( hx_node_iv(r1) == 0 );
 		ok1( hx_node_value(r1) != NULL );
 		ok1( strcmp(hx_node_value(r1), "http://www.w3.org/2001/XMLSchema#integer") == 0 );
 		
@@ -157,7 +185,7 @@ void test_bnodes ( void ) {
 		ok1( hx_node_is_blank(b1) );
 		ok1( !hx_node_is_resource(b1) );
 		
-		ok1( hx_node_number(b1) == 0 );
+		ok1( hx_node_iv(b1) == 0 );
 		ok1( hx_node_value(b1) != NULL );
 		ok1( strcmp(hx_node_value(b1), "r1") == 0 );
 		

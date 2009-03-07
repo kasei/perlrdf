@@ -1,12 +1,22 @@
 #include "node.h"
 
-hx_node* _hx_new_node ( char type, char* value, int number, int padding ) {
+int _hx_node_parse_datatypes ( hx_node* n );
+
+hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, double nv ) {
 	hx_node* n	= (hx_node*) calloc( 1, sizeof( hx_node ) + padding );
 	n->type		= type;
-	if (value == NULL) {
-		n->number	= number;
+	n->flags	= flags;
+	if (flags & HX_NODE_IOK) {
+		n->iv		= iv;
 		n->value	= NULL;
-	} else {
+	}
+	
+	if (flags & HX_NODE_NOK) {
+		n->nv		= nv;
+		n->value	= NULL;
+	}
+	
+	if (!flags) {
 		n->value	= malloc( strlen( value ) + 1 );
 		strcpy( n->value, value );
 	}
@@ -14,28 +24,29 @@ hx_node* _hx_new_node ( char type, char* value, int number, int padding ) {
 }
 
 hx_node* hx_new_node_variable ( int value ) {
-	hx_node* n	= _hx_new_node( '?', NULL, value, 0 );
+	hx_node* n	= _hx_new_node( '?', NULL, 0, HX_NODE_IOK, value, 0.0 );
 	return n;
 }
 
 hx_node* hx_new_node_resource ( char* value ) {
-	hx_node* n	= _hx_new_node( 'R', value, 0, 0 );
+	hx_node* n	= _hx_new_node( 'R', value, 0, HX_NODE_NONE, 0, 0.0 );
 	return n;
 }
 
 hx_node* hx_new_node_blank ( char* value ) {
-	hx_node* n	= _hx_new_node( 'B', value, 0, 0 );
+	hx_node* n	= _hx_new_node( 'B', value, 0, HX_NODE_NONE, 0, 0.0 );
 	return n;
 }
 
 hx_node* hx_new_node_literal ( char* value ) {
-	hx_node* n	= _hx_new_node( 'L', value, 0, 0 );
+	hx_node* n	= _hx_new_node( 'L', value, 0, HX_NODE_NONE, 0, 0.0 );
+	_hx_node_parse_datatypes( n );
 	return n;
 }
 
 hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 	int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
-	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, 0, padding );
+	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->lang		= malloc( strlen( lang ) + 1 );
 	if (n->lang == NULL) {
 		free( n->value );
@@ -43,12 +54,13 @@ hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 		return NULL;
 	}
 	strcpy( n->lang, lang );
+	_hx_node_parse_datatypes( (hx_node*) n );
 	return n;
 }
 
 hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 	int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
-	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, 0, padding );
+	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, padding, HX_NODE_NONE, 0, 0.0 );
 	n->dt		= malloc( strlen( dt ) + 1 );
 	if (n->dt == NULL) {
 		free( n->value );
@@ -56,19 +68,34 @@ hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 		return NULL;
 	}
 	strcpy( n->dt, dt );
+	_hx_node_parse_datatypes( (hx_node*) n );
 	return n;
 }
 
 hx_node* hx_node_copy( hx_node* n ) {
 	if (hx_node_is_literal( n )) {
 		if (hx_node_is_lang_literal( n )) {
-			hx_node_lang_literal* l	= (hx_node_lang_literal*) n;
-			hx_node* copy	= (hx_node*) hx_new_node_lang_literal( l->value, l->lang );
-			return copy;
+			hx_node_lang_literal* d	= (hx_node_lang_literal*) n;
+			int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
+			hx_node_lang_literal* copy	= (hx_node_lang_literal*) _hx_new_node( 'G', d->value, padding, HX_NODE_NONE, 0, 0.0 );
+			copy->lang		= malloc( strlen( d->lang ) + 1 );
+			copy->flags		= d->flags;
+			copy->iv		= d->iv;
+			copy->nv		= d->nv;
+			strcpy( copy->lang, d->lang );
+			_hx_node_parse_datatypes( (hx_node*) copy );
+			return (hx_node*) copy;
 		} else if (hx_node_is_dt_literal( n )) {
 			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
-			hx_node* copy	= (hx_node*) hx_new_node_dt_literal( d->value, d->dt );
-			return copy;
+			int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
+			hx_node_dt_literal* copy	= (hx_node_dt_literal*) _hx_new_node( 'D', d->value, padding, HX_NODE_NONE, 0, 0.0 );
+			copy->dt		= malloc( strlen( d->dt ) + 1 );
+			copy->flags		= d->flags;
+			copy->iv		= d->iv;
+			copy->nv		= d->nv;
+			strcpy( copy->dt, d->dt );
+			_hx_node_parse_datatypes( (hx_node*) copy );
+			return (hx_node*) copy;
 		} else {
 			hx_node* copy	= hx_new_node_literal( n->value );
 			return copy;
@@ -146,8 +173,20 @@ char* hx_node_value ( hx_node* n ) {
 	return n->value;
 }
 
-int hx_node_number ( hx_node* n ) {
-	return n->number;
+int hx_node_ivok( hx_node* n ) {
+	return (n->flags & HX_NODE_IOK) ? 1 : 0;
+}
+
+int hx_node_nvok( hx_node* n ) {
+	return (n->flags & HX_NODE_NOK) ? 1 : 0;
+}
+
+int hx_node_iv ( hx_node* n ) {
+	return n->iv;
+}
+
+double hx_node_nv ( hx_node* n ) {
+	return n->nv;
 }
 
 char* hx_node_lang ( hx_node_lang_literal* n ) {
@@ -356,6 +395,30 @@ hx_node* hx_node_read( FILE* f, int buffer ) {
 	};
 	
 }
+
+int _hx_node_parse_datatypes ( hx_node* n ) {
+	if (!hx_node_is_dt_literal(n)) {
+		return 1;
+	}
+	
+	char* dt	= hx_node_dt( (hx_node_dt_literal*) n );
+	if (strcmp( dt, "http://www.w3.org/2001/XMLSchema#integer" ) == 0) {
+		char* value	= hx_node_value( n );
+		int iv		= atoi( value );
+		n->iv		= iv;
+		n->flags	|= HX_NODE_IOK;
+	} else if (strcmp( dt, "http://www.w3.org/2001/XMLSchema#float" ) == 0) {
+		char* ptr;
+		char* value	= hx_node_value( n );
+		double nv	= strtod( value, &ptr );
+		int diff	= ptr - value;
+		n->nv		= nv;
+		n->flags	|= HX_NODE_NOK;
+	}
+	
+	return 0;
+}
+
 
 //	R	- IRI resource
 //	B	- Blank node

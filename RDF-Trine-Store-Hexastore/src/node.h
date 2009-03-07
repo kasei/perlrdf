@@ -28,23 +28,33 @@
 //	I - index
 //	M - node map
 
+const static int HX_NODE_NONE	= 0;
+const static int HX_NODE_IOK	= 1;
+const static int HX_NODE_NOK	= 2;
+
 typedef struct {
 	char type;
+	int flags;
 	char* value;
-	int number;
+	int iv;
+	double nv;
 } hx_node;
 
 typedef struct {
 	char type;
+	int flags;
 	char* value;
-	int number;
+	int iv;
+	double nv;
 	char* lang;
 } hx_node_lang_literal;
 
 typedef struct {
 	char type;
+	int flags;
 	char* value;
-	int number;
+	int iv;
+	double nv;
 	char* dt;
 } hx_node_dt_literal;
 
@@ -66,8 +76,12 @@ int hx_node_is_dt_literal ( hx_node* n );
 int hx_node_is_resource ( hx_node* n );
 int hx_node_is_blank ( hx_node* n );
 
+int hx_node_ivok( hx_node* n );
+int hx_node_nvok( hx_node* n );
+
 char* hx_node_value ( hx_node* n );
-int hx_node_number ( hx_node* n );
+int hx_node_iv ( hx_node* n );
+double hx_node_nv ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );
 char* hx_node_dt ( hx_node_dt_literal* n );
 int hx_node_string ( hx_node* n, char** string );
