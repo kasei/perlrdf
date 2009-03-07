@@ -40,6 +40,8 @@ typedef struct {
 	void* ptr;
 } hx_variablebindings_iter;
 
+#include "materialize.h"
+
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names );
 

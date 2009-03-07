@@ -254,11 +254,22 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 	if (hx_variablebindings_iter_is_sorted_by_index(iter, index)) {
 		return iter;
 	} else {
-// 		fprintf( stderr, "*** Sorting of variable binding iterators not implemented yet.\n" ); // XXX
-// 		fprintf( stderr, "\tnames:\n" );
-// 		for (int i = 0; i < size; i++) {
-// 			fprintf( stderr, "\t- %s\n", names[ i ] );
-// 		}
-		return NULL;
+		// iterator isn't sorted on the requested column...
+		
+		// so, materialize the iterator
+		hx_variablebindings_iter* sorted	= hx_new_materialize_iter( iter );
+		if (sorted == NULL) {
+			hx_free_variablebindings_iter( iter, 0 );
+			return NULL;
+		}
+		
+		// and sort the materialized bindings by the requested column...
+		int r	= hx_materialize_sort_iter( sorted, index );
+		if (r == 0) {
+			return sorted;
+		} else {
+			hx_free_variablebindings_iter( sorted, 0 );
+			return NULL;
+		}
 	}
 }

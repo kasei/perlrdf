@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 #define HEAD_TREE_BRANCHING_SIZE				252
-#define VECTOR_TREE_BRANCHING_SIZE				60
+#define VECTOR_TREE_BRANCHING_SIZE				28
 #define TERMINAL_TREE_BRANCHING_SIZE			4
 
 typedef int64_t list_size_t;
