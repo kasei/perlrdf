@@ -1,4 +1,5 @@
 #include "materialize.h"
+#include "mergejoin.h"
 
 // prototypes
 int _hx_materialize_join_vb_names ( hx_variablebindings* lhs, hx_variablebindings* rhs, char*** merged_names, int* size );
@@ -90,6 +91,8 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	info->index		= 0;
 	info->sorted_by	= sorted_by;
 	
+	info->names		= names;
+	
 	info->length	= 0;
 	int alloc		= 32;
 	hx_variablebindings** bindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
@@ -113,6 +116,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 		}
 		hx_variablebindings_iter_next( iter );
 	}
+	info->bindings	= bindings;
 	hx_free_variablebindings_iter( iter, 0 );
 	hx_variablebindings_iter* miter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return miter;
@@ -150,5 +154,17 @@ int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
 		return 1;
 	} else {
 		return 0;
+	}
+}
+
+void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
+	fprintf( stderr, "Materialized iterator %p\n", iter );
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
+	fprintf( stderr, "\tInfo: %p\n", info );
+	fprintf( stderr, "\tLength: %d\n", (int) info->length );
+	for (int i = 0; i < info->length; i++) {
+		char* string;
+		hx_variablebindings_string( info->bindings[i], NULL, &string );
+		fprintf( stderr, "\t[%d] %s\n", i, string );
 	}
 }

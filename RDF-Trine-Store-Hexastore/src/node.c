@@ -236,6 +236,13 @@ int hx_node_string ( hx_node* n, char** str ) {
 			return 0;
 		}
 		sprintf( *str, "_:%s", n->value );
+	} else if (hx_node_is_variable( n )) {
+		alloc	= 10 + 6;
+		*str	= calloc( 1, alloc );
+		if (*str == NULL) {
+			return 0;
+		}
+		sprintf( *str, "?__var%d", n->iv );
 	} else {
 		fprintf( stderr, "*** Unrecognized node type '%c'\n", n->type );
 		return 0;

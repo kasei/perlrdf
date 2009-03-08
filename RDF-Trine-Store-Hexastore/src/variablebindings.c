@@ -138,13 +138,14 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	char** rhs_names	= hx_variablebindings_names( right );
 	int max_size		= (lhs_size > rhs_size) ? lhs_size : rhs_size;
 	
+// 	fprintf( stderr, "natural join...\n" );
 	int shared_count	= 0;
 	int shared_lhs_index[max_size];
 	char* shared_names[max_size];
 	for (int i = 0; i < lhs_size; i++) {
 		char* lhs_name	= lhs_names[ i ];
 		for (int j = 0; j < rhs_size; j++) {
-			char* rhs_name	= rhs_names[ i ];
+			char* rhs_name	= rhs_names[ j ];
 			if (strcmp( lhs_name, rhs_name ) == 0) {
 				int k	= shared_count++;
 				shared_lhs_index[ k ]	= i;
@@ -262,6 +263,8 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 			hx_free_variablebindings_iter( iter, 0 );
 			return NULL;
 		}
+		
+// 		hx_materialize_iter_debug( iter );
 		
 		// and sort the materialized bindings by the requested column...
 		int r	= hx_materialize_sort_iter( sorted, index );

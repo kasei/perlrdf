@@ -45,4 +45,6 @@ int _hx_materialize_cmp_bindings ( const void* a, const void* b );
 hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* iter );
 int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index );
 
+void hx_materialize_iter_debug ( hx_variablebindings_iter* iter );
+
 #endif
