@@ -50,7 +50,7 @@ btree.o: btree.c btree.h hexastore_types.h
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t
 
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
@@ -73,6 +73,9 @@ t/head.t: tap.o t/head.c head.h head.o $(OBJECTS)
 
 t/btree.t: tap.o t/btree.c btree.h btree.o $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o t/btree.t t/btree.c $(OBJECTS)
+
+t/join.t: tap.o t/join.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/join.t t/join.c $(OBJECTS)
 
 ########
 
