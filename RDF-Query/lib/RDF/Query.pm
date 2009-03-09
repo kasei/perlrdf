@@ -991,6 +991,7 @@ sub supported_extensions {
 	return qw(
 		http://kasei.us/2008/04/sparql-extension/service
 		http://kasei.us/2008/04/sparql-extension/service/bloom_filters
+		http://kasei.us/2008/04/sparql-extension/unsaid
 		http://kasei.us/2008/04/sparql-extension/federate_bindings
 		http://kasei.us/2008/04/sparql-extension/select_expression
 		http://kasei.us/2008/04/sparql-extension/aggregate
