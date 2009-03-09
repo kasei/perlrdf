@@ -35,7 +35,7 @@ foreach my $model (@models) {
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT ?name
 			WHERE {
-				{ ?p a foaf:Person ; foaf:name ?name } NOT { ?p foaf:nick ?nick }
+				{ ?p a foaf:Person ; foaf:name ?name } UNSAID { ?p foaf:nick ?nick }
 			}
 END
 		isa_ok( $query, 'RDF::Query' );

@@ -55,7 +55,7 @@ sub __solution_modifiers {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return 1 if $self->_test(qr/NOT|SERVICE|TIME/i);
+	return 1 if $self->_test(qr/UNSAID|SERVICE|TIME/i);
 	return $self->SUPER::_GraphPatternNotTriples_test;
 }
 
@@ -475,15 +475,15 @@ sub _TriplesBlock {
 	}
 }
 
-# NotGraphPattern ::= 'NOT' GroupGraphPattern
+# NotGraphPattern ::= 'UNSAID' GroupGraphPattern
 sub _NotGraphPattern_test {
 	my $self	= shift;
-	return $self->_test( qr/NOT/i );
+	return $self->_test( qr/UNSAID/i );
 }
 
 sub _NotGraphPattern {
 	my $self	= shift;
-	$self->_eat( qr/NOT/i );
+	$self->_eat( qr/UNSAID/i );
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;

@@ -6039,13 +6039,13 @@ __END__
           - name
   variables: *1
 ---
-- NOT block
+- UNSAID block
 - |
   PREFIX foaf: <http://xmlns.com/foaf/0.1/>
   SELECT ?name
   {
     ?p a foaf:Person .
-    NOT {
+    UNSAID {
       ?p foaf:mbox ?email .
     }
   }
