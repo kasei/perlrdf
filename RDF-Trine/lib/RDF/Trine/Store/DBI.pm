@@ -407,7 +407,7 @@ sub remove_statements {
 	}
 	
 	my $where	= join(" AND ", @where);
-	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE ${where}");
+	my $sth		= $dbh->prepare( join(' ', "DELETE FROM ${stable}", ($where ? "WHERE ${where}" : ())) );
 	my @values	= map { $self->_mysql_node_hash( $_ ) } (@bind);
 	$sth->execute( @values );
 }
