@@ -24,7 +24,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110_02';
 }
 
 ######################################################################
