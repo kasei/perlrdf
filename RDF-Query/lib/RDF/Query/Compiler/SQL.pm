@@ -31,7 +31,7 @@ use RDF::Query::Error qw(:try);
 my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.003_01';
 	@NODE_TYPE_TABLES	= (
 							['Resources', 'ljr', 'URI'],
 							['Literals', 'ljl', qw(Value Language Datatype)],

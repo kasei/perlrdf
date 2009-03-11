@@ -19,6 +19,49 @@ sub test_models_and_classes {
 	my @models;
 	
 	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
+		eval "use RDF::Query::Model::RDFTrine;";
+		if (not $@) {
+			require RDF::Query::Model::RDFTrine;
+			
+			my ($model, $dsn, $user, $pass);
+			if ($ENV{RDFQUERY_DBI_DATABASE} and $ENV{RDFQUERY_DBI_USER} and $ENV{RDFQUERY_DBI_PASS}) {
+				$dsn	= "DBI:mysql:database=$ENV{RDFQUERY_DBI_DATABASE}";
+				$user	= $ENV{RDFQUERY_DBI_USER} || 'test';
+				$pass	= $ENV{RDFQUERY_DBI_PASS} || 'test';
+				
+				$model	= eval {
+					my $store	= RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass);
+					$model	= RDF::Trine::Model->new( $store );
+				};
+			} else {
+				$model	= eval {
+					my $store	= RDF::Trine::Store::DBI->temporary_store();
+					$model	= RDF::Trine::Model->new( $store );
+				}
+			}
+			if (not $@) {
+				my $parser	= RDF::Trine::Parser->new('rdfxml');
+				my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
+				foreach my $i (0 .. $#files) {
+					my $file	= $files[ $i ];
+					my $uri		= $uris[ $i ];
+					my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+					$parser->parse( $uri, $content, $handler );
+				}
+				my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
+				my $data	= $bridge->meta;
+				$data->{ bridge }	= $bridge;
+				$data->{ modelobj }	= $model;
+				push(@models, $data);
+			} else {
+				warn "Couldn't connect to database: $dsn, $user, $pass" if ($RDF::Query::debug);
+			}
+		} else {
+			warn "RDF::Trine::Store::DBI not loaded: $@\n" if ($RDF::Query::debug);
+		}
+	}
+	
+	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
 		eval "use RDF::Query::Model::RDFTrine; use RDF::Trine::Store::Hexastore;";
 		if (not $@) {
 			require RDF::Query::Model::RDFTrine;
@@ -88,49 +131,6 @@ sub test_models_and_classes {
 			push(@models, $data);
 		} else {
 			warn "RDF::Core not loaded: $@\n" if ($RDF::Query::debug);
-		}
-	}
-	
-	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
-		eval "use RDF::Query::Model::RDFTrine;";
-		if (not $@) {
-			require RDF::Query::Model::RDFTrine;
-			
-			my ($model, $dsn, $user, $pass);
-			if ($ENV{RDFQUERY_DBI_DATABASE} and $ENV{RDFQUERY_DBI_USER} and $ENV{RDFQUERY_DBI_PASS}) {
-				$dsn		= "DBI:mysql:database=$ENV{RDFQUERY_DBI_DATABASE}";
-				$user	= $ENV{RDFQUERY_DBI_USER} || 'test';
-				$pass	= $ENV{RDFQUERY_DBI_PASS} || 'test';
-				
-				$model	= eval {
-					my $store	= RDF::Trine::Store::DBI->temporary_store($dsn, $user, $pass);
-					$model	= RDF::Trine::Model->new( $store );
-				};
-			} else {
-				$model	= eval {
-					my $store	= RDF::Trine::Store::DBI->temporary_store();
-					$model	= RDF::Trine::Model->new( $store );
-				}
-			}
-			if (not $@) {
-				my $parser	= RDF::Trine::Parser->new('rdfxml');
-				my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
-				foreach my $i (0 .. $#files) {
-					my $file	= $files[ $i ];
-					my $uri		= $uris[ $i ];
-					my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-					$parser->parse( $uri, $content, $handler );
-				}
-				my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-				my $data	= $bridge->meta;
-				$data->{ bridge }	= $bridge;
-				$data->{ modelobj }	= $model;
-				push(@models, $data);
-			} else {
-				warn "Couldn't connect to database: $dsn, $user, $pass" if ($RDF::Query::debug);
-			}
-		} else {
-			warn "RDF::Trine::Store::DBI not loaded: $@\n" if ($RDF::Query::debug);
 		}
 	}
 	

@@ -15,7 +15,7 @@ package RDF::Query::CostModel::Logged;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.003_01';
 }
 
 use strict;

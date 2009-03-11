@@ -13,7 +13,7 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 20;
+my $tests	= 22;
 if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;

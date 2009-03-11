@@ -25,7 +25,7 @@ use RDF::Query::Node::Variable;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.003_01';
 }
 
 =item C<< is_variable >>
@@ -38,6 +38,13 @@ sub is_variable {
 	my $self	= shift;
 	return (blessed($self) and $self->isa('RDF::Query::Node::Variable'));
 }
+
+=item C<< compare ( $a, $b ) >>
+
+Returns -1, 0, or 1 if $a is less than, equal to, or greater than $b, respectively,
+according to the SPARQL sorting rules.
+
+=cut
 
 sub compare {
 	my $a	= shift;
@@ -52,6 +59,12 @@ sub compare {
 	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	return $a <=> $b;
 }
+
+=item C<< from_trine ( $node ) >>
+
+Up-casts an RDF::Trine::Node object to an RDF::Query::Node object.
+
+=cut
 
 sub from_trine {
 	my $class	= shift;
