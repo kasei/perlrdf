@@ -61,31 +61,31 @@ sub test_models_and_classes {
 		}
 	}
 	
-	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
-		eval "use RDF::Query::Model::RDFTrine; use RDF::Trine::Store::Hexastore;";
-		if (not $@) {
-			require RDF::Query::Model::RDFTrine;
-			require RDF::Trine::Store::Hexastore;
-			
-			my ($model, $dsn, $user, $pass);
-			my $store	= RDF::Trine::Store::Hexastore->new();
-			$model	= RDF::Trine::Model->new( $store );
-			my $parser	= RDF::Trine::Parser->new('rdfxml');
-			foreach my $i (0 .. $#files) {
-				my $file	= $files[ $i ];
-				my $uri		= $uris[ $i ];
-				my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-				$parser->parse_into_model( $uri, $content, $model );
-			}
-			my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-			my $data	= $bridge->meta;
-			$data->{ bridge }	= $bridge;
-			$data->{ modelobj }	= $model;
-			push(@models, $data);
-		} else {
-			warn "RDF::Trine::Store::Hexastore not loaded: $@\n" if ($RDF::Query::debug);
-		}
-	}
+# 	if (not $ENV{RDFQUERY_NO_RDFTRINE}) {
+# 		eval "use RDF::Query::Model::RDFTrine; use RDF::Trine::Store::Hexastore;";
+# 		if (not $@) {
+# 			require RDF::Query::Model::RDFTrine;
+# 			require RDF::Trine::Store::Hexastore;
+# 			
+# 			my ($model, $dsn, $user, $pass);
+# 			my $store	= RDF::Trine::Store::Hexastore->new();
+# 			$model	= RDF::Trine::Model->new( $store );
+# 			my $parser	= RDF::Trine::Parser->new('rdfxml');
+# 			foreach my $i (0 .. $#files) {
+# 				my $file	= $files[ $i ];
+# 				my $uri		= $uris[ $i ];
+# 				my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+# 				$parser->parse_into_model( $uri, $content, $model );
+# 			}
+# 			my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
+# 			my $data	= $bridge->meta;
+# 			$data->{ bridge }	= $bridge;
+# 			$data->{ modelobj }	= $model;
+# 			push(@models, $data);
+# 		} else {
+# 			warn "RDF::Trine::Store::Hexastore not loaded: $@\n" if ($RDF::Query::debug);
+# 		}
+# 	}
 
 	if (not $ENV{RDFQUERY_NO_REDLAND}) {
 		eval "use RDF::Query::Model::Redland;";
