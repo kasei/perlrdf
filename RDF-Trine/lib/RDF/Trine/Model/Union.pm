@@ -22,6 +22,13 @@ use Scalar::Util qw(blessed);
 use RDF::Trine::Node;
 use RDF::Trine::Store::DBI;
 
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.110_02';
+}
+
+################################################################################
+
 =item C<< new ( @stores ) >>
 
 Returns a new union-model over the list of supplied rdf stores.

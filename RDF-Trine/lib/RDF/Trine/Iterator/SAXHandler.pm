@@ -29,6 +29,11 @@ use base qw(XML::SAX::Base);
 use Data::Dumper;
 use Time::HiRes qw(time);
 
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.110_02';
+}
+
 my %strings;
 my %tagstack;
 my %results;
