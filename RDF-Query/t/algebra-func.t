@@ -12,6 +12,7 @@ use Scalar::Util qw(reftype blessed);
 use RDF::Query;
 use RDF::Query::Node;
 use RDF::Query::Algebra;
+use RDF::Query::Functions;
 
 my $bz		= RDF::Query::Node::Blank->new( 'z' );
 my $bb		= RDF::Query::Node::Blank->new( 'b' );
@@ -850,8 +851,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 
 SKIP: {
 	# kasei:bloom
-	eval { require Bloom::Filter };
-	if ($@) {
+	unless ($RDF::Query::Functions::BLOOM_FILTER_LOADED) {
 		skip('Bloom::Filter is not available', 7);
 	}
 	
