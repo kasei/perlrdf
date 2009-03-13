@@ -11,7 +11,6 @@ recommends			'LWP::Simple'				=> 0;
 recommends			'RDF::Redland'				=> 1;
 recommends			'JavaScript'				=> 0;
 recommends			'Getopt::Simple'			=> 0;
-recommends			'Digest::SHA1'				=> 0;
 recommends			'Geo::Distance'				=> 0.09;
 recommends			'Crypt::GPG'				=> 0;
 recommends			'Bloom::Filter'				=> 1;
@@ -28,6 +27,7 @@ WriteMakefile(
 	VERSION_FROM		=> 'lib/RDF/Query.pm',
 	AUTHOR				=> 'Gregory Todd Williams <gwilliams@cpan.org>',
 	PREREQ_PM			=> {
+					'Digest::SHA1'				=> 0,
 					'DateTime::Format::W3CDTF'	=> 0,
 					'Error'						=> 0,
 					'File::Spec'				=> 0,
