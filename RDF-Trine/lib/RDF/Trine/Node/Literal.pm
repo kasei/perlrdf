@@ -23,7 +23,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS);
 BEGIN {
-	$VERSION	= '0.110_02';
+	$VERSION	= '0.110';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 }

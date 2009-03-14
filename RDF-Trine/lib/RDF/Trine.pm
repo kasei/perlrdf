@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.110_02
+This document describes RDF::Trine version 0.110
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.110_02';
+	$VERSION	= '0.110';
 }
 
 use Log::Log4perl qw(:easy);

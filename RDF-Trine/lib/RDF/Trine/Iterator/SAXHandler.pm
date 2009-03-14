@@ -31,7 +31,7 @@ use Time::HiRes qw(time);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_02';
+	$VERSION	= '0.110';
 }
 
 my %strings;

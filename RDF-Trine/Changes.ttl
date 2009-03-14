@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.110" ;
-                        doap:created      "2009-XX-XX" ;
+                        doap:created      "2009-03-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Store base class with default implementation of get_pattern()." ;
@@ -26,6 +26,8 @@
                         asc:update      "Updated ::Iterator::Bindings::as_string to join lines with empty string (had been returning a list)." ;
                         asc:update      "Updated schema in ::Store::DBI::mysql to use utf8 charset and collation, and use a pkey instead of a unique." ;
                         asc:update      "RDF::Trine::Store::get_pattern now passes through optional @args (used for order-by)." ;
+                        asc:update      "Fixed bug in ::Store::DBI::remove_statements causing bad SQL when all nodes are undef (remove all triples)." ;
+                        asc:update      "::Node::Literal::new now calls ::Node::Literal::XML::new if available and applicable." ;
                         ] .
 
 
