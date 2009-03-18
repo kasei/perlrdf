@@ -26,7 +26,7 @@ package RDF::Query::Parser::SPARQLP;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION		= '2.003_01';
+our $VERSION		= '2.100';
 
 use URI;
 use Data::Dumper;

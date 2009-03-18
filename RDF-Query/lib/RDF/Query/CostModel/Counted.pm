@@ -15,7 +15,7 @@ package RDF::Query::CostModel::Counted;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.003_01';
+	$VERSION	= '2.100';
 }
 
 use strict;

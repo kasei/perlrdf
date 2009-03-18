@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.003_01';
+	$VERSION	= '2.100';
 }
 
 ######################################################################

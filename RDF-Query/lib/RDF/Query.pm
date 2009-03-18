@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.003_01, released XX March 2009.
+This document describes RDF::Query version 2.100, released XX March 2009.
 
 =head1 SYNOPSIS
 
@@ -101,6 +101,7 @@ use DateTime::Format::W3CDTF;
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
+no warnings 'numeric';
 use RDF::Trine 0.108;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
@@ -128,7 +129,7 @@ use RDF::Query::CostModel::Counted;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.003_01';
+	$VERSION		= '2.100';
 	$DEFAULT_PARSER	= 'sparql';
 }
 

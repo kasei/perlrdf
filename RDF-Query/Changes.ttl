@@ -6,9 +6,197 @@
 @prefix asc:     <http://aaronland.info/ns/changefile/> .
                                      
 <>
-        dc:identifier           "$Id: Changes.ttl 298 2007-12-03 20:48:55Z samofool $" ;
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
+
+<http://kasei.us/code/files/RDF-Query-2.100.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.002.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.100" ;
+                        doap:created      "2009-03-18" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added ::Algebra::BasicGraphPattern::connected method." ;
+                        asc:addition      "Added ::Model::node_count method." ;
+                        asc:addition      "Added ::Model::RDFTrine::count_statements() and ::Model::RDFTrine::node_count() methods." ;
+                        asc:addition      "Added 'node_counts' as a recognized key to ::Model::RDFTrine::suports()." ;
+                        asc:addition      "Added 'store' field to the data returned by the meta() method in the ::Model::* classes." ;
+                        asc:addition      "Added a peek method to ::Iterator to support execution deferment like in ::Algebra::Service." ;
+                        asc:addition      "Added a RequestedInterruptError exception class." ;
+                        asc:addition      "Added ability to force SERVICE calls to abort using $ENV{RDFQUERY_THROW_ON_SERVICE} and RequestedInterruptError." ;
+                        asc:addition      "Added algebra classes for solution modifiers and query forms (construct, project)." ;
+                        asc:addition      "Added benchmark/costmodel.pl for testing the RDF::Query::CostModel." ;
+                        asc:addition      "Added benchmark/plans.pl to show the runtimes of the available QEPs for a query." ;
+                        asc:addition      "Added bf methods to ::Triple and ::BasicGraphPattern to describe the BGP in terms of bound/free." ;
+                        asc:addition      "Added bin/graph-bgp.pl to produce a png of a query's BGP variable connectivity graph." ;
+                        asc:addition      "Added bin/graph-qeps.pl to vizualize all QEPs of a query with GraphViz." ;
+                        asc:addition      "Added bin/graph-query.pl to graph the (one chosen) QEP tree." ;
+                        asc:addition      "Added bind_variables method to RDF::Query::Algebra." ;
+                        asc:addition      "Added caching to ::Algebra::Service::_names_for_node." ;
+                        asc:addition      "Added code and tests for Query Execution Plan classes RDF::Query::Plan::*." ;
+                        asc:addition      "Added code for RDF-Trine specific BGP query plans." ;
+                        asc:addition      "Added code to count (and warn) the rate of false positives from a bloomjoin." ;
+                        asc:addition      "Added cost model hooks in RDF::Query and ::Algebra::BasicGraphPattern." ;
+                        asc:addition      "Added debugging information when RDFQUERY_THROW_ON_SERVICE is in effect." ;
+                        asc:addition      "Added examples/create_query_api.pl for generating queries programatically (based on request from KjetilK)." ;
+                        asc:addition      "Added examples/query.pl to show a simple example of loading data and executing a query." ;
+                        asc:addition      "Added expected result count test in t/34-servicedescription.t." ;
+                        asc:addition      "Added FeDeRate BINDINGS to the list of supported extensions." ;
+                        asc:addition      "Added from_sse method to ::Statement, ::Node." ;
+                        asc:addition      "Added get_basic_graph_pattern to ::Model::RDFTrine (not used yet)." ;
+                        asc:addition      "Added initial code for ARQ-style property paths." ;
+                        asc:addition      "Added initial parser code for SPARQL Update (SPARUL) extension." ;
+                        asc:addition      "Added initial tests for algebra subsumes method." ;
+                        asc:addition      "Added is_solution_modifier() methods to ::Algebra classes." ;
+                        asc:addition      "Added labels and common patterns to service description template." ;
+                        asc:addition      "Added logging and costmodel tests." ;
+                        asc:addition      "Added logging for execution time (time to construct iterator) of Triples, BGPs, GGPs and sorting." ;
+                        asc:addition      "Added logging of cardinalities in ::Algebra::Triple, ::Algebra::BasicGraphPattern and ::Algebra::Service." ;
+                        asc:addition      "Added logging to plan classes ::NestedLoop, ::Service, ::Triple." ;
+                        asc:addition      "Added more example capabilities and patterns to the test service descriptions." ;
+                        asc:addition      "Added more logic and debugging to aggregating triples into BGPs for SERVICE calls." ;
+                        asc:addition      "Added new 'UNSAID' syntax for SPARQLP, implementing negation." ;
+                        asc:addition      "Added new bloom:filter function variant that doesn't use identity reasoning." ;
+                        asc:addition      "Added optional restriction argument to ::Algebra::subpatterns_of_type." ;
+                        asc:addition      "Added parse_expr method to RDF::Query::Parser::SPARQL." ;
+                        asc:addition      "Added RDF::Query::Algebra::Quad::bf() method." ;
+                        asc:addition      "Added RDF::Query::BGPOptimizer implementing a basic optimizer for basic selectivity-based join ordering." ;
+                        asc:addition      "Added RDF::Query::CostModel classes for computing/estimating the cost of executing a specific pattern." ;
+                        asc:addition      "Added RDF::Query::ExecutionContext to hold all necessary information for query execution (query, model, bound variables)." ;
+                        asc:addition      "Added RDF::Query::Federate::Plan for federation-specific code." ;
+                        asc:addition      "Added RDF::Query::Model::RDFTrine::BasicGraphPattner::graph() method." ;
+                        asc:addition      "Added RDF::Query::Node::compare for sorting (either Trine or Query) node objects." ;
+                        asc:addition      "Added RDF::Query::plan_class so that ::Federate can overload calls to ::Plan methods." ;
+                        asc:addition      "Added RDF::Query::ServiceDescription for parsing DARQ-style service descriptions." ;
+                        asc:addition      "Added RDF::Query::VariableBindings to wrap existing HASH-based variable binding structure." ;
+                        asc:addition      "Added RDF::Trine::Store::Hexastore to test model construction list in t/models.pl." ;
+                        asc:addition      "Added sparql:pattern data to test service descriptions." ;
+                        asc:addition      "Added sse re-serialization test to t/29-serialize.t." ;
+                        asc:addition      "Added stub ::Plan::ThresholdUnion class for running optimistic queries." ;
+                        asc:addition      "Added support for computed statement generators (like ARQ's computed property support [e.g. list:member])." ;
+                        asc:addition      "Added support for sparql:pattern in service description parsing." ;
+                        asc:addition      "Added t/plan-rdftrine.t to test QEP generation optimized for RDF::Trine BGPs." ;
+                        asc:addition      "Added test data for repeat patterns (e.g. { ?a ?a ?b})." ;
+                        asc:addition      "Added tests to t/plan.t for QEP sse serialization." ;
+                        asc:addition      "Added trial subsumes() methods to ::Algebra::BasicGraphPattern and ::Algebra::Triple." ;
+                        asc:addition      "Added workaround to RDFCore bridge so that RDF::Core doesn't die if getStmts is called with a Literal in the subj or pred position." ;
+                        asc:update      "Algebra classes now call RDF::Query::algebra_fixup for optimization before falling back on normal fixup code." ;
+                        asc:update      "Allow equality test and disjunction filters in patterns that can be compiled to SQL." ;
+                        asc:update      "Bloom filter use is now only attempted on SERVICE blocks that don't immediately contain a FILTER." ;
+                        asc:update      "Changed debugging in RDF::Query modules to use Log::Log4perl." ;
+                        asc:update      "Cleaned up federation tests." ;
+                        asc:update      "Code now materializes all node identities before creating the Bloom filter (so capacity arg is accurate)." ;
+                        asc:update      "Commented out in-progress service description tests." ;
+                        asc:update      "Converted RDF::Query::execute() to use ::Plan classes." ;
+                        asc:update      "Fixed ::Algebra::GroupGraphPattern to use join_bnode_streams in cases where the bloom filter wasn't automatically created but instead provided by the user." ;
+                        asc:update      "Fixed ::Model::RDFTrine::as_string use with Quads." ;
+                        asc:update      "Fixed argument list for RDF::Query::Algebra::Service::_names_for_node called from bloom function." ;
+                        asc:update      "Fixed bitrotted livejournal example script to work with new 2.000 API." ;
+                        asc:update      "Fixed bug in SQL compilation when restricting left-joins to specific node types (based on functions like isIRI)." ;
+                        asc:update      "Fixed bug in t/23-model_bridge.t to allow two models from the same model class to be used in testing." ;
+                        asc:update      "Fixed bug so ::Model::RDFTrine::meta may be called as a class method." ;
+                        asc:update      "Fixed bugs in RDF::Query and RDF::Query::Expression classes that insisted variables be RDF::Query objects (and not simply RDF::Trine objects)." ;
+                        asc:update      "Fixed error handling in t/plan.t." ;
+                        asc:update      "Fixed node identity computation based on owl:sameAs." ;
+                        asc:update      "Fixed propogation of iterator binding_names when pre-bound values are used in ::Algebra execution." ;
+                        asc:update      "Fixed RDF::Query::algebra_fixup to ignore service capabilities that would result in empty BGPs." ;
+                        asc:update      "Fixed RDF::Query::Algebra::Triple to correctly set binding_names when pre-binding is used." ;
+                        asc:update      "Fixed RDQL parser to qualify URIs before returning from parse()." ;
+                        asc:update      "Fixed SSE serialization bug in ::Algebra::Sort." ;
+                        asc:update      "Fixed SSE serialization of Aggregates using '*' instead of a variable as the column." ;
+                        asc:update      "Fixed t/costmodel-naive.t to provide a serialized query to ::Plan::Service constructor." ;
+                        asc:update      "Fixed test count in algebra-bgp.t." ;
+                        asc:update      "Fixed test in t/31-service.t that relied on identity-reasoning support in bloom filters (which is now off by default)." ;
+                        asc:update      "Fixed test plan for t/optimizer.t in cases where no appropriate model is available." ;
+                        asc:update      "Fixed use of pre-binding in execution of RDF::Trine optimized BasicGraphPatterns." ;
+                        asc:update      "Fixed use of RDFQUERY_NETWORK_TESTS in 31-service.t." ;
+                        asc:update      "Improved use of temporary RDF::Trine stores in RDF::Query tests." ;
+                        asc:update      "Logging code now uses sse serialization as log keys (because of expressions that can't be serialized as SPARQL)." ;
+                        asc:update      "Logging object can now be passed to RDF::Query constructor." ;
+                        asc:update      "Made SERVICE work again by rolling back streaming socket work (now commented out)." ;
+                        asc:update      "Marked tests TODO for federated query serialization." ;
+                        asc:update      "Modified code for aggregate queries (though they are currently broken)." ;
+                        asc:update      "Moved construction of bloom-filter-optimized patterns to RDF::Query::Algebra::GroupGraphPattern::_bloom_optimized_pattern()." ;
+                        asc:update      "Moved federation code to new RDF::Query::Federate class." ;
+                        asc:update      "Moved initial federated service code into RDF::Query::fixup and ::algebra_fixup." ;
+                        asc:update      "Moved QEP generation code to RDF::Query::query_plan so it can be overloaded." ;
+                        asc:update      "Moved RDF::Query::add_service() to RDF::Query::Federate::add_service()." ;
+                        asc:update      "Naive plan is used in ::Federate::Plan::generate_plans only if no optimistic plans are available." ;
+                        asc:update      "Parsing service descriptions now more forgiving in the face of missing values." ;
+                        asc:update      "Plan generation now includes any plans the model object can provide." ;
+                        asc:update      "RDF::Query now always uses a cost model (defaulting to ::Naive)." ;
+                        asc:update      "RDF::Query::Algebra::Triple::new now adds RDF::Query::Node::Variable objects for undefined nodes." ;
+                        asc:update      "RDF::Query::Federate now defaults to SPARQLP parser." ;
+                        asc:update      "RDF::Query::fixup() now only returns a construct pattern (the query pattern now being returned by RDF::Query::query_plan())." ;
+                        asc:update      "RDF::Query::Model::get_computed_statements now doesn't die if there's no query object present." ;
+                        asc:update      "RDF::Query::new() now accepts two-argument form with just $query and \\%options." ;
+                        asc:update      "RDF::Query::Node::Literal objects now can compare as equal when they're of numeric type but the lexical values aren't numeric." ;
+                        asc:update      "RDF::Query::prune_plans now takes ExecutionContext as an argument, and in turn calls ::Plan::prune_plans." ;
+                        asc:update      "RDF::Query::query_plan() now returns all possible query plans when called in list context." ;
+                        asc:update      "RDF::Query::query_plans now calls RDF::Query::prune_plans to select from the list of possible QEPs." ;
+                        asc:update      "RDF::Trine::Node::Resource now escapes unicode in base URIs (now just relative URI part) before calling URI->new_abs." ;
+                        asc:update      "Re-ordered conditionals so that the service-bloom-filter try block is called less frequently." ;
+                        asc:update      "Removed (now unused) parser generator script." ;
+                        asc:update      "Removed logging/warn calls from forked process in ::Service (was screwing up the parent-child IO pipe)." ;
+                        asc:update      "Removed now unused RDF::Query::construct() and RDF::Query::fixup()." ;
+                        asc:update      "Removed old execute() code from ::Algebra classes." ;
+                        asc:update      "Removed unused redland fallback code from RDF::Query::Model::RDFTrine." ;
+                        asc:update      "Removed use of \"DISTINCT\" queries in SERVICE calls (for pipelining)." ;
+                        asc:update      "Removed what looks like an accidentally pasted test in t/plan.t." ;
+                        asc:update      "SERVICE execution now uses non-identity reasoning Bloom filter function." ;
+                        asc:update      "SERVICE tests involving bloom filter handling marked as TODO." ;
+                        asc:update      "ServiceDescription now only runs sofilter if ?subject/?object are bound." ;
+                        asc:update      "ServiceDescription parsing now gets entire sparql:patterns and not just arcs to depth one." ;
+                        asc:update      "Silenced unfinished test debugging in t/logging.t." ;
+                        asc:update      "SPARQL parser now always adds a ::Algebra::Project (even when the query selects '*')." ;
+                        asc:update      "SPARQL parser now constructs ::Algebra::Project objects (had been in RDF::Query::execute)." ;
+                        asc:update      "SPARQL parser now creates ::Algebra::Construct objects for CONSTRUCT queries." ;
+                        asc:update      "SPARQL parser now puts ::Distinct above ::Sort algebras in the parse tree." ;
+                        asc:update      "SPARQLP parser now creates ::Project object as parent of any ::Aggregate." ;
+                        asc:update      "Split RDF::Query::execute into prepare() and execute_plan() methods." ;
+                        asc:update      "Started work on a more holistic approach to supporting service descriptions (instead of using add_computed_statement_generator())." ;
+                        asc:update      "Turtle parser now doesn't modify the lexical value of numeric typed literals." ;
+                        asc:update      "Turtle parser now makes universal IDs for all blank node (even those with given IDs like _:xyz)." ;
+                        asc:update      "Updated ::Algebra SSE serializations to conform to Jena's serialization syntax." ;
+                        asc:update      "Updated ::Algebra::Limit::sse to emit 'slice' serialization if its child is a ::Algebra::Offset." ;
+                        asc:update      "Updated ::Algebra::Service to fork and use LWP's callback mechanism for concurrency." ;
+                        asc:update      "Updated ::Compiler::SQL to recognize ::Algebra::Project objects." ;
+                        asc:update      "Updated args to roqet call in failing_earl_tests.sh." ;
+                        asc:update      "Updated as_sparql() methods to support the new ::Construct classes." ;
+                        asc:update      "Updated bin/parse.pl to emit the SSE serialization of the query algebra tree." ;
+                        asc:update      "Updated bin/rdf_parse_turtle.pl to warn on any parser error." ;
+                        asc:update      "Updated cost model code to work with ::Plan classes instead of ::Algebra classes." ;
+                        asc:update      "Updated costmodel and logging test expected results that changed due to changes to ::Plan::Join code." ;
+                        asc:update      "Updated dawg-eval.t regex to recognize RDFTrine blank nodes." ;
+                        asc:update      "Updated DBPedia test query in t/34-servicedescription.t to reflect new source data." ;
+                        asc:update      "Updated expected cardinalities in t/logging.t for current plan choice." ;
+                        asc:update      "Updated logging of algebra execution to use SPARQL serialization as logging key." ;
+                        asc:update      "Updated logging tests to use the new sparql serialization keys." ;
+                        asc:update      "Updated plan generation code to use ::BGPOptimizer when the model supports node_counts." ;
+                        asc:update      "Updated RDF::Query to require version 0.108 of RDF::Trine." ;
+                        asc:update      "Updated RDF::Query::sse to emit base and prefix serializations." ;
+                        asc:update      "Updated SERVICE test in t/plan.t (still broken, but only runs when dev env var RDFQUERY_NETWORK_TESTS in effect)." ;
+                        asc:update      "Updated SPARQL parser and serializer tests to always assume an ::Algebra::Project on SELECT queries." ;
+                        asc:update      "Updated SSE serialization of ::Join::PushDownNestedLoop to use 'bind-join' terminology." ;
+                        asc:update      "Updated t/plan.t to be less dependent on the specific state of the kasei.us service endpoint." ;
+                        asc:update      "Updated test service description RDF for new tests." ;
+                        asc:update      "Updates to improve logging and test coverage." ;
+                        asc:update      "Updates to RDF::Query::execute() to support explicit pre-binding lists (instead of just scalar values)." ;
+                        asc:update      "Updates to SPARQLP parser to support FeDeRate BINDINGS keyword." ;
+                        asc:update      "::Algebra::Distinct now does proper serialization in as_sparql()." ;
+                        asc:update      "::Algebra::GroupGraphPattern now throws an exception if passed unblessed values as patterns." ;
+                        asc:update      "::Algebra::Service now defers loading of content until the first result is requested." ;
+                        asc:update      "::Federate now labels nodes in the QEP tree with applicable services." ;
+                        asc:update      "::GroupGraphPattern::sse() updated to output the '(join ...)' only if the GGP has more than one pattern." ;
+                        asc:update      "::Model::debug() now shows data from the named graph model." ;
+                        asc:update      "::Model::RDFTrine now only produces BGP plans if there is no get_computed_statement_generators in the query object." ;
+                        asc:update      "::Model::RDFTrine::add_uri now decodes resulting content as utf8 before proceeding." ;
+                        asc:update      "::Model::RDFTrine::meta() probes the underlying store object to declare the proper 'store' class." ;
+                        asc:update      "::Service::_names_for_node updated to use ::Plan classes for query execution (fixes use of the k:bloom filter)." ;
+                        ] .
+
 
 <http://kasei.us/code/files/RDF-Query-2.002.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
@@ -19,11 +207,11 @@
                         doap:created      "2008-04-25" ;
                         ];
         asc:changes     [
-                        asc:update        "Updated Bloom::Filter required version in RDF-Query's Makefile.PL.
-                        asc:update        "Fixed bug in get_function() when called as a class method.
-                        asc:update        "Updated sparql:logical-* functions to accept more than two operands.
-                        asc:addition      "Added code to make loading of Bloom::Filter optional.
-                        asc:addition      "Added Bloom::Filter to list of recommended modules.
+                        asc:update        "Updated Bloom::Filter required version in RDF-Query's Makefile.PL." ;
+                        asc:update        "Fixed bug in get_function() when called as a class method." ;
+                        asc:update        "Updated sparql:logical-* functions to accept more than two operands." ;
+                        asc:addition      "Added code to make loading of Bloom::Filter optional." ;
+                        asc:addition      "Added Bloom::Filter to list of recommended modules." ;
                         ] .
 
 
@@ -36,7 +224,7 @@
                         doap:created      "2008-04-19" ;
                         ];
         asc:changes     [
-                        asc:addition      "Added test for using AS syntax for variable renaming: "(?var AS ?newvar)"." ;
+                        asc:addition      "Added test for using AS syntax for variable renaming: \"(?var AS ?newvar)\"." ;
                         asc:addition      "Added support for MIN, MAX, COUNT and COUNT-DISTINCT aggregate operators to the SPARQLP parser." ;
                         asc:addition      "Added COUNT DISTINCT variant aggregate operator." ;
                         asc:addition      "Added as_sparql submethod to RDF::Query::Node::Literal to serialize numeric types unquoted." ;
@@ -47,7 +235,7 @@
                         asc:addition      "Added ::Algebra::subpatterns_of_type method for retrieving all subpatterns of a particular type." ;
                         asc:addition      "Added tests for select expressions." ;
                         asc:addition      "Added initial support for selecting expression values." ;
-                        asc:update        "Fixed use of "DESCRIBE <resource>" (instead of "DESCRIBE ?var")." ;
+                        asc:update        "Fixed use of \"DESCRIBE <resource>\" (instead of \"DESCRIBE ?var\")." ;
                         asc:update        "Fixed SPARQL serialization of queries with DISTINCT." ;
                         asc:update        "Moved sort_rows() into new ::Algebra classes Sort, Limit, Offset and Distinct." ;
                         asc:update        "Updated SQL compiler to handle new ::Algebra classes." ;
