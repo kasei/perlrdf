@@ -7,15 +7,16 @@ hx_node* _hx_parser_node( hx_parser_t* index, void* node, raptor_identifier_type
 
 int hx_parser_parse_file_into_hexastore ( hx_hexastore* hx, const char* filename ) {
 	raptor_init();
-	raptor_parser* rdf_parser	= raptor_new_parser( "guess" );
 	unsigned char* uri_string	= raptor_uri_filename_to_uri_string( filename );
 	raptor_uri* uri				= raptor_new_uri(uri_string);
 	const char* parser_name		= raptor_guess_parser_name(NULL, NULL, NULL, 0, uri_string);
+	raptor_parser* rdf_parser	= raptor_new_parser( parser_name );
 	raptor_uri *base_uri		= raptor_uri_copy(uri);
 	
 	hx_parser_t index;
-	index.triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	index.hx		= hx;
+	index.count		= 0;
+	index.triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
 	raptor_set_statement_handler(rdf_parser, &index, _hx_parser_handle_triple);
 	raptor_parse_file(rdf_parser, uri, base_uri);

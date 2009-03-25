@@ -20,7 +20,7 @@ hx_node* l2;
 void test_path_join ( void );
 
 int main ( void ) {
-	plan_tests(9);
+	plan_tests(10);
 	p1	= hx_new_node_resource( "p1" );
 	p2	= hx_new_node_resource( "p2" );
 	r1	= hx_new_node_resource( "r1" );
