@@ -13,7 +13,11 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 	_hx_mergejoin_get_lhs_batch( info );
 	_hx_mergejoin_get_rhs_batch( info );
 	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
+//		fprintf( stderr, "looking for match while priming first result\n" );
+//		fprintf( stderr, "batch sizes %d <=> %d\n", info->lhs_batch_size, info->rhs_batch_size );
+//		fprintf( stderr, "keys %d <=> %d\n", (int) info->lhs_key, (int) info->rhs_key );
 		if (info->lhs_key == info->rhs_key) {
+//			fprintf( stderr, "found matching keys. indexes: %d <=> %d\n", info->lhs_batch_index, info->rhs_batch_index );
 			hx_variablebindings* left	= info->lhs_batch[ info->lhs_batch_index ];
 			hx_variablebindings* right	= info->rhs_batch[ info->rhs_batch_index ];
 			info->current	= hx_variablebindings_natural_join( left, right );
@@ -160,7 +164,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 		if (set == 1)
 			break;
 	}
-	fprintf( stderr, "joining A(%s) X B(%s)\n", anames[ lhs_index ], bnames[ rhs_index ] );
+//	fprintf( stderr, "joining A(%s) X B(%s)\n", anames[ lhs_index ], bnames[ rhs_index ] );
 	
 	hx_variablebindings_iter* lhs	= hx_variablebindings_sort_iter( _lhs, lhs_index );
 	hx_variablebindings_iter* rhs	= hx_variablebindings_sort_iter( _rhs, rhs_index );
@@ -255,8 +259,9 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 // 		fprintf( stderr, "- batch:\n" );
 		for (int i = 0; i < *batch_size; i++) {
 // 			fprintf( stderr, "- [%d] - ", i );
-// 			hx_variablebindings_debug( (*batch)[ i ], NULL );
+//			hx_variablebindings_debug( (*batch)[ i ], NULL );
 		}
+		
 		return 0;
 	} else {
 		info->finished	= 1;
