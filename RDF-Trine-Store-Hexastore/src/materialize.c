@@ -158,9 +158,9 @@ int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
 }
 
 void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
-	fprintf( stderr, "Materialized iterator %p\n", iter );
+	fprintf( stderr, "Materialized iterator %p\n", (void*) iter );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
-	fprintf( stderr, "\tInfo: %p\n", info );
+	fprintf( stderr, "\tInfo: %p\n", (void*) info );
 	fprintf( stderr, "\tLength: %d\n", (int) info->length );
 	for (int i = 0; i < info->length; i++) {
 		char* string;
