@@ -157,11 +157,17 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	
 	for (int i = 0; i < shared_count; i++) {
 		char* name		= shared_names[i];
+// 		fprintf( stderr, "*** shared key in natural join: %s\n", name );
 		hx_node_id node	= hx_variablebindings_node_for_binding( left, shared_lhs_index[i] );
 		for (int j = 0; j < rhs_size; j++) {
 			char* rhs_name	= rhs_names[ j ];
 			if (strcmp( name, rhs_name ) == 0) {
-				hx_node_id rnode	= hx_variablebindings_node_for_binding( right, shared_lhs_index[j] );
+// 				fprintf( stderr, "rhs_name: %s\n", rhs_name );
+// 				fprintf( stderr, "\tindex in lhs is %d\n", shared_lhs_index[j] );
+				char* lhs_name	= lhs_names[ shared_lhs_index[j] ];
+// 				fprintf( stderr, "lhs_name: %s\n", lhs_name );
+				hx_node_id rnode	= hx_variablebindings_node_for_binding( right, j );
+// 				fprintf( stderr, "\tcomparing nodes %d <=> %d\n", node, rnode );
 				if (node != rnode) {
 					return NULL;
 				}
