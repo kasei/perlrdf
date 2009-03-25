@@ -128,6 +128,20 @@ hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id ) {
 	}
 }
 
+int hx_nodemap_debug ( hx_nodemap* map ) {
+	struct avl_traverser iter;
+	avl_t_init( &iter, map->id2node );
+	hx_nodemap_item* item;
+	fprintf( stderr, "Nodemap:\n" );
+	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+		char* string;
+		hx_node_string( item->node, &string );
+		fprintf( stderr, "\t%d -> %s\n", (int) item->id, string );
+		free( string );
+	}
+	return 0;
+}
+
 int hx_nodemap_write( hx_nodemap* m, FILE* f ) {
 	fputc( 'M', f );
 	size_t used	= avl_count( m->id2node );

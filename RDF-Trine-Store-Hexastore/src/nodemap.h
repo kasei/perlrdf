@@ -29,6 +29,7 @@ int hx_nodemap_remove_node ( hx_nodemap* m, hx_node* n );
 hx_node_id hx_nodemap_get_node_id ( hx_nodemap* m, hx_node* n );
 hx_node* hx_nodemap_get_node ( hx_nodemap* m, hx_node_id id );
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map );
+int hx_nodemap_debug ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
 hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
