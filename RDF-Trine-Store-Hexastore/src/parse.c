@@ -38,7 +38,8 @@ int main (int argc, char** argv) {
 		}
 	}
 	
-	hx_parser_parse_file_into_hexastore( hx, rdf_filename );
+	hx_parser* parser	= hx_new_parser();
+	hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
 	if (f != NULL) {
 		if (hx_write( hx, f ) != 0) {
 			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
@@ -46,6 +47,7 @@ int main (int argc, char** argv) {
 		}
 	}
 	
+	hx_free_parser( parser );
 	hx_free_hexastore( hx );
 	hx_free_storage_manager( s );
 	return 0;

@@ -313,6 +313,18 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx
 	return iter;
 }
 
+uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
+	// XXX NOT EFFICIENT... Needs to be updated to use the {head,vector,terminal} structs' triples_count field
+	uint64_t count	= 0;
+	hx_index_iter* iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
+	while (!hx_index_iter_finished(iter)) {
+		count++;
+		hx_index_iter_next(iter);
+	}
+	hx_free_index_iter(iter);
+	return count;
+}
+
 uint64_t hx_triples_count ( hx_hexastore* hx ) {
 	hx_index* i	= hx->spo;
 	return hx_index_triples_count( i );

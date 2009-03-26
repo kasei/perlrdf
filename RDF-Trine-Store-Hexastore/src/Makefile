@@ -1,7 +1,7 @@
 CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o tap.o btree.o storage.o parser.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o tap.o btree.o storage.o parser.o bgp.o
 
 all: parse print optimize tests
 
@@ -50,10 +50,13 @@ btree.o: btree.c btree.h hexastore_types.h
 parser.o: parser.c parser.h hexastore_types.h
 	$(CC) $(INC) -c parser.c
 
+bgp.o: bgp.c bgp.h hexastore_types.h
+	$(CC) $(INC) -c bgp.c
+
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t
 
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
@@ -82,6 +85,9 @@ t/join.t: tap.o t/join.c $(OBJECTS)
 
 t/iter.t: tap.o t/iter.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o t/iter.t t/iter.c $(OBJECTS)
+
+t/bgp.t: tap.o t/bgp.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS)
 
 ########
 
