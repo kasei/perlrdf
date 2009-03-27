@@ -505,3 +505,9 @@ hx_node* hx_new_variable ( hx_hexastore* hx ) {
 	hx_node* n	= hx_new_node_variable( v );
 	return n;
 }
+
+hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name ) {
+	int v	= hx->next_var--;
+	hx_node* n	= hx_new_node_named_variable( v, name );
+	return n;
+}

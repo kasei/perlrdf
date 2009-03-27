@@ -19,16 +19,21 @@
 #include "node.h"
 
 static int TRIPLES_BATCH_SIZE	= 25000;
+typedef void (*hx_parser_logger)( uint64_t count );
 
 typedef struct {
 	uint64_t next_bnode;
 	struct timeval tv;
 	int count;
+	uint64_t total;
 	hx_hexastore* hx;
 	hx_triple* triples;
+	hx_parser_logger logger;
 } hx_parser;
 
 hx_parser* hx_new_parser ( void );
+int hx_parser_set_logger( hx_parser* p, hx_parser_logger l );
+
 int hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
 int hx_free_parser ( hx_parser* p );
 

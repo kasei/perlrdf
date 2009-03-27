@@ -310,7 +310,7 @@ void print_triple ( hx_nodemap* map, hx_node_id s, hx_node_id p, hx_node_id o, i
 	if (count > 0) {
 		fprintf( stdout, "[%d] ", count );
 	}
-	fprintf( stdout, "%s, %s, %s\n", ss, sp, so );
+	fprintf( stdout, "%s %s %s\n", ss, sp, so );
 	free( ss );
 	free( sp );
 	free( so );

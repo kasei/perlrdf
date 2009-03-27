@@ -8,15 +8,13 @@ hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, 
 	n->flags	= flags;
 	if (flags & HX_NODE_IOK) {
 		n->iv		= iv;
-		n->value	= NULL;
 	}
 	
 	if (flags & HX_NODE_NOK) {
 		n->nv		= nv;
-		n->value	= NULL;
 	}
 	
-	if (!flags) {
+	if (value != NULL) {
 		n->value	= malloc( strlen( value ) + 1 );
 		strcpy( n->value, value );
 	}
@@ -25,6 +23,11 @@ hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, 
 
 hx_node* hx_new_node_variable ( int value ) {
 	hx_node* n	= _hx_new_node( '?', NULL, 0, HX_NODE_IOK, value, 0.0 );
+	return n;
+}
+
+hx_node* hx_new_node_named_variable( int value, char* name ) {
+	hx_node* n	= _hx_new_node( '?', name, 0, HX_NODE_IOK, value, 0.0 );
 	return n;
 }
 
@@ -168,9 +171,27 @@ int hx_node_is_blank ( hx_node* n ) {
 	return (n->type == 'B');
 }
 
-
 char* hx_node_value ( hx_node* n ) {
 	return n->value;
+}
+
+int hx_node_variable_name ( hx_node* n, char** name ) {
+	if (n->type == '?') {
+		if (n->value == NULL) {
+			int alloc	= 10 + 6;
+			*name	= calloc( 1, alloc );
+			if (*name == NULL) {
+				return 0;
+			}
+			sprintf( *name, "__var%d", n->iv );
+		} else {
+			*name	= malloc( strlen( n->value ) + 1 );
+			strcpy( *name, n->value );
+		}
+	} else {
+		*name	= NULL;
+	}
+	return 0;
 }
 
 int hx_node_ivok( hx_node* n ) {
@@ -303,6 +324,8 @@ int hx_node_cmp( const void* _a, const void* _b ) {
 		} else if (hx_node_is_literal( a )) {
 			// XXX need to deal with language and datatype literals
 			return strcmp( a->value, b->value );
+		} else if (hx_node_is_variable( a )) {
+			return (hx_node_iv( a ) - hx_node_iv( b ));
 		} else {
 			fprintf( stderr, "*** Unknown node type %c in _sparql_sort_cmp\n", a->type );
 			return 0;
@@ -351,7 +374,7 @@ hx_node* hx_node_read( FILE* f, int buffer ) {
 	size_t used, read;
 	int c	= fgetc( f );
 	if (c != 'N') {
-		fprintf( stderr, "*** Bad header cookie trying to read node from file.\n" );
+		fprintf( stderr, "*** Bad header cookie ('%c') trying to read node from file.\n", c );
 		return NULL;
 	}
 	

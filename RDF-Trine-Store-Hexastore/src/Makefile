@@ -1,4 +1,4 @@
-CFLAGS	=	-I. -L. -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
+CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o tap.o btree.o storage.o parser.o bgp.o

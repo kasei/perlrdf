@@ -10,12 +10,17 @@ hx_parser* hx_new_parser ( void ) {
 	hx_parser* p	= (hx_parser*) calloc( 1, sizeof( hx_parser ) );
 	p->next_bnode	= 0;
 	gettimeofday( &( p->tv ), NULL );
+	p->logger		= NULL;
 	return p;
 }
 
 int hx_free_parser ( hx_parser* p ) {
 	free( p );
 	return 0;
+}
+
+int hx_parser_set_logger( hx_parser* p, hx_parser_logger l ) {
+	p->logger	= l;
 }
 
 int hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* filename ) {
@@ -57,10 +62,14 @@ void _hx_parser_handle_triple (void* user_data, const raptor_statement* triple)	
 	index->triples[ i ].object		= o;
 }
 
-int  _hx_parser_add_triples_batch ( hx_parser* index ) {
-	if (index->count > 0) {
-		hx_add_triples( index->hx, index->triples, index->count );
-		index->count	= 0;
+int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
+	if (parser->count > 0) {
+		hx_add_triples( parser->hx, parser->triples, parser->count );
+		parser->total	+= parser->count;
+		parser->count	= 0;
+		if (parser->logger != NULL) {
+			parser->logger( parser->total );
+		}
 	}
 	return 0;
 }
@@ -157,21 +166,21 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 	unsigned char* p	= id;
 	*(p++)	= 'X';
 	while (copy != 0) {
-		char i	= (char) (copy & 0x3f);
+		int i	= (int) (copy & 0x3f);
 		*(p++)	= encodingTable[ i ];
 		copy >>= 4;
 	}
 	*(p++)	= 'X';
 	copy	= parser->tv.tv_usec;
 	while (copy != 0) {
-		char i	= (char) (copy & 0x3f);
+		int i	= (int) (copy & 0x3f);
 		*(p++)	= encodingTable[ i ];
 		copy >>= 4;
 	}
 	*(p++)	= 'X';
 	copy	= parser->next_bnode++;
 	while (copy != 0) {
-		char i	= (char) (copy & 0x3f);
+		int i	= (int) (copy & 0x3f);
 		*(p++)	= encodingTable[ i ];
 		copy >>= 4;
 	}

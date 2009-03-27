@@ -59,6 +59,7 @@ typedef struct {
 } hx_node_dt_literal;
 
 hx_node* hx_new_node_variable ( int value );
+hx_node* hx_new_node_named_variable( int value, char* name );
 hx_node* hx_new_node_resource ( char* value );
 hx_node* hx_new_node_blank ( char* value );
 hx_node* hx_new_node_literal ( char* value );
@@ -80,6 +81,7 @@ int hx_node_ivok( hx_node* n );
 int hx_node_nvok( hx_node* n );
 
 char* hx_node_value ( hx_node* n );
+int hx_node_variable_name ( hx_node* n, char** name );
 int hx_node_iv ( hx_node* n );
 double hx_node_nv ( hx_node* n );
 char* hx_node_lang ( hx_node_lang_literal* n );

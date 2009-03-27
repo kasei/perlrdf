@@ -14,6 +14,10 @@ void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s data.rdf hexastore.out\n\n", argv[0] );
 }
 
+void logger ( uint64_t count ) {
+	fprintf( stderr, "\rAdded %d triples...", (int) count );
+}
+
 int main (int argc, char** argv) {
 	const char* rdf_filename	= NULL;
 	const char* output_filename	= NULL;
@@ -39,6 +43,7 @@ int main (int argc, char** argv) {
 	}
 	
 	hx_parser* parser	= hx_new_parser();
+	hx_parser_set_logger( parser, logger );
 	hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
 	if (f != NULL) {
 		if (hx_write( hx, f ) != 0) {
@@ -46,11 +51,11 @@ int main (int argc, char** argv) {
 			return 1;
 		}
 	}
+	fprintf( stderr, "\n" );
 	
 	hx_free_parser( parser );
 	hx_free_hexastore( hx );
 	hx_free_storage_manager( s );
 	return 0;
 }
-
 
