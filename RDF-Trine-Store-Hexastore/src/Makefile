@@ -1,4 +1,4 @@
-CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror
+CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o btree.o storage.o parser.o bgp.o
@@ -56,7 +56,7 @@ bgp.o: bgp.c bgp.h hexastore_types.h
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9
 
@@ -93,6 +93,9 @@ t/bgp.t: tap.o t/bgp.c $(OBJECTS) tap.o
 
 t/materialize.t: tap.o t/materialize.c $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/materialize.t t/materialize.c $(OBJECTS) tap.o
+
+t/selectivity.t: tap.o t/selectivity.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/selectivity.t t/selectivity.c $(OBJECTS) tap.o
 
 ########
 
