@@ -31,6 +31,7 @@ typedef struct {
 	int (*size) ( void* iter );
 	char** (*names) ( void* iter );
 	int (*sorted_by) ( void* iter, int index );
+	int (*debug) ( void* iter, char* header, int indent );
 } hx_variablebindings_iter_vtable;
 
 typedef struct {
@@ -43,6 +44,7 @@ typedef struct {
 #include "materialize.h"
 
 hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
+hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names );
 
 int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* m, char** string );
@@ -64,6 +66,7 @@ int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter );
 char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter );
 int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column );
 int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index );
+int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent );
 
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
 

@@ -5,11 +5,13 @@
 int _hx_materialize_join_vb_names ( hx_variablebindings* lhs, hx_variablebindings* rhs, char*** merged_names, int* size );
 int _hx_materialize_join_iter_names ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, char*** merged_names, int* size );
 int _hx_materialize_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size );
+int _hx_materialize_debug ( void* info, char* header, int indent );
+
 
 // implementations
 
 int _hx_materialize_iter_vb_finished ( void* data ) {
-//	fprintf( stderr, "*** _hx_mergejoin_iter_vb_finished\n" );
+//	fprintf( stderr, "*** _hx_materialize_iter_vb_finished (%p)\n", (void*) data );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
 
 //	fprintf( stderr, "- finished == %d\n", info->finished );
@@ -21,7 +23,7 @@ int _hx_materialize_iter_vb_current ( void* data, void* results ) {
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
 	
 	hx_variablebindings** b	= (hx_variablebindings**) results;
-	*b	= info->bindings[ info->index ];
+	*b	= hx_copy_variablebindings( info->bindings[ info->index ] );
 	return 0;
 }
 
@@ -41,7 +43,7 @@ int _hx_materialize_iter_vb_next ( void* data ) {
 int _hx_materialize_iter_vb_free ( void* data ) {
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
 	for (int i = 0; i < info->length; i++) {
-		hx_free_variablebindings( info->bindings[ i ], 0 );
+		hx_free_variablebindings( info->bindings[i], 0 );
 	}
 	free( info->bindings );
 	free( info->names );
@@ -84,6 +86,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	vtable->names		= _hx_materialize_iter_vb_names;
 	vtable->size		= _hx_materialize_iter_vb_size;
 	vtable->sorted_by	= _hx_materialize_iter_sorted_by;
+	vtable->debug		= _hx_materialize_debug;
 	
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) calloc( 1, sizeof( _hx_materialize_iter_vb_info ) );
 	info->finished	= 0;
@@ -168,3 +171,23 @@ void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
 		fprintf( stderr, "\t[%d] %s\n", i, string );
 	}
 }
+
+int _hx_materialize_debug ( void* data, char* header, int _indent ) {
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
+	char* indent	= malloc( _indent + 1 );
+	char* p			= indent;
+	for (int i = 0; i < _indent; i++) *(p++) = ' ';
+	*p	= (char) 0;
+	
+	fprintf( stderr, "%s%s materialize iterator\n", indent, header );
+	
+	fprintf( stderr, "%s%s  Info: %p\n", indent, header, (void*) info );
+	fprintf( stderr, "%s%s  Length: %d\n", indent, header, (int) info->length );
+	for (int i = 0; i < info->length; i++) {
+		char* string;
+		hx_variablebindings_string( info->bindings[i], NULL, &string );
+		fprintf( stderr, "%s%s  [%d] %s\n", indent, header, i, string );
+	}
+	return 0;
+}
+

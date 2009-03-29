@@ -8,6 +8,14 @@ hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_i
 	return b;
 }
 
+hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
+	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
+	c->size		= b->size;
+	c->names	= b->names;
+	c->nodes	= b->nodes;
+	return c;
+}
+
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 	if (free_names > 0) {
 		for (int i = 0; i < b->size; i++) {
@@ -253,6 +261,10 @@ int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter
 	return iter->vtable->sorted_by( iter->ptr, index );
 }
 
+int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent ) {
+	return iter->vtable->debug( iter->ptr, header, indent );
+}
+
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index ) {
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
@@ -282,3 +294,4 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		}
 	}
 }
+

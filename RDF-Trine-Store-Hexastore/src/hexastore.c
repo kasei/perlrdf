@@ -10,6 +10,8 @@ int _hx_iter_vb_next ( void* iter );
 int _hx_iter_vb_free ( void* iter );
 int _hx_iter_vb_size ( void* iter );
 int _hx_iter_vb_sorted_by (void* iter, int index );
+int _hx_iter_debug ( void* info, char* header, int indent );
+
 char** _hx_iter_vb_names ( void* iter );
 int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
 
@@ -391,6 +393,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	vtable->names		= _hx_iter_vb_names;
 	vtable->size		= _hx_iter_vb_size;
 	vtable->sorted_by	= _hx_iter_vb_sorted_by;
+	vtable->debug		= _hx_iter_debug;
 	
 	int size	= 0;
 	if (subj_name != NULL)
@@ -484,6 +487,13 @@ int _hx_iter_vb_sorted_by (void* data, int index ) {
 	int triple_pos	= info->index_to_triple_pos[ index ];
 // 	fprintf( stderr, "*** checking if index iterator is sorted by %d (triple %s)\n", index, HX_POSITION_NAMES[triple_pos] );
 	return hx_index_iter_is_sorted_by_index( info->iter, triple_pos );
+}
+
+int _hx_iter_debug ( void* data, char* header, int indent ) {
+	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
+	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	fprintf( stderr, "%s hexastore triples iterator\n", header );
+	return 0;
 }
 
 hx_node_id hx_get_node_id ( hx_hexastore* hx, hx_node* node ) {

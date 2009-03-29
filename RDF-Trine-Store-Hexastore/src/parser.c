@@ -21,6 +21,7 @@ int hx_free_parser ( hx_parser* p ) {
 
 int hx_parser_set_logger( hx_parser* p, hx_parser_logger l ) {
 	p->logger	= l;
+	return 0;
 }
 
 int hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* filename ) {

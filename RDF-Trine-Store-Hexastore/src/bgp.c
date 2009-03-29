@@ -37,7 +37,7 @@ hx_bgp* hx_new_bgp ( int size, hx_triple** triples ) {
 		}
 	}
 	b->variables		= vars;
-	b->variable_names	= (char*) calloc( vars, sizeof( char* ) );
+	b->variable_names	= (char**) calloc( vars, sizeof( char* ) );
 	for (int i = 0; i < size; i++) {
 		if (hx_node_is_variable( triples[i]->subject )) {
 			int vid	= abs(hx_node_iv( triples[i]->subject ));
@@ -206,14 +206,10 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 	hx_node_variable_name( t0->subject, &sname );
 	hx_node_variable_name( t0->predicate, &pname );
 	hx_node_variable_name( t0->object, &oname );
-fprintf( stderr, "1\n" );
 	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer0, sname, pname, oname );
-fprintf( stderr, "2\n" );
 	
 	if (size > 1) {
-fprintf( stderr, "3\n" );
 		for (int i = 1; i < size; i++) {
-fprintf( stderr, "4\n" );
 			char *sname, *pname, *oname;
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
@@ -222,12 +218,9 @@ fprintf( stderr, "4\n" );
 			hx_node_variable_name( t->predicate, &pname );
 			hx_node_variable_name( t->object, &oname );
 			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, sname, pname, oname );
-fprintf( stderr, "5\n" );
 			iter		= hx_new_mergejoin_iter( interm, iter );
-fprintf( stderr, "6\n" );
 		}
 	}
-fprintf( stderr, "7\n" );
 	return iter;
 }
 
@@ -253,7 +246,7 @@ int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r ) {
 			for (int j = 0; j < 3; j++) {
 				if (hx_node_is_variable( rnodes[j] )) {
 					if (hx_node_cmp(lnodes[i], rnodes[j]) == 0) {
-						fprintf( stderr, "should sort on %d\n", pos[i] );
+// 						fprintf( stderr, "should sort on %d\n", pos[i] );
 						return pos[i];
 					}
 				}
@@ -289,7 +282,7 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 			hx_node_variable_name( lnodes[i], &lname );
 			for (int j = 0; j < rsize; j++) {
 				if (strcmp(lname, rnames[j]) == 0) {
-					fprintf( stderr, "should sort on %d (%s)\n", pos[i], lname );
+//					fprintf( stderr, "should sort on %d (%s)\n", pos[i], lname );
 					return pos[i];
 				}
 			}

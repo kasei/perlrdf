@@ -6,6 +6,7 @@
 static uint32_t branching_size	= 126;
 
 void _add_data ( hx_storage_manager* s, hx_btree* tree, int count, int add );
+extern int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, uint32_t index, hx_btree_node* child, uint32_t branching_size );
 
 void small_split_test ( void );
 void medium_split_test ( void );

@@ -6,12 +6,14 @@ int _hx_mergejoin_join_iter_names ( hx_variablebindings_iter* lhs, hx_variablebi
 int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size );
 int _hx_mergejoin_get_lhs_batch ( _hx_mergejoin_iter_vb_info* info );
 int _hx_mergejoin_get_rhs_batch ( _hx_mergejoin_iter_vb_info* info );
+int _hx_mergejoin_debug ( void* info, char* header, int indent );
 
 // implementations
 
 int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 	_hx_mergejoin_get_lhs_batch( info );
 	_hx_mergejoin_get_rhs_batch( info );
+	info->started	= 1;
 	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
 //		fprintf( stderr, "looking for match while priming first result\n" );
 //		fprintf( stderr, "batch sizes %d <=> %d\n", info->lhs_batch_size, info->rhs_batch_size );
@@ -23,6 +25,8 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 			info->current	= hx_variablebindings_natural_join( left, right );
 			if (info->current != NULL) {
 				break;
+			} else {
+				_hx_mergejoin_iter_vb_next( info );
 			}
 		} else if (info->lhs_key < info->rhs_key) {
 			_hx_mergejoin_get_lhs_batch( info );
@@ -30,7 +34,6 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 			_hx_mergejoin_get_rhs_batch( info );
 		}
 	}
-	info->started	= 1;
 	if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
 		info->finished	= 1;
 		return 1;
@@ -145,6 +148,15 @@ int _hx_mergejoin_iter_sorted_by ( void* data, int index ) {
 	return (lhs_index == info->lhs_index);
 }
 
+int _hx_mergejoin_debug ( void* data, char* header, int indent ) {
+	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
+	for (int i = 0; i < indent; i++) fwrite( " ", sizeof( char ), 1, stderr );
+	fprintf( stderr, "%s mergejoin iterator\n", header );
+	hx_variablebindings_iter_debug( info->lhs, header, indent + 4 );
+	hx_variablebindings_iter_debug( info->rhs, header, indent + 4 );
+	return 0;
+}
+
 hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs, hx_variablebindings_iter* _rhs ) {
 	int asize		= hx_variablebindings_iter_size( _lhs );
 	char** anames	= hx_variablebindings_iter_names( _lhs );
@@ -178,6 +190,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	vtable->names		= _hx_mergejoin_iter_vb_names;
 	vtable->size		= _hx_mergejoin_iter_vb_size;
 	vtable->sorted_by	= _hx_mergejoin_iter_sorted_by;
+	vtable->debug		= _hx_mergejoin_debug;
 	
 	int size;
 	char** merged_names;
@@ -253,15 +266,14 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 			break;
 		}
 	}
-	
+
 	if (*batch_size > 0) {
 		*batch_id	= cur;
 // 		fprintf( stderr, "- batch:\n" );
-		for (int i = 0; i < *batch_size; i++) {
+// 		for (int i = 0; i < *batch_size; i++) {
 // 			fprintf( stderr, "- [%d] - ", i );
-//			hx_variablebindings_debug( (*batch)[ i ], NULL );
-		}
-		
+// 			hx_variablebindings_debug( (*batch)[ i ], NULL );
+// 		}
 		return 0;
 	} else {
 		info->finished	= 1;
