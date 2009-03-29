@@ -35,6 +35,7 @@ hx_parser* hx_new_parser ( void );
 int hx_parser_set_logger( hx_parser* p, hx_parser_logger l );
 
 int hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
+int hx_parser_parse_string_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* string, const char* base, char* parser_name );
 int hx_free_parser ( hx_parser* p );
 
 #endif
