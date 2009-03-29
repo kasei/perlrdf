@@ -1,9 +1,9 @@
-CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast # -Werror -DAVL_ALLOC_COUNT
+CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o tap.o btree.o storage.o parser.o bgp.o
 
-all: parse print optimize tests
+all: parse print optimize tests examples
 
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
@@ -56,7 +56,9 @@ bgp.o: bgp.c bgp.h hexastore_types.h
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
 
-tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t
+tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t
+
+examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9
 
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
@@ -89,6 +91,20 @@ t/iter.t: tap.o t/iter.c $(OBJECTS)
 t/bgp.t: tap.o t/bgp.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS)
 
+t/materialize.t: tap.o t/materialize.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o t/materialize.t t/materialize.c $(OBJECTS)
+
+########
+
+examples/lubm_q4: examples/lubm_q4.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm_q4 examples/lubm_q4.c $(OBJECTS)
+
+examples/lubm_q8: examples/lubm_q8.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm_q8 examples/lubm_q8.c $(OBJECTS)
+
+examples/lubm_q9: examples/lubm_q9.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm_q9 examples/lubm_q9.c $(OBJECTS)
+
 ########
 
 avl.o: avl.c avl.h hexastore_types.h
@@ -98,6 +114,8 @@ tap.o: tap.c tap.h
 	$(CC) $(INC) -c tap.c
 
 clean:
+	rm -f examples/lubm_q[489]
+	rm -rf examples/lubm_q[489].dSYM
 	rm -f test parse print optimize a.out
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
