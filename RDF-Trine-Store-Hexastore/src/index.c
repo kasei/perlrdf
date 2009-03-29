@@ -243,12 +243,18 @@ hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p,
 }
 
 int hx_free_index_iter ( hx_index_iter* iter ) {
-	if (iter->head_iter != NULL)
+	if (iter->head_iter != NULL) {
 		hx_free_head_iter( iter->head_iter );
-	if (iter->vector_iter != NULL)
+		iter->head_iter	= NULL;
+	}
+	if (iter->vector_iter != NULL) {
 		hx_free_vector_iter( iter->vector_iter );
-	if (iter->terminal_iter != NULL)
+		iter->vector_iter	= NULL;
+	}
+	if (iter->terminal_iter != NULL) {
 		hx_free_terminal_iter( iter->terminal_iter );
+		iter->terminal_iter	= NULL;
+	}
 	free( iter );
 	return 0;
 }

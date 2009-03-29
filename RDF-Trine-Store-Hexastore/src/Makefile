@@ -1,7 +1,7 @@
 CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror
 CC		=	gcc $(CFLAGS)
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
-OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o tap.o btree.o storage.o parser.o bgp.o
+OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o btree.o storage.o parser.o bgp.o
 
 all: parse print optimize tests examples
 
@@ -61,38 +61,38 @@ tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9
 
 ########
-t/node.t: tap.o t/node.c node.h node.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS)
+t/node.t: tap.o t/node.c node.h node.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS) tap.o
 
-t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/nodemap.t t/nodemap.c $(OBJECTS)
+t/nodemap.t: tap.o t/nodemap.c nodemap.h nodemap.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/nodemap.t t/nodemap.c $(OBJECTS) tap.o
 
-t/index.t: tap.o t/index.c index.h index.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/index.t t/index.c $(OBJECTS)
+t/index.t: tap.o t/index.c index.h index.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/index.t t/index.c $(OBJECTS) tap.o
 
-t/terminal.t: tap.o t/terminal.c terminal.h terminal.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/terminal.t t/terminal.c $(OBJECTS)
+t/terminal.t: tap.o t/terminal.c terminal.h terminal.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/terminal.t t/terminal.c $(OBJECTS) tap.o
 
-t/vector.t: tap.o t/vector.c vector.h vector.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/vector.t t/vector.c $(OBJECTS)
+t/vector.t: tap.o t/vector.c vector.h vector.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/vector.t t/vector.c $(OBJECTS) tap.o
 
-t/head.t: tap.o t/head.c head.h head.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/head.t t/head.c $(OBJECTS)
+t/head.t: tap.o t/head.c head.h head.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/head.t t/head.c $(OBJECTS) tap.o
 
-t/btree.t: tap.o t/btree.c btree.h btree.o $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/btree.t t/btree.c $(OBJECTS)
+t/btree.t: tap.o t/btree.c btree.h btree.o $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/btree.t t/btree.c $(OBJECTS) tap.o
 
-t/join.t: tap.o t/join.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/join.t t/join.c $(OBJECTS)
+t/join.t: tap.o t/join.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/join.t t/join.c $(OBJECTS) tap.o
 
-t/iter.t: tap.o t/iter.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/iter.t t/iter.c $(OBJECTS)
+t/iter.t: tap.o t/iter.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/iter.t t/iter.c $(OBJECTS) tap.o
 
-t/bgp.t: tap.o t/bgp.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS)
+t/bgp.t: tap.o t/bgp.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/bgp.t t/bgp.c $(OBJECTS) tap.o
 
-t/materialize.t: tap.o t/materialize.c $(OBJECTS)
-	$(CC) $(INC) $(LIBS) -o t/materialize.t t/materialize.c $(OBJECTS)
+t/materialize.t: tap.o t/materialize.c $(OBJECTS) tap.o
+	$(CC) $(INC) $(LIBS) -o t/materialize.t t/materialize.c $(OBJECTS) tap.o
 
 ########
 

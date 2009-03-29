@@ -148,7 +148,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	
 // 	fprintf( stderr, "natural join...\n" );
 	int shared_count	= 0;
-	int shared_lhs_index[max_size];
+	int* shared_lhs_index	= calloc( max_size, sizeof(int) );
 	char* shared_names[max_size];
 	for (int i = 0; i < lhs_size; i++) {
 		char* lhs_name	= lhs_names[ i ];
@@ -183,6 +183,8 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 		}
 		
 	}
+	
+	free( shared_lhs_index );
 	
 	int size;
 	char** names;

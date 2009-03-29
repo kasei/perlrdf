@@ -23,14 +23,19 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 			hx_variablebindings* left	= info->lhs_batch[ info->lhs_batch_index ];
 			hx_variablebindings* right	= info->rhs_batch[ info->rhs_batch_index ];
 			info->current	= hx_variablebindings_natural_join( left, right );
+// 			hx_free_variablebindings( right, 0 );
 			if (info->current != NULL) {
 				break;
 			} else {
 				_hx_mergejoin_iter_vb_next( info );
 			}
 		} else if (info->lhs_key < info->rhs_key) {
+// 			hx_free_variablebindings( info->lhs_batch[ info->lhs_batch_index ], 0 );
 			_hx_mergejoin_get_lhs_batch( info );
 		} else { // left_key > right_key
+// 			for (int i = info->rhs_batch_index; i < info->rhs_batch_size; i++) {
+// 				hx_free_variablebindings( info->rhs_batch[ i ], 0 );
+// 			}
 			_hx_mergejoin_get_rhs_batch( info );
 		}
 	}
