@@ -673,6 +673,9 @@ int hx_btree_iter_current ( hx_btree_iter* iter, hx_node_id* n, uint64_t* v ) {
 }
 
 int hx_btree_iter_next ( hx_btree_iter* iter ) {
+	if (hx_btree_iter_finished(iter)) {
+		return 1;
+	}
 	iter->index++;
 	if (iter->index >= iter->page->used) {
 		iter->page	= hx_btree_node_next_neighbor( iter->storage, iter->page );
