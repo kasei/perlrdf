@@ -1,5 +1,7 @@
 #include "nodemap.h"
 
+int _hx_nodemap_cmp_nodes ( const void* _a, const void* _b );
+
 // int _sparql_sort_cmp (const void * a, const void * b);
 int _hx_node_cmp_id ( const void* a, const void* b, void* param ) {
 	hx_nodemap_item* ia	= (hx_nodemap_item*) a;
@@ -196,7 +198,7 @@ hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 		node_handles[ i++ ]	= item->node;
 	}
-	qsort( node_handles, i, sizeof( char* ), hx_node_cmp );
+	qsort( node_handles, i, sizeof( hx_node* ), _hx_nodemap_cmp_nodes );
 	hx_nodemap* sorted	= hx_new_nodemap();
 	for (int j = 0; j < i; j++) {
 		hx_nodemap_add_node( sorted, node_handles[ j ] );
@@ -205,3 +207,8 @@ hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	return sorted;
 }
 
+int _hx_nodemap_cmp_nodes ( const void* _a, const void* _b ) {
+	hx_node** a	= (hx_node**) _a;
+	hx_node** b	= (hx_node**) _b;
+	return hx_node_cmp( *a, *b );
+}

@@ -6,7 +6,7 @@
 
 hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id );
 void help (int argc, char** argv) {
-	fprintf( stderr, "Usage: %s in.dat out.dat\n\n", argv[0] );
+	fprintf( stderr, "Usage: %s in.hx out.hxo\n\n", argv[0] );
 }
 
 int main (int argc, char** argv) {
@@ -38,7 +38,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "reading hexastore from file...\n" );
 	hx_hexastore* hx	= hx_read( s, inf, 0 );
 	fprintf( stderr, "reading nodemap from file...\n" );
-	hx_nodemap* map		= hx_nodemap_read( s, inf, 0 );
+	hx_nodemap* map		= hx_get_nodemap( hx );
 	
 	fprintf( stderr, "re-sorting nodemap...\n" );
 	hx_nodemap* smap	= hx_nodemap_sparql_order_nodes( map );

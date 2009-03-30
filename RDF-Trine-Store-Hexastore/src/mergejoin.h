@@ -51,11 +51,4 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs,
 hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right );
 
 
-
-
-
-
-
-void hx_mergejoin_run ( void* data, hx_nodemap* map ); // XXX
-
 #endif
