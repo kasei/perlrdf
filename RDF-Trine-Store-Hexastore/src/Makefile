@@ -58,7 +58,7 @@ storage.o: storage.c storage.h hexastore_types.h
 
 tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t
 
-examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9
+examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench
 
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS) tap.o
@@ -108,6 +108,9 @@ examples/lubm_q8: examples/lubm_q8.c $(OBJECTS)
 examples/lubm_q9: examples/lubm_q9.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/lubm_q9 examples/lubm_q9.c $(OBJECTS)
 
+examples/bench: examples/bench.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/bench examples/bench.c $(OBJECTS)
+
 ########
 
 avl.o: avl.c avl.h hexastore_types.h
@@ -117,8 +120,8 @@ tap.o: tap.c tap.h
 	$(CC) $(INC) -c tap.c
 
 clean:
-	rm -f examples/lubm_q[489]
-	rm -rf examples/lubm_q[489].dSYM
+	rm -f examples/lubm_q[489] examples/bench
+	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM
 	rm -f test parse print optimize a.out
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM

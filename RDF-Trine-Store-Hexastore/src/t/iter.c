@@ -76,7 +76,7 @@ void test_small_iter ( void ) {
 	
 	
 	{
-		hx_node_id nid	= hx_variablebindings_node_for_binding( b, 2 );
+		hx_node_id nid	= hx_variablebindings_node_id_for_binding( b, 2 );
 		hx_node* node	= hx_nodemap_get_node( map, nid );
 //		_debug_node( "[1] node: ", node );
 		
@@ -95,7 +95,7 @@ void test_small_iter ( void ) {
 //		fprintf( stdout, "[2] bindings: %s\n", string );
 		free( string );
 
-		hx_node_id nid	= hx_variablebindings_node_for_binding( b, 2 );
+		hx_node_id nid	= hx_variablebindings_node_id_for_binding( b, 2 );
 		hx_node* node	= hx_nodemap_get_node( map, nid );
 //		_debug_node( "[2] node: ", node );
 		
@@ -113,7 +113,7 @@ void test_small_iter ( void ) {
 //		fprintf( stdout, "[3] bindings: %s\n", string );
 		free( string );
 
-		hx_node_id nid	= hx_variablebindings_node_for_binding( b, 2 );
+		hx_node_id nid	= hx_variablebindings_node_id_for_binding( b, 2 );
 		hx_node* node	= hx_nodemap_get_node( map, nid );
 //		_debug_node( "[3] node: ", node );
 		

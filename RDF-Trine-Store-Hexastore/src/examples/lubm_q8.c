@@ -75,9 +75,9 @@ int main ( int argc, char** argv ) {
 	while (!hx_variablebindings_iter_finished( iter )) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
-		hx_node_id xid	= hx_variablebindings_node_for_binding ( b, xi );
-		hx_node_id yid	= hx_variablebindings_node_for_binding ( b, yi );
-		hx_node_id zid	= hx_variablebindings_node_for_binding ( b, zi );
+		hx_node_id xid	= hx_variablebindings_node_id_for_binding ( b, xi );
+		hx_node_id yid	= hx_variablebindings_node_id_for_binding ( b, yi );
+		hx_node_id zid	= hx_variablebindings_node_id_for_binding ( b, zi );
 		hx_node* x		= hx_nodemap_get_node( map, xid );
 		hx_node* y		= hx_nodemap_get_node( map, yid );
 		hx_node* z		= hx_nodemap_get_node( map, zid );

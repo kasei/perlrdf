@@ -96,8 +96,31 @@ char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column 
 	return b->names[ column ];
 }
 
-hx_node_id hx_variablebindings_node_for_binding ( hx_variablebindings* b, int column ) {
+hx_node_id hx_variablebindings_node_id_for_binding ( hx_variablebindings* b, int column ) {
 	return b->nodes[ column ];
+}
+
+hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_nodemap* map, int column ) {
+	hx_node_id id	= b->nodes[ column ];
+	hx_node* node	= hx_nodemap_get_node( map, id );
+	return node;
+}
+
+hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_nodemap* map, char* name ) {
+	int column	= -1;
+	for (int i = 0; i < b->size; i++) {
+		if (strcmp(b->names[i], name) == 0) {
+			column	= i;
+			break;
+		}
+	}
+	if (column >= 0) {
+		hx_node_id id	= b->nodes[ column ];
+		hx_node* node	= hx_nodemap_get_node( map, id );
+		return node;
+	} else {
+		return NULL;
+	}
 }
 
 int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindings* rhs, char*** merged_names, int* size ) {
@@ -166,7 +189,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	for (int i = 0; i < shared_count; i++) {
 		char* name		= shared_names[i];
 // 		fprintf( stderr, "*** shared key in natural join: %s\n", name );
-		hx_node_id node	= hx_variablebindings_node_for_binding( left, shared_lhs_index[i] );
+		hx_node_id node	= hx_variablebindings_node_id_for_binding( left, shared_lhs_index[i] );
 		for (int j = 0; j < rhs_size; j++) {
 			char* rhs_name	= rhs_names[ j ];
 			if (strcmp( name, rhs_name ) == 0) {
@@ -174,7 +197,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 // 				fprintf( stderr, "\tindex in lhs is %d\n", shared_lhs_index[j] );
 				char* lhs_name	= lhs_names[ shared_lhs_index[j] ];
 // 				fprintf( stderr, "lhs_name: %s\n", lhs_name );
-				hx_node_id rnode	= hx_variablebindings_node_for_binding( right, j );
+				hx_node_id rnode	= hx_variablebindings_node_id_for_binding( right, j );
 // 				fprintf( stderr, "\tcomparing nodes %d <=> %d\n", node, rnode );
 				if (node != rnode) {
 					return NULL;
@@ -196,12 +219,12 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 		char* name	= names[ i ];
 		for (int j = 0; j < lhs_size; j++) {
 			if (strcmp( name, lhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_for_binding( left, j );
+				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
 			}
 		}
 		for (int j = 0; j < rhs_size; j++) {
 			if (strcmp( name, rhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_for_binding( right, j );
+				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
 			}
 		}
 	}
@@ -211,6 +234,12 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 }
 
 
+hx_variablebindings_iter* hx_variablebindings_new_empty_iter ( void ) {
+	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
+	iter->vtable		= NULL;
+	iter->ptr			= NULL;
+	return iter;
+}
 
 hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_iter_vtable* vtable, void* ptr ) {
 	hx_variablebindings_iter* iter	= (hx_variablebindings_iter*) malloc( sizeof( hx_variablebindings_iter ) );
@@ -220,32 +249,54 @@ hx_variablebindings_iter* hx_variablebindings_new_iter ( hx_variablebindings_ite
 }
 
 int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vtable ) {
-	iter->vtable->free( iter->ptr );
-	if (free_vtable) {
-		free( iter->vtable );
+	if (iter->vtable != NULL) {
+		iter->vtable->free( iter->ptr );
+		if (free_vtable) {
+			free( iter->vtable );
+		}
 	}
 	free( iter );
 	return 0;
 }
 
 int hx_variablebindings_iter_finished ( hx_variablebindings_iter* iter ) {
-	return iter->vtable->finished( iter->ptr );
+	if (iter->vtable != NULL) {
+		return iter->vtable->finished( iter->ptr );
+	} else {
+		return 1;
+	}
 }
 
 int hx_variablebindings_iter_current ( hx_variablebindings_iter* iter, hx_variablebindings** b ) {
-	return iter->vtable->current( iter->ptr, b );
+	if (iter->vtable != NULL) {
+		return iter->vtable->current( iter->ptr, b );
+	} else {
+		return 1;
+	}
 }
 
 int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter ) {
-	return iter->vtable->next( iter->ptr );
+	if (iter->vtable != NULL) {
+		return iter->vtable->next( iter->ptr );
+	} else {
+		return 1;
+	}
 }
 
 int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter ) {
-	return iter->vtable->size( iter->ptr );
+	if (iter->vtable != NULL) {
+		return iter->vtable->size( iter->ptr );
+	} else {
+		return -1;
+	}
 }
 
 char** hx_variablebindings_iter_names ( hx_variablebindings_iter* iter ) {
-	return iter->vtable->names( iter->ptr );
+	if (iter->vtable != NULL) {
+		return iter->vtable->names( iter->ptr );
+	} else {
+		return NULL;
+	}
 }
 
 int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* column ) {
@@ -260,11 +311,19 @@ int hx_variablebindings_column_index ( hx_variablebindings_iter* iter, char* col
 }
 
 int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter, int index ) {
-	return iter->vtable->sorted_by( iter->ptr, index );
+	if (iter->vtable != NULL) {
+		return iter->vtable->sorted_by( iter->ptr, index );
+	} else {
+		return 0;
+	}
 }
 
 int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent ) {
-	return iter->vtable->debug( iter->ptr, header, indent );
+	if (iter->vtable != NULL) {
+		return iter->vtable->debug( iter->ptr, header, indent );
+	} else {
+		return 1;
+	}
 }
 
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index ) {

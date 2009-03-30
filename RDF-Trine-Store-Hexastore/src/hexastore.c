@@ -148,13 +148,23 @@ int hx_remove_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) 
 	return 0;
 }
 
-int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes ) {
+int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
 	int i		= 0;
 	int vars	= 0;
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
-
+	
+	if (!hx_node_is_variable( sn ) && s == 0) {
+		return 1;
+	}
+	if (!hx_node_is_variable( pn ) && p == 0) {
+		return 1;
+	}
+	if (!hx_node_is_variable( on ) && o == 0) {
+		return 1;
+	}
+	
 #ifdef DEBUG_INDEX_SELECTION
 	fprintf( stderr, "triple: { %d, %d, %d }\n", (int) s, (int) p, (int) o );
 #endif
@@ -190,6 +200,10 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 		used[ HX_OBJECT ]++;
 	} else if (o < (hx_node_id) 0) {
 		vars++;
+	}
+	
+	if (var_count != NULL) {
+		*var_count	= vars;
 	}
 	
 #ifdef DEBUG_INDEX_SELECTION
@@ -305,7 +319,7 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, int order_position ) {
 	hx_node* index_ordered[3];
 	hx_index* index;
-	hx_get_ordered_index( hx, sn, pn, on, order_position, &index, index_ordered );
+	hx_get_ordered_index( hx, sn, pn, on, order_position, &index, index_ordered, NULL );
 	
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
@@ -316,6 +330,63 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx
 }
 
 uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
+	{
+		int vars;
+		hx_index* index;
+		hx_node* index_ordered[3];
+		hx_get_ordered_index( hx, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
+
+		hx_node_id aid	= hx_get_node_id( hx, index_ordered[0] );
+		hx_node_id bid	= hx_get_node_id( hx, index_ordered[1] );
+		hx_node_id cid	= hx_get_node_id( hx, index_ordered[2] );
+		hx_node_id index_ordered_id[3]	= { aid, bid, cid };
+		
+		uint64_t size;
+		hx_head* head;
+		hx_index_iter* iter;
+		hx_vector* vector;
+		hx_terminal* terminal;
+		switch (vars) {
+			case 3:
+				return hx_triples_count( hx );
+			case 2:
+				head	= hx_index_head( index );
+				if (head == NULL) {
+					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
+				}
+				vector	= hx_head_get_vector( head, index_ordered_id[0] );
+				if (vector == NULL) {
+					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
+				}
+				size	= hx_vector_triples_count( vector );
+				return size;
+				break;
+			case 1:
+				head	= hx_index_head( index );
+				if (head == NULL) {
+					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
+				}
+				vector	= hx_head_get_vector( head, index_ordered_id[0] );
+				if (vector == NULL) {
+					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
+				}
+				terminal	= hx_vector_get_terminal( vector, index_ordered_id[1] );
+				if (terminal == NULL) {
+					fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
+					return (uint64_t) 0;
+				}
+				size	= (uint64_t) hx_terminal_size( terminal );
+				return size;
+			case 0:
+				iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
+				break;
+				return (uint64_t) ((hx_index_iter_finished(iter)) ? 0 : 1);
+		};
+	}
 	// XXX NOT EFFICIENT... Needs to be updated to use the {head,vector,terminal} structs' triples_count field
 	uint64_t count	= 0;
 	hx_index_iter* iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );

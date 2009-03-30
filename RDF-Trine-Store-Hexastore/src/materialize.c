@@ -149,8 +149,8 @@ int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index ) {
 int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
 	_hx_materialize_bindings_sort_info* a	= (_hx_materialize_bindings_sort_info*) _a;
 	_hx_materialize_bindings_sort_info* b	= (_hx_materialize_bindings_sort_info*) _b;
-	hx_node_id na	= hx_variablebindings_node_for_binding( a->binding, a->index );
-	hx_node_id nb	= hx_variablebindings_node_for_binding( b->binding, b->index );
+	hx_node_id na	= hx_variablebindings_node_id_for_binding( a->binding, a->index );
+	hx_node_id nb	= hx_variablebindings_node_id_for_binding( b->binding, b->index );
 	if (na < nb) {
 		return -1;
 	} else if (na > nb) {

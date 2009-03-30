@@ -82,6 +82,19 @@ int main (int argc, char** argv) {
 		hx_free_index_iter( iter );
 	} else if (strcmp( arg, "-c" ) == 0) {
 		fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx ) );
+	} else if (strcmp( arg, "-n" ) == 0) {
+		// print out the nodemap
+		hx_nodemap* map		= hx_get_nodemap( hx );
+		size_t used	= avl_count( map->id2node );
+		struct avl_traverser iter;
+		avl_t_init( &iter, map->id2node );
+		hx_nodemap_item* item;
+		while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
+			char* string;
+			hx_node_string( item->node, &string );
+			fprintf( stdout, "%-10llu\t%s\n", (unsigned long long) item->id, string );
+			free( string );
+		}
 	} else if (strcmp( arg, "-id" ) == 0) {
 		if (argc != 4) {
 			help(argc, argv);

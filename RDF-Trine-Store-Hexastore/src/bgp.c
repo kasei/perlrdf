@@ -1,9 +1,12 @@
 #include "bgp.h"
 #include "mergejoin.h"
 
+void _XXX_print_triple ( hx_triple* t, uint64_t size );
 int _hx_bgp_selectivity_cmp ( const void* a, const void* b );
 int _hx_bgp_sort_for_triple_join ( hx_triple* l, hx_triple* r );
 int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter );
+int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size );
+void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size );
 
 typedef struct {
 	uint64_t cost;
@@ -176,9 +179,44 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
 		s[i].cost		= hx_count_statements( hx, t->subject, t->predicate, t->object );
+//		_XXX_print_triple( t, s[i].cost );
+		if (s[i].cost == 0) {
+			fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
+			// there are no triples for this pattern, so no sense in continuing
+			return 1;
+		}
 	}
 	
 	qsort( s, size, sizeof( _hx_bgp_selectivity_t ), _hx_bgp_selectivity_cmp );
+	
+	
+	int* seen	= (int*) calloc( b->variables, sizeof( int ) );
+	for (int i = 0; i < size; i++) {
+		hx_triple* t	= s[i].triple;
+		if (i > 0) {
+			int joins	= _hx_bgp_triple_joins_with_seen( b, t, seen, size );
+			int j		= i;
+			while (joins == 0) {
+				j++;
+				if (j >= size) {
+					fprintf( stderr, "cartesian product\n" );
+					return 1;
+				} else {
+					hx_triple* u	= s[j].triple;
+					joins	= _hx_bgp_triple_joins_with_seen( b, u, seen, size );
+				}
+			}
+			if (j != i) {
+				uint64_t temp_cost	= s[j].cost;
+				hx_triple* temp_t	= s[j].triple;
+				s[j].cost	= s[i].cost;
+				s[j].triple	= s[i].triple;
+				s[i].cost	= temp_cost;
+				s[i].triple	= temp_t;
+			}
+		}
+		_hx_bgp_triple_add_seen_variables( b, t, seen, size );
+	}
 	
 	for (int i = 0; i < size; i++) {
 		b->triples[i]	= s[i].triple;
@@ -188,8 +226,34 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 	return 0;
 }
 
+void _hx_bgp_triple_add_seen_variables ( hx_bgp* b, hx_triple* t, int* seen, int size ) {
+	if (hx_node_is_variable( t->subject )) {
+		seen[ abs(hx_node_iv( t->subject )) ]++;
+	}
+	if (hx_node_is_variable( t->predicate )) {
+		seen[ abs(hx_node_iv( t->predicate )) ]++;
+	}
+	if (hx_node_is_variable( t->object )) {
+		seen[ abs(hx_node_iv( t->object )) ]++;
+	}
+}
+
+int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int size ) {
+	int join_with_previously_seen	= 0;
+	if (hx_node_is_variable( t->subject ) && seen[ abs(hx_node_iv( t->subject )) ] > 0) {
+		join_with_previously_seen++;
+	}
+	if (hx_node_is_variable( t->predicate ) && seen[ abs(hx_node_iv( t->predicate )) ] > 0) {
+		join_with_previously_seen++;
+	}
+	if (hx_node_is_variable( t->object ) && seen[ abs(hx_node_iv( t->object )) ] > 0) {
+		join_with_previously_seen++;
+	}
+	return join_with_previously_seen;
+}
+
+
 hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
-//	hx_bgp_reorder( b, hx );
 	int size	= hx_bgp_size( b );
 	
 	hx_triple* t0	= hx_bgp_triple( b, 0 );
@@ -289,4 +353,23 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 		}
 	}
 	return HX_SUBJECT;
+}
+
+
+
+
+
+
+void _XXX_print_triple ( hx_triple* t, uint64_t size ) {
+	hx_node* s	= t->subject;
+	hx_node* p	= t->predicate;
+	hx_node* o	= t->object;
+	char *ss, *sp, *so;
+	hx_node_string( s, &ss );
+	hx_node_string( p, &sp );
+	hx_node_string( o, &so );
+	fprintf( stderr, "%10llu\t{ %s %s %s }\n", (unsigned long long) size, ss, sp, so );
+	free( ss );
+	free( sp );
+	free( so );
 }

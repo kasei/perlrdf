@@ -204,6 +204,10 @@ uint64_t hx_index_triples_count ( hx_index* index ) {
 	return hx_head_triples_count( index->head );
 }
 
+hx_head* hx_index_head ( hx_index* index ) {
+	return index->head;
+}
+
 hx_index_iter* hx_index_new_iter ( hx_index* index ) {
 	hx_index_iter* iter	= (hx_index_iter*) calloc( 1, sizeof( hx_index_iter ) );
 	iter->flags			= 0;

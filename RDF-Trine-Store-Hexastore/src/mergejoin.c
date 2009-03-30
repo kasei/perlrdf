@@ -242,14 +242,14 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 	}
 	
 	hx_variablebindings_iter_current( iter, &b );
-	hx_node_id cur	= hx_variablebindings_node_for_binding( b, join_column );
+	hx_node_id cur	= hx_variablebindings_node_id_for_binding( b, join_column );
 // 	fprintf( stderr, "*** get_batch: node id %d\n", (int) cur );
 	(*batch)[ (*batch_size)++ ]	= b;
 	hx_variablebindings_iter_next( iter );
 	
 	while (!hx_variablebindings_iter_finished( iter )) {
 		hx_variablebindings_iter_current( iter, &b );
-		hx_node_id id	= hx_variablebindings_node_for_binding( b, join_column );
+		hx_node_id id	= hx_variablebindings_node_id_for_binding( b, join_column );
 // 		fprintf( stderr, "*** get_batch: next id %d\n", (int) id );
 		if (id == cur) {
 			if (*batch_size >= *batch_alloc_size) {
@@ -361,12 +361,12 @@ hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* le
 // 		fprintf( stderr, "filling node value for column %s (%d)\n", name, i );
 		for (int j = 0; j < lhs_size; j++) {
 			if (strcmp( name, lhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_for_binding( left, j );
+				values[i]	= hx_variablebindings_node_id_for_binding( left, j );
 			}
 		}
 		for (int j = 0; j < rhs_size; j++) {
 			if (strcmp( name, rhs_names[j] ) == 0) {
-				values[i]	= hx_variablebindings_node_for_binding( right, j );
+				values[i]	= hx_variablebindings_node_id_for_binding( right, j );
 			}
 		}
 	}

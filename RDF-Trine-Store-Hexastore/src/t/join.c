@@ -84,9 +84,9 @@ void test_path_join ( void ) {
 	}
 	
 	{
-		hx_node_id fid	= hx_variablebindings_node_for_binding( b, 0 );
+		hx_node_id fid	= hx_variablebindings_node_id_for_binding( b, 0 );
 		hx_node* from	= hx_nodemap_get_node( map, fid );
-		hx_node_id tid	= hx_variablebindings_node_for_binding( b, 2 );
+		hx_node_id tid	= hx_variablebindings_node_id_for_binding( b, 2 );
 		hx_node* to		= hx_nodemap_get_node( map, tid );
 
 		ok1( hx_node_cmp( from, r2 ) == 0 );
@@ -96,9 +96,9 @@ void test_path_join ( void ) {
 	ok1( !hx_variablebindings_iter_finished( iter ) );
 	hx_variablebindings_iter_current( iter, &b );
 	{
-		hx_node_id fid	= hx_variablebindings_node_for_binding( b, 0 );
+		hx_node_id fid	= hx_variablebindings_node_id_for_binding( b, 0 );
 		hx_node* from	= hx_nodemap_get_node( map, fid );
-		hx_node_id tid	= hx_variablebindings_node_for_binding( b, 2 );
+		hx_node_id tid	= hx_variablebindings_node_id_for_binding( b, 2 );
 		hx_node* to		= hx_nodemap_get_node( map, tid );
 		
 // 		_debug_node( "from: ", from );
