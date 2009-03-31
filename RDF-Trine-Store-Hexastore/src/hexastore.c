@@ -455,7 +455,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	}
 }
 
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name ) {
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
 	hx_variablebindings_iter_vtable* vtable	= malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_iter_vb_finished;
 	vtable->current		= _hx_iter_vb_current;
@@ -483,6 +483,8 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	info->names						= (char**) calloc( 3, sizeof( char* ) );
 	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
 	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
+	info->free_names				= free_names;
+	
 	int j	= 0;
 	if (subj_name != NULL) {
 		int idx	= j++;
@@ -541,6 +543,11 @@ int _hx_iter_vb_free ( void* data ) {
 	free( info->names );
 	free( info->triple_pos_to_index );
 	free( info->index_to_triple_pos );
+	if (info->free_names) {
+		free( info->subject );
+		free( info->predicate );
+		free( info->object );
+	}
 	free( info );
 	return 0;
 }

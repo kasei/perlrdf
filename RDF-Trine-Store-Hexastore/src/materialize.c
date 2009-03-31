@@ -46,6 +46,9 @@ int _hx_materialize_iter_vb_free ( void* data ) {
 		hx_free_variablebindings( info->bindings[i], 0 );
 	}
 	free( info->bindings );
+	for (int i = 0; i < info->size; i++) {
+		free( info->names[i] );
+	}
 	free( info->names );
 	free( info );
 	return 0;
