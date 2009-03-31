@@ -97,13 +97,22 @@ int main ( int argc, char** argv ) {
 		hx_free_variablebindings( b, 0 );
 		hx_variablebindings_iter_next( iter );
 	}
-	hx_free_variablebindings_iter( iter, 0 );
+	
+	hx_free_variablebindings_iter( iter, 1 );
 	
 	hx_free_bgp( b );
 	hx_free_node( x );
 	hx_free_node( y );
 	hx_free_node( z );
 	hx_free_node( type );
+	hx_free_node( faculty );
+	hx_free_node( advisor );
+	hx_free_node( teacherOf );
+	hx_free_node( course );
+	hx_free_node( student );
+	hx_free_node( takesCourse );
+	hx_free_hexastore( hx );
+	hx_free_storage_manager( s );
 	
 	return 0;
 }
