@@ -28,7 +28,7 @@ enum {
 	RDF_ITER_FLAGS_BOUND_C	= 4,
 };
 
-#define THREADED_BATCH_SIZE	200
+#define THREADED_BATCH_SIZE	5000
 
 static const int RDF_ITER_TYPE_MASK	= 0x07;
 static const int RDF_ITER_TYPE_FFF	= 0;

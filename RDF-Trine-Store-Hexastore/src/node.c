@@ -121,7 +121,7 @@ int hx_free_node( hx_node* n ) {
 		hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
 		free( d->dt );
 	}
-	if (n->type != '?') {
+	if (n->value != NULL) {
 		free( n->value );
 	}
 	free( n );

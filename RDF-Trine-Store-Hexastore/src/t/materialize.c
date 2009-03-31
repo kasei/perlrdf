@@ -51,8 +51,8 @@ void test_small_iter ( void ) {
 	// get ?subj ?pred ?obj ordered by object
 	hx_variablebindings_iter* _iter	= _get_triples( hx, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_materialize_iter( _iter );
-	hx_variablebindings_iter_debug( iter, "#", 0 );
 	
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
 	ok1( !hx_variablebindings_iter_finished( iter ) );
 	hx_variablebindings_iter_current( iter, &b );
 	

@@ -19,6 +19,7 @@
 
 typedef struct {
 	int size;
+	int free_names;
 	char** names;
 	hx_node_id* nodes;
 } hx_variablebindings;
@@ -43,13 +44,14 @@ typedef struct {
 
 #include "materialize.h"
 
-hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes );
+hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names );
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b );
 int hx_free_variablebindings ( hx_variablebindings* b, int free_names );
 
 int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* m, char** string );
 void hx_variablebindings_debug ( hx_variablebindings* b, hx_nodemap* m );
 
+int hx_variablebindings_set_names ( hx_variablebindings* b, char** names );
 int hx_variablebindings_size ( hx_variablebindings* b );
 char* hx_variablebindings_name_for_binding ( hx_variablebindings* b, int column );
 hx_node_id hx_variablebindings_node_id_for_binding ( hx_variablebindings* b, int column );

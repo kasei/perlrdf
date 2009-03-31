@@ -23,19 +23,14 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 			hx_variablebindings* left	= info->lhs_batch[ info->lhs_batch_index ];
 			hx_variablebindings* right	= info->rhs_batch[ info->rhs_batch_index ];
 			info->current	= hx_variablebindings_natural_join( left, right );
-// 			hx_free_variablebindings( right, 0 );
 			if (info->current != NULL) {
 				break;
 			} else {
 				_hx_mergejoin_iter_vb_next( info );
 			}
 		} else if (info->lhs_key < info->rhs_key) {
-// 			hx_free_variablebindings( info->lhs_batch[ info->lhs_batch_index ], 0 );
 			_hx_mergejoin_get_lhs_batch( info );
 		} else { // left_key > right_key
-// 			for (int i = info->rhs_batch_index; i < info->rhs_batch_size; i++) {
-// 				hx_free_variablebindings( info->rhs_batch[ i ], 0 );
-// 			}
 			_hx_mergejoin_get_rhs_batch( info );
 		}
 	}
@@ -127,8 +122,20 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 
 int _hx_mergejoin_iter_vb_free ( void* data ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
+	
+	for (int i = 0; i < info->lhs_batch_size; i++) {
+		hx_free_variablebindings( info->lhs_batch[i], 0 );
+		info->lhs_batch[i]	= NULL;
+	}
+	for (int i = 0; i < info->rhs_batch_size; i++) {
+		hx_free_variablebindings( info->rhs_batch[i], 0 );
+		info->rhs_batch[i]	= NULL;
+	}
+	
 	hx_free_variablebindings_iter( info->lhs, 0 );
 	hx_free_variablebindings_iter( info->rhs, 0 );
+	free( info->rhs_batch );
+	free( info->lhs_batch );
 	free( info->names );
 	free( info );
 	return 0;
@@ -167,7 +174,8 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	char** anames	= hx_variablebindings_iter_names( _lhs );
 	int bsize		= hx_variablebindings_iter_size( _rhs );
 	char** bnames	= hx_variablebindings_iter_names( _rhs );
-	int lhs_index, rhs_index;
+	int lhs_index	= -1;
+	int rhs_index	= -1;
 	for (int i = 0; i < asize; i++) {
 		int set	= 0;
 		for (int j = 0; j < bsize; j++) {
@@ -309,7 +317,7 @@ int _hx_mergejoin_join_iter_names ( hx_variablebindings_iter* lhs, hx_variablebi
 }
 int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size ) {
 	int seen_names	= 0;
-	char* names[ lhs_size + rhs_size ];
+	char** names	= (char**) calloc( lhs_size + rhs_size, sizeof( char* ) );
 	for (int i = 0; i < lhs_size; i++) {
 		char* name	= lhs_names[ i ];
 		int seen	= 0;
@@ -340,6 +348,7 @@ int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names,
 		(*merged_names)[ i ]	= names[ i ];
 	}
 	*size	= seen_names;
+	free( names );
 	return 0;
 }
 
@@ -371,6 +380,6 @@ hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* le
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values );
+	b	= hx_new_variablebindings( size, names, values, 1 );
 	return b;
 }

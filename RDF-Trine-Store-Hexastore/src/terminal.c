@@ -9,16 +9,22 @@ hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 	return terminal;
 }
 
-int hx_free_terminal ( hx_terminal* list ) {
-//	fprintf( stderr, "freeing terminal %p\n", list );
-//	fprintf( stderr, "refcount is now %d\n", list->refcount );
-	if (list->refcount <= 0) {
-		hx_free_btree( list->storage, list->tree );
-		free( list );
-		return 0;
-	} else {
-		return 1;
+int hx_free_terminal ( hx_terminal* t ) {
+	hx_free_btree( t->storage, t->tree );
+	free( t );
+	return 0;
+}
+
+int hx_terminal_inc_refcount ( hx_terminal* t ) {
+	return ++(t->refcount);
+}
+
+int hx_terminal_dec_refcount ( hx_terminal* t ) {
+	--(t->refcount);
+	if (t->refcount <= 0) {
+		hx_free_terminal( t );
 	}
+	return 0;
 }
 
 int hx_terminal_debug ( const char* header, hx_terminal* t, int newline ) {

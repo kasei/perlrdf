@@ -11,6 +11,19 @@ hx_head* hx_new_head( hx_storage_manager* s ) {
 
 int hx_free_head ( hx_head* head ) {
 // 	fprintf( stderr, "<<< freeing tree %p\n", (void*) head->tree );
+	hx_node_id key;
+	uint64_t value;
+	hx_btree_iter* iter	= hx_btree_new_iter( head->storage, head->tree );
+	while (!hx_btree_iter_finished(iter)) {
+		hx_btree_iter_current( iter, &key, &value );
+		hx_vector* v	= hx_storage_block_from_id( head->storage, value );
+		if (v != NULL) {
+			hx_free_vector( v );
+		}
+		hx_btree_iter_next(iter);
+	}
+	
+	hx_free_btree_iter( iter );
 	hx_free_btree( head->storage, head->tree );
 	free( head );
 	return 0;
@@ -75,6 +88,7 @@ hx_head_iter* hx_head_new_iter ( hx_head* head ) {
 }
 
 int hx_free_head_iter ( hx_head_iter* iter ) {
+	hx_free_btree_iter( iter->t );
 	free( iter );
 	return 0;
 }

@@ -31,6 +31,9 @@ typedef struct {
 hx_terminal* hx_new_terminal ( hx_storage_manager* s );
 int hx_free_terminal ( hx_terminal* list );
 
+int hx_terminal_inc_refcount ( hx_terminal* t );
+int hx_terminal_dec_refcount ( hx_terminal* t );
+
 int hx_terminal_debug ( const char* header, hx_terminal* t, int newline );
 int hx_terminal_add_node ( hx_terminal* t, hx_node_id n );
 int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n );

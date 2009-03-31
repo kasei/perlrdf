@@ -480,9 +480,9 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	info->predicate					= pred_name;
 	info->object					= obj_name;
 	info->iter						= i;
-	info->names						= (char**) calloc( size, sizeof( char* ) );
-	info->triple_pos_to_index		= (int*) calloc( size, sizeof( int ) );
-	info->index_to_triple_pos		= (int*) calloc( size, sizeof( int ) );
+	info->names						= (char**) calloc( 3, sizeof( char* ) );
+	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
+	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
 	int j	= 0;
 	if (subj_name != NULL) {
 		int idx	= j++;
@@ -524,7 +524,7 @@ int _hx_iter_vb_current ( void* data, void* results ) {
 		values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
 	}
 	hx_variablebindings** bindings	= (hx_variablebindings**) results;
-	*bindings	= hx_new_variablebindings( info->size, info->names, values );
+	*bindings	= hx_new_variablebindings( info->size, info->names, values, 0 );
 	return 0;
 }
 
@@ -537,10 +537,12 @@ int _hx_iter_vb_next ( void* data ) {
 int _hx_iter_vb_free ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	hx_index_iter* iter		= (hx_index_iter*) info->iter;
-	return hx_free_index_iter( iter );
+	hx_free_index_iter( iter );
 	free( info->names );
 	free( info->triple_pos_to_index );
+	free( info->index_to_triple_pos );
 	free( info );
+	return 0;
 }
 
 int _hx_iter_vb_size ( void* data ) {

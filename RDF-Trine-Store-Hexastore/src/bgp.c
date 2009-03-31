@@ -26,33 +26,39 @@ hx_bgp* hx_new_bgp ( int size, hx_triple** triples ) {
 				vars	= vid;
 			}
 		}
-		if (hx_node_is_variable( triples[i]->object )) {
-			int vid	= abs(hx_node_iv( triples[i]->object ));
+		if (hx_node_is_variable( triples[i]->predicate )) {
+			int vid	= abs(hx_node_iv( triples[i]->predicate ));
 			if (vid > vars) {
 				vars	= vid;
 			}
 		}
-		if (hx_node_is_variable( triples[i]->predicate )) {
-			int vid	= abs(hx_node_iv( triples[i]->predicate ));
+		if (hx_node_is_variable( triples[i]->object )) {
+			int vid	= abs(hx_node_iv( triples[i]->object ));
 			if (vid > vars) {
 				vars	= vid;
 			}
 		}
 	}
 	b->variables		= vars;
-	b->variable_names	= (char**) calloc( vars, sizeof( char* ) );
+	b->variable_names	= (vars == 0) ? NULL : (char**) calloc( vars + 1, sizeof( char* ) );
 	for (int i = 0; i < size; i++) {
 		if (hx_node_is_variable( triples[i]->subject )) {
 			int vid	= abs(hx_node_iv( triples[i]->subject ));
-			hx_node_variable_name( triples[i]->subject, &( b->variable_names[ vid ] ) );
+			if (b->variable_names[ vid ] == NULL) {
+				hx_node_variable_name( triples[i]->subject, &( b->variable_names[ vid ] ) );
+			}
 		}
 		if (hx_node_is_variable( triples[i]->predicate )) {
 			int vid	= abs(hx_node_iv( triples[i]->predicate ));
-			hx_node_variable_name( triples[i]->predicate, &( b->variable_names[ vid ] ) );
+			if (b->variable_names[ vid ] == NULL) {
+				hx_node_variable_name( triples[i]->predicate, &( b->variable_names[ vid ] ) );
+			}
 		}
 		if (hx_node_is_variable( triples[i]->object )) {
 			int vid	= abs(hx_node_iv( triples[i]->object ));
-			hx_node_variable_name( triples[i]->object, &( b->variable_names[ vid ] ) );
+			if (b->variable_names[ vid ] == NULL) {
+				hx_node_variable_name( triples[i]->object, &( b->variable_names[ vid ] ) );
+			}
 		}
 	}
 	return b;
@@ -72,6 +78,12 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 }
 
 int hx_free_bgp ( hx_bgp* b ) {
+	for (int i = 1; i <= b->variables; i++) {
+		if (b->variable_names[i] != NULL) {
+			free( b->variable_names[i] );
+		}
+	}
+	free( b->variable_names );
 	free( b->triples );
 	free( b );
 	return 0;
@@ -332,8 +344,10 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 					char* lname;
 					hx_node_variable_name( lnodes[i], &lname );
 					if (strcmp(lname, rnames[j]) == 0) {
+						free( lname );
 						return pos[i];
 					}
+					free( lname );
 				}
 			}
 		}
@@ -346,10 +360,12 @@ int _hx_bgp_sort_for_vb_join ( hx_triple* l, hx_variablebindings_iter* iter ) {
 			hx_node_variable_name( lnodes[i], &lname );
 			for (int j = 0; j < rsize; j++) {
 				if (strcmp(lname, rnames[j]) == 0) {
+					free( lname );
 //					fprintf( stderr, "should sort on %d (%s)\n", pos[i], lname );
 					return pos[i];
 				}
 			}
+			free( lname );
 		}
 	}
 	return HX_SUBJECT;

@@ -1,18 +1,25 @@
 #include "variablebindings.h"
 
-hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes ) {
+hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_id* nodes, int free_names ) {
 	hx_variablebindings* b	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
-	b->size		= size;
-	b->names	= names;
-	b->nodes	= nodes;
+	b->size			= size;
+	b->names		= names;
+	b->nodes		= nodes;
+	b->free_names	= free_names;
 	return b;
 }
 
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	c->size		= b->size;
-	c->names	= b->names;
-	c->nodes	= b->nodes;
+	c->names	= calloc( c->size, sizeof( char* ) );
+	for (int i = 0; i < c->size; i++) {
+		char* new	= calloc( strlen(b->names[i]) + 1, sizeof( char ) );
+		strcpy( new, b->names[i] );
+		c->names[i]	= new;
+	}
+	c->free_names	= 1;
+	c->nodes		= b->nodes;
 	return c;
 }
 
@@ -200,6 +207,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 				hx_node_id rnode	= hx_variablebindings_node_id_for_binding( right, j );
 // 				fprintf( stderr, "\tcomparing nodes %d <=> %d\n", node, rnode );
 				if (node != rnode) {
+					free( shared_lhs_index );
 					return NULL;
 				}
 			}
@@ -229,7 +237,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values );
+	b	= hx_new_variablebindings( size, names, values, 1 );
 	return b;
 }
 
@@ -253,7 +261,9 @@ int hx_free_variablebindings_iter ( hx_variablebindings_iter* iter, int free_vta
 		iter->vtable->free( iter->ptr );
 		if (free_vtable) {
 			free( iter->vtable );
+			iter->vtable	= NULL;
 		}
+		iter->ptr	= NULL;
 	}
 	free( iter );
 	return 0;
@@ -281,6 +291,11 @@ int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter ) {
 	} else {
 		return 1;
 	}
+}
+
+int hx_variablebindings_set_names ( hx_variablebindings* b, char** names ) {
+	b->names	= names;
+	return 0;
 }
 
 int hx_variablebindings_iter_size ( hx_variablebindings_iter* iter ) {

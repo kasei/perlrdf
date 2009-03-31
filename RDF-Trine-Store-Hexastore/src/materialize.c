@@ -72,7 +72,9 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	char** names	= (char**) calloc( size, sizeof( char* ) );
 	int sorted_by	= -1;
 	for (int i = 0; i < size; i++) {
-		names[i]	= _names[i];
+		char* new	= (char*) calloc( strlen( _names[i] ) + 1, sizeof( char ) );
+		strcpy( new, _names[i] );
+		names[i]	= new;
 		if (hx_variablebindings_iter_is_sorted_by_index( iter, i )) {
 			sorted_by	= i;
 		}
@@ -103,11 +105,18 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	while (!hx_variablebindings_iter_finished( iter )) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
+		
+		// replace the names array for this variable binding with our new copy,
+		// because the one it's got is stored in the iterator we're materializing
+		// and will be deallocated at the end of this function
+		hx_variablebindings_set_names( b, names );
+		
 		bindings[ info->length++ ]	= b;
 		if (info->length >= alloc) {
 			alloc	= alloc * 2;
 			hx_variablebindings** newbindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
 			if (newbindings == NULL) {
+				hx_free_variablebindings_iter( iter, 0 );
 				fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
 				return NULL;
 			}
@@ -142,6 +151,7 @@ int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index ) {
 	for (int i = 0; i < info->length; i++) {
 		info->bindings[i]	= sorted[i].binding;
 	}
+	free( sorted );
 	info->sorted_by	= index;
 	return 0;
 }
@@ -184,6 +194,7 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 	fprintf( stderr, "%s%s  Info: %p\n", indent, header, (void*) info );
 	fprintf( stderr, "%s%s  Length: %d\n", indent, header, (int) info->length );
 	for (int i = 0; i < info->length; i++) {
+		fprintf( stderr, "[%d]\n", i );
 		char* string;
 		hx_variablebindings_string( info->bindings[i], NULL, &string );
 		fprintf( stderr, "%s%s  [%d] %s\n", indent, header, i, string );
