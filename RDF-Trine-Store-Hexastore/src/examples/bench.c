@@ -124,18 +124,20 @@ double bench ( hx_hexastore* hx, hx_bgp* b ) {
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
 		
-		hx_node* x		= hx_variablebindings_node_for_binding_name( b, map, "x" );
-		hx_node* y		= hx_variablebindings_node_for_binding_name( b, map, "y" );
-		hx_node* z		= hx_variablebindings_node_for_binding_name( b, map, "z" );
+		if (1) {
+			hx_node* x		= hx_variablebindings_node_for_binding_name( b, map, "x" );
+			hx_node* y		= hx_variablebindings_node_for_binding_name( b, map, "y" );
+			hx_node* z		= hx_variablebindings_node_for_binding_name( b, map, "z" );
 		
-		char *xs, *ys, *zs;
-		hx_node_string( x, &xs );
-		hx_node_string( y, &ys );
-		hx_node_string( z, &zs );
-		printf( "%s\t%s\t%s\n", xs, ys, zs );
-		free( xs );
-		free( ys );
-		free( zs );
+			char *xs, *ys, *zs;
+			hx_node_string( x, &xs );
+			hx_node_string( y, &ys );
+			hx_node_string( z, &zs );
+			printf( "%s\t%s\t%s\n", xs, ys, zs );
+			free( xs );
+			free( ys );
+			free( zs );
+		}
 		
 		hx_free_variablebindings( b, 0 );
 		hx_variablebindings_iter_next( iter );
