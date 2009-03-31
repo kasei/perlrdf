@@ -231,6 +231,7 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 		b->triples[i]	= s[i].triple;
 	}
 	
+	free( seen );
 	free( s );
 	return 0;
 }

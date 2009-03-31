@@ -54,11 +54,13 @@ double bench ( hx_hexastore* hx, hx_bgp* b ) {
 		}
 	}
 	
+	uint64_t count	= 0;
 	while (!hx_variablebindings_iter_finished( iter )) {
+		count++;
 		hx_variablebindings* b;
 		hx_variablebindings_iter_current( iter, &b );
 		
-		if (1) {
+		if (0) {
 			hx_node* x		= hx_variablebindings_node_for_binding_name( b, map, "x" );
 			hx_node* y		= hx_variablebindings_node_for_binding_name( b, map, "y" );
 			hx_node* z		= hx_variablebindings_node_for_binding_name( b, map, "z" );
@@ -76,6 +78,7 @@ double bench ( hx_hexastore* hx, hx_bgp* b ) {
 		hx_free_variablebindings( b, 0 );
 		hx_variablebindings_iter_next( iter );
 	}
+	printf( "%llu results\n", (unsigned long long) count );
 	clock_t end_time	= clock();
 	
 	hx_free_variablebindings_iter( iter, 0 );
@@ -131,14 +134,14 @@ int main ( int argc, char** argv ) {
 	
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
-//		hx_bgp_debug( b );
+		hx_bgp_debug( b );
 		fprintf( stderr, "running time: %lf\n", bench( hx, b ) );
 		hx_free_bgp( b );
 	}
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
 		hx_bgp_reorder( b, hx );
-//		hx_bgp_debug( b );
+		hx_bgp_debug( b );
 		fprintf( stderr, "BGP-optimized running time: %lf\n", bench( hx, b ) );
 		hx_free_bgp( b );
 	}
