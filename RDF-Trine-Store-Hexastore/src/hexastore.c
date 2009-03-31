@@ -526,7 +526,7 @@ int _hx_iter_vb_current ( void* data, void* results ) {
 		values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
 	}
 	hx_variablebindings** bindings	= (hx_variablebindings**) results;
-	*bindings	= hx_new_variablebindings( info->size, info->names, values, 0 );
+	*bindings	= hx_new_variablebindings( info->size, info->names, values, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
 	return 0;
 }
 

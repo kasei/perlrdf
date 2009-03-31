@@ -237,7 +237,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 		}
 	}
 	
-	b	= hx_new_variablebindings( size, names, values, 1 );
+	b	= hx_new_variablebindings( size, names, values, HX_VARIABLEBINDINGS_FREE_NAMES );
 	return b;
 }
 
