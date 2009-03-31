@@ -78,12 +78,9 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 }
 
 int hx_free_bgp ( hx_bgp* b ) {
-	for (int i = 1; i <= b->variables; i++) {
-		if (b->variable_names[i] != NULL) {
-			free( b->variable_names[i] );
-		}
+	if (b->variable_names != NULL) {
+		free( b->variable_names );
 	}
-	free( b->variable_names );
 	free( b->triples );
 	free( b );
 	return 0;

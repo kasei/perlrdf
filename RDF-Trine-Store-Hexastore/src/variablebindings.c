@@ -13,13 +13,14 @@ hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	c->size		= b->size;
 	c->names	= calloc( c->size, sizeof( char* ) );
+	c->nodes	= (hx_node_id*) calloc( c->size, sizeof( hx_node_id ) );
 	for (int i = 0; i < c->size; i++) {
 		char* new	= calloc( strlen(b->names[i]) + 1, sizeof( char ) );
 		strcpy( new, b->names[i] );
 		c->names[i]	= new;
+		c->nodes[i]	= b->nodes[i];
 	}
 	c->free_names	= 1;
-	c->nodes		= b->nodes;
 	return c;
 }
 

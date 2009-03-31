@@ -8,6 +8,7 @@
 // 	?x :takesCourse ?z .
 // }
 
+#include <time.h>
 #include <stdio.h>
 #include <pthread.h>
 #include "hexastore.h"
@@ -16,7 +17,28 @@
 #include "node.h"
 #include "bgp.h"
 
+#define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
+double bench ( hx_hexastore* hx, hx_bgp* b );
+
+static hx_node* x;
+static hx_node* y;
+static hx_node* z;
+static hx_node* type;
+static hx_node* faculty;
+static hx_node* advisor;
+static hx_node* teacherOf;
+static hx_node* course;
+static hx_node* student;
+static hx_node* takesCourse;
+
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
+
+void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
+	t->subject		= s;
+	t->predicate	= p;
+	t->object		= o;
+}
+
 int main ( int argc, char** argv ) {
 	const char* filename	= argv[1];
 	FILE* f	= fopen( filename, "r" );
@@ -24,25 +46,26 @@ int main ( int argc, char** argv ) {
 		perror( "Failed to open hexastore file for reading: " );
 		return 1;
 	}
+	
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
-	hx_hexastore* hx	= hx_read( s, f, 0 );
-	hx_nodemap* map		= hx_get_nodemap( hx );
+	hx_hexastore* hx		= hx_read( s, f, 0 );
+	hx_nodemap* map			= hx_get_nodemap( hx );
 	fprintf( stderr, "Finished loading hexastore...\n" );
 	
-	hx_node* x				= hx_new_named_variable( hx, "x" );
-	hx_node* y				= hx_new_named_variable( hx, "y" );
-	hx_node* z				= hx_new_named_variable( hx, "z" );
-	hx_node* type			= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-	hx_node* faculty		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Faculty");
-	hx_node* advisor		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#advisor");
-	hx_node* teacherOf		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#teacherOf");
-	hx_node* course			= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Course");
-	hx_node* student		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Student");
-	hx_node* takesCourse	= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#takesCourse");
+	x			= hx_new_named_variable( hx, "x" );
+	y			= hx_new_named_variable( hx, "y" );
+	z			= hx_new_named_variable( hx, "z" );
+	type		= hx_new_node_resource("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+	faculty		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Faculty");
+	advisor		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#advisor");
+	teacherOf	= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#teacherOf");
+	course		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Course");
+	student		= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#Student");
+	takesCourse	= hx_new_node_resource("http://www.lehigh.edu/~zhp2/2004/0401/univ-bench.owl#takesCourse");
 	
+	hx_triple t0, t1, t2, t3, t4, t5;
 	hx_triple* triples[6];
 	{
-		hx_triple t0, t1, t2, t3, t4, t5;
 		_fill_triple( &t0, x, advisor, y );
 		_fill_triple( &t1, x, type, student );
 		_fill_triple( &t2, x, takesCourse, z );
@@ -111,14 +134,9 @@ int main ( int argc, char** argv ) {
 	hx_free_node( course );
 	hx_free_node( student );
 	hx_free_node( takesCourse );
+	
 	hx_free_hexastore( hx );
 	hx_free_storage_manager( s );
 	
 	return 0;
-}
-
-void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o ) {
-	t->subject		= s;
-	t->predicate	= p;
-	t->object		= o;
 }

@@ -22,6 +22,9 @@ int _hx_materialize_iter_vb_current ( void* data, void* results ) {
 //	fprintf( stderr, "*** _hx_materialize_iter_vb_current\n" );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
 	
+	if (info->index >= info->length) {
+		fprintf( stderr, "*** trying to get the materialized iterator's current variable binding, but it's passed the end of results.\n" );
+	}
 	hx_variablebindings** b	= (hx_variablebindings**) results;
 	*b	= hx_copy_variablebindings( info->bindings[ info->index ] );
 	return 0;
@@ -131,6 +134,11 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 		}
 		hx_variablebindings_iter_next( iter );
 	}
+	
+	if (info->length == 0) {
+		info->finished	= 1;
+	}
+	
 	info->bindings	= bindings;
 	hx_free_variablebindings_iter( iter, 0 );
 	hx_variablebindings_iter* miter	= hx_variablebindings_new_iter( vtable, (void*) info );
