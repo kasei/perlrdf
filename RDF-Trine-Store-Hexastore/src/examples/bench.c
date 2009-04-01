@@ -33,6 +33,14 @@ static hx_node* member;
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 
+double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
+	double total	= 0.0;
+	for (int i = 0; i < count; i++) {
+		total	+= bench( hx, b );
+	}
+	return (total / (double) count);
+}
+
 double bench ( hx_hexastore* hx, hx_bgp* b ) {
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	clock_t st_time	= clock();
@@ -135,14 +143,14 @@ int main ( int argc, char** argv ) {
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
 		hx_bgp_debug( b );
-		fprintf( stderr, "running time: %lf\n", bench( hx, b ) );
+		fprintf( stderr, "running time: %lf\n", average( hx, b, 4 ) );
 		hx_free_bgp( b );
 	}
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
 		hx_bgp_reorder( b, hx );
 		hx_bgp_debug( b );
-		fprintf( stderr, "BGP-optimized running time: %lf\n", bench( hx, b ) );
+		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, 4 ) );
 		hx_free_bgp( b );
 	}
 	
