@@ -40,10 +40,12 @@ int _hx_materialize_iter_vb_free ( void* iter );
 int _hx_materialize_iter_vb_size ( void* iter );
 char** _hx_materialize_iter_vb_names ( void* iter );
 
-int _hx_materialize_cmp_bindings ( const void* a, const void* b );
+int _hx_materialize_cmp_bindings ( const void* _a, const void* _b );
+int _hx_materialize_cmp_bindings_column ( const void* _a, const void* _b );
 
 hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* iter );
-int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index );
+int hx_materialize_sort_iter_by_column ( hx_variablebindings_iter* iter, int index );
+int hx_materialize_sort_iter ( hx_variablebindings_iter* iter );
 
 void hx_materialize_iter_debug ( hx_variablebindings_iter* iter );
 

@@ -131,6 +131,29 @@ hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_
 	}
 }
 
+int hx_variablebindings_cmp ( void* _a, void* _b ) {
+	hx_variablebindings* a	= (hx_variablebindings*) _a;
+	hx_variablebindings* b	= (hx_variablebindings*) _b;
+	int asize	= a->size;
+	int bsize	= b->size;
+	if (asize < bsize) {
+		return -1;
+	} else if (bsize < asize) {
+		return 1;
+	}
+	
+	for (int i = 0; i < asize; i++) {
+		hx_node_id av	= a->nodes[i];
+		hx_node_id bv	= b->nodes[i];
+		if (av < bv) {
+			return -1;
+		} else if (bv < av) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindings* rhs, char*** merged_names, int* size ) {
 	int lhs_size		= hx_variablebindings_size( lhs );
 	char** lhs_names	= hx_variablebindings_names( lhs );
@@ -362,7 +385,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 // 		hx_materialize_iter_debug( iter );
 		
 		// and sort the materialized bindings by the requested column...
-		int r	= hx_materialize_sort_iter( sorted, index );
+		int r	= hx_materialize_sort_iter_by_column( sorted, index );
 		if (r == 0) {
 			return sorted;
 		} else {

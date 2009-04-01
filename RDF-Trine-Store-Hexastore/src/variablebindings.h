@@ -61,6 +61,7 @@ hx_node_id hx_variablebindings_node_id_for_binding ( hx_variablebindings* b, int
 hx_node* hx_variablebindings_node_for_binding ( hx_variablebindings* b, hx_nodemap* map, int column );
 hx_node* hx_variablebindings_node_for_binding_name ( hx_variablebindings* b, hx_nodemap* map, char* name );
 char** hx_variablebindings_names ( hx_variablebindings* b );
+int hx_variablebindings_cmp ( void* a, void* b );
 
 hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right );
 

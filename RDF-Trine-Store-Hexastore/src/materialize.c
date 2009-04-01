@@ -145,7 +145,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	return miter;
 }
 
-int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index ) {
+int hx_materialize_sort_iter_by_column ( hx_variablebindings_iter* iter, int index ) {
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
 	_hx_materialize_bindings_sort_info* sorted	= calloc( info->length, sizeof( _hx_materialize_bindings_sort_info ) );
 	if (sorted == NULL) {
@@ -158,7 +158,7 @@ int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index ) {
 		sorted[i].binding	= info->bindings[i];
 	}
 	
-	qsort( sorted, info->length, sizeof( _hx_materialize_bindings_sort_info ), _hx_materialize_cmp_bindings );
+	qsort( sorted, info->length, sizeof( _hx_materialize_bindings_sort_info ), _hx_materialize_cmp_bindings_column );
 	for (int i = 0; i < info->length; i++) {
 		info->bindings[i]	= sorted[i].binding;
 	}
@@ -167,7 +167,14 @@ int hx_materialize_sort_iter ( hx_variablebindings_iter* iter, int index ) {
 	return 0;
 }
 
-int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
+int hx_materialize_sort_iter ( hx_variablebindings_iter* iter ) {
+	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) iter->ptr;
+	qsort( info->bindings, info->length, sizeof(hx_variablebindings*), _hx_materialize_cmp_bindings );
+	info->sorted_by	= 0;
+	return 0;
+}
+
+int _hx_materialize_cmp_bindings_column ( const void* _a, const void* _b ) {
 	_hx_materialize_bindings_sort_info* a	= (_hx_materialize_bindings_sort_info*) _a;
 	_hx_materialize_bindings_sort_info* b	= (_hx_materialize_bindings_sort_info*) _b;
 	hx_node_id na	= hx_variablebindings_node_id_for_binding( a->binding, a->index );
@@ -179,6 +186,12 @@ int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
 	} else {
 		return 0;
 	}
+}
+
+int _hx_materialize_cmp_bindings ( const void* _a, const void* _b ) {
+	hx_variablebindings** a	= (hx_variablebindings**) _a;
+	hx_variablebindings** b	= (hx_variablebindings**) _b;
+	return hx_variablebindings_cmp( *a, *b );
 }
 
 void hx_materialize_iter_debug ( hx_variablebindings_iter* iter ) {
