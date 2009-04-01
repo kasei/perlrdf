@@ -35,6 +35,20 @@ int _hx_mergejoin_prime_first_result ( _hx_mergejoin_iter_vb_info* info ) {
 		}
 	}
 	if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
+		if (info->lhs_batch_size > 0) {
+			for (int i = 0; i < info->lhs_batch_size; i++) {
+				hx_free_variablebindings( info->lhs_batch[i], 0 );
+				info->lhs_batch[i]	= NULL;
+			}
+			info->lhs_batch_size	= 0;
+		}
+		if (info->rhs_batch_size > 0) {
+			for (int i = 0; i < info->rhs_batch_size; i++) {
+				hx_free_variablebindings( info->rhs_batch[i], 0 );
+				info->rhs_batch[i]	= NULL;
+			}
+			info->rhs_batch_size	= 0;
+		}
 		info->finished	= 1;
 		return 1;
 	} else {
@@ -132,8 +146,8 @@ int _hx_mergejoin_iter_vb_free ( void* data ) {
 		info->rhs_batch[i]	= NULL;
 	}
 	
-	hx_free_variablebindings_iter( info->lhs, 0 );
-	hx_free_variablebindings_iter( info->rhs, 0 );
+	hx_free_variablebindings_iter( info->lhs, 1 );
+	hx_free_variablebindings_iter( info->rhs, 1 );
 	free( info->rhs_batch );
 	free( info->lhs_batch );
 	free( info->names );

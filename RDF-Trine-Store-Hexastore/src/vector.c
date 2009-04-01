@@ -122,7 +122,7 @@ int hx_vector_write( hx_vector* v, FILE* f ) {
 	fputc( 'V', f );
 	list_size_t used	= hx_vector_size( v );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
-	fwrite( &( used ), sizeof( uint64_t ), 1, f );
+	fwrite( &( v->triples_count ), sizeof( uint64_t ), 1, f );
 	hx_vector_iter* iter	= hx_vector_new_iter( v );
 	while (!hx_vector_iter_finished( iter )) {
 		hx_node_id n;

@@ -117,7 +117,7 @@ int hx_head_write( hx_head* h, FILE* f ) {
 	fputc( 'H', f );
 	list_size_t used	= hx_head_size( h );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
-	fwrite( &( used ), sizeof( uint64_t ), 1, f );
+	fwrite( &(h->triples_count), sizeof( uint64_t ), 1, f );
 	hx_head_iter* iter	= hx_head_new_iter( h );
 	while (!hx_head_iter_finished( iter )) {
 		hx_node_id n;
