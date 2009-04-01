@@ -355,7 +355,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		// so, materialize the iterator
 		hx_variablebindings_iter* sorted	= hx_new_materialize_iter( iter );
 		if (sorted == NULL) {
-			hx_free_variablebindings_iter( iter, 0 );
+			hx_free_variablebindings_iter( iter, 1 );
 			return NULL;
 		}
 		
@@ -366,7 +366,7 @@ hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_ite
 		if (r == 0) {
 			return sorted;
 		} else {
-			hx_free_variablebindings_iter( sorted, 0 );
+			hx_free_variablebindings_iter( sorted, 1 );
 			return NULL;
 		}
 	}

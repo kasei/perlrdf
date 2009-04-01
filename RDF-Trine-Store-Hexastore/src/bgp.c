@@ -294,11 +294,14 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
 			hx_index_iter* titer	= hx_get_statements( hx, t->subject, t->predicate, t->object, jsort );
+			if (titer == NULL) {
+				return NULL;
+			}
 			hx_node_variable_name( t->subject, &sname );
 			hx_node_variable_name( t->predicate, &pname );
 			hx_node_variable_name( t->object, &oname );
 			hx_variablebindings_iter* interm	= hx_new_iter_variablebindings( titer, sname, pname, oname, 1 );
-			iter		= hx_new_mergejoin_iter( interm, iter );
+			iter					= hx_new_mergejoin_iter( interm, iter );
 		}
 	}
 	return iter;

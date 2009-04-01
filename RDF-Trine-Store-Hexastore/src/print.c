@@ -159,7 +159,7 @@ int main (int argc, char** argv) {
 			hx_free_variablebindings( b, 0 );
 			hx_variablebindings_iter_next( iter );
 		}
-		hx_free_variablebindings_iter( iter, 0 );
+		hx_free_variablebindings_iter( iter, 1 );
 	} else if (strcmp( arg, "-path" ) == 0) {
 		char* from	= argv[3];
 		char* to	= argv[4];
@@ -281,7 +281,7 @@ int main (int argc, char** argv) {
 			hx_free_variablebindings( b, 0 );
 			hx_variablebindings_iter_next( iter );
 		}
-		hx_free_variablebindings_iter( iter, 0 );
+		hx_free_variablebindings_iter( iter, 1 );
 	} else {
 		if (argc != 5) {
 			help(argc, argv);

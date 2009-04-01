@@ -122,7 +122,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 			alloc	= alloc * 2;
 			hx_variablebindings** newbindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
 			if (newbindings == NULL) {
-				hx_free_variablebindings_iter( iter, 0 );
+				hx_free_variablebindings_iter( iter, 1 );
 				fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
 				return NULL;
 			}
@@ -140,7 +140,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	}
 	
 	info->bindings	= bindings;
-	hx_free_variablebindings_iter( iter, 0 );
+	hx_free_variablebindings_iter( iter, 1 );
 	hx_variablebindings_iter* miter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return miter;
 }

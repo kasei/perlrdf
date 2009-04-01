@@ -111,7 +111,7 @@ void test_path_join ( void ) {
 	hx_variablebindings_iter_next( iter );
 	ok1( hx_variablebindings_iter_finished( iter ) );
 	
-	hx_free_variablebindings_iter( iter, 0 );
+	hx_free_variablebindings_iter( iter, 1 );
 	hx_free_hexastore( hx );
 	hx_free_storage_manager( s );
 }

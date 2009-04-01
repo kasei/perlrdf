@@ -324,6 +324,17 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
+
+	if (!hx_node_is_variable( sn ) && s == 0) {
+		return NULL;
+	}
+	if (!hx_node_is_variable( pn ) && p == 0) {
+		return NULL;
+	}
+	if (!hx_node_is_variable( on ) && o == 0) {
+		return NULL;
+	}
+	
 	hx_node_id index_ordered_id[3]	= { s, p, o };
 	hx_index_iter* iter	= hx_index_new_iter1( index, index_ordered_id[0], index_ordered_id[1], index_ordered_id[2] );
 	return iter;
