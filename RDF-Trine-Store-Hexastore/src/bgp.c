@@ -79,6 +79,11 @@ hx_bgp* hx_new_bgp2 ( hx_triple* t1, hx_triple* t2 ) {
 
 int hx_free_bgp ( hx_bgp* b ) {
 	if (b->variable_names != NULL) {
+		for (int i = 1; i <= b->variables; i++) {
+			if (b->variable_names[i] != NULL) {
+				free( b->variable_names[i] );
+			}
+		}
 		free( b->variable_names );
 	}
 	free( b->triples );
@@ -115,12 +120,12 @@ int _hx_bgp_string_concat ( char** string, char* new, int* alloc ) {
 }
 
 int hx_bgp_string ( hx_bgp* b, char** string ) {
-	// XXX refactor hx_bgp_debug code into here, with dynamic memory allocation
+	*string	= NULL;
 	int alloc	= 256;
 	char* str	= (char*) calloc( 1, alloc );
 	
 	int size	= hx_bgp_size( b );
-	_hx_bgp_string_concat( &str, "{\n", &alloc );
+	if (_hx_bgp_string_concat( &str, "{\n", &alloc )) return 1;
 	
 	hx_node *last_s	= NULL;
 	hx_node *last_p	= NULL;
@@ -134,29 +139,29 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 		if (last_s != NULL) {
 			if (hx_node_cmp(t->subject, last_s) == 0) {
 				if (hx_node_cmp(t->predicate, last_p) == 0) {
-					_hx_bgp_string_concat( &str, ", ", &alloc );
-					_hx_bgp_string_concat( &str, o, &alloc );
+					if (_hx_bgp_string_concat( &str, ", ", &alloc )) return 1;
+					if (_hx_bgp_string_concat( &str, o, &alloc )) return 1;
 				} else {
-					_hx_bgp_string_concat( &str, " ;\n\t\t", &alloc );
-					_hx_bgp_string_concat( &str, p, &alloc );
-					_hx_bgp_string_concat( &str, " ", &alloc );
-					_hx_bgp_string_concat( &str, o, &alloc );
+					if (_hx_bgp_string_concat( &str, " ;\n\t\t", &alloc )) return 1;
+					if (_hx_bgp_string_concat( &str, p, &alloc )) return 1;
+					if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
+					if (_hx_bgp_string_concat( &str, o, &alloc )) return 1;
 				}
 			} else {
-				_hx_bgp_string_concat( &str, " .\n\t", &alloc );
-				_hx_bgp_string_concat( &str, s, &alloc );
-				_hx_bgp_string_concat( &str, " ", &alloc );
-				_hx_bgp_string_concat( &str, p, &alloc );
-				_hx_bgp_string_concat( &str, " ", &alloc );
-				_hx_bgp_string_concat( &str, o, &alloc );
+				if (_hx_bgp_string_concat( &str, " .\n\t", &alloc )) return 1;
+				if (_hx_bgp_string_concat( &str, s, &alloc )) return 1;
+				if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
+				if (_hx_bgp_string_concat( &str, p, &alloc )) return 1;
+				if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
+				if (_hx_bgp_string_concat( &str, o, &alloc )) return 1;
 			}
 		} else {
-			_hx_bgp_string_concat( &str, "\t", &alloc );
-			_hx_bgp_string_concat( &str, s, &alloc );
-			_hx_bgp_string_concat( &str, " ", &alloc );
-			_hx_bgp_string_concat( &str, p, &alloc );
-			_hx_bgp_string_concat( &str, " ", &alloc );
-			_hx_bgp_string_concat( &str, o, &alloc );
+			if (_hx_bgp_string_concat( &str, "\t", &alloc )) return 1;
+			if (_hx_bgp_string_concat( &str, s, &alloc )) return 1;
+			if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
+			if (_hx_bgp_string_concat( &str, p, &alloc )) return 1;
+			if (_hx_bgp_string_concat( &str, " ", &alloc )) return 1;
+			if (_hx_bgp_string_concat( &str, o, &alloc )) return 1;
 		}
 		last_s	= t->subject;
 		last_p	= t->predicate;
@@ -164,7 +169,7 @@ int hx_bgp_string ( hx_bgp* b, char** string ) {
 		free( p );
 		free( o );
 	}
-	_hx_bgp_string_concat( &str, " .\n}\n", &alloc );
+	if (_hx_bgp_string_concat( &str, " .\n}\n", &alloc )) return 1;
 	*string	= str;
 	return 0;
 }
@@ -174,6 +179,7 @@ int hx_bgp_debug ( hx_bgp* b ) {
 	int r	= hx_bgp_string( b, &string );
 	if (r == 0) {
 		fprintf( stderr, string );
+		free( string );
 		return 0;
 	} else {
 		fprintf( stderr, "hx_bgp_string didn't return success\n" );
@@ -199,7 +205,7 @@ int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
 	qsort( s, size, sizeof( _hx_bgp_selectivity_t ), _hx_bgp_selectivity_cmp );
 	
 	
-	int* seen	= (int*) calloc( b->variables, sizeof( int ) );
+	int* seen	= (int*) calloc( b->variables + 1, sizeof( int ) );
 	for (int i = 0; i < size; i++) {
 		hx_triple* t	= s[i].triple;
 		if (i > 0) {
