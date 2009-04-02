@@ -6,6 +6,9 @@ OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o 
 
 all: parse print optimize tests examples
 
+server: server.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
+
 parse: parse.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o parse parse.c $(OBJECTS)
 
@@ -123,7 +126,7 @@ tap.o: tap.c tap.h
 clean:
 	rm -f examples/lubm_q[489] examples/bench
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM
-	rm -f test parse print optimize a.out
+	rm -f test parse print optimize a.out server
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
