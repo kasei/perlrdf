@@ -18,12 +18,13 @@ hx_btree* hx_new_btree ( hx_storage_manager* s, uint32_t branching_size ) {
 	hx_btree* tree			= (hx_btree*) hx_storage_new_block( s, sizeof( hx_btree ) );
 	tree->root				= hx_new_btree_root( s, branching_size );
 	tree->branching_size	= branching_size;
+	hx_storage_sync_block( s, tree );
 	return tree;
 }
 
 int hx_free_btree ( hx_storage_manager* s, hx_btree* tree ) {
 	hx_free_btree_node( s, tree->root );
-	free( tree );
+	hx_storage_release_block( s, tree );
 	return 0;
 }
 
@@ -49,6 +50,7 @@ hx_btree_node* hx_new_btree_root ( hx_storage_manager* s, uint32_t branching_siz
 	hx_btree_node* root	= hx_new_btree_node( s, branching_size );
 	hx_btree_node_set_flag( s, root, HX_BTREE_NODE_ROOT );
 	hx_btree_node_set_flag( s, root, HX_BTREE_NODE_LEAF );
+	hx_storage_sync_block( s, root );
 	return root;
 }
 
@@ -56,6 +58,7 @@ hx_btree_node* hx_new_btree_node ( hx_storage_manager* w, uint32_t branching_siz
 	hx_btree_node* node	= (hx_btree_node*) hx_storage_new_block( w, sizeof( hx_btree_node ) + (branching_size * sizeof( hx_btree_child )) );
 	memcpy( &( node->type ), "HXBN", 4 );
 	node->used	= (uint32_t) 0;
+	hx_storage_sync_block( w, node );
 	return node;
 }
 
@@ -173,6 +176,7 @@ int hx_btree_node_add_child ( hx_storage_manager* w, hx_btree_node* node, hx_nod
 // 		node->children[i]	= child;
 		node->used++;
 	}
+	hx_storage_sync_block( w, node );
 	return 0;
 }
 
@@ -199,6 +203,7 @@ int hx_btree_node_remove_child ( hx_storage_manager* w, hx_btree_node* node, hx_
 // 			node->children[ k ]	= node->children[ k + 1 ];
 		}
 		node->used--;
+		hx_storage_sync_block( w, node );
 		return 0;
 	} else {
 		// not found. need to add at index i
@@ -254,6 +259,7 @@ int hx_btree_node_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node
 			hx_btree_node_add_child( w, s, key, rid, branching_size );
 			_hx_btree_node_split_child( w, s, 0, root, branching_size );
 			*_root	= s;
+			hx_storage_sync_block( w, s );
 		}
 		return _hx_btree_node_insert_nonfull( w, s, key, value, branching_size );
 	} else {
@@ -290,6 +296,7 @@ int _hx_btree_node_insert_nonfull( hx_storage_manager* w, hx_btree_node* node, h
 		if (key > node->ptr[i].key) {
 			node->ptr[i].key	= key;
 		}
+		hx_storage_sync_block( w, node );
 		
 		return _hx_btree_node_insert_nonfull( w, u, key, value, branching_size );
 	}
@@ -324,6 +331,7 @@ REMOVE_NODE:
 // 		node->children[ k ]	= node->children[ k + 1 ];
 	}
 	node->used--;
+	hx_storage_sync_block( s, node );
 	
 	// if node doesn't underflow return 0
 //	fprintf( stderr, "remove> if node doesn't underflow return 0\n" );
@@ -355,6 +363,7 @@ REMOVE_NODE:
 			hx_free_btree_node( s, root );
 			root	= newroot;
 			hx_btree_node_set_flag( s, root, HX_BTREE_NODE_ROOT );
+			hx_storage_sync_block( s, root );
 		}
 		return 0;
 	} else {
@@ -481,6 +490,7 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 			if (!hx_btree_node_has_flag( s, from, HX_BTREE_NODE_LEAF )) {
 				hx_btree_node* child	= hx_storage_block_from_id( s, from->ptr[i].child );
 				hx_btree_node_set_parent( s, child, node );
+				hx_storage_sync_block( s, child );
 			}
 		}
 	} else {
@@ -490,6 +500,7 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 			if (!hx_btree_node_has_flag( s, from, HX_BTREE_NODE_LEAF )) {
 				hx_btree_node* child	= hx_storage_block_from_id( s, from->ptr[i].child );
 				hx_btree_node_set_parent( s, child, node );
+				hx_storage_sync_block( s, child );
 			}
 		}
 		// now shift the remaining nodes in `from' over
@@ -506,6 +517,10 @@ int _hx_btree_rebalance( hx_storage_manager* s, hx_btree_node* node, hx_btree_no
 	_hx_btree_node_reset_keys( s, parent );
 	
 	from->used	-= take;
+	
+	hx_storage_sync_block( s, from );
+	hx_storage_sync_block( s, parent );
+	
 // 	fprintf( stderr, "rebalanced key count: %d, %d\n", node->used, from->used );
 	return 0;
 }
@@ -534,18 +549,23 @@ int _hx_btree_merge_nodes( hx_storage_manager* s, hx_btree_node* a, hx_btree_nod
 		if (!hx_btree_node_has_flag( s, a, HX_BTREE_NODE_LEAF )) {
 			hx_btree_node* child	= hx_storage_block_from_id( s, b->ptr[i].child );
 			hx_btree_node_set_parent( s, child, a );
+			hx_storage_sync_block( s, child );
 		}
 	}
 	
 	a->next	= b->next;
+	hx_storage_sync_block( s, a );
+	
 	hx_btree_node* c	= hx_storage_block_from_id( s, a->next );
 	if (c != NULL) {
 		c->prev	= hx_storage_id_from_block( s, a );
+		hx_storage_sync_block( s, c );
 	}
 	
 	// refresh the key list (this could be more efficient by only updating the two keys that were possibly affected)
 	hx_btree_node* parent	= hx_storage_block_from_id( s, a->parent );
 	_hx_btree_node_reset_keys( s, parent );
+	hx_storage_sync_block( s, parent );
 	
 	return 0;
 }
@@ -558,6 +578,7 @@ int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, ui
 	hx_btree_node_set_next_neighbor( w, child, z );
 	if (next != NULL) {
 		hx_btree_node_set_prev_neighbor( w, next, z );
+		hx_storage_sync_block( w, next );
 	}
 	
 	hx_btree_node_set_parent( w, z, parent );
@@ -585,6 +606,11 @@ int _hx_btree_node_split_child( hx_storage_manager* w, hx_btree_node* parent, ui
 	
 	parent->ptr[index].key	= ckey;
 	hx_btree_node_add_child( w, parent, zkey, zid, branching_size );
+	
+	hx_storage_sync_block( w, parent );
+	hx_storage_sync_block( w, z );
+	hx_storage_sync_block( w, child );
+	
 	return 0;
 }
 
