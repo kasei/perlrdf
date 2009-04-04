@@ -10,8 +10,8 @@
 #define VECTOR_TREE_BRANCHING_SIZE				28
 #define TERMINAL_TREE_BRANCHING_SIZE			4
 
-typedef int64_t list_size_t;
 typedef int64_t hx_node_id;
+typedef hx_node_id list_size_t;
 
 #define HX_SUBJECT		0
 #define HX_PREDICATE	1
