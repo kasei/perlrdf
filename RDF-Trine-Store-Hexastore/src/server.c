@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
 
     if (server.verbose > 0)
       printf("Connect: %s:%u\n", inet_ntoa(sa.sin_addr), ntohs(sa.sin_port));
-
+	
     server_run(&server);
 
     printf("Disconnect\n");
@@ -317,6 +317,7 @@ static void server_run(hx_server *server)
       DRIZZLE_RETURN_CHECK(ret, "drizzle_result_write", &(server->drizzle))
     }
   }
+  return;
 }
 
 //static int row_cb(hx_server* server, int field_count, char **fields, char **columns)
@@ -337,10 +338,10 @@ static int row_cb(hx_server *server, int field_count, char **fields, char **colu
     if (drizzle_column_create(&(server->result), &(server->column)) == NULL)
       DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_column_create", &(server->drizzle))
 
-    drizzle_column_set_catalog(&(server->column), "sqlite");
-    drizzle_column_set_db(&(server->column), "sqlite_db");
-    drizzle_column_set_table(&(server->column), "sqlite_table");
-    drizzle_column_set_orig_table(&(server->column), "sqlite_table");
+    drizzle_column_set_catalog(&(server->column), "hexastore");
+    drizzle_column_set_db(&(server->column), "hexastore_db");
+    drizzle_column_set_table(&(server->column), "hexastore_table");
+    drizzle_column_set_orig_table(&(server->column), "hexastore_table");
     drizzle_column_set_charset(&(server->column), 8);
     drizzle_column_set_type(&(server->column), DRIZZLE_COLUMN_TYPE_VARCHAR);
 
@@ -407,10 +408,10 @@ static drizzle_return_t send_version(hx_server *server)
   if (drizzle_column_create(&(server->result), &(server->column)) == NULL)
     DRIZZLE_RETURN_CHECK_VAL(ret, "drizzle_column_create", &(server->drizzle))
 
-  drizzle_column_set_catalog(&(server->column), "sqlite");
-  drizzle_column_set_db(&(server->column), "sqlite_db");
-  drizzle_column_set_table(&(server->column), "sqlite_table");
-  drizzle_column_set_orig_table(&(server->column), "sqlite_table");
+  drizzle_column_set_catalog(&(server->column), "hexastore");
+  drizzle_column_set_db(&(server->column), "hexastore_db");
+  drizzle_column_set_table(&(server->column), "hexastore_table");
+  drizzle_column_set_orig_table(&(server->column), "hexastore_table");
   drizzle_column_set_charset(&(server->column), 8);
   drizzle_column_set_type(&(server->column), DRIZZLE_COLUMN_TYPE_VARCHAR);
   drizzle_column_set_size(&(server->column), sizes[0]);
