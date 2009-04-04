@@ -23,7 +23,6 @@ int main ( void ) {
 }
 
 void test_variables ( void ) {
-	diag("variables test");
 	{
 		hx_node* v1	= hx_new_node_variable( -1 );
 		ok1( v1 != NULL );
@@ -59,7 +58,6 @@ void test_variables ( void ) {
 }
 
 void test_literals ( void ) {
-	diag("literals test");
 	{
 		hx_node* l1	= hx_new_node_literal("foo");
 		ok1( l1 != NULL );
@@ -152,7 +150,6 @@ void test_literals ( void ) {
 }
 
 void test_resources ( void ) {
-	diag("resources test");
 	{
 		hx_node* r1	= (hx_node*) hx_new_node_resource("http://www.w3.org/2001/XMLSchema#integer");
 		ok1( r1 != NULL );
@@ -173,7 +170,6 @@ void test_resources ( void ) {
 }
 
 void test_bnodes ( void ) {
-	diag("bnodes test");
 	{
 		hx_node* b1	= (hx_node*) hx_new_node_blank("r1");
 		ok1( b1 != NULL );
@@ -217,7 +213,6 @@ void test_cmp ( void ) {
 }
 
 void test_store ( void ) {
-	diag("file store test");
 	const char* filename	= "__test.node.data";
 	
 	{

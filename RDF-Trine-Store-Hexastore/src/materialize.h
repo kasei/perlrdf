@@ -23,9 +23,11 @@ typedef struct {
 	int size;
 	int length;
 	char** names;
+	int started;
 	int finished;
 	int index;
 	int sorted_by;
+	hx_variablebindings_iter* iter;
 } _hx_materialize_iter_vb_info;
 
 typedef struct {

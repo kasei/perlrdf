@@ -451,12 +451,13 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	}
 	
 	hx->next_var	= -1;
-	hx->spo	= hx_index_read( s, f, buffer );
-	hx->sop	= hx_index_read( s, f, buffer );
-	hx->pso	= hx_index_read( s, f, buffer );
-	hx->pos	= hx_index_read( s, f, buffer );
-	hx->osp	= hx_index_read( s, f, buffer );
-	hx->ops	= hx_index_read( s, f, buffer );
+	hx->spo		= hx_index_read( s, f, buffer );
+	hx->sop		= hx_index_read( s, f, buffer );
+	hx->pso		= hx_index_read( s, f, buffer );
+	hx->pos		= hx_index_read( s, f, buffer );
+	hx->osp		= hx_index_read( s, f, buffer );
+	hx->ops		= hx_index_read( s, f, buffer );
+	hx->storage	= s;
 	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
 		free( hx );

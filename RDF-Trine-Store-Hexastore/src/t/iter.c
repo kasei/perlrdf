@@ -33,7 +33,6 @@ int main ( void ) {
 }
 
 void test_small_iter ( void ) {
-	diag("small iter test");
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_hexastore* hx	= hx_new_hexastore( s );
 	hx_nodemap* map		= hx_get_nodemap( hx );

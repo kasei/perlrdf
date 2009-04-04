@@ -33,7 +33,6 @@ int main ( void ) {
 }
 
 void new_root_test ( void ) {
-	diag( "new root test" );
 	hx_storage_manager* w	= hx_new_memory_storage_manager();
 	
 	hx_btree_node* orig	= hx_new_btree_root( w, branching_size );
@@ -65,7 +64,6 @@ void new_root_test ( void ) {
 }
 
 void small_split_test ( void ) {
-	diag( "small split test" );
 	hx_storage_manager* w	= hx_new_memory_storage_manager();
 	hx_btree_node* root	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_ROOT );
@@ -111,7 +109,6 @@ void small_split_test ( void ) {
 }
 
 void medium_split_test ( void ) {
-	diag( "medium split test" );
 	hx_storage_manager* w	= hx_new_memory_storage_manager();
 	hx_btree_node* root	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_ROOT );
@@ -171,7 +168,6 @@ void medium_split_test ( void ) {
 }
 
 void large_split_test ( void ) {
-	diag( "large split test" );
 	hx_storage_manager* w	= hx_new_memory_storage_manager();
 	hx_btree_node* root	= hx_new_btree_node( w, branching_size );
 	hx_btree_node_set_flag( w, root, HX_BTREE_NODE_ROOT );
@@ -229,7 +225,6 @@ void large_split_test ( void ) {
 }
 
 void large_test ( void ) {
-	diag( "large test" );
 	hx_storage_manager* w	= hx_new_memory_storage_manager();
 //	printf( "%d\n", (int) sizeof( hx_btree_node ) );
 	hx_btree* tree		= hx_new_btree( w, branching_size );
@@ -273,7 +268,6 @@ void large_test ( void ) {
 
 
 void small_remove_test ( void ) {
-	diag( "small remove test" );
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_btree* tree		= hx_new_btree( s, branching_size );
 	hx_btree_node* root	= tree->root;
@@ -324,7 +318,6 @@ void small_remove_test ( void ) {
 }
 
 void medium_remove_test ( void ) {
-	diag( "medium remove test" );
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_btree* tree		= hx_new_btree( s, branching_size );
 	hx_btree_node* root	= tree->root;
@@ -354,7 +347,6 @@ void medium_remove_test ( void ) {
 }
 
 void large_remove_test ( void ) {
-	diag( "large remove test" );
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_btree* tree		= hx_new_btree( s, branching_size );
 	hx_btree_node* root	= tree->root;

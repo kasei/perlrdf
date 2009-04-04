@@ -172,7 +172,6 @@ void spo_iter_test1 ( void ) {
 }
 
 void pso_iter1_test1 ( void ) {
-	diag( "hx_index_new_iter1" );
 	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	hx_index* i	= hx_new_index( st, HX_INDEX_ORDER_PSO );
 	ok1( i != NULL );

@@ -6,14 +6,17 @@ int _hx_materialize_join_vb_names ( hx_variablebindings* lhs, hx_variablebinding
 int _hx_materialize_join_iter_names ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs, char*** merged_names, int* size );
 int _hx_materialize_join_names ( char** lhs_names, int lhs_size, char** rhs_names, int rhs_size, char*** merged_names, int* size );
 int _hx_materialize_debug ( void* info, char* header, int indent );
-
+int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info );
 
 // implementations
 
 int _hx_materialize_iter_vb_finished ( void* data ) {
 //	fprintf( stderr, "*** _hx_materialize_iter_vb_finished (%p)\n", (void*) data );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
-
+	if (info->started == 0) {
+		_hx_materialize_prime_results( info );
+	}
+	
 //	fprintf( stderr, "- finished == %d\n", info->finished );
 	return info->finished;
 }
@@ -21,6 +24,9 @@ int _hx_materialize_iter_vb_finished ( void* data ) {
 int _hx_materialize_iter_vb_current ( void* data, void* results ) {
 //	fprintf( stderr, "*** _hx_materialize_iter_vb_current\n" );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
+	if (info->started == 0) {
+		_hx_materialize_prime_results( info );
+	}
 	
 	if (info->index >= info->length) {
 		fprintf( stderr, "*** trying to get the materialized iterator's current variable binding, but it's passed the end of results.\n" );
@@ -33,6 +39,9 @@ int _hx_materialize_iter_vb_current ( void* data, void* results ) {
 int _hx_materialize_iter_vb_next ( void* data ) {
 // 	fprintf( stderr, "*** _hx_materialize_iter_vb_next\n" );
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) data;
+	if (info->started == 0) {
+		_hx_materialize_prime_results( info );
+	}
 	
 	info->index++;
 	if (info->index >= info->length) {
@@ -97,6 +106,7 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	vtable->debug		= _hx_materialize_debug;
 	
 	_hx_materialize_iter_vb_info* info	= (_hx_materialize_iter_vb_info*) calloc( 1, sizeof( _hx_materialize_iter_vb_info ) );
+	info->started	= 0;
 	info->finished	= 0;
 	info->size		= size;
 	info->index		= 0;
@@ -105,42 +115,8 @@ hx_variablebindings_iter* hx_new_materialize_iter ( hx_variablebindings_iter* it
 	info->names		= names;
 	
 	info->length	= 0;
-	int alloc		= 32;
-	hx_variablebindings** bindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
-	
-	while (!hx_variablebindings_iter_finished( iter )) {
-		hx_variablebindings* b;
-		hx_variablebindings_iter_current( iter, &b );
-		
-		// replace the names array for this variable binding with our new copy,
-		// because the one it's got is stored in the iterator we're materializing
-		// and will be deallocated at the end of this function
-		hx_variablebindings_set_names( b, names );
-		
-		bindings[ info->length++ ]	= b;
-		if (info->length >= alloc) {
-			alloc	= alloc * 2;
-			hx_variablebindings** newbindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
-			if (newbindings == NULL) {
-				hx_free_variablebindings_iter( iter, 1 );
-				fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
-				return NULL;
-			}
-			for (int i = 0; i < info->length; i++) {
-				newbindings[i]	= bindings[i];
-			}
-			free( bindings );
-			bindings	= newbindings;
-		}
-		hx_variablebindings_iter_next( iter );
-	}
-	
-	if (info->length == 0) {
-		info->finished	= 1;
-	}
-	
-	info->bindings	= bindings;
-	hx_free_variablebindings_iter( iter, 1 );
+	info->bindings	= NULL;
+	info->iter		= iter;
 	hx_variablebindings_iter* miter	= hx_variablebindings_new_iter( vtable, (void*) info );
 	return miter;
 }
@@ -226,3 +202,46 @@ int _hx_materialize_debug ( void* data, char* header, int _indent ) {
 	return 0;
 }
 
+int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
+	hx_variablebindings_iter* iter	= info->iter;
+	char** names	= info->names;
+	info->iter		= NULL;
+	info->started	= 1;
+	int alloc		= 32;
+	hx_variablebindings** bindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
+	
+	while (!hx_variablebindings_iter_finished( iter )) {
+		hx_variablebindings* b;
+		hx_variablebindings_iter_current( iter, &b );
+		
+		// replace the names array for this variable binding with our new copy,
+		// because the one it's got is stored in the iterator we're materializing
+		// and will be deallocated at the end of this function
+		hx_variablebindings_set_names( b, names );
+		
+		bindings[ info->length++ ]	= b;
+		if (info->length >= alloc) {
+			alloc	= alloc * 2;
+			hx_variablebindings** newbindings	= calloc( alloc, sizeof( hx_variablebindings* ) );
+			if (newbindings == NULL) {
+				hx_free_variablebindings_iter( iter, 1 );
+				fprintf( stderr, "*** allocating space for %d materialized bindings failed\n", alloc );
+				return 1;
+			}
+			for (int i = 0; i < info->length; i++) {
+				newbindings[i]	= bindings[i];
+			}
+			free( bindings );
+			bindings	= newbindings;
+		}
+		hx_variablebindings_iter_next( iter );
+	}
+	
+	if (info->length == 0) {
+		info->finished	= 1;
+	}
+	
+	info->bindings	= bindings;
+	hx_free_variablebindings_iter( iter, 1 );
+	return 0;
+}

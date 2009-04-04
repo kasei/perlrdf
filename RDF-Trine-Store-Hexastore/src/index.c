@@ -497,6 +497,7 @@ hx_index* hx_index_read( hx_storage_manager* s, FILE* f, int buffer ) {
 		free( i );
 		return NULL;
 	} else {
+		i->storage	= s;
 		return i;
 	}
 }
