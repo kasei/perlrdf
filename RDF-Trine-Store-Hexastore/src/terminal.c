@@ -1,7 +1,7 @@
 #include "terminal.h"
 
 hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
-	hx_terminal* terminal	= (hx_terminal*) calloc( 1, sizeof( hx_terminal ) );
+	hx_terminal* terminal	= (hx_terminal*) hx_storage_new_block( s, sizeof( hx_terminal ) );
 	terminal->storage		= s;
 	terminal->tree			= hx_new_btree( s, TERMINAL_TREE_BRANCHING_SIZE );
 	terminal->refcount		= 0;
@@ -11,7 +11,7 @@ hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 
 int hx_free_terminal ( hx_terminal* t ) {
 	hx_free_btree( t->storage, t->tree );
-	free( t );
+	hx_storage_release_block( t->storage, t );
 	return 0;
 }
 

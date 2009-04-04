@@ -1,7 +1,7 @@
 #include "head.h"
 
 hx_head* hx_new_head( hx_storage_manager* s ) {
-	hx_head* head	= (hx_head*) calloc( 1, sizeof( hx_head ) );
+	hx_head* head	= (hx_head*) hx_storage_new_block( s, sizeof( hx_head ) );
 	head->storage		= s;
 	head->tree		= hx_new_btree( s, HEAD_TREE_BRANCHING_SIZE );
 // 	fprintf( stderr, ">>> allocated tree %p\n", (void*) head->tree );
@@ -25,7 +25,7 @@ int hx_free_head ( hx_head* head ) {
 	
 	hx_free_btree_iter( iter );
 	hx_free_btree( head->storage, head->tree );
-	free( head );
+	hx_storage_release_block( head->storage, head );
 	return 0;
 }
 

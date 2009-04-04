@@ -23,7 +23,7 @@ hx_index* hx_new_index ( hx_storage_manager* s, int* index_order ) {
 	int a	= index_order[0];
 	int b	= index_order[1];
 	int c	= index_order[2];
-	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index ) );
+	hx_index* i	= (hx_index*) hx_storage_new_block( s, sizeof( hx_index ) );
 	i->order[0]	= a;
 	i->order[1]	= b;
 	i->order[2]	= c;
@@ -34,7 +34,7 @@ hx_index* hx_new_index ( hx_storage_manager* s, int* index_order ) {
 
 int hx_free_index ( hx_index* i ) {
 	hx_free_head( i->head );
-	free( i );
+	hx_storage_release_block( i->storage, i );
 	return 0;
 }
 
@@ -491,7 +491,7 @@ hx_index* hx_index_read( hx_storage_manager* s, FILE* f, int buffer ) {
 //		fprintf( stderr, "*** Bad header cookie trying to read index from file.\n" );
 		return NULL;
 	}
-	hx_index* i	= (hx_index*) calloc( 1, sizeof( hx_index ) );
+	hx_index* i	= (hx_index*) hx_storage_new_block( s, sizeof( hx_index ) );
 	read	= fread( i->order, sizeof( int ), 3, f );
 	if (read == 0 || (i->head = hx_head_read( s, f, buffer )) == NULL) {
 		free( i );

@@ -1,7 +1,7 @@
 #include "vector.h"
 
 hx_vector* hx_new_vector( hx_storage_manager* s ) {
-	hx_vector* vector	= (hx_vector*) calloc( 1, sizeof( hx_vector ) );
+	hx_vector* vector	= (hx_vector*) hx_storage_new_block( s, sizeof( hx_vector ) );
 	vector->storage		= s;
 	vector->tree		= hx_new_btree( s, VECTOR_TREE_BRANCHING_SIZE );
 // 	fprintf( stderr, ">>> allocated tree %p\n", (void*) vector->tree );
@@ -22,7 +22,7 @@ int hx_free_vector ( hx_vector* vector ) {
 	}
 	hx_free_btree_iter( iter );
 	hx_free_btree( vector->storage, vector->tree );
-	free( vector );
+	hx_storage_release_block( vector->storage, vector );
 	return 0;
 }
 

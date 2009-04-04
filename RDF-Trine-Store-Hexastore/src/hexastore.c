@@ -23,7 +23,7 @@ hx_hexastore* hx_new_hexastore ( hx_storage_manager* s ) {
 }
 
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap* map ) {
-	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
 	hx->storage		= s;
 	hx->map			= map;
 	hx->spo			= hx_new_index( s, HX_INDEX_ORDER_SPO );
@@ -44,7 +44,7 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 	hx_free_index( hx->pos );
 	hx_free_index( hx->osp );
 	hx_free_index( hx->ops );
-	free( hx );
+	hx_storage_release_block( hx->storage, hx );
 	return 0;
 }
 
@@ -442,7 +442,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 		fprintf( stderr, "*** Bad header cookie trying to read hexastore from file.\n" );
 		return NULL;
 	}
-	hx_hexastore* hx	= (hx_hexastore*) calloc( 1, sizeof( hx_hexastore ) );
+	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
 	hx->map	= hx_nodemap_read( s, f, buffer );
 	if (hx->map == NULL) {
 		fprintf( stderr, "*** NULL nodemap returned while trying to read hexastore from disk.\n" );
@@ -467,7 +467,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 }
 
 hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
-	hx_variablebindings_iter_vtable* vtable	= malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	hx_variablebindings_iter_vtable* vtable	= calloc( 1, sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_iter_vb_finished;
 	vtable->current		= _hx_iter_vb_current;
 	vtable->next		= _hx_iter_vb_next;
