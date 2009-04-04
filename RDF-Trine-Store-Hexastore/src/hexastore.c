@@ -446,7 +446,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	hx->map	= hx_nodemap_read( s, f, buffer );
 	if (hx->map == NULL) {
 		fprintf( stderr, "*** NULL nodemap returned while trying to read hexastore from disk.\n" );
-		free( hx );
+		hx_storage_release_block( s, hx );
 		return NULL;
 	}
 	
@@ -460,9 +460,10 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	hx->storage	= s;
 	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
-		free( hx );
+		hx_storage_release_block( s, hx );
 		return NULL;
 	} else {
+		hx->storage	= s;
 		return hx;
 	}
 }

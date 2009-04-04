@@ -494,7 +494,7 @@ hx_index* hx_index_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	hx_index* i	= (hx_index*) hx_storage_new_block( s, sizeof( hx_index ) );
 	read	= fread( i->order, sizeof( int ), 3, f );
 	if (read == 0 || (i->head = hx_head_read( s, f, buffer )) == NULL) {
-		free( i );
+		hx_storage_release_block( s, i );
 		return NULL;
 	} else {
 		i->storage	= s;
