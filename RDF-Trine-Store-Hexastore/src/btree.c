@@ -3,6 +3,7 @@
 
 void _hx_btree_debug_leaves_visitor (hx_storage_manager* w, hx_btree_node* node, int level, uint32_t branching_size, void* param);
 void _hx_btree_debug_visitor ( hx_storage_manager* w, hx_btree_node* node, int level, uint32_t branching_size, void* param );
+void _hx_btree_free_node_visitor ( hx_storage_manager* s, hx_btree_node* node, int level, uint32_t branching_size, void* param );
 
 void _hx_btree_count ( hx_storage_manager* w, hx_btree_node* node, int level, uint32_t branching_size, void* param );
 int _hx_btree_binary_search ( const hx_btree_node* node, const hx_node_id n, int* index );
@@ -23,7 +24,7 @@ hx_btree* hx_new_btree ( hx_storage_manager* s, uint32_t branching_size ) {
 }
 
 int hx_free_btree ( hx_storage_manager* s, hx_btree* tree ) {
-	hx_free_btree_node( s, tree->root );
+	hx_btree_node_traverse( s, tree->root, NULL, _hx_btree_free_node_visitor, 0, tree->branching_size, NULL );
 	hx_storage_release_block( s, tree );
 	return 0;
 }
@@ -641,6 +642,10 @@ void _hx_btree_count ( hx_storage_manager* w, hx_btree_node* node, int level, ui
 	if (hx_btree_node_has_flag( w, node, HX_BTREE_NODE_LEAF )) {
 		*count	+= node->used;
 	}
+}
+
+void _hx_btree_free_node_visitor ( hx_storage_manager* s, hx_btree_node* node, int level, uint32_t branching_size, void* param ) {
+	hx_free_btree_node( s, node );
 }
 
 hx_btree_iter* hx_btree_new_iter ( hx_storage_manager* w, hx_btree* tree ) {
