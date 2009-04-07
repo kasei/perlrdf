@@ -21,6 +21,7 @@
 #include "vector.h"
 #include "head.h"
 #include "storage.h"
+#include "triple.h"
 
 enum {
 	RDF_ITER_FLAGS_BOUND_A	= 1,
@@ -46,18 +47,6 @@ typedef struct {
 	hx_index* ops;
 	int next_var;
 } hx_hexastore;
-
-typedef struct {
-	hx_node* subject;
-	hx_node* predicate;
-	hx_node* object;
-} hx_triple;
-
-typedef struct {
-	hx_node_id subject;
-	hx_node_id predicate;
-	hx_node_id object;
-} hx_triple_id;
 
 typedef struct {
 	hx_hexastore* hx;
