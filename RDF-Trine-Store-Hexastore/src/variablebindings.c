@@ -29,6 +29,9 @@ int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 		for (int i = 0; i < b->size; i++) {
 			free( b->names[ i ] );
 		}
+	}
+	
+	if (b->free_names > 0) {
 		free( b->names );
 	}
 	free( b->nodes );
@@ -317,8 +320,9 @@ int hx_variablebindings_iter_next ( hx_variablebindings_iter* iter ) {
 	}
 }
 
-int hx_variablebindings_set_names ( hx_variablebindings* b, char** names ) {
-	b->names	= names;
+int hx_variablebindings_set_names ( hx_variablebindings* b, char** names, int free_names ) {
+	b->names		= names;
+	b->free_names	= free_names;
 	return 0;
 }
 

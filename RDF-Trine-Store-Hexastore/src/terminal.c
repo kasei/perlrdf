@@ -95,6 +95,7 @@ hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* t ) {
 }
 
 int hx_free_terminal_iter ( hx_terminal_iter* iter ) {
+	hx_free_btree_iter( iter->t );
 	free( iter );
 	return 0;
 }

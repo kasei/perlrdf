@@ -141,7 +141,7 @@ int _hx_materialize_prime_results ( _hx_materialize_iter_vb_info* info ) {
 			// replace the names array for this variable binding with our new copy,
 			// because the one it's got is stored in the iterator we're materializing
 			// and will be deallocated at the end of this function
-			hx_variablebindings_set_names( b, names );
+			hx_variablebindings_set_names( b, names, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
 			
 			bindings[ info->length++ ]	= b;
 			if (info->length >= alloc) {

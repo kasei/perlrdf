@@ -87,7 +87,6 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 		_hx_mergejoin_prime_first_result( info );
 	}
 	
-
 	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
 // 		fprintf( stderr, "- incrementing RHS index\n" );
 		info->rhs_batch_index++;
@@ -110,6 +109,20 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 				}
 				if ((info->lhs_batch_size == 0) || (info->rhs_batch_size == 0)) {
 // 					fprintf( stderr, "- no more matching batches. iterator is finished\n" );
+					if (info->lhs_batch_size > 0) {
+						for (int i = 0; i < info->lhs_batch_size; i++) {
+							hx_free_variablebindings( info->lhs_batch[i], 0 );
+							info->lhs_batch[i]	= NULL;
+						}
+						info->lhs_batch_size	= 0;
+					}
+					if (info->rhs_batch_size > 0) {
+						for (int i = 0; i < info->rhs_batch_size; i++) {
+							hx_free_variablebindings( info->rhs_batch[i], 0 );
+							info->rhs_batch[i]	= NULL;
+						}
+						info->rhs_batch_size	= 0;
+					}
 					info->finished	= 1;
 					return 1;
 				} else {
@@ -145,7 +158,8 @@ int _hx_mergejoin_iter_vb_free ( void* data ) {
 		hx_free_variablebindings( info->rhs_batch[i], 0 );
 		info->rhs_batch[i]	= NULL;
 	}
-	
+	info->lhs_batch_size	= 0;
+	info->rhs_batch_size	= 0;
 	hx_free_variablebindings_iter( info->lhs, 1 );
 	hx_free_variablebindings_iter( info->rhs, 1 );
 	free( info->rhs_batch );
@@ -255,11 +269,17 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 
 int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindings_iter* iter, int join_column, hx_node_id* batch_id, int* batch_size, int* batch_alloc_size, hx_variablebindings*** batch ) {
 	hx_variablebindings* b;
-	*batch_size	= 0;
 	
+	if (*batch_size > 0) {
+//		fprintf( stderr, "getting new batch (batch currently has %d items)\n", *batch_size );
+		for (int i = 0; i < *batch_size; i++) {
+			hx_free_variablebindings( (*batch)[i], 0 );
+		}
+	}
+	
+	*batch_size	= 0;
 	if (hx_variablebindings_iter_finished( iter )) {
 // 		fprintf( stderr, "- iterator is finished (in get_batch)\n" );
-		*batch_size	= 0;
 		return 1;
 	}
 	
@@ -308,9 +328,11 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 		return 1;
 	}
 }
+
 int _hx_mergejoin_get_lhs_batch ( _hx_mergejoin_iter_vb_info* info ) {
 	return _hx_mergejoin_get_batch( info, info->lhs, info->lhs_index, &( info->lhs_key ), &( info->lhs_batch_size ), &( info->lhs_batch_alloc_size ), &( info->lhs_batch ) );
 }
+
 int _hx_mergejoin_get_rhs_batch ( _hx_mergejoin_iter_vb_info* info ) {
 	return _hx_mergejoin_get_batch( info, info->rhs, info->rhs_index, &( info->rhs_key ), &( info->rhs_batch_size ), &( info->rhs_batch_alloc_size ), &( info->rhs_batch ) );
 }
