@@ -92,7 +92,8 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 			triple_ids[i].predicate	= hx_nodemap_add_node( hx->map, triples[i].predicate );
 			triple_ids[i].object	= hx_nodemap_add_node( hx->map, triples[i].object );
 		}
-		
+
+#ifdef HX_SHARE_TERMINALS
 		pthread_t threads[3];
 		hx_thread_info tinfo[3];
 		for (int i = 0; i < 3; i++) {
@@ -114,6 +115,28 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 			for (int i = 0; i < 3; i++) {
 				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
 			}
+#else
+		pthread_t threads[6];
+		hx_thread_info tinfo[6];
+		for (int i = 0; i < 6; i++) {
+			tinfo[i].hx			= hx;
+			tinfo[i].count		= count;
+			tinfo[i].triples	= triple_ids;
+		}
+		
+		{
+			tinfo[0].index		= hx->spo;
+			tinfo[1].index		= hx->sop;
+			tinfo[2].index		= hx->pos;
+			tinfo[3].index		= hx->pso;
+			tinfo[4].index		= hx->osp;
+			tinfo[5].index		= hx->ops;
+			
+			for (int i = 0; i < 6; i++) {
+				tinfo[i].secondary	= NULL;
+				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
+			}
+#endif
 			for (int i = 0; i < 3; i++) {
 				pthread_join(threads[i], NULL);
 			}
@@ -130,7 +153,9 @@ void* _hx_add_triple_threaded (void* arg) {
 		hx_node_id o	= tinfo->triples[i].object;
 		hx_terminal* t;
 		int added	= hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
-		hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o, added );
+		if (tinfo->secondary != NULL) {
+			hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o, added );
+		}
 	}
 	return NULL;
 }
