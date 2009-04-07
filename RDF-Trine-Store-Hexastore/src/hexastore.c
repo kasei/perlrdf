@@ -497,6 +497,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 	info->triple_pos_to_index		= (int*) calloc( 3, sizeof( int ) );
 	info->index_to_triple_pos		= (int*) calloc( 3, sizeof( int ) );
 	info->free_names				= free_names;
+	info->current					= NULL;
 	
 	int j	= 0;
 	if (subj_name != NULL) {
@@ -531,21 +532,25 @@ int _hx_iter_vb_finished ( void* data ) {
 
 int _hx_iter_vb_current ( void* data, void* results ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
-	hx_index_iter* iter		= (hx_index_iter*) info->iter;
-	hx_node_id triple[3];
-	hx_index_iter_current ( iter, &(triple[0]), &(triple[1]), &(triple[2]) );
-	hx_node_id* values	= calloc( info->size, sizeof( hx_node_id ) );
-	for (int i = 0; i < info->size; i++) {
-		values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
-	}
 	hx_variablebindings** bindings	= (hx_variablebindings**) results;
-	*bindings	= hx_new_variablebindings( info->size, info->names, values, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
+	if (info->current == NULL) {
+		hx_index_iter* iter		= (hx_index_iter*) info->iter;
+		hx_node_id triple[3];
+		hx_index_iter_current ( iter, &(triple[0]), &(triple[1]), &(triple[2]) );
+		hx_node_id* values	= calloc( info->size, sizeof( hx_node_id ) );
+		for (int i = 0; i < info->size; i++) {
+			values[ i ]	= triple[ info->triple_pos_to_index[ i ] ];
+		}
+		info->current	= hx_new_variablebindings( info->size, info->names, values, HX_VARIABLEBINDINGS_NO_FREE_NAMES );
+	}
+	*bindings	= info->current;
 	return 0;
 }
 
 int _hx_iter_vb_next ( void* data ) {
 	_hx_iter_vb_info* info	= (_hx_iter_vb_info*) data;
 	hx_index_iter* iter		= (hx_index_iter*) info->iter;
+	info->current			= NULL;
 	return hx_index_iter_next( iter );
 }
 

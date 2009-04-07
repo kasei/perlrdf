@@ -75,6 +75,7 @@ typedef struct {
 	int* triple_pos_to_index;
 	int* index_to_triple_pos;
 	char *subject, *predicate, *object;
+	hx_variablebindings* current;
 } _hx_iter_vb_info;
 
 hx_hexastore* hx_new_hexastore ( hx_storage_manager* w );

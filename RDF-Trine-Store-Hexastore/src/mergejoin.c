@@ -274,6 +274,7 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 //		fprintf( stderr, "getting new batch (batch currently has %d items)\n", *batch_size );
 		for (int i = 0; i < *batch_size; i++) {
 			hx_free_variablebindings( (*batch)[i], 0 );
+			(*batch)[i]	= NULL;
 		}
 	}
 	
