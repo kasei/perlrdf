@@ -11,6 +11,8 @@
 static uint32_t HX_BTREE_NODE_ROOT	= 1;
 static uint32_t HX_BTREE_NODE_LEAF	= 2;
 
+#define hx_btree_node_has_flag(s,node,flag)	(((node->flags & flag) > 0) ? 1 : 0)
+
 hx_btree_node* hx_new_btree_root ( hx_storage_manager* s, uint32_t branching_size );
 hx_btree_node* hx_new_btree_node ( hx_storage_manager* s, uint32_t branching_size );
 int hx_free_btree_node ( hx_storage_manager* s, hx_btree_node* node );
@@ -30,7 +32,7 @@ int hx_btree_node_set_parent ( hx_storage_manager* s, hx_btree_node* node, hx_bt
 int hx_btree_node_set_next_neighbor ( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* next );
 int hx_btree_node_set_prev_neighbor ( hx_storage_manager* s, hx_btree_node* node, hx_btree_node* prev );
 
-int hx_btree_node_has_flag ( hx_storage_manager* s, hx_btree_node* node, uint32_t type );
+
 int hx_btree_node_set_flag ( hx_storage_manager* s, hx_btree_node* node, uint32_t type );
 int hx_btree_node_unset_flag ( hx_storage_manager* s, hx_btree_node* node, uint32_t type );
 

@@ -98,10 +98,6 @@ hx_btree_node* hx_btree_node_prev_neighbor ( hx_storage_manager* w, hx_btree_nod
 	return hx_storage_block_from_id( w, node->prev );
 }
 
-int hx_btree_node_has_flag ( hx_storage_manager* w, hx_btree_node* node, uint32_t flag ) {
-	return ((node->flags & flag) > 0) ? 1 : 0;
-}
-
 int hx_btree_node_set_flag ( hx_storage_manager* w, hx_btree_node* node, uint32_t flag ) {
 	node->flags	|= flag;
 	return 0;
