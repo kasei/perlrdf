@@ -46,6 +46,9 @@ int hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, c
 	
 	raptor_free_parser(rdf_parser);
 	free( parser->triples );
+	free( uri_string );
+	free( base_uri );
+	free( uri );
 	return 0;
 }
 
@@ -91,10 +94,15 @@ int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 	if (parser->count > 0) {
 		hx_add_triples( parser->hx, parser->triples, parser->count );
 		parser->total	+= parser->count;
-		parser->count	= 0;
 		if (parser->logger != NULL) {
 			parser->logger( parser->total );
 		}
+		for (int i = 0; i < parser->count; i++) {
+			hx_free_node( parser->triples[i].subject );
+			hx_free_node( parser->triples[i].predicate );
+			hx_free_node( parser->triples[i].object );
+		}
+		parser->count	= 0;
 	}
 	return 0;
 }
