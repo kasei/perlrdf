@@ -76,7 +76,7 @@ int _hx_mergejoin_iter_vb_current ( void* data, void* results ) {
 	}
 	
 	hx_variablebindings** b	= (hx_variablebindings**) results;
-	*b	= info->current;
+	*b	= hx_copy_variablebindings( info->current );
 	return 0;
 }
 
@@ -85,6 +85,11 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
 	if (info->started == 0) {
 		_hx_mergejoin_prime_first_result( info );
+	}
+	
+	if (info->current != NULL) {
+		hx_free_variablebindings( info->current, 0 );
+		info->current	= NULL;
 	}
 	
 	while ((info->lhs_batch_size != 0) && (info->rhs_batch_size != 0)) {
@@ -150,6 +155,11 @@ int _hx_mergejoin_iter_vb_next ( void* data ) {
 int _hx_mergejoin_iter_vb_free ( void* data ) {
 	_hx_mergejoin_iter_vb_info* info	= (_hx_mergejoin_iter_vb_info*) data;
 	
+	if (info->current != NULL) {
+		hx_free_variablebindings( info->current, 0 );
+		info->current	= NULL;
+	}
+
 	for (int i = 0; i < info->lhs_batch_size; i++) {
 		hx_free_variablebindings( info->lhs_batch[i], 0 );
 		info->lhs_batch[i]	= NULL;

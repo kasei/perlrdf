@@ -206,7 +206,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 // 	fprintf( stderr, "natural join...\n" );
 	int shared_count	= 0;
 	int* shared_lhs_index	= calloc( max_size, sizeof(int) );
-	char* shared_names[max_size];
+	char** shared_names	= (char**) calloc( max_size, sizeof( char* ) );
 	for (int i = 0; i < lhs_size; i++) {
 		char* lhs_name	= lhs_names[ i ];
 		for (int j = 0; j < rhs_size; j++) {
@@ -234,6 +234,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 				hx_node_id rnode	= hx_variablebindings_node_id_for_binding( right, j );
 // 				fprintf( stderr, "\tcomparing nodes %d <=> %d\n", node, rnode );
 				if (node != rnode) {
+					free( shared_names );
 					free( shared_lhs_index );
 					return NULL;
 				}
@@ -243,6 +244,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	}
 	
 	free( shared_lhs_index );
+	free( shared_names );
 	
 	int size;
 	char** names;
