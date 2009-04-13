@@ -18,7 +18,7 @@
 #include "hexastore.h"
 #include "node.h"
 
-static int TRIPLES_BATCH_SIZE	= 25000;
+static int TRIPLES_BATCH_SIZE	= 5000;
 typedef void (*hx_parser_logger)( uint64_t count );
 
 typedef struct {
@@ -34,7 +34,7 @@ typedef struct {
 hx_parser* hx_new_parser ( void );
 int hx_parser_set_logger( hx_parser* p, hx_parser_logger l );
 
-int hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
+uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* filename );
 int hx_parser_parse_string_into_hexastore ( hx_parser* p, hx_hexastore* hx, const char* string, const char* base, char* parser_name );
 int hx_free_parser ( hx_parser* p );
 
