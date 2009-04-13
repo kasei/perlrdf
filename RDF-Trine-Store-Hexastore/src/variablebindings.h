@@ -17,8 +17,10 @@
 #include "nodemap.h"
 #include "node.h"
 
-#define HX_VARIABLEBINDINGS_FREE_NAMES	1
-#define HX_VARIABLEBINDINGS_NO_FREE_NAMES	0
+enum {
+	HX_VARIABLEBINDINGS_FREE_NAMES		= 1,
+	HX_VARIABLEBINDINGS_NO_FREE_NAMES	= 0
+};
 
 typedef struct {
 	int size;
