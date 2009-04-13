@@ -200,7 +200,7 @@ int hx_index_remove_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_nod
 	return 0;
 }
 
-uint64_t hx_index_triples_count ( hx_index* index ) {
+hx_storage_id_t hx_index_triples_count ( hx_index* index ) {
 	return hx_head_triples_count( index->head );
 }
 

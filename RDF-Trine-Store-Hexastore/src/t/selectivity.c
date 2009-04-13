@@ -30,52 +30,52 @@ int main ( void ) {
 	hx_node* sl			= hx_new_node_literal( "s" );
 
 	{	// ALL TRIPLES
-		uint64_t total	= hx_triples_count( hx );
+		hx_storage_id_t total	= hx_triples_count( hx );
 		ok1( total == 31 );
 	}
 	
 	{	// fff
-		uint64_t total	= hx_count_statements( hx, x, y, z );
+		hx_storage_id_t total	= hx_count_statements( hx, x, y, z );
 		ok1( total == 31 );
 	}
 	
 	{	// fbf
-		uint64_t total	= hx_count_statements( hx, x, binding, z );
+		hx_storage_id_t total	= hx_count_statements( hx, x, binding, z );
 		ok1( total == 8 );
 	}
 	
 	{	// bff
-		uint64_t total	= hx_count_statements( hx, rs, x, y );
+		hx_storage_id_t total	= hx_count_statements( hx, rs, x, y );
 		ok1( total == 7 );
 	}
 	
 	{	// ffb
-		uint64_t total	= hx_count_statements( hx, x, y, sl );
+		hx_storage_id_t total	= hx_count_statements( hx, x, y, sl );
 		ok1( total == 3 );
 	}
 	
 	{	// fbb
-		uint64_t total	= hx_count_statements( hx, x, variable, sl );
+		hx_storage_id_t total	= hx_count_statements( hx, x, variable, sl );
 		ok1( total == 2 );
 	}
 	
 	{	// bfb
-		uint64_t total	= hx_count_statements( hx, rs, x, rstype );
+		hx_storage_id_t total	= hx_count_statements( hx, rs, x, rstype );
 		ok1( total == 1 );
 	}
 
 	{	// bbf
-		uint64_t total	= hx_count_statements( hx, rs, resvar, y );
+		hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, y );
 		ok1( total == 4 );
 	}
 	
 	{	// bbb
-		uint64_t total	= hx_count_statements( hx, rs, resvar, sl );
+		hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, sl );
 		ok1( total == 1 );
 	}
 	
 	{	// bbb
-		uint64_t total	= hx_count_statements( hx, rs, resvar, rstype );
+		hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, rstype );
 		ok1( total == 0 );
 	}
 	

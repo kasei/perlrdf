@@ -78,8 +78,8 @@ int hx_remove_triple( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
 int hx_get_ordered_index( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o, int order_position, hx_index** index, hx_node** nodes, int* var_count );
 hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o, int order_position );
 
-uint64_t hx_triples_count( hx_hexastore* hx );
-uint64_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
+hx_storage_id_t hx_triples_count( hx_hexastore* hx );
+hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o );
 
 hx_node* hx_new_variable ( hx_hexastore* hx );
 hx_node* hx_new_named_variable ( hx_hexastore* hx, char* name );

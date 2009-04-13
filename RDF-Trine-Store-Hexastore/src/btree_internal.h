@@ -21,8 +21,8 @@ list_size_t hx_btree_size ( hx_storage_manager* s, hx_btree* tree );
 
 int hx_btree_node_debug ( char* string, hx_storage_manager* s, hx_btree_node* node, uint32_t branching_size );
 int hx_btree_tree_debug ( char* string, hx_storage_manager* s, hx_btree_node* node, uint32_t branching_size );
-int hx_btree_node_add_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint64_t child, uint32_t branching_size );
-uint64_t hx_btree_node_get_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint32_t branching_size );
+int hx_btree_node_add_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, hx_storage_id_t child, uint32_t branching_size );
+hx_storage_id_t hx_btree_node_get_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint32_t branching_size );
 int hx_btree_node_remove_child ( hx_storage_manager* s, hx_btree_node* node, hx_node_id n, uint32_t branching_size );
 
 // setter methods
@@ -36,8 +36,8 @@ int hx_btree_node_set_prev_neighbor ( hx_storage_manager* s, hx_btree_node* node
 int hx_btree_node_set_flag ( hx_storage_manager* s, hx_btree_node* node, uint32_t type );
 int hx_btree_node_unset_flag ( hx_storage_manager* s, hx_btree_node* node, uint32_t type );
 
-hx_btree_block_t hx_btree_node_search ( hx_storage_manager* s, hx_btree_node* root, hx_node_id key, uint32_t branching_size );
-int hx_btree_node_insert ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key, hx_btree_block_t value, uint32_t branching_size );
+hx_storage_id_t hx_btree_node_search ( hx_storage_manager* s, hx_btree_node* root, hx_node_id key, uint32_t branching_size );
+int hx_btree_node_insert ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key, hx_storage_id_t value, uint32_t branching_size );
 int hx_btree_node_remove ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key, uint32_t branching_size );
 void hx_btree_node_traverse ( hx_storage_manager* s, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, uint32_t branching_size, void* param );
 

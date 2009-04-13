@@ -12,7 +12,7 @@ hx_head* hx_new_head( hx_storage_manager* s ) {
 int hx_free_head ( hx_head* head ) {
 // 	fprintf( stderr, "<<< freeing tree %p\n", (void*) head->tree );
 	hx_node_id key;
-	uint64_t value;
+	hx_storage_id_t value;
 	hx_btree_iter* iter	= hx_btree_new_iter( head->storage, head->tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
@@ -35,7 +35,7 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 	sprintf( indent, "%s%s  ", header, header );
 	
 	hx_node_id key;
-	uint64_t value;
+	hx_storage_id_t value;
 	hx_btree_iter* iter	= hx_btree_new_iter( h->storage, h->tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
@@ -50,14 +50,14 @@ int hx_head_debug ( const char* header, hx_head* h ) {
 }
 
 int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v ) {
-	uint64_t value	= hx_storage_id_from_block( h->storage, v );
+	hx_storage_id_t value	= hx_storage_id_from_block( h->storage, v );
 	hx_btree_insert( h->storage, h->tree, n, value );
 //	fprintf( stderr, "adding vector: %llu\n", value );
 	return 0;
 }
 
 hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n ) {
-	uint64_t vector	= hx_btree_search( h->storage, h->tree, n );
+	hx_storage_id_t vector	= hx_btree_search( h->storage, h->tree, n );
 //	fprintf( stderr, "got vector: %llu\n", vector );
 	hx_vector* v	= hx_storage_block_from_id( h->storage, vector );
 	return v;
@@ -72,7 +72,7 @@ list_size_t hx_head_size ( hx_head* h ) {
 	return hx_btree_size( h->storage, h->tree );
 }
 
-uint64_t hx_head_triples_count ( hx_head* h ) {
+hx_storage_id_t hx_head_triples_count ( hx_head* h ) {
 	return h->triples_count;
 }
 
@@ -98,7 +98,7 @@ int hx_head_iter_finished ( hx_head_iter* iter ) {
 }
 
 int hx_head_iter_current ( hx_head_iter* iter, hx_node_id* n, hx_vector** v ) {
-	uint64_t vector;
+	hx_storage_id_t vector;
 	int r	= hx_btree_iter_current( iter->t, n, &vector );
 	*v		= hx_storage_block_from_id( iter->head->storage, vector );
 	return r;
@@ -117,7 +117,7 @@ int hx_head_write( hx_head* h, FILE* f ) {
 	fputc( 'H', f );
 	list_size_t used	= hx_head_size( h );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
-	fwrite( &(h->triples_count), sizeof( uint64_t ), 1, f );
+	fwrite( &(h->triples_count), sizeof( hx_storage_id_t ), 1, f );
 	hx_head_iter* iter	= hx_head_new_iter( h );
 	while (!hx_head_iter_finished( iter )) {
 		hx_node_id n;
@@ -145,7 +145,7 @@ hx_head* hx_head_read( hx_storage_manager* s, FILE* f, int buffer ) {
 		return NULL;
 	} else {
 		hx_head* h	= hx_new_head( s );
-		read	= fread( &(h->triples_count), sizeof( uint64_t ), 1, f );
+		read	= fread( &(h->triples_count), sizeof( hx_storage_id_t ), 1, f );
 		if (read == 0) {
 			return NULL;
 		}

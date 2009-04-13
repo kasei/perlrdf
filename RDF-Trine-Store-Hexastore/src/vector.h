@@ -19,7 +19,7 @@
 
 typedef struct {
 	hx_storage_manager* storage;
-	uint64_t triples_count;
+	hx_storage_id_t triples_count;
 	hx_btree* tree;
 } hx_vector;
 
@@ -36,7 +36,7 @@ int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t );
 hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n );
 int hx_vector_remove_terminal ( hx_vector* v, hx_node_id n );
 list_size_t hx_vector_size ( hx_vector* v );
-uint64_t hx_vector_triples_count ( hx_vector* v );
+hx_storage_id_t hx_vector_triples_count ( hx_vector* v );
 void hx_vector_triples_count_add ( hx_vector* v, int c );
 
 int hx_vector_write( hx_vector* t, FILE* f );

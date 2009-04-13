@@ -12,12 +12,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "hexastore_types.h"
-
 enum {
 	HX_STORAGE_MEMORY	= 2,
 	HX_STORAGE_FILE		= 4
 };
+
+typedef uint64_t hx_storage_id_t;
+static hx_storage_id_t hx_storage_id_mask	= ~( (hx_storage_id_t) 0 );
 
 typedef struct {
 	int flags;
@@ -35,7 +36,7 @@ void* hx_storage_new_block( hx_storage_manager* s, size_t size );
 int hx_storage_release_block( hx_storage_manager* s, void* block );
 int hx_storage_sync_block( hx_storage_manager* s, void* block );
 
-uint64_t hx_storage_id_from_block ( hx_storage_manager* s, void* block );
-void* hx_storage_block_from_id ( hx_storage_manager* s, uint64_t id );
+hx_storage_id_t hx_storage_id_from_block ( hx_storage_manager* s, void* block );
+void* hx_storage_block_from_id ( hx_storage_manager* s, hx_storage_id_t id );
 
 #endif

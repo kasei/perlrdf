@@ -12,7 +12,7 @@ hx_vector* hx_new_vector( hx_storage_manager* s ) {
 int hx_free_vector ( hx_vector* vector ) {
 //	fprintf( stderr, "freeing vector %p\n", vector );
 	hx_node_id key;
-	uint64_t value;
+	hx_storage_id_t value;
 	hx_btree_iter* iter	= hx_btree_new_iter( vector->storage, vector->tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
@@ -28,7 +28,7 @@ int hx_free_vector ( hx_vector* vector ) {
 
 int hx_vector_debug ( const char* header, const hx_vector* v ) {
 	hx_node_id key;
-	uint64_t value;
+	hx_storage_id_t value;
 	fprintf( stderr, "%s[\n", header );
 	
 	hx_btree_iter* iter	= hx_btree_new_iter( v->storage, v->tree );
@@ -46,7 +46,7 @@ int hx_vector_debug ( const char* header, const hx_vector* v ) {
 }
 
 int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t ) {
-	uint64_t value	= hx_storage_id_from_block( v->storage, t );
+	hx_storage_id_t value	= hx_storage_id_from_block( v->storage, t );
 //	fprintf( stderr, "adding terminal: %llu\n", value );
 	int r	= hx_btree_insert( v->storage, v->tree, n, value );
 	if (r == 0) {
@@ -57,7 +57,7 @@ int hx_vector_add_terminal ( hx_vector* v, const hx_node_id n, hx_terminal* t ) 
 }
 
 hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_node_id n ) {
-	uint64_t terminal	= hx_btree_search( v->storage, v->tree, n );
+	hx_storage_id_t terminal	= hx_btree_search( v->storage, v->tree, n );
 //	fprintf( stderr, "got terminal: %llu\n", terminal );
 	hx_terminal* t	= hx_storage_block_from_id( v->storage, terminal );
 	return t;
@@ -78,7 +78,7 @@ list_size_t hx_vector_size ( hx_vector* v ) {
 	return hx_btree_size( v->storage, v->tree );
 }
 
-uint64_t hx_vector_triples_count ( hx_vector* v ) {
+hx_storage_id_t hx_vector_triples_count ( hx_vector* v ) {
 	return v->triples_count;
 }
 
@@ -104,7 +104,7 @@ int hx_vector_iter_finished ( hx_vector_iter* iter ) {
 }
 
 int hx_vector_iter_current ( hx_vector_iter* iter, hx_node_id* n, hx_terminal** t ) {
-	uint64_t terminal;
+	hx_storage_id_t terminal;
 	int r	= hx_btree_iter_current( iter->t, n, &terminal );
 	*t		= hx_storage_block_from_id( iter->vector->storage, terminal );
 	return r;
@@ -122,7 +122,7 @@ int hx_vector_write( hx_vector* v, FILE* f ) {
 	fputc( 'V', f );
 	list_size_t used	= hx_vector_size( v );
 	fwrite( &used, sizeof( list_size_t ), 1, f );
-	fwrite( &( v->triples_count ), sizeof( uint64_t ), 1, f );
+	fwrite( &( v->triples_count ), sizeof( hx_storage_id_t ), 1, f );
 	hx_vector_iter* iter	= hx_vector_new_iter( v );
 	while (!hx_vector_iter_finished( iter )) {
 		hx_node_id n;
@@ -150,7 +150,7 @@ hx_vector* hx_vector_read( hx_storage_manager* s, FILE* f, int buffer ) {
 		return NULL;
 	} else {
 		hx_vector* v	= hx_new_vector( s );
-		read	= fread( &(v->triples_count), sizeof( uint64_t ), 1, f );
+		read	= fread( &(v->triples_count), sizeof( hx_storage_id_t ), 1, f );
 		if (read == 0) {
 			return NULL;
 		}

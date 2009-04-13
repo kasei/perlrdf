@@ -40,14 +40,14 @@ void new_root_test ( void ) {
 	
 	for (int i = 0; i < branching_size; i++) {
 		hx_node_id key	= (hx_node_id) i*2;
-		uint64_t value	= (uint64_t) 100 + i;
+		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_insert( w, &root, key, value, branching_size );
 	}
 	
 	ok1( orig == root ); // root hasn't split yet
 	ok1( root->used == branching_size );
 	
-	hx_btree_node_insert( w, &root, (hx_node_id) 7, (uint64_t) 777, branching_size );
+	hx_btree_node_insert( w, &root, (hx_node_id) 7, (hx_storage_id_t) 777, branching_size );
 	ok1( orig != root );
 	ok1( root->used == 2 );
 	
@@ -73,10 +73,10 @@ void small_split_test ( void ) {
 	
 	for (int i = 0; i < 10; i++) {
 		hx_node_id key	= (hx_node_id) 7 + i;
-		uint64_t value	= (uint64_t) 100 + i;
+		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
 	}
-	uint64_t cid	= hx_storage_id_from_block( w, child );
+	hx_storage_id_t cid	= hx_storage_id_from_block( w, child );
 	hx_btree_node_add_child( w, root, (hx_node_id) 16, cid, branching_size );
 	
 	ok1( root->used == 1 );
@@ -118,10 +118,10 @@ void medium_split_test ( void ) {
 	
 	for (int i = 0; i < branching_size-1; i++) {
 		hx_node_id key	= (hx_node_id) i;
-		uint64_t value	= (uint64_t) 100 + i;
+		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
 	}
-	uint64_t cid	= hx_storage_id_from_block( w, child );
+	hx_storage_id_t cid	= hx_storage_id_from_block( w, child );
 	hx_btree_node_add_child( w, root, (hx_node_id) branching_size-1, cid, branching_size );
 	
 	ok1( root->used == 1 );
@@ -177,10 +177,10 @@ void large_split_test ( void ) {
 	
 	for (int i = 0; i < branching_size; i++) {
 		hx_node_id key	= (hx_node_id) i;
-		uint64_t value	= (uint64_t) 100 + i;
+		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_node_add_child( w, child, key, value, branching_size );
 	}
-	uint64_t cid	= hx_storage_id_from_block( w, child );
+	hx_storage_id_t cid	= hx_storage_id_from_block( w, child );
 	hx_btree_node_add_child( w, root, (hx_node_id) branching_size, cid, branching_size );
 	
 	ok1( root->used == 1 );
@@ -234,7 +234,7 @@ void large_test ( void ) {
 //	printf( "root: %d (%p)\n", (int) _hx_btree_node2int(w, root), (void*) root );
 	
 	for (int i = 1; i <= 4000000; i++) {
-		hx_btree_node_insert( w, &(tree->root), (hx_node_id) i, (uint64_t) 10*i, branching_size );
+		hx_btree_node_insert( w, &(tree->root), (hx_node_id) i, (hx_storage_id_t) 10*i, branching_size );
 	}
 	
 	list_size_t size	= hx_btree_size( w, tree );
@@ -243,7 +243,7 @@ void large_test ( void ) {
 	
 	int counter	= 0;
 	hx_node_id key, last;
-	uint64_t value3;
+	hx_storage_id_t value3;
 	hx_btree_iter* iter	= hx_btree_new_iter( w, tree );
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value3 );
@@ -382,7 +382,7 @@ void large_remove_test ( void ) {
 void _add_data ( hx_storage_manager* s, hx_btree* tree, int count, int add ) {
 	for (int i = 0; i < count; i++) {
 		hx_node_id key	= (hx_node_id) add + i;
-		uint64_t value	= (uint64_t) 100 + i;
+		hx_storage_id_t value	= (hx_storage_id_t) 100 + i;
 		hx_btree_insert( s, tree, key, value );
 	}
 }

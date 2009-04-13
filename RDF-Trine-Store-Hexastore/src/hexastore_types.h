@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include "storage.h"
 
 #define HEAD_TREE_BRANCHING_SIZE				252
 #define VECTOR_TREE_BRANCHING_SIZE				28

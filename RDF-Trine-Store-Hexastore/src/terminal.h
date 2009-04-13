@@ -18,7 +18,7 @@
 
 typedef struct {
 	hx_storage_manager* storage;
-	uint64_t triples_count;
+	hx_storage_id_t triples_count;
 	hx_btree* tree;
 	int refcount;
 } hx_terminal;

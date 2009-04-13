@@ -47,17 +47,18 @@ int hx_storage_sync_block( hx_storage_manager* s, void* block ) {
 	}
 }
 
-uint64_t hx_storage_id_from_block ( hx_storage_manager* s, void* block ) {
+hx_storage_id_t hx_storage_id_from_block ( hx_storage_manager* s, void* block ) {
 	if (s->flags & HX_STORAGE_MEMORY) {
-		return (uint64_t) block;
+		return (hx_storage_id_t) block;
 	} else {
 		fprintf( stderr, "*** trying to get block id with non-memory storage manager\n" );
 		return 0;
 	}
 }
 
-void* hx_storage_block_from_id ( hx_storage_manager* s, uint64_t id ) {
+void* hx_storage_block_from_id ( hx_storage_manager* s, hx_storage_id_t id ) {
 	if (s->flags & HX_STORAGE_MEMORY) {
+//		fprintf( stderr, "%x <> %p\n", id, (void*) id );
 		return (void*) id;
 	} else {
 		fprintf( stderr, "*** trying to get block pointer with non-memory storage manager\n" );
