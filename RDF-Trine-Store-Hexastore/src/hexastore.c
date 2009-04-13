@@ -93,9 +93,11 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 			triple_ids[i].object	= hx_nodemap_add_node( hx->map, triples[i].object );
 		}
 
+		pthread_t* threads		= (pthread_t*) calloc( 6, sizeof( pthread_t ) );
+		hx_thread_info* tinfo	= (hx_thread_info*) calloc( 6, sizeof( hx_thread_info ) );
+		int thread_count;
 #ifdef HX_SHARE_TERMINALS
-		pthread_t threads[3];
-		hx_thread_info tinfo[3];
+		thread_count	= 3;
 		for (int i = 0; i < 3; i++) {
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
@@ -115,9 +117,9 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 			for (int i = 0; i < 3; i++) {
 				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
 			}
+		}
 #else
-		pthread_t threads[6];
-		hx_thread_info tinfo[6];
+		thread_count	= 6;
 		for (int i = 0; i < 6; i++) {
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
@@ -126,21 +128,33 @@ int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
 		
 		{
 			tinfo[0].index		= hx->spo;
+			tinfo[0].secondary	= NULL;
+			
 			tinfo[1].index		= hx->sop;
+			tinfo[1].secondary	= NULL;
+			
 			tinfo[2].index		= hx->pos;
+			tinfo[2].secondary	= NULL;
+			
 			tinfo[3].index		= hx->pso;
+			tinfo[3].secondary	= NULL;
+			
 			tinfo[4].index		= hx->osp;
+			tinfo[4].secondary	= NULL;
+			
 			tinfo[5].index		= hx->ops;
+			tinfo[5].secondary	= NULL;
 			
 			for (int i = 0; i < 6; i++) {
-				tinfo[i].secondary	= NULL;
 				pthread_create(&(threads[i]), NULL, _hx_add_triple_threaded, &( tinfo[i] ));
 			}
-#endif
-			for (int i = 0; i < 3; i++) {
-				pthread_join(threads[i], NULL);
-			}
 		}
+#endif
+		for (int i = 0; i < thread_count; i++) {
+			pthread_join(threads[i], NULL);
+		}
+		free( tinfo );
+		free( threads );
 	}
 	return 0;
 }
