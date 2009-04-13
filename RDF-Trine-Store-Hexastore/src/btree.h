@@ -15,23 +15,21 @@
 #include "hexastore_types.h"
 #include "storage.h"
 
+typedef int64_t hx_btree_block_t;
+
 typedef struct {
 	hx_node_id key;
-	uint64_t child;
+	hx_btree_block_t child;
 } hx_btree_child;
 
 typedef struct {
 	uint32_t type;
 	uint32_t flags;
-	uint64_t parent;
-	uint64_t prev;
-	uint64_t next;
+	hx_btree_block_t parent;
+	hx_btree_block_t prev;
+	hx_btree_block_t next;
 	uint32_t used;
 	hx_btree_child ptr[];
-// 	hx_node_id keys[ BRANCHING_SIZE ];
-// 	uint64_t children[ BRANCHING_SIZE ];
-// 	uint32_t __padding2;
-// 	uint64_t __padding1[3];
 } hx_btree_node;
 
 typedef struct {
@@ -53,8 +51,8 @@ typedef void hx_btree_node_visitor ( hx_storage_manager* s, hx_btree_node* node,
 hx_btree* hx_new_btree ( hx_storage_manager* s, uint32_t branching_size );
 int hx_free_btree ( hx_storage_manager* s, hx_btree* tree );
 
-uint64_t hx_btree_search ( hx_storage_manager* s, hx_btree* tree, hx_node_id key );
-int hx_btree_insert ( hx_storage_manager* s, hx_btree* tree, hx_node_id key, uint64_t value );
+hx_btree_block_t hx_btree_search ( hx_storage_manager* s, hx_btree* tree, hx_node_id key );
+int hx_btree_insert ( hx_storage_manager* s, hx_btree* tree, hx_node_id key, hx_btree_block_t value );
 int hx_btree_remove ( hx_storage_manager* s, hx_btree* tree, hx_node_id key );
 void hx_btree_traverse ( hx_storage_manager* s, hx_btree* tree, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, void* param );
 

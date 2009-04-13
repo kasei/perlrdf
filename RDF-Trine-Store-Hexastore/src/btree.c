@@ -29,11 +29,11 @@ int hx_free_btree ( hx_storage_manager* s, hx_btree* tree ) {
 	return 0;
 }
 
-uint64_t hx_btree_search ( hx_storage_manager* s, hx_btree* tree, hx_node_id key ) {
+hx_btree_block_t hx_btree_search ( hx_storage_manager* s, hx_btree* tree, hx_node_id key ) {
 	return hx_btree_node_search( s, tree->root, key, tree->branching_size );
 }
 
-int hx_btree_insert ( hx_storage_manager* s, hx_btree* tree, hx_node_id key, uint64_t value ) {
+int hx_btree_insert ( hx_storage_manager* s, hx_btree* tree, hx_node_id key, hx_btree_block_t value ) {
 	return hx_btree_node_insert( s, &( tree->root ), key, value, tree->branching_size );
 }
 
@@ -208,7 +208,7 @@ int hx_btree_node_remove_child ( hx_storage_manager* w, hx_btree_node* node, hx_
 	}
 }
 
-uint64_t hx_btree_node_search ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key, uint32_t branching_size ) {
+hx_btree_block_t hx_btree_node_search ( hx_storage_manager* w, hx_btree_node* root, hx_node_id key, uint32_t branching_size ) {
 	hx_btree_node* u	= _hx_btree_node_search_page( w, root, key, branching_size );
 	int i;
 	int r	= _hx_btree_binary_search( u, key, &i );
@@ -243,7 +243,7 @@ NEXT:	1;
 	return u;
 }
 
-int hx_btree_node_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node_id key, uint64_t value, uint32_t branching_size ) {
+int hx_btree_node_insert ( hx_storage_manager* w, hx_btree_node** _root, hx_node_id key, hx_btree_block_t value, uint32_t branching_size ) {
 	hx_btree_node* root	= *_root;
 	if (root->used == branching_size) {
 		hx_btree_node* s	= hx_new_btree_node( w, branching_size );
