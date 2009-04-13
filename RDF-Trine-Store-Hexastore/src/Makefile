@@ -67,6 +67,8 @@ tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t
 
 examples: examples/lubm_q4 examples/lubm_q8 examples/lubm_q9 examples/bench examples/knows
 
+bitmat: examples/lubm7_6m examples/lubm8_6m examples/lubm16_6m
+
 ########
 t/node.t: tap.o t/node.c node.h node.o $(OBJECTS) tap.o
 	$(CC) $(INC) $(LIBS) -o t/node.t t/node.c $(OBJECTS) tap.o
@@ -121,6 +123,15 @@ examples/bench: examples/bench.c $(OBJECTS)
 examples/knows: examples/knows.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -o examples/knows examples/knows.c $(OBJECTS)
 
+examples/lubm7_6m: examples/lubm7_6m.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm7_6m examples/lubm7_6m.c $(OBJECTS)
+
+examples/lubm8_6m: examples/lubm8_6m.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm8_6m examples/lubm8_6m.c $(OBJECTS)
+
+examples/lubm16_6m: examples/lubm16_6m.c $(OBJECTS)
+	$(CC) $(INC) $(LIBS) -o examples/lubm16_6m examples/lubm16_6m.c $(OBJECTS)
+
 ########
 
 avl.o: avl.c avl.h hexastore_types.h
@@ -131,6 +142,9 @@ tap.o: tap.c tap.h
 
 clean:
 	rm -f examples/lubm_q[489] examples/bench examples/knows
+	rm -rf examples/lubm7_6m examples/lubm7_6m.dSYM
+	rm -rf examples/lubm8_6m examples/lubm8_6m.dSYM
+	rm -rf examples/lubm16_6m examples/lubm16_6m.dSYM
 	rm -rf examples/lubm_q[489].dSYM examples/bench.dSYM examples/knows.dSYM
 	rm -f test parse print optimize a.out server
 	rm -f *.o
