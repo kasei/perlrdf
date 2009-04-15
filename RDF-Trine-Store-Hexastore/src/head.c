@@ -17,7 +17,7 @@ int hx_free_head ( hx_head* head, hx_storage_manager* s ) {
 		hx_btree_iter_current( iter, &key, &value );
 		hx_vector* v	= hx_storage_block_from_id( s, value );
 		if (v != NULL) {
-			hx_free_vector( v );
+			hx_free_vector( v, s );
 		}
 		hx_btree_iter_next(iter);
 	}
@@ -40,7 +40,7 @@ int hx_head_debug ( const char* header, hx_head* h, hx_storage_manager* s ) {
 		hx_btree_iter_current( iter, &key, &value );
 		hx_vector* v	= hx_storage_block_from_id( s, value );
 		fprintf( stderr, "%s  %d", header, (int) key );
-		hx_vector_debug( indent, v );
+		hx_vector_debug( indent, v, s );
 		fprintf( stderr, ",\n" );
 		hx_btree_iter_next(iter);
 	}
@@ -124,7 +124,7 @@ int hx_head_write( hx_head* h, hx_storage_manager* s, FILE* f ) {
 		hx_vector* v;
 		hx_head_iter_current( iter, &n, &v );
 		fwrite( &n, sizeof( hx_node_id ), 1, f );
-		hx_vector_write( v, f );
+		hx_vector_write( v, s, f );
 		hx_head_iter_next( iter );
 	}
 	hx_free_head_iter( iter );

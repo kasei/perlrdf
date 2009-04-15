@@ -427,7 +427,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
 				}
-				size	= hx_vector_triples_count( vector );
+				size	= hx_vector_triples_count( vector, st );
 				return size;
 				break;
 			case 1:
@@ -441,7 +441,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
 				}
-				terminal	= hx_vector_get_terminal( vector, index_ordered_id[1] );
+				terminal	= hx_vector_get_terminal( vector, st, index_ordered_id[1] );
 				if (terminal == NULL) {
 					fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;

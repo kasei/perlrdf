@@ -58,7 +58,7 @@ int hx_index_debug ( hx_index* index, hx_storage_manager* st ) {
 		hx_vector* v;
 		hx_head_iter_current( hiter, &(triple_ordered[ index->order[ 0 ] ]), &v );
 		
-		hx_vector_iter* viter	= hx_vector_new_iter( v );
+		hx_vector_iter* viter	= hx_vector_new_iter( v, st );
 		int j = 0;
 		while (!hx_vector_iter_finished( viter )) {
 			hx_terminal* t;
@@ -111,15 +111,15 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_n
 		hx_head_add_vector( h, st, index_ordered[0], v );
 	}
 	
-	if ((t = hx_vector_get_terminal( v, index_ordered[1] )) == NULL) {
+	if ((t = hx_vector_get_terminal( v, st, index_ordered[1] )) == NULL) {
 		t	= hx_new_terminal( st );
-		hx_vector_add_terminal( v, index_ordered[1], t );
+		hx_vector_add_terminal( v, st, index_ordered[1], t );
 	}
 	
 	int added	= hx_terminal_add_node( t, index_ordered[2] );
 	if (added == 0) {
 		hx_head_triples_count_add( h, st, 1);
-		hx_vector_triples_count_add( v, 1 );
+		hx_vector_triples_count_add( v, st, 1 );
 	}
 	
 	if (r_terminal != NULL) {
@@ -148,10 +148,10 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st,
 		hx_head_add_vector( h, st, index_ordered[0], v );
 	}
 	
-	hx_vector_add_terminal( v, index_ordered[1], t );
+	hx_vector_add_terminal( v, st, index_ordered[1], t );
 	if (added == 0) {
 		hx_head_triples_count_add( h, st, 1);
-		hx_vector_triples_count_add( v, 1 );
+		hx_vector_triples_count_add( v, st, 1 );
 	}
 	
 	return added;
@@ -176,7 +176,7 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 		return 1;
 	}
 	
-	if ((t = hx_vector_get_terminal( v, index_ordered[1] )) == NULL) {
+	if ((t = hx_vector_get_terminal( v, st, index_ordered[1] )) == NULL) {
 		// no terminal for this node... do nothing.
 		return 1;
 	}
@@ -184,14 +184,14 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 	int removed	= hx_terminal_remove_node( t, index_ordered[2] );
 	if (removed == 0) {
 		hx_head_triples_count_add( h, st, -1 );
-		hx_vector_triples_count_add( v, -1 );
+		hx_vector_triples_count_add( v, st, -1 );
 	}
 	
 	if (hx_terminal_size( t ) == 0) {
 		// no more nodes in this terminal list... remove it from the vector.
-		hx_vector_remove_terminal( v, index_ordered[1] );
+		hx_vector_remove_terminal( v, st, index_ordered[1] );
 		
-		if (hx_vector_size( v ) == 0) {
+		if (hx_vector_size( v, st ) == 0) {
 			// no more terminal lists in this vector... remove it from the head.
 			hx_head_remove_vector( h, st, index_ordered[0] );
 		}
@@ -323,7 +323,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 			break;
 		}
 		
-		iter->vector_iter	= hx_vector_new_iter( v );
+		iter->vector_iter	= hx_vector_new_iter( v, iter->storage );
 		if (iter->node_mask_b > (hx_node_id) 0) {
 //			fprintf( stderr, "- vector seeking to %d\n", (int) iter->node_mask_b );
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
@@ -392,7 +392,7 @@ NEXTHEAD:
 		hx_terminal* t;
 		hx_head_iter_current( iter->head_iter, &n, &v );
 		_hx_index_got_head_trigger( iter, n );
-		iter->vector_iter	= hx_vector_new_iter( v );
+		iter->vector_iter	= hx_vector_new_iter( v, iter->storage );
 		if (iter->node_mask_b > (hx_node_id) 0) {
 			if (hx_vector_iter_seek( iter->vector_iter, iter->node_mask_b ) != 0) {
 				goto NEXTHEAD;

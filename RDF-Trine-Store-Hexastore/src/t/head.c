@@ -29,12 +29,12 @@ void head_test ( void ) {
 	
 	{
 		hx_vector* v	= hx_head_get_vector( h, st, (hx_node_id) 4 );
-		ok1( 14 == (int) hx_vector_size(v) );
+		ok1( 14 == (int) hx_vector_size(v, st) );
 	}
 	
 	{
 		hx_vector* v	= hx_head_get_vector( h, st, (hx_node_id) 8 );
-		ok1( 18 == (int) hx_vector_size(v) );
+		ok1( 18 == (int) hx_vector_size(v, st) );
 	}
 	
 	hx_free_head(h, st);
@@ -58,7 +58,7 @@ void head_iter_test1 ( void ) {
 		if (counter > 0) {
 			ok1( cur > last );
 		}
-		ok1( hx_vector_size(v) == (int) cur + 10 );
+		ok1( hx_vector_size(v, st) == (int) cur + 10 );
 		last	= cur;
 		counter++;
 		hx_head_iter_next(iter);
@@ -117,7 +117,7 @@ hx_vector* _new_vector ( hx_storage_manager* st, int n ) {
 		for (int j = 1; j <= i; j++) {
 			hx_terminal_add_node( t, (hx_node_id) j );
 		}
-		hx_vector_add_terminal( v, (hx_node_id) i, t );
+		hx_vector_add_terminal( v, st, (hx_node_id) i, t );
 	}
 	return v;
 }
