@@ -18,32 +18,31 @@
 #include "storage.h"
 
 typedef struct {
-	hx_storage_manager* storage;
 	hx_storage_id_t triples_count;
 	hx_btree* tree;
 } hx_head;
 
 typedef struct {
+	hx_storage_manager* storage;
 	hx_head* head;
 	hx_btree_iter* t;
 } hx_head_iter;
 
 hx_head* hx_new_head ( hx_storage_manager* s );
-int hx_free_head ( hx_head* head );
+int hx_free_head ( hx_head* head, hx_storage_manager* s );
 
-int hx_head_debug ( const char* header, hx_head* h );
-// int hx_head_binary_search ( const hx_head* h, const hx_node_id n, int* index );
-int hx_head_add_vector ( hx_head* h, hx_node_id n, hx_vector* v );
-hx_vector* hx_head_get_vector ( hx_head* h, hx_node_id n );
-int hx_head_remove_vector ( hx_head* h, hx_node_id n );
-list_size_t hx_head_size ( hx_head* h );
-hx_storage_id_t hx_head_triples_count ( hx_head* h );
-void hx_head_triples_count_add ( hx_head* h, int c );
+int hx_head_debug ( const char* header, hx_head* h, hx_storage_manager* s );
+int hx_head_add_vector ( hx_head* h, hx_storage_manager* s, hx_node_id n, hx_vector* v );
+hx_vector* hx_head_get_vector ( hx_head* h, hx_storage_manager* s, hx_node_id n );
+int hx_head_remove_vector ( hx_head* h, hx_storage_manager* s, hx_node_id n );
+list_size_t hx_head_size ( hx_head* h, hx_storage_manager* s );
+hx_storage_id_t hx_head_triples_count ( hx_head* h, hx_storage_manager* s );
+void hx_head_triples_count_add ( hx_head* h, hx_storage_manager* s, int c );
 
-int hx_head_write( hx_head* t, FILE* f );
-hx_head* hx_head_read( hx_storage_manager* w, FILE* f, int buffer );
+int hx_head_write( hx_head* t, hx_storage_manager* s, FILE* f );
+hx_head* hx_head_read( hx_storage_manager* s, FILE* f, int buffer );
 
-hx_head_iter* hx_head_new_iter ( hx_head* head );
+hx_head_iter* hx_head_new_iter ( hx_head* head, hx_storage_manager* s );
 int hx_free_head_iter ( hx_head_iter* iter );
 int hx_head_iter_finished ( hx_head_iter* iter );
 int hx_head_iter_current ( hx_head_iter* iter, hx_node_id* n, hx_vector** v );

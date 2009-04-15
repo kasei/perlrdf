@@ -422,7 +422,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
 				}
-				vector	= hx_head_get_vector( head, index_ordered_id[0] );
+				vector	= hx_head_get_vector( head, st, index_ordered_id[0] );
 				if (vector == NULL) {
 					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
@@ -436,7 +436,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
 				}
-				vector	= hx_head_get_vector( head, index_ordered_id[0] );
+				vector	= hx_head_get_vector( head, st, index_ordered_id[0] );
 				if (vector == NULL) {
 					fprintf( stderr, "*** Did not find the vector pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;

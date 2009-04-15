@@ -24,20 +24,20 @@ void head_test ( void ) {
 	
 	for (int i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
-		hx_head_add_vector( h, (hx_node_id) i, v );
+		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
 	
 	{
-		hx_vector* v	= hx_head_get_vector( h, (hx_node_id) 4 );
+		hx_vector* v	= hx_head_get_vector( h, st, (hx_node_id) 4 );
 		ok1( 14 == (int) hx_vector_size(v) );
 	}
 	
 	{
-		hx_vector* v	= hx_head_get_vector( h, (hx_node_id) 8 );
+		hx_vector* v	= hx_head_get_vector( h, st, (hx_node_id) 8 );
 		ok1( 18 == (int) hx_vector_size(v) );
 	}
 	
-	hx_free_head(h);
+	hx_free_head(h, st);
 }
 
 void head_iter_test1 ( void ) {
@@ -45,9 +45,9 @@ void head_iter_test1 ( void ) {
 	hx_head* h	= hx_new_head( st );
 	for (int i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
-		hx_head_add_vector( h, (hx_node_id) i, v );
+		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
-	hx_head_iter* iter	= hx_head_new_iter( h );
+	hx_head_iter* iter	= hx_head_new_iter( h, st );
 	ok1( iter != NULL );
 	
 	int counter	= 0;
@@ -66,7 +66,7 @@ void head_iter_test1 ( void ) {
 	
 	ok1( counter == 10 );
 	hx_free_head_iter( iter );
-	hx_free_head(h);
+	hx_free_head(h, st);
 }
 
 void head_iter_test2 ( void ) {
@@ -74,9 +74,9 @@ void head_iter_test2 ( void ) {
 	hx_head* h	= hx_new_head( st );
 	for (int i = 1; i <= 10; i++) {
 		hx_vector* v	= _new_vector( st, i );
-		hx_head_add_vector( h, (hx_node_id) i, v );
+		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
-	hx_head_iter* iter	= hx_head_new_iter( h );
+	hx_head_iter* iter	= hx_head_new_iter( h, st );
 	ok1( hx_head_iter_seek( iter, (hx_node_id) 7 ) == 0);
 	int counter	= 0;
 	while (!hx_head_iter_finished(iter)) {
@@ -86,7 +86,7 @@ void head_iter_test2 ( void ) {
 	
 	ok1( counter == 4 );
 	hx_free_head_iter( iter );
-	hx_free_head(h);
+	hx_free_head(h, st);
 }
 
 void head_iter_test3 ( void ) {
@@ -94,9 +94,9 @@ void head_iter_test3 ( void ) {
 	hx_head* h	= hx_new_head( st );
 	for (int i = 2; i <= 10; i+=2) {
 		hx_vector* v	= _new_vector( st, i );
-		hx_head_add_vector( h, (hx_node_id) i, v );
+		hx_head_add_vector( h, st, (hx_node_id) i, v );
 	}
-	hx_head_iter* iter	= hx_head_new_iter( h );
+	hx_head_iter* iter	= hx_head_new_iter( h, st );
 	ok1( hx_head_iter_seek( iter, (hx_node_id) 7 ) != 0);
 	int counter	= 0;
 	while (!hx_head_iter_finished(iter)) {
@@ -107,7 +107,7 @@ void head_iter_test3 ( void ) {
 	ok1( counter == 2 );
 	
 	hx_free_head_iter( iter );
-	hx_free_head(h);
+	hx_free_head(h, st);
 }
 
 hx_vector* _new_vector ( hx_storage_manager* st, int n ) {
