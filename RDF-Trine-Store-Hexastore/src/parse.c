@@ -49,7 +49,7 @@ int main (int argc, char** argv) {
 	hx_parser_set_logger( parser, logger );
 	
 	clock_t st_time	= clock();
-	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, rdf_filename );
+	uint64_t total	= hx_parser_parse_file_into_hexastore( parser, hx, s, rdf_filename );
 	clock_t end_time	= clock();
 	
 	double elapsed	= DIFFTIME(st_time, end_time);
@@ -65,7 +65,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "\n" );
 	
 	hx_free_parser( parser );
-	hx_free_hexastore( hx );
+	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 	return 0;
 }

@@ -187,13 +187,13 @@ int hx_bgp_debug ( hx_bgp* b ) {
 	}
 }
 
-int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx ) {
+int hx_bgp_reorder ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* st ) {
 	int size	= hx_bgp_size( b );
 	_hx_bgp_selectivity_t* s	= (_hx_bgp_selectivity_t*) calloc( size, sizeof( _hx_bgp_selectivity_t ) );
 	for (int i = 0; i < size; i++) {
 		hx_triple* t	= hx_bgp_triple( b, i );
 		s[i].triple		= t;
-		s[i].cost		= hx_count_statements( hx, t->subject, t->predicate, t->object );
+		s[i].cost		= hx_count_statements( hx, st, t->subject, t->predicate, t->object );
 //		_XXX_print_triple( t, s[i].cost );
 		if (s[i].cost == 0) {
 			fprintf( stderr, "*** no results will be found, because this pattern has no associated triples\n" );
@@ -269,7 +269,7 @@ int _hx_bgp_triple_joins_with_seen ( hx_bgp* b, hx_triple* t, int* seen, int siz
 }
 
 
-hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
+hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_storage_manager* s ) {
 	int size	= hx_bgp_size( b );
 	
 	hx_triple* t0	= hx_bgp_triple( b, 0 );
@@ -280,7 +280,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 		sort	= HX_SUBJECT;
 	}
 	
-	hx_index_iter* titer0	= hx_get_statements( hx, t0->subject, t0->predicate, t0->object, sort );
+	hx_index_iter* titer0	= hx_get_statements( hx, s, t0->subject, t0->predicate, t0->object, sort );
 	
 	char *sname, *pname, *oname;
 	hx_node_variable_name( t0->subject, &sname );
@@ -293,7 +293,7 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx ) {
 			char *sname, *pname, *oname;
 			hx_triple* t			= hx_bgp_triple( b, i );
 			int jsort				= _hx_bgp_sort_for_vb_join( t, iter );
-			hx_index_iter* titer	= hx_get_statements( hx, t->subject, t->predicate, t->object, jsort );
+			hx_index_iter* titer	= hx_get_statements( hx, s, t->subject, t->predicate, t->object, jsort );
 			if (titer == NULL) {
 				return NULL;
 			}

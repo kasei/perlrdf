@@ -18,7 +18,7 @@
 #include "bgp.h"
 
 #define DIFFTIME(a,b) ((b-a)/(double)CLOCKS_PER_SEC)
-double bench ( hx_hexastore* hx, hx_bgp* b );
+double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s );
 
 static hx_node* x;
 static hx_node* y;
@@ -33,19 +33,19 @@ static hx_node* member;
 
 void _fill_triple ( hx_triple* t, hx_node* s, hx_node* p, hx_node* o );
 
-double average ( hx_hexastore* hx, hx_bgp* b, int count ) {
+double average ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s, int count ) {
 	double total	= 0.0;
 	for (int i = 0; i < count; i++) {
-		total	+= bench( hx, b );
+		total	+= bench( hx, b, s );
 	}
 	return (total / (double) count);
 }
 
-double bench ( hx_hexastore* hx, hx_bgp* b ) {
+double bench ( hx_hexastore* hx, hx_bgp* b, hx_storage_manager* s ) {
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	clock_t st_time	= clock();
 	
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
 //	hx_variablebindings_iter_debug( iter, "lubm8> ", 0 );
 	
 	int size		= hx_variablebindings_iter_size( iter );
@@ -143,14 +143,14 @@ int main ( int argc, char** argv ) {
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
 		hx_bgp_debug( b );
-		fprintf( stderr, "running time: %lf\n", average( hx, b, 4 ) );
+		fprintf( stderr, "running time: %lf\n", average( hx, b, s, 4 ) );
 		hx_free_bgp( b );
 	}
 	{
 		hx_bgp* b	= hx_new_bgp( 6, triples );
-		hx_bgp_reorder( b, hx );
+		hx_bgp_reorder( b, hx, s );
 		hx_bgp_debug( b );
-		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, 4 ) );
+		fprintf( stderr, "BGP-optimized running time: %lf\n", average( hx, b, s, 4 ) );
 		hx_free_bgp( b );
 	}
 	
@@ -165,7 +165,7 @@ int main ( int argc, char** argv ) {
 	hx_free_node( gradstudent );
 	hx_free_node( member );
 	
-	hx_free_hexastore( hx );
+	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 	
 	return 0;

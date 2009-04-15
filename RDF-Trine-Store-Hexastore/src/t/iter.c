@@ -5,9 +5,9 @@
 #include "storage.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
 void _debug_node ( char* h, hx_node* node );
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort );
 
 hx_node* p1;
 hx_node* p2;
@@ -36,7 +36,7 @@ void test_small_iter ( void ) {
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_hexastore* hx	= hx_new_hexastore( s );
 	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx );
+	_add_data( hx, s );
 // <r1> :p1 <r2>
 // <r2> :p1 <r1>
 // <r2> :p2 "l2"
@@ -49,7 +49,7 @@ void test_small_iter ( void ) {
 	hx_variablebindings* b;
 	
 	// get ?subj ?pred ?obj ordered by object
-	hx_variablebindings_iter* iter	= _get_triples( hx, HX_OBJECT );
+	hx_variablebindings_iter* iter	= _get_triples( hx, s, HX_OBJECT );
 	ok1( !hx_variablebindings_iter_finished( iter ) );
 	hx_variablebindings_iter_current( iter, &b );
 	
@@ -135,25 +135,25 @@ void test_small_iter ( void ) {
 // 	}
 	
 	hx_free_variablebindings_iter( iter, 1 );
-	hx_free_hexastore( hx );
+	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 }
 
-hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort ) {
+hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, hx_storage_manager* s, int sort ) {
 	hx_node* v1	= hx_new_node_variable( -1 );
 	hx_node* v2	= hx_new_node_variable( -2 );
 	hx_node* v3	= hx_new_node_variable( -3 );
 	
-	hx_index_iter* titer	= hx_get_statements( hx, v1, v2, v3, HX_OBJECT );
+	hx_index_iter* titer	= hx_get_statements( hx, s, v1, v2, v3, HX_OBJECT );
 	hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, "subj", "pred", "obj", 0 );
 	return iter;
 }
 
-void _add_data ( hx_hexastore* hx ) {
-	hx_add_triple( hx, r1, p1, r2 );
-	hx_add_triple( hx, r2, p1, r1 );
-	hx_add_triple( hx, r2, p2, l2 );
-	hx_add_triple( hx, r1, p2, l1 );
+void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
+	hx_add_triple( hx, s, r1, p1, r2 );
+	hx_add_triple( hx, s, r2, p1, r1 );
+	hx_add_triple( hx, s, r2, p2, l2 );
+	hx_add_triple( hx, s, r1, p2, l1 );
 }
 
 void _debug_node ( char* h, hx_node* node ) {

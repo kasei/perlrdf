@@ -24,7 +24,7 @@ int hx_parser_set_logger( hx_parser* p, hx_parser_logger l ) {
 	return 0;
 }
 
-uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, const char* filename ) {
+uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* hx, hx_storage_manager* s, const char* filename ) {
 	raptor_init();
 	unsigned char* uri_string	= raptor_uri_filename_to_uri_string( filename );
 	raptor_uri* uri				= raptor_new_uri(uri_string);
@@ -33,6 +33,7 @@ uint64_t hx_parser_parse_file_into_hexastore ( hx_parser* parser, hx_hexastore* 
 	raptor_uri *base_uri		= raptor_uri_copy(uri);
 	
 	parser->hx		= hx;
+	parser->s		= s;
 	parser->count	= 0;
 	parser->triples	= (hx_triple*) calloc( TRIPLES_BATCH_SIZE, sizeof( hx_triple ) );
 	
@@ -92,7 +93,7 @@ void _hx_parser_handle_triple (void* user_data, const raptor_statement* triple)	
 
 int  _hx_parser_add_triples_batch ( hx_parser* parser ) {
 	if (parser->count > 0) {
-		hx_add_triples( parser->hx, parser->triples, parser->count );
+		hx_add_triples( parser->hx, parser->s, parser->triples, parser->count );
 		parser->total	+= parser->count;
 		if (parser->logger != NULL) {
 			parser->logger( parser->total );

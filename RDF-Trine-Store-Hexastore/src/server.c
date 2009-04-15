@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
   }
 
   drizzle_free(&(server.drizzle));
-  hx_free_hexastore( server.db );
+  hx_free_hexastore( server.db, s );
   hx_free_storage_manager( s );
 
   return 0;

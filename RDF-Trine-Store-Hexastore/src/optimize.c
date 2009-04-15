@@ -33,10 +33,10 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_storage_manager* s	= hx_new_memory_storage_manager();
+	hx_storage_manager* st	= hx_new_memory_storage_manager();
 	
 	fprintf( stderr, "reading hexastore from file...\n" );
-	hx_hexastore* hx	= hx_read( s, inf, 0 );
+	hx_hexastore* hx	= hx_read( st, inf, 0 );
 	fprintf( stderr, "reading nodemap from file...\n" );
 	hx_nodemap* map		= hx_get_nodemap( hx );
 	
@@ -45,7 +45,7 @@ int main (int argc, char** argv) {
 	
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
-	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( s, smap );
+	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( st, smap );
 	hx_index_iter* iter	= hx_index_new_iter( hx->spo );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
@@ -54,7 +54,7 @@ int main (int argc, char** argv) {
 		hx_node* pn	= hx_nodemap_get_node( hx->map, p );
 		hx_node* on	= hx_nodemap_get_node( hx->map, o );
 		
-		hx_add_triple( shx, sn, pn, on );
+		hx_add_triple( shx, st, sn, pn, on );
 		hx_index_iter_next( iter );
 		if ((++count % 25000) == 0)
 			fprintf( stderr, "\rfinished %d triples", count );
@@ -71,9 +71,9 @@ int main (int argc, char** argv) {
 		return 1;
 	}
 	
-	hx_free_hexastore( hx );
+	hx_free_hexastore( hx, st );
 	hx_free_nodemap( smap );
-	hx_free_storage_manager( s );
+	hx_free_storage_manager( st );
 	fclose( inf );
 	fclose( outf );
 	return 0;

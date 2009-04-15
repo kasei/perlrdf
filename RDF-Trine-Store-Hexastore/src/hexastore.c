@@ -40,7 +40,6 @@ hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map ) {
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap* map ) {
 	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
 	hx_storage_set_thaw_remap_handler( s, _hx_thaw_handler, map );
-	hx->storage		= s;
 	hx->map			= map;
 	hx->spo			= hx_new_index( s, HX_INDEX_ORDER_SPO );
 	hx->sop			= hx_new_index( s, HX_INDEX_ORDER_SOP );
@@ -52,7 +51,7 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap*
 	return hx;
 }
 
-int hx_free_hexastore ( hx_hexastore* hx ) {
+int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_free_nodemap( hx->map );
 	hx_free_index( hx->spo );
 	hx_free_index( hx->sop );
@@ -60,7 +59,7 @@ int hx_free_hexastore ( hx_hexastore* hx ) {
 	hx_free_index( hx->pos );
 	hx_free_index( hx->osp );
 	hx_free_index( hx->ops );
-	hx_storage_release_block( hx->storage, hx );
+	hx_storage_release_block( s, hx );
 	return 0;
 }
 
@@ -68,7 +67,7 @@ hx_nodemap* hx_get_nodemap ( hx_hexastore* hx ) {
 	return hx->map;
 }
 
-int hx_add_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
+int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on ) {
 	hx_nodemap* map	= hx->map;
 	hx_node_id s	= hx_nodemap_add_node( map, sn );
 	hx_node_id p	= hx_nodemap_add_node( map, pn );
@@ -96,10 +95,10 @@ int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o )
 	return 0;
 }
 
-int hx_add_triples( hx_hexastore* hx, hx_triple* triples, int count ) {
+int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples, int count ) {
 	if (count < THREADED_BATCH_SIZE) {
 		for (int i = 0; i < count; i++) {
-			hx_add_triple( hx, triples[i].subject, triples[i].predicate, triples[i].object );
+			hx_add_triple( hx, s, triples[i].subject, triples[i].predicate, triples[i].object );
 		}
 	} else {
 		hx_triple_id triple_ids[ count ];
@@ -190,7 +189,7 @@ void* _hx_add_triple_threaded (void* arg) {
 	return NULL;
 }
 
-int hx_remove_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) {
+int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on ) {
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
@@ -203,7 +202,7 @@ int hx_remove_triple( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on ) 
 	return 0;
 }
 
-int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
+int hx_get_ordered_index( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on, int order_position, hx_index** index, hx_node** nodes, int* var_count ) {
 	int i		= 0;
 	int vars	= 0;
 	hx_node_id s	= hx_get_node_id( hx, sn );
@@ -371,10 +370,10 @@ int hx_get_ordered_index( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* o
 	return 0;
 }
 
-hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx_node* on, int order_position ) {
+hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_node* pn, hx_node* on, int order_position ) {
 	hx_node* index_ordered[3];
 	hx_index* index;
-	hx_get_ordered_index( hx, sn, pn, on, order_position, &index, index_ordered, NULL );
+	hx_get_ordered_index( hx, st, sn, pn, on, order_position, &index, index_ordered, NULL );
 	
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
@@ -395,12 +394,12 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_node* sn, hx_node* pn, hx
 	return iter;
 }
 
-hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, hx_node* o ) {
+hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, hx_node* s, hx_node* p, hx_node* o ) {
 	{
 		int vars;
 		hx_index* index;
 		hx_node* index_ordered[3];
-		hx_get_ordered_index( hx, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
+		hx_get_ordered_index( hx, st, s, p, o, HX_SUBJECT, &index, index_ordered, &vars );
 
 		hx_node_id aid	= hx_get_node_id( hx, index_ordered[0] );
 		hx_node_id bid	= hx_get_node_id( hx, index_ordered[1] );
@@ -414,7 +413,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, h
 		hx_terminal* terminal;
 		switch (vars) {
 			case 3:
-				return hx_triples_count( hx );
+				return hx_triples_count( hx, st );
 			case 2:
 				head	= hx_index_head( index );
 				if (head == NULL) {
@@ -448,14 +447,14 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, h
 				size	= (hx_storage_id_t) hx_terminal_size( terminal );
 				return size;
 			case 0:
-				iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
+				iter	= hx_get_statements( hx, st, s, p, o, HX_SUBJECT );
 				break;
 				return (hx_storage_id_t) ((hx_index_iter_finished(iter)) ? 0 : 1);
 		};
 	}
 	// XXX NOT EFFICIENT... Needs to be updated to use the {head,vector,terminal} structs' triples_count field
 	hx_storage_id_t count	= 0;
-	hx_index_iter* iter	= hx_get_statements( hx, s, p, o, HX_SUBJECT );
+	hx_index_iter* iter	= hx_get_statements( hx, st, s, p, o, HX_SUBJECT );
 	while (!hx_index_iter_finished(iter)) {
 		count++;
 		hx_index_iter_next(iter);
@@ -464,7 +463,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_node* s, hx_node* p, h
 	return count;
 }
 
-hx_storage_id_t hx_triples_count ( hx_hexastore* hx ) {
+hx_storage_id_t hx_triples_count ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_index* i	= hx->spo;
 	return hx_index_triples_count( i );
 }
@@ -512,14 +511,12 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	hx->pos		= hx_index_read( s, f, buffer );
 	hx->osp		= hx_index_read( s, f, buffer );
 	hx->ops		= hx_index_read( s, f, buffer );
-	hx->storage	= s;
 	hx_storage_set_thaw_remap_handler( s, _hx_thaw_handler, hx->map );
 	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
 		hx_storage_release_block( s, hx );
 		return NULL;
 	} else {
-		hx->storage	= s;
 		return hx;
 	}
 }

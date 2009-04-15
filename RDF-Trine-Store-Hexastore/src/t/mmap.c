@@ -20,7 +20,7 @@ static char* temp_file	= "/tmp/test.hx";
 static char* temp_map	= "/tmp/test.map";
 
 int main ( void ) {
-	plan_tests(10);
+	plan_tests(20);
 	
 	test_close_open();
 	test_mmap_grow();
@@ -60,7 +60,7 @@ void test_close_open (void) {
 			return;
 		}
 		fclose( fp );
-		hx_free_hexastore( hx );
+		hx_free_hexastore( hx, s );
 		hx_free_storage_manager( s );
 	}
 	
@@ -84,58 +84,58 @@ void test_close_open (void) {
 		hx_node* sl			= hx_new_node_literal( "s" );
 	
 		{	// ALL TRIPLES
-			hx_storage_id_t total	= hx_triples_count( hx );
+			hx_storage_id_t total	= hx_triples_count( hx, s );
 			ok1( total == 31 );
 		}
 		
 		{	// fff
-			hx_storage_id_t total	= hx_count_statements( hx, x, y, z );
+			hx_storage_id_t total	= hx_count_statements( hx, s, x, y, z );
 			ok1( total == 31 );
 		}
 		
 		{	// fbf
-			hx_storage_id_t total	= hx_count_statements( hx, x, binding, z );
+			hx_storage_id_t total	= hx_count_statements( hx, s, x, binding, z );
 			ok1( total == 8 );
 		}
 		
 		{	// bff
-			hx_storage_id_t total	= hx_count_statements( hx, rs, x, y );
+			hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, y );
 			ok1( total == 7 );
 		}
 		
 		{	// ffb
-			hx_storage_id_t total	= hx_count_statements( hx, x, y, sl );
+			hx_storage_id_t total	= hx_count_statements( hx, s, x, y, sl );
 			ok1( total == 3 );
 		}
 		
 		{	// fbb
-			hx_storage_id_t total	= hx_count_statements( hx, x, variable, sl );
+			hx_storage_id_t total	= hx_count_statements( hx, s, x, variable, sl );
 			ok1( total == 2 );
 		}
 		
 		{	// bfb
-			hx_storage_id_t total	= hx_count_statements( hx, rs, x, rstype );
+			hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, rstype );
 			ok1( total == 1 );
 		}
 	
 		{	// bbf
-			hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, y );
+			hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, y );
 			ok1( total == 4 );
 		}
 		
 		{	// bbb
-			hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, sl );
+			hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, sl );
 			ok1( total == 1 );
 		}
 		
 		{	// bbb
-			hx_storage_id_t total	= hx_count_statements( hx, rs, resvar, rstype );
+			hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, rstype );
 			ok1( total == 0 );
 		}
 		
 		hx_variablebindings* b;
 		
-		hx_free_hexastore( hx );
+		hx_free_hexastore( hx, s );
 		hx_free_storage_manager( s );
 		cleanup_files();
 	}
@@ -157,9 +157,68 @@ void test_mmap_grow ( void ) {
 	hx_hexastore* hx	= hx_new_hexastore( s );
 	_add_data( hx );
 	
+	hx_node* x			= hx_new_variable( hx );
+	hx_node* y			= hx_new_variable( hx );
+	hx_node* z			= hx_new_variable( hx );
+	hx_node* binding	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding" );
+	hx_node* variable	= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable" );
+	hx_node* resvar		= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable" );
+	hx_node* rs			= hx_new_node_resource( "http://resultset/" );
+	hx_node* rstype		= hx_new_node_resource( "http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet" );
+	hx_node* sl			= hx_new_node_literal( "s" );
+	
+	{	// ALL TRIPLES
+		hx_storage_id_t total	= hx_triples_count( hx, s );
+		ok1( total == 31 );
+	}
+	
+	{	// fff
+		hx_storage_id_t total	= hx_count_statements( hx, s, x, y, z );
+		ok1( total == 31 );
+	}
+	
+	{	// fbf
+		hx_storage_id_t total	= hx_count_statements( hx, s, x, binding, z );
+		ok1( total == 8 );
+	}
+	
+	{	// bff
+		hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, y );
+		ok1( total == 7 );
+	}
+	
+	{	// ffb
+		hx_storage_id_t total	= hx_count_statements( hx, s, x, y, sl );
+		ok1( total == 3 );
+	}
+	
+	{	// fbb
+		hx_storage_id_t total	= hx_count_statements( hx, s, x, variable, sl );
+		ok1( total == 2 );
+	}
+	
+	{	// bfb
+		hx_storage_id_t total	= hx_count_statements( hx, s, rs, x, rstype );
+		ok1( total == 1 );
+	}
+
+	{	// bbf
+		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, y );
+		ok1( total == 4 );
+	}
+	
+	{	// bbb
+		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, sl );
+		ok1( total == 1 );
+	}
+	
+	{	// bbb
+		hx_storage_id_t total	= hx_count_statements( hx, s, rs, resvar, rstype );
+		ok1( total == 0 );
+	}
 	
 	
-	hx_free_hexastore( hx );
+	hx_free_hexastore( hx, s );
 	hx_free_storage_manager( s );
 	cleanup_files();
 }

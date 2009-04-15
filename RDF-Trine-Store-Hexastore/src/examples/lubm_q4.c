@@ -55,7 +55,7 @@ int main ( int argc, char** argv ) {
 	}
 	
 	hx_bgp* b	= hx_new_bgp( 4, triples );
-	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx );
+	hx_variablebindings_iter* iter	= hx_bgp_execute( b, hx, s );
 	
 	int size		= hx_variablebindings_iter_size( iter );
 	char** names	= hx_variablebindings_iter_names( iter );
