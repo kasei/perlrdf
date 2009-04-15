@@ -32,7 +32,7 @@ typedef struct {
 
 typedef struct {
 	uint32_t branching_size;
-	hx_btree_node* root;
+	hx_storage_id_t root;
 } hx_btree;
 
 typedef struct {

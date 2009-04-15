@@ -2,14 +2,15 @@
 
 hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 	hx_terminal* terminal	= (hx_terminal*) hx_storage_new_block( s, sizeof( hx_terminal ) );
-	terminal->tree			= hx_new_btree( s, TERMINAL_TREE_BRANCHING_SIZE );
+	hx_btree* tree			= hx_new_btree( s, TERMINAL_TREE_BRANCHING_SIZE );
+	terminal->tree			= hx_storage_id_from_block( s, tree );
 	terminal->refcount		= 0;
 	terminal->triples_count	= 0;
 	return terminal;
 }
 
 int hx_free_terminal ( hx_terminal* t, hx_storage_manager* st ) {
-	hx_free_btree( st, t->tree );
+	hx_free_btree( st, hx_storage_block_from_id( st, t->tree ) );
 	hx_storage_release_block( st, t );
 	return 0;
 }
@@ -54,7 +55,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n 
 		return 1;
 	}
 	
-	int r	= hx_btree_insert( st, t->tree, n, (hx_storage_id_t) 1 );
+	int r	= hx_btree_insert( st, hx_storage_block_from_id( st, t->tree ), n, (hx_storage_id_t) 1 );
 	if (r == 0) {
 		t->triples_count++;
 	}
@@ -62,7 +63,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n 
 }
 
 int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
-	hx_storage_id_t r	= hx_btree_search( st, t->tree, n );
+	hx_storage_id_t r	= hx_btree_search( st, hx_storage_block_from_id( st, t->tree ), n );
 	if (r == 0) {
 		// not found
 		return 0;
@@ -74,7 +75,7 @@ int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_
 
 int hx_terminal_remove_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
 //	fprintf( stderr, "%p\n", t->tree->root );
-	int r	= hx_btree_remove( st, t->tree, n );
+	int r	= hx_btree_remove( st, hx_storage_block_from_id( st, t->tree ), n );
 //	fprintf( stderr, "after removing node from terminal, tree root = %p\n", t->tree->root );
 	if (r == 0) {
 		t->triples_count--;
@@ -90,7 +91,7 @@ hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* t, hx_storage_manager* st 
 	hx_terminal_iter* iter	= (hx_terminal_iter*) calloc( 1, sizeof( hx_terminal_iter ) );
 	iter->terminal	= t;
 	iter->storage	= st;
-	iter->t			= hx_btree_new_iter( st, t->tree );
+	iter->t			= hx_btree_new_iter( st, hx_storage_block_from_id( st, t->tree ) );
 	return iter;
 }
 

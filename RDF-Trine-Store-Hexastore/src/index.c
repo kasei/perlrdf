@@ -23,6 +23,7 @@ hx_index* hx_new_index ( hx_storage_manager* s, int* index_order ) {
 	int a	= index_order[0];
 	int b	= index_order[1];
 	int c	= index_order[2];
+//	fprintf( stderr, "hx_index is %d bytes in size\n", (int) sizeof( hx_index ) );
 	hx_index* i	= (hx_index*) hx_storage_new_block( s, sizeof( hx_index ) );
 	i->order[0]	= a;
 	i->order[1]	= b;

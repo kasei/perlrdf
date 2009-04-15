@@ -19,12 +19,7 @@ static char* temp_file	= "/tmp/test.hx";
 int main ( void ) {
 	plan_tests(10);
 	
-	int fd	= open( temp_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR );
-	for (int i = 0; i < 4*65536; i++)
-		write( fd, "", 1 );
-	lseek( fd, 0, SEEK_SET );
-	
-	hx_storage_manager* s	= hx_new_mmap_storage_manager( fd );
+	hx_storage_manager* s	= hx_new_mmap_storage_manager( temp_file );
 	if (s == NULL) {
 		fail( "hx_new_mmap_storage_manager returns mmap storage manager", "" );
 		return exit_status();

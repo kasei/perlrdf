@@ -37,14 +37,13 @@ static const int RDF_ITER_TYPE_BFF	= RDF_ITER_FLAGS_BOUND_A;
 static const int RDF_ITER_TYPE_BBF	= RDF_ITER_FLAGS_BOUND_A | RDF_ITER_FLAGS_BOUND_B;
 
 typedef struct {
-//	hx_storage_manager* storage;
 	hx_nodemap* map;
-	hx_index* spo;
-	hx_index* sop;
-	hx_index* pso;
-	hx_index* pos;
-	hx_index* osp;
-	hx_index* ops;
+	hx_storage_id_t spo;
+	hx_storage_id_t sop;
+	hx_storage_id_t pso;
+	hx_storage_id_t pos;
+	hx_storage_id_t osp;
+	hx_storage_id_t ops;
 	int next_var;
 } hx_hexastore;
 

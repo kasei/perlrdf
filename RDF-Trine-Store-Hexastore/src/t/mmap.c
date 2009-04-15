@@ -30,12 +30,7 @@ int main ( void ) {
 
 void test_close_open (void) {
 	{
-		int fd	= open( temp_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR );
-		for (int i = 0; i < 4*65536; i++)
-			write( fd, "", 1 );
-		lseek( fd, 0, SEEK_SET );
-		
-		hx_storage_manager* s	= hx_new_mmap_storage_manager( fd );
+		hx_storage_manager* s	= hx_new_mmap_storage_manager( temp_file );
 		if (s == NULL) {
 			fail( "hx_new_mmap_storage_manager returns mmap storage manager", "" );
 			cleanup_files();
@@ -65,8 +60,7 @@ void test_close_open (void) {
 	}
 	
 	{
-		int fd	= open( temp_file, O_RDONLY );
-		hx_storage_manager* s	= hx_open_mmap_storage_manager( fd, PROT_READ );
+		hx_storage_manager* s	= hx_open_mmap_storage_manager( temp_file, PROT_READ );
 		
 		FILE* fp		= fopen(temp_map, "r");
 		hx_nodemap* map	= hx_nodemap_read( s, fp, 0 );
@@ -142,12 +136,7 @@ void test_close_open (void) {
 }
 
 void test_mmap_grow ( void ) {
-	int fd	= open( temp_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR );
-	for (int i = 0; i < 4096; i++)
-		write( fd, "", 1 );
-	lseek( fd, 0, SEEK_SET );
-	fsync(fd);
-	hx_storage_manager* s	= hx_new_mmap_storage_manager( fd );
+	hx_storage_manager* s	= hx_new_mmap_storage_manager( temp_file );
 	if (s == NULL) {
 		fail( "hx_new_mmap_storage_manager returns mmap storage manager", "" );
 		cleanup_files();

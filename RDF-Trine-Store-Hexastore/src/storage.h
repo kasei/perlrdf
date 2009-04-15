@@ -28,9 +28,10 @@ typedef void hx_storage_handler ( void* s, void* arg );
 typedef struct {
 	int flags;
 	int fd;
+	int prot;
 	void* m;	// mmap ptr
 	off_t size;	// mmap file size
-	char* filename;
+	const char* filename;
 	hx_storage_handler* freeze_handler;
 	void* freeze_arg;
 	hx_storage_handler* thaw_handler;
@@ -38,8 +39,8 @@ typedef struct {
 } hx_storage_manager;
 
 hx_storage_manager* hx_new_memory_storage_manager( void );
-hx_storage_manager* hx_new_mmap_storage_manager( int fd );
-hx_storage_manager* hx_open_mmap_storage_manager( int fd, int prot );
+hx_storage_manager* hx_new_mmap_storage_manager( const char* filename );
+hx_storage_manager* hx_open_mmap_storage_manager( const char* filename, int prot );
 hx_storage_manager* hx_new_file_storage_manager( const char* filename );
 hx_storage_manager* hx_open_file_storage_manager( const char* filename );
 

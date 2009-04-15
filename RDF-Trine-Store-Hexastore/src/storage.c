@@ -8,10 +8,24 @@ hx_storage_manager* hx_new_memory_storage_manager( void ) {
 	return s;
 }
 
-hx_storage_manager* hx_new_mmap_storage_manager( int fd ) {
+hx_storage_manager* hx_new_mmap_storage_manager( const char* filename ) {
+	int fd	= open( filename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR );
+	if (fd == -1) {
+		perror( "Failed to open mmap file" );
+		return NULL;
+	}
+	
 	hx_storage_manager* s	= (hx_storage_manager*) calloc( 1, sizeof( hx_storage_manager ) );
+	s->filename	= filename;
 	struct stat st;
 	fstat( fd, &st );
+	
+	if (st.st_size == 0) {
+		for (int i = 0; i < 4096; i++)
+			write( fd, "", 1 );
+		fstat( fd, &st );
+	}
+	
 	s->fd	= fd;
 	s->m	= mmap( NULL, st.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
 	if (s->m == NULL) {
@@ -28,13 +42,21 @@ hx_storage_manager* hx_new_mmap_storage_manager( int fd ) {
 	return s;
 }
 
-hx_storage_manager* hx_open_mmap_storage_manager( int fd, int prot ) {
+hx_storage_manager* hx_open_mmap_storage_manager( const char* filename, int prot ) {
+	int fd	= open( filename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR );
+	if (fd == -1) {
+		perror( "Failed to open mmap file" );
+		return NULL;
+	}
+	
 	hx_storage_manager* s	= (hx_storage_manager*) calloc( 1, sizeof( hx_storage_manager ) );
+	s->filename	= filename;
 	struct stat st;
 	fstat( fd, &st );
 	s->fd	= fd;
-	int flags	= (prot & PROT_WRITE) ? MAP_SHARED : MAP_PRIVATE;
-	s->m	= mmap( NULL, st.st_size, prot | PROT_WRITE, flags, fd, 0 );
+	s->prot	= prot;
+	int flags	= (s->prot & PROT_WRITE) ? MAP_SHARED : MAP_PRIVATE;
+	s->m	= mmap( NULL, st.st_size, s->prot | PROT_WRITE, flags, fd, 0 );
 	if (s->m == NULL) {
 		free( s );
 		return NULL;
@@ -57,18 +79,42 @@ int _hx_storage_mmap_grow ( hx_storage_manager* s ) {
 		if (s->freeze_handler != NULL) {
 			s->freeze_handler( s, s->freeze_arg );
 		}
+		uint64_t next_block	= HX_STORAGE_MMAP_NEXT_BLOCK(s);
 		munmap( s->m, s->size );
-		off_t newsize	= s->size * 2;
-		lseek( s->fd, SEEK_END, 0 );
-		for (int i = 0; i < s->size; i++)
+		fsync( s->fd );
+		
+		off_t addsize	= (s->size == 0) ? 4096 : s->size;
+		off_t newsize	= s->size + addsize;
+		if (lseek( s->fd, 0, SEEK_END ) == -1) {
+			perror( "Failed to seek to end of mmap file" );
+		}
+		
+		for (int i = 0; i < addsize; i++)
 			write( s->fd, "", 1 );
-		lseek( s->fd, SEEK_SET, 0 );
-		s->m	= mmap( s->m, newsize, PROT_READ | PROT_WRITE, MAP_SHARED, s->fd, 0 );
+		fsync( s->fd );
+		
+		if (lseek( s->fd, 0, SEEK_SET ) == -1) {
+			perror( "Failed to seek to beginning of mmap file" );
+		}
+		
+		struct stat st;
+		fstat( s->fd, &st );
+		if (st.st_size != newsize) {
+			fprintf( stderr, "*** expected new size is %d bytes, but got %d bytes\n", (int) newsize, (int) st.st_size );
+		}
+		
+		void* prev	= s->m;
+		int flags	= (s->prot & PROT_WRITE) ? MAP_SHARED : MAP_PRIVATE;
+		s->m	= mmap( s->m, newsize, s->prot | PROT_WRITE, flags | MAP_FIXED, s->fd, 0 );
 		if (s->m == NULL) {
+			fprintf( stderr, "*** could not mmap after growing file\n" );
 			free( s );
 			return 1;
+		} else if (s->m != prev) {
+			fprintf( stderr, "*** mmap address has changed\n" );
 		}
-		s->size	= newsize;
+		HX_STORAGE_MMAP_NEXT_BLOCK(s)	= next_block;
+		s->size		= st.st_size;
 		if (s->thaw_handler != NULL) {
 			s->thaw_handler( s, s->thaw_arg );
 		}
@@ -100,7 +146,12 @@ void* hx_storage_new_block( hx_storage_manager* s, size_t size ) {
 	if (s->flags & HX_STORAGE_MEMORY) {
 		return calloc( 1, size );
 	} else if (s->flags & HX_STORAGE_MMAP) {
-		while ((HX_STORAGE_MMAP_NEXT_BLOCK(s) + size) >= s->size) {
+//		fprintf( stderr, "allocating %d bytes in mmap\n", (int) size );
+		while ((HX_STORAGE_MMAP_NEXT_BLOCK(s) + HX_STORAGE_BLOCK_HEADER_SIZE + size) >= s->size) {
+// 			fprintf( stderr, "*** need to grow mmap file:\n" );
+// 			fprintf( stderr, "\tcurrent size is %d bytes\n", (int) s->size );
+// 			fprintf( stderr, "\tcurrent offset is %d bytes\n", (int) HX_STORAGE_MMAP_NEXT_BLOCK(s) );
+// 			fprintf( stderr, "\trequested new allocation is %d bytes\n", (int) size );
 			_hx_storage_mmap_grow( s );
 		}
 		void* p			= (void*) ((int8_t*) s->m + HX_STORAGE_MMAP_NEXT_BLOCK(s));
@@ -108,6 +159,7 @@ void* hx_storage_new_block( hx_storage_manager* s, size_t size ) {
 		*sz				= (uint32_t) size;
 		HX_STORAGE_MMAP_NEXT_BLOCK(s)	+= size;
 		void* block		= ((int8_t*) p + sizeof( uint32_t ) );
+//		fprintf( stderr, "-> %p\n", (void*) block );
 		return block;
 	} else {
 		fprintf( stderr, "*** trying to create new block with unimplemented storage manager\n" );
