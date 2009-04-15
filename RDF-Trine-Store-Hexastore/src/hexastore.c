@@ -17,13 +17,29 @@ int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o )
 
 /////////////////////
 
+void _hx_thaw_handler ( void* _s, void* arg ) {
+	hx_storage_manager* s	= (hx_storage_manager*) _s;
+	hx_hexastore* hx	= (hx_hexastore*) hx_storage_first_block( s );
+	hx->map	= arg;
+}
+
+/////////////////////
+
 hx_hexastore* hx_new_hexastore ( hx_storage_manager* s ) {
 	hx_nodemap* map	= hx_new_nodemap();
 	return hx_new_hexastore_with_nodemap( s, map );
 }
 
+hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map ) {
+	hx_hexastore* hx	= (hx_hexastore*) hx_storage_first_block( s );
+	hx->map				= map;
+	hx_storage_set_thaw_remap_handler( s, _hx_thaw_handler, map );
+	return hx;
+}
+
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap* map ) {
 	hx_hexastore* hx	= (hx_hexastore*) hx_storage_new_block( s, sizeof( hx_hexastore ) );
+	hx_storage_set_thaw_remap_handler( s, _hx_thaw_handler, map );
 	hx->storage		= s;
 	hx->map			= map;
 	hx->spo			= hx_new_index( s, HX_INDEX_ORDER_SPO );
@@ -497,6 +513,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	hx->osp		= hx_index_read( s, f, buffer );
 	hx->ops		= hx_index_read( s, f, buffer );
 	hx->storage	= s;
+	hx_storage_set_thaw_remap_handler( s, _hx_thaw_handler, hx->map );
 	if ((hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL) || (hx->spo == NULL)) {
 		fprintf( stderr, "*** NULL index returned while trying to read hexastore from disk.\n" );
 		hx_storage_release_block( s, hx );

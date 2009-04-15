@@ -18,7 +18,7 @@
 typedef struct {
 	int order[3];
 	hx_storage_manager* storage;
-	hx_head* head;
+	hx_storage_id_t head;
 } hx_index;
 
 enum {

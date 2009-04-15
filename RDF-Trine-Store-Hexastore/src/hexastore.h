@@ -67,7 +67,8 @@ typedef struct {
 	hx_variablebindings* current;
 } _hx_iter_vb_info;
 
-hx_hexastore* hx_new_hexastore ( hx_storage_manager* w );
+hx_hexastore* hx_open_hexastore ( hx_storage_manager* s, hx_nodemap* map );
+hx_hexastore* hx_new_hexastore ( hx_storage_manager* s );
 hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* w, hx_nodemap* map );
 int hx_free_hexastore ( hx_hexastore* hx );
 
