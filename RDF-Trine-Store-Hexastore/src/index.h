@@ -17,7 +17,6 @@
 
 typedef struct {
 	int order[3];
-	hx_storage_manager* storage;
 	hx_storage_id_t head;
 } hx_index;
 
@@ -29,6 +28,7 @@ enum {
 };
 
 typedef struct {
+	hx_storage_manager* storage;
 	hx_index* index;
 	int flags;
 	hx_node_id node_mask_a, node_mask_b, node_mask_c;
@@ -50,20 +50,20 @@ static int HX_INDEX_ORDER_OPS[3]	= { HX_OBJECT, HX_PREDICATE, HX_SUBJECT };
 
 // hx_index* hx_new_index ( int a, int b, int c );
 hx_index* hx_new_index ( hx_storage_manager* s, int* index_order );
-int hx_free_index ( hx_index* index );
-int hx_index_debug ( hx_index* index );
-int hx_index_add_triple ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o );
-int hx_index_add_triple_terminal ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** t );
-int hx_index_add_triple_with_terminal ( hx_index* index, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int new );
-int hx_index_remove_triple ( hx_index* i, hx_node_id s, hx_node_id p, hx_node_id o );
-hx_storage_id_t hx_index_triples_count ( hx_index* index );
-hx_head* hx_index_head ( hx_index* index );
+int hx_free_index ( hx_index* index, hx_storage_manager* s );
+int hx_index_debug ( hx_index* index, hx_storage_manager* s );
+int hx_index_add_triple ( hx_index* index, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
+int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** t );
+int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int new );
+int hx_index_remove_triple ( hx_index* i, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
+hx_storage_id_t hx_index_triples_count ( hx_index* index, hx_storage_manager* st );
+hx_head* hx_index_head ( hx_index* index, hx_storage_manager* st );
 
-int hx_index_write( hx_index* t, FILE* f );
+int hx_index_write( hx_index* t, hx_storage_manager* s, FILE* f );
 hx_index* hx_index_read( hx_storage_manager* w, FILE* f, int buffer );
 
-hx_index_iter* hx_index_new_iter ( hx_index* index );
-hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_node_id s, hx_node_id p, hx_node_id o );
+hx_index_iter* hx_index_new_iter ( hx_index* index, hx_storage_manager* st );
+hx_index_iter* hx_index_new_iter1 ( hx_index* index, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_free_index_iter ( hx_index_iter* iter );
 
 int hx_index_iter_finished ( hx_index_iter* iter );

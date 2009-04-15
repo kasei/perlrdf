@@ -72,7 +72,7 @@ int main (int argc, char** argv) {
 	
 	if (arg == NULL) {
 		int count	= 1;
-		hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+		hx_index_iter* iter	= hx_index_new_iter( hx->spo, st );
 		while (!hx_index_iter_finished( iter )) {
 			hx_node_id s, p, o;
 			hx_index_iter_current( iter, &s, &p, &o );
@@ -141,7 +141,7 @@ int main (int argc, char** argv) {
 		char* s	= (sn == NULL) ? NULL : "subj";
 		char* p	= (pn == NULL) ? NULL : "pred";
 		char* o	= (on == NULL) ? NULL : "obj";
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o, 0 );
+		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, st, s, p, o, 0 );
 		int count	= 1;
 		
 		
@@ -172,10 +172,10 @@ int main (int argc, char** argv) {
 		hx_node* v2		= hx_new_variable( hx );
 		
 		hx_index_iter* titer_a	= hx_get_statements( hx, st, fnode, knode, v1, HX_OBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "from", NULL, "friend", 0 );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, st, "from", NULL, "friend", 0 );
 		
 		hx_index_iter* titer_b	= hx_get_statements( hx, st, v2, knode, tnode, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "friend", NULL, "to", 0 );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, st, "friend", NULL, "to", 0 );
 		
  		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
@@ -200,10 +200,10 @@ int main (int argc, char** argv) {
 		hx_node* v1		= hx_new_variable( hx );
 		hx_node* v2		= hx_new_variable( hx );
 		hx_index_iter* titer_a	= hx_get_statements( hx, st, node, v1, v2, HX_SUBJECT );
-		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, "subj", "p1", "o1", 0 );
+		hx_variablebindings_iter* iter_a	= hx_new_iter_variablebindings( titer_a, st, "subj", "p1", "o1", 0 );
 		
 		hx_index_iter* titer_b	= hx_get_statements( hx, st, node, v1, v2, HX_SUBJECT );
-		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, "subj", "p2", "o2", 0 );
+		hx_variablebindings_iter* iter_b	= hx_new_iter_variablebindings( titer_b, st, "subj", "p2", "o2", 0 );
 		
 		hx_variablebindings_iter* iter	= hx_new_mergejoin_iter( iter_a, iter_b );
 		
@@ -243,7 +243,7 @@ int main (int argc, char** argv) {
 		char* s	= (hx_node_is_variable( sn )) ? variable_name( &varmap, hx_node_iv( sn ) ) : NULL;
 		char* p	= (hx_node_is_variable( pn )) ? variable_name( &varmap, hx_node_iv( pn ) ) : NULL;
 		char* o	= (hx_node_is_variable( on )) ? variable_name( &varmap, hx_node_iv( on ) ) : NULL;
-		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, s, p, o, 0 );
+		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, st, s, p, o, 0 );
 		
 		fprintf( stderr, "constructed first variable bindings iterator...\n" );
 		
@@ -260,7 +260,7 @@ int main (int argc, char** argv) {
 			char* s	= (hx_node_is_variable( sn )) ? variable_name( &varmap, hx_node_iv( sn ) ) : NULL;
 			char* p	= (hx_node_is_variable( pn )) ? variable_name( &varmap, hx_node_iv( pn ) ) : NULL;
 			char* o	= (hx_node_is_variable( on )) ? variable_name( &varmap, hx_node_iv( on ) ) : NULL;
-			hx_variablebindings_iter* _iter	= hx_new_iter_variablebindings( titer, s, p, o, 0 );
+			hx_variablebindings_iter* _iter	= hx_new_iter_variablebindings( titer, st, s, p, o, 0 );
 			fprintf( stderr, "constructed variable bindings iterator #%d... constructing mergejoin...\n", _count++ );
 			hx_variablebindings_iter* join	= hx_new_mergejoin_iter( iter, _iter );
 			iter	= join;

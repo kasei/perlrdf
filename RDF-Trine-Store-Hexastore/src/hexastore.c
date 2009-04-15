@@ -13,7 +13,7 @@ int _hx_iter_vb_sorted_by (void* iter, int index );
 int _hx_iter_debug ( void* info, char* header, int indent );
 
 char** _hx_iter_vb_names ( void* iter );
-int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o );
+int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 
 /////////////////////
 
@@ -53,12 +53,12 @@ hx_hexastore* hx_new_hexastore_with_nodemap ( hx_storage_manager* s, hx_nodemap*
 
 int hx_free_hexastore ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_free_nodemap( hx->map );
-	hx_free_index( hx->spo );
-	hx_free_index( hx->sop );
-	hx_free_index( hx->pso );
-	hx_free_index( hx->pos );
-	hx_free_index( hx->osp );
-	hx_free_index( hx->ops );
+	hx_free_index( hx->spo, s );
+	hx_free_index( hx->sop, s );
+	hx_free_index( hx->pso, s );
+	hx_free_index( hx->pos, s );
+	hx_free_index( hx->osp, s );
+	hx_free_index( hx->ops, s );
 	hx_storage_release_block( s, hx );
 	return 0;
 }
@@ -72,24 +72,24 @@ int hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_nod
 	hx_node_id s	= hx_nodemap_add_node( map, sn );
 	hx_node_id p	= hx_nodemap_add_node( map, pn );
 	hx_node_id o	= hx_nodemap_add_node( map, on );
-	return _hx_add_triple( hx, s, p, o );
+	return _hx_add_triple( hx, st, s, p, o );
 }
 
-int _hx_add_triple( hx_hexastore* hx, hx_node_id s, hx_node_id p, hx_node_id o ) {
+int _hx_add_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o ) {
 	hx_terminal* t;
 	{
-		int added	= hx_index_add_triple_terminal( hx->spo, s, p, o, &t );
-		hx_index_add_triple_with_terminal( hx->pso, t, s, p, o, added );
+		int added	= hx_index_add_triple_terminal( hx->spo, st, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->pso, st, t, s, p, o, added );
 	}
 
 	{
-		int added	= hx_index_add_triple_terminal( hx->sop, s, p, o, &t );
-		hx_index_add_triple_with_terminal( hx->osp, t, s, p, o, added );
+		int added	= hx_index_add_triple_terminal( hx->sop, st, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->osp, st, t, s, p, o, added );
 	}
 	
 	{
-		int added	= hx_index_add_triple_terminal( hx->pos, s, p, o, &t );
-		hx_index_add_triple_with_terminal( hx->ops, t, s, p, o, added );
+		int added	= hx_index_add_triple_terminal( hx->pos, st, s, p, o, &t );
+		hx_index_add_triple_with_terminal( hx->ops, st, t, s, p, o, added );
 	}
 	
 	return 0;
@@ -114,6 +114,7 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 #ifdef HX_SHARE_TERMINALS
 		thread_count	= 3;
 		for (int i = 0; i < 3; i++) {
+			tinfo[i].s			= s;
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
 			tinfo[i].triples	= triple_ids;
@@ -136,6 +137,7 @@ int hx_add_triples( hx_hexastore* hx, hx_storage_manager* s, hx_triple* triples,
 #else
 		thread_count	= 6;
 		for (int i = 0; i < 6; i++) {
+			tinfo[i].s			= s;
 			tinfo[i].hx			= hx;
 			tinfo[i].count		= count;
 			tinfo[i].triples	= triple_ids;
@@ -181,9 +183,9 @@ void* _hx_add_triple_threaded (void* arg) {
 		hx_node_id p	= tinfo->triples[i].predicate;
 		hx_node_id o	= tinfo->triples[i].object;
 		hx_terminal* t;
-		int added	= hx_index_add_triple_terminal( tinfo->index, s, p, o, &t );
+		int added	= hx_index_add_triple_terminal( tinfo->index, tinfo->s, s, p, o, &t );
 		if (tinfo->secondary != NULL) {
-			hx_index_add_triple_with_terminal( tinfo->secondary, t, s, p, o, added );
+			hx_index_add_triple_with_terminal( tinfo->secondary, tinfo->s, t, s, p, o, added );
 		}
 	}
 	return NULL;
@@ -193,12 +195,12 @@ int hx_remove_triple( hx_hexastore* hx, hx_storage_manager* st, hx_node* sn, hx_
 	hx_node_id s	= hx_get_node_id( hx, sn );
 	hx_node_id p	= hx_get_node_id( hx, pn );
 	hx_node_id o	= hx_get_node_id( hx, on );
-	hx_index_remove_triple( hx->spo, s, p, o );
-	hx_index_remove_triple( hx->sop, s, p, o );
-	hx_index_remove_triple( hx->pso, s, p, o );
-	hx_index_remove_triple( hx->pos, s, p, o );
-	hx_index_remove_triple( hx->osp, s, p, o );
-	hx_index_remove_triple( hx->ops, s, p, o );
+	hx_index_remove_triple( hx->spo, st, s, p, o );
+	hx_index_remove_triple( hx->sop, st, s, p, o );
+	hx_index_remove_triple( hx->pso, st, s, p, o );
+	hx_index_remove_triple( hx->pos, st, s, p, o );
+	hx_index_remove_triple( hx->osp, st, s, p, o );
+	hx_index_remove_triple( hx->ops, st, s, p, o );
 	return 0;
 }
 
@@ -390,7 +392,7 @@ hx_index_iter* hx_get_statements( hx_hexastore* hx, hx_storage_manager* st, hx_n
 	}
 	
 	hx_node_id index_ordered_id[3]	= { s, p, o };
-	hx_index_iter* iter	= hx_index_new_iter1( index, index_ordered_id[0], index_ordered_id[1], index_ordered_id[2] );
+	hx_index_iter* iter	= hx_index_new_iter1( index, st, index_ordered_id[0], index_ordered_id[1], index_ordered_id[2] );
 	return iter;
 }
 
@@ -415,7 +417,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 			case 3:
 				return hx_triples_count( hx, st );
 			case 2:
-				head	= hx_index_head( index );
+				head	= hx_index_head( index, st );
 				if (head == NULL) {
 					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
@@ -429,7 +431,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 				return size;
 				break;
 			case 1:
-				head	= hx_index_head( index );
+				head	= hx_index_head( index, st );
 				if (head == NULL) {
 					fprintf( stderr, "*** Did not find the head pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
@@ -465,22 +467,22 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 
 hx_storage_id_t hx_triples_count ( hx_hexastore* hx, hx_storage_manager* s ) {
 	hx_index* i	= hx->spo;
-	return hx_index_triples_count( i );
+	return hx_index_triples_count( i, s );
 }
 
-int hx_write( hx_hexastore* h, FILE* f ) {
+int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f ) {
 	fputc( 'X', f );
 	if (hx_nodemap_write( h->map, f ) != 0) {
 		fprintf( stderr, "*** Error while writing hexastore nodemap to disk.\n" );
 		return 1;
 	}
 	if ((
-		(hx_index_write( h->spo, f )) ||
-		(hx_index_write( h->sop, f )) ||
-		(hx_index_write( h->pso, f )) ||
-		(hx_index_write( h->pos, f )) ||
-		(hx_index_write( h->osp, f )) ||
-		(hx_index_write( h->ops, f ))
+		(hx_index_write( h->spo, s, f )) ||
+		(hx_index_write( h->sop, s, f )) ||
+		(hx_index_write( h->pso, s, f )) ||
+		(hx_index_write( h->pos, s, f )) ||
+		(hx_index_write( h->osp, s, f )) ||
+		(hx_index_write( h->ops, s, f ))
 		) != 0) {
 		fprintf( stderr, "*** Error while writing hexastore indices to disk.\n" );
 		return 1;
@@ -521,7 +523,7 @@ hx_hexastore* hx_read( hx_storage_manager* s, FILE* f, int buffer ) {
 	}
 }
 
-hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
+hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_storage_manager* s, char* subj_name, char* pred_name, char* obj_name, int free_names ) {
 	hx_variablebindings_iter_vtable* vtable	= calloc( 1, sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_iter_vb_finished;
 	vtable->current		= _hx_iter_vb_current;
@@ -541,6 +543,7 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, char*
 		size++;
 	
 	_hx_iter_vb_info* info			= (_hx_iter_vb_info*) calloc( 1, sizeof( _hx_iter_vb_info ) );
+	info->s							= s;
 	info->size						= size;
 	info->subject					= subj_name;
 	info->predicate					= pred_name;

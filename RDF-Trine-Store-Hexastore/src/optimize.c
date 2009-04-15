@@ -46,7 +46,7 @@ int main (int argc, char** argv) {
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
 	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( st, smap );
-	hx_index_iter* iter	= hx_index_new_iter( hx->spo );
+	hx_index_iter* iter	= hx_index_new_iter( hx->spo, st );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
 		hx_index_iter_current( iter, &s, &p, &o );
@@ -61,7 +61,7 @@ int main (int argc, char** argv) {
 	}
 	hx_free_index_iter( iter );
 	
-	if (hx_write( shx, outf ) != 0) {
+	if (hx_write( shx, st, outf ) != 0) {
 		fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 		return 1;
 	}

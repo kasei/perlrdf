@@ -32,20 +32,20 @@ void spo_test1 ( void ) {
 	hx_node_id p	= (hx_node_id) 2;
 	hx_node_id o	= (hx_node_id) 3;
 	
-	ok1( hx_index_triples_count( i ) == 0 );
-	ok1( hx_index_add_triple( i, s, p, o ) == 0 );
-	ok1( hx_index_triples_count( i ) == 1 );
-	ok1( hx_index_add_triple( i, s, p, o ) == 1 ); //adding duplicate triple returns non-zero
+	ok1( hx_index_triples_count( i, st ) == 0 );
+	ok1( hx_index_add_triple( i, st, s, p, o ) == 0 );
+	ok1( hx_index_triples_count( i, st ) == 1 );
+	ok1( hx_index_add_triple( i, st, s, p, o ) == 1 ); //adding duplicate triple returns non-zero
 	
 	o	= (hx_node_id) 4;
-	ok1( hx_index_add_triple( i, s, p, o ) == 0 );
-	ok1( hx_index_triples_count( i ) == 2 );
-	ok1( hx_index_remove_triple( i, s, p, (hx_node_id) 3 ) == 0 );
-	ok1( hx_index_triples_count( i ) == 1 );
-	ok1( hx_index_remove_triple( i, s, p, (hx_node_id) 4 ) == 0 );
-	ok1( hx_index_triples_count( i ) == 0 );
+	ok1( hx_index_add_triple( i, st, s, p, o ) == 0 );
+	ok1( hx_index_triples_count( i, st ) == 2 );
+	ok1( hx_index_remove_triple( i, st, s, p, (hx_node_id) 3 ) == 0 );
+	ok1( hx_index_triples_count( i, st ) == 1 );
+	ok1( hx_index_remove_triple( i, st, s, p, (hx_node_id) 4 ) == 0 );
+	ok1( hx_index_triples_count( i, st ) == 0 );
 	
-	hx_free_index(i);
+	hx_free_index(i, st);
 	hx_free_storage_manager( st );
 }
 
@@ -56,26 +56,26 @@ void spo_test2 ( void ) {
 	s	= (hx_node_id) 1;
 	for (p = 1; p <= 10; p++) {
 		for (o = 1; o <= 100; o++) {
-			hx_index_add_triple( i, s, p, o );
+			hx_index_add_triple( i, st, s, p, o );
 		}
 	}
-	ok1( hx_index_triples_count( i ) == 1000 );
+	ok1( hx_index_triples_count( i, st ) == 1000 );
 	
 	for (p = 1; p <= 10; p++) {
 		for (o = 1; o <= 50; o++) {
-			hx_index_remove_triple( i, s, p, o );
+			hx_index_remove_triple( i, st, s, p, o );
 		}
 	}
-	ok1( hx_index_triples_count( i ) == 500 );
+	ok1( hx_index_triples_count( i, st ) == 500 );
 
 	for (p = 1; p <= 10; p++) {
 		for (o = 26; o <= 100; o++) {
-			hx_index_add_triple( i, s, p, o );
+			hx_index_add_triple( i, st, s, p, o );
 		}
 	}
-	ok1( hx_index_triples_count( i ) == 750 );
+	ok1( hx_index_triples_count( i, st ) == 750 );
 	
-	hx_free_index(i);
+	hx_free_index(i, st);
 	hx_free_storage_manager( st );
 }
 
@@ -91,14 +91,14 @@ void pos_iter_test1 ( void ) {
 	for (s = 1; s <= range; s++) {
 		for (p = 1; p <= range; p++) {
 			for (o = 1; o <= range; o++) {
-				hx_index_add_triple( i, s, p, o );
+				hx_index_add_triple( i, st, s, p, o );
 			}
 		}
 	}
-	ok1( hx_index_triples_count( i ) == triples );
+	ok1( hx_index_triples_count( i, st ) == triples );
 	
 	{
-		hx_index_iter* iter	= hx_index_new_iter( i );
+		hx_index_iter* iter	= hx_index_new_iter( i, st );
 		int counter	= 0;
 		ok1( iter != NULL );
 		hx_node_id last_s, last_p, last_o;
@@ -121,7 +121,7 @@ void pos_iter_test1 ( void ) {
 		ok1( counter == triples );
 	}
 	
-	hx_free_index(i);
+	hx_free_index(i, st);
 	hx_free_storage_manager( st );
 }
 
@@ -137,14 +137,14 @@ void spo_iter_test1 ( void ) {
 	for (s = 1; s <= range; s++) {
 		for (p = 1; p <= range; p++) {
 			for (o = 1; o <= range; o++) {
-				hx_index_add_triple( i, s, p, o );
+				hx_index_add_triple( i, st, s, p, o );
 			}
 		}
 	}
-	ok1( hx_index_triples_count( i ) == triples );
+	ok1( hx_index_triples_count( i, st ) == triples );
 	
 	{
-		hx_index_iter* iter	= hx_index_new_iter( i );
+		hx_index_iter* iter	= hx_index_new_iter( i, st );
 		int counter	= 0;
 		ok1( iter != NULL );
 		hx_node_id last_s, last_p, last_o;
@@ -167,7 +167,7 @@ void spo_iter_test1 ( void ) {
 		ok1( counter == triples );
 	}
 	
-	hx_free_index(i);
+	hx_free_index(i, st);
 	hx_free_storage_manager( st );
 }
 
@@ -185,15 +185,15 @@ void pso_iter1_test1 ( void ) {
 		for (s = 1; s <= range; s++) {
 			for (p = 1; p <= range; p++) {
 				for (o = 1; o <= range; o++) {
-					hx_index_add_triple( i, s, p, o );
+					hx_index_add_triple( i, st, s, p, o );
 				}
 			}
 		}
 	}
-	ok1( hx_index_triples_count( i ) == triples );
+	ok1( hx_index_triples_count( i, st ) == triples );
 	
 	const hx_node_id seek	= (hx_node_id) 2;
-	hx_index_iter* iter	= hx_index_new_iter1( i, (hx_node_id) -1, seek, (hx_node_id) -2 );
+	hx_index_iter* iter	= hx_index_new_iter1( i, st, (hx_node_id) -1, seek, (hx_node_id) -2 );
 	ok1( iter != NULL );
 	hx_node_id last_s, last_p, last_o;
 	hx_node_id cur_s, cur_p, cur_o;
@@ -216,7 +216,7 @@ void pso_iter1_test1 ( void ) {
 	hx_free_index_iter( iter );
 	ok1( counter == range * range );
 	
-	hx_free_index(i);
+	hx_free_index(i, st);
 	hx_free_storage_manager( st );
 }
 
@@ -230,20 +230,20 @@ void shared_terminal_test ( void ) {
 	hx_node_id o	= (hx_node_id) 3;
 	
 	hx_terminal* t;
-	ok1( hx_index_add_triple_terminal( spo, s, p, o, &t ) == 0 );
+	ok1( hx_index_add_triple_terminal( spo, st, s, p, o, &t ) == 0 );
 	ok1( t != NULL );
-	ok1( hx_index_add_triple_with_terminal( pso, t, s, p, o, 0 ) == 0 );
+	ok1( hx_index_add_triple_with_terminal( pso, st, t, s, p, o, 0 ) == 0 );
 	
-	ok1( hx_index_triples_count( spo ) == 1 );
-	ok1( hx_index_triples_count( pso ) == 1 );
+	ok1( hx_index_triples_count( spo, st ) == 1 );
+	ok1( hx_index_triples_count( pso, st ) == 1 );
 	
 	o	= (hx_node_id) 4;
-	ok1( hx_index_add_triple( spo, s, p, o ) == 0 );
-	ok1( hx_index_triples_count( spo ) == 2 );
+	ok1( hx_index_add_triple( spo, st, s, p, o ) == 0 );
+	ok1( hx_index_triples_count( spo, st ) == 2 );
 	
-	ok1( hx_index_add_triple( pso, s, p, o ) == 1 );	// should have already been added through the spo index
+	ok1( hx_index_add_triple( pso, st, s, p, o ) == 1 );	// should have already been added through the spo index
 	
-	hx_free_index(spo);
-	hx_free_index(pso);
+	hx_free_index(spo, st);
+	hx_free_index(pso, st);
 	hx_free_storage_manager( st );
 }

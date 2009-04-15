@@ -6,7 +6,7 @@
 #include "parser.h"
 #include "tap.h"
 
-void _add_data ( hx_hexastore* hx );
+void _add_data ( hx_hexastore* hx, hx_storage_manager* s );
 void _debug_node ( char* h, hx_node* node );
 hx_variablebindings_iter* _get_triples ( hx_hexastore* hx, int sort );
 
@@ -17,7 +17,7 @@ int main ( void ) {
 	hx_storage_manager* s	= hx_new_memory_storage_manager();
 	hx_hexastore* hx	= hx_new_hexastore( s );
 	hx_nodemap* map		= hx_get_nodemap( hx );
-	_add_data( hx );
+	_add_data( hx, s );
 	
 	hx_node* x			= hx_new_variable( hx );
 	hx_node* y			= hx_new_variable( hx );
@@ -86,7 +86,7 @@ int main ( void ) {
 	return exit_status();
 }
 
-void _add_data ( hx_hexastore* hx ) {
+void _add_data ( hx_hexastore* hx, hx_storage_manager* s ) {
 	const char* rdf	= "@prefix :        <http://example/> . \
 @prefix rs:      <http://www.w3.org/2001/sw/DataAccess/tests/result-set#> . \
 @prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> . \
@@ -125,7 +125,7 @@ void _add_data ( hx_hexastore* hx ) {
                     ] . \
 ";
 	hx_parser* parser	= hx_new_parser();
-	hx_parser_parse_string_into_hexastore( parser, hx, rdf, "http://example.org/", "turtle" );
+	hx_parser_parse_string_into_hexastore( parser, hx, s, rdf, "http://example.org/", "turtle" );
 	hx_free_parser(parser);
 }
 

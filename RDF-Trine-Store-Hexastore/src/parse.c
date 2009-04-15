@@ -57,7 +57,7 @@ int main (int argc, char** argv) {
 	fprintf( stderr, "\rParsed %"PRIu64" triples in %.1lf seconds (%.1lf triples/second)\n", total, elapsed, tps );
 	
 	if (f != NULL) {
-		if (hx_write( hx, f ) != 0) {
+		if (hx_write( hx, s, f ) != 0) {
 			fprintf( stderr, "*** Couldn't write hexastore to disk.\n" );
 			return 1;
 		}
