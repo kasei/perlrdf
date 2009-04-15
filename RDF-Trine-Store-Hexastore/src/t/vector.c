@@ -20,14 +20,14 @@ void vector_test ( void ) {
 	for (int i = 1; i <= 10; i++) {
 		hx_terminal* t	= hx_new_terminal( st );
 		for (int j = 1; j <= i; j++) {
-			hx_terminal_add_node( t, (hx_node_id) j );
+			hx_terminal_add_node( t, st, (hx_node_id) j );
 		}
 		hx_vector_add_terminal( v, st, (hx_node_id) i, t );
 	}
 	
 	hx_terminal* t	= hx_vector_get_terminal(v, st, (hx_node_id) 3 );
 	ok1( t != NULL );
-	ok1( hx_terminal_size( t ) == 3 );
+	ok1( hx_terminal_size( t, st ) == 3 );
 	
 	t	= hx_vector_get_terminal(v, st, (hx_node_id) 12 );
 	ok1( t == NULL );
@@ -42,7 +42,7 @@ void vector_iter_test ( void ) {
 	for (int i = 1; i <= 10; i++) {
 		hx_terminal* t	= hx_new_terminal( st );
 		for (int j = i; j > 0; j--) {
-			hx_terminal_add_node( t, (hx_node_id) j );
+			hx_terminal_add_node( t, st, (hx_node_id) j );
 		}
 		hx_vector_add_terminal( v, st, (hx_node_id) i, t );
 	}
@@ -57,7 +57,7 @@ void vector_iter_test ( void ) {
 		if (counter > 0) {
 			ok1( cur > last );
 		}
-		ok1( hx_terminal_size(t) == (int) cur );
+		ok1( hx_terminal_size(t, st) == (int) cur );
 		last	= cur;
 		counter++;
 		hx_vector_iter_next(iter);

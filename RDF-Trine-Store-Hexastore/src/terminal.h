@@ -17,38 +17,37 @@
 #include "storage.h"
 
 typedef struct {
-	hx_storage_manager* storage;
 	hx_storage_id_t triples_count;
 	hx_btree* tree;
 	int refcount;
 } hx_terminal;
 
 typedef struct {
+	hx_storage_manager* storage;
 	hx_terminal* terminal;
 	hx_btree_iter* t;
 } hx_terminal_iter;
 
 hx_terminal* hx_new_terminal ( hx_storage_manager* s );
-int hx_free_terminal ( hx_terminal* list );
+int hx_free_terminal ( hx_terminal* list, hx_storage_manager* st );
 
-int hx_terminal_inc_refcount ( hx_terminal* t );
-int hx_terminal_dec_refcount ( hx_terminal* t );
+int hx_terminal_inc_refcount ( hx_terminal* t, hx_storage_manager* st );
+int hx_terminal_dec_refcount ( hx_terminal* t, hx_storage_manager* st );
 
-int hx_terminal_debug ( const char* header, hx_terminal* t, int newline );
-int hx_terminal_add_node ( hx_terminal* t, hx_node_id n );
-int hx_terminal_contains_node ( hx_terminal* t, hx_node_id n );
-int hx_terminal_remove_node ( hx_terminal* t, hx_node_id n );
-list_size_t hx_terminal_size ( hx_terminal* t );
+int hx_terminal_debug ( const char* header, hx_terminal* t, hx_storage_manager* st, int newline );
+int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n );
+int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n );
+int hx_terminal_remove_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n );
+list_size_t hx_terminal_size ( hx_terminal* t, hx_storage_manager* st );
 
-int hx_terminal_write( hx_terminal* t, FILE* f );
-hx_terminal* hx_terminal_read( hx_storage_manager* w, FILE* f, int buffer );
+int hx_terminal_write( hx_terminal* t, hx_storage_manager* st, FILE* f );
+hx_terminal* hx_terminal_read( hx_storage_manager* s, FILE* f, int buffer );
 
-hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal );
+hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* terminal, hx_storage_manager* st );
 int hx_free_terminal_iter ( hx_terminal_iter* iter );
 int hx_terminal_iter_finished ( hx_terminal_iter* iter );
 int hx_terminal_iter_current ( hx_terminal_iter* iter, hx_node_id* n );
 int hx_terminal_iter_next ( hx_terminal_iter* iter );
 int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n );
-
 
 #endif

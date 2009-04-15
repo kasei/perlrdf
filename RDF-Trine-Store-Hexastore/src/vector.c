@@ -16,7 +16,7 @@ int hx_free_vector ( hx_vector* vector, hx_storage_manager* st ) {
 	while (!hx_btree_iter_finished(iter)) {
 		hx_btree_iter_current( iter, &key, &value );
 		hx_terminal* t	= hx_storage_block_from_id( st, value );
-		hx_terminal_dec_refcount( t );
+		hx_terminal_dec_refcount( t, st );
 		hx_btree_iter_next(iter);
 	}
 	hx_free_btree_iter( iter );
@@ -35,7 +35,7 @@ int hx_vector_debug ( const char* header, const hx_vector* v, hx_storage_manager
 		hx_btree_iter_current( iter, &key, &value );
 		hx_terminal* t	= hx_storage_block_from_id( st, value );
 		fprintf( stderr, "%s  %d", header, (int) key );
-		hx_terminal_debug( " -> ", t, 0 );
+		hx_terminal_debug( " -> ", t, st, 0 );
 		fprintf( stderr, ",\n" );
 		hx_btree_iter_next(iter);
 	}
@@ -50,7 +50,7 @@ int hx_vector_add_terminal ( hx_vector* v, hx_storage_manager* st, const hx_node
 	int r	= hx_btree_insert( st, v->tree, n, value );
 	if (r == 0) {
 		// added OK.
-		hx_terminal_inc_refcount( t );
+		hx_terminal_inc_refcount( t, st );
 	}
 	return r;
 }
@@ -65,8 +65,8 @@ hx_terminal* hx_vector_get_terminal ( hx_vector* v, hx_storage_manager* st, hx_n
 int hx_vector_remove_terminal ( hx_vector* v, hx_storage_manager* st, hx_node_id n ) {
 	hx_terminal* t	= hx_vector_get_terminal( v, st, n );
 	if (t != NULL) {
-		// removed OK.
-		hx_terminal_dec_refcount( t );
+		hx_terminal_dec_refcount( t, st );
+		hx_btree_remove( st, v->tree, n );
 		return 0;
 	} else {
 		return 1;
@@ -129,7 +129,7 @@ int hx_vector_write( hx_vector* v, hx_storage_manager* st, FILE* f ) {
 		hx_terminal* t;
 		hx_vector_iter_current( iter, &n, &t );
 		fwrite( &n, sizeof( hx_node_id ), 1, f );
-		hx_terminal_write( t, f );
+		hx_terminal_write( t, st, f );
 		hx_vector_iter_next( iter );
 	}
 	hx_free_vector_iter( iter );

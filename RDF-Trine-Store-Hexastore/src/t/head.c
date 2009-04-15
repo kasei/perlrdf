@@ -115,7 +115,7 @@ hx_vector* _new_vector ( hx_storage_manager* st, int n ) {
 	for (int i = 1; i <= 10+n; i++) {
 		hx_terminal* t	= hx_new_terminal( st );
 		for (int j = 1; j <= i; j++) {
-			hx_terminal_add_node( t, (hx_node_id) j );
+			hx_terminal_add_node( t, st, (hx_node_id) j );
 		}
 		hx_vector_add_terminal( v, st, (hx_node_id) i, t );
 	}

@@ -63,7 +63,7 @@ int hx_index_debug ( hx_index* index, hx_storage_manager* st ) {
 		while (!hx_vector_iter_finished( viter )) {
 			hx_terminal* t;
 			hx_vector_iter_current( viter, &(triple_ordered[ index->order[ 1 ] ]), &t );
-			hx_terminal_iter* titer	= hx_terminal_new_iter( t );
+			hx_terminal_iter* titer	= hx_terminal_new_iter( t, st );
 			while (!hx_terminal_iter_finished( titer )) {
 				hx_node_id n;
 				hx_terminal_iter_current( titer, &n );
@@ -116,7 +116,7 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_n
 		hx_vector_add_terminal( v, st, index_ordered[1], t );
 	}
 	
-	int added	= hx_terminal_add_node( t, index_ordered[2] );
+	int added	= hx_terminal_add_node( t, st, index_ordered[2] );
 	if (added == 0) {
 		hx_head_triples_count_add( h, st, 1);
 		hx_vector_triples_count_add( v, st, 1 );
@@ -181,13 +181,13 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 		return 1;
 	}
 	
-	int removed	= hx_terminal_remove_node( t, index_ordered[2] );
+	int removed	= hx_terminal_remove_node( t, st, index_ordered[2] );
 	if (removed == 0) {
 		hx_head_triples_count_add( h, st, -1 );
 		hx_vector_triples_count_add( v, st, -1 );
 	}
 	
-	if (hx_terminal_size( t ) == 0) {
+	if (hx_terminal_size( t, st ) == 0) {
 		// no more nodes in this terminal list... remove it from the vector.
 		hx_vector_remove_terminal( v, st, index_ordered[1] );
 		
@@ -342,7 +342,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 				break;
 			}
 			
-			iter->terminal_iter	= hx_terminal_new_iter( t );
+			iter->terminal_iter	= hx_terminal_new_iter( t, iter->storage );
 			if (iter->node_mask_c > (hx_node_id) 0) {
 //				fprintf( stderr, "- terminal seeking to %d\n", (int) iter->node_mask_c );
 				if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
@@ -401,7 +401,7 @@ NEXTHEAD:
 		
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
 		_hx_index_got_vector_trigger( iter, n );
-		iter->terminal_iter	= hx_terminal_new_iter( t );
+		iter->terminal_iter	= hx_terminal_new_iter( t, iter->storage );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 				_hx_index_iter_next_vector( iter );
@@ -435,7 +435,7 @@ NEXTVECTOR:
 		hx_terminal* t;
 		hx_vector_iter_current( iter->vector_iter, &n, &t );
 		_hx_index_got_vector_trigger( iter, n );
-		iter->terminal_iter	= hx_terminal_new_iter( t );
+		iter->terminal_iter	= hx_terminal_new_iter( t, iter->storage );
 		if (iter->node_mask_c > (hx_node_id) 0) {
 			if (hx_terminal_iter_seek( iter->terminal_iter, iter->node_mask_c ) != 0) {
 				goto NEXTVECTOR;

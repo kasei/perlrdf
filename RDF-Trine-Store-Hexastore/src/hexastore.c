@@ -446,7 +446,7 @@ hx_storage_id_t hx_count_statements( hx_hexastore* hx, hx_storage_manager* st, h
 					fprintf( stderr, "*** Did not find the terminal pointer in hx_count_statements with %d vars\n", vars );
 					return (hx_storage_id_t) 0;
 				}
-				size	= (hx_storage_id_t) hx_terminal_size( terminal );
+				size	= (hx_storage_id_t) hx_terminal_size( terminal, st );
 				return size;
 			case 0:
 				iter	= hx_get_statements( hx, st, s, p, o, HX_SUBJECT );
