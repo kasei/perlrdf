@@ -151,6 +151,15 @@ sub optimize {
 	return $self->_get_value( 'optimize', @_ );
 }
 
+=item C<< strict_errors >>
+
+=cut
+
+sub strict_errors {
+	my $self	= shift;
+	return $self->_get_value( 'strict_errors', @_ );
+}
+
 sub _get_value {
 	my $self	= shift;
 	my $key		= shift;

@@ -283,6 +283,7 @@ sub prepare {
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
+	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
@@ -310,6 +311,7 @@ sub prepare {
 					optimize			=> $self->{optimize},
 					requested_variables	=> \@vars,
 					model_optimize		=> 1,
+					strict_errors		=> $errors,
 				);
 	
 	$self->{model}		= $model;

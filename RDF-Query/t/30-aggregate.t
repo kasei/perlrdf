@@ -25,7 +25,7 @@ my @models	= test_models( @files );
 
 use Test::More;
 use Test::Exception;
-plan tests => (49 * scalar(@models));
+plan tests => (54 * scalar(@models));
 
 foreach my $model (@models) {
 	print "\n#################################\n";
@@ -315,7 +315,22 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		throws_ok {
-			$query->execute( $model );
+			$query->execute( $model, strict_errors => 1 );
 		} 'RDF::Query::Error::ComparisonError', 'expected comparision error on multi-typed values';
+		
+		# without strict errors, non-datatyped dates (in human readable form) will
+		# be string-compared with dateTime-datatyped W3CDTF literals
+		my $stream	= $query->execute( $model );
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			my $min	= $row->{min};
+			my $max	= $row->{max};
+			isa_ok( $min, 'RDF::Query::Node::Literal' );
+			isa_ok( $max, 'RDF::Query::Node::Literal' );
+ 			is( $min->literal_value, '2004-09-06T15:19:20+01:00', 'expected MIN plain-literal' );
+ 			is( $max->literal_value, 'Sat, 4 Oct 2003 20:02:22 PDT-0700', 'expected MAX plain-literal' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
 	}
 }

@@ -117,13 +117,27 @@ sub execute ($) {
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
 					$aggregates{ $alias }{ $group }[0]	= $op;
-					if (exists($aggregates{ $alias }{ $group }[1])) {
+					
+					my $strict	= 1;
+					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
 						if ($type ne $aggregates{ $alias }{ $group }[2]) {
-							throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple types";
+							if ($context->strict_errors) {
+								throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple types";
+							} else {
+								$strict	= 0;
+							}
 						}
 						
-						if ($value > $aggregates{ $alias }{ $group }[1]) {
-							$aggregates{ $alias }{ $group }[1]	= $value;
+						if ($strict) {
+							if ($value > $aggregates{ $alias }{ $group }[1]) {
+								$aggregates{ $alias }{ $group }[1]	= $value;
+								$aggregates{ $alias }{ $group }[2]	= $type;
+							}
+						} else {
+							if ("$value" gt "$aggregates{ $alias }{ $group }[1]") {
+								$aggregates{ $alias }{ $group }[1]	= $value;
+								$aggregates{ $alias }{ $group }[2]	= $type;
+							}
 						}
 					} else {
 						$aggregates{ $alias }{ $group }[1]	= $value;
@@ -140,13 +154,27 @@ sub execute ($) {
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
 					$aggregates{ $alias }{ $group }[0]	= $op;
-					if (exists($aggregates{ $alias }{ $group }[1])) {
+					
+					my $strict	= 1;
+					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
 						if ($type ne $aggregates{ $alias }{ $group }[2]) {
-							throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple types";
+							if ($context->strict_errors) {
+								throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple types";
+							} else {
+								$strict	= 0;
+							}
 						}
 						
-						if ($value < $aggregates{ $alias }{ $group }[1]) {
-							$aggregates{ $alias }{ $group }[1]	= $value;
+						if ($strict) {
+							if ($value < $aggregates{ $alias }{ $group }[1]) {
+								$aggregates{ $alias }{ $group }[1]	= $value;
+								$aggregates{ $alias }{ $group }[2]	= $type;
+							}
+						} else {
+							if ("$value" lt "$aggregates{ $alias }{ $group }[1]") {
+								$aggregates{ $alias }{ $group }[1]	= $value;
+								$aggregates{ $alias }{ $group }[2]	= $type;
+							}
 						}
 					} else {
 						$aggregates{ $alias }{ $group }[1]	= $value;
@@ -166,7 +194,9 @@ sub execute ($) {
 					
 					if (my $cmp = $aggregates{ $alias }{ $group }[3]) {
 						if ($type ne $cmp) {
-							throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over nodes of multiple types";
+							if ($context->strict_errors) {
+								throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over nodes of multiple types";
+							}
 						}
 					}
 					
