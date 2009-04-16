@@ -37,7 +37,7 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number reftype);
 use List::MoreUtils qw(uniq);
 
-our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT/i;
+our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG/i;
 
 sub __solution_modifiers {
 	my $self	= shift;

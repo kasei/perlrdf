@@ -24,7 +24,8 @@ my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => (36 * scalar(@models));
+use Test::Exception;
+plan tests => (49 * scalar(@models));
 
 foreach my $model (@models) {
 	print "\n#################################\n";
@@ -130,7 +131,7 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count apertures' );
 			$count++;
 		}
@@ -152,7 +153,7 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count distinct apertures' );
 			$count++;
 		}
@@ -196,7 +197,7 @@ END
 		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#decimal') });
+			my $expect	= RDF::Query::VariableBindings->new({ count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'COUNT() on sometimes unbound variable' );
 			$count++;
 		}
@@ -255,4 +256,66 @@ END
 		is( $count, 2, 'two aggreate groups' );
 	}
 	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
+			SELECT AVG(?f)
+			WHERE {
+				?image exif:fNumber ?f
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			my $value	= (values %$row)[0];
+			isa_ok( $value, 'RDF::Query::Node::Literal' );
+			ok( $value->is_numeric_type, 'avg produces a numeric type' );
+			is( $value->numeric_value, 6.125, 'expected average value' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
+			SELECT (MIN(?e) AS ?min) (MAX(?e) AS ?max)
+			WHERE {
+				[] foaf:mbox_sha1sum ?e
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		
+		my $stream	= $query->execute( $model );
+		my $bridge	= $query->bridge;
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			my $min	= $row->{min};
+			my $max	= $row->{max};
+			isa_ok( $min, 'RDF::Query::Node::Literal' );
+			isa_ok( $max, 'RDF::Query::Node::Literal' );
+			is( $min->literal_value, '19fc9d0234848371668cf10a1b71ac9bd4236806', 'expected MIN plain-literal' );
+			is( $max->literal_value, 'f8677979059b73385c9d14cadf7d1e3652b205a8', 'expected MAX plain-literal' );
+			$count++;
+		}
+		is( $count, 1, 'one aggreate row' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			PREFIX dc: <http://purl.org/dc/elements/1.1/>
+			SELECT (MIN(?d) AS ?min) (MAX(?d) AS ?max)
+			WHERE {
+				[] dc:date ?d
+			}
+END
+		isa_ok( $query, 'RDF::Query' );
+		throws_ok {
+			$query->execute( $model );
+		} 'RDF::Query::Error::ComparisonError', 'expected comparision error on multi-typed values';
+	}
 }
