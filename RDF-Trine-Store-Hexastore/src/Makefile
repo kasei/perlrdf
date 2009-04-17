@@ -1,10 +1,15 @@
-CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
 # CFLAGS	=	-O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
+CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
 CC		=	gcc $(CFLAGS)
+
+# CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -pedantic -ggdb
+# CC		=	g++ $(CFLAGS)
+
+
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o
 
-all: parse print optimize tests examples
+all: parse print optimize tests examples parse_query
 
 server: server.c $(OBJECTS)
 	$(CC) $(INC) $(LIBS) -ldrizzle -o server server.c $(OBJECTS)
@@ -62,6 +67,25 @@ bgp.o: bgp.c bgp.h hexastore_types.h
 
 storage.o: storage.c storage.h hexastore_types.h
 	$(CC) $(INC) -c storage.c
+
+########
+
+SPARQLParser.cc: SPARQLParser.yy
+	bison -o SPARQLParser.cc SPARQLParser.yy
+
+SPARQLScanner.cc: SPARQLScanner.ll
+	flex -o SPARQLScanner.cc SPARQLScanner.ll
+
+SPARQLParser.o: SPARQLParser.cc
+	g++ -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
+
+SPARQLScanner.o: SPARQLScanner.cc
+	g++ -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
+
+parse_query: SPARQLParser.o SPARQLScanner.o
+	g++ -W -Wall -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o
+
+########
 
 tests: t/nodemap.t t/node.t t/index.t t/terminal.t t/vector.t t/head.t t/btree.t t/join.t t/iter.t t/bgp.t t/materialize.t t/selectivity.t t/selectivity-mmap.t t/mmap.t
 
@@ -156,4 +180,5 @@ clean:
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
-
+	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.cc SPARQLScanner.cc
+	rm -f stack.hh position.hh location.hh
