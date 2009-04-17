@@ -74,10 +74,10 @@ SPARQLParser.cc: SPARQLParser.yy
 SPARQLScanner.cc: SPARQLScanner.ll
 	flex -o SPARQLScanner.cc SPARQLScanner.ll
 
-SPARQLParser.o: SPARQLParser.cc
+SPARQLParser.o: SPARQLParser.cc SPARQLParser.hh
 	$(CPP) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
 
-SPARQLScanner.o: SPARQLScanner.cc
+SPARQLScanner.o: SPARQLScanner.cc SPARQLScanner.hh
 	$(CPP) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
 
 parse_query: SPARQLParser.o SPARQLScanner.o
@@ -178,5 +178,5 @@ clean:
 	rm -f *.o
 	rm -rf *.dSYM t/*.dSYM
 	rm -f t/*.t
-	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.cc SPARQLScanner.cc
+	rm -f SPARQL SPARQLParser.o SPARQLScanner.o SPARQLParser.cc SPARQLScanner.cc SPARQLParser.hh
 	rm -f stack.hh position.hh location.hh
