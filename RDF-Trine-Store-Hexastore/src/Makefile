@@ -1,10 +1,8 @@
 # CFLAGS	=	-O3 -I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror -Wno-uninitialized # -DDEBUG_INDEX_SELECTION
-CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
-CC		=	gcc $(CFLAGS)
-
-# CFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -pedantic -ggdb
-# CC		=	g++ $(CFLAGS)
-
+CFLAGS		=	-I. -L. -I/ext/local/include -L/ext/local/lib -std=c99 -pedantic -ggdb -Wall -Wno-unused-value -Wno-unused-variable -Wno-int-to-pointer-cast -Wno-pointer-to-int-cast -Werror # -DDEBUG_INDEX_SELECTION
+CC			=	gcc $(CFLAGS)
+CPPFLAGS	=	-I. -L. -I/ext/local/include -L/ext/local/lib -pedantic -ggdb -Wall
+CPP			=	g++ $(CPPFLAGS)
 
 LIBS	=	-lpthread -lraptor -L/cs/willig4/local/lib -I/cs/willig4/local/include
 OBJECTS	=	hexastore.o index.o terminal.o vector.o head.o avl.o nodemap.o node.o variablebindings.o mergejoin.o materialize.o triple.o btree.o storage.o parser.o bgp.o
@@ -77,13 +75,13 @@ SPARQLScanner.cc: SPARQLScanner.ll
 	flex -o SPARQLScanner.cc SPARQLScanner.ll
 
 SPARQLParser.o: SPARQLParser.cc
-	g++ -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
+	$(CPP) -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLParser.o SPARQLParser.cc
 
 SPARQLScanner.o: SPARQLScanner.cc
-	g++ -DYYTEXT_POINTER=1 -W -Wall -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
+	$(CPP) -DYYTEXT_POINTER=1 -Wextra -ansi -g -c  -o SPARQLScanner.o SPARQLScanner.cc
 
 parse_query: SPARQLParser.o SPARQLScanner.o
-	g++ -W -Wall -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o
+	$(CPP) -Wextra -ansi -g -o parse_query SPARQLParser.o SPARQLScanner.o
 
 ########
 
