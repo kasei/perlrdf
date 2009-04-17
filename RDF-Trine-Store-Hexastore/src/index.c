@@ -34,14 +34,14 @@ hx_index* hx_new_index ( hx_storage_manager* s, int* index_order ) {
 }
 
 int hx_free_index ( hx_index* i, hx_storage_manager* st ) {
-	hx_free_head( hx_storage_block_from_id( st, i->head ), st );
+	hx_free_head( (hx_head*) hx_storage_block_from_id( st, i->head ), st );
 	hx_storage_release_block( st, i );
 	return 0;
 }
 
 // XXX replace the use of ->used, etc. with iterators (preserves abstraction)
 int hx_index_debug ( hx_index* index, hx_storage_manager* st ) {
-	hx_head* h	= hx_storage_block_from_id( st, index->head );
+	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	fprintf(
 		stderr,
 		"index: %p\n  -> head: %p\n  -> order [%d, %d, %d]\n  -> triples:\n",
@@ -102,7 +102,7 @@ int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_n
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
-	hx_head* h	= hx_storage_block_from_id( st, index->head );
+	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	hx_vector* v	= NULL;
 	hx_terminal* t;
 	
@@ -140,7 +140,7 @@ int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st,
 	}
 //	fprintf( stderr, "add_triple index order: { %d, %d, %d }\n", (int) index_ordered[0], (int) index_ordered[1], (int) index_ordered[2] );
 	
-	hx_head* h	= hx_storage_block_from_id( st, index->head );
+	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	hx_vector* v	= NULL;
 	
 	if ((v = hx_head_get_vector( h, st, index_ordered[0] )) == NULL) {
@@ -168,7 +168,7 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 		index_ordered[ i ]	= triple_ordered[ index->order[ i ] ];
 	}
 	
-	hx_head* h	= hx_storage_block_from_id( st, index->head );
+	hx_head* h	= (hx_head*) hx_storage_block_from_id( st, index->head );
 	hx_vector* v;
 	hx_terminal* t;
 	
@@ -202,11 +202,11 @@ int hx_index_remove_triple ( hx_index* index, hx_storage_manager* st, hx_node_id
 }
 
 hx_storage_id_t hx_index_triples_count ( hx_index* index, hx_storage_manager* st ) {
-	return hx_head_triples_count( hx_storage_block_from_id( st, index->head ), st );
+	return hx_head_triples_count( (hx_head*) hx_storage_block_from_id( st, index->head ), st );
 }
 
 hx_head* hx_index_head ( hx_index* index, hx_storage_manager* st ) {
-	return hx_storage_block_from_id( st, index->head );
+	return (hx_head*) hx_storage_block_from_id( st, index->head );
 }
 
 hx_index_iter* hx_index_new_iter ( hx_index* index, hx_storage_manager* st ) {
@@ -305,7 +305,7 @@ int _hx_index_iter_prime_first_result( hx_index_iter* iter ) {
 	iter->started	= 1;
 	hx_index* index	= iter->index;
 // 	fprintf( stderr, "_hx_index_iter_prime_first_result( %p )\n", (void*) iter );
-	iter->head_iter	= hx_head_new_iter( hx_storage_block_from_id( iter->storage, index->head ), iter->storage );
+	iter->head_iter	= hx_head_new_iter( (hx_head*) hx_storage_block_from_id( iter->storage, index->head ), iter->storage );
 	if (iter->node_mask_a > (hx_node_id) 0) {
 //		fprintf( stderr, "- head seeking to %d\n", (int) iter->node_mask_a );
 		if (hx_head_iter_seek( iter->head_iter, iter->node_mask_a ) != 0) {
@@ -483,7 +483,7 @@ int hx_index_iter_next ( hx_index_iter* iter ) {
 int hx_index_write( hx_index* i, hx_storage_manager* s, FILE* f ) {
 	fputc( 'I', f );
 	fwrite( i->order, sizeof( int ), 3, f );
-	return hx_head_write( hx_storage_block_from_id( s, i->head ), s, f );
+	return hx_head_write( (hx_head*) hx_storage_block_from_id( s, i->head ), s, f );
 }
 
 hx_index* hx_index_read( hx_storage_manager* s, FILE* f, int buffer ) {

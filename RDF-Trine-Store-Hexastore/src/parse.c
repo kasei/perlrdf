@@ -18,7 +18,7 @@ void help (int argc, char** argv) {
 }
 
 void logger ( uint64_t _count ) {
-	fprintf( stderr, "\rParsed %"PRIu64" triples...", _count );
+	fprintf( stderr, "\rParsed %lu triples...", (unsigned long) _count );
 }
 
 int main (int argc, char** argv) {
@@ -54,7 +54,7 @@ int main (int argc, char** argv) {
 	
 	double elapsed	= DIFFTIME(st_time, end_time);
 	double tps	= ((double) total / elapsed);
-	fprintf( stderr, "\rParsed %"PRIu64" triples in %.1lf seconds (%.1lf triples/second)\n", total, elapsed, tps );
+	fprintf( stderr, "\rParsed %lu triples in %.1lf seconds (%.1lf triples/second)\n", (unsigned long) total, elapsed, tps );
 	
 	if (f != NULL) {
 		if (hx_write( hx, s, f ) != 0) {

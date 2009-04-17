@@ -188,8 +188,8 @@ unsigned char* _hx_parser_generate_id (void *user_data, raptor_genid_type type, 
 	hx_parser* parser	= (hx_parser*) user_data;
 //	fprintf( stderr, "time: %llx seconds, %llx µs\n", (unsigned long long) parser->tv.tv_sec, (unsigned long long) parser->tv.tv_usec );
 	
-	unsigned long long seconds	= (parser->tv.tv_sec - 1234567890);
-	unsigned long long copy		= seconds;
+	uint64_t seconds	= (parser->tv.tv_sec - 1234567890);
+	uint64_t copy		= seconds;
 	static char encodingTable [64] = {
 		'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
 		'Q','R','S','T','U','V','W',    'Y','Z','a','b','c','d','e','f',

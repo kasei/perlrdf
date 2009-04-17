@@ -99,9 +99,9 @@ hx_triple* hx_bgp_triple ( hx_bgp* b, int i ) {
 	return b->triples[ i ];
 }
 
-int _hx_bgp_string_concat ( char** string, char* new, int* alloc ) {
+int _hx_bgp_string_concat ( char** string, char* _new, int* alloc ) {
 	int sl	= strlen(*string);
-	int nl	= strlen(new);
+	int nl	= strlen(_new);
 	while (sl + nl + 1 >= *alloc) {
 		*alloc	*= 2;
 		char* newstring	= (char*) malloc( *alloc );
@@ -115,7 +115,7 @@ int _hx_bgp_string_concat ( char** string, char* new, int* alloc ) {
 	}
 	char* str	= *string;
 	char* base	= &( str[ sl ] );
-	strcpy( base, new );
+	strcpy( base, _new );
 	return 0;
 }
 
@@ -391,7 +391,7 @@ void _XXX_print_triple ( hx_triple* t, uint64_t size ) {
 	hx_node_string( s, &ss );
 	hx_node_string( p, &sp );
 	hx_node_string( o, &so );
-	fprintf( stderr, "%10llu\t{ %s %s %s }\n", (unsigned long long) size, ss, sp, so );
+	fprintf( stderr, "%10lu\t{ %s %s %s }\n", (unsigned long) size, ss, sp, so );
 	free( ss );
 	free( sp );
 	free( so );

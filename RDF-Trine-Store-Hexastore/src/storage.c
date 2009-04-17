@@ -62,7 +62,7 @@ hx_storage_manager* hx_open_mmap_storage_manager( const char* filename, int prot
 		return NULL;
 	}
 	
-	if (strncmp( s->m, "HXMM", 4 ) != 0) {
+	if (strncmp( (const char*) s->m, "HXMM", 4 ) != 0) {
 		munmap( s->m, st.st_size );
 		free( s );
 		fprintf( stderr, "*** Bad header cookie while trying to open mmaped hexastore\n" );

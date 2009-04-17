@@ -1,6 +1,10 @@
 #ifndef _MATERIALIZE_H
 #define _MATERIALIZE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NODE_LIST_ALLOC_SIZE	10
 
 #include <errno.h>
@@ -50,5 +54,9 @@ int hx_materialize_sort_iter_by_column ( hx_variablebindings_iter* iter, int ind
 int hx_materialize_sort_iter ( hx_variablebindings_iter* iter );
 
 void hx_materialize_iter_debug ( hx_variablebindings_iter* iter );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

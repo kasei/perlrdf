@@ -233,7 +233,7 @@ hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* _lhs
 	hx_variablebindings_iter* rhs	= hx_variablebindings_sort_iter( _rhs, rhs_index );
 	
 	
-	hx_variablebindings_iter_vtable* vtable	= malloc( sizeof( hx_variablebindings_iter_vtable ) );
+	hx_variablebindings_iter_vtable* vtable	= (hx_variablebindings_iter_vtable*) malloc( sizeof( hx_variablebindings_iter_vtable ) );
 	vtable->finished	= _hx_mergejoin_iter_vb_finished;
 	vtable->current		= _hx_mergejoin_iter_vb_current;
 	vtable->next		= _hx_mergejoin_iter_vb_next;
@@ -307,15 +307,15 @@ int _hx_mergejoin_get_batch ( _hx_mergejoin_iter_vb_info* info, hx_variablebindi
 		if (id == cur) {
 			if (*batch_size >= *batch_alloc_size) {
 				int size	= *batch_alloc_size * 2;
-				hx_variablebindings** new	= calloc( size, sizeof( hx_variablebindings* ) );
-				if (new == NULL) {
+				hx_variablebindings** _new	= (hx_variablebindings**) calloc( size, sizeof( hx_variablebindings* ) );
+				if (_new == NULL) {
 					return -1;
 				}
 				for (int i = 0; i < *batch_size; i++) {
-					new[i]	= (*batch)[i];
+					_new[i]	= (*batch)[i];
 				}
 				free( *batch );
-				*batch	= new;
+				*batch	= _new;
 				*batch_alloc_size	= size;
 			}
 			(*batch)[ (*batch_size)++ ]	= b;
@@ -390,7 +390,7 @@ int _hx_mergejoin_join_names ( char** lhs_names, int lhs_size, char** rhs_names,
 		}
 	}
 	
-	*merged_names	= calloc( seen_names, sizeof( char* ) );
+	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
 	for (int i = 0; i < seen_names; i++) {
 		(*merged_names)[ i ]	= names[ i ];
 	}
@@ -407,7 +407,7 @@ hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* le
 // 	fprintf( stderr, "%d shared names\n", size );
 	hx_variablebindings* b;
 	
-	hx_node_id* values	= calloc( size, sizeof( hx_node_id ) );
+	hx_node_id* values	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	int lhs_size		= hx_variablebindings_size( left );
 	char** lhs_names	= hx_variablebindings_names( left );
 	int rhs_size	= hx_variablebindings_size( right );

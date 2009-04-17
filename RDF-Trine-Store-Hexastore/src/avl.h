@@ -26,6 +26,10 @@
 #ifndef AVL_H
 #define AVL_H 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stddef.h>
 
 /* Function types. */
@@ -111,5 +115,9 @@ void *avl_t_next (struct avl_traverser *);
 void *avl_t_prev (struct avl_traverser *);
 void *avl_t_cur (struct avl_traverser *);
 void *avl_t_replace (struct avl_traverser *, void *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* avl.h */

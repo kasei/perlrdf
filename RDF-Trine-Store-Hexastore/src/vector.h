@@ -1,6 +1,10 @@
 #ifndef _VECTOR_H
 #define _VECTOR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -48,5 +52,9 @@ int hx_vector_iter_finished ( hx_vector_iter* iter );
 int hx_vector_iter_current ( hx_vector_iter* iter, hx_node_id* n, hx_terminal** t );
 int hx_vector_iter_next ( hx_vector_iter* iter );
 int hx_vector_iter_seek( hx_vector_iter* iter, hx_node_id n );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

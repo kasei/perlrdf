@@ -1,6 +1,10 @@
 #ifndef _NODEMAP_H
 #define _NODEMAP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "hexastore_types.h"
@@ -33,5 +37,9 @@ int hx_nodemap_debug ( hx_nodemap* map );
 
 int hx_nodemap_write( hx_nodemap* t, FILE* f );
 hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef _STORAGE_H
 #define _STORAGE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdint.h>
@@ -56,5 +60,9 @@ int hx_storage_sync_block( hx_storage_manager* s, void* block );
 hx_storage_id_t hx_storage_id_from_block ( hx_storage_manager* s, void* block );
 void* hx_storage_block_from_id ( hx_storage_manager* s, hx_storage_id_t id );
 void* hx_storage_first_block ( hx_storage_manager* s );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

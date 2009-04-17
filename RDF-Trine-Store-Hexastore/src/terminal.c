@@ -10,7 +10,7 @@ hx_terminal* hx_new_terminal( hx_storage_manager* s ) {
 }
 
 int hx_free_terminal ( hx_terminal* t, hx_storage_manager* st ) {
-	hx_free_btree( st, hx_storage_block_from_id( st, t->tree ) );
+	hx_free_btree( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ) );
 	hx_storage_release_block( st, t );
 	return 0;
 }
@@ -55,7 +55,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n 
 		return 1;
 	}
 	
-	int r	= hx_btree_insert( st, hx_storage_block_from_id( st, t->tree ), n, (hx_storage_id_t) 1 );
+	int r	= hx_btree_insert( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n, (hx_storage_id_t) 1 );
 	if (r == 0) {
 		t->triples_count++;
 	}
@@ -63,7 +63,7 @@ int hx_terminal_add_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n 
 }
 
 int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
-	hx_storage_id_t r	= hx_btree_search( st, hx_storage_block_from_id( st, t->tree ), n );
+	hx_storage_id_t r	= hx_btree_search( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n );
 	if (r == 0) {
 		// not found
 		return 0;
@@ -75,7 +75,7 @@ int hx_terminal_contains_node ( hx_terminal* t, hx_storage_manager* st, hx_node_
 
 int hx_terminal_remove_node ( hx_terminal* t, hx_storage_manager* st, hx_node_id n ) {
 //	fprintf( stderr, "%p\n", t->tree->root );
-	int r	= hx_btree_remove( st, hx_storage_block_from_id( st, t->tree ), n );
+	int r	= hx_btree_remove( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ), n );
 //	fprintf( stderr, "after removing node from terminal, tree root = %p\n", t->tree->root );
 	if (r == 0) {
 		t->triples_count--;
@@ -91,7 +91,7 @@ hx_terminal_iter* hx_terminal_new_iter ( hx_terminal* t, hx_storage_manager* st 
 	hx_terminal_iter* iter	= (hx_terminal_iter*) calloc( 1, sizeof( hx_terminal_iter ) );
 	iter->terminal	= t;
 	iter->storage	= st;
-	iter->t			= hx_btree_new_iter( st, hx_storage_block_from_id( st, t->tree ) );
+	iter->t			= hx_btree_new_iter( st, (hx_btree*) hx_storage_block_from_id( st, t->tree ) );
 	return iter;
 }
 

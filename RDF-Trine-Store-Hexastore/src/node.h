@@ -1,6 +1,10 @@
 #ifndef _NODE_H
 #define _NODE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -93,5 +97,9 @@ int hx_node_cmp( const void* a, const void* b );
 
 int hx_node_write( hx_node* n, FILE* f );
 hx_node* hx_node_read( FILE* f, int buffer );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

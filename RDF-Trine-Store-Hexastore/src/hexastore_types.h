@@ -1,6 +1,10 @@
 #ifndef _HEXASTORE_TYPES_H
 #define _HEXASTORE_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -19,5 +23,9 @@ typedef hx_node_id list_size_t;
 #define HX_OBJECT		2
 
 static char* HX_POSITION_NAMES[3]	= { "SUBJECT", "PREDICATE", "OBJECT" };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

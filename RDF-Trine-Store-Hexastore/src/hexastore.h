@@ -1,6 +1,10 @@
 #ifndef _HEXASTORE_H
 #define _HEXASTORE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -26,7 +30,7 @@
 enum {
 	RDF_ITER_FLAGS_BOUND_A	= 1,
 	RDF_ITER_FLAGS_BOUND_B	= 2,
-	RDF_ITER_FLAGS_BOUND_C	= 4,
+	RDF_ITER_FLAGS_BOUND_C	= 4
 };
 
 #define THREADED_BATCH_SIZE	5000
@@ -92,5 +96,9 @@ hx_variablebindings_iter* hx_new_iter_variablebindings ( hx_index_iter* i, hx_st
 
 int hx_write( hx_hexastore* h, hx_storage_manager* s, FILE* f );
 hx_hexastore* hx_read( hx_storage_manager* w, FILE* f, int buffer );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

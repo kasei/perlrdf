@@ -189,7 +189,7 @@ hx_nodemap* hx_nodemap_read( hx_storage_manager* s, FILE* f, int buffer ) {
 
 hx_nodemap* hx_nodemap_sparql_order_nodes ( hx_nodemap* map ) {
 	size_t count	= avl_count( map->id2node );
-	hx_node** node_handles	= calloc( count, sizeof( hx_node* ) );
+	hx_node** node_handles	= (hx_node**) calloc( count, sizeof( hx_node* ) );
 	int i	= 0;
 	struct avl_traverser iter;
 	avl_t_init( &iter, map->id2node );

@@ -12,12 +12,12 @@ hx_variablebindings* hx_new_variablebindings ( int size, char** names, hx_node_i
 hx_variablebindings* hx_copy_variablebindings ( hx_variablebindings* b ) {
 	hx_variablebindings* c	= (hx_variablebindings*) calloc( 1, sizeof( hx_variablebindings ) );
 	c->size		= b->size;
-	c->names	= calloc( c->size, sizeof( char* ) );
+	c->names	= (char**) calloc( c->size, sizeof( char* ) );
 	c->nodes	= (hx_node_id*) calloc( c->size, sizeof( hx_node_id ) );
 	for (int i = 0; i < c->size; i++) {
-		char* new	= calloc( strlen(b->names[i]) + 1, sizeof( char ) );
-		strcpy( new, b->names[i] );
-		c->names[i]	= new;
+		char* _new	= (char*) calloc( strlen(b->names[i]) + 1, sizeof( char ) );
+		strcpy( _new, b->names[i] );
+		c->names[i]	= _new;
 		c->nodes[i]	= b->nodes[i];
 	}
 	c->free_names	= 1;
@@ -41,13 +41,13 @@ int hx_free_variablebindings ( hx_variablebindings* b, int free_names ) {
 
 int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char** string ) {
 	int size	= b->size;
-	hx_node_id id[ size ];
-	char* nodestrs[ size ];
+	hx_node_id* id	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
+	char** nodestrs	= (char**) calloc( size, sizeof( char* ) );
 	size_t len	= 5;
 	for (int i = 0; i < size; i++) {
 		hx_node_id id	= b->nodes[ i ];
 		if (map == NULL) {
-			char* number	= malloc( 20 );
+			char* number	= (char*) malloc( 20 );
 			sprintf( number, "%d", (int) id );
 			nodestrs[i]	= number;
 		} else {
@@ -56,9 +56,11 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		}
 		len	+= strlen( nodestrs[i] ) + 2 + strlen(b->names[i]) + 1;
 	}
-	*string	= malloc( len );
+	*string	= (char*) malloc( len );
 	char* p			= *string;
 	if (*string == NULL) {
+		free( id );
+		free( nodestrs );
 		fprintf( stderr, "*** Failed to allocated memory in hx_variablebindings_string\n" );
 		return 1;
 	}
@@ -81,6 +83,8 @@ int hx_variablebindings_string ( hx_variablebindings* b, hx_nodemap* map, char**
 		}
 		p	+= 2;
 	}
+	free( nodestrs );
+	free( id );
 	return 0;
 }
 
@@ -163,7 +167,7 @@ int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindi
 	int rhs_size		= hx_variablebindings_size( rhs );
 	char** rhs_names	= hx_variablebindings_names( rhs );
 	int seen_names	= 0;
-	char* names[ lhs_size + rhs_size ];
+	char** names		= (char**) calloc( lhs_size + rhs_size, sizeof( char* ) );
 	for (int i = 0; i < lhs_size; i++) {
 		char* name	= lhs_names[ i ];
 		int seen	= 0;
@@ -189,11 +193,12 @@ int _hx_variablebindings_join_names ( hx_variablebindings* lhs, hx_variablebindi
 		}
 	}
 	
-	*merged_names	= calloc( seen_names, sizeof( char* ) );
+	*merged_names	= (char**) calloc( seen_names, sizeof( char* ) );
 	for (int i = 0; i < seen_names; i++) {
 		(*merged_names)[ i ]	= names[ i ];
 	}
 	*size	= seen_names;
+	free( names );
 	return 0;
 }
 hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left, hx_variablebindings* right ) {
@@ -205,7 +210,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	
 // 	fprintf( stderr, "natural join...\n" );
 	int shared_count	= 0;
-	int* shared_lhs_index	= calloc( max_size, sizeof(int) );
+	int* shared_lhs_index	= (int*) calloc( max_size, sizeof(int) );
 	char** shared_names	= (char**) calloc( max_size, sizeof( char* ) );
 	for (int i = 0; i < lhs_size; i++) {
 		char* lhs_name	= lhs_names[ i ];
@@ -251,7 +256,7 @@ hx_variablebindings* hx_variablebindings_natural_join( hx_variablebindings* left
 	_hx_variablebindings_join_names( left, right, &names, &size );
 	hx_variablebindings* b;
 	
-	hx_node_id* values	= calloc( size, sizeof( hx_node_id ) );
+	hx_node_id* values	= (hx_node_id*) calloc( size, sizeof( hx_node_id ) );
 	for (int i = 0; i < size; i++) {
 		char* name	= names[ i ];
 		for (int j = 0; j < lhs_size; j++) {

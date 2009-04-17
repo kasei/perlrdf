@@ -4,7 +4,7 @@
 #include "nodemap.h"
 #include "storage.h"
 
-hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id );
+hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id );
 void help (int argc, char** argv) {
 	fprintf( stderr, "Usage: %s in.hx out.hxo\n\n", argv[0] );
 }
@@ -46,7 +46,7 @@ int main (int argc, char** argv) {
 	int count	= 0;
 	fprintf( stderr, "creating new hexastore...\n" );
 	hx_hexastore* shx	= hx_new_hexastore_with_nodemap( st, smap );
-	hx_index_iter* iter	= hx_index_new_iter( hx_storage_block_from_id( st, hx->spo ), st );
+	hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st );
 	while (!hx_index_iter_finished( iter )) {
 		hx_node_id s, p, o;
 		hx_index_iter_current( iter, &s, &p, &o );
@@ -100,9 +100,9 @@ char* node_string ( const char* nodestr ) {
 	return string;
 }
 
-hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* new, hx_node_id id ) {
+hx_node_id map_old_to_new_id ( hx_nodemap* old, hx_nodemap* _new, hx_node_id id ) {
 	hx_node* node		= hx_nodemap_get_node( old, id );
-	hx_node_id newid	= hx_nodemap_get_node_id( new, node );
+	hx_node_id newid	= hx_nodemap_get_node_id( _new, node );
 	return newid;
 }
 

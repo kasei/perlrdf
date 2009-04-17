@@ -1,6 +1,10 @@
 #ifndef _INDEX_H
 #define _INDEX_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -54,7 +58,7 @@ int hx_free_index ( hx_index* index, hx_storage_manager* s );
 int hx_index_debug ( hx_index* index, hx_storage_manager* s );
 int hx_index_add_triple ( hx_index* index, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 int hx_index_add_triple_terminal ( hx_index* index, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o, hx_terminal** t );
-int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int new );
+int hx_index_add_triple_with_terminal ( hx_index* index, hx_storage_manager* st, hx_terminal* t, hx_node_id s, hx_node_id p, hx_node_id o, int _new );
 int hx_index_remove_triple ( hx_index* i, hx_storage_manager* st, hx_node_id s, hx_node_id p, hx_node_id o );
 hx_storage_id_t hx_index_triples_count ( hx_index* index, hx_storage_manager* st );
 hx_head* hx_index_head ( hx_index* index, hx_storage_manager* st );
@@ -71,5 +75,9 @@ int hx_index_iter_current ( hx_index_iter* iter, hx_node_id* s, hx_node_id* p, h
 int hx_index_iter_next ( hx_index_iter* iter );
 
 int hx_index_iter_is_sorted_by_index ( hx_index_iter* iter, int index );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

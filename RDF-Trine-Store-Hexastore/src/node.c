@@ -15,7 +15,7 @@ hx_node* _hx_new_node ( char type, char* value, int padding, int flags, int iv, 
 	}
 	
 	if (value != NULL) {
-		n->value	= malloc( strlen( value ) + 1 );
+		n->value	= (char*) malloc( strlen( value ) + 1 );
 		strcpy( n->value, value );
 	}
 	return n;
@@ -50,7 +50,7 @@ hx_node* hx_new_node_literal ( char* value ) {
 hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 	int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
 	hx_node_lang_literal* n	= (hx_node_lang_literal*) _hx_new_node( 'G', value, padding, HX_NODE_NONE, 0, 0.0 );
-	n->lang		= malloc( strlen( lang ) + 1 );
+	n->lang		= (char*) malloc( strlen( lang ) + 1 );
 	if (n->lang == NULL) {
 		free( n->value );
 		free( n );
@@ -64,7 +64,7 @@ hx_node_lang_literal* hx_new_node_lang_literal ( char* value, char* lang ) {
 hx_node_dt_literal* hx_new_node_dt_literal ( char* value, char* dt ) {
 	int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 	hx_node_dt_literal* n	= (hx_node_dt_literal*) _hx_new_node( 'D', value, padding, HX_NODE_NONE, 0, 0.0 );
-	n->dt		= malloc( strlen( dt ) + 1 );
+	n->dt		= (char*) malloc( strlen( dt ) + 1 );
 	if (n->dt == NULL) {
 		free( n->value );
 		free( n );
@@ -81,7 +81,7 @@ hx_node* hx_node_copy( hx_node* n ) {
 			hx_node_lang_literal* d	= (hx_node_lang_literal*) n;
 			int padding	= sizeof( hx_node_lang_literal ) - sizeof( hx_node );
 			hx_node_lang_literal* copy	= (hx_node_lang_literal*) _hx_new_node( 'G', d->value, padding, HX_NODE_NONE, 0, 0.0 );
-			copy->lang		= malloc( strlen( d->lang ) + 1 );
+			copy->lang		= (char*) malloc( strlen( d->lang ) + 1 );
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -92,7 +92,7 @@ hx_node* hx_node_copy( hx_node* n ) {
 			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
 			int padding	= sizeof( hx_node_dt_literal ) - sizeof( hx_node );
 			hx_node_dt_literal* copy	= (hx_node_dt_literal*) _hx_new_node( 'D', d->value, padding, HX_NODE_NONE, 0, 0.0 );
-			copy->dt		= malloc( strlen( d->dt ) + 1 );
+			copy->dt		= (char*) malloc( strlen( d->dt ) + 1 );
 			copy->flags		= d->flags;
 			copy->iv		= d->iv;
 			copy->nv		= d->nv;
@@ -179,13 +179,13 @@ int hx_node_variable_name ( hx_node* n, char** name ) {
 	if (n->type == '?') {
 		if (n->value == NULL) {
 			int alloc	= 10 + 6;
-			*name	= calloc( 1, alloc );
+			*name	= (char*) calloc( 1, alloc );
 			if (*name == NULL) {
 				return 0;
 			}
 			sprintf( *name, "__var%d", n->iv );
 		} else {
-			*name	= malloc( strlen( n->value ) + 1 );
+			*name	= (char*) malloc( strlen( n->value ) + 1 );
 			strcpy( *name, n->value );
 		}
 	} else {
@@ -229,7 +229,7 @@ int hx_node_string ( hx_node* n, char** str ) {
 			hx_node_dt_literal* d	= (hx_node_dt_literal*) n;
 			alloc	+= 4 + strlen( d->dt );
 		}
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
@@ -245,14 +245,14 @@ int hx_node_string ( hx_node* n, char** str ) {
 		}
 	} else if (hx_node_is_resource( n )) {
 		alloc	= strlen(n->value) + 3;
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
 		sprintf( *str, "<%s>", n->value );
 	} else if (hx_node_is_blank( n )) {
 		alloc	= strlen(n->value) + 3;
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
@@ -261,7 +261,7 @@ int hx_node_string ( hx_node* n, char** str ) {
 		char* vname;
 		hx_node_variable_name( n, &vname );
 		alloc	= 2 + strlen( vname );
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
@@ -289,21 +289,21 @@ int hx_node_nodestr( hx_node* n, char** str ) {
 			dt	= hx_node_dt( d );
 			alloc	+= strlen( d->dt );
 		}
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
 		sprintf( *str, "L%s<%s>%s", n->value, lang, dt );
 	} else if (hx_node_is_resource( n )) {
 		alloc	= strlen(n->value) + 2;
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}
 		sprintf( *str, "R%s", n->value );
 	} else if (hx_node_is_blank( n )) {
 		alloc	= strlen(n->value) + 2;
-		*str	= calloc( 1, alloc );
+		*str	= (char*) calloc( 1, alloc );
 		if (*str == NULL) {
 			return 0;
 		}

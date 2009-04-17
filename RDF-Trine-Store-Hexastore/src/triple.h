@@ -1,6 +1,10 @@
 #ifndef _TRIPLE_H
 #define _TRIPLE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -30,5 +34,9 @@ typedef struct {
 
 hx_triple* hx_new_triple( hx_node* s, hx_node* p, hx_node* o );
 int hx_free_triple ( hx_triple* t );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

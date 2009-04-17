@@ -1,6 +1,10 @@
 #ifndef _MERGEJOIN_H
 #define _MERGEJOIN_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NODE_LIST_ALLOC_SIZE	10
 
 #include <errno.h>
@@ -50,5 +54,9 @@ char** _hx_mergejoin_iter_vb_names ( void* iter );
 hx_variablebindings_iter* hx_new_mergejoin_iter ( hx_variablebindings_iter* lhs, hx_variablebindings_iter* rhs );
 hx_variablebindings* hx_mergejoin_join_variablebindings( hx_variablebindings* left, hx_variablebindings* right );
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

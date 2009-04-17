@@ -1,6 +1,10 @@
 #ifndef _VARIABLEBINDINGS_H
 #define _VARIABLEBINDINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -80,5 +84,9 @@ int hx_variablebindings_iter_is_sorted_by_index ( hx_variablebindings_iter* iter
 int hx_variablebindings_iter_debug ( hx_variablebindings_iter* iter, char* header, int indent );
 
 hx_variablebindings_iter* hx_variablebindings_sort_iter( hx_variablebindings_iter* iter, int index );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef _TERMINAL_H
 #define _TERMINAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -49,5 +53,9 @@ int hx_terminal_iter_finished ( hx_terminal_iter* iter );
 int hx_terminal_iter_current ( hx_terminal_iter* iter, hx_node_id* n );
 int hx_terminal_iter_next ( hx_terminal_iter* iter );
 int hx_terminal_iter_seek( hx_terminal_iter* iter, hx_node_id n );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

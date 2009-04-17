@@ -1,6 +1,10 @@
 #ifndef _BTREE_INTERNAL_H
 #define _BTREE_INTERNAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // #define BRANCHING_SIZE	124
 // #define BRANCHING_SIZE	252
 // #define BRANCHING_SIZE	510
@@ -40,5 +44,9 @@ hx_storage_id_t hx_btree_node_search ( hx_storage_manager* s, hx_btree_node* roo
 int hx_btree_node_insert ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key, hx_storage_id_t value, uint32_t branching_size );
 int hx_btree_node_remove ( hx_storage_manager* s, hx_btree_node** _root, hx_node_id key, uint32_t branching_size );
 void hx_btree_node_traverse ( hx_storage_manager* s, hx_btree_node* node, hx_btree_node_visitor* before, hx_btree_node_visitor* after, int level, uint32_t branching_size, void* param );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

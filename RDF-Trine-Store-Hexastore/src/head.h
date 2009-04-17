@@ -1,6 +1,10 @@
 #ifndef _HEAD_H
 #define _HEAD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -48,5 +52,9 @@ int hx_head_iter_finished ( hx_head_iter* iter );
 int hx_head_iter_current ( hx_head_iter* iter, hx_node_id* n, hx_vector** v );
 int hx_head_iter_next ( hx_head_iter* iter );
 int hx_head_iter_seek( hx_head_iter* iter, hx_node_id n );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,6 +1,10 @@
 #ifndef _BGP_H
 #define _BGP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -36,5 +40,9 @@ hx_variablebindings_iter* hx_bgp_execute ( hx_bgp* b, hx_hexastore* hx, hx_stora
 
 int hx_bgp_debug ( hx_bgp* b );
 int hx_bgp_string ( hx_bgp* b, char** string );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

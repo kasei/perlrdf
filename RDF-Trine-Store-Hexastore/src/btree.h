@@ -1,6 +1,10 @@
 #ifndef _BTREE_H
 #define _BTREE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -64,5 +68,9 @@ int hx_btree_iter_seek( hx_btree_iter* iter, hx_node_id n );
 // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 // XXX remove this as soon as branching_size is a param of the tree...
 #include "btree_internal.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

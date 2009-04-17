@@ -19,7 +19,7 @@ typedef struct {
 } varmap_item_t;
 
 int _varmap_name2id_cmp ( const void* a, const void* b, void* param ) {
-	return strcmp( a, b );
+	return strcmp( (const char*) a, (const char*) b );
 }
 
 int _varmap_id2name_cmp ( const void* a, const void* b, void* param ) {
@@ -72,7 +72,7 @@ int main (int argc, char** argv) {
 	
 	if (arg == NULL) {
 		int count	= 1;
-		hx_index_iter* iter	= hx_index_new_iter( hx_storage_block_from_id( st, hx->spo ), st );
+		hx_index_iter* iter	= hx_index_new_iter( (hx_index*) hx_storage_block_from_id( st, hx->spo ), st );
 		while (!hx_index_iter_finished( iter )) {
 			hx_node_id s, p, o;
 			hx_index_iter_current( iter, &s, &p, &o );
@@ -81,7 +81,7 @@ int main (int argc, char** argv) {
 		}
 		hx_free_index_iter( iter );
 	} else if (strcmp( arg, "-c" ) == 0) {
-		fprintf( stdout, "Triples: %llu\n", (unsigned long long) hx_triples_count( hx, st ) );
+		fprintf( stdout, "Triples: %lu\n", (unsigned long) hx_triples_count( hx, st ) );
 	} else if (strcmp( arg, "-n" ) == 0) {
 		// print out the nodemap
 		hx_nodemap* map		= hx_get_nodemap( hx );
@@ -92,7 +92,7 @@ int main (int argc, char** argv) {
 		while ((item = (hx_nodemap_item*) avl_t_next( &iter )) != NULL) {
 			char* string;
 			hx_node_string( item->node, &string );
-			fprintf( stdout, "%-10llu\t%s\n", (unsigned long long) item->id, string );
+			fprintf( stdout, "%-10lu\t%s\n", (unsigned long) item->id, string );
 			free( string );
 		}
 	} else if (strcmp( arg, "-id" ) == 0) {
@@ -138,9 +138,9 @@ int main (int argc, char** argv) {
 		hx_node* on	= node_for_string( obj, hx );
 		
 		hx_index_iter* titer	= hx_get_statements( hx, st, sn, pn, on, HX_SUBJECT );
-		char* s	= (sn == NULL) ? NULL : "subj";
-		char* p	= (pn == NULL) ? NULL : "pred";
-		char* o	= (on == NULL) ? NULL : "obj";
+		char* s	= (char*) ((sn == NULL) ? NULL : "subj");
+		char* p	= (char*) ((pn == NULL) ? NULL : "pred");
+		char* o	= (char*) ((on == NULL) ? NULL : "obj");
 		hx_variablebindings_iter* iter	= hx_new_iter_variablebindings( titer, st, s, p, o, 0 );
 		int count	= 1;
 		
@@ -368,7 +368,7 @@ hx_node* node_for_string_with_varmap ( char* string, hx_hexastore* hx, varmap_t*
 	} else if (string[0] == '?') {
 		varmap_item_t* item	= (varmap_item_t*) avl_find( varmap->name2id, &( string[1] ) );
 		if (item == NULL) {
-			item	= calloc( 1, sizeof(varmap_item_t) );
+			item	= (varmap_item_t*) calloc( 1, sizeof(varmap_item_t) );
 			item->name	= &( string[1] );
 			item->id		= --( varmap->next );
 			avl_insert( varmap->name2id, item );
