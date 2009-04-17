@@ -11,7 +11,8 @@
 %debug
 
 /* start symbol is named "start" */
-%start Query
+// XXX %start Query
+%start BGP
 
 /* write out a header file containing the token defines */
 %defines
@@ -2157,6 +2158,7 @@ private:
     IRIref* m_IRIref;
 public:
     GraphTerm_rule0 (IRIref* p_IRIref) {
+    fprintf( stderr, "*** GraphTerm_rule0 IRIref: %s\n", _Production::toStr(NULL, 1, p_IRIref) ); // XXX
 	m_IRIref = p_IRIref;
 	trace("GraphTerm", 1, p_IRIref);
     }
@@ -3929,6 +3931,8 @@ public:
 /* END ClassBlock */
 
 extern Query* StupidGlobal;
+extern TriplesBlock* myBGP;
+extern Prologue* myPrologue;
 
 namespace SPARQLNS {
 
@@ -4463,6 +4467,19 @@ public:
 %% /*** Grammar Rules ***/
 
  /*** BEGIN SPARQL - Change the grammar rules below ***/
+
+/** ****************************************** **/
+// XXX
+
+BGP:
+    Prologue TriplesBlock {
+    myPrologue = $1;
+    myBGP = $2;
+}
+;
+
+/** ****************************************** **/
+
 Query:
     Prologue _O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C	{
     StupidGlobal = new Query($1, $2);
@@ -5745,6 +5762,8 @@ void SPARQLNS::SPARQLParser::error(const SPARQLParser::location_type& l,
 
 std::ostream* _Trace = NULL;
 Query* StupidGlobal = NULL;
+TriplesBlock* myBGP = NULL;
+Prologue* myPrologue = NULL;
 
 const char * _Production::toStr(std::ofstream* out, size_t argc, ...) {
     va_list bases;
@@ -6059,44 +6078,33 @@ void Driver::error(const std::string& m)
 #include <ostream>
 #include <fstream>
 
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/file_descriptor.hpp>
-
 int main(int argc,char **argv) {
 
     SPARQLNS::SPARQLContext context;
     SPARQLNS::Driver driver(context);
 
-    boost::iostreams::stream_buffer<boost::iostreams::file_descriptor_sink>* buf;
-    if (char* tmp = getenv("TRACE_FD")) {
-	std::istringstream is(tmp);
-	int fd;
-	is >> fd;
-	buf = new boost::iostreams::stream_buffer<boost::iostreams::file_descriptor_sink>(fd);
-	if (!(_Trace = new std::ostream(buf)))
-	    std::cerr << "couldn't open trace fd " << fd << std::endl;
-    }
 
     std::istream* yyin;
     const char* inputId;
     if (argc > 1) {
-	inputId = argv[1];
-	yyin = new std::ifstream(argv[1], std::ifstream::in);
+		inputId = argv[1];
+		yyin = new std::ifstream(argv[1], std::ifstream::in);
     } else {
-	inputId = "<stdin>";
-	yyin = &std::cin;
+		inputId = "<stdin>";
+		yyin = &std::cin;
     }
 
     std::string str(inputId);
     int result = driver.parse_stream(*yyin, str);
 
     if (result)
-	std::cerr << "Error: " << inputId << " did not contain a valid SPARQL string." << std::endl;
-    else
-	std::cout << StupidGlobal->toXml(0);
-
-    if (_Trace)
-	delete _Trace;
+		std::cerr << "Error: " << inputId << " did not contain a valid SPARQL string." << std::endl;
+    else {
+//		std::cout << StupidGlobal->toXml(0);
+		std::cout << myPrologue->toXml(0);
+		std::cout << myBGP->toXml(0);
+		std::cout << myBGP->toStr();
+	}
 
     return result;
 };
