@@ -82,6 +82,8 @@ protected:
 public:
     virtual const char* toStr(std::ofstream* out = NULL);
     virtual const char* toXml(size_t depth, std::ofstream* out = NULL);
+    virtual int getSize ( void ) { return size; }
+    virtual _Base* getValue ( int index ) { return vals[ index ]; }
 };
 class _Token : public _Base {
 protected:
@@ -381,20 +383,6 @@ public:
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_AskQuery);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_AskQuery);}
 };
-class Prologue : public _Production {
-private:
-    _QBaseDecl_E_Opt* m__QBaseDecl_E_Opt;
-    _QPrefixDecl_E_Star* m__QPrefixDecl_E_Star;
-    virtual const char* getProductionName () { return "Prologue"; }
-public:
-    Prologue (_QBaseDecl_E_Opt* p__QBaseDecl_E_Opt, _QPrefixDecl_E_Star* p__QPrefixDecl_E_Star) {
-	m__QBaseDecl_E_Opt = p__QBaseDecl_E_Opt;
-	m__QPrefixDecl_E_Star = p__QPrefixDecl_E_Star;
-	trace("Prologue", 2, p__QBaseDecl_E_Opt, p__QPrefixDecl_E_Star);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m__QBaseDecl_E_Opt, m__QPrefixDecl_E_Star);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m__QBaseDecl_E_Opt, m__QPrefixDecl_E_Star);}
-};
 class _QBaseDecl_E_Opt : public _Production {
 private:
     virtual const char * getProductionName () { return "_QBaseDecl_E_Opt"; }
@@ -456,22 +444,6 @@ public:
     }
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_IT_BASE, m_IRI_REF);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_IT_BASE, m_IRI_REF);}
-};
-class PrefixDecl : public _Production {
-private:
-    IT_PREFIX* m_IT_PREFIX;
-    PNAME_NS* m_PNAME_NS;
-    IRI_REF* m_IRI_REF;
-    virtual const char* getProductionName () { return "PrefixDecl"; }
-public:
-    PrefixDecl (IT_PREFIX* p_IT_PREFIX, PNAME_NS* p_PNAME_NS, IRI_REF* p_IRI_REF) {
-	m_IT_PREFIX = p_IT_PREFIX;
-	m_PNAME_NS = p_PNAME_NS;
-	m_IRI_REF = p_IRI_REF;
-	trace("PrefixDecl", 3, p_IT_PREFIX, p_PNAME_NS, p_IRI_REF);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_IT_PREFIX, m_PNAME_NS, m_IRI_REF);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_IT_PREFIX, m_PNAME_NS, m_IRI_REF);}
 };
 class SelectQuery : public _Production {
 private:
@@ -1305,20 +1277,6 @@ public:
 	delete p__Q_O_QGraphPatternNotTriples_E_Or_QFilter_E_S_QGT_DOT_E_Opt_S_QTriplesBlock_E_Opt_C_E_Star;
     }
 };
-class TriplesBlock : public _Production {
-private:
-    TriplesSameSubject* m_TriplesSameSubject;
-    _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt* m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt;
-    virtual const char* getProductionName () { return "TriplesBlock"; }
-public:
-    TriplesBlock (TriplesSameSubject* p_TriplesSameSubject, _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt* p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt) {
-	m_TriplesSameSubject = p_TriplesSameSubject;
-	m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt = p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt;
-	trace("TriplesBlock", 2, p_TriplesSameSubject, p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_TriplesSameSubject, m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_TriplesSameSubject, m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);}
-};
 class _O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C : public _Production {
 private:
     GT_DOT* m_GT_DOT;
@@ -1714,89 +1672,6 @@ public:
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m__O_QGT_DOT_E_S_QConstructTriples_E_Opt_C);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m__O_QGT_DOT_E_S_QConstructTriples_E_Opt_C);}
 };
-class TriplesSameSubject : public _Production {
-private:
-    virtual const char * getProductionName () { return "TriplesSameSubject"; }
-};
-class TriplesSameSubject_rule0 : public TriplesSameSubject {
-private:
-    VarOrTerm* m_VarOrTerm;
-    PropertyListNotEmpty* m_PropertyListNotEmpty;
-public:
-    TriplesSameSubject_rule0 (VarOrTerm* p_VarOrTerm, PropertyListNotEmpty* p_PropertyListNotEmpty) {
-	m_VarOrTerm = p_VarOrTerm;
-	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
-	trace("TriplesSameSubject", 2, p_VarOrTerm, p_PropertyListNotEmpty);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_VarOrTerm, m_PropertyListNotEmpty);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_VarOrTerm, m_PropertyListNotEmpty);}
-};
-class TriplesSameSubject_rule1 : public TriplesSameSubject {
-private:
-    TriplesNode* m_TriplesNode;
-    PropertyList* m_PropertyList;
-public:
-    TriplesSameSubject_rule1 (TriplesNode* p_TriplesNode, PropertyList* p_PropertyList) {
-	m_TriplesNode = p_TriplesNode;
-	m_PropertyList = p_PropertyList;
-	trace("TriplesSameSubject", 2, p_TriplesNode, p_PropertyList);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_TriplesNode, m_PropertyList);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_TriplesNode, m_PropertyList);}
-};
-class PropertyListNotEmpty : public _Production {
-private:
-    Verb* m_Verb;
-    ObjectList* m_ObjectList;
-    _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star* m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
-    virtual const char* getProductionName () { return "PropertyListNotEmpty"; }
-public:
-    PropertyListNotEmpty (Verb* p_Verb, ObjectList* p_ObjectList, _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star* p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star) {
-	m_Verb = p_Verb;
-	m_ObjectList = p_ObjectList;
-	m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star = p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
-	trace("PropertyListNotEmpty", 3, p_Verb, p_ObjectList, p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_Verb, m_ObjectList, m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_Verb, m_ObjectList, m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);}
-};
-class _O_QVerb_E_S_QObjectList_E_C : public _Production {
-private:
-    Verb* m_Verb;
-    ObjectList* m_ObjectList;
-    virtual const char* getProductionName () { return "_O_QVerb_E_S_QObjectList_E_C"; }
-public:
-    _O_QVerb_E_S_QObjectList_E_C (Verb* p_Verb, ObjectList* p_ObjectList) {
-	m_Verb = p_Verb;
-	m_ObjectList = p_ObjectList;
-	trace("_O_QVerb_E_S_QObjectList_E_C", 2, p_Verb, p_ObjectList);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_Verb, m_ObjectList);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_Verb, m_ObjectList);}
-};
-class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt : public _Production {
-private:
-    virtual const char * getProductionName () { return "_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt"; }
-};
-class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule0 : public _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt {
-public:
-    _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule0 () {
-	trace("_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt", 0);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 0);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 0);}
-};
-class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule1 : public _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt {
-private:
-    _O_QVerb_E_S_QObjectList_E_C* m__O_QVerb_E_S_QObjectList_E_C;
-public:
-    _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule1 (_O_QVerb_E_S_QObjectList_E_C* p__O_QVerb_E_S_QObjectList_E_C) {
-	m__O_QVerb_E_S_QObjectList_E_C = p__O_QVerb_E_S_QObjectList_E_C;
-	trace("_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt", 1, p__O_QVerb_E_S_QObjectList_E_C);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m__O_QVerb_E_S_QObjectList_E_C);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m__O_QVerb_E_S_QObjectList_E_C);}
-};
 class _O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C : public _Production {
 private:
     GT_SEMI* m_GT_SEMI;
@@ -1810,6 +1685,7 @@ public:
     }
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_GT_SEMI, m__Q_O_QVerb_E_S_QObjectList_E_C_E_Opt);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_GT_SEMI, m__Q_O_QVerb_E_S_QObjectList_E_C_E_Opt);}
+    virtual _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt* getVerbObjectList ( void ) { return m__Q_O_QVerb_E_S_QObjectList_E_C_E_Opt; }
 };
 class _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star : public _GenProduction {
 protected:
@@ -1835,55 +1711,6 @@ public:
 	trace("_Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star", 2, p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star, p__O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C);
 	delete p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
     }
-};
-class PropertyList : public _Production {
-private:
-    _QPropertyListNotEmpty_E_Opt* m__QPropertyListNotEmpty_E_Opt;
-    virtual const char* getProductionName () { return "PropertyList"; }
-public:
-    PropertyList (_QPropertyListNotEmpty_E_Opt* p__QPropertyListNotEmpty_E_Opt) {
-	m__QPropertyListNotEmpty_E_Opt = p__QPropertyListNotEmpty_E_Opt;
-	trace("PropertyList", 1, p__QPropertyListNotEmpty_E_Opt);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m__QPropertyListNotEmpty_E_Opt);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m__QPropertyListNotEmpty_E_Opt);}
-};
-class _QPropertyListNotEmpty_E_Opt : public _Production {
-private:
-    virtual const char * getProductionName () { return "_QPropertyListNotEmpty_E_Opt"; }
-};
-class _QPropertyListNotEmpty_E_Opt_rule0 : public _QPropertyListNotEmpty_E_Opt {
-public:
-    _QPropertyListNotEmpty_E_Opt_rule0 () {
-	trace("_QPropertyListNotEmpty_E_Opt", 0);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 0);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 0);}
-};
-class _QPropertyListNotEmpty_E_Opt_rule1 : public _QPropertyListNotEmpty_E_Opt {
-private:
-    PropertyListNotEmpty* m_PropertyListNotEmpty;
-public:
-    _QPropertyListNotEmpty_E_Opt_rule1 (PropertyListNotEmpty* p_PropertyListNotEmpty) {
-	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
-	trace("_QPropertyListNotEmpty_E_Opt", 1, p_PropertyListNotEmpty);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_PropertyListNotEmpty);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_PropertyListNotEmpty);}
-};
-class ObjectList : public _Production {
-private:
-    Object* m_Object;
-    _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star* m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star;
-    virtual const char* getProductionName () { return "ObjectList"; }
-public:
-    ObjectList (Object* p_Object, _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star* p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star) {
-	m_Object = p_Object;
-	m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star = p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star;
-	trace("ObjectList", 2, p_Object, p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_Object, m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_Object, m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);}
 };
 class _O_QGT_COMMA_E_S_QObject_E_C : public _Production {
 private:
@@ -1939,6 +1766,8 @@ public:
 class Verb : public _Production {
 private:
     virtual const char * getProductionName () { return "Verb"; }
+public:
+    virtual const char* toStr(std::ofstream* out = NULL)	= 0;
 };
 class Verb_rule0 : public Verb {
 private:
@@ -1962,47 +1791,45 @@ public:
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_IT_a);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_IT_a);}
 };
-class TriplesNode : public _Production {
-private:
-    virtual const char * getProductionName () { return "TriplesNode"; }
-};
-class TriplesNode_rule0 : public TriplesNode {
-private:
-    Collection* m_Collection;
+class _QGraphNode_E_Plus : public _GenProduction {
+protected:
+    _QGraphNode_E_Plus () : 
+    _GenProduction("_QGraphNode_E_Plus", 0) {}
+    _QGraphNode_E_Plus (GraphNode* p_GraphNode) : 
+    _GenProduction("_QGraphNode_E_Plus", 1, p_GraphNode) {}
+    _QGraphNode_E_Plus (_QGraphNode_E_Plus* p__QGraphNode_E_Plus, GraphNode* p_GraphNode) : 
+    _GenProduction("_QGraphNode_E_Plus", 2, p__QGraphNode_E_Plus, p_GraphNode) {}
+    virtual const char * getProductionName () { return "_QGraphNode_E_Plus"; }
 public:
-    TriplesNode_rule0 (Collection* p_Collection) {
-	m_Collection = p_Collection;
-	trace("TriplesNode", 1, p_Collection);
-    }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_Collection);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_Collection);}
+	virtual int count ( void )	= 0;
+	virtual int getSize ( void ) = 0;
 };
-class TriplesNode_rule1 : public TriplesNode {
-private:
-    BlankNodePropertyList* m_BlankNodePropertyList;
+class _QGraphNode_E_Plus_rule0 : public _QGraphNode_E_Plus {
 public:
-    TriplesNode_rule1 (BlankNodePropertyList* p_BlankNodePropertyList) {
-	m_BlankNodePropertyList = p_BlankNodePropertyList;
-	trace("TriplesNode", 1, p_BlankNodePropertyList);
+    _QGraphNode_E_Plus_rule0 (GraphNode* p_GraphNode) : 
+    _QGraphNode_E_Plus(p_GraphNode) {
+	trace("_QGraphNode_E_Plus", 1, p_GraphNode);
     }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_BlankNodePropertyList);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_BlankNodePropertyList);}
+    virtual int count ( void ) {
+    	return 0; // XXX
+    }
+    virtual int getSize ( void ) {
+    	return 0; // XXX
+    }
 };
-class BlankNodePropertyList : public _Production {
-private:
-    GT_LBRACKET* m_GT_LBRACKET;
-    PropertyListNotEmpty* m_PropertyListNotEmpty;
-    GT_RBRACKET* m_GT_RBRACKET;
-    virtual const char* getProductionName () { return "BlankNodePropertyList"; }
+class _QGraphNode_E_Plus_rule1 : public _QGraphNode_E_Plus {
 public:
-    BlankNodePropertyList (GT_LBRACKET* p_GT_LBRACKET, PropertyListNotEmpty* p_PropertyListNotEmpty, GT_RBRACKET* p_GT_RBRACKET) {
-	m_GT_LBRACKET = p_GT_LBRACKET;
-	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
-	m_GT_RBRACKET = p_GT_RBRACKET;
-	trace("BlankNodePropertyList", 3, p_GT_LBRACKET, p_PropertyListNotEmpty, p_GT_RBRACKET);
+    _QGraphNode_E_Plus_rule1 (_QGraphNode_E_Plus* p__QGraphNode_E_Plus, GraphNode* p_GraphNode) : 
+    _QGraphNode_E_Plus(p__QGraphNode_E_Plus, p_GraphNode) {
+	trace("_QGraphNode_E_Plus", 2, p__QGraphNode_E_Plus, p_GraphNode);
+	delete p__QGraphNode_E_Plus;
     }
-    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_GT_LBRACKET, m_PropertyListNotEmpty, m_GT_RBRACKET);}
-    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_GT_LBRACKET, m_PropertyListNotEmpty, m_GT_RBRACKET);}
+    virtual int count ( void ) {
+    	return 0; // XXX
+    }
+    virtual int getSize ( void ) {
+    	return 0; // XXX
+    }
 };
 class Collection : public _Production {
 private:
@@ -2019,30 +1846,8 @@ public:
     }
     virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_GT_LPAREN, m__QGraphNode_E_Plus, m_GT_RPAREN);}
     virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_GT_LPAREN, m__QGraphNode_E_Plus, m_GT_RPAREN);}
-};
-class _QGraphNode_E_Plus : public _GenProduction {
-protected:
-    _QGraphNode_E_Plus () : 
-    _GenProduction("_QGraphNode_E_Plus", 0) {}
-    _QGraphNode_E_Plus (GraphNode* p_GraphNode) : 
-    _GenProduction("_QGraphNode_E_Plus", 1, p_GraphNode) {}
-    _QGraphNode_E_Plus (_QGraphNode_E_Plus* p__QGraphNode_E_Plus, GraphNode* p_GraphNode) : 
-    _GenProduction("_QGraphNode_E_Plus", 2, p__QGraphNode_E_Plus, p_GraphNode) {}
-    virtual const char * getProductionName () { return "_QGraphNode_E_Plus"; }
-};
-class _QGraphNode_E_Plus_rule0 : public _QGraphNode_E_Plus {
-public:
-    _QGraphNode_E_Plus_rule0 (GraphNode* p_GraphNode) : 
-    _QGraphNode_E_Plus(p_GraphNode) {
-	trace("_QGraphNode_E_Plus", 1, p_GraphNode);
-    }
-};
-class _QGraphNode_E_Plus_rule1 : public _QGraphNode_E_Plus {
-public:
-    _QGraphNode_E_Plus_rule1 (_QGraphNode_E_Plus* p__QGraphNode_E_Plus, GraphNode* p_GraphNode) : 
-    _QGraphNode_E_Plus(p__QGraphNode_E_Plus, p_GraphNode) {
-	trace("_QGraphNode_E_Plus", 2, p__QGraphNode_E_Plus, p_GraphNode);
-	delete p__QGraphNode_E_Plus;
+    virtual int getSize ( void ) {
+    	return (2 * m__QGraphNode_E_Plus->count()) + m__QGraphNode_E_Plus->getSize();
     }
 };
 class GraphNode : public _Production {
@@ -3928,9 +3733,330 @@ public:
     ANON(const char * p_ANON) : _Terminal(p_ANON) { trace(); }
 };
 
+/******************************************************************************/
+
+class ObjectList : public _Production {
+private:
+    Object* m_Object;
+    _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star* m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star;
+    virtual const char* getProductionName () { return "ObjectList"; }
+public:
+    ObjectList (Object* p_Object, _Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star* p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star) {
+	m_Object = p_Object;
+	m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star = p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star;
+	trace("ObjectList", 2, p_Object, p__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_Object, m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_Object, m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star);}
+    virtual int getSize ( void ) {
+    	return 1 + m__Q_O_QGT_COMMA_E_S_QObject_E_C_E_Star->getSize();
+    }
+};
+
+class _O_QVerb_E_S_QObjectList_E_C : public _Production {
+private:
+    Verb* m_Verb;
+    ObjectList* m_ObjectList;
+    virtual const char* getProductionName () { return "_O_QVerb_E_S_QObjectList_E_C"; }
+public:
+    _O_QVerb_E_S_QObjectList_E_C (Verb* p_Verb, ObjectList* p_ObjectList) {
+	m_Verb = p_Verb;
+	m_ObjectList = p_ObjectList;
+	trace("_O_QVerb_E_S_QObjectList_E_C", 2, p_Verb, p_ObjectList);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_Verb, m_ObjectList);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_Verb, m_ObjectList);}
+    virtual int getSize ( void ) {
+    	return m_ObjectList->getSize();
+    }
+};
+
+class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt : public _Production {
+private:
+    virtual const char * getProductionName () { return "_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt"; }
+public:
+    virtual int getSize ( void )	= 0;
+};
+class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule0 : public _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt {
+public:
+    _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule0 () {
+	trace("_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt", 0);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 0);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 0);}
+    virtual int getSize ( void ) { return 0; }
+};
+class _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule1 : public _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt {
+private:
+    _O_QVerb_E_S_QObjectList_E_C* m__O_QVerb_E_S_QObjectList_E_C;
+public:
+    _Q_O_QVerb_E_S_QObjectList_E_C_E_Opt_rule1 (_O_QVerb_E_S_QObjectList_E_C* p__O_QVerb_E_S_QObjectList_E_C) {
+		m__O_QVerb_E_S_QObjectList_E_C = p__O_QVerb_E_S_QObjectList_E_C;
+		trace("_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt", 1, p__O_QVerb_E_S_QObjectList_E_C);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m__O_QVerb_E_S_QObjectList_E_C);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m__O_QVerb_E_S_QObjectList_E_C);}
+    virtual int getSize ( void ) {
+    	return m__O_QVerb_E_S_QObjectList_E_C->getSize();
+    }
+};
+
+class PropertyListNotEmpty : public _Production {
+private:
+    Verb* m_Verb;
+    ObjectList* m_ObjectList;
+    _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star* m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
+    virtual const char* getProductionName () { return "PropertyListNotEmpty"; }
+public:
+    PropertyListNotEmpty (Verb* p_Verb, ObjectList* p_ObjectList, _Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star* p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star) {
+	m_Verb = p_Verb;
+	m_ObjectList = p_ObjectList;
+	m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star = p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star;
+	trace("PropertyListNotEmpty", 3, p_Verb, p_ObjectList, p__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_Verb, m_ObjectList, m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_Verb, m_ObjectList, m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star);}
+    virtual ObjectList* getObjectList ( void ) { return m_ObjectList; }
+    virtual Verb* getVerb ( void ) {
+    	return m_Verb;
+    }
+    virtual int getSize ( void ) {
+    	Verb* v			= this->getVerb();
+    	ObjectList* o	= this->getObjectList();
+    	int size		= o->getSize();
+    	fprintf( stderr, "%s object list size: %d\n", v->toStr(), size );
+    	int tailsize	= m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star->getSize();
+    	fprintf( stderr, "- tail has %d items\n", tailsize );
+    	for (int i = 0; i < tailsize; i++) {
+			_Base* x	= (_Base*) m__Q_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C_E_Star->getValue( i );
+			_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C* y	= (_O_QGT_SEMI_E_S_QVerb_E_S_QObjectList_E_Opt_C*) x;
+			_Q_O_QVerb_E_S_QObjectList_E_C_E_Opt* vol	= y->getVerbObjectList();
+			int oc	= vol->getSize();
+			fprintf( stderr, "- (%d) %d\n", i, oc );
+			size	+= oc;
+    	}
+    	fprintf( stderr, "total triples: %d\n", size );
+    	return size; // XXX
+    }
+};
+
+class BlankNodePropertyList : public _Production {
+private:
+    GT_LBRACKET* m_GT_LBRACKET;
+    PropertyListNotEmpty* m_PropertyListNotEmpty;
+    GT_RBRACKET* m_GT_RBRACKET;
+    virtual const char* getProductionName () { return "BlankNodePropertyList"; }
+public:
+    BlankNodePropertyList (GT_LBRACKET* p_GT_LBRACKET, PropertyListNotEmpty* p_PropertyListNotEmpty, GT_RBRACKET* p_GT_RBRACKET) {
+	m_GT_LBRACKET = p_GT_LBRACKET;
+	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
+	m_GT_RBRACKET = p_GT_RBRACKET;
+	trace("BlankNodePropertyList", 3, p_GT_LBRACKET, p_PropertyListNotEmpty, p_GT_RBRACKET);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_GT_LBRACKET, m_PropertyListNotEmpty, m_GT_RBRACKET);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_GT_LBRACKET, m_PropertyListNotEmpty, m_GT_RBRACKET);}
+    virtual int getSize ( void ) {
+    	return m_PropertyListNotEmpty->getSize();
+    }
+};
+
+class _QPropertyListNotEmpty_E_Opt : public _Production {
+private:
+    virtual const char * getProductionName () { return "_QPropertyListNotEmpty_E_Opt"; }
+public:
+    virtual int getSize ( void ) = 0;
+};
+class _QPropertyListNotEmpty_E_Opt_rule0 : public _QPropertyListNotEmpty_E_Opt {
+public:
+    _QPropertyListNotEmpty_E_Opt_rule0 () {
+	trace("_QPropertyListNotEmpty_E_Opt", 0);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 0);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 0);}
+    virtual int getSize ( void ) {
+    	return 0;
+    }
+};
+class _QPropertyListNotEmpty_E_Opt_rule1 : public _QPropertyListNotEmpty_E_Opt {
+private:
+    PropertyListNotEmpty* m_PropertyListNotEmpty;
+public:
+    _QPropertyListNotEmpty_E_Opt_rule1 (PropertyListNotEmpty* p_PropertyListNotEmpty) {
+	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
+	trace("_QPropertyListNotEmpty_E_Opt", 1, p_PropertyListNotEmpty);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_PropertyListNotEmpty);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_PropertyListNotEmpty);}
+    virtual int getSize ( void ) {
+    	return m_PropertyListNotEmpty->getSize();
+    }
+};
+class PropertyList : public _Production {
+private:
+    _QPropertyListNotEmpty_E_Opt* m__QPropertyListNotEmpty_E_Opt;
+    virtual const char* getProductionName () { return "PropertyList"; }
+public:
+    PropertyList (_QPropertyListNotEmpty_E_Opt* p__QPropertyListNotEmpty_E_Opt) {
+	m__QPropertyListNotEmpty_E_Opt = p__QPropertyListNotEmpty_E_Opt;
+	trace("PropertyList", 1, p__QPropertyListNotEmpty_E_Opt);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m__QPropertyListNotEmpty_E_Opt);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m__QPropertyListNotEmpty_E_Opt);}
+    virtual int getSize ( void ) {
+    	return m__QPropertyListNotEmpty_E_Opt->getSize();
+    }
+};
+
+class PrefixDecl : public _Production {
+private:
+    IT_PREFIX* m_IT_PREFIX;
+    PNAME_NS* m_PNAME_NS;
+    IRI_REF* m_IRI_REF;
+    virtual const char* getProductionName () { return "PrefixDecl"; }
+public:
+    PrefixDecl (IT_PREFIX* p_IT_PREFIX, PNAME_NS* p_PNAME_NS, IRI_REF* p_IRI_REF) {
+	m_IT_PREFIX = p_IT_PREFIX;
+	m_PNAME_NS = p_PNAME_NS;
+	m_IRI_REF = p_IRI_REF;
+	trace("PrefixDecl", 3, p_IT_PREFIX, p_PNAME_NS, p_IRI_REF);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 3, m_IT_PREFIX, m_PNAME_NS, m_IRI_REF);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 3, m_IT_PREFIX, m_PNAME_NS, m_IRI_REF);}
+    virtual const char* getIRI ( void ) { return m_IRI_REF->toStr(); }
+    virtual const char* getName ( void ) {
+    	char* name	= (char*) m_PNAME_NS->toStr();
+    	int length	= strlen(name);
+    	name[ length - 1 ]	= (char) 0;
+    	return (const char*) name;
+    }
+};
+
+class Prologue : public _Production {
+private:
+    _QBaseDecl_E_Opt* m__QBaseDecl_E_Opt;
+    _QPrefixDecl_E_Star* m__QPrefixDecl_E_Star;
+    virtual const char* getProductionName () { return "Prologue"; }
+public:
+    Prologue (_QBaseDecl_E_Opt* p__QBaseDecl_E_Opt, _QPrefixDecl_E_Star* p__QPrefixDecl_E_Star) {
+		m__QBaseDecl_E_Opt = p__QBaseDecl_E_Opt;
+		m__QPrefixDecl_E_Star = p__QPrefixDecl_E_Star;
+		trace("Prologue", 2, p__QBaseDecl_E_Opt, p__QPrefixDecl_E_Star);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m__QBaseDecl_E_Opt, m__QPrefixDecl_E_Star);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m__QBaseDecl_E_Opt, m__QPrefixDecl_E_Star);}
+    virtual int namespaceCount ( void ) {
+    	return m__QPrefixDecl_E_Star->getSize();
+    }
+    virtual const char** getNamespaces ( void ) {
+    	int size	= namespaceCount();
+    	const char** names	= (const char**) new char*[ size * 2 ];
+    	for (int i = 0; i < size; i++) {
+    		PrefixDecl* pd	= (PrefixDecl*) m__QPrefixDecl_E_Star->getValue( i );
+    		const char* iri		= pd->getIRI();
+    		const char* name	= pd->getName();
+    		names[ 2*i ]		= name;
+    		names[ 2*i + 1 ]	= iri;
+    	}
+    	return (const char**) names;
+    }
+};
+
+class TriplesSameSubject : public _Production {
+private:
+    virtual const char * getProductionName () { return "TriplesSameSubject"; }
+public:
+    virtual int getSize ( void )	= 0;
+};
+class TriplesSameSubject_rule0 : public TriplesSameSubject {
+private:
+    VarOrTerm* m_VarOrTerm;
+    PropertyListNotEmpty* m_PropertyListNotEmpty;
+public:
+    TriplesSameSubject_rule0 (VarOrTerm* p_VarOrTerm, PropertyListNotEmpty* p_PropertyListNotEmpty) {
+	m_VarOrTerm = p_VarOrTerm;
+	m_PropertyListNotEmpty = p_PropertyListNotEmpty;
+	trace("TriplesSameSubject", 2, p_VarOrTerm, p_PropertyListNotEmpty);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_VarOrTerm, m_PropertyListNotEmpty);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_VarOrTerm, m_PropertyListNotEmpty);}
+    virtual int getSize ( void ) {
+    	return m_PropertyListNotEmpty->getSize();
+    }
+};
+class TriplesSameSubject_rule1 : public TriplesSameSubject {
+private:
+    TriplesNode* m_TriplesNode;
+    PropertyList* m_PropertyList;
+public:
+    TriplesSameSubject_rule1 (TriplesNode* p_TriplesNode, PropertyList* p_PropertyList) {
+	m_TriplesNode = p_TriplesNode;
+	m_PropertyList = p_PropertyList;
+	trace("TriplesSameSubject", 2, p_TriplesNode, p_PropertyList);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_TriplesNode, m_PropertyList);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_TriplesNode, m_PropertyList);}
+    virtual int getSize ( void ) {
+    	return m_PropertyList->getSize();
+    }
+};
+
+class TriplesBlock : public _Production {
+private:
+    TriplesSameSubject* m_TriplesSameSubject;
+    _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt* m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt;
+    virtual const char* getProductionName () { return "TriplesBlock"; }
+public:
+    TriplesBlock (TriplesSameSubject* p_TriplesSameSubject, _Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt* p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt) {
+	m_TriplesSameSubject = p_TriplesSameSubject;
+	m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt = p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt;
+	trace("TriplesBlock", 2, p_TriplesSameSubject, p__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 2, m_TriplesSameSubject, m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 2, m_TriplesSameSubject, m__Q_O_QGT_DOT_E_S_QTriplesBlock_E_Opt_C_E_Opt);}
+    virtual int getSize ( void ) { return m_TriplesSameSubject->getSize(); }
+};
+
+class TriplesNode : public _Production {
+private:
+    virtual const char * getProductionName () { return "TriplesNode"; }
+public:
+	virtual int getSize ( void ) = 0;
+};
+class TriplesNode_rule0 : public TriplesNode {
+private:
+    Collection* m_Collection;
+public:
+    TriplesNode_rule0 (Collection* p_Collection) {
+	m_Collection = p_Collection;
+	trace("TriplesNode", 1, p_Collection);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_Collection);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_Collection);}
+	virtual int getSize ( void ) {
+		return m_Collection->getSize();
+	}
+};
+class TriplesNode_rule1 : public TriplesNode {
+private:
+    BlankNodePropertyList* m_BlankNodePropertyList;
+public:
+    TriplesNode_rule1 (BlankNodePropertyList* p_BlankNodePropertyList) {
+	m_BlankNodePropertyList = p_BlankNodePropertyList;
+	trace("TriplesNode", 1, p_BlankNodePropertyList);
+    }
+    virtual const char* toStr (std::ofstream* out = NULL) {return _Production::toStr(out, 1, m_BlankNodePropertyList);}
+    virtual const char* toXml (size_t depth, std::ofstream* out = NULL) {return _Production::toXml(depth, out, 1, m_BlankNodePropertyList);}
+	virtual int getSize ( void ) {
+		return m_BlankNodePropertyList->getSize();
+	}
+};
+
+/******************************************************************************/
+
+
 /* END ClassBlock */
 
-extern Query* StupidGlobal;
+// extern Query* StupidGlobal;
 extern TriplesBlock* myBGP;
 extern Prologue* myPrologue;
 
@@ -4469,7 +4595,6 @@ public:
  /*** BEGIN SPARQL - Change the grammar rules below ***/
 
 /** ****************************************** **/
-// XXX
 
 BGP:
     Prologue TriplesBlock {
@@ -4482,7 +4607,7 @@ BGP:
 
 Query:
     Prologue _O_QSelectQuery_E_Or_QConstructQuery_E_Or_QDescribeQuery_E_Or_QAskQuery_E_C	{
-    StupidGlobal = new Query($1, $2);
+//    StupidGlobal = new Query($1, $2);
 }
 ;
 
@@ -6074,9 +6199,31 @@ void Driver::error(const std::string& m)
 #include <stdio.h>
 // #include "SPARQLFrob.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <ostream>
 #include <fstream>
+
+void generateBGPAST ( Prologue* prologue, TriplesBlock* bgp ) {
+	fprintf( stderr, "prologue: %p\n", (void*) prologue );
+	fprintf( stderr, "bgp: %p\n", (void*) bgp );
+	int c			= prologue->namespaceCount();
+	fprintf( stderr, "%d declared namespaces\n", c );
+	const char** n	= prologue->getNamespaces();
+	for (int i = 0; i < c; i++) {
+		fprintf( stderr, "PREFIX: %s: %s\n", n[2*i], n[2*i+1] );
+	}
+	
+	int t			= bgp->getSize();
+	fprintf( stderr, "%d triples\n", t );
+	// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	
+	// clean up
+	for (int i = 0; i < 2*c; i++) {
+		delete n[i];
+	}
+	delete n;
+}
 
 int main(int argc,char **argv) {
 
@@ -6101,9 +6248,9 @@ int main(int argc,char **argv) {
 		std::cerr << "Error: " << inputId << " did not contain a valid SPARQL string." << std::endl;
     else {
 //		std::cout << StupidGlobal->toXml(0);
-		std::cout << myPrologue->toXml(0);
-		std::cout << myBGP->toXml(0);
-		std::cout << myBGP->toStr();
+// 		std::cout << myPrologue->toXml(0);
+ 		std::cout << myBGP->toXml(0);
+		generateBGPAST( myPrologue, myBGP );
 	}
 
     return result;
