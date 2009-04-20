@@ -197,7 +197,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
+	return uniq(map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
 }
 
 =item C<< definite_variables >>
