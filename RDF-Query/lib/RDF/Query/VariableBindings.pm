@@ -30,7 +30,7 @@ sub new {
 	my $self		= bless( { %$bindings }, $class );
 	foreach my $k (keys %$self) {
 		my $node	= $self->{$k};
-		if (not($node->isa('RDF::Query::Node'))) {
+		if (ref($node) and not($node->isa('RDF::Query::Node'))) {
 			$self->{$k}	= RDF::Query::Node->from_trine( $node );
 		}
 	}
