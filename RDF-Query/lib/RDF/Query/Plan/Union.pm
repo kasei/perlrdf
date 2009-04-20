@@ -75,7 +75,7 @@ sub next {
 	my $iter	= $self->[0]{iter};
 	return undef unless ($iter);
 	my $row		= $iter->next;
-	if ($row) {
+	if (defined($row)) {
 		return $row;
 	} else {
 		$self->[0]{iter}	= undef;

@@ -84,11 +84,15 @@ sub next {
 		my $row	= $plan->next;
 		return undef unless ($row);
 		
-		$l->debug( "- got construct bindings from pattern: " . $row->as_string );
+		if ($l->is_debug) {
+			$l->debug( "- got construct bindings from pattern: " . $row->as_string );
+		}
 		my $triples	= $self->triples;
 		
 		foreach my $t (@$triples) {
-			$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
+			if ($l->is_debug) {
+				$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
+			}
 			my @triple	= $t->nodes;
 			for my $i (0 .. 2) {
 				if ($triple[$i]->isa('RDF::Trine::Node::Variable')) {

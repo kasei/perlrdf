@@ -110,10 +110,12 @@ sub next {
 			}
 		}
 		
-		while (my $inner_row = $self->[0]{inner}->next) {
+		while (defined(my $inner_row = $self->[0]{inner}->next)) {
 #			warn "using inner row: " . Dumper($inner_row);
-			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
-				$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
+				if ($l->is_debug) {
+					$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				return $joined;

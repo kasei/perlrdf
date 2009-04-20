@@ -478,7 +478,9 @@ sub query_plan {
 		return @plans;
 	} else {
 		my ($plan)	= $self->prune_plans( $context, @plans );
-		$l->debug("using query plan: " . $plan->sse({}, ''));
+		if ($l->is_debug) {
+			$l->debug("using query plan: " . $plan->sse({}, ''));
+		}
 		return $plan;
 	}
 }
