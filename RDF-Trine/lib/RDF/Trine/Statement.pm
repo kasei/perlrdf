@@ -81,6 +81,16 @@ sub nodes {
 	return ($s, $p, $o);
 }
 
+=item C<< node_names >>
+
+Returns the method names for accessing the nodes of this statement.
+
+=cut
+
+sub node_names {
+	return qw(subject predicate object);
+}
+
 =item C<< subject >>
 
 Returns the subject node of the triple pattern.
@@ -132,6 +142,20 @@ Returns the statement in a string form.
 sub as_string {
 	my $self	= shift;
 	return $self->sse;
+}
+
+=item C<< has_blanks >>
+
+Returns true if any of the nodes in this statement are blank nodes.
+
+=cut
+
+sub has_blanks {
+	my $self	= shift;
+	foreach my $node ($self->nodes) {
+		return 1 if $node->is_blank;
+	}
+	return 0;
 }
 
 =item C<< sse >>

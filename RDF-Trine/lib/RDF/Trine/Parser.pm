@@ -58,6 +58,14 @@ sub new {
 	}
 }
 
+=item C<< parse ( $base_uri, $data ) >>
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+
+=cut
+
+
+
 1;
 
 __END__

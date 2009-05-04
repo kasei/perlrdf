@@ -64,6 +64,16 @@ sub nodes {
 	return ($s, $p, $o, $c);
 }
 
+=item C<< node_names >>
+
+Returns the method names for accessing the nodes of this statement.
+
+=cut
+
+sub node_names {
+	return qw(subject predicate object context);
+}
+
 =item C<< context >>
 
 Returns the context node of the quad pattern.

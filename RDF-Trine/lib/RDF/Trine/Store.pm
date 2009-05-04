@@ -18,6 +18,8 @@ use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 
+use RDF::Trine::Store::DBI;
+
 ######################################################################
 
 our ($VERSION);
@@ -41,7 +43,7 @@ Returns a new temporary triplestore (using appropriate default values).
 =cut
 
 sub temporary_store {
-	die "unimplemented";
+	return RDF::Trine::Store::DBI->temporary_store();
 }
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
