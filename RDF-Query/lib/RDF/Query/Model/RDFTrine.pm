@@ -368,9 +368,17 @@ sub _get_named_statements {
 	my $self	= shift;
 	my @triple	= splice(@_, 0, 3);
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
 	
 	my $model	= $self->_named_graphs_model;
 	my @nodes	= map { $self->is_node($_) ? $_ : $self->new_variable() } (@triple, $context);
+	
+	if ($l->is_debug) {
+		$l->debug("named statement pattern: " . Dumper(\@nodes));
+		$l->debug("model contains:");
+		$model->_debug;
+	}
+
 	my $stream	= smap { _cast_quad_to_local( $_ ) } $model->get_statements( @nodes );
 	return $stream;
 }
@@ -387,6 +395,14 @@ sub _get_basic_graph_pattern {
 	my $model	= ($triples[0]->isa('RDF::Trine::Statement::Quad'))
 				? $self->_named_graphs_model
 				: $self->model;
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
+	if ($l->is_debug) {
+		$l->debug("get BGP: " . Dumper(\@triples));
+		$l->debug("model contains:");
+		$model->_debug;
+	}
+	
 	my $pattern	= RDF::Trine::Pattern->new( @triples );
 	my $stream	= smap {
 					foreach my $k (keys %$_) {
@@ -592,7 +608,7 @@ sub generate_plans {
 	my $query	= $context->query;
 	if ($algebra->isa('RDF::Query::Algebra::BasicGraphPattern')) {
 		if (not($query) or not(scalar(@{$query->get_computed_statement_generators}))) {
-			my @triples	= $algebra->triples;
+			my @triples	= map { $_->distinguish_bnode_variables } $algebra->triples;
 			return RDF::Query::Model::RDFTrine::BasicGraphPattern->new( @triples );
 		}
 	}

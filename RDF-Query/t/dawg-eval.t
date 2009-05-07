@@ -12,6 +12,7 @@ use Scalar::Util qw(blessed reftype);
 
 use RDF::Query;
 use RDF::Trine;
+use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf);
 use RDF::Trine::Iterator qw(smap);
 
@@ -45,8 +46,6 @@ require Data::Dumper;
 require GraphViz;
 require XML::Simple;
 XML::Simple->import();
-require Test::RDF;
-Test::RDF->import();
 
 plan qw(no_plan);
 require "t/dawg/earl.pl";
@@ -512,11 +511,10 @@ sub compare_results {
 		
 		warn "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n" if ($debug);
 		
-#		return rdf_eq( rdfxml => \$expectxml, rdfxml => \$actualxml, $test );
-		### XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		pass( $test );	# XXX
-		return 1;
-		### XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		my $act_graph	= RDF::Trine::Graph->new( $actual );
+		my $exp_graph	= RDF::Trine::Graph->new( $expected );
+		my $eq	= $act_graph->equals( $exp_graph );
+		return is( $eq, 1, $test );
 	} else {
 		my %actual_flat;
 		foreach my $i (0 .. $#{ $actual }) {

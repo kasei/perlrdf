@@ -346,7 +346,6 @@ sub execute {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		exit;
 	}
 	return $self->execute_plan( $plan, $context );
 }

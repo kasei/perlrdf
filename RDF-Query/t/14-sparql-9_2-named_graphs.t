@@ -11,8 +11,8 @@ use Test::More;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.trine.store.dbi          = TRACE, Screen
-# 	log4perl.category.rdf.query.model          = TRACE, Screen
+# 	log4perl.category.rdf.trine.store.dbi = TRACE, Screen
+# 	log4perl.category.rdf.query     = TRACE, Screen
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
 # 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
@@ -21,7 +21,7 @@ use Test::More;
 
 my @models	= test_models();
 
-my $tests	= 58;
+my $tests	= 65;
 plan tests => 1 + ($tests * scalar(@models));
 # plan qw(no_plan);	# the number of tests is currently broken because named graphs
 # 					# are adding triples to the underyling model. when that's fixed,
@@ -299,5 +299,30 @@ END
 			$count++;
 		} continue { $stream->next }
 		is( $count, 4, 'graph-3: expected count' );
+	}
+	
+	{
+		print "# **************************************************************\n";
+		print "# find all graph names\n";
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' ) or die RDF::Query->error;
+			SELECT ?g
+			FROM NAMED <${alice}>
+			FROM NAMED <${bob}>
+			WHERE {
+				GRAPH ?g {} .
+			}
+END
+		
+		my $count	= 0;
+		my $stream	= $query->execute( $model );
+		while (my $row = $stream->next) {
+			isa_ok( $row, 'HASH' );
+			my $g	= $row->{g};
+			isa_ok( $g, 'RDF::Query::Node::Resource' );
+			like( $g->uri_value, qr/(alice|bob).rdf$/, 'expected graph name' );
+			$count++;
+		}
+		
+		is( $count, 2, 'two expected graph names' );
 	}
 }

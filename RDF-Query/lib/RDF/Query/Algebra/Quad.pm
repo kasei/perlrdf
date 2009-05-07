@@ -140,6 +140,24 @@ sub bf {
 	return $bf;
 }
 
+=item C<< distinguish_bnode_variables >>
+
+Returns a new Quad object with blank nodes replaced by distinguished variables.
+
+=cut
+
+sub distinguish_bnode_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @nodes	= $self->nodes;
+	foreach my $i (0 .. $#nodes) {
+		if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+			$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
+		}
+	}
+	return $class->new( @nodes );
+}
+
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
 
 Returns a new pattern that is ready for execution using the given bridge.
