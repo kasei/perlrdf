@@ -15,7 +15,6 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
 ######################################################################
@@ -151,7 +150,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(
+	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->referenced_variables,
 		$self->time_triples->referenced_variables,
@@ -166,7 +165,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(
+	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->definite_variables,
 		$self->time_triples->definite_variables,

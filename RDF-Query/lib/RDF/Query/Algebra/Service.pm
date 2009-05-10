@@ -18,7 +18,6 @@ use URI::Escape;
 use MIME::Base64;
 use Data::Dumper;
 use RDF::Query::Error;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(store_fd fd_retrieve);
@@ -192,7 +191,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(
+	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->definite_variables,
 	);

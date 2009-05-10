@@ -17,7 +17,6 @@ use base qw(RDF::Query::Expression);
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
 ######################################################################

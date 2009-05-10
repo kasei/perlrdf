@@ -65,6 +65,14 @@ use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
+sub _uniq {
+	my %seen;
+	my @data;
+	foreach (@_) {
+		push(@data, $_) unless ($seen{ $_ }++);
+	}
+	return @data;
+}
 
 1; # Magic true value required at end of module
 __END__
@@ -80,7 +88,6 @@ L<Digest::MD5>
 L<Error>
 L<JSON>
 L<LWP::UserAgent>
-L<List::MoreUtils>
 L<List::Util>
 L<Log::Log4perl>
 L<Math::BigInt>

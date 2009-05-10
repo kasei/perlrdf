@@ -33,7 +33,6 @@ use JSON 2.0;
 use Text::Table;
 use Log::Log4perl;
 use Scalar::Util qw(reftype);
-use List::MoreUtils qw(uniq);
 use RDF::Trine::Iterator::Bindings::Materialized;
 
 use RDF::Trine::Iterator qw(smap);
@@ -226,7 +225,7 @@ sub nested_loop_join {
 	my $b_map	= (%b_map) ? \%b_map : undef;
 	################################################
 	
-	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
+	my @names	= RDF::Trine::_uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
 	my $b		= $bstream->project( @names );
 	

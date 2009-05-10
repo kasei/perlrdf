@@ -13,7 +13,6 @@ REQUIREMENTS
      * I18N::LangTags
      * JSON
      * List::Util
-     * List::MoreUtils
      * LWP
      * Parse::RecDescent
      * RDF::Trine

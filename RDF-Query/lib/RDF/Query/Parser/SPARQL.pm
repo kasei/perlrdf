@@ -40,7 +40,6 @@ use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number);
-use List::MoreUtils qw(uniq);
 
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
@@ -503,7 +502,7 @@ sub _SelectQuery {
 
 	if ($star) {
 		my $triples	= $self->{build}{triples} || [];
-		my @vars	= uniq( map { $_->referenced_variables } @$triples );
+		my @vars	= RDF::Query::_uniq( map { $_->referenced_variables } @$triples );
 		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
 	}
 

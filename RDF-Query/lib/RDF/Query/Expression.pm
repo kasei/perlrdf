@@ -16,7 +16,6 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
 ######################################################################
@@ -125,7 +124,7 @@ sub referenced_variables {
 			push(@vars, $o->referenced_variables);
 		}
 	}
-	return uniq(@vars);
+	return RDF::Query::_uniq(@vars);
 }
 
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>

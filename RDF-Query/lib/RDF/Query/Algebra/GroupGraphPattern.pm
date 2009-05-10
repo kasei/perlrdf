@@ -18,7 +18,6 @@ use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Query::Error qw(:try);
 use Time::HiRes qw(gettimeofday tv_interval);
@@ -156,7 +155,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->referenced_variables } $self->patterns);
+	return RDF::Query::_uniq(map { $_->referenced_variables } $self->patterns);
 }
 
 =item C<< definite_variables >>
@@ -167,7 +166,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(map { $_->definite_variables } $self->patterns);
+	return RDF::Query::_uniq(map { $_->definite_variables } $self->patterns);
 }
 
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
@@ -347,7 +346,7 @@ sub join_bnode_streams {
 	$l->debug('BNODE MAP: ' . Dumper($b_map));
 	################################################
 	
-	my @names	= uniq( map { $_->binding_names() } ($astream, $bstream) );
+	my @names	= RDF::Query::_uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
 	my $b		= $bstream->project( @names );
 	

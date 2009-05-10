@@ -15,7 +15,6 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra RDF::Trine::Statement::Quad);
 
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);

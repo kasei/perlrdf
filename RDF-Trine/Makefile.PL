@@ -7,7 +7,6 @@ use inc::Module::Install;
 
 license				'perl';
 
-build_requires		'Test::JSON'				=> 0;
 build_requires		'Test::More'				=> 0.61;
 build_requires		'Test::Exception'			=> 0;
 
@@ -24,7 +23,6 @@ WriteMakefile(
 					'Error'						=> 0,
 					'JSON'						=> 2,
 					'LWP::UserAgent'			=> 0,
-					'List::MoreUtils'			=> 0,
 					'List::Util'				=> 0,
 					'Log::Log4perl'				=> 0,
 					'Math::BigInt'				=> 0,

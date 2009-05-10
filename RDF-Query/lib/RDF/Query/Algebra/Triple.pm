@@ -17,7 +17,6 @@ use base qw(RDF::Query::Algebra RDF::Trine::Statement);
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(refaddr);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday tv_interval);

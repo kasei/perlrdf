@@ -19,7 +19,6 @@ use base qw(RDF::Query::Plan);
 
 use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 
 =item C<< new ( $pattern, \@group_by, [ $alias, $op, $attribute ], ... ) >>
 
@@ -31,7 +30,7 @@ sub new {
 	my $groupby	= shift;
 	my @ops		= @_;
 	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
-	$self->[0]{referenced_variables}	= [ uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
+	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
 	return $self;
 }
 

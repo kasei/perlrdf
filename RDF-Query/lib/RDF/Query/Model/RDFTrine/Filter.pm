@@ -16,7 +16,6 @@ use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype refaddr);
 use Carp qw(carp croak confess);
 

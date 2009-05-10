@@ -15,7 +15,6 @@ no warnings 'redefine';
 
 use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
@@ -221,7 +220,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
+	return RDF::Trine::_uniq(map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
 }
 
 =item C<< definite_variables >>

@@ -17,7 +17,6 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(refaddr);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -137,7 +136,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->referenced_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
 =item C<< definite_variables >>
@@ -148,7 +147,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(map { $_->definite_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->definite_variables } $self->triples);
 }
 
 =item C<< check_duplicate_blanks >>

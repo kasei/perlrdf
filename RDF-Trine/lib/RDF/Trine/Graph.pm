@@ -79,7 +79,6 @@ sub equals {
 	if (scalar(@$nba) != scalar(@$nbb)) {
 		my $nbac	= scalar(@$nba);
 		my $nbbc	= scalar(@$nbb);
-		warn 1;
 		warn "count of non-blank statements didn't match ($nbac != $nbbc)" if ($debug);
 		return 0;
 	}
@@ -159,6 +158,13 @@ sub equals {
 	return 0;
 }
 
+=item C<< split_blank_statements >>
+
+Returns two array refs, containing triples with blank nodes and triples without
+any blank nodes, respectively.
+
+=cut
+
 sub split_blank_statements {
 	my $self	= shift;
 	my $iter	= $self->get_statements;
@@ -172,6 +178,12 @@ sub split_blank_statements {
 	}
 	return (\@blanks, \@nonblanks);
 }
+
+=item C<< get_statements >>
+
+Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
+
+=cut
 
 sub get_statements {
 	my $self	= shift;

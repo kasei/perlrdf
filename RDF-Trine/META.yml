@@ -8,7 +8,6 @@ abstract: An RDF framework, providing a triplestore, parsers, serializers, and c
 author:
   - Gregory Todd Williams <gwilliams@cpan.org>
 build_requires:
-  Test::JSON: 0
   Test::More: 0.61
   Test::Exception: 0
 recommends:
@@ -22,7 +21,6 @@ requires:
     Error:                         0
     JSON:                          2
     LWP::UserAgent:                0
-    List::MoreUtils:               0
     List::Util:                    0
     Log::Log4perl:                 0
     Math::BigInt:                  0
@@ -37,7 +35,6 @@ requires:
     XML::Namespace:                0
     XML::SAX:                      0
     XML::LibXML::SAX:              1.66
-    XML::Parser:                   0
 license: perl
 distribution_type: module
 generated_by: Module::Install version 0.63

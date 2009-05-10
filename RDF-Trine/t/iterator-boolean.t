@@ -5,7 +5,7 @@ no warnings 'redefine';
 use URI::file;
 use Test::More tests => 8;
 use Test::Exception;
-use Test::JSON;
+use JSON 2.0;
 
 use Data::Dumper;
 use RDF::Trine;
@@ -36,6 +36,7 @@ use RDF::Trine::Statement;
 {
 	my $stream	= RDF::Trine::Iterator::Boolean->new( [0] );
 	my $json	= $stream->as_json;
-	is_json( $json, '{"boolean":false,"head":{"vars":[]}}', 'boolean iterator as_json' );
+	my $expect	= from_json('{"boolean":false,"head":{"vars":[]}}');
+	my $got		= from_json($json);
+	is_deeply( $got, $expect, 'boolean iterator as_json' );
 }
-

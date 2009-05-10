@@ -23,7 +23,6 @@ no warnings 'redefine';
 
 use Set::Scalar;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Data::Dumper;
 
 use RDF::Query::Expression;
@@ -87,7 +86,7 @@ sub referenced_blanks {
 			push(@list, @blanks);
 		}
 	}
-	return uniq(@list);
+	return RDF::Query::_uniq(@list);
 }
 
 =item C<< referenced_functions >>
@@ -109,7 +108,7 @@ sub referenced_functions {
 			}
 		}
 	}
-	return uniq(@list);
+	return RDF::Query::_uniq(@list);
 }
 
 =item C<< check_duplicate_blanks >>

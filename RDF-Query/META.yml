@@ -32,7 +32,6 @@ requires:
   Error: 0
   I18N::LangTags: 0
   JSON: 2
-  List::MoreUtils: 0
   LWP::Simple: 0
   Parse::RecDescent: 0
   RDF::Trine: 0.109

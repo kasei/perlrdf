@@ -28,7 +28,6 @@ use RDF::Query::CostModel::Naive;
 use Set::Scalar;
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
-use List::MoreUtils qw(uniq);
 
 =item C<< new ( $logger ) >>
 

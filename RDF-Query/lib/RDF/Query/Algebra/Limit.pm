@@ -17,7 +17,6 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use Set::Scalar;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(sgrep);
 
@@ -154,7 +153,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq($self->pattern->referenced_variables);
+	return RDF::Query::_uniq($self->pattern->referenced_variables);
 }
 
 =item C<< definite_variables >>

@@ -94,7 +94,6 @@ use Data::Dumper;
 use LWP::UserAgent;
 use I18N::LangTags;
 use List::Util qw(first);
-use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
@@ -1560,6 +1559,15 @@ sub error {
 	}
 }
 
+sub _uniq {
+	my %seen;
+	my @data;
+	foreach (@_) {
+		push(@data, $_) unless ($seen{ $_ }++);
+	}
+	return @data;
+}
+
 =begin private
 
 =item C<set_error ( $error )>
@@ -1645,8 +1653,6 @@ __END__
 =item * L<JSON|JSON>
 
 =item * L<List::Util|List::Util>
-
-=item * L<List::MoreUtils|List::MoreUtils>
 
 =item * L<LWP|LWP>
 

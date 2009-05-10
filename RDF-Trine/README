@@ -24,7 +24,6 @@ REQUIREMENTS
      * Error
      * JSON
      * LWP::UserAgent
-     * List::MoreUtils
      * List::Util
      * Log::Log4perl
      * Math::BigInt

@@ -28,7 +28,6 @@ use RDF::Query::Error qw(:try);
 use Set::Scalar;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 
 =item C<< new () >>
 

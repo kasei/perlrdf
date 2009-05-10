@@ -35,7 +35,6 @@ use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number reftype);
-use List::MoreUtils qw(uniq);
 
 
 # [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery | (Update | Manage)*)

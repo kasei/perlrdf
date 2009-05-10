@@ -18,7 +18,6 @@ use Data::Dumper;
 use Set::Scalar;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 
 ######################################################################
@@ -150,7 +149,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq($self->first->referenced_variables, $self->second->referenced_variables);
+	return RDF::Query::_uniq($self->first->referenced_variables, $self->second->referenced_variables);
 }
 
 =item C<< definite_variables >>
