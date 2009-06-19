@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.002, released 25 April 2008.
+This document describes RDF::Query version 2.100, released XX March 2009.
 
 =head1 SYNOPSIS
 
@@ -94,13 +94,13 @@ use Data::Dumper;
 use LWP::UserAgent;
 use I18N::LangTags;
 use List::Util qw(first);
-use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
+no warnings 'numeric';
 use RDF::Trine 0.108;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 
@@ -128,7 +128,7 @@ use RDF::Query::CostModel::Counted;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.002';
+	$VERSION		= '2.100';
 	$DEFAULT_PARSER	= 'sparql';
 }
 
@@ -282,6 +282,7 @@ sub prepare {
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
 	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
+	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
@@ -309,6 +310,7 @@ sub prepare {
 					optimize			=> $self->{optimize},
 					requested_variables	=> \@vars,
 					model_optimize		=> 1,
+					strict_errors		=> $errors,
 				);
 	
 	$self->{model}		= $model;
@@ -343,7 +345,6 @@ sub execute {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		exit;
 	}
 	return $self->execute_plan( $plan, $context );
 }
@@ -475,7 +476,9 @@ sub query_plan {
 		return @plans;
 	} else {
 		my ($plan)	= $self->prune_plans( $context, @plans );
-		$l->debug("using query plan: " . $plan->sse({}, ''));
+		if ($l->is_debug) {
+			$l->debug("using query plan: " . $plan->sse({}, ''));
+		}
 		return $plan;
 	}
 }
@@ -991,6 +994,7 @@ sub supported_extensions {
 	return qw(
 		http://kasei.us/2008/04/sparql-extension/service
 		http://kasei.us/2008/04/sparql-extension/service/bloom_filters
+		http://kasei.us/2008/04/sparql-extension/unsaid
 		http://kasei.us/2008/04/sparql-extension/federate_bindings
 		http://kasei.us/2008/04/sparql-extension/select_expression
 		http://kasei.us/2008/04/sparql-extension/aggregate
@@ -1555,6 +1559,15 @@ sub error {
 	}
 }
 
+sub _uniq {
+	my %seen;
+	my @data;
+	foreach (@_) {
+		push(@data, $_) unless ($seen{ $_ }++);
+	}
+	return @data;
+}
+
 =begin private
 
 =item C<set_error ( $error )>
@@ -1640,8 +1653,6 @@ __END__
 =item * L<JSON|JSON>
 
 =item * L<List::Util|List::Util>
-
-=item * L<List::MoreUtils|List::MoreUtils>
 
 =item * L<LWP|LWP>
 

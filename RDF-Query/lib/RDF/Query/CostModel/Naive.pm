@@ -15,7 +15,7 @@ package RDF::Query::CostModel::Naive;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 use strict;
@@ -28,7 +28,6 @@ use RDF::Query::Error qw(:try);
 use Set::Scalar;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 
 =item C<< new () >>
 
@@ -48,7 +47,9 @@ sub _cost_aggregate {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->cost( $plan->pattern, $context );
 }
 
@@ -57,7 +58,9 @@ sub _cost_service {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	my $card	= $self->_cardinality( $plan, $context );
 	my $cost	= $self->cost( $plan->pattern, $context );
 	$l->debug( sprintf('COST of Service is %d + %d', $card, $cost) );
@@ -69,7 +72,9 @@ sub _cost_thresholdunion {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	my $cost	= $self->cost( $plan->default, $context );
 	my @oplans	= $plan->optimistic;
 	$cost		-= scalar(@oplans);
@@ -81,7 +86,9 @@ sub _cost_union {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->cost( $plan->lhs, $context ) + $self->cost( $plan->rhs, $context );
 }
 
@@ -90,7 +97,9 @@ sub _cost_sort {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	my $card	= $self->_cardinality( $plan->pattern, $context );
 	my $scost	= $card * (log($card)/log(2));
 	return $scost + $self->cost( $plan->pattern, $context );
@@ -101,7 +110,9 @@ sub _cost_not {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context ) + $self->cost( $plan->not_pattern, $context );
 }
 
@@ -110,7 +121,9 @@ sub _cost_filter {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
@@ -119,7 +132,9 @@ sub _cost_construct {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
@@ -128,7 +143,9 @@ sub _cost_limit {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	my $card	= $self->_cardinality( $plan->pattern, $context );
 	my $limit	= $plan->limit;
 	my $lcard	= ($limit < $card) ? $limit : $card;
@@ -140,7 +157,9 @@ sub _cost_offset {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	my $card	= $self->_cardinality( $plan->pattern, $context );
 	return $card + $self->cost( $plan->pattern, $context );
 }
@@ -150,7 +169,9 @@ sub _cost_project {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
@@ -159,7 +180,9 @@ sub _cost_constant {
 	my $pattern	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $pattern->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $pattern->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $pattern, $context );
 }
 
@@ -168,7 +191,9 @@ sub _cost_nestedloop {
 	my $bgp		= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
+	}
 	my $lhscost	= $self->cost( $bgp->lhs, $context );
 	my $rhscost	= $self->cost( $bgp->rhs, $context );
 	my $card	= $self->_cardinality( $bgp, $context );
@@ -181,7 +206,9 @@ sub _cost_pushdownnestedloop {
 	my $bgp		= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $bgp->sse( {}, '' ) );
+	}
 	my $lhscost	= $self->cost( $bgp->lhs, $context );
 	
 	$context->pushstack();
@@ -196,7 +223,9 @@ sub _cost_pushdownnestedloop {
 	
 	my $lhscard 		= $self->_cardinality( $bgp->lhs, $context );
 	my $single_rhscost	= $self->cost( $bgp->rhs, $context );
-	$l->debug( sprintf('COST of PushDownNestedLoop is %d + (%d * %d)', $lhscost, $lhscard, $single_rhscost) );
+	if ($l->is_debug) {
+		$l->debug( sprintf('COST of PushDownNestedLoop is %d + (%d * %d)', $lhscost, $lhscard, $single_rhscost) );
+	}
 	my $rhscost			= $lhscard * $single_rhscost;
 	$context->popstack();
 	
@@ -208,7 +237,9 @@ sub _cost_triple {
 	my $triple	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $triple->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $triple->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $triple, $context );
 }
 
@@ -217,7 +248,9 @@ sub _cost_quad {
 	my $quad	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $quad->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $quad->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $quad, $context );
 }
 
@@ -226,7 +259,9 @@ sub _cost_distinct {
 	my $plan	= shift;
 	my $context	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
-	$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
 	return $self->_cardinality( $plan, $context ) + $self->cost( $plan->pattern, $context );
 }
 
@@ -385,7 +420,9 @@ sub _cardinality_nestedloop {
 			
 			if ($f != $actually_free) {
 				my $diff	= $f - $actually_free;
-				$l->debug("- NestedLoop triple {" . $t->sse( {}, '' ) . "} has $diff variables that will be bound by previous triples.");
+				if ($l->is_debug) {
+					$l->debug("- NestedLoop triple {" . $t->sse( {}, '' ) . "} has $diff variables that will be bound by previous triples.");
+				}
 			}
 			
 			my $r		= $actually_free / 3;
@@ -442,7 +479,9 @@ sub _cardinality_pushdownnestedloop {
 			
 			if ($f != $actually_free) {
 				my $diff	= $f - $actually_free;
-				$l->debug("- PushDownNestedLoop triple {" . $t->sse( {}, '' ) . "} has $diff variables that will be bound by previous triples.");
+				if ($l->is_debug) {
+					$l->debug("- PushDownNestedLoop triple {" . $t->sse( {}, '' ) . "} has $diff variables that will be bound by previous triples.");
+				}
 			}
 			
 			my $r		= $actually_free / 3;

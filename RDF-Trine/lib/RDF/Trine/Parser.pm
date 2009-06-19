@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.110_01
+This document describes RDF::Trine::Parser version 0.110
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
 }
 
 use RDF::Trine::Parser::Turtle;
@@ -57,6 +57,14 @@ sub new {
 		throw RDF::Trine::Parser::Error -text => "No parser known for type $type";
 	}
 }
+
+=item C<< parse ( $base_uri, $data ) >>
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+
+=cut
+
+
 
 1;
 

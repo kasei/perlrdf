@@ -18,7 +18,7 @@ use base qw(RDF::Trine::Statement);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
 }
 
 ######################################################################
@@ -62,6 +62,16 @@ sub nodes {
 	my $o		= $self->object;
 	my $c		= $self->context;
 	return ($s, $p, $o, $c);
+}
+
+=item C<< node_names >>
+
+Returns the method names for accessing the nodes of this statement.
+
+=cut
+
+sub node_names {
+	return qw(subject predicate object context);
 }
 
 =item C<< context >>

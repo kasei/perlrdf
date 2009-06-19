@@ -26,7 +26,7 @@ package RDF::Query::Parser::SPARQLP;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION		= '2.002';
+our $VERSION		= '2.100';
 
 use URI;
 use Data::Dumper;
@@ -35,9 +35,8 @@ use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number reftype);
-use List::MoreUtils qw(uniq);
 
-our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT/i;
+our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG/i;
 
 sub __solution_modifiers {
 	my $self	= shift;
@@ -55,7 +54,7 @@ sub __solution_modifiers {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return 1 if $self->_test(qr/NOT|SERVICE|TIME/i);
+	return 1 if $self->_test(qr/UNSAID|SERVICE|TIME/i);
 	return $self->SUPER::_GraphPatternNotTriples_test;
 }
 
@@ -475,15 +474,15 @@ sub _TriplesBlock {
 	}
 }
 
-# NotGraphPattern ::= 'NOT' GroupGraphPattern
+# NotGraphPattern ::= 'UNSAID' GroupGraphPattern
 sub _NotGraphPattern_test {
 	my $self	= shift;
-	return $self->_test( qr/NOT/i );
+	return $self->_test( qr/UNSAID/i );
 }
 
 sub _NotGraphPattern {
 	my $self	= shift;
-	$self->_eat( qr/NOT/i );
+	$self->_eat( qr/UNSAID/i );
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;

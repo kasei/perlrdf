@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -64,6 +64,20 @@ Returns the SPARQL string for this node.
 sub as_sparql {
 	my $self	= shift;
 	return $self->sse;
+}
+
+=item C<< make_distinguished_variable >>
+
+Returns a new variable based on this blank node.
+
+=cut
+
+sub make_distinguished_variable {
+	my $self	= shift;
+	my $id		= $self->blank_identifier;
+	my $name	= '__ndv_' . $id;
+	my $var		= RDF::Query::Node::Variable->new( $name );
+	return $var;
 }
 
 

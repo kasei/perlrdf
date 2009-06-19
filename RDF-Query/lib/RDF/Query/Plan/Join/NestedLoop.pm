@@ -116,7 +116,9 @@ sub next {
 			my $inner_row	= $inner->[ $self->[0]{inner_index}++ ];
 	#		warn "using inner row: " . Dumper($inner_row);
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
-				$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+				if ($l->is_debug) {
+					$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				$self->[0]{count}++;
@@ -147,14 +149,18 @@ sub close {
 		$l->debug("logging nestedloop join execution statistics");
 		my $elapsed = tv_interval ( $t0 );
 		if (my $sparql = $self->logging_keys->{sparql}) {
-			$l->debug("- SPARQL: $sparql");
+			if ($l->is_debug) {
+				$l->debug("- SPARQL: $sparql");
+				$l->debug("- elapsed: $elapsed");
+				$l->debug("- count: $count");
+			}
 			$log->push_key_value( 'execute_time-nestedloop', $sparql, $elapsed );
 			$log->push_key_value( 'cardinality-nestedloop', $sparql, $count );
-			$l->debug("- elapsed: $elapsed");
-			$l->debug("- count: $count");
 		}
 		if (my $bf = $self->logging_keys->{bf}) {
-			$l->debug("- bf: $bf");
+			if ($l->is_debug) {
+				$l->debug("- bf: $bf");
+			}
 			$log->push_key_value( 'cardinality-bf-nestedloop', $bf, $count );
 		}
 	}

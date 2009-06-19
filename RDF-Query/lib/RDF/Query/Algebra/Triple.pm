@@ -16,7 +16,7 @@ use base qw(RDF::Query::Algebra RDF::Trine::Statement);
 
 use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
+use Scalar::Util qw(refaddr);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Time::HiRes qw(gettimeofday tv_interval);
@@ -25,9 +25,10 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 ######################################################################
 
 our ($VERSION);
+my %AS_SPARQL;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -63,23 +64,28 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift || {};
-	my $indent	= shift;
-	
-	my $pred	= $self->predicate;
-	if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-		$pred	= 'a';
+	if (exists $AS_SPARQL{ refaddr( $self ) }) {
+		return $AS_SPARQL{ refaddr( $self ) };
 	} else {
-		$pred	= $pred->as_sparql( $context );
+		my $context	= shift || {};
+		my $indent	= shift;
+		
+		my $pred	= $self->predicate;
+		if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+			$pred	= 'a';
+		} else {
+			$pred	= $pred->as_sparql( $context );
+		}
+		
+		my $string	= sprintf(
+			"%s %s %s .",
+			$self->subject->as_sparql( $context ),
+			$pred,
+			$self->object->as_sparql( $context ),
+		);
+		$AS_SPARQL{ refaddr( $self ) }	= $string;
+		return $string;
 	}
-	
-	my $string	= sprintf(
-		"%s %s %s .",
-		$self->subject->as_sparql( $context ),
-		$pred,
-		$self->object->as_sparql( $context ),
-	);
-	return $string;
 }
 
 =item C<< referenced_blanks >>
@@ -157,9 +163,32 @@ sub fixup {
 	}
 }
 
+=item C<< distinguish_bnode_variables >>
+
+Returns a new Quad object with blank nodes replaced by distinguished variables.
+
+=cut
+
+sub distinguish_bnode_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @nodes	= $self->nodes;
+	foreach my $i (0 .. $#nodes) {
+		if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+			$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
+		}
+	}
+	return $class->new( @nodes );
+}
+
 sub _from_sse {
 	my $class	= shift;
 	return RDF::Trine::Statement->from_sse( @_ );
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $AS_SPARQL{ refaddr( $self ) };
 }
 
 1;

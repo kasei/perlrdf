@@ -24,7 +24,6 @@ REQUIREMENTS
      * Error
      * JSON
      * LWP::UserAgent
-     * List::MoreUtils
      * List::Util
      * Log::Log4perl
      * Math::BigInt
@@ -59,7 +58,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.110 (2009-XX-XX)
+  Version 0.110 (2009-03-14)
 
      * Added RDF::Trine::Store base class with default implementation of get_pattern().
      * Updated bin/rdf_store_add_file.pl to use the RDF::Trine parser, not Redland's parser.
@@ -69,6 +68,8 @@ VERSION HISTORY
      * Added debug tracing code to ::Store::DBI.
      * Updated schema in ::Store::DBI::mysql to use utf8 charset and collation, and use a pkey instead of a unique.
      * RDF::Trine::Store::get_pattern now passes through optional @args (used for order-by).
+     * Fixed bug in ::Store::DBI::remove_statements causing bad SQL when all nodes are undef (remove all triples).
+     * ::Node::Literal::new now calls ::Node::Literal::XML::new if available and applicable.
 
   Version 0.109 (2008-11-14)
 

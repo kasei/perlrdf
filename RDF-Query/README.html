@@ -25,13 +25,12 @@
 			<li>I18N::LangTags</li>
 			<li>JSON</li>
 			<li>List::Util</li>
-			<li>List::MoreUtils</li>
 			<li>LWP</li>
-			<li>Parse::RecDescent</li>
 			<li>Parse::RecDescent</li>
 			<li>RDF::Trine</li>
 			<li>Scalar::Util</li>
 			<li>Set::Scalar</li>
+			<li>Storable</li>
 			<li>URI</li>
 		</ul>
 		<p>The following additional modules are recommended for some functionality:</p>
@@ -40,6 +39,7 @@
 			<li>RDF::Redland</li>
 			<li>JavaScript</li>
 			<li>Geo::Distance</li>
+			<li>Bloom::Filter</li>
 		</ul>
 	<h2 id="installing">Installing RDF::Query</h2>
 		<p>To install, run:</p>
@@ -50,7 +50,215 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_001">Version 2.002 (2008-04-25)</h3>
+		<h3 id="v2_100">Version 2.100 (2009-03-18)</h3>
+			<ul>
+				<li>API
+					<ul>
+						<li>Added ::Algebra::BasicGraphPattern::connected method.</li>
+						<li>Added 'node_counts' as a recognized key to ::Model::RDFTrine::suports().</li>
+						<li>Added ::Model::node_count method.</li>
+						<li>Added ::Model::RDFTrine::count_statements() and ::Model::RDFTrine::node_count() methods.</li>
+						<li>Added 'store' field to the data returned by the meta() method in the ::Model::* classes.</li>
+						<li>Added a peek method to ::Iterator to support execution deferment like in ::Algebra::Service.</li>
+						<li>Added ability to force SERVICE calls to abort using $ENV{RDFQUERY_THROW_ON_SERVICE} and RequestedInterruptError.</li>
+						<li>Added bf methods to ::Triple and ::BasicGraphPattern to describe the BGP in terms of bound/free.</li>
+						<li>Added bind_variables method to RDF::Query::Algebra.</li>
+						<li>Added caching to ::Algebra::Service::_names_for_node.</li>
+						<li>Added code to count (and warn) the rate of false positives from a bloomjoin.</li>
+						<li>Added cost model hooks in RDF::Query and ::Algebra::BasicGraphPattern.</li>
+						<li>Added FeDeRate BINDINGS to the list of supported extensions.</li>
+						<li>Added get_basic_graph_pattern to ::Model::RDFTrine (not used yet).</li>
+						<li>Added is_solution_modifier() methods to ::Algebra classes.</li>
+						<li>Added labels and common patterns to service description template.</li>
+						<li>Added more logic and debugging to aggregating triples into BGPs for SERVICE calls.</li>
+						<li>Added optional restriction argument to ::Algebra::subpatterns_of_type.</li>
+						<li>Added RDF::Query::Model::RDFTrine::BasicGraphPattner::graph() method.</li>
+						<li>Added RDF::Query::Node::compare for sorting (either Trine or Query) node objects.</li>
+						<li>Added RDF::Query::plan_class so that ::Federate can overload calls to ::Plan methods.</li>
+						<li>Added support for computed statement generators (like ARQ's computed property support [e.g. list:member]).</li>
+						<li>Added trial subsumes() methods to ::Algebra::BasicGraphPattern and ::Algebra::Triple.</li>
+						<li>Algebra classes now call RDF::Query::algebra_fixup for optimization before falling back on normal fixup code.</li>
+						<li>Allow equality test and disjunction filters in patterns that can be compiled to SQL.</li>
+						<li>Fixed ::Algebra::GroupGraphPattern to use join_bnode_streams in cases where the bloom filter wasn't automatically created but instead provided by the user.</li>
+						<li>Fixed ::Model::RDFTrine::as_string use with Quads.</li>
+						<li>Fixed argument list for RDF::Query::Algebra::Service::_names_for_node called from bloom function.</li>
+						<li>Fixed bug so ::Model::RDFTrine::meta may be called as a class method.</li>
+						<li>Fixed RDF::Query::algebra_fixup to ignore service capabilities that would result in empty BGPs.</li>
+						<li>Modified code for aggregate queries (though they are currently broken).</li>
+						<li>Moved construction of bloom-filter-optimized patterns to RDF::Query::Algebra::GroupGraphPattern::_bloom_optimized_pattern().</li>
+						<li>Moved initial federated service code into RDF::Query::fixup and ::algebra_fixup.</li>
+						<li>Moved QEP generation code to RDF::Query::query_plan so it can be overloaded.</li>
+						<li>Moved RDF::Query::add_service() to RDF::Query::Federate::add_service().</li>
+						<li>Parsing service descriptions now more forgiving in the face of missing values.</li>
+						<li>RDF::Query::Algebra::Triple::new now adds RDF::Query::Node::Variable objects for undefined nodes.</li>
+						<li>RDF::Query::fixup() now only returns a construct pattern (the query pattern now being returned by RDF::Query::query_plan()).</li>
+						<li>RDF::Query::Model::get_computed_statements now doesn't die if there's no query object present.</li>
+						<li>RDF::Query::new() now accepts two-argument form with just $query and \%options.</li>
+						<li>RDF::Query::Node::Literal objects now can compare as equal when they're of numeric type but the lexical values aren't numeric.</li>
+						<li>RDF::Query::prune_plans now takes ExecutionContext as an argument, and in turn calls ::Plan::prune_plans.</li>
+						<li>RDF::Query::query_plan() now returns all possible query plans when called in list context.</li>
+						<li>RDF::Query::query_plans now calls RDF::Query::prune_plans to select from the list of possible QEPs.</li>
+						<li>RDF::Trine::Node::Resource now escapes unicode in base URIs (now just relative URI part) before calling URI->new_abs.</li>
+						<li>Removed now unused RDF::Query::construct() and RDF::Query::fixup().</li>
+						<li>Removed old execute() code from ::Algebra classes.</li>
+						<li>Removed unused redland fallback code from RDF::Query::Model::RDFTrine.</li>
+						<li>Split RDF::Query::execute into prepare() and execute_plan() methods.</li>
+						<li>Converted RDF::Query::execute() to use ::Plan classes.</li>
+						<li>Updated ::Compiler::SQL to recognize ::Algebra::Project objects.</li>
+						<li>Updates to RDF::Query::execute() to support explicit pre-binding lists (instead of just scalar values).</li>
+						<li>::Algebra::GroupGraphPattern now throws an exception if passed unblessed values as patterns.</li>
+						<li>::Federate now labels nodes in the QEP tree with applicable services.</li>
+						<li>::Model::debug() now shows data from the named graph model.</li>
+						<li>::Model::RDFTrine::add_uri now decodes resulting content as utf8 before proceeding.</li>
+						<li>::Model::RDFTrine::meta() probes the underlying store object to declare the proper 'store' class.</li>
+						<li>::Service::_names_for_node updated to use ::Plan classes for query execution (fixes use of the k:bloom filter).</li>
+					</ul>
+				</li>
+				<li>Classes
+					<ul>
+						<li>Added algebra classes for solution modifiers and query forms (construct, project).</li>
+						<li>Added code and tests for Query Execution Plan classes RDF::Query::Plan::*.</li>
+						<li>Added RDF::Query::Federate::Plan for federation-specific code.</li>
+						<li>Added RDF::Query::BGPOptimizer implementing a basic optimizer for basic selectivity-based join ordering.</li>
+						<li>Added RDF::Query::CostModel classes for computing/estimating the cost of executing a specific pattern.</li>
+						<li>Added RDF::Query::ExecutionContext to hold all necessary information for query execution (query, model, bound variables).</li>
+						<li>Added RDF::Query::ServiceDescription for parsing DARQ-style service descriptions.</li>
+						<li>Added RDF::Query::VariableBindings to wrap existing HASH-based variable binding structure.</li>
+						<li>Added stub ::Plan::ThresholdUnion class for running optimistic queries.</li>
+						<li>Added workaround to RDFCore bridge so that RDF::Core doesn't die if getStmts is called with a Literal in the subj or pred position.</li>
+						<li>Added a RequestedInterruptError exception class.</li>
+						<li>Added code for RDF-Trine specific BGP query plans.</li>
+						<li>Changed debugging in RDF::Query modules to use Log::Log4perl.</li>
+						<li>Made SERVICE work again by rolling back streaming socket work (now commented out).</li>
+						<li>Moved federation code to new RDF::Query::Federate class.</li>
+						<li>Plan generation now includes any plans the model object can provide.</li>
+						<li>RDF::Query now always uses a cost model (defaulting to ::Naive).</li>
+						<li>RDF::Query::Federate now defaults to SPARQLP parser.</li>
+						<li>Removed logging/warn calls from forked process in ::Service (was screwing up the parent-child IO pipe).</li>
+						<li>Removed use of "DISTINCT" queries in SERVICE calls (for pipelining).</li>
+						<li>ServiceDescription now only runs sofilter if ?subject/?object are bound.</li>
+						<li>Started work on a more holistic approach to supporting service descriptions (instead of using add_computed_statement_generator()).</li>
+						<li>Updated ::Algebra::Service to fork and use LWP's callback mechanism for concurrency.</li>
+						<li>::Algebra::Service now defers loading of content until the first result is requested.</li>
+						<li>::Model::RDFTrine now only produces BGP plans if there is no get_computed_statement_generators in the query object.</li>
+						<li>Code now materializes all node identities before creating the Bloom filter (so capacity arg is accurate).</li>
+						<li>Bloom filter use is now only attempted on SERVICE blocks that don't immediately contain a FILTER.</li>
+						<li>Re-ordered conditionals so that the service-bloom-filter try block is called less frequently.</li>
+						<li>SERVICE execution now uses non-identity reasoning Bloom filter function.</li>
+					</ul>
+				</li>
+				<li>Syntax and Serialization
+					<ul>
+						<li>Added from_sse method to ::Statement, ::Node.</li>
+						<li>Added initial code for ARQ-style property paths.</li>
+						<li>Added initial parser code for SPARQL Update (SPARUL) extension.</li>
+						<li>Added new 'UNSAID' syntax for SPARQLP, implementing negation.</li>
+						<li>Added parse_expr method to RDF::Query::Parser::SPARQL.</li>
+						<li>Added RDF::Query::Algebra::Quad::bf() method.</li>
+						<li>Fixed RDQL parser to qualify URIs before returning from parse().</li>
+						<li>Fixed SSE serialization of Aggregates using '*' instead of a variable as the column.</li>
+						<li>Removed (now unused) parser generator script.</li>
+						<li>SPARQL parser now always adds a ::Algebra::Project (even when the query selects '*').</li>
+						<li>SPARQL parser now creates ::Algebra::Construct objects for CONSTRUCT queries.</li>
+						<li>SPARQL parser now puts ::Distinct above ::Sort algebras in the parse tree.</li>
+						<li>SPARQLP parser now creates ::Project object as parent of any ::Aggregate.</li>
+						<li>Turtle parser now doesn't modify the lexical value of numeric typed literals.</li>
+						<li>Turtle parser now makes universal IDs for all blank node (even those with given IDs like _:xyz).</li>
+						<li>Updated ::Algebra SSE serializations to conform to Jena's serialization syntax.</li>
+						<li>Updated ::Algebra::Limit::sse to emit 'slice' serialization if its child is a ::Algebra::Offset.</li>
+						<li>Updated as_sparql() methods to support the new ::Construct classes.</li>
+						<li>Updated RDF::Query::sse to emit base and prefix serializations.</li>
+						<li>Updated SPARQL parser and serializer tests to always assume an ::Algebra::Project on SELECT queries.</li>
+						<li>Updated SSE serialization of ::Join::PushDownNestedLoop to use 'bind-join' terminology.</li>
+						<li>Updates to SPARQLP parser to support FeDeRate BINDINGS keyword.</li>
+						<li>::Algebra::Distinct now does proper serialization in as_sparql().</li>
+						<li>::GroupGraphPattern::sse() updated to output the '(join ...)' only if the GGP has more than one pattern.</li>
+					</ul>
+				</li>
+				<li>Optimizer
+					<ul>
+						<li>Added benchmark/plans.pl to show the runtimes of the available QEPs for a query.</li>
+						<li>Added benchmark/costmodel.pl for testing the RDF::Query::CostModel.</li>
+						<li>Added logging for execution time (time to construct iterator) of Triples, BGPs, GGPs and sorting.</li>
+						<li>Added logging of cardinalities in ::Algebra::Triple, ::Algebra::BasicGraphPattern and ::Algebra::Service.</li>
+						<li>Added logging to plan classes ::NestedLoop, ::Service, ::Triple.</li>
+						<li>Naive plan is used in ::Federate::Plan::generate_plans only if no optimistic plans are available.</li>
+						<li>Updated cost model code to work with ::Plan classes instead of ::Algebra classes.</li>
+						<li>Logging code now uses sse serialization as log keys (because of expressions that can't be serialized as SPARQL).</li>
+						<li>Logging object can now be passed to RDF::Query constructor.</li>
+						<li>Updated logging of algebra execution to use SPARQL serialization as logging key.</li>
+					</ul>
+				</li>
+				<li>Miscellaneous
+					<ul>
+						<li>SPARQL parser now constructs ::Algebra::Project objects (had been in RDF::Query::execute).</li>
+						<li>Updated RDF::Query to require version 0.108 of RDF::Trine.</li>
+						<li>Added new bloom:filter function variant that doesn't use identity reasoning.</li>
+						<li>Added debugging information when RDFQUERY_THROW_ON_SERVICE is in effect.</li>
+						<li>Fixed test plan for t/optimizer.t in cases where no appropriate model is available.</li>
+						<li>Updated plan generation code to use ::BGPOptimizer when the model supports node_counts.</li>
+						<li>Fixed SSE serialization bug in ::Algebra::Sort.</li>
+						<li>Fixed bugs in RDF::Query and RDF::Query::Expression classes that insisted variables be RDF::Query objects (and not simply RDF::Trine objects).</li>
+						<li>Fixed propogation of iterator binding_names when pre-bound values are used in ::Algebra execution.</li>
+						<li>Fixed RDF::Query::Algebra::Triple to correctly set binding_names when pre-binding is used.</li>
+						<li>Fixed use of pre-binding in execution of RDF::Trine optimized BasicGraphPatterns.</li>
+						<li>Fixed bug in SQL compilation when restricting left-joins to specific node types (based on functions like isIRI).</li>
+						<li>Fixed node identity computation based on owl:sameAs.</li>
+						<li>Fixed bitrotted livejournal example script to work with new 2.000 API.</li>
+					</ul>
+				</li>
+				<li>Tests
+					<ul>
+						<li>Added expected result count test in t/34-servicedescription.t.</li>
+						<li>Added initial tests for algebra subsumes method.</li>
+						<li>Added logging and costmodel tests.</li>
+						<li>Added more example capabilities and patterns to the test service descriptions.</li>
+						<li>Added RDF::Trine::Store::Hexastore to test model construction list in t/models.pl.</li>
+						<li>Added sparql:pattern data to test service descriptions.</li>
+						<li>Added sse re-serialization test to t/29-serialize.t.</li>
+						<li>Added support for sparql:pattern in service description parsing.</li>
+						<li>Added t/plan-rdftrine.t to test QEP generation optimized for RDF::Trine BGPs.</li>
+						<li>Added test data for repeat patterns (e.g. { ?a ?a ?b}).</li>
+						<li>Added tests to t/plan.t for QEP sse serialization.</li>
+						<li>Cleaned up federation tests.</li>
+						<li>Commented out in-progress service description tests.</li>
+						<li>Fixed bug in t/23-model_bridge.t to allow two models from the same model class to be used in testing.</li>
+						<li>Fixed error handling in t/plan.t.</li>
+						<li>Fixed t/costmodel-naive.t to provide a serialized query to ::Plan::Service constructor.</li>
+						<li>Fixed test count in algebra-bgp.t.</li>
+						<li>Fixed test in t/31-service.t that relied on identity-reasoning support in bloom filters (which is now off by default).</li>
+						<li>Fixed use of RDFQUERY_NETWORK_TESTS in 31-service.t.</li>
+						<li>Improved use of temporary RDF::Trine stores in RDF::Query tests.</li>
+						<li>Marked tests TODO for federated query serialization.</li>
+						<li>Removed what looks like an accidentally pasted test in t/plan.t.</li>
+						<li>SERVICE tests involving bloom filter handling marked as TODO.</li>
+						<li>ServiceDescription parsing now gets entire sparql:patterns and not just arcs to depth one.</li>
+						<li>Silenced unfinished test debugging in t/logging.t.</li>
+						<li>Updated args to roqet call in failing_earl_tests.sh.</li>
+						<li>Updated costmodel and logging test expected results that changed due to changes to ::Plan::Join code.</li>
+						<li>Updated dawg-eval.t regex to recognize RDFTrine blank nodes.</li>
+						<li>Updated DBPedia test query in t/34-servicedescription.t to reflect new source data.</li>
+						<li>Updated expected cardinalities in t/logging.t for current plan choice.</li>
+						<li>Updated logging tests to use the new sparql serialization keys.</li>
+						<li>Updated SERVICE test in t/plan.t (still broken, but only runs when dev env var RDFQUERY_NETWORK_TESTS in effect).</li>
+						<li>Updated t/plan.t to be less dependent on the specific state of the kasei.us service endpoint.</li>
+						<li>Updated test service description RDF for new tests.</li>
+						<li>Updates to improve logging and test coverage.</li>
+					</ul>
+				</li>
+				<li>Examples and Documentation
+					<ul>
+						<li>Added examples/query.pl to show a simple example of loading data and executing a query.</li>
+						<li>Added examples/create_query_api.pl for generating queries programatically (based on request from KjetilK).</li>
+						<li>Added bin/graph-bgp.pl to produce a png of a query's BGP variable connectivity graph.</li>
+						<li>Added bin/graph-query.pl to graph the (one chosen) QEP tree.</li>
+						<li>Added bin/graph-qeps.pl to vizualize all QEPs of a query with GraphViz.</li>
+						<li>Updated bin/parse.pl to emit the SSE serialization of the query algebra tree.</li>
+						<li>Updated bin/rdf_parse_turtle.pl to warn on any parser error.</li>
+					</ul>
+				</li>
+			</ul>
+		<h3 id="v2_002">Version 2.002 (2008-04-25)</h3>
 			<ul>
 				<li>Updated Bloom::Filter required version in RDF-Query's Makefile.PL.</li>
 				<li>Fixed bug in get_function() when called as a class method.</li>

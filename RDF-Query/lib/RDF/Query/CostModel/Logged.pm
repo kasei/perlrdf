@@ -15,7 +15,7 @@ package RDF::Query::CostModel::Logged;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 use strict;
@@ -28,7 +28,6 @@ use RDF::Query::CostModel::Naive;
 use Set::Scalar;
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
-use List::MoreUtils qw(uniq);
 
 =item C<< new ( $logger ) >>
 

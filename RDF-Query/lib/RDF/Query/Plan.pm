@@ -380,7 +380,7 @@ sub generate_plans {
 # 				my @nodes	= $t->nodes;
 # 				foreach my $i (0 .. $#nodes) {
 # 					if ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
-# 						$nodes[$i]	= _make_blank_distinguished_variable( $nodes[$i] );
+# 						$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
 # 					}
 # 				}
 # 				if (scalar(@nodes) == 4) {
@@ -394,9 +394,21 @@ sub generate_plans {
 # 		}
 		
 		if (scalar(@triples) == 0) {
-			my $v		= RDF::Query::VariableBindings->new( {} );
-			my $plan	= RDF::Query::Plan::Constant->new( $v );
-			push(@return_plans, $plan);
+			if ($args{ named_graph }) {
+				my @nodes	= map { RDF::Query::Node::Variable->new($_) } qw(s p o);
+				push(@nodes, $args{ named_graph });
+				my $plan	= RDF::Query::Plan::Distinct->new( 
+								RDF::Query::Plan::Project->new(
+									RDF::Query::Plan::Quad->new( @nodes, { sparql => '{}' } ),
+									[ $args{ named_graph } ]
+								)
+							);
+				push(@return_plans, $plan);
+			} else {
+				my $v		= RDF::Query::VariableBindings->new( {} );
+				my $plan	= RDF::Query::Plan::Constant->new( $v );
+				push(@return_plans, $plan);
+			}
 		} elsif (scalar(@triples) == 1) {
 			push(@return_plans, $self->generate_plans( @triples, $context, %args ));
 		} else {
@@ -412,7 +424,11 @@ sub generate_plans {
 		my @plans	= map { RDF::Query::Plan::Limit->new( $algebra->limit, $_ ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'NamedGraph') {
-		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
+		# we push 'named_graph' down as part of %arg here so that empty BGPs ({}) can be \
+		# handled specially in named graphs -- namely, {} should be executed as an empty BGP \
+		# when in a GraphGraphPattern so GRAPH ?g {} ends up returning all the valid graph names, \
+		# instead of being optimized away into an empty variable binding.
+		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args, named_graph => $algebra->graph );
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Offset') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
@@ -485,12 +501,8 @@ sub generate_plans {
 		my @plans	= map { RDF::Query::Plan::Sort->new( $_, @neworder ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Triple' or $type eq 'Quad') {
-		my @nodes	= $algebra->nodes;
-		foreach my $i (0 .. $#nodes) {
-			if ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
-				$nodes[$i]	= _make_blank_distinguished_variable( $nodes[$i] );
-			}
-		}
+		my $st		= $algebra->distinguish_bnode_variables;
+		my @nodes	= $st->nodes;
 		my $plan	= (scalar(@nodes) == 4)
 					? RDF::Query::Plan::Quad->new( @nodes, { sparql => $algebra->as_sparql } )
 					: RDF::Query::Plan::Triple->new( @nodes, { sparql => $algebra->as_sparql, bf => $algebra->bf } );
@@ -683,14 +695,6 @@ sub _add_constant_join {
 		}
 	}
 	return @return_plans;
-}
-
-sub _make_blank_distinguished_variable {
-	my $blank	= shift;
-	my $id		= $blank->blank_identifier;
-	my $name	= '__ndv_' . $id;
-	my $var		= RDF::Trine::Node::Variable->new( $name );
-	return $var;
 }
 
 =item C<< plan_node_name >>

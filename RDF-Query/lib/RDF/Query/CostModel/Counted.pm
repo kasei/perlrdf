@@ -15,7 +15,7 @@ package RDF::Query::CostModel::Counted;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 use strict;
@@ -28,7 +28,6 @@ use RDF::Query::Error qw(:try);
 use Set::Scalar;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 
 sub _cost_triple {
 	my $self	= shift;

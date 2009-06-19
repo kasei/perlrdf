@@ -16,7 +16,6 @@ use base qw(RDF::Query::Algebra);
 
 use Scalar::Util qw(blessed);
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 
@@ -24,7 +23,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -168,7 +167,7 @@ Returns a list of the variable names used in this algebra expression.
 sub referenced_variables {
 	my $self	= shift;
 	my @aliases	= map { $_->[0] } $self->ops;
-	return uniq( @aliases, $self->pattern->referenced_variables );
+	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
 =item C<< definite_variables >>

@@ -28,6 +28,12 @@ sub new {
 	my $class		= shift;
 	my $bindings	= shift;
 	my $self		= bless( { %$bindings }, $class );
+	foreach my $k (keys %$self) {
+		my $node	= $self->{$k};
+		if (ref($node) and not($node->isa('RDF::Query::Node'))) {
+			$self->{$k}	= RDF::Query::Node->from_trine( $node );
+		}
+	}
 	return $self;
 }
 

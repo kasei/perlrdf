@@ -15,7 +15,6 @@ no warnings 'redefine';
 
 use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 
@@ -23,7 +22,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
 }
 
 ######################################################################
@@ -106,7 +105,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->referenced_variables } $self->triples);
+	return RDF::Trine::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
 =item C<< definite_variables >>
@@ -117,7 +116,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(map { $_->definite_variables } $self->triples);
+	return RDF::Trine::_uniq(map { $_->definite_variables } $self->triples);
 }
 
 =item C<< clone >>

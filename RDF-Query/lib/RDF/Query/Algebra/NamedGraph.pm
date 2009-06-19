@@ -17,7 +17,6 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use Log::Log4perl;
 use RDF::Query::Error;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
@@ -26,7 +25,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -144,7 +143,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	my @list	= uniq(
+	my @list	= RDF::Query::_uniq(
 		$self->pattern->referenced_variables,
 		(map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph)),
 	);
@@ -159,7 +158,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(
+	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->definite_variables,
 	);

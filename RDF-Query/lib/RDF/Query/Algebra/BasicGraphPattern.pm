@@ -16,7 +16,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
+use Scalar::Util qw(refaddr);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -24,8 +24,9 @@ use RDF::Trine::Iterator qw(smap swatch);
 ######################################################################
 
 our ($VERSION);
+my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -47,7 +48,6 @@ sub new {
 	my @triples	= @_;
 	foreach my $t (@triples) {
 		unless ($t->isa('RDF::Trine::Statement')) {
-			Carp::cluck;
 			throw RDF::Query::Error::QueryPatternError -text => "Patterns belonging to a BGP must be graph statements";
 		}
 	}
@@ -103,14 +103,19 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift || '';
-	my @triples;
-	foreach my $t ($self->triples) {
-		push(@triples, $t->as_sparql( $context, $indent ));
+	if (exists $AS_SPARQL{ refaddr( $self ) }) {
+		return $AS_SPARQL{ refaddr( $self ) };
+	} else {
+		my $context	= shift;
+		my $indent	= shift || '';
+		my @triples;
+		foreach my $t ($self->triples) {
+			push(@triples, $t->as_sparql( $context, $indent ));
+		}
+		my $string	= join("\n${indent}", @triples);
+		$AS_SPARQL{ refaddr( $self ) }	= $string;
+		return $string;
 	}
-	my $string	= join("\n${indent}", @triples);
-	return $string;
 }
 
 =item C<< type >>
@@ -131,7 +136,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->referenced_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
 =item C<< definite_variables >>
@@ -142,7 +147,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return uniq(map { $_->definite_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->definite_variables } $self->triples);
 }
 
 =item C<< check_duplicate_blanks >>
@@ -337,6 +342,10 @@ sub bind_variables {
 	return $class->new( map { $_->bind_variables( $bound ) } $self->triples );
 }
 
+sub DESTROY {
+	my $self	= shift;
+	delete $AS_SPARQL{ refaddr( $self ) };
+}
 
 1;
 

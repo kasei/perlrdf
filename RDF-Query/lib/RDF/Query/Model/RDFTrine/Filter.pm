@@ -16,7 +16,6 @@ use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Scalar::Util qw(blessed reftype refaddr);
 use Carp qw(carp croak confess);
 
@@ -26,7 +25,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################

@@ -38,7 +38,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.000';
+	$VERSION		= '2.100';
 }
 
 

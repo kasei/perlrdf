@@ -15,7 +15,7 @@ package RDF::Query::Logger;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 use strict;

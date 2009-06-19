@@ -35,7 +35,8 @@ use RDF::Trine::Namespace qw(rdf foaf);
 
 use RDF::Query::Plan;
 
-my ($data)	= grep { $_->{bridge}->isa('RDF::Query::Model::RDFTrine') } test_models_and_classes($file);
+my @data	= test_models_and_classes($file);
+my ($data)	= grep { $_->{bridge}->isa('RDF::Query::Model::RDFTrine') } @data;
 
 ################################################################################
 

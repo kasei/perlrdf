@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.110_01
+This document describes RDF::Trine version 0.110
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
 }
 
 use Log::Log4perl qw(:easy);
@@ -60,10 +60,19 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Iterator;
+use RDF::Trine::Store;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
+sub _uniq {
+	my %seen;
+	my @data;
+	foreach (@_) {
+		push(@data, $_) unless ($seen{ $_ }++);
+	}
+	return @data;
+}
 
 1; # Magic true value required at end of module
 __END__
@@ -79,7 +88,6 @@ L<Digest::MD5>
 L<Error>
 L<JSON>
 L<LWP::UserAgent>
-L<List::MoreUtils>
 L<List::Util>
 L<Log::Log4perl>
 L<Math::BigInt>

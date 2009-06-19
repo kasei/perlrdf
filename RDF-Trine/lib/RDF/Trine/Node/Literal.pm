@@ -21,9 +21,11 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, $USE_XMLLITERALS);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
+	eval "use RDF::Trine::Node::Literal::XML;";
+	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 }
 
 ######################################################################
@@ -41,6 +43,19 @@ Returns a new Literal structure.
 =cut
 
 sub new {
+	my $class	= shift;
+	my $literal	= shift;
+	my $lang	= shift;
+	my $dt		= shift;
+	
+	if ($USE_XMLLITERALS and defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
+		return RDF::Trine::Node::Literal::XML->new( $literal, $lang, $dt );
+	} else {
+		return $class->_new( $literal, $lang, $dt );
+	}
+}
+
+sub _new {
 	my $class	= shift;
 	my $literal	= shift;
 	my $lang	= shift;

@@ -15,7 +15,7 @@ package RDF::Query::ServiceDescription;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.000';
+	$VERSION	= '2.100';
 }
 
 use strict;

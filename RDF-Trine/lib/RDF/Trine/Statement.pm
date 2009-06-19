@@ -15,7 +15,6 @@ no warnings 'redefine';
 
 use Data::Dumper;
 use Log::Log4perl;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
@@ -24,7 +23,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110_01';
+	$VERSION	= '0.110';
 }
 
 ######################################################################
@@ -81,6 +80,16 @@ sub nodes {
 	return ($s, $p, $o);
 }
 
+=item C<< node_names >>
+
+Returns the method names for accessing the nodes of this statement.
+
+=cut
+
+sub node_names {
+	return qw(subject predicate object);
+}
+
 =item C<< subject >>
 
 Returns the subject node of the triple pattern.
@@ -132,6 +141,20 @@ Returns the statement in a string form.
 sub as_string {
 	my $self	= shift;
 	return $self->sse;
+}
+
+=item C<< has_blanks >>
+
+Returns true if any of the nodes in this statement are blank nodes.
+
+=cut
+
+sub has_blanks {
+	my $self	= shift;
+	foreach my $node ($self->nodes) {
+		return 1 if $node->is_blank;
+	}
+	return 0;
 }
 
 =item C<< sse >>
@@ -197,7 +220,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return uniq(map { $_->name } grep { blessed($_) and $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
+	return RDF::Trine::_uniq(map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $self->nodes);
 }
 
 =item C<< definite_variables >>

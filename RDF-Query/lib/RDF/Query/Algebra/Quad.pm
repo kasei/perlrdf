@@ -15,7 +15,6 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra RDF::Trine::Statement::Quad);
 
 use Data::Dumper;
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
@@ -24,7 +23,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -138,6 +137,24 @@ sub bf {
 				: 'b';
 	}
 	return $bf;
+}
+
+=item C<< distinguish_bnode_variables >>
+
+Returns a new Quad object with blank nodes replaced by distinguished variables.
+
+=cut
+
+sub distinguish_bnode_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @nodes	= $self->nodes;
+	foreach my $i (0 .. $#nodes) {
+		if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+			$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
+		}
+	}
+	return $class->new( @nodes );
 }
 
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>

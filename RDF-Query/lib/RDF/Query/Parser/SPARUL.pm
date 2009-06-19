@@ -26,7 +26,7 @@ package RDF::Query::Parser::SPARUL;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION		= '2.002';
+our $VERSION		= '2.100';
 
 use URI;
 use Data::Dumper;
@@ -35,7 +35,6 @@ use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number reftype);
-use List::MoreUtils qw(uniq);
 
 
 # [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery | (Update | Manage)*)

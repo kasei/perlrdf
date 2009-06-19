@@ -17,7 +17,6 @@ use base qw(RDF::Query::Algebra);
 use Data::Dumper;
 use Set::Scalar;
 use Scalar::Util qw(blessed);
-use List::MoreUtils qw(uniq);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(sgrep);
 
@@ -25,7 +24,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.002';
+	$VERSION	= '2.100';
 }
 
 ######################################################################
@@ -197,7 +196,7 @@ sub referenced_variables {
 			push(@vars, $v->referenced_variables);
 		}
 	}
-	return uniq(@vars);
+	return RDF::Query::_uniq(@vars);
 }
 
 =item C<< definite_variables >>
