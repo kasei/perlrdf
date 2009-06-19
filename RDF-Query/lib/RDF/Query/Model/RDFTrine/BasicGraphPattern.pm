@@ -106,6 +106,7 @@ sub execute ($) {
 	} else {
 		warn "no iterator in execute()";
 	}
+	return $self;
 }
 
 =item C<< next >>
