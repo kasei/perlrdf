@@ -44,19 +44,10 @@ use Benchmark qw(cmpthese);
 
 my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
 my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
-my $sparql	= <<"END";
-	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-	SELECT *
-	WHERE {
-		?person
-			foaf:mbox_sha1sum "$MBOX_SHA" ;
-			foaf:name ?name ;
-		OPTIONAL {
-			?person foaf:knows [ foaf:name ?someone ]
-		}
-	}
-END
-my $query	= RDF::Query::Benchmark->new( $sparql, undef, undef, 'sparql', optimize => 1 );
+
+my %args	= (optimize => 1, &RDF::Query::Util::cli_parse_args);
+my $sparql	= delete $args{ query };
+my $query	= RDF::Query->new( $sparql, \%args ) or die RDF::Query->error;
 my $context	= RDF::Query::ExecutionContext->new(
 				bound		=> {},
 				model		=> $bridge,

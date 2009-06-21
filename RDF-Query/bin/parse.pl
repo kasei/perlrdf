@@ -7,13 +7,20 @@ use File::Spec;
 use Data::Dumper;
 use lib qw(../lib lib);
 use RDF::Query;
+use RDF::Query::Util;
 
-binmode(STDIN, ':utf8');
-my @args;
-my $input	= (scalar(@ARGV) == 0 or $ARGV[0] eq '-')
-			? do { local($/) = undef; <> }
-			: do { local($/) = undef; open(my $fh, '<', $ARGV[0]) || die $!; binmode($fh, ':utf8'); push(@args, base => 'file://' . File::Spec->rel2abs($ARGV[0])); <$fh> };
-my $query	= RDF::Query->new( $input, { lang => 'sparqlp', @args } );
+unless (@ARGV) {
+	print STDERR <<"END";
+USAGE: $0 -e 'SELECT * ...'
+USAGE: $0 query.rq
+
+END
+	exit;
+}
+
+my %args	= &RDF::Query::Util::cli_parse_args;
+my $sparql	= delete $args{ query };
+my $query	= RDF::Query->new( $sparql, \%args );
 if ($query) {
 	print $query->sse . "\n";
 } else {

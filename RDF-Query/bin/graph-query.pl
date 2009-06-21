@@ -7,21 +7,7 @@ no warnings 'redefine';
 use lib qw(. t lib .. ../t ../lib);
 require "t/models.pl";
 
-unless (@ARGV) {
-	print <<"END";
-USAGE: perl $0 query.rq [ service.rdf, ... ]
-
-Graph the QEP produced for a query.
-
-END
-	exit;
-}
-
-my $qfile	= shift;
-my $sparql	= do { open(my $fh, '<', $qfile) or die $!; local($/) = undef; <$fh> };
-my @files	= @ARGV;
-my @models	= test_models();
-
+use RDF::Query::Util;
 use RDF::Query::Federate;
 use RDF::Query::CostModel::Naive;
 
@@ -39,8 +25,25 @@ use Benchmark;
 # ] );
 ################################################################################
 
+unless (@ARGV) {
+	print <<"END";
+USAGE: perl $0 query.rq [ service.rdf, ... ]
+
+Graph the QEP produced for a query.
+
+END
+	exit;
+}
+
+my %args	= &RDF::Query::Util::cli_parse_args;
+my $sparql	= delete $args{ query };
+$args{ optimize }	= 1;
+
+my @files	= @ARGV;
+my @models	= test_models();
+
 my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
-my $query	= RDF::Query::Federate->new( $sparql, {  optimize => 1 } );
+my $query	= RDF::Query::Federate->new( $sparql, \%args );
 warn RDF::Query->error unless ($query);
 
 foreach my $file (@files) {

@@ -7,6 +7,7 @@ use lib qw(lib);
 use File::Spec;
 use URI::file;
 use RDF::Query;
+use RDF::Query::Util;
 
 unless (@ARGV) {
 	print STDERR <<"END";
@@ -17,13 +18,9 @@ END
 	exit;
 }
 
-my $sparql;
-my $file	= shift;
-if ($file eq '-e') {
-	$sparql	= shift;
-} else {
-	$sparql	= do { local($/) = undef; open( my $fh, '<', $file ) or die $!; <$fh> };
-}
+my %args	= &RDF::Query::Util::cli_parse_args;
+my $sparql	= delete $args{ query };
+my $query	= RDF::Query->new( $sparql, \%args ) or die RDF::Query->error;
 
 my @files	= map { File::Spec->rel2abs( $_ ) } @ARGV;
 my @uris	= map { URI::file->new_abs( $_ ) } @files;
@@ -38,7 +35,6 @@ foreach my $i (0 .. $#files) {
 	$parser->parse( $uri, $content, $handler );
 }
 
-my $query	= RDF::Query->new( $sparql );
 my $iter	= $query->execute( $model );
 
 print $iter->as_string;

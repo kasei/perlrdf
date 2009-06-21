@@ -187,7 +187,7 @@ sub graph {
 	my $g		= shift;
 	my $label	= $self->graph_labels;
 	
-	$g->add_node( "$self", label => "BasicGraphPattern" . $self->graph_labels );
+	$g->add_node( "$self", label => "BasicGraphPattern (RDF::Trine)" . $self->graph_labels );
 	
 	my @triples	= $self->triples;
 	foreach my $t (@triples) {
@@ -202,8 +202,8 @@ sub graph {
 				$g->add_node( "${self}$str", label => $str );
 				$g->add_edge( "$t" => "${self}$str", label => $names[ $i ] );
 			} else {
-				$g->add_node( "${self}$n", label => $str );
-				$g->add_edge( "$t" => "${self}$n", label => $names[ $i ] );
+				$g->add_node( "${self}${t}$n", label => $str );
+				$g->add_edge( "$t" => "${self}${t}$n", label => $names[ $i ] );
 			}
 		}
 	}

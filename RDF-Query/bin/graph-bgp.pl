@@ -34,7 +34,9 @@ use Benchmark;
 # ] );
 ################################################################################
 
-my $query	= RDF::Query->new( $sparql, {  optimize => 0 } );
+my %args	= (optimize => 0, &RDF::Query::Util::cli_parse_args);
+my $sparql	= delete $args{ query };
+my $query	= RDF::Query->new( $sparql, \%args ) or die RDF::Query->error;
 warn RDF::Query->error unless ($query);
 
 my ($bgp)	= $query->pattern->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern');
