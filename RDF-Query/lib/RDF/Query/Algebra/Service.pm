@@ -137,7 +137,7 @@ sub sse {
 	my $indent	= $context->{indent};
 	
 	return sprintf(
-		'(service\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		"(service\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->endpoint->sse( $context, "${prefix}${indent}" ),
 		$self->pattern->sse( $context, "${prefix}${indent}" )
 	);
