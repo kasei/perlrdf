@@ -18,9 +18,7 @@ END
 	exit;
 }
 
-my %args	= &RDF::Query::Util::cli_parse_args;
-my $sparql	= delete $args{ query };
-my $query	= RDF::Query->new( $sparql, \%args );
+my $query	= &RDF::Query::Util::cli_make_query;
 if ($query) {
 	print $query->sse . "\n";
 } else {

@@ -35,16 +35,12 @@ END
 	exit;
 }
 
-my %args	= &RDF::Query::Util::cli_parse_args;
-my $sparql	= delete $args{ query };
-$args{ optimize }	= 1;
+my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
 
 my @files	= @ARGV;
 my @models	= test_models();
 
 my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
-my $query	= RDF::Query::Federate->new( $sparql, \%args );
-warn RDF::Query->error unless ($query);
 
 foreach my $file (@files) {
 	my $uri	= URI::file->new_abs( $file );

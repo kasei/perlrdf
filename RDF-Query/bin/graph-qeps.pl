@@ -45,9 +45,7 @@ use Benchmark qw(cmpthese);
 my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
 my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
 
-my %args	= (optimize => 1, &RDF::Query::Util::cli_parse_args);
-my $sparql	= delete $args{ query };
-my $query	= RDF::Query->new( $sparql, \%args ) or die RDF::Query->error;
+my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
 my $context	= RDF::Query::ExecutionContext->new(
 				bound		=> {},
 				model		=> $bridge,
