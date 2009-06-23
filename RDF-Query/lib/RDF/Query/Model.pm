@@ -471,13 +471,19 @@ sub get_computed_statements {
 	my $iter;
 	if (blessed($query)) {
 		my $comps	= $query->get_computed_statement_generators;
-		foreach my $c (@$comps) {
-			my $new	= $c->( $query, $self, $bound, $s, $p, $o );
-			if ($new and not($iter)) {
-				$iter	= $new;
-			} elsif ($new) {
-				$iter	= $iter->concat( $new );
+		my $l		= Log::Log4perl->get_logger("rdf.query.model");
+		if (@$comps) {
+			$l->debug("finding matching statements from computed statement generators");
+			foreach my $c (@$comps) {
+				my $new	= $c->( $query, $self, $bound, $s, $p, $o );
+				if ($new and not($iter)) {
+					$iter	= $new;
+				} elsif ($new) {
+					$iter	= $iter->concat( $new );
+				}
 			}
+		} else {
+			$l->debug("no computed statement generators found");
 		}
 		return $iter;
 	}
