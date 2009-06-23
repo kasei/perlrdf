@@ -35,7 +35,7 @@ Log::Log4perl::init( \q[
 # construct a query from the command line arguments
 my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
 
-my $model	= &RDF::Query::Util::cli_make_model( @ARGV );
+my $model	= &RDF::Query::Util::cli_make_model;
 
 # execute the query against data contained in the model
 my $iter	= $query->execute( $model );
