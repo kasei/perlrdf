@@ -87,11 +87,11 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent} || '';
+	my $indent	= $context->{indent} || '  ';
 	
 	my @triples	= sort map { $_->sse( $context ) } $self->triples;
 	return sprintf(
-		"(BGP\n${prefix}${indent}%s)",
+		"(BGP\n${prefix}${indent}%s\n${prefix})",
 		join("\n${prefix}${indent}", @triples)
 	);
 }

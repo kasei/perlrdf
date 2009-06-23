@@ -97,7 +97,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	my $vars	= join(' ',
 					map {
@@ -105,7 +105,7 @@ sub sse {
 					} @{ $self->vars }
 				);
 	return sprintf(
-		"(project (%s)\n${prefix}${indent}%s)",
+		"(project (%s)\n${prefix}${indent}%s\n${prefix})",
 		$vars,
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
