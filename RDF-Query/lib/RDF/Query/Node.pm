@@ -79,7 +79,7 @@ sub from_trine {
 	} elsif ($n->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Node::Resource->new( $n->uri_value );
 	} elsif ($n->isa('RDF::Trine::Node::Blank')) {
-		return RDF::Query::Node::Variable->new( $n->blank_identifier );
+		return RDF::Query::Node::Blank->new( $n->blank_identifier );
 	} else {
 		die Dumper($n);
 	}
