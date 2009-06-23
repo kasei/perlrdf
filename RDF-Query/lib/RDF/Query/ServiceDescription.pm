@@ -322,8 +322,25 @@ sub computed_statement_generator {
 		}
 		
 		if ($ok) {
-			my $st		= RDF::Query::Algebra::Triple->new( $s, $p, $o );
+			my @triple	= ($s,$p,$o);
+			foreach my $i (0 .. $#triple) {
+				my $node	= $triple[$i];
+				if ($node->isa('RDF::Query::Node::Blank')) {
+					# blank nodes need special handling, since we can't directly reference
+					# blank nodes on a remote endpoint.
+					
+					# for now, we'll just assume that this is a losing battle, and no
+					# results are possible when trying to use a blank node to identify
+					# remote nodes (which is an acceptable reading of the spec). so return
+					# an empty iterator without actually making the remote call.
+					return RDF::Trine::Iterator::Bindings->new();
+				}
+			}
+			
+			my $st		= RDF::Query::Algebra::Triple->new( @triple );
 			$l->debug( "running statement generator for " . $st->sse({}, '') );
+			$l->debug( "running statement generator with pre-bound data: " . Dumper($bound) );
+			
 			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $st );
 			my $service	= RDF::Query::Algebra::Service->new(
 							RDF::Query::Node::Resource->new( $self->url ),
@@ -335,11 +352,15 @@ sub computed_statement_generator {
 						);
 			my ($plan)	= RDF::Query::Plan->generate_plans( $service, $context );
 			$plan->execute( $context );
+			my $bindings	= RDF::Trine::Iterator::Bindings->new( sub {
+				my $vb	= $plan->next;
+				return $vb;
+			} );
 			my $iter	= smap {
 							my $bound	= shift;
 							my $triple	= $st->bind_variables( $bound );
 							$triple;
-						} RDF::Trine::Iterator::Bindings->new( sub { return $plan->next } );
+						} $bindings;
 			return $iter;
 		} else {
 			return undef;
