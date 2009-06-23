@@ -79,6 +79,7 @@ sub next {
 	if ($row) {
 		return $row;
 	} else {
+		delete $self->[0]{iter};
 		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
 		$iter->close();
 		my $index	= ++$self->[0]{idx};
@@ -102,8 +103,10 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open ThresholdUnion";
 	}
-	$self->[0]{iter}->close();
-	delete $self->[0]{iter};
+	if ($self->[0]{iter}) {
+		$self->[0]{iter}->close();
+		delete $self->[0]{iter};
+	}
 	$self->SUPER::close();
 }
 
