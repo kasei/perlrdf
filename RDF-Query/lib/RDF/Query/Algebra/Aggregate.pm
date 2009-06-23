@@ -128,7 +128,7 @@ sub sse {
 	my @group	= $self->groupby;
 	my $group	= (@group) ? '(' . join(', ', @group) . ')' : '';
 	return sprintf(
-		'(aggregate\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)',
+		"(aggregate\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(', ', @ops_sse),
 		$group,
