@@ -242,6 +242,11 @@ sub new {
 		$self->{optimize}	= 0;
 	}
 	
+	if (my $opt = $options{force_no_optimization}) {
+		$l->debug("got force_no_optimization flag");
+		$self->{force_no_optimization}	= 1;
+	}
+	
 	# add rdf as a default namespace to RDQL queries
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
@@ -488,7 +493,8 @@ sub query_plan {
 =item C<< plan_class >>
 
 Returns the class name for Plan generation. This method should be overloaded by
-RDF::Query subclasses if the subclass also provides a subclass of RDF::Query::Plan.
+RDF::Query subclasses if the implementation also provides a subclass of
+RDF::Query::Plan.
 
 =end private
 
