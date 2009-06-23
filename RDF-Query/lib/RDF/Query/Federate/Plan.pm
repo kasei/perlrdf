@@ -34,25 +34,36 @@ sub generate_plans {
 	my $algebra	= shift;
 	my $context	= shift;
 	my %args	= @_;
+	my $l		= Log::Log4perl->get_logger('rdf.query.federate.plan');
 	
-	my @optimistic_plans;
-	my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
-	foreach my $plan (@plans) {
-		$self->label_plan_with_services( $plan, $context );
-		if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
-			my @fplans	= $self->optimistic_plans( $plan, $context );
-			if (@fplans) {
-				my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
-				$oplan->label( services => $plan->label( 'services' ) );
-				push(@optimistic_plans, $oplan);
+	my $query	= $context->query;
+	my $cache	= ($query->{_query_cache}{federate_plans} ||= {});
+	my $sse	= $algebra->sse();
+	
+	if ($cache->{ $sse }) {
+		return @{ $cache->{ $sse } };
+	} else {
+		$l->debug("generating plans for federated query with algebra: $sse");
+		my @optimistic_plans;
+		my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
+		foreach my $plan (@plans) {
+			$self->label_plan_with_services( $plan, $context );
+			if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
+				my @fplans	= $self->optimistic_plans( $plan, $context );
+				if (@fplans > 1) {
+					my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
+					$oplan->label( services => $plan->label( 'services' ) );
+					push(@optimistic_plans, $oplan);
+				}
+			}
+			unless (@optimistic_plans) {
+				push(@optimistic_plans, $plan);
 			}
 		}
-		unless (@optimistic_plans) {
-			push(@optimistic_plans, $plan);
-		}
+		
+		$cache->{ $sse }	= \@optimistic_plans;
+		return @optimistic_plans;
 	}
-	
-	return @optimistic_plans;
 }
 
 =item C<< optimistic_plans ( $plan, $context ) >>
@@ -95,7 +106,7 @@ sub label_plan_with_services {
 	my $context	= shift;
 	my $query	= $context->query;
 	my @sds		= $query->services;
-	my @l		= map { Log::Log4perl->get_logger($_) } qw(rdf.query.federate.plan rdf.query.plan);
+	my $l		= Log::Log4perl->get_logger('rdf.query.federate.plan');
 	
 	if ($plan->isa('RDF::Query::Plan::Triple')) {
 		my @services;
@@ -105,8 +116,13 @@ sub label_plan_with_services {
 			}
 		}
 		
-		if (@services) {
-			$_->debug( "SERVICES that can handle pattern: " . $plan->triple->sse . "\n\t" . join("\n\t", map { $_->url } @services) ) for (@l);
+		# $plan might have already been labeled with services, in which case
+		# we should just assume the existing label is correct, and save ourselves
+		# the work of re-labeling
+		if (@services and not($plan->label( 'services' ))) {
+			if ($l->is_debug) {
+				$l->debug( "SERVICES that can handle pattern: " . $plan->triple->sse . "\n\t" . join("\n\t", map { $_->url } @services) );
+			}
 			$plan->label( services => [ map { $_->url } @services ] );
 		}
 	} elsif ($plan->isa('RDF::Query::Plan::Join')) {
