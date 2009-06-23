@@ -14,12 +14,19 @@ sub cli_make_query {
 	my $sparql	= delete $args{ query };
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	$l->debug("creating sparql query with class $class");
-	return $class->new( $sparql, \%args );
+	my $query	= $class->new( $sparql, \%args );
+	
+	if ($args{ service_descriptions }) {
+		$query->add_service( $_ ) for (@{ $args{ service_descriptions } });
+	}
+	
+	return $query;
 }
 
 sub cli_parse_args {
 	my %args;
 	$args{ class }	= 'RDF::Query';
+	my @service_descriptions;
 	
 	return unless (@ARGV);
 	while ($ARGV[0] =~ /^-(\w+)$/) {
@@ -28,8 +35,10 @@ sub cli_parse_args {
 			$args{ query }	= shift(@ARGV);
 		} elsif ($opt eq '-l') {
 			$args{ lang }	= shift(@ARGV);
-		} elsif ($opt eq '-o') {
+		} elsif ($opt eq '-O') {
 			$args{ optimize }	= 1;
+		} elsif ($opt eq '-o') {
+			$args{ force_no_optimization }	= 1;
 		} elsif ($opt eq '-c') {
 			my $class		= shift(@ARGV);
 			eval "require $class";
@@ -37,7 +46,24 @@ sub cli_parse_args {
 		} elsif ($opt eq '-f') {
 			require RDF::Query::Federate;
 			$args{ class }	= 'RDF::Query::Federate';
+		} elsif ($opt eq '-F') {
+			require RDF::Query::Federate;
+			require RDF::Query::ServiceDescription;
+			$args{ class }	= 'RDF::Query::Federate';
+			my $url_string	= shift(@ARGV);
+			my $uri;
+			if ($url_string =~ m<^https?:\/\/>) {
+				$uri		= URI->new( $url_string );
+			} else {
+				$uri		= URI::file->new_abs( $url_string );
+			}
+			my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
+			push(@service_descriptions, $sd);	
 		}
+	}
+	
+	if (@service_descriptions) {
+		$args{ service_descriptions }	= \@service_descriptions;
 	}
 	
 	unless (defined($args{query})) {
