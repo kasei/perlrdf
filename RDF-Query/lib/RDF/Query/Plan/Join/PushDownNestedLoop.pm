@@ -34,6 +34,7 @@ sub new {
 	my $class	= shift;
 	my $lhs		= shift;
 	my $rhs		= shift;
+	
 	my $opt		= shift || 0;
 	if (not($opt) and $rhs->isa('RDF::Query::Plan::Join') and $rhs->optional) {
 		# we can't push down results to an optional pattern because of the
@@ -113,8 +114,8 @@ sub next {
 		while (defined(my $inner_row = $self->[0]{inner}->next)) {
 #			warn "using inner row: " . Dumper($inner_row);
 			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
-				if ($l->is_debug) {
-					$l->debug("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+				if ($l->is_trace) {
+					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;

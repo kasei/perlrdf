@@ -49,7 +49,9 @@ sub execute ($) {
 		my $expr	= $self->[1];
 		my $bool	= RDF::Query::Node::Resource->new( "sparql:ebv" );
 		my $filter	= RDF::Query::Expression::Function->new( $bool, $expr );
-		$l->debug("filter constructed for " . $expr->sse({}, ''));
+		if ($l->is_trace) {
+			$l->trace("filter constructed for " . $expr->sse({}, ''));
+		}
 		my $query	= $context->query;
 		my $bridge	= $context->model;
 		$self->[0]{filter}	= sub {
@@ -85,12 +87,14 @@ sub next {
 			$l->debug("no remaining rows in filter");
 			return;
 		}
-		$l->debug("filter processing bindings $row");
+		if ($l->is_trace) {
+			$l->trace("filter processing bindings $row");
+		}
 		if ($filter->( $row )) {
-			$l->debug( "- filter returned true on row" );
+			$l->trace( "- filter returned true on row" );
 			return $row;
 		} else {
-			$l->debug( "- filter returned false on row" );
+			$l->trace( "- filter returned false on row" );
 		}
 	}
 }
