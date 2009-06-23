@@ -290,7 +290,7 @@ TODO: {
 		}
 END
 	my $sse		= $query->sse;
-	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (alias "COUNT(?person)" (COUNT ?person)) (aggregate (BGP (triple ?person foaf:name ?name)) (COUNT(?person)))))', 'sse: aggregate count(?person)' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?COUNT(?person)) (aggregate (BGP (triple ?person foaf:name ?name)) (alias "COUNT(?person)" (COUNT ?person)))))', 'sse: aggregate count(?person)' );
 }
 
 {
@@ -352,6 +352,7 @@ sub _CLEAN_WS {
 	my $string	= shift;
 	for ($string) {
 		s/\s+/ /g;
+		1 while s/[)]\s+[)]/))/g;
 	}
 	return $string;
 }
