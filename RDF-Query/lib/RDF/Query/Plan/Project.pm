@@ -74,11 +74,11 @@ sub next {
 	my $plan	= $self->[1];
 	my $row		= $plan->next;
 	unless (defined($row)) {
-		$l->debug("no remaining rows in project");
+		$l->trace("no remaining rows in project");
 		return;
 	}
-	if ($l->is_debug) {
-		$l->debug( "project on row $row" );
+	if ($l->is_trace) {
+		$l->trace( "project on row $row" );
 	}
 	
 	my $keys	= $self->[2];
@@ -93,13 +93,17 @@ sub next {
 		if ($e->isa('RDF::Query::Expression::Alias')) {
 			$name			= $e->name;
 			$var_or_expr	= $e->expression;
-			$l->debug( "- project alias " . $var_or_expr->sse . " -> $name" );
+			if ($l->is_trace) {
+				$l->trace( "- project alias " . $var_or_expr->sse . " -> $name" );
+			}
 		} else {
 			$name			= $e->sse;
 			$var_or_expr	= $e;
 		}
 		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
-		$l->debug( "- project value $name -> $value" );
+		if ($l->is_trace) {
+			$l->trace( "- project value $name -> $value" );
+		}
 		$proj->{ $name }	= $value;
 	}
 	
