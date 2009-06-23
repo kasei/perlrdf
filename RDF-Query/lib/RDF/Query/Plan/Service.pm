@@ -103,6 +103,14 @@ sub execute ($) {
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query		= $context->query;
 	
+	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
+		my $l	= Log::Log4perl->get_logger("rdf.query.plan.service");
+		$l->warn("SERVICE REQUEST $endpoint:{{{\n$sparql\n}}}\n");
+		$l->warn("QUERY LENGTH: " . length($sparql) . "\n");
+		$l->warn("QUERY URL: $url\n");
+		throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
+	}
+	
 	{
 		$l->debug('SERVICE execute');
 		my $printable	= $sparql;
@@ -233,7 +241,7 @@ sub _get_iterator {
 						$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 						$u;
 					};
-
+	
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
