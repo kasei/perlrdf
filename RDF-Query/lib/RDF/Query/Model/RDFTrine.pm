@@ -297,9 +297,9 @@ sub _get_statements {
 	
 	my $model	= $self->model;
 	my @nodes	= map { blessed($_) ? $_ : $self->new_variable() } @triple;
-	if ($l->is_debug) {
-		$l->debug("statement pattern: " . Dumper(\@nodes));
-		$l->debug("model contains:");
+	if ($l->is_trace) {
+		$l->trace("statement pattern: " . Dumper(\@nodes));
+		$l->trace("model contains:");
 		$model->_debug;
 	}
 	my $stream	= smap { _cast_triple_to_local( $_ ) } $model->get_statements( @nodes );
@@ -323,9 +323,9 @@ sub _get_named_statements {
 	my $model	= $self->_named_graphs_model;
 	my @nodes	= map { $self->is_node($_) ? $_ : $self->new_variable() } (@triple, $context);
 	
-	if ($l->is_debug) {
-		$l->debug("named statement pattern: " . Dumper(\@nodes));
-		$l->debug("model contains:");
+	if ($l->is_trace) {
+		$l->trace("named statement pattern: " . Dumper(\@nodes));
+		$l->trace("model contains:");
 		$model->_debug;
 	}
 
@@ -347,9 +347,9 @@ sub _get_basic_graph_pattern {
 				: $self->model;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.model.rdftrine");
-	if ($l->is_debug) {
-		$l->debug("get BGP: " . Dumper(\@triples));
-		$l->debug("model contains:");
+	if ($l->is_trace) {
+		$l->trace("get BGP: " . Dumper(\@triples));
+		$l->trace("model contains:");
 		$model->_debug;
 	}
 	
@@ -556,6 +556,11 @@ sub generate_plans {
 	my %args	= @_;
 	my $model	= $context->model;
 	my $query	= $context->query;
+	
+	if (blessed($query) and $query->{force_no_optimization}) {
+		return;
+	}
+	
 	if ($algebra->isa('RDF::Query::Algebra::BasicGraphPattern')) {
 		if (not($query) or not(scalar(@{$query->get_computed_statement_generators}))) {
 			my @triples	= map { $_->distinguish_bnode_variables } $algebra->triples;
