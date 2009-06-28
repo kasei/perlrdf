@@ -280,8 +280,7 @@ END
 	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person ?name) (union (BGP (triple ?person foaf:name ?name)) (BGP (triple ?person foaf:nick ?name)))))', 'sse: select with filter regex' );
 }
 
-TODO: {
-	local($TODO)	= 'sse serialization of aggregate variable renaming broken';
+{
 	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT COUNT(?person)
