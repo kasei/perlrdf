@@ -50,8 +50,12 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "ThresholdUnion plan can't be executed while already open";
 	}
+
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.thresholdunion");
 	
 	my $iter	= $self->[1][0];
+	$l->trace("threshold union initialized with first sub-plan: " . $iter->sse);
+	
 	$iter->execute( $context );
 	
 	if ($iter->state == $self->OPEN) {
@@ -76,14 +80,17 @@ sub next {
 	}
 	my $iter	= $self->[0]{iter};
 	my $row		= $iter->next;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.thresholdunion");
 	if ($row) {
 		return $row;
 	} else {
+		$l->trace("thresholdunion sub-plan finished");
 		delete $self->[0]{iter};
 		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
 		$iter->close();
 		my $index	= ++$self->[0]{idx};
 		my $iter	= $self->[1][ $index ];
+		$l->trace("threshold union executing next sub-plan: " . $iter->sse);
 		$iter->execute( $self->[0]{context} );
 		if ($iter->state == $self->OPEN) {
 			$self->[0]{iter}	= $iter;
