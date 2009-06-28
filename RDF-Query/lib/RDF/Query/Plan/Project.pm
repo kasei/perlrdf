@@ -75,6 +75,9 @@ sub next {
 	my $row		= $plan->next;
 	unless (defined($row)) {
 		$l->trace("no remaining rows in project");
+		if ($self->[1]->state == $self->[1]->OPEN) {
+			$self->[1]->close();
+		}
 		return;
 	}
 	if ($l->is_trace) {
@@ -120,7 +123,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open PROJECT";
 	}
 	delete $self->[0]{context};
-	$self->[1]->close();
+	if (blessed($self->[1]) and $self->[1]->state == $self->OPEN) {
+		$self->[1]->close();
+	}
 	$self->SUPER::close();
 }
 
