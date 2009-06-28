@@ -101,7 +101,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open NOT";
 	}
 	delete $self->[0]{filter};
-	$self->[2]->close();
+	if ($self->[2]->state == $self->[2]->OPEN) {
+		$self->[2]->close();
+	}
 	$self->SUPER::close();
 }
 
