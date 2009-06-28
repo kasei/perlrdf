@@ -26,6 +26,7 @@ use warnings;
 no warnings 'redefine';
 use Carp qw(carp croak confess);
 
+use URI::file;
 use RDF::Query;
 use LWP::Simple;
 
@@ -55,10 +56,8 @@ sub cli_make_query {
 
 =item C<< cli_make_model >>
 
-Returns a model object suitable for use in a call to C<< $query->execute >>,
-loaded with RDF from files and/or URLs listed in @ARGV. This model may be any
-of the supported models, but as currently implemented will be a
-RDF::Trine::Model object.
+Calls C<< make_model >> with arguments from C<< @ARGV >>, returning the
+constructed model object.
 
 C<< cli_make_model >> will usually be called after cli_make_query, allowing a
 typical CLI invocation to look like `prog.pl [flags] [query file] [data files]`.
@@ -66,6 +65,19 @@ typical CLI invocation to look like `prog.pl [flags] [query file] [data files]`.
 =cut
 
 sub cli_make_model {
+	return make_model( @ARGV );
+}
+
+=item C<< make_model ( @files ) >>
+
+Returns a model object suitable for use in a call to C<< $query->execute >>,
+loaded with RDF from files and/or URLs listed in @files. This model may be any
+of the supported models, but as currently implemented will be a
+RDF::Trine::Model object.
+
+=cut
+
+sub make_model {
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	
 	# create a temporary triplestore, and wrap it into a model
@@ -73,7 +85,7 @@ sub cli_make_model {
 	my $model	= RDF::Trine::Model->new( $store );
 	
 	# read in the list of files with RDF/XML content for querying
-	my @files	= @ARGV;
+	my @files	= @_;
 	
 	# create a rdf/xml parser object that we'll use to read in the rdf data
 	my $parser	= RDF::Trine::Parser->new('rdfxml');
@@ -94,7 +106,6 @@ sub cli_make_model {
 			$parser->parse_into_model( $uri, $content, $model );
 		}
 	}
-	warn $model;
 	return $model;
 }
 
@@ -156,6 +167,41 @@ sub cli_parse_args {
 		$args{ query }	= $sparql;
 	}
 	return %args;
+}
+
+=item C<< start_endpoint ( $model, $port ) >>
+
+Starts an SPARQL endpoint HTTP server on port $port.
+
+If called in list context, returns the PID and the actual port the server bound
+to. If called in scalar context, returns only the port.
+
+=cut
+
+sub start_endpoint {
+	my $model	= shift;
+	my $port	= shift;
+	my $path	= shift;
+	
+	require CGI;
+	require RDF::Endpoint::Server;
+	
+	local($ENV{TMPDIR})	= '/tmp';
+	my $cgi	= CGI->new;
+	my $s	= RDF::Endpoint::Server->new_with_model( $model,
+				Port		=> $port,
+				Prefix		=> '',
+				CGI			=> $cgi,
+				IncludePath	=> $path,
+			);
+	
+	my $pid	= $s->background();
+#	warn "Endpoint started as [$pid]\n";
+	if (wantarray) {
+		return ($pid, $port);
+	} else {
+		return $port;
+	}
 }
 
 1;
