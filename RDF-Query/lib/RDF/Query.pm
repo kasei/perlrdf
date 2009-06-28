@@ -247,6 +247,11 @@ sub new {
 		$self->{force_no_optimization}	= 1;
 	}
 	
+	if (my $time = $options{optimistic_threshold_time}) {
+		$l->debug("got optimistic_threshold_time flag");
+		$self->{optimistic_threshold_time}	= $time;
+	}
+	
 	# add rdf as a default namespace to RDQL queries
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
@@ -305,17 +310,19 @@ sub prepare {
 	
 	$l->trace("constructing ExecutionContext");
 	my $context	= RDF::Query::ExecutionContext->new(
-					bound				=> \%bound,
-					model				=> $bridge,
-					query				=> $self,
-					base				=> $parsed->{base},
-					ns					=> $parsed->{namespaces},
-					logger				=> $self->logger,
-					costmodel			=> $self->costmodel,
-					optimize			=> $self->{optimize},
-					requested_variables	=> \@vars,
-					model_optimize		=> 1,
-					strict_errors		=> $errors,
+					bound						=> \%bound,
+					model						=> $bridge,
+					query						=> $self,
+					base						=> $parsed->{base},
+					ns							=> $parsed->{namespaces},
+					logger						=> $self->logger,
+					costmodel					=> $self->costmodel,
+					optimize					=> $self->{optimize},
+					force_no_optimization		=> $self->{force_no_optimization},
+					optimistic_threshold_time	=> $self->{optimistic_threshold_time} || 0,
+					requested_variables			=> \@vars,
+					model_optimize				=> 1,
+					strict_errors				=> $errors,
 				);
 	
 	$self->{model}		= $model;

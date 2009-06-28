@@ -160,6 +160,15 @@ sub strict_errors {
 	return $self->_get_value( 'strict_errors', @_ );
 }
 
+=item C<< optimistic_threshold_time >>
+
+=cut
+
+sub optimistic_threshold_time {
+	my $self	= shift;
+	return $self->_get_value( 'optimistic_threshold_time', @_ );
+}
+
 sub _get_value {
 	my $self	= shift;
 	my $key		= shift;
