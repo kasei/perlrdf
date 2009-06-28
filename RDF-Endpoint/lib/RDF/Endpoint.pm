@@ -38,19 +38,31 @@ sub new {
 	my $submiturl	= $args{ SubmitURL };
 	my $whitelist	= $args{ WhiteListModel };
 	
-	my $wlstore		= RDF::Trine::Store::DBI->new( $whitelist, $dsn, $user, $pass );
-	my $wlmodel		= RDF::Trine::Model->new( $wlstore );
-	
 	my $store		= RDF::Trine::Store::DBI->new( $model, $dsn, $user, $pass );
-	my $m			= RDF::Trine::Model::StatementFilter->new( $store );
+	my $m			= RDF::Trine::Model->new( $store );
+	return $class->new_with_model( $m, %args, dbh => $store->dbh );
+}
+
+sub new_with_model {
+	my $class		= shift;
+	my $m			= shift;
+	my %args		= @_;
+	
+	my $incpath		= $args{ IncludePath } || './include';
+	my $adminurl	= $args{ AdminURL };
+	my $submiturl	= $args{ SubmitURL };
+	my $whitelist	= $args{ WhiteListModel };
+	
 	my $self		= bless( {
 						incpath		=> $incpath,
 						admin		=> $adminurl,
 						submit		=> $submiturl,
-						whitelist	=> $wlmodel,
 						_model		=> $m,
 						_ua			=> LWP::UserAgent->new,
 					}, $class );
+	if (my $dbh = $args{dbh}) {
+		$self->{_dbh}	= $dbh;
+	}
 	$self->_load_endpoint_config;
 	
 	if (my $id = $args{ Identity }) {
@@ -58,7 +70,7 @@ sub new {
 	}
 	
 # 	if ($self->authorized_user) {
-		$self->{_model}	= RDF::Trine::Model->new( $store );
+# 		$self->{_model}	= RDF::Trine::Model->new( $store );
 # 	} else {
 # 		$m->add_rule( sub {
 # 			my $st	= shift;
@@ -275,55 +287,55 @@ sub about {
 	} );
 }
 
-sub save_query {
-	my $self	= shift;
-	my $cgi		= shift;
-	my $sparql	= shift;
-	my $query	= RDF::Query->new( $sparql );
-	if ($query) {
-		my $serial	= $query->as_sparql;
-		my $dbh		= $self->dbh;
-		
-		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
-		$sth->execute( $serial );
-		my ($name)	= $sth->fetchrow;
-		unless ($name) {
-			$dbh->begin_work;
-			my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
-			$sth->execute();
-			my ($name)	= $sth->fetchrow;
-			if ($name) {
-				$name++;
-			} else {
-				$name	= 'a';
-			}
-			
-			my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
-			$ins->execute( $name, $serial );
-			$dbh->commit;
-		}
-		return $name;
-	} else {
-		die RDF::Query->error;
-	}
-}
-
-sub run_saved_query {
-	my $self	= shift;
-	my $cgi		= shift;
-	my $name	= shift;
-
-	my $dbh		= $self->dbh;
-	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
-	$sth->execute( $name );
-	my ($sparql)	= $sth->fetchrow;
-	if ($sparql) {
-		$self->run_query( $cgi, $sparql );
-	} else {
-		my $error	= 'Unrecognized query name';
-		return $self->error( $cgi, 400, 'Bad Request', $error );
-	}
-}
+# sub save_query {
+# 	my $self	= shift;
+# 	my $cgi		= shift;
+# 	my $sparql	= shift;
+# 	my $query	= RDF::Query->new( $sparql );
+# 	if ($query) {
+# 		my $serial	= $query->as_sparql;
+# 		my $dbh		= $self->dbh;
+# 		
+# 		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
+# 		$sth->execute( $serial );
+# 		my ($name)	= $sth->fetchrow;
+# 		unless ($name) {
+# 			$dbh->begin_work;
+# 			my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
+# 			$sth->execute();
+# 			my ($name)	= $sth->fetchrow;
+# 			if ($name) {
+# 				$name++;
+# 			} else {
+# 				$name	= 'a';
+# 			}
+# 			
+# 			my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
+# 			$ins->execute( $name, $serial );
+# 			$dbh->commit;
+# 		}
+# 		return $name;
+# 	} else {
+# 		die RDF::Query->error;
+# 	}
+# }
+# 
+# sub run_saved_query {
+# 	my $self	= shift;
+# 	my $cgi		= shift;
+# 	my $name	= shift;
+# 
+# 	my $dbh		= $self->dbh;
+# 	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
+# 	$sth->execute( $name );
+# 	my ($sparql)	= $sth->fetchrow;
+# 	if ($sparql) {
+# 		$self->run_query( $cgi, $sparql );
+# 	} else {
+# 		my $error	= 'Unrecognized query name';
+# 		return $self->error( $cgi, 400, 'Bad Request', $error );
+# 	}
+# }
 
 sub run_query {
 	my $self	= shift;
@@ -509,15 +521,15 @@ sub raw_auth_query {
 	return $query;
 }
 
-sub update_auth_query {
-	my $self	= shift;
-	my $query	= shift;
-	my $dbh		= $self->dbh;
-	if ($query ne $self->auth_query) {
-		my $sth	= $dbh->prepare('UPDATE Endpoint SET auth_query = ? WHERE ID = 1');
-		$sth->execute( $query );
-	}
-}
+# sub update_auth_query {
+# 	my $self	= shift;
+# 	my $query	= shift;
+# 	my $dbh		= $self->dbh;
+# 	if ($query ne $self->auth_query) {
+# 		my $sth	= $dbh->prepare('UPDATE Endpoint SET auth_query = ? WHERE ID = 1');
+# 		$sth->execute( $query );
+# 	}
+# }
 
 sub priv_preds {
 	my $self	= shift;
@@ -554,19 +566,23 @@ sub update_priv_preds {
 sub _load_endpoint_config {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
-	my ($owner, $auth)	= $dbh->selectrow_array( 'SELECT owner_openid, auth_query FROM Endpoint WHERE ID = 1' );
-	$self->{config}{owner_openid}	= $owner;
-	$self->{config}{auth_query}		= $auth;
-	
-	my $sth		= $dbh->prepare( 'SELECT URI FROM Endpoint_PrivatePredicates WHERE endpoint = 1' );
-	$sth->execute();
-	
-	my @preds;
-	while (my ($uri) = $sth->fetchrow) {
-		push( @preds, RDF::Trine::Node::Resource->new( $uri ) );
+	if ($dbh) {
+		my ($owner, $auth)	= $dbh->selectrow_array( 'SELECT owner_openid, auth_query FROM Endpoint WHERE ID = 1' );
+		$self->{config}{owner_openid}	= $owner;
+		$self->{config}{auth_query}		= $auth;
+		
+		my $sth		= $dbh->prepare( 'SELECT URI FROM Endpoint_PrivatePredicates WHERE endpoint = 1' );
+		$sth->execute();
+		
+		my @preds;
+		while (my ($uri) = $sth->fetchrow) {
+			push( @preds, RDF::Trine::Node::Resource->new( $uri ) );
+		}
+		$self->{config}{priv_preds}	= [ sort @preds ];
+		return $owner;
+	} else {
+		return;
 	}
-	$self->{config}{priv_preds}	= [ sort @preds ];
-	return $owner;
 }
 
 sub set_owner_openid {
@@ -632,34 +648,34 @@ sub _html_escape {
 	return $text;
 }
 
-sub init {
-	my $self	= shift;
-	my $dbh		= $self->dbh;
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Queries (
-            Name VARCHAR(8) UNIQUE NOT NULL,
-            Query longtext NOT NULL
-        );
-END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Endpoint (
-            ID bigint unsigned PRIMARY KEY AUTO_INCREMENT,
-            owner_openid VARCHAR(256) NOT NULL,
-            include_path VARCHAR(256) NOT NULL,
-            auth_query VARCHAR(1024),
-            priv_query VARCHAR(1024)
-        );
-END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Endpoint_PrivatePredicates (
-            endpoint bigint unsigned,
-            ID bigint unsigned,
-            URI text NOT NULL,
-            PRIMARY KEY (endpoint, ID)
-        );
-END
-	return 1;
-}
+# sub init {
+# 	my $self	= shift;
+# 	my $dbh		= $self->dbh;
+# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+#         CREATE TABLE IF NOT EXISTS Queries (
+#             Name VARCHAR(8) UNIQUE NOT NULL,
+#             Query longtext NOT NULL
+#         );
+# END
+# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+#         CREATE TABLE IF NOT EXISTS Endpoint (
+#             ID bigint unsigned PRIMARY KEY AUTO_INCREMENT,
+#             owner_openid VARCHAR(256) NOT NULL,
+#             include_path VARCHAR(256) NOT NULL,
+#             auth_query VARCHAR(1024),
+#             priv_query VARCHAR(1024)
+#         );
+# END
+# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+#         CREATE TABLE IF NOT EXISTS Endpoint_PrivatePredicates (
+#             endpoint bigint unsigned,
+#             ID bigint unsigned,
+#             URI text NOT NULL,
+#             PRIMARY KEY (endpoint, ID)
+#         );
+# END
+# 	return 1;
+# }
 
 sub error {
 	my $self	= shift;
@@ -684,7 +700,7 @@ sub redir {
 
 sub dbh {
 	my $self	= shift;
-	my $dbh		= $self->_model->_store->dbh;
+	my $dbh		= $self->{_dbh};
 	return $dbh;
 }
 
