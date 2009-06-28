@@ -58,8 +58,6 @@ sub new_from_uri {
 	my $class	= shift;
 	my $uri		= shift;
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
-	my ($label, $url, $triples, $definitive, @capabilities, @patterns);
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/$RDF::Query::VERSION" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	my $resp	= $ua->get( $uri );
@@ -73,7 +71,21 @@ sub new_from_uri {
 	my $model	= RDF::Trine::Model->new( $store );
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	$parser->parse_into_model( $uri, $content, $model );
-	
+	return $class->new_with_model( $model );
+}
+
+=item C<< new_with_model ( $model ) >>
+
+Creates a new service description object using the DARQ-style service description
+data loaded in the supplied C<< $model >> object.
+
+=cut
+
+sub new_with_model {
+	my $class	= shift;
+	my $model	= shift;
+	my ($label, $url, $triples, $definitive, @capabilities, @patterns);
+	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
 	my $infoquery	= RDF::Query->new( <<"END" );
 		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
