@@ -52,6 +52,9 @@ sub new {
 		unless (defined($nodes[ $i ])) {
 			$nodes[ $i ]	= RDF::Query::Node::Variable->new($node_methods[ $i ]);
 		}
+		if (blessed($nodes[ $i ]) and not($nodes[ $i ]->isa('RDF::Query::Node'))) {
+			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+		}
 	}
 	return $class->SUPER::new( @nodes );
 }
