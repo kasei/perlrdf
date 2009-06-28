@@ -7,6 +7,29 @@ no warnings 'redefine';
 use RDF::Endpoint;
 use base qw(HTTP::Server::Simple::CGI);
 
+sub new_with_model {
+	my $class		= shift;
+	my $model		= shift;
+	my %args		= @_;
+	my $port		= $args{ Port };
+	my $prefix		= $args{ Prefix };
+	my $incpath		= $args{ IncludePath };
+	my $cgi			= $args{ CGI };
+
+	my $host		= $cgi->server_name;
+	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
+	my $self		= $class->SUPER::new( $port );
+	my $endpoint	= RDF::Endpoint->new_with_model(
+						$model,
+						IncludePath => $incpath,
+						AdminURL	=> "http://${hostname}/${prefix}admin/",
+						SubmitURL	=> "http://${hostname}/${prefix}sparql",
+					);
+	$self->{endpoint}	= $endpoint;
+	$self->{prefix}		= $prefix || '';
+	return $self;
+}
+
 sub new {
 	my $class		= shift;
 	my %args		= @_;
