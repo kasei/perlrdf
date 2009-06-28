@@ -68,7 +68,7 @@ sub _install_namespaces {
 	if (@_) {
 		foreach my $name (@_) {
 			my $uri	= XML::CommonNS->uri( uc($name) );
-			my $ns	= __PACKAGE__->new( "$uri" );
+			my $ns	= $class->new( "$uri" );
 			no strict 'refs';
 			*{ "${pkg}::${name}" }	= \$ns;
 		}
