@@ -397,15 +397,15 @@ sub answers_triple_pattern {
 	my $p = $triple->predicate;
 	unless ($p->isa('RDF::Trine::Node::Variable')) {	# if predicate is bound (not a variable)
 		my $puri	= $p->uri_value;
+		$l->trace("  service compatability based on predicate: $puri");
 		my $caps	= $self->capabilities;
 		my %preds	= map { $_->{pred}->uri_value => $_ } @$caps;
+		$l->trace("  service supports predicates: " . join(', ', keys %preds));
 		my $cap		= $preds{ $puri };
-		if ($self->definitive) {
-			return 0 unless ($cap);		# no capability matches this predicate.
-		} else {
-			# if the description isn't definitive, we conservatively assume
-			# that it can answer any pattern.
-			$cap	||= {};
+		unless ($cap) {
+			# no capability matches this predicate.
+			$l->debug("*** service doesn't support the predicate $puri");
+			return 0;
 		}
 		
 		my $ok		= 1;
