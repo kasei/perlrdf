@@ -167,7 +167,7 @@ sub _sse {
 			push(@args, $self->_sse( $context, $indent, $more, $rest, $list ));
 		}
 		no warnings 'uninitialized';
-		return join("\n${indent}${more}", @args);
+		return join("\n${indent}${more}", '', @args);
 	} elsif ($p =~ m/^[PTNWEJVibswu\\*]{2,}$/) {
 		my @args;
 		foreach my $p2 (split(//, $p)) {
