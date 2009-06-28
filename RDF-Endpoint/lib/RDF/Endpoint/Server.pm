@@ -147,6 +147,10 @@ sub redir {
 	return;
 }
 
+sub print_banner {
+	return;
+}
+
 1;
 
 __END__
