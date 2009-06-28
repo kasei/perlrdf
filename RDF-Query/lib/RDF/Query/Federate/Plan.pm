@@ -51,7 +51,8 @@ sub generate_plans {
 			if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
 				my @fplans	= $self->optimistic_plans( $plan, $context );
 				if (@fplans > 1) {
-					my $oplan	= RDF::Query::Plan::ThresholdUnion->new( @fplans, $plan );
+					my $time	= $context->optimistic_threshold_time;
+					my $oplan	= RDF::Query::Plan::ThresholdUnion->new( $time, @fplans, $plan );
 					$oplan->label( services => $plan->label( 'services' ) );
 					push(@optimistic_plans, $oplan);
 				}

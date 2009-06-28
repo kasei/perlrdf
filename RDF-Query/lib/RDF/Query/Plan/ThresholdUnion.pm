@@ -17,19 +17,21 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Time::HiRes qw(time);
 use Scalar::Util qw(blessed);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
 
-=item C<< new ( @plans ) >>
+=item C<< new ( $time, @plans ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
+	my $time	= shift;
 	my @plans	= @_;
-	my $self	= $class->SUPER::new( \@plans );
+	my $self	= $class->SUPER::new( $time, \@plans );
 	my %vars;
 	foreach my $plan (@plans) {
 		foreach my $v ($plan->referenced_variables) {
@@ -53,15 +55,16 @@ sub execute ($) {
 
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.thresholdunion");
 	
-	my $iter	= $self->[1][0];
+	my $iter	= $self->[2][0];
 	$l->trace("threshold union initialized with first sub-plan: " . $iter->sse);
 	
 	$iter->execute( $context );
 	
 	if ($iter->state == $self->OPEN) {
-		$self->[0]{iter}	= $iter;
-		$self->[0]{idx}		= 0;
-		$self->[0]{context}	= $context;
+		$self->[0]{iter}		= $iter;
+		$self->[0]{idx}			= 0;
+		$self->[0]{context}		= $context;
+		$self->[0]{start_time}	= time;
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -86,10 +89,26 @@ sub next {
 	} else {
 		$l->trace("thresholdunion sub-plan finished");
 		delete $self->[0]{iter};
-		return undef unless ($self->[0]{idx} < $#{ $self->[1] });
+		return undef unless ($self->[0]{idx} < $#{ $self->[2] });
 		$iter->close();
-		my $index	= ++$self->[0]{idx};
-		my $iter	= $self->[1][ $index ];
+		
+		my $iter;
+		my $index;
+		my $threshold	= $self->threshold_time;
+		my $elapsed		= time - $self->[0]{start_time};
+		if (($threshold == 0) or ($elapsed < $threshold)) {
+			# we haven't passed the threshold of execution time, so go on
+			# to the next optimistic plan:
+			$l->trace("the elapsed time ($elapsed) hasn't passed the threshold time ($threshold); continuing to next plan");
+			$index	= ++$self->[0]{idx};
+			$iter	= $self->[2][ $index ];
+		} else {
+			# the elapsed time has passed the threshold time, so jump straight to the default plan
+			$l->trace("the elapsed time ($elapsed) has passed the threshold time ($threshold); jumping to the default plan");
+			$index	= ($self->[0]{idx} = $#{ $self->[2] });
+			$iter	= $self->[2][ $index ];
+		}
+		
 		$l->trace("threshold union executing next sub-plan: " . $iter->sse);
 		$iter->execute( $self->[0]{context} );
 		if ($iter->state == $self->OPEN) {
@@ -123,7 +142,16 @@ sub close {
 
 sub children {
 	my $self	= shift;
-	return @{ $self->[1] };
+	return @{ $self->[2] };
+}
+
+=item C<< threshold_time >>
+
+=cut
+
+sub threshold_time {
+	my $self	= shift;
+	return $self->[1];
 }
 
 =item C<< optimistic >>
@@ -132,7 +160,7 @@ sub children {
 
 sub optimistic {
 	my $self	= shift;
-	return @{ $self->[1] }[ 0 .. $#{ $self->[1] } - 1 ];
+	return @{ $self->[2] }[ 0 .. $#{ $self->[2] } - 1 ];
 }
 
 =item C<< default >>
@@ -141,7 +169,7 @@ sub optimistic {
 
 sub default {
 	my $self	= shift;
-	return $self->[1][ $#{ $self->[1] } ];
+	return $self->[2][ $#{ $self->[2] } ];
 }
 
 =item C<< distinct >>
@@ -184,7 +212,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(*P);
+	return qw(i *P);
 }
 
 =item C<< plan_node_data >>
@@ -197,7 +225,7 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	my $exprs	= $self->[2];
-	return ($self->children);
+	return ($self->threshold_time, $self->children);
 }
 
 =item C<< graph ( $g ) >>

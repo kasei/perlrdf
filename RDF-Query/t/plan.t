@@ -47,22 +47,22 @@ use RDF::Query::Plan;
 		my $var		= RDF::Trine::Node::Variable->new('s');
 		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
 		my $plan	= RDF::Query::Plan::Limit->new( 2, $triple );
-		is( _CLEAN_WS($plan->sse), '(limit 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))' ) or die;
+		is( _CLEAN_WS($plan->sse), '(limit 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))', 'sse: triple' ) or die;
 	}
 
 	{
 		my $var		= RDF::Trine::Node::Variable->new('s');
 		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
 		my $plan	= RDF::Query::Plan::Offset->new( 2, $triple );
-		is( _CLEAN_WS($plan->sse), '(offset 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))' ) or die;
+		is( _CLEAN_WS($plan->sse), '(offset 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))', 'sse: offset' ) or die;
 	}
 
 	{
 		my $var	= RDF::Trine::Node::Variable->new('p');
 		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
 		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
-		my $plan	= RDF::Query::Plan::ThresholdUnion->new( $plan_a, $plan_b );
-		is( _CLEAN_WS($plan->sse), '(threshold-union (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: threshold-union' ) or die;
+		my $plan	= RDF::Query::Plan::ThresholdUnion->new( 7, $plan_a, $plan_b );
+		is( _CLEAN_WS($plan->sse), '(threshold-union 7 (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: threshold-union' ) or die;
 	}
 
 	{
