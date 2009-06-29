@@ -16,11 +16,12 @@ use base qw(RDF::Query::Algebra RDF::Trine::Statement::Quad);
 
 use Data::Dumper;
 use Carp qw(carp croak confess);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
+my %QUAD_LABELS;
 our ($VERSION);
 BEGIN {
 	$VERSION	= '2.100';
@@ -180,6 +181,35 @@ sub fixup {
 		my $fixed	= $class->new( @nodes );
 		return $fixed;
 	}
+}
+
+=item C<< label ( $label => $value ) >>
+
+Sets the named C<< $label >> to C<< $value >> for this quad object.
+If no C<< $value >> is given, returns the current label value, or undef if none
+exists.
+
+=cut
+
+sub label {
+	my $self	= shift;
+	my $addr	= refaddr($self);
+	my $label	= shift;
+	if (@_) {
+		my $value	= shift;
+		$QUAD_LABELS{ $addr }{ $label }	= $value;
+	}
+	if (exists $QUAD_LABELS{ $addr }) {
+		return $QUAD_LABELS{ $addr }{ $label };
+	} else {
+		return;
+	}
+}
+
+sub DESTROY {
+	my $self	= shift;
+	my $addr	= refaddr( $self );
+	delete $QUAD_LABELS{ $addr };
 }
 
 

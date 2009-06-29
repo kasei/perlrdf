@@ -18,7 +18,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(refaddr);
 use Carp qw(carp croak confess);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
 
@@ -26,6 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 my %AS_SPARQL;
+my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
 	$VERSION	= '2.100';
@@ -189,9 +190,34 @@ sub _from_sse {
 	return RDF::Trine::Statement->from_sse( @_ );
 }
 
+=item C<< label ( $label => $value ) >>
+
+Sets the named C<< $label >> to C<< $value >> for this triple object.
+If no C<< $value >> is given, returns the current label value, or undef if none
+exists.
+
+=cut
+
+sub label {
+	my $self	= shift;
+	my $addr	= refaddr($self);
+	my $label	= shift;
+	if (@_) {
+		my $value	= shift;
+		$TRIPLE_LABELS{ $addr }{ $label }	= $value;
+	}
+	if (exists $TRIPLE_LABELS{ $addr }) {
+		return $TRIPLE_LABELS{ $addr }{ $label };
+	} else {
+		return;
+	}
+}
+
 sub DESTROY {
 	my $self	= shift;
-	delete $AS_SPARQL{ refaddr( $self ) };
+	my $addr	= refaddr( $self );
+	delete $TRIPLE_LABELS{ $addr };
+	delete $AS_SPARQL{ $addr };
 }
 
 1;
