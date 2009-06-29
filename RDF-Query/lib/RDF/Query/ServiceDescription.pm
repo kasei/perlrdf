@@ -371,6 +371,7 @@ sub computed_statement_generator {
 			my $iter	= smap {
 							my $bound	= shift;
 							my $triple	= $st->bind_variables( $bound );
+							$triple->label( origin => $self->url );
 							$triple;
 						} $bindings;
 			return $iter;
