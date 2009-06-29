@@ -146,6 +146,11 @@ sub next {
 		}
 		my $pre_bound	= $self->[0]{bound};
 		my $bindings	= RDF::Query::VariableBindings->new( $binding );
+		if ($row->can('label')) {
+			if (my $o = $row->label('origin')) {
+				$bindings->label( origin => [ $o ] );
+			}
+		}
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		return $bindings;
 	}
