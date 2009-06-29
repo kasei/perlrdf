@@ -13,6 +13,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+use RDF::Trine::Iterator qw(smap);
 use RDF::Query::Error qw(:try);
 
 use Data::Dumper;
@@ -476,10 +477,12 @@ sub get_computed_statements {
 			$l->debug("finding matching statements from computed statement generators");
 			foreach my $c (@$comps) {
 				my $new	= $c->( $query, $self, $bound, $s, $p, $o );
-				if ($new and not($iter)) {
-					$iter	= $new;
-				} elsif ($new) {
-					$iter	= $iter->concat( $new );
+				if ($new) {
+					if (not($iter)) {
+						$iter	= $new;
+					} else {
+						$iter	= $iter->concat( $new );
+					}
 				}
 			}
 		} else {
