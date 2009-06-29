@@ -20,6 +20,10 @@ use RDF::Trine::Namespace qw(rdf foaf);
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
+my $eval_tests		= 3;
+my $rewrite_tests	= 2;
+my $run_eval_tests	= 0;
+
 ################################################################################
 # Log::Log4perl::init( \q[
 # 	log4perl.category.rdf.query.plan.thresholdunion          = TRACE, Screen
@@ -42,9 +46,6 @@ foreach my $i (0 .. $#sigs) {
 my %named	= map { $_ => File::Spec->rel2abs("data/federation_data/$_") } qw(alice.rdf bob.rdf);
 my %models	= map { $_ => RDF::Query::Util::make_model( $named{$_} ) } (keys %named);
 
-my $eval_tests		= 2;
-my $rewrite_tests	= 2;
-my $run_eval_tests	= 0;
 
 eval { require LWP::Simple };
 if ($@) {
@@ -159,8 +160,13 @@ END
 	my $iter	= $query->execute_plan( $plan, $ctx );
 	
 	my %names;
+	my %origins;
 	my $counter	= 0;
 	while (my $row = $iter->next) {
+		my $orig	= $row->label('origin');
+		foreach my $o (@$orig) {
+			$origins{ $o }++;
+		}
 		$counter++;
 		$names{ $row->{name}->literal_value }++;
 	}
@@ -172,6 +178,7 @@ END
 	#	- zero results from alice's server on port 8889
 	#	- two results from the local join that merges data from both servers, one with name=Alice, and one with name=Bob
 	is_deeply( \%names, { Bob => 2, Alice => 1 }, 'expected duplicate result counts per result' );
+	is_deeply( \%origins, { 'http://127.0.0.1:8889/sparql' => 1, 'http://127.0.0.1:8891/sparql' => 2 }, 'expected originating endpoint distribution' );
 	
 	while (my($name, $pid) = each(%pids)) {
 		kill_endpoint( $pid, $quit_sig );
