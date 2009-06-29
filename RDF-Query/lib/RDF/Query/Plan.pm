@@ -260,6 +260,10 @@ sub as_iterator {
 
 =item C<< label ( $label => $value ) >>
 
+Sets the named C<< $label >> to C<< $value >> for this plan object.
+If no C<< $value >> is given, returns the current label value, or undef if none
+exists.
+
 =cut
 
 sub label {
