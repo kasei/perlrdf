@@ -194,6 +194,7 @@ sub next {
 	return undef unless $result;
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
+	$row->label( origin => [ $self->endpoint ] );
 	return $row;
 };
 
