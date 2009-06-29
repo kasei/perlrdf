@@ -21,7 +21,6 @@ use Time::HiRes qw(time);
 use Scalar::Util qw(blessed);
 
 use RDF::Query::ExecutionContext;
-use RDF::Query::VariableBindings;
 
 =item C<< new ( $time, @plans ) >>
 

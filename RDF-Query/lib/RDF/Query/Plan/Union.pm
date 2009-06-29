@@ -20,7 +20,6 @@ use base qw(RDF::Query::Plan);
 use Scalar::Util qw(blessed refaddr);
 
 use RDF::Query::ExecutionContext;
-use RDF::Query::VariableBindings;
 
 =item C<< new ( $lhs, $rhs ) >>
 

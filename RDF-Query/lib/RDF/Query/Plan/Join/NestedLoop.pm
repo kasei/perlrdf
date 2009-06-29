@@ -28,7 +28,6 @@ BEGIN {
 }
 
 use RDF::Query::ExecutionContext;
-use RDF::Query::VariableBindings;
 
 =item C<< new ( $lhs, $rhs, $opt, [ \%logging_keys ] ) >>
 
