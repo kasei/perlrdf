@@ -19,7 +19,8 @@ use base qw(RDF::Query::Plan);
 
 use Data::Dumper;
 use Set::Scalar;
-use Scalar::Util qw(blessed);
+use List::Util qw(reduce);
+use Scalar::Util qw(blessed refaddr);
 use RDF::Query::Error qw(:try);
 
 =item C<< generate_plans ( $algebra, $execution_context, %args ) >>
@@ -43,55 +44,181 @@ sub generate_plans {
 	if ($cache->{ $sse }) {
 		return @{ $cache->{ $sse } };
 	} else {
-		$l->debug("generating plans for federated query with algebra: $sse");
-		my @optimistic_plans;
-		my @plans	= $self->SUPER::generate_plans( $algebra, $context, %args );
-		foreach my $plan (@plans) {
-			$self->label_plan_with_services( $plan, $context );
-			if (not($plan->isa('RDF::Query::Plan::Triple')) and not($plan->isa('RDF::Query::Plan::ThresholdUnion'))) {
-				my @fplans	= $self->optimistic_plans( $plan, $context );
-				if (@fplans > 1) {
-					my $time	= $context->optimistic_threshold_time;
+		my $aclass	= ref($algebra);
+		my ($type)	= ($aclass =~ m<::(\w+)$>);
+		
+		if ($type eq 'BasicGraphPattern') {
+			my ($plan)	= $self->prune_plans( $context, $self->SUPER::generate_plans( $algebra, $context, %args ) );
+			my @triples	= $algebra->triples();
+			my @fplans	= map { $_->[0] } $self->_optimistic_triple_join_plans( $context, \@triples, %args, method => 'triples' );
+			$l->debug("generating plans for federated query with algebra: $sse");
+			my @optimistic_plans;
+#			foreach my $plan (@plans) {
+				if (@fplans) {
+					my $time	= $context->optimistic_threshold_time || 0;
 					my $oplan	= RDF::Query::Plan::ThresholdUnion->new( $time, @fplans, $plan );
 					$oplan->label( services => $plan->label( 'services' ) );
 					push(@optimistic_plans, $oplan);
 				}
+				unless (@optimistic_plans) {
+					push(@optimistic_plans, $plan);
+				}
+#			}
+			
+			$cache->{ $sse }	= \@optimistic_plans;
+			if ($l->is_debug) {
+				foreach my $i (0 .. $#optimistic_plans) {
+					my $p	= $optimistic_plans[ $i ];
+					my $sse	= $p->sse({}, '');
+					$l->debug("optimistic plan $i: $sse");
+				}
 			}
-			unless (@optimistic_plans) {
-				push(@optimistic_plans, $plan);
-			}
+			return @optimistic_plans;
+		} else {
+			return $self->SUPER::generate_plans( $algebra, $context, %args );
 		}
-		
-		$cache->{ $sse }	= \@optimistic_plans;
-		return @optimistic_plans;
 	}
 }
 
-=item C<< optimistic_plans ( $plan, $context ) >>
+# =item C<< optimistic_plans ( $plan, $context ) >>
+# 
+# Returns a set of optimistic query plans that may be used to provide subsets of
+# the results expected from $plan. This method only makes the root node of $plan
+# optimistic, assuming that it has been called previously for the sub-nodes.
+# 
+# =cut
+# 
+# sub optimistic_plans {
+# 	my $self	= shift;
+# 	my $plan	= shift;
+# 	my $context	= shift;
+# 	my $servs	= $plan->label( 'services' );
+# 	
+# 	my @opt_plans;
+# 	if (ref($servs) and scalar(@$servs)) {
+# 		foreach my $url (@$servs) {
+# 			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
+# 			push(@opt_plans, $service);
+# 		}
+# 		unless (@opt_plans) {
+# 			warn "no optimistic plans found for plan " . $plan->sse({}, '');
+# 		}
+# 	}
+# 	return @opt_plans;
+# }
 
-Returns a set of optimistic query plans that may be used to provide subsets of
-the results expected from $plan. This method only makes the root node of $plan
-optimistic, assuming that it has been called previously for the sub-nodes.
-
-=cut
-
-sub optimistic_plans {
+sub _optimistic_triple_join_plans {
 	my $self	= shift;
-	my $plan	= shift;
 	my $context	= shift;
-	my $servs	= $plan->label( 'services' );
+	my $triples	= shift;
+	my %args	= @_;
+	my $l		= Log::Log4perl->get_logger('rdf.query.federate.plan');
 	
-	my @opt_plans;
-	if (ref($servs) and scalar(@$servs)) {
-		foreach my $url (@$servs) {
-			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
-			push(@opt_plans, $service);
-		}
-		unless (@opt_plans) {
-			warn "no optimistic plans found for plan " . $plan->sse({}, '');
+	my $method		= $args{ method };
+	my @join_types	= RDF::Query::Plan::Join->join_classes;
+	my @triples		= @$triples;
+	my %triples		= map { refaddr($_) => $_ } @triples;
+	my %ids			= map { refaddr($triples[$_]) => $_ } (0 .. $#triples);
+	my %tplans		= map { refaddr($_) => [ $self->generate_plans( $_, $context, %args ) ] } @triples;
+	
+	my %per_service;
+	my @service_plans;
+	foreach my $id (0 .. $#triples) {
+		my $r	= refaddr($triples[$id]);
+		my $ps	= $tplans{$r};
+		my $t	= $triples{ $r };
+		foreach my $pid (0 .. $#{ $ps }) {
+			my $p	= $ps->[ $pid ];
+			$self->label_plan_with_services( $p, $context );
+			push(@service_plans, { plan => $p, size => 1, coverage => [$id] });
+			foreach my $service (@{ $p->label('services') || [] }) {
+				push( @{ $per_service{ $service }{ $r } }, $p );
+			}
 		}
 	}
-	return @opt_plans;
+	
+	foreach my $s (sort keys %per_service) {
+		$l->trace("SERVICE: $s");
+		my $data	= $per_service{ $s };
+		my @triples;
+		my @ids;
+		foreach my $r (sort { $ids{ $a } <=> $ids{ $b } } keys %$data) {
+			my $t	= $triples{ $r };
+			push(@ids, $ids{ $r });
+			push(@triples, $t);
+			$l->trace("\tTRIPLE $ids{$r}: " . $t->sse);
+			my @plans	= @{ $data->{ $r } };
+			foreach my $p (@plans) {
+				$l->trace("\t\tPLAN: " . $p->sse);
+			}
+		}
+		my ($join)	= $self->_triple_join_plans( $context, \@triples, %args );
+		my ($plan, $algebras)	= @$join;
+		my $size	= scalar(@$algebras);
+		my $algebra	= ($size > 1) ? RDF::Query::Algebra::BasicGraphPattern->new( @$algebras ) : $algebras->[0];
+		$plan->label('algebra', $algebra);
+		my $service	= RDF::Query::Plan::Service->new_from_plan( $s, $plan, $context );
+		push(@service_plans, { service => $s, plan => $service, size => $size, coverage => [sort { $a <=> $b } @ids] });
+	}
+	
+	my %plans_by_coverage;
+	foreach my $sp (@service_plans) {
+		my @cover	= @{ $sp->{ coverage } };
+		my $data	= \%plans_by_coverage;
+		while (@cover) {
+			my $c	= shift(@cover);
+			$data	= ($data->{ $c } ||= {});
+		}
+		$data->{ '_service' }	= $sp;
+	}
+	
+	my @plans;
+	my $full_coverage	= join('', 0..$#triples);
+	my @join_service_plans	= sort { $b->{size} <=> $a->{size} } grep { $_->{size} >= 2 } @service_plans;
+SP:	foreach my $sp (@join_service_plans) {
+		$l->trace("----------------------->");
+		my $plan		= $sp->{plan};
+		my $coverage	= join('', @{$sp->{coverage}});
+		$l->trace("trying service $sp->{service} with BGP coverage $coverage");
+		while ($coverage ne $full_coverage) {
+			$l->trace("coverage ($coverage) isn't full yet (needs to be $full_coverage)");
+			my $needed	= $full_coverage;
+			foreach my $c (split(//, $coverage)) {
+				$needed	=~ s/$c//;
+			}
+			my @needed	= split('', $needed);
+			my $start	= shift(@needed);
+			$l->trace("starting remote BGP with triple $start");
+			$coverage	.= $start;
+			my $access_key	= $start;
+			my $data	= $plans_by_coverage{ $start };
+			while (@needed and ref($data->{ $needed[0] })) {
+				my $c	= shift(@needed);
+				$access_key	.= $c;
+				$l->trace("adding triple $c to the current remote BGP");
+				$coverage	.= $c;
+				$data	= $data->{ $c };
+			}
+			unless (exists $data->{ '_service' }) {
+				$l->trace("the current plan reached a dead end with key '$access_key': " . Dumper($data));
+				next SP;
+			}
+			$l->trace("no more triples in this remote BGP");
+			my $join_plan	= $data->{ '_service' }{'plan'};
+			Carp::confess Dumper($full_coverage, $coverage, $data) unless ref($join_plan);
+			$plan	= RDF::Query::Plan::Join::NestedLoop->new( $plan, $join_plan, 0, {} );
+			$coverage	= join('', sort split(//, $coverage));
+		}
+		push(@plans, $plan);
+		$l->trace("<-------------");
+	}
+	if (@plans) {
+		my $count	= scalar(@plans);
+		$l->debug("returning $count possible QEPs for optimistic BGP");
+		return map {[$_, $triples]} @plans;
+	} else {
+		return;
+	}
 }
 
 =item C<< label_plan_with_services ( $plan, $context ) >>
