@@ -13,7 +13,7 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 22;
+my $tests	= 20;
 if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
@@ -229,8 +229,9 @@ END
 		my $name	= $row->{name};
 		is( $name->literal_value, "Alan Turing", 'execution: expected foaf:name in federation description' );
 		$count++;
+		last;
 	}
-	cmp_ok( $count, '>', 0, 'got results from dbpedia' );
+	is( $count, 1, 'got results from dbpedia' );
 }
 
 {
