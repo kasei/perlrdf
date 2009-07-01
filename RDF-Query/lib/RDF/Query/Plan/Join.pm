@@ -32,7 +32,9 @@ sub new {
 	my $self	= $class->SUPER::new( $lhs, $rhs, $opt, @_ );
 	
 	my %vars;
-	foreach my $v ($lhs->referenced_variables, $rhs->referenced_variables) {
+	my @lhs_rv	= $lhs->referenced_variables;
+	my @rhs_rv	= $rhs->referenced_variables;
+	foreach my $v (@lhs_rv, @rhs_rv) {
 		$vars{ $v }++;
 	}
 	$self->[0]{referenced_variables}	= [ keys %vars ];

@@ -21,11 +21,32 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 my $eval_tests		= 3;
-my $rewrite_tests	= 2;
-my $run_eval_tests	= 0;
+my $rewrite_tests	= 4;
+my $run_eval_tests	= 1;
+
+if (not $ENV{RDFQUERY_DEV_TESTS}) {
+	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
+	return;
+}
+
+plan tests => ($eval_tests + $rewrite_tests);
+
+my $reason;
+eval { require LWP::Simple };
+if ($@) {
+	$run_eval_tests	= 0;
+	$reason			= "LWP::Simple is not available for loading <http://...> URLs";
+}
+
+eval { require RDF::Endpoint::Server };
+if ($@) {
+	$run_eval_tests	= 0;
+	$reason			= "RDF::Endpoint::Server is not available";
+}
 
 ################################################################################
 # Log::Log4perl::init( \q[
+# #	log4perl.category.rdf.query.federate.plan          = TRACE, Screen
 # 	log4perl.category.rdf.query.plan.thresholdunion          = TRACE, Screen
 # #	log4perl.category.rdf.query.servicedescription           = DEBUG, Screen
 # 	
@@ -47,23 +68,6 @@ my %named	= map { $_ => File::Spec->rel2abs("data/federation_data/$_") } qw(alic
 my %models	= map { $_ => RDF::Query::Util::make_model( $named{$_} ) } (keys %named);
 
 
-eval { require LWP::Simple };
-if ($@) {
-	plan skip_all => "LWP::Simple is not available for loading <http://...> URLs";
-	return;
-} elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
-	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
-	return;
-}
-
-eval { require RDF::Endpoint::Server };
-if ($@) {
-	plan tests => $rewrite_tests;
-} else {
-	$run_eval_tests	= 1;
-	plan tests => ($eval_tests + $rewrite_tests);
-}
-
 ################################################################################
 
 run_tests();
@@ -73,8 +77,11 @@ run_tests();
 sub run_tests {
 	simple_optimistic_bgp_rewriting_test();
 	simple_optimistic_bgp_rewriting_test_with_threshold_time();
+	overlapping_optimistic_bgp_rewriting_test_1();
+	overlapping_optimistic_bgp_rewriting_test_2();
 	
-	if ($run_eval_tests) {
+	SKIP: {
+		skip $reason, $eval_tests unless ($run_eval_tests);
 		simple_optimistic_bgp_rewriting_execution_test();
 	}
 }
@@ -98,10 +105,15 @@ END
 	my ($plan, $ctx)	= $query->prepare();
 	my $sse	= $plan->sse({}, '  ');
 	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan' );
-		(project (p knows) (threshold-union 0
-			  (service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-			  (service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-			  (bind-join (triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))))
+		(project (p knows)
+			(threshold-union 0
+				(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
+				(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
+				(bind-join
+					(triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)
+					(triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))
+			)
+		)
 END
 	
 	### If we were to start an RDF::Endpoint server on the appropriate ports, this should work:
@@ -130,10 +142,124 @@ END
 	my ($plan, $ctx)	= $query->prepare();
 	my $sse	= $plan->sse({}, '  ');
 	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan' );
-		(project (p knows) (threshold-union 3
-			  (service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-			  (service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-			  (bind-join (triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))))
+		(project (p knows)
+			(threshold-union 3
+				(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
+				(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
+				(bind-join
+					(triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)
+					(triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))
+			)
+		)
+END
+}
+
+sub overlapping_optimistic_bgp_rewriting_test_1 {
+	### this test uses four endpoint service descriptions, with overlapping
+	### coverage of five predicates:
+	### service \ predicate:	P	Q	R	S	T
+	### 			a			*	*	*
+	### 			b				*	*	*
+	### 			c			*		*	*
+	### 			d						*	*
+	### no single endpoint can answer the whole query, involving a BGP with
+	### 3 triple patterns, but endpoint 'a' can answer a two-triple-pattern
+	### subquery (predicates P and Q), then joining with results from endpoint
+	### 'd' (the single triple-pattern with predicate T).
+	my @names		= ('a' .. 'd');
+	my %preds		= (
+						a	=> [qw(P Q R)],
+						b	=> [qw(Q R S)],
+						c	=> [qw(R S P)],
+						d	=> [qw(S T)],
+					);
+	my %sd			= map {
+						my $port	= 10000 + (ord($_) - ord('a'));
+						$_ => local_sd( $_, $port, "http://${_}.example.com/", 5, [ map { "ex:$_" } @{ $preds{ $_ } } ] );
+					} @names;
+	my $query		= RDF::Query::Federate->new( <<"END", { optimize => 1 } );
+		PREFIX ex: <http://example.org/>
+		SELECT * WHERE {
+			?v ex:P ?p ;
+				ex:Q ?q ;
+				ex:T ?t .
+		}
+END
+	while (my ($name,$sd) = each(%sd)) {
+		$query->add_service( $sd );
+	}
+	my ($plan, $ctx)	= $query->prepare();
+	my $sse	= $plan->sse({}, '  ');
+	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan (1)' );
+		(project (v p q t)
+			(threshold-union 0
+				(nestedloop-join
+					(service <http://127.0.0.1:10000/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v <http://example.org/P> ?p .\n\t?v <http://example.org/Q> ?q .\n}")
+					(service <http://127.0.0.1:10003/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v <http://example.org/T> ?t .\n}"))
+				(bind-join
+					(bind-join
+						(triple ?v <http://example.org/T> ?t)
+						(triple ?v <http://example.org/Q> ?q))
+					(triple ?v <http://example.org/P> ?p))
+			)
+		)
+END
+}
+
+sub overlapping_optimistic_bgp_rewriting_test_2 {
+	### this test uses two endpoint service descriptions, with overlapping
+	### coverage of four predicates:
+	### service \ predicate:	P	Q	R	S
+	### 			a			*	*	*
+	### 			b				*	*	*
+	### no single endpoint can answer the whole query, involving a BGP with
+	### 4 triple patterns, but each endpoint can answer a three-triple-pattern
+	### subquery, then joining with results with a single-triple-pattern query
+	### from the other endpoint.
+	my @names		= (qw(a b));
+	my %preds		= (
+						a	=> [qw(P Q R)],
+						b	=> [qw(Q R S)],
+					);
+	my %sd			= map {
+						my $port	= 10000 + (ord($_) - ord('a'));
+						$_ => local_sd( $_, $port, "http://${_}.example.com/", 5, [ map { "ex:$_" } @{ $preds{ $_ } } ] );
+					} @names;
+	my $query		= RDF::Query::Federate->new( <<"END", { optimize => 1 } );
+		PREFIX ex: <http://example.org/>
+		SELECT * WHERE {
+			?v ex:P ?p ;
+				ex:Q ?q ;
+				ex:R ?t ;
+				ex:S ?s .
+		}
+END
+	while (my ($name,$sd) = each(%sd)) {
+		$query->add_service( $sd );
+	}
+	my $ctx		= RDF::Query::ExecutionContext->new(
+		query						=> $query,
+		optimize					=> 1,
+		model						=> $query->new_bridge,
+		optimistic_threshold_time	=> 2,
+	);
+	my @plans	= $query->query_plan( $ctx );
+	my $plan	= $plans[0];
+	my $sse	= $plan->sse({}, '  ');
+	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan (2)' );
+		(project (v p q t s)
+			(threshold-union 2
+				(nestedloop-join
+					(service <http://127.0.0.1:10000/sparql> "SELECT * WHERE {\n\t?v <http://example.org/P> ?p .\n\t?v <http://example.org/Q> ?q .\n\t?v <http://example.org/R> ?t .\n}")
+					(triple ?v <http://example.org/S> ?s))
+				(nestedloop-join
+					(service <http://127.0.0.1:10001/sparql> "SELECT * WHERE {\n\t?v <http://example.org/Q> ?q .\n\t?v <http://example.org/R> ?t .\n\t?v <http://example.org/S> ?s .\n}")
+					(triple ?v <http://example.org/P> ?p))
+				(bind-join
+					(bind-join (bind-join (triple ?v <http://example.org/S> ?s) (triple ?v <http://example.org/R> ?t)) (triple ?v <http://example.org/Q> ?q))
+					(triple ?v <http://example.org/P> ?p))
+			)
+		)
 END
 }
 
@@ -141,7 +267,7 @@ sub simple_optimistic_bgp_rewriting_execution_test {
 	my %ports		= qw(alice.rdf 8889 bob.rdf 8891);
 	my $alice_sd	= local_sd( 'alice.rdf', 8889, 'http://work.example/people/', 5, [qw(rdf:type foaf:knows foaf:name)] );
 	my $bob_sd		= local_sd( 'bob.rdf', 8891, 'http://oldcorp.example.org/bob/', 4, [qw(rdf:type foaf:knows foaf:name)] );
-	my $query		= RDF::Query::Federate->new( <<"END", { optimize => 1, optimistic_threshold_time => 0.0001 } );
+	my $query		= RDF::Query::Federate->new( <<"END", { optimize => 1, optimistic_threshold_time => 0 } );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT ?p ?name WHERE {
 			?p foaf:knows ?knows ; foaf:name ?name.
@@ -163,22 +289,19 @@ END
 	my %origins;
 	my $counter	= 0;
 	while (my $row = $iter->next) {
-		my $orig	= $row->label('origin');
-		foreach my $o (@$orig) {
-			$origins{ $o }++;
-		}
+		my $orig	= join(',', sort @{ $row->label('origin') });
+		$origins{ $orig }++;
 		$counter++;
 		$names{ $row->{name}->literal_value }++;
 	}
 	
-	is( $counter, 3, 'expected result count with duplicates from optimistic execution' );
-	
 	# we expect to find:
 	#	- one result with name=Bob from the optimistic BGP sent to bob's server on port 8891
-	#	- zero results from alice's server on port 8889
+	#	- one result with name=Alice from alice's server on port 8889
 	#	- two results from the local join that merges data from both servers, one with name=Alice, and one with name=Bob
-	is_deeply( \%names, { Bob => 2, Alice => 1 }, 'expected duplicate result counts per result' );
-	is_deeply( \%origins, { 'http://127.0.0.1:8889/sparql' => 1, 'http://127.0.0.1:8891/sparql' => 2 }, 'expected originating endpoint distribution' );
+	is( $counter, 4, 'expected result count with duplicates from optimistic execution' );
+	is_deeply( \%names, { Bob => 2, Alice => 2 }, 'expected duplicate result counts per result' );
+	is_deeply( \%origins, { 'http://127.0.0.1:8889/sparql' => 2, 'http://127.0.0.1:8891/sparql' => 2 }, 'expected originating endpoint distribution' );
 	
 	while (my($name, $pid) = each(%pids)) {
 		kill_endpoint( $pid, $quit_sig );
@@ -218,6 +341,7 @@ sub local_sd {
 @prefix exif: <http://www.kanzaki.com/ns/exif#> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix ex: <http://example.org/> .
 
 # definition of an endpoint
 [] a sd:Service ;
@@ -233,7 +357,6 @@ END
 	$parser->parse_into_model( $base, $rdf, $model );
 	return RDF::Query::ServiceDescription->new_with_model( $model );
 }
-
 
 sub _CLEAN_WS {
 	my $string	= shift;
