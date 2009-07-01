@@ -46,6 +46,37 @@ sub new {
 	return $self;
 }
 
+=item C<< copy_labels_from ( $vb ) >>
+
+Copies the labels from C<< $vb >>, adding them to the labels for this object.
+
+=cut
+
+sub copy_labels_from {
+	my $self		= shift;
+	my $rowa		= shift;
+	my $self_labels	= $VB_LABELS{ refaddr($self) };
+	my $a_labels	= $VB_LABELS{ refaddr($rowa) };
+	if ($self_labels or $a_labels) {
+		$self_labels	||= {};
+		$a_labels		||= {};
+		my %new_labels	= ( %$self_labels, %$a_labels );
+		
+		if (exists $new_labels{'origin'}) {
+			my %origins;
+			foreach my $o (@{ $self_labels->{'origin'} || [] }) {
+				$origins{ $o }++;
+			}
+			foreach my $o (@{ $a_labels->{'origin'} || [] }) {
+				$origins{ $o }++;
+			}
+			$new_labels{'origin'}	= [ keys %origins ];
+		}
+		
+		$VB_LABELS{ refaddr($self) }	= \%new_labels;
+	}
+}
+
 =item C<< join ( $row ) >>
 
 Returns a new VariableBindings object based on the join of this object and C<< $row >>.
@@ -74,27 +105,9 @@ sub join {
 	
 	my $row	= { (map { $_ => $self->{$_} } grep { defined($self->{$_}) } keys %$self), (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa) };
 	my $joined	= $class->new( $row );
-	my $self_labels	= $VB_LABELS{ refaddr($self) };
-	my $a_labels	= $VB_LABELS{ refaddr($rowa) };
-	if ($self_labels or $a_labels) {
-		$self_labels	||= {};
-		$a_labels		||= {};
-		my %new_labels	= ( %$self_labels, %$a_labels );
-		
-		if (exists $new_labels{'origin'}) {
-			my %origins;
-			foreach my $o (@{ $self_labels->{'origin'} || [] }) {
-				$origins{ $o }++;
-			}
-			foreach my $o (@{ $a_labels->{'origin'} || [] }) {
-				$origins{ $o }++;
-			}
-			$new_labels{'origin'}	= [ keys %origins ];
-		}
-		
-		$VB_LABELS{ refaddr($joined) }	= \%new_labels;
-	}
-
+	$joined->copy_labels_from( $self );
+	$joined->copy_labels_from( $rowa );
+	
 	return $joined;
 }
 
