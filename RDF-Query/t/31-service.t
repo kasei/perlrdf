@@ -19,8 +19,8 @@ BEGIN { require "models.pl"; }
 
 my $tests	= 25;
 eval { require Bloom::Filter };
-if ($@) {
-	plan skip_all => "Bloom::Filter is not available";
+if ($@ or not(Bloom::Filter->can('freeze'))) {
+	plan skip_all => "Bloom::Filter with serialization is not available";
 	return;
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
