@@ -17,7 +17,7 @@ my $tests	= 22;
 if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
+} elsif ($ENV{RDFQUERY_NETWORK_TESTS}) {
 	plan tests => $tests;
 } else {
 	plan skip_all => 'No network. Set RDFQUERY_DEV_TESTS and set RDFQUERY_NETWORK_TESTS to run these tests.';

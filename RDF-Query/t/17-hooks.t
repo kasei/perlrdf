@@ -8,7 +8,7 @@ use RDF::Query;
 if (not RDF::Query->loadable_bridge_class) {
 	plan( skip_all => "Cannot find a loadable RDF model class." );
 	return;
-} elsif (exists $ENV{RDFQUERY_NETWORK_TESTS}) {
+} elsif ($ENV{RDFQUERY_NETWORK_TESTS}) {
 	plan( tests => 3 );
 } else {
 	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
