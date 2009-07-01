@@ -542,7 +542,8 @@ sub prune_plans {
 	my @plans	= @_;
 	my $cm		= $context->costmodel;
 	if ($cm) {
-		my ($plan)	= map { $_->[0] } reduce { $a->[1] < $b->[1] ? $a : $b } map { [ $_, $cm->cost($_, $context) ] } @plans;
+		use sort 'stable';
+		my ($plan)	= map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [ $_, $cm->cost($_, $context) ] } @plans;
 		return $plan;
 	} else {
 		return $plans[0];
