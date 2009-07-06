@@ -114,11 +114,17 @@ END
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/#>
 			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 			PREFIX sd: <http://darq.sf.net/dose/0.1#>
-			SELECT DISTINCT ?pred ?sofilter ?ssel ?osel ?triples
+			PREFIX sparql: <http://kasei.us/2008/04/sparql#>
+			SELECT DISTINCT ?pred ?type ?sofilter ?ssel ?osel ?triples
 			WHERE {
 				[] a sd:Service ;
 					sd:capability ?cap .
-				?cap sd:predicate ?pred .
+				{
+					?cap sd:predicate ?pred .
+				} UNION {
+					?cap a ?type .
+					FILTER(?type = sparql:any_triple)
+				}
 				OPTIONAL { ?cap sd:sofilter ?sofilter }
 				OPTIONAL { ?cap sd:objectSelectivity ?osel }
 				OPTIONAL { ?cap sd:subjectSelectivity ?ssel }
@@ -127,8 +133,10 @@ END
 END
 		my $iter	= $capquery->execute( $model );
 		while (my $row = $iter->next) {
-			my ($p, $f, $ss, $os, $t)	= @{ $row }{ qw(pred sofilter ssel osel triples) };
-			my $data						= { pred => $p };
+			my ($p, $type, $f, $ss, $os, $t)	= @{ $row }{ qw(pred type sofilter ssel osel triples) };
+			my $data						= ($p)
+											? { pred => $p }
+											: { type => $type };
 			$data->{ object_selectivity }	= $os if (defined $os);
 			$data->{ subject_selectivity }	= $ss if (defined $ss);
 			$data->{ size }					= $t if (defined $t);
@@ -279,8 +287,8 @@ statements matching C<< $subj, $pred, $obj [, $context ] >>.
 sub computed_statement_generator {
 	my $self	= shift;
 	my $caps	= $self->capabilities;
-	my %preds	= map { $_->{pred}->uri_value => $_ } @$caps;
-	my $l			= Log::Log4perl->get_logger("rdf.query.servicedescription");
+	my %preds	= map { $_->{pred}->uri_value => $_ } grep { exists $_->{pred} } @$caps;
+	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
 	
 	return sub {
 		my $query	= shift;

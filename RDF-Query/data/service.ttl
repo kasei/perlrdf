@@ -67,7 +67,7 @@
 		sd:objectSelectivity 5.5E-5 
 	] ;
 	sd:capability [ sd:predicate <http://purl.org/dc/terms/spatial> ] ;
-	
+	sd:capability [ a sparql:any_triple ] ;
 
 	# whether the service is definitive or not
 	# sd:isDefinitive (default=false)
