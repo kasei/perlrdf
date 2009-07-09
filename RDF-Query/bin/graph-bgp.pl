@@ -23,7 +23,6 @@ my $sparql	= do { open(my $fh, '<', $qfile) or die $!; local($/) = undef; <$fh> 
 use GraphViz;
 use List::Util qw(first);
 use Time::HiRes qw(tv_interval gettimeofday);
-use Benchmark;
 
 ################################################################################
 # Log::Log4perl::init( \q[
