@@ -23,7 +23,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110';
+	$VERSION	= '0.111_01';
 }
 
 ######################################################################
@@ -55,20 +55,26 @@ sub new {
 	}
 	
 	if (defined($base)) {
-		my $buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
-		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-			my $text	= $1;
-			push(@uni, $text);
-			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
-			$count++;
+		if ($ENV{RQ_USE_IRIS}) {
+			require RDF::Query::IRI;
+			my $buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+			$uri	= RDF::Query::IRI->new_abs($uri, $buri)->as_string;
+		} else {
+			my $buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+			while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+				my $text	= $1;
+				push(@uni, $text);
+				$buri		=~ s/$1/',____rq' . $count . '____,'/e;
+				$count++;
+			}
+			### We have to work around the URI module not accepting IRIs. If there's
+			### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
+			### the URI into an absolute URI, and then replace the breadcrumbs with
+			### the Unicode.
+			
+			my $abs			= URI->new_abs( $uri, $buri );
+			$uri			= $abs->as_string;
 		}
-		### We have to work around the URI module not accepting IRIs. If there's
-		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-		### the URI into an absolute URI, and then replace the breadcrumbs with
-		### the Unicode.
-		
-		my $abs			= URI->new_abs( $uri, $buri );
-		$uri			= $abs->as_string;
 	}
 
 	while ($uri =~ /,____rq(\d+)____,/) {

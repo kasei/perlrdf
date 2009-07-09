@@ -41,7 +41,7 @@ use base qw(RDF::Trine::Iterator::Graph);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110';
+	$VERSION	= '0.111_01';
 }
 
 =item C<< new ( \@results, %args ) >>

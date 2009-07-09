@@ -22,7 +22,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110';
+	$VERSION	= '0.111_01';
 }
 
 ######################################################################

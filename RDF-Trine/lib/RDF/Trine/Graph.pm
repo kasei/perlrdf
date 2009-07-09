@@ -22,7 +22,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.110';
+	$VERSION	= '0.111_01';
 }
 
 use Data::Dumper;

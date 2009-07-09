@@ -10,6 +10,29 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.111.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.110.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.111" ;
+                        doap:created      "2009-07-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Graph for testing graph equality." ;
+                        asc:addition    "Added node_names() method to ::Statement and ::Statement::Quad." ;
+                        asc:addition    "Added RDF::Trine::Statement::has_blanks method." ;
+                        asc:update      "Fixed bug in RDF::Trine::Namespace to allow subclassing." ;
+                        asc:update      "Removed dependency on Test::JSON, List::MoreUtils, and XML::Parser." ;
+                        asc:update      "Added POD to RDF::Trine::Parser." ;
+                        asc:update      "RDF::Trine::Store::temporary_store now delegates to RDF::Trine::Store::DBI." ;
+                        asc:update      "Removed unnecessary call to blessed() in RDF::Trine::Statement." ;
+                        asc:update      "Removed unused RDF::Trine::Promise class." ;
+                        asc:update      "RDF::Trine now loads RDF::Trine::Store." ;
+                        asc:update      "Removed TODO labeling of tests in t/model-filter.t.' ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.110.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.109.tar.gz> ;

@@ -19,7 +19,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.110';
+	$VERSION	= '0.111_01';
 }
 
 use Scalar::Util qw(blessed);
