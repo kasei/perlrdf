@@ -1,4 +1,4 @@
-use Test::More tests => 66;
+use Test::More tests => 74;
 use Test::Exception;
 
 use strict;
@@ -90,20 +90,36 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 			is( $count, 2, 'got two results for pattern { ?p a foaf:Person ; foaf:name ?name }' );
 		}
 	
-		TODO: {
-			local($TODO)	= "get_pattern needs to respect requested ordering, even if the underlying store doesn't do it natively";
-			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' => 'ASC' ] );
-			is_deeply( [ $stream->sorted_by ], ['name' => 'ASC'], 'results sort order' );
-			my $count	= 0;
-			my @expect	= ('Eve', 'Gregory Todd Williams');
-			while (my $b = $stream->next) {
-				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
-				my $name	= shift(@expect);
-				is( $b->{name}->literal_value, $name, 'name pattern' );
-				$count++;
+		{
+			{
+				my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' => 'ASC' ] );
+				is_deeply( [ $stream->sorted_by ], ['name' => 'ASC'], 'results sort order (ASC)' );
+				my $count	= 0;
+				my @expect	= ('Eve', 'Gregory Todd Williams');
+				while (my $b = $stream->next) {
+					isa_ok( $b, 'HASH' );
+					isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+					my $name	= shift(@expect);
+					is( $b->{name}->literal_value, $name, 'name pattern' );
+					$count++;
+				}
+				is( $count, 2, 'got two results for ascending-ordered pattern { ?p a foaf:Person ; foaf:name ?name }' );
 			}
-			is( $count, 2, 'got two results for ordered pattern { ?p a foaf:Person ; foaf:name ?name }' );
+
+			{
+				my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' => 'DESC' ] );
+				is_deeply( [ $stream->sorted_by ], ['name' => 'DESC'], 'results sort order (DESC)' );
+				my $count	= 0;
+				my @expect	= ('Gregory Todd Williams', 'Eve');
+				while (my $b = $stream->next) {
+					isa_ok( $b, 'HASH' );
+					isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+					my $name	= shift(@expect);
+					is( $b->{name}->literal_value, $name, 'name pattern' );
+					$count++;
+				}
+				is( $count, 2, 'got two results for descending-ordered pattern { ?p a foaf:Person ; foaf:name ?name }' );
+			}
 		}
 	
 		{
