@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:foaf="http://xmlns.com/foaf/0.1/">
+  <foaf:Person rdf:about="http://work.example/people/alice#me">
+    <foaf:name>Alice</foaf:name>
+    <foaf:mbox rdf:resource="mailto:alice@work.example"/>
+    <foaf:knows><foaf:Person rdf:about="http://oldcorp.example.org/bob/uri"/></foaf:knows>
+  </foaf:Person>
+  <foaf:Person rdf:about="http://oldcorp.example.org/bob/uri">
+    <foaf:name>Bob</foaf:name>
+    <foaf:mbox rdf:resource="mailto:bob@oldcorp.example.org"/>
+    <foaf:knows rdf:resource="http://work.example/people/alice#me"/>
+  </foaf:Person>
+</rdf:RDF>
