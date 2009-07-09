@@ -1,0 +1,45 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sd: <http://darq.sf.net/dose/0.1#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix sparql: <http://kasei.us/2008/04/sparql#> .
+@prefix p: <http://dbpedia.org/property/> .
+
+# definition of an endpoint
+[] a sd:Service ;
+	rdfs:label "DBpedia" ;
+	rdfs:comment "Service for DBpedia data" ;
+	
+	# the endpoint url
+	sd:url <http://dbpedia.org/sparql> ;
+	
+	# capabilities of the endpoint
+	sd:capability [ 
+		# the endpoint stores triples with predicate rdf:type
+		sd:predicate rdf:type ; 
+		sd:triples 9417778 ; 
+	];
+	
+	sd:capability [ 
+		# the endpoint stores triples with predicate foaf:name
+		sd:predicate foaf:name ; 
+		sd:triples 700012 ; 
+		
+		# if the object in the triple pattern is bound 
+		# (e.g. ?s foaf:name 'Bastian Quilitz") the result size will be
+		# reduced by factor 0.02. (on average)
+		sd:objectSelectivity 1.4e-06 ;
+	
+	] ;
+	
+	
+	# whether the service is definitive or not
+	# sd:isDefinitive (default=false)
+	sd:isDefinitive false ;
+	
+	# total number of triples in the store
+	sd:totalTriples 58787090 ; 
+	
+	sparql:pattern [ a foaf:Person ; p:name [] ; foaf:name [] ; p:field [] ; p:wordnet_type [] ] ;
+	.
