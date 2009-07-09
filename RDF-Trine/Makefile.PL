@@ -26,6 +26,7 @@ WriteMakefile(
 					'List::Util'				=> 0,
 					'Log::Log4perl'				=> 0,
 					'Math::BigInt'				=> 0,
+					'Math::Combinatorics'		=> 0.09,
 					'Scalar::Util'				=> 0,
 					'Text::Table'				=> 0,
 					'Time::HiRes'				=> 0,

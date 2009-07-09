@@ -35,6 +35,7 @@ requires:
     XML::Namespace:                0
     XML::SAX:                      0
     XML::LibXML::SAX:              1.66
+    Math::Combinatorics:           0.09
 license: perl
 distribution_type: module
 generated_by: Module::Install version 0.63
