@@ -51,7 +51,11 @@ sub cli_make_query {
 		$query->add_service( $_ ) for (@{ $args{ service_descriptions } });
 	}
 	
-	return $query;
+	if (wantarray) {
+		return ($query, \%args);
+	} else {
+		return $query;
+	}
 }
 
 =item C<< cli_make_model >>
@@ -65,7 +69,15 @@ typical CLI invocation to look like `prog.pl [flags] [query file] [data files]`.
 =cut
 
 sub cli_make_model {
-	return make_model( @ARGV );
+	my @files;
+	while (scalar(@ARGV) and $ARGV[0] ne '--') {
+		my $file	= shift(@ARGV);
+		push(@files, $file);
+	}
+	if (scalar(@ARGV) and $ARGV[0] eq '--') {
+		shift(@ARGV);
+	}
+	return make_model( @files );
 }
 
 =item C<< make_model ( @files ) >>
@@ -122,7 +134,7 @@ sub cli_parse_args {
 	my @service_descriptions;
 	
 	return unless (@ARGV);
-	while ($ARGV[0] =~ /^-(\w+)$/) {
+	while (scalar(@ARGV) and $ARGV[0] =~ /^-(\w+)/) {
 		my $opt	= shift(@ARGV);
 		if ($opt eq '-e') {
 			$args{ query }	= shift(@ARGV);
@@ -152,6 +164,10 @@ sub cli_parse_args {
 			}
 			my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
 			push(@service_descriptions, $sd);	
+		} elsif ($opt =~ /^-D([^=]+)(=(.+))?/) {
+			$args{ defines }{ $1 }	= (defined($2) ? $3 : 1);
+		} elsif ($opt eq '--') {
+			last;
 		}
 	}
 	
