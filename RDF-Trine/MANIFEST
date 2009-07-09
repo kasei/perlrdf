@@ -13,6 +13,7 @@ inc/Module/Install/MakeMaker.pm
 inc/Module/Install/Metadata.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
+lib/RDF/Trine/Graph.pm
 lib/RDF/Trine/Iterator.pm
 lib/RDF/Trine/Iterator/Bindings.pm
 lib/RDF/Trine/Iterator/Bindings/Materialized.pm
@@ -34,7 +35,6 @@ lib/RDF/Trine/Parser/Error.pm
 lib/RDF/Trine/Parser/RDFXML.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
-lib/RDF/Trine/Promise.pm
 lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
@@ -474,6 +474,7 @@ t/data/turtle/test-24.out
 t/data/turtle/test-24.ttl
 t/data/turtle/test-25.out
 t/data/turtle/test-25.ttl
+t/graph.t
 t/iterator-bindings-join.t
 t/iterator-bindings-materialize.t
 t/iterator-boolean.t
