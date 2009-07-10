@@ -163,9 +163,18 @@ sub cli_parse_args {
 				$uri		= URI::file->new_abs( $url_string );
 			}
 			my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
-			push(@service_descriptions, $sd);	
+			push(@service_descriptions, $sd);
+		} elsif ($opt eq '-s') {
+			require RDF::Query::Federate;
+			require RDF::Query::ServiceDescription;
+			$args{ class }	= 'RDF::Query::Federate';
+			my $service_url	= shift(@ARGV);
+			my $sd	= RDF::Query::ServiceDescription->new( $service_url );
+			push(@service_descriptions, $sd);
 		} elsif ($opt =~ /^-D([^=]+)(=(.+))?/) {
 			$args{ defines }{ $1 }	= (defined($2) ? $3 : 1);
+		} elsif ($opt eq '-N') {
+			$args{ declare_namespaces }	= 1;
 		} elsif ($opt eq '--') {
 			last;
 		}
@@ -182,6 +191,13 @@ sub cli_parse_args {
 					: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
 		$args{ query }	= $sparql;
 	}
+	
+	if (delete $args{ declare_namespaces }) {
+		$args{ query }	= join('', <<"END", $args{ query } );
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+END
+	}
+	
 	return %args;
 }
 
