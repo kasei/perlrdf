@@ -7,7 +7,6 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store.
 
 This document describes RDF::Trine::Store::DBI::SQLite version 0.111_01
 
-
 =head1 SYNOPSIS
 
     use RDF::Trine::Store::DBI::SQLite;
@@ -93,12 +92,10 @@ L<http://rt.cpan.org>.
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
+=head1 COPYRIGHT
 
-=head1 LICENCE AND COPYRIGHT
-
-Copyright (c) 2007, Gregory Todd Williams C<< <gwilliams@cpan.org> >>. All rights reserved.
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself. See L<perlartistic>.
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

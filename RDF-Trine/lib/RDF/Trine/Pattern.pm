@@ -5,6 +5,10 @@
 
 RDF::Trine::Pattern - Class for BasicGraphPattern patterns
 
+=head1 VERSION
+
+This document describes RDF::Trine::Pattern version 0.111_01
+
 =cut
 
 package RDF::Trine::Pattern;
@@ -172,6 +176,12 @@ __END__
 
 =head1 AUTHOR
 
- Gregory Todd Williams <gwilliams@cpan.org>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

@@ -5,24 +5,28 @@
 
 RDF::Trine::Iterator::Graph::Materialized - Materialized graph class.
 
+=head1 VERSION
+
+This document describes RDF::Trine::Iterator::Graph::Materialized version 0.111_01
+
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator;
-    
-    my $iterator = RDF::Trine::Iterator::Graph::Materialized->new( \@data );
-    while (my $statement = $iterator->next) {
-    	# do something with $statement
-    }
+ use RDF::Trine::Iterator;
+ 
+ my $iterator = RDF::Trine::Iterator::Graph::Materialized->new( \@data );
+ while (my $statement = $iterator->next) {
+ 	# do something with $statement
+ }
 
-    my $iterator = RDF::Trine::Iterator::Graph->new( \&code );
-    my $miter = $iterator->materialize;
-    while (my $statement = $miter->next) {
-    	# do something with $statement
-    }
-    $miter->reset; # start the iteration again
-    while (my $statement = $miter->next) {
-        # ...
-    }
+ my $iterator = RDF::Trine::Iterator::Graph->new( \&code );
+ my $miter = $iterator->materialize;
+ while (my $statement = $miter->next) {
+ 	# do something with $statement
+ }
+ $miter->reset; # start the iteration again
+ while (my $statement = $miter->next) {
+     # ...
+ }
 
 =head1 METHODS
 
@@ -121,3 +125,17 @@ sub length {
 }
 
 1;
+
+=back
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut

@@ -5,6 +5,10 @@
 
 RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class.
 
+=head1 VERSION
+
+This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.111_01
+
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator;
@@ -135,12 +139,10 @@ __END__
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
+=head1 COPYRIGHT
 
-=head1 LICENCE AND COPYRIGHT
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
-Copyright (c) 2007, Gregory Todd Williams C<< <gwilliams@cpan.org> >>. All rights reserved.
-
-This module is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself. See L<perlartistic>.
-
-
+=cut
