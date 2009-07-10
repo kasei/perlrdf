@@ -194,7 +194,29 @@ sub cli_parse_args {
 	
 	if (delete $args{ declare_namespaces }) {
 		$args{ query }	= join('', <<"END", $args{ query } );
+		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX owl: <http://www.w3.org/2002/07/owl#>
+		PREFIX air: <http://www.daml.org/2001/10/html/airport-ont#>
+		PREFIX bibtex: <http://purl.oclc.org/NET/nknouf/ns/bibtex#>
+		PREFIX bio: <http://purl.org/vocab/bio/0.1/>
+		PREFIX book: <http://purl.org/net/schemas/book/>
+		PREFIX contact: <http://www.w3.org/2000/10/swap/pim/contact#>
+		PREFIX cyc: <http://www.cyc.com/2004/06/04/cyc#>
+		PREFIX dc: <http://purl.org/dc/elements/1.1/>
+		PREFIX dcterms: <http://purl.org/dc/terms/>
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+		PREFIX ical: <http://www.w3.org/2002/12/cal/icaltzd#>
+		PREFIX lang: <http://purl.org/net/inkel/rdf/schemas/lang/1.1#>
+		PREFIX likes: <http://rdf.netalleynetworks.com/ilike/20040830#>
+		PREFIX quaff: <http://purl.org/net/schemas/quaffing/>
+		PREFIX rel: <http://purl.org/vocab/relationship/>
+		PREFIX trust: <http://trust.mindswap.org/ont/trust.owl#>
+		PREFIX visit: <http://purl.org/net/vocab/2004/07/visit#>
+		PREFIX whois: <http://www.kanzaki.com/ns/whois#>
+		PREFIX wn: <http://xmlns.com/wordnet/1.6/>
+		PREFIX wot: <http://xmlns.com/wot/0.1/>
 END
 	}
 	
