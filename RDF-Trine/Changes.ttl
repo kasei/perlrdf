@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.111" ;
-                        doap:created      "2009-07-XX" ;
+                        doap:created      "2009-07-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Graph for testing graph equality." ;
