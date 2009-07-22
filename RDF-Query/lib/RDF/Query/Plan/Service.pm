@@ -248,7 +248,11 @@ sub _get_iterator {
 		$p->parse_string( $response->content );
 		return $handler->iterator;
 	} else {
-		throw RDF::Query::Error::ExecutionError -text => "error making remote SPARQL call: " . $response->status_line;
+		my $status		= $response->status_line;
+		my $sparql		= $self->sparql;
+		my $endpoint	= $self->endpoint;
+		warn "url: $url\n";
+		throw RDF::Query::Error::ExecutionError -text => "*** error making remote SPARQL call to endpoint $endpoint ($status) while making service call for query: $sparql";
 	}
 }
 
