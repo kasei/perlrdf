@@ -3,7 +3,18 @@
 
 =head1 NAME
 
-RDF::Trine::Graph - Graph class
+RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism.
+
+=head1 VERSION
+
+This document describes RDF::Trine::Graph version 0.111
+
+=head1 SYNOPSIS
+
+  use RDF::Trine::Graph;
+  my $a	= RDF::Trine::Graph->new( $model_a );
+  my $b	= RDF::Trine::Graph->new( $model_b );
+  print "graphs are " . ($a->equals( $b ) ? "the same" : "different");
 
 =head1 METHODS
 
@@ -22,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.111_01';
+	$VERSION	= '0.111';
 }
 
 use Data::Dumper;
@@ -35,7 +46,7 @@ use RDF::Trine::Store::DBI;
 
 =item C<< new ( $iterator ) >>
 
-Returns a new graph from the given ::Model or ::Iterator::Graph object.
+Returns a new graph from the given RDF::Trine::Model or RDF::Trine::Iterator::Graph object.
 
 =cut
 
@@ -215,6 +226,12 @@ __END__
 
 =head1 AUTHOR
 
- Gregory Todd Williams <gwilliams@cpan.org>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

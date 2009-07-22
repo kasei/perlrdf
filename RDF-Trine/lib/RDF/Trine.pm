@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.111_01
+This document describes RDF::Trine version 0.111
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.111_01';
+	$VERSION	= '0.111';
 }
 
 use Log::Log4perl qw(:easy);
@@ -113,10 +113,9 @@ C<< <gwilliams@cpan.org> >>.
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
-
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2007 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

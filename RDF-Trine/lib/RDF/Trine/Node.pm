@@ -5,6 +5,10 @@
 
 RDF::Trine::Node - Base class for RDF Nodes
 
+=head1 VERSION
+
+This document describes RDF::Trine::Node version 0.111
+
 =head1 METHODS
 
 =over 4
@@ -19,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111_01';
+	$VERSION	= '0.111';
 }
 
 use Scalar::Util qw(blessed);
@@ -182,6 +186,12 @@ __END__
 
 =head1 AUTHOR
 
- Gregory Todd Williams <gwilliams@cpan.org>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut

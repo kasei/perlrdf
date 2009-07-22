@@ -57,7 +57,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.111 (2009-07-XX)
+  Version 0.111 (2009-07-14)
 
      * Added RDF::Trine::Graph for testing graph equality.
      * Added node_names() method to ::Statement and ::Statement::Quad.

@@ -5,6 +5,10 @@
 
 RDF::Trine::Node::Variable - RDF Node class for variables
 
+=head1 VERSION
+
+This document describes RDF::Trine::Node::Variable version 0.111
+
 =cut
 
 package RDF::Trine::Node::Variable;
@@ -22,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111_01';
+	$VERSION	= '0.111';
 }
 
 ######################################################################
@@ -112,6 +116,12 @@ __END__
 
 =head1 AUTHOR
 
- Gregory Todd Williams <gwilliams@cpan.org>
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
