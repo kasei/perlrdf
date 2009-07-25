@@ -10,6 +10,8 @@ use LWP::UserAgent;
 use Data::Dumper;
 
 use RDF::Trine;
+use RDF::Trine::Model;
+use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Statement;
 
@@ -24,12 +26,12 @@ END
 	exit;
 }
 
-my $server	= shift;
-my $dbname	= shift;
-my $user	= shift;
-my $pass	= shift;
-my $model	= shift;
-my $host	= shift;
+my $server		= shift;
+my $dbname		= shift;
+my $user		= shift;
+my $pass		= shift;
+my $modelname	= shift;
+my $host		= shift;
 
 my $dsn;
 if ($server eq 'mysql') {
@@ -46,12 +48,16 @@ if ($server eq 'mysql') {
 	exit;
 }
 
-my $data;
-my $store	= RDF::Trine::Store::DBI->new($model, $dsn, $user, $pass);
-my $iter	= $store->get_statements();
+my $store	= RDF::Trine::Store::DBI->new($modelname, $dsn, $user, $pass);
+my $model	= RDF::Trine::Model->new($store);
 
-while (my $s = $iter->next) {
-	print $s->as_string . "\n";
+my $serializer	= RDF::Trine::Serializer::NTriples->new();
+$serializer->serialize_model_to_file( \*STDOUT, $model );
+
+if (0) {
+	my $iter	= $store->get_statements();
+	
+	while (my $s = $iter->next) {
+		print $s->as_string . "\n";
+	}
 }
-
-
