@@ -14,7 +14,7 @@ sub new_with_model {
 	my $port		= $args{ Port };
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
-	my $cgi			= $args{ CGI };
+	my $cgi			= $args{ CGI } || do { require CGI; CGI->new() };
 
 	my $host		= $cgi->server_name;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
@@ -41,7 +41,7 @@ sub new {
 	my $model		= $args{ Model };
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
-	my $cgi			= $args{ CGI };
+	my $cgi			= $args{ CGI } || do { require CGI; CGI->new() };
 	
 	my $host	= $cgi->server_name;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);

@@ -20,6 +20,5 @@ my $s	= RDF::Endpoint::CGI->new(
 			Prefix			=> '/~samofool/endpoint/index.cgi',
 			IncludePath		=> '/Users/samofool/data/prog/dist/perlrdf/RDF-Endpoint/include',
 			CGI				=> $cgi,
-			WhiteListModel	=> 'whitelist',
 		);
 $s->run( $cgi );

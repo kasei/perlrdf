@@ -1,3 +1,31 @@
+=head1 NAME
+
+RDF::Endpoint - A SPARQL Endpoint (server) implementation based on RDF::Query.
+
+=head1 VERSION
+
+This document describes RDF::Endpoint version 1.000, released XXX August 2009.
+
+=head1 SYNOPSIS
+
+
+ my $s	= RDF::Endpoint::Server->new_with_model( $model,
+   Port    => $port,
+   Prefix  => '/path/to/server-root/',
+ );
+ 
+ my $pid	= $s->run();
+
+=head1 DESCRIPTION
+
+...
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
 package RDF::Endpoint;
 
 use strict;
@@ -25,6 +53,21 @@ use Scalar::Util qw(blessed);
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::StatementFilter;
 
+
+=item C<< new ( $dsn, $username, $password, $model_name, SubmitURL => $url, IncludePath => $path, %optional_args ) >>
+
+Returns a new Endpoint object based on an RDF::Trine::Store::DBI model created
+with the specified DBI $dsn, $username, $password, and $model_name.
+
+The supplied $url should map back to the endpoint server, allowing query forms
+to be submitted and handled properly.
+
+The IncludePath $path variable is used as the base path for templates used by
+the endpoint including HTML forms and query results. If not supplied, it
+defaults to './include'.
+
+=cut
+
 sub new {
 	my $class		= shift;
 	my $dsn			= shift;
@@ -36,12 +79,24 @@ sub new {
 	my $incpath		= $args{ IncludePath } || './include';
 	my $adminurl	= $args{ AdminURL };
 	my $submiturl	= $args{ SubmitURL };
-	my $whitelist	= $args{ WhiteListModel };
 	
 	my $store		= RDF::Trine::Store::DBI->new( $model, $dsn, $user, $pass );
 	my $m			= RDF::Trine::Model->new( $store );
 	return $class->new_with_model( $m, %args, dbh => $store->dbh );
 }
+
+=item C<< new_with_model ( $model, SubmitURL => $url, IncludePath => $path, IncludePath => $path, %optional_args ) >>
+
+Returns a new Endpoint object based on the supplied RDF::Trine::Model object.
+
+The supplied $url should map back to the endpoint server, allowing query forms
+to be submitted and handled properly.
+
+The IncludePath $path variable is used as the base path for templates used by
+the endpoint including HTML forms and query results. If not supplied, it
+defaults to './include'.
+
+=cut
 
 sub new_with_model {
 	my $class		= shift;
@@ -51,7 +106,6 @@ sub new_with_model {
 	my $incpath		= $args{ IncludePath } || './include';
 	my $adminurl	= $args{ AdminURL };
 	my $submiturl	= $args{ SubmitURL };
-	my $whitelist	= $args{ WhiteListModel };
 	
 	my $self		= bless( {
 						incpath		=> $incpath,
@@ -69,21 +123,6 @@ sub new_with_model {
 		$self->set_identity( $id );
 	}
 	
-# 	if ($self->authorized_user) {
-# 		$self->{_model}	= RDF::Trine::Model->new( $store );
-# 	} else {
-# 		$m->add_rule( sub {
-# 			my $st	= shift;
-# 			my $p	= $st->predicate;
-# 			my $uri	= $p->uri_value;
-# 			
-# 			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/mbox');
-# 			return 0 if ($uri eq 'http://xmlns.com/foaf/0.1/phone');
-# 			return 0 if ($uri =~ m<^http://xmlns.com/foaf/0.1/\w+ChatID$>);
-# 			return 1;
-# 		} );
-# 	}
-	
 	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
 	$self->{_ua}->default_header( 'Accept' => 'application/turtle,application/x-turtle,application/rdf+xml' );
 	
@@ -92,29 +131,6 @@ sub new_with_model {
 					} );
 	$self->{_tt}	= $template;
 	return $self;
-}
-
-sub authorized_user {
-	my $self	= shift;
-	my $id		= $self->get_identity;
-	return 0 unless ($id);
-	
-	our %authorized;
-	if (exists $authorized{ $id }) {
-		return $authorized{ $id };
-	} else {
-		my $wl		= $self->{ whitelist };
-		my $sparql	= $self->auth_query( $id );
-		my $query	= RDF::Query->new( $sparql );
-		my $res		= $query->execute( $wl );
-		if (blessed($res) and $res->get_boolean) {
-			$authorized{ $id }	= 1;
-			return 1;
-		} else {
-			$authorized{ $id }	= 0;
-			return 0;
-		}
-	}
 }
 
 sub login_page {
@@ -287,61 +303,10 @@ sub about {
 	} );
 }
 
-# sub save_query {
-# 	my $self	= shift;
-# 	my $cgi		= shift;
-# 	my $sparql	= shift;
-# 	my $query	= RDF::Query->new( $sparql );
-# 	if ($query) {
-# 		my $serial	= $query->as_sparql;
-# 		my $dbh		= $self->dbh;
-# 		
-# 		my $sth		= $dbh->prepare( "SELECT Name FROM Queries WHERE Query = ?" );
-# 		$sth->execute( $serial );
-# 		my ($name)	= $sth->fetchrow;
-# 		unless ($name) {
-# 			$dbh->begin_work;
-# 			my $sth		= $dbh->prepare( "SELECT MAX(Name) FROM Queries" );
-# 			$sth->execute();
-# 			my ($name)	= $sth->fetchrow;
-# 			if ($name) {
-# 				$name++;
-# 			} else {
-# 				$name	= 'a';
-# 			}
-# 			
-# 			my $ins		= $dbh->prepare( "INSERT INTO Queries (Name, Query) VALUES (?,?)" );
-# 			$ins->execute( $name, $serial );
-# 			$dbh->commit;
-# 		}
-# 		return $name;
-# 	} else {
-# 		die RDF::Query->error;
-# 	}
-# }
-# 
-# sub run_saved_query {
-# 	my $self	= shift;
-# 	my $cgi		= shift;
-# 	my $name	= shift;
-# 
-# 	my $dbh		= $self->dbh;
-# 	my $sth		= $dbh->prepare( "SELECT Query FROM Queries WHERE Name = ?" );
-# 	$sth->execute( $name );
-# 	my ($sparql)	= $sth->fetchrow;
-# 	if ($sparql) {
-# 		$self->run_query( $cgi, $sparql );
-# 	} else {
-# 		my $error	= 'Unrecognized query name';
-# 		return $self->error( $cgi, 400, 'Bad Request', $error );
-# 	}
-# }
-
 sub run_query {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $sparql	= shift;
-	# $self->save_query( $cgi, $sparql );
 	
 	my $model		= $self->_model;
 	my $http_accept	= $ENV{HTTP_ACCEPT} || 'text/html';
@@ -521,16 +486,6 @@ sub raw_auth_query {
 	return $query;
 }
 
-# sub update_auth_query {
-# 	my $self	= shift;
-# 	my $query	= shift;
-# 	my $dbh		= $self->dbh;
-# 	if ($query ne $self->auth_query) {
-# 		my $sth	= $dbh->prepare('UPDATE Endpoint SET auth_query = ? WHERE ID = 1');
-# 		$sth->execute( $query );
-# 	}
-# }
-
 sub priv_preds {
 	my $self	= shift;
 	return $self->{config}{priv_preds} || [];
@@ -648,35 +603,6 @@ sub _html_escape {
 	return $text;
 }
 
-# sub init {
-# 	my $self	= shift;
-# 	my $dbh		= $self->dbh;
-# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-#         CREATE TABLE IF NOT EXISTS Queries (
-#             Name VARCHAR(8) UNIQUE NOT NULL,
-#             Query longtext NOT NULL
-#         );
-# END
-# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-#         CREATE TABLE IF NOT EXISTS Endpoint (
-#             ID bigint unsigned PRIMARY KEY AUTO_INCREMENT,
-#             owner_openid VARCHAR(256) NOT NULL,
-#             include_path VARCHAR(256) NOT NULL,
-#             auth_query VARCHAR(1024),
-#             priv_query VARCHAR(1024)
-#         );
-# END
-# 	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-#         CREATE TABLE IF NOT EXISTS Endpoint_PrivatePredicates (
-#             endpoint bigint unsigned,
-#             ID bigint unsigned,
-#             URI text NOT NULL,
-#             PRIMARY KEY (endpoint, ID)
-#         );
-# END
-# 	return 1;
-# }
-
 sub error {
 	my $self	= shift;
 	my $cgi		= shift;
@@ -707,3 +633,15 @@ sub dbh {
 1;
 
 __END__
+
+=head1 AUTHOR
+
+ Gregory Todd Williams <gwilliams@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2007-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut

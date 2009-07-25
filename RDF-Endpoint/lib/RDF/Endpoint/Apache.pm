@@ -24,7 +24,6 @@ sub handler : method {
 	my $pass	= $r->dir_config( 'EndpointDBPass' );
 	my $model	= $r->dir_config( 'EndpointModel' );
 	my $inc		= $r->dir_config( 'EndpointIncludePath' );
-	my $wl		= $r->dir_config( 'EndpointWhiteListModel' );
 	$secret		= $r->dir_config( 'EndpointSecret' ) || $secret;
 	$salt		= $r->dir_config( 'EndpointSalt' ) || $salt;
 	
@@ -42,7 +41,6 @@ sub handler : method {
 		Model			=> $model,
 		IncludePath		=> $inc,
 		CGI				=> $cgi,
-		WhiteListModel	=> $wl,
 	);
 	
 	$endpoint->{_r}	= $r;
@@ -61,7 +59,6 @@ sub new {
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
 	my $cgi			= $args{ CGI };
-	my $wl			= $args{ WhiteListModel };
 	
 	my $host		= $cgi->server_name;
 	my $port		= $cgi->server_port;
@@ -71,10 +68,6 @@ sub new {
 	my $self		= bless({ dbh => $dbh }, $class);
 	
 	my %endargs;
-	
-	if ($wl) {
-		$endargs{ WhiteListModel }	= $wl;
-	}
 	
 	if (my $data = $cgi->cookie( -name => 'identity' )) {
 		my ($id, $hash)	= split('>', $data, 2);

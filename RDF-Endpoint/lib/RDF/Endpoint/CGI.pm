@@ -24,7 +24,6 @@ sub new {
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
 	my $cgi			= $args{ CGI };
-	my $wl			= $args{ WhiteListModel };
 	
 	my $host	= $cgi->server_name;
 	my $port	= $cgi->server_port;
@@ -32,10 +31,6 @@ sub new {
 	my $self		= bless({}, $class);
 
 	my %endargs;
-	
-	if ($wl) {
-		$endargs{ WhiteListModel }	= $wl;
-	}
 	
 	if (my $data = $cgi->cookie( -name => 'identity' )) {
 		my ($id, $hash)	= split('>', $data, 2);
