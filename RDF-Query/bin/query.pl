@@ -8,11 +8,15 @@ use File::Spec;
 use URI::file;
 use RDF::Query;
 use RDF::Query::Util;
+binmode( \*STDOUT, ':utf8' );
 
 unless (@ARGV) {
 	print STDERR <<"END";
-USAGE: $0 -e 'SELECT * ...' data.rdf [ ... ]
-USAGE: $0 query.rq data.rdf
+USAGE:
+       $0 -e 'SELECT * ...' data.rdf [ ... ]
+       $0 -E http://service.example/sparql -e 'SELECT * ...'
+       $0 -F path/to/service_description.ttl -e 'SELECT * ...'
+       $0 query.rq data.rdf
 
 Reads in a SPARQL query from query.rq (or specified with the -e flag), and
 RDF/XML data from the data.rdf files. The SPARQL query is executed against a
@@ -24,18 +28,17 @@ END
 }
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.query.util		= DEBUG, Screen
-	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr			= 0
-	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.util		= DEBUG, Screen
+# 	log4perl.category.rdf.query.plan.thresholdunion		= TRACE, Screen
+# 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr			= 0
+# 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 # construct a query from the command line arguments
-my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
-
-my $model	= &RDF::Query::Util::cli_make_model;
+my ($query, $model)	= &RDF::Query::Util::cli_make_query_and_model or die RDF::Query->error;
 
 # execute the query against data contained in the model
 my $iter	= $query->execute( $model );
@@ -43,7 +46,8 @@ my $iter	= $query->execute( $model );
 # print the results as a string to standard output
 print $iter->as_string;
 
-### or, if you want to iterator over each result row:
+### this will allow the results to be printed in a streaming fashion:
+### or, if you want to iterate over each result row:
 # while (my $s = $iter->next) {
 # 	print $s . "\n";
 # }

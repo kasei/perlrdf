@@ -30,6 +30,19 @@ use URI::file;
 use RDF::Query;
 use LWP::Simple;
 
+=item C<< cli_make_query_and_model >>
+
+Returns a query object, model, and args HASHref based on the arguments in @ARGV.
+These arguments are parsed using C<< cli_make_query >> and C<< make_model >>.
+
+=cut
+
+sub cli_make_query_and_model {
+	my ($query, $args)	= cli_make_query();
+	my $model			= make_model( $args, @ARGV );
+	return ($query, $model, $args);
+}
+
 =item C<< cli_make_query >>
 
 Returns a RDF::Query object based on the arguments in @ARGV. These arguments
@@ -77,7 +90,8 @@ sub cli_make_model {
 	if (scalar(@ARGV) and $ARGV[0] eq '--') {
 		shift(@ARGV);
 	}
-	return make_model( @files );
+	
+	return make_model( {}, @files );
 }
 
 =item C<< make_model ( @files ) >>
@@ -90,35 +104,48 @@ RDF::Trine::Model object.
 =cut
 
 sub make_model {
+	my $args	= shift;
+	my %args	= %$args;
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	
-	# create a temporary triplestore, and wrap it into a model
-	my $store	= RDF::Trine::Store::DBI->temporary_store();
-	my $model	= RDF::Trine::Model->new( $store );
-	
-	# read in the list of files with RDF/XML content for querying
-	my @files	= @_;
-	
-	# create a rdf/xml parser object that we'll use to read in the rdf data
-	my $parser	= RDF::Trine::Parser->new('rdfxml');
-	
-	# loop over all the files
-	foreach my $i (0 .. $#files) {
-		my $file	= $files[ $i ];
-		if ($file =~ m<^https?:\/\/>) {
-			$l->debug("fetching RDF from $file ...");
-			my $uri		= URI->new( $file );
-			my $content	= get($file);
-			$parser->parse_into_model( $uri, $content, $model );
-		} else {
-			$file	= File::Spec->rel2abs( $file );
-			# $uri is the URI object used as the base uri for parsing
-			my $uri		= URI::file->new_abs( $file );
-			my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-			$parser->parse_into_model( $uri, $content, $model );
-		}
+	while (@_ and $_[0] =~ m/^-(.)/) {
+		shift;
 	}
-	return $model;
+	
+	if ($args{ dsn } and $args{ user } and $args{ pass } and $args{ model } and $args{ dbname }) {
+		$args{ dsn }		.= $args{ dbname };
+		my $store	= RDF::Trine::Store::DBI->new($args{ model }, $args{ dsn }, $args{ user }, $args{ pass });
+		my $model	= RDF::Trine::Model->new($store);
+		return $model;
+	} else {
+		# create a temporary triplestore, and wrap it into a model
+		my $store	= RDF::Trine::Store::DBI->temporary_store();
+		my $model	= RDF::Trine::Model->new( $store );
+		
+		# read in the list of files with RDF/XML content for querying
+		my @files	= @_;
+		
+		# create a rdf/xml parser object that we'll use to read in the rdf data
+		my $parser	= RDF::Trine::Parser->new('rdfxml');
+		
+		# loop over all the files
+		foreach my $i (0 .. $#files) {
+			my $file	= $files[ $i ];
+			if ($file =~ m<^https?:\/\/>) {
+				$l->debug("fetching RDF from $file ...");
+				my $uri		= URI->new( $file );
+				my $content	= get($file);
+				$parser->parse_into_model( $uri, $content, $model );
+			} else {
+				$file	= File::Spec->rel2abs( $file );
+				# $uri is the URI object used as the base uri for parsing
+				my $uri		= URI::file->new_abs( $file );
+				my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+				$parser->parse_into_model( $uri, $content, $model );
+			}
+		}
+		return $model;
+	}
 }
 
 =item C<< cli_parse_args >>
@@ -163,9 +190,35 @@ sub cli_parse_args {
 				$uri		= URI::file->new_abs( $url_string );
 			}
 			my $sd	= RDF::Query::ServiceDescription->new_from_uri( $uri );
-			push(@service_descriptions, $sd);	
+			push(@service_descriptions, $sd);
+		} elsif ($opt eq '-E') {
+			require RDF::Query::Federate;
+			require RDF::Query::ServiceDescription;
+			$args{ class }	= 'RDF::Query::Federate';
+			my $service_url	= shift(@ARGV);
+			my $sd	= RDF::Query::ServiceDescription->new( $service_url );
+			push(@service_descriptions, $sd);
 		} elsif ($opt =~ /^-D([^=]+)(=(.+))?/) {
 			$args{ defines }{ $1 }	= (defined($2) ? $3 : 1);
+		} elsif ($opt eq '-N') {
+			$args{ declare_namespaces }	= 1;
+		} elsif ($opt eq '-s') {
+			my $server	= shift(@ARGV);
+			if ($server eq 'mysql') {
+				$args{ dsn }	= "DBI:mysql:database=";
+			} elsif ($server eq 'sqlite') {
+				$args{ dsn }	= "DBI:SQLite:dbname=";
+			} elsif ($server eq 'pg') {
+				$args{ dsn }	= "DBI:Pg:dbname=";
+			}
+		} elsif ($opt eq '-d') {
+			$args{ dbname }	= shift(@ARGV);
+		} elsif ($opt eq '-u') {
+			$args{ user }	= shift(@ARGV);
+		} elsif ($opt eq '-p') {
+			$args{ pass }	= shift(@ARGV);
+		} elsif ($opt eq '-m') {
+			$args{ model }	= shift(@ARGV);
 		} elsif ($opt eq '--') {
 			last;
 		}
@@ -182,6 +235,35 @@ sub cli_parse_args {
 					: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
 		$args{ query }	= $sparql;
 	}
+	
+	if (delete $args{ declare_namespaces }) {
+		$args{ query }	= join('', <<"END", $args{ query } );
+		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX owl: <http://www.w3.org/2002/07/owl#>
+		PREFIX air: <http://www.daml.org/2001/10/html/airport-ont#>
+		PREFIX bibtex: <http://purl.oclc.org/NET/nknouf/ns/bibtex#>
+		PREFIX bio: <http://purl.org/vocab/bio/0.1/>
+		PREFIX book: <http://purl.org/net/schemas/book/>
+		PREFIX contact: <http://www.w3.org/2000/10/swap/pim/contact#>
+		PREFIX cyc: <http://www.cyc.com/2004/06/04/cyc#>
+		PREFIX dc: <http://purl.org/dc/elements/1.1/>
+		PREFIX dcterms: <http://purl.org/dc/terms/>
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+		PREFIX ical: <http://www.w3.org/2002/12/cal/icaltzd#>
+		PREFIX lang: <http://purl.org/net/inkel/rdf/schemas/lang/1.1#>
+		PREFIX likes: <http://rdf.netalleynetworks.com/ilike/20040830#>
+		PREFIX quaff: <http://purl.org/net/schemas/quaffing/>
+		PREFIX rel: <http://purl.org/vocab/relationship/>
+		PREFIX trust: <http://trust.mindswap.org/ont/trust.owl#>
+		PREFIX visit: <http://purl.org/net/vocab/2004/07/visit#>
+		PREFIX whois: <http://www.kanzaki.com/ns/whois#>
+		PREFIX wn: <http://xmlns.com/wordnet/1.6/>
+		PREFIX wot: <http://xmlns.com/wot/0.1/>
+END
+	}
+	
 	return %args;
 }
 
@@ -258,9 +340,24 @@ Implies -c B<RDF::Query::Federate>.
 
 =item -F I<loc>
 
-Species the URL or path to a file I<loc> which contains an RDF service
+Specifies the URL or path to a file I<loc> which contains an RDF service
 description. The described service is used as an underlying triplestore for
 query answering. Implies -f.
+
+=item -E I<url>
+
+Specifies the URL of a remove SPARQL endpoint to be used as a data source. The
+endpoint is used as an underlying triplestore for query answering. Implies -f.
+
+=item -s I<database-type>
+
+Specifies the database type to use for the underlying data model.
+
+=item -u I<user>
+
+=item -p I<password>
+
+=item -m I<model>
 
 =back
 

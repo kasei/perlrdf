@@ -37,10 +37,14 @@ sub new {
 	my $class	= shift;
 	my $uri		= shift;
 	my %data	= @_;
+	unless ($data{capabilities}) {
+		$data{capabilities}	= [ { type => RDF::Query::Node::Resource->new('http://kasei.us/2008/04/sparql#any_triple') } ];
+
+	}
 	my $data	= {
-					url			=> $uri,
-					label		=> "SPARQL Endpoint $uri",
-					definitive	=> 0,
+					url				=> $uri,
+					label			=> "SPARQL Endpoint $uri",
+					definitive		=> 0,
 					%data,
 				};
 	my $self	= bless( $data, $class );
@@ -186,16 +190,14 @@ END
 		}
 	}
 	
-	my $data	= {
+	my %data	= (
 					label			=> (ref($label) ? $label->literal_value : ''),
-					url				=> $url->uri_value,
 					size			=> (ref($triples) ? $triples->literal_value : ''),
 					definitive		=> $definitive,
 					capabilities	=> \@capabilities,
 					patterns		=> \@patterns,
-				};
-	my $self	= bless( $data, $class );
-	return $self;
+				);
+	return $class->new( $url->uri_value, %data );
 }
 
 =item C<< url >>
@@ -403,12 +405,20 @@ sub answers_triple_pattern {
 	my $l		= Log::Log4perl->get_logger("rdf.query.servicedescription");
 	$l->debug( 'checking triple for service compatability: ' . $triple->sse );
 	
+	my $caps	= $self->capabilities;
+	
+	my @wildcards	= grep { exists $_->{type} and $_->{type}->uri_value eq 'http://kasei.us/2008/04/sparql#any_triple' } @$caps;
+	if (@wildcards) {
+		# service can answer any triple pattern, so return true.
+		return 1;
+	}
+	
+	my @pred_caps	= grep { exists $_->{pred} } @$caps;
 	my $p = $triple->predicate;
-	unless ($p->isa('RDF::Trine::Node::Variable')) {	# if predicate is bound (not a variable)
+	if (not($p->isa('RDF::Trine::Node::Variable'))) {	# if predicate is bound (not a variable)
 		my $puri	= $p->uri_value;
 		$l->trace("  service compatability based on predicate: $puri");
-		my $caps	= $self->capabilities;
-		my %preds	= map { $_->{pred}->uri_value => $_ } @$caps;
+		my %preds	= map { $_->{pred}->uri_value => $_ } @pred_caps;
 		$l->trace("  service supports predicates: " . join(', ', keys %preds));
 		my $cap		= $preds{ $puri };
 		unless ($cap) {
@@ -440,11 +450,10 @@ sub answers_triple_pattern {
 				my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
 				
-				# XXX "ASK {}" is just a simple query just so we have a valid RDF::Query
-				# XXX object to pass to $filter->evaluate below evaluating a filter really
+				# XXX "ASK {}" is just a simple stand-in query allowing us to have a valid query
+				# XXX object to pass to $filter->evaluate below. evaluating a filter really
 				# XXX shouldn't require a query object in this case, since it's not going
-				# XXX to even touch a datastore, but the code needs to be changed to allow
-				# XXX for that.
+				# XXX to even touch a datastore, but the code needs to be changed to allow for that.
 				my $query		= RDF::Query->new("ASK {}");
 				my $value		= $filter->evaluate( $query, $bridge, $bound );
 				my $nok			= ($value->literal_value eq 'false');
@@ -458,7 +467,7 @@ sub answers_triple_pattern {
 		return $ok;
 	} else {
 		# predicate is a variable in the triple pattern. can we matchit based on sparql:pattern?
-		warn "service doesn't handle triple based on predicate\n";
+		$l->trace("service doesn't handle triple patterns with unbound predicates");
 		return 0;
 	}
 }

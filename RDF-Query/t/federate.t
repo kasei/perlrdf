@@ -65,7 +65,7 @@ foreach my $i (0 .. $#sigs) {
 	}
 }
 my %named	= map { $_ => File::Spec->rel2abs("data/federation_data/$_") } qw(alice.rdf bob.rdf);
-my %models	= map { $_ => RDF::Query::Util::make_model( $named{$_} ) } (keys %named);
+my %models	= map { $_ => RDF::Query::Util::make_model( {}, $named{$_} ) } (keys %named);
 
 
 ################################################################################
