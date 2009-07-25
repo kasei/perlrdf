@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Redland and RDF::Core.
+RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine, RDF::Redland, and RDF::Core.
 
 =head1 VERSION
 
@@ -222,6 +222,9 @@ sub new {
 	if (defined $options{secretkey}) {
 		$self->{options}{secretkey}	= $options{secretkey};
 	}
+	if (defined $options{defines}) {
+		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ $options{defines} };
+	}
 	
 	if ($options{logger}) {
 		$l->debug("got external logger");
@@ -392,7 +395,11 @@ sub execute_plan {
 	$l->debug("executing the graph pattern");
 	
 	my $options	= $parsed->{options} || {};
-
+	
+	if ($self->{options}{plan}) {
+		warn $plan->sse({}, '');
+	}
+	
 	$plan->execute( $context );
 	my $stream	= $plan->as_iterator( $context );
 # 	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
@@ -1659,6 +1666,8 @@ __END__
 
 =item * L<DateTime::Format::W3CDTF|DateTime::Format::W3CDTF>
 
+=item * L<Digest::SHA1|Digest::SHA1>
+
 =item * L<Error|Error>
 
 =item * L<I18N::LangTags|I18N::LangTags>
@@ -1674,6 +1683,10 @@ __END__
 =item * L<Scalar::Util|Scalar::Util>
 
 =item * L<Set::Scalar|Set::Scalar>
+
+=item * L<Storable|Storable>
+
+=item * L<URI|URI>
 
 =item * L<RDF::Redland|RDF::Redland> or L<RDF::Core|RDF::Core> for optional model support.
 
@@ -1711,5 +1724,11 @@ C<$iterator> is a RDF::Trine::Iterator object.
 =head1 AUTHOR
 
  Gregory Todd Williams <gwilliams@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
