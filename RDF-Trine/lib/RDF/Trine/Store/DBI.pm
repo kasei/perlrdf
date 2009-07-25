@@ -160,6 +160,7 @@ sub get_statements {
 	$sth->execute();
 	
 	my $sub		= sub {
+NEXTROW:
 		my $row	= $sth->fetchrow_hashref;
 		return undef unless (defined $row);
 		my @triple;
@@ -178,7 +179,8 @@ sub get_statements {
 					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
 					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
-					push( @triple, undef );
+					warn "node isn't a resource, blank, or literal?" . Dumper($row);
+					goto NEXTROW;
 				}
 			} else {
 				push(@triple, $node);
