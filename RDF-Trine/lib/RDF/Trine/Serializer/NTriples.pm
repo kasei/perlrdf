@@ -75,8 +75,7 @@ sub serialize_model_to_file {
 	my $model	= shift;
 	my $iter	= $model->as_stream;
 	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		print {$file} join(' ', map { $_->sse } @nodes) . " .\n";
+		print {$file} join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
 	}
 }
 
