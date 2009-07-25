@@ -5,6 +5,10 @@
 
 RDF::Query::Federate::Plan - Executable query plan nodes.
 
+=head1 VERSION
+
+This document describes RDF::Query::Federate::Plan version 2.101, released XX March 2009.
+
 =head1 METHODS
 
 =over 4
@@ -79,33 +83,6 @@ sub generate_plans {
 		}
 	}
 }
-
-# =item C<< optimistic_plans ( $plan, $context ) >>
-# 
-# Returns a set of optimistic query plans that may be used to provide subsets of
-# the results expected from $plan. This method only makes the root node of $plan
-# optimistic, assuming that it has been called previously for the sub-nodes.
-# 
-# =cut
-# 
-# sub optimistic_plans {
-# 	my $self	= shift;
-# 	my $plan	= shift;
-# 	my $context	= shift;
-# 	my $servs	= $plan->label( 'services' );
-# 	
-# 	my @opt_plans;
-# 	if (ref($servs) and scalar(@$servs)) {
-# 		foreach my $url (@$servs) {
-# 			my $service	= RDF::Query::Plan::Service->new_from_plan( $url, $plan, $context );
-# 			push(@opt_plans, $service);
-# 		}
-# 		unless (@opt_plans) {
-# 			warn "no optimistic plans found for plan " . $plan->sse({}, '');
-# 		}
-# 	}
-# 	return @opt_plans;
-# }
 
 sub _optimistic_triple_join_plans {
 	my $self	= shift;
@@ -187,6 +164,11 @@ SP:	foreach my $sp (@join_service_plans) {
 				$needed	=~ s/$c//;
 			}
 			my @needed	= split('', $needed);
+			
+			# XXX this is where things go naive. ideally, we would start with
+			# XXX any triple that yielded the optimal bin packing of plans to
+			# XXX produce full coverage, but instead we start with the lowest
+			# XXX numbered triple, and use a greedy search from there.
 			my $start	= shift(@needed);
 			$l->trace("starting remote BGP with triple $start");
 			$coverage	.= $start;
@@ -276,5 +258,11 @@ __END__
 =head1 AUTHOR
 
  Gregory Todd Williams <gwilliams@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
