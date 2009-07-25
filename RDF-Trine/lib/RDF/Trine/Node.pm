@@ -100,6 +100,16 @@ sub as_string {
 	return $self->sse;
 }
 
+=item C<< as_ntriples >>
+
+Returns the node in a string form suitable for NTriples serialization.
+
+=cut
+
+sub as_ntriples {
+	return $_[0]->sse;
+}
+
 =item C<< equal ( $node ) >>
 
 Returns true if the two nodes are equal, false otherwise.

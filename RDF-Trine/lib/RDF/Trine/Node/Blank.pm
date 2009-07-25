@@ -76,6 +76,22 @@ sub sse {
 	return qq(_:${id});
 }
 
+=item C<< as_ntriples >>
+
+Returns the node in a string form suitable for NTriples serialization.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	my $id		= $self->blank_identifier;
+	if ($id =~ m/[^A-Za-z0-9]/) {
+		$id	=~ s/Z/ZZ/g;	# only alphanumerics are allowed in ntriples bnode ids, so we'll use 'Z' as the escape char
+		$id	=~ s/([^A-Za-z0-9])/sprintf('Z%xz', ord($1))/ge;
+	}
+	return qq(_:${id});
+}
+
 =item C<< as_string >>
 
 Returns a string representation of the node.

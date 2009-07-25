@@ -162,6 +162,35 @@ sub as_string {
 	return $string;
 }
 
+=item C<< as_ntriples >>
+
+Returns the node in a string form suitable for NTriples serialization.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	my $literal	= $self->literal_value;
+	$literal	=~ s/\\/\\\\/g;
+	
+	my $escaped	= $self->_unicode_escape( $literal );
+	$literal	= $escaped;
+	
+	$literal	=~ s/"/\\"/g;
+	$literal	=~ s/\n/\\n/g;
+	$literal	=~ s/\r/\\r/g;
+	$literal	=~ s/\t/\\t/g;
+	if ($self->has_language) {
+		my $lang	= $self->literal_value_language;
+		return qq("${literal}"\@${lang});
+	} elsif ($self->has_datatype) {
+		my $dt		= $self->literal_datatype;
+		return qq("${literal}"^^<${dt}>);
+	} else {
+		return qq("${literal}");
+	}
+}
+
 =item C<< type >>
 
 Returns the type string of this node.

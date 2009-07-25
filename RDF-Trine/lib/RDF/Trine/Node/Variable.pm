@@ -83,6 +83,17 @@ sub as_string {
 	return '?' . $self->name;
 }
 
+=item C<< as_ntriples >>
+
+Returns the node in a string form suitable for NTriples serialization.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	Carp::confess "Variable nodes aren't allowed in NTriples: " . Dumper($self);
+}
+
 =item C<< type >>
 
 Returns the type string of this node.

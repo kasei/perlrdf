@@ -164,6 +164,52 @@ sub as_string {
 	return '<' . $self->uri_value . '>';
 }
 
+=item C<< as_ntriples >>
+
+Returns the node in a string form suitable for NTriples serialization.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	my $context	= shift;
+	my $uri		= $self->uri_value;
+	
+	if (ref($uri) and reftype($uri) eq 'ARRAY') {
+		die;
+	} else {
+		my $ns		= $context->{namespaces} || {};
+		while (my ($k, $v) = each(%$ns)) {
+			if (index($uri, $v) == 0) {
+				my $qname	= join(':', $k, substr($uri, length($v)));
+				return $qname;
+			}
+		}
+		
+		my $qname	= 0;
+		my $string	= qq(${uri});
+		foreach my $n (keys %$ns) {
+			if (substr($uri, 0, length($ns->{ $n })) eq $ns->{ $n }) {
+				$string	= join(':', $n, substr($uri, length($ns->{ $n })));
+				$qname	= 1;
+				last;
+			}
+		}
+		
+		$string	=~ s/\\/\\\\/g;
+		my $escaped	= $self->_unicode_escape( $string );
+		if ($qname) {
+			return $escaped;
+		} else {
+			$escaped	=~ s/"/\\"/g;
+			$escaped	=~ s/\n/\\n/g;
+			$escaped	=~ s/\r/\\r/g;
+			$escaped	=~ s/\t/\\t/g;
+			return '<' . $escaped . '>';
+		}
+	}
+}
+
 =item C<< type >>
 
 Returns the type string of this node.
