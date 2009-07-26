@@ -82,16 +82,42 @@ typical CLI invocation to look like `prog.pl [flags] [query file] [data files]`.
 =cut
 
 sub cli_make_model {
+	my %args;
 	my @files;
 	while (scalar(@ARGV) and $ARGV[0] ne '--') {
-		my $file	= shift(@ARGV);
-		push(@files, $file);
+		while (scalar(@ARGV) and $ARGV[0] =~ /^-(\w)$/) {
+			my $opt	= shift(@ARGV);
+			if ($opt eq '-s') {
+				my $server	= shift(@ARGV);
+				if ($server eq 'mysql') {
+					$args{ dsn }	= "DBI:mysql:database=";
+				} elsif ($server eq 'sqlite') {
+					$args{ dsn }	= "DBI:SQLite:dbname=";
+				} elsif ($server eq 'pg') {
+					$args{ dsn }	= "DBI:Pg:dbname=";
+				}
+			} elsif ($opt eq '-d') {
+				$args{ dbname }	= shift(@ARGV);
+			} elsif ($opt eq '-u') {
+				$args{ user }	= shift(@ARGV);
+			} elsif ($opt eq '-p') {
+				$args{ pass }	= shift(@ARGV);
+			} elsif ($opt eq '-m') {
+				$args{ model }	= shift(@ARGV);
+			} elsif ($opt eq '--') {
+				last;
+			}
+		}
+		if (@ARGV) {
+			my $file	= shift(@ARGV);
+			push(@files, $file);
+		}
 	}
 	if (scalar(@ARGV) and $ARGV[0] eq '--') {
 		shift(@ARGV);
 	}
 	
-	return make_model( {}, @files );
+	return make_model( \%args, @files );
 }
 
 =item C<< make_model ( @files ) >>
@@ -108,7 +134,7 @@ sub make_model {
 	my %args	= %$args;
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	
-	while (@_ and $_[0] =~ m/^-(.)/) {
+	while (scalar(@_) and $_[0] =~ m/^-(.)/) {
 		shift;
 	}
 	
