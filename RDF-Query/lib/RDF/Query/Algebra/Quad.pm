@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::Quad - Algebra class for Quad patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::Quad version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::Quad;
@@ -24,7 +28,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 my %QUAD_LABELS;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

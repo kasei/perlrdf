@@ -9,6 +9,81 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.200.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.100.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.200_01" ;
+                        doap:created      "2009-07-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for average aggregates, and fixed datatype support in aggregates." ;
+                        asc:addition      "Added RDF::Query::Util as home to helper functions (added CLI args parsing functions to create queries and models)." ;
+                        asc:addition      "Added examples of queries and service descriptions in examples/." ;
+                        asc:addition      "Added new RDF::Query::ServiceDescription::new_with_model constructor." ;
+                        asc:addition      "Added test data in data/federation_data/." ;
+                        asc:addition      "Added t/federate.t with tests for optimistic federated query optimization using ::Plan::ThresholdUnion and RDF::Endpoint::Server." ;
+                        asc:addition      "Added the ability to add label annotations to RDF::Query::VariableBindings, RDF::Query::Algebra::Triple and RDF::Query::Algebra::Quad objects." ;
+                        asc:addition      "Added distinguish_bnode_variables method to RDF::Query::Algebra::Quad and RDF::Query::Algebra::Triple." ;
+                        asc:addition      "Added RDF::Query::Node::Blank::make_distinguished_variable method." ;
+                        asc:addition      "Added caching of sparql serializations to RDF::Query::Algebra::BasicGraphPattern and RDF::Query::Algebra::Triple." ;
+                        asc:addition      "Added code to RDF::Query::VariableBindings::new to up-cast any RDF::Trine::Node objects to their RDF::Query equivalents." ;
+                        asc:addition      "Added hook in RDF::Query::execute_plan() to print the query plan to STDERR if $options{plan} is set (can be set if defines)." ;
+                        asc:addition      "Added threshold timeout argument to RDF::Query::Plan::ThresholdUnion and support for it in RDF::Query::Federate::Plan." ;
+                        asc:addition      "Added 'optimistic_threshold_time' query flag to RDF::Query::ExecutionContext and RDF::Query constructor." ;
+                        asc:addition      "Added bin/query.pl, a fork of examples/query.pl, to support simple query execution." ;
+                        asc:addition      "Added and updated POD to RDF::Query::Util, RDF::Query::Node and RDF::Query::Plan and RDF::Query::Federate::Plan." ;
+                        asc:addition      "Added check for RDFQUERY_THROW_ON_SERVICE environment variable in RDF::Query::Plan::Service." ;
+                        asc:addition      "Added logging in RDF::Query::Plan::ThresholdUnion, and RDF::Query::Model." ;
+                        asc:addition      "Added calls to Log::Log4perl::is_debug to eliminate unnecessary serialization of logging when not in use." ;
+                        asc:addition      "Added check for ref($node) in RDF::Query::VariableBindings::new (broke code after previous removal of blessed() check)." ;
+                        asc:addition      "Added use of defined() in code that had been testing boolean value of objects (and causing expensive string overloading)." ;
+                        asc:update        "Fixed bug in RDF::Query::Plan::Offset in cases where the offset was beyond the end of the result set." ;
+                        asc:update        "Fixed testing for Bloom::Filter in t/31-service.t." ;
+                        asc:update        "Fixed test expectations when making remote DBPedia query in t/34-servicedescription.t." ;
+                        asc:update        "Fixed check of $ENV{RDFQUERY_NETWORK_TESTS} to test boolean value, not just existence." ;
+                        asc:update        "Fixed (bad) expected serializations in t/29-serialize.t." ;
+                        asc:update        "Fixed bug in RDF::Query::Plan::ThresholdUnion attempting to close an iterator twice." ;
+                        asc:update        "Fixed sse serialization issues in RDF::Query::Algebra::BasicGraphPattern and RDF::Query::Algebra::Project." ;
+                        asc:update        "Fixed bug in RDF::Query::Node::from_trine() that up-cast blank nodes to variables." ;
+                        asc:update        "Fixed quoting issue in RDF::Query::Algebra::Service::sse()." ;
+                        asc:update        "Fixed parameter handling in bin/graph-qeps.pl:prune_plans()." ;
+                        asc:update        "Fixed handling of 'GRAPH ?g {}' (empty GraphGraphPatterns) to return all graph names." ;
+                        asc:update        "Fixed serialization quoting issue in RDF::Query::Algebra::Aggregate::sse()." ;
+                        asc:update        "RDF::Query::Plan::Aggregate now attempts plain string comparisons for MIN,MAX when strict_errors is not set." ;
+                        asc:update        "Simplified CLI argument parsing in bin/ and examples/ programs." ;
+                        asc:update        "Cleaned up code in RDF::Query::Model::get_computed_statements()." ;
+                        asc:update        "Updated SSE formatting and uninitialized warning in RDF::Query::Plan, RDF::Query::Algebra::Filter, RDF::Query::Algebra::Distinct and RDF::Query::Algebra::Sort." ;
+                        asc:update        "Moved shared RDF::Trine-related model methods into RDF::Query::Model from subclasses." ;
+                        asc:update        "Raised required RDF::Trine version to 0.111 which brings RDF::Trine::Graph support." ;
+                        asc:update        "RDF::Query::Model::RDFTrine::BasicGraphPattern::execute now returns $self." ;
+                        asc:update        "Removed dependency on Test::JSON, List::MoreUtils, and XML::Parser." ;
+                        asc:update        "Removed TODO on test in t/29-serialize.t." ;
+                        asc:update        "Removed unnecessary code in RDF::Query::Plan subclasses, bin/query.pl, bin/graph-bgp.pl and bin/graph-query.pl." ;
+                        asc:update        "Changed logging level from debug to trace in RDF::Query::Plan::Triple, RDF::Query::Plan::Project, RDF::Query::Plan::Filter, RDF::Query::Plan::Join::NestedLoop, RDF::Query::Plan::PushDownNestedLoop, and RDF::Query::Model::RDFTrine." ;
+                        asc:update        "Made error message more useful when SERVICE calls fail in RDF::Query::Plan::Service." ;
+                        asc:update        "Rewrote the optimistic plan generator in RDF::Query::Federate::Plan." ;
+                        asc:update        "Simplified logging in RDF::Query::Federate::Plan (now only logs to category 'rdf.query.federate.plan')." ;
+                        asc:update        "RDF::Query::ServiceDescription now adds an 'origin' label annotations to RDF::Query::Algebra::Triple objects." ;
+                        asc:update        "Removed check of the sd:definitive property in RDF::Query::ServiceDescription (was based on wrong assumptions)." ;
+                        asc:update        "Updated RDF::Query::ServiceDescription::answers_triple_pattern() to recognize wildcard capabilities, constructor now adds wildcard by default." ;
+                        asc:update        "RDF::Query::ServiceDescription::computed_statement_generator now returns empty iterators when passed triple patterns with bound blank nodes." ;
+                        asc:update        "RDF::Query::Plan::Service now adds an 'origin' label annotation to the RDF::Query::VariableBindings object." ;
+                        asc:update        "RDF::Query::Federate::add_service() now adds the appropriate computed statement generators to the query object." ;
+                        asc:update        "Removed optimistic query rewriting test from t/34-servicedescription.t (now covered by t/federate.t)." ;
+                        asc:update        "Updated dawg-eval.t to actually test graph equivalence." ;
+                        asc:update        "Clarified graph labels in RDF::Query::Model::RDFTrine::BasicGraphPattern::graph()." ;
+                        asc:update        "RDF::Query::Plan::Quad and RDF::Query::Plan::Triple now add an 'origin' label annotation to the RDF::Query::VariableBindings object if the underlying statement has one." ;
+                        asc:update        "RDF::Query::Plan::prune_plans now uses a stable sort when comparing plan costs." ;
+                        asc:update        "RDF::Query::Algebra::Triple::new now up-casts to RDF::Query node objects, if necessary." ;
+                        asc:update        "RDF::Query::Model::RDFTrine::generate_plans now respects the force_no_optimization query flag." ;
+                        asc:update        "RDF::Query::Algebra::BasicGraphPattern::sse() now sorts triples for output." ;
+                        asc:update        "RDF::Query::new() now looks for $args{ defines }, and adds them to the internal %options HASH." ;
+                        asc:update        "Updated RDF::Query::Plan to only consider model-specific plans (if there are any)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.100.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.002.tar.gz> ;

@@ -5,6 +5,10 @@
 
 RDF::Query::BGPOptimizer - Optimizer for ordering the joins of triple patterns in a BGP
 
+=head1 VERSION
+
+This document describes RDF::Query::BGPOptimizer version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -20,6 +24,14 @@ use List::Util qw(reduce);
 use Scalar::Util qw(blessed reftype refaddr);
 use RDF::Query::Error qw(:try);
 
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< ordered_triples ( $context, @triples ) >>
 

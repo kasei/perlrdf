@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::GroupGraphPattern;
@@ -28,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 

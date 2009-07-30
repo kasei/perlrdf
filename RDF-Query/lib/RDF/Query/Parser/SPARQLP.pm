@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQLP - Extended SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQLP version 1.000
+This document describes RDF::Query::Parser::SPARQLP version 2.200_01, released XX July 2009.
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ package RDF::Query::Parser::SPARQLP;
 use strict;
 use warnings;
 use base qw(RDF::Query::Parser::SPARQL);
-our $VERSION		= '2.100';
+our $VERSION		= '2.200_01';
 
 use URI;
 use Data::Dumper;
@@ -37,6 +37,16 @@ use RDF::Trine::Namespace qw(rdf);
 use Scalar::Util qw(blessed looks_like_number reftype);
 
 our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG/i;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
+
 
 sub __solution_modifiers {
 	my $self	= shift;

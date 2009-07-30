@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Triple - Executable query plan for Triples.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Triple version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -23,6 +27,15 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( @triple ) >>
 

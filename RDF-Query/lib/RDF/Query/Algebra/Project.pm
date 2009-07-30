@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::Project - Algebra class for projection
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::Project version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::Project;
@@ -24,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Project - Executable query plan for Projects.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Project version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -18,6 +22,15 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Scalar::Util qw(blessed);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $plan, \@keys ) >>
 

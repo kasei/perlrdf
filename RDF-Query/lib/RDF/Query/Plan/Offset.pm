@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Offset - Executable query plan for Offsets.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Offset version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -16,6 +20,15 @@ package RDF::Query::Plan::Offset;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $plan, $offset ) >>
 

@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra - Base class for Algebra expressions
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -14,7 +18,7 @@ RDF::Query::Algebra - Base class for Algebra expressions
 package RDF::Query::Algebra;
 
 BEGIN {
-	our $VERSION	= '2.100';
+	our $VERSION	= '2.200_01';
 }
 
 use strict;

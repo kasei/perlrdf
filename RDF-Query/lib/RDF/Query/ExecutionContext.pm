@@ -5,6 +5,10 @@
 
 RDF::Query::ExecutionContext - Query execution context
 
+=head1 VERSION
+
+This document describes RDF::Query::ExecutionContext version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -15,6 +19,15 @@ package RDF::Query::ExecutionContext;
 
 use strict;
 use warnings;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( model => $model, query => $query, bound => \%bound ) >>
 

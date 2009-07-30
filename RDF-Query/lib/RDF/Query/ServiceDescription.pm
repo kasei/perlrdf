@@ -5,6 +5,10 @@
 
 RDF::Query::Node - Class for describing federated query data sources.
 
+=head1 VERSION
+
+This document describes RDF::Query::ServiceDescription version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -15,7 +19,7 @@ package RDF::Query::ServiceDescription;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 use strict;

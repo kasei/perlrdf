@@ -5,6 +5,10 @@
 
 RDF::Query::Expression::Alias - Class for aliasing expressions with variable names
 
+=head1 VERSION
+
+This document describes RDF::Query::Expression::Alias version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Expression::Alias;
@@ -22,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

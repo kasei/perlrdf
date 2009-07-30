@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::BasicGraphPattern - Algebra class for BasicGraphPattern patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::BasicGraphPattern version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::BasicGraphPattern;
@@ -26,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

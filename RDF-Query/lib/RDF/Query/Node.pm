@@ -5,6 +5,10 @@
 
 RDF::Query::Node - Base class for RDF Nodes
 
+=head1 VERSION
+
+This document describes RDF::Query::Node version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -25,7 +29,7 @@ use RDF::Query::Node::Variable;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 =item C<< is_variable >>

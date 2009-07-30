@@ -1,3 +1,16 @@
+# RDF::Query::Model::RDFTrine
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Query::Model::RDFTrine - An RDF::Query::Model backend for interfacing with an RDF::Trine model.
+
+=head1 VERSION
+
+This document describes RDF::Query::Model::RDFTrine version 2.200_01, released XX July 2009.
+
+=cut
+
 package RDF::Query::Model::RDFTrine;
 
 use strict;
@@ -31,7 +44,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

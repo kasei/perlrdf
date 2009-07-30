@@ -5,6 +5,10 @@
 
 RDF::Query::Plan - Executable query plan nodes.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -46,6 +50,15 @@ use RDF::Trine::Statement::Quad;
 use constant READY		=> 0x01;
 use constant OPEN		=> 0x02;
 use constant CLOSED		=> 0x04;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new >>
 

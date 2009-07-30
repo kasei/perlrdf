@@ -3,7 +3,11 @@
 
 =head1 NAME
 
-RDF::Query::CostModel::Naive - Execution cost estimator
+RDF::Query::CostModel - Execution cost estimator
+
+=head1 VERSION
+
+This document describes RDF::Query::CostModel version 2.200_01, released XX July 2009.
 
 =head1 METHODS
 
@@ -15,7 +19,7 @@ package RDF::Query::CostModel;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 use strict;

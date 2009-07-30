@@ -5,6 +5,10 @@
 
 RDF::Query::Model::RDFTrine::BasicGraphPattern - Plan class for BasicGraphPattern patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Model::RDFTrine::BasicGraphPattern version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Model::RDFTrine::BasicGraphPattern;
@@ -22,7 +26,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

@@ -5,6 +5,10 @@
 
 RDF::Query::Federate - A subclass of RDF::Query for efficient federated query execution.
 
+=head1 VERSION
+
+This document describes RDF::Query::Federate version 2.200_01, released XX July 2009.
+
 =head1 SYNOPSIS
 
  my $service = RDF::Query::ServiceDescription->new( $url );
@@ -38,7 +42,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.100';
+	$VERSION		= '2.200_01';
 }
 
 

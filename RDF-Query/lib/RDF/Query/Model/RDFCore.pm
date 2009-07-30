@@ -1,3 +1,16 @@
+# RDF::Query::Model::RDFCore
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Query::Model::RDFCore - An RDF::Query::Model backend for interfacing with an RDF::Core model.
+
+=head1 VERSION
+
+This document describes RDF::Query::Model::RDFCore version 2.200_01, released XX July 2009.
+
+=cut
+
 package RDF::Query::Model::RDFCore;
 
 use strict;
@@ -27,7 +40,7 @@ use RDF::Trine::Statement::Quad;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

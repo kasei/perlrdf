@@ -5,6 +5,10 @@
 
 RDF::Query::Temporal - tSPARQL temporal extensions to the RDF::Query engine.
 
+=head1 VERSION
+
+This document describes RDF::Query::Temporal version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Temporal;
@@ -15,6 +19,15 @@ no warnings 'redefine';
 use base qw(RDF::Query);
 
 use Scalar::Util qw(blessed);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =begin private
 

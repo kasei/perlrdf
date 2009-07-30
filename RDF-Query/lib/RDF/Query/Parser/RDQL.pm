@@ -5,6 +5,10 @@
 
 RDF::Query::Parser::RDQL - An RDQL parser for RDF::Query
 
+=head1 VERSION
+
+This document describes RDF::Query::Parser::RDQL version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Parser::RDQL;
@@ -26,7 +30,7 @@ our ($VERSION, $lang, $languri);
 BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
 }

@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::Sort - Algebra class for sorting
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::Sort version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::Sort;
@@ -25,7 +29,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

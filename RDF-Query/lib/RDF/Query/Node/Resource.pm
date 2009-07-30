@@ -5,6 +5,10 @@
 
 RDF::Query::Node::Resource - RDF Node class for resources
 
+=head1 VERSION
+
+This document describes RDF::Query::Node::Resource version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Node::Resource;
@@ -23,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

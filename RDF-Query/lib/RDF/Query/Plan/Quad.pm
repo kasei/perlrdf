@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Quad - Executable query plan for Quads.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Quad version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -21,6 +25,15 @@ use Scalar::Util qw(blessed);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( @quad ) >>
 

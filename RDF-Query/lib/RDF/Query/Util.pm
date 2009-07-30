@@ -5,6 +5,10 @@
 
 RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Query.
 
+=head1 VERSION
+
+This document describes RDF::Query::Util version 2.200_01, released XX July 2009.
+
 =head1 SYNOPSIS
 
  use RDF::Query::Util;
@@ -29,6 +33,15 @@ use Carp qw(carp croak confess);
 use URI::file;
 use RDF::Query;
 use LWP::Simple;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< cli_make_query_and_model >>
 

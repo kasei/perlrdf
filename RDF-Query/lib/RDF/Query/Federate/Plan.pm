@@ -7,7 +7,7 @@ RDF::Query::Federate::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate::Plan version 2.101, released XX March 2009.
+This document describes RDF::Query::Federate::Plan version 2.200_01, released XX July 2009.
 
 =head1 METHODS
 
@@ -26,6 +26,15 @@ use Set::Scalar;
 use List::Util qw(reduce);
 use Scalar::Util qw(blessed refaddr);
 use RDF::Query::Error qw(:try);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< generate_plans ( $algebra, $execution_context, %args ) >>
 

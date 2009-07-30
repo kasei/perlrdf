@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Aggregate version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -19,6 +23,15 @@ use base qw(RDF::Query::Plan);
 
 use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $pattern, \@group_by, [ $alias, $op, $attribute ], ... ) >>
 

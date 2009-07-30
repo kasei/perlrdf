@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::Service - Algebra class for SERVICE (federation) patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::Service version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::Service;
@@ -28,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

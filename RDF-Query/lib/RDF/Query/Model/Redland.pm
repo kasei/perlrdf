@@ -1,3 +1,16 @@
+# RDF::Query::Model::Redland
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Query::Model::Redland - An RDF::Query::Model backend for interfacing with a Redland model.
+
+=head1 VERSION
+
+This document describes RDF::Query::Model::Redland version 2.200_01, released XX July 2009.
+
+=cut
+
 package RDF::Query::Model::Redland;
 
 use strict;
@@ -22,7 +35,7 @@ use RDF::Trine::Statement::Quad;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

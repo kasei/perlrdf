@@ -5,6 +5,10 @@
 
 RDF::Query::Algebra::Path - Algebra class for path patterns
 
+=head1 VERSION
+
+This document describes RDF::Query::Algebra::Path version 2.200_01, released XX July 2009.
+
 =cut
 
 package RDF::Query::Algebra::Path;
@@ -24,7 +28,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.100';
+	$VERSION	= '2.200_01';
 }
 
 ######################################################################

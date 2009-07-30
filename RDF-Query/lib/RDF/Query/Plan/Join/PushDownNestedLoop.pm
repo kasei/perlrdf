@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested loop joins.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -19,9 +23,15 @@ use base qw(RDF::Query::Plan::Join);
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 
+######################################################################
+
+our ($VERSION);
 BEGIN {
+	$VERSION	= '2.200_01';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
+
+######################################################################
 
 use RDF::Query::ExecutionContext;
 

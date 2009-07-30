@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::BasicGraphPattern - Executable query plan for BasicGraphPatterns.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::BasicGraphPattern version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -19,6 +23,15 @@ use base qw(RDF::Query::Plan);
 
 use Scalar::Util qw(blessed);
 use RDF::Trine::Statement;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( @triples ) >>
 

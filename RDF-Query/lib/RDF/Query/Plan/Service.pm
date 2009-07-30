@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Service - Executable query plan for remote SPARQL queries.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Service version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -25,6 +29,15 @@ use URI::Escape;
 use RDF::Query::Error qw(:try);
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION		= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $endpoint, $plan, $sparql, [ \%logging_keys ] ) >>
 

@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::ThresholdUnion - Executable query plan for unions.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::ThresholdUnion version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -21,6 +25,15 @@ use Time::HiRes qw(time);
 use Scalar::Util qw(blessed);
 
 use RDF::Query::ExecutionContext;
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $time, @plans ) >>
 

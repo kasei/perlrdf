@@ -5,6 +5,10 @@
 
 RDF::Query::Plan::Construct - Executable query plan for constructing a graph from a set of variable bindings.
 
+=head1 VERSION
+
+This document describes RDF::Query::Plan::Construct version 2.200_01, released XX July 2009.
+
 =head1 METHODS
 
 =over 4
@@ -19,6 +23,15 @@ use base qw(RDF::Query::Plan);
 
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
+
+######################################################################
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '2.200_01';
+}
+
+######################################################################
 
 =item C<< new ( $plan, \@triples ) >>
 
