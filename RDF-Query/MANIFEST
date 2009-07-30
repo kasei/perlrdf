@@ -3,18 +3,23 @@ bin/failing_earl_tests.sh
 bin/graph-bgp.pl
 bin/graph-qeps.pl
 bin/graph-query.pl
+bin/hexastore_query.pl
 bin/open-test-files.sh
 bin/parse_profile.pl
 bin/parse.pl
 bin/passing_earl_tests.sh
 bin/timport.pl
 bin/tparse.pl
+bin/query.pl
 Changes.ttl
 data/about.xrdf
 data/bnode-person.rdf
 data/Flower-2.rdf
 data/foaf.xrdf
 data/greenwich.rdf
+data/federation_data/alice.rdf
+data/federation_data/alice_bob.rdf
+data/federation_data/bob.rdf
 data/named_graphs/alice.rdf
 data/named_graphs/alice.ttl
 data/named_graphs/bob.rdf
@@ -30,6 +35,12 @@ doap.rdf
 examples/create_query_api.pl
 examples/livejournal.pl
 examples/query.pl
+examples/queries/sparql-bgp-people-knows.rq
+examples/queries/sparql-bgp-people.rq
+examples/queries/sparql-ggp-person-opt-knows.rq
+examples/queries/sparqlp-service-people-names.rq
+examples/service_descriptions/dbpedia_org.ttl
+examples/service_descriptions/kasei_us.ttl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Makefile.pm
@@ -112,6 +123,7 @@ lib/RDF/Query/Plan/Triple.pm
 lib/RDF/Query/Plan/Union.pm
 lib/RDF/Query/ServiceDescription.pm
 lib/RDF/Query/Temporal.pm
+lib/RDF/Query/Util.pm
 lib/RDF/Query/VariableBindings.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -164,6 +176,7 @@ t/algebra.t
 t/costmodel-logged.t
 t/costmodel-naive.t
 t/distance.js
+t/federate.t
 t/functions.rdf
 t/logging.t
 t/models.pl
