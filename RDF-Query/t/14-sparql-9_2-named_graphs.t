@@ -302,7 +302,6 @@ END
 	}
 	
 	{
-		print "# **************************************************************\n";
 		print "# find all graph names\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' ) or die RDF::Query->error;
 			SELECT ?g

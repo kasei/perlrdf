@@ -90,7 +90,7 @@ foreach my $data (@models) {
 				);
 	
 	{
-		my $query	= RDF::Query->new( <<"END", { lang => 'sparqlp' } );
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparqlp', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
 PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
 END
 		my ($plan, $context)	= $query->prepare();

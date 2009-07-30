@@ -94,7 +94,9 @@ sub execute ($) {
 # 				warn "pre-bound variable found: " . $nodes[$i]->name;
 				$nodes[$i]	= $bound->{ $nodes[$i]->name };
 			}
-			my $triple	= RDF::Trine::Statement->new( @nodes );
+			my $triple	= (scalar(@nodes) == 4)
+						? RDF::Trine::Statement::Quad->new( @nodes )
+						: RDF::Trine::Statement->new( @nodes );
 			push(@bound_triples, $triple);
 		}
 	} else {
