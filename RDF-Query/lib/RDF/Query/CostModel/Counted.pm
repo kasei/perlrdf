@@ -7,7 +7,7 @@ RDF::Query::CostModel::Counted - Execution cost estimator
 
 =head1 VERSION
 
-This document describes RDF::Query::CostModel::Counted version 2.200_01, released XX July 2009.
+This document describes RDF::Query::CostModel::Counted version 2.200, released 6 August 2009.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::CostModel::Counted;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200_01';
+	$VERSION	= '2.200';
 }
 
 use strict;

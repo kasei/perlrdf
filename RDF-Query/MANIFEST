@@ -4,7 +4,7 @@ bin/graph-bgp.pl
 bin/graph-qeps.pl
 bin/graph-query.pl
 bin/hexastore_query.pl
-bin/open-test-files.sh
+bin/open-test-files.pl
 bin/parse_profile.pl
 bin/parse.pl
 bin/passing_earl_tests.sh

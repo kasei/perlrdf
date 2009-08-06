@@ -7,7 +7,7 @@ RDF::Query::Plan::Project - Executable query plan for Projects.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.200_01, released XX July 2009.
+This document describes RDF::Query::Plan::Project version 2.200, released 6 August 2009.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200_01';
+	$VERSION	= '2.200';
 }
 
 ######################################################################

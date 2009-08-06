@@ -7,7 +7,7 @@ RDF::Query::Algebra::Triple - Algebra class for Triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Triple version 2.200_01, released XX July 2009.
+This document describes RDF::Query::Algebra::Triple version 2.200, released 6 August 2009.
 
 =cut
 
@@ -33,7 +33,7 @@ my %AS_SPARQL;
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.200_01';
+	$VERSION	= '2.200';
 }
 
 ######################################################################

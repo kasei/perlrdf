@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARUL - SPARQL Update Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARUL version 2.200_01, released XX July 2009.
+This document describes RDF::Query::Parser::SPARUL version 2.200, released 6 August 2009.
 
 =head1 SYNOPSIS
 
@@ -39,7 +39,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200_01';
+	$VERSION	= '2.200';
 }
 
 ######################################################################

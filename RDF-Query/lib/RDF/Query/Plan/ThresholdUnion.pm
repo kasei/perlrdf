@@ -7,7 +7,7 @@ RDF::Query::Plan::ThresholdUnion - Executable query plan for unions.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::ThresholdUnion version 2.200_01, released XX July 2009.
+This document describes RDF::Query::Plan::ThresholdUnion version 2.200, released 6 August 2009.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200_01';
+	$VERSION	= '2.200';
 }
 
 ######################################################################

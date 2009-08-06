@@ -14,8 +14,8 @@
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.100.tar.gz> ;
 
         doap:Version    [
-                        doap:revision     "2.200_01" ;
-                        doap:created      "2009-07-XX" ;
+                        doap:revision     "2.200" ;
+                        doap:created      "2009-08-06" ;
                         ];
         asc:changes     [
                         asc:addition      "Added support for average aggregates, and fixed datatype support in aggregates." ;
