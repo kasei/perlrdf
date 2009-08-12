@@ -151,12 +151,16 @@ sub get_statements {
 	
 	my $dbh		= $self->dbh;
 	my $triple	= RDF::Trine::Statement->new( $subj, $pred, $obj );
+	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
 	my @vars	= $triple->referenced_variables;
 	
 	local($self->{context_variable_count})	= 0;
 	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
 	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
 	my $sth		= $dbh->prepare( $sql );
+	
 	$sth->execute();
 	
 	my $sub		= sub {
@@ -232,6 +236,8 @@ sub get_pattern {
 	my %args	= @_;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	$l->trace("get_pattern called for: " . $pattern->sse);
+	
 	if (my $o = $args{ orderby }) {
 		my @ordering	= @$o;
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
@@ -247,7 +253,6 @@ sub get_pattern {
 	my %vars	= map { $_ => 1 } @vars;
 	
 	my $sql		= $self->_sql_for_pattern( $pattern, $context, %args );
-	
 	$l->debug("get_pattern sql: $sql\n");
 	
 	my $sth		= $dbh->prepare( $sql );
@@ -1126,7 +1131,6 @@ sub make_private_predicate_view {
 	my $stable		= join('', $prefix, $oldpre, $id);
 	my $predlist	= join(', ', map { $self->_mysql_node_hash( $_ ) } (@preds));
 	my $sql			= "CREATE VIEW ${stable} AS SELECT * FROM ${oldtable} WHERE Predicate NOT IN (${predlist})";
-	warn $sql;
 	
 	my $dbh			= $self->dbh;
 	$dbh->do( $sql );
