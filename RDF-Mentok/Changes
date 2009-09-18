@@ -1,0 +1,6 @@
+Revision history for Perl extension RDF::Mentok.
+
+0.01  Thu Sep 17 17:37:50 2009
+	- original version; created by h2xs 1.23 with options
+		/usr/local/include/mentok/mentok.h -lmentok -n RDF::Mentok
+

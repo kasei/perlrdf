@@ -1,0 +1,10 @@
+Changes
+Makefile.PL
+MANIFEST
+Mentok.xs
+ppport.h
+README
+t/RDF-Mentok.t
+fallback/const-c.inc
+fallback/const-xs.inc
+lib/RDF/Mentok.pm
