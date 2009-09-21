@@ -26,7 +26,6 @@ WriteMakefile(
 					'LWP::UserAgent'						=> 0,
 					'LWPx::ParanoidAgent'					=> 0,
 					'Module::Install::Base'					=> 0,
-					'Net::OpenID::Consumer'					=> 0,
 					'RDF::Query'							=> 2,
 					'RDF::Trine'							=> 0,
 					'Scalar::Util'							=> 0,

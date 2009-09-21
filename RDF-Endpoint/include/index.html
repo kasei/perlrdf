@@ -3,7 +3,6 @@
 		<title>SPARQL</title>
 	</head>
 	<body>
-	<p id="login">[% login %]</p>
 	<form action="[% submit_url %]" method="get">
 		<textarea id="query" name="query" rows="10" cols="50">
 PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/>
@@ -14,6 +13,7 @@ WHERE {
 ORDER BY ?name
 </textarea><br/>
 		<select id="mime-type" name="mime-type">
+			<option value="">Result Format...</option>
 			<option label="HTML" value="text/html">HTML</option>
 			<option label="XML" value="text/xml">XML</option>
 			<option label="JSON" value="application/json">JSON</option>

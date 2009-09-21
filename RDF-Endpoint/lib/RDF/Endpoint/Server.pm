@@ -4,6 +4,8 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+use RDF::Endpoint::Error qw(:try);
+use Scalar::Util qw(reftype);
 use RDF::Endpoint;
 use base qw(HTTP::Server::Simple::CGI);
 
@@ -15,18 +17,20 @@ sub new_with_model {
 	my $prefix		= $args{ Prefix };
 	my $incpath		= $args{ IncludePath };
 	my $cgi			= $args{ CGI } || do { require CGI; CGI->new() };
-
+	
 	my $host		= $cgi->server_name;
 	my $hostname	= ($port == 80) ? $host : join(':', $host, $port);
 	my $self		= $class->SUPER::new( $port );
 	my $endpoint	= RDF::Endpoint->new_with_model(
 						$model,
 						IncludePath => $incpath,
-						AdminURL	=> "http://${hostname}/${prefix}admin/",
 						SubmitURL	=> "http://${hostname}/${prefix}sparql",
 					);
 	$self->{endpoint}	= $endpoint;
 	$self->{prefix}		= $prefix || '';
+	if (defined($args{ banner })) {
+		$self->{banner}		= $args{ banner };
+	}
 	return $self;
 }
 
@@ -52,12 +56,13 @@ sub new {
 						$pass,
 						$model,
 						IncludePath => $incpath,
-						AdminURL	=> "http://${hostname}/${prefix}admin/",
 						SubmitURL	=> "http://${hostname}/${prefix}sparql",
 					);
-	$endpoint->init();
 	$self->{endpoint}	= $endpoint;
 	$self->{prefix}		= $prefix || '';
+	if (defined($args{ banner })) {
+		$self->{banner}		= $args{ banner };
+	}
 	return $self;
 }
 
@@ -74,54 +79,42 @@ sub handle_request {
 	my $domain	= "http://${host}:${port}" . $prefix;
 	my $url		= $domain . $path;
 	
-	if ($path =~ qr'^/sparql') {
-		my $sparql	= $cgi->param('query');
+	my $stdout	= select();
+	my $content	= '';
+	my $sparql	= $cgi->param('query');
+	try {
 		if ($sparql) {
-			print "HTTP/1.1 200 OK\n";
-			my $content	= '';
 			open( my $fh, '>', \$content );
 			my $out	= select( $fh );
 			$endpoint->run_query( $cgi, $sparql );
 			select($out);
 			close($fh);
-			use bytes;
-			
-			print "Content-Length: " . length($content) . "\n";
-			print $content;
-		} else {
-			$self->error( 400, 'Bad Request', 'No query.' );
-		}
-	} elsif ($path =~ qr'^${prefix}/query/(\w+)') {
-		my $query	= $endpoint->run_saved_query( $cgi, $1 );
-	} else {
-		if ($path =~ qr</$>) {
-			my $url	= "${domain}${path}index.html";
-			$self->redir( 303, 'See Other', $url );
-		} elsif ($path =~ qr[^${prefix}/admin$]) {
-			# POSTing data for the admin page
-			$endpoint->handle_admin_post( $cgi, $host, $port, $prefix );
-		} elsif ($path =~ qr[^${prefix}/admin/]) {
-			if ($path =~ qr[^${prefix}/admin/index.html$]) {
-				$endpoint->admin_index( $cgi, $prefix );
-			} else {
-				$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
-			}
-		} elsif ($path =~ qr[^${prefix}/index.html$]) {
-			my $content	= '';
+		} elsif ($path =~ m#^/(sparql)?$#) {
 			open( my $fh, '>', \$content );
 			my $out	= select( $fh );
 			$endpoint->query_page( $cgi, $prefix );
 			select($out);
 			close($fh);
-			use bytes;
-			
-			print "HTTP/1.1 200 OK\n";
-			print "Content-Length: " . length($content) . "\n";
-			print $content;
 		} else {
-			$self->error( 403, 'Forbidden', 'You do not have permission to access this resource' );
+			my $url	= "${domain}/";
+			$self->redir( 303, 'See Other', $url );
 		}
-	}
+		
+		print "HTTP/1.1 200 OK\n";
+		print $content;
+	} catch RDF::Endpoint::Error::MalformedQuery with {
+		my $e		= shift;
+		select($stdout);
+		$self->error( 400, 'Bad Request', $e->text );
+	} catch RDF::Endpoint::Error::EncodingError with {
+		my $e		= shift;
+		select($stdout);
+		$self->error( 406, 'Not Acceptable', $e->text );
+	} except {	# this will catch RDF::Endpoint::Error::InternalError and any unknown exceptions
+		my $e		= shift;
+		select($stdout);
+		$self->error( 500, 'Internal Server Error', $e->text );
+	};
 }
 
 sub prefix {
@@ -148,6 +141,14 @@ sub redir {
 }
 
 sub print_banner {
+	my $self	= shift;
+	if (defined(my $b = $self->{banner})) {
+		if (reftype($b) eq 'CODE') {
+			$b->( $self );
+		} else {
+			print $b;
+		}
+	}
 	return;
 }
 

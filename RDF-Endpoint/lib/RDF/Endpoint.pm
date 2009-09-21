@@ -45,10 +45,12 @@ use File::Slurp;
 use URI::Escape;
 use Data::Dumper;
 use LWP::UserAgent;
-use Net::OpenID::Consumer;
+use HTTP::Negotiate qw(choose);
 
 use List::Util qw(first);
 use Scalar::Util qw(blessed);
+
+use RDF::Endpoint::Error qw(:try);
 
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::StatementFilter;
@@ -77,7 +79,6 @@ sub new {
 	my %args		= @_;
 	
 	my $incpath		= $args{ IncludePath } || './include';
-	my $adminurl	= $args{ AdminURL };
 	my $submiturl	= $args{ SubmitURL };
 	
 	my $store		= RDF::Trine::Store::DBI->new( $model, $dsn, $user, $pass );
@@ -104,23 +105,16 @@ sub new_with_model {
 	my %args		= @_;
 	
 	my $incpath		= $args{ IncludePath } || './include';
-	my $adminurl	= $args{ AdminURL };
 	my $submiturl	= $args{ SubmitURL };
 	
 	my $self		= bless( {
 						incpath		=> $incpath,
-						admin		=> $adminurl,
 						submit		=> $submiturl,
 						_model		=> $m,
 						_ua			=> LWP::UserAgent->new,
 					}, $class );
 	if (my $dbh = $args{dbh}) {
 		$self->{_dbh}	= $dbh;
-	}
-	$self->_load_endpoint_config;
-	
-	if (my $id = $args{ Identity }) {
-		$self->set_identity( $id );
 	}
 	
 	$self->{_ua}->agent( "RDF::Endpoint/${VERSION}" );
@@ -133,174 +127,48 @@ sub new_with_model {
 	return $self;
 }
 
-sub login_page {
-	my $self	= shift;
-	my $cgi		= shift;
-	
-	my $model	= $self->_model;
-	my $tt		= $self->_template;
-	my $file	= 'login.html';
-
-	print $cgi->header( -type => 'text/html; charset=utf-8' );
-	my $submit	= $self->submit_url;
-	
-	$tt->process( $file, {
-					submit_url	=> $submit,
-				} ) || die $tt->error();
-}
-
 sub query_page {
 	my $self	= shift;
 	my $cgi		= shift;
 	my $prefix	= shift;
 	
-	my $model	= $self->_model;
-	my $tt		= $self->_template;
-	my $file	= 'index.html';
-
-	print $cgi->header( -type => 'text/html; charset=utf-8' );
-	my $submit	= $self->submit_url;
+	my $variants = [
+		['html',	1.000, 'text/html', undef, undef, undef, 1],
+		['html',	1.000, 'application/xhtml+xml', undef, undef, undef, 1],
+		['rdf',		1.000, 'application/rdf+xml', undef, undef, undef, 1],
+	];
+	my $choice	= choose($variants) || 'html';
+#	warn "conneg prefers: $choice\n";
 	
-	my $login	= $self->_login_crumb;
-	my $content;
-	$tt->process( $file, {
-					submit_url	=> $submit,
-					login		=> $login,
-				}, \$content ) || die $tt->error();
-	print $content;
-}
-
-sub _login_crumb {
-	my $self	= shift;
-	my $submit	= $self->submit_url;
-	if (my $id = $self->get_identity) {
-		return qq<[Logged in as $id; <a href="${submit}?logout=1">Logout</a>.]>;
-	} else {
-		return qq<[<a href="${submit}?login=1">Login</a>]>;
-	}
-}
-
-sub handle_admin_post {
-	my $self	= shift;
-	my $cgi		= shift;
-	my $host	= shift;
-	my $port	= shift;
-	my $prefix	= shift;
-	my $model	= $self->_model;
-	
-	my $owner	= $cgi->param( 'owner_openid' );
-	if ($owner ne $self->owner_openid) {
-		$self->set_owner_openid( $owner );
-		return $self->redir( $cgi, 302, "Found", $self->submit_url );
-	}
-	
-	my $preds		= $cgi->param('priv_preds');
-	$self->update_priv_preds( $preds );
-	
-	my $auth		= $cgi->param('auth_query');
-	$self->update_auth_query( $auth );
-
-	$self->_load_endpoint_config;
-	
-	my @keys	= $cgi->param;
-	foreach my $key (grep { /^(add|delete)_/ } sort @keys) {
-		if ($key eq 'add_uri') {
-			my $url		= $cgi->param($key);
-			if ($url) {
-				$self->_add_uri( $url );
-			}
-		} elsif ($key =~ /^delete_<(.*)>$/) {
-			my $url	= $1;
-			my $ctx	= RDF::Trine::Node::Resource->new( $url );
-			$model->remove_statements( undef, undef, undef, $ctx );
-		}
+	if ($choice eq 'html') {
+		my $tt		= $self->_template;
+		my $file	= 'index.html';
+		my $submit	= $self->submit_url;
 		
-	}
-	$self->redir( $cgi, 302, "Found", $self->admin_url );
-}
-
-sub _add_uri {
-	my $self	= shift;
-	my $url		= shift;
-	my $ua		= $self->_agent;
-	my $resp	= $ua->get($url);
-	my $model	= $self->_model;
-	if ($resp->is_success) {
-		require RDF::Redland;
-		my $data		= $resp->content;
-		my $base		= $url;
-		my $format		= 'guess';
-		my $baseuri		= RDF::Redland::URI->new( $base );
-		my $basenode	= RDF::Trine::Node::Resource->new( $base );
-		my $parser		= RDF::Redland::Parser->new( $format );
-		my $stream		= $parser->parse_string_as_stream( $data, $baseuri );
-		while ($stream and !$stream->end) {
-			my $statement	= $stream->current;
-			my $stmt		= RDF::Trine::Statement->from_redland( $statement );
-			$model->add_statement( $stmt, $basenode );
-			$stream->next;
-		}
+		my $fh	= select();
+		print $cgi->header( -status => "200 OK", -type => 'text/html; charset=utf-8' );
+		$tt->process( $file, {
+						submit_url	=> $submit,
+					}, $fh ) || die $tt->error();
 	} else {
-		die $resp->status_line;
+		my $model	= $self->_model;
+		my $tt		= $self->_template;
+		my $file	= 'endpoint_description.rdf';
+		my $count	= $model->count_statements;
+		
+		my @extensions		= map { { url => $_ } } RDF::Query->supported_extensions;
+		my @functions		= map { { url => $_ } } RDF::Query->supported_functions;
+		print $cgi->header( -status => "200 OK", -type => 'text/plain; charset=utf-8' );
+		my $submit	= $self->submit_url;
+		
+		my $fh	= select();
+		$tt->process( $file, {
+			endpoint_url	=> $submit,
+			triples			=> $count,
+			functions		=> \@functions,
+			extensions		=> \@extensions,
+		}, $fh );
 	}
-}
-
-sub admin_index {
-	my $self	= shift;
-	my $cgi		= shift;
-	my $prefix	= shift;
-	
-	my $model	= $self->_model;
-	my $tt		= $self->_template;
-	my $file	= 'admin_index.html';
-
-	my @files;
-	my $stream	= $model->get_contexts;
-	while (my $c = $stream->next) {
-		my $uri		= $c->as_string;
-		my $count	= $model->count_statements( undef, undef, undef, $c );
-		push( @files, {
-			source			=> _html_escape($uri),
-			count			=> $count,
-			delete_field	=> $cgi->checkbox( -name => "delete_${uri}", -label => '', -checked => 0 ),
-		} );
-	}
-	
-	my $owner		= $self->owner_openid;
-	my $auth_query	= $self->raw_auth_query();
-	my $priv_preds	= join("\n", map { $_->uri_value } @{ $self->priv_preds });
-	warn 'owner: ' . $owner;
-	
-	print $cgi->header( -type => 'text/html; charset=utf-8' );
-	my $submit	= $self->admin_url;
-	$tt->process( $file, {
-		admin_submit_url	=> $submit,
-		files				=> \@files,
-		owner_openid		=> $owner,
-		priv_preds			=> $priv_preds,
-		auth_query			=> $auth_query,
-	} );
-}
-
-sub about {
-	my $self	= shift;
-	my $cgi		= shift;
-	
-	my $model	= $self->_model;
-	my $tt		= $self->_template;
-	my $file	= 'endpoint_description.rdf';
-	my $count	= $model->count_statements;
-	
-	my @extensions		= map { { url => $_ } } RDF::Query->supported_extensions;
-	my @functions		= map { { url => $_ } } RDF::Query->supported_functions;
-	print $cgi->header( -type => 'text/plain; charset=utf-8' );
-	my $submit	= $self->submit_url;
-	$tt->process( $file, {
-		endpoint_url	=> $submit,
-		triples			=> $count,
-		functions		=> \@functions,
-		extensions		=> \@extensions,
-	} );
 }
 
 sub run_query {
@@ -309,37 +177,44 @@ sub run_query {
 	my $sparql	= shift;
 	
 	my $model		= $self->_model;
-	my $http_accept	= $ENV{HTTP_ACCEPT} || 'text/html';
-	my @accept	= map { $_->[0] }
-					sort { $b->[1] <=> $a->[1] }
-						map { my ($t,$q) = split(/;q=/, $_); $q ||= 1; [ $t,$q ] }
-							sort { index($b, 'html') }
-								split(/,\s*/, $http_accept);
-	my %ok		= map { $_ => 1 } qw(text/plain text/xml application/rdf+xml application/sparql-results+json application/json text/html application/xhtml+xml application/sparql-results+xml);
-	if (my $t = $cgi->param('mime-type')) {
-		unshift( @accept, $t );
-	}
-	my @types	= (grep { exists($ok{ $_ }) } @accept);
 	
-	my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
+	my $variants = [
+		['html',			1.000, 'text/html', undef, undef, undef, 1],
+		['html-xhtml',		0.900, 'application/xhtml+xml', undef, undef, undef, 1],
+		['xml-sparqlres',	0.900, 'application/sparql-results+xml', undef, undef, undef, 1],
+		['json-sparqlres',	0.800, 'application/sparql-results+json', undef, undef, undef, 1],
+		['json-sparqlres',	0.800, 'application/json', undef, undef, undef, 1],
+		['xml-rdf',			0.900, 'application/rdf+xml', undef, undef, undef, 1],
+		['xml',				0.500, 'text/xml', undef, undef, undef, 1],
+		['xml',				0.500, 'application/xml', undef, undef, undef, 1],
+	];
+	
+	if (my $t = $cgi->param('mime-type')) {
+		$ENV{HTTP_ACCEPT}	= $t;
+	}
+	my @choices	= grep { $_->[1] > 0 } choose($variants);
+#	warn "conneg prefers: " . Dumper(\@choices) . "\n";
+	
+	my $query	= RDF::Query->new( $sparql, { lang => 'sparqlp', defines => { plan => 1 } } );
 	unless ($query) {
 		my $error	= RDF::Query->error;
-		return $self->error( $cgi, 400, 'Bad Request', $error );
+		throw RDF::Endpoint::Error::MalformedQuery -text => $error, -value => 400;
 	}
 	my $stream	= $query->execute( $model );
 	if ($stream) {
 		my $tt		= $self->_template;
 		my $file	= 'results.html';
-		my $type	= first {
-						(/xml/)
-							? 1
-							: (/json/)
-								? do { ($stream->isa('RDF::Trine::Iterator::Graph')) ? 0 : 1 }
-								: 1
-					} @types;
-		if (defined($type)) {
-			my %header_args	= ( '-X-Endpoint-Description' => $self->endpoint_description_url );
-			if ($type =~ /html/) {
+		
+		if ($stream->isa('RDF::Trine::Iterator::Graph')) {
+			# graph results can't be serialized as JSON
+			@choices	= grep { not m/^json/ } @choices;
+		}
+		
+		my $choice	= shift @choices;
+		if (ref($choice)) {
+			my $choice_name	= $choice->[0];
+			my %header_args	= ( '-X-Endpoint-Description' => $self->submit_url );
+			if ($choice_name =~ /html/) {
 				local($Template::Directive::WHILE_MAX)	= 1_000_000_000;
 				print $cgi->header( -type => "text/html; charset=utf-8", %header_args );
 				my $total	= 0;
@@ -372,11 +247,15 @@ sub run_query {
 					feed_url	=> $self->feed_url( $cgi ),
 				}, \$content ) or warn $tt->error();
 				print $content;
-			} elsif ($type =~ /xml/) {
+			} elsif ($choice_name =~ /xml/) {
+				my $type	= ($stream->isa('RDF::Trine::Iterator::Graph'))
+							? 'application/rdf+xml'
+							: 'application/sparql-results+xml';
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				my $outfh	= select();
 				$stream->print_xml( $outfh );
-			} elsif ($type =~ /json/) {
+			} elsif ($choice_name =~ /json/) {
+				my $type	= 'application/sparql-results+json';
 				print $cgi->header( -type => "$type; charset=utf-8", %header_args );
 				print $stream->as_json;
 			} else {
@@ -386,11 +265,11 @@ sub run_query {
 			}
 			
 		} else {
-			return $self->error( $cgi, 406, 'Not Acceptable', 'No acceptable result encoding was found matching the request' );
+			throw RDF::Endpoint::Error::EncodingError -text => 'No acceptable result encoding was found matching the request', -value => 406;
 		}
 	} else {
 		my $error	= RDF::Query->error;
-		return $self->error( $cgi, 400, 'Bad Request', $error );
+		throw RDF::Endpoint::Error::InternalError -text => $error, -value => 500;
 	}
 }
 
@@ -465,27 +344,6 @@ END
 	}
 }
 
-sub owner_openid {
-	my $self	= shift;
-	return $self->{config}{owner_openid};
-}
-
-sub auth_query {
-	my $self	= shift;
-	my $id		= shift || '[%USER_OPENID%]';
-	my $query	= $self->raw_auth_query;
-	$query		=~ s/\[%USER_OPENID%\]/<$id>/g;
-	my $owner	= $self->owner_openid;
-	$query		=~ s/\[%OWNER_OPENID%\]/<$owner>/g;
-	return $query;
-}
-
-sub raw_auth_query {
-	my $self	= shift;
-	my $query	= $self->{config}{auth_query};
-	return $query;
-}
-
 sub priv_preds {
 	my $self	= shift;
 	return $self->{config}{priv_preds} || [];
@@ -518,62 +376,9 @@ sub update_priv_preds {
 	}
 }
 
-sub _load_endpoint_config {
-	my $self	= shift;
-	my $dbh		= $self->dbh;
-	if ($dbh) {
-		my ($owner, $auth)	= $dbh->selectrow_array( 'SELECT owner_openid, auth_query FROM Endpoint WHERE ID = 1' );
-		$self->{config}{owner_openid}	= $owner;
-		$self->{config}{auth_query}		= $auth;
-		
-		my $sth		= $dbh->prepare( 'SELECT URI FROM Endpoint_PrivatePredicates WHERE endpoint = 1' );
-		$sth->execute();
-		
-		my @preds;
-		while (my ($uri) = $sth->fetchrow) {
-			push( @preds, RDF::Trine::Node::Resource->new( $uri ) );
-		}
-		$self->{config}{priv_preds}	= [ sort @preds ];
-		return $owner;
-	} else {
-		return;
-	}
-}
-
-sub set_owner_openid {
-	my $self	= shift;
-	my $id		= shift;
-	my $dbh		= $self->dbh;
-	my $sth		= $dbh->prepare( 'UPDATE Endpoint SET owner_openid = ? WHERE ID = 1' );
-	$sth->execute( $id );
-}
-
-sub endpoint_description_url {
-	my $self	= shift;
-	my $submit	= $self->submit_url;
-	return "${submit}?about=1"
-}
-
-sub admin_url {
-	my $self	= shift;
-	return $self->{admin};
-}
-
 sub submit_url {
 	my $self	= shift;
 	return $self->{submit};
-}
-
-sub set_identity {
-	my $self	= shift;
-	my $id		= shift;
-	$self->{_identity}	= $id;
-}
-
-sub get_identity {
-	my $self	= shift;
-	my $id	= $self->{_identity};
-	return $id;
 }
 
 sub _template {

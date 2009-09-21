@@ -6,12 +6,10 @@ no warnings 'redefine';
 
 use CGI;
 use RDF::Endpoint;
+use RDF::Endpoint::Error qw(:try);
 use Data::Dumper;
 use LWPx::ParanoidAgent;
 use Digest::SHA1 qw(sha1_hex);
-
-my $secret			= q<G"dEMXI9N,:d'J;A>;
-my $salt			= q<$*C@>;
 
 sub new {
 	my $class		= shift;
@@ -32,13 +30,6 @@ sub new {
 
 	my %endargs;
 	
-	if (my $data = $cgi->cookie( -name => 'identity' )) {
-		my ($id, $hash)	= split('>', $data, 2);
-		if ($hash eq $self->_id_hash( $id )) {
-			$endargs{ Identity }	= $id;
-		}
-	}
-	
 	my $endpoint	= RDF::Endpoint->new(
 						$dsn,
 						$user,
@@ -46,10 +37,8 @@ sub new {
 						$model,
 						IncludePath => $incpath,
 						SubmitURL	=> "http://${hostname}" . $cgi->url( -absolute => 1 ),
-						AdminURL	=> "http://${hostname}" . join('?', $cgi->url( -absolute => 1 ), 'admin=1'),
 						%endargs,
 					);
-	$endpoint->init();
 	$self->{endpoint}	= $endpoint;
 	$self->{prefix}		= $prefix || '';
 	return $self;
@@ -67,61 +56,21 @@ sub run {
 	my $path	= $absurl;
 	$path		=~ s/$prefix//;
 	
-	my $csr = Net::OpenID::Consumer->new(
-		ua		=> LWPx::ParanoidAgent->new,
-#		cache	=> Some::Cache->new,
-		args	=> $cgi,
-		consumer_secret => $secret,
-	);
-	
 	no warnings 'uninitialized';
 	my $host	= $cgi->server_name;
 	my $port	= $cgi->server_port;
 
-
-	if ($cgi->param('openid.check')) {
-		if (my $setup_url = $csr->user_setup_url) {
-			# redirect/link/popup user to $setup_url
-			warn "setup_url: $setup_url";
-			$self->redir( $cgi, 303, 'See Other', $setup_url );
-		} elsif ($csr->user_cancel) {
-			# restore web app state to prior to check_url
-			warn "restoring on cancel: $url";
-			$self->redir( $cgi, 303, 'See Other', $url );
-		} elsif (my $vident = $csr->verified_identity) {
-			my $verified_url = $vident->url;
-			warn "You are $verified_url !";
-			$endpoint->set_identity( $verified_url );
-			$self->redir( $cgi, 303, 'See Other', $url, $verified_url );
+	try {
+		if (my $sparql = $cgi->param('query')) {
+			$endpoint->run_query( $cgi, $sparql );
 		} else {
-			die "Error validating identity: " . $csr->err;
+			$endpoint->query_page( $cgi, $prefix );
 		}
-	} elsif (my $id = $cgi->param('identity')) {
-		my $claimed_identity = $csr->claimed_identity($id);
-		if ($claimed_identity) {
-			my $check_url = $claimed_identity->check_url(
-				return_to  => "${url}?openid.check=1",
-#				trust_root => "http://example.com/",
-			);
-			$self->redir( $cgi, 303, 'See Other', $check_url );
-		} else {
-			$endpoint->login_page( $cgi );
-		}
-	} elsif ($cgi->param('login')) {
-		$endpoint->login_page( $cgi );
-	} elsif (my $sparql = $cgi->param('query')) {
-		$endpoint->run_query( $cgi, $sparql );
-	} elsif (my $q = $cgi->param('queryname')) {
-		my $query	= $endpoint->run_saved_query( $cgi, $q );
-	} elsif ($cgi->param('admin')) {
-		if ($cgi->param('submit')) {
-			$endpoint->handle_admin_post( $cgi, $host, $port, $prefix );
-		} else {
-			$endpoint->admin_index( $cgi, $prefix );
-		}
-	} else {
-		$endpoint->query_page( $cgi, $prefix );
-	}
+	} except {
+		my $e	= shift;
+		my $v	= $e->value;
+		$self->error( $e->value, '', $e->text );
+	};
 }
 
 sub prefix {
@@ -146,28 +95,8 @@ sub redir {
 	my $code	= shift;
 	my $message	= shift;
 	my $url		= shift;
-	my $id		= shift;
-	my %args;
-	if ($id) {
-		my $hash			= $id . '>' . $self->_id_hash( $id );
-		my $cookie			= $cgi->cookie(
-								-name		=> 'identity',
-								-value		=> $hash,
-								-path		=> '/',
-								-expires	=> '+1h',
-							);
-		$args{ -cookie }	= $cookie;
-	}
-	print $cgi->header( -status => "${code} ${message}", -Location => $url, %args );
+	print $cgi->header( -status => "${code} ${message}", -Location => $url );
 	return;
-}
-
-sub _id_hash {
-	my $self	= shift;
-	my $id		= shift;
-	$id			=~ tr/A-Za-z/N-ZA-Mn-za-m/;
-	my $hash	= sha1_hex( $salt . $id );
-	return $hash;
 }
 
 1;

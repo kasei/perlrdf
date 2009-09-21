@@ -3,10 +3,24 @@
 use strict;
 use warnings;
 no warnings 'redefine';
-use lib qw(lib ../RDF-Query/lib ../RDF-Store-DBI/lib ../RDF-SPARQLResults/lib);
+use lib qw(lib ../RDF-Query/lib ../RDF-Trine/lib);
 
+use Log::Log4perl;
+use RDF::Query;
 use RDF::Query::Util;
 use RDF::Endpoint::Server;
+
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.store.dbi	= TRACE, Screen
+# #	log4perl.category.rdf.query.util		= DEBUG, Screen
+# #	log4perl.category.rdf.query.plan.thresholdunion		= TRACE, Screen
+# 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr			= 0
+# 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 
 unless (@ARGV) {
 	print STDERR <<"END";
@@ -32,7 +46,7 @@ $ENV{TMPDIR}	= '/tmp';
 my $cgi	= CGI->new;
 my $port		= 9680;
 my $announce	= 0;
-while (@ARGV and $ARGV[0] =~ /^-[pb]/) {
+while (@ARGV and $ARGV[0] =~ /^-[pb]$/) {
 	if ($ARGV[0] eq '-p') {
 		shift(@ARGV);
 		$port	= shift(@ARGV);
@@ -47,6 +61,7 @@ my $s	= RDF::Endpoint::Server->new_with_model( $model,
 			Port		=> $port,
 			Prefix		=> '',
 			CGI			=> $cgi,
+			banner		=> sub { print "You can connect to your server at http://localhost:" . $_[0]->port . "/\n" },
 		);
 
 if ($announce) {
@@ -65,4 +80,3 @@ if ($announce) {
 }
 
 my $pid	= $s->run();
-print "Endpoint started as [$pid]\n";
