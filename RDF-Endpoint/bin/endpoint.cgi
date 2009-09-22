@@ -5,6 +5,7 @@ use warnings;
 no warnings 'redefine';
 
 use lib qw(/Users/samofool/data/prog/dist/perlrdf/RDF-Endpoint/lib);
+use lib qw(lib ../RDF-Query/lib ../RDF-Trine/lib);
 
 use CGI;
 use RDF::Endpoint::CGI;
