@@ -55,6 +55,7 @@ use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
 use RDF::Query::Algebra::Project;
 use RDF::Query::Algebra::Not;
+use RDF::Query::Algebra::Exists;
 
 use constant SSE_TAGS	=> {
 	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',
