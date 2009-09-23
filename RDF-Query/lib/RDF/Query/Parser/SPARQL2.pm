@@ -86,6 +86,55 @@ sub __handle_GraphPatternNotTriples {
 	}
 }
 
+# [57] BuiltInCall ::= 'NOT'? 'EXISTS' GroupGraphPattern
+sub _BuiltInCall_test {
+	my $self	= shift;
+	return 1 if $self->_test(qr/(NOT\s+)?EXISTS/i);
+	return $self->SUPER::_BuiltInCall_test;
+}
+
+sub _BuiltInCall {
+	my $self	= shift;
+	if ($self->_test(qr/(NOT\s+)?EXISTS/i)) {
+		my $op	= $self->_eat(qr/(NOT\s+)?EXISTS/i);
+		$self->__consume_ws_opt;
+		$self->_GroupGraphPattern;
+		my $cont	= $self->_remove_pattern;
+		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
+		my $func	= $self->new_function_expression($iri, $cont);
+		$self->_add_stack( $func );
+	} else {
+		$self->SUPER::_BuiltInCall;
+		my $op		= $self->_eat( qr/\w+/ );
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
+		$self->__consume_ws_opt;
+		$self->_eat('(');
+		$self->__consume_ws_opt;
+		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/i) {
+			### one-arg functions that take an expression
+			$self->_Expression;
+			my ($expr)	= splice(@{ $self->{stack} });
+			$self->_add_stack( $self->new_function_expression($iri, $expr) );
+		} elsif ($op =~ /^(LANGMATCHES|sameTerm)$/i) {
+			### two-arg functions that take expressions
+			$self->_Expression;
+			my ($arg1)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			$self->_eat(',');
+			$self->__consume_ws_opt;
+			$self->_Expression;
+			my ($arg2)	= splice(@{ $self->{stack} });
+			$self->_add_stack( $self->new_function_expression($iri, $arg1, $arg2) );
+		} else {
+			### BOUND(Var)
+			$self->_Var;
+			my ($expr)	= splice(@{ $self->{stack} });
+			$self->_add_stack( $self->new_function_expression($iri, $expr) );
+		}
+		$self->__consume_ws_opt;
+		$self->_eat(')');
+	}
+}
 
 # ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
 sub _ExistsGraphPattern_test {
