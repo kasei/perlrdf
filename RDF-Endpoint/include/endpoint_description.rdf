@@ -9,6 +9,11 @@
 @prefix exif: <http://www.kanzaki.com/ns/exif#> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix void: <http://rdfs.org/ns/void#> .
+
+[] a void:Dataset ;
+	void:sparqlEndpoint <[% endpoint_url %]> ;
+	void:numberOfTriples [% triples %] .
 
 # definition of an endpoint
 [] a sd:Service ;

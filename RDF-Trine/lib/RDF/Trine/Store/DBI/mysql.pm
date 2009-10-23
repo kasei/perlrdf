@@ -67,6 +67,9 @@ sub add_statement {
 	my $dbh		= $self->dbh;
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
+	unless (blessed($stmt) and $stmt->can('nodes')) {
+		Carp::confess "No statement passed to add_statement";
+	}
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
 		$self->_add_node( $n );

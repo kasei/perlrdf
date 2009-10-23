@@ -381,6 +381,9 @@ sub remove_statement {
 	my $context	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
+	unless (blessed($stmt)) {
+		Carp::confess "no statement passed to remove_statement";
+	}
 	my @nodes	= $stmt->nodes;
 	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
 	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes, $context);
