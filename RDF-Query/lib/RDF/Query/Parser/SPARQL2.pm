@@ -89,7 +89,7 @@ sub __handle_GraphPatternNotTriples {
 # [57] BuiltInCall ::= 'NOT'? 'EXISTS' GroupGraphPattern
 sub _BuiltInCall_test {
 	my $self	= shift;
-	return 1 if $self->_test(qr/(NOT\s+)?EXISTS/i);
+	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
 	return $self->SUPER::_BuiltInCall_test;
 }
 
@@ -102,6 +102,13 @@ sub _BuiltInCall {
 		my $cont	= $self->_remove_pattern;
 		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
 		my $func	= $self->new_function_expression($iri, $cont);
+		$self->_add_stack( $func );
+	} elsif ($self->_test(qr/COALESCE/)) {
+		my $op	= $self->_eat(qr/COALESCE/i);
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:coalesce' );
+		$self->_ArgList;
+		my @args	= splice(@{ $self->{stack} });
+		my $func	= $self->new_function_expression( $iri, @args );
 		$self->_add_stack( $func );
 	} else {
 		$self->SUPER::_BuiltInCall;

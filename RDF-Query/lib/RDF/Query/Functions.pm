@@ -716,6 +716,16 @@ $RDF::Query::functions{"sparql:exists"}	= sub {
 # 	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 };
 
+$RDF::Query::functions{"sparql:coalesce"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	my @args	= @_;
+	foreach my $node (@args) {
+		if (blessed($node)) {
+			return $node;
+		}
+	}
+};
 
 our $GEO_DISTANCE_LOADED;
 BEGIN {

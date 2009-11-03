@@ -156,5 +156,48 @@ END
 			ok( not($ok), 'not dateTime-less-than-or-equal' );
 		}
 		
+		{
+			# coalesce
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql2' } );
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+				SELECT * WHERE {
+					?p a foaf:Person .
+					OPTIONAL {
+						?p foaf:aimChatID ?aim .
+					}
+					FILTER(COALESCE(?aim,"unknown") = "unknown")
+				}
+END
+			
+			my $count	= 0;
+			my $stream	= $query->execute( $model );
+			while (my $row = $stream->next()) {
+				$count++;
+			}
+			is($count, 3, 'coalesce simple');
+		}
+		
+		{
+			# coalesce
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql2' } );
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+				SELECT (COALESCE(?aim) AS ?name) WHERE {
+					?p a foaf:Person .
+					OPTIONAL {
+						?p foaf:aimChatID ?aim .
+					}
+				}
+END
+			warn RDF::Query->error unless ($query);
+			
+			my $count	= 0;
+			my $stream	= $query->execute( $model );
+			while (my $row = $stream->next()) {
+				warn $row;
+				$count++;
+			}
+			is($count, 4, 'coalesce type-error');
+		}
+		
 	}
 }
