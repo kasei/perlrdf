@@ -27,6 +27,7 @@ WriteMakefile(
 	VERSION_FROM		=> 'lib/RDF/Query.pm',
 	AUTHOR				=> 'Gregory Todd Williams <gwilliams@cpan.org>',
 	PREREQ_PM			=> {
+					'Data::UUID'				=> 0,
 					'Digest::SHA1'				=> 0,
 					'DateTime::Format::W3CDTF'	=> 0,
 					'Error'						=> 0,

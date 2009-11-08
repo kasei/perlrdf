@@ -27,6 +27,7 @@ recommends:
   Geo::Distance: 0.09
   Bloom::Filter: 1
 requires:
+  Data::UUID: 0
   DateTime::Format::W3CDTF: 0
   Digest::SHA1: 0
   Error: 0
@@ -41,4 +42,4 @@ requires:
   URI: 0
 resources:
   homepage: http://kasei.us/code/rdf-query/
-  Repository: http://github.com/kasei/perlrdf/
+  repository: http://github.com/kasei/perlrdf/
