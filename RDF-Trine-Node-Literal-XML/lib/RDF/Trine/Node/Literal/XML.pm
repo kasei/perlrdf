@@ -24,7 +24,7 @@ use XML::LibXML;
 
 our ($VERSION, %XML_FRAGMENTS);
 BEGIN {
-	$VERSION	= '0.001_01';
+	$VERSION	= '0.1';
 }
 
 ######################################################################
@@ -151,6 +151,7 @@ __END__
 
 =head1 AUTHOR
 
- Gregory Todd Williams <gwilliams@cpan.org>
+First created by Gregory Todd Williams <gwilliams@cpan.org>, modfied
+and maintained by Kjetil Kjernsmo <kjetilk@cpan.org>
 
 =cut
