@@ -35,39 +35,22 @@ BEGIN {
 
 =cut
 
-=item C<new ( $string, $lang, $datatype )>
+=item C<< new ( $node [ , $lang, $datatype ] ) >>
 
-Returns a new XML Literal object. This method follows the same API as the
+=item C<< new ( $string ) >>
+
+Returns a new XML Literal object. This method can be used in two different ways:
+It can either be passed a string or an XML::LibXML node. 
+
+In the case of passing a string, this method follows the same API as the
 RDF::Trine::Node::Literal constructor, but:
 
-* $string must be a valid XML fragment
-* $lang will be ignored, and set to undef
+* $string must be a well-balanced XML fragment
+* $lang will be ignored
 * $datatype will be ignored and set to 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'
 
-If these conditions are not met, this method throws a RDF::Trine::Error exception.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	my $literal	= shift;
-	
-	my $self	= $class->SUPER::_new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
-	
-	my $parser = XML::LibXML->new();
-	my $doc = eval { $parser->parse_balanced_chunk( $literal ) };
-	if ($@) {
-		throw RDF::Trine::Error -text => "$@";
-	}
-	
-	$XML_FRAGMENTS{ refaddr( $self ) }	= $doc;
-	return $self;
-}
-
-=item C<< new_from_node ( $node ) >>
-
-Returns a new XML Literal object using an XML::LibXML type C<< $node >>. 
-The Node may be one of these types or a subclass thereof:
+In the case of using a XML::LibXML node C<< $node >>, 
+the Node may be one of these types or a subclass thereof:
 
   * XML::LibXML::Document
   * XML::LibXML::DocumentFragment
@@ -75,30 +58,49 @@ The Node may be one of these types or a subclass thereof:
   * XML::LibXML::CDATASection
   * XML::LibXML::NodeList
 
+If the string is not a valid XML fragment, and the C<< $node >> is not
+of one of the above types, this method throws a RDF::Trine::Error exception.
 
 =cut
 
-sub new_from_node {
+sub new {
 	my $class	= shift;
-	my $node	= shift;
+	my $input	= shift;
 
-	unless (_check_type($node)) {
-	  throw RDF::Trine::Error -text => ref($node) . " is not a valid type.";
-	}
-
-	my $literal;
-	if ($node->isa('XML::LibXML::NodeList')) {
-	  foreach my $context ($node->get_nodelist) {
-	    $literal .= $context->toString;
+	my $typeok = _check_type($input); # First check if we have a valid node
+	if ($typeok) { # Then use it
+	  my $literal;
+	  if ($input->isa('XML::LibXML::NodeList')) {
+	    foreach my $context ($input->get_nodelist) {
+	      $literal .= $context->toString;
+	    }
+	  } else {
+	    $literal = $input->toString;
 	  }
-	} else {
-	  $literal = $node->toString;
+	  
+	  my $self	= $class->SUPER::new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
+	  $XML_FRAGMENTS{ refaddr( $self ) }	= $input;
+	  return $self;
 	}
 
-	my $self	= $class->SUPER::new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
-	$XML_FRAGMENTS{ refaddr( $self ) }	= $node;
-	return $self;
+	if (ref($input) && (! $typeok)) { # Then it is neither a string nor a good type
+	  throw RDF::Trine::Error -text => ref($input) . " is not a valid type.";
+	}
+	
+        # Last chance is that it is a string with valid XML
+        my $parser = XML::LibXML->new();
+        my $doc = eval { $parser->parse_balanced_chunk( $input ) };
+        if ($@) { # Didn't parse, so invalid XML string
+	  throw RDF::Trine::Error -text => "$@";
+	}
+
+        my $self = $class->SUPER::_new( $input, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
+
+        $XML_FRAGMENTS{ refaddr( $self ) }	= $doc;
+        return $self;
 }
+
+
 
 =item C<< xml_element >>
 
@@ -115,9 +117,15 @@ sub xml_element {
 	return $node;
 }
 
+#sub literal_value {
+#  my $self = shift;
+
+
+
 # Check if we have an acceptable type
 sub _check_type {
   my $type = shift;
+  return 0 unless blessed($type);
   return ($type->isa('XML::LibXML::Document') ||
 	  $type->isa('XML::LibXML::DocumentFragment') ||
 	  $type->isa('XML::LibXML::Element') ||
