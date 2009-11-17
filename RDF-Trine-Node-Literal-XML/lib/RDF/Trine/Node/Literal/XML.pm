@@ -41,8 +41,8 @@ Returns a new XML Literal object. This method follows the same API as the
 RDF::Trine::Node::Literal constructor, but:
 
 * $string must be a valid XML fragment
-* $lang must be undef
-* $datatype must be 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'
+* $lang will be ignored, and set to undef
+* $datatype will be ignored and set to 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'
 
 If these conditions are not met, this method throws a RDF::Trine::Error exception.
 
@@ -51,56 +51,80 @@ If these conditions are not met, this method throws a RDF::Trine::Error exceptio
 sub new {
 	my $class	= shift;
 	my $literal	= shift;
-	my $lang	= shift;
-	my $dt		= shift;
 	
-	unless (defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-		throw RDF::Trine::Error -text => "Cannot create an XMLLiteral object without rdf:XMLLiteral datatype";
-	}
-	
-	my $self	= $class->SUPER::_new( $literal, $lang, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
+	my $self	= $class->SUPER::_new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
 	
 	my $parser = XML::LibXML->new();
-	my $doc = eval { $parser->parse_string( "<rdf-wrapper>${literal}</rdf-wrapper>" ) };
+	my $doc = eval { $parser->parse_balanced_chunk( $literal ) };
 	if ($@) {
 		throw RDF::Trine::Error -text => "$@";
 	}
 	
-	$XML_FRAGMENTS{ refaddr( $self ) }	= $doc->documentElement;
+	$XML_FRAGMENTS{ refaddr( $self ) }	= $doc;
 	return $self;
 }
 
-=item C<< new_from_element ( $el ) >>
+=item C<< new_from_node ( $node ) >>
 
-Returns a new XML Literal object using the XML::LibXML::Element C<< $el >>.
+Returns a new XML Literal object using an XML::LibXML type C<< $node >>. 
+The Node may be one of these types or a subclass thereof:
+
+  * XML::LibXML::Document
+  * XML::LibXML::DocumentFragment
+  * XML::LibXML::Element
+  * XML::LibXML::CDATASection
+  * XML::LibXML::NodeList
+
 
 =cut
 
-sub new_from_element {
+sub new_from_node {
 	my $class	= shift;
-	my $el		= shift;
-	my $literal	= $el->toString;
+	my $node	= shift;
+
+	unless (_check_type($node)) {
+	  throw RDF::Trine::Error -text => ref($node) . " is not a valid type.";
+	}
+
+	my $literal;
+	if ($node->isa('XML::LibXML::NodeList')) {
+	  foreach my $context ($node->get_nodelist) {
+	    $literal .= $context->toString;
+	  }
+	} else {
+	  $literal = $node->toString;
+	}
+
 	my $self	= $class->SUPER::new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
-	$XML_FRAGMENTS{ refaddr( $self ) }	= $el;
+	$XML_FRAGMENTS{ refaddr( $self ) }	= $node;
 	return $self;
 }
 
 =item C<< xml_element >>
 
-Returns the XML::LibXML::Element object for the XML Literal. If this XML Literal
-object was constructed with C<< new >>, this element contains the '<rdf-wrapper>'
-parent-XML-element, otherwise it is the element object passed to C<< new_from_element >>.
+Returns the XML::LibXML node for the XML Literal.
 
 =cut
 
 sub xml_element {
 	my $self	= shift;
-	my $el		= $XML_FRAGMENTS{ refaddr( $self ) };
-	unless (blessed($el)) {
+	my $node	= $XML_FRAGMENTS{ refaddr( $self ) };
+	unless (blessed($node)) {
 		throw RDF::Trine::Error -text => "No XML element found for object";
 	}
-	return $el;
+	return $node;
 }
+
+# Check if we have an acceptable type
+sub _check_type {
+  my $type = shift;
+  return ($type->isa('XML::LibXML::Document') ||
+	  $type->isa('XML::LibXML::DocumentFragment') ||
+	  $type->isa('XML::LibXML::Element') ||
+	  $type->isa('XML::LibXML::CDATASection') ||
+	  $type->isa('XML::LibXML::NodeList') );
+}
+
 
 sub DESTROY {
 	my $self	= shift;
