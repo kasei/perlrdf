@@ -24,7 +24,7 @@ use XML::LibXML;
 
 our ($VERSION, %XML_FRAGMENTS);
 BEGIN {
-	$VERSION	= '0.1';
+	$VERSION	= '0.11';
 }
 
 ######################################################################

@@ -6,3 +6,5 @@
 .patch$
 ~$
 .bak$
+.old$
+.tar.gz$
