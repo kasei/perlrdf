@@ -55,6 +55,59 @@ sub add_statement {
 	return $self->_store->add_statement( @_ );
 }
 
+=item C<< add_hashref ( $hashref [, $context] ) >>
+
+Add triples represented in an RDF/JSON-like manner to the model.
+
+=cut
+
+sub add_hashref {
+	my $self	   = shift;
+	my $index   = shift;
+	my $context = shift;
+	
+	foreach my $s (keys %$index) {
+		my $ts = ( $s =~ /^_:(.*)$/ ) ?
+		         RDF::Trine::Node::Blank->new($1) :
+					RDF::Trine::Node::Resource->new($s);
+		
+		foreach my $p (keys %{ $index->{$s} }) {
+			my $tp = RDF::Trine::Node::Resource->new($p);
+			
+			foreach my $O (@{ $index->{$s}->{$p} }) {
+				my $to;
+				
+				# $O should be a hashref, but we can do a little error-correcting.
+				unless (ref $O) {
+					if ($O =~ /^_:/) {
+						$O = { 'value'=>$O, 'type'=>'bnode' };
+					} elsif ($O =~ /^[a-z0-9._\+-]{1,12}:\S+$/i) {
+						$O = { 'value'=>$O, 'type'=>'uri' };
+					} elsif ($O =~ /^(.*)\@([a-z]{2})$/) {
+						$O = { 'value'=>$1, 'type'=>'literal', 'lang'=>$2 };
+					} else {
+						$O = { 'value'=>$O, 'type'=>'literal' };
+					}
+				}
+				
+				if (lc $O->{'type'} eq 'literal') {
+					$to = RDF::Trine::Node::Literal->new(
+						$O->{'value'}, $O->{'lang'}, $O->{'datatype'});
+				} else {
+					$to = ( $O->{'value'} =~ /^_:(.*)$/ ) ?
+						RDF::Trine::Node::Blank->new($1) :
+						RDF::Trine::Node::Resource->new($O->{'value'});
+				}
+				
+				if ( $ts && $tp && $to ) {
+					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
+					$self->add_statement($st, $context);
+				}
+			}
+		}
+	}
+}
+
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the rdf store.
@@ -140,6 +193,43 @@ sub as_stream {
 	my $self	= shift;
 	my $stream	= $self->get_statements( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
 	return $stream;
+}
+
+=item C<< as_hashref >>
+
+Returns a hashref representing the model in an RDF/JSON-like manner.
+
+=cut
+
+sub as_hashref {
+	my $self	= shift;
+	my $stream	= $self->as_stream;
+	my $index = {};
+	while (my $statement = $stream->next) {
+		
+		my $s = $statement->subject->is_blank ? 
+			('_:'.$statement->subject->blank_identifier) :
+			$statement->subject->uri ;
+		my $p = $statement->predicate->uri ;
+		
+		my $o = {};
+		if ($statement->object->is_literal) {
+			$o->{'type'}     = 'literal';
+			$o->{'value'}    = $statement->object->literal_value;
+			$o->{'lang'}     = $statement->object->literal_value_language
+				if $statement->object->has_language;
+			$o->{'datatype'} = $statement->object->literal_datatype
+				if $statement->object->has_datatype;
+		} else {
+			$o->{'type'}  = $statement->object->is_blank ? 'bnode' : 'uri';
+			$o->{'value'} = $statement->object->is_blank ? 
+				('_:'.$statement->object->blank_identifier) :
+				$statement->object->uri ;
+		}
+
+		push @{ $index->{$s}->{$p} }, $o;
+	}
+	return $index;
 }
 
 sub _store {

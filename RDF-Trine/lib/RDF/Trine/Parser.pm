@@ -38,6 +38,7 @@ BEGIN {
 
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
+use RDF::Trine::Parser::RDFJSON;
 
 our %types;
 
