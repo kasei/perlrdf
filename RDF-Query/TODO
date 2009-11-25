@@ -1,0 +1,17 @@
+Bugs:
+	Fix nested GRAPH graph patterns (currently disallowed?)
+
+SPARQL2:
+	Filter form of NOT EXISTS
+	Aggregates
+		Port aggregate support from SPARQLP parser
+		Implement HAVING clauses
+	Project Expressions
+		Align syntax with draft spec
+	Subqueries
+		...
+	Basic Federated Queries
+		Port SERVICE support from SPARQLP parser
+	SPARQL Update
+		grammar support
+		algebra and plan implementations
