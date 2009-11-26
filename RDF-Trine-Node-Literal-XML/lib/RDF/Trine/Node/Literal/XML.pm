@@ -24,7 +24,7 @@ use XML::LibXML;
 
 our ($VERSION, %XML_FRAGMENTS);
 BEGIN {
-	$VERSION	= '0.11';
+	$VERSION	= '0.12';
 }
 
 ######################################################################
@@ -72,12 +72,19 @@ sub new {
 	  my $literal;
 	  if ($input->isa('XML::LibXML::NodeList')) {
 	    foreach my $context ($input->get_nodelist) {
-	      $literal .= $context->toString;
+	      if ($context->ownerDocument) {
+		$literal .= $context->toStringEC14N;
+	      } else {
+		$literal .= $context->toString;
+	      }
 	    }
 	  } else {
-	    $literal = $input->toString;
+	    if ($input->ownerDocument) {
+	      $literal = $input->toStringEC14N;
+	    } else {
+	      $literal = $input->toString;
+	    }
 	  }
-	  
 	  my $self	= $class->SUPER::new( $literal, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
 	  $XML_FRAGMENTS{ refaddr( $self ) }	= $input;
 	  return $self;
