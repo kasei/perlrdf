@@ -10,6 +10,28 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.112.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.111.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.112" ;
+                        doap:created      "2009-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Parser::RDFJSON package (patch from tobyink)." ;
+                        asc:addition    "Added RDF::Trine::Serializer::RDFJSON package (patch from tobyink)." ;
+                        asc:addition    "Added add_hashref and as_hashref methods to RDF::Trine::Model (patch from tobyink)." ;
+                        asc:addition    "Added tests for RDF/JSON parsing/serializing (patch from tobyink)." ;
+                        asc:addition    "Added logging code to RDF::Trine::Store::DBI." ;
+                        asc:addition    "Added as_ntriples methods to RDF::Trine::Node and subclasses for proper NTriples formatting." ;
+                        asc:update      "Updated RDF::Trine docs to mention the RDF/XML parser (good catch by tobyink)." ;
+                        asc:update      "Changed ::Store::DBI::get_statements to skip (with warning) past ill-formed statements with IDs that don't appear in any of the value tables." ;
+                        asc:update      "Updated RDF::Trine::Serializer::NTriples to call as_ntriples on node objects during serialization." ;
+                        asc:update      "Updated bin/rdf_store_serialize.pl to print in NTriples format." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.111.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.110.tar.gz> ;
