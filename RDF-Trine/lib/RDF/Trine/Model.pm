@@ -59,6 +59,8 @@ sub add_statement {
 
 Add triples represented in an RDF/JSON-like manner to the model.
 
+See C<as_hashref> for full documentation of the hashref format.
+
 =cut
 
 sub add_hashref {
@@ -198,6 +200,46 @@ sub as_stream {
 =item C<< as_hashref >>
 
 Returns a hashref representing the model in an RDF/JSON-like manner.
+
+A graph like this (in Turtle):
+
+  @prefix ex: <http://example.com/> .
+  
+  ex:subject1
+    ex:predicate1
+      "Foo"@en ,
+      "Bar"^^ex:datatype1 .
+  
+  _:bnode1
+    ex:predicate2
+      ex:object2 ;
+    ex:predicate3 ;
+      _:bnode3 .
+
+Is represented like this as a hashref:
+
+  {
+    "http://example.com/subject1" => {
+      "http://example.com/predicate1" => [
+        { 'type'=>'literal', 'value'=>"Foo", 'lang'=>"en" },
+        { 'type'=>'literal', 'value'=>"Bar", 'datatype'=>"http://example.com/datatype1" },
+      ],
+    },
+    "_:bnode1" => {
+      "http://example.com/predicate2" => [
+        { 'type'=>'uri', 'value'=>"http://example.com/object2" },
+      ],
+      "http://example.com/predicate2" => [
+        { 'type'=>'bnode', 'value'=>"_:bnode3" },
+      ],
+    },
+  }
+
+Note that the type of subjects (resource or blank node) is indicated
+entirely by the convention of starting blank nodes with "_:".
+
+This hashref structure is compatible with RDF/JSON and with the ARC2
+library for PHP.
 
 =cut
 

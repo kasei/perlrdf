@@ -50,7 +50,7 @@ BEGIN {
 
 =item C<< new >>
 
-Returns a new 
+Returns a new serializer object.
 
 =cut
 
