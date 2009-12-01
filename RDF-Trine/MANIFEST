@@ -496,6 +496,7 @@ t/parser-rdfxml-w3c.t
 t/parser-turtle.t
 t/pod-coverage.t
 t/pod.t
+t/rdfjson.t
 t/statement-serialization.t
 t/statement.t
 t/store-context.t
