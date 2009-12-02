@@ -103,6 +103,16 @@ lives_ok {
   isa_ok( $el, 'XML::LibXML::NodeList' );
 }
 
+{
+  my $parser = XML::LibXML->new();
+  my $doc = $parser->parse_string( '<root xmlns="http://example.org/ns"><bar>baz</bar><foo>dahut</foo></root>');
+  my $l	= RDF::Trine::Node::Literal::XML->new( $doc );
+  isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
+  is( $l->literal_value, '<root xmlns="http://example.org/ns"><bar>baz</bar><foo>dahut</foo></root>', 'document expected literal value, default namespace' );
+  my $el = $l->xml_element;
+  isa_ok( $el, 'XML::LibXML::Document' );
+}
+
 
 
 
