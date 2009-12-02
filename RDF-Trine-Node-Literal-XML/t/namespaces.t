@@ -92,5 +92,18 @@ lives_ok {
   isa_ok( $el, 'XML::LibXML::NodeList' );
 }
 
+{
+  my $parser = XML::LibXML->new();
+  my $doc = $parser->parse_string( '<ex:root xmlns:ex="http://example.org/ns"><ex:bar>baz</ex:bar><foo>dahut</foo></ex:root>');
+  my $nodes = $doc->findnodes('/ex:root/*');
+  my $l	= RDF::Trine::Node::Literal::XML->new( $nodes );
+  isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
+  is( $l->literal_value, '<ex:bar xmlns:ex="http://example.org/ns">baz</ex:bar><foo>dahut</foo>', 'nodelist expected literal value' );
+  my $el = $l->xml_element;
+  isa_ok( $el, 'XML::LibXML::NodeList' );
+}
+
+
+
 
 done_testing;

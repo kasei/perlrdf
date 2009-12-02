@@ -84,4 +84,39 @@ lives_ok {
 }
 
 
+
+{
+  my $parser = XML::LibXML->new();
+  my $doc = $parser->parse_string( '<ex:root xmlns:ex="http://example.org/ns"><ex:bar xml:lang="en">baz</ex:bar><ex:foo>dahut</ex:foo></ex:root>');
+  my $nodes = $doc->findnodes('/ex:root/*');
+  my $l	= RDF::Trine::Node::Literal::XML->new( $nodes, 'tlh' );
+  isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
+  is( $l->literal_value, '<ex:bar xmlns:ex="http://example.org/ns" xml:lang="tlh">baz</ex:bar><ex:foo xmlns:ex="http://example.org/ns" xml:lang="tlh">dahut</ex:foo>', 'nodelist expected literal value with lang overridden and namespaces' );
+  my $el = $l->xml_element;
+  isa_ok( $el, 'XML::LibXML::NodeList' );
+}
+
+
+{
+  my $parser = XML::LibXML->new();
+  my $doc = $parser->parse_string( '<ex:root xmlns:ex="http://example.org/ns"><ex:bar xml:lang="en">baz</ex:bar><ex:foo>dahut</ex:foo></ex:root>');
+  my $l	= RDF::Trine::Node::Literal::XML->new( $doc, 'tlh' );
+  isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
+  is( $l->literal_value, '<ex:root xmlns:ex="http://example.org/ns" xml:lang="tlh"><ex:bar xml:lang="en">baz</ex:bar><ex:foo>dahut</ex:foo></ex:root>', 'Document expected literal value with lang on root and namespaces' );
+  my $el = $l->xml_element;
+  isa_ok( $el, 'XML::LibXML::Document' );
+}
+
+{
+  my $parser = XML::LibXML->new();
+  my $doc = $parser->parse_balanced_chunk( '<ex:root xmlns:ex="http://example.org/ns"><ex:bar xml:lang="en">baz</ex:bar><ex:foo>dahut</ex:foo></ex:root>');
+  my $l	= RDF::Trine::Node::Literal::XML->new( $doc, 'tlh' );
+  isa_ok( $l, 'RDF::Trine::Node::Literal::XML' );
+  is( $l->literal_value, '<ex:root xmlns:ex="http://example.org/ns" xml:lang="tlh"><ex:bar xml:lang="en">baz</ex:bar><ex:foo>dahut</ex:foo></ex:root>', 'Documentfragment expected literal value with lang on root and namespaces' );
+  my $el = $l->xml_element;
+  isa_ok( $el, 'XML::LibXML::DocumentFragment' );
+}
+
+
+
 done_testing;
