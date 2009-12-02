@@ -15,16 +15,15 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Node::Literal);
 
 use RDF::Trine::Error qw(:try);
-use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak confess);
-use XML::LibXML;
+use XML::LibXML qw(:ns);
 
 ######################################################################
 
 our ($VERSION, %XML_FRAGMENTS);
 BEGIN {
-	$VERSION	= '0.12';
+	$VERSION	= '0.13';
 }
 
 ######################################################################
@@ -40,16 +39,16 @@ BEGIN {
 =item C<< new ( $string ) >>
 
 Returns a new XML Literal object. This method can be used in two different ways:
-It can either be passed a string or an XML::LibXML node. 
+It can either be passed a string or an XML::LibXML node.
 
 In the case of passing a string, this method follows the same API as the
 RDF::Trine::Node::Literal constructor, but:
 
 * $string must be a well-balanced XML fragment
-* $lang will be ignored
+* $lang is optional, but if a language code is present it will be used as the value of C<< xml:lang >> attribute(s) on the root XML element(s) of the literal. If the element already has an C<< xml:lang >> attribute it will be overwritten.
 * $datatype will be ignored and set to 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral'
 
-In the case of using a XML::LibXML node C<< $node >>, 
+In the case of using a XML::LibXML node C<< $node >>,
 the Node may be one of these types or a subclass thereof:
 
   * XML::LibXML::Document
@@ -66,12 +65,16 @@ of one of the above types, this method throws a RDF::Trine::Error exception.
 sub new {
 	my $class	= shift;
 	my $input	= shift;
+	my $lang	= shift;
 
 	my $typeok = _check_type($input); # First check if we have a valid node
 	if ($typeok) { # Then use it
 	  my $literal;
 	  if ($input->isa('XML::LibXML::NodeList')) {
 	    foreach my $context ($input->get_nodelist) {
+	      if ($lang) {
+		$context->setAttributeNS(XML_XML_NS, 'lang', $lang);
+	      }
 	      if ($context->ownerDocument) {
 		$literal .= $context->toStringEC14N;
 	      } else {
@@ -79,6 +82,22 @@ sub new {
 	      }
 	    }
 	  } else {
+	    if ($lang) {
+	      if ($input->isa('XML::LibXML::Element')) {
+		$input->setAttributeNS(XML_XML_NS, 'lang', $lang);
+	      }
+	      elsif ($input->isa('XML::LibXML::Document')) {
+		my $root = $input->documentElement();
+		$root->setAttributeNS(XML_XML_NS, 'lang', $lang);
+	      }
+	      elsif ($input->isa('XML::LibXML::DocumentFragment')) {
+		foreach my $context ($input->childNodes) {
+		  $context->setAttributeNS(XML_XML_NS, 'lang', $lang);
+		}
+	      } else {
+		carp ref($input) . " doesn't support xml:lang attributes";
+	      }
+	    }
 	    if ($input->ownerDocument) {
 	      $literal = $input->toStringEC14N;
 	    } else {
@@ -99,6 +118,13 @@ sub new {
         my $doc = eval { $parser->parse_balanced_chunk( $input ) };
         if ($@) { # Didn't parse, so invalid XML string
 	  throw RDF::Trine::Error -text => "$@";
+	}
+
+	if ($lang) {
+	  foreach my $context ($doc->childNodes) {
+	    $context->setAttributeNS(XML_XML_NS, 'lang', $lang);
+	  }
+	  $input = $doc->toString;
 	}
 
         my $self = $class->SUPER::_new( $input, undef, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral' );
@@ -123,11 +149,6 @@ sub xml_element {
 	}
 	return $node;
 }
-
-#sub literal_value {
-#  my $self = shift;
-
-
 
 # Check if we have an acceptable type
 sub _check_type {
