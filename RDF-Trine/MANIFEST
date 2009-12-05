@@ -38,6 +38,7 @@ lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
 lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
+lib/RDF/Trine/Serializer/RDFXML.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store.pm
@@ -497,6 +498,7 @@ t/parser-turtle.t
 t/pod-coverage.t
 t/pod.t
 t/rdfjson.t
+t/rdfxml.t
 t/statement-serialization.t
 t/statement.t
 t/store-context.t
