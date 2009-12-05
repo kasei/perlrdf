@@ -59,6 +59,9 @@ VERSION HISTORY
 
   Version 0.112 (2009-XX-XX)
 
+     * Added RDF/XML serializer.
+     * Added serialize_iterator_to_file and serialize_iterator_to_string methods to NTriples serializer.
+     * Added _serialize_bounded_description method to NTriples serializer.
      * Added RDF::Trine::Parser::RDFJSON package (patch from tobyink).
      * Added RDF::Trine::Serializer::RDFJSON package (patch from tobyink).
      * Added add_hashref and as_hashref methods to RDF::Trine::Model (patch from tobyink).

@@ -19,6 +19,9 @@
                         doap:created      "2009-XX-XX" ;
                         ];
         asc:changes     [
+                        asc:addition    "Added RDF/XML serializer." ;
+                        asc:addition    "Added serialize_iterator_to_file and serialize_iterator_to_string methods to NTriples serializer." ;
+                        asc:addition    "Added _serialize_bounded_description method to NTriples serializer." ;
                         asc:addition    "Added RDF::Trine::Parser::RDFJSON package (patch from tobyink)." ;
                         asc:addition    "Added RDF::Trine::Serializer::RDFJSON package (patch from tobyink)." ;
                         asc:addition    "Added add_hashref and as_hashref methods to RDF::Trine::Model (patch from tobyink)." ;
@@ -51,7 +54,7 @@
                         asc:update      "Removed unnecessary call to blessed() in RDF::Trine::Statement." ;
                         asc:update      "Removed unused RDF::Trine::Promise class." ;
                         asc:update      "RDF::Trine now loads RDF::Trine::Store." ;
-                        asc:update      "Removed TODO labeling of tests in t/model-filter.t.' ;
+                        asc:update      "Removed TODO labeling of tests in t/model-filter.t." ;
                         ] .
 
 
