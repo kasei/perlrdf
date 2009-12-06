@@ -1,4 +1,4 @@
-use Test::More tests => 183;
+use Test::More tests => 207;
 use Test::Exception;
 
 use strict;
@@ -94,6 +94,21 @@ foreach my $store (@$stores) {
 			is_deeply( [ $stream->sorted_by ], ['name', 'ASC'], 'results sort order' );
 			my $count	= 0;
 			my @expect	= ('Eve', 'Gregory Todd Williams');
+			while (my $b = $stream->next) {
+				isa_ok( $b, 'HASH' );
+				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+				my $name	= shift(@expect);
+				is( $b->{name}->literal_value, $name, 'name pattern' );
+				$count++;
+			}
+			is( $count, 2, 'expected result count (2 people)' );
+		}
+
+		{
+			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ qw(name DESC p ASC) ] );
+			is_deeply( [ $stream->sorted_by ], ['name', 'DESC', 'p', 'ASC'], 'results sort order' );
+			my $count	= 0;
+			my @expect	= ('Gregory Todd Williams', 'Eve');
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
 				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );

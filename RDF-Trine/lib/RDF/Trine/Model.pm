@@ -29,6 +29,7 @@ BEGIN {
 use Scalar::Util qw(blessed);
 use Log::Log4perl;
 use RDF::Trine::Node;
+use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 
 =item C<< new ( @stores ) >>
@@ -157,9 +158,19 @@ sub get_statements {
 	return $self->_store->get_statements( @_ );
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
+=item C<< get_pattern ( $bgp [, $context] [, %args ] ) >>
 
 Returns a stream object of all bindings matching the specified graph pattern.
+
+If C<< $context >> is given, restricts BGP matching to only quads with the
+C<< $context >> value.
+
+C<< %args >> may contain an 'orderby' key-value pair to request a specific
+ordering based on variable name. The value for the 'orderby' key should be an
+ARRAY reference containing variable name and direction ('ASC' or 'DESC') tuples.
+A valid C<<%args>> hash, therefore, might look like
+C<< C<< orderby => [qw(name ASC)] >> (corresponding to a SPARQL-like request to
+'ORDER BY ASC(?name)').
 
 =cut
 
@@ -193,8 +204,10 @@ Returns an iterator object containing every statement in the model.
 
 sub as_stream {
 	my $self	= shift;
-	my $stream	= $self->get_statements( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
-	return $stream;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	return $stream->as_statements( qw(s p o) );
 }
 
 =item C<< as_hashref >>

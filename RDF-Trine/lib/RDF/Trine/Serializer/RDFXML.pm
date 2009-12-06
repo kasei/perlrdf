@@ -107,10 +107,82 @@ sub serialize_iterator_to_file {
 	my $fh		= shift;
 	my $iter	= shift;
 	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
-	while (my $st = $iter->next) {
-		print {$fh} $self->_statement_as_string( $st );
+	
+	my @statements	= $iter->next;
+	if (@statements) {
+		my $st	= shift(@statements);
+		my @samesubj;
+		push(@samesubj, $st);
+		my $subj	= $st->subject;
+		while (my $row = $iter->next) {
+			if ($row->subject->equal( $subj )) {
+				push(@samesubj, $row);
+			} else {
+				push(@statements, $row);
+				last;
+			}
+		}
+		
+		print {$fh} $self->_statements_same_subject_as_string( @samesubj );
 	}
+	
 	print {$fh} qq[</rdf:RDF>\n];
+}
+
+sub _statements_same_subject_as_string {
+	my $self		= shift;
+	my @statements	= @_;
+	return unless (@statements);
+	my $s			= $statements[0]->subject;
+	
+	my $id;
+	if ($s->is_blank) {
+		my $b	= $s->blank_identifier;
+		$id	= qq[rdf:nodeID="$b"];
+	} else {
+		my $i	= $s->uri_value;
+		$id	= qq[rdf:about="$i"];
+	}
+	
+	my $counter	= 1;
+	my %namespaces	= ('http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf');
+	my $string	= '';
+	foreach my $st (@statements) {
+		my (undef, $p, $o)	= $st->nodes;
+		my ($ns,$ln)	= $self->_split_predicate( $p );
+		unless (exists $namespaces{ $ns }) {
+			$namespaces{ $ns }	= 'ns' . $counter++;
+		}
+		my $prefix	= $namespaces{ $ns };
+		if ($o->is_literal) {
+			my $lv		= $o->literal_value;
+			$lv			=~ s/&/&amp;/g;
+			$lv			=~ s/</&lt;/g;
+			my $lang	= $o->literal_value_language;
+			my $dt		= $o->literal_datatype;
+			if ($lang) {
+				$string	.= qq[\t<${prefix}:$ln xml:lang="${lang}">${lv}</$ln>\n];
+			} elsif ($dt) {
+				$string	.= qq[\t<${prefix}:$ln rdf:datatype="${dt}">${lv}</$ln>\n];
+			} else {
+				$string	.= qq[\t<${prefix}:$ln>${lv}</$ln>\n];
+			}
+		} elsif ($o->is_blank) {
+			my $b	= $o->blank_identifier;
+			$string	.= qq[\t<${prefix}:$ln rdf:nodeID="$b"/>\n];
+		} else {
+			my $u	= $o->uri_value;
+			$string	.= qq[\t<${prefix}:$ln rdf:resource="$u"/>\n];
+		}
+	}
+	
+	$string	.= qq[</rdf:Description>\n];
+	
+	# rdf namespace is already defined in the <rdf:RDF> tag, so ignore it here
+	delete $namespaces{ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' };
+	
+	my $namespaces	= join(' ', map { my $ns = $namespaces{$_}; qq[xmlns:${ns}="$_"] } sort { $namespaces{$a} cmp $namespaces{$b} } (keys %namespaces));
+	return qq[<rdf:Description ${namespaces} $id>\n] . $string;
 }
 
 sub _statement_as_string {

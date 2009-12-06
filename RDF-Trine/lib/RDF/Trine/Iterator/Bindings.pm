@@ -529,6 +529,24 @@ sub as_string {
 	}
 }
 
+=item C<< as_statements ( @names ) >>
+
+=cut
+
+sub as_statements {
+	my $self	= shift;
+	my @names	= @_;
+	my $sub		= sub {
+		my $row	= $self->next;
+		return undef unless (defined $row);
+		my $statement	= (@names == 3)
+					? RDF::Trine::Statement->new( @{ $row }{@names} )
+					: RDF::Trine::Statement::Quad->new( @{ $row }{@names} );
+		return $statement;
+	};
+	return RDF::Trine::Iterator::Graph->new( $sub )
+}
+
 =item C<< print_xml ( $fh, $max_size ) >>
 
 Prints an XML serialization of the stream data to the filehandle $fh.
