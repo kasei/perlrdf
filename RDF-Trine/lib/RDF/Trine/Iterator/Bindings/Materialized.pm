@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.112_02
+This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.112_03
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use Scalar::Util qw(blessed reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112_02';
+	$VERSION	= '0.112_03';
 }
 
 =item C<< new ( \@results, \@names, %args ) >>

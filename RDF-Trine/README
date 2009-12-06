@@ -59,6 +59,7 @@ VERSION HISTORY
 
   Version 0.112 (2009-XX-XX)
 
+     * Skip some failing tests when RDF::Trine::Node::Literal::XML is loaded.
      * Added RDF/XML serializer.
      * Added serialize_iterator_to_file and serialize_iterator_to_string methods to NTriples serializer.
      * Added _serialize_bounded_description method to NTriples serializer.

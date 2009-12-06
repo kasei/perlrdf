@@ -32,6 +32,7 @@
                         asc:update      "Changed ::Store::DBI::get_statements to skip (with warning) past ill-formed statements with IDs that don't appear in any of the value tables." ;
                         asc:update      "Updated RDF::Trine::Serializer::NTriples to call as_ntriples on node objects during serialization." ;
                         asc:update      "Updated bin/rdf_store_serialize.pl to print in NTriples format." ;
+                        asc:update      "Skip some failing tests when RDF::Trine::Node::Literal::XML is loaded." ;
                         ] .
 
 
