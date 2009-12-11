@@ -77,7 +77,7 @@ sub serialize_model_to_file {
 	my $model  = shift;
 	my $opts   = shift;
 	my $string = to_json($model->as_hashref, $opts);
-	print {$file} $string . " .\n";
+	print {$file} $string;
 }
 
 =item C<< serialize_model_to_string ( $model [,\%json_options] ) >>
@@ -110,6 +110,12 @@ http://n2.talis.com/wiki/RDF_JSON_Specification
 
  Toby Inkster <tobyink@cpan.org>
  Gregory Williams <gwilliams@cpan.org>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2009 Toby Inkster. All rights reserved. This program is free
+software; you can redistribute it and/or modify it under the same terms as Perl
+itself.
 
 =cut
 
