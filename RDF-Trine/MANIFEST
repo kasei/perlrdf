@@ -37,6 +37,7 @@ lib/RDF/Trine/Parser/RDFXML.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
 lib/RDF/Trine/Serializer/NTriples.pm
+lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
 lib/RDF/Trine/Serializer/RDFXML.pm
 lib/RDF/Trine/Statement.pm
@@ -493,6 +494,7 @@ t/namespace-uri.t
 t/node-resource-i18n.t
 t/node-serialization.t
 t/node.t
+t/ntriples-canonical.t
 t/parser-rdfxml-w3c.t
 t/parser-turtle.t
 t/pod-coverage.t
