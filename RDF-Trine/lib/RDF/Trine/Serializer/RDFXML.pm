@@ -149,7 +149,13 @@ sub _statements_same_subject_as_string {
 	my $string	= '';
 	foreach my $st (@statements) {
 		my (undef, $p, $o)	= $st->nodes;
-		my ($ns,$ln)	= $p->qname;
+		my ($ns, $ln);
+		try {
+			($ns,$ln)	= $p->qname;
+		} catch RDF::Trine::Error with {
+			my $uri	= $p->uri_value;
+			throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
+		};
 		unless (exists $namespaces{ $ns }) {
 			$namespaces{ $ns }	= 'ns' . $counter++;
 		}
@@ -200,7 +206,13 @@ sub _statement_as_string {
 		$id	= qq[rdf:about="$i"];
 	}
 	$string	.= qq[<rdf:Description $id>\n];
-	my ($ns,$ln)	= $p->qname;
+	my ($ns, $ln);
+	try {
+		($ns,$ln)	= $p->qname;
+	} catch RDF::Trine::Error with {
+		my $uri	= $p->uri_value;
+		throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
+	};
 	if ($o->is_literal) {
 		my $lv		= $o->literal_value;
 		$lv			=~ s/&/&amp;/g;
