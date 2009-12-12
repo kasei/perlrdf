@@ -287,6 +287,24 @@ sub as_hashref {
 	return $index;
 }
 
+=item C<< objects_for_predicate_list ( $subject, @predicates ) >>
+
+=cut
+
+sub objects_for_predicate_list {
+	my $self	= shift;
+	my $node	= shift;
+	my @preds	= shift;
+	my @objects;
+	foreach my $p (@preds) {
+		my $iter	= $self->get_statements( $node, $p );
+		while (my $s = $iter->next) {
+			push( @objects, $s->object );
+		}
+	}
+	return @objects;
+}
+
 sub _store {
 	my $self	= shift;
 	return $self->{store};
