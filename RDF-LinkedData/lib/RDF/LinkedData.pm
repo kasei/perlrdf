@@ -2,6 +2,10 @@
 
 RDF::LinkedData - mod_perl handler class for serving RDF as linked data
 
+=head1 METHODS
+
+=over 4
+
 =cut
 
 package RDF::LinkedData;
@@ -11,18 +15,16 @@ use warnings;
 
 use Data::Dumper;
 use Apache2::Request;
+use Scalar::Util qw(blessed);
 use HTTP::Negotiate qw(choose);
 use URI::Escape qw(uri_escape);
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
+use RDF::Trine 0.113;
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
 
 use Error qw(:try);
-
-=head1 METHODS
-
-=over 4
 
 =item C<< handler >> ( $apache_req )
 
@@ -93,7 +95,6 @@ sub run {
 	my $self	= shift;
 	my $r		= $self->request;
 	
-	
 	my $uri		= $r->uri;
 	my $base	= $self->base;
 	my $model	= $self->model;
@@ -138,10 +139,29 @@ sub run {
 					return OK;
 				}
 			} else {
+				my $title		= $self->_title( $node );
+				my $desc		= $self->_description( $node );
+				my $description	= sprintf( "<table>%s</table>\n", join("\n\t\t", map { sprintf( '<tr><td>%s</td><td>%s</td></tr>', @$_ ) } @$desc) );
 				$r->content_type('text/html');
 				$r->print(<<"END");
-Page for &lt;$iri&gt;<br/>
-URI: &lt;$uri&gt;<br/>
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
+	 "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<title>${title}</title>
+</head>
+<body xmlns:foaf="http://xmlns.com/foaf/0.1/">
+
+<h1>${title}</h1>
+<hr/>
+
+<div>
+	${description}
+</div>
+
+</body></html>
 END
 				return OK;
 			}
@@ -159,5 +179,103 @@ END
 	}
 }
 
+sub _title {
+	my $self	= shift;
+	my $node	= shift;
+	my $model	= $self->model;
+	my $name	= RDF::Trine::Node::Resource->new( 'http://xmlns.com/foaf/0.1/name' );
+	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+	my $title	= RDF::Trine::Node::Resource->new( 'http://purl.org/dc/elements/1.1/title' );
+	my @names	= $model->objects_for_predicate_list( $node, $name, $title, $label );
+	foreach my $n (@names) {
+		if ($n->is_literal) {
+			return $n->literal_value;
+		}
+	}
+	return $node->uri_value;
+}
+
+sub _description {
+	my $self	= shift;
+	my $node	= shift;
+	my $model	= $self->model;
+	my $iter	= $model->get_statements( $node );
+	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+	my @desc;
+	while (my $st = $iter->next) {
+		my $p	= $st->predicate;
+		my @pn	= $model->objects_for_predicate_list( $p, $label );
+		next unless (@pn);
+		my $pn	= shift(@pn);
+		my $ps	= $self->_html_node_value( $pn );
+		
+		my $obj	= $st->object;
+		my $os	= $self->_html_node_value( $obj, $p );
+		
+		push(@desc, [$ps, $os]);
+	}
+	return \@desc;
+}
+
+sub _html_node_value {
+	my $self		= shift;
+	my $n			= shift;
+	my $rdfapred	= shift;
+	my $qname		= '';
+	my $xmlns		= '';
+	if ($rdfapred) {
+		try {
+			my ($ns, $ln)	= $rdfapred->qname;
+			$xmlns	= qq[xmlns:ns="${ns}"];
+			$qname	= qq[ns:$ln];
+		};
+	}
+	return '' unless (blessed($n));
+	if ($n->is_literal) {
+		my $l	= _escape( $n->literal_value );
+		if ($qname) {
+			return qq[<span $xmlns property="${qname}">$l</span>];
+		} else {
+			return $l;
+		}
+	} elsif ($n->is_resource) {
+		my $uri		= _escape( $n->uri_value );
+		my $title	= _escape( $self->_title( $n ) );
+		
+		if ($qname) {
+			return qq[<a $xmlns rel="${qname}" href="${uri}">$title</a>];
+		} else {
+			return qq[<a href="${uri}">$title</a>];
+		}
+	} else {
+		return $n->as_string;
+	}
+}
+
+sub _escape {
+	my $l	= shift;
+	for ($l) {
+		s/&/&amp;/g;
+		s/</&lt;/g;
+		s/"/&quot;/g;
+	}
+	return $l;
+}
 
 1;
+
+__END__
+
+=back
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
