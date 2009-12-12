@@ -149,7 +149,7 @@ sub _statements_same_subject_as_string {
 	my $string	= '';
 	foreach my $st (@statements) {
 		my (undef, $p, $o)	= $st->nodes;
-		my ($ns,$ln)	= $self->_split_predicate( $p );
+		my ($ns,$ln)	= $p->qname;
 		unless (exists $namespaces{ $ns }) {
 			$namespaces{ $ns }	= 'ns' . $counter++;
 		}
@@ -200,7 +200,7 @@ sub _statement_as_string {
 		$id	= qq[rdf:about="$i"];
 	}
 	$string	.= qq[<rdf:Description $id>\n];
-	my ($ns,$ln)	= $self->_split_predicate( $p );
+	my ($ns,$ln)	= $p->qname;
 	if ($o->is_literal) {
 		my $lv		= $o->literal_value;
 		$lv			=~ s/&/&amp;/g;
@@ -278,24 +278,6 @@ sub __serialize_bounded_description {
 		}
 	}
 	return $string;
-}
-
-sub _split_predicate {
-	my $self	= shift;
-	my $p		= shift;
-	my $uri		= $p->uri_value;
-	
-	my $nameStartChar	= qr<([A-Za-z:_]|[\x{C0}-\x{D6}]|[\x{D8}-\x{D8}]|[\x{F8}-\x{F8}]|[\x{200C}-\x{200C}]|[\x{37F}-\x{1FFF}][\x{200C}-\x{200C}]|[\x{2070}-\x{2070}]|[\x{2C00}-\x{2C00}]|[\x{3001}-\x{3001}]|[\x{F900}-\x{F900}]|[\x{FDF0}-\x{FDF0}]|[\x{10000}-\x{10000}])>;
-	my $nameChar		= qr<$nameStartChar|-|[.]|[0-9]|\x{B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]>;
-	my $lnre			= qr<((${nameStartChar})($nameChar)*)>;
-	if ($uri =~ m/${lnre}$/) {
-		my $ln	= $1;
-		my $ns	= substr($uri, 0, length($uri)-length($ln));
-#		warn "QName: " . Dumper([$ns,$ln]);
-		return ($ns, $ln);
-	} else {
-		throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
-	}
 }
 
 1;
