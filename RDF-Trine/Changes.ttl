@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.112" ;
-                        doap:created      "2009-XX-XX" ;
+                        doap:created      "2009-12-12" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF/XML serializer." ;

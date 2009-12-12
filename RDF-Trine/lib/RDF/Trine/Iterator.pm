@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.112_03.
+This document describes RDF::Trine::Iterator version 0.112.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.112_03';
+	$VERSION	= '0.112';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);

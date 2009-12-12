@@ -57,7 +57,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.112 (2009-XX-XX)
+  Version 0.112 (2009-12-12)
 
      * Skip some failing tests when RDF::Trine::Node::Literal::XML is loaded.
      * Added RDF/XML serializer.
