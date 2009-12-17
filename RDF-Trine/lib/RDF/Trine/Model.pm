@@ -289,12 +289,14 @@ sub as_hashref {
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
 
+...
+
 =cut
 
 sub objects_for_predicate_list {
 	my $self	= shift;
 	my $node	= shift;
-	my @preds	= shift;
+	my @preds	= @_;
 	my @objects;
 	foreach my $p (@preds) {
 		my $iter	= $self->get_statements( $node, $p );
