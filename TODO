@@ -1,17 +1,48 @@
-Bugs:
-	Fix nested GRAPH graph patterns (currently disallowed?)
-
-SPARQL2:
-	Filter form of NOT EXISTS
-	Aggregates
-		Port aggregate support from SPARQLP parser
-		Implement HAVING clauses
-	Project Expressions
-		Align syntax with draft spec
-	Subqueries
-		...
-	Basic Federated Queries
-		Port SERVICE support from SPARQLP parser
-	SPARQL Update
-		grammar support
-		algebra and plan implementations
+RDF::Query
+	RDFa support for FROM clauses [kasei]
+	Track SPARQL 1.1 Query [kasei]
+		Aggregates
+			Port aggregate support from SPARQLP parser
+			Implement HAVING clauses
+		Project Expressions
+			Align syntax with draft spec
+		Basic Federated Queries
+			Port SERVICE support from SPARQLP parser
+	Fix nested GRAPH graph patterns (currently disallowed?) [kasei]
+	Implement SPARQL 1.1 Update
+	SPARQL 1.1 Property Paths
+RDF::Trine
+	Parsers
+		Proper URL parsing based on mime types
+		Guess parser based on filename/content sniffing
+		RDFa [tobyink]
+		XRD [tobyink]
+		TriX [tobyink]
+		GRDDL [tobyink]
+		jsonGRDDL [tobyink]
+		eRDF [tobyink]
+		OpenURL COinS [tobyink]
+		Microformats [tobyink]
+		HTML [tobyink]
+		TriG
+	Serializers
+		Standardize serializer API and turn it into POD in RDF::Trine::Serializer
+		Pretty print RDF/XML [tobyink or kasei]
+		Pretty print Turtle [tobyink]
+		TriX [tobyink]
+		TriG
+		RDFa (refactor from RDF::LinkedData) [kasei]
+	Exporters
+		vCard [tobyink]
+		jCard [tobyink]
+		iCal [tobyink]
+		KML [tobyink]
+		M3U [tobyink]
+		Atom [tobyink]
+RDF::Endpoint
+	Clean up and release to CPAN [kasei]
+	Implement SPARQL 1.1 Service Description
+RDF::LinkedData
+	Rename to RDF::LinkedData::Handler (or something similar to denote mod_perl) [kasei]
+	Clean up and release to CPAN [kasei]
+	Implement SPARQL 1.1 HTTP RDF Update
