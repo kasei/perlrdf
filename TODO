@@ -13,7 +13,7 @@ RDF::Query
 	SPARQL 1.1 Property Paths
 RDF::Trine
 	Parsers
-		Proper URL parsing based on mime types
+		Proper URL parsing based on mime types [kasei]
 		Guess parser based on filename/content sniffing
 		RDFa [tobyink]
 		XRD [tobyink]
@@ -41,7 +41,7 @@ RDF::Trine
 		Atom [tobyink]
 RDF::Endpoint
 	Clean up and release to CPAN [kasei]
-	Implement SPARQL 1.1 Service Description
+	Implement SPARQL 1.1 Service Description [kasei]
 RDF::LinkedData
 	Rename to RDF::LinkedData::Handler (or something similar to denote mod_perl) [kasei]
 	Clean up and release to CPAN [kasei]
