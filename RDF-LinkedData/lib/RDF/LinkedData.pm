@@ -147,7 +147,7 @@ sub run {
 <?xml version="1.0"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
 	 "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title>${title}</title>
@@ -184,15 +184,20 @@ sub _title {
 	my $node	= shift;
 	my $model	= $self->model;
 	my $name	= RDF::Trine::Node::Resource->new( 'http://xmlns.com/foaf/0.1/name' );
-	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
 	my $title	= RDF::Trine::Node::Resource->new( 'http://purl.org/dc/elements/1.1/title' );
+	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
 	my @names	= $model->objects_for_predicate_list( $node, $name, $title, $label );
-	foreach my $n (@names) {
-		if ($n->is_literal) {
-			return $n->literal_value;
+	foreach my $name (@names) {
+		if ($name->is_literal) {
+			return $name->literal_value;
 		}
 	}
-	return $node->uri_value;
+	
+	if ($node->is_resource) {
+		return $node->uri_value;
+	} else {
+		return $node->as_string;
+	}
 }
 
 sub _description {
