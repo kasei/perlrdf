@@ -50,7 +50,7 @@ BEGIN {
 
 =item C<< new >>
 
-Returns a new 
+Returns a new N-Triples serializer object.
 
 =cut
 

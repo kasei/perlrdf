@@ -66,6 +66,15 @@ BEGIN {
 
 ######################################################################
 
+=item C<< new ( [ onfail => $rule ] ) >>
+
+Returns a new Canonical N-Triples serializer object. If specified, the value of
+the 'onfail' argument dictates the handling of blank nodes with no canonical
+representation. The allowable rule values are 'truncate', 'append', 'space',
+and 'die', and their respective behaviour is described in L</DESCRIPTION> above.
+
+=cut
+
 sub new {
 	my $class = shift;
 	my %opts;
