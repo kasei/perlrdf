@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.111
+This document describes RDF::Trine::Parser version 0.112
 
 =head1 SYNOPSIS
 
@@ -33,11 +33,12 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.112';
 }
 
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
+use RDF::Trine::Parser::RDFJSON;
 
 our %types;
 

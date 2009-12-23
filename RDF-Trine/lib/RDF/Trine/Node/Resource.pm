@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.111
+This document describes RDF::Trine::Node::Resource version 0.112
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.112';
 }
 
 ######################################################################
@@ -232,6 +232,29 @@ sub equal {
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node'));
 	return 0 unless ($self->type eq $node->type);
 	return ($self->uri_value eq $node->uri_value);
+}
+
+=item C<< qname >>
+
+If the IRI can be split into a namespace and local part for construction of a
+QName, returns a list containing these two parts. Otherwise throws an exception.
+
+=cut
+
+sub qname {
+	my $p		= shift;
+	my $uri		= $p->uri_value;
+	
+	my $nameStartChar	= qr<([A-Za-z:_]|[\x{C0}-\x{D6}]|[\x{D8}-\x{D8}]|[\x{F8}-\x{F8}]|[\x{200C}-\x{200C}]|[\x{37F}-\x{1FFF}][\x{200C}-\x{200C}]|[\x{2070}-\x{2070}]|[\x{2C00}-\x{2C00}]|[\x{3001}-\x{3001}]|[\x{F900}-\x{F900}]|[\x{FDF0}-\x{FDF0}]|[\x{10000}-\x{10000}])>;
+	my $nameChar		= qr<$nameStartChar|-|[.]|[0-9]|\x{B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]>;
+	my $lnre			= qr<((${nameStartChar})($nameChar)*)>;
+	if ($uri =~ m/${lnre}$/) {
+		my $ln	= $1;
+		my $ns	= substr($uri, 0, length($uri)-length($ln));
+		return ($ns, $ln);
+	} else {
+		throw RDF::Trine::Error -text => "Can't turn IRI $uri into a QName.";
+	}
 }
 
 1;

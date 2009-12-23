@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.111
+This document describes RDF::Trine::Iterator::Bindings version 0.112
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.112';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -527,6 +527,24 @@ sub as_string {
 	} else {
 		return '';
 	}
+}
+
+=item C<< as_statements ( @names ) >>
+
+=cut
+
+sub as_statements {
+	my $self	= shift;
+	my @names	= @_;
+	my $sub		= sub {
+		my $row	= $self->next;
+		return undef unless (defined $row);
+		my $statement	= (@names == 3)
+					? RDF::Trine::Statement->new( @{ $row }{@names} )
+					: RDF::Trine::Statement::Quad->new( @{ $row }{@names} );
+		return $statement;
+	};
+	return RDF::Trine::Iterator::Graph->new( $sub )
 }
 
 =item C<< print_xml ( $fh, $max_size ) >>

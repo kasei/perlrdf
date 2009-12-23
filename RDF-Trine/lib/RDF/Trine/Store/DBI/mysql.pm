@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.111
+This document describes RDF::Trine::Store::DBI::mysql version 0.112
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 
-our $VERSION	= "0.111";
+our $VERSION	= "0.112";
 
 
 
@@ -67,6 +67,9 @@ sub add_statement {
 	my $dbh		= $self->dbh;
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
+	unless (blessed($stmt) and $stmt->can('nodes')) {
+		Carp::confess "No statement passed to add_statement";
+	}
 	my @nodes	= $stmt->nodes;
 	foreach my $n (@nodes) {
 		$self->_add_node( $n );

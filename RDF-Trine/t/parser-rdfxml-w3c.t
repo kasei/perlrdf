@@ -15,6 +15,12 @@ plan qw(no_plan);
 
 use_ok( 'RDF::Trine::Parser::RDFXML' );
 
+my $XML_LOADED	= ($RDF::Trine::Node::Literal::XML::VERSION > 0);
+my %XML_EXEMPTIONS	= map { $_ => 1 } qw(
+/rdfms-empty-property-elements/test003.rdf
+/rdfms-empty-property-elements/test009.rdf
+);
+
 our %PREFIXES	= (
 	'/rdf-containers-syntax-vs-schema/test007.rdf'	=> 'd',
 );
@@ -186,9 +192,11 @@ find( sub {
 		my $prefix	= $1;
 		my ($file)	= $File::Find::name =~ m/rdfxml-w3c(.*)$/;
 		if ($ok{ $file }) {
-			my $expect	= "${prefix}.nt";
-			if (-r $expect) {
-				push(@good, $File::Find::name);
+			if (not($XML_LOADED) or ($XML_LOADED and not exists $XML_EXEMPTIONS{ $file })) {
+				my $expect	= "${prefix}.nt";
+				if (-r $expect) {
+					push(@good, $File::Find::name);
+				}
 			}
 		}
 	}

@@ -5,7 +5,7 @@ RDF::Trine - An RDF Framework for Perl.
    components:
 
    * RDF::Trine::Model - RDF model providing access to a triple store.
-   * RDF::Trine::Parser - Native RDF parsers (currently for Turtle only).
+   * RDF::Trine::Parser - Native RDF parsers (currently RDF/XML, Turtle, and RDF/JSON).
    * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
      Redland schema.
    * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
@@ -56,6 +56,23 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.112 (2009-12-12)
+
+     * Skip some failing tests when RDF::Trine::Node::Literal::XML is loaded.
+     * Added RDF/XML serializer.
+     * Added serialize_iterator_to_file and serialize_iterator_to_string methods to NTriples serializer.
+     * Added _serialize_bounded_description method to NTriples serializer.
+     * Added RDF::Trine::Parser::RDFJSON package (patch from tobyink).
+     * Added RDF::Trine::Serializer::RDFJSON package (patch from tobyink).
+     * Added add_hashref and as_hashref methods to RDF::Trine::Model (patch from tobyink).
+     * Added tests for RDF/JSON parsing/serializing (patch from tobyink).
+     * Updated RDF::Trine docs to mention the RDF/XML parser (good catch by tobyink).
+     * Added logging code to RDF::Trine::Store::DBI.
+     * Changed ::Store::DBI::get_statements to skip (with warning) past ill-formed statements with IDs that don't appear in any of the value tables.
+     * Updated RDF::Trine::Serializer::NTriples to call as_ntriples on node objects during serialization.
+     * Added as_ntriples methods to RDF::Trine::Node and subclasses for proper NTriples formatting.
+     * Updated bin/rdf_store_serialize.pl to print in NTriples format.
 
   Version 0.111 (2009-07-14)
 

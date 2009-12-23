@@ -8,7 +8,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.111
+This document describes RDF::Trine version 0.112
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ components:
 
 =item * RDF::Trine::Model - RDF model providing access to a triple store.
 
-=item * RDF::Trine::Parser - Native RDF parsers (currently for Turtle only).
+=item * RDF::Trine::Parser - Native RDF parsers (currently RDF/XML and Turtle only).
 
 =item * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the Redland schema.
 
@@ -49,7 +49,7 @@ no warnings 'redefine';
 our ($debug, $VERSION);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.111';
+	$VERSION	= '0.112';
 }
 
 use Log::Log4perl qw(:easy);

@@ -7,7 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 0.111
+This document describes RDF::Trine::Node version 0.112
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.112';
 }
 
 use Scalar::Util qw(blessed);

@@ -10,6 +10,32 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.112.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.111.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.112" ;
+                        doap:created      "2009-12-12" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF/XML serializer." ;
+                        asc:addition    "Added serialize_iterator_to_file and serialize_iterator_to_string methods to NTriples serializer." ;
+                        asc:addition    "Added _serialize_bounded_description method to NTriples serializer." ;
+                        asc:addition    "Added RDF::Trine::Parser::RDFJSON package (patch from tobyink)." ;
+                        asc:addition    "Added RDF::Trine::Serializer::RDFJSON package (patch from tobyink)." ;
+                        asc:addition    "Added add_hashref and as_hashref methods to RDF::Trine::Model (patch from tobyink)." ;
+                        asc:addition    "Added tests for RDF/JSON parsing/serializing (patch from tobyink)." ;
+                        asc:addition    "Added logging code to RDF::Trine::Store::DBI." ;
+                        asc:addition    "Added as_ntriples methods to RDF::Trine::Node and subclasses for proper NTriples formatting." ;
+                        asc:update      "Updated RDF::Trine docs to mention the RDF/XML parser (good catch by tobyink)." ;
+                        asc:update      "Changed ::Store::DBI::get_statements to skip (with warning) past ill-formed statements with IDs that don't appear in any of the value tables." ;
+                        asc:update      "Updated RDF::Trine::Serializer::NTriples to call as_ntriples on node objects during serialization." ;
+                        asc:update      "Updated bin/rdf_store_serialize.pl to print in NTriples format." ;
+                        asc:update      "Skip some failing tests when RDF::Trine::Node::Literal::XML is loaded." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.111.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.110.tar.gz> ;
@@ -29,7 +55,7 @@
                         asc:update      "Removed unnecessary call to blessed() in RDF::Trine::Statement." ;
                         asc:update      "Removed unused RDF::Trine::Promise class." ;
                         asc:update      "RDF::Trine now loads RDF::Trine::Store." ;
-                        asc:update      "Removed TODO labeling of tests in t/model-filter.t.' ;
+                        asc:update      "Removed TODO labeling of tests in t/model-filter.t." ;
                         ] .
 
 
