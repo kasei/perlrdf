@@ -45,7 +45,7 @@ use DBI;
 use Carp;
 use DBI;
 use Scalar::Util qw(blessed reftype refaddr);
-use Encode ('encode_utf8');
+use Encode;
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
@@ -1007,7 +1007,7 @@ using the same algorithm that Redland's mysql storage backend uses.
 
 sub _mysql_hash;
 sub _mysql_hash_pp {
-	my $data	= encode_utf8(shift);
+	my $data	= encode('utf8', shift);
 	my @data	= unpack('C*', md5( $data ));
 	my $sum		= Math::BigInt->new('0');
 #	my $count	= 0;
