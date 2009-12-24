@@ -38,7 +38,7 @@ use Log::Log4perl;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
-use RDF::Trine::Parser::Error;
+use RDF::Trine::Error;
 use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION, $rdf, $xsd);
@@ -140,7 +140,7 @@ sub _eat_re {
 	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
 		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
+		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
 	if ($self->{tokens} =~ m/^($thing)/) {
@@ -149,7 +149,7 @@ sub _eat_re {
 		return;
 	}
 	$l->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
+	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 }
 
 sub _eat_re_save {
@@ -158,7 +158,7 @@ sub _eat_re_save {
 	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
 		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
+		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
 	if ($self->{tokens} =~ m/^($thing)/) {
@@ -167,7 +167,7 @@ sub _eat_re_save {
 		return $match;
 	}
 	$l->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
+	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 }
 
 sub _eat {
@@ -176,7 +176,7 @@ sub _eat {
 	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
 		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Parser::Error::ValueError -text => "No tokens";
+		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
 	### thing is a string
@@ -186,7 +186,7 @@ sub _eat {
 	} else {
 		
 		$l->logcluck("expected: $thing, got: $self->{tokens}");
-		throw RDF::Trine::Parser::Error::ValueError -text => "Expected: $thing";
+		throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 	}
 }
 
@@ -207,7 +207,7 @@ sub _triple {
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
 		unless ($n->isa('RDF::Trine::Node')) {
-			throw RDF::Trine::Parser::Error;
+			throw RDF::Trine::Error::ParserError;
 		}
 	}
 	
@@ -657,7 +657,7 @@ sub _ws {
 	} else {
 		my $ws	= $self->_eat_re_save( qr/[\n\r\t ]+/ );
 		unless ($ws =~ /^[\n\r\t ]/) {
-			throw RDF::Trine::Parser::Error::ValueError -text => 'Not whitespace';
+			throw RDF::Trine::Error::ParserError -text => 'Not whitespace';
 		}
 	}
 }

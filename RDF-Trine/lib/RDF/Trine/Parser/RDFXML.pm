@@ -39,7 +39,7 @@ use Scalar::Util qw(blessed);
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
-use RDF::Trine::Parser::Error qw(:try);
+use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
@@ -705,7 +705,7 @@ sub get_namespace {
 			return $uri;
 		}
 	}
-	throw RDF::Trine::Parser::Error::ValueError -text => "Unknown namespace: $prefix";
+	throw RDF::Trine::Error::ParserError -text => "Unknown namespace: $prefix";
 }
 
 sub new_bnode {
