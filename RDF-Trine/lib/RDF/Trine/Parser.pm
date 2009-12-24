@@ -64,24 +64,31 @@ sub new {
 	}
 }
 
+=item C<< parse_url_into_model ( $url, $model ) >>
+
+Retrieves the content from C<< $url >> and attempts to parse the resulting RDF
+into C<< $model >> using a parser chosen by the associated content media type.
+
+=cut
+
 sub parse_url_into_model {
 	my $class	= shift;
 	my $url		= shift;
 	my $model	= shift;
+	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
-	my $accept	= join(',', values %media_types);
+	my $accept	= join(',', map { /(turtle|rdf+xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
 	$ua->default_headers->push_header( 'Accept' => $accept );
+	
 	my $resp	= $ua->get( $url );
 	unless ($resp->is_success) {
-		warn "No content available from $url: " . $resp->status_line;
-		return;
+		throw RDF::Trine::Error::ParserError -text => $resp->status_line;
 	}
 	
-	warn Dumper(\%media_types);
-	
 	my $type	= $resp->header('content-type');
+	$type		=~ s/^([^\s;]+).*/$1/;
 	my $pclass	= $media_types{ $type };
-	if ($pclass->can('new')) {
+	if ($pclass and $pclass->can('new')) {
 		my $parser	= $pclass->new();
 		my $content	= $resp->content;
 		return $parser->parse_into_model( $url, $content, $model );
