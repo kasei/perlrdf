@@ -109,7 +109,7 @@ sub serialize_iterator_to_file {
 	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
 	
 	my @statements	= $iter->next;
-	if (@statements) {
+	while (@statements) {
 		my $st	= shift(@statements);
 		my @samesubj;
 		push(@samesubj, $st);
@@ -166,12 +166,13 @@ sub _statements_same_subject_as_string {
 			$lv			=~ s/</&lt;/g;
 			my $lang	= $o->literal_value_language;
 			my $dt		= $o->literal_datatype;
+			my $tag	= join(':', $prefix, $ln);
 			if ($lang) {
-				$string	.= qq[\t<${prefix}:$ln xml:lang="${lang}">${lv}</$ln>\n];
+				$string	.= qq[\t<${tag} xml:lang="${lang}">${lv}</${tag}>\n];
 			} elsif ($dt) {
-				$string	.= qq[\t<${prefix}:$ln rdf:datatype="${dt}">${lv}</$ln>\n];
+				$string	.= qq[\t<${tag} rdf:datatype="${dt}">${lv}</${tag}>\n];
 			} else {
-				$string	.= qq[\t<${prefix}:$ln>${lv}</$ln>\n];
+				$string	.= qq[\t<${tag}>${lv}</${tag}>\n];
 			}
 		} elsif ($o->is_blank) {
 			my $b	= $o->blank_identifier;

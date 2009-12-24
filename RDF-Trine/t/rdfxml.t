@@ -27,8 +27,8 @@ use_ok('RDF::Trine::Serializer::RDFXML');
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
 	<ns1:predicate rdf:resource="http://example.com/bar"/>
-	<ns1:predicate>Foo</predicate>
-	<ns1:predicate xml:lang="en">baz</predicate>
+	<ns1:predicate>Foo</ns1:predicate>
+	<ns1:predicate xml:lang="en">baz</ns1:predicate>
 </rdf:Description>
 </rdf:RDF>
 END
@@ -59,7 +59,7 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://example.com/ns#" rdf:nodeID="b">
-	<ns1:description>quux</description>
+	<ns1:description>quux</ns1:description>
 </rdf:Description>
 </rdf:RDF>
 END
@@ -83,8 +83,8 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://example.com/ns#" rdf:nodeID="a">
-	<ns1:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bar</title>
-	<ns1:title>foo</title>
+	<ns1:title rdf:datatype="http://www.w3.org/2001/XMLSchema#string">bar</ns1:title>
+	<ns1:title>foo</ns1:title>
 </rdf:Description>
 </rdf:RDF>
 END
@@ -126,9 +126,9 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://purl.org/net/inkel/rdf/schemas/lang/1.1#" xmlns:ns2="http://xmlns.com/foaf/0.1/" rdf:about="http://example.com/alice">
-	<ns1:masters>en</masters>
+	<ns1:masters>en</ns1:masters>
 	<rdf:type rdf:resource="http://xmlns.com/foaf/0.1/Person"/>
-	<ns2:name>Alice</name>
+	<ns2:name>Alice</ns2:name>
 </rdf:Description>
 </rdf:RDF>
 END
