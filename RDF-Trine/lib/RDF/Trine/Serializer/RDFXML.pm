@@ -28,6 +28,7 @@ package RDF::Trine::Serializer::RDFXML;
 
 use strict;
 use warnings;
+use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
