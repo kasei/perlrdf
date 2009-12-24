@@ -13,7 +13,7 @@ This document describes RDF::Trine::Parser version 0.112
 
  use RDF::Trine::Parser;
  my $parser	= RDF::Trine::Parser->new( 'turtle' );
- my $iterator = $parser->parse( $base_uri, $data );
+ $parser->parse_into_model( $base_uri, $rdf, $model );
 
 =head1 DESCRIPTION
 
@@ -30,46 +30,73 @@ package RDF::Trine::Parser;
 use strict;
 use warnings;
 no warnings 'redefine';
+use Data::Dumper;
 
 our ($VERSION);
+our %parser_names;
+our %media_types;
 BEGIN {
 	$VERSION	= '0.112';
 }
 
+use LWP::UserAgent;
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 
-our %types;
 
-=item C<< new ( $type ) >>
+=item C<< new ( $parser_name ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $type	= shift;
+	my $name	= shift;
+	my $key		= lc($name);
+	$key		=~ s/[^a-z]//g;
 	
-	if ($type eq 'guess') {
+	if ($name eq 'guess') {
 		die;
-	} elsif (my $class = $types{ $type }) {
+	} elsif (my $class = $parser_names{ $key }) {
 		return $class->new( @_ );
 	} else {
-		throw RDF::Trine::Error::ParserError -text => "No parser known for type $type";
+		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
 	}
 }
 
-=item C<< parse ( $base_uri, $data ) >>
-
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
-
-=cut
-
-
+sub parse_url_into_model {
+	my $class	= shift;
+	my $url		= shift;
+	my $model	= shift;
+	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
+	my $accept	= join(',', values %media_types);
+	$ua->default_headers->push_header( 'Accept' => $accept );
+	my $resp	= $ua->get( $url );
+	unless ($resp->is_success) {
+		warn "No content available from $url: " . $resp->status_line;
+		return;
+	}
+	
+	warn Dumper(\%media_types);
+	
+	my $type	= $resp->header('content-type');
+	my $pclass	= $media_types{ $type };
+	if ($pclass->can('new')) {
+		my $parser	= $pclass->new();
+		my $content	= $resp->content;
+		return $parser->parse_into_model( $url, $content, $model );
+	} else {
+		throw RDF::Trine::Error -text => "No parser found for content type $type";
+	}
+}
 
 1;
 
 __END__
+
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =back
 

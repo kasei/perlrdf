@@ -31,6 +31,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 no warnings 'once';
+use base qw(RDF::Trine::Parser);
 
 use URI;
 use Data::UUID;
@@ -45,13 +46,14 @@ our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
 	$VERSION				= '0.112';
+	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
+	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
+		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
+	}
 	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 	
-	foreach my $t ('turtle', 'application/x-turtle', 'application/turtle') {
-		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
-	}
 	$r_boolean				= qr'(?:true|false)';
 	$r_comment				= qr'#[^\r\n]*';
 	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
@@ -92,7 +94,7 @@ sub new {
 	return $self;
 }
 
-=item C<< parse ( $base_uri, $data ) >>
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
 C<< triple >> method for each RDF triple parsed. This method does nothing by

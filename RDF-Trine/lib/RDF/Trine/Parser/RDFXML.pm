@@ -30,6 +30,8 @@ package RDF::Trine::Parser::RDFXML;
 use strict;
 use warnings;
 
+use base qw(RDF::Trine::Parser);
+
 use URI;
 use Carp;
 use XML::SAX;
@@ -46,8 +48,9 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.112';
-	foreach my $t ('rdfxml', 'application/rdf+xml') {
-		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
+	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
+	foreach my $type (qw(application/rdf+xml)) {
+		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 }
 
