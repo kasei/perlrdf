@@ -8,7 +8,6 @@ This document describes RDF::Endpoint version 1.000, released XXX August 2009.
 
 =head1 SYNOPSIS
 
-
  my $s	= RDF::Endpoint::Server->new_with_model( $model,
    Port    => $port,
    Prefix  => '/path/to/server-root/',
@@ -136,38 +135,38 @@ sub query_page {
 		['html',	1.000, 'text/html', undef, undef, undef, 1],
 		['html',	1.000, 'application/xhtml+xml', undef, undef, undef, 1],
 		['rdf',		1.000, 'application/rdf+xml', undef, undef, undef, 1],
+		['turtle',	1.000, 'text/turtle', undef, undef, undef, 1],
 	];
 	my $choice	= choose($variants) || 'html';
 #	warn "conneg prefers: $choice\n";
 	
+	my $model		= $self->_model;
+	my $count		= $model->count_statements;
+	my @extensions	= map { { url => $_ } } RDF::Query->supported_extensions;
+	my @functions	= map { { url => $_ } } RDF::Query->supported_functions;
+	my $submit		= $self->submit_url;
 	if ($choice eq 'html') {
 		my $tt		= $self->_template;
 		my $file	= 'index.html';
-		my $submit	= $self->submit_url;
 		
-		my $fh	= select();
 		print $cgi->header( -status => "200 OK", -type => 'text/html; charset=utf-8' );
 		$tt->process( $file, {
-						submit_url	=> $submit,
-					}, $fh ) || die $tt->error();
-	} else {
-		my $model	= $self->_model;
-		my $tt		= $self->_template;
-		my $file	= 'endpoint_description.rdf';
-		my $count	= $model->count_statements;
-		
-		my @extensions		= map { { url => $_ } } RDF::Query->supported_extensions;
-		my @functions		= map { { url => $_ } } RDF::Query->supported_functions;
-		print $cgi->header( -status => "200 OK", -type => 'text/plain; charset=utf-8' );
-		my $submit	= $self->submit_url;
-		
-		my $fh	= select();
-		$tt->process( $file, {
-			endpoint_url	=> $submit,
+			submit_url		=> $submit,
 			triples			=> $count,
 			functions		=> \@functions,
 			extensions		=> \@extensions,
-		}, $fh );
+		} ) || die $tt->error();
+	} else {
+		my $tt		= $self->_template;
+		my $file	= 'endpoint_description.rdf';
+		
+		print $cgi->header( -status => "200 OK", -type => 'text/turtle; charset=utf-8' );
+		$tt->process( $file, {
+			submit_url		=> $submit,
+			triples			=> $count,
+			functions		=> \@functions,
+			extensions		=> \@extensions,
+		} ) || die $tt->error();
 	}
 }
 
@@ -341,38 +340,6 @@ END
 		print "</body></html>\n";
 	} else {
 	
-	}
-}
-
-sub priv_preds {
-	my $self	= shift;
-	return $self->{config}{priv_preds} || [];
-}
-
-sub update_priv_preds {
-	my $self	= shift;
-	my $preds	= shift;
-	my $dbh		= $self->dbh;
-	
-	my @new_preds	= sort grep { length($_) } split(/\s+/, $preds);
-	my @old_preds	= map { $_->uri_value } @{ $self->priv_preds };
-	if (join('<', @new_preds) ne join('<', @old_preds)) {
-		my $add	= $dbh->prepare('INSERT INTO Endpoint_PrivatePredicates (endpoint, ID, URI) VALUES (1,?,?)');
-		my $rm	= $dbh->prepare('DELETE FROM Endpoint_PrivatePredicates WHERE URI = ?');
-		
-		my %old_preds	= map { $_ => 1 } @old_preds;
-		foreach my $new (@new_preds) {
-			if ($old_preds{ $new }) {
-				delete $old_preds{ $new };
-			} else {
-				my $node	= RDF::Trine::Node::Resource->new( $new );
-				my $id		= RDF::Trine::Store::DBI->_mysql_node_hash( $node );
-				$add->execute( $id, $new );
-			}
-		}
-		foreach my $old (keys %old_preds) {
-			$rm->execute( $old );
-		}
 	}
 }
 

@@ -27,11 +27,6 @@ sub handler : method {
 	$secret		= $r->dir_config( 'EndpointSecret' ) || $secret;
 	$salt		= $r->dir_config( 'EndpointSalt' ) || $salt;
 	
-	if (my $xmpp_conf = $r->dir_config( 'EndpointXMPPConf' )) {
-		require Log::Dispatch::Jabber;
-		Log::Log4perl->init_and_watch( $xmpp_conf, 10 );
-	}
-	
 	my $cgi		= CGI->new;
 	
 	my $endpoint		= $class->new(
