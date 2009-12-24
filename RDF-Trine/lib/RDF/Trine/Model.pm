@@ -133,6 +133,17 @@ sub remove_statements {
 	return $self->_store->remove_statements( @_ );
 }
 
+=item C<< size >>
+
+Returns the number of statements in the model.
+
+=cut
+
+sub size {
+	my $self	= shift;
+	return $self->count_statements();
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
