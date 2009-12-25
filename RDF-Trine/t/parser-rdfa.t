@@ -1,3 +1,6 @@
+use strict;
+use warnings;
+
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -8,8 +11,13 @@ use RDF::Trine::Parser;
 use RDF::Trine::Serializer::NTriples::Canonical;
 
 my $tests	= 1;
-plan tests => $tests;
 
+if ($ENV{RDFTRINE_NETWORK_TESTS}) {
+	plan tests => $tests;
+} else {
+	plan skip_all => 'No network. Set RDFTRINE_NETWORK_TESTS to run these tests.';
+	return;
+}
 
 my $path	= File::Spec->catfile( $Bin, 'data', 'rdfa' );
 my @good	= glob("${path}/test*.xhtml");
