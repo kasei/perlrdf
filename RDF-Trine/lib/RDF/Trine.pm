@@ -46,10 +46,14 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($debug, $VERSION);
+our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= '0.112';
+	
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(iri blank literal);
 }
 
 use Log::Log4perl qw(:easy);
@@ -73,6 +77,20 @@ sub _uniq {
 		push(@data, $_) unless ($seen{ $_ }++);
 	}
 	return @data;
+}
+
+sub iri {
+	my $iri	= shift;
+	return RDF::Trine::Node::Resource->new( $iri );
+}
+
+sub blank {
+	my $id	= shift;
+	return RDF::Trine::Node::Blank->new( $id );
+}
+
+sub literal {
+	return RDF::Trine::Node::Literal->new( @_ );
 }
 
 1; # Magic true value required at end of module
