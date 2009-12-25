@@ -34,10 +34,6 @@ components:
 
 =back
 
-=head1 METHODS
-
-=over 4
-
 =cut
 
 package RDF::Trine;
@@ -79,15 +75,38 @@ sub _uniq {
 	return @data;
 }
 
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< iri ( $iri ) >>
+
+Returns a RDF::Trine::Node::Resource object with the given IRI value.
+
+=cut
+
 sub iri {
 	my $iri	= shift;
 	return RDF::Trine::Node::Resource->new( $iri );
 }
 
+=item C<< blank ( $id ) >>
+
+Returns a RDF::Trine::Node::Blank object with the given identifier.
+
+=cut
+
 sub blank {
 	my $id	= shift;
 	return RDF::Trine::Node::Blank->new( $id );
 }
+
+=item C<< literal ( $value, $lang, $dt ) >>
+
+Returns a RDF::Trine::Node::Literal object with the given value and optional
+language/datatype.
+
+=cut
 
 sub literal {
 	return RDF::Trine::Node::Literal->new( @_ );
