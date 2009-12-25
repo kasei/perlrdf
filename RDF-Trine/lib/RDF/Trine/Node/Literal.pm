@@ -74,6 +74,9 @@ sub _new {
 	if ($lang) {
 		$self	= [ 'LITERAL', $literal, lc($lang), undef ];
 	} elsif ($dt) {
+		if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
+			$dt	= $dt->uri_value;
+		}
 		$self	= [ 'LITERAL', $literal, undef, $dt ];
 	} else {
 		$self	= [ 'LITERAL', $literal ];
