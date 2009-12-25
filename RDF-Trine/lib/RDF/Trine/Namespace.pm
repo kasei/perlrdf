@@ -67,7 +67,9 @@ sub _install_namespaces {
 	my $pkg		= caller( $level );
 	if (@_) {
 		foreach my $name (@_) {
-			my $uri	= XML::CommonNS->uri( uc($name) );
+			my $uri	= (uc($name) eq 'XSD')
+				? XML::NamespaceFactory->new('http://www.w3.org/2001/XMLSchema#')
+				: XML::CommonNS->uri( uc($name) );
 			my $ns	= $class->new( "$uri" );
 			no strict 'refs';
 			*{ "${pkg}::${name}" }	= \$ns;
