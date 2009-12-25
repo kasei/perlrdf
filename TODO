@@ -21,7 +21,7 @@ the work, if known):
 	* Parsers
 		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
 		* Guess parser based on filename/content sniffing
-		* RDFa [tobyink]
+		* RDFa [kasei; done 2009.12.24]
 		* XRD [tobyink]
 		* TriX [tobyink]
 		* GRDDL [tobyink]
@@ -31,12 +31,15 @@ the work, if known):
 		* Microformats [tobyink]
 		* HTML [tobyink]
 		* TriG
+		* N-Quads
+		* Much faster Turtle parser
 	* Serializers
 		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer
 		* Pretty print RDF/XML [tobyink or kasei]
 		* Pretty print Turtle [tobyink]
 		* TriX [tobyink]
 		* TriG
+		* N-Quads
 		* RDFa (refactor from RDF::LinkedData) [kasei]
 	* Exporters
 		* vCard [tobyink]
