@@ -300,7 +300,10 @@ sub as_hashref {
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
 
-...
+Given the RDF::Trine::Node objects C<< $subject >> and C<< @predicates >>,
+finds all matching triples in the model with the specified subject and any
+of the given predicates, and returns a list of object values (in the partial
+order given by the ordering of C<< @predicates >>).
 
 =cut
 
