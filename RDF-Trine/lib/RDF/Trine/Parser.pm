@@ -43,7 +43,7 @@ use LWP::UserAgent;
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
-
+use RDF::Trine::Parser::RDFa;
 
 =item C<< new ( $parser_name ) >>
 
