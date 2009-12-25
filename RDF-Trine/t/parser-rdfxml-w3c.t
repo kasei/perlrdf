@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'uninitialized';
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
