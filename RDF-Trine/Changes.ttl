@@ -10,6 +10,38 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.113.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.112.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.113" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Parser::RDFa implementation to connect with RDF::RDFa::Parser." ;
+                        asc:addition    "Added ability to pass RDF::Trine::Node::Resource values as the datatype argument to RDF::Trine::Node::Literal::new()." ;
+                        asc:addition    "Added syntax shortcuts as exportable from RDF::Trine: iri(), blank(), and literal()." ;
+                        asc:addition    "Added RDF::Trine::Serializer base class." ;
+                        asc:addition    "Added RDF::Trine::Parser::parse_url_into_model class method." ;
+                        asc:addition    "Added RDF::Trine::Model::size method." ;
+                        asc:addition    "Added RDF::Trine::Model::objects_for_predicate_list method." ;
+                        asc:addition    "Added RDF::Trine::Node::Resource::qname method to split an IRI into namespace and local parts." ;
+                        asc:addition    "Added RDF::Trine::Serializer::NTriples::Canonical (from tobyink)." ;
+                        asc:addition    "Added RDF::Trine::Iterator::Bindings::as_statements to return a graph iterator." ;
+                        asc:update      "Special-cased 'xsd' in RDF::Trine::Namespace to return the RDF-version of the namespace URI (with trailing '#')." ;
+                        asc:update      "Fixed syntax error in generated RDF/XML in RDF::Trine::Serializer::RDFXML." ;
+                        asc:update      "Fixed bug in RDF::Trine::Serializer::RDFXML that was dropping triples." ;
+                        asc:update      "Updated parser classes' registration of parser names and media types." ;
+                        asc:update      "Removed ::Parser::Error package. Replaced with use of RDF::Trine::Error." ;
+                        asc:update      "Convert data to utf8 encoding before hashing in RDF::Trine::Store::DBI::_mysql_hash_pp." ;
+                        asc:update      "Removed RDF::Trine::Serializer::RDFXML::_split_predicate and replaced with call to $pred->qname." ;
+                        asc:update      "Updated POD for ::Model::get_pattern to mention 'orderby' argument." ;
+                        asc:update      "Updated ::Model::as_stream to return a graph iterator sorted by (s,p,o)." ;
+                        asc:update      "Updated RDF/XML serializer to merge same-subject rdf:Descriptions." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.112.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.111.tar.gz> ;
