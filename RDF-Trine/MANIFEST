@@ -31,11 +31,12 @@ lib/RDF/Trine/Node/Literal.pm
 lib/RDF/Trine/Node/Resource.pm
 lib/RDF/Trine/Node/Variable.pm
 lib/RDF/Trine/Parser.pm
-lib/RDF/Trine/Parser/Error.pm
+lib/RDF/Trine/Parser/RDFa.pm
 lib/RDF/Trine/Parser/RDFJSON.pm
 lib/RDF/Trine/Parser/RDFXML.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
+lib/RDF/Trine/Serializer.pm
 lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
@@ -53,6 +54,8 @@ META.yml
 README
 SIGNATURE
 t/00.load.t
+t/data/rdfa/test-sd.nt
+t/data/rdfa/test-sd.xhtml
 t/data/rdfxml-w3c/amp-in-url/test001.nt
 t/data/rdfxml-w3c/amp-in-url/test001.rdf
 t/data/rdfxml-w3c/datatypes-intensional/test001.nt
@@ -495,6 +498,7 @@ t/node-resource-i18n.t
 t/node-serialization.t
 t/node.t
 t/ntriples-canonical.t
+t/parser-rdfa.t
 t/parser-rdfxml-w3c.t
 t/parser-turtle.t
 t/pod-coverage.t
@@ -505,3 +509,4 @@ t/statement-serialization.t
 t/statement.t
 t/store-context.t
 t/store-triple_sql.t
+t/syntax.t

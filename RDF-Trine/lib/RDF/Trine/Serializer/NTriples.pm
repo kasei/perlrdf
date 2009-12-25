@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - NTriples Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.112
+This document describes RDF::Trine::Serializer::NTriples version 0.113_01
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.113_01';
 }
 
 ######################################################################
