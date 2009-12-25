@@ -17,7 +17,11 @@ This document describes RDF::Trine::Parser version 0.113_01
 
 =head1 DESCRIPTION
 
-...
+RDF::Trine::Parser is a base class for RDF parsers. It may be used as a factory
+class for constructing parser objects by name or media type with the C<< new >>
+method, or used to abstract away the logic of choosing a parser based on the
+media type of RDF content retrieved over the network with the
+C<< parse_url_into_model >> method.
 
 =head1 METHODS
 
@@ -46,6 +50,10 @@ use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
 
 =item C<< new ( $parser_name ) >>
+
+Returns a new RDF::Trine::Parser object for the parser with the specified name
+(e.g. "rdfxml" or "turtle"). If no parser with the specified name is found,
+throws a RDF::Trine::Error::ParserError exception.
 
 =cut
 
@@ -77,7 +85,9 @@ sub parse_url_into_model {
 	my $model	= shift;
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
-	my $accept	= join(',', map { /(turtle|rdf+xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
+	
+	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
+	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
 	$ua->default_headers->push_header( 'Accept' => $accept );
 	
 	my $resp	= $ua->get( $url );
