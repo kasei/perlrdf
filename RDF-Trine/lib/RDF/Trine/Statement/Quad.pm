@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for Quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.113_01
+This document describes RDF::Trine::Statement::Quad version 0.113_02
 
 =cut
 
@@ -22,7 +22,7 @@ use base qw(RDF::Trine::Statement);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.113_01';
+	$VERSION	= '0.113_02';
 }
 
 ######################################################################

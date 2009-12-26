@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.113_01
+This document describes RDF::Trine::Store version 0.113_02
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Store::DBI;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.113_01';
+	$VERSION	= '0.113_02';
 }
 
 ######################################################################
