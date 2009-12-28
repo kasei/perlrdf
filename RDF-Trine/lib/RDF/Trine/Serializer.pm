@@ -36,10 +36,12 @@ BEGIN {
 }
 
 use LWP::UserAgent;
+
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::NTriples::Canonical;
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::RDFJSON;
+use RDF::Trine::Serializer::Turtle;
 
 1;
 

@@ -66,6 +66,10 @@ package RDF::Trine::Error::ParserError;
 
 use base qw(RDF::Trine::Error);
 
+package RDF::Trine::Error::UnimplementedError;
+
+use base qw(RDF::Trine::Error);
+
 1;
 
 __END__

@@ -42,7 +42,9 @@ Returns a new Quad structure.
 sub new {
 	my $class	= shift;
 	my @nodes	= @_;
-	Carp::confess "Quad constructor must have four node arguments" unless (scalar(@nodes) == 4);
+	unless (scalar(@nodes) == 4) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
+	}
 	my @names	= qw(subject predicate object context);
 	foreach my $i (0 .. 2) {
 		unless (defined($nodes[ $i ])) {

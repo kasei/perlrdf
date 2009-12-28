@@ -58,7 +58,6 @@ Returns a new serializer object.
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	$class = ref($class) || $class;
 	my $self = bless( {}, $class);
 	return $self;
 }

@@ -1,16 +1,19 @@
-use Test::More tests => 6;
+use Test::More tests => 9;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine;
+use RDF::Trine qw(iri);
 use RDF::Trine::Store;
 use RDF::Trine::Model;
 use RDF::Trine::Graph;
 use RDF::Trine::Parser;
 
+
+throws_ok { RDF::Trine::Graph->new() } 'RDF::Trine::Error::MethodInvocationError', "RDF::Trine::Graph::new throws with no arguments";
+throws_ok { RDF::Trine::Graph->new(1) } 'RDF::Trine::Error::MethodInvocationError', "RDF::Trine::Graph::new throws with unblessed arguments";
 
 {
 	my $foaf_a	= <<'END';
@@ -45,6 +48,42 @@ END
 END
 	test_graph_equality( $foaf_a, $foaf_b, 0, 'blank node does not map to iri' );
 }
+
+{
+	my $foaf_a	= <<'END';
+	@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+	[] a foaf:Person ; foaf:name "Alice" .
+	<bob> a foaf:Person ; foaf:name "Bob" .
+	<x> <y> <z> .
+END
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+	$parser->parse_into_model( 'http://base/', $foaf_a, $model );
+	my $iter	= $model->get_statements( undef, iri('http://xmlns.com/foaf/0.1/name'), undef );
+	my $graph	= RDF::Trine::Graph->new( $iter );
+	
+	my $model_expect	= do {
+		my $store	= RDF::Trine::Store->temporary_store();
+		my $model	= RDF::Trine::Model->new( $store );
+		$parser->parse_into_model ( 'http://base/', <<'END', $model );
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+_:a foaf:name "Alice" .
+<bob> foaf:name "Bob" .
+END
+		$model;
+	};
+	my $graph_expect	= RDF::Trine::Graph->new( $model_expect );
+	ok( $graph->equals( $graph_expect ), 'graph equality from statement iterator' );
+}
+
+
+
+
+
+
+
+
+
 
 
 sub test_graph_equality {

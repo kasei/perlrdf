@@ -19,6 +19,7 @@ no warnings 'redefine';
 
 use Data::Dumper;
 use Log::Log4perl;
+use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 
@@ -47,7 +48,7 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-		unless ($t->isa('RDF::Trine::Statement')) {
+		unless (blessed($t) and $t->isa('RDF::Trine::Statement')) {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}

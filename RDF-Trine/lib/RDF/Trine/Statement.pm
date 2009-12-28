@@ -47,7 +47,9 @@ Returns a new Triple structure.
 sub new {
 	my $class	= shift;
 	my @nodes	= @_;
-	Carp::confess "Triple constructor must have three node arguments" unless (scalar(@nodes) == 3);
+	unless (scalar(@nodes) == 3) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Triple constructor must have three node arguments";
+	}
 	my @names	= qw(subject predicate object);
 	foreach my $i (0 .. 2) {
 		unless (defined($nodes[ $i ])) {
@@ -187,22 +189,21 @@ Parses the supplied SSE-encoded string and returns a RDF::Trine::Statement objec
 sub from_sse {
 	my $class	= shift;
 	my $context	= $_[1];
-	for ($_[0]) {
-		if (m/^[(]triple/) {
-			s/^[(]triple\s+//;
-			my @nodes;
-			push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
-			push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
-			push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
-			if (m/^\s*[)]/) {
-				s/^\s*[)]//;
-				return RDF::Trine::Statement->new( @nodes );
-			} else {
-				throw RDF::Trine::Error -text => "Cannot parse end-of-triple from SSE string: >>$_<<";
-			}
+	$_			= $_[0];
+	if (m/^[(]triple/) {
+		s/^[(]triple\s+//;
+		my @nodes;
+		push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
+		push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
+		push(@nodes, RDF::Trine::Node->from_sse( $_, $context ));
+		if (m/^\s*[)]/) {
+			s/^\s*[)]//;
+			return RDF::Trine::Statement->new( @nodes );
 		} else {
-			throw RDF::Trine::Error -text => "Cannot parse triple from SSE string: >>$_<<";
+			throw RDF::Trine::Error -text => "Cannot parse end-of-triple from SSE string: >>$_<<";
 		}
+	} else {
+		throw RDF::Trine::Error -text => "Cannot parse triple from SSE string: >>$_<<";
 	}
 }
 

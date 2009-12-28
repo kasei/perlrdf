@@ -58,7 +58,6 @@ Returns a new
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	$class = ref($class) || $class;
 	my $self = bless( {}, $class);
 	return $self;
 }
@@ -133,7 +132,6 @@ sub serialize_iterator_to_file {
 sub _statements_same_subject_as_string {
 	my $self		= shift;
 	my @statements	= @_;
-	return unless (@statements);
 	my $s			= $statements[0]->subject;
 	
 	my $id;
@@ -193,52 +191,6 @@ sub _statements_same_subject_as_string {
 	return qq[<rdf:Description ${namespaces} $id>\n] . $string;
 }
 
-sub _statement_as_string {
-	my $self	= shift;
-	my $st		= shift;
-	my ($s,$p,$o)	= $st->nodes;
-	my $id;
-	
-	my $string	= '';
-	if ($s->is_blank) {
-		my $b	= $s->blank_identifier;
-		$id	= qq[rdf:nodeID="$b"];
-	} else {
-		my $i	= $s->uri_value;
-		$id	= qq[rdf:about="$i"];
-	}
-	$string	.= qq[<rdf:Description $id>\n];
-	my ($ns, $ln);
-	try {
-		($ns,$ln)	= $p->qname;
-	} catch RDF::Trine::Error with {
-		my $uri	= $p->uri_value;
-		throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
-	};
-	if ($o->is_literal) {
-		my $lv		= $o->literal_value;
-		$lv			=~ s/&/&amp;/g;
-		$lv			=~ s/</&lt;/g;
-		my $lang	= $o->literal_value_language;
-		my $dt		= $o->literal_datatype;
-		if ($lang) {
-			$string	.= qq[\t<$ln xmlns="$ns" xml:lang="${lang}">${lv}</$ln>\n];
-		} elsif ($dt) {
-			$string	.= qq[\t<$ln xmlns="$ns" rdf:datatype="${dt}">${lv}</$ln>\n];
-		} else {
-			$string	.= qq[\t<$ln xmlns="$ns">${lv}</$ln>\n];
-		}
-	} elsif ($o->is_blank) {
-		my $b	= $o->blank_identifier;
-		$string	.= qq[\t<$ln xmlns="$ns" rdf:nodeID="$b"/>\n];
-	} else {
-		my $u	= $o->uri_value;
-		$string	.= qq[\t<$ln xmlns="$ns" rdf:resource="$u"/>\n];
-	}
-	$string	.= qq[</rdf:Description>\n];
-	return $string;
-}
-
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
 Serializes the iterator to RDF/XML, returning the result as a string.
@@ -259,18 +211,10 @@ sub _serialize_bounded_description {
 	my $self	= shift;
 	my $model	= shift;
 	my $node	= shift;
-	my $seen	= shift || {};
-	return '' if ($seen->{ $node->sse }++);
-	my $iter	= $model->get_statements( $node, undef, undef );
+	my $seen	= {};
 	
 	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
-			$string	.= $self->__serialize_bounded_description( $model, $nodes[2], $seen );
-		}
-	}
+	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
 }
@@ -281,14 +225,19 @@ sub __serialize_bounded_description {
 	my $node	= shift;
 	my $seen	= shift || {};
 	return '' if ($seen->{ $node->sse }++);
-	my $iter	= $model->get_statements( $node, undef, undef );
 	
 	my $string	= '';
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
-			$string	.= $self->__serialize_bounded_description( $model, $nodes[2], $seen );
+	my $st		= RDF::Trine::Statement->new( $node, map { RDF::Trine::Node::Variable->new($_) } qw(p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $iter	= $model->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
+	
+	my @bindings	= $iter->get_all;
+	if (@bindings) {
+		my @samesubj	= map { RDF::Trine::Statement->new( $node, $_->{p}, $_->{o} ) } @bindings;
+		my @blanks		= grep { blessed($_) and $_->isa('RDF::Trine::Node::Blank') } map { $_->{o} } @bindings;
+		$string			.= $self->_statements_same_subject_as_string( @samesubj );
+		foreach my $object (@blanks) {
+			$string	.= $self->__serialize_bounded_description( $model, $object, $seen );
 		}
 	}
 	return $string;

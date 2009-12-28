@@ -1,11 +1,11 @@
-use Test::More tests => 9;
+use Test::More tests => 14;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine;
+use RDF::Trine qw(iri);
 use_ok('RDF::Trine::Serializer::RDFXML');
 
 
@@ -165,3 +165,155 @@ END
 		warn $xml;
 	} 'RDF::Trine::Error::SerializationError', "serializing bad predicates throws exception (local part starts with digits)";
 }
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/predicate' => [
+				{'type' => 'literal','value' => 'Foo'},
+				{'type' => 'uri','value' => 'http://example.com/bar'},
+				'baz@en'
+			],
+		},
+		'http://example.com/bar' => {
+			'http://example.com/predicate' => [
+				{'type' => 'literal','value' => 'Bar'},
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/bar">
+	<ns1:predicate>Bar</ns1:predicate>
+</rdf:Description>
+<rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
+	<ns1:predicate rdf:resource="http://example.com/bar"/>
+	<ns1:predicate>Foo</ns1:predicate>
+	<ns1:predicate xml:lang="en">baz</ns1:predicate>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	{
+		my $xml = $serializer->serialize_model_to_string($model);
+		is($xml, $expect, 'serialize_model_to_string 1');
+	}
+	{
+		my $iter	= $model->as_stream;
+		my $xml = $serializer->serialize_iterator_to_string($iter);
+		is($xml, $expect, 'serialize_iterator_to_string 1');
+	}
+}
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/maker' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+		},
+		'_:a' => {
+			'http://example.com/name' => [
+				{'type' => 'literal','value' => 'Alice', 'lang' => 'en'},
+			],
+			'http://example.com/homepage' => [
+				{'type' => 'uri', 'value' => 'http://example.com/' },
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
+	<ns1:maker rdf:nodeID="a"/>
+</rdf:Description>
+<rdf:Description xmlns:ns1="http://example.com/" rdf:nodeID="a">
+	<ns1:homepage rdf:resource="http://example.com/"/>
+	<ns1:name xml:lang="en">Alice</ns1:name>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
+	is($xml, $expect, 'serialize_model_to_string 1');
+}
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/maker' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+			'http://example.com/creator' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+		},
+		'_:a' => {
+			'http://example.com/name' => [
+				{'type' => 'literal','value' => 'Alice', 'lang' => 'en'},
+			],
+			'http://example.com/homepage' => [
+				{'type' => 'uri', 'value' => 'http://example.com/' },
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
+	<ns1:creator rdf:nodeID="a"/>
+	<ns1:maker rdf:nodeID="a"/>
+</rdf:Description>
+<rdf:Description xmlns:ns1="http://example.com/" rdf:nodeID="a">
+	<ns1:homepage rdf:resource="http://example.com/"/>
+	<ns1:name xml:lang="en">Alice</ns1:name>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
+	is($xml, $expect, '_serialize_bounded_description');
+}
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/maker' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+			'http://example.com/creator' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+		},
+		'_:a' => {
+			'http://example.com/name' => [
+				{'type' => 'literal','value' => 'Alice', 'lang' => 'en'},
+			],
+			'http://example.com/homepage' => [
+				{'type' => 'uri', 'value' => 'http://example.com/' },
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+</rdf:RDF>
+END
+	
+	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/unknown'));
+	is($xml, $expect, '_serialize_bounded_description with unknown node');
+}
+

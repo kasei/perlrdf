@@ -49,7 +49,7 @@ BEGIN {
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(iri blank literal);
+	@EXPORT_OK	= qw(iri blank literal variable);
 }
 
 use Log::Log4perl qw(:easy);
@@ -111,6 +111,18 @@ language/datatype.
 sub literal {
 	return RDF::Trine::Node::Literal->new( @_ );
 }
+
+=item C<< variable ( $name ) >>
+
+Returns a RDF::Trine::Node::Variable object with the given variable name.
+
+=cut
+
+sub variable {
+	my $name	= shift;
+	return RDF::Trine::Node::Variable->new( $name );
+}
+
 
 1; # Magic true value required at end of module
 __END__

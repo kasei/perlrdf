@@ -229,7 +229,7 @@ Returns true if the two nodes are equal, false otherwise.
 sub equal {
 	my $self	= shift;
 	my $node	= shift;
-	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node'));
+	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
 	return 0 unless ($self->type eq $node->type);
 	return ($self->uri_value eq $node->uri_value);
 }

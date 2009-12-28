@@ -46,7 +46,7 @@ BEGIN {
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(sgrep smap swatch sfinally);
+	@EXPORT_OK	= qw(sgrep smap swatch);
 	use overload 'bool' => sub { $_[0] };
 	use overload '&{}' => sub {
 		my $self	= shift;
@@ -576,37 +576,6 @@ sub swatch (&$) {
 		
 		local($_)	= $data;
 		$block->( $data );
-		return $data;
-	};
-	
-	my $s		= $stream->_new( $next, @args );
-	return $s;
-}
-
-=item C<sfinally { EXPR } $stream>
-
-=cut
-
-sub sfinally (&$) {
-	my $block	= shift;
-	my $stream	= shift;
-	my @args	= $stream->construct_args();
-	my $class	= ref($stream);
-	
-	my $open	= 1;
-	my $next	= sub {
-		return undef unless ($open);
-		if (@_ and $_[0]) {
-			$block->();
-			$stream->close;
-			$open	= 0;
-		}
-		my $data	= $stream->next;
-		unless ($data) {
-			$block->();
-			$open	= 0;
-			return undef;
-		}
 		return $data;
 	};
 	

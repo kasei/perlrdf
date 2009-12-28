@@ -44,6 +44,8 @@ BEGIN {
 }
 
 use LWP::UserAgent;
+
+use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
@@ -64,11 +66,11 @@ sub new {
 	$key		=~ s/[^a-z]//g;
 	
 	if ($name eq 'guess') {
-		die;
+		throw RDF::Trine::Error::UnimplementedError -text => "guess parser heuristics are not implemented yet";
 	} elsif (my $class = $parser_names{ $key }) {
 		return $class->new( @_ );
 	} else {
-		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
+		throw RDF::Trine::Error::MethodInvocationError -text => "No parser known named $name";
 	}
 }
 
@@ -103,7 +105,7 @@ sub parse_url_into_model {
 		my $content	= $resp->content;
 		return $parser->parse_into_model( $url, $content, $model );
 	} else {
-		throw RDF::Trine::Error -text => "No parser found for content type $type";
+		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
 }
 

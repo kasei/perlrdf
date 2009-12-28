@@ -188,14 +188,96 @@ C<< orderby => [qw(name ASC)] >> (corresponding to a SPARQL-like request to
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
 					? $bgp
 					: $bgp->triples;
 	unless (@triples) {
 		throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 	}
-	return $self->_store->get_pattern( $bgp, @_ );
+	
+	my $store	= $self->_store;
+	if ($store and $store->can('get_pattern')) {
+		return $self->_store->get_pattern( $bgp, $context, @args );
+	} else {
+		if (1 == scalar(@triples)) {
+			my $t		= shift(@triples);
+			my @nodes	= $t->nodes;
+			my %vars;
+			my @names	= qw(subject predicate object);
+			foreach my $n (0 .. 2) {
+				if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
+					$vars{ $names[ $n ] }	= $nodes[$n]->name;
+				}
+			}
+			my $iter	= $self->get_statements( @nodes, $context, @args );
+			my @vars	= values %vars;
+			my $sub		= sub {
+				my $row	= $iter->next;
+				return undef unless ($row);
+				my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
+				return \%data;
+			};
+			return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+		} else {
+			my $t		= shift(@triples);
+			my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+			my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+			my @inner;
+			while (my $row = $rhs->next) {
+				push(@inner, $row);
+			}
+			my @results;
+			while (my $row = $lhs->next) {
+				RESULT: foreach my $irow (@inner) {
+					my %keysa;
+					my @keysa	= keys %$irow;
+					@keysa{ @keysa }	= (1) x scalar(@keysa);
+					my @shared	= grep { exists $keysa{ $_ } } (keys %$row);
+					foreach my $key (@shared) {
+						my $val_a	= $irow->{ $key };
+						my $val_b	= $row->{ $key };
+						next unless (defined($val_a) and defined($val_b));
+						my $equal	= $val_a->equal( $val_b );
+						unless ($equal) {
+							next RESULT;
+						}
+					}
+					
+					my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
+					push(@results, $jrow);
+				}
+			}
+			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+		}
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 =item C<< get_contexts >>
 

@@ -50,17 +50,6 @@ sub temporary_store {
 	return RDF::Trine::Store::DBI->temporary_store();
 }
 
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
-
-Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub get_statements {
-	die "unimplemented";
-}
-
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
 Returns a stream object of all bindings matching the specified graph pattern.
@@ -126,43 +115,24 @@ sub get_pattern {
 	}
 }
 
+=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
 =item C<< get_contexts >>
-
-=cut
-
-sub get_contexts {
-	die "unimplemented";
-}
 
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
 
-=cut
-
-sub add_statement {
-	die "unimplemented";
-}
-
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
 
-=cut
-
-sub remove_statement {
-	die "unimplemented";
-}
-
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
-
-=cut
-
-sub remove_statements {
-	die "unimplemented";
-}
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
@@ -170,10 +140,6 @@ Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
-
-sub count_statements {
-	die "unimplemented";
-}
 
 
 1;

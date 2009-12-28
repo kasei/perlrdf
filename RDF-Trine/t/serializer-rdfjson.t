@@ -1,4 +1,4 @@
-use Test::More tests => 5;
+use Test::More tests => 3;
 
 use strict;
 use warnings;
@@ -37,18 +37,3 @@ my $json = $serializer->serialize_model_to_string($model);
 
 ok($json =~ /^\{/, "RDF/JSON serialiser seems to work");
 
-my $parser	= RDF::Trine::Parser->new( 'RDF/JSON' );
-my $new_model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
-$parser->parse_into_model(undef, $json, $new_model);
-
-ok($model->count_statements(
-		RDF::Trine::Node::Resource->new('http://example.com/doc'),
-		RDF::Trine::Node::Resource->new('http://example.com/predicate'),
-		RDF::Trine::Node::Resource->new('http://example.com/bar'),
-		),
-	"RDF/JSON parser works");
-
-my $data = $new_model->as_hashref;
-
-ok(defined $data->{'http://example.com/doc'}->{'http://example.com/predicate'}->[2]->{'value'},
-	"as_hashref seems to work");

@@ -1,4 +1,4 @@
-use Test::More tests => 2;
+use Test::More tests => 3;
 BEGIN { use_ok('RDF::Trine::Serializer::NTriples::Canonical') };
 
 use strict;
@@ -32,3 +32,14 @@ _:h3 <eg:prop> "val" .\r
 END
 
 is($testString, $correctString, "canonicalisation works");
+
+{
+	my ($rh, $wh);
+	pipe($rh, $wh);
+	$serializer->serialize_model_to_file($wh, $model);
+	close($wh);
+	
+	local($/)	= undef;
+	my $string	= <$rh>;
+	is( $string, $correctString, 'serialize_model_to_file' );
+}
