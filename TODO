@@ -36,7 +36,7 @@ the work, if known):
 	* Serializers
 		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer
 		* Pretty print RDF/XML [tobyink or kasei]
-		* Pretty print Turtle [tobyink]
+		* Pretty print Turtle [kasei; done 2009.12.30]
 		* TriX [tobyink]
 		* TriG
 		* N-Quads
