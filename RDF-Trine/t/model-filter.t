@@ -1,6 +1,7 @@
 use Test::More tests => 74;
 use Test::Exception;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -154,7 +155,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 	}
 	
 	{
-		my $st5		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('グレゴリ　ウィリアムス', 'jp') );
+		my $st5		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('グレゴリ ウィリアムス', 'jp') );
 		$model->add_statement( $st5 );
 		
 		my $pattern	= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
@@ -163,7 +164,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 		while (my $b = $stream->next) {
 			isa_ok( $b, 'HASH' );
 			isa_ok( $b->{name}, 'RDF::Trine::Node::Literal', 'literal name' );
-			like( $b->{name}->literal_value, qr/Gregory|グレゴリ/, 'name pattern　with language-tagged result' );
+			like( $b->{name}->literal_value, qr/Gregory|グレゴリ/, 'name pattern with language-tagged result' );
 			$count++;
 		}
 		is( $count, 2, 'expected result count (2 names)' );
@@ -184,7 +185,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 			my $name	= $b->{name};
 			isa_ok( $b, 'HASH' );
 			isa_ok( $name, 'RDF::Trine::Node::Literal', 'literal name' );
-			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern　with datatyped result' );
+			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern with datatyped result' );
 			if (my $type = $name->literal_datatype) {
 				is( $type, 'http://www.w3.org/2000/01/rdf-schema#Literal', 'datatyped literal' );
 				$dt++;

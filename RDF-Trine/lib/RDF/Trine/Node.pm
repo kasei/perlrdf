@@ -174,14 +174,32 @@ sub from_sse {
 }
 
 sub _unicode_escape {
-	# based on Unicode::Escape, but without running the string through Encode:: first.
 	my $self	= shift;
 	my $str		= shift;
-	my $us		= Unicode::String->new($str);
 	my $rslt	= '';
-	while (my $uchar = $us->chop) {
-		my $utf8 = $uchar->utf8;
-		$rslt = (($utf8 =~ /[\x80-\xff]/) ? '\\u'.uc(unpack('H4', $uchar->utf16be)) : $utf8) . $rslt;
+	
+	while (length($str)) {
+		my $utf8	= substr($str,0,1,'');
+		if ($utf8 eq "\n") {
+			$rslt	.= "\\n";
+		} elsif ($utf8 eq "\t") {
+			$rslt	.= "\\t";
+		} elsif ($utf8 eq "\r") {
+			$rslt	.= "\\r";
+		} elsif ($utf8 eq '"') {
+			$rslt	.= '\\"';
+		} elsif ($utf8 eq '\\') {
+			$rslt	.= '\\\\';
+		} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
+			$rslt	.= sprintf('\\U%08X', ord($utf8));
+		} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
+#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
+			$rslt	.= sprintf('\\u%04X', ord($utf8));
+		} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
+			$rslt	.= sprintf('\\u%04X', ord($utf8));
+		} else {
+			$rslt	.= $utf8;
+		}
 	}
 	return $rslt;
 }

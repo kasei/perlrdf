@@ -1,6 +1,7 @@
 use Test::More tests => 207;
 use Test::Exception;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -160,7 +161,8 @@ foreach my $store (@$stores) {
 		while (my $b = $stream->next) {
 			isa_ok( $b, 'HASH' );
 			isa_ok( $b->{name}, 'RDF::Trine::Node::Literal', 'literal name' );
-			like( $b->{name}->literal_value, qr/Gregory|グレゴリ/, 'name pattern　with language-tagged result' );
+			my $value	= $b->{name}->literal_value;
+			like( $value, qr/Gregory|グレゴリ/, 'name pattern with language-tagged result' );
 			$count++;
 		}
 		is( $count, 2, 'expected result count (2 names)' );
@@ -181,7 +183,7 @@ foreach my $store (@$stores) {
 			my $name	= $b->{name};
 			isa_ok( $b, 'HASH' );
 			isa_ok( $name, 'RDF::Trine::Node::Literal', 'literal name' );
-			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern　with datatyped result' );
+			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern with datatyped result' );
 			if (my $type = $name->literal_datatype) {
 				is( $type, 'http://www.w3.org/2000/01/rdf-schema#Literal', 'datatyped literal' );
 				$dt++;

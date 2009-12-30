@@ -268,12 +268,15 @@ sub get_pattern {
 			my $name	= $self->_column_name( $nodename, 'Name' );
 			my $value	= $self->_column_name( $nodename, 'Value' );
 			if (defined( my $u = $row->{ $uri })) {
+				$u	= decode('utf8', $u);
 				$bindings{ $nodename }	 = RDF::Trine::Node::Resource->new( $u );
 			} elsif (defined( my $n = $row->{ $name })) {
 				$bindings{ $nodename }	 = RDF::Trine::Node::Blank->new( $n );
 			} elsif (defined( my $v = $row->{ $value })) {
 				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
-				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
+				my ($val,$lang,$dt)	= @{ $row }{ @cols };
+				$val	= decode('utf8', $val);
+				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( $val, $lang, $dt );
 			} else {
 				$bindings{ $nodename }	= undef;
 			}

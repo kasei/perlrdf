@@ -14,7 +14,20 @@ use RDF::Trine::Serializer::NTriples;
 
 plan qw(no_plan);
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.parser.rdfxml          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 use_ok( 'RDF::Trine::Parser::RDFXML' );
+
+my $ok_regex	= (@ARGV) ? shift : '';
+
 
 my $XML_LOADED	= ($RDF::Trine::Node::Literal::XML::VERSION > 0);
 my %XML_EXEMPTIONS	= map { $_ => 1 } qw(
@@ -207,21 +220,23 @@ my $s		= RDF::Trine::Serializer::NTriples->new();
 foreach my $file (@good) {
 	TODO: {
 		my (undef, undef, $filename)	= File::Spec->splitpath( $file );
-		local($TODO)	= 'rdf/xml parser is currently broken' if ($file =~ m/ex-(19|37|45|46|53|58)/);
-		my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-		my (undef, undef, $test)	= File::Spec->splitpath( $file );
-		my $nt;
-		lives_ok {
-			my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
-			my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
-			my $prefix	= $PREFIXES{ $filename } || 'genid';
-			my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
-			my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
-			$parser->parse_into_model( $url, $data, $model );
-			$nt			=  $s->serialize_model_to_string( $model );
-		} $test;
-		
-		compare( $nt, $file );
+		if ($file =~ $ok_regex) {
+			local($TODO)	= 'rdf/xml parser is currently broken' if ($file =~ m/ex-(19|37|45|46|53|58)/);
+			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+			my (undef, undef, $test)	= File::Spec->splitpath( $file );
+			my $nt;
+			lives_ok {
+				my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
+				my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
+				my $prefix	= $PREFIXES{ $filename } || 'genid';
+				my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
+				my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
+				$parser->parse_into_model( $url, $data, $model );
+				$nt			=  $s->serialize_model_to_string( $model );
+			} $test;
+			
+			compare( $nt, $file );
+		}
 	}
 }
 
