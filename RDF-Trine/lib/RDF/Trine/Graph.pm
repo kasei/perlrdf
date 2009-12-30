@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.113_02
+This document describes RDF::Trine::Graph version 0.113
 
 =head1 SYNOPSIS
 
@@ -30,9 +30,10 @@ no warnings 'redefine';
 
 use Math::Combinatorics qw(permute);
 
-our ($VERSION);
+our ($VERSION, $debug);
 BEGIN {
-	$VERSION	= '0.113_02';
+	$debug		= 0;
+	$VERSION	= '0.113';
 }
 
 use Data::Dumper;

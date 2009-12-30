@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.113" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2009-12-30" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Parser::RDFa implementation to connect with RDF::RDFa::Parser." ;
