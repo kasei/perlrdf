@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - [One line description of module's purpose here]
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.113_02
+This document describes RDF::Trine::Store::DBI version 0.113
 
 =head1 SYNOPSIS
 
@@ -60,7 +60,7 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.113_02";
+our $VERSION	= "0.113";
 
 
 
