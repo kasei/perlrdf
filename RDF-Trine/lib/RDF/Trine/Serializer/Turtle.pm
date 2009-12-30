@@ -119,11 +119,11 @@ sub serialize_iterator_to_file {
 			if ($pred->equal( $last_pred )) {
 				# continue an existing predicate
 				print {$fh} qq[, ];
-				print {$fh} $obj->as_ntriples;
+				print {$fh} $self->_turtle( $obj, 2 );
 			} else {
 				# start a new predicate
 				print {$fh} qq[ ;\n\t];
-				print {$fh} join( ' ', $pred->as_ntriples, $obj->as_ntriples );
+				print {$fh} join( ' ', $self->_turtle( $pred, 1 ), $self->_turtle( $obj, 2 ) );
 			}
 		} else {
 			# start a new subject
@@ -132,9 +132,9 @@ sub serialize_iterator_to_file {
 			}
 			$open_triple	= 1;
 			print {$fh} join( ' ',
-				$subj->as_ntriples,
-				$pred->as_ntriples,
-				$obj->as_ntriples,
+				$self->_turtle( $subj, 0 ),
+				$self->_turtle( $pred, 1 ),
+				$self->_turtle( $obj, 2 ),
 			);
 		}
 		$last_subj	= $subj;
@@ -160,6 +160,30 @@ sub serialize_iterator_to_string {
 	$self->serialize_iterator_to_file( $fh, $iter );
 	close($fh);
 	return $string;
+}
+
+sub _turtle {
+	my $self	= shift;
+	my $obj		= shift;
+	my $pos		= shift;
+	if ($obj->is_resource and $pos == 1 and $obj->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+		return 'a';
+	} elsif ($obj->is_literal and $obj->has_datatype) {
+		my $dt	= $obj->literal_datatype;
+		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$>) {
+			my $type	= $1;
+			my $value	= $obj->literal_value;
+			if ($type eq 'integer' and $value =~ m/^[-+]?[0-9]+$/) {
+				return $value;
+			} elsif ($type eq 'double' and $value =~ m/^[-+]?([0-9]+[.][0-9]*[eE][-+]?[0-9]+|[.][0-9]+[eE][-+]?[0-9]+|[0-9]+[eE][-+]?[0-9]+)$/) {
+				return $value;
+			} elsif ($type eq 'decimal' and $value =~ m/^[-+]?([0-9]+[.][0-9]*|[.][0-9]+|[0-9]+)$/) {
+				return $value;
+			}
+		}
+	}
+	
+	return $obj->as_ntriples;
 }
 
 1;
