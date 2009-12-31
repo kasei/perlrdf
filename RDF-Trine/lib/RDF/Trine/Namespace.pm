@@ -88,6 +88,16 @@ sub uri {
 	return RDF::Trine::Node::Resource->new( $uri );
 }
 
+=item C<< uri_value >>
+
+Returns the URI/IRI value of this namespace.
+
+=cut
+
+sub uri_value {
+	my $self	= shift;
+	return $self->uri();
+}
 
 1; # Magic true value required at end of module
 __END__
