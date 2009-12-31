@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.113_02
+This document describes RDF::Trine::Serializer::Turtle version 0.113
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.113_02';
+	$VERSION	= '0.113';
 }
 
 ######################################################################
