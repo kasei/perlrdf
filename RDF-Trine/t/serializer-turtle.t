@@ -1,4 +1,4 @@
-use Test::More tests => 23;
+use Test::More tests => 24;
 use Test::Exception;
 
 use strict;
@@ -27,6 +27,8 @@ use_ok('RDF::Trine::Serializer::Turtle');
 	my $turtle = $serializer->serialize_iterator_to_string($iter);
 	is($turtle, $expect, 'serialize_iterator_to_string 1');
 }
+
+################################################################################
 
 my @tests	= (
 	[
@@ -136,6 +138,21 @@ my @tests	= (
 		qq{[] <http://example.com/ns#description> [\n\t\t<http://example.com/ns#foo> "foo"\n\t], [\n\t\t<http://example.com/ns#bar> "bar"\n\t] .\n},
 		'multiple blank objects'
 	],
+	[
+		{
+			'_:a' => {
+				'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
+			},
+			'_:b' => {
+				'http://example.com/ns#foo' => [{type=>'uri', value=>'_:c'}],
+			},
+			'_:c' => {
+				'http://example.com/ns#bar' => ['bar'],
+			},
+		},
+		qq{[] <http://example.com/ns#description> [\n\t\t<http://example.com/ns#foo> [\n\t\t\t<http://example.com/ns#bar> "bar"\n\t\t]\n\t] .\n},
+		'multi-level blank objects'
+	],
 	
 	
 	### integers
@@ -224,8 +241,6 @@ my @tests	= (
 	],
 );
 
-
-# numeric type tests
 {
 	foreach my $d (@tests) {
 		my ($hash, $expect, $test)	= @$d;
@@ -237,7 +252,7 @@ my @tests	= (
 	}
 }
 
-
+################################################################################
 
 {
 	my $serializer = RDF::Trine::Serializer::Turtle->new({ foaf => 'http://xmlns.com/foaf/0.1/' });
