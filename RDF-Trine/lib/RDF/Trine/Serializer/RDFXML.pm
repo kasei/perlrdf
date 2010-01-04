@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::RDFXML version 0.113
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the RDF/XML syntax.
 
 =head1 METHODS
 
@@ -248,6 +249,10 @@ sub __serialize_bounded_description {
 __END__
 
 =back
+
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-syntax-grammar/>
 
 =head1 AUTHOR
 

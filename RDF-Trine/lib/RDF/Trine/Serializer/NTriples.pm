@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::NTriples version 0.113
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the N-Triples syntax.
 
 =head1 METHODS
 
@@ -159,6 +160,10 @@ sub _serialize_bounded_description {
 __END__
 
 =back
+
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-testcases/#ntriples>
 
 =head1 AUTHOR
 

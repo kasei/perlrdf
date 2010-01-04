@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::RDF/JSON version 0.113
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the RDF/JSON syntax.
 
 =head1 METHODS
 
@@ -104,7 +105,7 @@ __END__
 
 =head1 SEE ALSO
 
-http://n2.talis.com/wiki/RDF_JSON_Specification
+L<http://n2.talis.com/wiki/RDF_JSON_Specification>
 
 =head1 AUTHOR
 

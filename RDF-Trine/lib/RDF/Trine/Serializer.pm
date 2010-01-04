@@ -15,7 +15,8 @@ This document describes RDF::Trine::Serializer version 0.113
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer class provides an API for serializing RDF graphs
+(via both model objects and graph iterators) to strings and files.
 
 =head1 METHODS
 

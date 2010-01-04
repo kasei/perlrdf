@@ -145,7 +145,6 @@ sub serialize_iterator_to_file {
 					# the rdf:List appears as the object of a statement, and so
 					# will be serialized whenever we get to serializing that
 					# statement
-# 					warn "next 1";
 					next;
 				}
 				
@@ -155,7 +154,6 @@ sub serialize_iterator_to_file {
 # 					warn $head->as_string . " is a valid rdf:List head";
 					$valid_list_head	= 1;
 				} else {
-# 					warn "next 2";
 					next;
 				}
 			}
@@ -164,7 +162,6 @@ sub serialize_iterator_to_file {
 		if ($seen->{ $subj->as_string }) {
 			if ($valid_list) {
 				if ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
-# 					warn "next 3";
 					next;
 				} else {
 					# don't skip these statements, because while we've "seen" the list head already
@@ -172,7 +169,6 @@ sub serialize_iterator_to_file {
 					# not any other links hanging off of the list head (e.g. "(1 2) ex:p <object>").
 				}
 			} else {
-# 				warn "next 4";
 				next;
 			}
 		}
@@ -224,8 +220,6 @@ sub serialize_iterator_to_file {
 	if ($open_triple) {
 		print {$fh} qq[ .\n];
 	}
-	
-# 	warn Dumper($seen);
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
