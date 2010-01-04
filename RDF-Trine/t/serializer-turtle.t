@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 29;
 use Test::Exception;
 
 use strict;
@@ -9,28 +9,83 @@ use RDF::Trine;
 use_ok('RDF::Trine::Serializer::Turtle');
 
 
-{
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
-	$model->add_hashref({
-		'http://example.com/doc' => {
-			'http://example.com/predicate' => [
-				{'type' => 'literal','value' => 'Foo'},
-				{'type' => 'uri','value' => 'http://example.com/bar'},
-				'baz@en'
-			],
-		},
-	});
-	
-	my $serializer = RDF::Trine::Serializer::Turtle->new();
-	my $expect	= qq[<http://example.com/doc> <http://example.com/predicate> <http://example.com/bar>, "Foo", "baz"\@en .\n];
-	my $iter	= $model->as_stream;
-	my $turtle = $serializer->serialize_iterator_to_string($iter);
-	is($turtle, $expect, 'serialize_iterator_to_string 1');
-}
-
 ################################################################################
 
 my @tests	= (
+	[
+		{
+			'_:b'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:a'}],
+						'http://example.com/predicate' => ['foo'],
+					},
+			'_:a'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+					},
+		},
+		qq{(1 2) <http://example.com/predicate> "foo" .\n},
+		'rdf:List as subject syntax'
+	],
+	[
+		{
+			'_:abc'	=> { 'http://example.com/predicate' => [{type => 'blank', value => '_:head'}] },
+			'_:head'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:middle'}],
+					},
+			'_:middle'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+					},
+		},
+		qq{[] <http://example.com/predicate> (1 2) .\n},
+		'concise rdf:List syntax 1'
+	],
+	[
+		{
+			'_:a'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:b'}],
+					},
+			'_:doc'	=> { 'http://example.com/predicate' => [{type => 'blank', value => '_:a'}] },
+			'_:b'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+					},
+		},
+		qq{[] <http://example.com/predicate> (1 2) .\n},
+		'concise rdf:List syntax 2'
+	],
+	[
+		{
+			'_:abc'	=> { 'http://example.com/predicate' => [{type => 'blank', value => '_:head'}] },
+			'_:head'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}, {type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:middle'}],
+					},
+			'_:middle'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '3', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+					},
+		},
+		qq{[] <http://example.com/predicate> [\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 2, 1 ;\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> [\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 3 ;\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>\n\t\t]\n\t] .\n},
+		'full rdf:List syntax on invalid list'
+	],
+	[
+		{
+			'_:b'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:a'}],
+					},
+			'_:a'	=> {
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+					},
+		},
+		qq{(1 2) .\n},
+		'bare concise rdf:List syntax'
+	],
 	[
 		{
 			'http://example.com/doc'	=> {
@@ -310,3 +365,23 @@ END
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'RDF::Trine::Namespace Qnames');
 }
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/predicate' => [
+				{'type' => 'literal','value' => 'Foo'},
+				{'type' => 'uri','value' => 'http://example.com/bar'},
+				'baz@en'
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::Turtle->new();
+	my $expect	= qq[<http://example.com/doc> <http://example.com/predicate> <http://example.com/bar>, "Foo", "baz"\@en .\n];
+	my $iter	= $model->as_stream;
+	my $turtle = $serializer->serialize_iterator_to_string($iter);
+	is($turtle, $expect, 'serialize_iterator_to_string 1');
+}
+
