@@ -44,8 +44,9 @@ use RDF::Trine::Namespace qw(rdf);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, $debug);
 BEGIN {
+	$debug		= 0;
 	$VERSION	= '0.113';
 }
 
@@ -131,46 +132,53 @@ sub serialize_iterator_to_file {
 	
 	my $open_triple	= 0;
 	while (my $st = $iter->next) {
+# 		warn "------------------\n";
+# 		warn $st->as_string . "\n";
 		my $subj	= $st->subject;
 		my $pred	= $st->predicate;
 		my $obj		= $st->object;
 		
-		my $valid_list_head	= 0;
-		my $valid_list		= 0;
+# 		my $valid_list_head	= 0;
+# 		my $valid_list		= 0;
 		if (my $model = $args{model}) {
 			if (my $head = $self->_statement_describes_list($model, $st)) {
-				$valid_list	= 1;
-# 				warn "found a rdf:List head " . $head->as_string . " for the subject in statement " . $st->as_string;
+# 				$valid_list	= 1;
+				warn "found a rdf:List head " . $head->as_string . " for the subject in statement " . $st->as_string if ($debug);
 				if ($model->count_statements(undef, undef, $head)) {
 					# the rdf:List appears as the object of a statement, and so
 					# will be serialized whenever we get to serializing that
 					# statement
+					warn "next" if ($debug);
 					next;
 				}
-				
-				if ($head->equal( $subj )) {
-					# the rdf:List doesn't appear as the object of any statement,
-					# so it needs to be serialized here.
-# 					warn $head->as_string . " is a valid rdf:List head";
-					$valid_list_head	= 1;
-				} else {
-					next;
-				}
+# 				
+# 				if ($head->equal( $subj )) {
+# 					# the rdf:List doesn't appear as the object of any statement,
+# 					# so it needs to be serialized here.
+# 					warn $head->as_string . " is a valid rdf:List head" if ($debug);
+# 					$valid_list_head	= 1;
+# 				} else {
+# 					warn "next" if ($debug);
+# 					next;
+# 				}
 			}
 		}
 		
 		if ($seen->{ $subj->as_string }) {
-			if ($valid_list) {
-				if ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
-					next;
-				} else {
-					# don't skip these statements, because while we've "seen" the list head already
-					# that only means we've serialized the expected list part of it (e.g. "(1 2)")
-					# not any other links hanging off of the list head (e.g. "(1 2) ex:p <object>").
-				}
-			} else {
+# 			if ($valid_list) {
+# 				if ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
+# 					warn "next" if ($debug);
+# 					next;
+# 				} else {
+# 					# don't skip these statements, because while we've "seen" the list head already
+# 					# that only means we've serialized the expected list part of it (e.g. "(1 2)")
+# 					# not any other links hanging off of the list head (e.g. "(1 2) ex:p <object>").
+# 					warn "don't skip" if ($debug);
+# 				}
+# 			} else {
+				warn "next" if ($debug);
 				next;
-			}
+# 			}
 		}
 		
 		if ($subj->equal( $last_subj )) {
@@ -181,11 +189,11 @@ sub serialize_iterator_to_file {
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
 			} else {
 				# start a new predicate
-				if ($valid_list_head) {
-					print {$fh} ' ';
-				} else {
+# 				if ($valid_list_head) {
+# 					print {$fh} ' ';
+# 				} else {
 					print {$fh} qq[ ;\n${indent}$tab];
-				}
+# 				}
 				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
 				print {$fh} ' ';
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
@@ -196,23 +204,27 @@ sub serialize_iterator_to_file {
 				print {$fh} qq[ .\n${indent}];
 			}
 			$open_triple	= 1;
-			if ($valid_list_head) {
-				$self->_turtle_rdf_list( $fh, $subj, $args{model}, $seen, $level, $tab, %args );
-			} else {
+# 			if ($valid_list_head) {
+# 				$self->_turtle_rdf_list( $fh, $subj, $args{model}, $seen, $level, $tab, %args );
+# 				$seen->{ $subj->as_string }++;
+# 			} else {
 				$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
-			}
+# 			}
 			
-			unless ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
+			warn '-> ' . $pred->as_string if ($debug);
+# 			if (not($valid_list_head) or ($valid_list_head and not($pred->equal($rdf->first)) and not($pred->equal($rdf->rest)))) {
 				print {$fh} ' ';
 				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
 				print {$fh} ' ';
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
-			}
+# 			}
 		}
 	} continue {
 		if (blessed($last_subj) and not($last_subj->equal($st->subject))) {
-			$seen->{ $st->subject->as_string }++;
+# 			warn "marking " . $st->subject->as_string . " as seen";
+			$seen->{ $last_subj->as_string }++;
 		}
+# 		warn "setting last subject to " . $st->subject->as_string;
 		$last_subj	= $st->subject;
 		$last_pred	= $st->predicate;
 	}
@@ -247,6 +259,7 @@ sub _serialize_object_to_file {
 	my $tab		= shift;
 	my %args	= @_;
 	my $indent	= $tab x $level;
+	
 	if (my $model = $args{model}) {
 		if ($subj->is_blank) {
 			if ($self->_check_valid_rdf_list( $subj, $model )) {
@@ -254,41 +267,43 @@ sub _serialize_object_to_file {
 				return $self->_turtle_rdf_list( $fh, $subj, $model, $seen, $level, $tab, %args );
 			} else {
 				my $count	= $model->count_statements( undef, undef, $subj );
-				if ($count == 1) {
-					$seen->{ $subj->as_string }++;
-					my $iter	= $model->get_statements( $subj, undef, undef );
-					my $last_pred;
-					my $triple_count	= 0;
-					print {$fh} "[";
-					while (my $st = $iter->next) {
-						my $pred	= $st->predicate;
-						my $obj		= $st->object;
-						
-						# continue an existing subject
-						if ($pred->equal( $last_pred )) {
-							# continue an existing predicate
-							print {$fh} qq[, ];
-							$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
-						} else {
-							# start a new predicate
-							if ($triple_count == 0) {
-								print {$fh} qq[\n${indent}${tab}${tab}];
+				my $rec		= $model->count_statements( $subj, undef, $subj );
+				if ($count == 1 and $rec == 0) {
+					unless ($seen->{ $subj->as_string }++) {
+						my $iter	= $model->get_statements( $subj, undef, undef );
+						my $last_pred;
+						my $triple_count	= 0;
+						print {$fh} "[";
+						while (my $st = $iter->next) {
+							my $pred	= $st->predicate;
+							my $obj		= $st->object;
+							
+							# continue an existing subject
+							if ($pred->equal( $last_pred )) {
+								# continue an existing predicate
+								print {$fh} qq[, ];
+								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
 							} else {
-								print {$fh} qq[ ;\n${indent}$tab${tab}];
+								# start a new predicate
+								if ($triple_count == 0) {
+									print {$fh} qq[\n${indent}${tab}${tab}];
+								} else {
+									print {$fh} qq[ ;\n${indent}$tab${tab}];
+								}
+								$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
+								print {$fh} ' ';
+								$self->_serialize_object_to_file( $fh, $obj, $seen, $level+1, $tab, %args );
 							}
-							$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-							print {$fh} ' ';
-							$self->_serialize_object_to_file( $fh, $obj, $seen, $level+1, $tab, %args );
+							
+							$last_pred	= $pred;
+							$triple_count++;
 						}
-						
-						$last_pred	= $pred;
-						$triple_count++;
+						if ($triple_count) {
+							print {$fh} "\n${indent}${tab}";
+						}
+						print {$fh} "]";
+						return;
 					}
-					if ($triple_count) {
-						print {$fh} "\n${indent}${tab}";
-					}
-					print {$fh} "]";
-					return;
 				}
 			}
 		}
@@ -349,8 +364,11 @@ sub _check_valid_rdf_list {
 		return 0;
 	}
 	
+	my %list_elements;
 	my $node	= $head;
 	until ($node->equal( $rdf->nil )) {
+		$list_elements{ $node->as_string }++;
+		
 		unless ($node->is_blank) {
 # 			warn "\tnode " . $node->as_string . " isn't a blank node\n";
 			return 0;
@@ -390,6 +408,16 @@ sub _check_valid_rdf_list {
 # 					warn "\tnode " . $node->as_string . " has more outgoing links than expected\n";
 					return 0;
 				}
+			}
+		}
+		
+		
+		
+		my @links	= $model->objects_for_predicate_list( $node, $rdf->first, $rdf->rest );
+		foreach my $l (@links) {
+			if ($list_elements{ $l->as_string }) {
+				warn $node->as_string . " is repeated in the list" if ($debug);
+				return 0;
 			}
 		}
 		
@@ -446,7 +474,8 @@ sub _turtle {
 	} elsif ($obj->is_blank and $pos == 0) {
 		if (my $model = $args{ model }) {
 			my $count	= $model->count_statements( undef, undef, $obj );
-			if ($count < 2) {
+			my $rec		= $model->count_statements( $obj, undef, $obj );
+			if ($count < 2 and $rec == 0) {
 				print {$fh} '[]';
 				return;
 			}
