@@ -74,7 +74,7 @@ sub new {
 	}
 }
 
-=item C<< parse_url_into_model ( $url, $model ) >>
+=item C<< parse_url_into_model ( $url, $model [, $context] ) >>
 
 Retrieves the content from C<< $url >> and attempts to parse the resulting RDF
 into C<< $model >> using a parser chosen by the associated content media type.
@@ -85,6 +85,7 @@ sub parse_url_into_model {
 	my $class	= shift;
 	my $url		= shift;
 	my $model	= shift;
+	my %args	= @_;
 	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
 	
@@ -103,7 +104,7 @@ sub parse_url_into_model {
 	if ($pclass and $pclass->can('new')) {
 		my $parser	= $pclass->new();
 		my $content	= $resp->content;
-		return $parser->parse_into_model( $url, $content, $model );
+		return $parser->parse_into_model( $url, $content, $model, %args );
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}

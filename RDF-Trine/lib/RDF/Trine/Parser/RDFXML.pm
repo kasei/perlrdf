@@ -89,7 +89,18 @@ sub parse_into_model {
 	}
 	my $input	= shift;
 	my $model	= shift;
-	my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
+	my %args	= @_;
+	my $context	= $args{'context'};
+	
+	my $handler	= sub {
+		my $st	= shift;
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
+	};
 	$self->{saxhandler}->set_handler( $handler );
 	return $self->parse( $uri, $input, $handler );
 }
