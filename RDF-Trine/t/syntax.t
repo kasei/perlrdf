@@ -1,11 +1,11 @@
-use Test::More tests => 12;
+use Test::More tests => 14;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(iri blank literal);
+use RDF::Trine qw(iri blank literal variable);
 use RDF::Trine::Namespace qw(xsd);
 
 {
@@ -38,6 +38,12 @@ use RDF::Trine::Namespace qw(xsd);
 	isa_ok( $l, 'RDF::Trine::Node::Literal' );
 	is( $l->literal_value, '123', 'expected dt-literal value' );
 	is( $l->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', 'expected dt-literal datatype' );
+}
+
+{
+	my $v	= variable( 'x' );
+	isa_ok( $v, 'RDF::Trine::Node::Variable' );
+	is( $v->name, 'x', 'expected variable name' );
 }
 
 

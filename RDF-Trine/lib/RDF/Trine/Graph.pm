@@ -63,10 +63,8 @@ sub new {
 		while (my $st = $iter->next) {
 			$model->add_statement( $st );
 		}
-		$data{ type }	= 'model';
 		$data{ model }	= $model;
 	} elsif ($_[0]->isa('RDF::Trine::Model')) {
-		$data{ type }	= 'model';
 		$data{ model }	= shift;
 	} else {
 		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::new must be called with a Model or Iterator argument";
@@ -101,14 +99,8 @@ sub equals {
 	my $bac	= scalar(@$ba);
 	my $bbc	= scalar(@$bb);
 	if ($bac != $bbc) {
-		warn 2;
 # 		warn "count of blank statements didn't match ($bac != $bbc)" if ($debug);
 		return 0;
-	}
-	
-	if ($bac == 0) {
-# 		warn "no blank nodes -- models match\n" if ($debug);
-		return 1;
 	}
 	
 	for ($nba, $nbb) {
@@ -117,9 +109,14 @@ sub equals {
 	
 	foreach my $i (0 .. $#{ $nba }) {
 		unless ($nba->[$i] eq $nbb->[$i]) {
-			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
+# 			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
 			return 0;
 		}
+	}
+	
+	if ($bac == 0) {
+# 		warn "no blank nodes -- models match\n" if ($debug);
+		return 1;
 	}
 	
 	my %blank_ids_a;
@@ -203,11 +200,7 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 
 sub get_statements {
 	my $self	= shift;
-	if ($self->{type} eq 'model') {
-		return $self->{model}->get_statements();
-	} else {
-		throw RDF::Trine::Error -text => "Unrecognized graph type";
-	}
+	return $self->{model}->get_statements();
 }
 
 1;

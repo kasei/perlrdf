@@ -50,6 +50,9 @@ sub new {
 	unless (defined($name)) {
 		$name	= 'r' . time() . 'r' . $COUNTER++;
 	}
+	if ($name =~ m/[^A-Za-z0-9]/) {
+		throw RDF::Trine::Error::SerializationError -text => "Only alphanumerics are allowed in N-Triples bnode labels";
+	}
 	return bless( [ 'BLANK', $name ], $class );
 }
 
@@ -85,10 +88,6 @@ Returns the node in a string form suitable for NTriples serialization.
 sub as_ntriples {
 	my $self	= shift;
 	my $id		= $self->blank_identifier;
-	if ($id =~ m/[^A-Za-z0-9]/) {
-		$id	=~ s/Z/ZZ/g;	# only alphanumerics are allowed in ntriples bnode ids, so we'll use 'Z' as the escape char
-		$id	=~ s/([^A-Za-z0-9])/sprintf('Z%xz', ord($1))/ge;
-	}
 	return qq(_:${id});
 }
 
@@ -123,7 +122,6 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Blank'));
-	return 0 unless ($self->type eq $node->type);
 	return ($self->blank_identifier eq $node->blank_identifier);
 }
 

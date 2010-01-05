@@ -67,14 +67,13 @@ sub _new {
 	my $self;
 
 	if ($lang and $dt) {
-		Carp::cluck;
 		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
 	}
 	
 	if ($lang) {
 		$self	= [ 'LITERAL', $literal, lc($lang), undef ];
 	} elsif ($dt) {
-		if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
+		if (blessed($dt)) {
 			$dt	= $dt->uri_value;
 		}
 		$self	= [ 'LITERAL', $literal, undef, $dt ];

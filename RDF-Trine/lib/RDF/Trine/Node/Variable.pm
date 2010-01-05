@@ -91,7 +91,7 @@ Returns the node in a string form suitable for NTriples serialization.
 
 sub as_ntriples {
 	my $self	= shift;
-	Carp::confess "Variable nodes aren't allowed in NTriples: " . Dumper($self);
+	throw RDF::Trine::Error::UnimplementedError -text => "Variable nodes aren't allowed in NTriples";
 }
 
 =item C<< type >>

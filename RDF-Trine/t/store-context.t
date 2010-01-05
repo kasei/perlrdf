@@ -58,7 +58,7 @@ my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, RDF::Trine::Node::Re
 }
 
 {
-	my $ctx		= RDF::Trine::Node::Blank->new('blank-context');
+	my $ctx		= RDF::Trine::Node::Blank->new('blankContext');
 	$store->add_statement( $_, $ctx ) for ($st0, $st1, $st2);
 	my $stream	= $store->get_contexts;
 	my $count	= 0;
@@ -69,7 +69,7 @@ my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, RDF::Trine::Node::Re
 		} elsif ($c->isa('RDF::Trine::Node::Literal')) {
 			is( $c->literal_value, 'Literal Context', 'context literal' );
 		} else {
-			is( $c->blank_identifier, 'blank-context', 'context bnode' );
+			is( $c->blank_identifier, 'blankContext', 'context bnode' );
 		}
 		$count++;
 	}

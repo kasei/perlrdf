@@ -64,14 +64,12 @@ sub new {
 	my $class	= shift;
 	my $stream	= shift || sub { undef };
 	my $names	= shift || [];
-	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args	= @_;
 	
 	my $type	= 'bindings';
 	my $self	= $class->SUPER::new( $stream, $type, $names, %args );
 	
 	my $s 	= $args{ sorted_by } || [];
-	Carp::confess unless (reftype($s) eq 'ARRAY');
 	$self->{sorted_by}	= $s;
 	return $self;
 }
@@ -139,8 +137,8 @@ sub join_streams {
 # 	my $bridge	= shift;
 	my %args	= @_;
 	
-	Carp::confess unless ($a->isa('RDF::Trine::Iterator::Bindings'));
-	Carp::confess unless ($b->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($a->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($b->isa('RDF::Trine::Iterator::Bindings'));
 	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	my @join_sorted_by;
@@ -204,8 +202,8 @@ sub nested_loop_join {
 #	my $bridge	= shift;
 	my %args	= @_;
 	
-	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
-	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
 	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	################################################
