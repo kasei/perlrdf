@@ -13,7 +13,7 @@ This document describes RDF::Trine::Parser::RDFJSON version 0.113
 
  use RDF::Trine::Parser;
  my $parser	= RDF::Trine::Parser->new( 'RDF/JSON' );
- my $iterator = $parser->parse( $base_uri, $data );
+ $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION
 
@@ -141,7 +141,8 @@ parsed, will call C<< $model->add_statement( $statement ) >>.
 =cut
 
 sub parse_into_model {
-	my $self	= shift;
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
 	my $uri		= shift;
 	my $input	= shift;
 	my $model	= shift;
