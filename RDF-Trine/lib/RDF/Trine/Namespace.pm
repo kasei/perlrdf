@@ -108,9 +108,7 @@ __END__
 
 L<XML::Namespace>
 
-=head1 BUGS AND LIMITATIONS
-
-No bugs have been reported.
+=head1 BUGS
 
 Please report any bugs or feature requests to
 C<< <gwilliams@cpan.org> >>.

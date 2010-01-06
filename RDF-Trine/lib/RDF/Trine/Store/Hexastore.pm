@@ -13,20 +13,8 @@ This document describes RDF::Trine::Store::Hexastore version 0.100
 
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
+RDF::Trine::Store::Hexastore provides an in-memory triple-store based on
+six-way indexing as popularized by Hexastore.
 
 =cut
 
@@ -755,3 +743,22 @@ sub _new_list_page {
 1;
 
 __END__
+
+=back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<< <gwilliams@cpan.org> >>.
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut

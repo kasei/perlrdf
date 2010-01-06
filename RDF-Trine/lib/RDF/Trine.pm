@@ -152,9 +152,7 @@ L<XML::Namespace>
 L<XML::SAX>
 L<XML::LibXML::SAX>
 
-=head1 BUGS AND LIMITATIONS
-
-No bugs have been reported.
+=head1 BUGS
 
 Please report any bugs or feature requests to
 C<< <gwilliams@cpan.org> >>.
@@ -169,3 +167,4 @@ Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
+=cut
