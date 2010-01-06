@@ -4,12 +4,11 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.100
-
+This document describes RDF::Trine::Store::Hexastore version 0.113
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Store::Hexastore;
+ use RDF::Trine::Store::Hexastore;
 
 =head1 DESCRIPTION
 
