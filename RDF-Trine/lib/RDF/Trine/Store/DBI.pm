@@ -1,6 +1,6 @@
 =head1 NAME
 
-RDF::Trine::Store::DBI - [One line description of module's purpose here]
+RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
@@ -10,28 +10,10 @@ This document describes RDF::Trine::Store::DBI version 0.113
 
     use RDF::Trine::Store::DBI;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
-  
-  
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
+RDF::Trine::Store::DBI provides a persistent triple-store using the L<DBI|DBI>
+module.
 
 =cut
 
@@ -1244,8 +1226,7 @@ __END__
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+C<< <gwilliams@cpan.org> >>.
 
 =head1 AUTHOR
 

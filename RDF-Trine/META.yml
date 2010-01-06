@@ -27,6 +27,7 @@ requires:
     Math::BigInt:                  0
     Math::Combinatorics:           0.09
     Scalar::Util:                  0
+    Storable:                      0
     Test::More:                    0
     Text::Table:                   0
     Time::HiRes:                   0
