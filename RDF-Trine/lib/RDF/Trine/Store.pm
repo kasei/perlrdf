@@ -23,6 +23,7 @@ use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 
 use RDF::Trine::Store::DBI;
+use RDF::Trine::Store::Hexastore;
 
 ######################################################################
 
