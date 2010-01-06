@@ -19,9 +19,7 @@ the work, if known):
 	* SPARQL 1.1 Property Paths
 ## RDF::Trine
 	* Parsers
-		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
 		* Guess parser based on filename/content sniffing
-		* RDFa [kasei; done 2009.12.24]
 		* XRD [tobyink]
 		* TriX [tobyink]
 		* GRDDL [tobyink]
@@ -33,14 +31,17 @@ the work, if known):
 		* TriG
 		* N-Quads
 		* Much faster Turtle parser
+		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
+		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
+		* RDFa [kasei; done 2009.12.24]
 	* Serializers
 		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer
 		* Pretty print RDF/XML [tobyink or kasei]
-		* Pretty print Turtle [kasei; done 2009.12.30]
 		* TriX [tobyink]
 		* TriG
 		* N-Quads
 		* RDFa (refactor from RDF::LinkedData) [kasei]
+		* Pretty print Turtle [kasei; done 2009.12.31]
 	* Exporters
 		* vCard [tobyink]
 		* jCard [tobyink]
