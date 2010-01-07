@@ -49,6 +49,7 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/Hexastore.pm
 Makefile.PL
 MANIFEST			This list of files
 META.yml
@@ -516,6 +517,9 @@ t/serializer-turtle.t
 t/statement-serialization.t
 t/statement.t
 t/store-context.t
+t/store-hexastore-pattern.t
+t/store-hexastore-storable.t
+t/store-hexastore.t
 t/store-triple_sql.t
 t/store.t
 t/syntax.t
