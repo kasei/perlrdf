@@ -10,6 +10,36 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.114.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.113.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.114" ;
+                        doap:created      "2010-01-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added new Turtle serializer." ;
+                        asc:addition    "Added Storable to list of prereq modules." ;
+                        asc:addition    "Added partial support for rdf:Lists to RDF::Trine::Serializer::Turtle." ;
+                        asc:addition    "Added RDF::Trine::Namespace::uri_value method." ;
+                        asc:addition    "Added variable() shortcut function to RDF::Trine package." ;
+                        asc:addition    "Added UnimplementedError exception class." ;
+                        asc:update      "Updated RDF/XML serializer grouping of same-subject statements for bounded descriptions." ;
+                        asc:update      "Updated parse_into_model parser methods to be both class and object methods." ;
+                        asc:update      "Updated Parser parse_* methods to take extra %args with optional 'context' value." ;
+                        asc:update      "Moved RDF::Trine::Store::Hexastore from alpha/ directory into RDF::Trine package." ;
+                        asc:update      "Updated unicode encoding and escaping in ::Node, ::Node::Literal, and ::Store::DBI." ;
+                        asc:update      "Updated RDF::Trine::Graph to materialize statements when constructed with a graph iterator." ;
+                        asc:update      "Moved get_pattern logic from ::Store to ::Model." ;
+                        asc:update      "Updated ::Model::Union to work better with ::Model::get_pattern." ;
+                        asc:update      "Updated Node and Statement from_sse methods to work with constant string arguments." ;
+                        asc:update      "Updated code and tests for better coverage." ;
+                        asc:update      "Removed unused RDF::Trine::Iterator::sfinally function." ;
+                        asc:update      "Fixed bug in RDF::Trine::Graph::equals." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.113.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.112.tar.gz> ;

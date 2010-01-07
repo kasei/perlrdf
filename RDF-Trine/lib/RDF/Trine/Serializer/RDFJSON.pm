@@ -114,7 +114,7 @@ L<http://n2.talis.com/wiki/RDF_JSON_Specification>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2009 Toby Inkster. All rights reserved. This program is free
+Copyright (c) 2010 Toby Inkster. All rights reserved. This program is free
 software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 

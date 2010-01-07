@@ -59,6 +59,27 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.114 (2010-01-XX)
+
+     * Added new Turtle serializer.
+     * Updated RDF/XML serializer grouping of same-subject statements for bounded descriptions.
+     * Updated parse_into_model parser methods to be both class and object methods.
+     * Updated Parser parse_* methods to take extra %args with optional 'context' value.
+     * Moved RDF::Trine::Store::Hexastore from alpha/ directory into RDF::Trine package.
+     * Added Storable to list of prereq modules.
+     * Added partial support for rdf:Lists to RDF::Trine::Serializer::Turtle.
+     * Added RDF::Trine::Namespace::uri_value method.
+     * Updated unicode encoding and escaping in ::Node, ::Node::Literal, and ::Store::DBI.
+     * Added variable() shortcut function to RDF::Trine package.
+     * Updated RDF::Trine::Graph to materialize statements when constructed with a graph iterator.
+     * Moved get_pattern logic from ::Store to ::Model.
+     * Updated ::Model::Union to work better with ::Model::get_pattern.
+     * Updated Node and Statement from_sse methods to work with constant string arguments.
+     * Updated code and tests for better coverage.
+     * Removed unused RDF::Trine::Iterator::sfinally function.
+     * Fixed bug in RDF::Trine::Graph::equals.
+     * Added UnimplementedError exception class.
+
   Version 0.113 (2009-12-30)
 
      * Added RDF::Trine::Parser::RDFa implementation to connect with RDF::RDFa::Parser.
