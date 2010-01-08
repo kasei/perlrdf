@@ -18,6 +18,8 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Statement);
 
+use Scalar::Util qw(blessed);
+
 ######################################################################
 
 our ($VERSION);
@@ -46,7 +48,7 @@ sub new {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
 	}
 	my @names	= qw(subject predicate object context);
-	foreach my $i (0 .. 2) {
+	foreach my $i (0 .. 3) {
 		unless (defined($nodes[ $i ])) {
 			$nodes[ $i ]	= RDF::Trine::Node::Variable->new($names[ $i ]);
 		}
@@ -103,13 +105,10 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
-	return sprintf(
-		'(quad %s %s %s %s)',
-		$self->subject->sse( $context ),
-		$self->predicate->sse( $context ),
-		$self->object->sse( $context ),
-		$self->context->sse( $context ),
-	);
+	
+	my @nodes	= map { $self->$_() } qw(subject predicate object context);
+	my @sse		= map { blessed($_) ? $_->sse( $context ) : '(undef)' } (@nodes);
+	return sprintf( '(quad %s %s %s %s)', @sse );
 }
 
 =item C<< type >>
