@@ -22,6 +22,7 @@ package RDF::Trine::Store::DBI;
 use strict;
 use warnings;
 no warnings 'redefine';
+use base qw(RDF::Trine::Store);
 
 use DBI;
 use Carp;
