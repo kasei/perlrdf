@@ -537,9 +537,10 @@ sub as_statements {
 	my $sub		= sub {
 		my $row	= $self->next;
 		return undef unless (defined $row);
-		my $statement	= (@names == 3)
-					? RDF::Trine::Statement->new( @{ $row }{@names} )
-					: RDF::Trine::Statement::Quad->new( @{ $row }{@names} );
+		my @values	= @{ $row }{ @names };
+		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
+						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
+						: RDF::Trine::Statement::Quad->new( @values );
 		return $statement;
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub )
