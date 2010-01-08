@@ -1,4 +1,4 @@
-use Test::More tests => 207;
+use Test::More tests => 6;
 use Test::Exception;
 
 use utf8;
@@ -16,7 +16,8 @@ use RDF::Trine::Model;
 
 my $model	= RDF::Trine::Model->temporary_model;
 isa_ok( $model, 'RDF::Trine::Model' );
-isa_ok( $model->_store, 'RDF::Trine::Store::Hexastore', 'expected initial store type' );
+isa_ok( $model->_store, 'RDF::Trine::Store', 'initial store type' );
+my $initial	= ref($model->_store);
 
 is( $model->size, 0, 'expected model size' );
 $model->{threshold}	= 10;
@@ -26,4 +27,7 @@ foreach my $i (0 .. $model->{threshold}) {
 	$model->add_statement( $st );
 }
 is( $model->size, 11, 'expected model size' );
-isa_ok( $model->_store, 'RDF::Trine::Store::DBI', 'expected store type beyond threshold' );
+isa_ok( $model->_store, 'RDF::Trine::Store', 'final store type' );
+
+my $final	= ref($model->_store);
+cmp_ok( $initial, 'ne', $final, 'expected change in store stype beyond threshold' );

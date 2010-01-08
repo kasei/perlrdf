@@ -54,26 +54,26 @@ sub new {
 }
 
 =item C<< temporary_model >>
-
+ 
 Returns a new temporary (non-persistent) model.
-
+ 
 =cut
-
+ 
 sub temporary_model {
 	my $class	= shift;
-	my $store	= RDF::Trine::Store::Hexastore->new();
+	my $store	= RDF::Trine::Store::Memory->new();
 	my $self	= $class->new( $store );
 	$self->{temporary}	= 1;
 	$self->{threshold}	= 2000;
 	return $self;
 }
-
+ 
 =item C<< add_statement ( $statement [, $context] ) >>
-
+ 
 Adds the specified C<< $statement >> to the rdf store.
-
+ 
 =cut
-
+ 
 sub add_statement {
 	my $self	= shift;
 	if ($self->{temporary}) {
