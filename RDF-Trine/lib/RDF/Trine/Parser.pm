@@ -74,7 +74,7 @@ sub new {
 	}
 }
 
-=item C<< parse_url_into_model ( $url, $model [, $context] ) >>
+=item C<< parse_url_into_model ( $url, $model [, %args] ) >>
 
 Retrieves the content from C<< $url >> and attempts to parse the resulting RDF
 into C<< $model >> using a parser chosen by the associated content media type.

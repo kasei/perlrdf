@@ -49,7 +49,7 @@ our ($VERSION);
 BEGIN {
 	$VERSION	= '0.113';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
-	foreach my $type (qw(application/rdf+xml)) {
+	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 }
@@ -766,6 +766,10 @@ __END__
 =end private
 
 =back
+
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-syntax-grammar/>
 
 =head1 AUTHOR
 
