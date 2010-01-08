@@ -9,8 +9,11 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 my @models	= test_models();
-plan tests => 1 + 10 * scalar(@models);
+my $tests	= 1 + (16 * scalar(@models));
+plan tests => $tests;
+
 my $file	= URI::file->new_abs( 'data/foaf.xrdf' );
+my $rdfa	= URI::file->new_abs( 'data/rdfa-test.xhtml' );
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -53,5 +56,34 @@ END
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
 		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
 		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'Got homepage url' );
+	}
+	
+	SKIP: {
+		unless ($ENV{RDFQUERY_NETWORK_TESTS}) {
+			skip "RDFa tests require network access. Set RDFQUERY_NETWORK_TESTS to run these tests.", 6;
+		}
+		eval "use RDF::RDFa::Parser;";
+		skip( "Need RDF::RDFa::Parser to run these tests.", 6 ) if ($@);
+		
+		my $query	= new RDF::Query ( <<"END" );
+			PREFIX dc: <http://purl.org/dc/elements/1.1/>
+			SELECT *
+			FROM <$rdfa>
+			WHERE {
+				?s dc:creator ?o
+			}
+END
+		warn RDF::Query->error unless ($query);
+		
+		my @results	= $query->execute( $model );
+		is( scalar(@results), 1, 'Got one result' );
+		isa_ok( $results[0], 'HASH' );
+		is( scalar(@{ [ keys %{ $results[0] } ] }), 2, 'got two field' );
+		
+		my $s	= $results[0]{'s'};
+		my $o	= $results[0]{'o'};
+		isa_ok( $s, 'RDF::Trine::Node::Resource' );
+		isa_ok( $o, 'RDF::Trine::Node::Literal' );
+		is( $o->literal_value, 'Mark Birbeck', 'expected value from RDFa data' );
 	}
 }
