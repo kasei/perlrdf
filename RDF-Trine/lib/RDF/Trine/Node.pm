@@ -26,13 +26,42 @@ BEGIN {
 	$VERSION	= '0.113';
 }
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Unicode::String;
 
 use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Literal;
 use RDF::Trine::Node::Resource;
 use RDF::Trine::Node::Variable;
+
+my $NIL_NODE;
+
+=item C<< new () >>
+
+Returns the nil-valued node.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	if (blessed($NIL_NODE)) {
+		return $NIL_NODE;
+	} else {
+		$NIL_NODE	= bless({}, $class);
+		return $NIL_NODE;
+	}
+}
+
+=item C<< is_nil >>
+
+Returns true if this object is the nil-valued node.
+
+=cut
+
+sub is_nil {
+	my $self	= shift;
+	return (refaddr($self) == refaddr($NIL_NODE));
+}
 
 =item C<< is_node >>
 
@@ -110,6 +139,16 @@ sub as_ntriples {
 	return $_[0]->sse;
 }
 
+=item C<< sse >>
+
+Returns the SSE serialization of the node.
+
+=cut
+
+sub sse {
+	return '';
+}
+
 =item C<< equal ( $node ) >>
 
 Returns true if the two nodes are equal, false otherwise.
@@ -117,7 +156,14 @@ Returns true if the two nodes are equal, false otherwise.
 =cut
 
 sub equal {
-	return 0;
+	my $self	= shift;
+	my $node	= shift;
+	return 0 unless (blessed($node));
+	if ($self->is_nil and $node->is_nil) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 =item C<< from_sse ( $string, $context ) >>
