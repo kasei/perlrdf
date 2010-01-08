@@ -28,6 +28,8 @@ BEGIN {
 
 use Scalar::Util qw(blessed);
 use Log::Log4perl;
+
+use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
@@ -297,10 +299,10 @@ Returns an iterator object containing every statement in the model.
 
 sub as_stream {
 	my $self	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $st		= RDF::Trine::Statement::Quad->new( map { variable($_) } qw(s p o g) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
-	return $stream->as_statements( qw(s p o) );
+	return $stream->as_statements( qw(s p o g) );
 }
 
 =item C<< as_hashref >>
@@ -412,6 +414,7 @@ sub _debug {
 	my $self	= shift;
 	my $stream	= $self->as_stream;
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
+	$l->debug( 'model statements:' );
 	while (my $s = $stream->next) {
 		$l->debug('[model]' . $s->as_string);
 	}
