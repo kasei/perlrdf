@@ -127,7 +127,9 @@ sub sse {
 	my $uri		= $self->uri_value;
 	
 	my $ns		= $context->{namespaces} || {};
-	while (my ($k, $v) = each(%$ns)) {
+	my %ns		= %$ns;
+	foreach my $k (keys %ns) {
+		my $v	= $ns{ $k };
 		if (index($uri, $v) == 0) {
 			my $qname	= join(':', $k, substr($uri, length($v)));
 			return $qname;
