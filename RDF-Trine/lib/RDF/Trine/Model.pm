@@ -44,7 +44,28 @@ sub new {
 	my $class	= shift;
 	my $store	= shift;
 	my %args	= @_;
-	my $self	= bless({ store => $store, %args }, $class);
+	my $self	= bless({
+		store		=> $store,
+		temporary	=> 0,
+		added		=> 0,
+		threshold	=> -1,
+		%args
+	}, $class);
+}
+
+=item C<< temporary_model >>
+
+Returns a new temporary (non-persistent) model.
+
+=cut
+
+sub temporary_model {
+	my $class	= shift;
+	my $store	= RDF::Trine::Store::Hexastore->new();
+	my $self	= $class->new( $store );
+	$self->{temporary}	= 1;
+	$self->{threshold}	= 2000;
+	return $self;
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -55,6 +76,17 @@ Adds the specified C<< $statement >> to the rdf store.
 
 sub add_statement {
 	my $self	= shift;
+	if ($self->{temporary}) {
+		if ($self->{added}++ >= $self->{threshold}) {
+# 			warn "*** should upgrade to a DBI store here";
+			my $store	= RDF::Trine::Store::DBI->temporary_store;
+			my $iter	= $self->get_statements();
+			while (my $st = $iter->next) {
+				$store->add_statement( $st );
+			}
+			$self->{store}	= $store;
+		}
+	}
 	return $self->_store->add_statement( @_ );
 }
 
