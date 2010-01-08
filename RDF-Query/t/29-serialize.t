@@ -13,6 +13,7 @@ use_ok( 'RDF::Query' );
 
 ################################################################################
 ### AS_SPARQL TESTS
+
 {
 	my $rdql	= qq{SELECT ?person WHERE (?person foaf:name "Gregory Todd Williams") USING foaf FOR <http://xmlns.com/foaf/0.1/>};
 	my $query	= new RDF::Query ( $rdql, undef, undef, 'rdql' );

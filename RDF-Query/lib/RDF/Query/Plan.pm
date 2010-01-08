@@ -195,12 +195,16 @@ sub _sse {
 
 sub _sse_atom {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	my $more	= shift;
 	my $p		= shift;
 	my $v		= shift;
 	no warnings 'uninitialized';
+	
+	my $ns		= $context->{ namespaces } || {};
+	my %ns		= %$ns;
+	
 	if ($p eq 's') {
 		for ($v) {
 			s/\\/\\\\/g;
@@ -219,17 +223,17 @@ sub _sse_atom {
 		return $v;
 	} elsif ($p eq 'W') {
 		if (blessed($v)) {
-			return $v->sse( $context, "${indent}${more}" );
+			return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
 		} else {
 			return $v;
 		}
 	} elsif ($p =~ m/^[PNETV]$/) {
-		return $v->sse( $context, "${indent}${more}" );
+		return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
 	} elsif ($p eq 'J') {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			return $v->name;
 		} else {
-			return $v->sse( $context, "${indent}${more}" );
+			return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
 		}
 	}
 }

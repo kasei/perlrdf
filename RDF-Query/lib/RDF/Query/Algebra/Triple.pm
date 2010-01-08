@@ -29,7 +29,6 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 ######################################################################
 
 our ($VERSION);
-my %AS_SPARQL;
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
@@ -72,28 +71,25 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	if (exists $AS_SPARQL{ refaddr( $self ) }) {
-		return $AS_SPARQL{ refaddr( $self ) };
+	my $context	= shift;
+	my $indent	= shift;
+	
+	my $pred	= $self->predicate;
+	if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+		$pred	= 'a';
 	} else {
-		my $context	= shift || {};
-		my $indent	= shift;
-		
-		my $pred	= $self->predicate;
-		if ($pred->isa('RDF::Trine::Node::Resource') and $pred->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-			$pred	= 'a';
-		} else {
-			$pred	= $pred->as_sparql( $context );
-		}
-		
-		my $string	= sprintf(
-			"%s %s %s .",
-			$self->subject->as_sparql( $context ),
-			$pred,
-			$self->object->as_sparql( $context ),
-		);
-		$AS_SPARQL{ refaddr( $self ) }	= $string;
-		return $string;
+		$pred	= $pred->as_sparql( $context );
 	}
+	
+	my $subj	= $self->subject->as_sparql( $context );
+	my $obj		= $self->object->as_sparql( $context );
+	my $string	= sprintf(
+		"%s %s %s .",
+		$subj,
+		$pred,
+		$obj,
+	);
+	return $string;
 }
 
 =item C<< referenced_blanks >>
@@ -221,7 +217,6 @@ sub DESTROY {
 	my $self	= shift;
 	my $addr	= refaddr( $self );
 	delete $TRIPLE_LABELS{ $addr };
-	delete $AS_SPARQL{ $addr };
 }
 
 1;

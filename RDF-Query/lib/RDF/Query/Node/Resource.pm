@@ -68,8 +68,10 @@ Returns the SPARQL string for this node.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
-	return $self->sse( $context );
+	my $context	= shift || {};
+	my $ns		= $context->{ namespaces } || {};
+	my %ns		= %$ns;
+	return $self->sse( { namespaces => \%ns } );
 }
 
 

@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(refaddr reftype);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -112,6 +112,9 @@ sub as_sparql {
 		return $AS_SPARQL{ refaddr( $self ) };
 	} else {
 		my $context	= shift;
+# 		if (ref($context)) {
+# 			$context	= { %$context };
+# 		}
 		my $indent	= shift || '';
 		my @triples;
 		foreach my $t ($self->triples) {

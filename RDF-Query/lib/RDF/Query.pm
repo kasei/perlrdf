@@ -676,7 +676,7 @@ sub as_sparql {
 	my $self	= shift;
 	my $parsed	= $self->parsed;
 	
-	my $context	= { namespaces => $self->{parsed}{namespaces} };
+	my $context	= { namespaces => { %{ $self->{parsed}{namespaces} } } };
 	my $method	= $parsed->{method};
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
