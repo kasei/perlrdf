@@ -59,8 +59,17 @@ the work, if known):
 
 
 
-NG Work
-=================
+NG-branch Work
+==============
+
+The ng branch of perlrdf is meant for significant changes to the APIs. This
+includes tracking SPARQL 1.1, bringing sanity to things that have never quite
+worked right (support for quads), standardizing APIs for all parser and
+serializer classes, etc.
+
+## RDF::Query
+	* SPARQL 1.1 Query
+	* API updates to support full SPARQL 1.1 Service Description (including dataset description)
 ## RDF::Trine
 	* Add full coverage tests of the storage classes to t/store.t.
 	* Move nil-valued signleton ::Node object to its own ::Node::Nil class.
