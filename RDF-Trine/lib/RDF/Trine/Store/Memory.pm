@@ -103,7 +103,7 @@ sub get_statements {
 	}
 	
 	if ($use_quad) {
-		warn "get quad statements";
+# 		warn "get quad statements";
 		return $self->_get_statements_quad( $bound, %bound );
 	} else {
 		return $self->_get_statements_triple( $bound, %bound );
@@ -323,8 +323,8 @@ sub add_statement {
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
 		}
-	} else {
-		warn "store already has statement " . $st->as_string;
+# 	} else {
+# 		warn "store already has statement " . $st->as_string;
 	}
 	return;
 }
