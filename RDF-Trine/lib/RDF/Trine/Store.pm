@@ -124,6 +124,9 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 =item C<< get_contexts >>
 
+Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
+the set of contexts of the stored quads.
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
@@ -160,3 +163,34 @@ Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
+=cut
+
+
+
+get_statements( s, p, o )
+	return (s,p,o,nil) for all distinct (s,p,o)
+get_statements( s, p, o, g )
+	return all (s,p,o,g)
+
+add_statement( TRIPLE )
+	add (s, p, o, nil)
+add_statement( TRIPLE, CONTEXT )
+	add (s, p, o, context)
+add_statement( QUAD )
+	add (s, p, o, g )
+add_statement( QUAD, CONTEXT )
+	throw exception
+
+remove_statement( TRIPLE )
+	remove (s, p, o, nil)
+remove_statement( TRIPLE, CONTEXT )
+	remove (s, p, o, context)
+remove_statement( QUAD )
+	remove (s, p, o, g)
+remove_statement( QUAD, CONTEXT )
+	throw exception
+
+count_statements( s, p, o )
+	count distinct (s,p,o) for all statements (s,p,o,g)
+count_statements( s, p, o, g )
+	count (s,p,o,g)

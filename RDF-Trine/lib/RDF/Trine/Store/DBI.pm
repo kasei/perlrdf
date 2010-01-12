@@ -284,6 +284,8 @@ sub get_pattern {
 
 =item C<< get_contexts >>
 
+Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
+the set of contexts of the stored quads.
 
 =cut
 
