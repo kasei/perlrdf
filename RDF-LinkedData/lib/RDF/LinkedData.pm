@@ -21,6 +21,7 @@ use URI::Escape qw(uri_escape);
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
 use RDF::Trine 0.113;
+use RDF::Trine qw(iri);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
 
@@ -36,8 +37,12 @@ sub handler : method {
 	my $class 	= shift;
 	my $r	  	= shift;
 	
-	my $status;
+	my $filename	= $r->filename;
+	if (-r $filename) {
+		return DECLINED;
+	}
 	
+	my $status;
 	my $handler	= $class->new( $r );
 	if (!$handler) {
 		warn "couldn't get a handler";
@@ -205,14 +210,32 @@ sub _description {
 	my $node	= shift;
 	my $model	= $self->model;
 	my $iter	= $model->get_statements( $node );
-	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+	my @label	= (
+					iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
+					iri( 'http://purl.org/dc/elements/1.1/description' ),
+				);
 	my @desc;
 	while (my $st = $iter->next) {
 		my $p	= $st->predicate;
-		my @pn	= $model->objects_for_predicate_list( $p, $label );
-		next unless (@pn);
-		my $pn	= shift(@pn);
-		my $ps	= $self->_html_node_value( $pn );
+		my @pn	= $model->objects_for_predicate_list( $p, @label );
+		
+		my $ps;
+		if (@pn) {
+			my $pn	= shift(@pn);
+			$ps	= $self->_html_node_value( $pn );
+		} elsif ($p->is_resource and $p->uri_value =~ m<^http://www.w3.org/1999/02/22-rdf-syntax-ns#_(\d+)$>) {
+			$ps	= '#' . $1;
+		} else {
+			# try to turn the predicate into a qname and use the local part as the printable name
+			my $name;
+			try {
+				(my $ns, $name)	= $p->qname;
+			};
+			next unless ($name);
+			
+			my $title	= _escape( $name );
+			$ps	= $title;
+		}
 		
 		my $obj	= $st->object;
 		my $os	= $self->_html_node_value( $obj, $p );
