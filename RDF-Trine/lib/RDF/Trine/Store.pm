@@ -144,7 +144,16 @@ Removes the specified C<$statement> from the underlying model.
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
+=item C<< size >>
+
+Returns the number of statements in the store.
+
 =cut
+
+sub size {
+	my $self	= shift;
+	return $self->count_statements( undef, undef, undef, undef );
+}
 
 
 1;
