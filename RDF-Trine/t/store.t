@@ -12,14 +12,14 @@ use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my @stores	= test_stores();
-plan tests => scalar(@stores) * 167;
+plan tests => 2 + scalar(@stores) * 165;
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my @names	= ('a' .. 'z');
 my @triples;
 my @quads;
 
-my $nil	= RDF::Trine::Node->new();
+my $nil	= RDF::Trine::Node::Nil->new();
 foreach my $i (@names[0..2]) {
 	my $w	= $ex->$i();
 	foreach my $j (@names[0..2]) {
@@ -60,14 +60,28 @@ foreach my $store (@stores) {
 	contexts_tests( $store );
 	get_statements_tests_triples( $store );
 	get_statements_tests_quads( $store );
+# 	orderby_tests( $store );
 	remove_statement_tests( $store );
-	
+}
+
+{
+	my $store	= RDF::Trine::Store::Memory->new();
 	$store->add_statement( RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d) );
 	$store->add_statement( RDF::Trine::Statement::Quad->new($ex->r, $ex->t, $ex->u, $ex->v) );
 	is( $store->_statement_id($ex->a, $ex->t, $ex->c, $ex->d), -1, '_statement_id' );
 	is( $store->_statement_id($ex->w, $ex->x, $ex->z, $ex->z), -1, '_statement_id' );
-	
 }
+
+
+
+
+
+
+
+
+
+
+
 
 sub add_quads {
 	my $store	= shift;
@@ -94,7 +108,7 @@ sub contexts_tests {
 		$seen{ $c->as_string }++;
 	}
 	my $expect	= {
-					'' => 1,
+					'(nil)' => 1,
 					'<http://example.com/a>'	=> 1,
 					'<http://example.com/b>'	=> 1,
 					'<http://example.com/c>'	=> 1,
@@ -121,7 +135,6 @@ sub count_statements_tests_simple {
 	my $store	= shift;
 	
 	{
-		print "# count_statements with one quad\n";
 		is( $store->size, 0 );
 		my $st	= RDF::Trine::Statement::Quad->new( $ex->a, $ex->b, $ex->c, $ex->d );
 		$store->add_statement( $st );
@@ -160,7 +173,6 @@ sub count_statements_tests_quads {
 	print "# quad count_statements tests\n";
 	my $store	= shift;
 	{
-		print "# count_statements with quads\n";
 		is( $store->count_statements, 27, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff )' );
 		is( $store->count_statements(undef, undef, undef, undef), 81, 'count_statements( ffff )' );
@@ -176,7 +188,6 @@ sub count_statements_tests_triples {
 	my $store	= shift;
 	
 	{
-		print "# count_statements with quads+triples\n";
 		is( $store->count_statements, 27, 'count_statements() after triples added' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff ) after triples added' );
 		is( $store->count_statements(undef, undef, undef, undef), 108, 'count_statements( ffff ) after triples added' );
@@ -303,6 +314,26 @@ sub get_statements_tests_quads {
 		is( $count, 0, 'get_statements( bbff ) expected empty result'  );
 	}
 	
+}
+
+sub orderby_tests {
+	print "# orderby tests\n";
+	my $store	= shift;
+	
+	{
+		my $iter	= $store->get_statements( undef, undef, undef, undef, orderby => 'predicate' );
+		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
+		my $last;
+		while (my $st = $iter->next) {
+			my $pred	= $st->predicate;
+			
+			if (defined($last)) {
+				my $cmp	= $last->compare( $pred );
+				cmp_ok( $cmp, '<=', 0 );
+			}
+			$last	= $pred;
+		}
+	}
 }
 
 sub remove_statement_tests {
