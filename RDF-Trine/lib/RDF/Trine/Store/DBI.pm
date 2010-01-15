@@ -8,7 +8,7 @@ This document describes RDF::Trine::Store::DBI version 0.113
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Store::DBI;
+ use RDF::Trine::Store::DBI;
 
 =head1 DESCRIPTION
 
@@ -173,6 +173,7 @@ NEXTROW:
 				push(@triple, $node);
 			}
 		}
+		
 		if (blessed($context) and $context->is_variable) {
 			my $nodename	= $context->name; #'sql_ctx_1_';
 			my $uri			= $self->_column_name( $nodename, 'URI' );
@@ -335,6 +336,9 @@ sub add_statement {
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+		if (blessed($context)) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
+		}
 		$context	= $stmt->context;
 	} else {
 		my $cid		= do {
@@ -369,12 +373,28 @@ sub remove_statement {
 	my $context	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
+	
 	unless (blessed($stmt)) {
-		Carp::confess "no statement passed to remove_statement";
+		throw RDF::Trine::Error::MethodInvocationError -text => "no statement passed to remove_statement";
 	}
+	
+	if ($stmt->isa( 'RDF::Trine::Statement::Quad' )) {
+		if (blessed($context)) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
+		}
+	} else {
+		my @nodes	= $stmt->nodes;
+		if (blessed($context)) {
+			$stmt	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
+		} else {
+			my $nil	= RDF::Trine::Node::Nil->new();
+			$stmt	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
+		}
+	}
+	
 	my @nodes	= $stmt->nodes;
 	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
-	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes, $context);
+	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes);
 	$sth->execute( @values );
 }
 
@@ -954,6 +974,8 @@ sub _add_sql_node_clause {
 		my $id	= $self->_mysql_node_hash( $node );
 		$id		=~ s/\D//;
 		_add_where( $context, "${col} = $id" );
+	} elsif ($node->is_nil) {
+		_add_where( $context, "${col} = 0" );
 	} else {
 		throw RDF::Trine::Error::CompilationError( -text => "Unknown node type: " . Dumper($node) );
 	}
