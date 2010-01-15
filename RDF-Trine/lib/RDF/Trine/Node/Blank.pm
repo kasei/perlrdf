@@ -125,6 +125,13 @@ sub equal {
 	return ($self->blank_identifier eq $node->blank_identifier);
 }
 
+# called to compare two nodes of the same type
+sub _compare {
+	my $a	= shift;
+	my $b	= shift;
+	return ($a->blank_identifier cmp $b->blank_identifier);
+}
+
 1;
 
 __END__

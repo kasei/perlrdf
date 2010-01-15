@@ -29,39 +29,11 @@ BEGIN {
 use Scalar::Util qw(blessed refaddr);
 use Unicode::String;
 
+use RDF::Trine::Node::Nil;
 use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Literal;
 use RDF::Trine::Node::Resource;
 use RDF::Trine::Node::Variable;
-
-my $NIL_NODE;
-
-=item C<< new () >>
-
-Returns the nil-valued node.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	if (blessed($NIL_NODE)) {
-		return $NIL_NODE;
-	} else {
-		$NIL_NODE	= bless({}, $class);
-		return $NIL_NODE;
-	}
-}
-
-=item C<< is_nil >>
-
-Returns true if this object is the nil-valued node.
-
-=cut
-
-sub is_nil {
-	my $self	= shift;
-	return (refaddr($self) == refaddr($NIL_NODE));
-}
 
 =item C<< is_node >>
 
@@ -72,6 +44,17 @@ Returns true if this object is a RDF node, false otherwise.
 sub is_node {
 	my $self	= shift;
 	return (blessed($self) and $self->isa('RDF::Trine::Node'));
+}
+
+=item C<< is_nil >>
+
+Returns true if this object is the nil-valued node.
+
+=cut
+
+sub is_nil {
+	my $self	= shift;
+	return (blessed($self) and $self->isa('RDF::Trine::Node::Nil'));
 }
 
 =item C<< is_blank >>
@@ -126,6 +109,7 @@ Returns the node in a string form.
 
 sub as_string {
 	my $self	= shift;
+	Carp::confess unless ($self->can('sse'));
 	return $self->sse;
 }
 
@@ -145,10 +129,6 @@ Returns the SSE serialization of the node.
 
 =cut
 
-sub sse {
-	return '';
-}
-
 =item C<< equal ( $node ) >>
 
 Returns true if the two nodes are equal, false otherwise.
@@ -159,10 +139,41 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless (blessed($node));
-	if ($self->is_nil and $node->is_nil) {
-		return 1;
+	return (refaddr($self) == refaddr($node));
+}
+
+=item C<< compare ( $node_a, $node_b ) >>
+
+Returns -1, 0, or 1 if $node_a sorts less than, equal to, or greater than
+$node_b in the defined SPARQL ordering, respectively. This function may be
+used as the function argument to C<<sort>>.
+
+=cut
+
+my %order	= (
+	NIL		=> 0,
+	BLANK	=> 1,
+	URI		=> 2,
+	LITERAL	=> 3,
+);
+sub compare {
+	my $a	= shift;
+	my $b	= shift;
+	return -1 unless blessed($a);
+	return 1 unless blessed($b);
+	
+	# (Lowest) no value assigned to the variable or expression in this solution.
+	# Blank nodes
+	# IRIs
+	# RDF literals (plain < xsd:string)
+	my $at	= $a->type;
+	my $bt	= $b->type;
+	if ($a->type ne $b->type) {
+		my $an	= $order{ $at };
+		my $bn	= $order{ $bt };
+		return ($an <=> $bn);
 	} else {
-		return 0;
+		return $a->_compare( $b );
 	}
 }
 

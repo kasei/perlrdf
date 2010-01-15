@@ -1,17 +1,17 @@
-# RDF::Trine::Node::Variable
+# RDF::Trine::Node::Nil
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Trine::Node::Variable - RDF Node class for variables
+RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Variable version 0.113
+This document describes RDF::Trine::Node::Nil version 0.113
 
 =cut
 
-package RDF::Trine::Node::Variable;
+package RDF::Trine::Node::Nil;
 
 use strict;
 use warnings;
@@ -24,6 +24,7 @@ use Carp qw(carp croak confess);
 
 ######################################################################
 
+my $NIL_NODE;
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.113';
@@ -37,61 +38,42 @@ BEGIN {
 
 =cut
 
-=item C<new ( $name )>
+=item C<< new () >>
 
-Returns a new Variable structure.
+Returns the nil-valued node.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $name	= shift;
-	return bless( [ $name ], $class );
+	if (blessed($NIL_NODE)) {
+		return $NIL_NODE;
+	} else {
+		$NIL_NODE	= bless({}, $class);
+		return $NIL_NODE;
+	}
 }
 
-=item C<< name >>
+=item C<< is_nil >>
 
-Returns the name of the variable.
+Returns true if this object is the nil-valued node.
 
 =cut
 
-sub name {
+sub is_nil {
 	my $self	= shift;
-	return $self->[0];
+	return (refaddr($self) == refaddr($NIL_NODE));
 }
 
 =item C<< sse >>
 
-Returns the SSE string for this variable.
+Returns the SSE string for this nil node.
 
 =cut
 
 sub sse {
 	my $self	= shift;
-	my $name	= $self->name;
-	return qq(?${name});
-}
-
-=item C<< as_string >>
-
-Returns a string representation of the node.
-
-=cut
-
-sub as_string {
-	my $self	= shift;
-	return '?' . $self->name;
-}
-
-=item C<< as_ntriples >>
-
-Returns the node in a string form suitable for NTriples serialization.
-
-=cut
-
-sub as_ntriples {
-	my $self	= shift;
-	throw RDF::Trine::Error::UnimplementedError -text => "Variable nodes aren't allowed in NTriples";
+	return '(nil)';
 }
 
 =item C<< type >>
@@ -101,7 +83,7 @@ Returns the type string of this node.
 =cut
 
 sub type {
-	return 'VAR';
+	return 'NIL';
 }
 
 =item C<< equal ( $node ) >>
@@ -113,16 +95,17 @@ Returns true if the two nodes are equal, false otherwise.
 sub equal {
 	my $self	= shift;
 	my $node	= shift;
-	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node'));
-	return 0 unless ($self->type eq $node->type);
-	return ($self->name eq $node->name);
+	return 0 unless (blessed($node));
+	if ($self->is_nil and $node->is_nil) {
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 # called to compare two nodes of the same type
 sub _compare {
-	my $a	= shift;
-	my $b	= shift;
-	return ($a->name cmp $b->name);
+	return 0;
 }
 
 1;

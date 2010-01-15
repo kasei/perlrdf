@@ -71,14 +71,14 @@ sub _new {
 	}
 	
 	if ($lang) {
-		$self	= [ 'LITERAL', $literal, lc($lang), undef ];
+		$self	= [ $literal, lc($lang), undef ];
 	} elsif ($dt) {
 		if (blessed($dt)) {
 			$dt	= $dt->uri_value;
 		}
-		$self	= [ 'LITERAL', $literal, undef, $dt ];
+		$self	= [ $literal, undef, $dt ];
 	} else {
-		$self	= [ 'LITERAL', $literal ];
+		$self	= [ $literal ];
 	}
 	return bless($self, $class);
 }
@@ -92,9 +92,9 @@ Returns the string value of the literal.
 sub literal_value {
 	my $self	= shift;
 	if (@_) {
-		$self->[1]	= shift;
+		$self->[0]	= shift;
 	}
-	return $self->[1];
+	return $self->[0];
 }
 
 =item C<< literal_value_language >>
@@ -105,7 +105,7 @@ Returns the language tag of the ltieral.
 
 sub literal_value_language {
 	my $self	= shift;
-	return $self->[2];
+	return $self->[1];
 }
 
 =item C<< literal_datatype >>
@@ -116,7 +116,7 @@ Returns the datatype of the literal.
 
 sub literal_datatype {
 	my $self	= shift;
-	return $self->[3];
+	return $self->[2];
 }
 
 =item C<< sse >>
@@ -232,6 +232,30 @@ sub equal {
 		return 0 unless ($self->literal_value_language eq $node->literal_value_language);
 	}
 	return 1;
+}
+
+# called to compare two nodes of the same type
+sub _compare {
+	my $a	= shift;
+	my $b	= shift;
+	if ($a ne $b) {
+		return ($a cmp $b);
+	}
+	
+	# the nodes have the same lexical value
+	if ($a->has_langauge and $b->has_langauge) {
+		return ($a->literal_value_language cmp $b->literal_value_language);
+	}
+	
+	if ($a->has_datatype and $b->has_datatype) {
+		return ($a->literal_datatype cmp $b->literal_datatype);
+	} elsif ($a->has_datatype) {
+		return 1;
+	} elsif ($b->has_datatype) {
+		return -1;
+	}
+	
+	return 0;
 }
 
 1;

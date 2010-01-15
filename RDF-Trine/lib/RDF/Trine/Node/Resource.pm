@@ -196,6 +196,13 @@ sub equal {
 	return ($self->uri_value eq $node->uri_value);
 }
 
+# called to compare two nodes of the same type
+sub _compare {
+	my $a	= shift;
+	my $b	= shift;
+	return ($a->uri_value cmp $b->uri_value);
+}
+
 =item C<< qname >>
 
 If the IRI can be split into a namespace and local part for construction of a
