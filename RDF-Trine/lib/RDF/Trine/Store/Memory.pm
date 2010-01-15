@@ -85,7 +85,7 @@ sub get_statements {
 	my %bound;
 	
 	my $use_quad	= 0;
-	if (scalar(@_) == 4) {
+	if (scalar(@_) >= 4) {
 		$use_quad	= 1;
 		my $g	= $nodes[3];
 		if (blessed($g) and not($g->is_variable)) {
@@ -102,12 +102,10 @@ sub get_statements {
 		}
 	}
 	
-	if ($use_quad) {
-# 		warn "get quad statements";
-		return $self->_get_statements_quad( $bound, %bound );
-	} else {
-		return $self->_get_statements_triple( $bound, %bound );
-	}
+	my $iter	= ($use_quad)
+				? $self->_get_statements_quad( $bound, %bound )
+				: $self->_get_statements_triple( $bound, %bound );
+	return $iter;
 }
 
 sub _get_statements_triple {
@@ -296,7 +294,7 @@ sub add_statement {
 		if (blessed($context)) {
 			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
 		} else {
-			my $nil	= RDF::Trine::Node->new();
+			my $nil	= RDF::Trine::Node::Nil->new();
 			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
 		}
 	}
@@ -349,7 +347,7 @@ sub remove_statement {
 		if (blessed($context)) {
 			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
 		} else {
-			my $nil	= RDF::Trine::Node->new();
+			my $nil	= RDF::Trine::Node::Nil->new();
 			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
 		}
 	}
@@ -412,7 +410,7 @@ sub count_statements {
 	my %bound;
 	
 	my $use_quad	= 0;
-	if (scalar(@_) == 4) {
+	if (scalar(@_) >= 4) {
 		$use_quad	= 1;
 # 		warn "count statements with quad" if ($::debug);
 		my $g	= $nodes[3];
@@ -425,7 +423,7 @@ sub count_statements {
 	foreach my $pos (0 .. 2) {
 		my $n	= $nodes[ $pos ];
 # 		unless (blessed($n)) {
-# 			$n	= RDF::Trine::Node->new();
+# 			$n	= RDF::Trine::Node::Nil->new();
 # 			$nodes[ $pos ]	= $n;
 # 		}
 		
@@ -509,7 +507,7 @@ sub _statement_id {
 	foreach my $pos (0 .. 3) {
 		my $n	= $nodes[ $pos ];
 # 		unless (blessed($n)) {
-# 			$n	= RDF::Trine::Node->new();
+# 			$n	= RDF::Trine::Node::Nil->new();
 # 			$nodes[ $pos ]	= $n;
 # 		}
 	}
