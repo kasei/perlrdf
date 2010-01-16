@@ -63,7 +63,13 @@ sub get_pattern {
 	my $bgp		= shift;
 	my $context	= shift;
 	my @args	= @_;
+	my %args	= @args;
 	
+	if ($bgp->isa('RDF::Trine::Statement')) {
+		$bgp	= RDF::Trine::Pattern->new($bgp);
+	}
+	
+	my %iter_args;
 	my @triples	= $bgp->triples;
 	if (1 == scalar(@triples)) {
 		my $t		= shift(@triples);
@@ -113,8 +119,72 @@ sub get_pattern {
 				push(@results, $jrow);
 			}
 		}
-		return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+		
+		if (my $o = $args{ 'orderby' }) {
+			unless (reftype($o) eq 'ARRAY') {
+				throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument to get_pattern must be an ARRAY reference";
+			}
+			
+			my @order;
+			my %order;
+			my @o	= @$o;
+			my @sorted_by;
+			my %vars	= map { $_ => 1 } $bgp->referenced_variables;
+			if (scalar(@o) % 2 != 0) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument ARRAY to get_pattern must contain an even number of elements";
+			}
+			while (@o) {
+				my ($k,$dir)	= splice(@o, 0, 2, ());
+				next unless ($vars{ $k });
+				unless ($dir =~ m/^ASC|DESC$/i) {
+					throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $k must be either 'ASC' or 'DESC' in get_pattern call";
+				}
+				my $asc	= ($dir eq 'ASC') ? 1 : 0;
+				push(@order, $k);
+				$order{ $k }	= $asc;
+				push(@sorted_by, $k, $dir);
+			}
+			
+			@results	= _sort_bindings( \@results, \@order, \%order );
+			$iter_args{ sorted_by }	= \@sorted_by;
+		}
+		my $iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ], %iter_args );
+		return $iter;
 	}
+}
+
+sub _sort_bindings {
+	my $res		= shift;
+	my $o		= shift;
+	my $dir		= shift;
+	my @sorted	= map { $_->[0] } sort { _sort_mapped_data($a,$b,$o,$dir) } map { _map_sort_data( $_, $o ) } @$res;
+	return @sorted;
+}
+
+sub _sort_mapped_data {
+	my $a	= shift;
+	my $b	= shift;
+	my $o	= shift;
+	my $dir	= shift;
+	foreach my $i (1 .. $#{ $a }) {
+		my $av	= $a->[ $i ];
+		my $bv	= $b->[ $i ];
+		my $key	= $o->[ $i-1 ];
+		next unless (defined($av) or defined($bv));
+		my $cmp	= RDF::Trine::Node::compare( $av, $bv );
+		unless ($dir->{ $key }) {
+			$cmp	*= -1;
+		}
+		return $cmp if ($cmp);
+	}
+	return 0;
+}
+
+sub _map_sort_data {
+	my $res		= shift;
+	my $o		= shift;
+	my @data	= ($res, map { $res->{ $_ } } @$o);
+	return \@data;
 }
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
