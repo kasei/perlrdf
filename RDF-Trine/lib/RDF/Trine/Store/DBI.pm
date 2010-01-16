@@ -227,7 +227,7 @@ sub get_pattern {
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
 			no warnings 'uninitialized';
 			unless ($dir =~ /^(ASC|DESC)$/) {
-				throw RDF::Trine::Error::CompilationError -text => 'Direction must be ASC or DESC in get_pattern call';
+				throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $col must be either 'ASC' or 'DESC' in get_pattern call";
 			}
 		}
 	}
