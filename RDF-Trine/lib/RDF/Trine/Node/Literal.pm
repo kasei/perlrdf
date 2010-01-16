@@ -238,8 +238,8 @@ sub equal {
 sub _compare {
 	my $a	= shift;
 	my $b	= shift;
-	if ($a ne $b) {
-		return ($a cmp $b);
+	if ($a->literal_value ne $b->literal_value) {
+		return ($a->literal_value cmp $b->literal_value);
 	}
 	
 	# the nodes have the same lexical value
