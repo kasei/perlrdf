@@ -244,8 +244,7 @@ the same terms as Perl itself.
 
 =cut
 
-
-
+get_statements()	XXX maybe this should instead follow the quad semantics?
 get_statements( s, p, o )
 	return (s,p,o,nil) for all distinct (s,p,o)
 get_statements( s, p, o, g )
@@ -269,6 +268,7 @@ remove_statement( QUAD )
 remove_statement( QUAD, CONTEXT )
 	throw exception
 
+count_statements()	XXX maybe this should instead follow the quad semantics?
 count_statements( s, p, o )
 	count distinct (s,p,o) for all statements (s,p,o,g)
 count_statements( s, p, o, g )

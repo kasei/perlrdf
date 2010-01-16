@@ -138,7 +138,6 @@ sub count_statements_tests_simple {
 		is( $store->size, 0 );
 		my $st	= RDF::Trine::Statement::Quad->new( $ex->a, $ex->b, $ex->c, $ex->d );
 		$store->add_statement( $st );
-#		$store->_debug;
 
 		is( $store->size, 1, 'size' );
 		is( $store->count_statements(), 1, 'count_statements()' );
@@ -376,7 +375,7 @@ sub remove_statement_tests {
 
 sub test_stores {
 	my @stores;
-#	push(@stores, RDF::Trine::Store::DBI->temporary_store());
+	push(@stores, RDF::Trine::Store::DBI->temporary_store());
 	push(@stores, RDF::Trine::Store::Memory->temporary_store());
 	return @stores;
 }
