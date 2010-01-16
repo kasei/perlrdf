@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak confess);
 
 ######################################################################
