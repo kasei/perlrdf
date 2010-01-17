@@ -32,7 +32,6 @@ END
 															 'http://xmlns.com/foaf/0.1/name'
 														   ], 'RDF::Query::Node::Resource' ),
 													bless( [
-															 'LITERAL',
 															 'Gregory Todd Williams'
 														   ], 'RDF::Query::Node::Literal' )
 												  ], 'RDF::Query::Algebra::Triple' ),
@@ -135,7 +134,6 @@ END
 																	  'lat'
 																	], 'RDF::Query::Node::Variable' ),
 															 bless( [
-																	  'LITERAL',
 																	  '52.988674',
 																	  undef,
 																	  'http://www.w3.org/2001/XMLSchema#float'
@@ -220,7 +218,6 @@ END
 															 'homepage'
 														   ], 'RDF::Query::Node::Variable' ),
 													bless( [
-															 'LITERAL',
 															 'kasei'
 														   ], 'RDF::Query::Node::Literal' )
 												  ], 'RDF::Query::Expression::Function' ),
@@ -234,7 +231,6 @@ END
 																	  'http://xmlns.com/foaf/0.1/name'
 																	], 'RDF::Query::Node::Resource' ),
 															 bless( [
-																	  'LITERAL',
 																	  'Gregory Todd Williams'
 																	], 'RDF::Query::Node::Literal' )
 														   ], 'RDF::Query::Algebra::Triple' ),
