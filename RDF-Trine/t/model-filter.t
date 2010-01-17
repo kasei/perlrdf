@@ -21,12 +21,16 @@ my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-n
 my $rdfs	= RDF::Trine::Namespace->new('http://www.w3.org/2000/01/rdf-schema#');
 my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
+
+my $nil		= RDF::Trine::Node::Nil->new();
 my $b		= RDF::Trine::Node::Blank->new();
 my $p		= RDF::Trine::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
 my $st0		= RDF::Trine::Statement->new( $p, $rdf->type, $foaf->Person );
 my $st1		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
+my $st1q	= RDF::Trine::Statement::Quad->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams'), $nil );
 my $st2		= RDF::Trine::Statement->new( $b, $rdf->type, $foaf->Person );
 my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
+my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve'), $nil );
 
 {
 	my $model	= model();
@@ -44,21 +48,21 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 	{
 		my $stream	= $model->get_statements( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'got foaf:name statement' );
+		is_deeply( $st, $st1q, 'got foaf:name statement' );
 		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement)' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( $b, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st3, 'got foaf:name statement (with bnode in triple)' );
+		is_deeply( $st, $st3q, 'got foaf:name statement (with bnode in triple)' );
 		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement with bnode)' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'got foaf:name statement (with literal in triple)' );
+		is_deeply( $st, $st1q, 'got foaf:name statement (with literal in triple)' );
 		is( $stream->next, undef, 'expected end-of-stream (only one foaf:name statement with literal)' );
 	}
 	
