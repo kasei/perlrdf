@@ -155,7 +155,6 @@ sub get_statements {
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	warn "get_statements semantics: $semantics";
 	local($self->{context_variable_count})	= 0;
 	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
 	my $sql		= $self->_sql_for_pattern( $st, $context, semantics => $semantics, unique => 1 );
