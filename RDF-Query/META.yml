@@ -35,7 +35,7 @@ requires:
   JSON: 2
   LWP::Simple: 0
   Parse::RecDescent: 0
-  RDF::Trine: 0.113
+  RDF::Trine: 0.114
   Scalar::Util: 0
   Set::Scalar: 0
   Storable: 0
