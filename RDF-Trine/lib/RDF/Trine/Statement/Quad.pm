@@ -106,8 +106,8 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	
-	my @nodes	= map { $self->$_() } qw(subject predicate object context);
-	my @sse		= map { blessed($_) ? $_->sse( $context ) : '(undef)' } (@nodes);
+	my @nodes	= $self->nodes;
+	my @sse		= map { $_->sse( $context ) } (@nodes);
 	return sprintf( '(quad %s %s %s %s)', @sse );
 }
 
