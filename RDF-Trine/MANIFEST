@@ -28,6 +28,7 @@ lib/RDF/Trine/Namespace.pm
 lib/RDF/Trine/Node.pm
 lib/RDF/Trine/Node/Blank.pm
 lib/RDF/Trine/Node/Literal.pm
+lib/RDF/Trine/Node/Nil.pm
 lib/RDF/Trine/Node/Resource.pm
 lib/RDF/Trine/Node/Variable.pm
 lib/RDF/Trine/Parser.pm
@@ -49,6 +50,7 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Hexastore.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -494,6 +496,7 @@ t/iterator-materialized.t
 t/iterator-thaw.t
 t/iterator.t
 t/model-filter.t
+t/model-temporary.t
 t/model-union.t
 t/model.t
 t/namespace-export.t
