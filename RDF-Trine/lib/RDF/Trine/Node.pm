@@ -21,9 +21,13 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($VERSION);
+our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
 	$VERSION	= '0.200_01';
+	
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(ntriples_escape);
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -261,6 +265,10 @@ sub _unicode_escape {
 	return $rslt;
 }
 
+sub ntriples_escape {
+	my $class	= __PACKAGE__;
+	return $class->_unicode_escape( @_ );
+}
 
 1;
 
