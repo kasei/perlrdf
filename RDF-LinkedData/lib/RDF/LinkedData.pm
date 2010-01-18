@@ -18,6 +18,8 @@ use Apache2::Request;
 use Scalar::Util qw(blessed);
 use HTTP::Negotiate qw(choose);
 use URI::Escape qw(uri_escape);
+use Apache2::RequestUtil ();
+use Apache2::RequestRec ();
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
 use RDF::Trine 0.113;
@@ -69,6 +71,14 @@ sub new {
 	my $dbuser		= $r->dir_config( 'LinkedData_User' );
 	my $dbpass		= $r->dir_config( 'LinkedData_Password' );
 	my $dsn			= $r->dir_config( 'LinkedData_DSN' );
+	
+	foreach (qw(LinkedData_Base LinkedData_Model LinkedData_User LinkedData_Password LinkedData_DSN)) {
+		my $v	= $r->dir_config($_);
+		unless (defined($v) and length($v)) {
+			die "Missing configuration value for $_";
+		}
+	}
+	
 	my $store		= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
 	my $model		= RDF::Trine::Model->new( $store );
 	
@@ -174,11 +184,11 @@ END
 			return NOT_FOUND;
 		}
 	} else {
-		$r->err_header_out('Vary', join ", ", qw(Accept));
+		$r->err_headers_out->add('Vary', join ", ", qw(Accept));
 		if ($choice =~ /^rdf/) {
-			$r->err_header_out(Location => "${base}${uri}/data");
+			$r->err_headers_out->add(Location => "${base}${uri}/data");
 		} else {
-			$r->err_header_out(Location => "${base}${uri}/page");
+			$r->err_headers_out->add(Location => "${base}${uri}/page");
 		}
 		return HTTP_SEE_OTHER;
 	}
