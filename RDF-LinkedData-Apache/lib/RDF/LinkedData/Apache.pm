@@ -40,7 +40,7 @@ sub handler : method {
 	my $r	  	= shift;
 	
 	my $filename	= $r->filename;
-	if (-r $filename) {
+	if (-r $filename and -f _) {
 		return Apache2::Const::DECLINED;
 	}
 	
@@ -61,10 +61,9 @@ Creates a new handler object, given an Apache Request object.
 =cut
 
 sub new {
-	my $proto	= shift;
-	my $class   = ref($proto) || $proto;
+	my $class	= shift;
 	my $r		= shift;
-	throw Mentok::ArgumentError unless (ref $r);
+	throw Error -text => "Missing request object in RDF::LinkedData::Apache constructor" unless (blessed($r));
 
 	my $base		= $r->dir_config( 'LinkedData_Base' );
 	my $dbmodel		= $r->dir_config( 'LinkedData_Model' );
@@ -76,7 +75,7 @@ sub new {
 	foreach my $name (keys %data) {
 		my $v	= $data{ $name };
 		unless (defined($v) and length($v)) {
-			die "Missing configuration value for $name";
+			throw Error -text => "Missing configuration value for $name in RDF::LinkedData::Apache constructor";
 		}
 	}
 	
@@ -97,20 +96,44 @@ sub new {
 	return $self;
 } # END sub new
 
+=item C<< request >>
+
+Returns the Apache request object.
+
+=cut
+
 sub request {
 	my $self	= shift;
 	return $self->{_r};
 }
+
+=item C<< model >>
+
+Returns the RDF::Trine::Model object.
+
+=cut
 
 sub model {
 	my $self	= shift;
 	return $self->{_model};
 }
 
+=item C<< base >>
+
+Returns the base URI for this handler.
+
+=cut
+
 sub base {
 	my $self	= shift;
 	return $self->{_base};
 }
+
+=item C<< run >>
+
+Runs the handler.
+
+=cut
 
 sub run {
 	my $self	= shift;
@@ -246,11 +269,13 @@ sub _description {
 			my $name;
 			try {
 				(my $ns, $name)	= $p->qname;
-			};
-			next unless ($name);
-			
-			my $title	= _escape( $name );
-			$ps	= $title;
+			} catch RDF::Trine::Error with {};
+			if ($name) {
+				my $title	= _escape( $name );
+				$ps	= $title;
+			} else {
+				$ps	= _escape( $p->uri_value );
+			}
 		}
 		
 		my $obj	= $st->object;
@@ -272,7 +297,7 @@ sub _html_node_value {
 			my ($ns, $ln)	= $rdfapred->qname;
 			$xmlns	= qq[xmlns:ns="${ns}"];
 			$qname	= qq[ns:$ln];
-		};
+		} catch RDF::Trine::Error with {};
 	}
 	return '' unless (blessed($n));
 	if ($n->is_literal) {
