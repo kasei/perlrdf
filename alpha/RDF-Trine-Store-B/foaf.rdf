@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+		xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+		xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+		xmlns:owl="http://www.w3.org/2002/07/owl#"
+		xmlns:air="http://www.daml.org/2001/10/html/airport-ont#"
+		xmlns:bibtex="http://purl.oclc.org/NET/nknouf/ns/bibtex#"
+		xmlns:bio="http://purl.org/vocab/bio/0.1/"
+		xmlns:book="http://purl.org/net/schemas/book/"
+		xmlns:contact="http://www.w3.org/2000/10/swap/pim/contact#"
+		xmlns:cyc="http://www.cyc.com/2004/06/04/cyc#"
+		xmlns:dao="http://kasei.us/e/ns/dao#"
+		xmlns:dc="http://purl.org/dc/elements/1.1/"
+		xmlns:dcterms="http://purl.org/dc/terms/"
+		xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#"
+		xmlns:ical="http://www.w3.org/2002/12/cal/icaltzd#"
+		xmlns:lang="http://purl.org/net/inkel/rdf/schemas/lang/1.1#"
+		xmlns:likes="http://rdf.netalleynetworks.com/ilike/20040830#"
+		xmlns:quaff="http://purl.org/net/schemas/quaffing/"
+		xmlns:rel="http://purl.org/vocab/relationship/"
+		xmlns:trust="http://trust.mindswap.org/ont/trust.owl#"
+		xmlns:visit="http://purl.org/net/vocab/2004/07/visit#"
+		xmlns:whois="http://www.kanzaki.com/ns/whois#"
+		xmlns:wn="http://xmlns.com/wordnet/1.6/"
+		xmlns:wot="http://xmlns.com/wot/0.1/"
+		xmlns:tshirt="http://xmlns.com/tshirt/"
+		>
+
+
+<!-- ME -->
+	<foaf:Person rdf:about="http://kasei.us/about/foaf.xrdf#greg">
+		<foaf:name>Gregory Todd Williams</foaf:name>
+		<foaf:firstName>Gregory</foaf:firstName>
+		<foaf:surname>Williams</foaf:surname>
+		<foaf:nick>kasei</foaf:nick>
+		<foaf:nick>火星</foaf:nick>
+		<foaf:nick>samofool</foaf:nick>
+		<foaf:nick>The Samo Fool</foaf:nick>
+		<foaf:gender>male</foaf:gender>
+		<foaf:aimChatID>samofool</foaf:aimChatID>
+		<foaf:jabberID>samofool@livejournal.com</foaf:jabberID>
+		<foaf:mbox rdf:resource="mailto:greg@evilfunhouse.com"/>
+	</foaf:Person>
+</rdf:RDF>

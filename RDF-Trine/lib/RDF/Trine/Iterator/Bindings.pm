@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.112
+This document describes RDF::Trine::Iterator::Bindings version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -64,14 +64,12 @@ sub new {
 	my $class	= shift;
 	my $stream	= shift || sub { undef };
 	my $names	= shift || [];
-	Carp::confess unless (scalar(@_) % 2 == 0);
 	my %args	= @_;
 	
 	my $type	= 'bindings';
 	my $self	= $class->SUPER::new( $stream, $type, $names, %args );
 	
 	my $s 	= $args{ sorted_by } || [];
-	Carp::confess unless (reftype($s) eq 'ARRAY');
 	$self->{sorted_by}	= $s;
 	return $self;
 }
@@ -139,8 +137,8 @@ sub join_streams {
 # 	my $bridge	= shift;
 	my %args	= @_;
 	
-	Carp::confess unless ($a->isa('RDF::Trine::Iterator::Bindings'));
-	Carp::confess unless ($b->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($a->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($b->isa('RDF::Trine::Iterator::Bindings'));
 	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	my @join_sorted_by;
@@ -204,8 +202,8 @@ sub nested_loop_join {
 #	my $bridge	= shift;
 	my %args	= @_;
 	
-	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
-	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($astream->isa('RDF::Trine::Iterator::Bindings'));
+# 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
 	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
 	################################################
@@ -539,9 +537,10 @@ sub as_statements {
 	my $sub		= sub {
 		my $row	= $self->next;
 		return undef unless (defined $row);
-		my $statement	= (@names == 3)
-					? RDF::Trine::Statement->new( @{ $row }{@names} )
-					: RDF::Trine::Statement::Quad->new( @{ $row }{@names} );
+		my @values	= @{ $row }{ @names };
+		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
+						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
+						: RDF::Trine::Statement::Quad->new( @values );
 		return $statement;
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub )
@@ -713,7 +712,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

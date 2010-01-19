@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.112
+This document describes RDF::Trine::Model version 0.114_01
 
 =head1 METHODS
 
@@ -23,11 +23,13 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 use Scalar::Util qw(blessed);
 use Log::Log4perl;
+
+use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
@@ -42,17 +44,49 @@ sub new {
 	my $class	= shift;
 	my $store	= shift;
 	my %args	= @_;
-	my $self	= bless({ store => $store, %args }, $class);
+	my $self	= bless({
+		store		=> $store,
+		temporary	=> 0,
+		added		=> 0,
+		threshold	=> -1,
+		%args
+	}, $class);
 }
 
-=item C<< add_statement ( $statement [, $context] ) >>
-
-Adds the specified C<< $statement >> to the rdf store.
-
+=item C<< temporary_model >>
+ 
+Returns a new temporary (non-persistent) model.
+ 
 =cut
-
+ 
+sub temporary_model {
+	my $class	= shift;
+	my $store	= RDF::Trine::Store::Memory->new();
+	my $self	= $class->new( $store );
+	$self->{temporary}	= 1;
+	$self->{threshold}	= 2000;
+	return $self;
+}
+ 
+=item C<< add_statement ( $statement [, $context] ) >>
+ 
+Adds the specified C<< $statement >> to the rdf store.
+ 
+=cut
+ 
 sub add_statement {
 	my $self	= shift;
+	if ($self->{temporary}) {
+		if ($self->{added}++ >= $self->{threshold}) {
+# 			warn "*** should upgrade to a DBI store here";
+			my $store	= RDF::Trine::Store::DBI->temporary_store;
+			my $iter	= $self->get_statements();
+			while (my $st = $iter->next) {
+				$store->add_statement( $st );
+			}
+			$self->{store}	= $store;
+		}
+	}
 	return $self->_store->add_statement( @_ );
 }
 
@@ -133,6 +167,17 @@ sub remove_statements {
 	return $self->_store->remove_statements( @_ );
 }
 
+=item C<< size >>
+
+Returns the number of statements in the model.
+
+=cut
+
+sub size {
+	my $self	= shift;
+	return $self->count_statements();
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
@@ -177,14 +222,96 @@ C<< orderby => [qw(name ASC)] >> (corresponding to a SPARQL-like request to
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
 					? $bgp
 					: $bgp->triples;
 	unless (@triples) {
 		throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 	}
-	return $self->_store->get_pattern( $bgp, @_ );
+	
+	my $store	= $self->_store;
+	if ($store and $store->can('get_pattern')) {
+		return $self->_store->get_pattern( $bgp, $context, @args );
+	} else {
+		if (1 == scalar(@triples)) {
+			my $t		= shift(@triples);
+			my @nodes	= $t->nodes;
+			my %vars;
+			my @names	= qw(subject predicate object);
+			foreach my $n (0 .. 2) {
+				if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
+					$vars{ $names[ $n ] }	= $nodes[$n]->name;
+				}
+			}
+			my $iter	= $self->get_statements( @nodes, $context, @args );
+			my @vars	= values %vars;
+			my $sub		= sub {
+				my $row	= $iter->next;
+				return undef unless ($row);
+				my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
+				return \%data;
+			};
+			return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+		} else {
+			my $t		= shift(@triples);
+			my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+			my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+			my @inner;
+			while (my $row = $rhs->next) {
+				push(@inner, $row);
+			}
+			my @results;
+			while (my $row = $lhs->next) {
+				RESULT: foreach my $irow (@inner) {
+					my %keysa;
+					my @keysa	= keys %$irow;
+					@keysa{ @keysa }	= (1) x scalar(@keysa);
+					my @shared	= grep { exists $keysa{ $_ } } (keys %$row);
+					foreach my $key (@shared) {
+						my $val_a	= $irow->{ $key };
+						my $val_b	= $row->{ $key };
+						next unless (defined($val_a) and defined($val_b));
+						my $equal	= $val_a->equal( $val_b );
+						unless ($equal) {
+							next RESULT;
+						}
+					}
+					
+					my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
+					push(@results, $jrow);
+				}
+			}
+			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+		}
+	}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 =item C<< get_contexts >>
 
@@ -204,10 +331,10 @@ Returns an iterator object containing every statement in the model.
 
 sub as_stream {
 	my $self	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $st		= RDF::Trine::Statement::Quad->new( map { variable($_) } qw(s p o g) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
-	return $stream->as_statements( qw(s p o) );
+	return $stream->as_statements( qw(s p o g) );
 }
 
 =item C<< as_hashref >>
@@ -289,7 +416,10 @@ sub as_hashref {
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
 
-...
+Given the RDF::Trine::Node objects C<< $subject >> and C<< @predicates >>,
+finds all matching triples in the model with the specified subject and any
+of the given predicates, and returns a list of object values (in the partial
+order given by the ordering of C<< @predicates >>).
 
 =cut
 
@@ -316,6 +446,7 @@ sub _debug {
 	my $self	= shift;
 	my $stream	= $self->as_stream;
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
+	$l->debug( 'model statements:' );
 	while (my $s = $stream->next) {
 		$l->debug('[model]' . $s->as_string);
 	}
@@ -333,7 +464,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -1,6 +1,17 @@
-<html>
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+	xmlns:sd="http://www.w3.org/ns/sparql-service-description#"
+	xmlns:scovo="http://purl.org/NET/scovo#"
+	xmlns:void="http://rdfs.org/ns/void#"
+	>
 	<head>
 		<title>SPARQL</title>
+		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8"/>
 	</head>
 	<body>
 	<form action="[% submit_url %]" method="get">
@@ -20,5 +31,51 @@ ORDER BY ?name
 		</select>
 		<input name="submit" id="submit" type="submit" value="Submit" />
 	</form>
+	<div class="rdf2rdfa">
+	   <div class="description" typeof="sd:Service">
+		  <div rel="sd:url" resource="[% submit_url %]"></div>
+		  <div rel="sd:defaultDatasetDescription">
+			 <div class="description" typeof="sd:Dataset">
+				<div rel="sd:defaultGraph">
+				   <div class="description" typeof="rdfs:Resource">
+					  <div rel="void:statItem">
+						 <div class="description" typeof="rdfs:Resource">
+							<div rel="scovo:dimension" resource="http://rdfs.org/ns/void#numberOfTriples"></div>
+							<div property="rdf:value" content="[% triples %]" datatype="xsd:integer"></div>
+						 </div>
+					  </div>
+				   </div>
+				</div>
+				<!--
+				<div rel="sd:namedGraph">
+				   <div class="description" typeof="rdfs:Resource">
+					  <div rel="sd:graph">
+						 <div class="description" typeof="rdfs:Resource">
+							<div rel="void:statItem">
+							   <div class="description" typeof="rdfs:Resource">
+								  <div rel="scovo:dimension" resource="http://rdfs.org/ns/void#numberOfTriples"></div>
+								  <div property="rdf:value" content="2000" datatype="xsd:integer"></div>
+							   </div>
+							</div>
+						 </div>
+					  </div>
+					  <div rel="sd:named" resource="http://example/named-graph"></div>
+				   </div>
+				</div>
+				-->
+			 </div>
+		  </div>
+	[% FOREACH function = functions %]
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="[% function.url %]" typeof="sd:ScalarFunction"></div>
+		  </div>
+	[% END %]
+	[% FOREACH ext = extensions %]
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="[% ext.url %]"></div>
+		  </div>
+	[% END %]
+	   </div>
+	</div>
 	</body>
 </html>

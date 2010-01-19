@@ -7,11 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 0.112
-
-=head1 METHODS
-
-=over 4
+This document describes RDF::Trine::Node version 0.114_01
 
 =cut
 
@@ -21,18 +17,47 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($VERSION);
+our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
+	
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(ntriples_escape);
 }
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Unicode::String;
 
+use RDF::Trine::Node::Nil;
 use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Literal;
 use RDF::Trine::Node::Resource;
 use RDF::Trine::Node::Variable;
+
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< ntriples_escape ( $value ) >>
+
+Returns the passed string value with special characters (control characters,
+Unicode, etc.) escaped, suitable for printing inside an N-Triples or Turtle
+encoded literal.
+
+=cut
+
+sub ntriples_escape ($) {
+	my $class	= __PACKAGE__;
+	return $class->_unicode_escape( @_ );
+}
+
+=back
+
+=head1 METHODS
+
+=over 4
 
 =item C<< is_node >>
 
@@ -43,6 +68,17 @@ Returns true if this object is a RDF node, false otherwise.
 sub is_node {
 	my $self	= shift;
 	return (blessed($self) and $self->isa('RDF::Trine::Node'));
+}
+
+=item C<< is_nil >>
+
+Returns true if this object is the nil-valued node.
+
+=cut
+
+sub is_nil {
+	my $self	= shift;
+	return (blessed($self) and $self->isa('RDF::Trine::Node::Nil'));
 }
 
 =item C<< is_blank >>
@@ -97,6 +133,7 @@ Returns the node in a string form.
 
 sub as_string {
 	my $self	= shift;
+	Carp::confess unless ($self->can('sse'));
 	return $self->sse;
 }
 
@@ -110,6 +147,12 @@ sub as_ntriples {
 	return $_[0]->sse;
 }
 
+=item C<< sse >>
+
+Returns the SSE serialization of the node.
+
+=cut
+
 =item C<< equal ( $node ) >>
 
 Returns true if the two nodes are equal, false otherwise.
@@ -117,7 +160,45 @@ Returns true if the two nodes are equal, false otherwise.
 =cut
 
 sub equal {
-	return 0;
+	my $self	= shift;
+	my $node	= shift;
+	return 0 unless (blessed($node));
+	return (refaddr($self) == refaddr($node));
+}
+
+=item C<< compare ( $node_a, $node_b ) >>
+
+Returns -1, 0, or 1 if $node_a sorts less than, equal to, or greater than
+$node_b in the defined SPARQL ordering, respectively. This function may be
+used as the function argument to C<<sort>>.
+
+=cut
+
+my %order	= (
+	NIL		=> 0,
+	BLANK	=> 1,
+	URI		=> 2,
+	LITERAL	=> 3,
+);
+sub compare {
+	my $a	= shift;
+	my $b	= shift;
+	return -1 unless blessed($a);
+	return 1 unless blessed($b);
+	
+	# (Lowest) no value assigned to the variable or expression in this solution.
+	# Blank nodes
+	# IRIs
+	# RDF literals (plain < xsd:string)
+	my $at	= $a->type;
+	my $bt	= $b->type;
+	if ($a->type ne $b->type) {
+		my $an	= $order{ $at };
+		my $bn	= $order{ $bt };
+		return ($an <=> $bn);
+	} else {
+		return $a->_compare( $b );
+	}
 }
 
 =item C<< from_sse ( $string, $context ) >>
@@ -132,61 +213,77 @@ my $r_VARNAME			= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x
 sub from_sse {
 	my $class	= shift;
 	my $context	= $_[1];
-	for ($_[0]) {
-		if (my ($iri) = m/^<([^>]+)>/o) {
-			s/^<([^>]+)>\s*//;
-			return RDF::Trine::Node::Resource->new( $iri );
-		} elsif (my ($lit) = m/^"(([^"\\]+|\\([\\"nt]))+)"/o) {
-			my @args;
-			s/^"(([^"\\]+|\\([\\"nt]))+)"//;
-			if (my ($lang) = m/[@](\S+)/) {
-				s/[@](\S+)\s*//;
-				$args[0]	= $lang;
-			} elsif (m/^\Q^^\E/) {
-				s/^\Q^^\E//;
-				my ($dt)	= $class->from_sse( $_, $context );
-				$args[1]	= $dt->uri_value;
-			}
-			$lit	=~ s/\\(.)/eval "\"\\$1\""/ge;
-			return RDF::Trine::Node::Literal->new( $lit, @args );
-		} elsif (my ($id1) = m/^[(]([^)]+)[)]/) {
-			s/^[(]([^)]+)[)]\s*//;
-			return RDF::Trine::Node::Blank->new( $id1 );
-		} elsif (my ($id2) = m/^_:(\S+)/) {
-			s/^_:(\S+)\s*//;
-			return RDF::Trine::Node::Blank->new( $id2 );
-		} elsif (my ($v) = m/^[?](${r_VARNAME})/) {
-			s/^[?](${r_VARNAME})\s*//;
-			return RDF::Trine::Node::Variable->new( $v );
-		} elsif (my ($pn, $ln) = m/^(\S*):(\S*)/o) {
-			if ($pn eq '') {
-				$pn	= '__DEFAULT__';
-			}
-			if (my $ns = $context->{namespaces}{ $pn }) {
-				s/^(\S+):(\S+)\s*//;
-				return RDF::Trine::Node::Resource->new( join('', $ns, $ln) );
-			} else {
-				throw RDF::Trine::Error -text => "No such namespace '$pn' while parsing SSE QName: >>$_<<";
-			}
-		} else {
-			throw RDF::Trine::Error -text => "Cannot parse SSE node from SSE string: >>$_<<";
+	$_			= $_[0];
+	if (my ($iri) = m/^<([^>]+)>/o) {
+		s/^<([^>]+)>\s*//;
+		return RDF::Trine::Node::Resource->new( $iri );
+	} elsif (my ($lit) = m/^"(([^"\\]+|\\([\\"nt]))+)"/o) {
+		my @args;
+		s/^"(([^"\\]+|\\([\\"nt]))+)"//;
+		if (my ($lang) = m/[@](\S+)/) {
+			s/[@](\S+)\s*//;
+			$args[0]	= $lang;
+		} elsif (m/^\Q^^\E/) {
+			s/^\Q^^\E//;
+			my ($dt)	= $class->from_sse( $_, $context );
+			$args[1]	= $dt->uri_value;
 		}
+		$lit	=~ s/\\(.)/eval "\"\\$1\""/ge;
+		return RDF::Trine::Node::Literal->new( $lit, @args );
+	} elsif (my ($id1) = m/^[(]([^)]+)[)]/) {
+		s/^[(]([^)]+)[)]\s*//;
+		return RDF::Trine::Node::Blank->new( $id1 );
+	} elsif (my ($id2) = m/^_:(\S+)/) {
+		s/^_:(\S+)\s*//;
+		return RDF::Trine::Node::Blank->new( $id2 );
+	} elsif (my ($v) = m/^[?](${r_VARNAME})/) {
+		s/^[?](${r_VARNAME})\s*//;
+		return RDF::Trine::Node::Variable->new( $v );
+	} elsif (my ($pn, $ln) = m/^(\S*):(\S*)/o) {
+		if ($pn eq '') {
+			$pn	= '__DEFAULT__';
+		}
+		if (my $ns = $context->{namespaces}{ $pn }) {
+			s/^(\S+):(\S+)\s*//;
+			return RDF::Trine::Node::Resource->new( join('', $ns, $ln) );
+		} else {
+			throw RDF::Trine::Error -text => "No such namespace '$pn' while parsing SSE QName: >>$_<<";
+		}
+	} else {
+		throw RDF::Trine::Error -text => "Cannot parse SSE node from SSE string: >>$_<<";
 	}
 }
 
 sub _unicode_escape {
-	# based on Unicode::Escape, but without running the string through Encode:: first.
 	my $self	= shift;
 	my $str		= shift;
-	my $us		= Unicode::String->new($str);
 	my $rslt	= '';
-	while (my $uchar = $us->chop) {
-		my $utf8 = $uchar->utf8;
-		$rslt = (($utf8 =~ /[\x80-\xff]/) ? '\\u'.uc(unpack('H4', $uchar->utf16be)) : $utf8) . $rslt;
+	
+	while (length($str)) {
+		my $utf8	= substr($str,0,1,'');
+		if ($utf8 eq "\n") {
+			$rslt	.= "\\n";
+		} elsif ($utf8 eq "\t") {
+			$rslt	.= "\\t";
+		} elsif ($utf8 eq "\r") {
+			$rslt	.= "\\r";
+		} elsif ($utf8 eq '"') {
+			$rslt	.= '\\"';
+		} elsif ($utf8 eq '\\') {
+			$rslt	.= '\\\\';
+		} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
+			$rslt	.= sprintf('\\U%08X', ord($utf8));
+		} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
+#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
+			$rslt	.= sprintf('\\u%04X', ord($utf8));
+		} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
+			$rslt	.= sprintf('\\u%04X', ord($utf8));
+		} else {
+			$rslt	.= $utf8;
+		}
 	}
 	return $rslt;
 }
-
 
 1;
 
@@ -200,7 +297,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

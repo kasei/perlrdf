@@ -36,7 +36,7 @@ WriteMakefile(
 					'JSON'						=> 2,
 					'Parse::RecDescent'			=> 0,
 					'RDF::Core'					=> 0,
-					'RDF::Trine'				=> 0.111,
+					'RDF::Trine'				=> 0.114,
 					'Scalar::Util'				=> 0,
 					'Scalar::Util'				=> 0,
 					'Set::Scalar'				=> 0,

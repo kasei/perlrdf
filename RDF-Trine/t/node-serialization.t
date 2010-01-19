@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 12;
+use Test::More tests => 17;
 
 use RDF::Trine;
 use RDF::Trine::Node;
@@ -43,5 +43,33 @@ use RDF::Trine::Node;
 	is( $blank->sse, '?person', 'variable sse' );
 	is( $blank->as_string, '?person', 'blank as_string' );
 }
+
+{
+	my $string	= "\x04\x{10001}";
+	my $literal	= RDF::Trine::Node::Literal->new($string);
+	is( $literal->as_ntriples, '"\u0004\U00010001"', 'unicode escaping of x04x10001' );
+}
+
+{
+	my $literal	= RDF::Trine::Node::Literal->new("\x7f");
+	is( $literal->as_ntriples, '"\u007F"', 'unicode escaping of x7f' );
+}
+
+{
+	my $literal	= RDF::Trine::Node::Literal->new(qq[a\r\t"\x80\x{10f000}b\x0b]);
+	my $expect	= q["a\r\t\"\u0080\U0010F000b\u000B"];
+	is( $literal->as_ntriples, $expect, 'unicode escaping of a\\r\\t"x{80}x{10f000}bx{0b}' );
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://example.org/bar');
+	is( $uri->sse({ namespaces => { foo => 'http://example.org/' } }), 'foo:bar', 'uri sse with valid namespace' );
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://example.org/bar');
+	is( $uri->sse({ namespaces => { foo => 'http://example.com/' } }), '<http://example.org/bar>', 'uri sse with invalid namespace' );
+}
+
 
 __END__

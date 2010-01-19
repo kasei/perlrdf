@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - NTriples Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.112
+This document describes RDF::Trine::Serializer::NTriples version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::NTriples version 0.112
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the N-Triples syntax.
 
 =head1 METHODS
 
@@ -28,6 +29,7 @@ package RDF::Trine::Serializer::NTriples;
 
 use strict;
 use warnings;
+use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
@@ -43,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -57,7 +59,6 @@ Returns a new N-Triples serializer object.
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	$class = ref($class) || $class;
 	my $self = bless( {}, $class);
 	return $self;
 }
@@ -160,13 +161,17 @@ __END__
 
 =back
 
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-testcases/#ntriples>
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

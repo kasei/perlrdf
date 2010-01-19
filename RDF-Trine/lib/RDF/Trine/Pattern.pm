@@ -7,7 +7,7 @@ RDF::Trine::Pattern - Class for BasicGraphPattern patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Pattern version 0.112
+This document describes RDF::Trine::Pattern version 0.114_01
 
 =cut
 
@@ -19,6 +19,7 @@ no warnings 'redefine';
 
 use Data::Dumper;
 use Log::Log4perl;
+use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 
@@ -26,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -47,7 +48,7 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-		unless ($t->isa('RDF::Trine::Statement')) {
+		unless (blessed($t) and $t->isa('RDF::Trine::Statement')) {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
@@ -180,7 +181,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -8,7 +8,7 @@ RDF::Trine::Namespace - Abbreviated syntax for constructing RDF node objects.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Namespace version 0.112
+This document describes RDF::Trine::Namespace version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(XML::Namespace);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -65,13 +65,13 @@ sub _install_namespaces {
 	my $class	= shift;
 	my $level	= shift;
 	my $pkg		= caller( $level );
-	if (@_) {
-		foreach my $name (@_) {
-			my $uri	= XML::CommonNS->uri( uc($name) );
-			my $ns	= $class->new( "$uri" );
-			no strict 'refs';
-			*{ "${pkg}::${name}" }	= \$ns;
-		}
+	foreach my $name (@_) {
+		my $uri	= (uc($name) eq 'XSD')
+			? XML::NamespaceFactory->new('http://www.w3.org/2001/XMLSchema#')
+			: XML::CommonNS->uri( uc($name) );
+		my $ns	= $class->new( "$uri" );
+		no strict 'refs';
+		*{ "${pkg}::${name}" }	= \$ns;
 	}
 }
 
@@ -88,6 +88,16 @@ sub uri {
 	return RDF::Trine::Node::Resource->new( $uri );
 }
 
+=item C<< uri_value >>
+
+Returns the URI/IRI value of this namespace.
+
+=cut
+
+sub uri_value {
+	my $self	= shift;
+	return $self->uri();
+}
 
 1; # Magic true value required at end of module
 __END__
@@ -98,9 +108,7 @@ __END__
 
 L<XML::Namespace>
 
-=head1 BUGS AND LIMITATIONS
-
-No bugs have been reported.
+=head1 BUGS
 
 Please report any bugs or feature requests to
 C<< <gwilliams@cpan.org> >>.
@@ -111,7 +119,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.112
+This document describes RDF::Trine::Node::Literal version 0.114_01
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 }
@@ -67,16 +67,18 @@ sub _new {
 	my $self;
 
 	if ($lang and $dt) {
-		Carp::cluck;
 		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
 	}
 	
 	if ($lang) {
-		$self	= [ 'LITERAL', $literal, lc($lang), undef ];
+		$self	= [ $literal, lc($lang), undef ];
 	} elsif ($dt) {
-		$self	= [ 'LITERAL', $literal, undef, $dt ];
+		if (blessed($dt)) {
+			$dt	= $dt->uri_value;
+		}
+		$self	= [ $literal, undef, $dt ];
 	} else {
-		$self	= [ 'LITERAL', $literal ];
+		$self	= [ $literal ];
 	}
 	return bless($self, $class);
 }
@@ -90,9 +92,9 @@ Returns the string value of the literal.
 sub literal_value {
 	my $self	= shift;
 	if (@_) {
-		$self->[1]	= shift;
+		$self->[0]	= shift;
 	}
-	return $self->[1];
+	return $self->[0];
 }
 
 =item C<< literal_value_language >>
@@ -103,7 +105,7 @@ Returns the language tag of the ltieral.
 
 sub literal_value_language {
 	my $self	= shift;
-	return $self->[2];
+	return $self->[1];
 }
 
 =item C<< literal_datatype >>
@@ -114,7 +116,7 @@ Returns the datatype of the literal.
 
 sub literal_datatype {
 	my $self	= shift;
-	return $self->[3];
+	return $self->[2];
 }
 
 =item C<< sse >>
@@ -126,14 +128,8 @@ Returns the SSE string for this literal.
 sub sse {
 	my $self	= shift;
 	my $literal	= $self->literal_value;
-	$literal	=~ s/\\/\\\\/g;
-	
 	my $escaped	= $self->_unicode_escape( $literal );
 	$literal	= $escaped;
-	
-	$literal	=~ s/"/\\"/g;
-	$literal	=~ s/\n/\\n/g;
-	$literal	=~ s/\t/\\t/g;
 	if ($self->has_language) {
 		my $lang	= $self->literal_value_language;
 		return qq("${literal}"\@${lang});
@@ -171,15 +167,8 @@ Returns the node in a string form suitable for NTriples serialization.
 sub as_ntriples {
 	my $self	= shift;
 	my $literal	= $self->literal_value;
-	$literal	=~ s/\\/\\\\/g;
-	
 	my $escaped	= $self->_unicode_escape( $literal );
 	$literal	= $escaped;
-	
-	$literal	=~ s/"/\\"/g;
-	$literal	=~ s/\n/\\n/g;
-	$literal	=~ s/\r/\\r/g;
-	$literal	=~ s/\t/\\t/g;
 	if ($self->has_language) {
 		my $lang	= $self->literal_value_language;
 		return qq("${literal}"\@${lang});
@@ -245,6 +234,30 @@ sub equal {
 	return 1;
 }
 
+# called to compare two nodes of the same type
+sub _compare {
+	my $a	= shift;
+	my $b	= shift;
+	if ($a->literal_value ne $b->literal_value) {
+		return ($a->literal_value cmp $b->literal_value);
+	}
+	
+	# the nodes have the same lexical value
+	if ($a->has_langauge and $b->has_langauge) {
+		return ($a->literal_value_language cmp $b->literal_value_language);
+	}
+	
+	if ($a->has_datatype and $b->has_datatype) {
+		return ($a->literal_datatype cmp $b->literal_datatype);
+	} elsif ($a->has_datatype) {
+		return 1;
+	} elsif ($b->has_datatype) {
+		return -1;
+	}
+	
+	return 0;
+}
+
 1;
 
 __END__
@@ -257,7 +270,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

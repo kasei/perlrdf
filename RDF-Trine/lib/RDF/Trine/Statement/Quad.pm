@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for Quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.112
+This document describes RDF::Trine::Statement::Quad version 0.114_01
 
 =cut
 
@@ -18,11 +18,13 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Statement);
 
+use Scalar::Util qw(blessed);
+
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -42,9 +44,11 @@ Returns a new Quad structure.
 sub new {
 	my $class	= shift;
 	my @nodes	= @_;
-	Carp::confess "Quad constructor must have four node arguments" unless (scalar(@nodes) == 4);
+	unless (scalar(@nodes) == 4) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
+	}
 	my @names	= qw(subject predicate object context);
-	foreach my $i (0 .. 2) {
+	foreach my $i (0 .. 3) {
 		unless (defined($nodes[ $i ])) {
 			$nodes[ $i ]	= RDF::Trine::Node::Variable->new($names[ $i ]);
 		}
@@ -101,13 +105,10 @@ Returns the SSE string for this alegbra expression.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
-	return sprintf(
-		'(quad %s %s %s %s)',
-		$self->subject->sse( $context ),
-		$self->predicate->sse( $context ),
-		$self->object->sse( $context ),
-		$self->context->sse( $context ),
-	);
+	
+	my @nodes	= $self->nodes;
+	my @sse		= map { $_->sse( $context ) } (@nodes);
+	return sprintf( '(quad %s %s %s %s)', @sse );
 }
 
 =item C<< type >>
@@ -188,7 +189,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

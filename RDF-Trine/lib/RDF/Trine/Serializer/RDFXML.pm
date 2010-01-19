@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.112
+This document describes RDF::Trine::Serializer::RDFXML version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::RDFXML version 0.112
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the RDF/XML syntax.
 
 =head1 METHODS
 
@@ -28,6 +29,7 @@ package RDF::Trine::Serializer::RDFXML;
 
 use strict;
 use warnings;
+use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
@@ -43,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -57,7 +59,6 @@ Returns a new
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	$class = ref($class) || $class;
 	my $self = bless( {}, $class);
 	return $self;
 }
@@ -109,7 +110,7 @@ sub serialize_iterator_to_file {
 	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
 	
 	my @statements	= $iter->next;
-	if (@statements) {
+	while (@statements) {
 		my $st	= shift(@statements);
 		my @samesubj;
 		push(@samesubj, $st);
@@ -132,7 +133,6 @@ sub serialize_iterator_to_file {
 sub _statements_same_subject_as_string {
 	my $self		= shift;
 	my @statements	= @_;
-	return unless (@statements);
 	my $s			= $statements[0]->subject;
 	
 	my $id;
@@ -166,12 +166,13 @@ sub _statements_same_subject_as_string {
 			$lv			=~ s/</&lt;/g;
 			my $lang	= $o->literal_value_language;
 			my $dt		= $o->literal_datatype;
+			my $tag	= join(':', $prefix, $ln);
 			if ($lang) {
-				$string	.= qq[\t<${prefix}:$ln xml:lang="${lang}">${lv}</$ln>\n];
+				$string	.= qq[\t<${tag} xml:lang="${lang}">${lv}</${tag}>\n];
 			} elsif ($dt) {
-				$string	.= qq[\t<${prefix}:$ln rdf:datatype="${dt}">${lv}</$ln>\n];
+				$string	.= qq[\t<${tag} rdf:datatype="${dt}">${lv}</${tag}>\n];
 			} else {
-				$string	.= qq[\t<${prefix}:$ln>${lv}</$ln>\n];
+				$string	.= qq[\t<${tag}>${lv}</${tag}>\n];
 			}
 		} elsif ($o->is_blank) {
 			my $b	= $o->blank_identifier;
@@ -189,52 +190,6 @@ sub _statements_same_subject_as_string {
 	
 	my $namespaces	= join(' ', map { my $ns = $namespaces{$_}; qq[xmlns:${ns}="$_"] } sort { $namespaces{$a} cmp $namespaces{$b} } (keys %namespaces));
 	return qq[<rdf:Description ${namespaces} $id>\n] . $string;
-}
-
-sub _statement_as_string {
-	my $self	= shift;
-	my $st		= shift;
-	my ($s,$p,$o)	= $st->nodes;
-	my $id;
-	
-	my $string	= '';
-	if ($s->is_blank) {
-		my $b	= $s->blank_identifier;
-		$id	= qq[rdf:nodeID="$b"];
-	} else {
-		my $i	= $s->uri_value;
-		$id	= qq[rdf:about="$i"];
-	}
-	$string	.= qq[<rdf:Description $id>\n];
-	my ($ns, $ln);
-	try {
-		($ns,$ln)	= $p->qname;
-	} catch RDF::Trine::Error with {
-		my $uri	= $p->uri_value;
-		throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
-	};
-	if ($o->is_literal) {
-		my $lv		= $o->literal_value;
-		$lv			=~ s/&/&amp;/g;
-		$lv			=~ s/</&lt;/g;
-		my $lang	= $o->literal_value_language;
-		my $dt		= $o->literal_datatype;
-		if ($lang) {
-			$string	.= qq[\t<$ln xmlns="$ns" xml:lang="${lang}">${lv}</$ln>\n];
-		} elsif ($dt) {
-			$string	.= qq[\t<$ln xmlns="$ns" rdf:datatype="${dt}">${lv}</$ln>\n];
-		} else {
-			$string	.= qq[\t<$ln xmlns="$ns">${lv}</$ln>\n];
-		}
-	} elsif ($o->is_blank) {
-		my $b	= $o->blank_identifier;
-		$string	.= qq[\t<$ln xmlns="$ns" rdf:nodeID="$b"/>\n];
-	} else {
-		my $u	= $o->uri_value;
-		$string	.= qq[\t<$ln xmlns="$ns" rdf:resource="$u"/>\n];
-	}
-	$string	.= qq[</rdf:Description>\n];
-	return $string;
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
@@ -257,18 +212,10 @@ sub _serialize_bounded_description {
 	my $self	= shift;
 	my $model	= shift;
 	my $node	= shift;
-	my $seen	= shift || {};
-	return '' if ($seen->{ $node->sse }++);
-	my $iter	= $model->get_statements( $node, undef, undef );
+	my $seen	= {};
 	
 	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
-			$string	.= $self->__serialize_bounded_description( $model, $nodes[2], $seen );
-		}
-	}
+	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
 }
@@ -279,14 +226,19 @@ sub __serialize_bounded_description {
 	my $node	= shift;
 	my $seen	= shift || {};
 	return '' if ($seen->{ $node->sse }++);
-	my $iter	= $model->get_statements( $node, undef, undef );
 	
 	my $string	= '';
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
-			$string	.= $self->__serialize_bounded_description( $model, $nodes[2], $seen );
+	my $st		= RDF::Trine::Statement->new( $node, map { RDF::Trine::Node::Variable->new($_) } qw(p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $iter	= $model->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
+	
+	my @bindings	= $iter->get_all;
+	if (@bindings) {
+		my @samesubj	= map { RDF::Trine::Statement->new( $node, $_->{p}, $_->{o} ) } @bindings;
+		my @blanks		= grep { blessed($_) and $_->isa('RDF::Trine::Node::Blank') } map { $_->{o} } @bindings;
+		$string			.= $self->_statements_same_subject_as_string( @samesubj );
+		foreach my $object (@blanks) {
+			$string	.= $self->__serialize_bounded_description( $model, $object, $seen );
 		}
 	}
 	return $string;
@@ -298,13 +250,17 @@ __END__
 
 =back
 
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-syntax-grammar/>
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

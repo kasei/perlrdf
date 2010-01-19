@@ -5,7 +5,7 @@ RDF::Trine - An RDF Framework for Perl.
    components:
 
    * RDF::Trine::Model - RDF model providing access to a triple store.
-   * RDF::Trine::Parser - Native RDF parsers (currently RDF/XML, Turtle, and RDF/JSON).
+   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, and RDF/JSON).
    * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
      Redland schema.
    * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
@@ -27,6 +27,7 @@ REQUIREMENTS
      * List::Util
      * Log::Log4perl
      * Math::BigInt
+     * Math::Combinatorics
      * Scalar::Util
      * Text::Table
      * Time::HiRes
@@ -45,6 +46,7 @@ REQUIREMENTS
      * DBD::Mysql
      * Test::More
      * Test::Exception
+     * RDF::RDFa::Parser
 
 INSTALLATION
 
@@ -56,6 +58,50 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.114 (2010-01-XX)
+
+     * Added new Turtle serializer.
+     * Updated RDF/XML serializer grouping of same-subject statements for bounded descriptions.
+     * Updated parse_into_model parser methods to be both class and object methods.
+     * Updated Parser parse_* methods to take extra %args with optional 'context' value.
+     * Moved RDF::Trine::Store::Hexastore from alpha/ directory into RDF::Trine package.
+     * Added Storable to list of prereq modules.
+     * Added partial support for rdf:Lists to RDF::Trine::Serializer::Turtle.
+     * Added RDF::Trine::Namespace::uri_value method.
+     * Updated unicode encoding and escaping in ::Node, ::Node::Literal, and ::Store::DBI.
+     * Added variable() shortcut function to RDF::Trine package.
+     * Updated RDF::Trine::Graph to materialize statements when constructed with a graph iterator.
+     * Moved get_pattern logic from ::Store to ::Model.
+     * Updated ::Model::Union to work better with ::Model::get_pattern.
+     * Updated Node and Statement from_sse methods to work with constant string arguments.
+     * Updated code and tests for better coverage.
+     * Removed unused RDF::Trine::Iterator::sfinally function.
+     * Fixed bug in RDF::Trine::Graph::equals.
+     * Added UnimplementedError exception class.
+
+  Version 0.113 (2009-12-30)
+
+     * Added RDF::Trine::Parser::RDFa implementation to connect with RDF::RDFa::Parser.
+     * Added ability to pass RDF::Trine::Node::Resource values as the datatype argument to RDF::Trine::Node::Literal::new().
+     * Special-cased 'xsd' in RDF::Trine::Namespace to return the RDF-version of the namespace URI (with trailing '#').
+     * Added syntax shortcuts as exportable from RDF::Trine: iri(), blank(), and literal().
+     * Added RDF::Trine::Serializer base class.
+     * Fixed syntax error in generated RDF/XML in RDF::Trine::Serializer::RDFXML.
+     * Fixed bug in RDF::Trine::Serializer::RDFXML that was dropping triples.
+     * Added RDF::Trine::Parser::parse_url_into_model class method.
+     * Updated parser classes' registration of parser names and media types.
+     * Added RDF::Trine::Model::size method.
+     * Removed ::Parser::Error package. Replaced with use of RDF::Trine::Error.
+     * Convert data to utf8 encoding before hashing in RDF::Trine::Store::DBI::_mysql_hash_pp.
+     * Added RDF::Trine::Model::objects_for_predicate_list method.
+     * Removed RDF::Trine::Serializer::RDFXML::_split_predicate and replaced with call to $pred->qname.
+     * Added RDF::Trine::Node::Resource::qname method to split an IRI into namespace and local parts.
+     * Added RDF::Trine::Serializer::NTriples::Canonical (from tobyink).
+     * Added RDF::Trine::Iterator::Bindings::as_statements to return a graph iterator.
+     * Updated POD for ::Model::get_pattern to mention 'orderby' argument.
+     * Updated ::Model::as_stream to return a graph iterator sorted by (s,p,o).
+     * Updated RDF/XML serializer to merge same-subject rdf:Descriptions.
 
   Version 0.112 (2009-12-12)
 

@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.112
+This document describes RDF::Trine::Graph version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 use Data::Dumper;
@@ -58,10 +58,13 @@ sub new {
 	
 	my %data;
 	if ($_[0]->isa('RDF::Trine::Iterator::Graph')) {
-		$data{ type }	= 'iter';
-		$data{ iter }	= shift;
+		my $iter	= shift;
+		my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+		while (my $st = $iter->next) {
+			$model->add_statement( $st );
+		}
+		$data{ model }	= $model;
 	} elsif ($_[0]->isa('RDF::Trine::Model')) {
-		$data{ type }	= 'model';
 		$data{ model }	= shift;
 	} else {
 		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::new must be called with a Model or Iterator argument";
@@ -90,20 +93,14 @@ sub equals {
 	if (scalar(@$nba) != scalar(@$nbb)) {
 		my $nbac	= scalar(@$nba);
 		my $nbbc	= scalar(@$nbb);
-		warn "count of non-blank statements didn't match ($nbac != $nbbc)" if ($debug);
+# 		warn "count of non-blank statements didn't match ($nbac != $nbbc)" if ($debug);
 		return 0;
 	}
 	my $bac	= scalar(@$ba);
 	my $bbc	= scalar(@$bb);
 	if ($bac != $bbc) {
-		warn 2;
-		warn "count of blank statements didn't match ($bac != $bbc)" if ($debug);
+# 		warn "count of blank statements didn't match ($bac != $bbc)" if ($debug);
 		return 0;
-	}
-	
-	if ($bac == 0) {
-		warn "no blank nodes -- models match\n" if ($debug);
-		return 1;
 	}
 	
 	for ($nba, $nbb) {
@@ -112,9 +109,14 @@ sub equals {
 	
 	foreach my $i (0 .. $#{ $nba }) {
 		unless ($nba->[$i] eq $nbb->[$i]) {
-			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
+# 			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
 			return 0;
 		}
+	}
+	
+	if ($bac == 0) {
+# 		warn "no blank nodes -- models match\n" if ($debug);
+		return 1;
 	}
 	
 	my %blank_ids_a;
@@ -137,7 +139,7 @@ sub equals {
 	MAPPING: foreach my $mapping (@kbp) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
-		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
+# 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
 		my %bb	= map { $_->as_string => 1 } @$bb;
 		foreach my $st (@$ba) {
@@ -146,7 +148,7 @@ sub equals {
 				my $n	= $st->$method();
 				if ($n->is_blank) {
 					my $id	= $mapping{ $n->blank_identifier };
-					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
+# 					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
 					push(@nodes, RDF::Trine::Node::Blank->new( $id ));
 				} else {
 					push(@nodes, $n);
@@ -154,18 +156,18 @@ sub equals {
 			}
 			my $class	= ref($st);
 			my $mapped_st	= $class->new( @nodes )->as_string;
-			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
+# 			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
 			if ($bb{ $mapped_st }) {
 				delete $bb{ $mapped_st };
 			} else {
 				next MAPPING;
 			}
 		}
-		warn "found mapping: " . Dumper(\%mapping) if ($debug);
+# 		warn "found mapping: " . Dumper(\%mapping) if ($debug);
 		return 1;
 	}
 	
-	warn "didn't find mapping\n" if ($debug);
+# 	warn "didn't find mapping\n" if ($debug);
 	return 0;
 }
 
@@ -198,24 +200,7 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 
 sub get_statements {
 	my $self	= shift;
-	if ($self->{type} eq 'model') {
-		return $self->{model}->get_statements();
-	} elsif ($self->{type} eq 'iter') {
-		return $self->{iter};
-	} else {
-		throw RDF::Trine::Error -text => "Unrecognized graph type";
-	}
-}
-
-sub _sort_statements ($$) {
-	return 1 if ($_[0]->has_blanks);
-	return -1 if ($_[1]->has_blanks);
-	for my $method (qw(subject predicate object)) {
-		my ($a, $b)	= map { $_->$method()->as_string } @_;
-		my $c		= ($a cmp $b);
-		return $c if ($c);
-	}
-	return 0;
+	return $self->{model}->get_statements();
 }
 
 1;
@@ -230,7 +215,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

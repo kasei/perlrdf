@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN" "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+	xmlns:sd="http://www.w3.org/ns/sparql-service-description#"
+	xmlns:scovo="http://purl.org/NET/scovo#"
+	xmlns:void="http://rdfs.org/ns/void#"
+	>
+	<head>
+		<title>SPARQL</title>
+		<meta http-equiv="Content-Type" content="application/xhtml+xml; charset=UTF-8"/>
+	</head>
+	<body>
+	<form action="http://kasei.us/sparql" method="get">
+		<textarea id="query" name="query" rows="10" cols="50"></textarea><br/>
+		<select id="mime-type" name="mime-type">
+			<option value="">Result Format...</option>
+			<option label="HTML" value="text/html">HTML</option>
+			<option label="XML" value="text/xml">XML</option>
+			<option label="JSON" value="application/json">JSON</option>
+		</select>
+		<input name="submit" id="submit" type="submit" value="Submit" />
+	</form>
+	<div class="rdf2rdfa">
+	   <div class="description" typeof="sd:Service">
+		  <div rel="sd:url" resource="http://kasei.us/sparql"></div>
+		  <div rel="sd:defaultDatasetDescription">
+			 <div class="description" typeof="sd:Dataset">
+				<div rel="sd:defaultGraph">
+				   <div class="description" typeof="rdfs:Resource">
+					  <div rel="void:statItem">
+						 <div class="description" typeof="rdfs:Resource">
+							<div rel="scovo:dimension" resource="http://rdfs.org/ns/void#numberOfTriples"></div>
+							<div property="rdf:value" content="12729" datatype="xsd:integer"></div>
+						 </div>
+					  </div>
+				   </div>
+				</div>
+			 </div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="java:com.hp.hpl.jena.query.function.library.sha1sum" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#dateTime" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#string" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="java:com.hp.hpl.jena.query.function.library.langeq" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://kasei.us/code/rdf-query/functions/bloom/filter" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2005/04/xpath-functionsmatches" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#double" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#decimal" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://kasei.us/2007/09/functions/warn" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="java:com.ldodds.sparql.Distance" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#float" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://kasei.us/code/rdf-query/functions/bloom" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="java:com.hp.hpl.jena.query.function.library.now" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#integer" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="java:com.hp.hpl.jena.query.function.library.listMember" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+		  <div rel="sd:extensionFunction">
+			 <div class="description" about="http://www.w3.org/2001/XMLSchema#boolean" typeof="sd:ScalarFunction"></div>
+		  </div>
+	
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/service"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/service/bloom_filters"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/unsaid"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/federate_bindings"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/select_expression"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/aggregate"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/aggregate/count"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/aggregate/count-distinct"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/aggregate/min"></div>
+		  </div>
+	
+		  <div rel="sd:languageExtension">
+			 <div class="description" about="http://kasei.us/2008/04/sparql-extension/aggregate/max"></div>
+		  </div>
+	
+	   </div>
+	</div>
+	</body>
+</html>

@@ -61,7 +61,7 @@ our @ISA = qw();
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112_02';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -271,7 +271,7 @@ Toby Inkster, E<lt>tobyink@cpan.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Toby Inkster
+Copyright (c) 2010 Toby Inkster
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.1 or,

@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.112.
+This document describes RDF::Trine::Iterator version 0.114_01.
 
 =head1 SYNOPSIS
 
@@ -42,11 +42,11 @@ use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(sgrep smap swatch sfinally);
+	@EXPORT_OK	= qw(sgrep smap swatch);
 	use overload 'bool' => sub { $_[0] };
 	use overload '&{}' => sub {
 		my $self	= shift;
@@ -583,37 +583,6 @@ sub swatch (&$) {
 	return $s;
 }
 
-=item C<sfinally { EXPR } $stream>
-
-=cut
-
-sub sfinally (&$) {
-	my $block	= shift;
-	my $stream	= shift;
-	my @args	= $stream->construct_args();
-	my $class	= ref($stream);
-	
-	my $open	= 1;
-	my $next	= sub {
-		return undef unless ($open);
-		if (@_ and $_[0]) {
-			$block->();
-			$stream->close;
-			$open	= 0;
-		}
-		my $data	= $stream->next;
-		unless ($data) {
-			$block->();
-			$open	= 0;
-			return undef;
-		}
-		return $data;
-	};
-	
-	my $s		= $stream->_new( $next, @args );
-	return $s;
-}
-
 1;
 
 __END__
@@ -634,7 +603,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

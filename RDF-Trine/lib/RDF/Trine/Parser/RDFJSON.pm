@@ -7,13 +7,13 @@ RDF::Trine::Parser::RDFJSON - RDF/JSON RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFJSON version 0.112
+This document describes RDF::Trine::Parser::RDFJSON version 0.114_01
 
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
  my $parser	= RDF::Trine::Parser->new( 'RDF/JSON' );
- my $iterator = $parser->parse( $base_uri, $data );
+ $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION
 
@@ -31,6 +31,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 no warnings 'once';
+use base qw(RDF::Trine::Parser);
 
 use URI;
 use Data::UUID;
@@ -38,17 +39,17 @@ use Log::Log4perl;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
-use RDF::Trine::Parser::Error;
+use RDF::Trine::Error;
 use Scalar::Util qw(blessed looks_like_number);
 use JSON;
 
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.112';
-	
-	foreach my $t ('RDFJSON', 'RDF/JSON', 'application/json', 'application/x-rdf+json') {
-		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
+	$VERSION				= '0.114_01';
+	$RDF::Trine::Parser::parser_names{ 'rdfjson' }	= __PACKAGE__;
+	foreach my $type (qw(application/json application/x-rdf+json)) {
+		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 }
 
@@ -71,7 +72,7 @@ sub new {
 	return $self;
 }
 
-=item C<< parse ( $base_uri, $data ) >>
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
 C<< triple >> method for each RDF triple parsed. This method does nothing by
@@ -140,14 +141,23 @@ parsed, will call C<< $model->add_statement( $statement ) >>.
 =cut
 
 sub parse_into_model {
-	my $self	= shift;
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
 	my $uri		= shift;
 	my $input	= shift;
 	my $model	= shift;
-	my $opts = shift;
+	my %args	= @_;
+	my $context	= $args{'context'};
+	my $opts	= $args{'json_opts'};
+	
 	my $handler	= sub {
 		my $st	= shift;
-		$model->add_statement( $st );
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
 	};
 	return $self->parse( $uri, $input, $handler, $opts );
 }

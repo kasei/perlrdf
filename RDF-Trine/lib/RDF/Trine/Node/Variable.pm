@@ -7,7 +7,7 @@ RDF::Trine::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Variable version 0.112
+This document describes RDF::Trine::Node::Variable version 0.114_01
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
@@ -91,7 +91,7 @@ Returns the node in a string form suitable for NTriples serialization.
 
 sub as_ntriples {
 	my $self	= shift;
-	Carp::confess "Variable nodes aren't allowed in NTriples: " . Dumper($self);
+	throw RDF::Trine::Error::UnimplementedError -text => "Variable nodes aren't allowed in NTriples";
 }
 
 =item C<< type >>
@@ -118,6 +118,12 @@ sub equal {
 	return ($self->name eq $node->name);
 }
 
+# called to compare two nodes of the same type
+sub _compare {
+	my $a	= shift;
+	my $b	= shift;
+	return ($a->name cmp $b->name);
+}
 
 1;
 
@@ -131,7 +137,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

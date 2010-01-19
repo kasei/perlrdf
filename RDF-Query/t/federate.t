@@ -105,17 +105,13 @@ END
 	my ($plan, $ctx)	= $query->prepare();
 	my $sse	= $plan->sse({}, '  ');
 	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan' );
-		(project (p knows)
-			(threshold-union 0
-				(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-				(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-				(bind-join
-					(triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)
-					(triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))
-			)
-		)
+(project (p knows) (threshold-union 0
+	(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p foaf:knows ?knows .\n\t?knows a foaf:Person .\n}")
+	(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p foaf:knows ?knows .\n\t?knows a foaf:Person .\n}")
+	(bind-join
+		(triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)
+		(triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))))
 END
-	
 	### If we were to start an RDF::Endpoint server on the appropriate ports, this should work:
 # 	my $iter	= $query->execute_plan( $plan, $ctx );
 # 	while (my $row = $iter->next) {
@@ -144,8 +140,8 @@ END
 	is( _CLEAN_WS($sse), _CLEAN_WS(<<'END'), 'expected optimistic federation query plan' );
 		(project (p knows)
 			(threshold-union 3
-				(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
-				(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p <http://xmlns.com/foaf/0.1/knows> ?knows .\n\t?knows a <http://xmlns.com/foaf/0.1/Person> .\n}")
+				(service <http://127.0.0.1:8889/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p foaf:knows ?knows .\n\t?knows a foaf:Person .\n}")
+				(service <http://127.0.0.1:8891/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/>\nSELECT * WHERE {\n\t?p foaf:knows ?knows .\n\t?knows a foaf:Person .\n}")
 				(bind-join
 					(triple ?knows <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)
 					(triple ?p <http://xmlns.com/foaf/0.1/knows> ?knows))
@@ -194,8 +190,8 @@ END
 		(project (v p q t)
 			(threshold-union 0
 				(nestedloop-join
-					(service <http://127.0.0.1:10000/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v <http://example.org/P> ?p .\n\t?v <http://example.org/Q> ?q .\n}")
-					(service <http://127.0.0.1:10003/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v <http://example.org/T> ?t .\n}"))
+					(service <http://127.0.0.1:10000/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v ex:P ?p .\n\t?v ex:Q ?q .\n}")
+					(service <http://127.0.0.1:10003/sparql> "PREFIX ex: <http://example.org/>\nSELECT * WHERE {\n\t?v ex:T ?t .\n}"))
 				(bind-join
 					(bind-join
 						(triple ?v <http://example.org/T> ?t)

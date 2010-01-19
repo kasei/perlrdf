@@ -1,14 +1,13 @@
 # RDF::Trine
 # -----------------------------------------------------------------------------
 
-
 =head1 NAME
 
 RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.112
+This document describes RDF::Trine version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -34,10 +33,6 @@ components:
 
 =back
 
-=head1 METHODS
-
-=over 4
-
 =cut
 
 package RDF::Trine;
@@ -46,16 +41,21 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our ($debug, $VERSION);
+our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.112';
+	$VERSION	= '0.114_01';
+	
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(iri blank literal variable statement store);
 }
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 use RDF::Trine::Parser;
+use RDF::Trine::Serializer;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
@@ -72,6 +72,81 @@ sub _uniq {
 		push(@data, $_) unless ($seen{ $_ }++);
 	}
 	return @data;
+}
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< iri ( $iri ) >>
+
+Returns a RDF::Trine::Node::Resource object with the given IRI value.
+
+=cut
+
+sub iri {
+	my $iri	= shift;
+	return RDF::Trine::Node::Resource->new( $iri );
+}
+
+=item C<< blank ( $id ) >>
+
+Returns a RDF::Trine::Node::Blank object with the given identifier.
+
+=cut
+
+sub blank {
+	my $id	= shift;
+	return RDF::Trine::Node::Blank->new( $id );
+}
+
+=item C<< literal ( $value, $lang, $dt ) >>
+
+Returns a RDF::Trine::Node::Literal object with the given value and optional
+language/datatype.
+
+=cut
+
+sub literal {
+	return RDF::Trine::Node::Literal->new( @_ );
+}
+
+=item C<< variable ( $name ) >>
+
+Returns a RDF::Trine::Node::Variable object with the given variable name.
+
+=cut
+
+sub variable {
+	my $name	= shift;
+	return RDF::Trine::Node::Variable->new( $name );
+}
+
+=item C<< statement ( @nodes ) >>
+
+Returns a RDF::Trine::Statement object with the supplied node objects.
+
+=cut
+
+sub statement {
+	my @nodes	= @_;
+	if (scalar(@nodes) == 4) {
+		return RDF::Trine::Statement::Quad->new( @nodes );
+	} else {
+		return RDF::Trine::Statement->new( @nodes );
+	}
+}
+
+=item C<< store ( $config ) >>
+
+Returns a RDF::Trine::Store object based on the supplied configuration string.
+See L<RDF::Trine::Store> for more information on store configuration strings.
+
+=cut
+
+sub store {
+	my $config	= shift;
+	return RDF::Trine::Store->new_with_string( $config );
 }
 
 1; # Magic true value required at end of module
@@ -102,9 +177,7 @@ L<XML::Namespace>
 L<XML::SAX>
 L<XML::LibXML::SAX>
 
-=head1 BUGS AND LIMITATIONS
-
-No bugs have been reported.
+=head1 BUGS
 
 Please report any bugs or feature requests to
 C<< <gwilliams@cpan.org> >>.
@@ -115,7 +188,8 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
+=cut
