@@ -2,13 +2,16 @@ The Perl RDF project aims to be a pure-perl RDF framework implementation with an
 emphasis on extensibility, API stability, and the presence of a test suite.
 Currently, the project includes:
 
-  * RDF::Query, a SPARQL (and RDQL) query engine supporting RDF::Redland,
-    RDF::Core, and RDF::Store.
-  * RDF::Trine::Parser - A native parser for RDF/XML and Turtle.
-  * RDF::Trine::Store::DBI, an RDF Store for MySQL, PostgreSQL and SQLite, based
-    on the Redland schema.
+  * RDF::Query, a SPARQL (and RDQL) query engine supporting RDF::Trine,
+    RDF::Redland, and RDF::Core.
+  * RDF::Trine::Parser, a set of native RDF parsers for RDF/XML, RDFa, Turtle,
+    and RDF/JSON.
+  * RDF::Trine::Store, a triplestore API with DBI-based implementations for
+    MySQL, PostgreSQL and SQLite, based on the Redland schema.
   * RDF::Trine::Iterator, iterator classes for variable bindings and RDF
     statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
   * RDF::Trine::Namespace - A convenience class for easily constructing RDF node
     objects from URI namespaces.
   * RDF::Endpoint - A SPARQL endpoint based on RDF::Query.
+  * RDF::LinkedData - A mod_perl2 handler for serving linked data from an
+    RDF::Trine triplestore.

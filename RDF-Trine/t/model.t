@@ -1,6 +1,7 @@
-use Test::More tests => 183;
+use Test::More;
 use Test::Exception;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -26,8 +27,12 @@ my $st2		= RDF::Trine::Statement->new( $b, $rdf->type, $foaf->Person );
 my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
 
 my ($stores, $remove)	= stores();
+
+plan tests => 69 * scalar(@$stores);
+
 foreach my $store (@$stores) {
-	isa_ok( $store, 'RDF::Trine::Store::DBI' );
+	print "### Testing store " . ref($store) . "\n";
+	isa_ok( $store, 'RDF::Trine::Store' );
 	my $model	= RDF::Trine::Model->new( $store );
 	isa_ok( $model, 'RDF::Trine::Model' );
 	$model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
@@ -68,7 +73,7 @@ foreach my $store (@$stores) {
 			isa_ok( $subj, 'RDF::Trine::Node' );
 			$count++;
 		}
-		is( $count, 2, 'expected result count (2 people)' );
+		is( $count, 2, 'expected result count (2 people) 1' );
 	}
 	
 	{
@@ -86,7 +91,7 @@ foreach my $store (@$stores) {
 				like( $b->{name}->literal_value, qr/Eve|Gregory/, 'name pattern' );
 				$count++;
 			}
-			is( $count, 2, 'expected result count (2 people)' );
+			is( $count, 2, 'expected result count (2 people) 2' );
 		}
 	
 		{
@@ -101,7 +106,22 @@ foreach my $store (@$stores) {
 				is( $b->{name}->literal_value, $name, 'name pattern' );
 				$count++;
 			}
-			is( $count, 2, 'expected result count (2 people)' );
+			is( $count, 2, 'expected result count (2 people) 3' );
+		}
+
+		{
+			my $stream	= $model->get_pattern( $pattern, undef, orderby => [ qw(name DESC p ASC) ] );
+			is_deeply( [ $stream->sorted_by ], ['name', 'DESC', 'p', 'ASC'], 'results sort order' );
+			my $count	= 0;
+			my @expect	= ('Gregory Todd Williams', 'Eve');
+			while (my $b = $stream->next) {
+				isa_ok( $b, 'HASH' );
+				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+				my $name	= shift(@expect);
+				is( $b->{name}->literal_value, $name, 'name pattern' );
+				$count++;
+			}
+			is( $count, 2, 'expected result count (2 people) 4' );
 		}
 
 		{
@@ -112,7 +132,7 @@ foreach my $store (@$stores) {
 		{
 			throws_ok {
 				my $stream	= $model->get_pattern( $pattern, undef, orderby => [ 'name' ] );
-			} 'Error', 'bad ordering request throws exception';
+			} 'RDF::Trine::Error::MethodInvocationError', 'bad ordering request throws exception';
 		}
 	}
 	
@@ -145,7 +165,8 @@ foreach my $store (@$stores) {
 		while (my $b = $stream->next) {
 			isa_ok( $b, 'HASH' );
 			isa_ok( $b->{name}, 'RDF::Trine::Node::Literal', 'literal name' );
-			like( $b->{name}->literal_value, qr/Gregory|グレゴリ/, 'name pattern　with language-tagged result' );
+			my $value	= $b->{name}->literal_value;
+			like( $value, qr/Gregory|グレゴリ/, 'name pattern with language-tagged result' );
 			$count++;
 		}
 		is( $count, 2, 'expected result count (2 names)' );
@@ -166,7 +187,7 @@ foreach my $store (@$stores) {
 			my $name	= $b->{name};
 			isa_ok( $b, 'HASH' );
 			isa_ok( $name, 'RDF::Trine::Node::Literal', 'literal name' );
-			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern　with datatyped result' );
+			is( $name->literal_value, 'Gregory Todd Williams', 'name pattern with datatyped result' );
 			if (my $type = $name->literal_datatype) {
 				is( $type, 'http://www.w3.org/2000/01/rdf-schema#Literal', 'datatyped literal' );
 				$dt++;
@@ -197,6 +218,8 @@ foreach my $file (@$remove) {
 sub stores {
 	my @stores;
 	my @removeme;
+	push(@stores, RDF::Trine::Store::Memory->temporary_store());
+	
 	{
 		my $store	= RDF::Trine::Store::DBI->new();
 		$store->init();

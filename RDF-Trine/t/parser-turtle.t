@@ -29,7 +29,7 @@ foreach my $file (@bad) {
 		my $url	= 'file://' . $file;
 		my $parser	= RDF::Trine::Parser->new('turtle');
 		$parser->parse( $url, $data );
-	} 'RDF::Trine::Parser::Error::ValueError', $test;
+	} 'RDF::Trine::Error::ParserError', $test;
 }
 
 

@@ -7,13 +7,13 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.111
+This document describes RDF::Trine::Parser::RDFXML version 0.114_01
 
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
  my $parser	= RDF::Trine::Parser->new( 'rdfxml' );
- my $iterator = $parser->parse( $base_uri, $data );
+ $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION
 
@@ -30,6 +30,8 @@ package RDF::Trine::Parser::RDFXML;
 use strict;
 use warnings;
 
+use base qw(RDF::Trine::Parser);
+
 use URI;
 use Carp;
 use XML::SAX;
@@ -39,15 +41,16 @@ use Scalar::Util qw(blessed);
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
-use RDF::Trine::Parser::Error qw(:try);
+use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
-	foreach my $t ('rdfxml', 'application/rdf+xml') {
-		$RDF::Trine::Parser::types{ $t }	= __PACKAGE__;
+	$VERSION	= '0.114_01';
+	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
+	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
+		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 }
 
@@ -79,14 +82,26 @@ parsed, will call C<< $model->add_statement( $statement ) >>.
 =cut
 
 sub parse_into_model {
-	my $self	= shift;
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
 	my $uri		= shift;
 	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
 		$uri	= $uri->uri_value;
 	}
 	my $input	= shift;
 	my $model	= shift;
-	my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
+	my %args	= @_;
+	my $context	= $args{'context'};
+	
+	my $handler	= sub {
+		my $st	= shift;
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
+	};
 	$self->{saxhandler}->set_handler( $handler );
 	return $self->parse( $uri, $input, $handler );
 }
@@ -705,7 +720,7 @@ sub get_namespace {
 			return $uri;
 		}
 	}
-	throw RDF::Trine::Parser::Error::ValueError -text => "Unknown namespace: $prefix";
+	throw RDF::Trine::Error::ParserError -text => "Unknown namespace: $prefix";
 }
 
 sub new_bnode {
@@ -752,13 +767,17 @@ __END__
 
 =back
 
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-syntax-grammar/>
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

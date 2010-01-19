@@ -7,7 +7,7 @@ RDF::Trine::Model::Union - Union models for joining multiple stores together.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Union version 0.111
+This document describes RDF::Trine::Model::Union version 0.114_01
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use RDF::Trine::Store::DBI;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.114_01';
 }
 
 ################################################################################
@@ -54,7 +54,7 @@ Adds the specified C<$statement> to the first rdf store.
 sub add_statement {
 	my $self	= shift;
 	my @iterators;
-	my $store	= $self->_store;
+	my ($store)	= $self->_stores;
 	$store->add_statement( @_ );
 }
 
@@ -112,15 +112,16 @@ sub get_statements {
 	my $self	= shift;
 	my @iterators;
 	foreach my $store ($self->_stores) {
-		my $i	= $self->_store->get_statements( @_ );
-		my @data;
-		while (my $d = $i->next) {
-			warn '++++++++++++++++++ ' . $d->as_string;
-			
-		}
-		
-		my $m	= $i->materialize;
-		push(@iterators, $m);
+		my $i	= $store->get_statements( @_ );
+		push(@iterators, $i);
+# 		my @data;
+# 		while (my $d = $i->next) {
+# 			warn '++++++++++++++++++ ' . $d->as_string;
+# 			
+# 		}
+# 		
+# 		my $m	= $i->materialize;
+# 		push(@iterators, $m);
 	}
 	while (@iterators > 1) {
 		my $i	= shift(@iterators);
@@ -130,25 +131,25 @@ sub get_statements {
 	return $iterators[0]->unique;
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
-
-Returns a stream object of all bindings matching the specified graph pattern.
-
-=cut
-
-sub get_pattern {
-	my $self	= shift;
-	my @iterators;
-	foreach my $store ($self->_stores) {
-		push(@iterators, $self->_store->get_pattern( @_ ));
-	}
-	while (@iterators > 1) {
-		my $i	= shift(@iterators);
-		my $j	= shift(@iterators);
-		unshift(@iterators, $i->concat( $j ));
-	}
-	return $iterators[0];
-}
+# =item C<< get_pattern ( $bgp [, $context] ) >>
+# 
+# Returns a stream object of all bindings matching the specified graph pattern.
+# 
+# =cut
+# 
+# sub get_pattern {
+# 	my $self	= shift;
+# 	my @iterators;
+# 	foreach my $store ($self->_stores) {
+# 		push(@iterators, $store->get_pattern( @_ ));
+# 	}
+# 	while (@iterators > 1) {
+# 		my $i	= shift(@iterators);
+# 		my $j	= shift(@iterators);
+# 		unshift(@iterators, $i->concat( $j ));
+# 	}
+# 	return $iterators[0];
+# }
 
 sub _stores {
 	my $self	= shift;
@@ -157,7 +158,7 @@ sub _stores {
 
 sub _store {
 	my $self	= shift;
-	return $self->{stores}[0];
+	return;
 }
 
 1;
@@ -172,7 +173,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

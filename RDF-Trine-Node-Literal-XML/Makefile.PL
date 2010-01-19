@@ -3,22 +3,27 @@ use warnings;
 
 use inc::Module::Install;
 
-license				'perl';
+license			'perl';
 
-build_requires		'Test::More'				=> 0.61;
-build_requires		'Test::Exception'			=> 0;
+name                    'RDF-Trine-Node-Literal-XML';
+author	                'Kjetil Kjernsmo <kjetilk@cpan.org>';
+version_from        	'lib/RDF/Trine/Node/Literal/XML.pm';
+abstract_from       	'lib/RDF/Trine/Node/Literal/XML.pm';
+readme_from       	'lib/RDF/Trine/Node/Literal/XML.pm';
 
-#####################################################
+test_requires		'Test::More'				=> '0.61';
+test_requires		'Test::Exception'			=> 0;
 
-WriteMakefile(
-    NAME                		=> 'RDF::Trine::XS',
-	AUTHOR						=> 'Gregory Todd Williams <gwilliams@cpan.org>',
-    VERSION_FROM        		=> 'lib/RDF/Trine/Node/Literal/XML.pm',
-    ABSTRACT_FROM       		=> 'lib/RDF/Trine/Node/Literal/XML.pm',
-    PREREQ_PM			=> {
-					'RDF::Trine'				=> 0,
-					'Scalar::Util'				=> 0,
-					'XML::LibXML'				=> 0,
-					'Error'						=> 0,
-				},
-);
+include                 'Test::Signature';
+
+
+requires 		'RDF::Trine'				=> 0.111;
+requires		'Scalar::Util'				=> 0;
+requires		'XML::LibXML'				=> 0;
+requires		'Error'					=> 0;
+
+auto_install;
+
+sign;
+
+WriteAll;

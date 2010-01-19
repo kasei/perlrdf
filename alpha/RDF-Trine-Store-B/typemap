@@ -1,0 +1,5 @@
+TYPEMAP
+b_t * T_PTROBJ
+b_iterator_triple_t * T_PTROBJ
+b_triple_t * T_PTROBJ
+

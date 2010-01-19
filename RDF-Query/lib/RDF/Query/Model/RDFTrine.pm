@@ -33,6 +33,7 @@ use RDF::Query::Model::RDFTrine::Filter;
 use RDF::Query::Model::RDFTrine::BasicGraphPattern;
 
 use RDF::Trine 0.102;
+use RDF::Trine qw(iri);
 use RDF::Trine::Model;
 use RDF::Trine::Parser;
 use RDF::Trine::Pattern;
@@ -206,9 +207,20 @@ sub add_uri {
 	my $named		= shift;
 	my $format		= shift || 'guess';
 	
+	unless ($named) {
+		my $model	= $self->model;
+		my $ok		= 0;
+		try {
+			RDF::Trine::Parser->parse_url_into_model( $uri, $model );
+			$ok	= 1;
+		} catch RDF::Trine::Error::ParserError with {};
+		if ($ok) {
+			return;
+		}
+	}
+	
 	my $ua			= LWP::UserAgent->new( agent => "RDF::Query/${RDF::Query::VERSION}" );
 	$ua->default_headers->push_header( 'Accept' => "application/rdf+xml;q=0.5, text/turtle;q=0.7, text/xml" );
-	
 	my $resp		= $ua->get( $uri );
 	unless ($resp->is_success) {
 		warn "No content available from $uri: " . $resp->status_line;
@@ -217,9 +229,12 @@ sub add_uri {
 	my $data		= $resp->content;
 	$data			= decode_utf8( $data );
 	$self->add_string( $data, $uri, $named, $format );
+	
+#	$self->model->_debug;
+	return;
 }
 
-=item C<add_string ( $data, $base_uri, $named, $format )>
+=item C<add_string ( $data, $base_uri, $named )>
 
 Adds the contents of C<$data> to the model. If C<$named> is true,
 the data is added to the model using C<$base_uri> as the named context.
@@ -231,22 +246,20 @@ sub add_string {
 	my $data	= shift;
 	my $base	= shift;
 	my $named	= shift;
-	my $format	= shift || 'guess';
 	
-	my $graph	= RDF::Query::Node::Resource->new( $base );
+	my $graph	= iri( $base );
 	my $model	= ($named) ? $self->_named_graphs_model : $self->model;
 	
-	my $handler	= ($named)
-				? sub { my $st	= shift; $model->add_statement( $st, $graph ) }
-				: sub { my $st	= shift; $model->add_statement( $st ) };
-	
-	if ($data =~ m/<rdf:RDF/ms) {
-		my $parser	= RDF::Trine::Parser->new('rdfxml');
-		$parser->parse( $base, $data, $handler );
-	} else {
-		my $parser	= RDF::Trine::Parser->new('turtle');
-		$parser->parse( $base, $data, $handler );
+	my @named	= ($named) ? (context => iri($base)) : ();
+	my $pname	= 'turtle';
+	if ($data =~ /<rdf:RDF/ms) {
+		$pname	= 'rdfxml';
+	} elsif ($data =~ /XHTML[+]RDFa/) {
+		$pname	= 'rdfa';
 	}
+	my $parser	= RDF::Trine::Parser->new($pname);
+	$parser->parse_into_model( $base, $data, $model, @named );
+	return;
 }
 
 =item C<statement_method_map ()>

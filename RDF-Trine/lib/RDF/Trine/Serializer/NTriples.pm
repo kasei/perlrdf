@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - NTriples Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.111
+This document describes RDF::Trine::Serializer::NTriples version 0.114_01
 
 =head1 SYNOPSIS
 
@@ -16,7 +16,8 @@ This document describes RDF::Trine::Serializer::NTriples version 0.111
 
 =head1 DESCRIPTION
 
-...
+The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+graphs to the N-Triples syntax.
 
 =head1 METHODS
 
@@ -28,6 +29,7 @@ package RDF::Trine::Serializer::NTriples;
 
 use strict;
 use warnings;
+use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
@@ -43,29 +45,28 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.111';
+	$VERSION	= '0.114_01';
 }
 
 ######################################################################
 
 =item C<< new >>
 
-Returns a new 
+Returns a new N-Triples serializer object.
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	$class = ref($class) || $class;
 	my $self = bless( {}, $class);
 	return $self;
 }
 
-=item C<< serialize_model_to_file ( $file, $model ) >>
+=item C<< serialize_model_to_file ( $fh, $model ) >>
 
 Serializes the C<$model> to NTriples, printing the results to the supplied
-C<$file> handle.
+filehandle C<<$fh>>.
 
 =cut
 
@@ -75,7 +76,7 @@ sub serialize_model_to_file {
 	my $model	= shift;
 	my $iter	= $model->as_stream;
 	while (my $st = $iter->next) {
-		print {$file} join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
+		print {$file} $self->_statement_as_string( $st );
 	}
 }
 
@@ -92,7 +93,64 @@ sub serialize_model_to_string {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= join(' ', map { $_->sse } @nodes) . " .\n";
+		$string		.= $self->_statement_as_string( $st );
+	}
+	return $string;
+}
+
+=item C<< serialize_iterator_to_file ( $file, $iter ) >>
+
+Serializes the iterator to NTriples, printing the results to the supplied
+filehandle C<<$fh>>.
+
+=cut
+
+sub serialize_iterator_to_file {
+	my $self	= shift;
+	my $file	= shift;
+	my $iter	= shift;
+	while (my $st = $iter->next) {
+		print {$file} $self->_statement_as_string( $st );
+	}
+}
+
+sub _statement_as_string {
+	my $self	= shift;
+	my $st		= shift;
+	return join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
+}
+
+=item C<< serialize_iterator_to_string ( $iter ) >>
+
+Serializes the iterator to NTriples, returning the result as a string.
+
+=cut
+
+sub serialize_iterator_to_string {
+	my $self	= shift;
+	my $iter	= shift;
+	my $string	= '';
+	while (my $st = $iter->next) {
+		my @nodes	= $st->nodes;
+		$string		.= $self->_statement_as_string( $st );
+	}
+	return $string;
+}
+
+sub _serialize_bounded_description {
+	my $self	= shift;
+	my $model	= shift;
+	my $node	= shift;
+	my $seen	= shift || {};
+	return '' if ($seen->{ $node->sse }++);
+	my $iter	= $model->get_statements( $node, undef, undef );
+	my $string	= '';
+	while (my $st = $iter->next) {
+		my @nodes	= $st->nodes;
+		$string		.= $self->_statement_as_string( $st );
+		if ($nodes[2]->is_blank) {
+			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
+		}
 	}
 	return $string;
 }
@@ -103,13 +161,17 @@ __END__
 
 =back
 
+=head1 SEE ALSO
+
+L<http://www.w3.org/TR/rdf-testcases/#ntriples>
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

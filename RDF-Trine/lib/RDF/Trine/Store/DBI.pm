@@ -1,38 +1,19 @@
 =head1 NAME
 
-RDF::Trine::Store::DBI - [One line description of module's purpose here]
-
+RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.111
+This document describes RDF::Trine::Store::DBI version 0.114_01
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Store::DBI;
+ use RDF::Trine::Store::DBI;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
-  
-  
 =head1 DESCRIPTION
 
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
+RDF::Trine::Store::DBI provides a persistent triple-store using the L<DBI|DBI>
+module.
 
 =cut
 
@@ -41,11 +22,13 @@ package RDF::Trine::Store::DBI;
 use strict;
 use warnings;
 no warnings 'redefine';
+use base qw(RDF::Trine::Store);
 
 use DBI;
 use Carp;
 use DBI;
 use Scalar::Util qw(blessed reftype refaddr);
+use Encode;
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
@@ -60,7 +43,7 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.111";
+our $VERSION	= "0.114_01";
 
 
 
@@ -121,6 +104,13 @@ sub new {
 	return $self;
 }
 
+sub _new_with_string {
+	my $class	= shift;
+	my $config	= shift;
+	my ($model, $dsn, $user, $pass)	= split(';', $config);
+	return $class->new( $model, $dsn, $user, $pass );
+}
+
 =item C<< temporary_store >>
 
 =cut
@@ -144,21 +134,37 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements {
 	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
-	my $context	= shift;
+	my @nodes	= @_[0..3];
+	my $bound	= 0;
+	my %bound;
 	
+	my $use_quad	= 0;
+	if (scalar(@_) >= 4) {
+		$use_quad	= 1;
+# 		warn "count statements with quad" if ($::debug);
+		my $g	= $nodes[3];
+		if (blessed($g) and not($g->is_variable)) {
+			$bound++;
+			$bound{ 3 }	= $g;
+		}
+	}
+	
+	my ($subj, $pred, $obj, $context)	= @nodes;
+	
+	my $var		= 0;
 	my $dbh		= $self->dbh;
-	my $triple	= RDF::Trine::Statement->new( $subj, $pred, $obj );
+	my $st		= ($use_quad)
+				? RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) )
+				: RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
-	my @vars	= $triple->referenced_variables;
+	my @vars	= $st->referenced_variables;
 	
+	my $semantics	= ($use_quad ? 'quad' : 'triple');
 	local($self->{context_variable_count})	= 0;
 	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
-	my $sql		= $self->_sql_for_pattern( $triple, $context, @_ );
+	my $sql		= $self->_sql_for_pattern( $st, $context, semantics => $semantics, unique => 1 );
 	my $sth		= $dbh->prepare( $sql );
 	
 	$sth->execute();
@@ -169,13 +175,17 @@ NEXTROW:
 		return undef unless (defined $row);
 		my @triple;
 		my $temp_var_count	= 1;
-		foreach my $node ($triple->nodes) {
+		my @nodes	= ($st->nodes)[ $use_quad ? (0..3) : (0..2) ];
+		foreach my $node (@nodes) {
 			if ($node->is_variable) {
 				my $nodename	= $node->name;
 				my $uri			= $self->_column_name( $nodename, 'URI' );
 				my $name		= $self->_column_name( $nodename, 'Name' );
 				my $value		= $self->_column_name( $nodename, 'Value' );
-				if (defined( my $u = $row->{ $uri })) {
+				my $node		= $self->_column_name( $nodename, 'Node' );
+				if ($row->{ $node } == 0) {
+					push( @triple, RDF::Trine::Node::Nil->new() );
+				} elsif (defined( my $u = $row->{ $uri })) {
 					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
 				} elsif (defined( my $n = $row->{ $name })) {
 					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
@@ -183,34 +193,18 @@ NEXTROW:
 					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
 					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
-					warn "node isn't a resource, blank, or literal?" . Dumper($row);
+					warn "node isn't nil or a resource, blank, or literal?" . Dumper($row);
 					goto NEXTROW;
 				}
 			} else {
 				push(@triple, $node);
 			}
 		}
-		if (blessed($context) and $context->is_variable) {
-			my $nodename	= $context->name; #'sql_ctx_1_';
-			my $uri			= $self->_column_name( $nodename, 'URI' );
-			my $name		= $self->_column_name( $nodename, 'Name' );
-			my $value		= $self->_column_name( $nodename, 'Value' );
-			if (defined $row->{ $uri }) {
-				push( @triple, RDF::Trine::Node::Resource->new( $row->{ $uri } ) );
-			} elsif (defined $row->{ $name }) {
-				push( @triple, RDF::Trine::Node::Blank->new( $row->{ $name } ) );
-			} elsif (defined $row->{ $value }) {
-				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
-				push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
-			} else {
-			}
-		} elsif ($context) {
-			push( @triple, $context );
-		}
-		my $triple	= (@triple == 3)
+		
+		my $st	= (@triple == 3)
 					? RDF::Trine::Statement->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
-		return $triple;
+		return $st;
 	};
 	
 	return RDF::Trine::Iterator::Graph->new( $sub )
@@ -243,7 +237,7 @@ sub get_pattern {
 		while (my ($col, $dir) = splice( @ordering, 0, 2, () )) {
 			no warnings 'uninitialized';
 			unless ($dir =~ /^(ASC|DESC)$/) {
-				throw RDF::Trine::Error::CompilationError -text => 'Direction must be ASC or DESC in get_pattern call';
+				throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $col must be either 'ASC' or 'DESC' in get_pattern call";
 			}
 		}
 	}
@@ -268,12 +262,15 @@ sub get_pattern {
 			my $name	= $self->_column_name( $nodename, 'Name' );
 			my $value	= $self->_column_name( $nodename, 'Value' );
 			if (defined( my $u = $row->{ $uri })) {
+				$u	= decode('utf8', $u);
 				$bindings{ $nodename }	 = RDF::Trine::Node::Resource->new( $u );
 			} elsif (defined( my $n = $row->{ $name })) {
 				$bindings{ $nodename }	 = RDF::Trine::Node::Blank->new( $n );
 			} elsif (defined( my $v = $row->{ $value })) {
 				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
-				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
+				my ($val,$lang,$dt)	= @{ $row }{ @cols };
+				$val	= decode('utf8', $val);
+				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( $val, $lang, $dt );
 			} else {
 				$bindings{ $nodename }	= undef;
 			}
@@ -298,6 +295,8 @@ sub get_pattern {
 
 =item C<< get_contexts >>
 
+Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
+the set of contexts of the stored quads.
 
 =cut
 
@@ -305,26 +304,29 @@ sub get_contexts {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
-	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM ${stable} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) WHERE Context != 0 ORDER BY URI, Name, Value;";
- 	my $sth		= $dbh->prepare( $sql );
- 	$sth->execute();
- 	my $sub		= sub {
- 		my $row	= $sth->fetchrow_hashref;
- 		my $uri		= $self->_column_name( 'URI' );
- 		my $name	= $self->_column_name( 'Name' );
- 		my $value	= $self->_column_name( 'Value' );
- 		if ($row->{ $uri }) {
- 			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
- 		} elsif ($row->{ $name }) {
- 			return RDF::Trine::Node::Blank->new( $row->{ $name } );
- 		} elsif (defined $row->{ $value }) {
- 			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
- 			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
- 		} else {
- 			return;
- 		}
- 	};
- 	return RDF::Trine::Iterator->new( $sub );
+	my $sql		= "SELECT DISTINCT Context, r.URI AS URI, b.Name AS Name, l.Value AS Value, l.Language AS Language, l.Datatype AS Datatype FROM ${stable} s LEFT JOIN Resources r ON (r.ID = s.Context) LEFT JOIN Literals l ON (l.ID = s.Context) LEFT JOIN Bnodes b ON (b.ID = s.Context) ORDER BY URI, Name, Value;";
+	my $sth		= $dbh->prepare( $sql );
+	$sth->execute();
+	my $sub		= sub {
+		my $row	= $sth->fetchrow_hashref;
+		return unless defined($row);
+		my $uri		= $self->_column_name( 'URI' );
+		my $name	= $self->_column_name( 'Name' );
+		my $value	= $self->_column_name( 'Value' );
+		if ($row->{ Context } == 0) {
+			return RDF::Trine::Node::Nil->new();
+		} elsif ($row->{ $uri }) {
+			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
+		} elsif ($row->{ $name }) {
+			return RDF::Trine::Node::Blank->new( $row->{ $name } );
+		} elsif (defined $row->{ $value }) {
+			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
+		} else {
+			return;
+		}
+	};
+	return RDF::Trine::Iterator->new( $sub );
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -347,6 +349,9 @@ sub add_statement {
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+		if (blessed($context)) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
+		}
 		$context	= $stmt->context;
 	} else {
 		my $cid		= do {
@@ -381,9 +386,28 @@ sub remove_statement {
 	my $context	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
+	
+	unless (blessed($stmt)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "no statement passed to remove_statement";
+	}
+	
+	if ($stmt->isa( 'RDF::Trine::Statement::Quad' )) {
+		if (blessed($context)) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
+		}
+	} else {
+		my @nodes	= $stmt->nodes;
+		if (blessed($context)) {
+			$stmt	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
+		} else {
+			my $nil	= RDF::Trine::Node::Nil->new();
+			$stmt	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
+		}
+	}
+	
 	my @nodes	= $stmt->nodes;
 	my $sth		= $dbh->prepare("DELETE FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?");
-	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes, $context);
+	my @values	= map { $self->_mysql_node_hash( $_ ) } (@nodes);
 	$sth->execute( @values );
 }
 
@@ -468,17 +492,32 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub count_statements {
 	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
-	my $context	= shift;
+	my @nodes	= @_[0..3];
+	my $bound	= 0;
+	my %bound;
+	
+	my $use_quad	= 0;
+	if (scalar(@_) >= 4) {
+		$use_quad	= 1;
+# 		warn "count statements with quad" if ($::debug);
+		my $g	= $nodes[3];
+		if (blessed($g) and not($g->is_variable)) {
+			$bound++;
+			$bound{ 3 }	= $g;
+		}
+	}
+	
+	my ($subj, $pred, $obj, $context)	= @nodes;
 	
 	my $dbh		= $self->dbh;
 	my $var		= 0;
-	my $triple	= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
-	my @vars	= $triple->referenced_variables;
+	my $st		= ($use_quad)
+				? RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) )
+				: RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my @vars	= $st->referenced_variables;
 	
-	my $sql		= $self->_sql_for_pattern( $triple, $context, count => 1 );
+	my $semantics	= ($use_quad ? 'quad' : 'triple');
+	my $sql		= $self->_sql_for_pattern( $st, $context, 'count-distinct' => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
 	my $sth		= $dbh->prepare( $sql );
@@ -665,7 +704,7 @@ sub _sql_for_pattern {
 				# if we've already got some UNION patterns, make sure the new
 				# pattern has the same referenced variables (otherwise the
 				# columns of the result are going to come out all screwy
-				unless ($pvars eq $variables) {
+				if ($pvars ne $variables) {
 					throw RDF::Trine::Error::CompilationError -text => 'All patterns in a UNION must reference the same variables.';
 				}
 			} else {
@@ -680,14 +719,10 @@ sub _sql_for_pattern {
 		my $type		= $pattern->type;
 		my $method		= "_sql_for_" . lc($type);
 		my $context		= $self->_new_context;
-# 		my $context		= {
-# 							next_alias		=> 0,
-# 							level			=> 0,
-# 							statement_table	=> $self->statements_table,
-# 						};
 		
+# 		warn "*** sql compilation method $method";
 		if ($self->can($method)) {
-			$self->$method( $pattern, $ctx_node, $context );
+			$self->$method( $pattern, $ctx_node, $context, %args );
 			push(@sql, $self->_sql_from_context( $context, %args ));
 		} else {
 			throw RDF::Trine::Error::CompilationError ( -text => "Don't know how to turn a $type into SQL" );
@@ -714,7 +749,7 @@ sub _sql_from_context {
 	my $vars	= $context->{vars};
 	my $from	= $context->{from_tables} || [];
 	my $where	= $context->{where_clauses} || [];
-	my $unique	= 0;	# XXX
+	my $unique	= $args{'unique'} ? 1 : 0;
 	
 	my ($varcols, @cols)	= $self->add_variable_values_joins( $context, $vars );
 	unless (@cols) {
@@ -733,8 +768,10 @@ sub _sql_from_context {
 	if ($args{ count }) {
 		@cols	= ('COUNT(*)');
 	}
+	if ($args{ 'count-distinct' }) {
+		$unique	= 1;
+	}
 	
-#	my @cols	= map { _get_var( $context, $_ ) . " AS $_" } keys %$vars;
 	my @sql	= (
 				"SELECT" . ($unique ? ' DISTINCT' : ''),
 				INDENT . join(",\n" . INDENT, @cols),
@@ -759,6 +796,12 @@ sub _sql_from_context {
 #	push(@sql, $self->limit_clause( $options ) );
 	
 	my $sql	= join("\n", grep {length} @sql);
+	
+	if ($args{ 'count-distinct' }) {
+		$sql	= "SELECT COUNT(*) FROM ($sql)";
+	}
+	
+# 	warn $sql;
 	return $sql;
 }
 
@@ -789,7 +832,7 @@ sub _sql_for_filter {
 	my $type		= $pattern->type;
 	my $method		= "_sql_for_" . lc($type);
 	$self->$method( $pattern, $ctx_node, $context );
-	$self->_sql_for_expr( $expr, $ctx_node, $context );
+	$self->_sql_for_expr( $expr, $ctx_node, $context, @_ );
 }
 
 sub _sql_for_expr {
@@ -814,13 +857,13 @@ sub _sql_for_expr {
 			my $node	= $args[0];
 			_add_restriction( $context, $node, qw(literal resource) );
 		} elsif ($func eq 'sparql:logical-or') {
-			$self->_sql_for_or_expr( $expr, $ctx_node, $context );
+			$self->_sql_for_or_expr( $expr, $ctx_node, $context, @_ );
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown function data: " . Dumper($expr);
 		}
 	} elsif ($expr->isa('RDF::Query::Expression::Binary')) {
 		if ($expr->op eq '==') {
-			$self->_sql_for_equality_expr( $expr, $ctx_node, $context );
+			$self->_sql_for_equality_expr( $expr, $ctx_node, $context, @_ );
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "Unknown expr data: " . Dumper($expr);
 		}
@@ -841,7 +884,7 @@ sub _sql_for_or_expr {
 	my @disj;
 	foreach my $e (@args) {
 		my $tmp_ctx		= $self->_new_context;
-		$self->_sql_for_expr( $e, $ctx_node, $tmp_ctx );
+		$self->_sql_for_expr( $e, $ctx_node, $tmp_ctx, @_ );
 		my ($var, $val)	= %{ $tmp_ctx->{vars} };
 		my $existing_col = _get_var( $context, $var );
 		push(@disj, "${existing_col} = $val");
@@ -891,6 +934,8 @@ sub _sql_for_equality_expr {
 	}
 }
 
+sub _sql_for_triple { &_sql_for_statement; }
+sub _sql_for_quad { &_sql_for_statement; }
 {
 	my %restrictions	= (
 		subject		=> ['literal'],
@@ -898,14 +943,18 @@ sub _sql_for_equality_expr {
 		object		=> [],
 		context		=> [],
 	);
-sub _sql_for_triple {
+sub _sql_for_statement {
 	my $self	= shift;
 	my $triple	= shift;
-	my $has_graph_name	= (scalar(@_) == 2);
 	my $ctx		= shift;
 	my $context	= shift;
+	my %args	= @_;
 	
-	my $quad		= $triple->isa('RDF::Trine::Statement::Quad');
+	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
+	no warnings 'uninitialized';
+	if ($args{semantics} eq 'triple') {
+		$quad	= 0;
+	}
 	my @posmap	= ($quad)
 				? qw(subject predicate object context)
 				: qw(subject predicate object);
@@ -963,6 +1012,8 @@ sub _add_sql_node_clause {
 		my $id	= $self->_mysql_node_hash( $node );
 		$id		=~ s/\D//;
 		_add_where( $context, "${col} = $id" );
+	} elsif ($node->is_nil) {
+		_add_where( $context, "${col} = 0" );
 	} else {
 		throw RDF::Trine::Error::CompilationError( -text => "Unknown node type: " . Dumper($node) );
 	}
@@ -975,7 +1026,7 @@ sub _sql_for_bgp {
 	my $context	= shift;
 	
 	foreach my $triple ($bgp->triples) {
-		$self->_sql_for_triple( $triple, $ctx, $context );
+		$self->_sql_for_triple( $triple, $ctx, $context, @_ );
 	}
 }
 
@@ -991,7 +1042,7 @@ sub _sql_for_ggp {
 	foreach my $p (@patterns) {
 		my $type	= $p->type;
 		my $method	= "_sql_for_" . lc($type);
-		$self->$method( $p, $ctx, $context );
+		$self->$method( $p, $ctx, $context, @_ );
 	}
 }
 
@@ -1004,17 +1055,15 @@ using the same algorithm that Redland's mysql storage backend uses.
 
 sub _mysql_hash;
 sub _mysql_hash_pp {
-	my $data	= shift;
+	my $data	= encode('utf8', shift);
 	my @data	= unpack('C*', md5( $data ));
 	my $sum		= Math::BigInt->new('0');
-#	my $count	= 0;
 	foreach my $count (0 .. 7) {
-#	while (@data) {
 		my $data	= Math::BigInt->new( $data[ $count ] ); #shift(@data);
 		my $part	= $data << (8 * $count);
 #		warn "+ $part\n";
 		$sum		+= $part;
-	} # continue { last if ++$count == 8 }	# limit to 64 bits
+	}
 #	warn "= $sum\n";
 	$sum	=~ s/\D//;	# get rid of the extraneous '+' that pops up under perl 5.6
 	return $sum;
@@ -1042,6 +1091,7 @@ sub _mysql_node_hash {
 #	my @node	= @$node;
 #	my ($type, $value)	= splice(@node, 0, 2, ());
 	return 0 unless (blessed($node));
+	return 0 if ($node->is_nil);
 	
 	my $data;
 	if ($node->isa('RDF::Trine::Node::Resource')) {
@@ -1150,6 +1200,21 @@ sub dbh {
 	return $dbh;
 }
 
+sub _debug {
+	my $self	= shift;
+	my $dbh		= $self->{dbh};
+	my $name	= $self->model_name;
+	my $id		= _mysql_hash( $name );
+	my $table	= 'Statements' . $id;
+	my $sth		= $dbh->prepare( "SELECT * FROM $table" );
+	$sth->execute;
+	my $count	= 1;
+	while (my $h = $sth->fetchrow_hashref) {
+		my ($s,$p,$o,$g)	= @{ $h }{ qw(Subject Predicate Object Context) };
+		warn sprintf("[%5d] subj=%-20d  pred=%-20d  obj=%-20d  context=%-20d\n", $count++, $s, $p, $o, $g );
+	}
+}
+
 =item C<< init >>
 
 Creates the necessary tables in the underlying database.
@@ -1238,8 +1303,7 @@ __END__
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+C<< <gwilliams@cpan.org> >>.
 
 =head1 AUTHOR
 
@@ -1247,7 +1311,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

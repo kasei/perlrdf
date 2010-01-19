@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query::Node - Class for describing federated query data sources.
+RDF::Query::ServiceDescription - Class for describing federated query data sources.
 
 =head1 VERSION
 

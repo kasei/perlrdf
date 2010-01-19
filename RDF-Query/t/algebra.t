@@ -5,7 +5,7 @@ no warnings 'redefine';
 use utf8;
 
 use Data::Dumper;
-use Test::More tests => 36;
+use Test::More tests => 35;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -102,7 +102,6 @@ END
 	my $rea	= RDF::Query::Node::Resource->new( 'http://example.org/a' );
 	my $reb	= RDF::Query::Node::Resource->new( 'http://example.org/b' );
 	my $lea	= RDF::Query::Node::Literal->new( 'http://example.org/a' );
-	my $bea	= RDF::Query::Node::Blank->new( 'http://example.org/a' );
 	
 	{
 		cmp_ok( $ba, '<', $bb, 'blank less-than' );
@@ -132,7 +131,6 @@ END
 	}
 	
 	{
-		cmp_ok( $bea, '<', $lea, 'blank less-than resource (same value)' );
 		cmp_ok( $bz, '<', $la, 'blank less-than resource (different value)' );
 		cmp_ok( $rea, '<', $lea, 'resource less-than literal (same value)' );
 		cmp_ok( $rea, '<', $la, 'resource less-than literal (different value)' );

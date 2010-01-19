@@ -44,7 +44,6 @@ my $false	= RDF::Query::Node::Literal->new( 'false', undef, 'http://www.w3.org/2
 my $rea		= RDF::Query::Node::Resource->new( 'http://example.org/a' );
 my $reb		= RDF::Query::Node::Resource->new( 'http://example.org/b' );
 my $lea		= RDF::Query::Node::Literal->new( 'http://example.org/a' );
-my $bea		= RDF::Query::Node::Blank->new( 'http://example.org/a' );
 
 my $dt2		= RDF::Query::Node::Literal->new( '2007-12-31T23:55:00-05:00', undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
 my $dt1		= RDF::Query::Node::Literal->new( '2008-01-01T00:00:00Z', undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );

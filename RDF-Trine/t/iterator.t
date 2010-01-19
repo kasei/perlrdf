@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 57;
+use Test::More tests => 60;
 
 use Data::Dumper;
 use RDF::Trine;
@@ -11,6 +11,13 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Iterator::Bindings;
 use RDF::Trine::Iterator::Boolean;
+
+{
+	my $iter	= RDF::Trine::Iterator->new([1,2]);
+	is( &$iter, 1 );
+	is( $iter->next, 2 );
+	is( &$iter, undef );
+}
 
 {
 	my @data	= ({value=>1},{value=>2},{value=>3});
