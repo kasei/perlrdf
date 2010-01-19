@@ -9,10 +9,6 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 This document describes RDF::Trine::Node version 0.114_01
 
-=head1 METHODS
-
-=over 4
-
 =cut
 
 package RDF::Trine::Node;
@@ -38,6 +34,30 @@ use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Literal;
 use RDF::Trine::Node::Resource;
 use RDF::Trine::Node::Variable;
+
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< ntriples_escape ( $value ) >>
+
+Returns the passed string value with special characters (control characters,
+Unicode, etc.) escaped, suitable for printing inside an N-Triples or Turtle
+encoded literal.
+
+=cut
+
+sub ntriples_escape ($) {
+	my $class	= __PACKAGE__;
+	return $class->_unicode_escape( @_ );
+}
+
+=back
+
+=head1 METHODS
+
+=over 4
 
 =item C<< is_node >>
 
@@ -263,11 +283,6 @@ sub _unicode_escape {
 		}
 	}
 	return $rslt;
-}
-
-sub ntriples_escape ($) {
-	my $class	= __PACKAGE__;
-	return $class->_unicode_escape( @_ );
 }
 
 1;
