@@ -1,6 +1,6 @@
 =head1 NAME
 
-RDF::LinkedData - mod_perl handler class for serving RDF as linked data
+RDF::LinkedData::Apache - mod_perl handler class for serving RDF as linked data
 
 =head1 METHODS
 
@@ -8,7 +8,7 @@ RDF::LinkedData - mod_perl handler class for serving RDF as linked data
 
 =cut
 
-package RDF::LinkedData;
+package RDF::LinkedData::Apache;
 
 use strict;
 use warnings;
