@@ -5,14 +5,14 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(variable);
+use RDF::Trine qw(variable store);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my @stores	= test_stores();
-plan tests => 4 + scalar(@stores) * 165;
+plan tests => 5 + scalar(@stores) * 165;
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my @names	= ('a' .. 'z');
@@ -20,6 +20,7 @@ my @triples;
 my @quads;
 
 {
+	isa_ok( store( 'Memory' ), 'RDF::Trine::Store::Memory' );
 	isa_ok( RDF::Trine::Store->new_with_string( 'Memory' ), 'RDF::Trine::Store::Memory' );
 	isa_ok( RDF::Trine::Store->new_with_string( 'SPARQL;http://example/' ), 'RDF::Trine::Store::SPARQL' );
 }

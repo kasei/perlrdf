@@ -48,7 +48,7 @@ BEGIN {
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(iri blank literal variable);
+	@EXPORT_OK	= qw(iri blank literal variable statement store);
 }
 
 use Log::Log4perl qw(:easy);
@@ -122,6 +122,32 @@ sub variable {
 	return RDF::Trine::Node::Variable->new( $name );
 }
 
+=item C<< statement ( @nodes ) >>
+
+Returns a RDF::Trine::Statement object with the supplied node objects.
+
+=cut
+
+sub statement {
+	my @nodes	= @_;
+	if (scalar(@nodes) == 4) {
+		return RDF::Trine::Statement::Quad->new( @nodes );
+	} else {
+		return RDF::Trine::Statement->new( @nodes );
+	}
+}
+
+=item C<< store ( $config ) >>
+
+Returns a RDF::Trine::Store object based on the supplied configuration string.
+See L<RDF::Trine::Store> for more information on store configuration strings.
+
+=cut
+
+sub store {
+	my $config	= shift;
+	return RDF::Trine::Store->new_with_string( $config );
+}
 
 1; # Magic true value required at end of module
 __END__
