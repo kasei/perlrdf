@@ -64,27 +64,10 @@ sub new {
 	my $class	= shift;
 	my $r		= shift;
 	throw Error -text => "Missing request object in RDF::LinkedData::Apache constructor" unless (blessed($r));
-
+	
 	my $base		= $r->dir_config( 'LinkedData_Base' );
-	my $dbmodel		= $r->dir_config( 'LinkedData_Model' );
-	my $dbuser		= $r->dir_config( 'LinkedData_User' );
-	my $dbpass		= $r->dir_config( 'LinkedData_Password' );
-	my $dsn			= $r->dir_config( 'LinkedData_DSN' );
-	
-	my %data	= (LinkedData_Base => $base, LinkedData_Model => $dbmodel, LinkedData_User => $dbuser, LinkedData_Password => $dbpass,  LinkedData_DSN => $dsn);
-	foreach my $name (keys %data) {
-		my $v	= $data{ $name };
-		unless (defined($v) and length($v)) {
-			throw Error -text => "Missing configuration value for $name in RDF::LinkedData::Apache constructor";
-		}
-	}
-	
-	my $store;
-	if ($dsn eq 'Memory') {
-		$store	= RDF::Trine::Store::Memory->new();
-	} else {
-		$store	= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
-	}
+	my $config		= $r->dir_config( 'LinkedData_Store' );
+	my $store		= RDF::Trine::Store->new_with_string( $config );
 	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $self = bless( {

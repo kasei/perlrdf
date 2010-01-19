@@ -37,7 +37,7 @@ throws_ok {
 	$headers->mock( 'add' => sub { shift; $headers{ $_[0] } = $_[1]; } );
 	
 	my $r = Test::MockObject->new();
-	$r->set_series( 'dir_config', 'http://base', 'model', 'user', 'password', 'Memory' );
+	$r->set_series( 'dir_config', 'http://base', 'Memory' );
 	$r->set_always( 'header_out', sub { shift; $headers{ $_[0] } = $_[1]; } );
 	$r->set_always( 'err_headers_out', $errors );
 	
@@ -67,7 +67,7 @@ throws_ok {
 
 {
 	print "# page redirection\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'dsn']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'DBI;model;dsn;user;password']);
 	$r->set_always( 'uri', '/foo' );
 	isa_ok( $handler, 'RDF::LinkedData::Apache' );
 	is( $handler->request, $r, 'request object' );
@@ -81,7 +81,7 @@ throws_ok {
 
 {
 	print "# data redirection\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo' );
 	local($ENV{HTTP_ACCEPT})	= 'application/rdf+xml';
 	$handler->run;
@@ -90,7 +90,7 @@ throws_ok {
 
 {
 	print "# bad data request\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/data' );
 	local($ENV{HTTP_ACCEPT})	= 'application/rdf+xml';
 	
@@ -102,7 +102,7 @@ throws_ok {
 
 {
 	print "# data request for rdf/xml\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/data' );
 	local($ENV{HTTP_ACCEPT})	= 'application/rdf+xml';
 	my $model	= $handler->model;
@@ -117,7 +117,7 @@ throws_ok {
 
 {
 	print "# data request for ntriples\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/data' );
 	local($ENV{HTTP_ACCEPT})	= 'text/n3';
 	my $model	= $handler->model;
@@ -132,7 +132,7 @@ throws_ok {
 
 {
 	print "# page request\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -147,7 +147,7 @@ throws_ok {
 
 {
 	print "# page request with labeled statement object\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -162,7 +162,7 @@ throws_ok {
 
 {
 	print "# page request with unlabeled statement object\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -177,7 +177,7 @@ throws_ok {
 
 {
 	print "# page request with rdfs container proeprty\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -191,7 +191,7 @@ throws_ok {
 
 {
 	print "# page request with non-qnameable property\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -205,7 +205,7 @@ throws_ok {
 
 {
 	print "# page request with labeled predicate\n";
-	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'model', 'user', 'password', 'Memory']);
+	my ($handler, $r, $headers, $errors)	= new_handler( dir_config => ['http://base', 'Memory']);
 	$r->set_always( 'uri', '/foo/page' );
 	local($ENV{HTTP_ACCEPT})	= 'text/html';
 	my $model	= $handler->model;
@@ -217,7 +217,6 @@ throws_ok {
 	is( $r->content_type, 'text/html', 'expected content type' );
 	like( $r->_mock_content, qr[<td>predicate</td><td><a href="http://foo/">http://foo/</a></td>]ms, 'expected content' );
 }
-
 
 ################################################################################
 
