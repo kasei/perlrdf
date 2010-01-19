@@ -41,14 +41,14 @@ sub handler : method {
 	
 	my $filename	= $r->filename;
 	if (-r $filename) {
-		return DECLINED;
+		return Apache2::Const::DECLINED;
 	}
 	
 	my $status;
 	my $handler	= $class->new( $r );
 	if (!$handler) {
 		warn "couldn't get a handler";
-		return DECLINED;
+		return Apache2::Const::DECLINED;
 	} else {
 		return $handler->run();
 	}
@@ -72,15 +72,21 @@ sub new {
 	my $dbpass		= $r->dir_config( 'LinkedData_Password' );
 	my $dsn			= $r->dir_config( 'LinkedData_DSN' );
 	
-	foreach (qw(LinkedData_Base LinkedData_Model LinkedData_User LinkedData_Password LinkedData_DSN)) {
-		my $v	= $r->dir_config($_);
+	my %data	= (LinkedData_Base => $base, LinkedData_Model => $dbmodel, LinkedData_User => $dbuser, LinkedData_Password => $dbpass,  LinkedData_DSN => $dsn);
+	foreach my $name (keys %data) {
+		my $v	= $data{ $name };
 		unless (defined($v) and length($v)) {
-			die "Missing configuration value for $_";
+			die "Missing configuration value for $name";
 		}
 	}
 	
-	my $store		= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
-	my $model		= RDF::Trine::Model->new( $store );
+	my $store;
+	if ($dsn eq 'Memory') {
+		$store	= RDF::Trine::Store::Memory->new();
+	} else {
+		$store	= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
+	}
+	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $self = bless( {
 		_r	=> $r,
@@ -145,13 +151,13 @@ sub run {
 					$r->content_type('text/plain');
 					$r->print("# Data for <$iri>\n");
 					$r->print($string);
-					return OK;
+					return Apache2::Const::OK;
 				} else {
 					my $s		= RDF::Trine::Serializer::RDFXML->new();
 					my $string	= $s->_serialize_bounded_description( $model, $node );
 					$r->content_type('application/rdf+xml');
 					$r->print($string);
-					return OK;
+					return Apache2::Const::OK;
 				}
 			} else {
 				my $title		= $self->_title( $node );
@@ -178,10 +184,10 @@ sub run {
 
 </body></html>
 END
-				return OK;
+				return Apache2::Const::OK;
 			}
 		} else {
-			return NOT_FOUND;
+			return Apache2::Const::NOT_FOUND;
 		}
 	} else {
 		$r->err_headers_out->add('Vary', join ", ", qw(Accept));
@@ -190,7 +196,7 @@ END
 		} else {
 			$r->err_headers_out->add(Location => "${base}${uri}/page");
 		}
-		return HTTP_SEE_OTHER;
+		return Apache2::Const::HTTP_SEE_OTHER;
 	}
 }
 
