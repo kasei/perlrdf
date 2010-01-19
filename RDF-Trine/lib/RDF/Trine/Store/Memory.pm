@@ -60,6 +60,12 @@ sub new {
 	return $self;
 }
 
+sub _new_with_string {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new();
+}
+
 =item C<< temporary_store >>
 
 Returns a temporary (empty) triple store.

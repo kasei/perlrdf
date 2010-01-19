@@ -25,6 +25,7 @@ use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
+use RDF::Trine::Store::SPARQL;
 
 ######################################################################
 
@@ -41,6 +42,35 @@ BEGIN {
 
 =cut
 
+=item C<< new_with_string ( $config ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied configuration
+string. The format of the string specifies the Store subclass to be
+instantiated as well as any required constructor arguments. These are separated
+by a semicolon. An example configuration string for the DBI store would be:
+
+ DBI;mymodel;DBI:mysql:database=rdf;user;password
+
+The format of the constructor arguments (everything after the first ';') is
+specific to the Store subclass.
+
+=cut
+
+sub new_with_string {
+	my $proto	= shift;
+	my $string	= shift;
+	if (defined($string)) {
+		my ($subclass, $config)	= split(/;/, $string, 2);
+		my $class	= join('::', 'RDF::Trine::Store', $subclass);
+		if ($class->can('_new_with_string')) {
+			return $class->_new_with_string( $config );
+		} else {
+			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_string";
+		}
+	} else {
+		throw RDF::Trine::Error::MethodInvocationError;
+	}
+}
 
 =item C<< temporary_store >>
 

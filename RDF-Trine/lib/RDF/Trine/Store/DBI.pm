@@ -104,6 +104,13 @@ sub new {
 	return $self;
 }
 
+sub _new_with_string {
+	my $class	= shift;
+	my $config	= shift;
+	my ($model, $dsn, $user, $pass)	= split(';', $config);
+	return $class->new( $model, $dsn, $user, $pass );
+}
+
 =item C<< temporary_store >>
 
 =cut

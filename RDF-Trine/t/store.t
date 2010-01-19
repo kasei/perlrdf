@@ -12,12 +12,17 @@ use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my @stores	= test_stores();
-plan tests => 2 + scalar(@stores) * 165;
+plan tests => 4 + scalar(@stores) * 165;
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my @names	= ('a' .. 'z');
 my @triples;
 my @quads;
+
+{
+	isa_ok( RDF::Trine::Store->new_with_string( 'Memory' ), 'RDF::Trine::Store::Memory' );
+	isa_ok( RDF::Trine::Store->new_with_string( 'SPARQL;http://example/' ), 'RDF::Trine::Store::SPARQL' );
+}
 
 my $nil	= RDF::Trine::Node::Nil->new();
 foreach my $i (@names[0..2]) {
