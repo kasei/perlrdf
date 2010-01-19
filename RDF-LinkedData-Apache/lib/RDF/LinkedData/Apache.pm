@@ -1,6 +1,6 @@
 =head1 NAME
 
-RDF::LinkedData - mod_perl handler class for serving RDF as linked data
+RDF::LinkedData::Apache - mod_perl handler class for serving RDF as linked data
 
 =head1 METHODS
 
@@ -8,7 +8,7 @@ RDF::LinkedData - mod_perl handler class for serving RDF as linked data
 
 =cut
 
-package RDF::LinkedData;
+package RDF::LinkedData::Apache;
 
 use strict;
 use warnings;
@@ -18,9 +18,12 @@ use Apache2::Request;
 use Scalar::Util qw(blessed);
 use HTTP::Negotiate qw(choose);
 use URI::Escape qw(uri_escape);
+use Apache2::RequestUtil ();
+use Apache2::RequestRec ();
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
 use RDF::Trine 0.113;
+use RDF::Trine qw(iri);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
 
@@ -36,12 +39,16 @@ sub handler : method {
 	my $class 	= shift;
 	my $r	  	= shift;
 	
-	my $status;
+	my $filename	= $r->filename;
+	if (-r $filename) {
+		return Apache2::Const::DECLINED;
+	}
 	
+	my $status;
 	my $handler	= $class->new( $r );
 	if (!$handler) {
 		warn "couldn't get a handler";
-		return DECLINED;
+		return Apache2::Const::DECLINED;
 	} else {
 		return $handler->run();
 	}
@@ -64,8 +71,22 @@ sub new {
 	my $dbuser		= $r->dir_config( 'LinkedData_User' );
 	my $dbpass		= $r->dir_config( 'LinkedData_Password' );
 	my $dsn			= $r->dir_config( 'LinkedData_DSN' );
-	my $store		= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
-	my $model		= RDF::Trine::Model->new( $store );
+	
+	my %data	= (LinkedData_Base => $base, LinkedData_Model => $dbmodel, LinkedData_User => $dbuser, LinkedData_Password => $dbpass,  LinkedData_DSN => $dsn);
+	foreach my $name (keys %data) {
+		my $v	= $data{ $name };
+		unless (defined($v) and length($v)) {
+			die "Missing configuration value for $name";
+		}
+	}
+	
+	my $store;
+	if ($dsn eq 'Memory') {
+		$store	= RDF::Trine::Store::Memory->new();
+	} else {
+		$store	= RDF::Trine::Store::DBI->new( $dbmodel, $dsn, $dbuser, $dbpass );
+	}
+	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $self = bless( {
 		_r	=> $r,
@@ -130,13 +151,13 @@ sub run {
 					$r->content_type('text/plain');
 					$r->print("# Data for <$iri>\n");
 					$r->print($string);
-					return OK;
+					return Apache2::Const::OK;
 				} else {
 					my $s		= RDF::Trine::Serializer::RDFXML->new();
 					my $string	= $s->_serialize_bounded_description( $model, $node );
 					$r->content_type('application/rdf+xml');
 					$r->print($string);
-					return OK;
+					return Apache2::Const::OK;
 				}
 			} else {
 				my $title		= $self->_title( $node );
@@ -163,19 +184,19 @@ sub run {
 
 </body></html>
 END
-				return OK;
+				return Apache2::Const::OK;
 			}
 		} else {
-			return NOT_FOUND;
+			return Apache2::Const::NOT_FOUND;
 		}
 	} else {
-		$r->err_header_out('Vary', join ", ", qw(Accept));
+		$r->err_headers_out->add('Vary', join ", ", qw(Accept));
 		if ($choice =~ /^rdf/) {
-			$r->err_header_out(Location => "${base}${uri}/data");
+			$r->err_headers_out->add(Location => "${base}${uri}/data");
 		} else {
-			$r->err_header_out(Location => "${base}${uri}/page");
+			$r->err_headers_out->add(Location => "${base}${uri}/page");
 		}
-		return HTTP_SEE_OTHER;
+		return Apache2::Const::HTTP_SEE_OTHER;
 	}
 }
 
@@ -205,14 +226,32 @@ sub _description {
 	my $node	= shift;
 	my $model	= $self->model;
 	my $iter	= $model->get_statements( $node );
-	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+	my @label	= (
+					iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
+					iri( 'http://purl.org/dc/elements/1.1/description' ),
+				);
 	my @desc;
 	while (my $st = $iter->next) {
 		my $p	= $st->predicate;
-		my @pn	= $model->objects_for_predicate_list( $p, $label );
-		next unless (@pn);
-		my $pn	= shift(@pn);
-		my $ps	= $self->_html_node_value( $pn );
+		my @pn	= $model->objects_for_predicate_list( $p, @label );
+		
+		my $ps;
+		if (@pn) {
+			my $pn	= shift(@pn);
+			$ps	= $self->_html_node_value( $pn );
+		} elsif ($p->is_resource and $p->uri_value =~ m<^http://www.w3.org/1999/02/22-rdf-syntax-ns#_(\d+)$>) {
+			$ps	= '#' . $1;
+		} else {
+			# try to turn the predicate into a qname and use the local part as the printable name
+			my $name;
+			try {
+				(my $ns, $name)	= $p->qname;
+			};
+			next unless ($name);
+			
+			my $title	= _escape( $name );
+			$ps	= $title;
+		}
 		
 		my $obj	= $st->object;
 		my $os	= $self->_html_node_value( $obj, $p );
