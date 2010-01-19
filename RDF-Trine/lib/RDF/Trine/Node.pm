@@ -265,7 +265,7 @@ sub _unicode_escape {
 	return $rslt;
 }
 
-sub ntriples_escape {
+sub ntriples_escape ($) {
 	my $class	= __PACKAGE__;
 	return $class->_unicode_escape( @_ );
 }
