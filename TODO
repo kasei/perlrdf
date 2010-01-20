@@ -71,7 +71,5 @@ serializer classes, etc.
 	* SPARQL 1.1 Query
 	* API updates to support full SPARQL 1.1 Service Description (including dataset description)
 ## RDF::Trine
-	* Add full coverage tests of the storage classes to t/store.t.
-	* Move nil-valued signleton ::Node object to its own ::Node::Nil class.
 	* Merge ::Statement and ::Statement::Quad. Triples will have the nil node in the graph position.
 	* Bring sanity to quad handling in the Store apis. Consider having a union default graph.
