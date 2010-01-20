@@ -39,6 +39,20 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.201 (2010-01-XX)
+
+     * Added benchmark/lubm.pl.
+     * Added examples/queries/sparql-ask-people.rq.
+     * Added RDFa tests.
+     * Added Data::UUID prerequisite to META.yml and Makefile.PL.
+     * Updated ::Model::RDFTrine::add_uri and ::add_string to use new RDF::Trine::Parser methods.
+     * Updated as_sparql and sse code to work with more recent RDF::Trine versions.
+     * Removed as_sparql caching in RDF::Query::Algebra::Triple.
+     * Renamed RDF::Query test files to remove old-style numbering.
+     * Updated parser tests to track new RDF::Trine::Node::Literal internal structure.
+     * Updated prereq version of RDF::Trine to 0.114.
+     * Fixed NAME POD section in RDF::Query::ServiceDescription (RT52264 from KjetilK).
+
   Version 2.200 (2009-08-06)
 
      * Federation / Service Descriptions:

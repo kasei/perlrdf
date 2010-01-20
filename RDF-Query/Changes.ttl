@@ -9,6 +9,29 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.201.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.200.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.201" ;
+                        doap:created      "2010-01-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added benchmark/lubm.pl." ;
+                        asc:addition      "Added examples/queries/sparql-ask-people.rq." ;
+                        asc:addition      "Added RDFa tests." ;
+                        asc:addition      "Added Data::UUID prerequisite to META.yml and Makefile.PL." ;
+                        asc:update        "Updated ::Model::RDFTrine::add_uri and ::add_string to use new RDF::Trine::Parser methods." ;
+                        asc:update        "Updated as_sparql and sse code to work with more recent RDF::Trine versions." ;
+                        asc:update        "Removed as_sparql caching in RDF::Query::Algebra::Triple." ;
+                        asc:update        "Renamed RDF::Query test files to remove old-style numbering." ;
+                        asc:update        "Updated parser tests to track new RDF::Trine::Node::Literal internal structure." ;
+                        asc:update        "Updated prereq version of RDF::Trine to 0.114." ;
+                        asc:update        "Fixed NAME POD section in RDF::Query::ServiceDescription (RT52264 from KjetilK)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.200.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.100.tar.gz> ;
