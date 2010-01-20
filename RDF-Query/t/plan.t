@@ -130,6 +130,26 @@ END
 	}
 	
 	{
+		my $parser	= RDF::Query::Parser::SPARQL2->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name NOT EXISTS { ?p foaf:firstName ?fn } }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );
+		my ($plan)	= RDF::Query::Plan->generate_plans( $e, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Exists', 'ggp algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(not-exists (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?fn))', 'sse: not exists' ) or die;
+	}
+	
+	{
+		my $parser	= RDF::Query::Parser::SPARQL2->new();
+		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name exists { ?p foaf:firstName ?fn } }' );
+		my $algebra	= $parsed->{triples}[0];
+		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );
+		my ($plan)	= RDF::Query::Plan->generate_plans( $e, $context );
+		isa_ok( $plan, 'RDF::Query::Plan::Exists', 'ggp algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(exists (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?fn))', 'sse: exists' ) or die;
+	}
+	
+	{
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name } ORDER BY ?name' );
 		my $algebra	= $parsed->{triples}[0]->pattern;
