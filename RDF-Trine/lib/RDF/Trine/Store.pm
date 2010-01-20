@@ -101,6 +101,8 @@ sub get_pattern {
 	
 	my %iter_args;
 	my @triples	= $bgp->triples;
+	
+	my ($iter);
 	if (1 == scalar(@triples)) {
 		my $t		= shift(@triples);
 		my @nodes	= $t->nodes;
@@ -111,15 +113,15 @@ sub get_pattern {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
 		}
-		my $iter	= $self->get_statements( @nodes, $context, @args );
+		my $_iter	= $self->get_statements( @nodes );
 		my @vars	= values %vars;
 		my $sub		= sub {
-			my $row	= $iter->next;
+			my $row	= $_iter->next;
 			return undef unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return \%data;
 		};
-		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
 		my $t		= shift(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
@@ -149,36 +151,39 @@ sub get_pattern {
 				push(@results, $jrow);
 			}
 		}
-		
-		if (my $o = $args{ 'orderby' }) {
-			unless (reftype($o) eq 'ARRAY') {
-				throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument to get_pattern must be an ARRAY reference";
-			}
-			
-			my @order;
-			my %order;
-			my @o	= @$o;
-			my @sorted_by;
-			my %vars	= map { $_ => 1 } $bgp->referenced_variables;
-			if (scalar(@o) % 2 != 0) {
-				throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument ARRAY to get_pattern must contain an even number of elements";
-			}
-			while (@o) {
-				my ($k,$dir)	= splice(@o, 0, 2, ());
-				next unless ($vars{ $k });
-				unless ($dir =~ m/^ASC|DESC$/i) {
-					throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $k must be either 'ASC' or 'DESC' in get_pattern call";
-				}
-				my $asc	= ($dir eq 'ASC') ? 1 : 0;
-				push(@order, $k);
-				$order{ $k }	= $asc;
-				push(@sorted_by, $k, $dir);
-			}
-			
-			@results	= _sort_bindings( \@results, \@order, \%order );
-			$iter_args{ sorted_by }	= \@sorted_by;
+		$iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+	}
+	
+	if (my $o = $args{ 'orderby' }) {
+		unless (reftype($o) eq 'ARRAY') {
+			throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument to get_pattern must be an ARRAY reference";
 		}
-		my $iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ], %iter_args );
+		
+		my @order;
+		my %order;
+		my @o	= @$o;
+		my @sorted_by;
+		my %vars	= map { $_ => 1 } $bgp->referenced_variables;
+		if (scalar(@o) % 2 != 0) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument ARRAY to get_pattern must contain an even number of elements";
+		}
+		while (@o) {
+			my ($k,$dir)	= splice(@o, 0, 2, ());
+			next unless ($vars{ $k });
+			unless ($dir =~ m/^ASC|DESC$/i) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $k must be either 'ASC' or 'DESC' in get_pattern call";
+			}
+			my $asc	= ($dir eq 'ASC') ? 1 : 0;
+			push(@order, $k);
+			$order{ $k }	= $asc;
+			push(@sorted_by, $k, $dir);
+		}
+		
+		my @results	= $iter->get_all;
+		@results	= _sort_bindings( \@results, \@order, \%order );
+		$iter_args{ sorted_by }	= \@sorted_by;
+		return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ], %iter_args );
+	} else {
 		return $iter;
 	}
 }
