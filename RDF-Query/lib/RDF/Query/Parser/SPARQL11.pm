@@ -1,18 +1,18 @@
-# RDF::Query::Parser::SPARQL2
+# RDF::Query::Parser::SPARQL11
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Parser::SPARQL2 - SPARQL Parser.
+RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL2 version 2.200, released 6 August 2009.
+This document describes RDF::Query::Parser::SPARQL11 version 2.200, released 6 August 2009.
 
 =head1 SYNOPSIS
 
- use RDF::Query::Parser::SPARQL2;
- my $parser	= RDF::Query::Parse::SPARQL2->new();
+ use RDF::Query::Parser::SPARQL11;
+ my $parser	= RDF::Query::Parse::SPARQL11->new();
  my $iterator = $parser->parse( $query, $base_uri );
 
 =head1 DESCRIPTION
@@ -25,7 +25,7 @@ This document describes RDF::Query::Parser::SPARQL2 version 2.200, released 6 Au
 
 =cut
 
-package RDF::Query::Parser::SPARQL2;
+package RDF::Query::Parser::SPARQL11;
 
 use strict;
 use warnings;

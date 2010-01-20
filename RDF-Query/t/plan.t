@@ -130,7 +130,7 @@ END
 	}
 	
 	{
-		my $parser	= RDF::Query::Parser::SPARQL2->new();
+		my $parser	= RDF::Query::Parser::SPARQL11->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name NOT EXISTS { ?p foaf:firstName ?fn } }' );
 		my $algebra	= $parsed->{triples}[0];
 		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );
@@ -140,7 +140,7 @@ END
 	}
 	
 	{
-		my $parser	= RDF::Query::Parser::SPARQL2->new();
+		my $parser	= RDF::Query::Parser::SPARQL11->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name exists { ?p foaf:firstName ?fn } }' );
 		my $algebra	= $parsed->{triples}[0];
 		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );

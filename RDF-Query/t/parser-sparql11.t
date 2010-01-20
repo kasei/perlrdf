@@ -10,7 +10,7 @@ use Data::Dumper;
 use Scalar::Util qw(reftype);
 use RDF::Query::Node;
 
-use_ok( 'RDF::Query::Parser::SPARQL2' );
+use_ok( 'RDF::Query::Parser::SPARQL11' );
 
 ################################################################################
 Log::Log4perl::init( \q[
@@ -22,8 +22,8 @@ Log::Log4perl::init( \q[
 ] );
 ################################################################################
 
-my $parser	= RDF::Query::Parser::SPARQL2->new();
-isa_ok( $parser, 'RDF::Query::Parser::SPARQL2' );
+my $parser	= RDF::Query::Parser::SPARQL11->new();
+isa_ok( $parser, 'RDF::Query::Parser::SPARQL11' );
 
 
 my (@data)	= YAML::Load(do { local($/) = undef; <DATA> });

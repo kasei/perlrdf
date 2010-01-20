@@ -118,7 +118,7 @@ use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
-use RDF::Query::Parser::SPARQL2;
+use RDF::Query::Parser::SPARQL11;
 use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
@@ -179,7 +179,7 @@ sub new {
 					sparql	=> 'RDF::Query::Parser::SPARQL',
 					tsparql	=> 'RDF::Query::Parser::SPARQLP',
 					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
-					sparql2	=> 'RDF::Query::Parser::SPARQL2',
+					sparql2	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',
