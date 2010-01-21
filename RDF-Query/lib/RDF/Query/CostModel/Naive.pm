@@ -71,6 +71,17 @@ sub _cost_service {
 	return $card + $cost;
 }
 
+sub _cost_exists {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
+	return $self->cost( $plan->exists_pattern, $context );
+}
+
 sub _cost_thresholdunion {
 	my $self	= shift;
 	my $plan	= shift;
@@ -305,6 +316,13 @@ sub _cardinality_quad {
 	
 	# round the cardinality to an integer
 	return int($card + .5 * ($card <=> 0));
+}
+
+sub _cardinality_exists {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	return 1;
 }
 
 sub _cardinality_not {

@@ -75,7 +75,7 @@ sub pattern {
 	return $self->[0];
 }
 
-=item C<< not_pattern >>
+=item C<< exists_pattern >>
 
 Returns the not-pattern (RHS).
 
@@ -155,6 +155,18 @@ Returns a list of the variable names used in this algebra expression.
 sub referenced_variables {
 	my $self	= shift;
 	return RDF::Query::_uniq($self->pattern->referenced_variables, $self->exists_pattern->referenced_variables);
+}
+
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return;
 }
 
 =item C<< definite_variables >>

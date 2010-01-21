@@ -76,6 +76,18 @@ use constant SSE_TAGS	=> {
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
 };
 
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return $self->referenced_variables;
+}
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.

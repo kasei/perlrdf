@@ -175,11 +175,11 @@ sub new {
 	no warnings 'uninitialized';
 	
 	my %names	= (
-					rdql	=> 'RDF::Query::Parser::RDQL',
-					sparql	=> 'RDF::Query::Parser::SPARQL',
-					tsparql	=> 'RDF::Query::Parser::SPARQLP',
-					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
-					sparql2	=> 'RDF::Query::Parser::SPARQL11',
+					rdql		=> 'RDF::Query::Parser::RDQL',
+					sparql		=> 'RDF::Query::Parser::SPARQL',
+					tsparql		=> 'RDF::Query::Parser::SPARQLP',
+					sparqlp		=> 'RDF::Query::Parser::SPARQLP',
+					sparql11	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',

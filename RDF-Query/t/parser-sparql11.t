@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 4;
+use Test::More tests => 7;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -97,9 +97,7 @@ __END__
                   - URI
                   - type
           - 0
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
-          - s
+      - &1 []
   variables: *1
 ---
 - NOT EXISTS graph pattern
@@ -128,9 +126,7 @@ __END__
                   - URI
                   - type
           - 1
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
-          - s
+      - &1 []
   variables: *1
 ---
 - EXISTS filter
@@ -210,4 +206,66 @@ __END__
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - s
+  variables: *1
+---
+- SELECT expression
+- |
+  PREFIX  dc:  <http://purl.org/dc/elements/1.1/>
+  PREFIX  ns:  <http://example.org/ns#>
+  SELECT  ?title (?p*(1-?discount) AS ?price)
+     { ?x ns:price ?p .
+       ?x dc:title ?title . 
+       ?x ns:discount ?discount 
+     }
+- method: SELECT
+  namespaces:
+    dc: http://purl.org/dc/elements/1.1/
+    ns: http://example.org/ns#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#price
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://purl.org/dc/elements/1.1/title
+            - !!perl/array:RDF::Query::Node::Variable
+              - title
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://example.org/ns#discount
+            - !!perl/array:RDF::Query::Node::Variable
+              - discount
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - title
+        - !!perl/array:RDF::Query::Expression::Alias
+          - !!perl/array:RDF::Query::Node::Variable
+            - price
+          - !!perl/array:RDF::Query::Expression::Binary
+            - '*'
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Expression::Binary
+              - -
+              - !!perl/array:RDF::Query::Node::Literal
+                - 1
+                - ~
+                - http://www.w3.org/2001/XMLSchema#integer
+              - !!perl/array:RDF::Query::Node::Variable
+                - discount
   variables: *1

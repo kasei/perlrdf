@@ -187,6 +187,18 @@ sub referenced_variables {
 	return @list;
 }
 
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return $self->pattern->binding_variables;
+}
+
 =item C<< definite_variables >>
 
 Returns a list of the variable names that will be bound after evaluating this algebra expression.

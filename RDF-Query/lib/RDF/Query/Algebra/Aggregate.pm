@@ -44,7 +44,7 @@ Returns a new Aggregate structure. Groups by the named bindings in C<< @groupby 
 and returns new bindings for the named C<< $alias >> for the operation C<< $op >>
 on column C<< $col >>.
 
-C<< $op >> may be one of: COUNT, MIN, MAX.
+C<< $op >> may be one of: COUNT, MIN, MAX, SUM.
 
 =cut
 
@@ -174,6 +174,20 @@ sub referenced_variables {
 	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	my @aliases	= map { $_->[0] } $self->ops;
+	throw Error; # XXX unimplemented
+	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
+}
+
 =item C<< definite_variables >>
 
 Returns a list of the variable names that will be bound after evaluating this algebra expression.
@@ -272,6 +286,18 @@ sub execute {
 				my $values	= join('<<<', @{ $row }{ @cols });
 				if (exists($row->{ $col->name })) {
 					$aggregates{ $alias }{ $group }++ unless ($seen{ $values }++);
+				}
+			});
+		} elsif ($op eq 'SUM') {
+			push(@aggregators, sub {
+				my $row		= shift;
+				my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
+				my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+				if (exists($aggregates{ $alias }{ $group })) {
+					$aggregates{ $alias }{ $group }	+= $row->{ $col->name };
+				} else {
+					$aggregates{ $alias }{ $group }	= $row->{ $col->name };
 				}
 			});
 		} elsif ($op eq 'MAX') {

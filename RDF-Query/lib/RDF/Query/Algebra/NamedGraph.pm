@@ -154,6 +154,22 @@ sub referenced_variables {
 	return @list;
 }
 
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	my @list	= RDF::Query::_uniq(
+		$self->pattern->binding_variables,
+		(map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph)),
+	);
+	return @list;
+}
+
 =item C<< definite_variables >>
 
 Returns a list of the variable names that will be bound after evaluating this algebra expression.
