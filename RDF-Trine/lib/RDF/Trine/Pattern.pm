@@ -36,9 +36,7 @@ BEGIN {
 
 =over 4
 
-=cut
-
-=item C< <new ( @triples ) >>
+=item C<< new ( @triples ) >>
 
 Returns a new BasicGraphPattern structure.
 
