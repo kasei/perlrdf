@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDF/JSON version 0.114_01
+This document describes RDF::Trine::Serializer::RDF/JSON version 0.114_02
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.114_01';
+	$VERSION	= '0.114_02';
 }
 
 ######################################################################
