@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.114_02
+This document describes RDF::Trine::Store::Memory version 0.114_03
 
 =head1 SYNOPSIS
 

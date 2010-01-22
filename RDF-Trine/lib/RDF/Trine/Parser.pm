@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.114_02
+This document describes RDF::Trine::Parser version 0.114_03
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ our ($VERSION);
 our %parser_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.114_02';
+	$VERSION	= '0.114_03';
 }
 
 use LWP::UserAgent;
