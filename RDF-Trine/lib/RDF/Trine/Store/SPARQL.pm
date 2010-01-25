@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.114_03
+This document describes RDF::Trine::Store::SPARQL version 0.114_04
 
 =head1 SYNOPSIS
 

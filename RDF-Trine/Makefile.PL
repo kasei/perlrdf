@@ -24,6 +24,7 @@ WriteMakefile(
 					'JSON'						=> 2,
 					'LWP::UserAgent'			=> 0,
 					'List::Util'				=> 0,
+					'List::MoreUtils'			=> 0,
 					'Log::Log4perl'				=> 0,
 					'Math::BigInt'				=> 0,
 					'Math::Combinatorics'		=> 0.09,
