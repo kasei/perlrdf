@@ -12,6 +12,9 @@ This document describes RDF::Trine::Parser version 0.114_01
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
+ 
+ RDF::Trine::Parser->parse_url_into_model( $url, $model );
+ 
  my $parser	= RDF::Trine::Parser->new( 'turtle' );
  $parser->parse_into_model( $base_uri, $rdf, $model );
 
