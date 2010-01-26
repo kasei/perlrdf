@@ -1,0 +1,12 @@
+inc/Module/Install.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Metadata.pm
+lib/RDF/LinkedData/Apache.pm
+MANIFEST			This list of files
+META.yml
+README
+t/00-load.t
+t/01-simple.t
+t/pod-coverage.t
+t/pod.t
