@@ -1,0 +1,6 @@
+.gitignore
+.prove
+inc/.author
+MANIFEST.SKIP
+Makefile
+.DS_Store
