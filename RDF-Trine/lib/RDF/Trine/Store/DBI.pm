@@ -798,7 +798,7 @@ sub _sql_from_context {
 	my $sql	= join("\n", grep {length} @sql);
 	
 	if ($args{ 'count-distinct' }) {
-		$sql	= "SELECT COUNT(*) FROM ($sql)";
+		$sql	= "SELECT COUNT(*) FROM ($sql) AS counttable";
 	}
 	
 # 	warn $sql;
