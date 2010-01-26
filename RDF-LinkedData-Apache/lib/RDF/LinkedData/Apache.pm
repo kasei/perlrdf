@@ -1,6 +1,83 @@
 =head1 NAME
 
-RDF::LinkedData::Apache - mod_perl handler class for serving RDF as linked data
+RDF::LinkedData::Apache - mod_perl2 handler class for serving RDF as linked data
+
+=head1 VERSION
+
+This document describes RDF::LinkedData::Apache version 0.001
+
+=head1 SYNOPSIS
+
+  <Location /rdf>
+    SetHandler perl-script
+    PerlResponseHandler RDF::LinkedData
+    PerlSetVar LinkedData_Base http://host.name
+    PerlSetVar LinkedData_Store SPARQL;http://localhost/sparql
+  </Location>
+
+=head1 DESCRIPTION
+
+The RDF::LinkedData::Apache module is a mod_perl2 handler for serving RDF
+content as linked data. To use this module, it should be set as a
+PerlResponseHandler and PerlSetVar should be used to set the LinkedData_Base
+and LinkedData_Store variables. The base variable represents the host name
+RDF data will be served from (including the 'http://' prefix) while the store
+variable must be a valid RDF::Trine::Store configuration string.
+
+Using the configuration shown in the L</SYNOPSIS> section above, the server will
+serve requests for resources with the prefix L<http://host.name/rdf> based on
+sub-requests to the locally-accessible SPARQL endpoint available at
+L<http://localhost/sparql>. The server will respond to the following types of
+queries:
+
+=over 4
+
+* L<http://host.name/rdf/example>
+
+Will return an HTTP 303 redirect based on the value of the request's Accept
+header. If the Accept header contains a recognized RDF media type, the redirect
+will be to L<http://host.name/rdf/example/data>, otherwise to
+L<http://host.name/rdf/example/page>
+
+* L<http://host.name/rdf/example/data>
+
+Will return a bounded description of the L<http://host.name/rdf/example>
+resource in an RDF serialization based on the Accept header. If the Accept
+header does not contain a recognized media type, RDF/XML will be returned.
+
+* L<http://host.name/rdf/example/page>
+
+Will return an HTML description of the L<http://host.name/rdf/example> resource
+including RDFa markup.
+
+=back
+
+If the RDF resource for which data is requested is not the subject of any RDF
+triples in the underlying triplestore, the /page and /data redirects will take
+place, but the subsequent request will return HTTP 404 (Not Found).
+
+The HTML description of resources will be enhanced by having metadata about the
+predicate of RDF triples loaded into the same triplestore. Currently, the
+relevant metadata includes rdfs:label and dc:description statements about
+predicates. For example, if the triplestore contains the statement
+
+ <http://host.name/rdf/example> <http://example/date> "2010" .
+
+then also including the triple
+
+ <http://example/date> <http://www.w3.org/2000/01/rdf-schema#label> "Creation Date" .
+
+Would allow the HTML description of L<http://host.name/rdf/example> to include
+a description including:
+
+ Creation Date: 2010
+
+instead of the less specific:
+
+ date: 2010
+
+which is simply based on attempting to extract a useful suffix from the
+predicate URI.
 
 =head1 METHODS
 
@@ -22,14 +99,14 @@ use Apache2::RequestUtil ();
 use Apache2::RequestRec ();
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
-use RDF::Trine 0.113;
+use RDF::Trine 0.114;
 use RDF::Trine qw(iri);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
 
 use Error qw(:try);
 
-=item C<< handler >> ( $apache_req )
+=item C<< handler ( $apache_req ) >>
 
 Main mod_perl handler method.
 
@@ -54,7 +131,7 @@ sub handler : method {
 	}
 }
 
-=item C<< new >> ( $apache_req )
+=item C<< new ( $apache_req ) >>
 
 Creates a new handler object, given an Apache Request object.
 
