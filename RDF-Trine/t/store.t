@@ -5,14 +5,14 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(variable store);
+use RDF::Trine qw(variable store literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my @stores	= test_stores();
-plan tests => 5 + scalar(@stores) * 165;
+plan tests => 5 + scalar(@stores) * 168;
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my @names	= ('a' .. 'z');
@@ -78,17 +78,6 @@ foreach my $store (@stores) {
 	is( $store->_statement_id($ex->w, $ex->x, $ex->z, $ex->z), -1, '_statement_id' );
 }
 
-
-
-
-
-
-
-
-
-
-
-
 sub add_quads {
 	my $store	= shift;
 	foreach my $q (@quads) {
@@ -129,10 +118,20 @@ sub add_statement_tests_simple {
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
-	is( $store->size, 1 );
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	$store->add_statement( $quad );
-	is( $store->size, 1 );
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
+	
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, literal('graph'));
+	$store->add_statement( $quad2 );
+	is( $store->size, 1, 'store has 1 statement after (quad) add' );
+	
+	my $count	= $store->count_statements( undef, undef, undef, literal('graph') );
+	is( $count, 1, 'expected count of literal-context statements' );
+	
+	$store->remove_statement( $quad2 );
 	is( $store->size, 0 );
 }
 
