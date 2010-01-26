@@ -23,7 +23,9 @@ components:
 
 =item * RDF::Trine::Model - RDF model providing access to a triple store.
 
-=item * RDF::Trine::Parser - Native RDF parsers (currently RDF/XML and Turtle only).
+=item * RDF::Trine::Parser - RDF parsers for various serialization formats including RDF/XML, Turtle, RDFa, and RDF/JSON.
+
+=item * RDF::Trine::Store::Memory - An in-memory, non-persistant triple store.
 
 =item * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the Redland schema.
 
