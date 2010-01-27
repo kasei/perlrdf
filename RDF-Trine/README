@@ -59,7 +59,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.114 (2010-01-XX)
+  Version 0.114 (2010-01-27)
 
      * Added new Turtle serializer.
      * Updated RDF/XML serializer grouping of same-subject statements for bounded descriptions.
