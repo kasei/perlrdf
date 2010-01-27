@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.114_01
+This document describes RDF::Trine::Store::DBI version 0.114
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.114_01";
+our $VERSION	= "0.114";
 
 
 
@@ -798,7 +798,7 @@ sub _sql_from_context {
 	my $sql	= join("\n", grep {length} @sql);
 	
 	if ($args{ 'count-distinct' }) {
-		$sql	= "SELECT COUNT(*) FROM ($sql)";
+		$sql	= "SELECT COUNT(*) FROM ($sql) AS counttable";
 	}
 	
 # 	warn $sql;

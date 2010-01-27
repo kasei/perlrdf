@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.114" ;
-                        doap:created      "2010-01-XX" ;
+                        doap:created      "2010-01-27" ;
                         ];
         asc:changes     [
                         asc:addition    "Added new Turtle serializer." ;
