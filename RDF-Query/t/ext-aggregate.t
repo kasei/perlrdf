@@ -329,45 +329,39 @@ END
 	}
 }
 
-{
-	my $model	= RDF::Trine::Model->temporary_model;
-	my $data	= <<'END';
-@prefix : <http://books.example/> .
-
-:org1 :affiliates :auth1, :auth2 .
-:auth1 :writesBook :book1, :book2 .
-:book1 :price 9 .
-:book2 :price 5 .
-:auth2 :writesBook :book3 .
-:book3 :price 7 .
-:org2 :affiliates :auth3 .
-:auth3 :writesBook :book4 .
-:book4 :price 7 .
-END
-	my $parser	= RDF::Trine::Parser->new('turtle');
-	$parser->parse_into_model( 'http://base/', $data, $model );
-	my $query	= RDF::Query->new( <<'END', { lang => 'sparql11' } );
-PREFIX : <http://books.example/>
-SELECT (SUM(?lprice) AS ?totalPrice)
-WHERE {
-  ?org :affiliates ?auth .
-  ?auth :writesBook ?book .
-  ?book :price ?lprice .
-}
-GROUP BY ?org
-HAVING (SUM(?lprice) > 10)
-END
-	warn RDF::Query->error unless ($query);
-	my $iter	= $query->execute( $model );
-	while (my $r = $iter->next) {
-		use Data::Dumper;
-		warn Dumper($r);
-	}
-
-
-
-
-
-
-
-}
+# {
+# 	# HAVING tests
+# 	my $model	= RDF::Trine::Model->temporary_model;
+# 	my $data	= <<'END';
+# @prefix : <http://books.example/> .
+# 
+# :org1 :affiliates :auth1, :auth2 .
+# :auth1 :writesBook :book1, :book2 .
+# :book1 :price 9 .
+# :book2 :price 5 .
+# :auth2 :writesBook :book3 .
+# :book3 :price 7 .
+# :org2 :affiliates :auth3 .
+# :auth3 :writesBook :book4 .
+# :book4 :price 7 .
+# END
+# 	my $parser	= RDF::Trine::Parser->new('turtle');
+# 	$parser->parse_into_model( 'http://base/', $data, $model );
+# 	my $query	= RDF::Query->new( <<'END', { lang => 'sparql11' } );
+# PREFIX : <http://books.example/>
+# SELECT (SUM(?lprice) AS ?totalPrice)
+# WHERE {
+#   ?org :affiliates ?auth .
+#   ?auth :writesBook ?book .
+#   ?book :price ?lprice .
+# }
+# GROUP BY ?org
+# HAVING (SUM(?lprice) > 10)
+# END
+# 	warn RDF::Query->error unless ($query);
+# 	my $iter	= $query->execute( $model );
+# 	while (my $r = $iter->next) {
+# 		use Data::Dumper;
+# 		warn Dumper($r);
+# 	}
+# }
