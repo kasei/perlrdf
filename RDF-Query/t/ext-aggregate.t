@@ -219,7 +219,6 @@ END
 		
 		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary P' => 1 );
 		while (my $row = $stream->next) {
-			use Data::Dumper;
 			my $name	= $row->{name}->literal_value;
 			my $expect	= $expect{ $name };
 			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for variable GROUP' );
