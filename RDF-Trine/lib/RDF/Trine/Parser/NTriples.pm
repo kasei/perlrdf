@@ -121,7 +121,6 @@ sub parse_file {
 LINE:
 		($line, my @extra)	= split(/\r\n|\r|\n/, $line, 2);
 		$lineno++;
-# 		warn "line $lineno: " . Dumper($line);
 		
 		next unless (defined($line) and length($line));
 		next unless ($line =~ /\S/);
@@ -133,29 +132,25 @@ LINE:
 		my @nodes	= ();
 		try {
 			while (my $n = $self->_eat_node( $lineno, $line )) {
-# 				warn "got node " . $n->as_string . " with remaining content: " . Dumper($line);
 				push(@nodes, $n);
 				$line	=~ s/^\s*//;
 			}
 		};
-#		} catch RDF::Trine::Error::ParserError with {};
 		$line	=~ s/^\s//g;
 		unless ($line eq '.') {
-			warn Dumper(\@nodes, $line);
+# 			warn Dumper(\@nodes, $line);
 			throw RDF::Trine::Error::ParserError -text => "Missing expected '.' at line $lineno";
 		}
 		
-# 		warn 'done. ' . Dumper(\@nodes);
 		my $st;
 		if (scalar(@nodes) == 3) {
 			$st	= RDF::Trine::Statement->new( @nodes );
 # 		} elsif (scalar(@nodes) == 4) {
 # 			$st	= RDF::Trine::Statement::Quad->new( @nodes );
 		} else {
-			warn Dumper(\@nodes);
+# 			warn Dumper(\@nodes);
 			throw RDF::Trine::Error::ParserError -text => "Not valid N-Triples data at line $lineno";
 		}
-# 		warn $st->as_string;
 		$handler->( $st );
 		if (@extra) {
 			$line	= shift(@extra);

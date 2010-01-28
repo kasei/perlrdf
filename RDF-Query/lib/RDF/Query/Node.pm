@@ -85,7 +85,7 @@ sub from_trine {
 	} elsif ($n->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Query::Node::Blank->new( $n->blank_identifier );
 	} else {
-		die Dumper($n);
+		die "from_trine called with unrecognized node type:" . Dumper($n);
 	}
 }
 

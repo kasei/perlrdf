@@ -134,12 +134,12 @@ sub parse {
 	my $nodes	= $self->{saxhandler}{nodes};
 	if ($nodes and scalar(@$nodes)) {
 		warn Dumper($nodes);
-		die "node stack isn't empty after parse";
+		throw RDF::Trine::Error::ParserError -text => "node stack isn't empty after parse";
 	}
 	my $expect	= $self->{saxhandler}{expect};
 	if ($expect and scalar(@$expect) > 2) {
 		warn Dumper($expect);
-		die "expect stack isn't empty after parse";
+		throw RDF::Trine::Error::ParserError -text => "expect stack isn't empty after parse";
 	}
 }
 

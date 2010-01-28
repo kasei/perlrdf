@@ -679,8 +679,7 @@ $RDF::Query::functions{"sparql:exists"}	= sub {
 	my $bridge	= shift;
 	
 	my $ggp		= shift;
-	# XXX
-	warn Dumper($ggp);
+	warn Dumper($ggp); # XXX
 	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	
 # 	my $list	= shift;
