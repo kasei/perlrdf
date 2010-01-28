@@ -10,6 +10,23 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.115.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.114.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.115" ;
+                        doap:created      "2010-01-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added N-Triples and N-Quads parsers." ;
+                        asc:addition    "Added RDF::Trine::Store::SPARQL::get_pattern implementation." ;
+                        asc:update      "Changed RDF::Trine::Model::objects_for_predicate_list to return only a single node in scalar context." ;
+                        asc:update      "Added table alias for COUNT(*) queries in RDF::Trine::Store::DBI (fix for mysql)." ;
+                        asc:update      "Added example of using parse_url_into_model to RDF::Trine::Parser SYNOPSIS." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.114.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.113.tar.gz> ;

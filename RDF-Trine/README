@@ -59,6 +59,14 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.115 (2010-01-XX)
+
+     * Added N-Triples and N-Quads parsers.
+     * Added RDF::Trine::Store::SPARQL::get_pattern implementation.
+     * Changed RDF::Trine::Model::objects_for_predicate_list to return only a single node in scalar context.
+     * Added table alias for COUNT(*) queries in RDF::Trine::Store::DBI (fix for mysql).
+     * Added example of using parse_url_into_model to RDF::Trine::Parser SYNOPSIS.
+
   Version 0.114 (2010-01-27)
 
      * Added new Turtle serializer.

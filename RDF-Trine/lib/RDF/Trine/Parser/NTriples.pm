@@ -110,6 +110,10 @@ sub parse {
 	return $self->parse_file( $base, $fh, $handler );
 }
 
+=item C<< parse_file ( $base, $fh, $handler ) >>
+
+=cut
+
 sub parse_file {
 	my $self	= shift;
 	my $base	= shift;
