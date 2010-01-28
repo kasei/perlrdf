@@ -99,7 +99,7 @@ use Apache2::RequestUtil ();
 use Apache2::RequestRec ();
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
-use RDF::Trine 0.114;
+use RDF::Trine 0.115;
 use RDF::Trine qw(iri variable statement);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
