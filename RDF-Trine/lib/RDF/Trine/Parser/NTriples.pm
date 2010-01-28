@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::NTriples - NTriples Parser.
+RDF::Trine::Parser::NTriples - N-Triples Parser.
 
 =head1 VERSION
 
@@ -12,7 +12,7 @@ This document describes RDF::Trine::Parser::NTriples version 0.114
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
- my $parser	= RDF::Trine::Parser->new( 'rdfxml' );
+ my $parser	= RDF::Trine::Parser->new( 'ntriples' );
  $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION
@@ -66,7 +66,7 @@ sub new {
 	return $self;
 }
 
-=item C<< parse_into_model ( $base_uri, $data, $model [, $context] ) >>
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
 parsed, will call C<< $model->add_statement( $statement ) >>.
@@ -142,21 +142,29 @@ LINE:
 			throw RDF::Trine::Error::ParserError -text => "Missing expected '.' at line $lineno";
 		}
 		
-		my $st;
-		if (scalar(@nodes) == 3) {
-			$st	= RDF::Trine::Statement->new( @nodes );
-# 		} elsif (scalar(@nodes) == 4) {
-# 			$st	= RDF::Trine::Statement::Quad->new( @nodes );
-		} else {
-# 			warn Dumper(\@nodes);
-			throw RDF::Trine::Error::ParserError -text => "Not valid N-Triples data at line $lineno";
-		}
-		$handler->( $st );
+		$self->_emit_statement( $handler, \@nodes, $lineno );
 		if (@extra) {
 			$line	= shift(@extra);
 			goto LINE;
 		}
 	}
+}
+
+sub _emit_statement {
+	my $self	= shift;
+	my $handler	= shift;
+	my $nodes	= shift;
+	my $lineno	= shift;
+	my $st;
+	if (scalar(@$nodes) == 3) {
+		$st	= RDF::Trine::Statement->new( @$nodes );
+# 	} elsif (scalar(@$nodes) == 4) {
+# 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
+	} else {
+# 		warn Dumper($nodes);
+		throw RDF::Trine::Error::ParserError -text => "Not valid N-Triples data at line $lineno";
+	}
+	$handler->( $st );
 }
 
 sub _eat_node {

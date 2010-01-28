@@ -133,7 +133,7 @@ sub parse {
 	return;
 }
 
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context ] ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
 parsed, will call C<< $model->add_statement( $statement ) >>.
