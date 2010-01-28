@@ -4,7 +4,7 @@ RDF::LinkedData::Apache - mod_perl2 handler class for serving RDF as linked data
 
 =head1 VERSION
 
-This document describes RDF::LinkedData::Apache version 0.001
+This document describes RDF::LinkedData::Apache version 0.001_01
 
 =head1 SYNOPSIS
 
@@ -106,6 +106,11 @@ use RDF::Trine::Serializer::RDFXML;
 use RDF::Query;
 
 use Error qw(:try);
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.001_01';
+}
 
 =item C<< handler ( $apache_req ) >>
 
