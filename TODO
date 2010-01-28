@@ -34,6 +34,7 @@ the work, if known):
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
 		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
 		* RDFa [kasei; done 2009.12.24]
+		* N-Triples [kasei; done 2010.01.27]
 	* Serializers
 		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer
 		* Pretty print RDF/XML [tobyink or kasei]
@@ -52,24 +53,8 @@ the work, if known):
 ## RDF::Endpoint
 	* Clean up and release to CPAN [kasei]
 	* Implement SPARQL 1.1 Service Description [kasei]
-## RDF::LinkedData
-	* Rename to RDF::LinkedData::Handler (or something similar to denote mod_perl) [kasei]
+## RDF::LinkedData::Apache
 	* Clean up and release to CPAN [kasei]
 	* Implement SPARQL 1.1 HTTP RDF Update
+	* Rename to RDF::LinkedData::Apache [kasei; done 2010.01.27]
 
-
-
-NG-branch Work
-==============
-
-The ng branch of perlrdf is meant for significant changes to the APIs. This
-includes tracking SPARQL 1.1, bringing sanity to things that have never quite
-worked right (support for quads), standardizing APIs for all parser and
-serializer classes, etc.
-
-## RDF::Query
-	* SPARQL 1.1 Query
-	* API updates to support full SPARQL 1.1 Service Description (including dataset description)
-## RDF::Trine
-	* Merge ::Statement and ::Statement::Quad. Triples will have the nil node in the graph position.
-	* Bring sanity to quad handling in the Store apis. Consider having a union default graph.
