@@ -103,6 +103,7 @@ use RDF::Trine 0.114;
 use RDF::Trine qw(iri);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
+use RDF::Query;
 
 use Error qw(:try);
 
@@ -142,15 +143,16 @@ sub new {
 	my $r		= shift;
 	throw Error -text => "Missing request object in RDF::LinkedData::Apache constructor" unless (blessed($r));
 	
-	my $base		= $r->dir_config( 'LinkedData_Base' );
-	my $config		= $r->dir_config( 'LinkedData_Store' );
-	my $store		= RDF::Trine::Store->new_with_string( $config );
+	my $base	= $r->dir_config( 'LinkedData_Base' );
+	my $config	= $r->dir_config( 'LinkedData_Store' );
+	my $store	= RDF::Trine::Store->new_with_string( $config );
 	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $self = bless( {
-		_r	=> $r,
-		_model => $model,
-		_base => $base,
+		_r		=> $r,
+		_model	=> $model,
+		_base	=> $base,
+		_cache	=> {},
 	}, $class );
 
 	return $self;
@@ -286,21 +288,45 @@ END
 sub _title {
 	my $self	= shift;
 	my $node	= shift;
-	my $model	= $self->model;
-	my $name	= RDF::Trine::Node::Resource->new( 'http://xmlns.com/foaf/0.1/name' );
-	my $title	= RDF::Trine::Node::Resource->new( 'http://purl.org/dc/elements/1.1/title' );
-	my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
-	my @names	= $model->objects_for_predicate_list( $node, $name, $title, $label );
-	foreach my $name (@names) {
-		if ($name->is_literal) {
-			return $name->literal_value;
-		}
-	}
-	
-	if ($node->is_resource) {
-		return $node->uri_value;
+	my $nodestr	= $node->as_string;
+	if (my $title = $self->{_cache}{title}{$nodestr}) {
+		return $title;
 	} else {
-		return $node->as_string;
+		my $model	= $self->model;
+		my $name	= RDF::Trine::Node::Resource->new( 'http://xmlns.com/foaf/0.1/name' );
+		my $title	= RDF::Trine::Node::Resource->new( 'http://purl.org/dc/elements/1.1/title' );
+		my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+		
+		{
+			# optimistically assume that we'll get back a valid name on the first try
+			my $name	= $model->objects_for_predicate_list( $node, $name, $title, $label );
+			if (blessed($name) and $name->is_literal) {
+				my $str	= $name->literal_value;
+				$self->{_cache}{title}{$nodestr}	= $str;
+				return $str;
+			}
+		}
+		
+		# if that didn't work, continue to try to find a valid literal title node
+		my @names	= $model->objects_for_predicate_list( $node, $name, $title, $label );
+		foreach my $name (@names) {
+			if ($name->is_literal) {
+				my $str	= $name->literal_value;
+				$self->{_cache}{title}{$nodestr}	= $str;
+				return $str;
+			}
+		}
+		
+		# and finally fall back on just returning a string version of the node
+		if ($node->is_resource) {
+			my $uri	= $node->uri_value;
+			$self->{_cache}{title}{$nodestr}	= $uri;
+			return $uri;
+		} else {
+			my $str	= $node->as_string;
+			$self->{_cache}{title}{$nodestr}	= $str;
+			return $str;
+		}
 	}
 }
 
@@ -308,6 +334,7 @@ sub _description {
 	my $self	= shift;
 	my $node	= shift;
 	my $model	= $self->model;
+	
 	my $iter	= $model->get_statements( $node );
 	my @label	= (
 					iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
@@ -316,11 +343,11 @@ sub _description {
 	my @desc;
 	while (my $st = $iter->next) {
 		my $p	= $st->predicate;
-		my @pn	= $model->objects_for_predicate_list( $p, @label );
 		
 		my $ps;
-		if (@pn) {
-			my $pn	= shift(@pn);
+		if (my $pname = $self->{_cache}{pred}{$p->as_string}) {
+			$ps	= $pname;
+		} elsif (my $pn = $model->objects_for_predicate_list( $p, @label )) {
 			$ps	= $self->_html_node_value( $pn );
 		} elsif ($p->is_resource and $p->uri_value =~ m<^http://www.w3.org/1999/02/22-rdf-syntax-ns#_(\d+)$>) {
 			$ps	= '#' . $1;
@@ -338,6 +365,7 @@ sub _description {
 			}
 		}
 		
+		$self->{_cache}{pred}{$p->as_string}	= $ps;
 		my $obj	= $st->object;
 		my $os	= $self->_html_node_value( $obj, $p );
 		
