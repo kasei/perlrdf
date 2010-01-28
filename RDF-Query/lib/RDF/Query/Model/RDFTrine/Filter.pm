@@ -7,7 +7,7 @@ RDF::Query::Model::RDFTrine::Filter - Algebra class for Filter patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Model::RDFTrine::Filter version 2.200, released 6 August 2009.
+This document describes RDF::Query::Model::RDFTrine::Filter version 2.201_01, released 27 January 2010.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201_01';
 }
 
 ######################################################################

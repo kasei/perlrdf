@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.200, released 6 August 2009.
+This document describes RDF::Query::Functions version 2.201_01, released 27 January 2010.
 
 =cut
 
@@ -35,7 +35,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.200';
+	$VERSION	= '2.201_01';
 }
 
 ######################################################################
