@@ -100,7 +100,7 @@ use Apache2::RequestRec ();
 use Apache2::Const qw(OK HTTP_SEE_OTHER REDIRECT DECLINED SERVER_ERROR HTTP_NO_CONTENT HTTP_NOT_IMPLEMENTED NOT_FOUND);
 
 use RDF::Trine 0.114;
-use RDF::Trine qw(iri);
+use RDF::Trine qw(iri variable statement);
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Query;
@@ -152,9 +152,23 @@ sub new {
 		_r		=> $r,
 		_model	=> $model,
 		_base	=> $base,
-		_cache	=> {},
+		_cache	=> {
+			title	=> {
+				'<http://www.w3.org/2000/01/rdf-schema#label>'	=> 'label',
+				'<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'	=> 'type',
+			},
+			pred	=> {
+				'<http://www.w3.org/2000/01/rdf-schema#label>'	=> 'label',
+				'<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'	=> 'type',
+				'<http://purl.org/dc/elements/1.1/type>' => 'Type',
+			},
+		},
 	}, $class );
-
+	
+	foreach (1 .. 50) {
+		$self->{_cache}{pred}{"<http://www.w3.org/1999/02/22-rdf-syntax-ns#_$_>"}	= "#$_";
+	}
+	
 	return $self;
 } # END sub new
 
@@ -293,13 +307,16 @@ sub _title {
 		return $title;
 	} else {
 		my $model	= $self->model;
-		my $name	= RDF::Trine::Node::Resource->new( 'http://xmlns.com/foaf/0.1/name' );
-		my $title	= RDF::Trine::Node::Resource->new( 'http://purl.org/dc/elements/1.1/title' );
-		my $label	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#label' );
+
+		my @label	= (
+			iri( 'http://xmlns.com/foaf/0.1/name' ),
+			iri( 'http://purl.org/dc/elements/1.1/title' ),
+			iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
+		);
 		
 		{
 			# optimistically assume that we'll get back a valid name on the first try
-			my $name	= $model->objects_for_predicate_list( $node, $name, $title, $label );
+			my $name	= $model->objects_for_predicate_list( $node, @label );
 			if (blessed($name) and $name->is_literal) {
 				my $str	= $name->literal_value;
 				$self->{_cache}{title}{$nodestr}	= $str;
@@ -308,7 +325,7 @@ sub _title {
 		}
 		
 		# if that didn't work, continue to try to find a valid literal title node
-		my @names	= $model->objects_for_predicate_list( $node, $name, $title, $label );
+		my @names	= $model->objects_for_predicate_list( $node, @label );
 		foreach my $name (@names) {
 			if ($name->is_literal) {
 				my $str	= $name->literal_value;
@@ -338,7 +355,7 @@ sub _description {
 	my $iter	= $model->get_statements( $node );
 	my @label	= (
 					iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
-					iri( 'http://purl.org/dc/elements/1.1/description' ),
+#					iri( 'http://purl.org/dc/elements/1.1/description' ),
 				);
 	my @desc;
 	while (my $st = $iter->next) {
