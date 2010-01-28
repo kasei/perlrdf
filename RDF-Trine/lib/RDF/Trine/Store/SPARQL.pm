@@ -140,6 +140,64 @@ END
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
+=item C<< get_pattern ( $bgp [, $context] ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_pattern {
+	my $self	= shift;
+	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	my %args	= @args;
+	
+	if ($bgp->isa('RDF::Trine::Statement')) {
+		$bgp	= RDF::Trine::Pattern->new($bgp);
+	}
+	
+	my %iter_args;
+	my @triples	= grep { $_->type eq 'TRIPLE' } $bgp->triples;
+	my @quads	= grep { $_->type eq 'QUAD' } $bgp->triples;
+	
+	my @tripless;
+	foreach my $t (@triples) {
+		my @nodes	= $t->nodes;
+		my @nodess;
+		foreach my $n (@nodes) {
+			push(@nodess, ($n->is_variable ? '?' . $n->name : $n->as_ntriples));
+		}
+		push(@tripless, join(' ', @nodess) . ' .');
+	}
+	my $triples	= join("\n\t", @tripless);
+	my $quads	= '';
+	if (@quads) {
+		return $self->SUPER::get_pattern( $bgp, $context, @args );
+		throw RDF::Trine::Error::UnimplementedError -text => "SPARQL get_pattern quad support not implemented";
+	}
+	
+	my $sparql	= <<"END";
+SELECT * WHERE {
+	$triples
+	$quads
+}
+END
+	if (my $o = delete $args{orderby}) {
+		my @order;
+		while (@$o) {
+			my ($k,$order)	= splice(@$o,0,2,());
+			push(@order, "${order}(?$k)");
+		}
+		if (@order) {
+			$sparql	.= "ORDER BY " . join(' ', @order);
+		}
+	}
+	
+	my $iter	= $self->_get_iterator( $sparql );
+	return $iter;
+}
+
 =item C<< get_contexts >>
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
