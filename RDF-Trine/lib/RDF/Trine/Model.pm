@@ -448,7 +448,7 @@ sub _store {
 
 sub _debug {
 	my $self	= shift;
-	my $stream	= $self->as_stream;
+	my $stream	= $self->get_statements( undef, undef, undef, undef );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
 	$l->debug( 'model statements:' );
 	while (my $s = $stream->next) {
