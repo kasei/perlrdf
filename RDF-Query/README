@@ -39,7 +39,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.201 (2010-01-XX)
+  Version 2.201 (2010-01-30)
 
      * Added benchmark/lubm.pl.
      * Added examples/queries/sparql-ask-people.rq.

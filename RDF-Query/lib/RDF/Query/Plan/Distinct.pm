@@ -7,7 +7,7 @@ RDF::Query::Plan::Distinct - Executable query plan for Distincts.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Distinct version 2.200, released 6 August 2009.
+This document describes RDF::Query::Plan::Distinct version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 ######################################################################

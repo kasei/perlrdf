@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.200, released 6 August 2009.
+This document describes RDF::Query::Plan version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -56,7 +56,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 ######################################################################

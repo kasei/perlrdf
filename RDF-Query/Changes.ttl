@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.201" ;
-                        doap:created      "2010-01-XX" ;
+                        doap:created      "2010-01-30" ;
                         ];
         asc:changes     [
                         asc:addition      "Added benchmark/lubm.pl." ;
