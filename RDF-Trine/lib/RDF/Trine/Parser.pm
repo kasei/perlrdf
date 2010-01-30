@@ -48,6 +48,7 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::NTriples;
 use RDF::Trine::Parser::NQuads;
 use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::TriG;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;

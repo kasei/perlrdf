@@ -120,7 +120,7 @@ sub parse {
 	}
 	local($self->{baseURI})	= $uri;
 	local($self->{tokens})	= $input;
-	$self->_turtleDoc();
+	$self->_Document();
 	return;
 }
 
@@ -210,7 +210,7 @@ sub _triple {
 	my $count	= ++$self->{triple_count};
 }
 
-sub _turtleDoc {
+sub _Document {
 	my $self	= shift;
 	while ($self->_statement_test()) {
 		$self->_statement();
@@ -314,13 +314,8 @@ sub _base {
 
 sub _triples_test {
 	my $self	= shift;
-	### between triples and ws. disjoint, so easy enough
-	return 0 unless (length($self->{tokens}));
-	if ($self->{tokens} !~ /^[\r\n\t #]/) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return 1 if $self->_resource_test;
+	return $self->_blank_test;
 }
 
 sub _triples {
