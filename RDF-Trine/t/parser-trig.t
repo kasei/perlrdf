@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 13;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
@@ -99,6 +99,63 @@ END
 			'<http://www.example.org/exampleDocument#G1>'	=> 4,
 			'<http://www.example.org/exampleDocument#G2>'	=> 2,
 			'<http://www.example.org/exampleDocument#G3>'	=> 9,
+		);
+		my %got;
+		while (my $st = $iter->next) {
+			$got{ $st->context->as_string }++;
+		}
+		is_deeply( \%got, \%expect, 'expected statement counts per graph name' );
+	}
+}
+
+{
+	my $model = RDF::Trine::Model->temporary_model;
+	my $trig	= <<'END';
+# TriG Example Document 3
+# This document contains a default graph and two named graphs.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+# default graph
+    { 
+      <http://example.org/bob> dc:publisher "Bob" . 
+      <http://example.org/alice> dc:publisher "Alice" .
+    }
+
+<http://example.org/bob> 
+    { 
+       _:a foaf:name "Bob" . 
+       _:a foaf:mbox <mailto:bob@oldcorp.example.org> .
+    }
+ 
+<http://example.org/alice>
+    { 
+       _:a foaf:name "Alice" . 
+       _:a foaf:mbox <mailto:alice@work.example.org> .
+    }
+END
+	$parser->parse_into_model(undef, $trig, $model);
+	
+	{
+		my $iter	= $model->get_contexts;
+		my %expect	= (
+			'(nil)'	=> 1,
+			'<http://example.org/bob>'	=> 1,
+			'<http://example.org/alice>'	=> 1,
+		);
+		my %got;
+		while (my $c = $iter->next) {
+			$got{ $c->as_string }++;
+		}
+		is_deeply( \%got, \%expect, 'expected graph names' );
+	}
+	
+	{
+		my $iter	= $model->get_statements( undef, undef, undef, undef );
+		my %expect	= (
+			'(nil)'	=> 2,
+			'<http://example.org/bob>'	=> 2,
+			'<http://example.org/alice>'	=> 2,
 		);
 		my %got;
 		while (my $st = $iter->next) {
