@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.201_01, released 27 January 2010.
+This document describes RDF::Query::Util version 2.201, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use LWP::Simple;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201_01';
+	$VERSION	= '2.201';
 }
 
 ######################################################################

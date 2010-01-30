@@ -7,7 +7,7 @@ RDF::Query::Expression::Unary - Class for unary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Unary version 2.201_01, released 27 January 2010.
+This document describes RDF::Query::Expression::Unary version 2.201, released 30 January 2010.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201_01';
+	$VERSION	= '2.201';
 }
 
 ######################################################################

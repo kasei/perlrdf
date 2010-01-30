@@ -14,8 +14,8 @@
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.200.tar.gz> ;
 
         doap:Version    [
-                        doap:revision     "2.201_01" ;
-                        doap:created      "2010-01-27" ;
+                        doap:revision     "2.201" ;
+                        doap:created      "2010-01-30" ;
                         ];
         asc:changes     [
                         asc:addition      "Added benchmark/lubm.pl." ;

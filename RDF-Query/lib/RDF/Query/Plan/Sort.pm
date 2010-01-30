@@ -7,7 +7,7 @@ RDF::Query::Plan::Sort - Executable query plan for Sorts.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Sort version 2.201_01, released 27 January 2010.
+This document describes RDF::Query::Plan::Sort version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201_01';
+	$VERSION	= '2.201';
 }
 
 ######################################################################
