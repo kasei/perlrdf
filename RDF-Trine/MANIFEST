@@ -32,6 +32,8 @@ lib/RDF/Trine/Node/Nil.pm
 lib/RDF/Trine/Node/Resource.pm
 lib/RDF/Trine/Node/Variable.pm
 lib/RDF/Trine/Parser.pm
+lib/RDF/Trine/Parser/NQuads.pm
+lib/RDF/Trine/Parser/NTriples.pm
 lib/RDF/Trine/Parser/RDFa.pm
 lib/RDF/Trine/Parser/RDFJSON.pm
 lib/RDF/Trine/Parser/RDFXML.pm
@@ -509,6 +511,8 @@ t/parser-rdfa.t
 t/parser-rdfjson.t
 t/parser-rdfxml-w3c.t
 t/parser-turtle.t
+t/parser-nquads.t
+t/parser-ntriples.t
 t/parser.t
 t/pattern.t
 t/pod-coverage.t
