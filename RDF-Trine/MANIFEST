@@ -5,7 +5,7 @@ bin/rdf_store_add_file.pl
 bin/rdf_store_makeprivate.pl
 bin/rdf_store_serialize.pl
 Changes.ttl
-examples/create_store.pl
+examples/foaf_labels.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Makefile.pm
