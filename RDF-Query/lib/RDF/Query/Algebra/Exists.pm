@@ -1,17 +1,17 @@
-# RDF::Query::Algebra::Offset
+# RDF::Query::Algebra::Exists
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Algebra::Offset - Algebra class for offseting query results
+RDF::Query::Algebra::Exists - Algebra class for EXISTS and NOT EXISTS patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Offset version 2.201, released 30 January 2010.
+This document describes RDF::Query::Algebra::Exists version 2.201, released 30 January 2010.
 
 =cut
 
-package RDF::Query::Algebra::Offset;
+package RDF::Query::Algebra::Exists;
 
 use strict;
 use warnings;
@@ -19,10 +19,8 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
-use Set::Scalar;
-use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
-use RDF::Trine::Iterator qw(sgrep);
+use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 ######################################################################
 
@@ -39,17 +37,19 @@ BEGIN {
 
 =cut
 
-=item C<< new ( $pattern, $offset ) >>
+=item C<new ( $pattern, $pattern, $exists, $not_flag )>
 
-Returns a new Sort structure.
+Returns a new EXISTS structure for the specified $pattern. If $not_flag is true,
+the pattern will be interpreted as a NOT EXISTS pattern.
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $pattern	= shift;
-	my $offset	= shift;
-	return bless( [ $pattern, $offset ], $class );
+	my $exists	= shift;
+	my $not		= shift;
+	return bless( [ $pattern, $exists, $not ], $class );
 }
 
 =item C<< construct_args >>
@@ -61,34 +61,40 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	my $pattern	= $self->pattern;
-	my $offset	= $self->offset;
-	return ($pattern, $offset);
+	return ($self->pattern, $self->exists_pattern, $self->not_flag);
 }
 
 =item C<< pattern >>
 
-Returns the pattern to be sorted.
+Returns the base pattern (LHS) onto which the not-pattern joins.
 
 =cut
 
 sub pattern {
 	my $self	= shift;
-	if (@_) {
-		$self->[0]	= shift;
-	}
 	return $self->[0];
 }
 
-=item C<< offset >>
+=item C<< exists_pattern >>
 
-Returns the offset number of the pattern.
+Returns the not-pattern (RHS).
 
 =cut
 
-sub offset {
+sub exists_pattern {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< not_flag >>
+
+Returns true if the pattern is a NOT EXISTS pattern.
+
+=cut
+
+sub not_flag {
+	my $self	= shift;
+	return $self->[2];
 }
 
 =item C<< sse >>
@@ -103,10 +109,11 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
 	
+	my $tag		= ($self->not_flag) ? 'not-exists' : 'exists';
 	return sprintf(
-		"(offset %s\n${prefix}${indent}%s)",
-		$self->offset,
+		"(${tag}\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
+		$self->not_pattern->sse( $context, "${prefix}${indent}" )
 	);
 }
 
@@ -120,11 +127,11 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift;
-	
+	my $tag		= ($self->not_flag) ? 'NOT EXISTS' : 'EXISTS';
 	my $string	= sprintf(
-		"%s\nOFFSET %d",
+		"%s\n${indent}${tag} %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->offset,
+		$self->not_pattern->as_sparql( $context, $indent ),
 	);
 	return $string;
 }
@@ -136,7 +143,7 @@ Returns the type of this algebra expression.
 =cut
 
 sub type {
-	return 'LIMIT';
+	return 'EXISTS';
 }
 
 =item C<< referenced_variables >>
@@ -147,7 +154,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->referenced_variables);
+	return RDF::Query::_uniq($self->pattern->referenced_variables, $self->exists_pattern->referenced_variables);
 }
 
 =item C<< binding_variables >>
@@ -159,7 +166,7 @@ bind values during execution.
 
 sub binding_variables {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->binding_variables);
+	return;
 }
 
 =item C<< definite_variables >>
@@ -170,7 +177,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 
 sub definite_variables {
 	my $self	= shift;
-	return $self->pattern->definite_variables;
+	return;
 }
 
 =item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
@@ -187,24 +194,13 @@ sub fixup {
 	my $bridge	= shift;
 	my $base	= shift;
 	my $ns		= shift;
-	
+
 	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
 		return $opt;
 	} else {
-		return $class->new( $self->pattern->fixup( $query, $bridge, $base, $ns ), $self->offset );
+		return $class->new( map { $_->fixup( $query, $bridge, $base, $ns ) } ($self->pattern, $self->not_pattern) );
 	}
 }
-
-=item C<< is_solution_modifier >>
-
-Returns true if this node is a solution modifier.
-
-=cut
-
-sub is_solution_modifier {
-	return 1;
-}
-
 
 
 1;

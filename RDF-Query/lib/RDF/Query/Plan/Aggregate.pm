@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.200, released 6 August 2009.
+This document describes RDF::Query::Plan::Aggregate version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 ######################################################################
@@ -117,6 +117,34 @@ sub execute ($) {
 					$aggregates{ $alias }{ $group }[0]	= $op;
 					if (exists($row->{ $col->name })) {
 						$aggregates{ $alias }{ $group }[1]++ unless ($seen{ $values }++);
+					}
+				});
+			} elsif ($op eq 'SUM') {
+				push(@aggregators, sub {
+					$l->debug("- aggregate op: SUM");
+					my $row		= shift;
+					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+					my $value	= $row->{ $col->name };
+					my $type	= _node_type( $value );
+					$aggregates{ $alias }{ $group }[0]	= $op;
+					
+					my $strict	= 1;
+					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
+						if ($type ne $aggregates{ $alias }{ $group }[2]) {
+							if ($context->strict_errors) {
+								throw RDF::Query::Error::ComparisonError -text => "Cannot compute SUM aggregate over nodes of multiple types";
+							} else {
+								$strict	= 0;
+							}
+						}
+						
+						$aggregates{ $alias }{ $group }[1]	+= $value;
+						$aggregates{ $alias }{ $group }[2]	= $type;
+					} else {
+						$aggregates{ $alias }{ $group }[1]	= $value;
+						$aggregates{ $alias }{ $group }[2]	= $type;
 					}
 				});
 			} elsif ($op eq 'MAX') {

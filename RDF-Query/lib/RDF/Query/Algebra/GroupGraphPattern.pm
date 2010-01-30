@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.200, released 6 August 2009.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.201, released 30 January 2010.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
@@ -160,6 +160,18 @@ Returns a list of the variable names used in this algebra expression.
 sub referenced_variables {
 	my $self	= shift;
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->patterns);
+}
+
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return RDF::Query::_uniq(map { $_->binding_variables } $self->patterns);
 }
 
 =item C<< definite_variables >>

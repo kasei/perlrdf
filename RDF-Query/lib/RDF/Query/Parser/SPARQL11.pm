@@ -1,18 +1,18 @@
-# RDF::Query::Parser::SPARQL
+# RDF::Query::Parser::SPARQL11
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Parser::SPARQL - SPARQL Parser.
+RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL11 version 2.201, released 30 January 2010.
 
 =head1 SYNOPSIS
 
- use RDF::Query::Parser::SPARQL;
- my $parser	= RDF::Query::Parse::SPARQL->new();
+ use RDF::Query::Parser::SPARQL11;
+ my $parser	= RDF::Query::Parse::SPARQL11->new();
  my $iterator = $parser->parse( $query, $base_uri );
 
 =head1 DESCRIPTION
@@ -25,7 +25,7 @@ This document describes RDF::Query::Parser::SPARQL version 2.201, released 30 Ja
 
 =cut
 
-package RDF::Query::Parser::SPARQL;
+package RDF::Query::Parser::SPARQL11;
 
 use strict;
 use warnings;
@@ -38,7 +38,7 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Parser;
 use RDF::Query::Algebra;
 use RDF::Trine::Namespace qw(rdf);
-use Scalar::Util qw(blessed looks_like_number);
+use Scalar::Util qw(blessed looks_like_number reftype);
 
 ######################################################################
 
@@ -76,6 +76,7 @@ our $r_INTEGER				= qr/\d+/;
 our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL}/;
 our $r_ANON					= qr/\[[\t\r\n ]*\]/;
 our $r_NIL					= qr/\([\n\r\t ]*\)/;
+our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG|SUM/i;
 
 =item C<< new >>
 
@@ -327,6 +328,8 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
+	use Data::Dumper;
+	Carp::cluck Dumper($self->{tokens});
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -510,7 +513,7 @@ sub _SelectQuery {
 
 	if ($star) {
 		my $triples	= $self->{build}{triples} || [];
-		my @vars	= RDF::Query::_uniq( map { $_->referenced_variables } @$triples );
+		my @vars	= RDF::Query::_uniq( map { $_->binding_variables } @$triples );
 		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
 	}
 
@@ -551,14 +554,42 @@ sub __SelectVars {
 	return $star;
 }
 
+sub _BrackettedAliasExpression {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	$self->_Expression;
+	my ($expr)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat('AS');
+	$self->__consume_ws_opt;
+	$self->_Var;
+	my ($var)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_eat(')');
+	
+	my $alias	= $self->new_alias_expression( $var, $expr );
+	$self->_add_stack( $alias );
+}
+
 sub __SelectVar_test {
 	my $self	= shift;
+	local($self->{__aggregate_call_ok})	= 1;
+	return 1 if $self->_BuiltInCall_test;
+	return 1 if $self->_test( qr/[(]/i);
 	return $self->{tokens} =~ m'^[?$]';
 }
 
 sub __SelectVar {
 	my $self	= shift;
-	$self->_Var;
+	local($self->{__aggregate_call_ok})	= 1;
+	if ($self->_test('(')) {
+		$self->_BrackettedAliasExpression;
+	} elsif ($self->_BuiltInCall_test) {
+		$self->_BuiltInCall;
+	} else {
+		$self->_Var;
+	}
 }
 
 # [6] ConstructQuery ::= 'CONSTRUCT' ConstructTemplate DatasetClause* WhereClause SolutionModifier
@@ -683,6 +714,46 @@ sub _WhereClause {
 	
 	my $ggp	= $self->_peek_pattern;
 	$ggp->check_duplicate_blanks;
+	
+	$self->__consume_ws_opt;
+	if ($self->_test( qr/GROUP\s+BY/i )) {
+		$self->_eat( qr/GROUP\s+BY/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->__GroupByVar;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->__GroupByVar_test) {
+			$self->__GroupByVar;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		$self->{build}{__group_by}	= \@vars;
+		$self->__consume_ws_opt;
+	}
+	if ($self->_test( qr/HAVING/i )) {
+		$self->_eat(qr/HAVING/i);
+		$self->__consume_ws_opt;
+		local($self->{__aggregate_call_ok})	= 1;
+		$self->_BrackettedExpression;
+	}
+}
+
+sub __GroupByVar_test {
+	my $self	= shift;
+	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->__SelectVar_test);
+}
+
+sub __GroupByVar {
+	my $self	= shift;
+	if ($self->_test('(')) {
+		$self->_BrackettedAliasExpression;
+	} elsif ($self->_BuiltInCall_test) {
+		$self->_BuiltInCall;
+	} else {
+		$self->__SelectVar;
+	}
 }
 
 # [14] SolutionModifier ::= OrderClause? LimitOffsetClauses?
@@ -886,7 +957,16 @@ sub __handle_GraphPatternNotTriples {
 	my $self	= shift;
 	my $data	= shift;
 	my ($class, @args)	= @$data;
-	if ($class eq 'RDF::Query::Algebra::Optional') {
+	if ($class eq 'RDF::Query::Algebra::Exists') {
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		my $pat	= $class->new( $ggp, @args );
+		$self->_add_patterns( $pat );
+	} elsif ($class eq 'RDF::Query::Algebra::Optional') {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
@@ -951,12 +1031,14 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/OPTIONAL|{|GRAPH/i);
+	return $self->_test(qr/OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_OptionalGraphPattern_test) {
+	if ($self->_ExistsGraphPattern_test) {
+		$self->_ExistsGraphPattern;
+	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
 	} elsif ($self->_GroupOrUnionGraphPattern_test) {
 		$self->_GroupOrUnionGraphPattern;
@@ -964,6 +1046,24 @@ sub _GraphPatternNotTriples {
 		$self->_GraphGraphPattern;
 	}
 }
+
+# ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
+sub _ExistsGraphPattern_test {
+	my $self	= shift;
+	return $self->_test( qr/(NOT\s+)?EXISTS/i );
+}
+
+sub _ExistsGraphPattern {
+	my $self	= shift;
+	my $op		= $self->_eat( qr/(NOT\s+)?EXISTS/i );
+	my $not		= ($op =~ /^NOT/i) ? 1 : 0;
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	my $pat		= ['RDF::Query::Algebra::Exists', $ggp, $not];
+	$self->_add_stack( $pat );
+}
+
 
 # [23] OptionalGraphPattern ::= 'OPTIONAL' GroupGraphPattern
 sub _OptionalGraphPattern_test {
@@ -1596,15 +1696,67 @@ sub _BrackettedExpression {
 	$self->_eat(')');
 }
 
+sub __Aggregate {
+	my $self	= shift;
+	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	my $expr;
+	my $distinct	= 0;
+	if ($self->_test('*')) {
+		$expr	= $self->_eat('*');
+	} else {
+		if ($op eq 'COUNT' and $self->_test( qr/DISTINCT/i )) {
+			$self->_eat( qr/DISTINCT\s*/i );
+			$distinct	= 1;
+		}
+		$self->_Expression;
+		($expr)	= splice(@{ $self->{stack} });
+	}
+	$self->__consume_ws_opt;
+	
+	my $arg	= blessed($expr) ? $expr->as_sparql : $expr;
+	if ($distinct) {
+		$arg	= 'DISTINCT ' . $arg;
+	}
+	my $name	= sprintf('%s(%s)', $op, $arg);
+	$self->_eat(')');
+	
+	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), $expr ];
+	$self->_add_stack( $self->new_variable($name) );
+	
+}
+
 # [57] BuiltInCall ::= 'STR' '(' Expression ')'  | 'LANG' '(' Expression ')'  | 'LANGMATCHES' '(' Expression ',' Expression ')'  | 'DATATYPE' '(' Expression ')'  | 'BOUND' '(' Var ')'  | 'sameTerm' '(' Expression ',' Expression ')'  | 'isIRI' '(' Expression ')'  | 'isURI' '(' Expression ')'  | 'isBLANK' '(' Expression ')'  | 'isLITERAL' '(' Expression ')'  | RegexExpression
 sub _BuiltInCall_test {
 	my $self	= shift;
+	if ($self->{__aggregate_call_ok}) {
+		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
+	}
+	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
 	return $self->_test(qr/STR|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX/i);
 }
 
 sub _BuiltInCall {
 	my $self	= shift;
-	if ($self->_RegexExpression_test) {
+	if ($self->{__aggregate_call_ok} and $self->_test( $r_AGGREGATE_CALL )) {
+		$self->__Aggregate;
+	} elsif ($self->_test(qr/(NOT\s+)?EXISTS/i)) {
+		my $op	= $self->_eat(qr/(NOT\s+)?EXISTS/i);
+		$self->__consume_ws_opt;
+		$self->_GroupGraphPattern;
+		my $cont	= $self->_remove_pattern;
+		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
+		my $func	= $self->new_function_expression($iri, $cont);
+		$self->_add_stack( $func );
+	} elsif ($self->_test(qr/COALESCE/)) {
+		my $op	= $self->_eat(qr/COALESCE/i);
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:coalesce' );
+		$self->_ArgList;
+		my @args	= splice(@{ $self->{stack} });
+		my $func	= $self->new_function_expression( $iri, @args );
+		$self->_add_stack( $func );
+	} elsif ($self->_RegexExpression_test) {
 		$self->_RegexExpression;
 	} else {
 		my $op		= $self->_eat( qr/\w+/ );
@@ -1856,6 +2008,15 @@ sub _NIL {
 sub __solution_modifiers {
 	my $self	= shift;
 	my $star	= shift;
+	
+	my $aggdata	= delete( $self->{build}{__aggregate} );
+	if ($aggdata) {
+		my $groupby	= delete( $self->{build}{__group_by} ) || [];
+		my $pattern	= $self->{build}{triples};
+		my $ggp		= shift(@$pattern);
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, %{ $aggdata } );
+		push(@{ $self->{build}{triples} }, $agg);
+	}
 	
 	my $vars	= $self->{build}{variables};
 	my $pattern	= pop(@{ $self->{build}{triples} });

@@ -7,34 +7,36 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.200, released 6 August 2009.
+This document describes RDF::Query version 2.201, released 30 January 2010.
 
 =head1 SYNOPSIS
 
- my $query = new RDF::Query ( $rdql, undef, undef, 'rdql' );
- my @rows = $query->execute( $model );
- 
  my $query = new RDF::Query ( $sparql );
  my $iterator = $query->execute( $model );
  while (my $row = $iterator->next) {
    print $row->{ var }->as_string;
  }
+ 
+ my $query = new RDF::Query ( $rdql, { lang => 'rdql' } );
+ my @rows = $query->execute( $model );
 
 =head1 DESCRIPTION
 
-RDF::Query allows RDQL and SPARQL queries to be run against an RDF model, returning rows
-of matching results.
+RDF::Query allows SPARQL and RDQL queries to be run against an RDF model,
+returning rows of matching results.
 
 See L<http://www.w3.org/TR/rdf-sparql-query/> for more information on SPARQL.
 
-See L<http://www.w3.org/Submission/2004/SUBM-RDQL-20040109/> for more information on RDQL.
+See L<http://www.w3.org/Submission/2004/SUBM-RDQL-20040109/> for more
+information on RDQL.
 
 =head1 CHANGES IN VERSION 2.000
 
-There are many changes in the code between the 1.x and 2.x releases. Most of these
-changes will only affect queries that should have raised errors in the first place
-(SPARQL parsing, queries that use undefined namespaces, etc.). Beyond these changes,
-however, there are some significant API changes that will affect all users:
+There are many changes in the code between the 1.x and 2.x releases. Most of
+these changes will only affect queries that should have raised errors in the
+first place (SPARQL parsing, queries that use undefined namespaces, etc.).
+Beyond these changes, however, there are some significant API changes that will
+affect all users:
 
 =over 4
 
@@ -47,10 +49,10 @@ as the underlying model (Redland nodes from a Redland model and RDF::Core nodes
 from an RDF::Core model).
 
 In the past, it was possible to execute a query and not know what type of nodes
-were going to be returned, leading to overly verbose code that required examining
-all nodes and statements with the bridge object. This new API brings consistency
-to both the execution model and client code, greatly simplifying interaction
-with query results.
+were going to be returned, leading to overly verbose code that required
+examining all nodes and statements with the bridge object. This new API brings
+consistency to both the execution model and client code, greatly simplifying
+interaction with query results.
 
 =item Binding Result Values
 
@@ -101,9 +103,7 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 no warnings 'numeric';
-use RDF::Trine 0.111;
-use RDF::Trine::Iterator qw(sgrep smap swatch);
-
+use RDF::Trine 0.114;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -116,6 +116,7 @@ use RDF::Query::Algebra;
 use RDF::Query::Node;
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
+use RDF::Query::Parser::SPARQL11;
 use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
@@ -128,7 +129,7 @@ use RDF::Query::CostModel::Counted;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.200';
+	$VERSION		= '2.201';
 	$DEFAULT_PARSER	= 'sparql';
 }
 
@@ -172,10 +173,11 @@ sub new {
 	no warnings 'uninitialized';
 	
 	my %names	= (
-					rdql	=> 'RDF::Query::Parser::RDQL',
-					sparql	=> 'RDF::Query::Parser::SPARQL',
-					tsparql	=> 'RDF::Query::Parser::SPARQLP',
-					sparqlp	=> 'RDF::Query::Parser::SPARQLP',
+					rdql		=> 'RDF::Query::Parser::RDQL',
+					sparql		=> 'RDF::Query::Parser::SPARQL',
+					tsparql		=> 'RDF::Query::Parser::SPARQLP',
+					sparqlp		=> 'RDF::Query::Parser::SPARQLP',
+					sparql11	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',

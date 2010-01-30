@@ -9,7 +9,7 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 11;
+my $tests	= 13;
 my @models	= test_models( qw(data/foaf.xrdf data/about.xrdf) );
 plan tests => 1 + ($tests * scalar(@models));
 
@@ -154,6 +154,48 @@ END
 			my $stream	= $query->execute( $model );
 			my $ok		= $stream->get_boolean();
 			ok( not($ok), 'not dateTime-less-than-or-equal' );
+		}
+		
+		{
+			# coalesce
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+				SELECT * WHERE {
+					?p a foaf:Person .
+					OPTIONAL {
+						?p foaf:aimChatID ?aim .
+					}
+					FILTER(COALESCE(?aim,"unknown") = "unknown")
+				}
+END
+			
+			my $count	= 0;
+			my $stream	= $query->execute( $model );
+			while (my $row = $stream->next()) {
+				$count++;
+			}
+			is($count, 3, 'coalesce simple');
+		}
+		
+		{
+			# coalesce
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+				SELECT (COALESCE(?aim) AS ?name) WHERE {
+					?p a foaf:Person .
+					OPTIONAL {
+						?p foaf:aimChatID ?aim .
+					}
+				}
+END
+			warn RDF::Query->error unless ($query);
+			
+			my $count	= 0;
+			my $stream	= $query->execute( $model );
+			while (my $row = $stream->next()) {
+				$count++;
+			}
+			is($count, 4, 'coalesce type-error');
 		}
 		
 	}

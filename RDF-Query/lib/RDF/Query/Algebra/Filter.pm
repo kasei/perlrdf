@@ -7,7 +7,7 @@ RDF::Query::Algebra::Filter - Algebra class for Filter expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Filter version 2.200, released 6 August 2009.
+This document describes RDF::Query::Algebra::Filter version 2.201, released 30 January 2010.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 ######################################################################
@@ -169,6 +169,18 @@ sub referenced_variables {
 	} else {
 		return (@vars);
 	}
+}
+
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return $self->pattern->binding_variables;
 }
 
 =item C<< definite_variables >>

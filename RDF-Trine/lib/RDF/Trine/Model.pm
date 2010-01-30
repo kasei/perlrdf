@@ -431,7 +431,11 @@ sub objects_for_predicate_list {
 	foreach my $p (@preds) {
 		my $iter	= $self->get_statements( $node, $p );
 		while (my $s = $iter->next) {
-			push( @objects, $s->object );
+			if (not(wantarray)) {
+				return $s->object;
+			} else {
+				push( @objects, $s->object );
+			}
 		}
 	}
 	return @objects;

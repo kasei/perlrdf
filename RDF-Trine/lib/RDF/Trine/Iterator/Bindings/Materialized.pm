@@ -44,7 +44,6 @@ no warnings 'redefine';
 use Data::Dumper;
 use base qw(RDF::Trine::Iterator::Bindings);
 
-use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 
 our ($VERSION);

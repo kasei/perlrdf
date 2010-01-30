@@ -7,7 +7,7 @@ RDF::Query::CostModel::Naive - Execution cost estimator
 
 =head1 VERSION
 
-This document describes RDF::Query::CostModel::Naive version 2.200, released 6 August 2009.
+This document describes RDF::Query::CostModel::Naive version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::CostModel::Naive;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 use strict;
@@ -69,6 +69,17 @@ sub _cost_service {
 	my $cost	= $self->cost( $plan->pattern, $context );
 	$l->debug( sprintf('COST of Service is %d + %d', $card, $cost) );
 	return $card + $cost;
+}
+
+sub _cost_exists {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
+	return $self->cost( $plan->exists_pattern, $context );
 }
 
 sub _cost_thresholdunion {
@@ -305,6 +316,13 @@ sub _cardinality_quad {
 	
 	# round the cardinality to an integer
 	return int($card + .5 * ($card <=> 0));
+}
+
+sub _cardinality_exists {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	return 1;
 }
 
 sub _cardinality_not {

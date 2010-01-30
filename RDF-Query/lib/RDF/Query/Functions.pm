@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.200, released 6 August 2009.
+This document describes RDF::Query::Functions version 2.201, released 30 January 2010.
 
 =cut
 
@@ -35,7 +35,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.200';
+	$VERSION	= '2.201';
 }
 
 ######################################################################
@@ -674,6 +674,57 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 };
 
+$RDF::Query::functions{"sparql:exists"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	
+	my $ggp		= shift;
+	warn Dumper($ggp); # XXX
+	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	
+# 	my $list	= shift;
+# 	my $value	= shift;
+# 	
+# 	my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
+# 	my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
+# 	
+# 	my $result;
+# 	LIST: while ($list) {
+# 		if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
+# 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+# 		} else {
+# 			my $stream	= $bridge->get_statements( $list, $first, undef, $query, {} );
+# 			while (my $stmt = $stream->next()) {
+# 				my $member	= $stmt->object;
+# 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
+# 			}
+# 			
+# 			my $stmt	= $bridge->get_statements( $list, $rest, undef, $query, {} )->next();
+# 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
+# 			
+# 			my $tail	= $stmt->object;
+# 			if ($tail) {
+# 				$list	= $tail;
+# 				next; #next LIST;
+# 			} else {
+# 				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+# 			}
+# 		}
+# 	}
+# 	
+# 	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+};
+
+$RDF::Query::functions{"sparql:coalesce"}	= sub {
+	my $query	= shift;
+	my $bridge	= shift;
+	my @args	= @_;
+	foreach my $node (@args) {
+		if (blessed($node)) {
+			return $node;
+		}
+	}
+};
 
 our $GEO_DISTANCE_LOADED;
 BEGIN {

@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Not
+# RDF::Query::Plan::Exists
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Not - Executable query plan for Not blocks.
+RDF::Query::Plan::Exists - Executable query plan for EXISTS blocks.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Not version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Exists version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,7 +15,7 @@ This document describes RDF::Query::Plan::Not version 2.201, released 30 January
 
 =cut
 
-package RDF::Query::Plan::Not;
+package RDF::Query::Plan::Exists;
 
 use strict;
 use warnings;
@@ -30,16 +30,17 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $plan, $not_plan ) >>
+=item C<< new ( $plan, $exists_plan, $not_flag ) >>
 
 =cut
 
 sub new {
-	my $class	= shift;
-	my $plan	= shift;
-	my $nplan	= shift;
-	my $self	= $class->SUPER::new( $plan, $nplan );
-	$self->[0]{referenced_variables}	= [ $plan->referenced_variables, $nplan->referenced_variables ];
+	my $class		= shift;
+	my $plan		= shift;
+	my $exists_plan	= shift;
+	my $not_flag	= shift;
+	my $self	= $class->SUPER::new( $plan, $exists_plan, $not_flag );
+	$self->[0]{referenced_variables}	= [ $plan->referenced_variables, $exists_plan->referenced_variables ];
 	return $self;
 }
 
@@ -51,7 +52,7 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "NOT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "EXISTS plan can't be executed while already open";
 	}
 	my $plan	= $self->pattern;
 	$plan->execute( $context );
@@ -73,33 +74,45 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open NOT";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open EXISTS";
 	}
 	my $plan	= $self->pattern;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.not");
 	my $context	= $self->[0]{context};
 	
+	my $not		= $self->not_flag;
 	while (1) {
 		my $row	= $plan->next;
 		unless ($row) {
-			$l->debug("no remaining rows in NOT");
+			$l->debug("no remaining rows in EXISTS");
 			return;
 		}
-		$l->debug("NOT processing bindings $row");
-		my $npattern	= $self->not_pattern;
+		$l->debug("EXISTS processing bindings $row");
+		my $npattern	= $self->exists_pattern;
 		my $copy		= $context->copy( bound => $row );
 		$npattern->execute( $copy );
 		if ($npattern->state == $npattern->OPEN) {
 			if ($npattern->next) {
-				$npattern->close();
-				$l->debug( "- NOT returned true on row" );
+				if ($not) {
+					$npattern->close();
+					$l->debug( "- NOT EXISTS found row, going to next result..." );
+				} else {
+					$l->debug( "- EXISTS found row, returning result..." );
+					$npattern->close();
+					return $row;
+				}
 			} else {
-				$l->debug( "- NOT returned false on row" );
-				$npattern->close();
-				return $row;
+				if ($not) {
+					$l->debug( "- NOT EXISTS didn't find any rows, returning result..." );
+					$npattern->close();
+					return $row;
+				} else {
+					$npattern->close();
+					$l->debug( "- EXISTS didn't find any rows, going to next result..." );
+				}
 			}
 		} else {
-			warn "could not execute NOT-plan in NOT";
+			warn "could not execute EXISTS-plan in EXISTS";
 		}
 	}
 }
@@ -111,7 +124,7 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open NOT";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open EXISTS";
 	}
 	delete $self->[0]{filter};
 	if ($self->[2]->state == $self->[2]->OPEN) {
@@ -131,15 +144,26 @@ sub pattern {
 	return $self->[1];
 }
 
-=item C<< not_pattern >>
+=item C<< exists_pattern >>
 
 Returns the query plan that will be used as the negated pattern.
 
 =cut
 
-sub not_pattern {
+sub exists_pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< not_flag >>
+
+Returns true if the EXISTS plan represents a negative query (NOT EXISTS).
+
+=cut
+
+sub not_flag {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinct >>
@@ -171,7 +195,8 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'not';
+	my $self	= shift;
+	return ($self->not_flag) ? 'not-exists' : 'exists';
 }
 
 =item C<< plan_prototype >>
@@ -197,7 +222,7 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	my $expr	= $self->[1];
-	return ($self->pattern, $self->not_pattern);
+	return ($self->pattern, $self->exists_pattern, $self->not_flag);
 }
 
 1;

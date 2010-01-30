@@ -7,7 +7,7 @@ RDF::Query::Algebra - Base class for Algebra expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra version 2.200, released 6 August 2009.
+This document describes RDF::Query::Algebra version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -18,7 +18,7 @@ This document describes RDF::Query::Algebra version 2.200, released 6 August 200
 package RDF::Query::Algebra;
 
 BEGIN {
-	our $VERSION	= '2.200';
+	our $VERSION	= '2.201';
 }
 
 use strict;
@@ -55,6 +55,7 @@ use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
 use RDF::Query::Algebra::Project;
 use RDF::Query::Algebra::Not;
+use RDF::Query::Algebra::Exists;
 
 use constant SSE_TAGS	=> {
 	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',
@@ -74,6 +75,18 @@ use constant SSE_TAGS	=> {
 	'join'					=> 'RDF::Query::Algebra::GroupGraphPattern',
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
 };
+
+=item C<< binding_variables >>
+
+Returns a list of the variable names used in this algebra expression that will
+bind values during execution.
+
+=cut
+
+sub binding_variables {
+	my $self	= shift;
+	return $self->referenced_variables;
+}
 
 =item C<< referenced_blanks >>
 

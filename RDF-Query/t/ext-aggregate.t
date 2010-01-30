@@ -2,7 +2,10 @@
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use URI::file;
+use Scalar::Util qw(blessed);
+use RDF::Trine qw(literal);
 
 use lib qw(. t);
 use RDF::Query;
@@ -30,7 +33,6 @@ plan tests => (54 * scalar(@models));
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
-	my $bridge	= RDF::Query->get_bridge( $model );
 	
 	{
 		my $query	= new RDF::Query ( <<"END" );
@@ -49,8 +51,8 @@ END
 		while (my $row = $stream->next) {
 			$count++;
 			my $count	= $row->{count};
-			ok( $bridge->is_literal( $count ), 'literal aggregate' );
-			is( $bridge->literal_value( $count ), 3, 'foaf:knows count' );
+			ok( blessed($count) and $count->is_literal, 'literal aggregate' );
+			is( $count->literal_value, 3, 'foaf:knows count' );
 		}
 		is( $count, 1, 'one aggreate' );
 	}
@@ -73,10 +75,10 @@ END
 		while (my $row = $stream->next) {
 			my $wide	= $row->{wide};
 			my $narrow	= $row->{narrow};
-			ok( $bridge->is_literal( $wide ), 'literal aggregate' );
-			ok( $bridge->is_literal( $narrow ), 'literal aggregate' );
-			is( $bridge->literal_value( $wide ), 4.5, 'wide (MIN) aperture' );
-			is( $bridge->literal_value( $narrow ), 11, 'narrow (MAX) aperture' );
+			ok( blessed($wide) and $wide->is_literal, 'literal aggregate' );
+			ok( blessed($narrow) and $narrow->is_literal, 'literal aggregate' );
+			is( $wide->literal_value, 4.5, 'wide (MIN) aperture' );
+			is( $narrow->literal_value, 11, 'narrow (MAX) aperture' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate' );
@@ -107,10 +109,10 @@ END
 		while (my $row = $stream->next) {
 			my $begin	= $row->{begin};
 			my $end	= 	$row->{end};
-			ok( $bridge->is_literal( $begin ), 'literal aggregate' );
-			ok( $bridge->is_literal( $end ), 'literal aggregate' );
-			is( $bridge->literal_value( $begin ), '2004-09-06T15:19:20+01:00', 'beginning date of photos' );
-			is( $bridge->literal_value( $end ), '2005-04-07T18:27:56-04:00', 'ending date of photos' );
+			ok( blessed($begin) and $begin->is_literal, 'literal aggregate' );
+			ok( blessed($end) and $end->is_literal, 'literal aggregate' );
+			is( $begin->literal_value, '2004-09-06T15:19:20+01:00', 'beginning date of photos' );
+			is( $end->literal_value, '2005-04-07T18:27:56-04:00', 'ending date of photos' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate' );
@@ -128,10 +130,9 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => $bridge->new_literal('4', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => literal('4', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count apertures' );
 			$count++;
 		}
@@ -150,10 +151,9 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => $bridge->new_literal('2', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
+			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => literal('2', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count distinct apertures' );
 			$count++;
 		}
@@ -171,10 +171,9 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'MIN(?mbox)' => $bridge->new_literal('19fc9d0234848371668cf10a1b71ac9bd4236806') });
+			my $expect	= RDF::Query::VariableBindings->new({ 'MIN(?mbox)' => literal('19fc9d0234848371668cf10a1b71ac9bd4236806') });
 			is_deeply( $row, $expect, 'value for min mbox_sha1sum' );
 			$count++;
 		}
@@ -194,7 +193,6 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $expect	= RDF::Query::VariableBindings->new({ count => RDF::Query::Node::Literal->new('3', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
@@ -217,12 +215,10 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		
 		my %expect	= ( 'Gregory Todd Williams' => 2, 'Gary P' => 1 );
 		while (my $row = $stream->next) {
-			use Data::Dumper;
 			my $name	= $row->{name}->literal_value;
 			my $expect	= $expect{ $name };
 			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for variable GROUP' );
@@ -243,7 +239,6 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		
 		my %expect	= ( '45' => 3, '110' => 1 );
@@ -267,7 +262,6 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $value	= (values %$row)[0];
@@ -291,7 +285,6 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $min	= $row->{min};
@@ -334,3 +327,40 @@ END
 		is( $count, 1, 'one aggreate row' );
 	}
 }
+
+# {
+# 	# HAVING tests
+# 	my $model	= RDF::Trine::Model->temporary_model;
+# 	my $data	= <<'END';
+# @prefix : <http://books.example/> .
+# 
+# :org1 :affiliates :auth1, :auth2 .
+# :auth1 :writesBook :book1, :book2 .
+# :book1 :price 9 .
+# :book2 :price 5 .
+# :auth2 :writesBook :book3 .
+# :book3 :price 7 .
+# :org2 :affiliates :auth3 .
+# :auth3 :writesBook :book4 .
+# :book4 :price 7 .
+# END
+# 	my $parser	= RDF::Trine::Parser->new('turtle');
+# 	$parser->parse_into_model( 'http://base/', $data, $model );
+# 	my $query	= RDF::Query->new( <<'END', { lang => 'sparql11' } );
+# PREFIX : <http://books.example/>
+# SELECT (SUM(?lprice) AS ?totalPrice)
+# WHERE {
+#   ?org :affiliates ?auth .
+#   ?auth :writesBook ?book .
+#   ?book :price ?lprice .
+# }
+# GROUP BY ?org
+# HAVING (SUM(?lprice) > 10)
+# END
+# 	warn RDF::Query->error unless ($query);
+# 	my $iter	= $query->execute( $model );
+# 	while (my $r = $iter->next) {
+# 		use Data::Dumper;
+# 		warn Dumper($r);
+# 	}
+# }
