@@ -21,14 +21,17 @@ REQUIREMENTS
      * DBI
      * DBD::SQLite
      * Digest::MD5
+     * Digest::SHA1
      * Error
      * JSON
      * LWP::UserAgent
      * List::Util
+     * List::MoreUtils
      * Log::Log4perl
      * Math::BigInt
      * Math::Combinatorics
      * Scalar::Util
+     * Set::Scalar
      * Text::Table
      * Time::HiRes
      * Unicode::Escape
@@ -58,6 +61,14 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.115 (2010-01-30)
+
+     * Added N-Triples and N-Quads parsers.
+     * Added RDF::Trine::Store::SPARQL::get_pattern implementation.
+     * Changed RDF::Trine::Model::objects_for_predicate_list to return only a single node in scalar context.
+     * Added table alias for COUNT(*) queries in RDF::Trine::Store::DBI (fix for mysql).
+     * Added example of using parse_url_into_model to RDF::Trine::Parser SYNOPSIS.
 
   Version 0.114 (2010-01-27)
 

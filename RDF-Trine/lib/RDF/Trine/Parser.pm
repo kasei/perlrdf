@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.114
+This document describes RDF::Trine::Parser version 0.115
 
 =head1 SYNOPSIS
 
@@ -43,13 +43,14 @@ our ($VERSION);
 our %parser_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.114';
+	$VERSION	= '0.115';
 }
 
 use LWP::UserAgent;
 
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::NTriples;
+use RDF::Trine::Parser::NQuads;
 use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;

@@ -1,8 +1,10 @@
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
 lib/RDF/LinkedData/Apache.pm
+Makefile.PL
 MANIFEST			This list of files
 META.yml
 README
