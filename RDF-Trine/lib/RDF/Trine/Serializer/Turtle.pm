@@ -37,6 +37,7 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
 
+use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -69,7 +70,7 @@ sub new {
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
-Serializes the C<$model> to RDF/XML, printing the results to the supplied
+Serializes the C<$model> to Turtle, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -78,7 +79,11 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+	
+	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
 	
 	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t", model => $model );
 	return 1;
@@ -86,7 +91,7 @@ sub serialize_model_to_file {
 
 =item C<< serialize_model_to_string ( $model ) >>
 
-Serializes the C<$model> to RDF/XML, returning the result as a string.
+Serializes the C<$model> to Turtle, returning the result as a string.
 
 =cut
 
@@ -102,7 +107,7 @@ sub serialize_model_to_string {
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
-Serializes the iterator to RDF/XML, printing the results to the supplied
+Serializes the iterator to Turtle, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -236,7 +241,7 @@ sub serialize_iterator_to_file {
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
-Serializes the iterator to RDF/XML, returning the result as a string.
+Serializes the iterator to Turtle, returning the result as a string.
 
 =cut
 

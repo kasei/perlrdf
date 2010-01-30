@@ -147,6 +147,10 @@ __END__
 
 =back
 
+=head1 SEE ALSO
+
+L<http://www4.wiwiss.fu-berlin.de/bizer/TriG/>
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
