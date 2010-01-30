@@ -40,8 +40,8 @@ the work, if known):
 		* Pretty print RDF/XML [tobyink or kasei]
 		* TriX [tobyink]
 		* TriG
-		* N-Quads
 		* RDFa (refactor from RDF::LinkedData) [kasei]
+		* N-Quads [kasei; done 2010.01.30]
 		* Pretty print Turtle [kasei; done 2009.12.31]
 	* Exporters
 		* vCard [tobyink]
