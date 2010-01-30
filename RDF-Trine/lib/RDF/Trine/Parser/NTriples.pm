@@ -68,34 +68,17 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
-parsed, will call C<< $model->add_statement( $statement ) >>.
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
+
+Parses all data read from the filehandle C<< $fh >>, using the given
+C<< $base_uri >>. For each RDF statement parsed, will call
+C<< $model->add_statement( $statement ) >>.
 
 =cut
 
-sub parse_into_model {
-	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
-	my $uri		= shift;
-	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
-		$uri	= $uri->uri_value;
-	}
-	my $input	= shift;
-	my $model	= shift;
-	my %args	= @_;
-	my $context	= $args{'context'};
-	
-	my $handler	= sub {
-		my $st	= shift;
-		if ($context) {
-			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
-			$model->add_statement( $quad );
-		} else {
-			$model->add_statement( $st );
-		}
-	};
-	return $self->parse( $uri, $input, $handler );
-}
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
@@ -110,7 +93,7 @@ sub parse {
 	return $self->parse_file( $base, $fh, $handler );
 }
 
-=item C<< parse_file ( $base, $fh, $handler ) >>
+=item C<< parse_file ( $base, $fh, \&handler ) >>
 
 =cut
 

@@ -72,6 +72,38 @@ sub new {
 	return $self;
 }
 
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=cut
+
+sub parse_into_model {
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
+	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
+	my $input	= shift;
+	my $model	= shift;
+	my %args	= @_;
+	my $context	= $args{'context'};
+	my $opts	= $args{'json_opts'};
+	
+	my $handler	= sub {
+		my $st	= shift;
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
+	};
+	return $self->parse( $uri, $input, $handler, $opts );
+}
+
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
@@ -85,7 +117,7 @@ sub parse {
 	my $uri		= shift;
 	my $input	= shift;
 	my $handler	= shift;
-	my $opts = shift;
+	my $opts	= shift;
 	
 	my $index = from_json($input, $opts);
 	
@@ -133,34 +165,6 @@ sub parse {
 	return;
 }
 
-=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context ] ) >>
-
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
-parsed, will call C<< $model->add_statement( $statement ) >>.
-
-=cut
-
-sub parse_into_model {
-	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
-	my $uri		= shift;
-	my $input	= shift;
-	my $model	= shift;
-	my %args	= @_;
-	my $context	= $args{'context'};
-	my $opts	= $args{'json_opts'};
-	
-	my $handler	= sub {
-		my $st	= shift;
-		if ($context) {
-			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
-			$model->add_statement( $quad );
-		} else {
-			$model->add_statement( $st );
-		}
-	};
-	return $self->parse( $uri, $input, $handler, $opts );
-}
 
 1;
 
@@ -173,5 +177,10 @@ __END__
  Toby Inkster <tobyink@cpan.org>
  Gregory Williams <gwilliams@cpan.org>
 
-=cut
+=head1 COPYRIGHT
 
+Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
+
+=cut
