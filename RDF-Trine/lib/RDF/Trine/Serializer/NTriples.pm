@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Serializer::NTriples - NTriples Serializer.
+RDF::Trine::Serializer::NTriples - N-Triples Serializer.
 
 =head1 VERSION
 
@@ -16,7 +16,7 @@ This document describes RDF::Trine::Serializer::NTriples version 0.115
 
 =head1 DESCRIPTION
 
-The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
+The RDF::Trine::Serializer::NTriples class provides an API for serializing RDF
 graphs to the N-Triples syntax.
 
 =head1 METHODS
@@ -65,7 +65,7 @@ sub new {
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
-Serializes the C<$model> to NTriples, printing the results to the supplied
+Serializes the C<$model> to N-Triples, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -82,7 +82,7 @@ sub serialize_model_to_file {
 
 =item C<< serialize_model_to_string ( $model ) >>
 
-Serializes the C<$model> to NTriples, returning the result as a string.
+Serializes the C<$model> to N-Triples, returning the result as a string.
 
 =cut
 
@@ -100,7 +100,7 @@ sub serialize_model_to_string {
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
-Serializes the iterator to NTriples, printing the results to the supplied
+Serializes the iterator to N-Triples, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -114,15 +114,9 @@ sub serialize_iterator_to_file {
 	}
 }
 
-sub _statement_as_string {
-	my $self	= shift;
-	my $st		= shift;
-	return join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
-}
-
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
-Serializes the iterator to NTriples, returning the result as a string.
+Serializes the iterator to N-Triples, returning the result as a string.
 
 =cut
 
@@ -153,6 +147,12 @@ sub _serialize_bounded_description {
 		}
 	}
 	return $string;
+}
+
+sub _statement_as_string {
+	my $self	= shift;
+	my $st		= shift;
+	return join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
 }
 
 1;
