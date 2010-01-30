@@ -20,6 +20,7 @@ WriteMakefile(
 					'DBI'						=> 0,
 					'DBD::SQLite'				=> 1.14,
 					'Digest::MD5'				=> 0,
+					'Digest::SHA1'				=> 0,
 					'Error'						=> 0,
 					'JSON'						=> 2,
 					'LWP::UserAgent'			=> 0,

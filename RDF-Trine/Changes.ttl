@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.115" ;
-                        doap:created      "2010-01-XX" ;
+                        doap:created      "2010-01-30" ;
                         ];
         asc:changes     [
                         asc:addition    "Added N-Triples and N-Quads parsers." ;
