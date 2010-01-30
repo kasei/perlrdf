@@ -17,6 +17,8 @@ This document describes RDF::Trine::Parser version 0.115
  
  my $parser	= RDF::Trine::Parser->new( 'turtle' );
  $parser->parse_into_model( $base_uri, $rdf, $model );
+ 
+ $parser->parse_file_into_model( $base_uri, 'data.ttl', $model );
 
 =head1 DESCRIPTION
 
@@ -37,15 +39,9 @@ package RDF::Trine::Parser;
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use Data::Dumper;
-
-our ($VERSION);
-our %parser_names;
-our %media_types;
-BEGIN {
-	$VERSION	= '0.115';
-}
-
+use Scalar::Util qw(blessed);
 use LWP::UserAgent;
 
 use RDF::Trine::Error qw(:try);
@@ -55,6 +51,13 @@ use RDF::Trine::Parser::Turtle;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
+
+our %media_types;
+our %parser_names;
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.115';
+}
 
 =item C<< new ( $parser_name ) >>
 
@@ -113,6 +116,89 @@ sub parse_url_into_model {
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
+}
+
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=cut
+
+sub parse_into_model {
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
+	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
+	my $input	= shift;
+	my $model	= shift;
+	my %args	= @_;
+	my $context	= $args{'context'};
+	
+	my $handler	= sub {
+		my $st	= shift;
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
+	};
+	return $self->parse( $uri, $input, $handler );
+}
+
+=item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
+
+Parses all data read from the filehandle C<< $fh >>, using the given
+C<< $base_uri >>. For each RDF statement parsed, will call
+C<< $model->add_statement( $statement ) >>.
+
+=cut
+
+sub parse_file_into_model {
+	my $proto	= shift;
+	my $self	= blessed($proto) ? $proto : $proto->new();
+	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
+	my $fh		= shift;
+	my $model	= shift;
+	my %args	= @_;
+	my $context	= $args{'context'};
+	
+	my $handler	= sub {
+		my $st	= shift;
+		if ($context) {
+			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+			$model->add_statement( $quad );
+		} else {
+			$model->add_statement( $st );
+		}
+	};
+	return $self->parse_file( $uri, $fh, $handler );
+}
+
+=item C<< parse_file ( $base, $fh, $handler ) >>
+
+=cut
+
+sub parse_file {
+	my $self	= shift;
+	my $base	= shift;
+	my $fh		= shift;
+	my $handler	= shift;
+	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	
+	my $content	= do { local($/) = undef; <$fh> };
+	return $self->parse( $base, $content, $handler, @_ );
 }
 
 1;

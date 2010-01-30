@@ -32,16 +32,7 @@ my $model	= RDF::Trine::Model->new( $store );
 
 # Now we'll load the RDF data for the FOAF vocabulary from its URL:
 my $url		= 'http://xmlns.com/foaf/0.1/index.rdf';
-my $data	= get( $url );	# get() is from LWP::Simple
-
-
-# $base_uri is used in parsing as the location that the data was loaded from
-my $base_uri	= RDF::Trine::Node::Resource->new( $url );
-
-
-# We'll parse the data using the 'rdfxml' parser:
-my $parser	= RDF::Trine::Parser->new( 'rdfxml' );
-$parser->parse_into_model( $base_uri, $data, $model );
+RDF::Trine::Parser->parse_url_into_model( $url, $model );
 
 
 # $model now contains all the FOAF data. To look up specific triples
