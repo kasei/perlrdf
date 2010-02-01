@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.115
+This document describes RDF::Trine::Parser version 0.116
 
 =head1 SYNOPSIS
 
@@ -39,8 +39,15 @@ package RDF::Trine::Parser;
 use strict;
 use warnings;
 no warnings 'redefine';
-
 use Data::Dumper;
+
+our ($VERSION);
+our %parser_names;
+our %media_types;
+BEGIN {
+	$VERSION	= '0.116';
+}
+
 use Scalar::Util qw(blessed);
 use LWP::UserAgent;
 
@@ -52,13 +59,6 @@ use RDF::Trine::Parser::TriG;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
-
-our %media_types;
-our %parser_names;
-our ($VERSION);
-BEGIN {
-	$VERSION	= '0.115';
-}
 
 =item C<< new ( $parser_name ) >>
 

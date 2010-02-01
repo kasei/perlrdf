@@ -1,4 +1,4 @@
-use Test::More tests => 14;
+use Test::More tests => 15;
 use Test::Exception;
 
 use strict;
@@ -317,3 +317,15 @@ END
 	is($xml, $expect, '_serialize_bounded_description with unknown node');
 }
 
+{
+	my $model = RDF::Trine::Model->temporary_model();
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+</rdf:RDF>
+END
+	
+	my $xml = $serializer->serialize_model_to_string($model);
+	is($xml, $expect, 'serialize_model_to_string with empty model');
+}
