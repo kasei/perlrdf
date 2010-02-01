@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.115
+This document describes RDF::Trine::Serializer::RDFXML version 0.116
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.115';
+	$VERSION	= '0.116';
 }
 
 ######################################################################
@@ -109,7 +109,9 @@ sub serialize_iterator_to_file {
 	my $iter	= shift;
 	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
 	
-	my @statements	= $iter->next;
+	my $st			= $iter->next;
+	my @statements;
+	push(@statements, $st) if blessed($st);
 	while (@statements) {
 		my $st	= shift(@statements);
 		my @samesubj;

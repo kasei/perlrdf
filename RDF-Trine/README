@@ -62,6 +62,10 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.116 (2010-01-31)
+
+     * Fixed bug in RDF::Trine::Serializer::RDFXML when serializing empty models.
+
   Version 0.115 (2010-01-30)
 
      * Added N-Triples and N-Quads parsers.
