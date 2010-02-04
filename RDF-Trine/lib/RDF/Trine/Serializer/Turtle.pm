@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.116
+This document describes RDF::Trine::Serializer::Turtle version 0.117
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.116';
+	$VERSION	= '0.117';
 }
 
 ######################################################################

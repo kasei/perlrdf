@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.116
+This document describes RDF::Trine::Serializer version 0.117
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.116';
+	$VERSION	= '0.117';
 }
 
 use LWP::UserAgent;
