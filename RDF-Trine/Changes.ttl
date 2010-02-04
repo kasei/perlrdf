@@ -10,6 +10,19 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.117.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.116.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.117" ;
+                        doap:created      "2010-02-04" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed bug in RDF::Trine::Iterator::Bindings::as_json when using empty iterator." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.116.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.115.tar.gz> ;
