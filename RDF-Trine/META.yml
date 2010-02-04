@@ -10,6 +10,7 @@ author:
 build_requires:
   Test::More: 0.61
   Test::Exception: 0
+  Test::JSON: 0
 recommends:
   RDF::RDFa::Parser: 0
   RDF::Redland: 1

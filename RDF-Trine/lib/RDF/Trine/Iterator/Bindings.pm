@@ -36,7 +36,7 @@ use Data::Dumper;
 use JSON 2.0;
 use Text::Table;
 use Log::Log4perl;
-use Scalar::Util qw(reftype);
+use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator::Bindings::Materialized;
 
 use RDF::Trine::Iterator qw(smap);
@@ -340,7 +340,8 @@ sub binding_value_by_name {
 	if (exists( $row->{ $name } )) {
 		return $row->{ $name };
 	} else {
-		warn "No variable named '$name' is present in query results.\n";
+# 		warn "No variable named '$name' is present in query results.\n";
+		return;
 	}
 }
 
@@ -454,8 +455,10 @@ sub as_json {
 		for (my $i = 0; $i < $width; $i++) {
 			my $name		= $self->binding_name($i);
 			my $value		= $self->binding_value($i);
-			if (my ($k, $v) = format_node_json($value, $name)) {
-				$row{ $k }		= $v;
+			if (blessed($value)) {
+				if (my ($k, $v) = format_node_json($value, $name)) {
+					$row{ $k }		= $v;
+				}
 			}
 		}
 		

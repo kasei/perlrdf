@@ -1,9 +1,11 @@
-#!/usr/bin/perl
+use Test::More tests => 10;
+use Test::JSON;
+
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use URI::file;
-use Test::More tests => 8;
 
 use RDF::Trine;
 use RDF::Trine::Node;
@@ -33,4 +35,16 @@ use_ok( 'RDF::Trine::Iterator::Bindings' );
 	is_deeply( $proj->next, { b => 2 } );
 	is_deeply( $proj->next, { b => 3 } );
 	is( $proj->next, undef );
+}
+
+{
+	my $iter	= RDF::Trine::Iterator::Bindings->new( [] );
+	my $expect	= '{"head":{"vars":[]},"results":{"bindings":[{}],"distinct":false,"ordered":false}}';
+	is_json( $iter->as_json, $expect, 'as_json empty bindings iterator without names' );
+}
+
+{
+	my $iter	= RDF::Trine::Iterator::Bindings->new( [], [qw(a b c)] );
+	my $expect	= '{"head":{"vars":["a", "b", "c"]},"results":{"bindings":[{}],"distinct":false,"ordered":false}}';
+	is_json( $iter->as_json, $expect, 'as_json empty bindings iterator with names' );
 }
