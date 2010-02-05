@@ -51,7 +51,7 @@ BEGIN {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 	
-	eval "use RDF::RDFa::Parser;";
+	eval "use RDF::RDFa::Parser 0.30;";
 	unless ($@) {
 		$HAVE_RDFA_PARSER	= 1;
 	}
@@ -59,17 +59,20 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new >>
+=item C<< new ( options => \%options ) >>
+
+Returns a new RDFa parser object with the supplied options.
 
 =cut
 
 sub new {
 	my $class	= shift;
+	my %args	= @_;
 	unless ($HAVE_RDFA_PARSER) {
-		throw RDF::Trine::Error -text => "Can't locate RDF::RDFa::Parser";
+		throw RDF::Trine::Error -text => "Failed to load RDF::RDFa::Parser >= 0.30";
 	}
 	
-	my $self = bless( {}, $class);
+	my $self = bless( { %args }, $class);
 	return $self;
 }
 
@@ -90,15 +93,17 @@ sub parse {
 	my $string	= shift;
 	my $handler	= shift;
 	
-	my $parser	= RDF::RDFa::Parser->new($string, $base);
-	$parser->consume;
-	my $graph	= $parser->graph;
-	my $iter	= $graph->as_stream;
-	while (my $st = $iter->next()) {
-		if (reftype($handler) eq 'CODE') {
-			$handler->( $st );
+	my $parser  = RDF::RDFa::Parser->new($string, $base, $self->{'options'});
+	$parser->set_callbacks({
+		ontriple	=> sub {
+			my ($p, $el, $st)	= @_;
+			if (reftype($handler) eq 'CODE') {
+				$handler->( $st );
+			}
+			return 1;
 		}
-	}
+	});
+	$parser->consume;
 }
 
 

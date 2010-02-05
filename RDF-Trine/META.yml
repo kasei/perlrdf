@@ -12,7 +12,7 @@ build_requires:
   Test::Exception: 0
   Test::JSON: 0
 recommends:
-  RDF::RDFa::Parser: 0
+  RDF::RDFa::Parser: 0.30
   RDF::Redland: 1
   RDF::Core: 0
 requires:
