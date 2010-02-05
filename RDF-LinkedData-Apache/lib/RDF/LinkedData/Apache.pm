@@ -315,6 +315,7 @@ sub _title {
 
 		my @label	= (
 			iri( 'http://xmlns.com/foaf/0.1/name' ),
+			iri( 'http://purl.org/dc/terms/title' ),
 			iri( 'http://purl.org/dc/elements/1.1/title' ),
 			iri( 'http://www.w3.org/2000/01/rdf-schema#label' ),
 		);
