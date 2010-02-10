@@ -1,4 +1,4 @@
-use Test::More tests => 31;
+use Test::More tests => 32;
 use Test::Exception;
 
 use strict;
@@ -375,7 +375,27 @@ END
 	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
-	is($turtle, $expect, 'multiple namespace Qnames');
+	is($turtle, $expect, 'multiple namespace Qnames (old namespace API)');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/', rdfs => 'http://www.w3.org/2000/01/rdf-schema#' } );
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'], 'http://www.w3.org/2000/01/rdf-schema#seeAlso' => [{type=>'resource', value => 'http://alice.me/'}] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+\@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+[] rdfs:seeAlso <http://alice.me/> ;
+	foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'multiple namespace Qnames (new namespace API)');
 }
 
 {

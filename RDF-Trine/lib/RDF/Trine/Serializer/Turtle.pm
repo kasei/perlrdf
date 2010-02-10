@@ -12,7 +12,8 @@ This document describes RDF::Trine::Serializer::Turtle version 0.117
 =head1 SYNOPSIS
 
  use RDF::Trine::Serializer::Turtle;
- my $serializer	= RDF::Trine::Serializer::Turtle->new();
+ my $serializer	= RDF::Trine::Serializer::Turtle->new( namespaces => { ex => 'http://example/' } );
+ print $serializer->serialize_model_to_string($model);
 
 =head1 DESCRIPTION
 
@@ -35,7 +36,7 @@ use base qw(RDF::Trine::Serializer);
 use URI;
 use Carp;
 use Data::Dumper;
-use Scalar::Util qw(blessed refaddr);
+use Scalar::Util qw(blessed refaddr reftype);
 
 use RDF::Trine qw(variable);
 use RDF::Trine::Node;
@@ -53,7 +54,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( %namespaces ) >>
+=item C<< new ( namespaces => \%namespaces ) >>
 
 Returns a new Turtle serializer object.
 
@@ -61,7 +62,17 @@ Returns a new Turtle serializer object.
 
 sub new {
 	my $class	= shift;
-	my $ns		= shift || {};
+	my $ns	= {};
+	if (@_) {
+		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
+			$ns	= shift;
+		} else {
+			my %args	= @_;
+			if (exists $args{ namespaces }) {
+				$ns	= $args{ namespaces };
+			}
+		}
+	}
 	my $self = bless( {
 		ns			=> { reverse %$ns },
 	}, $class );

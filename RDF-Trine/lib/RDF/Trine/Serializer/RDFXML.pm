@@ -12,7 +12,8 @@ This document describes RDF::Trine::Serializer::RDFXML version 0.117
 =head1 SYNOPSIS
 
  use RDF::Trine::Serializer::RDFXML;
- my $serializer	= RDF::Trine::Serializer::RDFXML->new();
+ my $serializer	= RDF::Trine::Serializer::RDFXML->new( namespaces => { ex => 'http://example/' } );
+ print $serializer->serialize_model_to_string($model);
 
 =head1 DESCRIPTION
 
@@ -50,16 +51,21 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new >>
+=item C<< new ( namespaces => \%namespaces ) >>
 
-Returns a new 
+Returns a new RDF/XML serializer object.
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	my $self = bless( {}, $class);
+	my $self = bless( { namespaces => { 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf' } }, $class);
+	if (my $ns = $args{namespaces}) {
+		my %ns		= %{ $ns };
+		my %nsmap	= reverse %ns;
+		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
+	}
 	return $self;
 }
 
@@ -107,7 +113,9 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $iter	= shift;
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
+	
+	my $ns		= $self->_top_xmlns();
+	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $ns>\n];
 	
 	my $st			= $iter->next;
 	my @statements;
@@ -147,7 +155,7 @@ sub _statements_same_subject_as_string {
 	}
 	
 	my $counter	= 1;
-	my %namespaces	= ('http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf');
+	my %namespaces	= %{ $self->{namespaces} };
 	my $string	= '';
 	foreach my $st (@statements) {
 		my (undef, $p, $o)	= $st->nodes;
@@ -188,10 +196,13 @@ sub _statements_same_subject_as_string {
 	$string	.= qq[</rdf:Description>\n];
 	
 	# rdf namespace is already defined in the <rdf:RDF> tag, so ignore it here
-	delete $namespaces{ 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' };
-	
-	my $namespaces	= join(' ', map { my $ns = $namespaces{$_}; qq[xmlns:${ns}="$_"] } sort { $namespaces{$a} cmp $namespaces{$b} } (keys %namespaces));
-	return qq[<rdf:Description ${namespaces} $id>\n] . $string;
+	my %seen	= %{ $self->{namespaces} };
+	my $ns	= join(' ', map { my $ns = $namespaces{$_}; qq[xmlns:${ns}="$_"] } sort { $namespaces{$a} cmp $namespaces{$b} } grep { not($seen{$_}) } (keys %namespaces));
+	if ($ns) {
+		return qq[<rdf:Description ${ns} $id>\n] . $string;
+	} else {
+		return qq[<rdf:Description $id>\n] . $string;
+	}
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
@@ -216,7 +227,8 @@ sub _serialize_bounded_description {
 	my $node	= shift;
 	my $seen	= {};
 	
-	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n];
+	my $ns		= $self->_top_xmlns();
+	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $ns>\n];
 	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
@@ -244,6 +256,20 @@ sub __serialize_bounded_description {
 		}
 	}
 	return $string;
+}
+
+sub _top_xmlns {
+	my $self	= shift;
+	my $namespaces	= $self->{namespaces};
+	my @keys		= sort { $namespaces->{$a} cmp $namespaces->{$b} } keys %$namespaces;
+	
+	my @ns;
+	foreach my $v (@keys) {
+		my $k	= $namespaces->{$v};
+		push(@ns, qq[xmlns:$k="$v"]);
+	}
+	my $ns		= join(' ', @ns);
+	return $ns;
 }
 
 1;
