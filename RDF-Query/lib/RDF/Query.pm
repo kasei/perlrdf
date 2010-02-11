@@ -1658,42 +1658,6 @@ __END__
 
 =back
 
-=head1 REQUIRES
-
-=over 4
-
-=item * L<RDF::Trine|RDF::Trine>
-
-=item * L<DateTime|DateTime>
-
-=item * L<DateTime::Format::W3CDTF|DateTime::Format::W3CDTF>
-
-=item * L<Digest::SHA1|Digest::SHA1>
-
-=item * L<Error|Error>
-
-=item * L<I18N::LangTags|I18N::LangTags>
-
-=item * L<JSON|JSON>
-
-=item * L<List::Util|List::Util>
-
-=item * L<LWP|LWP>
-
-=item * L<Parse::RecDescent|Parse::RecDescent>
-
-=item * L<Scalar::Util|Scalar::Util>
-
-=item * L<Set::Scalar|Set::Scalar>
-
-=item * L<Storable|Storable>
-
-=item * L<URI|URI>
-
-=item * L<RDF::Redland|RDF::Redland> or L<RDF::Core|RDF::Core> for optional model support.
-
-=back
-
 =head1 DEFINED HOOKS
 
 The following hook URIs are defined and may be used to extend the query engine
@@ -1722,6 +1686,10 @@ C<$bridge> is the model bridge (RDF::Query::Model::*) object.
 C<$iterator> is a RDF::Trine::Iterator object.
 
 =back
+
+=head1 SEE ALSO
+
+L<http://www.perlrdf.org/>
 
 =head1 AUTHOR
 
