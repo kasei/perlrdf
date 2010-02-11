@@ -20,6 +20,7 @@ the work, if known):
 ## RDF::Trine
 	* Parsers
 		* Guess parser based on filename/content sniffing
+		* Add optional (XSD) value canonicalization to parsers
 		* XRD [tobyink]
 		* TriX [tobyink]
 		* GRDDL [tobyink]
@@ -37,6 +38,7 @@ the work, if known):
 		* N-Quads [kasei; done 2010.01.28]
 	* Serializers
 		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer
+		* Added ::RDFJSON::serialize_iterator_* methods
 		* Pretty print RDF/XML [tobyink or kasei]
 		* TriX [tobyink]
 		* TriG
