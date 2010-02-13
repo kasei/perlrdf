@@ -79,7 +79,7 @@ sub new {
 	} elsif (my $class = $parser_names{ $key }) {
 		return $class->new( @_ );
 	} else {
-		throw RDF::Trine::Error::MethodInvocationError -text => "No parser known named $name";
+		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
 	}
 }
 
