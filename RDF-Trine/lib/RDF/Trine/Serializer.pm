@@ -25,7 +25,9 @@ package RDF::Trine::Serializer;
 use strict;
 use warnings;
 no warnings 'redefine';
+
 use Data::Dumper;
+use HTTP::Negotiate qw(choose);
 
 our ($VERSION);
 our %serializer_names;
@@ -72,6 +74,31 @@ sub new {
 		return $class->new( @_ );
 	} else {
 		throw RDF::Trine::Error::SerializationError -text => "No serializer known named $name";
+	}
+}
+
+=item C<< negotiate ( request_headers => $request_headers, %options ) >>
+
+Returns an appropriate RDF::Trine::Serializer object as decided by
+L<HTTP::Negotiate>. If the C<< 'request_headers' >> key-value is supplied, the
+C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
+C<< %options >> is passed through to the serializer constructor.
+
+=cut
+
+sub negotiate {
+	my $class	= shift;
+	my %options	= @_;
+	my $headers	= delete $options{ 'request_headers' };
+	my @variants;
+	while (my($type, $sclass) = each(%media_types)) {
+		push(@variants, [$sclass, 1.0, $type]);
+	}
+	my $sclass	= choose( \@variants, $headers );
+	if ($sclass) {
+		return $sclass->new( %options );
+	} else {
+		throw RDF::Trine::Error::SerializationError -text => "No appropriate serializer found for content-negotiation";
 	}
 }
 

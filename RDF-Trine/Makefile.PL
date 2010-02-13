@@ -23,6 +23,7 @@ WriteMakefile(
 					'Digest::MD5'				=> 0,
 					'Digest::SHA1'				=> 0,
 					'Error'						=> 0,
+					'HTTP::Negotiate'			=> 0,
 					'JSON'						=> 2,
 					'LWP::UserAgent'			=> 0,
 					'List::Util'				=> 0,
