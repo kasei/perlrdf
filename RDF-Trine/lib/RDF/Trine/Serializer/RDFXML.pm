@@ -47,6 +47,10 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.117';
+	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
+	foreach my $type (qw(application/rdf+xml)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################
@@ -91,16 +95,6 @@ sub serialize_model_to_file {
 Serializes the C<$model> to RDF/XML, returning the result as a string.
 
 =cut
-
-sub serialize_model_to_string {
-	my $self	= shift;
-	my $model	= shift;
-	my $string	= '';
-	open( my $fh, '>', \$string );
-	$self->serialize_model_to_file( $fh, $model );
-	close($fh);
-	return $string;
-}
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
@@ -210,16 +204,6 @@ sub _statements_same_subject_as_string {
 Serializes the iterator to RDF/XML, returning the result as a string.
 
 =cut
-
-sub serialize_iterator_to_string {
-	my $self	= shift;
-	my $iter	= shift;
-	my $string	= '';
-	open( my $fh, '>', \$string );
-	$self->serialize_iterator_to_file( $fh, $iter );
-	close($fh);
-	return $string;
-}
 
 sub _serialize_bounded_description {
 	my $self	= shift;

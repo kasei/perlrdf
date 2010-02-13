@@ -46,6 +46,10 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.117';
+	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
+	foreach my $type (qw(text/plain)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################

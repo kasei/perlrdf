@@ -46,6 +46,10 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.117';
+	$RDF::Trine::Serializer::serializer_names{ 'rdfjson' }	= __PACKAGE__;
+	foreach my $type (qw(application/json application/x-rdf+json)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################

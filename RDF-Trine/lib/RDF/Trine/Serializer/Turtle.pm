@@ -50,6 +50,10 @@ our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= '0.117';
+	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
+	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################
