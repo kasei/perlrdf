@@ -289,30 +289,6 @@ sub get_pattern {
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 =item C<< get_contexts >>
 
 =cut
