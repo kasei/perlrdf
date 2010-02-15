@@ -79,8 +79,9 @@ sub new {
 
 =item C<< negotiate ( request_headers => $request_headers, %options ) >>
 
-Returns an appropriate RDF::Trine::Serializer object as decided by
-L<HTTP::Negotiate>. If the C<< 'request_headers' >> key-value is supplied, the
+Returns a two-element list containing an appropriate media type and
+RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.
+If the C<< 'request_headers' >> key-value is supplied, the
 C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
 C<< %options >> is passed through to the serializer constructor.
 
@@ -92,11 +93,11 @@ sub negotiate {
 	my $headers	= delete $options{ 'request_headers' };
 	my @variants;
 	while (my($type, $sclass) = each(%media_types)) {
-		push(@variants, [$sclass, 1.0, $type]);
+		push(@variants, [$type, 1.0, $type]);
 	}
-	my $sclass	= choose( \@variants, $headers );
-	if ($sclass) {
-		return $sclass->new( %options );
+	my $stype	= choose( \@variants, $headers );
+	if (defined($stype) and my $sclass = $media_types{ $stype }) {
+		return ($stype, $sclass->new( %options ));
 	} else {
 		throw RDF::Trine::Error::SerializationError -text => "No appropriate serializer found for content-negotiation";
 	}
