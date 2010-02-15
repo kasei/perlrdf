@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(reftype blessed);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(sgrep);
 
@@ -49,6 +49,9 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $vars	= shift;
+	unless (reftype($vars) eq 'ARRAY' and not(blessed($vars))) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Variable list in RDF::Query::Algebra::Project constructor must be an ARRAY reference";
+	}
 	return bless( [ $pattern, $vars ], $class );
 }
 
