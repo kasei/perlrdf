@@ -27,9 +27,13 @@ use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
 use RDF::Query::Node::Variable;
 
-our ($VERSION);
+our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
 	$VERSION	= '2.201';
+
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(iri blank literal variable);
 }
 
 =item C<< is_variable >>
@@ -115,6 +119,51 @@ sub compare {
 	
 	local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	return $a <=> $b;
+}
+
+
+=item C<< iri ( $iri ) >>
+
+Returns a RDF::Query::Node::Resource object with the given IRI value.
+
+=cut
+
+sub iri {
+	my $iri	= shift;
+	return RDF::Query::Node::Resource->new( $iri );
+}
+
+=item C<< blank ( $id ) >>
+
+Returns a RDF::Query::Node::Blank object with the given identifier.
+
+=cut
+
+sub blank {
+	my $id	= shift;
+	return RDF::Query::Node::Blank->new( $id );
+}
+
+=item C<< literal ( $value, $lang, $dt ) >>
+
+Returns a RDF::Query::Node::Literal object with the given value and optional
+language/datatype.
+
+=cut
+
+sub literal {
+	return RDF::Query::Node::Literal->new( @_ );
+}
+
+=item C<< variable ( $name ) >>
+
+Returns a RDF::Query::Node::Variable object with the given variable name.
+
+=cut
+
+sub variable {
+	my $name	= shift;
+	return RDF::Query::Node::Variable->new( $name );
 }
 
 

@@ -17,8 +17,13 @@ This document describes RDF::Query::Algebra version 2.201, released 30 January 2
 
 package RDF::Query::Algebra;
 
+our (@ISA, @EXPORT_OK);
 BEGIN {
 	our $VERSION	= '2.201';
+	
+	require Exporter;
+	@ISA		= qw(Exporter);
+	@EXPORT_OK	= qw(triple bgp ggp);
 }
 
 use strict;
@@ -305,6 +310,47 @@ sub from_sse {
 		return;
 	}
 }
+
+=back
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< triple ( $subj, $pred, $obj ) >>
+
+Returns a RDF::Query::Algebra::Triple object with the supplied node objects.
+
+=cut
+
+sub triple {
+	my @nodes	= @_[0..2];
+	return RDF::Query::Algebra::Triple->new( @nodes );
+}
+
+=item C<< bgp ( @triples ) >>
+
+Returns a RDF::Query::Algebra::BasicGraphPattern object with the supplied triples.
+
+=cut
+
+sub bgp {
+	my @triples	= @_;
+	return RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+}
+
+=item C<< ggp ( @patterns ) >>
+
+Returns a RDF::Query::Algebra::GroupGraphPattern object with the supplied algebra patterns.
+
+=cut
+
+sub ggp {
+	my @patterns	= @_;
+	return RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
+}
+
+
 
 1;
 
