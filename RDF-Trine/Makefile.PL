@@ -34,6 +34,7 @@ WriteMakefile(
 					'Scalar::Util'				=> 0,
 					'Set::Scalar'				=> 0,
 					'Storable'					=> 0,
+					'Text::CSV'					=> 0,
 					'Text::Table'				=> 0,
 					'Time::HiRes'				=> 0,
 					'Unicode::Escape'			=> 0,
