@@ -1,6 +1,7 @@
 use Test::More qw(no_plan);
 use Test::Exception;
 use FindBin qw($Bin);
+use File::Glob qw(bsd_glob);
 use File::Spec;
 
 use RDF::Trine;
@@ -8,8 +9,8 @@ use RDF::Trine::Parser;
 
 
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle' );
-my @good	= glob("${path}/test*.ttl");
-my @bad		= glob("${path}/bad*.ttl");
+my @good	= bsd_glob("${path}/test*.ttl");
+my @bad		= bsd_glob("${path}/bad*.ttl");
 
 foreach my $file (@good) {
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
