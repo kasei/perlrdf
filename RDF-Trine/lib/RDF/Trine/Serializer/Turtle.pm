@@ -302,7 +302,8 @@ sub _serialize_object_to_file {
 							if ($pred->equal( $last_pred )) {
 								# continue an existing predicate
 								print {$fh} qq[, ];
-								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
+								$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+#								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
 							} else {
 								# start a new predicate
 								if ($triple_count == 0) {
