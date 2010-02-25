@@ -13,6 +13,7 @@ inc/Module/Install/MakeMaker.pm
 inc/Module/Install/Metadata.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
+lib/RDF/Trine/Exporter/CSV.pm
 lib/RDF/Trine/Graph.pm
 lib/RDF/Trine/Iterator.pm
 lib/RDF/Trine/Iterator/Bindings.pm
@@ -37,9 +38,11 @@ lib/RDF/Trine/Parser/NTriples.pm
 lib/RDF/Trine/Parser/RDFa.pm
 lib/RDF/Trine/Parser/RDFJSON.pm
 lib/RDF/Trine/Parser/RDFXML.pm
+lib/RDF/Trine/Parser/TriG.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
 lib/RDF/Trine/Serializer.pm
+lib/RDF/Trine/Serializer/NQuads.pm
 lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
@@ -52,8 +55,8 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
-lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Hexastore.pm
+lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/SPARQL.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -488,6 +491,7 @@ t/data/turtle/test-24.out
 t/data/turtle/test-24.ttl
 t/data/turtle/test-25.out
 t/data/turtle/test-25.ttl
+t/exporter-csv.t
 t/graph.t
 t/iterator-bindings-join.t
 t/iterator-bindings-materialize.t
@@ -507,21 +511,24 @@ t/namespace-uri.t
 t/node-resource-i18n.t
 t/node-serialization.t
 t/node.t
+t/parser-nquads.t
+t/parser-ntriples.t
 t/parser-rdfa.t
 t/parser-rdfjson.t
 t/parser-rdfxml-w3c.t
+t/parser-trig.t
 t/parser-turtle.t
-t/parser-nquads.t
-t/parser-ntriples.t
 t/parser.t
 t/pattern.t
 t/pod-coverage.t
 t/pod.t
+t/serializer-nquads.t
 t/serializer-ntriples-canonical.t
 t/serializer-ntriples.t
 t/serializer-rdfjson.t
 t/serializer-rdfxml.t
 t/serializer-turtle.t
+t/serializer.t
 t/statement-serialization.t
 t/statement.t
 t/store-context.t
