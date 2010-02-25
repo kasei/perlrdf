@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.117
+This document describes RDF::Trine::Serializer::NTriples version 0.118_01
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.117';
+	$VERSION	= '0.118_01';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
