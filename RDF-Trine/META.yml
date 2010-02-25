@@ -3,7 +3,7 @@ meta-spec:
   version: 1.3
   url: http://module-build.sourceforge.net/META-spec-v1.3.html
 name:         RDF-Trine
-version: 0.117
+version: 0.118_01
 abstract: An RDF framework, providing a triplestore, parsers, serializers, and common classes for nodes, triples, quads, etc.
 author:
   - Gregory Todd Williams <gwilliams@cpan.org>

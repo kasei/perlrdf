@@ -23,6 +23,7 @@ REQUIREMENTS
      * Digest::MD5
      * Digest::SHA1
      * Error
+     * HTTP::Negotiate
      * JSON
      * LWP::UserAgent
      * List::Util
@@ -32,6 +33,7 @@ REQUIREMENTS
      * Math::Combinatorics
      * Scalar::Util
      * Set::Scalar
+     * Text::CSV
      * Text::Table
      * Time::HiRes
      * Unicode::Escape
@@ -61,6 +63,30 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.118 (2010-XX-XX)
+
+     * Added RDF::Trine::Parser::TriG.
+     * Added RDF::Trine::Parser::parse_file_into_model method.
+     * Added RDF::Trine::Serializer::NQuads.
+     * Added RDF::Trine::Serializer::negotiate constructor.
+     * Added RDF::Trine::Serializer::new constructor based on requested serializer name.
+     * Added RDF::Trine::Exporter::CSV for serializing variable bindings.
+     * Added Text::CSV and HTTP::Negotiate to RDF::Trine prereq list.
+     * Fixed exception thrown on unrecognized parser name.
+     * Removed dependency list and added perlrdf link to POD in RDF::Trine and RDF::Query.
+     * Updated RDF::Trine::Serializer::Turtle->new API to take %args instead of \%namespaces.
+     * Updated RDF::Trine::Serializer::RDFXML to take %args and properly accept and serialize xmlns namespaces.
+     * Updated RDF::Trine::Parser::RDFa to use streaming parsing (instead of materializing the graph first).
+     * Updated RDF::Trine::Model::_debug to use quad semantics when getting statement iterator.
+     * Updated t/parser-turtle.t to use File::Glob::bsd_glob for cases where the test directory's path contains whitespace.
+     * Removed redundant parse_into_model methods from RDF::Trine::Parser subclasses.
+     * Renamed examples/create_store.pl to examples/foaf_labels.pl.
+     * Fixed bug in turtle serializer that improperly serialized bnode objects 'belonging' to a parent bnode.
+
+  Version 0.117 (2010-02-04)
+
+     * Fixed bug in RDF::Trine::Iterator::Bindings::as_json when using empty iterator.
 
   Version 0.116 (2010-01-31)
 
