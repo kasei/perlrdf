@@ -64,7 +64,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.118 (2010-XX-XX)
+  Version 0.118 (2010-03-22)
 
      * Added RDF::Trine::Parser::TriG.
      * Added RDF::Trine::Parser::parse_file_into_model method.

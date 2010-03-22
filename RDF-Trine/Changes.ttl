@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.118" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-03-22" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Parser::TriG." ;
