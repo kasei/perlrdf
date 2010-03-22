@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.117
+This document describes RDF::Trine::Model version 0.118
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.117';
+	$VERSION	= '0.118';
 }
 
 use Scalar::Util qw(blessed);
@@ -289,30 +289,6 @@ sub get_pattern {
 	}
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 =item C<< get_contexts >>
 
 =cut
@@ -448,7 +424,7 @@ sub _store {
 
 sub _debug {
 	my $self	= shift;
-	my $stream	= $self->as_stream;
+	my $stream	= $self->get_statements( undef, undef, undef, undef );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
 	$l->debug( 'model statements:' );
 	while (my $s = $stream->next) {

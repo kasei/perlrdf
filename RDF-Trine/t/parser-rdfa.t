@@ -10,18 +10,14 @@ use RDF::Trine;
 use RDF::Trine::Parser;
 use RDF::Trine::Serializer::NTriples::Canonical;
 
-my $tests	= 1;
-
-if ($ENV{RDFTRINE_NETWORK_TESTS}) {
-	plan tests => $tests;
-} else {
-	plan skip_all => 'No network. Set RDFTRINE_NETWORK_TESTS to run these tests.';
-	return;
-}
 
 my $path	= File::Spec->catfile( $Bin, 'data', 'rdfa' );
 my @good	= glob("${path}/test*.xhtml");
+my $tests	= 2 * scalar(@good);
+plan tests => $tests;
+
 my %expect;
+my %names;
 foreach my $g (@good) {
 	my $f	= $g;
 	$f		=~ s/xhtml$/nt/;
@@ -30,6 +26,8 @@ foreach my $g (@good) {
 		open( my $fh, '<', $f ) or next;
 		my $content	= <$fh>;
 		$expect{ $g }	= $content;
+		(undef, undef, my $name)	= File::Spec->splitpath( $g );
+		$names{ $g }	= $name;
 	}
 }
 my $serializer	= RDF::Trine::Serializer::NTriples::Canonical->new( onfail=>'space' );
@@ -40,13 +38,27 @@ SKIP: {
 	skip( "Need RDF::RDFa::Parser to run these tests.", $tests ) if ($@);
 	foreach my $file (keys %expect) {
 		my $expect	= $expect{ $file };
-		my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-		my (undef, undef, $test)	= File::Spec->splitpath( $file );
-		my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
-		my $url	= 'file://' . $file;
-		my $parser	= RDF::Trine::Parser->new('rdfa');
-		$parser->parse_into_model( $url, $data, $model );
-		my $got	= $serializer->serialize_model_to_string($model);
-		is( $got, $expect );
+		my $name	= $names{ $file };
+		
+		{
+			my $parser	= RDF::Trine::Parser->new('rdfa');
+			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+			my (undef, undef, $test)	= File::Spec->splitpath( $file );
+			my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+			my $url	= 'file://' . $file;
+			$parser->parse_into_model( $url, $data, $model );
+			my $got	= $serializer->serialize_model_to_string($model);
+			is( $got, $expect, "parse_into_model: $name" );
+		}
+		
+		{
+			my $parser	= RDF::Trine::Parser->new('rdfa');
+			my $url	= 'file://' . $file;
+			my $model	= RDF::Trine::Model->temporary_model;
+			$parser->parse_file_into_model( $url, $file, $model );
+			my $got	= $serializer->serialize_model_to_string($model);
+			is( $got, $expect, "parse_file_into_model: $name" );
+		}
+		
 	}
 }

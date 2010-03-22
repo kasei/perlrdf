@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.117
+This document describes RDF::Trine::Store::Hexastore version 0.118
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.117;
+our $VERSION	= 0.118;
 
 use Data::Dumper;
 use RDF::Trine::Error;

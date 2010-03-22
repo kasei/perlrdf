@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 19;
 use Test::Exception;
 
 use strict;
@@ -329,3 +329,62 @@ END
 	my $xml = $serializer->serialize_model_to_string($model);
 	is($xml, $expect, 'serialize_model_to_string with empty model');
 }
+
+{
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( namespaces => { ex => 'http://example.com/' } );
+	my $model = RDF::Trine::Model->temporary_model;
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/maker' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+		},
+		'_:a' => {
+			'http://example.com/name' => [
+				{'type' => 'literal','value' => 'Alice', 'lang' => 'en'},
+			],
+			'http://example.com/homepage' => [
+				{'type' => 'uri', 'value' => 'http://example.com/' },
+			],
+		},
+	});
+	
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:ex="http://example.com/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description rdf:about="http://example.com/doc">
+	<ex:maker rdf:nodeID="a"/>
+</rdf:Description>
+<rdf:Description rdf:nodeID="a">
+	<ex:homepage rdf:resource="http://example.com/"/>
+	<ex:name xml:lang="en">Alice</ex:name>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
+	is($xml, $expect, 'xmlns namespaces 1');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( namespaces => {
+		foaf	=> 'http://xmlns.com/foaf/0.1/',
+		rdfs	=> "http://www.w3.org/2000/01/rdf-schema#",
+		lang	=> "http://purl.org/net/inkel/rdf/schemas/lang/1.1#",
+	} );
+	my $model = RDF::Trine::Model->temporary_model;
+	$model->add_hashref({
+		'_:a' => {
+			'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'	=> [{type => 'uri', value => 'http://xmlns.com/foaf/0.1/Person'}],
+			'http://xmlns.com/foaf/0.1/name'	=> ['Eve'],
+			'http://purl.org/net/inkel/rdf/schemas/lang/1.1#masters' => ['en','fr'],
+			'http://www.w3.org/2000/01/rdf-schema#seeAlso'	=> [{type => 'uri', value => 'http://eve.example.com/'}],
+		},
+	});
+	
+	my $xml = $serializer->serialize_model_to_string($model);
+	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:lang="http://purl.org/net/inkel/rdf/schemas/lang/1.1#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"]sm, 'xmlns sorted in rdf:RDF tag' );
+	like( $xml, qr[<lang:masters>en</lang:masters>]sm, 'Qname literal tag' );
+	like( $xml, qr[<rdfs:seeAlso rdf:resource="http://eve.example.com/"/>]sm, 'Qname resource tag' );
+}
+

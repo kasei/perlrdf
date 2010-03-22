@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.117
+This document describes RDF::Trine::Parser::Turtle version 0.118
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use Scalar::Util qw(blessed looks_like_number);
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.117';
+	$VERSION				= '0.118';
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -94,6 +94,13 @@ sub new {
 	return $self;
 }
 
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=cut
+
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
 Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
@@ -113,36 +120,8 @@ sub parse {
 	}
 	local($self->{baseURI})	= $uri;
 	local($self->{tokens})	= $input;
-	$self->_turtleDoc();
+	$self->_Document();
 	return;
-}
-
-=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
-
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
-parsed, will call C<< $model->add_statement( $statement ) >>.
-
-=cut
-
-sub parse_into_model {
-	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
-	my $uri		= shift;
-	my $input	= shift;
-	my $model	= shift;
-	my %args	= @_;
-	my $context	= $args{'context'};
-	
-	my $handler	= sub {
-		my $st	= shift;
-		if ($context) {
-			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
-			$model->add_statement( $quad );
-		} else {
-			$model->add_statement( $st );
-		}
-	};
-	return $self->parse( $uri, $input, $handler );
 }
 
 sub _eat_re {
@@ -231,7 +210,7 @@ sub _triple {
 	my $count	= ++$self->{triple_count};
 }
 
-sub _turtleDoc {
+sub _Document {
 	my $self	= shift;
 	while ($self->_statement_test()) {
 		$self->_statement();
@@ -335,13 +314,8 @@ sub _base {
 
 sub _triples_test {
 	my $self	= shift;
-	### between triples and ws. disjoint, so easy enough
-	return 0 unless (length($self->{tokens}));
-	if ($self->{tokens} !~ /^[\r\n\t #]/) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return 1 if $self->_resource_test;
+	return $self->_blank_test;
 }
 
 sub _triples {

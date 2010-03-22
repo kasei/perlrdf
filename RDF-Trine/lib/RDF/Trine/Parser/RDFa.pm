@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.117
+This document describes RDF::Trine::Parser::RDFa version 0.118
 
 =head1 SYNOPSIS
 
@@ -45,13 +45,13 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.117';
+	$VERSION	= '0.118';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 	
-	eval "use RDF::RDFa::Parser;";
+	eval "use RDF::RDFa::Parser 0.30;";
 	unless ($@) {
 		$HAVE_RDFA_PARSER	= 1;
 	}
@@ -59,50 +59,29 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new >>
+=item C<< new ( options => \%options ) >>
+
+Returns a new RDFa parser object with the supplied options.
 
 =cut
 
 sub new {
 	my $class	= shift;
+	my %args	= @_;
 	unless ($HAVE_RDFA_PARSER) {
-		throw RDF::Trine::Error -text => "Can't locate RDF::RDFa::Parser";
+		throw RDF::Trine::Error -text => "Failed to load RDF::RDFa::Parser >= 0.30";
 	}
 	
-	my $self = bless( {}, $class);
+	my $self = bless( { %args }, $class);
 	return $self;
 }
 
-=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context ] ) >>
+=item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
-parsed, will call C<< $model->add_statement( $statement ) >>.
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
-
-sub parse_into_model {
-	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
-	my $uri		= shift;
-	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
-		$uri	= $uri->uri_value;
-	}
-	my $input	= shift;
-	my $model	= shift;
-	my %args	= @_;
-	my $context	= $args{'context'};
-	
-	my $handler	= sub {
-		my $st	= shift;
-		if ($context) {
-			my $quad	= RDF::Trine::Statement::Quad->new( $st->nodes, $context );
-			$model->add_statement( $quad );
-		} else {
-			$model->add_statement( $st );
-		}
-	};
-	return $self->parse( $uri, $input, $handler );
-}
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
@@ -114,15 +93,17 @@ sub parse {
 	my $string	= shift;
 	my $handler	= shift;
 	
-	my $parser	= RDF::RDFa::Parser->new($string, $base);
-	$parser->consume;
-	my $graph	= $parser->graph;
-	my $iter	= $graph->as_stream;
-	while (my $st = $iter->next()) {
-		if (reftype($handler) eq 'CODE') {
-			$handler->( $st );
+	my $parser  = RDF::RDFa::Parser->new($string, $base, $self->{'options'});
+	$parser->set_callbacks({
+		ontriple	=> sub {
+			my ($p, $el, $st)	= @_;
+			if (reftype($handler) eq 'CODE') {
+				$handler->( $st );
+			}
+			return 1;
 		}
-	}
+	});
+	$parser->consume;
 }
 
 

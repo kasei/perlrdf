@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl.
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.117
+This document describes RDF::Trine version 0.118
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ no warnings 'redefine';
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.117';
+	$VERSION	= '0.118';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -156,33 +156,14 @@ __END__
 
 =back
 
-=head1 DEPENDENCIES
-
-L<Data::UUID>
-L<DBI>
-L<DBD::SQLite>
-L<Digest::MD5>
-L<Error>
-L<JSON>
-L<LWP::UserAgent>
-L<List::Util>
-L<Log::Log4perl>
-L<Math::BigInt>
-L<Scalar::Util>
-L<Text::Table>
-L<Time::HiRes>
-L<Unicode::Escape>
-L<Unicode::String>
-L<URI>
-L<XML::CommonNS>
-L<XML::Namespace>
-L<XML::SAX>
-L<XML::LibXML::SAX>
-
 =head1 BUGS
 
 Please report any bugs or feature requests to
 C<< <gwilliams@cpan.org> >>.
+
+=head1 SEE ALSO
+
+L<http://www.perlrdf.org/>
 
 =head1 AUTHOR
 

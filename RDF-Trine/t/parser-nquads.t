@@ -11,13 +11,13 @@ use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Parser;
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.trine.model          = TRACE, Screen
-	
-	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr  = 0
-	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.model          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 my $parser	= RDF::Trine::Parser->new( 'nquads' );

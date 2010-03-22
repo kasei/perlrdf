@@ -7,12 +7,13 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.117
+This document describes RDF::Trine::Serializer::Turtle version 0.118
 
 =head1 SYNOPSIS
 
  use RDF::Trine::Serializer::Turtle;
- my $serializer	= RDF::Trine::Serializer::Turtle->new();
+ my $serializer	= RDF::Trine::Serializer::Turtle->new( namespaces => { ex => 'http://example/' } );
+ print $serializer->serialize_model_to_string($model);
 
 =head1 DESCRIPTION
 
@@ -35,8 +36,9 @@ use base qw(RDF::Trine::Serializer);
 use URI;
 use Carp;
 use Data::Dumper;
-use Scalar::Util qw(blessed refaddr);
+use Scalar::Util qw(blessed refaddr reftype);
 
+use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -47,12 +49,16 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.117';
+	$VERSION	= '0.118';
+	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
+	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################
 
-=item C<< new ( %namespaces ) >>
+=item C<< new ( namespaces => \%namespaces ) >>
 
 Returns a new Turtle serializer object.
 
@@ -60,7 +66,17 @@ Returns a new Turtle serializer object.
 
 sub new {
 	my $class	= shift;
-	my $ns		= shift || {};
+	my $ns	= {};
+	if (@_) {
+		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
+			$ns	= shift;
+		} else {
+			my %args	= @_;
+			if (exists $args{ namespaces }) {
+				$ns	= $args{ namespaces };
+			}
+		}
+	}
 	my $self = bless( {
 		ns			=> { reverse %$ns },
 	}, $class );
@@ -69,7 +85,7 @@ sub new {
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
-Serializes the C<$model> to RDF/XML, printing the results to the supplied
+Serializes the C<$model> to Turtle, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -78,7 +94,11 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+	
+	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
 	
 	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t", model => $model );
 	return 1;
@@ -86,7 +106,7 @@ sub serialize_model_to_file {
 
 =item C<< serialize_model_to_string ( $model ) >>
 
-Serializes the C<$model> to RDF/XML, returning the result as a string.
+Serializes the C<$model> to Turtle, returning the result as a string.
 
 =cut
 
@@ -102,7 +122,7 @@ sub serialize_model_to_string {
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
-Serializes the iterator to RDF/XML, printing the results to the supplied
+Serializes the iterator to Turtle, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -236,7 +256,7 @@ sub serialize_iterator_to_file {
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
-Serializes the iterator to RDF/XML, returning the result as a string.
+Serializes the iterator to Turtle, returning the result as a string.
 
 =cut
 
@@ -282,7 +302,8 @@ sub _serialize_object_to_file {
 							if ($pred->equal( $last_pred )) {
 								# continue an existing predicate
 								print {$fh} qq[, ];
-								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
+								$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+#								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
 							} else {
 								# start a new predicate
 								if ($triple_count == 0) {

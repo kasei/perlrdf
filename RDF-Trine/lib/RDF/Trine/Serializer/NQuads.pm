@@ -1,23 +1,23 @@
-# RDF::Trine::Serializer::NTriples
+# RDF::Trine::Serializer::NQuads
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Trine::Serializer::NTriples - N-Triples Serializer.
+RDF::Trine::Serializer::NQuads - N-Quads Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.118
+This document describes RDF::Trine::Serializer::NQuads version 0.115
 
 =head1 SYNOPSIS
 
- use RDF::Trine::Serializer::NTriples;
- my $serializer	= RDF::Trine::Serializer::NTriples->new();
+ use RDF::Trine::Serializer::NQuads;
+ my $serializer	= RDF::Trine::Serializer::NQuads->new();
 
 =head1 DESCRIPTION
 
-The RDF::Trine::Serializer::NTriples class provides an API for serializing RDF
-graphs to the N-Triples syntax.
+The RDF::Trine::Serializer::NQuads class provides an API for serializing RDF
+graphs to the N-Quads syntax.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ graphs to the N-Triples syntax.
 
 =cut
 
-package RDF::Trine::Serializer::NTriples;
+package RDF::Trine::Serializer::NQuads;
 
 use strict;
 use warnings;
@@ -45,18 +45,18 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.118';
-	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
-	foreach my $type (qw(text/plain)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
+	$VERSION	= '0.115';
+	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
+# 	foreach my $type (qw(text/plain)) {
+# 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+# 	}
 }
 
 ######################################################################
 
 =item C<< new >>
 
-Returns a new N-Triples serializer object.
+Returns a new N-Quads serializer object.
 
 =cut
 
@@ -69,7 +69,7 @@ sub new {
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
-Serializes the C<$model> to N-Triples, printing the results to the supplied
+Serializes the C<$model> to N-Quads, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -86,7 +86,7 @@ sub serialize_model_to_file {
 
 =item C<< serialize_model_to_string ( $model ) >>
 
-Serializes the C<$model> to N-Triples, returning the result as a string.
+Serializes the C<$model> to N-Quads, returning the result as a string.
 
 =cut
 
@@ -104,7 +104,7 @@ sub serialize_model_to_string {
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
-Serializes the iterator to N-Triples, printing the results to the supplied
+Serializes the iterator to N-Quads, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -120,7 +120,7 @@ sub serialize_iterator_to_file {
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
-Serializes the iterator to N-Triples, returning the result as a string.
+Serializes the iterator to N-Quads, returning the result as a string.
 
 =cut
 
@@ -156,8 +156,20 @@ sub _serialize_bounded_description {
 sub _statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
-	return join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
+	my @nodes;
+	if ($st->type eq 'TRIPLE') {
+		@nodes	= $st->nodes;
+	} else {
+		my $g	= $st->context;
+		if ($g->is_nil) {
+			@nodes	= ($st->nodes)[0..2];
+		} else {
+			@nodes	= $st->nodes;
+		}
+	}
+	return join(' ', map { $_->as_ntriples } @nodes) . " .\n";
 }
+
 
 1;
 
@@ -167,7 +179,7 @@ __END__
 
 =head1 SEE ALSO
 
-L<http://www.w3.org/TR/rdf-testcases/#ntriples>
+L<http://sw.deri.org/2008/07/n-quads/>
 
 =head1 AUTHOR
 

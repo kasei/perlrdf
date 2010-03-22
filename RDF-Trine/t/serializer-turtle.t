@@ -1,4 +1,4 @@
-use Test::More tests => 31;
+use Test::More tests => 33;
 use Test::Exception;
 
 use strict;
@@ -375,7 +375,27 @@ END
 	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
-	is($turtle, $expect, 'multiple namespace Qnames');
+	is($turtle, $expect, 'multiple namespace Qnames (old namespace API)');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new( namespaces => { foaf => 'http://xmlns.com/foaf/0.1/', rdfs => 'http://www.w3.org/2000/01/rdf-schema#' } );
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'], 'http://www.w3.org/2000/01/rdf-schema#seeAlso' => [{type=>'resource', value => 'http://alice.me/'}] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+\@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+[] rdfs:seeAlso <http://alice.me/> ;
+	foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'multiple namespace Qnames (new namespace API)');
 }
 
 {
@@ -416,3 +436,84 @@ END
 	is($turtle, $expect, 'serialize_iterator_to_string 1');
 }
 
+{
+	# bug found 2010.02.23 had a reference to a bnode _:XXX, but the bnode was serialized with free floating brackets ('[]') without the id _:XXX.
+	my $turtle	= <<'END';
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix sd: <http://www.w3.org/ns/sparql-service-description#> .
+@prefix scovo: <http://purl.org/NET/scovo#> .
+@prefix void: <http://rdfs.org/ns/void#> .
+@prefix ent: <http://www.w3.org/ns/entailment/> .
+
+[]
+	a sd:Service ;
+	
+	sd:url <http://kasei.us/sparql> ;
+	
+	sd:defaultEntailmentRegime ent:Simple ;
+	sd:feature sd:DereferencesURIs ;
+	sd:extensionFunction <http://openjena.org/ARQ/function#sha1sum>, <java:com.ldodds.sparql.Distance> ;
+	sd:languageExtension <http://kasei.us/2008/04/sparql-extension/federate_bindings> ;
+	
+	sd:defaultDatasetDescription [
+		a sd:Dataset ;
+		sd:defaultGraph [
+			a sd:Graph ;
+			void:statItem [
+				scovo:dimension void:numberOfTriples ;
+				rdf:value 100
+			] ;
+		] ;
+	] ;
+	
+	sd:availableGraphDescriptions [
+		a sd:GraphCollection ;
+		sd:namedGraph [
+			a sd:NamedGraph ;
+			sd:named <http://xmlns.com/foaf/0.1/> ;
+			sd:graphDescription [
+				a sd:Graph ;
+				void:statItem [
+					scovo:dimension void:numberOfTriples ;
+					rdf:value 608
+				] ;
+			] ;
+		], [
+			a sd:NamedGraph ;
+			sd:named <http://kasei.us/sparql> ;
+			sd:graphDescription [
+				a sd:Graph ;
+				void:statItem [
+					scovo:dimension void:numberOfTriples ;
+					rdf:value 53
+				] ;
+			] ;
+		] ;
+	] ;
+	
+	sd:defaultEntailmentRegime ent:Simple ;
+	
+	.
+
+<java:com.ldodds.sparql.Distance> a sd:ScalarFunction .
+<http://openjena.org/ARQ/function#sha1sum> a sd:ScalarFunction .
+END
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base, $turtle, $model );
+	my $namespaces	= {
+		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
+		xsd		=> 'http://www.w3.org/2001/XMLSchema#',
+		scovo	=> 'http://purl.org/NET/scovo#',
+		jena	=> 'java:com.hp.hpl.jena.query.function.library.',
+		sd		=> 'http://www.w3.org/ns/sparql-service-description#',
+		saddle	=> 'http://www.w3.org/2005/03/saddle/#',
+		ke		=> 'http://kasei.us/2008/04/sparql-extension/',
+		kf		=> 'http://kasei.us/2007/09/functions/',
+	};
+	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
+	my $got			= $serializer->serialize_model_to_string($model);
+	unlike( $got, qr/\[\] a sd:NamedGraph/sm, 'no free floating blank node' );
+}
