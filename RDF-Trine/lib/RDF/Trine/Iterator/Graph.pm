@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 0.117
+This document describes RDF::Trine::Iterator::Graph version 0.118
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.117';
+	$VERSION	= '0.118';
 }
 
 ######################################################################

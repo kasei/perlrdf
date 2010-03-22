@@ -10,6 +10,35 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.118.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.117.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.118" ;
+                        doap:created      "2010-03-22" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Parser::TriG." ;
+                        asc:addition    "Added RDF::Trine::Parser::parse_file_into_model method." ;
+                        asc:addition    "Added RDF::Trine::Serializer::NQuads." ;
+                        asc:addition    "Added RDF::Trine::Serializer::negotiate constructor." ;
+                        asc:addition    "Added RDF::Trine::Serializer::new constructor based on requested serializer name." ;
+                        asc:addition    "Added RDF::Trine::Exporter::CSV for serializing variable bindings." ;
+                        asc:addition    "Added Text::CSV and HTTP::Negotiate to RDF::Trine prereq list." ;
+                        asc:update      "Fixed exception thrown on unrecognized parser name." ;
+                        asc:update      "Removed dependency list and added perlrdf link to POD in RDF::Trine and RDF::Query." ;
+                        asc:update      "Updated RDF::Trine::Serializer::Turtle->new API to take %args instead of \\%namespaces." ;
+                        asc:update      "Updated RDF::Trine::Serializer::RDFXML to take %args and properly accept and serialize xmlns namespaces." ;
+                        asc:update      "Updated RDF::Trine::Parser::RDFa to use streaming parsing (instead of materializing the graph first)." ;
+                        asc:update      "Updated RDF::Trine::Model::_debug to use quad semantics when getting statement iterator." ;
+                        asc:update      "Updated t/parser-turtle.t to use File::Glob::bsd_glob for cases where the test directory's path contains whitespace." ;
+                        asc:update      "Removed redundant parse_into_model methods from RDF::Trine::Parser subclasses." ;
+                        asc:update      "Renamed examples/create_store.pl to examples/foaf_labels.pl." ;
+                        asc:update      "Fixed bug in turtle serializer that improperly serialized bnode objects 'belonging' to a parent bnode." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.117.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.116.tar.gz> ;
