@@ -221,6 +221,28 @@ sub execute ($) {
 						$aggregates{ $alias }{ $group }[2]	= $type;
 					}
 				});
+			} elsif ($op eq 'SAMPLE') {
+				push(@aggregators, sub {
+					### this is just the MIN code from above, without the strict comparison checking
+					$l->debug("- aggregate op: SAMPLE");
+					my $row		= shift;
+					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+					my $value	= $row->{ $col->name };
+					my $type	= _node_type( $value );
+					$aggregates{ $alias }{ $group }[0]	= $op;
+					
+					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
+						if ("$value" lt "$aggregates{ $alias }{ $group }[1]") {
+							$aggregates{ $alias }{ $group }[1]	= $value;
+							$aggregates{ $alias }{ $group }[2]	= $type;
+						}
+					} else {
+						$aggregates{ $alias }{ $group }[1]	= $value;
+						$aggregates{ $alias }{ $group }[2]	= $type;
+					}
+				});
 			} elsif ($op eq 'AVG') {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: AVG");
@@ -246,6 +268,27 @@ sub execute ($) {
 						$aggregates{ $alias }{ $group }[3]	= $type;
 					}
 				});
+			} elsif ($op eq 'GROUP_CONCAT') {
+				push(@aggregators, sub {
+					$l->debug("- aggregate op: GROUP_CONCAT");
+					my $row		= shift;
+					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+					my $value	= $row->{ $col->name };
+					$aggregates{ $alias }{ $group }[0]	= $op;
+					
+					my $str		= RDF::Query::Node::Resource->new('sparql:str');
+					my $expr	= RDF::Query::Expression::Function->new( $str, $value );
+
+					my $query	= $context->query;
+					my $bridge	= $context->model;
+					my $exprval	= $expr->evaluate( $query, $bridge, $row );
+					
+					my $string	= blessed($exprval) ? $exprval->literal_value : '';
+# 					warn "adding '$string' to group_concat aggregate";
+					push( @{ $aggregates{ $alias }{ $group }[1] }, $string );
+				});
 			} else {
 				throw RDF::Query::Error -text => "Unknown aggregate operator $op";
 			}
@@ -267,12 +310,14 @@ sub execute ($) {
 				if ($op eq 'AVG') {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
 					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
+				} elsif ($op eq 'GROUP_CONCAT') {
+					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', sort @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
 					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
 				} else {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, $aggregates{ $agg }{ $group }[1] );
+					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, $aggregates{ $agg }{ $group }[2] );
 				}
 			}
 			

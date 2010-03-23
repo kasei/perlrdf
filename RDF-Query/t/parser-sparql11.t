@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -268,4 +268,53 @@ __END__
                 - http://www.w3.org/2001/XMLSchema#integer
               - !!perl/array:RDF::Query::Node::Variable
                 - discount
+  variables: *1
+---
+- GROUP_CONCAT Aggregate
+- |
+  PREFIX  dc:  <http://purl.org/dc/elements/1.1/>
+  PREFIX  ns:  <http://example.org/ns#>
+  SELECT GROUP_CONCAT(?title)
+     { ?x dc:title ?title . 
+       ?x ns:discount ?discount 
+     }
+  GROUP BY ?discount
+- method: SELECT
+  namespaces:
+    dc: http://purl.org/dc/elements/1.1/
+    ns: http://example.org/ns#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Aggregate
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://purl.org/dc/elements/1.1/title
+              - !!perl/array:RDF::Query::Node::Variable
+                - title
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/ns#discount
+              - !!perl/array:RDF::Query::Node::Variable
+                - discount
+        -
+          - !!perl/array:RDF::Query::Node::Variable
+            - discount
+        -
+          - GROUP_CONCAT(?title)
+          -
+            - GROUP_CONCAT
+            - !!perl/array:RDF::Query::Node::Variable
+              - title
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - GROUP_CONCAT(?title)
   variables: *1
