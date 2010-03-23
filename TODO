@@ -29,13 +29,13 @@ the work, if known):
 		* OpenURL COinS [tobyink]
 		* Microformats [tobyink]
 		* HTML [tobyink]
-		* TriG
 		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
 		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
 		* RDFa [kasei; done 2009.12.24]
 		* N-Triples [kasei; done 2010.01.27]
 		* N-Quads [kasei; done 2010.01.28]
+		* TriG [kasei; done 2010.03.22]
 	* Serializers
 		* Implement bounded description iterators (and remove the related code from serializer classes)
 		* Add ::RDFJSON::serialize_iterator_* methods
