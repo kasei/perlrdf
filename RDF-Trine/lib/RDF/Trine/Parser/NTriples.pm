@@ -215,7 +215,7 @@ sub _eat_node {
 			throw RDF::Trine::Error::ParserError -text => qq[Ending double quote not found at line $lineno];
 		}
 		
-		if ($_[0] =~ m/^@([a-z]+('-'[a-z0-9]+)*)/) {
+		if ($_[0] =~ m/^@([a-z]+(-[a-zA-Z0-9]+)*)/) {
 			my $lang	= $1;
 			substr($_[0],0,1+length($lang))	= '';
 			return RDF::Trine::Node::Literal->new($value, $lang);
