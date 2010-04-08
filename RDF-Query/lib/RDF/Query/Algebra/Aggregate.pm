@@ -18,7 +18,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 use Data::Dumper;
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
@@ -52,8 +52,16 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $groupby	= shift;
-	my @ops		= @_;
-	return bless( [ $pattern, $groupby, \@ops ] );
+	my (@ops, @having);
+	if (scalar(@_) and reftype($_[0]) eq 'HASH') {
+		my $hash	= shift;
+		@ops		= @{ $hash->{ 'expressions' } || [] };
+		@having		= @{ $hash->{ 'having' } || [] };
+	} else {
+		@ops		= @_;
+	}
+	
+	return bless( [ $pattern, $groupby, \@ops, \@having ] );
 }
 
 =item C<< construct_args >>
