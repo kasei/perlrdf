@@ -64,6 +64,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.119 (2010-XX-XX)
+
+     * Fixed bug in NTriples parser handling of language literals (reported by tobyink).
+     * Fixed another bug in turtle serializer that improperly serialized bnode objects 'belonging' to a parent triple (in-edge count of 1).
+
   Version 0.118 (2010-03-22)
 
      * Added RDF::Trine::Parser::TriG.
