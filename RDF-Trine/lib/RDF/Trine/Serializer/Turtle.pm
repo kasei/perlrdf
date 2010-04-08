@@ -496,7 +496,8 @@ sub _turtle {
 		if (my $model = $args{ model }) {
 			my $count	= $model->count_statements( undef, undef, $obj );
 			my $rec		= $model->count_statements( $obj, undef, $obj );
-			if ($count < 2 and $rec == 0) {
+			# XXX if $count == 1, then it would be better to ignore this triple for now, since it's a 'single-owner' bnode, and better serialized as a '[ ... ]' bnode in the object position as part of the 'owning' triple
+			if ($count < 1 and $rec == 0) {
 				print {$fh} '[]';
 				return;
 			}

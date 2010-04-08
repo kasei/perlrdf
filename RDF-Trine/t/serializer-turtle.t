@@ -1,4 +1,4 @@
-use Test::More tests => 33;
+use Test::More tests => 34;
 use Test::Exception;
 
 use strict;
@@ -517,3 +517,57 @@ END
 	my $got			= $serializer->serialize_model_to_string($model);
 	unlike( $got, qr/\[\] a sd:NamedGraph/sm, 'no free floating blank node' );
 }
+
+{
+	# bug found 2010.04.08 serialized uri->blank->xxx as uri->bnode label and []->xxx.
+	my $turtle	= <<'END';
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dc:      <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+@prefix void:    <http://rdfs.org/ns/void#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix doap:    <http://usefulinc.com/ns/doap#> .
+@prefix conv:    <http://data-gov.tw.rpi.edu/vocab/conversion/> .
+
+@prefix dg:      <http://data-gov.tw.rpi.edu/datagov/vocab/> .
+@prefix raw:     <http://data-gov.tw.rpi.edu/datagov/dataset/10/vocab/raw/> .
+@prefix e1:      <http://data-gov.tw.rpi.edu/datagov/dataset/10/vocab/enrichment/1/> .
+@prefix e2:      <http://data-gov.tw.rpi.edu/datagov/dataset/10/vocab/enrichment/2/> .
+@prefix :        <http://data-gov.tw.rpi.edu/datagov/dataset/10/> .
+
+:dataset-1 a void:Dataset ;
+	conv:conversionProcess [
+		a conv:RawConversionProcess ;
+		conv:conversionTool [ conv:project <csv2rdf> ; conv:revision "1.0.1" ] ;
+		dc:date "2010-01-01T18:00:00Z"^^xsd:dateTime ;
+		
+		# essential data
+		dcterms:requires [ conv:datasetFile <dataset.csv> ; dc:date "2009-12-01"^^xsd:date ; foaf:sha1 "da39a3ee5e6b4b0d3255bfef95601890afd80709" ] ;
+		conv:datasetOrigin "datagov" ;
+		conv:datasetIdentifier "10" ;
+	] ;
+	.
+END
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base, $turtle, $model );
+	my $namespaces	= {
+		rdf		=> 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
+		dc		=> 'http://purl.org/dc/terms/',
+		dcterms	=> 'http://purl.org/dc/terms/',
+		foaf	=> 'http://xmlns.com/foaf/0.1/',
+		void	=> 'http://rdfs.org/ns/void#',
+		xsd		=> 'http://www.w3.org/2001/XMLSchema#',
+		doap	=> 'http://usefulinc.com/ns/doap#',
+		conv	=> 'http://data-gov.tw.rpi.edu/vocab/conversion/',
+		dg		=> 'http://data-gov.tw.rpi.edu/datagov/vocab/',
+	};
+	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
+	my $got			= $serializer->serialize_model_to_string($model);
+	unlike( $got, qr/\[\] conv:conversionTool/sm, 'no free floating blank node 2' );
+}
+
