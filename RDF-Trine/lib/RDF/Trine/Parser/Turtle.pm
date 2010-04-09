@@ -696,6 +696,9 @@ sub _qname {
 	my $prefix	= ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) ? $self->_prefixName() : '';
 	$self->_eat(':');
 	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
+	unless (exists $self->{bindings}{$prefix}) {
+		throw RDF::Trine::Error::ParserError -text => "Undeclared prefix $prefix";
+	}
 	my $uri		= $self->{bindings}{$prefix};
 	return $uri . $name
 }

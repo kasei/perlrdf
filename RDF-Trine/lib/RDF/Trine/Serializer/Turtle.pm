@@ -38,7 +38,7 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr reftype);
 
-use RDF::Trine qw(variable);
+use RDF::Trine qw(variable iri);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -515,6 +515,21 @@ sub _turtle {
 				return;
 			} elsif ($type eq 'decimal' and $value =~ m/^[-+]?([0-9]+[.][0-9]*|[.][0-9]+|[0-9]+)$/) {
 				print {$fh} $value;
+				return;
+			}
+		} else {
+			my $dtr	= iri($dt);
+			my $literal	= $obj->literal_value;
+			my $qname;
+			try {
+				my ($ns,$local)	= $dtr->qname;
+				if (exists $self->{ns}{$ns}) {
+					$qname	= join(':', $self->{ns}{$ns}, $local);
+				}
+			} catch RDF::Trine::Error with {};
+			if ($qname) {
+				my $escaped	= $obj->_unicode_escape( $literal );
+				print {$fh} qq["$escaped"^^$qname];
 				return;
 			}
 		}
