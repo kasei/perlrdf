@@ -53,6 +53,12 @@ sub new {
 	if ($name =~ m/[^A-Za-z0-9]/) {
 		throw RDF::Trine::Error::SerializationError -text => "Only alphanumerics are allowed in N-Triples bnode labels";
 	}
+	return $class->_new( $name );
+}
+
+sub _new {
+	my $class	= shift;
+	my $name	= shift;
 	return bless( [ 'BLANK', $name ], $class );
 }
 
