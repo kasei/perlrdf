@@ -59,6 +59,15 @@ sub _cmp {
 	return $cmp;
 }
 
+sub new {
+	my $class	= shift;
+	my $name	= shift;
+	unless (defined($name)) {
+		$name	= 'r' . time() . 'r' . $RDF::Trine::Node::Blank::COUNTER++;
+	}
+	return $class->_new( $name );
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this node.
