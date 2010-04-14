@@ -6,6 +6,7 @@ no warnings 'redefine';
 
 use lib qw(. t lib .. ../t ../lib);
 use RDF::Query;
+use RDF::Query::Util;
 
 unless (@ARGV) {
 	print <<"END";
@@ -16,9 +17,6 @@ Graph a BasicGraphPattern's variable connectivity.
 END
 	exit;
 }
-
-my $qfile	= shift;
-my $sparql	= do { open(my $fh, '<', $qfile) or die $!; local($/) = undef; <$fh> };
 
 use GraphViz;
 use List::Util qw(first);
@@ -48,6 +46,8 @@ foreach my $i (0 .. $#triples) {
 	foreach my $n (@nodes) {
 		if ($n->isa('RDF::Query::Node::Variable')) {
 			push( @{ $vars{ $n->name } }, $i );
+		} elsif ($n->isa('RDF::Query::Node::Blank')) {
+			push( @{ $vars{ '_:' . $n->blank_identifier } }, $i );
 		}
 	}
 }
