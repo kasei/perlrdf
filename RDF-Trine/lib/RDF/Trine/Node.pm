@@ -257,32 +257,40 @@ sub from_sse {
 sub _unicode_escape {
 	my $self	= shift;
 	my $str		= shift;
-	my $rslt	= '';
 	
-	while (length($str)) {
-		my $utf8	= substr($str,0,1,'');
-		if ($utf8 eq "\n") {
-			$rslt	.= "\\n";
-		} elsif ($utf8 eq "\t") {
-			$rslt	.= "\\t";
-		} elsif ($utf8 eq "\r") {
-			$rslt	.= "\\r";
-		} elsif ($utf8 eq '"') {
-			$rslt	.= '\\"';
-		} elsif ($utf8 eq '\\') {
-			$rslt	.= '\\\\';
-		} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
-			$rslt	.= sprintf('\\U%08X', ord($utf8));
-		} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
-#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
-			$rslt	.= sprintf('\\u%04X', ord($utf8));
-		} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
-			$rslt	.= sprintf('\\u%04X', ord($utf8));
-		} else {
-			$rslt	.= $utf8;
+	if ($str =~ /\A[^\n\t\r"\x{10000}-\x{10ffff}\x{7f}-\x{ffff}\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]*\z/sm) {
+		# hot path - no special characters to escape, just printable ascii
+		return $str;
+	} else {
+		# slow path - escape all the special characters
+		my $rslt	= '';
+		while (length($str)) {
+			if (my ($ascii) = $str =~ /^([A-Za-z0-9 \t]+)/) {
+				$rslt	.= $ascii;
+				substr($str, 0, length($ascii))	= '';
+			} else {
+				my $utf8	= substr($str,0,1,'');
+				if ($utf8 eq '\\') {
+					$rslt	.= '\\\\';
+				} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
+					$rslt	.= sprintf('\\U%08X', ord($utf8));
+				} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
+		#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
+					$rslt	.= sprintf('\\u%04X', ord($utf8));
+				} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
+					$rslt	.= sprintf('\\u%04X', ord($utf8));
+				} else {
+					$rslt	.= $utf8;
+				}
+			}
 		}
+		$rslt		=~ s/\n/\\n/g;
+		$rslt		=~ s/\t/\\t/g;
+		$rslt		=~ s/\r/\\r/g;
+		$rslt		=~ s/"/\\"/g;
+	# 	$rslt		=~ s/\\/\\\\/g;
+		return $rslt;
 	}
-	return $rslt;
 }
 
 1;
