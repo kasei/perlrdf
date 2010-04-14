@@ -1,7 +1,8 @@
 PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 SELECT ?name ?knows
 WHERE {
-	[] a foaf:Person ;
+	?p a foaf:Person ;
 		foaf:name ?name ;
-		foaf:knows [ foaf:name ?knows ] .
+		foaf:knows ?q .
+	?q foaf:name ?knows .
 }
