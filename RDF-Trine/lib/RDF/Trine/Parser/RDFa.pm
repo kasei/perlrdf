@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.119_01
+This document describes RDF::Trine::Parser::RDFa version 0.119
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.119_01';
+	$VERSION	= '0.119';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

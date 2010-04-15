@@ -64,7 +64,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.119 (2010-XX-XX)
+  Version 0.119 (2010-04-15)
 
      * Fixed bug in NTriples parser handling of language literals (reported by tobyink).
      * Fixed another bug in turtle serializer that improperly serialized bnode objects 'belonging' to a parent triple (in-edge count of 1).
