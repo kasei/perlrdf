@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.118
+This document describes RDF::Trine::Parser::NTriples version 0.119
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.118';
+	$VERSION	= '0.119';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

@@ -10,6 +10,20 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.119.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.118.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.119" ;
+                        doap:created      "2010-04-15" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed bug in NTriples parser handling of language literals (reported by tobyink)." ;
+                        asc:update      "Fixed another bug in turtle serializer that improperly serialized bnode objects 'belonging' to a parent triple (in-edge count of 1)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.118.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.117.tar.gz> ;
