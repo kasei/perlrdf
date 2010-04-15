@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 7;
+use Test::More tests => 9;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -268,4 +268,124 @@ __END__
                 - http://www.w3.org/2001/XMLSchema#integer
               - !!perl/array:RDF::Query::Node::Variable
                 - discount
+  variables: *1
+---
+- GROUP_CONCAT Aggregate
+- |
+  PREFIX  dc:  <http://purl.org/dc/elements/1.1/>
+  PREFIX  ns:  <http://example.org/ns#>
+  SELECT GROUP_CONCAT(?title)
+     { ?x dc:title ?title . 
+       ?x ns:discount ?discount 
+     }
+  GROUP BY ?discount
+- method: SELECT
+  namespaces:
+    dc: http://purl.org/dc/elements/1.1/
+    ns: http://example.org/ns#
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Aggregate
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://purl.org/dc/elements/1.1/title
+              - !!perl/array:RDF::Query::Node::Variable
+                - title
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/ns#discount
+              - !!perl/array:RDF::Query::Node::Variable
+                - discount
+        -
+          - !!perl/array:RDF::Query::Node::Variable
+            - discount
+        -
+          - GROUP_CONCAT(?title)
+          -
+            - GROUP_CONCAT
+            - !!perl/array:RDF::Query::Node::Variable
+              - title
+        - []
+      - &1
+        - !!perl/array:RDF::Query::Node::Variable
+          - GROUP_CONCAT(?title)
+  variables: *1
+---
+- Aggregate with HAVING Clause
+- |
+  PREFIX : <http://books.example/>
+  SELECT (SUM(?lprice) AS ?totalPrice)
+  WHERE {
+    ?org :affiliates ?auth .
+    ?auth :writesBook ?book .
+    ?book :price ?lprice .
+  }
+  GROUP BY ?org
+  HAVING (SUM(?lprice) > 10)
+- method: SELECT
+  namespaces:
+    __DEFAULT__: http://books.example/
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Project
+      - !!perl/array:RDF::Query::Algebra::Aggregate
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - org
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://books.example/affiliates
+              - !!perl/array:RDF::Query::Node::Variable
+                - auth
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - auth
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://books.example/writesBook
+              - !!perl/array:RDF::Query::Node::Variable
+                - book
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - book
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://books.example/price
+              - !!perl/array:RDF::Query::Node::Variable
+                - lprice
+        -
+          - !!perl/array:RDF::Query::Node::Variable
+            - org
+        -
+          - SUM(?lprice)
+          -
+            - SUM
+            - !!perl/array:RDF::Query::Node::Variable
+              - lprice
+        -
+          - !!perl/array:RDF::Query::Expression::Binary
+            - '>'
+            - !!perl/array:RDF::Query::Node::Variable
+              - SUM(?lprice)
+            - !!perl/array:RDF::Query::Node::Literal
+              - 10
+              - ~
+              - http://www.w3.org/2001/XMLSchema#integer
+      - &1
+        - !!perl/array:RDF::Query::Expression::Alias
+          - !!perl/array:RDF::Query::Node::Variable
+            - totalPrice
+          - !!perl/array:RDF::Query::Node::Variable
+            - SUM(?lprice)
   variables: *1

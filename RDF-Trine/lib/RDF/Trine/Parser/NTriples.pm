@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.118
+This document describes RDF::Trine::Parser::NTriples version 0.119
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.118';
+	$VERSION	= '0.119';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -215,7 +215,7 @@ sub _eat_node {
 			throw RDF::Trine::Error::ParserError -text => qq[Ending double quote not found at line $lineno];
 		}
 		
-		if ($_[0] =~ m/^@([a-z]+('-'[a-z0-9]+)*)/) {
+		if ($_[0] =~ m/^@([a-z]+(-[a-zA-Z0-9]+)*)/) {
 			my $lang	= $1;
 			substr($_[0],0,1+length($lang))	= '';
 			return RDF::Trine::Node::Literal->new($value, $lang);

@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.118
+This document describes RDF::Trine::Serializer::Turtle version 0.119
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.118';
+	$VERSION	= '0.119';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -496,7 +496,8 @@ sub _turtle {
 		if (my $model = $args{ model }) {
 			my $count	= $model->count_statements( undef, undef, $obj );
 			my $rec		= $model->count_statements( $obj, undef, $obj );
-			if ($count < 2 and $rec == 0) {
+			# XXX if $count == 1, then it would be better to ignore this triple for now, since it's a 'single-owner' bnode, and better serialized as a '[ ... ]' bnode in the object position as part of the 'owning' triple
+			if ($count < 1 and $rec == 0) {
 				print {$fh} '[]';
 				return;
 			}

@@ -76,7 +76,7 @@ our $r_INTEGER				= qr/\d+/;
 our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL}/;
 our $r_ANON					= qr/\[[\t\r\n ]*\]/;
 our $r_NIL					= qr/\([\n\r\t ]*\)/;
-our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG|SUM/i;
+our $r_AGGREGATE_CALL		= qr/MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT/i;
 
 =item C<< new >>
 
@@ -714,30 +714,6 @@ sub _WhereClause {
 	
 	my $ggp	= $self->_peek_pattern;
 	$ggp->check_duplicate_blanks;
-	
-	$self->__consume_ws_opt;
-	if ($self->_test( qr/GROUP\s+BY/i )) {
-		$self->_eat( qr/GROUP\s+BY/i );
-		
-		my @vars;
-		$self->__consume_ws_opt;
-		$self->__GroupByVar;
-		push( @vars, splice(@{ $self->{stack} }));
-		$self->__consume_ws_opt;
-		while ($self->__GroupByVar_test) {
-			$self->__GroupByVar;
-			push( @vars, splice(@{ $self->{stack} }));
-			$self->__consume_ws_opt;
-		}
-		$self->{build}{__group_by}	= \@vars;
-		$self->__consume_ws_opt;
-	}
-	if ($self->_test( qr/HAVING/i )) {
-		$self->_eat(qr/HAVING/i);
-		$self->__consume_ws_opt;
-		local($self->{__aggregate_call_ok})	= 1;
-		$self->_BrackettedExpression;
-	}
 }
 
 sub __GroupByVar_test {
@@ -760,6 +736,17 @@ sub __GroupByVar {
 sub _SolutionModifier {
 	my $self	= shift;
 	
+	if ($self->_test( qr/GROUP\s+BY/i )) {
+		$self->_GroupClause;
+		$self->__consume_ws_opt;
+	}
+	
+	if ($self->_test( qr/HAVING/i )) {
+		$self->_HavingClause;
+#		die Dumper($self);
+		$self->__consume_ws_opt;
+	}
+	
 	if ($self->_OrderClause_test) {
 		$self->_OrderClause;
 		$self->__consume_ws_opt;
@@ -768,6 +755,38 @@ sub _SolutionModifier {
 	if ($self->_LimitOffsetClauses_test) {
 		$self->_LimitOffsetClauses;
 	}
+}
+
+sub _GroupClause {
+	my $self	= shift;
+	$self->_eat( qr/GROUP\s+BY/i );
+	
+	my @vars;
+	$self->__consume_ws_opt;
+	$self->__GroupByVar;
+	push( @vars, splice(@{ $self->{stack} }));
+	$self->__consume_ws_opt;
+	while ($self->__GroupByVar_test) {
+		$self->__GroupByVar;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	$self->{build}{__group_by}	= \@vars;
+	$self->__consume_ws_opt;
+}
+
+sub _HavingClause {
+	my $self	= shift;
+	$self->_eat(qr/HAVING/i);
+	$self->__consume_ws_opt;
+	local($self->{__aggregate_call_ok})	= 1;
+	my @exprs;
+	while ($self->_Constraint_test) {
+		$self->_Constraint;
+		my ($expr)	= splice(@{ $self->{stack} });
+		push(@exprs, $expr);
+	}
+	$self->{build}{__having}	= \@exprs;
 }
 
 # [15] LimitOffsetClauses ::= ( LimitClause OffsetClause? | OffsetClause LimitClause? )
@@ -2014,7 +2033,13 @@ sub __solution_modifiers {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, %{ $aggdata } );
+		my %constructor_args;
+		$constructor_args{ 'expressions' }	= [ %$aggdata ];
+		if (my $having = delete( $self->{build}{__having} )) {
+			$constructor_args{ 'having' }	= $having;
+		}
+	
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, \%constructor_args );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	
