@@ -36,6 +36,8 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Data::UUID;
 use Log::Log4perl;
+
+use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
@@ -90,6 +92,7 @@ sub new {
 					bindings		=> {},
 					bnode_id		=> 0,
 					bnode_prefix	=> $uuid,
+					@_
 				}, $class);
 	return $self;
 }
@@ -201,8 +204,15 @@ sub _triple {
 		}
 	}
 	
+	if ($self->{canonicalize}) {
+		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
+			my $value	= $o->literal_value;
+			my $dt		= $o->literal_datatype;
+			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			$o	= literal( $canon, undef, $dt );
+		}
+	}
 	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
-	
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}

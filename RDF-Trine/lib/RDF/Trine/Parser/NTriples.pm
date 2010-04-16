@@ -39,6 +39,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 
+use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -62,7 +63,7 @@ BEGIN {
 
 sub new {
 	my $class	= shift;
-	my $self = bless( {}, $class);
+	my $self = bless( {@_}, $class);
 	return $self;
 }
 
@@ -144,6 +145,14 @@ sub _emit_statement {
 	my $lineno	= shift;
 	my $st;
 	if (scalar(@$nodes) == 3) {
+		if ($self->{canonicalize}) {
+			if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
+				my $value	= $nodes->[2]->literal_value;
+				my $dt		= $nodes->[2]->literal_datatype;
+				my $canon	= $self->canonicalize_literal_value( $value, $dt );
+				$nodes->[2]	= literal( $canon, undef, $dt );
+			}
+		}
 		$st	= RDF::Trine::Statement->new( @$nodes );
 # 	} elsif (scalar(@$nodes) == 4) {
 # 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );

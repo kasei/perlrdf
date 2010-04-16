@@ -33,6 +33,8 @@ no warnings 'redefine';
 no warnings 'once';
 use base qw(RDF::Trine::Parser::Turtle);
 
+use RDF::Trine qw(literal);
+
 our ($VERSION);
 BEGIN {
 	$VERSION				= '0.115';
@@ -54,6 +56,14 @@ sub _triple {
 	}
 	
 	my $graph	= $self->{graph};
+	if ($self->{canonicalize}) {
+		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
+			my $value	= $o->literal_value;
+			my $dt		= $o->literal_datatype;
+			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			$o	= literal( $canon, undef, $dt );
+		}
+	}
 	my $st		= RDF::Trine::Statement::Quad->new( $s, $p, $o, $graph );
 	
 	if (my $code = $self->{handle_triple}) {

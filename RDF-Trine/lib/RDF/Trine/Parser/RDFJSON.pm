@@ -36,10 +36,13 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Data::UUID;
 use Log::Log4perl;
+
+use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Error;
+
 use Scalar::Util qw(blessed looks_like_number);
 use JSON;
 
@@ -68,6 +71,7 @@ sub new {
 					bindings		=> {},
 					bnode_id		=> 0,
 					bnode_prefix	=> $uuid,
+					@_
 				}, $class);
 	return $self;
 }
@@ -155,6 +159,14 @@ sub parse {
 				}
 				
 				if ( $ts && $tp && $to ) {
+					if ($self->{canonicalize}) {
+						if ($to->isa('RDF::Trine::Node::Literal') and $to->has_datatype) {
+							my $value	= $to->literal_value;
+							my $dt		= $to->literal_datatype;
+							my $canon	= $self->canonicalize_literal_value( $value, $dt );
+							$to	= literal( $canon, undef, $dt );
+						}
+					}
 					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
 					$handler->($st);
 				}

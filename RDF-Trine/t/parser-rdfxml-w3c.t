@@ -222,6 +222,7 @@ foreach my $file (@good) {
 		my (undef, undef, $filename)	= File::Spec->splitpath( $file );
 		if ($file =~ $ok_regex) {
 			local($TODO)	= 'rdf/xml parser is currently broken' if ($file =~ m/ex-(19|37|45|46|53|58)/);
+			my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
 			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 			my (undef, undef, $test)	= File::Spec->splitpath( $file );
 			my $nt;
@@ -233,7 +234,7 @@ foreach my $file (@good) {
 				my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
 				$parser->parse_into_model( $url, $data, $model );
 				$nt			=  $s->serialize_model_to_string( $model );
-			} $test;
+			} "parsing $name lives";
 			
 			compare( $nt, $file );
 		}

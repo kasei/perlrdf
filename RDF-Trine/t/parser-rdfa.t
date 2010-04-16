@@ -6,7 +6,7 @@ use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
 
-use RDF::Trine;
+use RDF::Trine qw(literal);
 use RDF::Trine::Parser;
 use RDF::Trine::Serializer::NTriples::Canonical;
 
