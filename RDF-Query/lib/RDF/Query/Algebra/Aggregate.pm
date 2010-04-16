@@ -40,6 +40,8 @@ BEGIN {
 
 =item C<new ( $pattern, \@groupby, $alias => [$op => $col] )>
 
+=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op => $col] ], having => \@constraint )>
+
 Returns a new Aggregate structure. Groups by the named bindings in C<< @groupby >>,
 and returns new bindings for the named C<< $alias >> for the operation C<< $op >>
 on column C<< $col >>.
@@ -74,7 +76,12 @@ will produce a clone of this algebra pattern.
 sub construct_args {
 	my $self	= shift;
 	my @ops		= @{ $self->[2] };
-	return ($self->pattern, [ $self->groupby ], \@ops);
+	my %args	= ( expressions => \@ops );
+	my @having	= $self->having;
+	if (scalar(@having)) {
+		$args{ having }	= \@having;
+	}
+	return ($self->pattern, [ $self->groupby ], \%args);
 }
 
 =item C<< pattern >>
@@ -90,13 +97,24 @@ sub pattern {
 
 =item C<< groupby >>
 
-Returns the aggregates GROUP BY binding names.
+Returns the aggregate's GROUP BY binding names.
 
 =cut
 
 sub groupby {
 	my $self	= shift;
 	return @{ $self->[1] };
+}
+
+=item C<< having >>
+
+Returns the aggregate's HAVING clause.
+
+=cut
+
+sub having {
+	my $self	= shift;
+	return @{ $self->[3] };
 }
 
 =item C<< ops >>

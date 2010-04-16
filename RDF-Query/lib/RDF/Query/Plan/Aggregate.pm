@@ -33,7 +33,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $pattern, \@group_by, [ $alias, $op, $attribute ], ... ) >>
+=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, $attribute ], ... ], having => \@constraings ) >>
 
 =cut
 
@@ -41,8 +41,10 @@ sub new {
 	my $class	= shift;
 	my $plan	= shift;
 	my $groupby	= shift;
-	my @ops		= @_;
-	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
+	my %args	= @_;
+	my @ops		= @{ $args{ 'expressions' } || [] };
+	my @having	= @{ $args{ 'having' } || [] };
+	my $self	= $class->SUPER::new( $plan, $groupby, \@ops, \@having );
 	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
 	return $self;
 }
@@ -380,6 +382,17 @@ Returns the grouping arguments that will be used to produce the aggregated data.
 sub groupby {
 	my $self	= shift;
 	return @{ $self->[2] || [] };
+}
+
+=item C<< having >>
+
+Returns the aggregate's HAVING clause.
+
+=cut
+
+sub having {
+	my $self	= shift;
+	return @{ $self->[4] || [] };
 }
 
 =item C<< plan_node_name >>

@@ -377,14 +377,17 @@ END
 # @prefix : <http://books.example/> .
 # 
 # :org1 :affiliates :auth1, :auth2 .
+# :org2 :affiliates :auth3 .
+# 
 # :auth1 :writesBook :book1, :book2 .
+# :auth2 :writesBook :book3 .
+# :auth3 :writesBook :book4 .
+# 
 # :book1 :price 9 .
 # :book2 :price 5 .
-# :auth2 :writesBook :book3 .
 # :book3 :price 7 .
-# :org2 :affiliates :auth3 .
-# :auth3 :writesBook :book4 .
 # :book4 :price 7 .
+# 
 # END
 # 	my $parser	= RDF::Trine::Parser->new('turtle');
 # 	$parser->parse_into_model( 'http://base/', $data, $model );
@@ -399,6 +402,33 @@ END
 # GROUP BY ?org
 # HAVING (SUM(?lprice) > 10)
 # END
+# 
+# ##############################
+# # GROUPS:
+# # org	auth	book	lprice
+# # ----------------------------
+# # org1	auth1	book1	9
+# # org1	auth1	book2	5
+# # org1	auth2	book3	7
+# # ----------------------------
+# # org2	auth3	book4	7
+# # ----------------------------
+# ##############################
+# # AGGREGATES:
+# # org	SUM(lprice)
+# # ----------------------------
+# # org1	21
+# # ----------------------------
+# # org2	7
+# # ----------------------------
+# ##############################
+# # CONSTRAINTS:
+# # org	SUM(lprice)
+# # ----------------------------
+# # org1	21
+# # ----------------------------
+# ##############################
+# 
 # 	warn RDF::Query->error unless ($query);
 # 	my $iter	= $query->execute( $model );
 # 	while (my $r = $iter->next) {
