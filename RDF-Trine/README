@@ -64,6 +64,15 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.120 (2010-XX-XX)
+
+     * Added optional value canonicalization on parsing (xsd integer, decimal, and boolean).
+     * RDF/XML parser now attempts to canonicalize XMLLiterals (doesn't yet canonicalize all XMLLiterals that it shold).
+     * Added RDF::Trine::Node::Blank::_new constructor that doesn't validate bnode name for N-Triples conformance.
+     * Performance improvements to RDF::Trine::Node::_unicode_escape.
+     * Updated Turtle parser to throw error on undeclared namespace prefixes.
+     * Updated Turtle serializer to produce QName literal datatypes.
+
   Version 0.119 (2010-04-15)
 
      * Fixed bug in NTriples parser handling of language literals (reported by tobyink).

@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.119
+This document describes RDF::Trine::Model version 0.120_01
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120_01';
 }
 
 use Scalar::Util qw(blessed);

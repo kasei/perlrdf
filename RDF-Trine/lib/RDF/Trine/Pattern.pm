@@ -7,7 +7,7 @@ RDF::Trine::Pattern - Class for BasicGraphPattern patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Pattern version 0.119
+This document describes RDF::Trine::Pattern version 0.120_01
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120_01';
 }
 
 ######################################################################

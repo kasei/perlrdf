@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFJSON - RDF/JSON RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFJSON version 0.119
+This document describes RDF::Trine::Parser::RDFJSON version 0.120_01
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use JSON;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.119';
+	$VERSION				= '0.120_01';
 	$RDF::Trine::Parser::parser_names{ 'rdfjson' }	= __PACKAGE__;
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

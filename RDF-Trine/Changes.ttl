@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.120.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.119.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.120" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added optional value canonicalization on parsing (xsd integer, decimal, and boolean)." ;
+                        asc:update      "RDF/XML parser now attempts to canonicalize XMLLiterals (doesn't yet canonicalize all XMLLiterals that it shold)." ;
+                        asc:update      "Added RDF::Trine::Node::Blank::_new constructor that doesn't validate bnode name for N-Triples conformance." ;
+                        asc:update      "Performance improvements to RDF::Trine::Node::_unicode_escape." ;
+                        asc:update      "Updated Turtle parser to throw error on undeclared namespace prefixes." ;
+                        asc:update      "Updated Turtle serializer to produce QName literal datatypes." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.119.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.118.tar.gz> ;
