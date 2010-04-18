@@ -20,7 +20,6 @@ the work, if known):
 ## RDF::Trine
 	* Parsers
 		* Guess parser based on filename/content sniffing
-		* Add optional (XSD) value canonicalization to parsers
 		* XRD [tobyink]
 		* TriX [tobyink]
 		* GRDDL [tobyink]
@@ -31,6 +30,7 @@ the work, if known):
 		* HTML [tobyink]
 		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
+		* Add optional (XSD) value canonicalization to parsers [kasei; done 2010.04.16]
 		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
 		* RDFa [kasei; done 2009.12.24]
 		* N-Triples [kasei; done 2010.01.27]
