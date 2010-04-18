@@ -203,6 +203,57 @@ sub get_statements {
 	return $self->_store->get_statements( @_ );
 }
 
+=item C<< subjects ( $predicate, $object ) >>
+
+=cut
+
+sub subjects {
+	my $self	= shift;
+	my $pred	= shift;
+	my $obj		= shift;
+	my $iter	= $self->get_statements( undef, $pred, $obj );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $subj	= $st->subject;
+		$nodes{ $subj->as_string }	= $subj;
+	}
+	return values(%nodes);
+}
+
+=item C<< predicates ( $subject, $object ) >>
+
+=cut
+
+sub predicates {
+	my $self	= shift;
+	my $subj	= shift;
+	my $obj		= shift;
+	my $iter	= $self->get_statements( $subj, undef, $obj );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $pred	= $st->predicate;
+		$nodes{ $pred->as_string }	= $pred;
+	}
+	return values(%nodes);
+}
+
+=item C<< objects ( $subject, $predicate ) >>
+
+=cut
+
+sub objects {
+	my $self	= shift;
+	my $subj	= shift;
+	my $pred	= shift;
+	my $iter	= $self->get_statements( $subj, $pred );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $obj	= $st->object;
+		$nodes{ $obj->as_string }	= $obj;
+	}
+	return values(%nodes);
+}
+
 =item C<< get_pattern ( $bgp [, $context] [, %args ] ) >>
 
 Returns a stream object of all bindings matching the specified graph pattern.
