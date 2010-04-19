@@ -28,7 +28,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 
 my ($stores, $remove)	= stores();
 
-plan tests => 78 * scalar(@$stores);
+plan tests => 81 * scalar(@$stores);
 
 foreach my $store (@$stores) {
 	print "### Testing store " . ref($store) . "\n";
@@ -174,6 +174,14 @@ foreach my $store (@$stores) {
 			ok( $preds[0]->equal( $rdf->type ), 'expected predicate' );
 			is( scalar(@objs), 1, "expected objects count on " . $p->uri_value );
 			ok( $objs[0]->equal( $foaf->Person ), 'expected object' );
+		}
+		{
+			my $subjs	= $model->subjects( $rdf->type );
+			my $preds	= $model->predicates( $p );
+			my $objs	= $model->objects( $p );
+			isa_ok( $subjs, 'RDF::Trine::Iterator', 'expected iterator from subjects()' );
+			isa_ok( $preds, 'RDF::Trine::Iterator', 'expected iterator from predicates()' );
+			isa_ok( $objs, 'RDF::Trine::Iterator', 'expected iterator from objects()' );
 		}
 	}
 	
