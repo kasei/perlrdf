@@ -297,6 +297,9 @@ sub get_pattern {
 
 =item C<< get_contexts >>
 
+Returns an iterator containing the nodes representing the named graphs in the
+model.
+
 =cut
 
 sub get_contexts {
