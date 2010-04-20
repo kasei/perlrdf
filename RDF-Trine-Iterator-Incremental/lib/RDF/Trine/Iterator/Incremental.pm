@@ -1,4 +1,4 @@
-# RDF::Trine::Model::RDFS
+# RDF::Trine::Iterator::Incremental
 # -----------------------------------------------------------------------------
 
 =head1 NAME
