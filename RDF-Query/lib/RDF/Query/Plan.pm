@@ -370,7 +370,8 @@ sub generate_plans {
 			my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 			my @groups	= $algebra->groupby;
 			my @ops		= $algebra->ops;
-			my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, @ops ) } @base;
+			my @having	= $algebra->having;
+			my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, expressions => \@ops, having => \@having ) } @base;
 			push(@return_plans, @plans);
 		} elsif ($type eq 'Construct') {
 			my $triples	= $algebra->triples;

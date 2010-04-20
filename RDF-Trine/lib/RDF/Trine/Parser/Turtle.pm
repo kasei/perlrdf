@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.119
+This document describes RDF::Trine::Parser::Turtle version 0.120
 
 =head1 SYNOPSIS
 
@@ -36,6 +36,8 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Data::UUID;
 use Log::Log4perl;
+
+use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
@@ -45,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number);
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.119';
+	$VERSION				= '0.120';
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -90,6 +92,7 @@ sub new {
 					bindings		=> {},
 					bnode_id		=> 0,
 					bnode_prefix	=> $uuid,
+					@_
 				}, $class);
 	return $self;
 }
@@ -201,8 +204,15 @@ sub _triple {
 		}
 	}
 	
+	if ($self->{canonicalize}) {
+		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
+			my $value	= $o->literal_value;
+			my $dt		= $o->literal_datatype;
+			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			$o	= literal( $canon, undef, $dt );
+		}
+	}
 	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
-	
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}
@@ -696,6 +706,9 @@ sub _qname {
 	my $prefix	= ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) ? $self->_prefixName() : '';
 	$self->_eat(':');
 	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
+	unless (exists $self->{bindings}{$prefix}) {
+		throw RDF::Trine::Error::ParserError -text => "Undeclared prefix $prefix";
+	}
 	my $uri		= $self->{bindings}{$prefix};
 	return $uri . $name
 }

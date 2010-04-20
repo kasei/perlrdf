@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.119
+This document describes RDF::Trine::Parser::RDFa version 0.120
 
 =head1 SYNOPSIS
 
@@ -37,6 +37,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 
+use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -45,7 +46,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -98,6 +99,16 @@ sub parse {
 		ontriple	=> sub {
 			my ($p, $el, $st)	= @_;
 			if (reftype($handler) eq 'CODE') {
+				if ($self->{canonicalize}) {
+					my $o	= $st->object;
+					if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
+						my $value	= $o->literal_value;
+						my $dt		= $o->literal_datatype;
+						my $canon	= $self->canonicalize_literal_value( $value, $dt );
+						$o	= literal( $canon, undef, $dt );
+						$st->object( $o );
+					}
+				}
 				$handler->( $st );
 			}
 			return 1;

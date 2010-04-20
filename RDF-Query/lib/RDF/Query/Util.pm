@@ -67,7 +67,7 @@ following the final argument parsed by C<< &cli_parse_args >>.
 
 sub cli_make_query {
 	my %args	= cli_parse_args();
-	my $class	= delete $args{ class };
+	my $class	= delete $args{ class } || 'RDF::Query';
 	my $sparql	= delete $args{ query };
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	$l->debug("creating sparql query with class $class");

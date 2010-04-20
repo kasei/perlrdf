@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.119
+This document describes RDF::Trine::Parser::RDFXML version 0.120
 
 =head1 SYNOPSIS
 
@@ -35,10 +35,12 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Carp;
 use XML::SAX;
+use XML::LibXML;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
 
+use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -47,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -70,6 +72,7 @@ sub new {
 	my $self = bless( {
 		saxhandler	=> $saxhandler,
 		parser		=> $p,
+		%args,
 	}, $class);
 	return $self;
 }
@@ -574,6 +577,17 @@ sub assert {
 	$l->debug('[rdfxml parser] ' . $st->as_string);
 	
 	if ($self->{sthandler}) {
+		if ($self->{canonicalize}) {
+			my $o	= $st->object;
+			if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
+				my $value	= $o->literal_value;
+				my $dt		= $o->literal_datatype;
+				my $canon	= $self->canonicalize_literal_value( $value, $dt );
+				$o	= literal( $canon, undef, $dt );
+				$st->object( $o );
+			}
+		}
+		
 		$self->{sthandler}->( $st );
 		if (defined(my $id = $self->{reify_id}[0])) {
 			my $stid	= $self->new_resource( "#$id" );
@@ -739,6 +753,20 @@ sub new_literal {
 	my @args	= (undef, undef);
 	if (my $dt = $self->{datatype}) {	# datatype
 		$args[1]	= $dt;
+		if ($dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
+			my $parsed	= 0;
+			eval {
+				if ($string =~ m/^</) {
+					my $doc 	= XML::LibXML->load_xml(string => $string);
+					$parsed		= 1;
+					my $canon	= $doc->toStringEC14N(1);
+					$string	= $canon;
+				}
+			};
+			if ($@) {
+				warn "Cannot canonicalize XMLLiteral: $@" . Dumper($string);
+			}
+		}
 	} elsif (my $lang = $self->get_language) {
 		$args[0]	= $lang;
 	}

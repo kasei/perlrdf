@@ -1,4 +1,4 @@
-use Test::More tests => 11;
+use Test::More tests => 16;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
@@ -43,3 +43,38 @@ END
 	is( $model->count_statements(undef, iri('b'), undef, undef), 3, 'expected 3 count fbff' );
 	is( $model->count_statements(undef, undef, undef, iri('g1')), 1, 'expected 1 count fffb' );
 }
+
+{
+	# Canonicalization tests
+	my $parser	= RDF::Trine::Parser->new( 'nquads', canonicalize => 1 );
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/integer> "-0123"^^<http://www.w3.org/2001/XMLSchema#integer> <g> .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('-123', undef, 'http://www.w3.org/2001/XMLSchema#integer')), 1, 'expected 1 count for canonical integer value' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/integer> "+0000123"^^<http://www.w3.org/2001/XMLSchema#integer> <g> .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('123', undef, 'http://www.w3.org/2001/XMLSchema#integer')), 1, 'expected 1 count for canonical integer value' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/decimal> "+100000.00"^^<http://www.w3.org/2001/XMLSchema#decimal> <g> .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('100000', undef, 'http://www.w3.org/2001/XMLSchema#decimal')), 1, 'expected 1 count for canonical decimal value' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/decimal> "0"^^<http://www.w3.org/2001/XMLSchema#boolean> <g> .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean')), 1, 'expected 1 count for canonical boolean value' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/decimal> "1"^^<http://www.w3.org/2001/XMLSchema#boolean> <g> .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')), 1, 'expected 1 count for canonical boolean value' );
+	}
+}	

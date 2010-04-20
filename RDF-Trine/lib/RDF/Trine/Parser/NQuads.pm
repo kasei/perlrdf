@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 0.119
+This document describes RDF::Trine::Parser::NQuads version 0.120
 
 =head1 SYNOPSIS
 
@@ -39,6 +39,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 
+use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
@@ -47,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -91,6 +92,16 @@ sub _emit_statement {
 	my $nodes	= shift;
 	my $lineno	= shift;
 	my $st;
+	
+	if ($self->{canonicalize}) {
+		if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
+			my $value	= $nodes->[2]->literal_value;
+			my $dt		= $nodes->[2]->literal_datatype;
+			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			$nodes->[2]	= literal( $canon, undef, $dt );
+		}
+	}
+
 	if (scalar(@$nodes) == 3) {
 		$st	= RDF::Trine::Statement->new( @$nodes );
 	} elsif (scalar(@$nodes) == 4) {

@@ -1,4 +1,4 @@
-use Test::More tests => 34;
+use Test::More tests => 35;
 use Test::Exception;
 
 use strict;
@@ -569,5 +569,20 @@ END
 	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
 	my $got			= $serializer->serialize_model_to_string($model);
 	unlike( $got, qr/\[\] conv:conversionTool/sm, 'no free floating blank node 2' );
+}
+
+{
+	my $turtle	= <<'END';
+@prefix dc:      <http://purl.org/dc/terms/> .
+<http://example.com/> dc:date "2010-01-01T18:00:00Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+END
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base, $turtle, $model );
+	my $namespaces	= { xsd => 'http://www.w3.org/2001/XMLSchema#' };
+	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
+	my $got			= $serializer->serialize_model_to_string($model);
+	like( $got, qr/"\^\^xsd:dateTime/sm, 'qname literal datatype' );
 }
 

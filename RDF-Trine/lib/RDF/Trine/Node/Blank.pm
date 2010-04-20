@@ -7,7 +7,7 @@ RDF::Trine::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Blank version 0.119
+This document describes RDF::Trine::Node::Blank version 0.120
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.119';
+	$VERSION	= '0.120';
 }
 
 ######################################################################
@@ -53,6 +53,12 @@ sub new {
 	if ($name =~ m/[^A-Za-z0-9]/) {
 		throw RDF::Trine::Error::SerializationError -text => "Only alphanumerics are allowed in N-Triples bnode labels";
 	}
+	return $class->_new( $name );
+}
+
+sub _new {
+	my $class	= shift;
+	my $name	= shift;
 	return bless( [ 'BLANK', $name ], $class );
 }
 

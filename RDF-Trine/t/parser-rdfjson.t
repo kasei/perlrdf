@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine;
+use RDF::Trine qw(literal);
 use_ok('RDF::Trine::Parser::RDFJSON');
 
 my $json	=<<"END";
