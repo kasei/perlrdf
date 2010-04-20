@@ -86,6 +86,59 @@ sub run_rules {
 	return;
 }
 
+=item C<< add_rdfs_rules >>
+
+Adds a subset of the RDFS rules to the model ruleset. This set of rules does not
+include some of the RDFS rules (including those that are not finite such as the
+axiomatic container membership triples) or the literal generalization rules.
+
+=cut
+
+sub add_rdfs_rules {
+	my $self	= shift;
+	$self->add_rule( $_ ) for ($self->rdfs_rules);
+}
+
+=item C<< rdfs_rules >>
+
+Returns a list of the rule objects used in the C<< add_rdfs_rules >> method.
+
+=cut
+
+sub rdfs_rules {
+	my $self	= shift;
+	my @rules;
+	push(@rules, RDF::Query->new(<<"END"));	# axiomatic triples
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+CONSTRUCT {
+	rdf:type rdf:type rdf:Property .
+	rdf:subject rdf:type rdf:Property .
+	rdf:predicate rdf:type rdf:Property .
+	rdf:object rdf:type rdf:Property .
+	rdf:first rdf:type rdf:Property .
+	rdf:rest rdf:type rdf:Property .
+	rdf:value rdf:type rdf:Property .
+	rdf:nil rdf:type rdf:List .	
+} WHERE {}
+END
+	push(@rules, RDF::Query->new('CONSTRUCT { ?p a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> } WHERE { [] ?p [] }'));	# rdf1
+	push(@rules, RDF::Query->new('CONSTRUCT { ?s a ?c } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#domain> ?c . ?s ?p [] }')); # rdfs2
+	push(@rules, RDF::Query->new('CONSTRUCT { ?o a ?c } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#range> ?c . [] ?p ?o }'));	# rdfs3
+	push(@rules, RDF::Query->new('CONSTRUCT { ?s a <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { ?s [] [] }'));	# rdfs4a
+	push(@rules, RDF::Query->new('CONSTRUCT { ?o a <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { [] [] ?o }'));	# rdfs4b
+	push(@rules, RDF::Query->new('CONSTRUCT { ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r } WHERE { ?q <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r. ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?q }'));	# rdfs5
+	push(@rules, RDF::Query->new('CONSTRUCT { ?u <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?u> } WHERE { ?u a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> }'));	# rdfs6
+	push(@rules, RDF::Query->new('CONSTRUCT { ?s ?r ?o } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r . ?s ?p ?o }'));	# rdfs7
+	push(@rules, RDF::Query->new('CONSTRUCT { ?c <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { ?c a <http://www.w3.org/2000/01/rdf-schema#Class> }'));	# rdfs8
+	push(@rules, RDF::Query->new('CONSTRUCT { ?s a ?b } WHERE { ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?b . ?s a ?a }'));	# rdfs9
+	push(@rules, RDF::Query->new('CONSTRUCT { ?u <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?u } WHERE { ?u a <http://www.w3.org/2000/01/rdf-schema#Class> }'));	# rdfs10
+	push(@rules, RDF::Query->new('CONSTRUCT { ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?c } WHERE { ?b <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?c. ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?b }'));	# rdfs11
+	push(@rules, RDF::Query->new('CONSTRUCT { ?x <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2000/01/rdf-schema#member> } WHERE { ?x a <http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty> }'));	# rdfs12
+	push(@rules, RDF::Query->new('CONSTRUCT { ?x <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2000/01/rdf-schema#Literal> } WHERE { ?x a <http://www.w3.org/2000/01/rdf-schema#Datatype> }'));	# rdfs13
+	return @rules;
+}
+
+
 1;
 
 __END__
@@ -112,70 +165,3 @@ program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
 =cut
-
-
-
-
-
-
-RDFS Rules:
-
-### inference rules for RDF(S)
-
-{?S ?P ?O} => {?P a rdf:Property}.
-
-{?P @has rdfs:domain ?C. ?S ?P ?O} => {?S a ?C}.
-
-{?P @has rdfs:range ?C. ?S ?P ?O} => {?O a ?C}.
-
-{?S ?P ?O} => {?S a rdfs:Resource}.
-{?S ?P ?O} => {?O a rdfs:Resource}.
-
-{?Q rdfs:subPropertyOf ?R. ?P rdfs:subPropertyOf ?Q} => {?P rdfs:subPropertyOf ?R}.
-
-{?P @has rdfs:subPropertyOf ?R. ?S ?P ?O} => {?S ?R ?O}.
-
-{?C a rdfs:Class} => {?C rdfs:subClassOf rdfs:Resource}.
-
-{?A rdfs:subClassOf ?B. ?S a ?A} => {?S a ?B}.
-
-{?B rdfs:subClassOf ?C. ?A rdfs:subClassOf ?B} => {?A rdfs:subClassOf ?C}.
-
-{?X a rdfs:ContainerMembershipProperty} => {?X rdfs:subPropertyOf rdfs:member}.
-
-{?X a rdfs:Datatype} => {?X rdfs:subClassOf rdfs:Literal}.
-
-# 
-# # RDFS RULES
-# my @rules					= qw(Property domain range Subj_Resource Obj_Resource subProp_Trans subProp Class_Resource subClass subClass_Trans member Datatype);
-# my %rules					= (
-# 								Property			=> ['[] ?p []'												=> '?p a rdf:Property'],
-# 								domain				=> ['?p rdfs:domain ?c . ?s ?p []'							=> '?s a ?c'],
-# 								range				=> ['?p rdfs:range ?c . [] ?p ?o'							=> '?o a ?c'],
-# 								Subj_Resource		=> ['?s [] []'												=> '?s a rdfs:Resource'],
-# 								Obj_Resource		=> ['[] [] ?o . FILTER(!ISLITERAL(?o))'						=> '?o a rdfs:Resource'],
-# 								subProp_Trans		=> ['?q rdfs:subPropertyOf ?r. ?p rdfs:subPropertyOf ?q'	=> '?p rdfs:subPropertyOf ?r'],
-# 								subProp				=> ['?p rdfs:subPropertyOf ?r . ?s ?p ?o'					=> '?s ?r ?o'],
-# 								Class_Resource		=> ['?c a rdfs:Class'										=> '?c rdfs:subClassOf rdfs:Resource'],
-# 								subClass			=> ['?a rdfs:subClassOf ?b . ?s a ?a'						=> '?s a ?b'],
-# 								subClass_Trans		=> ['?b rdfs:subClassOf ?c. ?a rdfs:subClassOf ?b'			=> '?a rdfs:subClassOf ?c'],
-# 								member				=> ['?x a rdfs:ContainerMembershipProperty'					=> '?x rdfs:subPropertyOf rdfs:member'],
-# 								Datatype			=> ['?x a rdfs:Datatype'									=> '?x rdfs:subClassOf rdfs:Literal'],
-# 							);
-# 
-# # After a rules adds triples to the store, which other rules might now need to fire based on the new triples?
-# my %chaining_rules			= (
-# 								Property		=> [qw(Property domain range Subj_Resource Obj_Resource subProp subClass )],
-# 								domain			=> [qw(Property domain range Subj_Resource Obj_Resource subProp Class_Resource subClass)],
-# 								range			=> [qw(Property domain range Subj_Resource Obj_Resource subProp Class_Resource subClass)],
-# 								Subj_Resource	=> [qw(Property domain range Subj_Resource Obj_Resource subProp subClass)],
-# 								Obj_Resource	=> [qw(Property domain range Subj_Resource Obj_Resource subProp subClass)],
-# 								subProp_Trans	=> [qw(Property domain range Subj_Resource Obj_Resource subProp_Trans subProp)],
-# 								subProp			=> [qw(Property domain range Subj_Resource Obj_Resource subProp_Trans subProp Class_Resource subClass subClass_Trans member Datatype)],
-# 								Class_Resource	=> [qw(Property domain range Subj_Resource Obj_Resource subProp subClass subClass_Trans)],
-# 								subClass		=> [qw(Property domain range Subj_Resource Obj_Resource subProp Class_Resource subClass)],
-# 								subClass_Trans	=> [qw(Property domain range Subj_Resource Obj_Resource subClass subClass_Trans)],
-# 								member			=> [qw(Property domain range Subj_Resource Obj_Resource subProp_Trans subProp)],
-# 								Datatype		=> [qw(Property domain range Subj_Resource Obj_Resource subProp subClass subClass_Trans)],
-# 							);
-

@@ -1,4 +1,4 @@
-use Test::More tests => 12;
+use Test::More tests => 16;
 use Test::Exception;
 
 use utf8;
@@ -11,7 +11,7 @@ use RDF::Query;
 use RDF::Trine qw(statement iri literal blank);
 use RDF::Trine::Model::Rules;
 use RDF::Trine::Node;
-use RDF::Trine::Namespace;
+use RDF::Trine::Namespace qw(rdf rdfs);
 
 my @statements	= (
 	statement(iri('s'), iri('p'), iri('o')),
@@ -68,6 +68,27 @@ my @statements	= (
 	$model->run_rules();
 	is( $model->count_statements, 5, 'model size after 2-step rule' );
 	is( $model->count_statements(undef, iri('p3'), undef), 1, 'expected new triple after 2-step rule' );
+}
+
+{
+	my $parser	= RDF::Trine::Parser->new('ntriples');
+	my $model	= RDF::Trine::Model::Rules->temporary_model;
+	$parser->parse_into_model('http://base/', <<"END", $model);
+<http://example.org/bar> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> .
+<http://example.org/bas> <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://example.org/bar> .
+<http://example.org/bar> <http://www.w3.org/2000/01/rdf-schema#domain> <http://example.org/Domain1> .
+<http://example.org/bas> <http://www.w3.org/2000/01/rdf-schema#domain> <http://example.org/Domain2> .
+<http://example.org/bar> <http://www.w3.org/2000/01/rdf-schema#range> <http://example.org/Range1> .
+<http://example.org/bas> <http://www.w3.org/2000/01/rdf-schema#range> <http://example.org/Range2> .
+<http://example.org/baz1> <http://example.org/bas> <http://example.org/baz2> .
+END
+	$model->add_rdfs_rules();
+	$model->run_rules();
+	my $ex	= RDF::Trine::Namespace->new('http://example.org/');
+	is( $model->count_statements($ex->baz1, $rdf->type, $ex->Domain1), 1, 'expected RDFS entailed triple 1' );
+	is( $model->count_statements($ex->baz1, $rdf->type, $ex->Domain2), 1, 'expected RDFS entailed triple 2' );
+	is( $model->count_statements($ex->baz2, $rdf->type, $ex->Range1), 1, 'expected RDFS entailed triple 3' );
+	is( $model->count_statements($ex->baz2, $rdf->type, $ex->Range2), 1, 'expected RDFS entailed triple 4' );
 }
 
 __END__
