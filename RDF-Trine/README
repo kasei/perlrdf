@@ -42,6 +42,7 @@ REQUIREMENTS
      * XML::CommonNS
      * XML::Namespace
      * XML::SAX
+     * XML::LibXML
      * XML::LibXML::SAX
 
 
@@ -64,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.120 (2010-XX-XX)
+  Version 0.120 (2010-04-20)
 
      * Added optional value canonicalization on parsing (xsd integer, decimal, and boolean).
      * RDF/XML parser now attempts to canonicalize XMLLiterals (doesn't yet canonicalize all XMLLiterals that it shold).

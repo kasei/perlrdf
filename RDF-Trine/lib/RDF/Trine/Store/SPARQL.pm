@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.120_01
+This document describes RDF::Trine::Store::SPARQL version 0.120
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.120_01;
+our $VERSION	= 0.120;
 
 use Set::Scalar;
 use URI::Escape;

@@ -4,7 +4,7 @@ RDF::Trine::Serializer::NTriples::Canonical - Canonical representation of an RDF
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.120_01
+This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.120
 
 =head1 SYNOPSIS
 
@@ -62,7 +62,7 @@ our @ISA = qw();
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.120_01';
+	$VERSION	= '0.120';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples-canonical' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
