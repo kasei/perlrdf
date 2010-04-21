@@ -5543,6 +5543,7 @@ __END__
           -
             - COUNT
             - '*'
+        - []
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - COUNT(*)
@@ -5576,6 +5577,7 @@ __END__
             - COUNT
             - !!perl/array:RDF::Query::Node::Variable
               - o
+        - []
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - COUNT(?o)
@@ -5609,6 +5611,7 @@ __END__
             - COUNT-DISTINCT
             - !!perl/array:RDF::Query::Node::Variable
               - o
+        - []
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - COUNT(DISTINCT ?o)
@@ -5648,6 +5651,7 @@ __END__
                 - 1
                 - ~
                 - http://www.w3.org/2001/XMLSchema#integer
+        - []
       - &1
         - !!perl/array:RDF::Query::Node::Variable
           - COUNT(DISTINCT (?o + 1))
@@ -5681,6 +5685,7 @@ __END__
             - COUNT
             - !!perl/array:RDF::Query::Node::Variable
               - o
+        - []
       - &1
         - !!perl/array:RDF::Query::Expression::Alias
           - !!perl/array:RDF::Query::Node::Variable
@@ -5747,6 +5752,7 @@ __END__
             - COUNT-DISTINCT
             - !!perl/array:RDF::Query::Node::Variable
               - nick
+        - []
       - &2
         - !!perl/array:RDF::Query::Node::Variable
           - name
