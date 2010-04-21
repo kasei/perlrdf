@@ -55,7 +55,7 @@ sub new {
 	my $pattern	= shift;
 	my $groupby	= shift;
 	my (@ops, @having);
-	if (scalar(@_) and reftype($_[0]) eq 'HASH') {
+	if (scalar(@_) and ref($_[0]) and reftype($_[0]) eq 'HASH') {
 		my $hash	= shift;
 		@ops		= @{ $hash->{ 'expressions' } || [] };
 		@having		= @{ $hash->{ 'having' } || [] };
