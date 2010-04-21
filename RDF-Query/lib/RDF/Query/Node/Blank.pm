@@ -59,6 +59,14 @@ sub _cmp {
 	return $cmp;
 }
 
+=item C<< new ( [ $name ] ) >>
+
+Returns a new Blank node object. If C<< $name >> is supplied, it will be used as
+the blank node identifier. Otherwise a time-based identifier will be generated
+and used.
+
+=cut
+
 sub new {
 	my $class	= shift;
 	my $name	= shift;
