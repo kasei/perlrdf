@@ -44,6 +44,7 @@ use RDF::Query::Plan::Sort;
 use RDF::Query::Plan::Triple;
 use RDF::Query::Plan::ThresholdUnion;
 use RDF::Query::Plan::Union;
+use RDF::Query::Plan::SubSelect;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -523,6 +524,9 @@ sub generate_plans {
 				push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
 			}
 			push(@return_plans, @plans);
+		} elsif ($type eq 'SubSelect') {
+			my $query	= $algebra->query;
+			push(@return_plans, RDF::Query::Plan::SubSelect->new( $query ));
 		} elsif ($type eq 'Sort') {
 			my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 			my @order	= $algebra->orderby;
@@ -761,6 +765,7 @@ nodes of this plan node. These identifiers are recognized:
 * 'w' - A bareword string
 * '\X' - An array reference of X nodes (where X is another identifier scalar)
 * '*X' - A list of X nodes (where X is another identifier scalar)
+* 'Q' - A RDF::Query object
 
 =cut
 

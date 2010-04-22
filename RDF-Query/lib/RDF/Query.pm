@@ -677,9 +677,9 @@ Returns the query as a string in the SPARQL syntax.
 
 sub as_sparql {
 	my $self	= shift;
-	my $parsed	= $self->parsed;
+	my $parsed	= $self->parsed || {};
 	
-	my $context	= { namespaces => { %{ $self->{parsed}{namespaces} } } };
+	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
