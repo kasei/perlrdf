@@ -513,7 +513,12 @@ sub _SelectQuery {
 
 	if ($star) {
 		my $triples	= $self->{build}{triples} || [];
-		my @vars	= RDF::Query::_uniq( map { $_->binding_variables } @$triples );
+		my @vars;
+		foreach my $t (@$triples) {
+			my @v	= $t->binding_variables;
+			push(@vars, @v);
+		}
+		@vars	= RDF::Query::_uniq( @vars );
 		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
 	}
 
@@ -891,10 +896,23 @@ sub _OffsetClause {
 # [20] GroupGraphPattern ::= '{' TriplesBlock? ( ( GraphPatternNotTriples | Filter ) '.'? TriplesBlock? )* '}'
 sub _GroupGraphPattern {
 	my $self	= shift;
-	$self->_push_pattern_container;
 	
 	$self->_eat('{');
 	$self->__consume_ws_opt;
+	
+	if ($self->_SubSelect_test) {
+		$self->_SubSelect;
+	} else {
+		$self->_GroupGraphPatternSub;
+	}
+
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+}
+
+sub _GroupGraphPatternSub {
+	my $self	= shift;
+	$self->_push_pattern_container;
 	
 	my $got_pattern	= 0;
 	my $need_dot	= 0;
@@ -959,8 +977,6 @@ sub _GroupGraphPattern {
 		}
 	}
 	
-	$self->_eat('}');
-
 	my $cont		= $self->_pop_pattern_container;
 	
 	my @filters		= splice(@{ $self->{filters} });
@@ -1004,6 +1020,78 @@ sub __handle_GraphPatternNotTriples {
 	} else {
 		Carp::confess Dumper($class, \@args);
 	}
+}
+
+sub _SubSelect_test {
+	my $self	= shift;
+	return $self->_test(qr/SELECT/i);
+}
+
+sub _SubSelect {
+	my $self	= shift;
+	my $pattern;
+	{
+		local($self->{error});
+		local($self->{namespaces})				= $self->{namespaces};
+		local($self->{blank_ids})				= $self->{blank_ids};
+		local($self->{stack})					= [];
+		local($self->{filters})					= [];
+		local($self->{pattern_container_stack})	= [];
+		my $triples								= $self->_push_pattern_container();
+		local($self->{build})					= {};
+		$self->{build}{triples}					= $triples;
+		if ($self->{baseURI}) {
+			$self->{build}{base}	= $self->{baseURI};
+		}
+		
+		$self->_eat(qr/SELECT/i);
+		$self->__consume_ws;
+		
+		if ($self->{tokens} =~ m/^(DISTINCT|REDUCED)/i) {
+			my $mod	= $self->_eat( qr/DISTINCT|REDUCED/i );
+			$self->__consume_ws;
+			$self->{build}{options}{lc($mod)}	= 1;
+		}
+		
+		my $star	= $self->__SelectVars;
+		
+		$self->__consume_ws_opt;
+		$self->_WhereClause;
+		
+		if ($star) {
+			my $triples	= $self->{build}{triples} || [];
+			my @vars;
+			foreach my $t (@$triples) {
+				my @v	= $t->binding_variables;
+				push(@vars, @v);
+			}
+			@vars	= RDF::Query::_uniq( @vars );
+			$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
+		}
+		
+		$self->__consume_ws_opt;
+		$self->_SolutionModifier();
+		
+		if ($self->{build}{options}{orderby}) {
+			my $order	= delete $self->{build}{options}{orderby};
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+			push(@{ $self->{build}{triples} }, $sort);
+		}
+		$self->__solution_modifiers( $star );
+		
+		delete $self->{build}{options};
+		$self->{build}{method}		= 'SELECT';
+		my $data	= delete $self->{build};
+		my $query	= RDF::Query->_new(
+			base			=> $self->{baseURI},
+#			parser			=> $self,
+			parsed			=> { %$data },
+		);
+		$pattern	= RDF::Query::Algebra::SubSelect->new( $query );
+	}
+	
+	$self->_add_patterns( $pattern );
 }
 
 # [21] TriplesBlock ::= TriplesSameSubject ( '.' TriplesBlock? )?
@@ -2043,7 +2131,7 @@ sub __solution_modifiers {
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	
-	my $vars	= $self->{build}{variables};
+	my $vars	= [ @{ $self->{build}{variables} } ];
 	my $pattern	= pop(@{ $self->{build}{triples} });
 	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
 	push(@{ $self->{build}{triples} }, $proj);

@@ -191,11 +191,11 @@ sub new {
 	my $parser	= $pclass->new();
 	my $parsed	= $parser->parse( $query, $baseuri );
 	
-	my $self 	= bless( {
+	my $self	= $class->_new(
 					base			=> $baseuri,
 					parser			=> $parser,
 					parsed			=> $parsed,
-				}, $class );
+				);
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
 		$l->debug($parser->error);
@@ -256,6 +256,12 @@ sub new {
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 	}
+	return $self;
+}
+
+sub _new {
+	my $class	= shift;
+	my $self 	= bless( { @_ }, $class );
 	return $self;
 }
 
