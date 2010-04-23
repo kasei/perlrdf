@@ -10,6 +10,23 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.121.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.120.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.121" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added node-centric methods to RDF::Trine::Model: subjects, predicates, objects." ;
+                        asc:update      "Fixed URI qname code to disallow ':' in local name." ;
+                        asc:update      "Improved POD for value canonicalization in RDF::Trine::Parser." ;
+                        asc:update      "Added POD for RDF::Trine::Model::get_contexts." ;
+                        asc:update      "Added POD details to RDF::Trine::Model::get_statements regarding triple and quad semantics." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.120.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.119.tar.gz> ;

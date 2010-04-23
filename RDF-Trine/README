@@ -65,6 +65,14 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.121 (2010-XX-XX)
+
+     * Fixed URI qname code to disallow ':' in local name.
+     * Added node-centric methods to RDF::Trine::Model: subjects, predicates, objects.
+     * Improved POD for value canonicalization in RDF::Trine::Parser.
+     * Added POD for RDF::Trine::Model::get_contexts.
+     * Added POD details to RDF::Trine::Model::get_statements regarding triple and quad semantics.
+
   Version 0.120 (2010-04-20)
 
      * Added optional value canonicalization on parsing (xsd integer, decimal, and boolean).
