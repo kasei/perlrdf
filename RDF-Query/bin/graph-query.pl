@@ -9,7 +9,6 @@ require "t/models.pl";
 
 use RDF::Query::Util;
 use RDF::Query::Federate;
-use RDF::Query::CostModel::Naive;
 
 use GraphViz;
 use List::Util qw(first);
