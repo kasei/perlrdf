@@ -69,6 +69,7 @@ lib/RDF/Query/Algebra/Project.pm
 lib/RDF/Query/Algebra/Quad.pm
 lib/RDF/Query/Algebra/Service.pm
 lib/RDF/Query/Algebra/Sort.pm
+lib/RDF/Query/Algebra/SubSelect.pm
 lib/RDF/Query/Algebra/TimeGraph.pm
 lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
@@ -125,6 +126,7 @@ lib/RDF/Query/Plan/Project.pm
 lib/RDF/Query/Plan/Quad.pm
 lib/RDF/Query/Plan/Service.pm
 lib/RDF/Query/Plan/Sort.pm
+lib/RDF/Query/Plan/SubSelect.pm
 lib/RDF/Query/Plan/ThresholdUnion.pm
 lib/RDF/Query/Plan/Triple.pm
 lib/RDF/Query/Plan/Union.pm
@@ -140,6 +142,7 @@ README.html
 SIGNATURE
 t/00-simple.t
 t/01-coverage.t
+t/aggregate.t
 t/algebra-bgp.t
 t/algebra-expr.t
 t/algebra-func.t
@@ -180,8 +183,8 @@ t/parser-sparql11.t
 t/parser-sparqlp.t
 t/plan-rdftrine.t
 t/plan.t
-t/pod.t
 t/pod_coverage.t
+t/pod.t
 t/protocol-serialization.t
 t/queryform-ask.t
 t/queryform-construct.t
@@ -191,6 +194,7 @@ t/serialize.t
 t/sha1.js
 t/sha1.js.asc
 t/streams.t.deprecated
+t/subselect.t
 t/syntactic_forms.t
 t/union.t
 t/unsaid.t
