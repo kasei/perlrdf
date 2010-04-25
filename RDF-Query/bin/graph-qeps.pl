@@ -26,7 +26,6 @@ my @files	= @ARGV;
 my @models	= test_models( @files );
 
 use RDF::Query;
-use RDF::Query::CostModel::Naive;
 
 use GraphViz;
 use List::Util qw(first);

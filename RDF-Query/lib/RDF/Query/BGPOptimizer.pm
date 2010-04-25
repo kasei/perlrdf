@@ -46,17 +46,12 @@ sub ordered_triples {
 	my @triples	= @_;
 	
 	my $model	= $context->model;
-	my $cm		= $context->costmodel;
-	
-	unless (blessed($cm)) {
-		throw RDF::Query::Error::ExecutionError -text => "No CostModel object found in ExecutionContext during BGPOptimizer call";
-	}
 	
 	my %vars;
 	my %seen;
 	my @weighted	= map {
 		my $triple		= RDF::Query::Plan::Triple->new( $_->nodes );
-		[ $_, $cm->cost( $triple, $context ) ]
+		[ $_, $self->_cost( $triple, $context ) ]
 	} @triples;
 	my %triples		= map { refaddr($_->[0]) => $_ } @weighted;
 	my @ordered	= sort { $a->[1] <=> $b->[1] } @weighted;
@@ -116,6 +111,22 @@ sub ordered_triples {
 	return map { $_->[0] } @final;
 }
 
+sub _cost {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.bgpoptimizer");
+	my $bf		= $pattern->bf( $context );
+	my $f		= ($bf =~ tr/f//);
+	my $r		= $f / 3;
+	$l->debug( "Pattern has bf representation '$bf'" );
+	$l->debug( "There are $f of 3 free variables" );
+	$l->debug( 'Estimated cardinality of triple is : ' . $r );
+	
+	# round the cardinality to an integer
+	return int($r + .5 * ($r <=> 0));
+}
+
 sub _triple_vars {
 	my $self	= shift;
 	my $t		= shift;
@@ -129,51 +140,6 @@ sub _triple_vars {
 	}
 	return @vars;
 }
-
-
-# 	
-# 	my @plans;
-# 	my @triples	= map { $_->[0] } sort { $b->[1] <=> $a->[1] } map { [ $_, $model->node_count( $_->nodes ) ] } @$triples;
-# 	
-# 	my $t	= shift(@triples);
-# 	my @lhs_plans	= map { [ $_, [$t] ] } $self->generate_plans( $t, $context, %args );
-# 	if (@triples) {
-# 		my @rhs_plans	= $self->_triple_join_plans_opt( $context, \@triples, %args );
-# 		foreach my $i (0 .. $#lhs_plans) {
-# 			foreach my $j (0 .. $#rhs_plans) {
-# 				my $a			= $lhs_plans[ $i ][0];
-# 				my $b			= $rhs_plans[ $j ][0];
-# 				my $algebra_a	= $lhs_plans[ $i ][1];
-# 				my $algebra_b	= $rhs_plans[ $j ][1];
-# #				foreach my $join_type (@join_types) {
-# 					try {
-# 						my @algebras	= (@$algebra_a, @$algebra_b);
-# 						my %logging_keys;
-# 						if ($method eq 'triples') {
-# 							my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @algebras );
-# 							my $sparql		= $bgp->as_sparql;
-# 							my $bf			= $bgp->bf;
-# 							$logging_keys{ bf }		= $bf;
-# 							$logging_keys{ sparql }	= $sparql;
-# 						} else {
-# 							my $ggp			= RDF::Query::Algebra::GroupGraphPattern->new( @algebras );
-# 							my $sparql		= $ggp->as_sparql;
-# 							$logging_keys{ sparql }	= $sparql;
-# 						}
-# #						my $plan	= $join_type->new( $b, $a, 0, \%logging_keys );
-# 						my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $b, $a, 0, \%logging_keys );
-# 						push( @plans, [ $plan, [ @algebras ] ] );
-# 					} catch RDF::Query::Error::MethodInvocationError with {
-# 		#				warn "caught MethodInvocationError.";
-# 					};
-# #				}
-# 			}
-# 		}
-# 	} else {
-# 		@plans	= @lhs_plans;
-# 	}
-# 	
-# 	return @plans;
 
 1;
 

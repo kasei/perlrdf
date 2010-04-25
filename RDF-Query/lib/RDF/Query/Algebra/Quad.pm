@@ -162,31 +162,6 @@ sub distinguish_bnode_variables {
 	return $class->new( @nodes );
 }
 
-=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $query	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
-		return $opt;
-	} else {
-		my @nodes	= $self->nodes;
-		@nodes	= map { $bridge->as_native( $_, $base, $ns ) } @nodes;
-		my $fixed	= $class->new( @nodes );
-		return $fixed;
-	}
-}
-
 =item C<< label ( $label => $value ) >>
 
 Sets the named C<< $label >> to C<< $value >> for this quad object.

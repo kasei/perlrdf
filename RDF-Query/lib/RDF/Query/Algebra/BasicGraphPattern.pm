@@ -189,34 +189,6 @@ sub _check_duplicate_blanks {
 	return [keys %seen];
 }
 
-=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $query	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
-		return $opt;
-	} else {
-		my @nodes	= map { $_->fixup( $query, $bridge, $base, $ns ) } $self->triples;
-		if (my $cm = $query->costmodel) {
-			# execute triple patterns that have the least cost first (minimizing intermediate results)
-			@nodes	= map { $_->[0] } sort { $a->[1] <=> $b->[1] } map { [ $_, $cm->cost($_) ] } @nodes;
-		}
-		my $fixed	= $class->new( @nodes );
-		return $fixed;
-	}
-}
-
 =item C<< connected >>
 
 Returns true if the pattern is connected through shared variables, fase otherwise.

@@ -8,7 +8,6 @@ use lib qw(. t lib .. ../t ../lib);
 
 use RDF::Query::Util;
 use RDF::Query::Federate;
-use RDF::Query::CostModel::Naive;
 
 use List::Util qw(first);
 

@@ -26,7 +26,6 @@ my @files	= @ARGV;
 my @models	= test_models( @files );
 
 use RDF::Query;
-use RDF::Query::CostModel::Naive;
 
 use List::Util qw(first);
 use Time::HiRes qw(tv_interval gettimeofday);
