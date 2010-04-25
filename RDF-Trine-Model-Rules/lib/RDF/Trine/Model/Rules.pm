@@ -121,17 +121,14 @@ CONSTRUCT {
 	rdf:nil rdf:type rdf:List .	
 } WHERE {}
 END
-	push(@rules, RDF::Query->new('CONSTRUCT { ?p a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> } WHERE { [] ?p [] }'));	# rdf1
+	push(@rules, RDF::Query->new('CONSTRUCT { ?p a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> . ?s a <http://www.w3.org/2000/01/rdf-schema#Resource> . ?o a <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { ?s ?p ?o }')); # rdf1 rdfs4a rdfs4b
 	push(@rules, RDF::Query->new('CONSTRUCT { ?s a ?c } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#domain> ?c . ?s ?p [] }')); # rdfs2
 	push(@rules, RDF::Query->new('CONSTRUCT { ?o a ?c } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#range> ?c . [] ?p ?o }'));	# rdfs3
-	push(@rules, RDF::Query->new('CONSTRUCT { ?s a <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { ?s [] [] }'));	# rdfs4a
-	push(@rules, RDF::Query->new('CONSTRUCT { ?o a <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { [] [] ?o }'));	# rdfs4b
 	push(@rules, RDF::Query->new('CONSTRUCT { ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r } WHERE { ?q <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r. ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?q }'));	# rdfs5
 	push(@rules, RDF::Query->new('CONSTRUCT { ?u <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?u> } WHERE { ?u a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property> }'));	# rdfs6
 	push(@rules, RDF::Query->new('CONSTRUCT { ?s ?r ?o } WHERE { ?p <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> ?r . ?s ?p ?o }'));	# rdfs7
-	push(@rules, RDF::Query->new('CONSTRUCT { ?c <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2000/01/rdf-schema#Resource> } WHERE { ?c a <http://www.w3.org/2000/01/rdf-schema#Class> }'));	# rdfs8
+	push(@rules, RDF::Query->new('CONSTRUCT { ?c <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2000/01/rdf-schema#Resource>, ?c } WHERE { ?c a <http://www.w3.org/2000/01/rdf-schema#Class> }')); # rdfs8 rdfs10
 	push(@rules, RDF::Query->new('CONSTRUCT { ?s a ?b } WHERE { ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?b . ?s a ?a }'));	# rdfs9
-	push(@rules, RDF::Query->new('CONSTRUCT { ?u <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?u } WHERE { ?u a <http://www.w3.org/2000/01/rdf-schema#Class> }'));	# rdfs10
 	push(@rules, RDF::Query->new('CONSTRUCT { ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?c } WHERE { ?b <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?c. ?a <http://www.w3.org/2000/01/rdf-schema#subClassOf> ?b }'));	# rdfs11
 	push(@rules, RDF::Query->new('CONSTRUCT { ?x <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://www.w3.org/2000/01/rdf-schema#member> } WHERE { ?x a <http://www.w3.org/2000/01/rdf-schema#ContainerMembershipProperty> }'));	# rdfs12
 	push(@rules, RDF::Query->new('CONSTRUCT { ?x <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/2000/01/rdf-schema#Literal> } WHERE { ?x a <http://www.w3.org/2000/01/rdf-schema#Datatype> }'));	# rdfs13
