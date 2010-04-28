@@ -243,7 +243,7 @@ sub _compare {
 	}
 	
 	# the nodes have the same lexical value
-	if ($a->has_langauge and $b->has_langauge) {
+	if ($a->has_language and $b->has_language) {
 		return ($a->literal_value_language cmp $b->literal_value_language);
 	}
 	
