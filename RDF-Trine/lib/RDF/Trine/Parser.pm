@@ -209,6 +209,13 @@ sub parse_file {
 	return $self->parse( $base, $content, $handler, @_ );
 }
 
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+
+=cut
+
+
 =item C<< canonicalize_literal_value ( $string, $datatype ) >>
 
 If C<< $datatype >> is a recognized datatype, returns the canonical lexical
@@ -289,10 +296,6 @@ sub canonicalize_literal_value {
 1;
 
 __END__
-
-=item C<< parse ( $base_uri, $rdf, \&handler ) >>
-
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =back
 
