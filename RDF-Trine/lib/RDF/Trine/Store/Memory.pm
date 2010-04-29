@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.120
+This document describes RDF::Trine::Store::Memory version 0.121
 
 =head1 SYNOPSIS
 
@@ -23,7 +23,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.120;
+our $VERSION	= 0.121;
 
 use Set::Scalar;
 use Data::Dumper;

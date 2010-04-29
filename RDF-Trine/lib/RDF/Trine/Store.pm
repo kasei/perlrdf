@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.120
+This document describes RDF::Trine::Store version 0.121
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.120';
+	$VERSION	= '0.121';
 }
 
 ######################################################################
