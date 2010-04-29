@@ -71,6 +71,19 @@ sub _cost_service {
 	return $card + $cost;
 }
 
+sub _cost_subselect {
+	my $self	= shift;
+	my $plan	= shift;
+	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.costmodel");
+	if ($l->is_debug) {
+		$l->debug( 'Computing COST: ' . $plan->sse( {}, '' ) );
+	}
+	my $card	= $self->_cardinality( $plan, $context );
+	$l->debug( sprintf('COST of Sub-select is %d', $card) );
+	return $card;
+}
+
 sub _cost_exists {
 	my $self	= shift;
 	my $plan	= shift;
@@ -396,6 +409,13 @@ sub _cardinality_service {
 	my $pattern	= shift;
 	my $context	= shift;
 	return $self->_cardinality( $pattern->pattern, $context );	# XXX this isn't really right. it uses the local data to estimate the cardinality of the remote query...
+}
+
+sub _cardinality_subselect {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $context	= shift;
+	return 1;
 }
 
 sub _cardinality_union {

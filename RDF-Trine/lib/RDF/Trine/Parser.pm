@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.120
+This document describes RDF::Trine::Parser version 0.121
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ our ($VERSION);
 our %parser_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.120';
+	$VERSION	= '0.121';
 }
 
 use Scalar::Util qw(blessed);
@@ -60,11 +60,18 @@ use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
 
-=item C<< new ( $parser_name ) >>
+=item C<< new ( $parser_name, @args ) >>
 
 Returns a new RDF::Trine::Parser object for the parser with the specified name
 (e.g. "rdfxml" or "turtle"). If no parser with the specified name is found,
 throws a RDF::Trine::Error::ParserError exception.
+
+Any C<< @args >> will be passed through to the format-specific parser
+constructor.
+
+If C<< @args >> contains the key-value pair C<< (canonicalize => 1) >>, literal
+value canonicalization will be attempted during parsing with warnings being
+emitted for invalid lexical forms for recognized datatypes.
 
 =cut
 
@@ -206,6 +213,10 @@ sub parse_file {
 
 If C<< $datatype >> is a recognized datatype, returns the canonical lexical
 representation of the value C<< $string >>. Otherwise returns C<< $string >>.
+
+Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
+Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
+will trigger a warning.
 
 =cut
 

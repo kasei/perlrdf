@@ -169,7 +169,6 @@ sub new {
 	$class->clear_error;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
-	my $f	= DateTime::Format::W3CDTF->new;
 	no warnings 'uninitialized';
 	
 	my %names	= (
@@ -192,15 +191,11 @@ sub new {
 	my $parser	= $pclass->new();
 	my $parsed	= $parser->parse( $query, $baseuri );
 	
-	my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
-	$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
-	my $self 	= bless( {
+	my $self	= $class->_new(
 					base			=> $baseuri,
-					dateparser		=> $f,
 					parser			=> $parser,
 					parsed			=> $parsed,
-					useragent		=> $ua,
-				}, $class );
+				);
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
 		$l->debug($parser->error);
@@ -261,6 +256,12 @@ sub new {
 	if ($pclass eq 'RDF::Query::Parser::RDQL') {
 		$self->{parsed}{namespaces}{rdf}	= 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 	}
+	return $self;
+}
+
+sub _new {
+	my $class	= shift;
+	my $self 	= bless( { @_ }, $class );
 	return $self;
 }
 
@@ -676,9 +677,9 @@ Returns the query as a string in the SPARQL syntax.
 
 sub as_sparql {
 	my $self	= shift;
-	my $parsed	= $self->parsed;
+	my $parsed	= $self->parsed || {};
 	
-	my $context	= { namespaces => { %{ $self->{parsed}{namespaces} } } };
+	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
@@ -765,6 +766,18 @@ sub sse {
 	
 	chomp($sse);
 	return $sse;
+}
+
+=item C<< dateparser >>
+
+Returns the DateTime::Format::W3CDTF object associated with this query object.
+
+=cut
+
+sub dateparser {
+	my $self	= shift;
+	my $parser	= ($self->{dateparser} ||= DateTime::Format::W3CDTF->new);
+	return $parser;
 }
 
 =begin private
@@ -1523,7 +1536,14 @@ Returns the LWP::UserAgent object used for retrieving web content.
 
 sub useragent {
 	my $self	= shift;
-	return $self->{useragent};
+	if (my $ua = $self->{useragent}) {
+		return $ua;
+	} else {
+		my $ua		= LWP::UserAgent->new( agent => "RDF::Query/${VERSION}" );
+		$ua->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+		$self->{useragent}	= $ua;
+		return $ua;
+	}
 }
 
 

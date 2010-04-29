@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.120
+This document describes RDF::Trine::Model version 0.121
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.120';
+	$VERSION	= '0.121';
 }
 
 use Scalar::Util qw(blessed);
@@ -192,9 +192,15 @@ sub count_statements {
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
-Returns a stream object of all statements matching the specified subject,
+Returns an iterator of all statements matching the specified subject,
 predicate and objects from the rdf store. Any of the arguments may be undef to
 match any value.
+
+If three or fewer arguments are given, the statements returned will be matched
+based on triple semantics (the graph union of triples from all the named
+graphs). If four arguments are given (even if C<< $context >> is undef),
+statements will be matched based on quad semantics (the union of all quads in
+the underlying store).
 
 =cut
 
@@ -290,6 +296,9 @@ sub get_pattern {
 }
 
 =item C<< get_contexts >>
+
+Returns an iterator containing the nodes representing the named graphs in the
+model.
 
 =cut
 
@@ -388,6 +397,87 @@ sub as_hashref {
 		push @{ $index->{$s}->{$p} }, $o;
 	}
 	return $index;
+}
+
+=back
+
+=head2 Node-Centric Graph API
+
+=over 4
+
+=item C<< subjects ( $predicate, $object ) >>
+
+Returns a list of the nodes that appear as the subject of statements with the
+specified C<< $predicate >> and C<< $object >>. Either of the two arguments may
+be undef to signify a wildcard.
+
+=cut
+
+sub subjects {
+	my $self	= shift;
+	my $pred	= shift;
+	my $obj		= shift;
+	my $iter	= $self->get_statements( undef, $pred, $obj );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $subj	= $st->subject;
+		$nodes{ $subj->as_string }	= $subj;
+	}
+	if (wantarray) {
+		return values(%nodes);
+	} else {
+		return RDF::Trine::Iterator->new( [values(%nodes)] );
+	}
+}
+
+=item C<< predicates ( $subject, $object ) >>
+
+Returns a list of the nodes that appear as the predicate of statements with the
+specified C<< $subject >> and C<< $object >>. Either of the two arguments may
+be undef to signify a wildcard.
+
+=cut
+
+sub predicates {
+	my $self	= shift;
+	my $subj	= shift;
+	my $obj		= shift;
+	my $iter	= $self->get_statements( $subj, undef, $obj );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $pred	= $st->predicate;
+		$nodes{ $pred->as_string }	= $pred;
+	}
+	if (wantarray) {
+		return values(%nodes);
+	} else {
+		return RDF::Trine::Iterator->new( [values(%nodes)] );
+	}
+}
+
+=item C<< objects ( $subject, $predicate ) >>
+
+Returns a list of the nodes that appear as the object of statements with the
+specified C<< $subject >> and C<< $predicate >>. Either of the two arguments may
+be undef to signify a wildcard.
+
+=cut
+
+sub objects {
+	my $self	= shift;
+	my $subj	= shift;
+	my $pred	= shift;
+	my $iter	= $self->get_statements( $subj, $pred );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $obj	= $st->object;
+		$nodes{ $obj->as_string }	= $obj;
+	}
+	if (wantarray) {
+		return values(%nodes);
+	} else {
+		return RDF::Trine::Iterator->new( [values(%nodes)] );
+	}
 }
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>

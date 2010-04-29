@@ -1,4 +1,4 @@
-use Test::More tests => 64;
+use Test::More tests => 66;
 use Test::Exception;
 
 use utf8;
@@ -28,6 +28,7 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 my $k		= RDF::Trine::Node::Resource->new('http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#食べる');
 my $k2		= RDF::Trine::Node::Resource->new('/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#食べる', 'http://www.w3.org/');
 my $k3		= RDF::Trine::Node::Resource->new('#食べる', 'http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji/食');
+my $urn		= RDF::Trine::Node::Resource->new('urn:x-demonstrate:bug');
 
 throws_ok { RDF::Trine::Node::Literal->new('foo', 'en', 'http://dt') } 'RDF::Trine::Error::MethodInvocationError', 'RDF::Trine::Node::Literal::new throws with both langauge and datatype';
 throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with non-alphanumeric label';
@@ -135,6 +136,12 @@ TODO: {
 		($ns, $l)	= $k->qname;
 	} catch RDF::Trine::Error with {};
 	is( $l, '食べる', 'unicode qname separation' );
+}
+
+{
+	my ($ns, $l)	= $urn->qname;
+	is($ns, 'urn:x-demonstrate:', 'good URN namespace prefix');
+	is($l, 'bug', 'good URN local name');
 }
 
 # from_sse

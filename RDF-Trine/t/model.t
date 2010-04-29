@@ -7,7 +7,7 @@ use warnings;
 no warnings 'redefine';
 
 use DBI;
-use RDF::Trine;
+use RDF::Trine qw(literal);
 use RDF::Trine::Model;
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
@@ -28,7 +28,7 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 
 my ($stores, $remove)	= stores();
 
-plan tests => 69 * scalar(@$stores);
+plan tests => 81 * scalar(@$stores);
 
 foreach my $store (@$stores) {
 	print "### Testing store " . ref($store) . "\n";
@@ -153,6 +153,36 @@ foreach my $store (@$stores) {
 			$count++;
 		}
 		is( $count, 4, 'expected model statement count (4)' );
+	}
+	
+	{
+		{
+			my @subj	= $model->subjects( $rdf->type );
+			my @preds	= $model->predicates( $p );
+			my @objs	= $model->objects( $p );
+			is( scalar(@subj), 2, "expected subject count on rdf:type" );
+			is( scalar(@preds), 2, "expected predicate count on " . $p->uri_value );
+			is( scalar(@objs), 2, "expected objects count on " . $p->uri_value );
+		}
+		{
+			my @subjs	= $model->subjects( $foaf->name, literal('Eve') );
+			my @preds	= $model->predicates( $p, $foaf->Person );
+			my @objs	= $model->objects( $p, $rdf->type );
+			is( scalar(@subjs), 1, "expected subject count on rdf:type" );
+			ok( $subjs[0]->is_blank, 'expected subject' );
+			is( scalar(@preds), 1, "expected predicate count on " . $p->uri_value );
+			ok( $preds[0]->equal( $rdf->type ), 'expected predicate' );
+			is( scalar(@objs), 1, "expected objects count on " . $p->uri_value );
+			ok( $objs[0]->equal( $foaf->Person ), 'expected object' );
+		}
+		{
+			my $subjs	= $model->subjects( $rdf->type );
+			my $preds	= $model->predicates( $p );
+			my $objs	= $model->objects( $p );
+			isa_ok( $subjs, 'RDF::Trine::Iterator', 'expected iterator from subjects()' );
+			isa_ok( $preds, 'RDF::Trine::Iterator', 'expected iterator from predicates()' );
+			isa_ok( $objs, 'RDF::Trine::Iterator', 'expected iterator from objects()' );
+		}
 	}
 	
 	{
