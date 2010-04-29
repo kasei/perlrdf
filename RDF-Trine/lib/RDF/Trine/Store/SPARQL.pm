@@ -263,6 +263,7 @@ sub remove_statements {
 	while (my $st = $iter->next) {
 		$self->remove_statement( $st );
 	}
+	throw RDF::Trine::Error::UnimplementedError;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $context ) >>
@@ -327,8 +328,8 @@ sub _get_iterator {
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
-		warn "url: $url\n";
-		warn $sparql;
+#		warn "url: $url\n";
+#		warn $sparql;
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }

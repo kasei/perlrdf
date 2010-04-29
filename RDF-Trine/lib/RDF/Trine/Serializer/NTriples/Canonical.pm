@@ -126,11 +126,11 @@ sub serialize_model_to_string {
 	while (my $ST = $stream->next) {
 		push @statements, { 'trine' => $ST };
 		
-		if ($ST->subject->is_blank) {
+		if ($ST->subject->isa('RDF::Trine::Node::Blank')) {
 			$blankNodes->{ $ST->subject->blank_identifier }->{'trine'} = $ST->subject;
 		}
 		
-		if ($ST->object->is_blank) {
+		if ($ST->object->isa('RDF::Trine::Node::Blank')) {
 			$blankNodes->{ $ST->object->blank_identifier }->{'trine'} = $ST->object;
 		}
 	}
@@ -141,9 +141,9 @@ sub serialize_model_to_string {
 		# Really need to canonicalise typed literals as per XSD.
 		
 		$st->{'lex'} = sprintf('%s %s %s',
-			($st->{'trine'}->subject->is_blank ? '~' : $st->{'trine'}->subject->sse),
+			($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->subject->sse),
 			$st->{'trine'}->predicate->sse,
-			($st->{'trine'}->object->is_blank ? '~' : $st->{'trine'}->object->sse)
+			($st->{'trine'}->object->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->object->sse)
 			);
 		$lexCounts{ $st->{'lex'} }++;
 	}
@@ -160,7 +160,7 @@ sub serialize_model_to_string {
 	foreach my $st (@statements) {
 		next unless $lexCounts{ $st->{'lex'} } == 1;
 		
-		if ($st->{'trine'}->object->is_blank) {
+		if ($st->{'trine'}->object->isa('RDF::Trine::Node::Blank')) {
 			unless (defined $blankNodes->{ $st->{'trine'}->object->blank_identifier }->{'lex'}) {
 				$blankNodes->{ $st->{'trine'}->object->blank_identifier }->{'lex'} =
 					sprintf($blankNodePattern, $genSymCounter);
@@ -170,7 +170,7 @@ sub serialize_model_to_string {
 			$st->{'lex'} =~ s/\~$/$b/;
 		}
 		
-		if ($st->{'trine'}->subject->is_blank) {
+		if ($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank')) {
 			unless (defined $blankNodes->{ $st->{'trine'}->subject->blank_identifier }->{'lex'}) {
 				$blankNodes->{ $st->{'trine'}->subject->blank_identifier }->{'lex'} =
 					sprintf($blankNodePattern, $genSymCounter);

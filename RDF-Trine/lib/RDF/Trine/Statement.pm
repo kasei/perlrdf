@@ -158,7 +158,7 @@ Returns true if any of the nodes in this statement are blank nodes.
 sub has_blanks {
 	my $self	= shift;
 	foreach my $node ($self->nodes) {
-		return 1 if $node->is_blank;
+		return 1 if $node->isa('RDF::Trine::Node::Blank');
 	}
 	return 0;
 }

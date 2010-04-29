@@ -220,7 +220,7 @@ END
 		if ($object->is_resource) {
 			my $uri	= $object->uri_value;
 			print {$fh} qq[\t<${local} xmlns="${ns}" rdf:resource="$uri"/>\n];
-		} elsif ($object->is_blank) {
+		} elsif ($object->isa('RDF::Trine::Node::Blank')) {
 			my $id	= $object->blank_identifier;
 			print {$fh} qq[\t<${local} xmlns="${ns}" rdf:nodeID="$id"/>\n];
 		} else {

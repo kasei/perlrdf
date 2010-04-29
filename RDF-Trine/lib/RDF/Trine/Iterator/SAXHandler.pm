@@ -77,30 +77,30 @@ sub iterator {
 	}
 }
 
-=item C<< has_head >>
-
-Returns true if the <head/> element has been completely parsed, false otherwise.
-
-=cut
-
-sub has_head {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	return ($has_head{ $addr }) ? 1 : 0;
-}
-
-=item C<< has_end >>
-
-Returns true if the <sparql/> element (the entire iterator) has been completely
-parsed, false otherwise.
-
-=cut
-
-sub has_end {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	return ($has_end{ $addr }) ? 1 : 0;
-}
+# =item C<< has_head >>
+# 
+# Returns true if the <head/> element has been completely parsed, false otherwise.
+# 
+# =cut
+# 
+# sub has_head {
+# 	my $self	= shift;
+# 	my $addr	= refaddr( $self );
+# 	return ($has_head{ $addr }) ? 1 : 0;
+# }
+# 
+# =item C<< has_end >>
+# 
+# Returns true if the <sparql/> element (the entire iterator) has been completely
+# parsed, false otherwise.
+# 
+# =cut
+# 
+# sub has_end {
+# 	my $self	= shift;
+# 	my $addr	= refaddr( $self );
+# 	return ($has_end{ $addr }) ? 1 : 0;
+# }
 
 =item C<< iterator_class >>
 

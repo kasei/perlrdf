@@ -140,7 +140,7 @@ sub _statements_same_subject_as_string {
 	my $s			= $statements[0]->subject;
 	
 	my $id;
-	if ($s->is_blank) {
+	if ($s->isa('RDF::Trine::Node::Blank')) {
 		my $b	= $s->blank_identifier;
 		$id	= qq[rdf:nodeID="$b"];
 	} else {
@@ -164,7 +164,7 @@ sub _statements_same_subject_as_string {
 			$namespaces{ $ns }	= 'ns' . $counter++;
 		}
 		my $prefix	= $namespaces{ $ns };
-		if ($o->is_literal) {
+		if ($o->isa('RDF::Trine::Node::Literal')) {
 			my $lv		= $o->literal_value;
 			$lv			=~ s/&/&amp;/g;
 			$lv			=~ s/</&lt;/g;
@@ -178,7 +178,7 @@ sub _statements_same_subject_as_string {
 			} else {
 				$string	.= qq[\t<${tag}>${lv}</${tag}>\n];
 			}
-		} elsif ($o->is_blank) {
+		} elsif ($o->isa('RDF::Trine::Node::Blank')) {
 			my $b	= $o->blank_identifier;
 			$string	.= qq[\t<${prefix}:$ln rdf:nodeID="$b"/>\n];
 		} else {

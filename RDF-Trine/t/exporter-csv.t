@@ -72,11 +72,7 @@ END
 	my $e	= RDF::Trine::Exporter::CSV->new( quote => 0, sep_char => '|' );
 	my $t		= statement( iri('http://example.com/doc'), variable('p'), variable('o') );
 	my $iter	= $model->get_pattern( $t, undef, orderby => [ qw(p ASC o ASC) ] );
-	my ($rh, $wh);
-	pipe( $rh, $wh );
-	$e->serialize_iterator_to_file( $wh, $iter );
-	close($wh);
-	my $got		= do { local($/) = undef; <$rh> };
+	my $got		= $e->serialize_iterator_to_string( $iter );
 	my $expect	= <<'END';
 p|o
 http://example.com/predicate|http://example.com/bar

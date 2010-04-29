@@ -96,7 +96,7 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless (blessed($node));
-	if ($self->is_nil and $node->is_nil) {
+	if ($self->isa('RDF::Trine::Node::Nil') and $node->isa('RDF::Trine::Node::Nil')) {
 		return 1;
 	} else {
 		return 0;

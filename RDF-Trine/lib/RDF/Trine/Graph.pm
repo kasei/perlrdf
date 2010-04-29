@@ -146,7 +146,7 @@ sub equals {
 			my @nodes;
 			foreach my $method ($st->node_names) {
 				my $n	= $st->$method();
-				if ($n->is_blank) {
+				if ($n->isa('RDF::Trine::Node::Blank')) {
 					my $id	= $mapping{ $n->blank_identifier };
 # 					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
 					push(@nodes, RDF::Trine::Node::Blank->new( $id ));

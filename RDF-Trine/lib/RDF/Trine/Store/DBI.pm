@@ -460,7 +460,7 @@ sub _add_node {
 		$table	= "Resources";
 		@cols	= qw(ID URI);
 		@values{ @cols }	= ($hash, $node->uri_value);
-	} elsif ($node->is_literal) {
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
 		@values{ @cols }	= ($hash, $node->literal_value);

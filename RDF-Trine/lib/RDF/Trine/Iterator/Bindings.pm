@@ -665,13 +665,13 @@ sub format_node_json ($$$) {
 	
 	if(!defined $node) {
 		return;
-	} elsif ($node->is_resource) {
+	} elsif ($node->isa('RDF::Trine::Node::Resource')) {
 		$node_label	= $node->uri_value;
 		return $name => { type => 'uri', value => $node_label };
-	} elsif ($node->is_literal) {
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$node_label	= $node->literal_value;
 		return $name => { type => 'literal', value => $node_label };
-	} elsif ($node->is_blank) {
+	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		$node_label	= $node->blank_identifier;
 		return $name => { type => 'bnode', value => $node_label };
 	} else {
