@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.121_01
+This document describes RDF::Trine::Parser::Turtle version 0.121
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number);
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.121_01';
+	$VERSION				= '0.121';
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

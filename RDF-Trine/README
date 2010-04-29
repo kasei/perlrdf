@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.121 (2010-XX-XX)
+  Version 0.121 (2010-04-29)
 
      * Fixed URI qname code to disallow ':' in local name.
      * Added node-centric methods to RDF::Trine::Model: subjects, predicates, objects.
