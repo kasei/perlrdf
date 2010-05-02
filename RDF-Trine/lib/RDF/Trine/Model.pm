@@ -512,6 +512,42 @@ sub objects_for_predicate_list {
 	return @objects;
 }
 
+=item C<< bounded_description ( $node ) >>
+
+Returns an RDF::Trine::Iterator::Graph object over the bounded description
+triples for C<< $node >> (all triples resulting from a graph traversal starting
+with C<< node >> and stopping at non-blank nodes).
+
+=cut
+
+sub bounded_description {
+	my $self	= shift;
+	my $node	= shift;
+	my %seen;
+	my @nodes	= $node;
+	my @statements;
+	my $sub		= sub {
+		return if (not(@statements) and not(@nodes));
+		while (1) {
+			if (not(@statements)) {
+				return unless (scalar(@nodes));
+				my $n	= shift(@nodes);
+				next if ($seen{ $n->sse }++);
+				my $sts	= $self->get_statements( $n );
+				push(@statements, $sts->get_all);
+			}
+			last if (scalar(@statements));
+		}
+		return unless (scalar(@statements));
+		my $st	= shift(@statements);
+		if ($st->object->isa('RDF::Trine::Node::Blank')) {
+			push(@nodes, $st->object);
+		}
+		return $st;
+	};
+	return RDF::Trine::Iterator::Graph->new( $sub );
+}
+
 sub _store {
 	my $self	= shift;
 	return $self->{store};
