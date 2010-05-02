@@ -29,9 +29,13 @@ use RDF::Trine::Store::SPARQL;
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, $HAVE_REDLAND);
 BEGIN {
 	$VERSION	= '0.121';
+	eval "use RDF::Trine::Store::Redland;";
+	unless ($@) {
+		$HAVE_REDLAND	= 1;
+	}
 }
 
 ######################################################################

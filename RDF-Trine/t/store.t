@@ -5,7 +5,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(variable store literal);
+use RDF::Trine qw(iri variable store literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
@@ -124,15 +124,15 @@ sub add_statement_tests_simple {
 	$store->remove_statement( $triple, $ex->d );
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
-	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, literal('graph'));
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
 	$store->add_statement( $quad2 );
 	is( $store->size, 1, 'store has 1 statement after (quad) add' );
 	
-	my $count	= $store->count_statements( undef, undef, undef, literal('graph') );
-	is( $count, 1, 'expected count of literal-context statements' );
+	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
+	is( $count, 1, 'expected count of specific-context statements' );
 	
 	$store->remove_statement( $quad2 );
-	is( $store->size, 0 );
+	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
 sub count_statements_tests_simple {
@@ -140,7 +140,7 @@ sub count_statements_tests_simple {
 	my $store	= shift;
 	
 	{
-		is( $store->size, 0 );
+		is( $store->size, 0, 'expected zero size before add statement' );
 		my $st	= RDF::Trine::Statement::Quad->new( $ex->a, $ex->b, $ex->c, $ex->d );
 		$store->add_statement( $st );
 
@@ -382,5 +382,8 @@ sub test_stores {
 	my @stores;
 	push(@stores, RDF::Trine::Store::DBI->temporary_store());
 	push(@stores, RDF::Trine::Store::Memory->temporary_store());
+	if ($RDF::Trine::Store::HAVE_REDLAND) {
+		push(@stores, RDF::Trine::Store::Redland->temporary_store());
+	}
 	return @stores;
 }
