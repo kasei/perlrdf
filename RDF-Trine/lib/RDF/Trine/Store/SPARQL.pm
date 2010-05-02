@@ -259,11 +259,11 @@ sub remove_statements {
 	my $obj		= shift;
 	my $context	= shift;
 
+	throw RDF::Trine::Error::UnimplementedError;
 	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
 	while (my $st = $iter->next) {
 		$self->remove_statement( $st );
 	}
-	throw RDF::Trine::Error::UnimplementedError;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $context ) >>
