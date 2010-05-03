@@ -101,7 +101,7 @@ END
 	while (my $row = $iter->next) {
 		isa_ok( $row, 'HASH' );
 		my $name	= $row->{name};
-		is( $name->literal_value, "Alan Turing", 'execution: expected foaf:name in federation description' );
+		like( $name->literal_value, qr"^Alan.*Turing$", 'execution: expected foaf:name in federation description' );
 		$count++;
 		last;
 	}
