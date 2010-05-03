@@ -75,10 +75,6 @@ lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
 lib/RDF/Query/BGPOptimizer.pm
 lib/RDF/Query/Compiler/SQL.pm
-lib/RDF/Query/CostModel.pm
-lib/RDF/Query/CostModel/Counted.pm
-lib/RDF/Query/CostModel/Logged.pm
-lib/RDF/Query/CostModel/Naive.pm
 lib/RDF/Query/Error.pm
 lib/RDF/Query/ExecutionContext.pm
 lib/RDF/Query/Expression.pm
@@ -149,8 +145,6 @@ t/algebra-func.t
 t/algebra-subsumption.t
 t/algebra.t
 t/constraints.t
-t/costmodel-logged.t
-t/costmodel-naive.t
 t/dataset-from-file.t
 t/dataset-from-net.t
 t/dev-computed-statements.t

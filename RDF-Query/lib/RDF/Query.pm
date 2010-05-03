@@ -122,8 +122,6 @@ use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Logger;
 use RDF::Query::Plan;
-use RDF::Query::CostModel::Naive;
-use RDF::Query::CostModel::Counted;
 
 ######################################################################
 
@@ -228,13 +226,6 @@ sub new {
 		$self->{logger}	= $options{logger};
 	}
 	
-	if ($options{costmodel}) {
-		$l->debug("got cost model");
-		$self->{costmodel}	= $options{costmodel};
-	} else {
-		$self->{costmodel}	= RDF::Query::CostModel::Naive->new();
-	}
-	
 	if (my $opt = $options{optimize}) {
 		$l->debug("got optimization flag: $opt");
 		$self->{optimize}	= $opt;
@@ -322,7 +313,6 @@ sub prepare {
 					base						=> $parsed->{base},
 					ns							=> $parsed->{namespaces},
 					logger						=> $self->logger,
-					costmodel					=> $self->costmodel,
 					optimize					=> $self->{optimize},
 					force_no_optimization		=> $self->{force_no_optimization},
 					optimistic_threshold_time	=> $self->{optimistic_threshold_time} || 0,
@@ -948,24 +938,6 @@ sub load_data {
 }
 
 
-=item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
-
-Called in the fixup method of ::Algebra classes, returns either an optimized
-::Algebra object ready for execution, or undef (in which case it will be
-prepared for execution by the ::Algebra::* class itself.
-
-=cut
-
-sub algebra_fixup {
-	my $self	= shift;
-	my $pattern	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	return if ($self->{force_no_optimization});
-	return $bridge->fixup( $pattern, $self, $base, $ns );
-}
-
 =begin private
 
 =item C<< var_or_expr_value ( $bridge, \%bound, $value ) >>
@@ -1572,17 +1544,6 @@ Returns the logger object associated with this query object (if present).
 sub logger {
 	my $self	= shift;
 	return $self->{ logger };
-}
-
-=item C<< costmodel >>
-
-Returns the RDF::Query::CostModel object associated with this query object (if present).
-
-=cut
-
-sub costmodel {
-	my $self	= shift;
-	return $self->{ costmodel };
 }
 
 =item C<error ()>
