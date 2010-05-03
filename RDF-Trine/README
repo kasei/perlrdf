@@ -65,6 +65,15 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.122 (2010-XX-XX)
+
+     * Added RDF::Trine::Model::bounded_description method.
+     * Added initial implementation of a Redland-based storage class.
+     * Fixed SPARQL store tests to align with recent coverage efforts.
+     * Code cleanup and updates to improve test coverage.
+     * Rearranged POD in RDF::Trine::Parser.
+     * Fixed type in RDF::Trine::Node::Literal::_compare.
+
   Version 0.121 (2010-04-29)
 
      * Fixed URI qname code to disallow ':' in local name.

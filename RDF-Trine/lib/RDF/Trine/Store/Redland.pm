@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.121
+This document describes RDF::Trine::Store::Redland version 0.122_01
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.121;
+our $VERSION	= 0.122_01;
 my $NIL_TAG		= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use RDF::Redland 1.00;

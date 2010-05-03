@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.122.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.121.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.122" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Model::bounded_description method." ;
+                        asc:addition    "Added initial implementation of a Redland-based storage class." ;
+                        asc:update      "Fixed SPARQL store tests to align with recent coverage efforts." ;
+                        asc:update      "Code cleanup and updates to improve test coverage." ;
+                        asc:update      "Rearranged POD in RDF::Trine::Parser." ;
+                        asc:update      "Fixed type in RDF::Trine::Node::Literal::_compare." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.121.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.120.tar.gz> ;
