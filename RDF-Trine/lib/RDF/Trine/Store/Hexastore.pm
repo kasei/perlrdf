@@ -24,8 +24,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.121;
-
 use Data::Dumper;
 use RDF::Trine::Error;
 use List::Util qw(first);
@@ -40,6 +38,16 @@ use constant OTHERNODES	=> {
 				predicate	=> [qw(subject object)],
 				object		=> [qw(subject predicate)],
 			};
+
+######################################################################
+
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.121";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+}
+
+######################################################################
 
 =head1 METHODS
 

@@ -43,9 +43,15 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.121";
+######################################################################
 
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.121";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+}
 
+######################################################################
 
 =head1 METHODS
 
@@ -109,6 +115,13 @@ sub _new_with_string {
 	my $config	= shift;
 	my ($model, $dsn, $user, $pass)	= split(';', $config);
 	return $class->new( $model, $dsn, $user, $pass );
+}
+
+sub _new_with_object {
+	my $class	= shift;
+	my $obj		= shift;
+	return unless (blessed($obj) and $obj->isa('DBI::db'));
+	return $class->new( $obj );
 }
 
 =item C<< temporary_store >>
