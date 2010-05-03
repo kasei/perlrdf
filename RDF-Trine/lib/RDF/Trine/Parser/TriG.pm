@@ -37,7 +37,7 @@ use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '0.115';
+	$VERSION				= '0.122';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
 # 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 # 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
