@@ -116,7 +116,7 @@ sub next {
 			$name			= $e->sse;
 			$var_or_expr	= $e;
 		}
-		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
+		my $value		= $query->var_or_expr_value( $row, $var_or_expr );
 		if ($l->is_trace) {
 			$l->trace( "- project value $name -> $value" );
 		}

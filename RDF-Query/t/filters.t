@@ -15,6 +15,7 @@ eval "use Geo::Distance 0.09;";
 my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
 
 use RDF::Query;
+use RDF::Query::Node qw(iri);
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
@@ -33,7 +34,6 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my $image	= $row->{image}->uri_value;
 			like( $image, qr<(DSC_5705|DSC_8057)>, 'expected image URI' );
@@ -61,13 +61,12 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($image, $thing, $ttype, $tname)	= @{ $row }{qw(image thing type name)};
-			my $url		= $bridge->uri_value( $image );
-			my $node	= $bridge->as_string( $thing );
-			my $name	= $bridge->literal_value( $tname );
-			my $type	= $bridge->as_string( $ttype );
+			my $url		= $image->uri_value;
+			my $node	= $thing->as_string;
+			my $name	= $tname->literal_value;
+			my $type	= $ttype->as_string;
 			like( $type, qr/Flower/, "$node is a Flower" );
 			$count++;
 		}
@@ -92,8 +91,8 @@ END
 		while (my $row = $stream->next) {
 			isa_ok( $row, 'HASH' );
 			my ($p,$n)	= @{ $row }{qw(person name)};
-			isa_ok( $p, 'RDF::Trine::Node', $query->bridge->as_string( $p ) . ' is a node' );
-			like( $query->bridge->literal_value( $n ), qr/^Gary|Lauren/, 'name' );
+			isa_ok( $p, 'RDF::Trine::Node', $p->as_string . ' is a node' );
+			like( $n->literal_value, qr/^Gary|Lauren/, 'name' );
 			$count++;
 		}
 		is( $count, 1, "1 person (bnode) found" );
@@ -117,8 +116,8 @@ END
 		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n)	= @{ $row }{qw(person name)};
-			ok( $query->bridge->isa_node( $p ), $query->bridge->as_string( $p ) . ' is a node' );
-			like( $query->bridge->literal_value( $n ), qr/^(Greg|Liz|Lauren)/, 'name' );
+			ok( (blessed(p) and $p->isa('RDF::Trine::Node')), $p->as_string . ' is a node' );
+			like( $n->literal_value, qr/^(Greg|Liz|Lauren)/, 'name' );
 			$count++;
 		}
 		is( $count, 3, "3 people (uris) found" );
@@ -146,11 +145,10 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		$query->add_function( 'http://kasei.us/e/ns/geo#distance', sub {
 			my $query	= shift;
-			my $bridge	= shift;
 			my $geo		= new Geo::Distance;
 			my $point	= shift;
-			my $plat	= get_first_literal( $bridge, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
-			my $plon	= get_first_literal( $bridge, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
+			my $plat	= get_first_literal( $query, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
+			my $plon	= get_first_literal( $query, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
 			my ($lat, $lon)	= map { Scalar::Util::blessed($_) ? $_->literal_value : $_ } @_;
 			my $dist	= $geo->distance(
 							'kilometer',
@@ -163,12 +161,11 @@ END
 			return RDF::Query::Node::Literal->new("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
 		} );
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my ($image, $point, $pname, $lat, $lon)	= @{ $row }{qw(image point name lat long)};
-			my $url		= $bridge->uri_value( $image );
-			my $name	= $bridge->literal_value( $pname );
+			my $url		= $image->uri_value;
+			my $name	= $pname->literal_value;
 			like( $name, qr/, (RI|MA|CT)$/, "$name ($url)" );
 			$count++;
 		}
@@ -178,13 +175,12 @@ END
 	{
 		RDF::Query->add_function( 'http://kasei.us/e/ns/rdf#isa', sub {
 			my $query	= shift;
-			my $bridge	= shift;
 			my $node	= shift;
-			my $ntype	= $bridge->new_resource( shift );
+			my $ntype	= iri( shift );
 			my $model	= $query->{model};
 			my $p_type	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' );
 			my $p_sub	= RDF::Query::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#subClassOf' );
-			my $stmts	= $bridge->get_statements( $node, $p_type, undef );
+			my $stmts	= $query->model->get_statements( $node, $p_type );
 			my %seen;
 			my @types;
 			while (my $s = $stmts->next) {
@@ -195,7 +191,7 @@ END
 					return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 				} else {
 					next if ($seen{ $type->as_string }++);
-					my $sub_stmts	= $bridge->get_statements( $type, $p_sub, undef );
+					my $sub_stmts	= $query->bridge->get_statements( $type, $p_sub, undef );
 					while (my $s = $sub_stmts->next) {
 						push( @types, $s->object );
 					}
@@ -221,13 +217,12 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($image, $thing, $ttype, $tname)	= @{ $row }{qw(image thing type name)};
-			my $url		= $bridge->uri_value( $image );
-			my $node	= $bridge->as_string( $thing );
-			my $name	= $bridge->literal_value( $tname );
-			my $type	= $bridge->as_string( $ttype );
+			my $url		= $image->uri_value;
+			my $node	= $thing->as_string;
+			my $name	= $tname->literal_value;
+			my $type	= $ttype->as_string;
 			ok( $name, "$node is a $name (${type} isa wn:Object)" );
 			$count++;
 		}
@@ -255,7 +250,7 @@ END
 		my $stream	= $query->execute( $model );
 		while (my $row = $stream->next) {
 			my ($node)	= @{ $row }{qw(p)};
-			my $uri	= $query->bridge->uri_value( $node );
+			my $uri	= $node->uri_value;
 			is( $uri, 'http://kasei.us/about/foaf.xrdf#greg', 'jena:sha1sum' );
 			$count++;
 		}
@@ -278,7 +273,7 @@ END
 		my $stream	= $query->execute( $model );
 		while (my $row = $stream->next) {
 			my ($node)	= @{ $row }{qw(p)};
-			my $uri	= $query->bridge->uri_value( $node );
+			my $uri	= $node->uri_value;
 			is( $uri, 'http://kasei.us/about/foaf.xrdf#greg', 'xpath:matches' );
 			$count++;
 		}
@@ -305,7 +300,6 @@ END
 END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next()) {
 			my ($image, $point, $pname, $lat, $lon)	= @{ $row }{qw(image point name lat long)};
@@ -339,9 +333,9 @@ END
 		my %expect	= map {$_=>1} (1..3);
 		while (my $row = $stream->next) {
 			my ($data)	= @{ $row }{qw(data)};
-			ok( $query->bridge->isa_literal( $data ), "literal list member" );
-			ok( exists($expect{ $query->bridge->literal_value( $data ) }), , "expected literal value" );
-			delete $expect{ $query->bridge->literal_value( $data ) };
+			ok( $data->isa('RDF::Trine::Node::Literal'), "literal list member" );
+			ok( exists($expect{ $data->literal_value }), , "expected literal value" );
+			delete $expect{ $data->literal_value };
 			$count++;
 		}
 		is( $count, 3, "jfn:listMember: 3 objects found" );
@@ -357,15 +351,16 @@ sub get_first_literal {
 }
 
 sub get_first_obj {
-	my $bridge	= shift;
+	my $query	= shift;
 	my $node	= shift;
 	my $uri		= shift;
+	my $model	= $query->model;
 	my @uris	= UNIVERSAL::isa($uri, 'ARRAY') ? @{ $uri } : ($uri);
-	my @preds	= map { ref($_) ? $_ : $bridge->new_resource( $_ ) } @uris;
+	my @preds	= map { ref($_) ? $_ : iri( $_ ) } @uris;
 	foreach my $pred (@preds) {
-		my $stmts	= $bridge->get_statements( $node, $pred, undef );
+		my $stmts	= $model->get_statements( $node, $pred );
 		while (my $s = $stmts->next) {
-			my $node	= $bridge->object( $s );
+			my $node	= $s->object;
 			return $node if ($node);
 		}
 	}

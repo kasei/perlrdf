@@ -50,7 +50,6 @@ if ($data) {
 	my $context	= RDF::Query::ExecutionContext->new(
 					bound		=> {},
 					model		=> $bridge,
-					model_optimize	=> 1,
 				);
 	
 	{

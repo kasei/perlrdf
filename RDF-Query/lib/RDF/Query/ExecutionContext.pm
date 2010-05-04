@@ -146,15 +146,6 @@ sub requested_variables {
 	return $self->_get_value( 'requested_variables', @_ );
 }
 
-=item C<< model_optimize >>
-
-=cut
-
-sub model_optimize {
-	my $self	= shift;
-	return $self->_get_value( 'model_optimize', @_ );
-}
-
 =item C<< optimize >>
 
 =cut

@@ -122,9 +122,7 @@ sub execute ($) {
 		}
 	}
 	
-	my $bridge	= $context->model;
-	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
-	
+	my $iter	= $context->model->get_statements( @triple );
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;

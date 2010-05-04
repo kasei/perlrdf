@@ -20,9 +20,10 @@ package RDF::Query::Plan::Aggregate;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+use Scalar::Util qw(blessed);
 
 use RDF::Query::Error qw(:try);
-use Scalar::Util qw(blessed);
+use RDF::Query::Node qw(literal);
 
 ######################################################################
 
@@ -80,8 +81,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: COUNT");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					
 					unless ($groups{ $group }) {
 						my %data;
@@ -98,7 +99,7 @@ sub execute ($) {
 					if ($col eq '*') {
 						$should_inc	= 1;
 					} else {
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						$should_inc	= (defined $value) ? 1 : 0;
 					}
 					
@@ -109,8 +110,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: COUNT-DISTINCT");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					
 					my @cols	= (blessed($col) ? $col->name : keys %$row);
@@ -125,8 +126,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: SUM");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
@@ -153,8 +154,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: MAX");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
@@ -190,8 +191,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: MIN");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
@@ -228,8 +229,8 @@ sub execute ($) {
 					### this is just the MIN code from above, without the strict comparison checking
 					$l->debug("- aggregate op: SAMPLE");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
@@ -249,8 +250,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: AVG");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					my $type	= _node_type( $value );
@@ -274,8 +275,8 @@ sub execute ($) {
 				push(@aggregators, sub {
 					$l->debug("- aggregate op: GROUP_CONCAT");
 					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+					my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+					my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					my $value	= $row->{ $col->name };
 					$aggregates{ $alias }{ $group }[0]	= $op;
@@ -285,7 +286,7 @@ sub execute ($) {
 
 					my $query	= $context->query;
 					my $bridge	= $context->model;
-					my $exprval	= $expr->evaluate( $query, $bridge, $row );
+					my $exprval	= $expr->evaluate( $query, $row );
 					
 					my $string	= blessed($exprval) ? $exprval->literal_value : '';
 # 					warn "adding '$string' to group_concat aggregate";
@@ -311,15 +312,15 @@ sub execute ($) {
 				my $op			= $aggregates{ $agg }{ $group }[0];
 				if ($op eq 'AVG') {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
 				} elsif ($op eq 'GROUP_CONCAT') {
 					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', sort @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
 				} else {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, $aggregates{ $agg }{ $group }[2] );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : literal( $value, undef, $aggregates{ $agg }{ $group }[2] );
 				}
 			}
 			

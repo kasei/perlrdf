@@ -184,17 +184,16 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
-=item C<< evaluate ( $query, $bridge, \%bound ) >>
+=item C<< evaluate ( $query, \%bound ) >>
 
-Evaluates the expression using the supplied context (bound variables and bridge
-object). Will return a RDF::Query::Node object.
+Evaluates the expression using the supplied bound variables.
+Will return a RDF::Query::Node object.
 
 =cut
 
 sub evaluate {
 	my $self	= shift;
 	my $query	= shift || 'RDF::Query';
-	my $bridge	= shift;
 	my $bound	= shift;
 	my $uri		= $self->uri;
 	
@@ -208,25 +207,25 @@ sub evaluate {
 						my $value	= shift(@args);
 						return unless (defined $value);
 						return $value->isa('RDF::Query::Algebra')
-							? $value->evaluate( $query, $bridge, $bound )
+							? $value->evaluate( $query, $bound )
 							: ($value->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $value->name }
 								: $value
 					};
 		my $func	= $query->get_function( $uri );
-		my $value	= $func->( $query, $bridge, $args );
+		my $value	= $func->( $query, $args );
 		return $value;
 	} else {
 		my @args	= map {
 						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bridge, $bound )
+							? $_->evaluate( $query, $bound )
 							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
 					} $self->arguments;
 		
 		my $func	= $query->get_function($uri);
-		my $value	= $func->( $query, $bridge, @args );
+		my $value	= $func->( $query, @args );
 		return $value;
 	}
 }

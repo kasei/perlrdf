@@ -30,7 +30,7 @@ use RDF::Query::Node::Variable;
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
 	$VERSION	= '2.201';
-
+	
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable);

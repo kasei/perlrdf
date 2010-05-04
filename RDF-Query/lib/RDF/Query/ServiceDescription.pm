@@ -338,7 +338,7 @@ sub computed_statement_generator {
 				my $bound		= { subject => $s, object => $o };
 				my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
-				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $value		= $filter->evaluate( $query, $bound );
 				my $nok			= ($value->literal_value eq 'false');
 				if ($nok) {
 					$ok	= 0;
@@ -374,7 +374,6 @@ sub computed_statement_generator {
 						);
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound	=> {},
-#							model	=> $bridge,
 						);
 			my ($plan)	= RDF::Query::Plan->generate_plans( $service, $context );
 			$plan->execute( $context );
@@ -459,7 +458,7 @@ sub answers_triple_pattern {
 				# XXX shouldn't require a query object in this case, since it's not going
 				# XXX to even touch a datastore, but the code needs to be changed to allow for that.
 				my $query		= RDF::Query->new("ASK {}");
-				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $value		= $filter->evaluate( $query, $bound );
 				my $nok			= ($value->literal_value eq 'false');
 				if ($nok) {
 					$l->debug( "triple pattern doesn't match the sofilter" );

@@ -113,8 +113,8 @@ sub _cmp_rows {
 	no warnings 'numeric';
 	foreach my $data (@$exprs) {
 		my ($expr, $rev)	= @$data;
-		my $a_val	= $query->var_or_expr_value( $bridge, $a, $expr );
-		my $b_val	= $query->var_or_expr_value( $bridge, $b, $expr );
+		my $a_val	= $query->var_or_expr_value( $a, $expr );
+		my $b_val	= $query->var_or_expr_value( $b, $expr );
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $cmp		= $a_val <=> $b_val;
 		if ($cmp != 0) {

@@ -317,7 +317,6 @@ sub prepare {
 					force_no_optimization		=> $self->{force_no_optimization},
 					optimistic_threshold_time	=> $self->{optimistic_threshold_time} || 0,
 					requested_variables			=> \@vars,
-					model_optimize				=> 1,
 					strict_errors				=> $errors,
 				);
 	
@@ -487,7 +486,7 @@ sub query_plan {
 	if (wantarray) {
 		return @plans;
 	} else {
-		my ($plan)	= $self->prune_plans( $context, @plans );
+		my ($plan)	= @plans;	# XXX need to figure out what's the 'best' plan here
 		if ($l->is_debug) {
 			$l->debug("using query plan: " . $plan->sse({}, ''));
 		}
@@ -509,21 +508,6 @@ RDF::Query::Plan.
 
 sub plan_class {
 	return 'RDF::Query::Plan';
-}
-
-=begin private
-
-=item C<< prune_plans ( $context, @plans ) >>
-
-=end private
-
-=cut
-
-sub prune_plans {
-	my $self	= shift;
-	my $context	= shift;
-	my @plans	= @_;
-	return $self->plan_class->prune_plans( $context, @plans );
 }
 
 =begin private
@@ -940,7 +924,7 @@ sub load_data {
 
 =begin private
 
-=item C<< var_or_expr_value ( $bridge, \%bound, $value ) >>
+=item C<< var_or_expr_value ( \%bound, $value ) >>
 
 Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
 If  C<< $value >> is  a node object, it is simply returned. If it is an
@@ -954,11 +938,10 @@ is evaluated using C<< \%bound >>, and the resulting value is returned.
 
 sub var_or_expr_value {
 	my $self	= shift;
-	my $bridge	= shift;
 	my $bound	= shift;
 	my $v		= shift;
 	if ($v->isa('RDF::Query::Expression')) {
-		return $v->evaluate( $self, $bridge, $bound );
+		return $v->evaluate( $self, $bound );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
 	} elsif ($v->isa('RDF::Query::Node')) {
@@ -1088,7 +1071,7 @@ sub call_function {
 	$l->debug("trying to get function from $uri");
 	
 	my $filter			= RDF::Query::Expression::Function->new( $uri, @_ );
-	return $filter->evaluate( $self, $bridge, $bound );
+	return $filter->evaluate( $self, $bound );
 }
 
 =item C<< add_computed_statement_generator ( \&generator ) >>
