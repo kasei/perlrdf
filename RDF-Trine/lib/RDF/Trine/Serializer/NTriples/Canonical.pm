@@ -55,8 +55,7 @@ use warnings;
 
 use Carp;
 use RDF::Trine;
-
-our @ISA = qw();
+use base qw(RDF::Trine::Serializer::NTriples);
 
 ######################################################################
 
