@@ -48,7 +48,8 @@ use RDF::Trine::Store::DBI::Pg;
 our $VERSION;
 BEGIN {
 	$VERSION	= "0.121";
-	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
 
 ######################################################################
