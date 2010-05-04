@@ -103,6 +103,22 @@ sub negotiate {
 	}
 }
 
+=item C<< media_types >>
+
+Returns a list of media types appropriate for the format of the serializer.
+
+=cut
+
+sub media_types {
+	my $self	= shift;
+	my $class	= ref($self) || $self;
+	my @list;
+	while (my($type, $sclass) = each(%media_types)) {
+		push(@list, $type) if ($sclass eq $class);
+	}
+	return sort @list;
+}
+
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
 Serializes the C<< $model >>, printing the results to the supplied filehandle
