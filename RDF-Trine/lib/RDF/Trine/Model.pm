@@ -43,6 +43,7 @@ Returns a new model over the supplied rdf store.
 sub new {
 	my $class	= shift;
 	my $store	= shift;
+	throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
 	my %args	= @_;
 	my $self	= bless({
 		store		=> $store,
