@@ -39,10 +39,9 @@ END
 
 my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
 my $model	= &RDF::Query::Util::cli_make_model;
-my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
 my $context	= RDF::Query::ExecutionContext->new(
 				bound		=> {},
-				model		=> $bridge,
+				model		=> $model,
 				query		=> $query,
 				optimize	=> 1,
 			);

@@ -80,7 +80,11 @@ sub popstack {
 
 sub model {
 	my $self	= shift;
-	return $self->_get_value( 'model', @_ );
+	my $model	= $self->_get_value( 'model', @_ );
+	unless ($model) {
+		$model	= RDF::Trine::Model->temporary_model;
+	}
+	return $model;
 }
 
 =item C<< query >>

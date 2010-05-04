@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Triple
+# RDF::Query::Plan::ComputedTriple
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Triple - Executable query plan for Triples.
+RDF::Query::Plan::ComputedTriple - Executable query plan for computed triples.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Triple version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::ComputedTriple version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,7 +15,7 @@ This document describes RDF::Query::Plan::Triple version 2.201, released 30 Janu
 
 =cut
 
-package RDF::Query::Plan::Triple;
+package RDF::Query::Plan::ComputedTriple;
 
 use strict;
 use warnings;
@@ -43,27 +43,18 @@ BEGIN {
 
 sub new {
 	my $class	= shift;
-	my @triple	= splice(@_, 0, 3);
+	my @nodes	= splice(@_, 0, 4);
+	my $quad	= shift;
 	my $keys	= shift || {};
-	my $self	= $class->SUPER::new( @triple );
+	my $self	= $class->SUPER::new( \@nodes, $quad );
 	$self->[0]{logging_keys}	= $keys;
-	
-	### the next two loops look for repeated variables because some backends
-	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
-	### from { ?a ?b ?c }. if we find repeated variables (there can be at most
-	### one since there are only three nodes in a triple), we save the positions
-	### in the triple that hold the variable, and the code in next() will filter
-	### out any results that don't have the same value in those positions.
-	###
-	### in the first pass, we also set up the mapping that will let us pull out
-	### values from the result triples to construct result bindings.
 	
 	my %var_to_position;
 	my @methodmap	= qw(subject predicate object);
 	my %counts;
 	my $dup_var;
-	foreach my $idx (0 .. 2) {
-		my $node	= $triple[ $idx ];
+	foreach my $idx (0 .. 3) {
+		my $node	= $nodes[ $idx ];
 		if (blessed($node) and $node->isa('RDF::Trine::Node::Variable')) {
 			my $name	= $node->name;
 			$var_to_position{ $name }	= $methodmap[ $idx ];
@@ -78,7 +69,7 @@ sub new {
 	my @positions;
 	if (defined($dup_var)) {
 		foreach my $idx (0 .. 2) {
-			my $var	= $triple[ $idx ];
+			my $var	= $nodes[ $idx ];
 			if (blessed($var) and $var->isa('RDF::Trine::Node::Variable')) {
 				my $name	= $var->name;
 				if ($name eq $dup_var) {
@@ -105,25 +96,33 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "TRIPLE plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "COMPUTEDTRIPLE plan can't be executed while already open";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
-	$l->trace( "executing RDF::Query::Plan::Triple" );
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
+	$l->trace( "executing RDF::Query::Plan::ComputedTriple" );
 	
 	$self->[0]{start_time}	= [gettimeofday];
-	my @triple	= @{ $self }[ 1,2,3 ];
+	my @nodes	= @{ $self->[1] };
+	unless ($self->[2]) {
+		pop(@nodes);
+	}
+	
 	my $bound	= $context->bound;
 	if (%$bound) {
-		foreach my $i (0 .. $#triple) {
-			next unless ($triple[$i]->isa('RDF::Trine::Node::Variable'));
-			next unless (blessed($bound->{ $triple[$i]->name }));
-			$triple[ $i ]	= $bound->{ $triple[$i]->name };
+		foreach my $i (0 .. $#nodes) {
+			next unless ($nodes[$i]->isa('RDF::Trine::Node::Variable'));
+			next unless (blessed($bound->{ $nodes[$i]->name }));
+			$nodes[ $i ]	= $bound->{ $nodes[$i]->name };
 		}
 	}
 	
-	my $nil		= RDF::Trine::Node::Nil->new();	# if we want the default graph to be a union of the named graphs, this should be undef instead
-	my $iter	= $context->model->get_statements( @triple[0..2], $nil );
+	my $query	= $context->query;
+	my $csg		= $query->get_computed_statement_generators( $nodes[1]->uri_value );
+	unless (scalar(@$csg)) {
+		throw RDF::Query::Error::ExecutionError -text => "No computed statement generator found for predicate " . $nodes[1]->uri_value;
+	}
+	my $iter	= $csg->[0]->( $query, $query->model, $bound, @nodes );
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;
@@ -143,10 +142,10 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open TRIPLE";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open COMPUTEDTRIPLE";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
 	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
 		if ($l->is_trace) {
@@ -194,24 +193,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
 	
-# 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.triple");
+# 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
 	my $t0		= delete $self->[0]{start_time};
 	my $count	= delete $self->[0]{count};
-	if (my $log = delete $self->[0]{logger}) {
-# 		$l->debug("logging triple execution statistics");
-		my $elapsed = tv_interval ( $t0 );
-		if (my $sparql = $self->logging_keys->{sparql}) {
-# 			$l->debug("- SPARQL: $sparql");
-			$log->push_key_value( 'execute_time-triple', $sparql, $elapsed );
-			$log->push_key_value( 'cardinality-triple', $sparql, $count );
-# 			$l->debug("- elapsed: $elapsed");
-# 			$l->debug("- count: $count");
-		}
-		if (my $bf = $self->logging_keys->{bf}) {
-# 			$l->debug("- cardinality-bf-triple: $bf: $count");
-			$log->push_key_value( 'cardinality-bf-triple', $bf, $count );
-		}
-	}
 	delete $self->[0]{iter};
 	$self->SUPER::close();
 }
@@ -224,7 +208,11 @@ Returns a list of the three node objects that comprise the triple pattern this p
 
 sub nodes {
 	my $self	= shift;
-	return @{ $self }[1,2,3];
+	if ($self->[2]) {
+		return @{ $self->[1] }[0..3];
+	} else {
+		return @{ $self->[1] }[0..2];
+	}
 }
 
 =item C<< triple >>
@@ -236,7 +224,11 @@ Returns a RDF::Trine::Statement object representing the triple pattern this plan
 sub triple {
 	my $self	= shift;
 	my @nodes	= $self->nodes;
-	return RDF::Trine::Statement->new( @nodes );
+	if ($self->[2]) {
+		return RDF::Trine::Statement::Quad->new( @nodes );
+	} else {
+		return RDF::Trine::Statement->new( @nodes );
+	}
 }
 
 =item C<< bf () >>
@@ -250,7 +242,7 @@ sub bf {
 	my $context	= shift;
 	my $bf		= '';
 	my $bound	= $context->bound;
-	foreach my $n (@{ $self }[1,2,3]) {
+	foreach my $n (@{ $self->[1] }[0..3]) {
 		if ($n->isa('RDF::Trine::Node::Variable')) {
 			if (my $b = $bound->{ $n->name }) {
 				$bf	.= 'b';
@@ -291,7 +283,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'triple';
+	return 'computedtriple';
 }
 
 =item C<< plan_prototype >>
@@ -304,7 +296,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(N N N);
+	return qw(N N N N i);
 }
 
 =item C<< plan_node_data >>
@@ -327,9 +319,9 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $label	= $self->graph_labels;
-	$g->add_node( "$self", label => "Triple" . $self->graph_labels );
-	my @names	= qw(subject predicate object);
-	foreach my $i (0 .. 2) {
+	$g->add_node( "$self", label => "Computed Triple" . $self->graph_labels );
+	my @names	= qw(subject predicate object graph);
+	foreach my $i (0 .. 3) {
 		my $n	= $self->[ $i + 1 ];
 		my $rel	= $names[ $i ];
 		my $str	= $n->sse( {}, '' );

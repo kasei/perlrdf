@@ -115,8 +115,8 @@ sub execute ($) {
 		}
 	}
 	
-	my $bridge	= $context->model;
-	my $iter	= $bridge->get_named_statements( @quad, $context->query, $context->bound );
+	my $model	= $context->model;
+	my $iter	= $model->get_statements( @quad[0..3] );
 	
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
@@ -150,6 +150,10 @@ sub next {
 					}
 				}
 			}
+		}
+		
+		if ($row->context->isa('RDF::Trine::Node::Nil')) {
+			next;
 		}
 		
 		my $binding	= {};

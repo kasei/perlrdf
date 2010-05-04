@@ -5,6 +5,7 @@ use Test::More;
 
 use lib qw(. t);
 require "models.pl";
+use Scalar::Util qw(blessed);
 
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf Flower-2.rdf);
 my @models	= test_models( @files );
@@ -25,11 +26,11 @@ foreach my $model (@models) {
 		print "# FILTER equality disjunction\n";
 		my $sparql	= <<"END";
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			SELECT	?image
-			WHERE	{
-						?image exif:exposureTime ?time .
-						FILTER( ?time = "1/80" || ?time = "1/500" ) .
-					}
+			SELECT ?image ?time
+			WHERE {
+				?image exif:exposureTime ?time .
+				FILTER( ?time = "1/80" || ?time = "1/500" ) .
+			}
 END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		my $count	= 0;
@@ -116,7 +117,7 @@ END
 		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n)	= @{ $row }{qw(person name)};
-			ok( (blessed(p) and $p->isa('RDF::Trine::Node')), $p->as_string . ' is a node' );
+			ok( (blessed($p) and $p->isa('RDF::Trine::Node')), $p->as_string . ' is a node' );
 			like( $n->literal_value, qr/^(Greg|Liz|Lauren)/, 'name' );
 			$count++;
 		}
@@ -147,8 +148,8 @@ END
 			my $query	= shift;
 			my $geo		= new Geo::Distance;
 			my $point	= shift;
-			my $plat	= get_first_literal( $query, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
-			my $plon	= get_first_literal( $query, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
+			my $plat	= get_first_literal( $model, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
+			my $plon	= get_first_literal( $model, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
 			my ($lat, $lon)	= map { Scalar::Util::blessed($_) ? $_->literal_value : $_ } @_;
 			my $dist	= $geo->distance(
 							'kilometer',
@@ -176,11 +177,11 @@ END
 		RDF::Query->add_function( 'http://kasei.us/e/ns/rdf#isa', sub {
 			my $query	= shift;
 			my $node	= shift;
-			my $ntype	= iri( shift );
-			my $model	= $query->{model};
+			my $ntype	= shift;
+			my $model	= $query->model;
 			my $p_type	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' );
 			my $p_sub	= RDF::Query::Node::Resource->new( 'http://www.w3.org/2000/01/rdf-schema#subClassOf' );
-			my $stmts	= $query->model->get_statements( $node, $p_type );
+			my $stmts	= $model->get_statements( $node, $p_type );
 			my %seen;
 			my @types;
 			while (my $s = $stmts->next) {
@@ -191,7 +192,7 @@ END
 					return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 				} else {
 					next if ($seen{ $type->as_string }++);
-					my $sub_stmts	= $query->bridge->get_statements( $type, $p_sub, undef );
+					my $sub_stmts	= $model->get_statements( $type, $p_sub, undef );
 					while (my $s = $sub_stmts->next) {
 						push( @types, $s->object );
 					}
@@ -345,16 +346,15 @@ END
 ######################################################################
 
 sub get_first_literal {
-	my $bridge	= shift;
-	my $node	= get_first_obj( $bridge, @_ );
-	return $node ? $bridge->literal_value( $node ) : undef;
+	my $model	= shift;
+	my $node	= get_first_obj( $model, @_ );
+	return $node ? $node->uri_value : undef;
 }
 
 sub get_first_obj {
-	my $query	= shift;
+	my $model	= shift;
 	my $node	= shift;
 	my $uri		= shift;
-	my $model	= $query->model;
 	my @uris	= UNIVERSAL::isa($uri, 'ARRAY') ? @{ $uri } : ($uri);
 	my @preds	= map { ref($_) ? $_ : iri( $_ ) } @uris;
 	foreach my $pred (@preds) {

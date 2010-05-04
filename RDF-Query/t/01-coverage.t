@@ -15,23 +15,13 @@ my @models	= test_models( @files );
 
 use Test::More;
 
-plan tests => 1 + (62 * scalar(@models)) + 3;
+plan tests => 1 + (57 * scalar(@models)) + 3;
 
 use_ok( 'RDF::Query' );
+use RDF::Query::Node qw(iri);
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n";
-
-	{
-		print "# bridge object accessors\n" if ($verbose);
-		my $query	= new RDF::Query ( <<"END", undef, 'http://jena.hpl.hp.com/2003/07/query/RDQL', undef );
-			SELECT ?person
-			WHERE (?person foaf:name "Gregory Todd Williams")
-			USING foaf FOR <http://xmlns.com/foaf/0.1/>
-END
-		my $stream	= $query->execute( $model );
-		is( $model, $query->bridge->model, 'model accessor' );
-	}
 
 	{
 		print "# using RDQL language URI\n" if ($verbose);
@@ -73,9 +63,9 @@ END
 		ok( scalar(@results), 'results' );
 		my $row		= $results[0];
 		my ($p,$h)	= @{ $row }{qw(person homepage)};
-		ok( $query->bridge->isa_node( $p ), 'isa_node' );
-		ok( $query->bridge->isa_resource( $h ), 'isa_resource(resource)' );
-		is( $query->bridge->uri_value( $h ), 'http://kasei.us/', 'http://kasei.us/' );
+		ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
+		ok( $h->isa('RDF::Trine::Node::Resource'), 'isa_resource(resource)' );
+		is( $h->uri_value, 'http://kasei.us/', 'http://kasei.us/' );
 	}
 
 	{
@@ -90,7 +80,7 @@ END
 END
 		my ($name)	= $query->get( $model );
 		ok( $name, 'got name' );
-		is( $query->bridge->literal_value( $name ), 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
+		is( $name->literal_value, 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
 	}
 
 	{
@@ -104,8 +94,8 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		my ($person)	= $query->get( $model );
-		ok( $query->bridge->isa_resource( $person ), 'Resource' );
-		is( $query->bridge->uri_value( $person ), 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
+		ok( $person->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $person->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
 	}
 
 	{
@@ -120,8 +110,8 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		my ($name)	= $query->get( $model );
-		ok( $query->bridge->isa_literal( $name ), 'Literal' );
-		is( $query->bridge->literal_value( $name ), 'Gregory Todd Williams', 'Person name' );
+		ok( $name->isa('RDF::Trine::Node::Literal'), 'Literal' );
+		is( $name->literal_value, 'Gregory Todd Williams', 'Person name' );
 	}
 
 	{
@@ -136,12 +126,11 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		my @results	= $query->execute( $model );
-		ok( $query->bridge->isa_resource( $results[0]{person} ), 'Person Resource' );
-		ok( $query->bridge->isa_literal( $results[0]{name} ), 'Name Resource' );
-		is( $query->bridge->uri_value( $results[0]{person} ), 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
-		is( $query->bridge->literal_value( $results[0]{name} ), 'Gregory Todd Williams', 'Person name' );
-		is( $query->bridge->literal_value($results[0]{name}), 'Gregory Todd Williams', 'Person name #2' );
-		like( $query->bridge->as_string($results[0]{name}), qr'Gregory Todd Williams', 'Person name #3' );
+		ok( $results[0]{person}->isa('RDF::Trine::Node::Resource'), 'Person Resource' );
+		ok( $results[0]{name}->isa('RDF::Trine::Node::Literal'), 'Name Resource' );
+		is( $results[0]{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
+		is( $results[0]{name}->literal_value, 'Gregory Todd Williams', 'Person name' );
+		like( $results[0]{name}->as_string, qr'Gregory Todd Williams', 'Person name #2' );
 	}
 
 	{
@@ -156,8 +145,8 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		my @results	= $query->execute( $model );
-		ok( $query->bridge->isa_resource( $results[0]{person} ), 'Person Resource' );
-		is( $query->bridge->uri_value( $results[0]{person} ), 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
+		ok( $results[0]{person}->isa('RDF::Trine::Node::Resource'), 'Person Resource' );
+		is( $results[0]{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
 	}
 
 	{
@@ -189,7 +178,7 @@ END
 		ok( scalar(@results), 'one triple, two variables (query call)' );
 	
 		my ($person)	= $query->get( $model );
-		ok( $query->bridge->isa_node($person), 'one triple, two variables (get call)' );
+		ok( $person->isa('RDF::Trine::Node'), 'one triple, two variables (get call)' );
 	}
 
 	{
@@ -219,13 +208,11 @@ END
 END
 	
 		my ($name,$homepage)	= $query->get( $model );
-		ok( !$query->bridge->isa_resource( 0 ), 'isa_resource(0)' );
-		ok( !$query->bridge->isa_resource( $name ), 'isa_resource(literal)' );
-		ok( $query->bridge->isa_resource( $homepage ), 'isa_resource(resource)' );
+		ok( !$name->isa('RDF::Trine::Node::Resource'), 'isa_resource(literal)' );
+		ok( $homepage->isa('RDF::Trine::Node::Resource'), 'isa_resource(resource)' );
 	
-		ok( !$query->bridge->isa_literal( 0 ), 'isa_literal(0)' );
-		ok( !$query->bridge->isa_literal( $homepage ), 'isa_literal(resource)' );
-		ok( $query->bridge->isa_literal( $name ), 'isa_literal(literal)' );
+		ok( !$homepage->isa('RDF::Trine::Node::Literal'), 'isa_literal(resource)' );
+		ok( $name->isa('RDF::Trine::Node::Literal'), 'isa_literal(literal)' );
 	}
 
 	{
@@ -238,8 +225,8 @@ END
 		ok( scalar(@results), 'got result' );
 		my $row		= $results[0];
 		my ($aim)	= @{ $row }{qw(aim)};
-		ok( $query->bridge->isa_literal( $aim ), 'isa_literal' );
-		like( $query->bridge->as_string($aim), qr'samofool', 'got string' );
+		ok( $aim->isa('RDF::Trine::Node::Literal'), 'isa_literal' );
+		like( $aim->as_string, qr'samofool', 'got string' );
 	}
 
 	{
@@ -265,7 +252,7 @@ END
 		my $count;
 		while (my $row = $stream->next) {
 			my ($p)	= @{ $row }{qw(p)};
-			ok( $p, $query->bridge->as_string( $p ) );
+			ok( $p, $p->as_string );
 		} continue { ++$count };
 	}
 
@@ -297,8 +284,8 @@ END
 		my @results	= $query->execute( $model );
 		is( scalar(@results), 1, 'got one result' );
 		my $result	= $results[0];
-		is( $query->bridge->uri_value( $result->{'a'} ), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'rdf:type' );
-		is( $query->bridge->uri_value( $result->{'b'} ), 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Property', 'rdfs:Property' );
+		is( $result->{'a'}->uri_value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'rdf:type' );
+		is( $result->{'b'}->uri_value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Property', 'rdfs:Property' );
 		
 	}
 
@@ -329,9 +316,9 @@ END
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $thing	= $row->{thing};
-			ok( $query->bridge->isa_blank( $thing ), 'isa blank' );
+			ok( $thing->isa('RDF::Trine::Node::Blank'), 'isa blank' );
 			
-			my $id		= $query->bridge->blank_identifier( $thing );
+			my $id		= $thing->blank_identifier;
 			ok( length($id), 'blank identifier' );
 			$count++;
 		}
@@ -350,8 +337,7 @@ END
 			}
 END
 		my ($name)	= $query->get( $model );
-		my $bridge	= $query->bridge;
-		my $lang	= $bridge->literal_value_language( $name );
+		my $lang	= $name->literal_value_language;
 		is ($lang, 'en', 'language');
 	}
 
@@ -362,16 +348,15 @@ END
 			SELECT	?person ?name
 			WHERE	{ ?person :name ?name }
 END
-		my $bridge		= $query->get_bridge( $model );
 		my ($id, $name)	= ('lauren', 'Lauren B');
-		my $person	= $bridge->new_resource( "http://kasei.us/about/foaf.xrdf#${id}" );
+		my $person	= iri( "http://kasei.us/about/foaf.xrdf#${id}" );
 		my $stream	= $query->execute( $model, bind => { person => $person } );
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $p	= $row->{person};
 			is( $p->uri_value, "http://kasei.us/about/foaf.xrdf#${id}", 'expected pre-bound person URI' );
 			my $node	= $row->{name};
-			my $value	= $query->bridge->literal_value( $node );
+			my $value	= $node->literal_value;
 			is( $value, $name, 'expected name on pre-bound node' );
 			$count++;
 		}
@@ -388,22 +373,14 @@ END
 		my $stream	= $query->execute( $model );
 		my $value	= $stream->binding_value_by_name('person');
 		is( $value, $stream->binding_value( 0 ), 'binding_value' );
-		ok( $query->bridge->isa_node( $value ), 'binding_value_by_name' );
+		ok( $value->isa('RDF::Trine::Node'), 'binding_value_by_name' );
 		
 		my @names	= $stream->binding_names;
 		is_deeply( ['person'], \@names, 'binding_names' );
 		my @values	= $stream->binding_values;
-		ok( $query->bridge->isa_node( $values[0] ), 'binding_value_by_name' );
+		ok( $values[0]->isa('RDF::Trine::Node'), 'binding_value_by_name' );
 	}
 
-	{
-		print "# SPARQL query; Stream accessors-2\n" if ($verbose);
-		my $query	= new RDF::Query ( 'ASK	{ ?s ?p ?o }', undef, undef, 'sparql' );
-		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
-		is( $bridge->as_string( undef ), undef );
-	}
-	
 	{
 		print "# SPARQL query; BASE declaration\n" if ($verbose);
 		my $query	= new RDF::Query ( <<"END" );
@@ -412,11 +389,10 @@ END
 			WHERE	{ ?person <foaf/0.1/name> "Gregory Todd Williams" }
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $row		= $stream->next;
 		isa_ok( $row, 'HASH' );
 		ok( exists( $row->{ person } ) );
-		is( $bridge->uri_value( $row->{ person } ), 'http://kasei.us/about/foaf.xrdf#greg' );
+		is( $row->{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg' );
 	}
 }
 

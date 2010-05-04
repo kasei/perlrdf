@@ -193,6 +193,7 @@ Will return a RDF::Query::Node object.
 
 sub evaluate {
 	my $self	= shift;
+	die 'changed API for RDF::Query::Expression evaluate' if (scalar(@_) > 2);
 	my $query	= shift || 'RDF::Query';
 	my $bound	= shift;
 	my $uri		= $self->uri;
@@ -223,7 +224,6 @@ sub evaluate {
 								? $bound->{ $_->name }
 								: $_
 					} $self->arguments;
-		
 		my $func	= $query->get_function($uri);
 		my $value	= $func->( $query, @args );
 		return $value;

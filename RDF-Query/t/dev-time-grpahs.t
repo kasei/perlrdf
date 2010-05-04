@@ -69,8 +69,7 @@ END
 	
 	my $load_temporal_data	= sub {
 		my $query	= shift;
-		my $bridge	= RDF::Query->get_bridge( $model );
-		my $model	= $bridge->model;
+		my $model	= RDF::Query->get_model( $model );
 		my $base	= RDF::Redland::URI->new('http://kasei.us/e/ns/');
 		foreach my $graph (keys %data) {
 			my $rdf		= $data{ $graph };
@@ -145,8 +144,8 @@ END
 		my $count	= 0;
 		while (my $data = $stream->next) {
 			my $interval	= $data->{interval};
-			ok( $query->bridge->is_node( $interval ), 'time-intervals' );
-			like( $query->bridge->uri_value( $interval ), qr'http://kasei.us/e/time/all', 'time-intervals: uri' );
+			ok( $interval->isa('RDF::Trine::Node'), 'time-intervals' );
+			like( $interval->uri_value, qr'http://kasei.us/e/time/all', 'time-intervals: uri' );
 			$count++;
 		}
 		is( $count, 1, 'expected count of matching intervals' );
@@ -168,7 +167,7 @@ END
 		ok( scalar(@results), 'got TIME result: time-inside-2007-01-01' );
 		foreach my $r (@results) {
 			no warnings 'uninitialized';
-			my $e	= $query->bridge->as_string( $r->[0] );
+			my $e	= $r->[0]->as_string;
 			like( $e, qr/mailto:/, "email: $e" );
 		}
 	}
@@ -187,8 +186,8 @@ END
 		ok( scalar(@results), 'got TIME result: time-all-email' );
 		foreach my $r (@results) {
 			no warnings 'uninitialized';
-			my $p	= $query->bridge->as_string( $r->[0] );
-			my $e	= $query->bridge->as_string( $r->[1] );
+			my $p	= $r->[0]->as_string;
+			my $e	= $r->[1]->as_string;
 			like( $p, qr/#greg/, "person: $p" );
 			like( $e, qr/gwilliams[@]cpan.org/, "email: $e" );
 		}

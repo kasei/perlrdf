@@ -361,7 +361,7 @@ $RDF::Query::functions{"sparql:isuri"}	=
 $RDF::Query::functions{"sparql:isiri"}	= sub {
 	my $query	= shift;
 	my $node	= shift;
-	if ($node->is_resource) {
+	if ($node->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -372,7 +372,7 @@ $RDF::Query::functions{"sparql:isiri"}	= sub {
 $RDF::Query::functions{"sparql:isblank"}	= sub {
 	my $query	= shift;
 	my $node	= shift;
-	if ($node->is_blank) {
+	if ($node->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -383,7 +383,7 @@ $RDF::Query::functions{"sparql:isblank"}	= sub {
 $RDF::Query::functions{"sparql:isliteral"}	= sub {
 	my $query	= shift;
 	my $node	= shift;
-	if ($node->is_literal) {
+	if ($node->isa('RDF::Trine::Node::Literal')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');

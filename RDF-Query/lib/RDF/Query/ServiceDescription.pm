@@ -172,7 +172,7 @@ END
 				my $stream	= $model->get_statements( $subj, undef, undef );
 				while (my $st = $stream->next) {
 					push(@queue, $st->object);
-					my @nodes	= map { RDF::Query::Model::RDFTrine::_cast_to_local($_) } ($subj, $st->predicate, $st->object);
+					my @nodes	= ($subj, $st->predicate, $st->object);
 					foreach my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
 							if (exists($bnode_map{ $nodes[$i]->as_string })) {

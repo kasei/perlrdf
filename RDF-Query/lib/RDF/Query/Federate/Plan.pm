@@ -61,7 +61,8 @@ sub generate_plans {
 		my ($type)	= ($aclass =~ m<::(\w+)$>);
 		
 		if ($type eq 'BasicGraphPattern') {
-			my ($plan)	= $self->prune_plans( $context, $self->SUPER::generate_plans( $algebra, $context, %args ) );
+# 			my ($plan)	= $self->prune_plans( $context, $self->SUPER::generate_plans( $algebra, $context, %args ) );
+			my ($plan)	= $self->SUPER::generate_plans( $algebra, $context, %args );
 			my @triples	= $algebra->triples();
 			my @fplans	= map { $_->[0] } $self->_optimistic_triple_join_plans( $context, \@triples, %args, method => 'triples' );
 			$l->debug("generating plans for federated query with algebra: $sse");

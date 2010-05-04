@@ -25,13 +25,12 @@ foreach my $model (@models) {
 			WHERE	{ ?person foaf:name "Gregory Todd Williams" }
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		ok( $stream->is_graph, "Stream is graph result" );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next) {
-			my $p	= $bridge->predicate( $stmt );
-			my $s	= $bridge->as_string( $p );
+			my $p	= $stmt->predicate;
+			my $s	= $p->as_string;
 			ok( $s, $s );
 			++$count;
 		}
@@ -47,13 +46,12 @@ END
 			}
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		ok( $stream->is_graph, "Stream is graph result" );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next) {
-			my $p	= $bridge->predicate( $stmt );
-			my $s	= $bridge->as_string( $p );
+			my $p	= $stmt->predicate;
+			my $s	= $p->as_string;
 			ok( $s, $s );
 			++$count;
 		}
@@ -66,7 +64,6 @@ END
 			DESCRIBE <http://kasei.us/about/foaf.xrdf>
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		ok( $stream->is_graph, "Stream is graph result" );
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'describe resource returns graph iterator' );
 		my $count	= 0;

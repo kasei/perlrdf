@@ -14,6 +14,16 @@ my @models	= test_models( qw(data/foaf.xrdf) );
 plan tests => 1 + ($tests * scalar(@models));
 
 use_ok( 'RDF::Query' );
+
+################################################################################
+Log::Log4perl::init( \q[
+	log4perl.category.rdf.query.plan.computedtriple	= DEBUG, Screen
+	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
+	log4perl.appender.Screen.stderr					= 0
+	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
+] );
+################################################################################
+
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n";
@@ -29,10 +39,9 @@ foreach my $model (@models) {
 					?list list:member ?member .
 				}
 END
-			$query->add_computed_statement_generator( \&__compute_list_member );
+			$query->add_computed_statement_generator( 'http://www.jena.hpl.hp.com/ARQ/list#member' => \&__compute_list_member );
 			my $count	= 0;
 			my $stream	= $query->execute( $model );
-			my $bridge	= $query->bridge;
 			my %expect	= map { $_ => 1 } (1,2,3);
 			while (my $row = $stream->next) {
 				isa_ok( $row->{member}, 'RDF::Query::Node::Literal' );

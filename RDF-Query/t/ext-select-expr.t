@@ -32,10 +32,9 @@ foreach my $model (@models) {
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($lat)	= @{ $row }{qw(latitude)};
-			is( $bridge->literal_value( $lat ), '51.477222', 'AS for alpha conversion' );
+			is( $lat->literal_value, '51.477222', 'AS for alpha conversion' );
 		} continue { ++$count };
 		is( $count, 1, 'expecting one statement in model' );
 	}
@@ -55,11 +54,10 @@ END
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($lat, $long)	= @{ $row }{qw(lat long_off)};
-			is( $bridge->literal_value( $lat ), '51.477222', 'existing latitude' );
-			cmp_ok( $bridge->literal_value( $long ), '==', 1, 'modified longitude' );
+			is( $lat->literal_value, '51.477222', 'existing latitude' );
+			cmp_ok( $long->literal_value, '==', 1, 'modified longitude' );
 		} continue { ++$count };
 		is( $count, 1, 'expecting one statement in model' );
 	}
@@ -87,7 +85,6 @@ END
 			LIMIT 1
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next()) {
 			my ($image, $pname, $pdist)	= @{ $row }{qw(image name dist)};

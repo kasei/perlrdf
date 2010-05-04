@@ -58,70 +58,66 @@ END
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n";
-	SKIP: {
-		skip "This model does not support named graphs", $tests unless RDF::Query->supports( $model, 'named_graph' );
-		
-		{
-			# find intervals that contain a specific date
-			my $dt		= '1999-06-01';
-			my $sparql	= sprintf( $find_interval, ($dt) x 4 );
-			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
-			my $stream	= $query->execute( $model );
-			my $count	= 0;
-			while (my $data = $stream->next) {
-				my $interval	= $data->[0];
-				ok( $query->bridge->is_node( $interval ), 'time-intervals' );
-				like( $query->bridge->uri_value( $interval ), qr/#yearTo2000/, 'time-intervals: 1999' );
-				$count++;
-			}
-			is( $count, 1, '1999: correct count of matching intervals' );
+	{
+		# find intervals that contain a specific date
+		my $dt		= '1999-06-01';
+		my $sparql	= sprintf( $find_interval, ($dt) x 4 );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
+		my $stream	= $query->execute( $model );
+		my $count	= 0;
+		while (my $data = $stream->next) {
+			my $interval	= $data->[0];
+			ok( $interval->isa('RDF::Trine::Node'), 'time-intervals' );
+			like( $interval->uri_value, qr/#yearTo2000/, 'time-intervals: 1999' );
+			$count++;
 		}
-		
-		{
-			# find intervals that contain a specific date
-			my $dt		= '2000-06-01';
-			my $sparql	= sprintf( $find_interval, ($dt) x 4 );
-			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
-			my $stream	= $query->execute( $model );
-			my $count	= 0;
-			while (my $data = $stream->next) {
-				my $interval	= $data->[0];
-				ok( $query->bridge->is_node( $interval ), 'time-intervals' );
-				like( $query->bridge->uri_value( $interval ), qr/#year2000/, 'time-intervals: 2000' );
-				$count++;
-			}
-			is( $count, 1, '2000: correct count of matching intervals' );
+		is( $count, 1, '1999: correct count of matching intervals' );
+	}
+	
+	{
+		# find intervals that contain a specific date
+		my $dt		= '2000-06-01';
+		my $sparql	= sprintf( $find_interval, ($dt) x 4 );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
+		my $stream	= $query->execute( $model );
+		my $count	= 0;
+		while (my $data = $stream->next) {
+			my $interval	= $data->[0];
+			ok( $interval->isa('RDF::Trine::Node'), 'time-intervals' );
+			like( $interval->uri_value, qr/#year2000/, 'time-intervals: 2000' );
+			$count++;
 		}
-		
-		{
-			# find intervals that contain a specific date
-			my $dt		= '2002-06-01';
-			my $sparql	= sprintf( $find_interval, ($dt) x 4 );
-			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
-			my $stream	= $query->execute( $model );
-			my $count	= 0;
-			while (my $data = $stream->next) {
-				my $interval	= $data->[0];
-				$count++;
-			}
-			is( $count, 0, '2002: correct count of matching intervals' );
+		is( $count, 1, '2000: correct count of matching intervals' );
+	}
+	
+	{
+		# find intervals that contain a specific date
+		my $dt		= '2002-06-01';
+		my $sparql	= sprintf( $find_interval, ($dt) x 4 );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
+		my $stream	= $query->execute( $model );
+		my $count	= 0;
+		while (my $data = $stream->next) {
+			my $interval	= $data->[0];
+			$count++;
 		}
-		
-		{
-			# find intervals that contain a specific date
-			my $dt		= '2005-06-01';
-			my $sparql	= sprintf( $find_interval, ($dt) x 4 );
-			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
-			my $stream	= $query->execute( $model );
-			my $count	= 0;
-			while (my $data = $stream->next) {
-				my $interval	= $data->[0];
-				ok( $query->bridge->is_node( $interval ), 'time-intervals' );
-				like( $query->bridge->uri_value( $interval ), qr/#yearFrom2003/, 'time-intervals: 2005' );
-				$count++;
-			}
-			is( $count, 1, '2005: correct count of matching intervals' );
+		is( $count, 0, '2002: correct count of matching intervals' );
+	}
+	
+	{
+		# find intervals that contain a specific date
+		my $dt		= '2005-06-01';
+		my $sparql	= sprintf( $find_interval, ($dt) x 4 );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
+		my $stream	= $query->execute( $model );
+		my $count	= 0;
+		while (my $data = $stream->next) {
+			my $interval	= $data->[0];
+			ok( $interval->isa('RDF::Trine::Node'), 'time-intervals' );
+			like( $interval->uri_value, qr/#yearFrom2003/, 'time-intervals: 2005' );
+			$count++;
 		}
+		is( $count, 1, '2005: correct count of matching intervals' );
 	}
 }
 

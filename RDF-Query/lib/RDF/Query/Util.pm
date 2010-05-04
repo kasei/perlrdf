@@ -73,10 +73,6 @@ sub cli_make_query {
 	$l->debug("creating sparql query with class $class");
 	my $query	= $class->new( $sparql, \%args );
 	
-	if ($args{ service_descriptions }) {
-		$query->add_service( $_ ) for (@{ $args{ service_descriptions } });
-	}
-	
 	if (wantarray) {
 		return ($query, \%args);
 	} else {

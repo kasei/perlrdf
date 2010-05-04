@@ -5,10 +5,7 @@ use Test::Exception;
 
 use RDF::Query;
 
-if (not RDF::Query->loadable_bridge_class) {
-	plan( skip_all => "Cannot find a loadable RDF model class." );
-	return;
-} elsif ($ENV{RDFQUERY_NETWORK_TESTS}) {
+if ($ENV{RDFQUERY_NETWORK_TESTS}) {
 	plan( tests => 3 );
 } else {
 	plan skip_all => 'No network. Set RDFQUERY_NETWORK_TESTS to run these tests.';
@@ -32,30 +29,28 @@ SKIP: {
 END
 	$query->add_hook( 'http://kasei.us/code/rdf-query/hooks/post-create-model', sub {
 		my $self	= shift;
-		my $bridge	= shift;
-		my $model	= $bridge->model;
+		my $model	= shift;
 		
-		my $long	= $bridge->new_resource('http://www.w3.org/2003/01/geo/wgs84_pos#long');
-		my $stream	= $bridge->get_statements( undef, $long, undef );
+		my $long	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
+		my $stream	= $model->get_statements( undef, $long, undef );
 		while (my $stmt = $stream->next) {
-			my $l	= $bridge->literal_value( $bridge->object( $stmt ) );
-			my $dt	= $bridge->literal_datatype( $bridge->object( $stmt ) );
+			my $l	= $stmt->object->literal_value;
+			my $dt	= $stmt->object->literal_datatype;
 			$l		= sprintf( '%0.6f', ++$l );
-			$bridge->remove_statement( $stmt );
+			$model->remove_statement( $stmt );
 
-			my $lit	= $bridge->new_literal( $l, undef, $dt );
-			my $add	= $bridge->new_statement( $bridge->subject($stmt), $bridge->predicate($stmt), $lit );
-			$bridge->add_statement( $add );
+			my $lit	= RDF::Trine::Node::Literal->new( $l, undef, $dt );
+			my $add	= RDF::Trine::Statement->new( $stmt->subject, $stmt->predicate, $lit );
+			$model->add_statement( $add );
 		}
 	} );
 
 	my $count	= 0;
 	my $stream	= $query->execute();
-	my $bridge	= $query->bridge;
 	while (my $row = $stream->next) {
 		my ($lat, $long)	= @{ $row }{qw(lat long)};
-		is( $bridge->literal_value( $lat ), '51.477222', 'existing latitude' );
-		is( $bridge->literal_value( $long ), '1.000000', 'modified longitude' );
+		is( $lat->literal_value, '51.477222', 'existing latitude' );
+		is( $long->literal_value, '1.000000', 'modified longitude' );
 	} continue { ++$count };
 	is( $count, 1, 'expecting one statement in model' );
 }

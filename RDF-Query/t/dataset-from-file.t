@@ -37,8 +37,8 @@ END
 		is( scalar(@results), 1, 'Got one result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'Got homepage url' );
+		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{page}->uri_value, 'http://kasei.us/', 'Got homepage url' );
 	}
 	
 	{
@@ -54,8 +54,8 @@ END
 		is( scalar(@results), 1, 'Got one result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'Got homepage url' );
+		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{page}->uri_value, 'http://kasei.us/', 'Got homepage url' );
 	}
 	
 	SKIP: {

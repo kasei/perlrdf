@@ -68,7 +68,7 @@ sub execute ($) {
 	}
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.subselect");
 	my $query	= $self->query;
-	my $iter	= $query->execute( $context->model->model );
+	my $iter	= $query->execute( $context->model );
 	if ($iter) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{'open'}	= 1;
