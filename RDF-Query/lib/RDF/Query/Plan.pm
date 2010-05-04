@@ -42,7 +42,7 @@ use RDF::Query::Plan::Quad;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
 use RDF::Query::Plan::Triple;
-use RDF::Query::Plan::ComputedTriple;
+use RDF::Query::Plan::ComputedStatement;
 use RDF::Query::Plan::ThresholdUnion;
 use RDF::Query::Plan::Union;
 use RDF::Query::Plan::SubSelect;
@@ -514,7 +514,7 @@ sub generate_plans {
 			my $csg	= $query->get_computed_statement_generators( $pred->uri_value );
 			my @nodes	= $st->nodes;
 			my $quad	= (scalar(@nodes) == 4) ? 1 : 0;
-			my $mp		= RDF::Query::Plan::ComputedTriple->new( @nodes[0..3], $quad );
+			my $mp		= RDF::Query::Plan::ComputedStatement->new( @nodes[0..3], $quad );
 			push(@return_plans, $mp);
 		} else {
 			my @nodes	= $st->nodes;

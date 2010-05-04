@@ -1,13 +1,13 @@
-# RDF::Query::Plan::ComputedTriple
+# RDF::Query::Plan::ComputedStatement
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::ComputedTriple - Executable query plan for computed triples.
+RDF::Query::Plan::ComputedStatement - Executable query plan for computed triples.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::ComputedTriple version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::ComputedStatement version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,7 +15,7 @@ This document describes RDF::Query::Plan::ComputedTriple version 2.201, released
 
 =cut
 
-package RDF::Query::Plan::ComputedTriple;
+package RDF::Query::Plan::ComputedStatement;
 
 use strict;
 use warnings;
@@ -96,11 +96,11 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "COMPUTEDTRIPLE plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "COMPUTEDSTATEMENT plan can't be executed while already open";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
-	$l->trace( "executing RDF::Query::Plan::ComputedTriple" );
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedstatement");
+	$l->trace( "executing RDF::Query::Plan::ComputedStatement" );
 	
 	$self->[0]{start_time}	= [gettimeofday];
 	my @nodes	= @{ $self->[1] };
@@ -142,10 +142,10 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open COMPUTEDTRIPLE";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open COMPUTEDSTATEMENT";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedstatement");
 	my $iter	= $self->[0]{iter};
 	LOOP: while (my $row = $iter->next) {
 		if ($l->is_trace) {
@@ -193,7 +193,7 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open TRIPLE";
 	}
 	
-# 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedtriple");
+# 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.computedstatement");
 	my $t0		= delete $self->[0]{start_time};
 	my $count	= delete $self->[0]{count};
 	delete $self->[0]{iter};
@@ -283,7 +283,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'computedtriple';
+	return 'computedstatement';
 }
 
 =item C<< plan_prototype >>
@@ -319,7 +319,7 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $label	= $self->graph_labels;
-	$g->add_node( "$self", label => "Computed Triple" . $self->graph_labels );
+	$g->add_node( "$self", label => "Computed Statement" . $self->graph_labels );
 	my @names	= qw(subject predicate object graph);
 	foreach my $i (0 .. 3) {
 		my $n	= $self->[ $i + 1 ];
