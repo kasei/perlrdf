@@ -20,7 +20,7 @@ throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::Unimp
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {
-		skip( "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.", 5 );
+		skip( "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.", 12 );
 	}
 	
 	{
