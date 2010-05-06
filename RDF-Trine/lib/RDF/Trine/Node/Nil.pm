@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 0.121
+This document describes RDF::Trine::Node::Nil version 0.122
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 }
 
 ######################################################################
@@ -96,7 +96,7 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless (blessed($node));
-	if ($self->is_nil and $node->is_nil) {
+	if ($self->isa('RDF::Trine::Node::Nil') and $node->isa('RDF::Trine::Node::Nil')) {
 		return 1;
 	} else {
 		return 0;

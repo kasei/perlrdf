@@ -3,10 +3,11 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 60;
+use Test::More tests => 65;
+use Scalar::Util qw(reftype);
 
 use Data::Dumper;
-use RDF::Trine;
+use RDF::Trine qw(iri literal);
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
 use RDF::Trine::Iterator::Bindings;
@@ -147,4 +148,45 @@ use RDF::Trine::Iterator::Boolean;
 	is_deeply( $row, { name => 'Eve', number => 2 }, 'expected result after sgrep' );
 	is( $count, 1, 'one watched result' );
 	is( $stream->next, undef, 'empty stream' );
+}
+
+{
+	my @data	= (
+					{ name => literal('alice'), url => iri('http://example.com/alice'), number => literal(1) },
+					{ name => literal('eve'), url => iri('http://example.com/eve'), number => literal(2) }
+				);
+	my $stream	= RDF::Trine::Iterator::Bindings->new( \@data, [qw(name url number)] );
+	my $string	= $stream->to_string();
+	like( $string, qr/<\?xml/, 'xml to_string serialization' );
+}
+
+{
+	my $xml	= <<"END";
+<?xml version="1.0"?>
+<sparql xmlns="http://www.w3.org/2005/sparql-results#">
+<head>
+	<variable name="name"/>
+	<variable name="url"/>
+	<variable name="number"/>
+</head>
+<results>
+		<result>
+			<binding name="name"><literal>alice</literal></binding>
+			<binding name="url"><uri>http://example.com/alice</uri></binding>
+			<binding name="number"><literal>1</literal></binding>
+		</result>
+		<result>
+			<binding name="name"><literal>eve</literal></binding>
+			<binding name="url"><uri>http://example.com/eve</uri></binding>
+			<binding name="number"><literal>2</literal></binding>
+		</result>
+</results>
+</sparql>
+END
+	my $iter	= RDF::Trine::Iterator->from_string( $xml );
+	is_deeply( [$iter->construct_args], ['bindings', [qw(name url number)]], 'expected construct args' );
+	isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
+	my $b		= $iter->next;
+	is( reftype($b), 'HASH', 'expected variable bindings HASH' );
+	is( $b->{name}->literal_value, 'alice', 'expected variable binding literal value' );
 }

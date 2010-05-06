@@ -1,10 +1,11 @@
-use Test::More tests => 66;
+use Test::More tests => 69;
 use Test::Exception;
 
 use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
+use Scalar::Util qw(refaddr);
 
 use RDF::Trine qw(variable literal);
 use RDF::Trine::Error qw(:try);
@@ -39,7 +40,7 @@ is( $p->type, 'URI', 'resource type' );
 
 ok( $a->is_node, 'is_node' );
 ok( not($a->is_resource), '!is_resource' );
-ok( not($p->is_blank), '!is_blank' );
+ok( not($p->isa('RDF::Trine::Node::Blank')), '!is_blank' );
 ok( not($p->is_variable), '!is_variable' );
 
 ok( $a->equal( $a ), 'blank equal' );
@@ -182,4 +183,12 @@ TODO: {
 	my $n	= RDF::Trine::Node->from_sse( 'foaf:name', $ctx );
 	isa_ok( $n, 'RDF::Trine::Node::Resource', 'resource from_sse' );
 	is( $n->uri_value, 'http://xmlns.com/foaf/0.1/name', 'qname from_sse identifier' );
+}
+
+{
+	my $n1	= RDF::Trine::Node::Nil->new();
+	my $n2	= RDF::Trine::Node::Nil->new();
+	is( refaddr($n1), refaddr($n2), 'Nil is a singleton' );
+	ok( $n1->equal( $n2 ), 'Nil nodes claim equality' );
+	ok( not($n1->equal( $k )), 'Nil node is not equal to non-Nil node' );
 }

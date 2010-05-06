@@ -169,7 +169,7 @@ foreach my $store (@$stores) {
 			my @preds	= $model->predicates( $p, $foaf->Person );
 			my @objs	= $model->objects( $p, $rdf->type );
 			is( scalar(@subjs), 1, "expected subject count on rdf:type" );
-			ok( $subjs[0]->is_blank, 'expected subject' );
+			ok( $subjs[0]->isa('RDF::Trine::Node::Blank'), 'expected subject' );
 			is( scalar(@preds), 1, "expected predicate count on " . $p->uri_value );
 			ok( $preds[0]->equal( $rdf->type ), 'expected predicate' );
 			is( scalar(@objs), 1, "expected objects count on " . $p->uri_value );

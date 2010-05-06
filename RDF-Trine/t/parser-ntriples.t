@@ -1,9 +1,11 @@
-use Test::More tests => 16;
+use Test::More tests => 21;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
 use Data::Dumper;
 use utf8;
+use strict;
+use warnings;
 binmode( \*STDOUT, ':utf8' );
 binmode( \*STDERR, ':utf8' );
 
@@ -53,8 +55,10 @@ END
 	};
 	my $ntriples	= <<"END";
 _:anon <http://example.org/property> <http://example.org/resource2> .
+# comment
 <http://example.org/resource14> <http://example.org/property> "x" .
 <http://example.org/resource16> <http://example.org/property> "\\u00E9" .
+
 <http://example.org/resource21> <http://example.org/property> "<p/>"^^<http://www.w3.org/2000/01/rdf-schema#XMLLiteral> .
 <http://example.org/resource30> <http://example.org/property> "chat"\@fr .
 END
@@ -102,4 +106,38 @@ END
 		$parser->parse_into_model(undef, $ntriples, $model);
 		is( $model->count_statements(undef, undef, literal('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')), 1, 'expected 1 count for canonical boolean value' );
 	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/string> "01" .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal('01')), 1, 'expected 1 count for plain literal with canonicalizing parser' );
+	}
 }	
+
+{
+	# escaping tests
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/string> "0\\t1" .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal("0\t1")), 1, 'expected plain literal with tab-encoding' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/string> "0\\n1" .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal("0\n1")), 1, 'expected plain literal with newline-encoding' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/string> "0\\"\\\\1" .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal(qq[0"\\1])), 1, 'expected plain literal with quote and backslash-encoding' );
+	}
+	{
+		my $model = RDF::Trine::Model->temporary_model;
+		my $ntriples	= qq[_:a <http://example.com/string> "0\\U000000611" .\n];
+		$parser->parse_into_model(undef, $ntriples, $model);
+		is( $model->count_statements(undef, undef, literal(qq[0a1])), 1, 'expected plain literal with U-encoding' );
+	}
+}

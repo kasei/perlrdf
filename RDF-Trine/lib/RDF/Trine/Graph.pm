@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.121
+This document describes RDF::Trine::Graph version 0.122
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 }
 
 use Data::Dumper;
@@ -146,7 +146,7 @@ sub equals {
 			my @nodes;
 			foreach my $method ($st->node_names) {
 				my $n	= $st->$method();
-				if ($n->is_blank) {
+				if ($n->isa('RDF::Trine::Node::Blank')) {
 					my $id	= $mapping{ $n->blank_identifier };
 # 					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
 					push(@nodes, RDF::Trine::Node::Blank->new( $id ));

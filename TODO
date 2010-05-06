@@ -30,12 +30,6 @@ the work, if known):
 		* HTML [tobyink]
 		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
-		* Add optional (XSD) value canonicalization to parsers [kasei; done 2010.04.16]
-		* Proper URL parsing based on mime types [kasei; done 2009.12.23]
-		* RDFa [kasei; done 2009.12.24]
-		* N-Triples [kasei; done 2010.01.27]
-		* N-Quads [kasei; done 2010.01.28]
-		* TriG [kasei; done 2010.03.22]
 	* Serializers
 		* Implement bounded description iterators (and remove the related code from serializer classes)
 		* Add ::RDFJSON::serialize_iterator_* methods
@@ -43,9 +37,6 @@ the work, if known):
 		* TriX [tobyink]
 		* TriG
 		* RDFa (refactor from RDF::LinkedData) [kasei]
-		* Pretty print Turtle [kasei; done 2009.12.31]
-		* N-Quads [kasei; done 2010.01.30]
-		* Standardize serializer API and turn it into POD in RDF::Trine::Serializer [kasei; done 2010.02.13]
 	* Exporters
 		* vCard [tobyink]
 		* jCard [tobyink]
@@ -56,8 +47,5 @@ the work, if known):
 ## RDF::Endpoint
 	* Clean up and release to CPAN [kasei]
 	* Implement SPARQL 1.1 Service Description [kasei]
-## RDF::LinkedData::Apache
-	* Clean up and release to CPAN [kasei]
+## RDF::LinkedData
 	* Implement SPARQL 1.1 HTTP RDF Update
-	* Rename to RDF::LinkedData::Apache [kasei; done 2010.01.27]
-

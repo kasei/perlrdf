@@ -57,6 +57,7 @@ lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
 lib/RDF/Trine/Store/Hexastore.pm
 lib/RDF/Trine/Store/Memory.pm
+lib/RDF/Trine/Store/Redland.pm
 lib/RDF/Trine/Store/SPARQL.pm
 Makefile.PL
 MANIFEST			This list of files
@@ -502,6 +503,7 @@ t/iterator-graph.t
 t/iterator-materialized.t
 t/iterator-thaw.t
 t/iterator.t
+t/model-boundeddescription.t
 t/model-filter.t
 t/model-temporary.t
 t/model-union.t
@@ -536,5 +538,6 @@ t/store-hexastore-pattern.t
 t/store-hexastore-storable.t
 t/store-hexastore.t
 t/store-triple_sql.t
+t/store-sparql.t
 t/store.t
 t/syntax.t

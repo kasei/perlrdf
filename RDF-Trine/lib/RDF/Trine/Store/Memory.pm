@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.121
+This document describes RDF::Trine::Store::Memory version 0.122
 
 =head1 SYNOPSIS
 
@@ -23,7 +23,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.121;
+our $VERSION	= 0.122;
 
 use Set::Scalar;
 use Data::Dumper;
@@ -41,8 +41,7 @@ my @pos_names	= qw(subject predicate object context);
 
 =item C<< new () >>
 
-Returns a new storage object using the supplied arguments to construct a DBI
-object for the underlying database.
+Returns a new memory-backed storage object.
 
 =cut
 

@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.121.
+This document describes RDF::Trine::Iterator version 0.122.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -368,13 +368,13 @@ sub format_node_xml ($$$$) {
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
 		$node_label	= qq(<uri>${node_label}</uri>);
-	} elsif ($node->is_literal) {
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$node_label	= $node->literal_value;
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
 		$node_label	= qq(<literal>${node_label}</literal>);
-	} elsif ($node->is_blank) {
+	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		$node_label	= $node->blank_identifier;
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;

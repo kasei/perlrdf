@@ -7,7 +7,7 @@ RDF::Trine::Statement - Algebra class for Triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.121
+This document describes RDF::Trine::Statement version 0.122
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 }
 
 ######################################################################
@@ -158,7 +158,7 @@ Returns true if any of the nodes in this statement are blank nodes.
 sub has_blanks {
 	my $self	= shift;
 	foreach my $node ($self->nodes) {
-		return 1 if $node->is_blank;
+		return 1 if $node->isa('RDF::Trine::Node::Blank');
 	}
 	return 0;
 }

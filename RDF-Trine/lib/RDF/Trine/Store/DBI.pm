@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.121
+This document describes RDF::Trine::Store::DBI version 0.122
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.121";
+our $VERSION	= "0.122";
 
 
 
@@ -460,7 +460,7 @@ sub _add_node {
 		$table	= "Resources";
 		@cols	= qw(ID URI);
 		@values{ @cols }	= ($hash, $node->uri_value);
-	} elsif ($node->is_literal) {
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
 		@values{ @cols }	= ($hash, $node->literal_value);

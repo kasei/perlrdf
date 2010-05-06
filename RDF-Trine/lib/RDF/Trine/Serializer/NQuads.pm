@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.115';
+	$VERSION	= '0.122';
 	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -146,7 +146,7 @@ sub _serialize_bounded_description {
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
 		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
+		if ($nodes[2]->isa('RDF::Trine::Node::Blank')) {
 			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
 		}
 	}

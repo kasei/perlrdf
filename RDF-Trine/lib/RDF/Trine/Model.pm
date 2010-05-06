@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.121
+This document describes RDF::Trine::Model version 0.122
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 }
 
 use Scalar::Util qw(blessed);
@@ -305,7 +305,12 @@ model.
 sub get_contexts {
 	my $self	= shift;
 	my $store	= $self->_store;
-	return $store->get_contexts( @_ );
+	my $iter	= $store->get_contexts( @_ );
+	if (wantarray) {
+		return $iter->get_all;
+	} else {
+		return $iter;
+	}
 }
 
 =item C<< as_stream >>
@@ -374,13 +379,13 @@ sub as_hashref {
 	my $index = {};
 	while (my $statement = $stream->next) {
 		
-		my $s = $statement->subject->is_blank ? 
+		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
 			('_:'.$statement->subject->blank_identifier) :
 			$statement->subject->uri ;
 		my $p = $statement->predicate->uri ;
 		
 		my $o = {};
-		if ($statement->object->is_literal) {
+		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
 			$o->{'type'}     = 'literal';
 			$o->{'value'}    = $statement->object->literal_value;
 			$o->{'lang'}     = $statement->object->literal_value_language
@@ -388,8 +393,8 @@ sub as_hashref {
 			$o->{'datatype'} = $statement->object->literal_datatype
 				if $statement->object->has_datatype;
 		} else {
-			$o->{'type'}  = $statement->object->is_blank ? 'bnode' : 'uri';
-			$o->{'value'} = $statement->object->is_blank ? 
+			$o->{'type'}  = $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+			$o->{'value'} = $statement->object->isa('RDF::Trine::Node::Blank') ? 
 				('_:'.$statement->object->blank_identifier) :
 				$statement->object->uri ;
 		}
@@ -505,6 +510,42 @@ sub objects_for_predicate_list {
 		}
 	}
 	return @objects;
+}
+
+=item C<< bounded_description ( $node ) >>
+
+Returns an RDF::Trine::Iterator::Graph object over the bounded description
+triples for C<< $node >> (all triples resulting from a graph traversal starting
+with C<< node >> and stopping at non-blank nodes).
+
+=cut
+
+sub bounded_description {
+	my $self	= shift;
+	my $node	= shift;
+	my %seen;
+	my @nodes	= $node;
+	my @statements;
+	my $sub		= sub {
+		return if (not(@statements) and not(@nodes));
+		while (1) {
+			if (not(@statements)) {
+				return unless (scalar(@nodes));
+				my $n	= shift(@nodes);
+				next if ($seen{ $n->sse }++);
+				my $sts	= $self->get_statements( $n );
+				push(@statements, $sts->get_all);
+			}
+			last if (scalar(@statements));
+		}
+		return unless (scalar(@statements));
+		my $st	= shift(@statements);
+		if ($st->object->isa('RDF::Trine::Node::Blank')) {
+			push(@nodes, $st->object);
+		}
+		return $st;
+	};
+	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
 sub _store {

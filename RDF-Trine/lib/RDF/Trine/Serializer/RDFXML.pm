@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.121
+This document describes RDF::Trine::Serializer::RDFXML version 0.122
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -140,7 +140,7 @@ sub _statements_same_subject_as_string {
 	my $s			= $statements[0]->subject;
 	
 	my $id;
-	if ($s->is_blank) {
+	if ($s->isa('RDF::Trine::Node::Blank')) {
 		my $b	= $s->blank_identifier;
 		$id	= qq[rdf:nodeID="$b"];
 	} else {
@@ -164,7 +164,7 @@ sub _statements_same_subject_as_string {
 			$namespaces{ $ns }	= 'ns' . $counter++;
 		}
 		my $prefix	= $namespaces{ $ns };
-		if ($o->is_literal) {
+		if ($o->isa('RDF::Trine::Node::Literal')) {
 			my $lv		= $o->literal_value;
 			$lv			=~ s/&/&amp;/g;
 			$lv			=~ s/</&lt;/g;
@@ -178,7 +178,7 @@ sub _statements_same_subject_as_string {
 			} else {
 				$string	.= qq[\t<${tag}>${lv}</${tag}>\n];
 			}
-		} elsif ($o->is_blank) {
+		} elsif ($o->isa('RDF::Trine::Node::Blank')) {
 			my $b	= $o->blank_identifier;
 			$string	.= qq[\t<${prefix}:$ln rdf:nodeID="$b"/>\n];
 		} else {

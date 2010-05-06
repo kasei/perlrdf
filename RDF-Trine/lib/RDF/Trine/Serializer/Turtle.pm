@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.121
+This document describes RDF::Trine::Serializer::Turtle version 0.122
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -281,7 +281,7 @@ sub _serialize_object_to_file {
 	my $indent	= $tab x $level;
 	
 	if (my $model = $args{model}) {
-		if ($subj->is_blank) {
+		if ($subj->isa('RDF::Trine::Node::Blank')) {
 			if ($self->_check_valid_rdf_list( $subj, $model )) {
 # 				warn "node is a valid rdf:List: " . $subj->as_string . "\n";
 				return $self->_turtle_rdf_list( $fh, $subj, $model, $seen, $level, $tab, %args );
@@ -390,7 +390,7 @@ sub _check_valid_rdf_list {
 	until ($node->equal( $rdf->nil )) {
 		$list_elements{ $node->as_string }++;
 		
-		unless ($node->is_blank) {
+		unless ($node->isa('RDF::Trine::Node::Blank')) {
 # 			warn "\tnode " . $node->as_string . " isn't a blank node\n";
 			return 0;
 		}
@@ -489,10 +489,10 @@ sub _turtle {
 	my $tab		= shift;
 	my %args	= @_;
 	
-	if ($obj->is_resource and $pos == 1 and $obj->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
+	if ($obj->isa('RDF::Trine::Node::Resource') and $pos == 1 and $obj->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
 		print {$fh} 'a';
 		return;
-	} elsif ($obj->is_blank and $pos == 0) {
+	} elsif ($obj->isa('RDF::Trine::Node::Blank') and $pos == 0) {
 		if (my $model = $args{ model }) {
 			my $count	= $model->count_statements( undef, undef, $obj );
 			my $rec		= $model->count_statements( $obj, undef, $obj );
@@ -533,7 +533,7 @@ sub _turtle {
 				return;
 			}
 		}
-	} elsif ($obj->is_resource) {
+	} elsif ($obj->isa('RDF::Trine::Node::Resource')) {
 		my $value;
 		try {
 			my ($ns,$local)	= $obj->qname;

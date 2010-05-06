@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.121
+This document describes RDF::Trine::Parser version 0.122
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ our ($VERSION);
 our %parser_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 }
 
 use Scalar::Util qw(blessed);
@@ -209,6 +209,13 @@ sub parse_file {
 	return $self->parse( $base, $content, $handler, @_ );
 }
 
+=item C<< parse ( $base_uri, $rdf, \&handler ) >>
+
+=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+
+=cut
+
+
 =item C<< canonicalize_literal_value ( $string, $datatype ) >>
 
 If C<< $datatype >> is a recognized datatype, returns the canonical lexical
@@ -289,10 +296,6 @@ sub canonicalize_literal_value {
 1;
 
 __END__
-
-=item C<< parse ( $base_uri, $rdf, \&handler ) >>
-
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =back
 

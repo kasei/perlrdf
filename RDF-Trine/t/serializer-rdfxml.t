@@ -10,7 +10,7 @@ use_ok('RDF::Trine::Serializer::RDFXML');
 
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/predicate' => [
@@ -45,7 +45,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'_:b' => {
 			'http://example.com/ns#description' => ['quux'],
@@ -66,7 +66,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'_:a' => {
 			'http://example.com/ns#title' => [
@@ -91,7 +91,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'_:b' => {
 			'http://example.com/ns#description' => [{type=>'uri', value=>'_:a'}],
@@ -112,7 +112,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/alice' => {
 			'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' => [{ type => 'resource', value => 'http://xmlns.com/foaf/0.1/Person' }],
@@ -138,7 +138,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'_:b' => {
 			'http://example.com/' => [{type=>'uri', value=>'_:a'}],
@@ -152,7 +152,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'_:b' => {
 			'http://example.com/123' => [{type=>'uri', value=>'_:a'}],
@@ -167,7 +167,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/predicate' => [
@@ -210,7 +210,7 @@ END
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/maker' => [
@@ -241,12 +241,13 @@ END
 </rdf:RDF>
 END
 	
-	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
-	is($xml, $expect, 'serialize_model_to_string 1');
+	my $iter	= $model->bounded_description( iri('http://example.com/doc') );
+	my $xml		= $serializer->serialize_iterator_to_string( $iter );
+	is($xml, $expect, 'serialize bounded description 1');
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/maker' => [
@@ -271,22 +272,23 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
+	<ns1:maker rdf:nodeID="a"/>
 	<ns1:creator rdf:nodeID="a"/>
-	<ns1:maker rdf:nodeID="a"/>
 </rdf:Description>
 <rdf:Description xmlns:ns1="http://example.com/" rdf:nodeID="a">
-	<ns1:homepage rdf:resource="http://example.com/"/>
 	<ns1:name xml:lang="en">Alice</ns1:name>
+	<ns1:homepage rdf:resource="http://example.com/"/>
 </rdf:Description>
 </rdf:RDF>
 END
 	
-	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
-	is($xml, $expect, '_serialize_bounded_description');
+	my $iter	= $model->bounded_description( iri('http://example.com/doc') );
+	my $xml		= $serializer->serialize_iterator_to_string( $iter );
+	is($xml, $expect, 'serialize bounded description 2');
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/maker' => [
@@ -313,8 +315,9 @@ END
 </rdf:RDF>
 END
 	
-	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/unknown'));
-	is($xml, $expect, '_serialize_bounded_description with unknown node');
+	my $iter	= $model->bounded_description( iri('http://example.com/unknown') );
+	my $xml		= $serializer->serialize_iterator_to_string( $iter );
+	is($xml, $expect, 'serialize bounded description with unknown node');
 }
 
 {
@@ -362,7 +365,8 @@ END
 </rdf:RDF>
 END
 	
-	my $xml = $serializer->_serialize_bounded_description($model, iri('http://example.com/doc'));
+	my $iter	= $model->bounded_description( iri('http://example.com/doc') );
+	my $xml		= $serializer->serialize_iterator_to_string( $iter );
 	is($xml, $expect, 'xmlns namespaces 1');
 }
 

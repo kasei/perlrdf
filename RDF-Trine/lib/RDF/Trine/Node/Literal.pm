@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.121
+This document describes RDF::Trine::Node::Literal version 0.122
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 }
@@ -243,7 +243,7 @@ sub _compare {
 	}
 	
 	# the nodes have the same lexical value
-	if ($a->has_langauge and $b->has_langauge) {
+	if ($a->has_language and $b->has_language) {
 		return ($a->literal_value_language cmp $b->literal_value_language);
 	}
 	

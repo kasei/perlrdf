@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.121
+This document describes RDF::Trine::Store::SPARQL version 0.122
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.121;
+our $VERSION	= 0.122;
 
 use Set::Scalar;
 use URI::Escape;
@@ -259,6 +259,7 @@ sub remove_statements {
 	my $obj		= shift;
 	my $context	= shift;
 
+	throw RDF::Trine::Error::UnimplementedError;
 	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
 	while (my $st = $iter->next) {
 		$self->remove_statement( $st );
@@ -327,8 +328,8 @@ sub _get_iterator {
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
-		warn "url: $url\n";
-		warn $sparql;
+#		warn "url: $url\n";
+#		warn $sparql;
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }

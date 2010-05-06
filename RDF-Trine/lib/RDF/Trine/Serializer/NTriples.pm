@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.121
+This document describes RDF::Trine::Serializer::NTriples version 0.122
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.122';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -146,7 +146,7 @@ sub _serialize_bounded_description {
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
 		$string		.= $self->_statement_as_string( $st );
-		if ($nodes[2]->is_blank) {
+		if ($nodes[2]->isa('RDF::Trine::Node::Blank')) {
 			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
 		}
 	}

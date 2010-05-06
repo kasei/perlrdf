@@ -5,7 +5,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.121
+This document describes RDF::Trine::Store::DBI::mysql version 0.122
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 
-our $VERSION	= "0.121";
+our $VERSION	= "0.122";
 
 
 
@@ -112,7 +112,7 @@ sub _add_node {
 		$table	= "Resources";
 		@cols	= qw(ID URI);
 		@values{ @cols }	= ($hash, $node->uri_value);
-	} elsif ($node->is_literal) {
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
 		@values{ @cols }	= ($hash, $node->literal_value);
