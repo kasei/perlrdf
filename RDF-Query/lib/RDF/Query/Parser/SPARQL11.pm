@@ -525,6 +525,33 @@ sub _SelectQuery {
 	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
+	$self->__consume_ws_opt;
+	if ($self->_test( qr/BINDINGS/i )) {
+		$self->_eat( qr/BINDINGS/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->_test(qr/[\$?]/)) {
+			$self->_Var;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		while ($self->_Binding_test) {
+			$self->_Binding;
+			$self->__consume_ws_opt;
+		}
+		$self->_eat('}');
+		
+		$self->{build}{bindings}{vars}	= \@vars;
+		$self->__consume_ws_opt;
+	}
+	
 	if ($self->{build}{options}{orderby}) {
 		my $order	= delete $self->{build}{options}{orderby};
 		my $pattern	= pop(@{ $self->{build}{triples} });
@@ -719,33 +746,6 @@ sub _WhereClause {
 	
 	my $ggp	= $self->_peek_pattern;
 	$ggp->check_duplicate_blanks;
-	
-	$self->__consume_ws_opt;
-	if ($self->_test( qr/BINDINGS/i )) {
-		$self->_eat( qr/BINDINGS/i );
-		
-		my @vars;
-		$self->__consume_ws_opt;
-		$self->_Var;
-		push( @vars, splice(@{ $self->{stack} }));
-		$self->__consume_ws_opt;
-		while ($self->_test(qr/[\$?]/)) {
-			$self->_Var;
-			push( @vars, splice(@{ $self->{stack} }));
-			$self->__consume_ws_opt;
-		}
-		
-		$self->_eat('{');
-		$self->__consume_ws_opt;
-		while ($self->_Binding_test) {
-			$self->_Binding;
-			$self->__consume_ws_opt;
-		}
-		$self->_eat('}');
-		
-		$self->{build}{bindings}{vars}	= \@vars;
-		$self->__consume_ws_opt;
-	}
 }
 
 sub _Binding_test {
