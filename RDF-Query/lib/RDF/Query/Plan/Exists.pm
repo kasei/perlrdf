@@ -56,7 +56,7 @@ sub execute ($) {
 	}
 	my $plan	= $self->pattern;
 	$plan->execute( $context );
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.not");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.exists");
 	
 	if ($plan->state == $self->OPEN) {
 		$self->[0]{context}			= $context;
@@ -77,7 +77,7 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open EXISTS";
 	}
 	my $plan	= $self->pattern;
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.not");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.exists");
 	my $context	= $self->[0]{context};
 	
 	my $not		= $self->not_flag;
