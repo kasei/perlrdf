@@ -69,262 +69,251 @@ sub execute ($) {
 		
 		my %seen;
 		my %groups;
-		my %aggregates;
-		my @aggregators;
-		my @groupby	= @{ $self->[2] };
+		my %group_data;
+		my @groupby	= $self->groupby;
+		my @having	= $self->having;
 		my @ops		= @{ $self->[3] };
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
-		foreach my $data (@ops) {
-			my ($alias, $op, $col)	= @$data;
-			if ($op eq 'COUNT') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: COUNT");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					
-					unless ($groups{ $group }) {
-						my %data;
-						foreach my $i (0 .. $#groupby) {
-							my $group	= $groupby[ $i ];
-							my $key		= $group->can('name') ? $group->name : $group->as_sparql;
-							my $value	= $group[ $i ];
-							$data{ $key }	= $value;
-						}
-						$groups{ $group }	= \%data;
-					}
-					
-					my $should_inc	= 0;
-					if ($col eq '*') {
-						$should_inc	= 1;
-					} else {
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
-						$should_inc	= (defined $value) ? 1 : 0;
-					}
-					
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					$aggregates{ $alias }{ $group }[1]	+= $should_inc;
-				});
-			} elsif ($op eq 'COUNT-DISTINCT') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: COUNT-DISTINCT");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					
-					my @cols	= (blessed($col) ? $col->name : keys %$row);
-					no warnings 'uninitialized';
-					my $values	= join('<<<', @{ $row }{ @cols });
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					if (exists($row->{ $col->name })) {
-						$aggregates{ $alias }{ $group }[1]++ unless ($seen{ $values }++);
-					}
-				});
-			} elsif ($op eq 'SUM') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: SUM");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					my $type	= _node_type( $value );
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					my $strict	= 1;
-					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
-						if ($type ne $aggregates{ $alias }{ $group }[2]) {
-							if ($context->strict_errors) {
-								throw RDF::Query::Error::ComparisonError -text => "Cannot compute SUM aggregate over nodes of multiple types";
-							} else {
-								$strict	= 0;
-							}
-						}
-						
-						$aggregates{ $alias }{ $group }[1]	+= $value;
-						$aggregates{ $alias }{ $group }[2]	= $type;
-					} else {
-						$aggregates{ $alias }{ $group }[1]	= $value;
-						$aggregates{ $alias }{ $group }[2]	= $type;
-					}
-				});
-			} elsif ($op eq 'MAX') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: MAX");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					my $type	= _node_type( $value );
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					my $strict	= 1;
-					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
-						if ($type ne $aggregates{ $alias }{ $group }[2]) {
-							if ($context->strict_errors) {
-								throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple types";
-							} else {
-								$strict	= 0;
-							}
-						}
-						
-						if ($strict) {
-							if ($value > $aggregates{ $alias }{ $group }[1]) {
-								$aggregates{ $alias }{ $group }[1]	= $value;
-								$aggregates{ $alias }{ $group }[2]	= $type;
-							}
-						} else {
-							if ("$value" gt "$aggregates{ $alias }{ $group }[1]") {
-								$aggregates{ $alias }{ $group }[1]	= $value;
-								$aggregates{ $alias }{ $group }[2]	= $type;
-							}
-						}
-					} else {
-						$aggregates{ $alias }{ $group }[1]	= $value;
-						$aggregates{ $alias }{ $group }[2]	= $type;
-					}
-				});
-			} elsif ($op eq 'MIN') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: MIN");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					my $type	= _node_type( $value );
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					my $strict	= 1;
-					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
-						if ($type ne $aggregates{ $alias }{ $group }[2]) {
-							if ($context->strict_errors) {
-								throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple types";
-							} else {
-								$strict	= 0;
-							}
-						}
-						
-						if ($strict) {
-							if ($value < $aggregates{ $alias }{ $group }[1]) {
-								$aggregates{ $alias }{ $group }[1]	= $value;
-								$aggregates{ $alias }{ $group }[2]	= $type;
-							}
-						} else {
-							if ("$value" lt "$aggregates{ $alias }{ $group }[1]") {
-								$aggregates{ $alias }{ $group }[1]	= $value;
-								$aggregates{ $alias }{ $group }[2]	= $type;
-							}
-						}
-					} else {
-						$aggregates{ $alias }{ $group }[1]	= $value;
-						$aggregates{ $alias }{ $group }[2]	= $type;
-					}
-				});
-			} elsif ($op eq 'SAMPLE') {
-				push(@aggregators, sub {
-					### this is just the MIN code from above, without the strict comparison checking
-					$l->debug("- aggregate op: SAMPLE");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					my $type	= _node_type( $value );
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					if (scalar( @{ $aggregates{ $alias }{ $group } } ) > 1) {
-						if ("$value" lt "$aggregates{ $alias }{ $group }[1]") {
-							$aggregates{ $alias }{ $group }[1]	= $value;
-							$aggregates{ $alias }{ $group }[2]	= $type;
-						}
-					} else {
-						$aggregates{ $alias }{ $group }[1]	= $value;
-						$aggregates{ $alias }{ $group }[2]	= $type;
-					}
-				});
-			} elsif ($op eq 'AVG') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: AVG");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					my $type	= _node_type( $value );
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					if (my $cmp = $aggregates{ $alias }{ $group }[3]) {
-						if ($type ne $cmp) {
-							if ($context->strict_errors) {
-								throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over nodes of multiple types";
-							}
-						}
-					}
-					
-					if (blessed($value) and $value->isa('RDF::Query::Node::Literal') and $value->is_numeric_type) {
-						$aggregates{ $alias }{ $group }[1]++;
-						$aggregates{ $alias }{ $group }[2]	+= $value->numeric_value;
-						$aggregates{ $alias }{ $group }[3]	= $type;
-					}
-				});
-			} elsif ($op eq 'GROUP_CONCAT') {
-				push(@aggregators, sub {
-					$l->debug("- aggregate op: GROUP_CONCAT");
-					my $row		= shift;
-					my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-					my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
-					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-					my $value	= $row->{ $col->name };
-					$aggregates{ $alias }{ $group }[0]	= $op;
-					
-					my $str		= RDF::Query::Node::Resource->new('sparql:str');
-					my $expr	= RDF::Query::Expression::Function->new( $str, $value );
-
-					my $query	= $context->query;
-					my $bridge	= $context->model;
-					my $exprval	= $expr->evaluate( $query, $bridge, $row );
-					
-					my $string	= blessed($exprval) ? $exprval->literal_value : '';
-# 					warn "adding '$string' to group_concat aggregate";
-					push( @{ $aggregates{ $alias }{ $group }[1] }, $string );
-				});
-			} else {
-				throw RDF::Query::Error -text => "Unknown aggregate operator $op";
-			}
-		}
 		
 		while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
-			foreach my $agg (@aggregators) {
-				$agg->( $row );
+			my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
+			my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+			push( @{ $group_data{ 'rows' }{ $group } }, $row );
+			$group_data{ 'groups' }{ $group }	= \@group;
+			foreach my $i (0 .. $#groupby) {
+				my $g	= $groupby[$i];
+				$group_data{ 'groupby_sample' }{ $group }	= $row;
 			}
 		}
 		
 		my @rows;
-		foreach my $group (keys %groups) {
-			my $row		= $groups{ $group };
-			my %row		= %$row;
+		GROUP: foreach my $group (keys %{ $group_data{ 'rows' } }) {
+			$l->debug( "group: $group" );
+			my %having;
+			my %aggregates;
+			my %passthrough_data;
+			my @group	= @{ $group_data{ 'groups' }{ $group } };
+			
+			my $row_sample	= $group_data{ 'groupby_sample' }{ $group };
+			foreach my $g (@groupby) {
+				my $name	= ($g->isa('RDF::Query::Expression::Alias') or $g->isa('RDF::Query::Node::Variable'))
+							? $g->name
+							: $g->sse;
+				my $value	= $row_sample->{ $name };
+				$passthrough_data{ $name }	= $value;
+			}
+			
+			foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
+				$l->debug( "- row: $row" );
+# 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
+				my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
+				foreach my $data (@operation_data) {
+					my $aggregate_data	= pop(@$data);
+					my ($alias, $op, $col)	= @$data;
+					if ($op eq 'COUNT') {
+						$l->debug("- aggregate op: COUNT");
+# 						unless ($groups{ $group }) {
+# 							my %data;
+# 							foreach my $i (0 .. $#groupby) {
+# 								my $group	= $groupby[ $i ];
+# 								my $key		= $group->can('name') ? $group->name : $group->as_sparql;
+# 								my $value	= $group[ $i ];
+# 								$data{ $key }	= $value;
+# 							}
+# 							$groups{ $group }	= \%data;
+# 						}
+						die 'COUNT aggregate: ' . Dumper(\%groups);
+						my $should_inc	= 0;
+						if ($col eq '*') {
+							$should_inc	= 1;
+						} else {
+							my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+							$should_inc	= (defined $value) ? 1 : 0;
+						}
+						
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						$aggregate_data->{ $alias }{ $group }[1]	+= $should_inc;
+					} elsif ($op eq 'COUNT-DISTINCT') {
+						$l->debug("- aggregate op: COUNT-DISTINCT");
+						my @cols	= (blessed($col) ? $col->name : keys %$row);
+						no warnings 'uninitialized';
+						my $values	= join('<<<', @{ $row }{ @cols });
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						if (exists($row->{ $col->name })) {
+							$aggregate_data->{ $alias }{ $group }[1]++ unless ($seen{ $values }++);
+						}
+					} elsif ($op eq 'SUM') {
+						$l->debug("- aggregate op: SUM");
+						my $value	= $row->{ $col->name };
+						my $type	= _node_type( $value );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						my $strict	= 1;
+						my $v	= $value->literal_value;
+						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+								if ($context->strict_errors) {
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute SUM aggregate over nodes of multiple types";
+								} else {
+									$strict	= 0;
+								}
+							}
+							
+							$aggregate_data->{ $alias }{ $group }[1]	+= $v;
+							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+						} else {
+							$aggregate_data->{ $alias }{ $group }[1]	= $v;
+							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+						}
+					} elsif ($op eq 'MAX') {
+						$l->debug("- aggregate op: MAX");
+						my $value	= $row->{ $col->name };
+						my $type	= _node_type( $value );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						my $strict	= 1;
+						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+								if ($context->strict_errors) {
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple types";
+								} else {
+									$strict	= 0;
+								}
+							}
+							
+							if ($strict) {
+								if ($value > $aggregate_data->{ $alias }{ $group }[1]) {
+									$aggregate_data->{ $alias }{ $group }[1]	= $value;
+									$aggregate_data->{ $alias }{ $group }[2]	= $type;
+								}
+							} else {
+								if ("$value" gt "$aggregate_data->{ $alias }{ $group }[1]") {
+									$aggregate_data->{ $alias }{ $group }[1]	= $value;
+									$aggregate_data->{ $alias }{ $group }[2]	= $type;
+								}
+							}
+						} else {
+							$aggregate_data->{ $alias }{ $group }[1]	= $value;
+							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+						}
+					} elsif ($op eq 'MIN') {
+						$l->debug("- aggregate op: MIN");
+						my $value	= $row->{ $col->name };
+						my $type	= _node_type( $value );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						my $strict	= 1;
+						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+								if ($context->strict_errors) {
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple types";
+								} else {
+									$strict	= 0;
+								}
+							}
+							
+							if ($strict) {
+								if ($value < $aggregate_data->{ $alias }{ $group }[1]) {
+									$aggregate_data->{ $alias }{ $group }[1]	= $value;
+									$aggregate_data->{ $alias }{ $group }[2]	= $type;
+								}
+							} else {
+								if ("$value" lt "$aggregate_data->{ $alias }{ $group }[1]") {
+									$aggregate_data->{ $alias }{ $group }[1]	= $value;
+									$aggregate_data->{ $alias }{ $group }[2]	= $type;
+								}
+							}
+						} else {
+							$aggregate_data->{ $alias }{ $group }[1]	= $value;
+							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+						}
+					} elsif ($op eq 'SAMPLE') {
+						### this is just the MIN code from above, without the strict comparison checking
+						$l->debug("- aggregate op: SAMPLE");
+						my $value	= $row->{ $col->name };
+						my $type	= _node_type( $value );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
+							if ("$value" lt "$aggregate_data->{ $alias }{ $group }[1]") {
+								$aggregate_data->{ $alias }{ $group }[1]	= $value;
+								$aggregate_data->{ $alias }{ $group }[2]	= $type;
+							}
+						} else {
+							$aggregate_data->{ $alias }{ $group }[1]	= $value;
+							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+						}
+					} elsif ($op eq 'AVG') {
+						$l->debug("- aggregate op: AVG");
+						my $value	= $row->{ $col->name };
+						my $type	= _node_type( $value );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						if (my $cmp = $aggregate_data->{ $alias }{ $group }[3]) {
+							if ($type ne $cmp) {
+								if ($context->strict_errors) {
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over nodes of multiple types";
+								}
+							}
+						}
+						
+						if (blessed($value) and $value->isa('RDF::Query::Node::Literal') and $value->is_numeric_type) {
+							$aggregate_data->{ $alias }{ $group }[1]++;
+							$aggregate_data->{ $alias }{ $group }[2]	+= $value->numeric_value;
+							$aggregate_data->{ $alias }{ $group }[3]	= $type;
+						}
+					} elsif ($op eq 'GROUP_CONCAT') {
+						$l->debug("- aggregate op: GROUP_CONCAT");
+						my $value	= $row->{ $col->name };
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						my $str		= RDF::Query::Node::Resource->new('sparql:str');
+						my $expr	= RDF::Query::Expression::Function->new( $str, $value );
+	
+						my $query	= $context->query;
+						my $bridge	= $context->model;
+						my $exprval	= $expr->evaluate( $query, $bridge, $row );
+						
+						my $string	= blessed($exprval) ? $exprval->literal_value : '';
+	# 					warn "adding '$string' to group_concat aggregate";
+						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
+					} else {
+						throw RDF::Query::Error -text => "Unknown aggregate operator $op";
+					}
+				}
+			}
+
+			my %row	= %passthrough_data;
 			foreach my $agg (keys %aggregates) {
 				my $op			= $aggregates{ $agg }{ $group }[0];
 				if ($op eq 'AVG') {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
 				} elsif ($op eq 'GROUP_CONCAT') {
 					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', sort @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
 				} else {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= ($bridge->is_node($value)) ? $value : $bridge->new_literal( $value, undef, $aggregates{ $agg }{ $group }[2] );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, $aggregates{ $agg }{ $group }[2] );
 				}
 			}
 			
 			my $vars	= RDF::Query::VariableBindings->new( \%row );
 			$l->debug("aggregate row: $vars");
+			
+			foreach my $h (@having) {
+				$l->debug( "- evaluating aggregate row against HAVING clause: " . $h->sse );
+				my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $h );
+				my $bool	= $alg->evaluate( $query, $bridge, $vars );
+				if ($bool->literal_value eq 'false') {
+					$l->debug("aggregate failed having clause " . $h->sse);
+					next GROUP;
+				}
+			}
+			
 			push(@rows, $vars);
 		}
 		
@@ -415,7 +404,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(P \E *\ssW);
+	return qw(P \E \E *\ssW);
 }
 
 =item C<< plan_node_data >>
@@ -428,8 +417,9 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	my @group	= $self->groupby;
+	my @having	= $self->having;
 	my @ops		= @{ $self->[3] };
-	return ($self->pattern, \@group, map { [@$_] } @ops);
+	return ($self->pattern, \@group, \@having, map { [@$_] } @ops);
 }
 
 =item C<< distinct >>
@@ -451,7 +441,7 @@ Returns true if the pattern is guaranteed to return ordered results.
 
 sub ordered {
 	my $self	= shift;
-	my $sort	= $self->[2];
+	my $sort	= [ $self->groupby ];
 	return []; # XXX aggregates are actually sorted, so figure out what should go here...
 }
 
