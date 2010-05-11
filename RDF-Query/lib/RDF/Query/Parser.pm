@@ -249,7 +249,7 @@ sub new_alias_expression {
 	my $self		= shift;
 	my $var			= shift;
 	my $expr		= shift;
-	return RDF::Query::Expression::Alias->new( $var, $expr );
+	return RDF::Query::Expression::Alias->new( 'alias', $var, $expr );
 }
 
 =item C<new_filter ( $filter_expr, $pattern )>
