@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns="http://books.example/">
+  <rdf:Description rdf:about="http://books.example/org1">
+    <affiliates rdf:resource="http://books.example/auth1"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/org1">
+    <affiliates rdf:resource="http://books.example/auth2"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/auth1">
+    <writesBook rdf:resource="http://books.example/book1"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/auth1">
+    <writesBook rdf:resource="http://books.example/book2"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/book1">
+    <price rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">9</price>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/book2">
+    <price rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">5</price>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/auth2">
+    <writesBook rdf:resource="http://books.example/book3"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/book3">
+    <price rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">7</price>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/org2">
+    <affiliates rdf:resource="http://books.example/auth3"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/auth3">
+    <writesBook rdf:resource="http://books.example/book4"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="http://books.example/book4">
+    <price rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">7</price>
+  </rdf:Description>
+</rdf:RDF>
