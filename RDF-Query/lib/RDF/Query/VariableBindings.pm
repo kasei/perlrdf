@@ -59,6 +59,17 @@ sub new {
 	return $self;
 }
 
+=item C<< set ( $variable_name => $node ) >>
+
+=cut
+
+sub set {
+	my $self	= shift;
+	my $name	= shift;
+	my $node	= shift;
+	$self->{ $name }	= $node;
+}
+
 =item C<< copy_labels_from ( $vb ) >>
 
 Copies the labels from C<< $vb >>, adding them to the labels for this object.
