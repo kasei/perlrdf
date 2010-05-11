@@ -719,6 +719,58 @@ sub _WhereClause {
 	
 	my $ggp	= $self->_peek_pattern;
 	$ggp->check_duplicate_blanks;
+	
+	$self->__consume_ws_opt;
+	if ($self->_test( qr/BINDINGS/i )) {
+		$self->_eat( qr/BINDINGS/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->_test(qr/[\$?]/)) {
+			$self->_Var;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		while ($self->_Binding_test) {
+			$self->_Binding;
+			$self->__consume_ws_opt;
+		}
+		$self->_eat('}');
+		
+		$self->{build}{bindings}{vars}	= \@vars;
+		$self->__consume_ws_opt;
+	}
+}
+
+sub _Binding_test {
+	my $self	= shift;
+	return $self->_test( '(' );
+}
+
+sub _Binding {
+	my $self	= shift;
+	$self->_eat( '(' );
+	$self->__consume_ws_opt;
+	
+	my @terms;
+	$self->__consume_ws_opt;
+	$self->_VarOrTerm;
+	push( @terms, splice(@{ $self->{stack} }));
+	$self->__consume_ws_opt;
+	while ($self->_VarOrTerm_test) {
+		$self->_VarOrTerm;
+		push( @terms, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	push( @{ $self->{build}{bindings}{terms} }, \@terms );
+	$self->__consume_ws_opt;
+	$self->_eat( ')' );
 }
 
 sub __GroupByVar_test {
@@ -1138,12 +1190,14 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
+	return $self->_test(qr/SERVICE|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_ExistsGraphPattern_test) {
+	if ($self->_test(qr/SERVICE/i)) {
+		$self->_ServiceGraphPattern;
+	} elsif ($self->_ExistsGraphPattern_test) {
 		$self->_ExistsGraphPattern;
 	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
@@ -1152,6 +1206,23 @@ sub _GraphPatternNotTriples {
 	} else {
 		$self->_GraphGraphPattern;
 	}
+}
+
+sub _ServiceGraphPattern {
+	my $self	= shift;
+	$self->_eat( qr/SERVICE/i );
+	$self->__consume_ws_opt;
+	$self->_IRIref;
+	my ($iri)	= splice( @{ $self->{stack} } );
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my $pattern	= RDF::Query::Algebra::Service->new( $iri, $ggp );
+	$self->_add_patterns( $pattern );
+	
+	my $opt		= ['RDF::Query::Algebra::Service', $iri, $ggp];
+	$self->_add_stack( $opt );
 }
 
 # ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
