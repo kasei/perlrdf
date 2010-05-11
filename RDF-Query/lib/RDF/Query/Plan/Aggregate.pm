@@ -123,7 +123,6 @@ sub execute ($) {
 # 							}
 # 							$groups{ $group }	= \%data;
 # 						}
-						die 'COUNT aggregate: ' . Dumper(\%groups);
 						my $should_inc	= 0;
 						if ($col eq '*') {
 							$should_inc	= 1;
