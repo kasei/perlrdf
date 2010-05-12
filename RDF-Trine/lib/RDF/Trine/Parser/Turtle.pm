@@ -49,6 +49,8 @@ our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_
 BEGIN {
 	$VERSION				= '0.122';
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
