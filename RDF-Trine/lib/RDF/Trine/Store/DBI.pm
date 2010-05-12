@@ -199,11 +199,14 @@ NEXTROW:
 				if ($row->{ $node } == 0) {
 					push( @triple, RDF::Trine::Node::Nil->new() );
 				} elsif (defined( my $u = $row->{ $uri })) {
+					$u	= decode('utf8', $u);
 					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
 				} elsif (defined( my $n = $row->{ $name })) {
 					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
 				} elsif (defined( my $v = $row->{ $value })) {
 					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					$cols[0]	= decode('utf8', $cols[0]);
+					$cols[2]	= decode('utf8', $cols[2]);
 					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
 					warn "node isn't nil or a resource, blank, or literal?" . Dumper($row);
@@ -283,6 +286,7 @@ sub get_pattern {
 				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
 				my ($val,$lang,$dt)	= @{ $row }{ @cols };
 				$val	= decode('utf8', $val);
+				$dt		= decode('utf8', $dt);
 				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( $val, $lang, $dt );
 			} else {
 				$bindings{ $nodename }	= undef;
@@ -472,17 +476,17 @@ sub _add_node {
 	} elsif ($node->is_resource) {
 		$table	= "Resources";
 		@cols	= qw(ID URI);
-		@values{ @cols }	= ($hash, $node->uri_value);
+		@values{ @cols }	= ($hash, encode('utf8', $node->uri_value));
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
-		@values{ @cols }	= ($hash, $node->literal_value);
+		@values{ @cols }	= ($hash, encode('utf8', $node->literal_value));
 		if ($node->has_language) {
 			push(@cols, 'Language');
 			$values{ 'Language' }	= $node->literal_value_language;
 		} elsif ($node->has_datatype) {
 			push(@cols, 'Datatype');
-			$values{ 'Datatype' }	= $node->literal_datatype;
+			$values{ 'Datatype' }	= encode('utf8', $node->literal_datatype);
 		}
 	}
 	
