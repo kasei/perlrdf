@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.122
+This document describes RDF::Trine::Node::Resource version 0.123_01
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123_01';
 }
 
 ######################################################################

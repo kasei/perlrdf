@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.122
+This document describes RDF::Trine::Store version 0.123_01
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123_01';
 	eval "use RDF::Trine::Store::Redland;";
 	unless ($@) {
 		$HAVE_REDLAND	= 1;

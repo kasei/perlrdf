@@ -65,6 +65,18 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.123 (2010-XX-XX)
+
+     * Added turtle utf8 decoding for Turtle parser.
+     * Added RDF::Trine::Serializer::media_types method.
+     * Added RDF::Trine::Store::new_with_object method.
+     * Fixed unicode encoding bug in RDF::Trine::Store::DBI.
+     * RDF::Trine::Serializer::NTriples::Canonical.pm now inherits from RDF::Trine::Serializer::NTriples.
+     * Cleaned up VERSION declarations.
+     * Updated RDF::Trine::Parser::parse_url_into_model to fall back on file extension heuristics if the media-type based parse fails.
+     * Updated RDF::Trine::Parser::RDFJSON to throw an error if input isn't valid JSON.
+     * Added character decoding to RDF::Trine::Parser->parse_url_into_model.
+
   Version 0.122 (2010-05-05)
 
      * Added RDF::Trine::Model::bounded_description method.

@@ -10,6 +10,27 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.123.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.122.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.123" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added turtle utf8 decoding for Turtle parser." ;
+                        asc:addition    "Added RDF::Trine::Serializer::media_types method." ;
+                        asc:addition    "Added RDF::Trine::Store::new_with_object method." ;
+                        asc:update      "Fixed unicode encoding bug in RDF::Trine::Store::DBI." ;
+                        asc:update      "RDF::Trine::Serializer::NTriples::Canonical.pm now inherits from RDF::Trine::Serializer::NTriples." ;
+                        asc:update      "Cleaned up VERSION declarations." ;
+                        asc:update      "Updated RDF::Trine::Parser::parse_url_into_model to fall back on file extension heuristics if the media-type based parse fails." ;
+                        asc:update      "Updated RDF::Trine::Parser::RDFJSON to throw an error if input isn't valid JSON." ;
+                        asc:update      "Added character decoding to RDF::Trine::Parser->parse_url_into_model." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.122.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.121.tar.gz> ;
