@@ -9,9 +9,10 @@ use RDF::Trine;
 use Getopt::Long;
 use Time::HiRes qw(usleep);
 
+my %namespaces;
 my $in	= 'ntriples';
 my $out	= 'rdfxml';
-my $result	= GetOptions ("in=s" => \$in, "out=s" => \$out);
+my $result	= GetOptions ("in=s" => \$in, "out=s" => \$out, "define=s" => \%namespaces, "D=s" => \%namespaces);
 
 unless (@ARGV) {
 	print <<"END";
@@ -29,7 +30,7 @@ my $st :shared;
 
 $done			= 0;
 my $parser		= RDF::Trine::Parser->new($in);
-my $serializer	= RDF::Trine::Serializer->new($out);
+my $serializer	= RDF::Trine::Serializer->new($out, namespaces => \%namespaces);
 my $handler		= sub {
 	my $s		= shift;
 	lock($st);
