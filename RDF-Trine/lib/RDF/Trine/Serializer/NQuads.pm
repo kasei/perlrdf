@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NQuads - N-Quads Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NQuads version 0.115
+This document describes RDF::Trine::Serializer::NQuads version 0.123
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;

@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.122
+This document describes RDF::Trine::Store::Redland version 0.123
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.122";
+	$VERSION	= "0.123";
 	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 }

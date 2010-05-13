@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.122
+This document describes RDF::Trine::Serializer::RDFXML version 0.123
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;

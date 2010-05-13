@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.122
+This document describes RDF::Trine::Store::Memory version 0.123
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.122";
+	$VERSION	= "0.123";
 	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
 }

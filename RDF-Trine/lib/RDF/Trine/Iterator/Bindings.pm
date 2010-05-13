@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.122
+This document describes RDF::Trine::Iterator::Bindings version 0.123
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 }
 
 =item C<new ( \@results, \@names, %args )>
