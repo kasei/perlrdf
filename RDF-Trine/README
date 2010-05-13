@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.123 (2010-XX-XX)
+  Version 0.123 (2010-05-13)
 
      * Added turtle utf8 decoding for Turtle parser.
      * Added RDF::Trine::Serializer::media_types method.
