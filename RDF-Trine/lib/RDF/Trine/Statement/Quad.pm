@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Statement::Quad - Class for Quad patterns
+RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
