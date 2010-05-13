@@ -20,7 +20,7 @@ use RDF::Query;
 
 my @files	= map { "data/$_" } qw(t-sparql11-aggregates-1.rdf);
 my @models	= test_models( @files );
-my $tests	= (scalar(@models) * 30);
+my $tests	= (scalar(@models) * 46);
 plan tests => $tests;
 
 foreach my $model (@models) {
@@ -150,6 +150,66 @@ END
 			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
 			my $expect	= $expect{ $auth->uri_value };
 			cmp_ok( $val->literal_value, '==', $expect, 'expected MAX value' );
+		}
+		is( $count, 3, 'expected result count with aggregation' );
+	}
+
+	{
+		print "# SELECT MAX with GROUP BY and ORDER BY DESC\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MAX(?lprice) AS ?max)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
+	ORDER BY DESC(?max)
+END
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
+		my @expect	= (9, 7, 7);
+		while (my $row = $stream->next) {
+			$count++;
+			my $val		= $row->{max};
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
+			my $expect	= shift(@expect);
+			cmp_ok( $val->literal_value, '==', $expect, 'expected DESC MAX value' );
+		}
+		is( $count, 3, 'expected result count with aggregation' );
+	}
+
+	{
+		print "# SELECT MAX with GROUP BY and ORDER BY ASC\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MAX(?lprice) AS ?max)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
+	ORDER BY ASC(?max)
+END
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
+		my @expect	= (7, 7, 9);
+		while (my $row = $stream->next) {
+			$count++;
+			my $val		= $row->{max};
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
+			my $expect	= shift(@expect);
+			cmp_ok( $val->literal_value, '==', $expect, 'expected ASC MAX value' );
 		}
 		is( $count, 3, 'expected result count with aggregation' );
 	}

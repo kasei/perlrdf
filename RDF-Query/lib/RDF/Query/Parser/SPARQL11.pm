@@ -552,12 +552,6 @@ sub _SelectQuery {
 		$self->__consume_ws_opt;
 	}
 	
-	if ($self->{build}{options}{orderby}) {
-		my $order	= delete $self->{build}{options}{orderby};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
-		push(@{ $self->{build}{triples} }, $sort);
-	}
 	$self->__solution_modifiers( $star );
 	
 	delete $self->{build}{options};
@@ -2206,6 +2200,13 @@ sub __solution_modifiers {
 	my $pattern	= pop(@{ $self->{build}{triples} });
 	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
 	push(@{ $self->{build}{triples} }, $proj);
+	
+	if ($self->{build}{options}{orderby}) {
+		my $order	= delete $self->{build}{options}{orderby};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
 	
 	if ($self->{build}{options}{distinct}) {
 		delete $self->{build}{options}{distinct};
