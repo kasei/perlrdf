@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class.
+RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class
 
 =head1 VERSION
 

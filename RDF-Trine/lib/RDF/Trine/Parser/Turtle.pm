@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::Turtle - Turtle RDF Parser.
+RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 

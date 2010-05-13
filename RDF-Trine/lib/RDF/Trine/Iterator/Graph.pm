@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results.
+RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
 
 =head1 VERSION
 

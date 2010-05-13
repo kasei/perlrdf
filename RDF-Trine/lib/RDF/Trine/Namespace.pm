@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-RDF::Trine::Namespace - Abbreviated syntax for constructing RDF node objects.
+RDF::Trine::Namespace - Abbreviated syntax for constructing RDF node objects
 
 =head1 VERSION
 

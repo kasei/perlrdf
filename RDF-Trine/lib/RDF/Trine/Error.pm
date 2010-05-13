@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Error - Error classes for RDF::Trine.
+RDF::Trine::Error - Error classes for RDF::Trine
 
 =head1 VERSION
 

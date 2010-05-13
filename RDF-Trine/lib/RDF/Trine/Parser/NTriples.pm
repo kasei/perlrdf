@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::NTriples - N-Triples Parser.
+RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 

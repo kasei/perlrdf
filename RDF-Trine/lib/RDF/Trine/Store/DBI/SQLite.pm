@@ -1,7 +1,6 @@
 =head1 NAME
 
-RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store.
-
+RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 

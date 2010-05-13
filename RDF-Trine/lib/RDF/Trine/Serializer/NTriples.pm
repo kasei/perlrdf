@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Serializer::NTriples - N-Triples Serializer.
+RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 

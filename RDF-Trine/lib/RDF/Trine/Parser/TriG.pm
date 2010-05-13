@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::TriG - TriG RDF Parser.
+RDF::Trine::Parser::TriG - TriG RDF Parser
 
 =head1 VERSION
 

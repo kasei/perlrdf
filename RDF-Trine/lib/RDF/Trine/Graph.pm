@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism.
+RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 

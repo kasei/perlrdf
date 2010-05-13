@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::RDFXML - RDF/XML Parser.
+RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
