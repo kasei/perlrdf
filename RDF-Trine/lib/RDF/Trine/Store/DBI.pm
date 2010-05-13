@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.122
+This document describes RDF::Trine::Store::DBI version 0.123
 
 =head1 SYNOPSIS
 
@@ -43,9 +43,15 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 
-our $VERSION	= "0.122";
+######################################################################
 
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.123";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+}
 
+######################################################################
 
 =head1 METHODS
 
@@ -109,6 +115,13 @@ sub _new_with_string {
 	my $config	= shift;
 	my ($model, $dsn, $user, $pass)	= split(';', $config);
 	return $class->new( $model, $dsn, $user, $pass );
+}
+
+sub _new_with_object {
+	my $class	= shift;
+	my $obj		= shift;
+	return unless (blessed($obj) and $obj->isa('DBI::db'));
+	return $class->new( $obj );
 }
 
 =item C<< temporary_store >>
@@ -186,11 +199,14 @@ NEXTROW:
 				if ($row->{ $node } == 0) {
 					push( @triple, RDF::Trine::Node::Nil->new() );
 				} elsif (defined( my $u = $row->{ $uri })) {
+					$u	= decode('utf8', $u);
 					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
 				} elsif (defined( my $n = $row->{ $name })) {
 					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
 				} elsif (defined( my $v = $row->{ $value })) {
 					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					$cols[0]	= decode('utf8', $cols[0]);
+					$cols[2]	= decode('utf8', $cols[2]);
 					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
 				} else {
 					warn "node isn't nil or a resource, blank, or literal?" . Dumper($row);
@@ -270,6 +286,7 @@ sub get_pattern {
 				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
 				my ($val,$lang,$dt)	= @{ $row }{ @cols };
 				$val	= decode('utf8', $val);
+				$dt		= decode('utf8', $dt);
 				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( $val, $lang, $dt );
 			} else {
 				$bindings{ $nodename }	= undef;
@@ -459,17 +476,17 @@ sub _add_node {
 	} elsif ($node->is_resource) {
 		$table	= "Resources";
 		@cols	= qw(ID URI);
-		@values{ @cols }	= ($hash, $node->uri_value);
+		@values{ @cols }	= ($hash, encode('utf8', $node->uri_value));
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
-		@values{ @cols }	= ($hash, $node->literal_value);
+		@values{ @cols }	= ($hash, encode('utf8', $node->literal_value));
 		if ($node->has_language) {
 			push(@cols, 'Language');
 			$values{ 'Language' }	= $node->literal_value_language;
 		} elsif ($node->has_datatype) {
 			push(@cols, 'Datatype');
-			$values{ 'Datatype' }	= $node->literal_datatype;
+			$values{ 'Datatype' }	= encode('utf8', $node->literal_datatype);
 		}
 	}
 	

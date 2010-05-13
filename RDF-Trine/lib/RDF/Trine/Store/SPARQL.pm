@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.122
+This document describes RDF::Trine::Store::SPARQL version 0.123
 
 =head1 SYNOPSIS
 
@@ -24,8 +24,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.122;
-
 use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
@@ -35,7 +33,17 @@ use Scalar::Util qw(refaddr reftype blessed);
 
 use RDF::Trine::Error qw(:try);
 
-my @pos_names	= qw(subject predicate object context);
+######################################################################
+
+my @pos_names;
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.123";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	@pos_names	= qw(subject predicate object context);
+}
+
+######################################################################
 
 =head1 METHODS
 

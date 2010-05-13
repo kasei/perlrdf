@@ -107,13 +107,13 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	my $tag		= ($self->not_flag) ? 'not-exists' : 'exists';
 	return sprintf(
 		"(${tag}\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
-		$self->not_pattern->sse( $context, "${prefix}${indent}" )
+		$self->exists_pattern->sse( $context, "${prefix}${indent}" )
 	);
 }
 
@@ -131,7 +131,7 @@ sub as_sparql {
 	my $string	= sprintf(
 		"%s\n${indent}${tag} %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->not_pattern->as_sparql( $context, $indent ),
+		$self->exists_pattern->as_sparql( $context, $indent ),
 	);
 	return $string;
 }
@@ -166,7 +166,7 @@ bind values during execution.
 
 sub binding_variables {
 	my $self	= shift;
-	return;
+	return RDF::Query::_uniq(map { $_->binding_variables } $self->pattern);
 }
 
 =item C<< definite_variables >>
@@ -179,29 +179,6 @@ sub definite_variables {
 	my $self	= shift;
 	return;
 }
-
-=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $query	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-
-	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
-		return $opt;
-	} else {
-		return $class->new( map { $_->fixup( $query, $bridge, $base, $ns ) } ($self->pattern, $self->not_pattern) );
-	}
-}
-
 
 1;
 

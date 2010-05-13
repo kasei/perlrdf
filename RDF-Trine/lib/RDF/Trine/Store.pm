@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.122
+This document describes RDF::Trine::Store version 0.123
 
 =cut
 
@@ -29,9 +29,9 @@ use RDF::Trine::Store::SPARQL;
 
 ######################################################################
 
-our ($VERSION, $HAVE_REDLAND);
+our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 	eval "use RDF::Trine::Store::Redland;";
 	unless ($@) {
 		$HAVE_REDLAND	= 1;
@@ -74,6 +74,29 @@ sub new_with_string {
 	} else {
 		throw RDF::Trine::Error::MethodInvocationError;
 	}
+}
+
+=item C<< new_with_object ( $object ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied opaque C<< $object >>.
+If the C<< $object >> is recognized by an available backend as being sufficient
+to construct a store object, the store object will be returned. Otherwise undef
+will be returned.
+
+=cut
+
+sub new_with_object {
+	my $proto	= shift;
+	my $obj		= shift;
+	foreach my $class (keys %STORE_CLASSES) {
+		if ($class->can('_new_with_object')) {
+			my $s	= $class->_new_with_object( $obj );
+			if ($s) {
+				return $s;
+			}
+		}
+	}
+	return;
 }
 
 =item C<< temporary_store >>

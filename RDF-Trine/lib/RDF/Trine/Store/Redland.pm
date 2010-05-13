@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.122
+This document describes RDF::Trine::Store::Redland version 0.123
 
 =head1 SYNOPSIS
 
@@ -25,13 +25,22 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.122;
-my $NIL_TAG		= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
-
 use RDF::Redland 1.00;
 use Data::Dumper;
 use Scalar::Util qw(refaddr reftype blessed);
 use RDF::Trine::Error;
+
+######################################################################
+
+our $NIL_TAG;
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.123";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
+}
+
+######################################################################
 
 =head1 METHODS
 
@@ -59,6 +68,13 @@ sub _new_with_string {
 	my $store	= RDF::Redland::Storage->new( $store_name, $name, $opts );
 	my $model	= RDF::Redland::Model->new( $store, '' );
 	return $class->new( $model );
+}
+
+sub _new_with_object {
+	my $class	= shift;
+	my $obj		= shift;
+	return unless (blessed($obj) and $obj->isa('RDF::Redland::Model'));
+	return $class->new( $obj );
 }
 
 =item C<< temporary_store >>

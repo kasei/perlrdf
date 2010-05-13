@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.122
+This document describes RDF::Trine::Parser version 0.123
 
 =head1 SYNOPSIS
 
@@ -40,12 +40,14 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use Data::Dumper;
+use Encode qw(decode);
 
 our ($VERSION);
 our %parser_names;
 our %media_types;
+our %encodings;
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 }
 
 use Scalar::Util qw(blessed);
@@ -114,16 +116,61 @@ sub parse_url_into_model {
 		throw RDF::Trine::Error::ParserError -text => $resp->status_line;
 	}
 	
+	my $content	= $resp->content;
 	my $type	= $resp->header('content-type');
 	$type		=~ s/^([^\s;]+).*/$1/;
 	my $pclass	= $media_types{ $type };
 	if ($pclass and $pclass->can('new')) {
+		my $data	= $content;
+		if (my $e = $encodings{ $pclass }) {
+			$data	= decode( $e, $content );
+		}
 		my $parser	= $pclass->new();
-		my $content	= $resp->content;
-		return $parser->parse_into_model( $url, $content, $model, %args );
+		my $ok		= 0;
+		try {
+			$parser->parse_into_model( $url, $data, $model, %args );
+			$ok	= 1;
+		} catch RDF::Trine::Error::ParserError with {} otherwise {};
+		return 1 if ($ok);
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
+	
+	### FALLBACK
+	if ($url =~ /[.]x?rdf$/) {
+		my $parser	= RDF::Trine::Parser::RDFXML->new();
+		$parser->parse_into_model( $url, $content, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]ttl/) {
+		my $parser	= RDF::Trine::Parser::Turtle->new();
+		my $data	= decode('utf8', $content);
+		$parser->parse_into_model( $url, $data, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]nt/) {
+		my $parser	= RDF::Trine::Parser::NTriples->new();
+		$parser->parse_into_model( $url, $content, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]x?html/) {
+		my $parser	= RDF::Trine::Parser::RDFa->new();
+		$parser->parse_into_model( $url, $content, $model, %args );
+		return 1;
+	} else {
+		my @types	= keys %{ { map { $_ => 1 } values %media_types } };
+		foreach my $pclass (@types) {
+			my $data	= $content;
+			if (my $e = $encodings{ $pclass }) {
+				$data	= decode( $e, $content );
+			}
+			my $parser	= $pclass->new();
+			my $ok		= 0;
+			try {
+				$parser->parse_into_model( $url, $data, $model, %args );
+				$ok	= 1;
+			} catch RDF::Trine::Error::ParserError with {};
+			return 1 if ($ok);
+		}
+	}
+	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>

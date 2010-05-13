@@ -183,28 +183,6 @@ sub definite_variables {
 	return $self->pattern->definite_variables;
 }
 
-=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $query	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	if (my $opt = $query->algebra_fixup( $self, $bridge, $base, $ns )) {
-		return $opt;
-	} else {
-		return $class->new( $self->pattern->fixup( $query, $bridge, $base, $ns ), $self->limit );
-	}
-}
-
 =item C<< is_solution_modifier >>
 
 Returns true if this node is a solution modifier.

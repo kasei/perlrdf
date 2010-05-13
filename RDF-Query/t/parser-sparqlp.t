@@ -5468,6 +5468,7 @@ __END__
               - o
       - &1
         - !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - q
           - !!perl/array:RDF::Query::Expression::Binary
@@ -5504,6 +5505,7 @@ __END__
         - !!perl/array:RDF::Query::Node::Variable
           - p
         - !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - q
           - !!perl/array:RDF::Query::Expression::Binary
@@ -5688,6 +5690,7 @@ __END__
         - []
       - &1
         - !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - count
           - !!perl/array:RDF::Query::Node::Variable
@@ -5757,6 +5760,7 @@ __END__
         - !!perl/array:RDF::Query::Node::Variable
           - name
         - !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - count
           - !!perl/array:RDF::Query::Node::Variable

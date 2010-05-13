@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.122
+This document describes RDF::Trine::Store::Hexastore version 0.123
 
 =head1 SYNOPSIS
 
@@ -24,8 +24,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.122;
-
 use Data::Dumper;
 use RDF::Trine::Error;
 use List::Util qw(first);
@@ -40,6 +38,16 @@ use constant OTHERNODES	=> {
 				predicate	=> [qw(subject object)],
 				object		=> [qw(subject predicate)],
 			};
+
+######################################################################
+
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.123";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+}
+
+######################################################################
 
 =head1 METHODS
 

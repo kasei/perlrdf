@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.122
+This document describes RDF::Trine::Store::Memory version 0.123
 
 =head1 SYNOPSIS
 
@@ -23,8 +23,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-our $VERSION	= 0.122;
-
 use Set::Scalar;
 use Data::Dumper;
 use List::Util qw(first);
@@ -33,7 +31,17 @@ use Scalar::Util qw(refaddr reftype blessed);
 
 use RDF::Trine::Error;
 
-my @pos_names	= qw(subject predicate object context);
+######################################################################
+
+my @pos_names;
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.123";
+	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	@pos_names	= qw(subject predicate object context);
+}
+
+######################################################################
 
 =head1 METHODS
 

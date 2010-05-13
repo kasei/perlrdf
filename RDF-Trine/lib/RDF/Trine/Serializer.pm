@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class.
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.122
+This document describes RDF::Trine::Serializer version 0.123
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ our ($VERSION);
 our %serializer_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.122';
+	$VERSION	= '0.123';
 }
 
 use LWP::UserAgent;
@@ -101,6 +101,22 @@ sub negotiate {
 	} else {
 		throw RDF::Trine::Error::SerializationError -text => "No appropriate serializer found for content-negotiation";
 	}
+}
+
+=item C<< media_types >>
+
+Returns a list of media types appropriate for the format of the serializer.
+
+=cut
+
+sub media_types {
+	my $self	= shift;
+	my $class	= ref($self) || $self;
+	my @list;
+	while (my($type, $sclass) = each(%media_types)) {
+		push(@list, $type) if ($sclass eq $class);
+	}
+	return sort @list;
 }
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>

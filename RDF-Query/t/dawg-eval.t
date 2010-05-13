@@ -4,13 +4,15 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-require Encode;
+use Encode qw(encode);
+
 use URI::file;
 use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 
 use RDF::Query;
+use RDF::Query::Node qw(iri);
 use RDF::Trine;
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf);
@@ -42,10 +44,8 @@ if ($ENV{RDFQUERY_DAWGTEST}) {
 	exit;
 }
 
-require Data::Dumper;
-require GraphViz;
-require XML::Simple;
-XML::Simple->import();
+use Data::Dumper;
+use XML::Simple;
 
 plan qw(no_plan);
 require "t/dawg/earl.pl";
@@ -209,7 +209,10 @@ exit;
 
 sub new_model {
 	my @files		= @_;
-	my $bridge		= RDF::Query->new_bridge();
+	my $store		= RDF::Trine::Store::DBI->temporary_store;
+	my $model		= RDF::Trine::Model->new( $store );
+	my $bridge		= RDF::Query::Model::RDFTrine->new( $model );
+# 	my $bridge		= RDF::Query->new_bridge();
 	add_to_model( $bridge, file_uris(@files) );
 	return ($bridge, $bridge->model);
 }
@@ -418,14 +421,14 @@ sub get_expected_results {
 		}
 	} else {
 		my ($bridge, $model)	= new_model( $file );
-		my $p_type		= $bridge->new_resource('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
-		my $p_rv		= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable');
-		my $p_solution	= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution');
-		my $p_binding	= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding');
-		my $p_boolean	= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#boolean');
-		my $p_value		= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#value');
-		my $p_variable	= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable');
-		my $t_rs		= $bridge->new_resource('http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet');
+		my $p_type		= iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+		my $p_rv		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable');
+		my $p_solution	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution');
+		my $p_binding	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding');
+		my $p_boolean	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#boolean');
+		my $p_value		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#value');
+		my $p_variable	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable');
+		my $t_rs		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet');
 		my $rss			= smap { $bridge->subject($_) } $bridge->get_statements( undef, $p_type, $t_rs );
 		my $rs			= $rss->next;
 		
@@ -435,10 +438,9 @@ sub get_expected_results {
 			my $vnodess		= smap { $bridge->literal_value( $bridge->object($_) ) } $bridge->get_statements( $rs, $p_rv, undef );
 			my @vars		= $vnodess->get_all();
 			my $rowss		= smap { $bridge->object($_) } $bridge->get_statements( $rs, $p_solution, undef );
-			my @rows		= $rowss->get_all();
 			
 			my @results;
-			foreach my $row (@rows) {
+			while (my $row = $rowss->next) {
 				my %data;
 				my $stream		= smap { $bridge->object( $_ ) } $bridge->get_statements( $row, $p_binding, undef );
 				my @bindings	= $stream->get_all();
@@ -495,6 +497,7 @@ sub compare_results {
 	my $test		= shift;
 	warn 'compare_results: ' . Data::Dumper->Dump([$expected, $actual], [qw(expected actual)]) if ($debug or $debug_results);
 	
+	
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
 		return $ok;
@@ -520,7 +523,7 @@ sub compare_results {
 		foreach my $i (0 .. $#{ $actual }) {
 			my $row	= $actual->[ $i ];
 			my @keys	= sort keys %$row;
-			my $key		= join("\xFF", map { $row->{$_} } @keys);
+			my $key		= join("\xFF", map { encode('utf8', $row->{$_}) } @keys);
 			push( @{ $actual_flat{ $key } }, [ $i, $row ] );;
 		}
 		
@@ -531,7 +534,7 @@ sub compare_results {
 			my @keys	= keys %$row;
 			my @skeys	= sort @keys;
 			my @values	= map { $row->{$_} } @skeys;
-			my $key		= join("\xFF", @values);
+			my $key		= join("\xFF", map { encode('utf8', $_) } @values);
 			if (exists($actual_flat{ $key })) {
 				my $i	= $actual_flat{ $key }[0][0];
 				shift(@{ $actual_flat{ $key } });
@@ -607,7 +610,6 @@ sub compare_results {
 						# we didn't match this property, so this actual result doesn't
 						# match the expected result. break out and try another actual result.
 						$ok	= 0;
-						warn "did not match: $actualv <=> $expectedv\n" if ($debug);
 						next ACTUAL;
 					}
 					if ($ok) {
@@ -685,12 +687,14 @@ sub literal_as_string {
 
 sub get_first_literal {
 	my $node	= get_first_obj( @_ );
-	return $node ? Encode::decode('utf8', $bridge->literal_value($node)) : undef;
+	return $node;
+#	return $node ? Encode::decode('utf8', $bridge->literal_value($node)) : undef;
 }
 
 sub get_all_literal {
 	my @nodes	= get_all_obj( @_ );
-	return map { Encode::decode('utf8', $bridge->literal_value($_)) } grep { $bridge->isa_literal($_) } @nodes;
+	return @nodes;
+#	return map { Encode::decode('utf8', $bridge->literal_value($_)) } grep { $bridge->isa_literal($_) } @nodes;
 }
 
 sub get_first_uri {

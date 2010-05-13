@@ -750,22 +750,22 @@ sub plan_node_name;
 Returns a list of scalar identifiers for the type of the content (children)
 nodes of this plan node. These identifiers are recognized:
 
-* 'P' - A RDF::Query::Plan object
-* 'T' - An RDF::Trine::Statement object
-* 'Q' - An RDF::Trine::Statement::Quad object
-* 'N' - An RDF node
-* 'W' - An RDF node or wildcard ('*')
-* 'E' - An expression (either an RDF::Query::Expression object or an RDF node)
-* 'J' - A valid Project node (an RDF::Query::Expression object or an Variable node)
-* 'V' - A variable binding set (an object of type RDF::Query::VariableBindings)
-* 'u' - A valid URI string
-* 'i' - An integer
-* 'b' - A boolean integer value (0 or 1)
-* 's' - A string
-* 'w' - A bareword string
-* '\X' - An array reference of X nodes (where X is another identifier scalar)
-* '*X' - A list of X nodes (where X is another identifier scalar)
-* 'Q' - A RDF::Query object
+ * 'P' - A RDF::Query::Plan object
+ * 'T' - An RDF::Trine::Statement object
+ * 'Q' - An RDF::Trine::Statement::Quad object
+ * 'N' - An RDF node
+ * 'W' - An RDF node or wildcard ('*')
+ * 'E' - An expression (either an RDF::Query::Expression object or an RDF node)
+ * 'J' - A valid Project node (an RDF::Query::Expression object or an Variable node)
+ * 'V' - A variable binding set (an object of type RDF::Query::VariableBindings)
+ * 'u' - A valid URI string
+ * 'i' - An integer
+ * 'b' - A boolean integer value (0 or 1)
+ * 's' - A string
+ * 'w' - A bareword string
+ * '\X' - An array reference of X nodes (where X is another identifier scalar)
+ * '*X' - A list of X nodes (where X is another identifier scalar)
+ * 'Q' - A RDF::Query object
 
 =cut
 

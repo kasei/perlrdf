@@ -40,14 +40,12 @@ sub test_models_and_classes {
 				}
 			}
 			if (not $@) {
-				my $parser	= RDF::Trine::Parser->new('rdfxml');
-				my $handler	= sub { my $st	= shift; $model->add_statement( $st ) };
 				foreach my $i (0 .. $#files) {
 					my $file	= $files[ $i ];
 					my $uri		= $uris[ $i ];
-					my $content	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-					$parser->parse( $uri, $content, $handler );
+					RDF::Trine::Parser->parse_url_into_model( $uri, $model );
 				}
+				
 				my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
 				my $data	= $bridge->meta;
 				$data->{ bridge }	= $bridge;
@@ -94,8 +92,10 @@ sub test_models_and_classes {
 			my @data	= map { RDF::Redland::URI->new( "$_" ) } @uris;
 			my $storage	= new RDF::Redland::Storage("hashes", "test", "new='yes',hash-type='memory',contexts='yes'");
 			my $model	= new RDF::Redland::Model($storage, "");
-			my $parser	= new RDF::Redland::Parser("rdfxml");
-			$parser->parse_into_model($_, $_, $model) for (@data);
+			foreach (@data) {
+				my $parser	= new RDF::Redland::Parser("guess");
+				$parser->parse_into_model($_, $_, $model);
+			}
 			my $bridge	= RDF::Query::Model::Redland->new( $model );
 			my $data	= $bridge->meta;
 			$data->{ bridge }	= $bridge;
@@ -134,33 +134,6 @@ sub test_models_and_classes {
 		}
 	}
 	
-	############################################################################
-	if (0) {
-		require RDF::Query::Model::RDFCore;
-		require RDF::Core::Storage::Mysql;
-		my $dbh		= Kasei::Common::dbh();
-		my $storage	= new RDF::Core::Storage::Mysql ( dbh => $dbh, Model => 'db1' );
-		my $model	= new RDF::Core::Model (Storage => $storage);
-		if ($storage and $model) {
-			my $data	= {
-							bridge	=> $model,
-						};
-			push(@models, $data);
-		}
-	}
-	if (0) {
-		require RDF::Query::Model::RDFCore;
-		require RDF::Core::Storage::Mysql;
-		my $dbh		= Kasei::Common::dbh();
-		my $storage	= new RDF::Core::Storage::Mysql ( dbh => $dbh, Model => 'db1' );
-		my $model	= new RDF::Core::Model (Storage => $storage);
-		if ($storage and $model) {
-			my $data	= {
-							bridge	=> $model,
-						};
-			push(@models, $data);
-		}
-	}
 	############################################################################
 	
 	return @models;

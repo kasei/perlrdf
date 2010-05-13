@@ -389,10 +389,11 @@ __END__
               - http://example.org/ns#discount
             - !!perl/array:RDF::Query::Node::Variable
               - discount
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - title
-        - !!perl/array:RDF::Query::Expression::Alias
+        - &2 !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - price
           - !!perl/array:RDF::Query::Expression::Binary
@@ -407,7 +408,9 @@ __END__
                 - http://www.w3.org/2001/XMLSchema#integer
               - !!perl/array:RDF::Query::Node::Variable
                 - discount
-  variables: *1
+  variables:
+    - *1
+    - *2
 ---
 - GROUP_CONCAT Aggregate
 - |
@@ -521,13 +524,15 @@ __END__
               - 10
               - ~
               - http://www.w3.org/2001/XMLSchema#integer
-      - &1
-        - !!perl/array:RDF::Query::Expression::Alias
+      -
+        - &1 !!perl/array:RDF::Query::Expression::Alias
+          - alias
           - !!perl/array:RDF::Query::Node::Variable
             - totalPrice
           - !!perl/array:RDF::Query::Node::Variable
             - SUM(?lprice)
-  variables: *1
+  variables:
+    - *1
 ---
 - single triple; no prefix
 - |

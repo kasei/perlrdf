@@ -28,7 +28,7 @@ my @models	= test_models( @files );
 
 use Test::More;
 use Test::Exception;
-plan tests => (62 * scalar(@models));
+plan tests => (58 * scalar(@models));
 
 foreach my $model (@models) {
 	print "\n#################################\n";
@@ -222,30 +222,6 @@ END
 			my $name	= $row->{name}->literal_value;
 			my $expect	= $expect{ $name };
 			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for variable GROUP' );
-			$count++;
-		}
-		is( $count, 2, 'two aggreate groups' );
-	}
-	
-	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
-			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT ?fixedpoint (COUNT(*) AS ?count)
-			WHERE {
-				?image exif:fNumber ?f
-			}
-			GROUP BY (?f * 10 AS ?fixedpoint)
-END
-		isa_ok( $query, 'RDF::Query' );
-		my $stream	= $query->execute( $model );
-		my $count	= 0;
-		
-		my %expect	= ( '45' => 3, '110' => 1 );
-		while (my $row = $stream->next) {
-			my $f		= $row->{fixedpoint}->literal_value;
-			my $expect	= $expect{ $f };
-			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for expression GROUP' );
 			$count++;
 		}
 		is( $count, 2, 'two aggreate groups' );
