@@ -7,7 +7,7 @@ RDF::Query::Plan::Join - Join query plan base class.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Join version 2.202_01, released 30 January 2010.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202_01';
 }
 
 ######################################################################

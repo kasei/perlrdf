@@ -7,7 +7,7 @@ RDF::Query::Model::Redland - An RDF::Query::Model backend for interfacing with a
 
 =head1 VERSION
 
-This document describes RDF::Query::Model::Redland version 2.201, released 30 January 2010.
+This document describes RDF::Query::Model::Redland version 2.202_01, released 30 January 2010.
 
 =cut
 
@@ -35,7 +35,7 @@ use RDF::Trine::Statement::Quad;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202_01';
 }
 
 ######################################################################
