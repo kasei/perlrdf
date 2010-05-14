@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Project
+# RDF::Query::Plan::Extend
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Project - Executable query plan for Projects.
+RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Extend version 2.201, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,7 +15,7 @@ This document describes RDF::Query::Plan::Project version 2.201, released 30 Jan
 
 =cut
 
-package RDF::Query::Plan::Project;
+package RDF::Query::Plan::Extend;
 
 use strict;
 use warnings;
@@ -83,18 +83,18 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.project");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
 	my $plan	= $self->[1];
 	my $row		= $plan->next;
 	unless (defined($row)) {
-		$l->trace("no remaining rows in project");
+		$l->trace("no remaining rows in extend");
 		if ($self->[1]->state == $self->[1]->OPEN) {
 			$self->[1]->close();
 		}
 		return;
 	}
 	if ($l->is_trace) {
-		$l->trace( "project on row $row" );
+		$l->trace( "extend on row $row" );
 	}
 	
 	my $keys	= $self->[2];
@@ -104,16 +104,19 @@ sub next {
 	
 	my $proj	= $row->project( @{ $keys } );
 	foreach my $e (@$exprs) {
-		my $name		= $e->sse;
-		my $var_or_expr	= $e;
+		my $name			= $e->name;
+		my $var_or_expr	= $e->expression;
+		if ($l->is_trace) {
+			$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
+		}
 		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
 		if ($l->is_trace) {
-			$l->trace( "- project value $name -> $value" );
+			$l->trace( "- extend value $name -> $value" );
 		}
-		$proj->{ $name }	= $value;
+		$row->{ $name }	= $value;
 	}
 	
-	return $proj;
+	return $row;
 }
 
 =item C<< close >>
@@ -134,7 +137,7 @@ sub close {
 
 =item C<< pattern >>
 
-Returns the query plan that will be used to produce the data to be projected.
+Returns the query plan that will be used to produce the data to be extended.
 
 =cut
 
@@ -172,7 +175,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'project';
+	return 'extend';
 }
 
 =item C<< plan_prototype >>
@@ -211,7 +214,7 @@ sub graph {
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
 	my $expr	= join(' ', @{$self->[2]}, map { blessed($_) ? $_->sse( {}, "" ) : $_ } @{$self->[3]});
-	$g->add_node( "$self", label => "Project ($expr)" . $self->graph_labels );
+	$g->add_node( "$self", label => "Extend ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }

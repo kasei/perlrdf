@@ -38,6 +38,7 @@ use RDF::Query::Plan::Not;
 use RDF::Query::Plan::Exists;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
+use RDF::Query::Plan::Extend;
 use RDF::Query::Plan::Quad;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
@@ -509,6 +510,15 @@ sub generate_plans {
 			my @plans;
 			foreach my $plan (@base) {
 				push(@plans, RDF::Query::Plan::Project->new( $plan, $vars ));
+			}
+			push(@return_plans, @plans);
+		} elsif ($type eq 'Extend') {
+			my $pattern	= $algebra->pattern;
+			my $vars	= $algebra->vars;
+			my @base	= $self->generate_plans( $pattern, $context, %args );
+			my @plans;
+			foreach my $plan (@base) {
+				push(@plans, RDF::Query::Plan::Extend->new( $plan, $vars ));
 			}
 			push(@return_plans, @plans);
 		} elsif ($type eq 'Service') {

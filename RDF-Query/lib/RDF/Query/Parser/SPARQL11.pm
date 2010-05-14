@@ -328,8 +328,6 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	use Data::Dumper;
-	Carp::cluck Dumper($self->{tokens});
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -2197,15 +2195,24 @@ sub __solution_modifiers {
 	}
 	
 	my $vars	= [ @{ $self->{build}{variables} } ];
-	my $pattern	= pop(@{ $self->{build}{triples} });
-	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
-	push(@{ $self->{build}{triples} }, $proj);
+	
+	{
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
 	
 	if ($self->{build}{options}{orderby}) {
 		my $order	= delete $self->{build}{options}{orderby};
 		my $pattern	= pop(@{ $self->{build}{triples} });
 		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
 		push(@{ $self->{build}{triples} }, $sort);
+	}
+
+	{
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
 	}
 	
 	if ($self->{build}{options}{distinct}) {
