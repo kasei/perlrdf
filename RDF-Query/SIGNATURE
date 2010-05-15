@@ -124,8 +124,8 @@ SHA1 e515dec64d29cebdd222b1b3fa90be3aad93fef3 lib/RDF/Query/Node/Variable.pm
 SHA1 ce533875e79f6f5fe07fc2831d273ee004593c39 lib/RDF/Query/Parser.pm
 SHA1 f48d1e6e29a03e6d888cedb6511667e1a2310d16 lib/RDF/Query/Parser/RDQL.pm
 SHA1 4f08ca53e4847dab7c71e3255c0bc9a3cf363c67 lib/RDF/Query/Parser/SPARQL.pm
-SHA1 ed584a106f02f2189775a4a5a6ec8da1343424c2 lib/RDF/Query/Parser/SPARQL11.pm
-SHA1 b8abe8a1a567d2735d2ea1d6866ff7ae74660890 lib/RDF/Query/Parser/SPARQLP.pm
+SHA1 b82a9d3f63c4f839a104685ab0e6867af5b4d8ec lib/RDF/Query/Parser/SPARQL11.pm
+SHA1 75901fea407d9834b39c65e1060b05595bf88c7d lib/RDF/Query/Parser/SPARQLP.pm
 SHA1 7c823db50dd9af21606bf69b944df389ef5582c7 lib/RDF/Query/Parser/SPARUL.pm
 SHA1 cd5cf9b1ebd9597966a60fd2f221f1af3b0501e5 lib/RDF/Query/Plan.pm
 SHA1 ba10dc21cf8119352f179a088d041dbade133c35 lib/RDF/Query/Plan/Aggregate.pm
@@ -188,8 +188,8 @@ SHA1 f31e035c21fd1d3a168b9ce8a13b029f5539c693 t/named-graphs.t
 SHA1 8d5e1157eef5efc5f9a0b2722ecb149fede59c46 t/optional.t
 SHA1 a3c349c937f55a765129e4d12947be4108e8a5ea t/parser-rdql.t
 SHA1 e8062b32b2e913f776fa58643225c5e3149a1f4b t/parser-sparql.t
-SHA1 ec131f52114976f4f95f405a5c3164f4bf41a0f5 t/parser-sparql11.t
-SHA1 fb0e132cad4b84be5de9b6930cd0a2bb44d7353f t/parser-sparqlp.t
+SHA1 7bf68973698f3b26a916d5ab3cfe43858bf2f1cf t/parser-sparql11.t
+SHA1 1aa77023c087c526596db568733c31b8e4e2b2a1 t/parser-sparqlp.t
 SHA1 182369b36d168054474fd0b98be62ece33419382 t/plan-rdftrine.t
 SHA1 4e9b0e971ad5e07b4743ea3f2ab0d81b6940d53f t/plan.t
 SHA1 fada08a138c7f5d0c435fbd184ebfbd975f5da7d t/pod.t
@@ -214,7 +214,7 @@ SHA1 49b00fec62d3340cf77f10f09d3bd70261658ea4 t/unsaid.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (Darwin)
 
-iEYEARECAAYFAkvt4gsACgkQhPK6VMqoyC0FKACfURHJ6kwt6guSRTc5JYKp0kiA
-kfMAn23QJLoxrXcmsWkpwGK5t4Vuvn57
-=NOsv
+iEYEARECAAYFAkvt7TwACgkQhPK6VMqoyC1jggCghuFOMOSeWH1kAS52vf831yVT
+i7kAoLpW247o9/NixQA78zZgsCiHcAPh
+=KpNA
 -----END PGP SIGNATURE-----
