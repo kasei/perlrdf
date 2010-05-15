@@ -2197,9 +2197,12 @@ sub __solution_modifiers {
 	my $vars	= [ @{ $self->{build}{variables} } ];
 	
 	{
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
-		push(@{ $self->{build}{triples} }, $proj);
+		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
+		if (scalar(@vars)) {
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+			push(@{ $self->{build}{triples} }, $proj);
+		}
 	}
 	
 	if ($self->{build}{options}{orderby}) {
