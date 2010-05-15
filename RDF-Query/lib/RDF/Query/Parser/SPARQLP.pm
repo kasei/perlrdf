@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQLP - Extended SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQLP version 2.202_01, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQLP version 2.202_02, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG/i;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_01';
+	$VERSION	= '2.202_02';
 }
 
 ######################################################################

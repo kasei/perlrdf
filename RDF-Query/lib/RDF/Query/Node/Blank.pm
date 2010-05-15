@@ -7,7 +7,7 @@ RDF::Query::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Blank version 2.202_01, released 30 January 2010.
+This document describes RDF::Query::Node::Blank version 2.202_02, released 30 January 2010.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_01';
+	$VERSION	= '2.202_02';
 }
 
 ######################################################################

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Not - Algebra class for Not patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Not version 2.202_01, released 30 January 2010.
+This document describes RDF::Query::Algebra::Not version 2.202_02, released 30 January 2010.
 
 =cut
 
@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_01';
+	$VERSION	= '2.202_02';
 }
 
 ######################################################################

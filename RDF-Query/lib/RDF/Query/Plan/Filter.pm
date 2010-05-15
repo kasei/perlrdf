@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.202_01, released 30 January 2010.
+This document describes RDF::Query::Plan::Filter version 2.202_02, released 30 January 2010.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_01';
+	$VERSION	= '2.202_02';
 }
 
 ######################################################################
