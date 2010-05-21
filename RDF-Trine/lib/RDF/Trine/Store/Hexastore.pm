@@ -72,6 +72,14 @@ sub new {
 	return $self;
 }
 
+sub _new_with_string {
+    my ($self, $config) = @_;
+    my ($filename) = $config =~ m/file=(.+)$/; # TODO: It has a Storable part too, for later use.
+    return $self->load($filename);
+}
+
+
+
 =item C<< store ( $filename ) >>
 
 Write the triples data to a file specified by C<< $filename >>.

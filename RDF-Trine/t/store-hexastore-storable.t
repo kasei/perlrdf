@@ -41,8 +41,7 @@ END
 	is( $store->count_statements, 4, 'count_statements(fff) returned expected 4' );
 }
 
-TODO: {
-    local $TODO = "Add string loader";
+{
 	my $store	= RDF::Trine::Store->new_with_string('Hexastore;Storable;file='.$filename );
 	isa_ok( $store, 'RDF::Trine::Store::Hexastore' );
 	is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo') ), 3, 'count_statements(bff) returned 3' );
