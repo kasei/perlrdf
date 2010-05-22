@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Exporter::CSV - Export RDF data to CSV.
+RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 

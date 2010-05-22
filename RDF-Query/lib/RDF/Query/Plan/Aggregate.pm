@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Aggregate version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -144,7 +144,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'SUM') {
 						$l->debug("- aggregate op: SUM");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -167,7 +167,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MAX') {
 						$l->debug("- aggregate op: MAX");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -198,7 +198,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MIN') {
 						$l->debug("- aggregate op: MIN");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -230,7 +230,7 @@ sub execute ($) {
 					} elsif ($op eq 'SAMPLE') {
 						### this is just the MIN code from above, without the strict comparison checking
 						$l->debug("- aggregate op: SAMPLE");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -245,7 +245,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'AVG') {
 						$l->debug("- aggregate op: AVG");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -264,7 +264,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'GROUP_CONCAT') {
 						$l->debug("- aggregate op: GROUP_CONCAT");
-						my $value	= $row->{ $col->name };
+						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $str		= RDF::Query::Node::Resource->new('sparql:str');

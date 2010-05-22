@@ -119,29 +119,31 @@ unless ($PATTERN) {
 	close($fh);
 }
 
-
 ################################################################################
 
-
 sub eval_test {
-	my $bridge	= shift;
-	my $test	= shift;
-	my $earl	= shift;
-	my $man		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
-	my $rq		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
-	my $mfact	= $man->action;
-	my $mfres	= $man->result;
-	my $qtquery	= $rq->query;
-	my $qtdata	= $rq->data;
-	my $qtgdata	= $rq->graphData;
-	my $reqs	= $rq->requires;
+	my $bridge		= shift;
+	my $test		= shift;
+	my $earl		= shift;
+	my $man			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
+	my $rq			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
+	my $dawgt		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#');
+	my $mfact		= $man->action;
+	my $mfres		= $man->result;
+	my $qtquery		= $rq->query;
+	my $qtdata		= $rq->data;
+	my $qtgdata		= $rq->graphData;
+	my $reqs		= $man->requires;
+	my $approval	= $dawgt->approval;
 	
-	my $action	= get_first_obj( $bridge, $test, $mfact );
-	my $result	= get_first_obj( $bridge, $test, $mfres );
-	my $req		= get_first_obj( $bridge, $test, $reqs );
-	my $queryd	= get_first_obj( $bridge, $action, $qtquery );
-	my $data	= get_first_obj( $bridge, $action, $qtdata );
-	my @gdata	= get_all_obj( $bridge, $action, $qtgdata );
+	my $action		= get_first_obj( $bridge, $test, $mfact );
+	my $result		= get_first_obj( $bridge, $test, $mfres );
+	my $req			= get_first_obj( $bridge, $test, $reqs );
+	my $approved	= get_first_obj( $bridge, $test, $approval );
+	my $queryd		= get_first_obj( $bridge, $action, $qtquery );
+	my $data		= get_first_obj( $bridge, $action, $qtdata );
+	my @gdata		= get_all_obj( $bridge, $action, $qtgdata );
+	return unless ($approved);
 	
 	my $uri					= URI->new( $bridge->uri_value( $queryd ) );
 	my $filename			= $uri->file;
@@ -188,7 +190,7 @@ sub eval_test {
 			print STDERR "ok\n" if ($debug);
 			
 		#	warn "comparing results...";
-			my $ok			= compare_results( $expected, $actual, $earl, $bridge->as_string( $test ) );
+			my $ok			= compare_results( $expected, $actual, $earl, $bridge->as_string( $test ), $TODO );
 		};
 		warn $@ if ($@);
 		if ($ok) {
@@ -298,7 +300,7 @@ sub get_actual_results {
 	my $sparql	= shift;
 	my $base	= shift;
 	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql' );
+	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11' );
 	
 	local($RDF::Query::Model::Redland::debug)	= 1 if ($debug);
 	local($RDF::Query::Model::RDFCore::debug)	= 1 if ($debug);
@@ -495,6 +497,7 @@ sub compare_results {
 	my $actual		= shift;
 	my $earl		= shift;
 	my $test		= shift;
+	my $TODO		= shift;
 	warn 'compare_results: ' . Data::Dumper->Dump([$expected, $actual], [qw(expected actual)]) if ($debug or $debug_results);
 	
 	
@@ -633,7 +636,7 @@ sub compare_results {
 		}
 		
 		my @remaining	= keys %actual_flat;
-		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if (@remaining);
+		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if ($debug and (@remaining));
 		return is( scalar(@remaining), 0, "$test: no unchecked results" );
 	}
 }

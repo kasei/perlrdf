@@ -1,17 +1,17 @@
-# RDF::Query::Algebra::Project
+# RDF::Query::Algebra::Extend
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Algebra::Project - Algebra class for projection
+RDF::Query::Algebra::Extend - Algebra class for extending the variable projection
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Project version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Extend version 2.202, released 30 January 2010.
 
 =cut
 
-package RDF::Query::Algebra::Project;
+package RDF::Query::Algebra::Extend;
 
 use strict;
 use warnings;
@@ -41,7 +41,7 @@ BEGIN {
 
 =item C<< new ( $pattern, \@vars_and_exprs ) >>
 
-Returns a new Project structure.
+Returns a new Extend structure.
 
 =cut
 
@@ -50,16 +50,9 @@ sub new {
 	my $pattern	= shift;
 	my $vars	= shift;
 	unless (reftype($vars) eq 'ARRAY' and not(blessed($vars))) {
-		throw RDF::Query::Error::MethodInvocationError -text => "Variable list in RDF::Query::Algebra::Project constructor must be an ARRAY reference";
+		throw RDF::Query::Error::MethodInvocationError -text => "Variable list in RDF::Query::Algebra::Extend constructor must be an ARRAY reference";
 	}
-	my @vars;
-	foreach my $v (@$vars) {
-		if ($v->isa('RDF::Query::Node::Variable')) {
-			push(@vars, $v);
-		} else {
-			push(@vars, $v->alias);
-		}
-	}
+	my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
 	return bless( [ $pattern, \@vars ], $class );
 }
 
@@ -93,7 +86,7 @@ sub pattern {
 
 =item C<< vars >>
 
-Returns the vars to be projected to.
+Returns the vars to be extended.
 
 =cut
 
@@ -120,7 +113,7 @@ sub sse {
 					} @{ $self->vars }
 				);
 	return sprintf(
-		"(project (%s)\n${prefix}${indent}%s\n${prefix})",
+		"(extend (%s)\n${prefix}${indent}%s\n${prefix})",
 		$vars,
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
@@ -130,29 +123,29 @@ sub _from_sse {
 	my $class	= shift;
 	my $context	= $_[1];
 	for ($_[0]) {
-		if (m/^[(]project\s+[(]\s*/) {
+		if (m/^[(]extend\s+[(]\s*/) {
 			my @nodes;
-			s/^[(]project\s+[(]\s*//;
+			s/^[(]extend\s+[(]\s*//;
 			do {
 				push(@nodes, RDF::Trine::Node->from_sse( $_[0], $context ));
 			} until (m/\s*[)]/);
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;
 			} else {
-				throw RDF::Trine::Error -text => "Cannot parse end-of-project-vars from SSE string: >>$_<<";
+				throw RDF::Trine::Error -text => "Cannot parse end-of-extend-vars from SSE string: >>$_<<";
 			}
 			
 			my ($pattern)	= RDF::Query::Algebra->from_sse( $context, $_[0] );
 			
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;
-				warn "project: " . Dumper(\@nodes);
-				return RDF::Query::Algebra::Project->new( $pattern, \@nodes );
+				warn "extend: " . Dumper(\@nodes);
+				return RDF::Query::Algebra::Extend->new( $pattern, \@nodes );
 			} else {
-				throw RDF::Trine::Error -text => "Cannot parse end-of-project from SSE string: >>$_<<";
+				throw RDF::Trine::Error -text => "Cannot parse end-of-extend from SSE string: >>$_<<";
 			}
 		} else {
-			throw RDF::Trine::Error -text => "Cannot parse project from SSE string: >>$_<<";
+			throw RDF::Trine::Error -text => "Cannot parse extend from SSE string: >>$_<<";
 		}
 	}
 }

@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Graph::Materialized - Materialized graph class.
+RDF::Trine::Iterator::Graph::Materialized - Materialized graph class
 
 =head1 VERSION
 

@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer.
+RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer
 
 =head1 VERSION
 

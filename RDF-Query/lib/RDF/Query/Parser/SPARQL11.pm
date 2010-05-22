@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL11 version 2.202, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -328,8 +328,6 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	use Data::Dumper;
-	Carp::cluck Dumper($self->{tokens});
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -552,12 +550,6 @@ sub _SelectQuery {
 		$self->__consume_ws_opt;
 	}
 	
-	if ($self->{build}{options}{orderby}) {
-		my $order	= delete $self->{build}{options}{orderby};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
-		push(@{ $self->{build}{triples} }, $sort);
-	}
 	$self->__solution_modifiers( $star );
 	
 	delete $self->{build}{options};
@@ -2203,9 +2195,28 @@ sub __solution_modifiers {
 	}
 	
 	my $vars	= [ @{ $self->{build}{variables} } ];
-	my $pattern	= pop(@{ $self->{build}{triples} });
-	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
-	push(@{ $self->{build}{triples} }, $proj);
+	
+	{
+		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
+		if (scalar(@vars)) {
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+			push(@{ $self->{build}{triples} }, $proj);
+		}
+	}
+	
+	if ($self->{build}{options}{orderby}) {
+		my $order	= delete $self->{build}{options}{orderby};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+
+	{
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
 	
 	if ($self->{build}{options}{distinct}) {
 		delete $self->{build}{options}{distinct};

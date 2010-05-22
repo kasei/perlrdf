@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Serializer::NQuads - N-Quads Serializer.
+RDF::Trine::Serializer::NQuads - N-Quads Serializer
 
 =head1 VERSION
 

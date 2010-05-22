@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Serializer::Turtle - Turtle Serializer.
+RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 

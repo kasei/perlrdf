@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Pattern - Class for BasicGraphPattern patterns
+RDF::Trine::Pattern - Class for basic graph patterns
 
 =head1 VERSION
 

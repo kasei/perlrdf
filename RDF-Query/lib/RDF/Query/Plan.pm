@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -38,6 +38,7 @@ use RDF::Query::Plan::Not;
 use RDF::Query::Plan::Exists;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
+use RDF::Query::Plan::Extend;
 use RDF::Query::Plan::Quad;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
@@ -57,7 +58,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -509,6 +510,15 @@ sub generate_plans {
 			my @plans;
 			foreach my $plan (@base) {
 				push(@plans, RDF::Query::Plan::Project->new( $plan, $vars ));
+			}
+			push(@return_plans, @plans);
+		} elsif ($type eq 'Extend') {
+			my $pattern	= $algebra->pattern;
+			my $vars	= $algebra->vars;
+			my @base	= $self->generate_plans( $pattern, $context, %args );
+			my @plans;
+			foreach my $plan (@base) {
+				push(@plans, RDF::Query::Plan::Extend->new( $plan, $vars ));
 			}
 			push(@return_plans, @plans);
 		} elsif ($type eq 'Service') {

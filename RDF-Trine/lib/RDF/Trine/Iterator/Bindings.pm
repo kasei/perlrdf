@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query results.
+RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query results
 
 =head1 VERSION
 

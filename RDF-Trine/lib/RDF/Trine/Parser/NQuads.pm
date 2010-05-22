@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::NQuads - N-Quads Parser.
+RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 

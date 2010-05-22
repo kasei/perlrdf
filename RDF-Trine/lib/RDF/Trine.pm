@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine - An RDF Framework for Perl.
+RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 

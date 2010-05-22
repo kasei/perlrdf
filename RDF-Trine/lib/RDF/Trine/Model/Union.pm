@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Model::Union - Union models for joining multiple stores together.
+RDF::Trine::Model::Union - Union models for joining multiple stores together
 
 =head1 VERSION
 

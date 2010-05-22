@@ -39,6 +39,36 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.202 (2010-05-22)
+
+     * Added initial SPARQL 1.1 syntax and eval support for select expressions, subqueries, negation, aggregates, subqueries, and basic federation.
+     * Added RDF::Query::VariableBindings.pm->set method.
+     * Added RDF::Query::_new constructor without any sanity or setup code (used for subquery construction).
+     * Added RDF::Query::Node::Blank::new constructor to avoid RDF::Trine's N-Triples syntax requirements.
+     * Added SAMPLE and GROUP_CONCAT aggregate support.
+     * Added shortcut functions for constructing RDF::Query::Node objects and Algebra Triples, BGPs and GGPs.
+     * Added warning to RDF::Query::Algebra::Project constructor for improper variable lists.
+     * Updated DAWG tests to use SPARQL 1.1 parser.
+     * Removed SPARQLP aggregate tests that don't align with new SPARQL 1.1 semantics.
+     * Updated DAWG eval tests to skip non-approved tests.
+     * Fixed handling of unicode decoding in DAWG eval tests.
+     * Bumped required version of RDF::Trine to 0.123.
+     * Updated t/models.pl to use RDF::Trine::Parser->parse_url_into_model method and redland's 'guess' parser.
+     * Fixed logging key name in RDF::Query::Plan::Exists.
+     * Fixed sse and as_sparql methods in RDF::Query::Algebra::Exists.
+     * Implemented RDF::Query::Algebra::Exists::binding_variables.
+     * Updated BGPOptimizer to estimate selectivity directly instead of using costmodel code.
+     * Removed costmodel code.
+     * Removed unused fixup and execute methods in Algebra classes.
+     * Updated RDF::Query to only instantiate DateTime parser and LWP::UserAgent if needed.
+     * Changed DBPedia network test to align with recent DBPedia update in t/dev-service-description.
+     * Updated SPARQLP parser tests to align with internal changes in RDF::Query::Algebra::Aggregate.
+     * Updated RDF::Query::Algebra::Aggregate and RDF::Query::Plan::Aggregate to syntactically handle HAVING clauses.
+     * Fixed bin/graph-bgp.pl (had bitrotted).
+     * Changed bnodes to named variables in examples/queries/sparql-bgp-people-knows.rq.
+     * RDF::Query::Util::cli_make_query now defaults the 'class' parameter to 'RDF::Query'.
+     * Removed dependency list and added perlrdf link to POD in RDF::Trine and RDF::Query.
+
   Version 2.201 (2010-01-30)
 
      * Added benchmark/lubm.pl.

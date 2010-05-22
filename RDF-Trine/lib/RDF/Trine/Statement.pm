@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Statement - Algebra class for Triple patterns
+RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
