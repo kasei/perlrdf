@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Limit
+# RDF::Query::Plan::Extend
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Limit - Executable query plan for Limits.
+RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Limit version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Extend version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,11 +15,13 @@ This document describes RDF::Query::Plan::Limit version 2.202, released 30 Janua
 
 =cut
 
-package RDF::Query::Plan::Limit;
+package RDF::Query::Plan::Extend;
 
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+
+use Scalar::Util qw(blessed);
 
 ######################################################################
 
@@ -30,15 +32,21 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $plan, $limit ) >>
+=item C<< new ( $plan, \@keys ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $limit	= shift;
 	my $plan	= shift;
-	my $self	= $class->SUPER::new( $limit, $plan );
+	my $keys	= shift;
+	my (@vars, @exprs);
+	foreach my $k (@$keys) {
+		push(@exprs, $k) if ($k->isa('RDF::Query::Expression'));
+		push(@vars, $k->name) if ($k->isa('RDF::Query::Node::Variable'));
+		push(@vars, $k) if (not(ref($k)));
+	}
+	my $self	= $class->SUPER::new( $plan, \@vars, \@exprs );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
@@ -51,16 +59,16 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "LIMIT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "PROJECT plan can't be executed while already open";
 	}
-	my $plan	= $self->[2];
+	my $plan	= $self->[1];
 	$plan->execute( $context );
-
+	
 	if ($plan->state == $self->OPEN) {
+		$self->[0]{context}	= $context;
 		$self->state( $self->OPEN );
-		$self->[0]{count}	= 0;
 	} else {
-		warn "could not execute plan in LIMIT";
+		warn "could not execute plan in PROJECT";
 	}
 	$self;
 }
@@ -72,13 +80,41 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open LIMIT";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
-	return undef if ($self->[0]{count} >= $self->[1]);
-	my $plan	= $self->[2];
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
+	my $plan	= $self->[1];
 	my $row		= $plan->next;
-	return undef unless ($row);
-	$self->[0]{count}++;
+	unless (defined($row)) {
+		$l->trace("no remaining rows in extend");
+		if ($self->[1]->state == $self->[1]->OPEN) {
+			$self->[1]->close();
+		}
+		return;
+	}
+	if ($l->is_trace) {
+		$l->trace( "extend on row $row" );
+	}
+	
+	my $keys	= $self->[2];
+	my $exprs	= $self->[3];
+	my $query	= $self->[0]{context}->query;
+	
+	my $proj	= $row->project( @{ $keys } );
+	foreach my $e (@$exprs) {
+		my $name			= $e->name;
+		my $var_or_expr	= $e->expression;
+		if ($l->is_trace) {
+			$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
+		}
+		my $value		= $query->var_or_expr_value( $row, $var_or_expr );
+		if ($l->is_trace) {
+			$l->trace( "- extend value $name -> $value" );
+		}
+		$row->{ $name }	= $value;
+	}
+	
 	return $row;
 }
 
@@ -89,31 +125,22 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open LIMIT";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open PROJECT";
 	}
-	delete $self->[0]{count};
-	$self->[2]->close();
+	delete $self->[0]{context};
+	if (blessed($self->[1]) and $self->[1]->state == $self->OPEN) {
+		$self->[1]->close();
+	}
 	$self->SUPER::close();
 }
 
 =item C<< pattern >>
 
-Returns the query plan that will be used to produce the data to be filtered.
+Returns the query plan that will be used to produce the data to be extended.
 
 =cut
 
 sub pattern {
-	my $self	= shift;
-	return $self->[2];
-}
-
-=item C<< limit >>
-
-Returns the limit size.
-
-=cut
-
-sub limit {
 	my $self	= shift;
 	return $self->[1];
 }
@@ -147,7 +174,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'limit';
+	return 'extend';
 }
 
 =item C<< plan_prototype >>
@@ -160,7 +187,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(i P);
+	return qw(\J P);
 }
 
 =item C<< plan_node_data >>
@@ -172,7 +199,9 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	return ($self->limit, $self->pattern);
+	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
+	my @exprs	= @{$self->[3]};
+	return ([ @vars, @exprs ], $self->pattern);
 }
 
 =item C<< graph ( $g ) >>
@@ -183,10 +212,12 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Limit ($self->[1])" . $self->graph_labels );
+	my $expr	= join(' ', @{$self->[2]}, map { blessed($_) ? $_->sse( {}, "" ) : $_ } @{$self->[3]});
+	$g->add_node( "$self", label => "Extend ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }
+
 
 
 1;

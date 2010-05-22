@@ -4,13 +4,15 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-require Encode;
+use Encode qw(encode);
+
 use URI::file;
 use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 
 use RDF::Query;
+use RDF::Query::Node qw(iri);
 use RDF::Trine;
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf);
@@ -39,10 +41,8 @@ if ($ENV{RDFQUERY_DAWGTEST}) {
 	exit;
 }
 
-require Data::Dumper;
-require GraphViz;
-require XML::Simple;
-XML::Simple->import();
+use Data::Dumper;
+use XML::Simple;
 
 plan qw(no_plan);
 require "t/dawg/earl.pl";
@@ -115,29 +115,31 @@ unless ($PATTERN) {
 	close($fh);
 }
 
-
 ################################################################################
 
-
 sub eval_test {
-	my $bridge	= shift;
-	my $test	= shift;
-	my $earl	= shift;
-	my $man		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
-	my $rq		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
-	my $mfact	= $man->action;
-	my $mfres	= $man->result;
-	my $qtquery	= $rq->query;
-	my $qtdata	= $rq->data;
-	my $qtgdata	= $rq->graphData;
-	my $reqs	= $rq->requires;
+	my $bridge		= shift;
+	my $test		= shift;
+	my $earl		= shift;
+	my $man			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
+	my $rq			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
+	my $dawgt		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#');
+	my $mfact		= $man->action;
+	my $mfres		= $man->result;
+	my $qtquery		= $rq->query;
+	my $qtdata		= $rq->data;
+	my $qtgdata		= $rq->graphData;
+	my $reqs		= $man->requires;
+	my $approval	= $dawgt->approval;
 	
-	my $action	= get_first_obj( $bridge, $test, $mfact );
-	my $result	= get_first_obj( $bridge, $test, $mfres );
-	my $req		= get_first_obj( $bridge, $test, $reqs );
-	my $queryd	= get_first_obj( $bridge, $action, $qtquery );
-	my $data	= get_first_obj( $bridge, $action, $qtdata );
-	my @gdata	= get_all_obj( $bridge, $action, $qtgdata );
+	my $action		= get_first_obj( $bridge, $test, $mfact );
+	my $result		= get_first_obj( $bridge, $test, $mfres );
+	my $req			= get_first_obj( $bridge, $test, $reqs );
+	my $approved	= get_first_obj( $bridge, $test, $approval );
+	my $queryd		= get_first_obj( $bridge, $action, $qtquery );
+	my $data		= get_first_obj( $bridge, $action, $qtdata );
+	my @gdata		= get_all_obj( $bridge, $action, $qtgdata );
+	return unless ($approved);
 	
 	my $uri					= URI->new( $queryd->uri_value );
 	my $filename			= $uri->file;
@@ -205,7 +207,10 @@ exit;
 
 sub new_model {
 	my @files		= @_;
-	my $bridge		= RDF::Query->new_bridge();
+	my $store		= RDF::Trine::Store::DBI->temporary_store;
+	my $model		= RDF::Trine::Model->new( $store );
+	my $bridge		= RDF::Query::Model::RDFTrine->new( $model );
+# 	my $bridge		= RDF::Query->new_bridge();
 	add_to_model( $bridge, file_uris(@files) );
 	return ($bridge, $bridge->model);
 }
@@ -249,7 +254,7 @@ sub get_actual_results {
 	my $sparql	= shift;
 	my $base	= shift;
 	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql' );
+	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11' );
 	
 	return unless $query;
 	
@@ -368,15 +373,15 @@ sub get_expected_results {
 		}
 	} else {
 		my ($bridge, $model)	= new_model( $file );
-		my $p_type		= RDF::Trine::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' );
-		my $p_rv		= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable' );
-		my $p_solution	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution' );
-		my $p_binding	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding' );
-		my $p_boolean	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#boolean' );
-		my $p_value		= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#value' );
-		my $p_variable	= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable' );
-		my $t_rs		= RDF::Trine::Node::Resource->new( 'http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet' );
-		my $rss			= smap { $_->subject } $bridge->get_statements( undef, $p_type, $t_rs );
+		my $p_type		= iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+		my $p_rv		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable');
+		my $p_solution	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution');
+		my $p_binding	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#binding');
+		my $p_boolean	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#boolean');
+		my $p_value		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#value');
+		my $p_variable	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable');
+		my $t_rs		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet');
+		my $rss			= smap { $bridge->subject($_) } $bridge->get_statements( undef, $p_type, $t_rs );
 		my $rs			= $rss->next;
 		
 		if (my $bool = get_first_as_string( $bridge, $rs, $p_boolean )) {
@@ -384,11 +389,10 @@ sub get_expected_results {
 		} else {
 			my $vnodess		= smap { $_->object->literal_value } $bridge->get_statements( $rs, $p_rv, undef );
 			my @vars		= $vnodess->get_all();
-			my $rowss		= smap { $_->object } $bridge->get_statements( $rs, $p_solution, undef );
-			my @rows		= $rowss->get_all();
+			my $rowss		= smap { $bridge->object($_) } $bridge->get_statements( $rs, $p_solution, undef );
 			
 			my @results;
-			foreach my $row (@rows) {
+			while (my $row = $rowss->next) {
 				my %data;
 				my $stream		= smap { $_->object } $bridge->get_statements( $row, $p_binding, undef );
 				my @bindings	= $stream->get_all();
@@ -443,7 +447,9 @@ sub compare_results {
 	my $actual		= shift;
 	my $earl		= shift;
 	my $test		= shift;
+	my $TODO		= shift;
 	warn 'compare_results: ' . Data::Dumper->Dump([$expected, $actual], [qw(expected actual)]) if ($debug or $debug_results);
+	
 	
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
@@ -470,7 +476,7 @@ sub compare_results {
 		foreach my $i (0 .. $#{ $actual }) {
 			my $row	= $actual->[ $i ];
 			my @keys	= sort keys %$row;
-			my $key		= join("\xFF", map { $row->{$_} } @keys);
+			my $key		= join("\xFF", map { encode('utf8', $row->{$_}) } @keys);
 			push( @{ $actual_flat{ $key } }, [ $i, $row ] );;
 		}
 		
@@ -481,7 +487,7 @@ sub compare_results {
 			my @keys	= keys %$row;
 			my @skeys	= sort @keys;
 			my @values	= map { $row->{$_} } @skeys;
-			my $key		= join("\xFF", @values);
+			my $key		= join("\xFF", map { encode('utf8', $_) } @values);
 			if (exists($actual_flat{ $key })) {
 				my $i	= $actual_flat{ $key }[0][0];
 				shift(@{ $actual_flat{ $key } });
@@ -557,7 +563,6 @@ sub compare_results {
 						# we didn't match this property, so this actual result doesn't
 						# match the expected result. break out and try another actual result.
 						$ok	= 0;
-						warn "did not match: $actualv <=> $expectedv\n" if ($debug);
 						next ACTUAL;
 					}
 					if ($ok) {
@@ -581,7 +586,7 @@ sub compare_results {
 		}
 		
 		my @remaining	= keys %actual_flat;
-		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if (@remaining);
+		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if ($debug and (@remaining));
 		return is( scalar(@remaining), 0, "$test: no unchecked results" );
 	}
 }
@@ -635,12 +640,14 @@ sub literal_as_string {
 
 sub get_first_literal {
 	my $node	= get_first_obj( @_ );
-	return $node ? Encode::decode('utf8', $node->literal_value) : undef;
+	return $node;
+#	return $node ? Encode::decode('utf8', $bridge->literal_value($node)) : undef;
 }
 
 sub get_all_literal {
 	my @nodes	= get_all_obj( @_ );
-	return map { Encode::decode('utf8', $_->literal_value) } grep { $bridge->isa_literal($_) } @nodes;
+	return @nodes;
+#	return map { Encode::decode('utf8', $bridge->literal_value($_)) } grep { $bridge->isa_literal($_) } @nodes;
 }
 
 sub get_first_uri {

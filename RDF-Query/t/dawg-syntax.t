@@ -119,7 +119,7 @@ sub positive_syntax_test {
 	my $uri		= URI->new( relativeize_url( $url ) );
 	my $filename	= $uri->file;
 	my $sparql	= do { local($/) = undef; open(my $fh, '<', $filename); <$fh> };
-	my $query	= eval { RDF::Query->new( $sparql, undef, undef, 'sparql' ) };
+	my $query	= eval { RDF::Query->new( $sparql, undef, undef, 'sparql11' ) };
 	return 0 if ($@);
 	return blessed($query) ? 1 : 0;
 }
@@ -133,7 +133,7 @@ sub negative_syntax_test {
 	my $uri		= URI->new( relativeize_url( $url ) );
 	my $filename	= $uri->file;
 	my $sparql	= do { local($/) = undef; open(my $fh, '<', $filename); <$fh> };
-	my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
+	my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql11' );
 	return 1 if ($@);
 	warn Data::Dumper::Dumper($query->{parsed}) if (blessed($query));
 	warn $query->error if (blessed($query));

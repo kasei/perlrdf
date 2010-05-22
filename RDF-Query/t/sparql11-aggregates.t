@@ -1,124 +1,224 @@
-#!/usr/bin/perl
 use strict;
 use warnings;
 no warnings 'redefine';
-
-use URI::file;
+use Test::More;
+use Test::Exception;
 use Scalar::Util qw(blessed);
 use RDF::Trine qw(literal);
 
 use lib qw(. t);
+require "models.pl";
+
 use RDF::Query;
-BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.project	= TRACE, Screen
-# 	log4perl.category.rdf.query.plan.aggregate	= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.exists          = TRACE, Screen
 # 	
-# 	log4perl.appender.Screen					= Log::Log4perl::Appender::Screen
-# 	log4perl.appender.Screen.stderr				= 0
-# 	log4perl.appender.Screen.layout				= Log::Log4perl::Layout::SimpleLayout
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
 
-
-my @files	= map { "data/$_" } qw(foaf.xrdf about.xrdf);
+my @files	= map { "data/$_" } qw(t-sparql11-aggregates-1.rdf foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
-
-use Test::More;
-use Test::Exception;
-plan tests => (62 * scalar(@models));
+my $tests	= (scalar(@models) * 88);
+plan tests => $tests;
 
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
+
 	
 	{
-		my $query	= new RDF::Query ( <<"END" );
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT ?p ?knows
-			WHERE {
-				?p a foaf:Person ;
-					foaf:knows ?knows .
-			}
+		print "# SELECT SUM aggregate with GROUP BY and HAVING\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT (SUM(?lprice) AS ?totalPrice)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?org
+	HAVING (SUM(?lprice) > 10)
 END
-		isa_ok( $query, 'RDF::Query' );
-		
-		$query->aggregate( [RDF::Query::Node::Variable->new('p')], count => ['COUNT', RDF::Query::Node::Variable->new('knows')] );
-		my $stream	= $query->execute( $model );
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			$count++;
-			my $count	= $row->{count};
-			ok( blessed($count) and $count->is_literal, 'literal aggregate' );
-			is( $count->literal_value, 3, 'foaf:knows count' );
+			my $tp	= $row->{totalPrice};
+			isa_ok( $tp, 'RDF::Trine::Node::Literal', 'got ?totalPrice value' );
+			is( $tp->literal_value, '21', 'expected literal value' );
+			is( $tp->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', 'expected integer datatype' );
 		}
-		is( $count, 1, 'one aggreate' );
+		is( $count, 1, 'expected result count with aggregation' );
 	}
-	
+
 	{
-		my $query	= new RDF::Query ( <<"END" );
-			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT ?image ?aperture
-			WHERE {
-				?image a foaf:Image ;
-					exif:fNumber ?aperture
-			}
+		print "# SELECT GROUPED Variable with GROUP BY and HAVING\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?org
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?org
+	HAVING (SUM(?lprice) > 10)
 END
-		isa_ok( $query, 'RDF::Query' );
-		
-		$query->aggregate( [], wide => ['MIN', RDF::Query::Node::Variable->new('aperture')], narrow => ['MAX', RDF::Query::Node::Variable->new('aperture')] );
-		my $stream	= $query->execute( $model );
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $wide	= $row->{wide};
-			my $narrow	= $row->{narrow};
-			ok( blessed($wide) and $wide->is_literal, 'literal aggregate' );
-			ok( blessed($narrow) and $narrow->is_literal, 'literal aggregate' );
-			is( $wide->literal_value, 4.5, 'wide (MIN) aperture' );
-			is( $narrow->literal_value, 11, 'narrow (MAX) aperture' );
 			$count++;
+			my $org	= $row->{org};
+			isa_ok( $org, 'RDF::Trine::Node::Resource', 'got ?org value' );
 		}
-		is( $count, 1, 'one aggreate' );
+		is( $count, 1, 'expected result count with aggregation' );
 	}
-	
+
 	{
-		my $query	= new RDF::Query ( <<"END" );
-			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			PREFIX dcterms: <http://purl.org/dc/terms/>
-			PREFIX dc: <http://purl.org/dc/elements/1.1/>
-			PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-			SELECT ?place ?date
-			WHERE {
-				[] a foaf:Image ;
-					dcterms:spatial [ foaf:name ?place ] ;
-					dc:date ?date .
-				FILTER( DATATYPE(?date) = xsd:dateTime )
-			}
-			ORDER BY DESC(?place)
+		print "# SELECT MIN with GROUP BY\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MIN(?lprice) AS ?min)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
 END
-		isa_ok( $query, 'RDF::Query' );
-		
-		$query->aggregate( [], begin => ['MIN', RDF::Query::Node::Variable->new('date')], end => ['MAX', RDF::Query::Node::Variable->new('date')] );
-		my $stream	= $query->execute( $model );
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
-		my @expect	= ( ['Providence, RI', ''] );
+		my %expect	= (
+			'http://books.example/auth1'	=> 5,
+			'http://books.example/auth2'	=> 7,
+			'http://books.example/auth3'	=> 7,
+		);
 		while (my $row = $stream->next) {
-			my $begin	= $row->{begin};
-			my $end	= 	$row->{end};
-			ok( blessed($begin) and $begin->is_literal, 'literal aggregate' );
-			ok( blessed($end) and $end->is_literal, 'literal aggregate' );
-			is( $begin->literal_value, '2004-09-06T15:19:20+01:00', 'beginning date of photos' );
-			is( $end->literal_value, '2005-04-07T18:27:56-04:00', 'ending date of photos' );
 			$count++;
+			my $auth	= $row->{auth};
+			my $val		= $row->{min};
+			isa_ok( $auth, 'RDF::Trine::Node::Resource', 'got ?auth value' );
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?min value' );
+			my $expect	= $expect{ $auth->uri_value };
+			cmp_ok( $val->literal_value, '==', $expect, 'expected MIN value' );
 		}
-		is( $count, 1, 'one aggreate' );
+		is( $count, 3, 'expected result count with aggregation' );
+	}
+
+	{
+		print "# SELECT MAX with GROUP BY\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MAX(?lprice) AS ?max)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
+END
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
+		my %expect	= (
+			'http://books.example/auth1'	=> 9,
+			'http://books.example/auth2'	=> 7,
+			'http://books.example/auth3'	=> 7,
+		);
+		while (my $row = $stream->next) {
+			$count++;
+			my $auth	= $row->{auth};
+			my $val		= $row->{max};
+			isa_ok( $auth, 'RDF::Trine::Node::Resource', 'got ?auth value' );
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
+			my $expect	= $expect{ $auth->uri_value };
+			cmp_ok( $val->literal_value, '==', $expect, 'expected MAX value' );
+		}
+		is( $count, 3, 'expected result count with aggregation' );
+	}
+
+	{
+		print "# SELECT MAX with GROUP BY and ORDER BY DESC\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MAX(?lprice) AS ?max)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
+	ORDER BY DESC(?max)
+END
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
+		my @expect	= (9, 7, 7);
+		while (my $row = $stream->next) {
+			$count++;
+			my $val		= $row->{max};
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
+			my $expect	= shift(@expect);
+			cmp_ok( $val->literal_value, '==', $expect, 'expected DESC MAX value' );
+		}
+		is( $count, 3, 'expected result count with aggregation' );
+	}
+
+	{
+		print "# SELECT MAX with GROUP BY and ORDER BY ASC\n";
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+	PREFIX : <http://books.example/>
+	SELECT ?auth (MAX(?lprice) AS ?max)
+	WHERE {
+	  ?org :affiliates ?auth .
+	  ?auth :writesBook ?book .
+	  ?book :price ?lprice .
+	}
+	GROUP BY ?auth
+	ORDER BY ASC(?max)
+END
+		warn RDF::Query->error unless ($query);
+		my ($plan, $ctx)	= $query->prepare( $model );
+		my $pattern			= $query->pattern;
+		my $stream	= $query->execute_plan( $plan, $ctx );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
+		my @expect	= (7, 7, 9);
+		while (my $row = $stream->next) {
+			$count++;
+			my $val		= $row->{max};
+			isa_ok( $val, 'RDF::Trine::Node::Literal', 'got ?max value' );
+			my $expect	= shift(@expect);
+			cmp_ok( $val->literal_value, '==', $expect, 'expected ASC MAX value' );
+		}
+		is( $count, 3, 'expected result count with aggregation' );
 	}
 	
 	{
+		print "# SELECT COUNT(VAR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -140,6 +240,7 @@ END
 	}
 	
 	{
+		print "# SELECT COUNT(DISTINCT VAR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -161,6 +262,7 @@ END
 	}
 	
 	{
+		print "# SELECT MIN(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT MIN(?mbox)
@@ -181,6 +283,7 @@ END
 	}
 	
 	{
+		print "# SELECT COUNT(VAR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT (COUNT(?nick) AS ?count)
@@ -203,6 +306,7 @@ END
 	}
 	
 	{
+		print "# SELECT COUNT(VAR) with GROUP BY\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?name (COUNT(?nick) AS ?count)
@@ -228,30 +332,7 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
-			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT ?fixedpoint (COUNT(*) AS ?count)
-			WHERE {
-				?image exif:fNumber ?f
-			}
-			GROUP BY (?f * 10 AS ?fixedpoint)
-END
-		isa_ok( $query, 'RDF::Query' );
-		my $stream	= $query->execute( $model );
-		my $count	= 0;
-		
-		my %expect	= ( '45' => 3, '110' => 1 );
-		while (my $row = $stream->next) {
-			my $f		= $row->{fixedpoint}->literal_value;
-			my $expect	= $expect{ $f };
-			cmp_ok( $row->{count}->literal_value, '==', $expect, 'expected COUNT() value for expression GROUP' );
-			$count++;
-		}
-		is( $count, 2, 'two aggreate groups' );
-	}
-	
-	{
+		print "# SELECT AVG(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			SELECT AVG(?f)
@@ -274,6 +355,7 @@ END
 	}
 	
 	{
+		print "# SELECT MIN(STR), MAX(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
@@ -299,6 +381,7 @@ END
 	}
 	
 	{
+		print "# SELECT MIN(STR), MAX(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT (MIN(?d) AS ?min) (MAX(?d) AS ?max)
@@ -328,6 +411,7 @@ END
 	}
 	
 	{
+		print "# SELECT GROUP_CONCAT(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT (GROUP_CONCAT(?d) AS ?dates)
@@ -349,6 +433,7 @@ END
 	}
 	
 	{
+		print "# SELECT SAMPLE(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT (SAMPLE(?d) AS ?date)
@@ -369,70 +454,3 @@ END
 		is( $count, 1, 'one aggreate row' );
 	}
 }
-
-# {
-# 	# HAVING tests
-# 	my $model	= RDF::Trine::Model->temporary_model;
-# 	my $data	= <<'END';
-# @prefix : <http://books.example/> .
-# 
-# :org1 :affiliates :auth1, :auth2 .
-# :org2 :affiliates :auth3 .
-# 
-# :auth1 :writesBook :book1, :book2 .
-# :auth2 :writesBook :book3 .
-# :auth3 :writesBook :book4 .
-# 
-# :book1 :price 9 .
-# :book2 :price 5 .
-# :book3 :price 7 .
-# :book4 :price 7 .
-# 
-# END
-# 	my $parser	= RDF::Trine::Parser->new('turtle');
-# 	$parser->parse_into_model( 'http://base/', $data, $model );
-# 	my $query	= RDF::Query->new( <<'END', { lang => 'sparql11' } );
-# PREFIX : <http://books.example/>
-# SELECT (SUM(?lprice) AS ?totalPrice)
-# WHERE {
-#   ?org :affiliates ?auth .
-#   ?auth :writesBook ?book .
-#   ?book :price ?lprice .
-# }
-# GROUP BY ?org
-# HAVING (SUM(?lprice) > 10)
-# END
-# 
-# ##############################
-# # GROUPS:
-# # org	auth	book	lprice
-# # ----------------------------
-# # org1	auth1	book1	9
-# # org1	auth1	book2	5
-# # org1	auth2	book3	7
-# # ----------------------------
-# # org2	auth3	book4	7
-# # ----------------------------
-# ##############################
-# # AGGREGATES:
-# # org	SUM(lprice)
-# # ----------------------------
-# # org1	21
-# # ----------------------------
-# # org2	7
-# # ----------------------------
-# ##############################
-# # CONSTRAINTS:
-# # org	SUM(lprice)
-# # ----------------------------
-# # org1	21
-# # ----------------------------
-# ##############################
-# 
-# 	warn RDF::Query->error unless ($query);
-# 	my $iter	= $query->execute( $model );
-# 	while (my $r = $iter->next) {
-# 		use Data::Dumper;
-# 		warn Dumper($r);
-# 	}
-# }

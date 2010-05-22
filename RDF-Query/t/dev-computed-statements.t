@@ -59,7 +59,6 @@ END
 
 sub __compute_list_member {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $bound	= shift;
 	my $s		= shift;
 	my $p		= shift;
@@ -73,8 +72,8 @@ sub __compute_list_member {
 	if (blessed($p) and $p->isa('RDF::Query::Node::Resource') and $p->uri_value( 'http://www.jena.hpl.hp.com/ARQ/list#member' )) {
 		my @lists;
 		my $lists	= ($c)
-					? $bridge->get_named_statements( $s, $first, $o, $c )
-					: $bridge->get_statements( $s, $first, $o );
+					? $query->model->get_named_statements( $s, $first, $o, $c )
+					: $query->model->get_statements( $s, $first, $o );
 		while (my $l = $lists->next) {
 			push(@lists, [$l, $l->subject]);
 		}
@@ -102,12 +101,12 @@ sub __compute_list_member {
 			return undef if (blessed($list) and $list->isa('RDF::Query::Node::Resource') and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil');
 			my $obj		= $listst->object;
 			my $tail	= ($c)
-						? $bridge->get_named_statements( $list, $rest, undef, $c )
-						: $bridge->get_statements( $list, $rest, undef );
+						? $query->model->get_named_statements( $list, $rest, undef, $c )
+						: $query->model->get_statements( $list, $rest, undef );
 			while (my $st = $tail->next) {
 				my $lists	= ($c)
-							? $bridge->get_named_statements( $st->object, $first, $o, $c )
-							: $bridge->get_statements( $st->object, $first, $o );
+							? $query->model->get_named_statements( $st->object, $first, $o, $c )
+							: $query->model->get_statements( $st->object, $first, $o );
 				while (my $st = $lists->next) {
 					push(@lists, [$st, $head]);
 				}

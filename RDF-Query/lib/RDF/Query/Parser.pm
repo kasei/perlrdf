@@ -7,7 +7,7 @@ RDF::Query::Parser - Parser base class
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser version 2.202, released 30 January 2010.
 
 =cut
 
@@ -32,7 +32,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.201';
+	$VERSION		= '2.202';
 }
 
 ######################################################################
@@ -249,7 +249,7 @@ sub new_alias_expression {
 	my $self		= shift;
 	my $var			= shift;
 	my $expr		= shift;
-	return RDF::Query::Expression::Alias->new( $var, $expr );
+	return RDF::Query::Expression::Alias->new( 'alias', $var, $expr );
 }
 
 =item C<new_filter ( $filter_expr, $pattern )>

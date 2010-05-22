@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -38,6 +38,7 @@ use RDF::Query::Plan::Not;
 use RDF::Query::Plan::Exists;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
+use RDF::Query::Plan::Extend;
 use RDF::Query::Plan::Quad;
 use RDF::Query::Plan::Service;
 use RDF::Query::Plan::Sort;
@@ -58,7 +59,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -340,7 +341,7 @@ sub generate_plans {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
 	}
 	
-	$l->trace("generating query plan for " . $algebra->sse);
+	$l->trace("generating query plan for " . $algebra->sse({ indent => '  ' }, ''));
 	
 # 	if ($algebra->isa('RDF::Query::Algebra::Aggregate')) {
 # #		warn Dumper($algebra);
@@ -483,7 +484,16 @@ sub generate_plans {
 		
 		my @plans;
 		foreach my $plan (@base) {
-			push(@plans, RDF::Query::Plan::Project->new( $plan, $vars ));
+			push(@return_plans, RDF::Query::Plan::Project->new( $plan, $vars ));
+		}
+		push(@return_plans, @plans);
+	} elsif ($type eq 'Extend') {
+		my $pattern	= $algebra->pattern;
+		my $vars	= $algebra->vars;
+		my @base	= $self->generate_plans( $pattern, $context, %args );
+		my @plans;
+		foreach my $plan (@base) {
+			push(@plans, RDF::Query::Plan::Extend->new( $plan, $vars ));
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Service') {
@@ -515,17 +525,17 @@ sub generate_plans {
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Triple' or $type eq 'Quad') {
 		my $st		= $algebra->distinguish_bnode_variables;
-		my $pred	= $st->predicate;
-		my $query	= $context->query;
+		my $pred    = $st->predicate;
+		my $query    = $context->query;
 		if (blessed($query) and $pred->isa('RDF::Trine::Node::Resource') and scalar(@{ $query->get_computed_statement_generators( $st->predicate->uri_value ) })) {
-			my $csg	= $query->get_computed_statement_generators( $pred->uri_value );
-			my @nodes	= $st->nodes;
-			my $quad	= (scalar(@nodes) == 4) ? 1 : 0;
-			my $mp		= RDF::Query::Plan::ComputedStatement->new( @nodes[0..3], $quad );
+			my $csg    = $query->get_computed_statement_generators( $pred->uri_value );
+			my @nodes    = $st->nodes;
+			my $quad    = (scalar(@nodes) == 4) ? 1 : 0;
+			my $mp        = RDF::Query::Plan::ComputedStatement->new( @nodes[0..3], $quad );
 			push(@return_plans, $mp);
 		} else {
-			my @nodes	= $st->nodes;
-			my $plan	= (scalar(@nodes) == 4)
+			my @nodes    = $st->nodes;
+			my $plan    = (scalar(@nodes) == 4)
 						? RDF::Query::Plan::Quad->new( @nodes, { sparql => $algebra->as_sparql } )
 						: RDF::Query::Plan::Triple->new( @nodes, { sparql => $algebra->as_sparql, bf => $algebra->bf } );
 			push(@return_plans, $plan);
@@ -645,22 +655,22 @@ sub plan_node_name;
 Returns a list of scalar identifiers for the type of the content (children)
 nodes of this plan node. These identifiers are recognized:
 
-* 'P' - A RDF::Query::Plan object
-* 'T' - An RDF::Trine::Statement object
-* 'Q' - An RDF::Trine::Statement::Quad object
-* 'N' - An RDF node
-* 'W' - An RDF node or wildcard ('*')
-* 'E' - An expression (either an RDF::Query::Expression object or an RDF node)
-* 'J' - A valid Project node (an RDF::Query::Expression object or an Variable node)
-* 'V' - A variable binding set (an object of type RDF::Query::VariableBindings)
-* 'u' - A valid URI string
-* 'i' - An integer
-* 'b' - A boolean integer value (0 or 1)
-* 's' - A string
-* 'w' - A bareword string
-* '\X' - An array reference of X nodes (where X is another identifier scalar)
-* '*X' - A list of X nodes (where X is another identifier scalar)
-* 'Q' - A RDF::Query object
+ * 'P' - A RDF::Query::Plan object
+ * 'T' - An RDF::Trine::Statement object
+ * 'Q' - An RDF::Trine::Statement::Quad object
+ * 'N' - An RDF node
+ * 'W' - An RDF node or wildcard ('*')
+ * 'E' - An expression (either an RDF::Query::Expression object or an RDF node)
+ * 'J' - A valid Project node (an RDF::Query::Expression object or an Variable node)
+ * 'V' - A variable binding set (an object of type RDF::Query::VariableBindings)
+ * 'u' - A valid URI string
+ * 'i' - An integer
+ * 'b' - A boolean integer value (0 or 1)
+ * 's' - A string
+ * 'w' - A bareword string
+ * '\X' - An array reference of X nodes (where X is another identifier scalar)
+ * '*X' - A list of X nodes (where X is another identifier scalar)
+ * 'Q' - A RDF::Query object
 
 =cut
 

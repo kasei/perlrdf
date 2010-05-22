@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine - An RDF Framework for Perl.
+RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.121
+This document describes RDF::Trine version 0.123
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ no warnings 'redefine';
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.121';
+	$VERSION	= '0.123';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);

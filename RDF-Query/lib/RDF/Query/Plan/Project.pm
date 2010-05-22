@@ -7,7 +7,7 @@ RDF::Query::Plan::Project - Executable query plan for Projects.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Project version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -104,19 +104,9 @@ sub next {
 	
 	my $proj	= $row->project( @{ $keys } );
 	foreach my $e (@$exprs) {
-		my $var_or_expr;
-		my $name;
-		if ($e->isa('RDF::Query::Expression::Alias')) {
-			$name			= $e->name;
-			$var_or_expr	= $e->expression;
-			if ($l->is_trace) {
-				$l->trace( "- project alias " . $var_or_expr->sse . " -> $name" );
-			}
-		} else {
-			$name			= $e->sse;
-			$var_or_expr	= $e;
-		}
-		my $value		= $query->var_or_expr_value( $row, $var_or_expr );
+		my $name		= $e->sse;
+		my $var_or_expr	= $e;
+		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
 		if ($l->is_trace) {
 			$l->trace( "- project value $name -> $value" );
 		}

@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL11 version 2.202, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -328,8 +328,6 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	use Data::Dumper;
-	Carp::cluck Dumper($self->{tokens});
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -525,12 +523,33 @@ sub _SelectQuery {
 	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
-	if ($self->{build}{options}{orderby}) {
-		my $order	= delete $self->{build}{options}{orderby};
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
-		push(@{ $self->{build}{triples} }, $sort);
+	$self->__consume_ws_opt;
+	if ($self->_test( qr/BINDINGS/i )) {
+		$self->_eat( qr/BINDINGS/i );
+		
+		my @vars;
+		$self->__consume_ws_opt;
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+		while ($self->_test(qr/[\$?]/)) {
+			$self->_Var;
+			push( @vars, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+		}
+		
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		while ($self->_Binding_test) {
+			$self->_Binding;
+			$self->__consume_ws_opt;
+		}
+		$self->_eat('}');
+		
+		$self->{build}{bindings}{vars}	= \@vars;
+		$self->__consume_ws_opt;
 	}
+	
 	$self->__solution_modifiers( $star );
 	
 	delete $self->{build}{options};
@@ -719,6 +738,31 @@ sub _WhereClause {
 	
 	my $ggp	= $self->_peek_pattern;
 	$ggp->check_duplicate_blanks;
+}
+
+sub _Binding_test {
+	my $self	= shift;
+	return $self->_test( '(' );
+}
+
+sub _Binding {
+	my $self	= shift;
+	$self->_eat( '(' );
+	$self->__consume_ws_opt;
+	
+	my @terms;
+	$self->__consume_ws_opt;
+	$self->_VarOrTerm;
+	push( @terms, splice(@{ $self->{stack} }));
+	$self->__consume_ws_opt;
+	while ($self->_VarOrTerm_test) {
+		$self->_VarOrTerm;
+		push( @terms, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	push( @{ $self->{build}{bindings}{terms} }, \@terms );
+	$self->__consume_ws_opt;
+	$self->_eat( ')' );
 }
 
 sub __GroupByVar_test {
@@ -1138,12 +1182,14 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
+	return $self->_test(qr/SERVICE|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_ExistsGraphPattern_test) {
+	if ($self->_test(qr/SERVICE/i)) {
+		$self->_ServiceGraphPattern;
+	} elsif ($self->_ExistsGraphPattern_test) {
 		$self->_ExistsGraphPattern;
 	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
@@ -1152,6 +1198,23 @@ sub _GraphPatternNotTriples {
 	} else {
 		$self->_GraphGraphPattern;
 	}
+}
+
+sub _ServiceGraphPattern {
+	my $self	= shift;
+	$self->_eat( qr/SERVICE/i );
+	$self->__consume_ws_opt;
+	$self->_IRIref;
+	my ($iri)	= splice( @{ $self->{stack} } );
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my $pattern	= RDF::Query::Algebra::Service->new( $iri, $ggp );
+	$self->_add_patterns( $pattern );
+	
+	my $opt		= ['RDF::Query::Algebra::Service', $iri, $ggp];
+	$self->_add_stack( $opt );
 }
 
 # ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
@@ -2132,9 +2195,28 @@ sub __solution_modifiers {
 	}
 	
 	my $vars	= [ @{ $self->{build}{variables} } ];
-	my $pattern	= pop(@{ $self->{build}{triples} });
-	my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
-	push(@{ $self->{build}{triples} }, $proj);
+	
+	{
+		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
+		if (scalar(@vars)) {
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+			push(@{ $self->{build}{triples} }, $proj);
+		}
+	}
+	
+	if ($self->{build}{options}{orderby}) {
+		my $order	= delete $self->{build}{options}{orderby};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+
+	{
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
 	
 	if ($self->{build}{options}{distinct}) {
 		delete $self->{build}{options}{distinct};

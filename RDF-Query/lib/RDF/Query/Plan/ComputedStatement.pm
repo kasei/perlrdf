@@ -122,7 +122,7 @@ sub execute ($) {
 	unless (scalar(@$csg)) {
 		throw RDF::Query::Error::ExecutionError -text => "No computed statement generator found for predicate " . $nodes[1]->uri_value;
 	}
-	my $iter	= $csg->[0]->( $query, $query->model, $bound, @nodes );
+	my $iter	= $csg->[0]->( $query, $bound, @nodes );
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;

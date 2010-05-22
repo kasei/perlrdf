@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.201, released 30 January 2010.
+This document describes RDF::Query version 2.202, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 no warnings 'numeric';
-use RDF::Trine 0.114;
+use RDF::Trine 0.123;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -126,7 +126,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.201';
+	$VERSION		= '2.202';
 	$DEFAULT_PARSER	= 'sparql';
 }
 
@@ -876,7 +876,7 @@ sub var_or_expr_value {
 	} elsif ($v->isa('RDF::Query::Node')) {
 		return $v;
 	} else {
-		warn Dumper($v, $bound);
+		Carp::cluck "not an expression or node value in var_or_expr_value: " . Dumper($v, $bound);
 		throw RDF::Query::Error -text => 'Not an expression or node value';
 	}
 }

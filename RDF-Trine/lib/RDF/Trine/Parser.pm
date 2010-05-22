@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Parser - RDF Parser class.
+RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.121
+This document describes RDF::Trine::Parser version 0.123
 
 =head1 SYNOPSIS
 
@@ -40,12 +40,14 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use Data::Dumper;
+use Encode qw(decode);
 
 our ($VERSION);
 our %parser_names;
 our %media_types;
+our %encodings;
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.123';
 }
 
 use Scalar::Util qw(blessed);
@@ -119,10 +121,14 @@ sub parse_url_into_model {
 	$type		=~ s/^([^\s;]+).*/$1/;
 	my $pclass	= $media_types{ $type };
 	if ($pclass and $pclass->can('new')) {
+		my $data	= $content;
+		if (my $e = $encodings{ $pclass }) {
+			$data	= decode( $e, $content );
+		}
 		my $parser	= $pclass->new();
 		my $ok		= 0;
 		try {
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $url, $data, $model, %args );
 			$ok	= 1;
 		} catch RDF::Trine::Error::ParserError with {} otherwise {};
 		return 1 if ($ok);
@@ -137,7 +143,8 @@ sub parse_url_into_model {
 		return 1;
 	} elsif ($url =~ /[.]ttl/) {
 		my $parser	= RDF::Trine::Parser::Turtle->new();
-		$parser->parse_into_model( $url, $content, $model, %args );
+		my $data	= decode('utf8', $content);
+		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]nt/) {
 		my $parser	= RDF::Trine::Parser::NTriples->new();
@@ -150,11 +157,14 @@ sub parse_url_into_model {
 	} else {
 		my @types	= keys %{ { map { $_ => 1 } values %media_types } };
 		foreach my $pclass (@types) {
-			warn $pclass;
+			my $data	= $content;
+			if (my $e = $encodings{ $pclass }) {
+				$data	= decode( $e, $content );
+			}
 			my $parser	= $pclass->new();
 			my $ok		= 0;
 			try {
-				$parser->parse_into_model( $url, $content, $model, %args );
+				$parser->parse_into_model( $url, $data, $model, %args );
 				$ok	= 1;
 			} catch RDF::Trine::Error::ParserError with {};
 			return 1 if ($ok);

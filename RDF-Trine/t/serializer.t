@@ -1,4 +1,4 @@
-use Test::More tests => 22;
+use Test::More tests => 28;
 use Test::Exception;
 
 use strict;
@@ -22,9 +22,20 @@ my %name_expect	= (
 	'turtle'	=> 'RDF::Trine::Serializer::Turtle',
 );
 
+my %type_expect	= (
+	'nquads'	=> [],
+	'ntriples'	=> [qw(text/plain)],
+	'ntriples-canonical'	=> [],
+	'rdfjson'	=> [qw(application/json application/x-rdf+json)],
+	'rdfxml'	=> [qw(application/rdf+xml)],
+	'turtle'	=> [qw(application/turtle application/x-turtle text/turtle)],
+);
+
 while (my($k,$v) = each(%name_expect)) {
 	my $p	= RDF::Trine::Serializer->new( $k );
 	isa_ok( $p, $v );
+	my @types	= $p->media_types;
+	is_deeply( \@types, $type_expect{ $k }, "expected media types for $k" );
 }
 
 

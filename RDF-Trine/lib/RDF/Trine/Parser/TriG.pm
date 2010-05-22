@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::TriG - TriG RDF Parser.
+RDF::Trine::Parser::TriG - TriG RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::TriG version 0.115
+This document describes RDF::Trine::Parser::TriG version 0.123
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '0.121';
+	$VERSION				= '0.123';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
 # 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 # 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

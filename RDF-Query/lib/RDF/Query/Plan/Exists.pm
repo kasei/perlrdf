@@ -7,7 +7,7 @@ RDF::Query::Plan::Exists - Executable query plan for EXISTS blocks.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Exists version 2.201, released 30 January 2010.
+This document describes RDF::Query::Plan::Exists version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -56,7 +56,7 @@ sub execute ($) {
 	}
 	my $plan	= $self->pattern;
 	$plan->execute( $context );
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.not");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.exists");
 	
 	if ($plan->state == $self->OPEN) {
 		$self->[0]{context}			= $context;
@@ -77,7 +77,7 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open EXISTS";
 	}
 	my $plan	= $self->pattern;
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.not");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.exists");
 	my $context	= $self->[0]{context};
 	
 	my $not		= $self->not_flag;

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Exists - Algebra class for EXISTS and NOT EXISTS patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Exists version 2.201, released 30 January 2010.
+This document describes RDF::Query::Algebra::Exists version 2.202, released 30 January 2010.
 
 =cut
 
@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -107,13 +107,13 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	my $tag		= ($self->not_flag) ? 'not-exists' : 'exists';
 	return sprintf(
 		"(${tag}\n${prefix}${indent}%s\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
-		$self->not_pattern->sse( $context, "${prefix}${indent}" )
+		$self->exists_pattern->sse( $context, "${prefix}${indent}" )
 	);
 }
 
@@ -131,7 +131,7 @@ sub as_sparql {
 	my $string	= sprintf(
 		"%s\n${indent}${tag} %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->not_pattern->as_sparql( $context, $indent ),
+		$self->exists_pattern->as_sparql( $context, $indent ),
 	);
 	return $string;
 }
@@ -166,7 +166,7 @@ bind values during execution.
 
 sub binding_variables {
 	my $self	= shift;
-	return;
+	return RDF::Query::_uniq(map { $_->binding_variables } $self->pattern);
 }
 
 =item C<< definite_variables >>

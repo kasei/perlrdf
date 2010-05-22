@@ -7,7 +7,7 @@ RDF::Query::Expression::Alias - Class for aliasing expressions with variable nam
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Alias version 2.201, released 30 January 2010.
+This document describes RDF::Query::Expression::Alias version 2.202, released 30 January 2010.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -56,7 +56,8 @@ Returns the variable object of the aliased expression.
 
 sub alias {
 	my $self	= shift;
-	return $self->op;
+	my ($alias)	= $self->operands;
+	return $alias;
 }
 
 =item C<< expression >>
@@ -67,7 +68,7 @@ Returns the expression object of the aliased expression.
 
 sub expression {
 	my $self	= shift;
-	return ($self->operands)[0];
+	return ($self->operands)[1];
 }
 
 =item C<< sse >>
@@ -81,9 +82,9 @@ sub sse {
 	my $context	= shift;
 	
 	return sprintf(
-		'(alias %s %s)',
-		$self->op,
-		map { $_->sse( $context ) } $self->operands,
+		'(alias ?%s %s)',
+		$self->name,
+		$self->expression->sse( $context ),
 	);
 }
 

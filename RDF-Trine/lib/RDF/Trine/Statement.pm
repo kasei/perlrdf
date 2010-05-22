@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Statement - Algebra class for Triple patterns
+RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.121
+This document describes RDF::Trine::Statement version 0.123
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.121';
+	$VERSION	= '0.123';
 }
 
 ######################################################################
