@@ -7,7 +7,7 @@ RDF::Query::Logger - Base class for logging objects
 
 =head1 VERSION
 
-This document describes RDF::Query::Logger version 2.202_02, released 30 January 2010.
+This document describes RDF::Query::Logger version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::Logger;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_02';
+	$VERSION	= '2.202';
 }
 
 use strict;

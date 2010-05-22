@@ -7,7 +7,7 @@ RDF::Query::Plan::Exists - Executable query plan for EXISTS blocks.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Exists version 2.202_02, released 30 January 2010.
+This document describes RDF::Query::Plan::Exists version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202_02';
+	$VERSION	= '2.202';
 }
 
 ######################################################################

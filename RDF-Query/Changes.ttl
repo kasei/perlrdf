@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.202" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-05-22" ;
                         ];
         asc:changes     [
                         asc:addition      "Added initial SPARQL 1.1 syntax and eval support for select expressions, subqueries, negation, aggregates, subqueries, and basic federation." ;
