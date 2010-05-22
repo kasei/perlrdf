@@ -335,18 +335,25 @@ sub generate_plans {
 	my $algebra	= shift;
 	my $context	= shift;
 	my %args	= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.plan");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	unless (blessed($algebra) and $algebra->isa('RDF::Query::Algebra')) {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
 	}
 	
-	$l->trace("generating query plan for $algebra");
+	$l->trace("generating query plan for " . $algebra->sse);
+	
+# 	if ($algebra->isa('RDF::Query::Algebra::Aggregate')) {
+# #		warn Dumper($algebra);
+# 		my @ops		= $algebra->ops;
+# 		my @having	= $algebra->having;
+# 		my @group	= $algebra->groupby;
+# 		warn Dumper(\@ops, \@having, \@group);
+# 		if (scalar(@ops) == 1 and $ops[0][0] eq 'COUNT(*)') {
+# 		}
+# 	}
+	
 	my ($project);
 	my $constant	= $args{ constants };
-# 	unless ($algebra->isa('RDF::Query::Algebra::Project') or not ($algebra->is_solution_modifier)) {
-# 		# we're below all the solution modifiers, so now's the time to add any constant data
-# 		$constant	= delete $args{ constants };
-# 	}
 	
 	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
 		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away
