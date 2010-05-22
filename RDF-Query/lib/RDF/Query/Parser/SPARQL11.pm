@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL11 version 2.202, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -2197,9 +2197,12 @@ sub __solution_modifiers {
 	my $vars	= [ @{ $self->{build}{variables} } ];
 	
 	{
-		my $pattern	= pop(@{ $self->{build}{triples} });
-		my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
-		push(@{ $self->{build}{triples} }, $proj);
+		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
+		if (scalar(@vars)) {
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+			push(@{ $self->{build}{triples} }, $proj);
+		}
 	}
 	
 	if ($self->{build}{options}{orderby}) {

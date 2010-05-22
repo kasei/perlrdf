@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQLP - Extended SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQLP version 2.201, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQLP version 2.202, released 30 January 2010.
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ our $r_AGGREGATE_CALL	= qr/MIN|MAX|COUNT|AVG/i;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.201';
+	$VERSION	= '2.202';
 }
 
 ######################################################################
@@ -57,7 +57,51 @@ sub __solution_modifiers {
 		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, %{ $aggdata } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
-	$self->SUPER::__solution_modifiers( @_ );
+#	$self->SUPER::__solution_modifiers( @_ );
+	my $vars	= [ @{ $self->{build}{variables} } ];
+	
+	{
+		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
+		if (scalar(@vars)) {
+			my $pattern	= pop(@{ $self->{build}{triples} });
+			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
+			push(@{ $self->{build}{triples} }, $proj);
+		}
+	}
+	
+	if ($self->{build}{options}{orderby}) {
+		my $order	= delete $self->{build}{options}{orderby};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+
+	{
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $proj	= RDF::Query::Algebra::Project->new( $pattern, $vars );
+		push(@{ $self->{build}{triples} }, $proj);
+	}
+	
+	if ($self->{build}{options}{distinct}) {
+		delete $self->{build}{options}{distinct};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $sort	= RDF::Query::Algebra::Distinct->new( $pattern );
+		push(@{ $self->{build}{triples} }, $sort);
+	}
+	
+	if (exists $self->{build}{options}{offset}) {
+		my $offset		= delete $self->{build}{options}{offset};
+		my $pattern		= pop(@{ $self->{build}{triples} });
+		my $offseted	= RDF::Query::Algebra::Offset->new( $pattern, $offset );
+		push(@{ $self->{build}{triples} }, $offseted);
+	}
+	
+	if (exists $self->{build}{options}{limit}) {
+		my $limit	= delete $self->{build}{options}{limit};
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $limited	= RDF::Query::Algebra::Limit->new( $pattern, $limit );
+		push(@{ $self->{build}{triples} }, $limited);
+	}
 }
 
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
