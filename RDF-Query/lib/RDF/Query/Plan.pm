@@ -343,15 +343,27 @@ sub generate_plans {
 	
 	$l->trace("generating query plan for " . $algebra->sse({ indent => '  ' }, ''));
 	
-# 	if ($algebra->isa('RDF::Query::Algebra::Aggregate')) {
-# #		warn Dumper($algebra);
-# 		my @ops		= $algebra->ops;
-# 		my @having	= $algebra->having;
-# 		my @group	= $algebra->groupby;
-# 		warn Dumper(\@ops, \@having, \@group);
-# 		if (scalar(@ops) == 1 and $ops[0][0] eq 'COUNT(*)') {
-# 		}
-# 	}
+	### Optimize simple COUNT(*) aggregates over BGPs
+	if ($algebra->isa('RDF::Query::Algebra::Extend')) {
+		my $agg	= $algebra->pattern;
+		if ($agg->isa('RDF::Query::Algebra::Aggregate')) {
+			my @ops		= $agg->ops;
+			my @having	= $agg->having;
+			my @group	= $agg->groupby;
+			if (scalar(@having) == 0 and scalar(@group) == 0) {
+				if (scalar(@ops) == 1 and $ops[0][0] eq 'COUNT(*)') {
+					my $ggp	= $agg->pattern;
+					if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+						my @bgp	= $ggp->patterns;
+						if (scalar(@bgp) == 1 and ($bgp[0]->isa('RDF::Query::Algebra::BasicGraphPattern'))) {
+							my $bgp	= $bgp[0];
+							$l->debug("TODO: Potential optimization for COUNT(*) on BGP: " . $bgp->sse({ indent => '  ' }, ''));
+						}
+					}
+				}
+			}
+		}
+	}
 	
 	my ($project);
 	my $constant	= $args{ constants };
