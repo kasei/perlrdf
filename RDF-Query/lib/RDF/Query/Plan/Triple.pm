@@ -49,7 +49,7 @@ sub new {
 	$self->[0]{logging_keys}	= $keys;
 	
 	### the next two loops look for repeated variables because some backends
-	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
+	### can't distinguish a pattern like { ?a ?a ?b }
 	### from { ?a ?b ?c }. if we find repeated variables (there can be at most
 	### one since there are only three nodes in a triple), we save the positions
 	### in the triple that hold the variable, and the code in next() will filter

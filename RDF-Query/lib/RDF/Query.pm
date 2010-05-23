@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine, RDF::Redland, and RDF::Core.
+RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.
 
 =head1 VERSION
 
@@ -798,6 +798,10 @@ sub get_model {
 	} elsif ($store->isa('RDF::Redland::Model')) {
 		my $s	= RDF::Trine::Store->new_with_object( $store );
 		$model	= RDF::Trine::Model->new( $s );
+		unless (blessed($model)) {
+			Carp::cluck "Failed to construct an RDF::Trine model from $store";
+			return;
+		}
 	} elsif ($store->isa('RDF::Core::Model')) {
 		die "RDF::Core is no longer supported";
 	} else {

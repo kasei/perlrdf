@@ -15,7 +15,7 @@ my @models	= test_models( @files );
 
 use Test::More;
 
-plan tests => 1 + (57 * scalar(@models)) + 3;
+plan tests => 1 + (57 * scalar(@models));
 
 use_ok( 'RDF::Query' );
 use RDF::Query::Node qw(iri);
@@ -394,34 +394,4 @@ END
 		ok( exists( $row->{ person } ) );
 		is( $row->{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg' );
 	}
-}
-
-SKIP: {
-	eval "use RDF::Core; use RDF::Core::Storage::Memory; use RDF::Core::Model;";
-	skip "RDF::Core not installed", 3 if $@;
-	
-	my $storage	= new RDF::Core::Storage::Memory;
-	my $model	= new RDF::Core::Model (Storage => $storage);
-	
-	my $query1	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
-		SELECT ?page
-		WHERE
-			(?person foaf:name "Gregory Todd Williams")
-			(?person foaf:homepage ?page)
-		USING
-			foaf FOR <http://xmlns.com/foaf/0.1/>
-END
-
-	my $query2	= new RDF::Query ( <<"END", undef, undef, 'rdql' );
-		SELECT ?page
-		WHERE
-			(?person foaf:name "Gregory Todd Williams")
-			(?person foaf:homepage ?page)
-		USING
-			foaf FOR <http://xmlns.com/foaf/0.1/>
-END
-	
-	is( refaddr($query1->{parser}{parser}), refaddr($query2->{parser}{parser}), 'cached rdql parser' );
-	throws_ok { $query1->{parser}->autoload_me_please(1,2,3) } 'RDF::Query::Error::MethodError', 'bad object autoload';
-	throws_ok { RDF::Query::Parser::RDQL->autoload_me_please(1,2,3) } 'RDF::Query::Error::MethodInvocationError', 'bad class autoload';
 }
