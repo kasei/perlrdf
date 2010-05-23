@@ -40,7 +40,7 @@ BEGIN {
 
 =item C<new ( $pattern, \@groupby, $alias => [$op => $col] )>
 
-=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op => $col] ], having => \@constraint )>
+=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op => $col] ] )>
 
 Returns a new Aggregate structure. Groups by the named bindings in C<< @groupby >>,
 and returns new bindings for the named C<< $alias >> for the operation C<< $op >>
@@ -54,16 +54,15 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $groupby	= shift;
-	my (@ops, @having);
+	my (@ops);
 	if (scalar(@_) and ref($_[0]) and reftype($_[0]) eq 'HASH') {
 		my $hash	= shift;
 		@ops		= @{ $hash->{ 'expressions' } || [] };
-		@having		= @{ $hash->{ 'having' } || [] };
 	} else {
 		@ops		= @_;
 	}
 	
-	return bless( [ $pattern, $groupby, \@ops, \@having ] );
+	return bless( [ $pattern, $groupby, \@ops ] );
 }
 
 =item C<< construct_args >>
@@ -76,12 +75,7 @@ will produce a clone of this algebra pattern.
 sub construct_args {
 	my $self	= shift;
 	my @ops		= @{ $self->[2] };
-	my %args	= ( expressions => \@ops );
-	my @having	= $self->having;
-	if (scalar(@having)) {
-		$args{ having }	= \@having;
-	}
-	return ($self->pattern, [ $self->groupby ], \%args);
+	return ($self->pattern, [ $self->groupby ], { expressions => \@ops });
 }
 
 =item C<< pattern >>
@@ -104,17 +98,6 @@ Returns the aggregate's GROUP BY binding names.
 sub groupby {
 	my $self	= shift;
 	return @{ $self->[1] };
-}
-
-=item C<< having >>
-
-Returns the aggregate's HAVING clause.
-
-=cut
-
-sub having {
-	my $self	= shift;
-	return @{ $self->[3] };
 }
 
 =item C<< ops >>

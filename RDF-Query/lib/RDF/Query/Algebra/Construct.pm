@@ -106,7 +106,6 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
 	
-	die;
 	return sprintf(
 		'(construct\n${prefix}${indent}%s)',
 		$self->pattern->sse( $context, "${prefix}${indent}" ),

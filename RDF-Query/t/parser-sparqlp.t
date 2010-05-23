@@ -5554,11 +5554,11 @@ __END__
           -
             - COUNT
             - '*'
-        - []
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - COUNT(*)
-  variables: *1
+  variables:
+    - *1
 ---
 - 'aggregates: select count ?o'
 - |
@@ -5588,11 +5588,11 @@ __END__
             - COUNT
             - !!perl/array:RDF::Query::Node::Variable
               - o
-        - []
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - COUNT(?o)
-  variables: *1
+  variables:
+    - *1
 ---
 - 'aggregates: select count distinct ?o'
 - |
@@ -5622,11 +5622,11 @@ __END__
             - COUNT-DISTINCT
             - !!perl/array:RDF::Query::Node::Variable
               - o
-        - []
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - COUNT(DISTINCT ?o)
-  variables: *1
+  variables:
+    - *1
 ---
 - 'aggregates: select count distinct ?o + 1'
 - |
@@ -5662,11 +5662,11 @@ __END__
                 - 1
                 - ~
                 - http://www.w3.org/2001/XMLSchema#integer
-        - []
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - COUNT(DISTINCT (?o + 1))
-  variables: *1
+  variables:
+    - *1
 ---
 - 'aggregates: select count ?o with alias'
 - |
@@ -5697,7 +5697,6 @@ __END__
               - COUNT
               - !!perl/array:RDF::Query::Node::Variable
                 - o
-          - []
         -
           - &1 !!perl/array:RDF::Query::Expression::Alias
             - alias
@@ -5769,7 +5768,6 @@ __END__
               - COUNT-DISTINCT
               - !!perl/array:RDF::Query::Node::Variable
                 - nick
-          - []
         -
           - &2 !!perl/array:RDF::Query::Expression::Alias
             - alias

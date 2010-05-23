@@ -33,7 +33,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, $attribute ], ... ], having => \@constraings ) >>
+=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, $attribute ], ... ] ) >>
 
 =cut
 
@@ -43,8 +43,7 @@ sub new {
 	my $groupby	= shift;
 	my %args	= @_;
 	my @ops		= @{ $args{ 'expressions' } || [] };
-	my @having	= @{ $args{ 'having' } || [] };
-	my $self	= $class->SUPER::new( $plan, $groupby, \@ops, \@having );
+	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
 	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
 	return $self;
 }
@@ -71,7 +70,6 @@ sub execute ($) {
 		my %groups;
 		my %group_data;
 		my @groupby	= $self->groupby;
-		my @having	= $self->having;
 		my @ops		= @{ $self->[3] };
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		
@@ -90,7 +88,6 @@ sub execute ($) {
 		my @rows;
 		GROUP: foreach my $group (keys %{ $group_data{ 'rows' } }) {
 			$l->debug( "group: $group" );
-			my %having;
 			my %aggregates;
 			my %passthrough_data;
 			my @group	= @{ $group_data{ 'groups' }{ $group } };
@@ -302,17 +299,6 @@ sub execute ($) {
 			
 			my $vars	= RDF::Query::VariableBindings->new( \%row );
 			$l->debug("aggregate row: $vars");
-			
-			foreach my $h (@having) {
-				$l->debug( "- evaluating aggregate row against HAVING clause: " . $h->sse );
-				my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $h );
-				my $bool	= $alg->evaluate( $query, $bridge, $vars );
-				if ($bool->literal_value eq 'false') {
-					$l->debug("aggregate failed having clause " . $h->sse);
-					next GROUP;
-				}
-			}
-			
 			push(@rows, $vars);
 		}
 		
@@ -372,17 +358,6 @@ sub groupby {
 	return @{ $self->[2] || [] };
 }
 
-=item C<< having >>
-
-Returns the aggregate's HAVING clause.
-
-=cut
-
-sub having {
-	my $self	= shift;
-	return @{ $self->[4] || [] };
-}
-
 =item C<< plan_node_name >>
 
 Returns the string name of this plan node, suitable for use in serialization.
@@ -403,7 +378,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(P \E \E *\ssW);
+	return qw(P \E *\ssW);
 }
 
 =item C<< plan_node_data >>
@@ -416,9 +391,8 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	my @group	= $self->groupby;
-	my @having	= $self->having;
 	my @ops		= @{ $self->[3] };
-	return ($self->pattern, \@group, \@having, map { [@$_] } @ops);
+	return ($self->pattern, \@group, map { [@$_] } @ops);
 }
 
 =item C<< distinct >>

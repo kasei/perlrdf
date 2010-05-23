@@ -341,7 +341,29 @@ sub generate_plans {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan with a non-algebra object $algebra");
 	}
 	
-	$l->trace("generating query plan for $algebra");
+	$l->trace("generating query plan for " . $algebra->sse({ indent => '  ' }, ''));
+	
+	### Optimize simple COUNT(*) aggregates over BGPs
+	if ($algebra->isa('RDF::Query::Algebra::Extend')) {
+		my $agg	= $algebra->pattern;
+		if ($agg->isa('RDF::Query::Algebra::Aggregate')) {
+			my @ops		= $agg->ops;
+			my @group	= $agg->groupby;
+			if (scalar(@group) == 0) {
+				if (scalar(@ops) == 1 and $ops[0][0] eq 'COUNT(*)') {
+					my $ggp	= $agg->pattern;
+					if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+						my @bgp	= $ggp->patterns;
+						if (scalar(@bgp) == 1 and ($bgp[0]->isa('RDF::Query::Algebra::BasicGraphPattern'))) {
+							my $bgp	= $bgp[0];
+							$l->debug("TODO: Potential optimization for COUNT(*) on BGP: " . $bgp->sse({ indent => '  ' }, ''));
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	my ($project);
 	my $constant	= $args{ constants };
 # 	unless ($algebra->isa('RDF::Query::Algebra::Project') or not ($algebra->is_solution_modifier)) {
@@ -372,8 +394,7 @@ sub generate_plans {
 			my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 			my @groups	= $algebra->groupby;
 			my @ops		= $algebra->ops;
-			my @having	= $algebra->having;
-			my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, expressions => \@ops, having => \@having ) } @base;
+			my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, expressions => \@ops ) } @base;
 			push(@return_plans, @plans);
 		} elsif ($type eq 'Construct') {
 			my $triples	= $algebra->triples;

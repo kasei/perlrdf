@@ -829,13 +829,9 @@ sub _HavingClause {
 	$self->_eat(qr/HAVING/i);
 	$self->__consume_ws_opt;
 	local($self->{__aggregate_call_ok})	= 1;
-	my @exprs;
-	while ($self->_Constraint_test) {
-		$self->_Constraint;
-		my ($expr)	= splice(@{ $self->{stack} });
-		push(@exprs, $expr);
-	}
-	$self->{build}{__having}	= \@exprs;
+	$self->_Constraint;
+	my ($expr) = splice(@{ $self->{stack} });
+	$self->{build}{__having}	= $expr;
 }
 
 # [15] LimitOffsetClauses ::= ( LimitClause OffsetClause? | OffsetClause LimitClause? )
@@ -2179,18 +2175,17 @@ sub __solution_modifiers {
 	my $self	= shift;
 	my $star	= shift;
 	
+	my $having_expr;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
 	if ($aggdata) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
-		my %constructor_args;
-		$constructor_args{ 'expressions' }	= [ %$aggdata ];
 		if (my $having = delete( $self->{build}{__having} )) {
-			$constructor_args{ 'having' }	= $having;
+			$having_expr	= $having;
 		}
-	
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, \%constructor_args );
+		
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$aggdata] } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	
@@ -2203,6 +2198,12 @@ sub __solution_modifiers {
 			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
 			push(@{ $self->{build}{triples} }, $proj);
 		}
+	}
+	
+	if ($having_expr) {
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $filter	= RDF::Query::Algebra::Filter->new( $having_expr, $pattern );
+		push(@{ $self->{build}{triples} }, $filter);
 	}
 	
 	if ($self->{build}{options}{orderby}) {
