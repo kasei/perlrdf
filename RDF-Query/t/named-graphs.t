@@ -123,7 +123,10 @@ END
 					GRAPH ?src { ?x foaf:name "Alice"; foaf:mbox ?mbox } .
 				}
 END
-			my ($src, $mbox)	= $query->get( $model );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			my $src		= $row->{src};
+			my $mbox	= $row->{mbox};
 			ok( $src, 'got source' );
 			ok( $mbox, 'got mbox' );
 			is( $src->uri_value, $alice, 'graph uri' );

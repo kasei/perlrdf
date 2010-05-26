@@ -29,7 +29,7 @@ foreach my $model (@models) {
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$n)	= @{ $row }{qw(person nick)};
 		ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
@@ -47,15 +47,14 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		while ($stream and not $stream->finished) {
-			my $row		= $stream->current;
+		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n)	= @{ $row }{qw(person nick)};
 			ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
 			ok( $n->isa('RDF::Trine::Node::Literal'), 'isa_literal(nick)' );
 			like( ($n and $n->as_string), qr/kasei|The Samo Fool/, ($n and $n->as_string) );
 			last;
-		} continue { $stream->next }
+		}
 	}
 	
 	{
@@ -84,6 +83,7 @@ END
 	}
 	
 	{
+		print "# 1-triple optional\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
@@ -97,7 +97,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$h)	= @{ $row }{qw(person h)};
 		ok( $p->isa('RDF::Trine::Node'), 'isa_node(person)' );
@@ -105,6 +105,7 @@ END
 	}
 	
 	{
+		print "# 2-triple optional\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
@@ -119,7 +120,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$h,$t)	= @{ $row }{qw(person h title)};
 		ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
@@ -139,7 +140,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		ok( not($row), 'no results: successful BOUND() filter' );
 	}
 	
@@ -157,12 +158,12 @@ END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
-		while ($stream and not $stream->finished) {
-			my $row		= $stream->current;
+		while (my $row = $stream->next) {
 			my $school	= $row->{school};
 			my $str		= $school->as_string;
 			like( $str, qr<(smmusd|wheatonma)>, "exected school: $str" );
-		} continue { $stream->next; $count++ }
+			$count++;
+		}
 		is( $count, 2, 'expected result count' );
 	}
 	

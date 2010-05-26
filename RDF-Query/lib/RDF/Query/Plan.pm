@@ -434,13 +434,20 @@ sub generate_plans {
 		my $expr	= $algebra->expr;
 		my @plans	= map { RDF::Query::Plan::Filter->new( $expr, $_ ) } @base;
 		push(@return_plans, @plans);
-	} elsif ($type eq 'BasicGraphPattern' or $type eq 'GroupGraphPattern') {
-		my $query	= $context->query;
-		my $method	= ($type eq 'BasicGraphPattern') ? 'triples' : 'patterns';
-		my @triples	= $algebra->$method();
+	} elsif ($type eq 'BasicGraphPattern') {
+		my @triples	= map { $_->distinguish_bnode_variables } $algebra->triples;
+		my @normal_triples;
+		my @csg_triples;
+		foreach my $t (@triples) {
+			if (my @csg_plans = $self->_csg_plans( $context, $t )) {
+				push(@csg_triples, $t);
+			} else {
+				push(@normal_triples, $t);
+			}
+		}
 		
 		my @plans;
-		if (scalar(@triples) == 0) {
+		if (scalar(@normal_triples) == 0) {
 			if ($args{ named_graph }) {
 				my @nodes	= map { RDF::Query::Node::Variable->new($_) } qw(s p o);
 				push(@nodes, $args{ named_graph });
@@ -456,10 +463,61 @@ sub generate_plans {
 				my $plan	= RDF::Query::Plan::Constant->new( $v );
 				push(@plans, $plan);
 			}
-		} elsif (scalar(@triples) == 1) {
-			push(@plans, $self->generate_plans( @triples, $context, %args ));
+		} elsif (scalar(@normal_triples) == 1) {
+			push(@plans, $self->generate_plans( @normal_triples, $context, %args ));
 		} else {
-			push(@plans, map { $_->[0] } $self->_triple_join_plans( $context, \@triples, %args, method => $method ));
+			my $plan	= RDF::Query::Plan::BasicGraphPattern->new( @normal_triples );
+			push(@plans, $plan);
+		}
+		
+		if (@csg_triples) {
+			my @csg_plans;
+			foreach my $t (@csg_triples) {
+				push(@csg_plans, [ $self->generate_plans( $t, $context, %args ) ]);
+			}
+			my @join_types	= RDF::Query::Plan::Join->join_classes;
+			while (my $cps = shift(@csg_plans)) {
+				my @temp_plans	= @plans;
+				@plans			= ();
+				foreach my $p (@temp_plans) {
+					foreach my $cp (@$cps) {
+						foreach my $join_type (@join_types) {
+							my $plan	= $join_type->new( $p, $cp, 0, {} );
+							push(@plans, $plan);
+						}
+					}
+				}
+			}
+			push(@return_plans, @plans);
+		} else {
+			push(@return_plans, @plans);
+		}
+		
+	} elsif ($type eq 'GroupGraphPattern') {
+		my $query	= $context->query;
+		my @patterns	= $algebra->patterns();
+		
+		my @plans;
+		if (scalar(@patterns) == 0) {
+			if ($args{ named_graph }) {
+				my @nodes	= map { RDF::Query::Node::Variable->new($_) } qw(s p o);
+				push(@nodes, $args{ named_graph });
+				my $plan	= RDF::Query::Plan::Distinct->new( 
+								RDF::Query::Plan::Project->new(
+									RDF::Query::Plan::Quad->new( @nodes, { sparql => '{}' } ),
+									[ $args{ named_graph } ]
+								)
+							);
+				push(@plans, $plan);
+			} else {
+				my $v		= RDF::Query::VariableBindings->new( {} );
+				my $plan	= RDF::Query::Plan::Constant->new( $v );
+				push(@plans, $plan);
+			}
+		} elsif (scalar(@patterns) == 1) {
+			push(@plans, $self->generate_plans( @patterns, $context, %args ));
+		} else {
+			push(@plans, map { $_->[0] } $self->_triple_join_plans( $context, \@patterns, %args, method => 'patterns' ));
 		}
 		
 		push(@return_plans, @plans);
@@ -559,13 +617,8 @@ sub generate_plans {
 	} elsif ($type eq 'Triple' or $type eq 'Quad') {
 		my $st		= $algebra->distinguish_bnode_variables;
 		my $pred    = $st->predicate;
-		my $query    = $context->query;
-		if (blessed($query) and $pred->isa('RDF::Trine::Node::Resource') and scalar(@{ $query->get_computed_statement_generators( $st->predicate->uri_value ) })) {
-			my $csg    = $query->get_computed_statement_generators( $pred->uri_value );
-			my @nodes    = $st->nodes;
-			my $quad    = (scalar(@nodes) == 4) ? 1 : 0;
-			my $mp        = RDF::Query::Plan::ComputedStatement->new( @nodes[0..3], $quad );
-			push(@return_plans, $mp);
+		if (my @csg_plans = $self->_csg_plans( $context, $st )) {
+			push(@return_plans, @csg_plans);
 		} else {
 			my @nodes    = $st->nodes;
 			my $plan    = (scalar(@nodes) == 4)
@@ -591,6 +644,23 @@ sub generate_plans {
 		$p->label( algebra => $algebra );
 	}
 	
+	return @return_plans;
+}
+
+sub _csg_plans {
+	my $self	= shift;
+	my $context	= shift;
+	my $st		= shift;
+	my $pred	= $st->predicate;
+	my $query    = $context->query;
+	my @return_plans;
+	if (blessed($query) and $pred->isa('RDF::Trine::Node::Resource') and scalar(@{ $query->get_computed_statement_generators( $st->predicate->uri_value ) })) {
+		my $csg    = $query->get_computed_statement_generators( $pred->uri_value );
+		my @nodes    = $st->nodes;
+		my $quad    = (scalar(@nodes) == 4) ? 1 : 0;
+		my $mp        = RDF::Query::Plan::ComputedStatement->new( @nodes[0..3], $quad );
+		push(@return_plans, $mp);
+	}
 	return @return_plans;
 }
 

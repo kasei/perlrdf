@@ -115,9 +115,7 @@ END
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $bgp, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-		isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-		isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
+		isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
 	}
 	
 	{
@@ -165,8 +163,8 @@ END
 		my @plans	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		my ($plan)	= sort @plans;
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
-		isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bind-join (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)))', 'sse: filter' );
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bgp (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: filter' );
 	}
 	
 	############################################################################
