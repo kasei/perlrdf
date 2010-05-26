@@ -47,6 +47,7 @@ use RDF::Query::Plan::ComputedStatement;
 use RDF::Query::Plan::ThresholdUnion;
 use RDF::Query::Plan::Union;
 use RDF::Query::Plan::SubSelect;
+use RDF::Query::Plan::Iterator;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -343,27 +344,47 @@ sub generate_plans {
 	
 	$l->trace("generating query plan for " . $algebra->sse({ indent => '  ' }, ''));
 	
+	############################################################################
 	### Optimize simple COUNT(*) aggregates over BGPs
 	if ($algebra->isa('RDF::Query::Algebra::Extend')) {
 		my $agg	= $algebra->pattern;
 		if ($agg->isa('RDF::Query::Algebra::Aggregate')) {
-			my @ops		= $agg->ops;
 			my @having	= $agg->having;
 			my @group	= $agg->groupby;
 			if (scalar(@having) == 0 and scalar(@group) == 0) {
+				my @ops		= $agg->ops;
 				if (scalar(@ops) == 1 and $ops[0][0] eq 'COUNT(*)') {
 					my $ggp	= $agg->pattern;
 					if ($ggp->isa('RDF::Query::Algebra::GroupGraphPattern')) {
 						my @bgp	= $ggp->patterns;
 						if (scalar(@bgp) == 1 and ($bgp[0]->isa('RDF::Query::Algebra::BasicGraphPattern'))) {
 							my $bgp	= $bgp[0];
-							$l->debug("TODO: Potential optimization for COUNT(*) on BGP: " . $bgp->sse({ indent => '  ' }, ''));
+							my @triples	= $bgp->triples;
+							if (scalar(@triples) == 1) {
+								$l->debug("TODO: Potential optimization for COUNT(*) on 1-triple BGP: " . $bgp->sse({ indent => '  ' }, ''));
+								my $vars	= $algebra->vars;
+								my $alias	= $vars->[0];
+								my $name	= $alias->name;
+								my $done	= 0;
+								my $model	= $context->model;
+								my $code	= sub {
+									return if ($done);
+									$done	= 1;
+									my $count	= $model->count_statements( $triples[0]->nodes );
+									my $vb	= RDF::Query::VariableBindings->new( {
+										$name => RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer')
+									} );
+								};
+								my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
+								return RDF::Query::Plan::Iterator->new( $iter );
+							}
 						}
 					}
 				}
 			}
 		}
 	}
+	############################################################################
 	
 	my ($project);
 	my $constant	= $args{ constants };
