@@ -240,15 +240,19 @@ sub get_pattern {
 	}
 	
 	my $store	= $self->_store;
-	if ($store and $store->can('get_pattern')) {
+	# while almost all models will delegate get_pattern() to the underlying
+	# store object, in some cases this isn't possible (union models don't have
+	# a single store, so have to fall back to the model-specific get_pattern()
+	# implementation).
+	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
 		if (1 == scalar(@triples)) {
 			my $t		= shift(@triples);
 			my @nodes	= $t->nodes;
 			my %vars;
-			my @names	= qw(subject predicate object);
-			foreach my $n (0 .. 2) {
+			my @names	= qw(subject predicate object context);
+			foreach my $n (0 .. $#nodes) {
 				if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
 					$vars{ $names[ $n ] }	= $nodes[$n]->name;
 				}
@@ -291,7 +295,8 @@ sub get_pattern {
 					push(@results, $jrow);
 				}
 			}
-			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+			my $result	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+			return $result;
 		}
 	}
 }
