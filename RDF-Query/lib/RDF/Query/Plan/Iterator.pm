@@ -111,7 +111,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'iterator';
+	return 'optimized-iterator';
 }
 
 =item C<< plan_prototype >>
