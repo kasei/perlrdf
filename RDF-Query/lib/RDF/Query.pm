@@ -199,23 +199,6 @@ sub new {
 		return;
 	}
 	
-	if ($options{net_filters}) {
-		require JavaScript;
-		$self->{options}{net_filters}++;
-	}
-	if ($options{trusted_keys}) {
-		require Crypt::GPG;
-		$self->{options}{trusted_keys}	= $options{trusted_keys};
-	}
-	if ($options{gpg}) {
-		$self->{_gpg_obj}	= delete $options{gpg};
-	}
-	if (defined $options{keyring}) {
-		$self->{options}{keyring}	= $options{keyring};
-	}
-	if (defined $options{secretkey}) {
-		$self->{options}{secretkey}	= $options{secretkey};
-	}
 	if (defined $options{defines}) {
 		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ $options{defines} };
 	}
@@ -581,43 +564,6 @@ sub ask {
 
 ######################################################################
 
-=item C<< aggregate ( \@groupby, $alias => [ $op, $col ] ) >>
-
-=cut
-
-sub aggregate {
-	my $self	= shift;
-	my $groupby	= shift;
-	my %aggs	= @_;
-	my $pattern	= $self->pattern;
-	my $p		= $pattern;
-	if ($p->isa('RDF::Query::Algebra::Project')) {
-		$pattern	= $p	= $p->pattern;
-	}
-	if ($p->is_solution_modifier) {
-		while ($p->pattern->is_solution_modifier) {
-			if ($p->pattern->isa('RDF::Query::Algebra::Project')) {
-				$p->pattern( $p->pattern->pattern );
-			}
-			$p	= $p->pattern;
-		}
-	}
-	
-	my $head	= ($p->is_solution_modifier) ? 1 : 0;
-	my $child	= ($head) ? $p->pattern : $p;
-	my $agg		= RDF::Query::Algebra::Aggregate->new( $child, $groupby, %aggs );
-	
-	my $top;
-	if ($head) {
-		$p->pattern( $agg );
-		$top	= $pattern;
-	} else {
-		$top	= $agg;
-	}
-	$self->{parsed}{triples}	= [ $top ];
-	$self->{parsed}{'variables'}	= [ map { ref($_) ? $_ : RDF::Query::Node::Variable->new( $_ ) } (@$groupby, keys %aggs) ];
-}
-
 =item C<< pattern >>
 
 Returns the RDF::Query::Algebra::GroupGraphPattern algebra pattern for this query.
@@ -978,8 +924,6 @@ sub get_function {
 	
 	if ($func) {
 		return $func;
-	} elsif (ref($self) and $self->{options}{net_filters}) {
-		return $self->net_filter_function( $uri, %args );
 	}
 	return;
 }
@@ -1055,232 +999,6 @@ sub get_computed_statement_generators {
 	} else {
 		return $self->{'computed_statement_generators'} || {};
 	}
-}
-
-
-=item C<< net_filter_function ( $uri ) >>
-
-Takes a URI specifying the location of a javascript implementation.
-Returns a code reference implementing the javascript function.
-
-If the 'trusted_keys' option is set, a GPG signature at ${uri}.asc is
-retrieved and verified against the arrayref of trusted key fingerprints.
-A code reference is returned only if a trusted signature is found.
-
-=cut
-
-sub net_filter_function {
-	my $self	= shift;
-	my $uri		= shift;
-	my %args	= @_;
-	my $l		= Log::Log4perl->get_logger("rdf.query");
-	$l->debug("fetching $uri");
-	
-	my $model	= RDF::Trine::Model->temporary_model;
-	$model->add_uri( $uri );
-	
-	my $subj	= $model->new_resource( $uri );
-	
-	my $func	= do {
-		my $pred	= iri('http://www.mindswap.org/~gtw/sparql#function');
-		my $stream	= $model->get_statements( $subj, $pred, undef, $self, {} );
-		my $st		= $stream->();
-		my $obj		= $st->object;
-		my $func	= $obj->literal_value;
-	};
-	
-	my $impl	= do {
-		my $pred	= iri('http://www.mindswap.org/~gtw/sparql#source');
-		my $stream	= $model->get_statements( $subj, $pred, undef );
-		my $st		= $stream->next();
-		my $obj		= $st->object;
-		my $impl	= $obj->uri_value;
-	};
-	
-	my $resp	= $self->useragent->get( $impl );
-	unless ($resp->is_success) {
-		warn "No content available from $uri: " . $resp->status_line;
-		return;
-	}
-	my $content	= $resp->content;
-	
-	if ($self->{options}{trusted_keys}) {
-		my $gpg		= $self->{_gpg_obj} || new Crypt::GPG;
-		$gpg->gpgbin('/sw/bin/gpg');
-		$gpg->secretkey($self->{options}{secretkey} || $ENV{GPG_KEY} || '0xCAA8C82D');
-		my $keyring	= exists($self->{options}{keyring})
-					? $self->{options}{keyring}
-					: File::Spec->catfile($ENV{HOME}, '.gnupg', 'pubring.gpg');
-		$gpg->gpgopts("--lock-multiple --keyring " . $keyring);
-		
-		my $sigresp	= $self->useragent->get( "${impl}.asc" );
-#		if (not $sigresp) {
-#			throw RDF::Query::Error::ExecutionError -text => "Required signature not found: ${impl}.asc\n";
-		if ($sigresp->is_success) {
-			my $sig		= $sigresp->content;
-			my $ok	= $self->_is_trusted( $gpg, $content, $sig, $self->{options}{trusted_keys} );
-			unless ($ok) {
-				throw RDF::Query::Error::ExecutionError -text => "Not a trusted signature";
-			}
-		} else {
-			throw RDF::Query::Error::ExecutionError -text => "Could not retrieve required signature: ${uri}.asc";
-			return;
-		}
-	}
-
-	my ($rt, $cx)	= $self->new_javascript_engine(%args);
-	my $r		= $cx->eval( $content );
-	
-#	die "Requested function URL does not match the function's URI" unless ($meta->{uri} eq $url);
-	return sub {
-		my $query	= shift;
-		my $model	= shift;
-		$l->debug("Calling javascript function $func with: " . Dumper(\@_));
-		my $value	= $cx->call( $func, @_ );
-		$l->debug("--> $value");
-		return $value;
-	};
-}
-
-sub _is_trusted {
-	my $self	= shift;
-	my $gpg		= shift;
-	my $file	= shift;
-	my $sigfile	= shift;
-	my $trusted	= shift;
-	
-	my (undef, $sig)	= $gpg->verify($sigfile, $file);
-	
-	return 0 unless ($sig->validity eq 'GOOD');
-	
-	my $id		= $sig->keyid;
-	
-	my @keys	= $gpg->keydb($id);
-	foreach my $key (@keys) {
-		my $fp	= $key->{Fingerprint};
-		$fp		=~ s/ //g;
-		return 1 if (first { s/ //g; $_ eq $fp } @$trusted);
-	}
-	return 0;
-}
-
-
-
-=begin private
-
-=item C<new_javascript_engine ()>
-
-Returns a new JavaScript Runtime and Context object for running network FILTER
-functions.
-
-=end private
-
-=cut
-
-sub new_javascript_engine {
-	my $self	= shift;
-	my %args	= @_;
-	my $model	= $args{bridge};
-	my $l		= Log::Log4perl->get_logger("rdf.query");
-	
-	my $rt		= JavaScript::Runtime->new();
-	my $cx		= $rt->create_context();
-	my $meta	= $model->meta;
-	$cx->bind_function( 'warn' => sub { $l->debug(@_) } );
-	$cx->bind_function( '_warn' => sub { $l->debug(@_) } );
-	$cx->bind_function( 'makeTerm' => sub {
-		my $term	= shift;
-		my $lang	= shift;
-		my $dt		= shift;
-#		warn 'makeTerm: ' . Dumper($term);
-		if (not blessed($term)) {
-			my $node	= RDF::Query::Node->new_literal( $term, $lang, $dt );
-			return $node;
-		} else {
-			return $term;
-		}
-	} );
-	
-	my $toString	= sub {
-		my $string	= $_[0]->literal_value . '';
-		return $string;
-	};
-	
-	$cx->bind_class(
-		name		=> 'RDFNode',
-		constructor	=> sub {},
-		'package'	=> $meta->{node},
-		'methods'	=> {
-						is_literal	=> sub { return $_[0]->is_literal },
-						is_resource	=> sub { return $_[0]->is_resource },
-						is_blank	=> sub { return $_[0]->is_blank },
-						toString	=> $toString,
-					},
-		ps			=> {
-						literal_value			=> [sub { return $_[0]->literal_value }],
-						literal_datatype		=> [sub { return $_[0]->literal_datatype }],
-						literal_value_language	=> [sub { return $_[0]->literal_value_language }],
-						uri_value				=> [sub { return $_[0]->uri_value }],
-						blank_identifier		=> [sub { return $_[0]->blank_identifier }],
-					},
-	);
-
-	if ($meta->{literal} ne $meta->{node}) {
-		$cx->bind_class(
-			name		=> 'RDFLiteral',
-			constructor	=> sub {},
-			'package'	=> $model->meta->{literal},
-			'methods'	=> {
-							is_literal	=> sub { return 1 },
-							is_resource	=> sub { return 0 },
-							is_blank	=> sub { return 0 },
-							toString	=> $toString,
-						},
-			ps			=> {
-							literal_value			=> [sub { return $_[0]->literal_value }],
-							literal_datatype		=> [sub { return $_[0]->literal_datatype }],
-							literal_value_language	=> [sub { return $_[0]->literal_value_language }],
-						},
-		);
-#		$cx->eval( 'RDFLiteral.prototype.__proto__ = RDFNode.prototype;' );
-	}
-	if ($meta->{resource} ne $meta->{node}) {
-		$cx->bind_class(
-			name		=> 'RDFResource',
-			constructor	=> sub {},
-			'package'	=> $model->meta->{resource},
-			'methods'	=> {
-							is_literal	=> sub { return 0 },
-							is_resource	=> sub { return 1 },
-							is_blank	=> sub { return 0 },
-							toString	=> $toString,
-						},
-			ps			=> {
-							uri_value				=> [sub { return $_[0]->uri_value }],
-						},
-		);
-#		$cx->eval( 'RDFResource.prototype.__proto__ = RDFNode.prototype;' );
-	}
-	if ($meta->{blank} ne $meta->{node}) {
-		$cx->bind_class(
-			name		=> 'RDFBlank',
-			constructor	=> sub {},
-			'package'	=> $model->meta->{blank},
-			'methods'	=> {
-							is_literal	=> sub { return 0 },
-							is_resource	=> sub { return 0 },
-							is_blank	=> sub { return 1 },
-							toString	=> $toString,
-						},
-			ps			=> {
-							blank_identifier		=> [sub { return $_[0]->blank_identifier }],
-						},
-		);
-#		$cx->eval( 'RDFBlank.prototype.__proto__ = RDFNode.prototype;' );
-	}
-	
-	
-	return ($rt, $cx);
 }
 
 =item C<< add_hook_once ( $hook_uri, $function, $token ) >>
@@ -1553,27 +1271,27 @@ sub clear_error {
 }
 
 
-=begin private
-
-=item C<_debug_closure ( $code )>
-
-Debugging function to print out a deparsed (textual) version of a closure.
-	
-=end private
-
-=cut
-
-sub _debug_closure {
-	my $closure	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.query");
-	if ($l->is_trace) {
-		require B::Deparse;
-		my $deparse	= B::Deparse->new("-p", "-sC");
-		my $body	= $deparse->coderef2text($closure);
-		$l->trace("--- --- CLOSURE --- ---");
-		$l->logcluck($body);
-	}
-}
+# =begin private
+# 
+# =item C<_debug_closure ( $code )>
+# 
+# Debugging function to print out a deparsed (textual) version of a closure.
+# 	
+# =end private
+# 
+# =cut
+# 
+# sub _debug_closure {
+# 	my $closure	= shift;
+# 	my $l		= Log::Log4perl->get_logger("rdf.query");
+# 	if ($l->is_trace) {
+# 		require B::Deparse;
+# 		my $deparse	= B::Deparse->new("-p", "-sC");
+# 		my $body	= $deparse->coderef2text($closure);
+# 		$l->trace("--- --- CLOSURE --- ---");
+# 		$l->logcluck($body);
+# 	}
+# }
 
 
 1;
