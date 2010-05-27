@@ -24,7 +24,6 @@ REQUIREMENTS
 	The following additional modules are recommended for some functionality:
 
      * RDF::Redland
-     * JavaScript
      * Geo::Distance
 
 INSTALLATION
