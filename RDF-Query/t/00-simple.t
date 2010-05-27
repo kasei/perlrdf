@@ -36,8 +36,8 @@ END
 # 		use Data::Dumper;
 # 		warn Dumper(\@results);
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{'person'} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{'person'} ), 'http://kasei.us/about/foaf.xrdf#greg', 'got person uri' );
+		ok( $results[0]{'person'}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{'person'}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'got person uri' );
 	}
 	
 	{
@@ -56,8 +56,8 @@ END
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{person} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{person} ), 'http://kasei.us/about/foaf.xrdf#greg', 'got person uri' );
+		ok( $results[0]{person}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'got person uri' );
 	}
 	
 	{
@@ -81,8 +81,8 @@ END
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( ref($results[0]) && $query->bridge->isa_literal( $results[0]{title} ), 'Literal' );
-		is( ref($results[0]) && $query->bridge->literal_value( $results[0]{title} ), 'FOAF Description for Gregory Williams', 'got file title' );
+		ok( ref($results[0]) && $results[0]{title}->isa('RDF::Trine::Node::Literal'), 'Literal' );
+		is( ref($results[0]) && $results[0]{title}->literal_value, 'FOAF Description for Gregory Williams', 'got file title' );
 	}
 	
 	{
@@ -102,8 +102,8 @@ END
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'got homepage url' );
+		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{page}->uri_value, 'http://kasei.us/', 'got homepage url' );
 	}
 	
 	{
@@ -124,9 +124,9 @@ END
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 2, 'got two field' );
-		ok( $query->bridge->isa_literal( $results[0]{name} ), 'Literal' );
-		ok( $query->bridge->isa_resource( $results[0]{mbox} ), 'Resource' );
-		is( $query->bridge->literal_value( $results[0]{name} ), 'Gregory Todd Williams', 'got name' );
-		is( $query->bridge->uri_value( $results[0]{mbox} ), 'mailto:greg@evilfunhouse.com', 'got mbox uri' );
+		ok( $results[0]{name}->isa('RDF::Trine::Node::Literal'), 'Literal' );
+		ok( $results[0]{mbox}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{name}->literal_value, 'Gregory Todd Williams', 'got name' );
+		is( $results[0]{mbox}->uri_value, 'mailto:greg@evilfunhouse.com', 'got mbox uri' );
 	}
 }

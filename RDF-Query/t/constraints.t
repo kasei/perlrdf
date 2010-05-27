@@ -32,9 +32,8 @@ foreach my $model (@models) {
 			}
 END
 		my ($person, $homepage)	= $query->get( $model );
-		my $bridge	= $query->bridge;
-		ok( $bridge->isa_resource( $person ), 'Resource with regex match' );
-		is( $bridge->uri_value( $person ), 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
+		ok( $person->isa('RDF::Trine::Node::Resource'), 'Resource with regex match' );
+		is( $person->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'Person uri' );
 	}
 	
 	{
@@ -51,7 +50,6 @@ END
 			}
 END
 		my ($person, $homepage)	= $query->get( $model );
-		my $bridge	= $query->bridge;
 		is( $person, undef, 'no result with regex match' );
 	}
 	
@@ -70,8 +68,7 @@ END
 			}
 END
 		my ($point, $lat, $lon)	= $query->get( $model );
-		my $bridge	= $query->bridge;
-		ok( $bridge->isa_node( $point ), 'Point isa Node' );
+		ok( $point->isa('RDF::Trine::Node'), 'Point isa Node' );
 		cmp_ok( abs( $lat->numeric_value - 52.97277 ), '<', 0.001, 'latitude' );
 		cmp_ok( abs( $lon->literal_value + 9.430733 ), '<', 0.001, 'longitude' );
 	}
@@ -92,10 +89,9 @@ END
 END
 		warn RDF::Query->error unless ($query);
 		my ($point, $lat, $lon)	= $query->get( $model );
-		my $bridge	= $query->bridge;
-		ok( $bridge->isa_node( $point ), 'Point isa Node' );
-		cmp_ok( abs( $bridge->literal_value( $lat ) - 52.97277 ), '<', 0.001, 'latitude' );
-		cmp_ok( abs( $bridge->literal_value( $lon ) + 9.430733 ), '<', 0.001, 'longitude' );
+		ok( $point->isa('RDF::Trine::Node'), 'Point isa Node' );
+		cmp_ok( abs( $lat->literal_value - 52.97277 ), '<', 0.001, 'latitude' );
+		cmp_ok( abs( $lon->literal_value + 9.430733 ), '<', 0.001, 'longitude' );
 	}
 	
 	{
@@ -113,9 +109,8 @@ END
 			}
 END
 		my ($image, $point, $lat)	= $query->get( $model );
-		my $bridge	= $query->bridge;
-		ok( $bridge->isa_resource( $image ), 'Image isa Resource' );
-		is( $bridge->uri_value( $image ), 'http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg', 'Image url' );
+		ok( $image->isa('RDF::Trine::Node::Resource'), 'Image isa Resource' );
+		is( $image->uri_value, 'http://kasei.us/pictures/2004/20040909-Ireland/images/DSC_5705.jpg', 'Image url' );
 	}
 }
 

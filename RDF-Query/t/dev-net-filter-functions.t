@@ -27,7 +27,6 @@ foreach my $data (@data) {
 		eval "use JavaScript 1.03;";
 		skip( "Need JavaScript 1.03 or higher to run these tests.", $tests ) if ($@);
 		my $model	= $data->{'modelobj'};
-		my $bridge	= $data->{'bridge'};
 		print "\n#################################\n";
 		print "### Using model: $model\n";
 		
@@ -54,8 +53,8 @@ END
 			my $count	= 0;
 			while (my $row = $stream->next) {
 				my ($image, $point, $pname, $lat, $lon)	= @{ $row };
-				my $url		= $bridge->uri_value( $image );
-				my $name	= $bridge->literal_value( $pname );
+				my $url		= $image->uri_value;
+				my $name	= $pname->literal_value;
 				like( $name, qr/, (RI|MA|CT)$/, "$name ($url)" );
 				$count++;
 			}
@@ -76,7 +75,7 @@ END
 END
 			my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql', net_filters => 1 );
 			my ($p)		= $query->get( $model );
-			my $url		= $bridge->uri_value( $p );
+			my $url		= $p->uri_value;
 			is( $url, 'http://kasei.us/about/foaf.xrdf#greg', 'in-place sha1sum' );
 		}
 
@@ -99,7 +98,7 @@ END
 							trusted_keys	=> ['1150 BE14 FF91 269F 398B  0F4E 0253 5AF9 A2B9 659F'],
 						);
 			my ($p)	= $query->get( $model );
-			my $url		= $bridge->uri_value( $p );
+			my $url		= $p->uri_value;
 			is( $url, 'http://kasei.us/about/foaf.xrdf#greg', 'in-place sha1sum, verified' );
 		}
 	}

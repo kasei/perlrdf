@@ -42,12 +42,11 @@ use Benchmark qw(cmpthese);
 ################################################################################
 
 my ($model)	= first { $_->isa('RDF::Trine::Model') } @models;
-my $bridge	= RDF::Query::Model::RDFTrine->new( $model );
 
 my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
 my $context	= RDF::Query::ExecutionContext->new(
 				bound		=> {},
-				model		=> $bridge,
+				model		=> $model,
 				query		=> $query,
 				optimize	=> 1,
 			);

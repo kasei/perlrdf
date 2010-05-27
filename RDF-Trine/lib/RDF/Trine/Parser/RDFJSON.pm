@@ -41,7 +41,7 @@ use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
-use RDF::Trine::Error;
+use RDF::Trine::Error qw(:try);
 
 use Scalar::Util qw(blessed looks_like_number);
 use JSON;
@@ -123,7 +123,10 @@ sub parse {
 	my $handler	= shift;
 	my $opts	= shift;
 	
-	my $index = from_json($input, $opts);
+	my $index	= eval { from_json($input, $opts) };
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
+	}
 	
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?

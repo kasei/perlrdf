@@ -5,6 +5,7 @@ use warnings;
 use URI::file;
 use Test::More;
 use Data::Dumper;
+use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
 use lib qw(. t);
@@ -76,17 +77,19 @@ use RDF::Query::Plan;
 }
 
 foreach my $data (@models) {
-	my $bridge	= $data->{bridge};
 	my $model	= $data->{modelobj};
-	foreach my $uri (values %named) {
-		$bridge->add_uri( "$uri", 1 );
-	}
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
-	
+	unless ($model->isa('RDF::Trine::Model')) {
+		$model	= RDF::Trine::Model->new( RDF::Trine::Store->new_with_object( $model ) );
+	}
+	my $parser	= RDF::Trine::Parser->new('rdfxml');
+	foreach my $uri (values %named) {
+		$parser->parse_url_into_model( "$uri", $model, context => iri("$uri") );
+	}
 	my $context	= RDF::Query::ExecutionContext->new(
 					bound	=> {},
-					model	=> $bridge,
+					model	=> $model,
 				);
 	
 	{
@@ -112,13 +115,7 @@ END
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $bgp, $context );
-# 		if ($bridge->supports('basic_graph_pattern')) {
-# 			isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'triple algebra to plan' );
-# 		} else {
-			isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-			isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-			isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-# 		}
+		isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
 	}
 	
 	{
@@ -163,14 +160,11 @@ END
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name . FILTER(?name = "Greg") }' );
 		my $algebra	= $parsed->{triples}[0]->pattern;
-		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		my @plans	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		my ($plan)	= sort @plans;
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
-# 		if ($bridge->supports('basic_graph_pattern')) {
-# 			isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
-# 		} else {
-			isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-# 		}
-		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (nestedloop-join (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)))', 'sse: filter' ) or die;
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bgp (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: filter' );
 	}
 	
 	############################################################################

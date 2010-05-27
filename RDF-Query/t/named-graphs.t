@@ -50,8 +50,8 @@ END
 			ok( $src, 'got source' );
 			
 			ok( $name, 'got name' );		
-			is( $query->bridge->uri_value( $src ), $alice, 'graph uri' );
-			is( $query->bridge->literal_value( $name ), 'Alice', 'name literal' );
+			is( $src->uri_value, $alice, 'graph uri' );
+			is( $name->literal_value, 'Alice', 'name literal' );
 		}
 		
 		{
@@ -104,7 +104,7 @@ END
 				my $mbox	= $row->{mbox};
 				ok( $mbox, 'got mbox' );
 				
-				my $uri	= $query->bridge->uri_value( $mbox );
+				my $uri	= $mbox->uri_value;
 				is( $uri, 'mailto:bob@oldcorp.example.org', "mbox uri: $uri" );
 				$count++;
 			}
@@ -123,11 +123,14 @@ END
 					GRAPH ?src { ?x foaf:name "Alice"; foaf:mbox ?mbox } .
 				}
 END
-			my ($src, $mbox)	= $query->get( $model );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			my $src		= $row->{src};
+			my $mbox	= $row->{mbox};
 			ok( $src, 'got source' );
 			ok( $mbox, 'got mbox' );
-			is( $query->bridge->uri_value( $src ), $alice, 'graph uri' );
-			is( $query->bridge->uri_value( $mbox ), 'mailto:alice@work.example', 'mbox uri' );
+			is( $src->uri_value, $alice, 'graph uri' );
+			is( $mbox->uri_value, 'mailto:alice@work.example', 'mbox uri' );
 		}
 		
 		{
@@ -156,7 +159,7 @@ END
 				isa_ok( $row, 'HASH' );
 				
 				my ($graph, $name)	= @{ $row }{qw(g name)};
-				my $uri	= $query->bridge->uri_value( $graph );
+				my $uri	= $graph->uri_value;
 				
 				ok( exists $expected{ $uri }, "Known GRAPH: $uri" );
 				
@@ -164,7 +167,7 @@ END
 				
 				ok( $name, 'got name' );
 				
-				my $l_name	= $query->bridge->literal_value( $name );
+				my $l_name	= $name->literal_value;
 				is( $l_name, $expect, "got name: $l_name" );
 				$count++;
 			}
@@ -197,7 +200,7 @@ END
 				isa_ok( $row, 'HASH' );
 				
 				my ($graph, $name, $topic)	= @{ $row }{qw(g name topic)};
-				my $uri	= $query->bridge->uri_value( $graph );
+				my $uri	= $graph->uri_value;
 				
 				ok( exists $expected{ $uri }, "Known GRAPH: $uri" );
 				
@@ -206,8 +209,8 @@ END
 				ok( $name, 'got name' );
 				ok( $topic, 'got topic' );
 				
-				my $l_name	= $query->bridge->literal_value( $name );
-				my $l_topic	= $query->bridge->literal_value( $topic );
+				my $l_name	= $name->literal_value;
+				my $l_topic	= $topic->literal_value;
 				is( $l_name, $expect, "got name: $l_name" );
 				is( $l_topic, $expect, "got topic: $l_topic" );
 				$count++;
@@ -234,7 +237,6 @@ END
 					}
 END
 		my $stream	= $query->execute();
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while (my $data = $stream->next) {
@@ -260,7 +262,6 @@ END
 					}
 END
 		my $stream	= $query->execute();
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while (my $data = $stream->next) {
@@ -286,16 +287,15 @@ END
 					}
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while ($stream and not $stream->finished) {
 			my $row		= $stream->current;
 			my ($p,$g,$i)	= @{ $row }{qw(p g img)};
-			ok( $bridge->is_resource( $g ), 'graph-3: context is resource' );
-			ok( $bridge->is_resource( $p ), 'graph-3: person is resource' );
-			is( $bridge->uri_value( $p ), 'http://kasei.us/about/foaf.xrdf#greg', 'graph-3: correct person uri' );
-			like( $bridge->uri_value( $i ), qr/[.]jpg/, 'graph-3: made image' );
+			ok( $g->isa('RDF::Trine::Node::Resource'), 'graph-3: context is resource' );
+			ok( $p->isa('RDF::Trine::Node::Resource'), 'graph-3: person is resource' );
+			is( $p->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'graph-3: correct person uri' );
+			like( $i->uri_value, qr/[.]jpg/, 'graph-3: made image' );
 			$count++;
 		} continue { $stream->next }
 		is( $count, 4, 'graph-3: expected count' );

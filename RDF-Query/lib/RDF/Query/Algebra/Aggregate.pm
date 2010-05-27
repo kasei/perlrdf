@@ -129,7 +129,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	my @ops_sse;
 	my @ops		= $self->ops;

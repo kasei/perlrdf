@@ -100,7 +100,6 @@ sub next {
 	my $keys	= $self->[2];
 	my $exprs	= $self->[3];
 	my $query	= $self->[0]{context}->query;
-	my $bridge	= $self->[0]{context}->model;
 	
 	my $proj	= $row->project( @{ $keys } );
 	foreach my $e (@$exprs) {
@@ -109,7 +108,7 @@ sub next {
 		if ($l->is_trace) {
 			$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
 		}
-		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
+		my $value		= $query->var_or_expr_value( $row, $var_or_expr );
 		if ($l->is_trace) {
 			$l->trace( "- extend value $name -> $value" );
 		}

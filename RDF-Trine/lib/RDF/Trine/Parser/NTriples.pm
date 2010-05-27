@@ -126,7 +126,7 @@ LINE:
 		};
 		$line	=~ s/^\s//g;
 		unless ($line eq '.') {
-# 			warn Dumper(\@nodes, $line);
+# 			Carp::cluck 'N-Triples parser failed: ' . Dumper(\@nodes, $line);
 			throw RDF::Trine::Error::ParserError -text => "Missing expected '.' at line $lineno";
 		}
 		

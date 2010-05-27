@@ -37,8 +37,8 @@ END
 			my $stream	= $query->execute( $model );
 			while (my $row = $stream->next) {
 				my ($image, $dt)	= @{ $row }{qw(image date)};
-				my $url		= $query->bridge->uri_value( $image );
-				my $date	= $query->bridge->literal_value( $dt );
+				my $url		= $image->uri_value;
+				my $date	= $dt->literal_value;
 				like( $date, qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[-+]\d\d:\d\d$/, "valid date: $date" );
 				$count++;
 			}
@@ -64,8 +64,8 @@ END
 			my $stream	= $query->execute( $model );
 			while (my $row = $stream->next) {
 				my ($p, $n)	= @{ $row }{qw(person name)};
-				my $person	= $query->bridge->as_string( $p );
-				my $name	= $query->bridge->literal_value( $n );
+				my $person	= $p->as_string;
+				my $name	= $n->literal_value;
 				is( $name, 'Gary P', "english name: $name" );
 				$count++;
 			}
@@ -91,8 +91,8 @@ END
 			my $stream	= $query->execute( $model );
 			while (my $row = $stream->next) {
 				my ($p, $n)	= @{ $row }{qw(person name)};
-				my $person	= $query->bridge->as_string( $p );
-				my $name	= $query->bridge->literal_value( $n );
+				my $person	= $p->as_string;
+				my $name	= $n->literal_value;
 				is( $name, 'Gary P', "english name: $name" );
 				$count++;
 			}

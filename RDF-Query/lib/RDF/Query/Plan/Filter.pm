@@ -71,7 +71,7 @@ sub execute ($) {
 			my $row		= shift;
 			my $bool	= 0;
 			eval {
-				my $value	= $filter->evaluate( $query, $bridge, $row );
+				my $value	= $filter->evaluate( $query, $row );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			};
 			return $bool;

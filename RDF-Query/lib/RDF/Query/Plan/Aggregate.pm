@@ -20,9 +20,10 @@ package RDF::Query::Plan::Aggregate;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+use Scalar::Util qw(blessed);
 
 use RDF::Query::Error qw(:try);
-use Scalar::Util qw(blessed);
+use RDF::Query::Node qw(literal);
 
 ######################################################################
 
@@ -75,8 +76,8 @@ sub execute ($) {
 		
 		while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
-			my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-			my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
 			foreach my $i (0 .. $#groupby) {
@@ -124,7 +125,7 @@ sub execute ($) {
 						if ($col eq '*') {
 							$should_inc	= 1;
 						} else {
-							my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+							my $value	= $query->var_or_expr_value( $row, $col );
 							$should_inc	= (defined $value) ? 1 : 0;
 						}
 						
@@ -141,7 +142,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'SUM') {
 						$l->debug("- aggregate op: SUM");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -164,7 +165,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MAX') {
 						$l->debug("- aggregate op: MAX");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -195,7 +196,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MIN') {
 						$l->debug("- aggregate op: MIN");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -227,7 +228,7 @@ sub execute ($) {
 					} elsif ($op eq 'SAMPLE') {
 						### this is just the MIN code from above, without the strict comparison checking
 						$l->debug("- aggregate op: SAMPLE");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -242,7 +243,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'AVG') {
 						$l->debug("- aggregate op: AVG");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -261,7 +262,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'GROUP_CONCAT') {
 						$l->debug("- aggregate op: GROUP_CONCAT");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $str		= RDF::Query::Node::Resource->new('sparql:str');
@@ -269,7 +270,7 @@ sub execute ($) {
 	
 						my $query	= $context->query;
 						my $bridge	= $context->model;
-						my $exprval	= $expr->evaluate( $query, $bridge, $row );
+						my $exprval	= $expr->evaluate( $query, $row );
 						
 						my $string	= blessed($exprval) ? $exprval->literal_value : '';
 	# 					warn "adding '$string' to group_concat aggregate";

@@ -39,7 +39,8 @@ my @pos_names;
 our $VERSION;
 BEGIN {
 	$VERSION	= "0.123";
-	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
 }
 

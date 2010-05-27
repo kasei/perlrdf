@@ -14,7 +14,6 @@ build_requires:
 recommends:
   RDF::RDFa::Parser: 0.30
   RDF::Redland: 1
-  RDF::Core: 0
 requires:
     Data::UUID:                    0
     DBI:                           0
