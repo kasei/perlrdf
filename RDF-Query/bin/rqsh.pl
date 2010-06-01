@@ -28,7 +28,6 @@ my $model	= RDF::Trine::Model->temporary_model;
 my $class	= delete $args{ class } || 'RDF::Query';
 my $term	= Term::ReadLine->new('rqsh');
 
-my %history;
 while ( defined ($_ = $term->readline('rqsh> ')) ) {
 	my $sparql	= $_;
 	next unless (length($sparql));
@@ -62,7 +61,7 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 			warn RDF::Query->error;
 			next;
 		}
-		$term->addhistory($sparql) unless ($history{$sparql}++);
+		$term->addhistory($sparql);
 		my ($plan, $ctx)	= $query->prepare($model);
 		my $iter	= $query->execute_plan( $plan, $ctx );
 		my $count	= -1;
