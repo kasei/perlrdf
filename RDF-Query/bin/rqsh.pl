@@ -54,6 +54,8 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 				map({ $table->body($_) } 0 .. @rows),
 				$table->rule(@rule)
 			);
+		my $size	= scalar(@rows);
+		print "$size statements\n";
 	} else {
 		my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
 		my $query	= $class->new( $psparql, \%args );
