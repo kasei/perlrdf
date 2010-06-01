@@ -332,7 +332,7 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	Carp::cluck;
+	Carp::cluck "remaining text: " . Dumper($self->{tokens});
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -441,10 +441,14 @@ sub _RW_Query {
 		throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
 			unless ($self->{update});
 		$self->_InsertDataUpdate();
-	} elsif ($self->_test(qr/INSERT/i)) {
-		throw RDF::Query::Error::PermissionError -text => "INSERT update forbidden when parsing a read-only query"
+	} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
+		throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
 			unless ($self->{update});
-		$self->_InsertUpdate();
+		if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
+			$self->_InsertUpdate();
+		} elsif ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?DELETE/i)) {
+			$self->_DeleteUpdate();
+		}
 	} else {
 		my $l		= Log::Log4perl->get_logger("rdf.query");
 		if ($l->is_debug) {
@@ -540,9 +544,16 @@ sub _InsertDataUpdate {
 
 sub _InsertUpdate {
 	my $self	= shift;
+	my $graph;
+	if ($self->_test(qr/WITH/i)) {
+		$self->_eat(qr/WITH/i);
+		$self->__consume_ws_opt;
+		my $iri	= $self->_eat( $r_IRI_REF );
+		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
+		$self->__consume_ws_opt;
+	}
 	$self->_eat(qr/INSERT/i);
 	$self->__consume_ws_opt;
-	my $graph;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	my $data;
@@ -550,6 +561,10 @@ sub _InsertUpdate {
 		$self->_push_pattern_container;
 		$self->_TriplesBlock;
 		($data)	= @{ $self->_pop_pattern_container };
+		if ($graph) {
+			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( $data );
+			$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		}
 	} else {
 		$self->_GraphGraphPattern;
 		{
@@ -664,9 +679,8 @@ sub _SelectQuery {
 			$self->__consume_ws_opt;
 		}
 		$self->_eat('}');
-		
-		$self->{build}{bindings}{vars}	= \@vars;
 		$self->__consume_ws_opt;
+		$self->{build}{bindings}{vars}	= \@vars;
 	}
 	
 	$self->__solution_modifiers( $star );
