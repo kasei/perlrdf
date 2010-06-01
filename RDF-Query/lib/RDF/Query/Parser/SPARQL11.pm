@@ -441,6 +441,10 @@ sub _RW_Query {
 		throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
 			unless ($self->{update});
 		$self->_InsertDataUpdate();
+	} elsif ($self->_test(qr/INSERT/i)) {
+		throw RDF::Query::Error::PermissionError -text => "INSERT update forbidden when parsing a read-only query"
+			unless ($self->{update});
+		$self->_InsertUpdate();
 	} else {
 		my $l		= Log::Log4perl->get_logger("rdf.query");
 		if ($l->is_debug) {
@@ -509,7 +513,7 @@ sub _Prologue {
 sub _InsertDataUpdate {
 	my $self	= shift;
 	$self->_eat(qr/INSERT DATA/i);
-	$self->_ws;
+	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	my $data;
@@ -530,6 +534,39 @@ sub _InsertDataUpdate {
 
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
 	my $insert	= RDF::Query::Algebra::Insert->new($data, $empty);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'INSERT';
+}
+
+sub _InsertUpdate {
+	my $self	= shift;
+	$self->_eat(qr/INSERT/i);
+	$self->__consume_ws_opt;
+	my $graph;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my $data;
+	if ($self->_TriplesBlock_test) {
+		$self->_push_pattern_container;
+		$self->_TriplesBlock;
+		($data)	= @{ $self->_pop_pattern_container };
+	} else {
+		$self->_GraphGraphPattern;
+		{
+			my ($d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( $d );
+		}
+		$data	= $self->_remove_pattern;
+	}
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	$self->_eat(qr/WHERE/i);
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my $insert	= RDF::Query::Algebra::Insert->new($data, $ggp);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'INSERT';
 }
