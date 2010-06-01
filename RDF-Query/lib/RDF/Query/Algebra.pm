@@ -66,6 +66,7 @@ use RDF::Query::Algebra::SubSelect;
 use RDF::Query::Algebra::Load;
 use RDF::Query::Algebra::Clear;
 use RDF::Query::Algebra::Insert;
+use RDF::Query::Algebra::Delete;
 
 use constant SSE_TAGS	=> {
 	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',

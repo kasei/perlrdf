@@ -51,6 +51,7 @@ use RDF::Query::Plan::Iterator;
 use RDF::Query::Plan::Load;
 use RDF::Query::Plan::Clear;
 use RDF::Query::Plan::Insert;
+use RDF::Query::Plan::Delete;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -655,6 +656,11 @@ sub generate_plans {
 		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
 		foreach my $p (@plans) {
 			push(@return_plans, RDF::Query::Plan::Insert->new( $algebra->template, $p ));
+		}
+	} elsif ($type eq 'Delete') {
+		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
+		foreach my $p (@plans) {
+			push(@return_plans, RDF::Query::Plan::Delete->new( $algebra->template, $p ));
 		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));

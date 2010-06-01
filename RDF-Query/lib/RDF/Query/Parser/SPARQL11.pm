@@ -441,6 +441,10 @@ sub _RW_Query {
 		throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
 			unless ($self->{update});
 		$self->_InsertDataUpdate();
+	} elsif ($self->_test(qr/DELETE DATA/i)) {
+		throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
+			unless ($self->{update});
+		$self->_DeleteDataUpdate();
 	} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 		throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
 			unless ($self->{update});
@@ -540,6 +544,34 @@ sub _InsertDataUpdate {
 	my $insert	= RDF::Query::Algebra::Insert->new($data, $empty);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'INSERT';
+}
+
+sub _DeleteDataUpdate {
+	my $self	= shift;
+	$self->_eat(qr/DELETE DATA/i);
+	$self->__consume_ws_opt;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my $data;
+	if ($self->_TriplesBlock_test) {
+		$self->_push_pattern_container;
+		$self->_TriplesBlock;
+		($data)	= @{ $self->_pop_pattern_container };
+	} else {
+		$self->_GraphGraphPattern;
+		{
+			my ($d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( $d );
+		}
+		$data	= $self->_remove_pattern;
+	}
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+
+	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
+	my $delete	= RDF::Query::Algebra::Delete->new($data, $empty);
+	$self->_add_patterns( $delete );
+	$self->{build}{method}		= 'DELETE';
 }
 
 sub _InsertUpdate {
