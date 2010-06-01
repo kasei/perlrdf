@@ -202,7 +202,7 @@ Returns true if the plan represents an update operation.
 
 =cut
 
-sub is_updated {
+sub is_update {
 	return 1;
 }
 

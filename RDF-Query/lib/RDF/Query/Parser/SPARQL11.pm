@@ -437,6 +437,10 @@ sub _RW_Query {
 		throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
 			unless ($self->{update});
 		$self->_ClearGraphUpdate();
+	} elsif ($self->_test(qr/INSERT DATA/i)) {
+		throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
+			unless ($self->{update});
+		$self->_InsertDataUpdate();
 	} else {
 		my $l		= Log::Log4perl->get_logger("rdf.query");
 		if ($l->is_debug) {
@@ -502,6 +506,34 @@ sub _Prologue {
 # 	return @data;
 }
 
+sub _InsertDataUpdate {
+	my $self	= shift;
+	$self->_eat(qr/INSERT DATA/i);
+	$self->_ws;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my $data;
+	if ($self->_TriplesBlock_test) {
+		$self->_push_pattern_container;
+		$self->_TriplesBlock;
+		($data)	= @{ $self->_pop_pattern_container };
+	} else {
+		$self->_GraphGraphPattern;
+		{
+			my ($d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( $d );
+		}
+		$data	= $self->_remove_pattern;
+	}
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+
+	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
+	my $insert	= RDF::Query::Algebra::Insert->new($data, $empty);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'INSERT';
+}
+
 sub _LoadUpdate {
 	my $self	= shift;
 	$self->_eat(qr/LOAD/i);
@@ -509,8 +541,8 @@ sub _LoadUpdate {
 	$self->_IRIref;
 	my ($iri)	= splice( @{ $self->{stack} } );
 	$self->__consume_ws_opt;
-	if ($self->_test(qr/INTO GRAPH/)) {
-		$self->_eat(qr/INTO GRAPH/);
+	if ($self->_test(qr/INTO GRAPH/i)) {
+		$self->_eat(qr/INTO GRAPH/i);
 		$self->_ws;
 		$self->_IRIref;
 		my ($graph)	= splice( @{ $self->{stack} } );
@@ -527,8 +559,8 @@ sub _ClearGraphUpdate {
 	my $self	= shift;
 	$self->_eat(qr/CLEAR GRAPH/i);
 	$self->_ws;
-	if ($self->_test(qr/DEFAULT/)) {
-		$self->_eat(qr/DEFAULT/);
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
 		my $pat	= RDF::Query::Algebra::Clear->new();
 		$self->_add_patterns( $pat );
 	} else {

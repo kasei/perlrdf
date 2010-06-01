@@ -50,6 +50,7 @@ use RDF::Query::Plan::SubSelect;
 use RDF::Query::Plan::Iterator;
 use RDF::Query::Plan::Load;
 use RDF::Query::Plan::Clear;
+use RDF::Query::Plan::Insert;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -172,6 +173,9 @@ sub _sse {
 	if ($p =~ m/^[PTNWEJVibswu]$/) {
 		my $v	= shift(@$list);
 		return $self->_sse_atom($context, $indent, $more, $p, $v);
+	} elsif ($p eq 'A') {
+		my $v	= shift(@$list);
+		return $v->sse( $context, $indent );
 	} elsif (substr($p, 0, 1) eq '\\') {
 		my $rest	= substr($p, 1);
 		my $v		= shift(@$list);
@@ -292,7 +296,7 @@ Returns true if the plan represents an update operation.
 
 =cut
 
-sub is_updated {
+sub is_update {
 	return 0;
 }
 
@@ -647,6 +651,11 @@ sub generate_plans {
 		push(@return_plans, $plan);
 	} elsif ($type eq 'Load') {
 		push(@return_plans, RDF::Query::Plan::Load->new( $algebra->url, $algebra->graph ));
+	} elsif ($type eq 'Insert') {
+		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
+		foreach my $p (@plans) {
+			push(@return_plans, RDF::Query::Plan::Insert->new( $algebra->template, $p ));
+		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
 	} else {
@@ -778,6 +787,7 @@ nodes of this plan node. These identifiers are recognized:
 
  * 'P' - A RDF::Query::Plan object
  * 'T' - An RDF::Trine::Statement object
+ * 'A' - An RDF::Query::Algebra object
  * 'Q' - An RDF::Trine::Statement::Quad object
  * 'N' - An RDF node
  * 'W' - An RDF node or wildcard ('*')

@@ -585,6 +585,7 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Construct')
 									or $triples[0]->isa('RDF::Query::Algebra::Load')
 									or $triples[0]->isa('RDF::Query::Algebra::Clear')
+									or $triples[0]->isa('RDF::Query::Algebra::Insert')
 								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
@@ -609,7 +610,7 @@ sub as_sparql {
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
 	
-	if ($method =~ /^(LOAD|CLEAR)$/) {
+	if ($method =~ /^(LOAD|CLEAR|INSERT)$/) {
 		return $ggp->as_sparql;
 	} else {
 		{

@@ -11,12 +11,12 @@ use RDF::Query::Util;
 use Term::ReadLine;
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.query.plan				= DEBUG, Screen
-	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr					= 0
-	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.plan				= DEBUG, Screen
+# 	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr					= 0
+# 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 # $SIG{ALRM}	= sub { Carp::confess };
@@ -69,7 +69,7 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		if (blessed($iter)) {
 			print $iter->as_string( 0, \$count );
 		}
-		if ($plan->is_updated) {
+		if ($plan->is_update) {
 			my $size	= $model->size;
 			print "$size statements\n";
 		} elsif ($count >= 0) {
