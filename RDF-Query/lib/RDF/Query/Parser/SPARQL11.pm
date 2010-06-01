@@ -618,6 +618,50 @@ sub _InsertUpdate {
 	$self->{build}{method}		= 'INSERT';
 }
 
+sub _DeleteUpdate {
+	my $self	= shift;
+	my $graph;
+	if ($self->_test(qr/WITH/i)) {
+		$self->_eat(qr/WITH/i);
+		$self->__consume_ws_opt;
+		my $iri	= $self->_eat( $r_IRI_REF );
+		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
+		$self->__consume_ws_opt;
+	}
+	$self->_eat(qr/DELETE/i);
+	$self->__consume_ws_opt;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my $data;
+	if ($self->_TriplesBlock_test) {
+		$self->_push_pattern_container;
+		$self->_TriplesBlock;
+		($data)	= @{ $self->_pop_pattern_container };
+		if ($graph) {
+			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( $data );
+			$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		}
+	} else {
+		$self->_GraphGraphPattern;
+		{
+			my ($d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( $d );
+		}
+		$data	= $self->_remove_pattern;
+	}
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	$self->_eat(qr/WHERE/i);
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my $insert	= RDF::Query::Algebra::Delete->new($data, $ggp);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'DELETE';
+}
+
 sub _LoadUpdate {
 	my $self	= shift;
 	$self->_eat(qr/LOAD/i);
