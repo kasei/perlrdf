@@ -104,8 +104,14 @@ sub as_sparql {
 			"INSERT DATA {\n${indent}	%s\n${indent}}",
 			$temp->as_sparql( $context, "${indent}	" )
 		);
+	} else {
+		my $ggp	= $self->pattern;
+		return sprintf(
+			"INSERT {\n${indent}	%s\n${indent}} WHERE %s",
+			$temp->as_sparql( $context, "${indent}	" ),
+			$ggp->as_sparql( $context, "${indent}" ),
+		);
 	}
-	die;
 }
 
 =item C<< referenced_blanks >>
