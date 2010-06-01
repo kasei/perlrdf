@@ -485,7 +485,7 @@ sub as_xml {
 	return $string;
 }
 
-=item C<as_string ( $max_size )>
+=item C<as_string ( $max_size [, \$count] )>
 
 Returns a string table serialization of the stream data.
 
@@ -494,10 +494,14 @@ Returns a string table serialization of the stream data.
 sub as_string {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
+	my $count			= shift;
 	my @names			= $self->binding_names;
 	my $headers			= \@names;
 	my $rows			= [ map { [ @{$_}{ @names } ] } $self->get_all ];
-
+	if (ref($count)) {
+		$$count	= scalar(@$rows);
+	}
+	
 	my @rule			= qw(- +);
 	my @headers			= (\q"| ");
 	push(@headers, map { $_ => \q" | " } @$headers);
