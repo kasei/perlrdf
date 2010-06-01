@@ -184,9 +184,10 @@ sub new {
 		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
 	}
 	
+	my $update	= ($options{update} ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
-	my $parsed	= $parser->parse( $query, $baseuri );
+	my $parsed	= $parser->parse( $query, $baseuri, $update );
 	
 	my $self	= $class->_new(
 					base			=> $baseuri,
@@ -582,6 +583,8 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Distinct')
 									or $triples[0]->isa('RDF::Query::Algebra::Project')
 									or $triples[0]->isa('RDF::Query::Algebra::Construct')
+									or $triples[0]->isa('RDF::Query::Algebra::Load')
+									or $triples[0]->isa('RDF::Query::Algebra::Clear')
 								)) {
 		my $ggp		= $triples[0];
 		return $ggp;
@@ -606,51 +609,55 @@ sub as_sparql {
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
 	
-	{
-		my $pvars	= join(' ', sort $ggp->referenced_variables);
-		my $svars	= join(' ', sort map { $_->name } @{ $parsed->{ variables } });
-		if ($pvars eq $svars) {
-			$vars	= '*';
+	if ($method =~ /^(LOAD|CLEAR)$/) {
+		return $ggp->as_sparql;
+	} else {
+		{
+			my $pvars	= join(' ', sort $ggp->referenced_variables);
+			my $svars	= join(' ', sort map { $_->name } @{ $parsed->{ variables } });
+			if ($pvars eq $svars) {
+				$vars	= '*';
+			}
 		}
+		
+		my @ns		= map { "PREFIX $_: <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
+		my @mod;
+		if (my $ob = $parsed->{options}{orderby}) {
+			push(@mod, 'ORDER BY ' . join(' ', map {
+						my ($dir,$v) = @$_;
+						($dir eq 'ASC')
+							? $v->as_sparql( $context, '' )
+							: "${dir}" . $v->as_sparql( $context, '' );
+					} @$ob));
+		}
+		if (my $l = $parsed->{options}{limit}) {
+			push(@mod, "LIMIT $l");
+		}
+		if (my $o = $parsed->{options}{offset}) {
+			push(@mod, "OFFSET $o");
+		}
+		my $mod	= join("\n", @mod);
+		
+		my $methoddata	= '';
+		if ($method eq 'SELECT') {
+			$methoddata	= $method;
+		} elsif ($method eq 'ASK') {
+			$methoddata	= $method;
+		} elsif ($method eq 'DESCRIBE') {
+			$methoddata		= sprintf("%s %s\nWHERE", $method, $vars);
+		}
+		
+		my $sparql	= sprintf(
+			"%s\n%s %s\n%s",
+			join("\n", @ns),
+			$methoddata,
+			$ggp->as_sparql( $context, '' ),
+			$mod,
+		);
+		
+		chomp($sparql);
+		return $sparql;
 	}
-	
-	my @ns		= map { "PREFIX $_: <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
-	my @mod;
-	if (my $ob = $parsed->{options}{orderby}) {
-		push(@mod, 'ORDER BY ' . join(' ', map {
-					my ($dir,$v) = @$_;
-					($dir eq 'ASC')
-						? $v->as_sparql( $context, '' )
-						: "${dir}" . $v->as_sparql( $context, '' );
-				} @$ob));
-	}
-	if (my $l = $parsed->{options}{limit}) {
-		push(@mod, "LIMIT $l");
-	}
-	if (my $o = $parsed->{options}{offset}) {
-		push(@mod, "OFFSET $o");
-	}
-	my $mod	= join("\n", @mod);
-	
-	my $methoddata	= '';
-	if ($method eq 'SELECT') {
-		$methoddata	= $method;
-	} elsif ($method eq 'ASK') {
-		$methoddata	= $method;
-	} elsif ($method eq 'DESCRIBE') {
-		$methoddata		= sprintf("%s %s\nWHERE", $method, $vars);
-	}
-	
-	my $sparql	= sprintf(
-		"%s\n%s %s\n%s",
-		join("\n", @ns),
-		$methoddata,
-		$ggp->as_sparql( $context, '' ),
-		$mod,
-	);
-	
-	chomp($sparql);
-	return $sparql;
 }
 
 =item C<< sse >>

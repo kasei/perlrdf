@@ -95,9 +95,11 @@ sub new {
 
 ################################################################################
 
-=item C<< parse ( $query, $base_uri ) >>
+=item C<< parse ( $query, $base_uri, $update_flag ) >>
 
 Parses the C<< $query >>, using the given C<< $base_uri >>.
+If C<< $update_flag >> is true, the query will be parsed allowing
+SPARQL 1.1 Update statements.
 
 =cut
 
@@ -105,6 +107,7 @@ sub parse {
 	my $self	= shift;
 	my $input	= shift;
 	my $baseuri	= shift;
+	my $update	= shift || 0;
 	
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
@@ -117,6 +120,7 @@ sub parse {
 	local($self->{stack})					= [];
 	local($self->{filters})					= [];
 	local($self->{pattern_container_stack})	= [];
+	local($self->{update})					= $update;
 	my $triples								= $self->_push_pattern_container();
 	$self->{build}							= { sources => [], triples => $triples };
 	if ($baseuri) {
@@ -124,7 +128,7 @@ sub parse {
 	}
 	
 	try {
-		$self->_Query();
+		$self->_RW_Query();
 	} catch RDF::Query::Error with {
 		my $e	= shift;
 		$self->{build}	= undef;
@@ -328,6 +332,7 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
+	Carp::cluck;
 	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
 }
 
@@ -410,8 +415,8 @@ sub __new_statement {
 ################################################################################
 
 
-# [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery )
-sub _Query {
+# [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery | LoadUpdate )
+sub _RW_Query {
 	my $self	= shift;
 	$self->__consume_ws_opt;
 	$self->_Prologue;
@@ -424,6 +429,14 @@ sub _Query {
 		$self->_DescribeQuery();
 	} elsif ($self->_test(qr/ASK/i)) {
 		$self->_AskQuery();
+	} elsif ($self->_test(qr/LOAD/i)) {
+		throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden when parsing a read-only query"
+			unless ($self->{update});
+		$self->_LoadUpdate();
+	} elsif ($self->_test(qr/CLEAR GRAPH/i)) {
+		throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
+			unless ($self->{update});
+		$self->_ClearGraphUpdate();
 	} else {
 		my $l		= Log::Log4perl->get_logger("rdf.query");
 		if ($l->is_debug) {
@@ -489,6 +502,43 @@ sub _Prologue {
 # 	return @data;
 }
 
+sub _LoadUpdate {
+	my $self	= shift;
+	$self->_eat(qr/LOAD/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($iri)	= splice( @{ $self->{stack} } );
+	$self->__consume_ws_opt;
+	if ($self->_test(qr/INTO GRAPH/)) {
+		$self->_eat(qr/INTO GRAPH/);
+		$self->_ws;
+		$self->_IRIref;
+		my ($graph)	= splice( @{ $self->{stack} } );
+		my $pat	= RDF::Query::Algebra::Load->new( $iri, $graph );
+		$self->_add_patterns( $pat );
+	} else {
+		my $pat	= RDF::Query::Algebra::Load->new( $iri );
+		$self->_add_patterns( $pat );
+	}
+	$self->{build}{method}		= 'LOAD';
+}
+
+sub _ClearGraphUpdate {
+	my $self	= shift;
+	$self->_eat(qr/CLEAR GRAPH/i);
+	$self->_ws;
+	if ($self->_test(qr/DEFAULT/)) {
+		$self->_eat(qr/DEFAULT/);
+		my $pat	= RDF::Query::Algebra::Clear->new();
+		$self->_add_patterns( $pat );
+	} else {
+		$self->_IRIref;
+		my ($graph)	= splice( @{ $self->{stack} } );
+		my $pat	= RDF::Query::Algebra::Clear->new( $graph );
+		$self->_add_patterns( $pat );
+	}
+	$self->{build}{method}		= 'CLEAR';
+}
 
 # [5] SelectQuery ::= 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( Var+ | '*' ) DatasetClause* WhereClause SolutionModifier
 sub _SelectQuery {

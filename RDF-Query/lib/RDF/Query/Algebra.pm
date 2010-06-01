@@ -63,6 +63,8 @@ use RDF::Query::Algebra::Extend;
 use RDF::Query::Algebra::Not;
 use RDF::Query::Algebra::Exists;
 use RDF::Query::Algebra::SubSelect;
+use RDF::Query::Algebra::Load;
+use RDF::Query::Algebra::Clear;
 
 use constant SSE_TAGS	=> {
 	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',

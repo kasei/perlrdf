@@ -48,6 +48,8 @@ use RDF::Query::Plan::ThresholdUnion;
 use RDF::Query::Plan::Union;
 use RDF::Query::Plan::SubSelect;
 use RDF::Query::Plan::Iterator;
+use RDF::Query::Plan::Load;
+use RDF::Query::Plan::Clear;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -233,7 +235,11 @@ sub _sse_atom {
 			return $v;
 		}
 	} elsif ($p =~ m/^[PNETV]$/) {
-		return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
+		if (blessed($v)) {
+			return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
+		} else {
+			return '()';
+		}
 	} elsif ($p eq 'J') {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			return $v->name;
@@ -278,6 +284,16 @@ sub as_iterator {
 	my $vars	= $context->requested_variables;
 	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $self->next }, $vars, distinct => $self->distinct, sorted_by => $self->ordered );
 	return $stream;
+}
+
+=item C<< is_update >>
+
+Returns true if the plan represents an update operation.
+
+=cut
+
+sub is_updated {
+	return 0;
 }
 
 =item C<< label ( $label => $value ) >>
@@ -629,6 +645,10 @@ sub generate_plans {
 		# XXX
 		my $plan	= RDF::Query::Plan::Union->new( map { $_->[0] } @plans );
 		push(@return_plans, $plan);
+	} elsif ($type eq 'Load') {
+		push(@return_plans, RDF::Query::Plan::Load->new( $algebra->url, $algebra->graph ));
+	} elsif ($type eq 'Clear') {
+		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
 	} else {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
 	}

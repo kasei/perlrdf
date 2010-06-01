@@ -98,6 +98,11 @@ package RDF::Query::Error::RequestedInterruptError;
 
 use base qw(RDF::Query::Error);
 
+package RDF::Query::Error::PermissionError;
+
+use base qw(RDF::Query::Error);
+
+
 
 1;
 
