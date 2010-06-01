@@ -200,7 +200,7 @@ sub _get_statements_quad {
 			return unless ($i <= $#{ $self->{statements} });
 			my $st	= $self->{statements}[ $i ];
 # 			warn $st;
-			while (not(blessed($st))) {
+			while (not(blessed($st)) and ($i <= $#{ $self->{statements} })) {
 				$st	= $self->{statements}[ ++$i ];
 # 				warn "null st. next: $st";
 			}
