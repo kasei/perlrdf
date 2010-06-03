@@ -323,6 +323,26 @@ $RDF::Query::functions{"sparql:iri"}	= sub {
 	}
 };
 
+$RDF::Query::functions{"sparql:bnode"}	= sub {
+	my $query	= shift;
+	if (@_) {
+		my $node	= shift;
+		unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+			throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+		}
+		my $value	= $node->literal_value;
+		if (my $bnode = $query->{_query_row_cache}{'sparql:bnode'}{$value}) {
+			return $bnode;
+		} else {
+			my $bnode	= RDF::Query::Node::Blank->new();
+			$query->{_query_row_cache}{'sparql:bnode'}{$value}	= $bnode;
+			return $bnode;
+		}
+	} else {
+		return RDF::Query::Node::Blank->new();
+	}
+};
+
 $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my $query	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure

@@ -132,7 +132,7 @@ sub parse {
 	} catch RDF::Query::Error with {
 		my $e	= shift;
 		$self->{build}	= undef;
-		$self->{error}	= $e->text;
+		$self->{error}	= $e->stacktrace
 	};
 	my $data								= delete $self->{build};
 #	$data->{triples}						= $self->_pop_pattern_container();
@@ -2124,7 +2124,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return $self->_test(qr/STR|STRDT|STRLANG|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF/i);
+	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF/i);
 }
 
 sub _BuiltInCall {
@@ -2139,9 +2139,9 @@ sub _BuiltInCall {
 		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
 		my $func	= $self->new_function_expression($iri, $cont);
 		$self->_add_stack( $func );
-	} elsif ($self->_test(qr/COALESCE/)) {
-		my $op	= $self->_eat(qr/COALESCE/i);
-		my $iri		= RDF::Query::Node::Resource->new( 'sparql:coalesce' );
+	} elsif ($self->_test(qr/COALESCE|BNODE/)) {
+		my $op	= $self->_eat(qr/COALESCE|BNODE/i);
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
 		my $func	= $self->new_function_expression( $iri, @args );

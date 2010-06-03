@@ -101,6 +101,7 @@ sub next {
 	my $exprs	= $self->[3];
 	my $query	= $self->[0]{context}->query;
 	
+	local($query->{_query_row_cache})	= {};
 	my $proj	= $row->project( @{ $keys } );
 	foreach my $e (@$exprs) {
 		my $name			= $e->name;

@@ -71,6 +71,14 @@ sub execute ($) {
 			my $row		= shift;
 			my $bool	= 0;
 			eval {
+				my $qok	= ref($query);
+				local($query->{_query_row_cache})	= {};
+				unless ($qok) {
+					# $query may not be defined, but the local() call will autovivify it into a HASH.
+					# later on, if it's a ref, somebody's going to try to call a method on it, so
+					# undef it if it wasn't defined before the local() call.
+					$query	= undef;
+				}
 				my $value	= $filter->evaluate( $query, $row );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			};
