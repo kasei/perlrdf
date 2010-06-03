@@ -8,5 +8,34 @@ use Data::Dumper;
 use RDF::Query;
 use RDF::Query::Util;
 
+my $sparql	= 0;
+my $algebra	= 0;
+my $plan	= 0;
+while ($ARGV[0] =~ /^-([aps])$/) {
+	$algebra	= 1 if ($1 eq 'a');
+	$plan		= 1 if ($1 eq 'p');
+	$sparql		= 1 if ($1 eq 's');
+	shift(@ARGV);
+}
+$sparql	= 1 unless ($algebra || $plan || $sparql);
+
 my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
-print $query->as_sparql . "\n";
+
+if ($sparql) {
+	print "\n# SPARQL:\n";
+	print $query->as_sparql . "\n";
+}
+
+if ($algebra) {
+	print "\n# Algebra:\n";
+	print $query->pattern->sse . "\n";
+}
+
+if ($plan) {
+	print "\n# Plan:\n";
+	my $model	= RDF::Trine::Model->temporary_model;
+	my ($plan, $ctx)	= $query->prepare( $model );
+	print $plan->sse . "\n";
+}
+
+print "\n";
