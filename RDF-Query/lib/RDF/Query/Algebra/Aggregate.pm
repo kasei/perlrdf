@@ -161,6 +161,23 @@ sub as_sparql {
 	throw RDF::Query::Error::SerializationError -text => "Aggregates can't be serialized as SPARQL";
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		groupby		=> [ map { $_->as_hash } $self->groupby ],
+		expressions	=> [ map { $_->as_hash } $self->ops ],
+	};
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.

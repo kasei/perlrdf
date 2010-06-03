@@ -92,6 +92,21 @@ sub as_sparql {
 	return $string;
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 	=> lc($self->type),
+		nodes	=> [ map { $_->as_hash } $self->nodes ],
+	};
+}
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.

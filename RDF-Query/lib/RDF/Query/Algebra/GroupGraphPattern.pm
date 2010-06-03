@@ -141,6 +141,21 @@ sub as_sparql {
 	return $string;
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		patterns	=> [ map { $_->as_hash } $self->patterns ],
+	};
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.

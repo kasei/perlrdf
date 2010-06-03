@@ -662,6 +662,18 @@ sub as_sparql {
 	}
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $pattern	= $self->pattern;
+	return $pattern->as_hash;
+}
+
 =item C<< sse >>
 
 Returns the query as a string in the SSE syntax.

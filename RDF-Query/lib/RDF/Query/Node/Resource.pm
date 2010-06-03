@@ -74,6 +74,20 @@ sub as_sparql {
 	return $self->sse( { namespaces => \%ns } );
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'node',
+		iri			=> $self->uri_value,
+	};
+}
 
 1;
 

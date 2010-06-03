@@ -134,6 +134,23 @@ sub as_sparql {
 	return $string;
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( @{ $self->triples } );
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		construct	=> $bgp->as_hash,
+	};
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.
