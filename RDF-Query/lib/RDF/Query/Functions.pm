@@ -275,6 +275,54 @@ $RDF::Query::functions{"sparql:str"}	= sub {
 	}
 };
 
+$RDF::Query::functions{"sparql:strdt"}	= sub {
+	my $query	= shift;
+	my $str		= shift;
+	my $dt		= shift;
+	
+	unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($dt) and $dt->isa('RDF::Query::Node::Resource')) {
+		throw RDF::Query::Error::TypeError -text => "STRDT() must be called with a plain literal and a datatype IRI";
+	}
+	
+	my $value	= $str->literal_value;
+	my $uri		= $dt->uri_value;
+	return RDF::Query::Node::Literal->new( $value, undef, $uri );
+};
+
+$RDF::Query::functions{"sparql:strlang"}	= sub {
+	my $query	= shift;
+	my $str		= shift;
+	my $lang	= shift;
+	
+	unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($lang) and $lang->isa('RDF::Query::Node::Literal')) {
+		warn Dumper($str,$lang);
+		throw RDF::Query::Error::TypeError -text => "STRLANG() must be called with two plain literals";
+	}
+	
+	my $value	= $str->literal_value;
+	my $langtag	= $lang->literal_value;
+	return RDF::Query::Node::Literal->new( $value, $langtag );
+};
+
+$RDF::Query::functions{"sparql:uri"}	=
+$RDF::Query::functions{"sparql:iri"}	= sub {
+	my $query	= shift;
+	my $node	= shift;
+	
+	unless (blessed($node)) {
+		throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+	}
+	
+	if ($node->is_literal) {
+		my $value	= $node->literal_value;
+		return RDF::Query::Node::Resource->new( $value );
+	} elsif ($node->is_resource) {
+		return $node;
+	} else {
+		throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+	}
+};
+
 $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my $query	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure
