@@ -158,7 +158,7 @@ END
 							$plon,
 							$plat
 						);
-#			warn "\t-> ${dist} kilometers from Providence";
+# 			warn "\t-> ${dist} kilometers from Providence";
 			return RDF::Query::Node::Literal->new("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
 		} );
 		my $stream	= $query->execute( $model );
@@ -348,7 +348,7 @@ END
 sub get_first_literal {
 	my $model	= shift;
 	my $node	= get_first_obj( $model, @_ );
-	return $node ? $node->uri_value : undef;
+	return $node ? $node->literal_value : undef;
 }
 
 sub get_first_obj {
