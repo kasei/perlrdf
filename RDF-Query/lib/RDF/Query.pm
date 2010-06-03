@@ -655,9 +655,9 @@ sub as_sparql {
 			$methoddata		= sprintf("%s %s\nWHERE", $method, $vars);
 		}
 		
+		my $ns	= scalar(@ns) ? join("\n", @ns, '') : '';
 		my $sparql	= sprintf(
-			"%s\n%s %s\n%s",
-			join("\n", @ns),
+			"$ns%s %s\n%s",
 			$methoddata,
 			$ggp->as_sparql( $context, '' ),
 			$mod,
