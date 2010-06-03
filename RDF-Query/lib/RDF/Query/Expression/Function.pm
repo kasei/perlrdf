@@ -34,6 +34,8 @@ BEGIN {
 
 our %FUNCTION_MAP	= (
 	str			=> "STR",
+	strdt		=> "STRDT",
+	strlang		=> "STRLANG",
 	lang		=> "LANG",
 	langmatches	=> "LANGMATCHES",
 	sameterm	=> "sameTerm",
@@ -44,6 +46,9 @@ our %FUNCTION_MAP	= (
 	isblank		=> "isBlank",
 	isliteral	=> "isLiteral",
 	regex		=> "REGEX",
+	iri			=> "IRI",
+	uri			=> "IRI",
+	bnode		=> "BNODE",
 );
 
 =head1 METHODS
@@ -129,11 +134,11 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
 	my $string	= sprintf(
-		"%s( %s )",
+		"%s(%s)",
 		$func,
 		join(', ', map { $_->as_sparql( $context, $indent ) } @args),
 	);

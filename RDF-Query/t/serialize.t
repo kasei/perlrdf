@@ -35,7 +35,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER REGEX( STR( ?homepage ), "^http://www.rpi.edu/.+" ) . }', 'sparql to sparql with regex filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER REGEX(STR(?homepage), "^http://www.rpi.edu/.+") . }', 'sparql to sparql with regex filter' );
 };
 
 {

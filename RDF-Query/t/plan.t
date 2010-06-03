@@ -13,7 +13,7 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.parser          = TRACE, Screen
+# 	log4perl.category.rdf.query.plan          = TRACE, Screen
 # 	
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
