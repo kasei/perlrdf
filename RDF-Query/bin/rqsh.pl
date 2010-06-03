@@ -7,6 +7,7 @@ use lib qw(../lib lib);
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use RDF::Query;
+use RDF::Query::Error qw(:try);
 use RDF::Query::Util;
 use Term::ReadLine;
 
@@ -60,21 +61,26 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
 		my $query	= $class->new( $psparql, \%args );
 		unless ($query) {
-			warn RDF::Query->error;
+			print "Error: " . RDF::Query->error . "\n";
 			next;
 		}
 		$term->addhistory($sparql);
-		my ($plan, $ctx)	= $query->prepare($model);
-		my $iter	= $query->execute_plan( $plan, $ctx );
-		my $count	= -1;
-		if (blessed($iter)) {
-			print $iter->as_string( 0, \$count );
-		}
-		if ($plan->is_update) {
-			my $size	= $model->size;
-			print "$size statements\n";
-		} elsif ($count >= 0) {
-			print "$count results\n";
-		}
+		try {
+			my ($plan, $ctx)	= $query->prepare($model);
+			my $iter	= $query->execute_plan( $plan, $ctx );
+			my $count	= -1;
+			if (blessed($iter)) {
+				print $iter->as_string( 0, \$count );
+			}
+			if ($plan->is_update) {
+				my $size	= $model->size;
+				print "$size statements\n";
+			} elsif ($count >= 0) {
+				print "$count results\n";
+			}
+		} catch RDF::Query::Error with {
+			my $e	= shift;
+			print "Error: $e\n";
+		};
 	}
 }
