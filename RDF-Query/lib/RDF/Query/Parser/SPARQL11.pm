@@ -961,17 +961,33 @@ sub _Binding {
 	
 	my @terms;
 	$self->__consume_ws_opt;
-	$self->_VarOrTerm;
+	$self->_BindingValue;
 	push( @terms, splice(@{ $self->{stack} }));
 	$self->__consume_ws_opt;
-	while ($self->_VarOrTerm_test) {
-		$self->_VarOrTerm;
+	while ($self->_BindingValue_test) {
+		$self->_BindingValue;
 		push( @terms, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
 	push( @{ $self->{build}{bindings}{terms} }, \@terms );
 	$self->__consume_ws_opt;
 	$self->_eat( ')' );
+}
+
+sub _BindingValue_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/UNDEF|[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
+	return 0;
+}
+
+sub _BindingValue {
+	my $self	= shift;
+	if ($self->_test(qr/UNDEF/i)) {
+		$self->_eat(qr/UNDEF/i);
+		push(@{ $self->{stack} }, undef);
+	} else {
+		$self->_GraphTerm;
+	}
 }
 
 sub __GroupByVar_test {

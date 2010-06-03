@@ -453,7 +453,13 @@ sub query_plan {
 		my @constants;
 		while (my $values = shift(@{ $b->{terms} })) {
 			my %bound;
-			@bound{ @names }	= @{ $values };
+#			@bound{ @names }	= @{ $values };
+			foreach my $i (0 .. $#names) {
+				my $k	= $names[$i];
+				my $v	= $values->[$i];
+				next unless defined($v);
+				$bound{ $k }	= $v;
+			}
 			my $bound			= RDF::Query::VariableBindings->new( \%bound );
 			push(@constants, $bound);
 		}
