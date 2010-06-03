@@ -18,6 +18,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Expression);
 
+use RDF::Query::Error qw(:try);
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
@@ -199,7 +200,8 @@ sub evaluate {
 	my $uri		= $self->uri;
 	
 	no warnings 'uninitialized';
-	if ($uri->uri_value =~ /^sparql:logical-(.+)$/) {
+	my $uriv	= $uri->uri_value;
+	if ($uriv =~ /^sparql:logical-(.+)$/) {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw
 		# TypeErrors (e.g. true || fail ==> true).
@@ -216,6 +218,22 @@ sub evaluate {
 		my $func	= $query->get_function( $uri );
 		my $value	= $func->( $query, $args );
 		return $value;
+	} elsif ($uriv =~ /^sparql:if$/) {
+		my @args	= $self->arguments;
+		my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+		my $expr	= shift(@args);
+		my $index	= 1;
+		try {
+			my $exprval	= $query->var_or_expr_value( $bound, $expr );
+			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
+			my $value	= $func->evaluate( $query, {} );
+			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
+			if ($bool) {
+				$index	= 0;
+			}
+		} catch RDF::Query::Error::TypeError with {};
+		my $expr2	= $args[$index];
+		return $query->var_or_expr_value( $bound, $expr2 );
 	} else {
 		my @args	= map {
 						$_->isa('RDF::Query::Algebra')
