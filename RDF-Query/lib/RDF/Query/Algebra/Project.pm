@@ -168,6 +168,9 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
+	my $pattern	= $self->pattern;
+	
+	my ($vars, $sparql);
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -179,10 +182,30 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-	my $svars	= join(' ', sort @vars);
-	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+	if ($pattern->isa('RDF::Query::Algebra::Extend')) {
+		my %seen;
+		my $vlist	= $pattern->vars;
+		foreach my $k (@$vlist) {
+			if ($k->isa('RDF::Query::Expression::Alias')) {
+				$seen{ '?' . $k->name }	= $k->as_sparql({}, '');
+			} elsif ($k->isa('RDF::Query::Expression')) {
+				push(@vars, $k->as_sparql({}, ''));
+			} elsif ($k->isa('RDF::Query::Node::Variable')) {
+				push(@vars, '?' . $k->name);
+			} else {
+				push(@vars, $k);
+			}
+		}
+		@vars	= map { exists($seen{$_}) ? $seen{$_} : $_ } @vars;
+		$vars	= join(' ', @vars);
+		$sparql	= $pattern->pattern->as_sparql( $context, $indent );
+	} else {
+		my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
+		my $svars	= join(' ', sort @vars);
+		$vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
+		$sparql	= $pattern->as_sparql( $context, $indent );
+	}
+	return join(' ', $vars, 'WHERE', $sparql);
 }
 
 =item C<< as_hash >>

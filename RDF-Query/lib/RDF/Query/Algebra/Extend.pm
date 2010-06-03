@@ -165,7 +165,7 @@ sub as_sparql {
 	my (@vars);
 	foreach my $k (@$vlist) {
 		if ($k->isa('RDF::Query::Expression')) {
-			push(@vars, $k->sse({}, ''));
+			push(@vars, $k->as_sparql({}, ''));
 		} elsif ($k->isa('RDF::Query::Node::Variable')) {
 			push(@vars, '?' . $k->name);
 		} else {
