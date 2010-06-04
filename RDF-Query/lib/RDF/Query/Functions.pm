@@ -20,6 +20,7 @@ no warnings 'redefine';
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
 use RDF::Query;
+use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
 use Log::Log4perl;
@@ -349,6 +350,8 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.logicalor");
+	$l->trace('executing logical-or');
 	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 	my $arg;
 	my $error;
@@ -356,15 +359,18 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	while (1) {
 		my $bool;
 		try {
+			$l->trace('- getting logical-or operand...');
 			$arg 	= $args->();
 			if (defined($arg)) {
+				$l->trace("- logical-or operand: $arg");
 				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
 				my $value	= $func->evaluate( $query, {} );
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			$l->debug("error in lhs of logical-or");
-			$error	||= shift;
+			my $e	= shift;
+			$l->debug("error in lhs of logical-or: " . $e->text);
+			$error	||= $e;
 		};
 		last unless (defined($arg));
 		if ($bool) {
@@ -372,6 +378,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 		}
 	}
 	if ($error) {
+		$l->debug('logical-or error: ' . $error->text);
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -385,6 +392,8 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.logicaland");
+	$l->trace('executing logical-and');
 	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 	my $arg;
 	my $error;
@@ -392,15 +401,18 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	while (1) {
 		my $bool;
 		try {
+			$l->trace('- getting logical-and operand...');
 			$arg 	= $args->();
 			if (defined($arg)) {
+				$l->trace("- logical-and operand: $arg");
 				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
 				my $value	= $func->evaluate( $query, {} );
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			$l->debug("error in lhs of logical-or");
-			$error	||= shift;
+			my $e	= shift;
+			$l->debug("error in lhs of logical-and: " . $e->text);
+			$error	||= $e;
 		};
 		last unless (defined($arg));
 		unless ($bool) {
@@ -408,11 +420,62 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 		}
 	}
 	if ($error) {
+		$l->debug('logical-and error: ' . $error->text);
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	}
 };
+
+$RDF::Query::functions{"sparql:in"}		= sub { return __IN_FUNC('in', @_) };
+$RDF::Query::functions{"sparql:notin"}	= sub { return __IN_FUNC('notin', @_) };
+sub __IN_FUNC {
+	my $op		= shift;
+	my $query	= shift;
+	my $args	= shift;
+	my $node	= $args->();
+	unless (blessed($node)) {
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
+	
+	my $arg;
+	my $error;
+	while (1) {
+		my $bool;
+		try {
+			$l->trace("- getting $op operand...");
+			$arg 	= $args->();
+			if (defined($arg)) {
+				$l->trace("- $op operand: $arg");
+				my $expr	= RDF::Query::Expression::Binary->new('==', $node, $arg);
+				my $value	= $expr->evaluate( $query, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} catch RDF::Query::Error with {
+			my $e	= shift;
+			$l->debug("error in lhs of logical-and: " . $e->text);
+			$error	||= $e;
+		} otherwise {};
+		last unless (defined($arg));
+		if ($bool) {
+			if ($op eq 'notin') {
+				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			} else {
+				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			}
+		}
+	}
+	if ($error) {
+		$l->debug("$op error: " . $error->text);
+		$error->throw;
+	} else {
+		if ($op eq 'notin') {
+			return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		} else {
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+}
 
 # sop:isBound
 $RDF::Query::functions{"sparql:bound"}	= sub {

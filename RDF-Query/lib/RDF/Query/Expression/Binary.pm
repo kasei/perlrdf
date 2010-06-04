@@ -85,6 +85,8 @@ sub evaluate {
 	my $op		= $self->op;
 	my @operands	= $self->operands;
 	my ($lhs, $rhs)	= map {
+						throw RDF::Query::Error::ExecutionError ( -text => "error in evaluating operands to binary $op" )
+							unless (blessed($_));
 						$_->isa('RDF::Query::Algebra')
 							? $_->evaluate( $query, $bound )
 							: ($_->isa('RDF::Trine::Node::Variable'))

@@ -20,7 +20,7 @@ use base qw(RDF::Query::Expression);
 
 use RDF::Query::Error qw(:try);
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
 
 ######################################################################
@@ -49,6 +49,8 @@ our %FUNCTION_MAP	= (
 	iri			=> "IRI",
 	uri			=> "IRI",
 	bnode		=> "BNODE",
+	in			=> "IN",
+	notin		=> "NOT IN",
 );
 
 =head1 METHODS
@@ -106,7 +108,7 @@ sub sse {
 	my $context	= shift;
 	
 	my $uri		= $self->uri->uri_value;
-	if ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
+	if ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
 		my $func	= $2;
 		return sprintf(
 			'(%s %s)',
@@ -134,15 +136,26 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
-	my $string	= sprintf(
-		"%s(%s)",
-		$func,
-		join(', ', map { $_->as_sparql( $context, $indent ) } @args),
-	);
-	return $string;
+	if ($func eq 'IN' or $func eq 'NOT IN') {
+		my $term	= shift(@args);
+		my $string	= sprintf(
+			"%s %s (%s)",
+			$term->as_sparql( $context, $indent ),
+			$func,
+			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	} else {
+		my $string	= sprintf(
+			"%s(%s)",
+			$func,
+			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	}
 }
 
 =item C<< type >>
@@ -206,19 +219,23 @@ sub evaluate {
 	
 	no warnings 'uninitialized';
 	my $uriv	= $uri->uri_value;
-	if ($uriv =~ /^sparql:logical-(.+)$/) {
+	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/) {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw
 		# TypeErrors (e.g. true || fail ==> true).
 		my @args	= $self->arguments;
 		my $args	= sub {
 						my $value	= shift(@args);
-						return unless (defined $value);
-						return $value->isa('RDF::Query::Algebra')
-							? $value->evaluate( $query, $bound )
-							: ($value->isa('RDF::Trine::Node::Variable'))
-								? $bound->{ $value->name }
-								: $value
+						return unless (blessed($value));
+						my $val	= 0;
+						try {
+							$val	= $value->isa('RDF::Query::Expression')
+								? $value->evaluate( $query, $bound )
+								: ($value->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $value->name }
+									: $value;
+						} otherwise {};
+						return $val;
 					};
 		my $func	= $query->get_function( $uri );
 		my $value	= $func->( $query, $args );
@@ -248,6 +265,7 @@ sub evaluate {
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
+		Carp::confess Dumper($uri, $func) unless (reftype($func) eq 'CODE');
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

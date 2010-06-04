@@ -1963,7 +1963,34 @@ sub _RelationalExpression {
 		$self->_NumericExpression;
 		push(@list, splice(@{ $self->{stack} }));
 		$self->_add_stack( $self->new_binary_expression( $op, @list ) );
+	} elsif ($self->_test(qr/(NOT )?IN/)) {
+		my @list	= splice(@{ $self->{stack} });
+		my $op		= lc($self->_eat(qr/(NOT )?IN/));
+		$op			=~ s/\s+//g;
+		$self->__consume_ws_opt;
+		$self->_ExpressionList();
+		push(@list, splice(@{ $self->{stack} }));
+		$self->_add_stack( $self->new_function_expression( "sparql:$op", @list ) );
 	}
+}
+
+sub _ExpressionList {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	my @args;
+	unless ($self->_test(')')) {
+		$self->_Expression;
+		push( @args, splice(@{ $self->{stack} }) );
+		while ($self->_test(',')) {
+			$self->_eat(',');
+			$self->__consume_ws_opt;
+			$self->_Expression;
+			push( @args, splice(@{ $self->{stack} }) );
+		}
+	}
+	$self->_eat(')');
+	$self->_add_stack( @args );
 }
 
 # [51] NumericExpression ::= AdditiveExpression
