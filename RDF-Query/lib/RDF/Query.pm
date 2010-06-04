@@ -936,6 +936,9 @@ sub get_function {
 	my $uri		= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
+	if (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
+		$uri	= $uri->uri_value;
+	}
 	$l->debug("trying to get function from $uri");
 	
 	if (blessed($uri) and $uri->isa('RDF::Query::Node::Resource')) {
