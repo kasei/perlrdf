@@ -1265,7 +1265,7 @@ sub __handle_GraphPatternNotTriples {
 		}
 		my $pat	= $class->new( $ggp, @args );
 		$self->_add_patterns( $pat );
-	} elsif ($class eq 'RDF::Query::Algebra::Optional') {
+	} elsif ($class =~ /^RDF::Query::Algebra::(Optional|Minus)$/) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
@@ -1402,13 +1402,15 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/SERVICE|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
+	return $self->_test(qr/SERVICE|MINUS|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
 	if ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
+	} elsif ($self->_test(qr/MINUS/i)) {
+		$self->_MinusGraphPattern;
 	} elsif ($self->_ExistsGraphPattern_test) {
 		$self->_ExistsGraphPattern;
 	} elsif ($self->_OptionalGraphPattern_test) {
@@ -1468,6 +1470,16 @@ sub _OptionalGraphPattern {
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
 	my $opt		= ['RDF::Query::Algebra::Optional', $ggp];
+	$self->_add_stack( $opt );
+}
+
+sub _MinusGraphPattern {
+	my $self	= shift;
+	$self->_eat( qr/MINUS/i );
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	my $opt		= ['RDF::Query::Algebra::Minus', $ggp];
 	$self->_add_stack( $opt );
 }
 

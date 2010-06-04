@@ -52,6 +52,7 @@ use RDF::Query::Plan::Load;
 use RDF::Query::Plan::Clear;
 use RDF::Query::Plan::Insert;
 use RDF::Query::Plan::Delete;
+use RDF::Query::Plan::Minus;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -576,6 +577,21 @@ sub generate_plans {
 #						warn "caught MethodInvocationError.";
 					};
 				}
+			}
+		}
+		push(@return_plans, @plans);
+	} elsif ($type eq 'Minus') {
+		my @patterns	= ($algebra->pattern, $algebra->minus);
+		my @base_plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } @patterns;
+		my @plans;
+		my $base_a	= shift(@base_plans);
+		my $base_b	= shift(@base_plans);
+		foreach my $i (0 .. $#{ $base_a }) {
+			foreach my $j (0 .. $#{ $base_b }) {
+				my $a	= $base_a->[ $i ];
+				my $b	= $base_b->[ $j ];
+				my $plan	= RDF::Query::Plan::Minus->new( $a, $b );
+				push( @plans, $plan );
 			}
 		}
 		push(@return_plans, @plans);
