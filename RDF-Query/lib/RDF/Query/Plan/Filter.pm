@@ -20,6 +20,7 @@ package RDF::Query::Plan::Filter;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+use RDF::Query::Error qw(:try);
 
 ######################################################################
 
@@ -70,7 +71,7 @@ sub execute ($) {
 		$self->[0]{filter}	= sub {
 			my $row		= shift;
 			my $bool	= 0;
-			eval {
+			try {
 				my $qok	= ref($query);
 				local($query->{_query_row_cache})	= {};
 				unless ($qok) {
@@ -81,7 +82,7 @@ sub execute ($) {
 				}
 				my $value	= $filter->evaluate( $query, $row );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
-			};
+			} otherwise {};
 			return $bool;
 		};
 	} else {
