@@ -136,6 +136,7 @@ sub as_sparql {
 	foreach my $p ($self->patterns) {
 		push(@patterns, $p->as_sparql( $context, "$indent\t" ));
 	}
+	return "{}" unless (@patterns);
 	my $patterns	= join("\n${indent}\t", @patterns);
 	my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
 	return $string;
