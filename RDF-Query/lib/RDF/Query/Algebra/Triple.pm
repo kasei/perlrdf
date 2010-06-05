@@ -60,7 +60,12 @@ sub new {
 			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
 		}
 	}
-	return $class->SUPER::new( @nodes );
+	return $class->_new( @nodes );
+}
+
+sub _new {
+	my $class	= shift;
+	return $class->SUPER::new( @_ );
 }
 
 =item C<< as_sparql >>
@@ -116,7 +121,7 @@ Returns a list of the blank node names used in this algebra expression.
 sub referenced_blanks {
 	my $self	= shift;
 	my @nodes	= $self->nodes;
-	my @blanks	= grep { $_->isa('RDF::Trine::Node::Blank') } @nodes;
+	my @blanks	= grep { Carp::confess Dumper($_) unless blessed($_); $_->isa('RDF::Trine::Node::Blank') } @nodes;
 	return map { $_->blank_identifier } @blanks;
 }
 

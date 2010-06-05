@@ -18,7 +18,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
-use Data::Dumper;
 use Set::Scalar;
 use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
@@ -109,8 +108,11 @@ sub sse {
 	my $context	= shift;
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
-	
-	die 'SSE serialization of path expressions not implemented';
+	my $start	= $self->start->sse( $context, $prefix );
+	my $end		= $self->end->sse( $context, $prefix );
+	my $path	= $self->path;
+	my $psse	= $self->_expand_path( $path, 'sse' );
+	return sprintf( '(path %s (%s) %s)', $start, $psse, $end );
 }
 
 =item C<< as_sparql >>
@@ -122,14 +124,42 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift;
-	die 'SPARQL serialization of path expressions not implemented';
-	my $string	= sprintf(
-		"%s\n${indent}UNION\n${indent}%s",
-		$self->first->as_sparql( $context, $indent ),
-		$self->second->as_sparql( $context, $indent ),
-	);
-	return $string;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
+	my $start	= $self->start->as_sparql( $context, $prefix );
+	my $end		= $self->end->as_sparql( $context, $prefix );
+	my $path	= $self->path;
+	my $psse	= $self->_expand_path( $path, 'as_sparql' );
+	return sprintf( '%s (%s) %s .', $start, $psse, $end );
+}
+
+sub _expand_path {
+	my $self	= shift;
+	my $array	= shift;
+	my $method	= shift;
+	if (blessed($array)) {
+		return $array->$method({}, '');
+	} else {
+		my ($op, @nodes)	= @$array;
+		my @nodessse	= map { $self->_expand_path($_, $method) } @nodes;
+		my $psse;
+		if ($op eq '+') {
+			$psse	= '(' . join('/', @nodessse) . ')+';
+		} elsif ($op eq '*') {
+			$psse	= '(' . join('/', @nodessse) . ')*';
+		} elsif ($op eq '?') {
+			$psse	= '(' . join('/', @nodessse) . ')?';
+		} elsif ($op eq '^') {
+			$psse	= join('/', map { "^$_" } @nodessse);
+		} elsif ($op eq '/') {
+			$psse	= join('/', @nodessse);
+		} elsif ($op eq '|') {
+			$psse	= join('|', @nodessse);
+		} else {
+			die "Serialization of unknown path type $op";
+		}
+		return $psse;
+	}
 }
 
 =item C<< type >>

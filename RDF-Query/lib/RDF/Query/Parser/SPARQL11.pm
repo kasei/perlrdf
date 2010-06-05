@@ -407,7 +407,56 @@ sub __new_statement {
 	if (my $graph = $self->{named_graph}) {
 		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
 	} else {
-		return RDF::Query::Algebra::Triple->new( @nodes );
+		return RDF::Query::Algebra::Triple->_new( @nodes );
+	}
+}
+
+sub __new_path {
+	my $self	= shift;
+	my $start	= shift;
+	my $pdata	= shift;
+	my $end		= shift;
+	(undef, my $op, my @nodes)	= @$pdata;
+	foreach (@nodes) {
+		if (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+			(undef, my $op, my @nodes)	= @$_;
+			$_	= [$op, @nodes];
+		}
+	}
+	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
+	return $path;
+}
+
+sub __new_bgp {
+	# fix up BGPs that might actually have property paths in them. split those
+	# out as their own path algebra objects, and join them with the bgp with a
+	# ggp if necessary
+	my $self		= shift;
+	my @patterns	= @_;
+	my @paths		= grep { reftype($_->predicate) eq 'ARRAY' and $_->predicate->[0] eq 'PATH' } @patterns;
+	my @triples		= grep { blessed($_->predicate) } @patterns;
+	if (scalar(@patterns) > scalar(@paths) + scalar(@triples)) {
+		Carp::cluck "more than just triples and paths passed to __new_bgp: " . Dumper(\@patterns);
+	}
+	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+	if (@paths) {
+		my @p;
+		foreach my $p (@paths) {
+			my $start	= $p->subject;
+			my $end		= $p->object;
+			my $pdata	= $p->predicate;
+			push(@p, $self->__new_path( $start, $pdata, $end ));
+		}
+		my $pgroup	= (scalar(@p) == 1)
+					? $p[0]
+					: RDF::Query::Algebra::GroupGraphPattern->new( @p );
+		if (scalar(@triples)) {
+			return RDF::Query::Algebra::GroupGraphPattern->new( $bgp, $pgroup );
+		} else {
+			return $pgroup;
+		}
+	} else {
+		return $bgp;
 	}
 }
 
@@ -1016,7 +1065,6 @@ sub _SolutionModifier {
 	
 	if ($self->_test( qr/HAVING/i )) {
 		$self->_HavingClause;
-#		die Dumper($self);
 		$self->__consume_ws_opt;
 	}
 	
@@ -1221,7 +1269,7 @@ sub _GroupGraphPatternSub {
 				$self->_TriplesBlock;
 				my $rhs		= $self->_remove_pattern;
 				my $lhs		= $self->_remove_pattern;
-				my $merged	= RDF::Query::Algebra::BasicGraphPattern->new( map { $_->triples } ($lhs, $rhs) );
+				my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
 				$self->_add_patterns( $merged );
 			} else {
 				$self->_TriplesBlock;
@@ -1282,7 +1330,7 @@ sub __handle_GraphPatternNotTriples {
 	} elsif ($class eq 'RDF::Query::Algebra::GroupGraphPattern') {
 		# no-op
 	} else {
-		Carp::confess Dumper($class, \@args);
+		Carp::confess 'Unrecognized GraphPattern in __handle_GraphPatternNotTriples' . Dumper($class, \@args);
 	}
 }
 
@@ -1372,7 +1420,7 @@ sub _TriplesBlock {
 	$self->_push_pattern_container;
 	$self->__TriplesBlock;
 	my $triples		= $self->_pop_pattern_container;
-	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @$triples );
+	my $bgp			= $self->__new_bgp( @$triples );
 	$self->_add_patterns( $bgp );
 }
 
@@ -1381,7 +1429,7 @@ sub _TriplesBlock {
 ## the one with one underscore (_TriplesBlock) will pop everything off and make the BGP.
 sub __TriplesBlock {
 	my $self	= shift;
-	$self->_TriplesSameSubject;
+	$self->_TriplesSameSubjectPath;
 	$self->__consume_ws_opt;
 	my $got_dot	= 0;
 	while ($self->_test('.')) {
@@ -1674,6 +1722,38 @@ sub _TriplesSameSubject {
 #	return @triples;
 }
 
+# TriplesSameSubjectPath ::= VarOrTerm PropertyListNotEmptyPath | TriplesNode PropertyListPath
+sub _TriplesSameSubjectPath {
+	my $self	= shift;
+	my @triples;
+	if ($self->_TriplesNode_test) {
+		$self->_TriplesNode;
+		my ($s)	= splice(@{ $self->{stack} });
+		$self->__consume_ws_opt;
+		$self->_PropertyListPath;
+		$self->__consume_ws_opt;
+		
+		my @list	= splice(@{ $self->{stack} });
+		foreach my $data (@list) {
+			push(@triples, $self->__new_statement( $s, @$data ));
+		}
+	} else {
+		$self->_VarOrTerm;
+		my ($s)	= splice(@{ $self->{stack} });
+
+		$self->__consume_ws_opt;
+		$self->_PropertyListNotEmptyPath;
+		$self->__consume_ws_opt;
+		my (@list)	= splice(@{ $self->{stack} });
+		foreach my $data (@list) {
+			push(@triples, $self->__new_statement( $s, @$data ));
+		}
+	}
+	
+	$self->_add_patterns( @triples );
+#	return @triples;
+}
+
 # [33] PropertyListNotEmpty ::= Verb ObjectList ( ';' ( Verb ObjectList )? )*
 sub _PropertyListNotEmpty {
 	my $self	= shift;
@@ -1703,6 +1783,46 @@ sub _PropertyList {
 	my $self	= shift;
 	if ($self->_Verb_test) {
 		$self->_PropertyListNotEmpty;
+	}
+}
+
+# [33] PropertyListNotEmptyPath ::= (VerbPath | VerbSimple) ObjectList ( ';' ( (VerbPath | VerbSimple) ObjectList )? )*
+sub _PropertyListNotEmptyPath {
+	my $self	= shift;
+	if ($self->_VerbPath_test) {
+		$self->_VerbPath;
+	} else {
+		$self->_VerbSimple;
+	}
+	my ($v)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_ObjectList;
+	my @l	= splice(@{ $self->{stack} });
+	my @props		= map { [$v, $_] } @l;
+	while ($self->_test(qr'\s*;')) {
+		$self->_eat(';');
+		$self->__consume_ws_opt;
+		if ($self->_VerbPath_test or $self->_VerbSimple_test) {
+			if ($self->_VerbPath_test) {
+				$self->_VerbPath;
+			} else {
+				$self->_VerbSimple;
+			}
+			my ($v)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			$self->_ObjectList;
+			my @l	= splice(@{ $self->{stack} });
+			push(@props, map { [$v, $_] } @l);
+		}
+	}
+	$self->_add_stack( @props );
+}
+
+# [34] PropertyListPath ::= PropertyListNotEmptyPath?
+sub _PropertyListPath {
+	my $self	= shift;
+	if ($self->_Verb_test) {
+		$self->_PropertyListNotEmptyPath;
 	}
 }
 
@@ -1748,6 +1868,190 @@ sub _Verb {
 		$self->_VarOrIRIref;
 	}
 }
+
+# VerbSimple ::= Var
+sub _VerbSimple_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/[\$?]/));
+}
+
+sub _VerbSimple {
+	my $self	= shift;
+	$self->_Var;
+}
+
+# VerbPath ::= Path
+sub _VerbPath_test {
+	my $self	= shift;
+	return 1 if ($self->_IRIref_test);
+	return 1 if ($self->_test(qr/\^|[(a!]/));
+}
+
+sub _VerbPath {
+	my $self	= shift;
+	$self->_Path
+}
+
+# [74]  	Path	  ::=  	PathAlternative
+sub _Path {
+	my $self	= shift;
+	$self->_PathAlternative;
+}
+
+################################################################################
+
+# [75]  	PathAlternative	  ::=  	PathSequence ( '|' PathSequence )*
+sub _PathAlternative {
+	my $self	= shift;
+	$self->_PathSequence;
+	while ($self->_test(qr/[|]/)) {
+		$self->_eat(qr/[|]/);
+		$self->_PathSequence;
+	}
+}
+
+# [76]  	PathSequence	  ::=  	PathEltOrInverse ( '/' PathEltOrInverse | '^' PathElt )*
+sub _PathSequence {
+	my $self	= shift;
+	$self->_PathEltOrInverse;
+	while ($self->_test(qr<[/^]>)) {
+		my $op;
+		my ($lhs)	= splice(@{ $self->{stack} });
+		if ($self->_test(qr</>)) {
+			$op	= $self->_eat(qr</>);
+			$self->_PathEltOrInverse;
+		} else {
+			$op	= $self->_eat(qr<\^>);
+			$self->_PathElt;
+		}
+		my ($rhs)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', $op, $lhs, $rhs] );
+	}
+}
+
+# [77]  	PathElt	  ::=  	PathPrimary PathMod?
+sub _PathElt {
+	my $self	= shift;
+	$self->_PathPrimary;
+	if ($self->_PathMod_test) {
+		my @path	= splice(@{ $self->{stack} });
+		$self->_PathMod;
+		my ($mod)	= splice(@{ $self->{stack} });
+		if (defined($mod)) {
+			$self->_add_stack( ['PATH', $mod, @path] );
+		} else {
+			# this might happen if we descend into _PathMod by mistaking a + as
+			# a path modifier, but _PathMod figures out it's actually part of a
+			# signed numeric object that follows the path
+			$self->_add_stack( @path );
+		}
+	}
+}
+
+# [78]  	PathEltOrInverse	  ::=  	PathElt | '^' PathElt
+sub _PathEltOrInverse {
+	my $self	= shift;
+	if ($self->_test(qr/\^/)) {
+		$self->_eat(qr<\^>);
+		$self->_PathElt;
+		my @props	= splice(@{ $self->{stack} });
+		$self->_add_stack( [ 'PATH', '^', @props ] );
+	} else {
+		$self->_PathElt;
+	}
+}
+
+# [79]  	PathMod	  ::=  	( '*' | '?' | '+' | '{' ( Integer ( ',' ( '}' | Integer '}' ) | '}' ) ) )
+sub _PathMod_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/[*?+{]/));
+}
+
+sub _PathMod {
+	my $self	= shift;
+	if ($self->_test(qr/[*?+]?/)) {
+		if ($self->_test(qr/[+][.0-9]/)) {
+			return;
+		} else {
+			$self->_add_stack( $self->_eat(qr/[*?+]/) );
+		}
+	} else {
+		$self->_eat(qr/{/);
+		my $value	= $self->_eat( $r_INTEGER );
+		if ($self->_test(qr/,/)) {
+			$self->_eat(qr/,/);
+			if ($self->_test(qr/}/)) {
+				$self->_eat(qr/}/);
+				$self->_add_stack( "$value-" );
+			} else {
+				my $end	= $self->_eat( $r_INTEGER );
+				$self->_eat(qr/}/);
+				$self->_add_stack( "$value-$end" );
+			}
+		} else {
+			$self->_eat(qr/}/);
+			$self->_add_stack( "$value" );
+		}
+	}
+}
+
+# [80]  	PathPrimary	  ::=  	( IRIref | 'a' | '!' PathNegatedPropertyClass | '(' Path ')' )
+sub _PathPrimary {
+	my $self	= shift;
+	if ($self->_IRIref_test) {
+		$self->_IRIref;
+	} elsif ($self->_test(qr/a[\n\t\r <]/)) {
+		$self->_eat(qr/a/);
+		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
+		$self->_add_stack( $type );
+	} elsif ($self->_test(qr/[!]/)) {
+		$self->_eat(qr/[!]/);
+		$self->_PathNegatedPropertyClass;
+	} else {
+		$self->_eat(qr/[(]/);
+		$self->_Path;
+		$self->_eat(qr/[)]/);
+	}
+}
+
+# [81]  	PathNegatedPropertyClass	  ::=  	( PathOneInPropertyClass | '(' ( PathOneInPropertyClass ( '|' PathOneInPropertyClass )* )? ')' )
+sub _PathNegatedPropertyClass {
+	my $self	= shift;
+	if ($self->_test(qr/[(]/)) {
+		$self->_eat(qr/[(]/);
+		if ($self->_PathOneInPropertyClass_test) {
+			$self->_PathOneInPropertyClass;
+			while ($self->_test(/[|]/)) {
+				$self->_eat(qr/[|]/);
+				$self->_PathOneInPropertyClass;
+			}
+		}
+		$self->_eat(qr/[)]/);
+	} else {
+		$self->_PathOneInPropertyClass;
+	}
+}
+
+# [82]  	PathOneInPropertyClass	  ::=  	IRIref | 'a'
+sub _PathOneInPropertyClass_test {
+	my $self	= shift;
+	return 1 if $self->_IRIref_test;
+	return 1 if ($self->_test(qr/a[\n\t\r <]/));
+	return 0;
+}
+
+sub _PathOneInPropertyClass {
+	my $self	= shift;
+	if ($self->_test(qr/a[\n\t\r <]/)) {
+		$self->_eat(qr/a/);
+		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
+		$self->_add_stack( $type );
+	} else {
+		$self->_IRIref;
+	}
+}
+
+################################################################################
 
 # [38] TriplesNode ::= Collection | BlankNodePropertyList
 sub _TriplesNode_test {
@@ -1931,11 +2235,8 @@ sub _ConditionalOrExpression {
 # [48] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
 sub _ConditionalAndExpression {
 	my $self	= shift;
-	my @list;
-	
 	$self->_ValueLogical;
-	push(@list, splice(@{ $self->{stack} }));
-	Carp::confess Dumper(\@list) if (scalar(@list) > 1);
+	my @list	= splice(@{ $self->{stack} });
 	
 	$self->__consume_ws_opt;
 	while ($self->_test('&&')) {
