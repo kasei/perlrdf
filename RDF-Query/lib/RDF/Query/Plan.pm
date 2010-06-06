@@ -839,7 +839,7 @@ sub __path_plan {
 	if (blessed($path)) {
 		my $s	= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
 		my $e	= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
-		return RDF::Query::Plan::Triple->new( $start, $path, $end );
+		return RDF::Query::Plan::Triple->new( $s, $path, $e );
 	} elsif ($op eq '?') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $context );
@@ -848,6 +848,7 @@ sub __path_plan {
 		return $union;
 	} elsif ($op eq '^') {
 		my $node	= shift(@nodes);
+		return $self->__path_plan( $end, $node, $start, $context );
 	} elsif ($op eq '/') {
 		my $count	= scalar(@nodes);
 		if ($count == 1) {

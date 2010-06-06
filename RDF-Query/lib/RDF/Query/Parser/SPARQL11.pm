@@ -2099,7 +2099,8 @@ sub _BlankNodePropertyList {
 	my $self	= shift;
 	$self->_eat('[');
 	$self->__consume_ws_opt;
-	$self->_PropertyListNotEmpty;	
+#	$self->_PropertyListNotEmpty;
+	$self->_PropertyListNotEmptyPath;
 	$self->__consume_ws_opt;
 	$self->_eat(']');
 	
