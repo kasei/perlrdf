@@ -1336,14 +1336,10 @@ sub __handle_GraphPatternNotTriples {
 		}
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
-	} elsif ($class eq 'RDF::Query::Algebra::Union') {
-		# no-op
-	} elsif ($class eq 'RDF::Query::Algebra::NamedGraph') {
-		# no-op
-	} elsif ($class eq 'RDF::Query::Algebra::GroupGraphPattern') {
+	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
-		Carp::confess 'Unrecognized GraphPattern in __handle_GraphPatternNotTriples' . Dumper($class, \@args);
+		Carp::confess 'Unrecognized GraphPattern in __handle_GraphPatternNotTriples: ' . Dumper($class, \@args);
 	}
 }
 
@@ -2478,13 +2474,12 @@ sub _Aggregate {
 		$distinct	= 1;
 	}
 	
-	my @expr;
-	my %options;
+	my (@expr, %options);
 	if ($self->_test('*')) {
 		@expr	= $self->_eat('*');
 	} else {
 		$self->_Expression;
-		@expr	= splice(@{ $self->{stack} });
+		push(@expr, splice(@{ $self->{stack} }));
 		if ($op eq 'GROUP_CONCAT') {
 			$self->__consume_ws_opt;
 			while ($self->_test(qr/,/)) {
@@ -2516,8 +2511,7 @@ sub _Aggregate {
 	my $name	= sprintf('%s(%s)', $op, $arg);
 	$self->_eat(')');
 	
-	$self->{build}{__aggregate}[0]{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), @expr ];
-	$self->{build}{__aggregate}[1]{ $name }	= \%options;
+	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), \%options, @expr ];
 	
 	$self->_add_stack( RDF::Query::Node::Variable::ExpressionProxy->new($name) );
 	
@@ -2736,10 +2730,10 @@ sub _String {
 		$value		= substr($string, 1, length($string) - 2);
 	}
 #	$value	=~ s/(${r_ECHAR})/"$1"/ge;
-	$value	=~ s/\\t/\n/g;
+	$value	=~ s/\\t/\t/g;
 	$value	=~ s/\\b/\n/g;
 	$value	=~ s/\\n/\n/g;
-	$value	=~ s/\\r/\n/g;
+	$value	=~ s/\\r/\x08/g;
 	$value	=~ s/\\"/"/g;
 	$value	=~ s/\\'/'/g;
 	$value	=~ s/\\\\/\\/g;	# backslash must come last, so it doesn't accidentally create a new escape
@@ -2830,8 +2824,7 @@ sub __solution_modifiers {
 			$having_expr	= $having;
 		}
 		
-		my ($agghash, $optshash)	= @$aggdata;
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$agghash], options => $optshash } );
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$aggdata] } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	

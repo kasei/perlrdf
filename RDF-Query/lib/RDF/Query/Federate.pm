@@ -63,7 +63,7 @@ Returns a new RDF::Query::Federate object for the specified C<$query>.
 The query language defaults to SPARQLP, but may be set specifically by
 specifying either C<$languri> or C<$lang>, whose acceptable values are:
 
-  $lang: 'rdql', 'sparql', 'tsparql', or 'sparqlp'
+  $lang: 'rdql', 'sparql11', or 'sparql'
 
   $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
 
@@ -74,7 +74,7 @@ sub new {
 	my $query	= shift;
 	my $baseuri	= shift;
 	my $languri	= shift;
-	my $lang	= shift || 'sparqlp';
+	my $lang	= shift || 'sparql11';
 	return $class->SUPER::new( $query, $baseuri, $languri, $lang, @_ );
 }
 

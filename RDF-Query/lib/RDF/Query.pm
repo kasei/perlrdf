@@ -117,7 +117,6 @@ use RDF::Query::Node qw(iri);
 use RDF::Query::Parser::RDQL;
 use RDF::Query::Parser::SPARQL;
 use RDF::Query::Parser::SPARQL11;
-use RDF::Query::Parser::SPARQLP;	# local extensions to SPARQL
 use RDF::Query::Compiler::SQL;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Plan;
@@ -145,7 +144,7 @@ Returns a new RDF::Query object for the specified C<$query>.
 The query language defaults to SPARQL, but may be set specifically by
 specifying either C<$languri> or C<$lang>, whose acceptable values are:
 
-  $lang: 'rdql', 'sparql', 'tsparql', or 'sparqlp'
+  $lang: 'rdql', 'sparql11', or 'sparql'
 
   $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
 
@@ -171,8 +170,6 @@ sub new {
 	my %names	= (
 					rdql		=> 'RDF::Query::Parser::RDQL',
 					sparql		=> 'RDF::Query::Parser::SPARQL',
-					tsparql		=> 'RDF::Query::Parser::SPARQLP',
-					sparqlp		=> 'RDF::Query::Parser::SPARQLP',
 					sparql11	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	my %uris	= (
@@ -904,7 +901,7 @@ sub supported_extensions {
 =item C<< supported_functions >>
 
 Returns a list URLs that may be used as functions in FILTER clauses
-(and the SELECT clause if the SPARQLP parser is used).
+(and the SELECT clause if the SPARQL 1.1 parser is used).
 
 =cut
 

@@ -19,7 +19,7 @@ foreach my $model (@models) {
 	print "### Using model: $model\n";
 	{
 		print "# select expression (node plus literal)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT (?lat AS ?latitude)
@@ -41,7 +41,7 @@ END
 
 	{
 		print "# select expression (node plus literal)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT ?lat (?long + 1.0 AS ?long_off)
@@ -67,7 +67,7 @@ END
 	SKIP: {
 		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 2 ) unless ($GEO_DISTANCE_LOADED);
 		print "# select expression (function)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX dcterms: <http://purl.org/dc/terms/>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>

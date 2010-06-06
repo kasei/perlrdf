@@ -30,7 +30,7 @@ foreach my $model (@models) {
 	SKIP: {
 		{
 			print "# computed predicate: list:member\n";
-			my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+			my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 				PREFIX test: <http://kasei.us/e/ns/test#>
 				PREFIX list: <http://www.jena.hpl.hp.com/ARQ/list#>
 				SELECT ?member

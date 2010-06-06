@@ -40,7 +40,7 @@ BEGIN {
 
 =item C<new ( $pattern, \@groupby, $alias => [$op => $col] )>
 
-=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op => $col] ] )>
+=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op, \%options, @cols] ] )>
 
 Returns a new Aggregate structure. Groups by the named bindings in C<< @groupby >>,
 and returns new bindings for the named C<< $alias >> for the operation C<< $op >>
@@ -54,16 +54,21 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $groupby	= shift;
-	my (@ops, %opts);
+	my @ops;
 	if (scalar(@_) and ref($_[0]) and reftype($_[0]) eq 'HASH') {
 		my $hash	= shift;
 		@ops		= @{ $hash->{ 'expressions' } || [] };
-		%opts		= %{ $hash->{ 'options' } || {} };
 	} else {
+		while (@_) {
+			my ($alias, $data)	= splice(@_,0,2,());
+			my $op	= shift(@$data);
+			my @data	= ($op, {}, @$data);
+			push(@ops, $alias, \@data);
+		}
 		@ops		= @_;
 	}
 	
-	return bless( [ $pattern, $groupby, \@ops, \%opts ] );
+	return bless( [ $pattern, $groupby, \@ops ] );
 }
 
 =item C<< construct_args >>
@@ -101,20 +106,9 @@ sub groupby {
 	return @{ $self->[1] };
 }
 
-=item C<< options >>
-
-Returns a hash of options to this aggregate.
-
-=cut
-
-sub options {
-	my $self	= shift;
-	return %{ $self->[3] };
-}
-
 =item C<< ops >>
 
-Returns a list of tuples as ARRAY refs containing C<< $alias, $op, $col >>.
+Returns a list of tuples as ARRAY refs containing C<< $alias, $op, @cols >>.
 
 =cut
 
@@ -125,8 +119,8 @@ sub ops {
 	while (@ops) {
 		my $alias	= shift(@ops);
 		my $data	= shift(@ops);
-		my ($op, @col)	= @$data;
-		push(@tuples, [$alias, $op, @col]);
+		my ($op, $opts, @col)	= @$data;
+		push(@tuples, [$alias, $op, $opts, @col]);
 	}
 	return @tuples;
 }
@@ -145,15 +139,14 @@ sub sse {
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
-	my %opts	= $self->options;
 	foreach my $data (@ops) {
-		my ($alias, $op, @cols)	= @$data;
+		my ($alias, $op, $opts, @cols)	= @$data;
 		my @col_strings	= map { ($_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
 		my $col_string	= join(' ', @col_strings);
 		if (@col_strings > 1) {
 			$col_string	= '(' . $col_string . ')';
 		}
-		my %op_opts	= %{ $opts{$alias} || {} };
+		my %op_opts	= %{ $opts || {} };
 		my @opts_keys	= keys %op_opts;
 		if (@opts_keys) {
 			my $opt_string	= '(' . join(' ', map { $_, qq["$op_opts{$_}"] } @opts_keys) . ')';

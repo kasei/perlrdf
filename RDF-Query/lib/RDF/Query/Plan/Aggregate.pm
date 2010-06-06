@@ -34,7 +34,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, @attributes ], ... ] ) >>
+=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, \%options, @attributes ], ... ] ) >>
 
 =cut
 
@@ -89,6 +89,7 @@ sub execute ($) {
 		my @rows;
 		GROUP: foreach my $group (keys %{ $group_data{ 'rows' } }) {
 			$l->debug( "group: $group" );
+			my %options;
 			my %aggregates;
 			my %passthrough_data;
 			my @group	= @{ $group_data{ 'groups' }{ $group } };
@@ -105,7 +106,8 @@ sub execute ($) {
 			my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
 			foreach my $data (@operation_data) {
 				my $aggregate_data	= pop(@$data);
-				my ($alias, $op, @cols)	= @$data;
+				my ($alias, $op, $opts, @cols)	= @$data;
+				$options{ $alias }	= $opts;
 				my $distinct	= ($op =~ /^(.*)-DISTINCT$/);
 				$op				=~ s/-DISTINCT$//;
 				my $col	= $cols[0];
@@ -277,7 +279,8 @@ sub execute ($) {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
 				} elsif ($op eq 'GROUP_CONCAT') {
-					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', @{ $aggregates{ $agg }{ $group }[1] }) );
+					my $j	= (exists $options{$agg}{seperator}) ? $options{$agg}{seperator} : ' ';
+					$row{ $agg }	= RDF::Query::Node::Literal->new( join($j, @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
@@ -372,9 +375,15 @@ sub sse {
 	my $gsse	= join(' ', @group);
 	my @ops;
 	foreach my $p (@{ $self->[3] }) {
-		my ($alias, $op, @cols)	= @$p;
+		my ($alias, $op, $options, @cols)	= @$p;
 		my $cols	= '(' . join(' ', map { $_->sse($context, "${indent}${more}") } @cols) . ')';
-		push(@ops, qq[("$alias" "$op" $cols)]);
+		my @opts_keys	= keys %$options;
+		if (@opts_keys) {
+			my $opt_string	= '(' . join(' ', map { $_, qq["$options->{$_}"] } @opts_keys) . ')';
+			push(@ops, qq[("$alias" "$op" $cols $opt_string)]);
+		} else {
+			push(@ops, qq[("$alias" "$op" $cols)]);
+		}
 	}
 	my $osse	= join(' ', @ops);
 	return sprintf(

@@ -93,7 +93,7 @@ foreach my $data (@models) {
 				);
 	
 	{
-		my $query	= RDF::Query->new( <<"END", { lang => 'sparqlp', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
 PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
 END
 		my ($plan, $context)	= $query->prepare();
@@ -385,7 +385,7 @@ END
 
 	SKIP: {
 		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
-		my $parser	= RDF::Query::Parser::SPARQLP->new();
+		my $parser	= RDF::Query::Parser::SPARQL11->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person ; foaf:homepage ?page } }' );
 		my $algebra	= $parsed->{triples}[0];
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );

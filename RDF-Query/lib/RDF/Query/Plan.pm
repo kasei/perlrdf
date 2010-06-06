@@ -421,7 +421,11 @@ sub generate_plans {
 	if ($type eq 'Aggregate') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @groups	= $algebra->groupby;
-		my @ops		= $algebra->ops;
+		my @ops;
+		foreach my $o ($algebra->ops) {
+			my ($alias, $op, $opts, @cols)	= @$o;
+			push(@ops, [ $alias, $op, $opts, @cols ]);
+		}
 		my @plans	= map { RDF::Query::Plan::Aggregate->new( $_, \@groups, expressions => \@ops ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Construct') {

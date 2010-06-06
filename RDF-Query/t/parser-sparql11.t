@@ -458,9 +458,9 @@ __END__
             - GROUP_CONCAT(?title)
             -
               - GROUP_CONCAT
+              - {}
               - !!perl/array:RDF::Query::Node::Variable
                 - title
-          - GROUP_CONCAT(?title): {}
         -
           - &1 !!perl/array:RDF::Query::Expression::Alias
             - alias
@@ -536,9 +536,9 @@ __END__
                 - SUM(?lprice)
                 -
                   - SUM
+                  - {}
                   - !!perl/array:RDF::Query::Node::Variable
                     - lprice
-              - SUM(?lprice): {}
             -
               - &1 !!perl/array:RDF::Query::Expression::Alias
                 - alias

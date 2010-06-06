@@ -361,7 +361,7 @@ Specifies the query string I<str>.
 =item -l I<lang>
 
 Specifies the query language I<lang> used. This should be one of: B<sparql>,
-B<sparqlp>, or B<rdql>.
+B<sparql11>, or B<rdql>.
 
 =item -O
 
