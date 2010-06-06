@@ -497,9 +497,13 @@ sub as_string {
 	my $count			= shift;
 	my @names			= $self->binding_names;
 	my $headers			= \@names;
-	my $rows			= [ map { [ @{$_}{ @names } ] } $self->get_all ];
+	my @rows;
+	while (my $row = $self->next) {
+		push(@rows, [ map { blessed($_) ? $_->as_string : '' } @{ $row }{ @names } ]);
+	}
+#	my $rows			= [ map { [ map { blessed($_) ? $_->as_string : '' } @{$_}{ @names } ] } @nodes ];
 	if (ref($count)) {
-		$$count	= scalar(@$rows);
+		$$count	= scalar(@rows);
 	}
 	
 	my @rule			= qw(- +);
@@ -508,22 +512,18 @@ sub as_string {
 	pop	@headers;
 	push @headers => (\q" |");
 	
-	unless ('ARRAY' eq ref $rows) {
-		die("make_table() rows must be an AoA with rows being same size as headers");
-	}
-	
-	if ('ARRAY' eq ref $rows->[0]) {
-		if (@$headers == @{ $rows->[0] }) {
+	if ('ARRAY' eq ref $rows[0]) {
+		if (@$headers == @{ $rows[0] }) {
 			my $table = Text::Table->new(@headers);
 			$table->rule(@rule);
 			$table->body_rule(@rule);
-			$table->load(@$rows);
+			$table->load(@rows);
 		
 			return join('',
 					$table->rule(@rule),
 					$table->title,
 					$table->rule(@rule),
-					map({ $table->body($_) } 0 .. @$rows),
+					map({ $table->body($_) } 0 .. @rows),
 					$table->rule(@rule)
 				);
 		} else {
