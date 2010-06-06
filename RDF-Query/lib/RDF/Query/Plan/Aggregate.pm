@@ -34,7 +34,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, $attribute ], ... ] ) >>
+=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, @attributes ], ... ] ) >>
 
 =cut
 
@@ -358,32 +358,59 @@ sub plan_node_name {
 	return 'aggregate';
 }
 
-=item C<< plan_prototype >>
-
-Returns a list of scalar identifiers for the type of the content (children)
-nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
-identifiers.
+=item C<< sse ( $context, $indent ) >>
 
 =cut
 
-sub plan_prototype {
+sub sse {
 	my $self	= shift;
-	return qw(P \E *\ssW);
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my $psse	= $self->pattern->sse( $context, "${indent}${more}" );
+	my @group	= map { $_->sse($context, "${indent}${more}") } $self->groupby;
+	my $gsse	= join(' ', @group);
+	my @ops;
+	foreach my $p (@{ $self->[3] }) {
+		my ($alias, $op, @cols)	= @$p;
+		my $cols	= '(' . join(' ', map { $_->sse($context, "${indent}${more}") } @cols) . ')';
+		push(@ops, qq[("$alias" "$op" $cols)]);
+	}
+	my $osse	= join(' ', @ops);
+	return sprintf(
+		"(aggregate\n${indent}${more}%s\n${indent}${more}(%s)\n${indent}${more}(%s))",
+		$psse,
+		$gsse,
+		$osse,
+	);
 }
 
-=item C<< plan_node_data >>
-
-Returns the data for this plan node that corresponds to the values described by
-the signature returned by C<< plan_prototype >>.
-
-=cut
-
-sub plan_node_data {
-	my $self	= shift;
-	my @group	= $self->groupby;
-	my @ops		= @{ $self->[3] };
-	return ($self->pattern, \@group, map { [@$_] } @ops);
-}
+# =item C<< plan_prototype >>
+# 
+# Returns a list of scalar identifiers for the type of the content (children)
+# nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+# identifiers.
+# 
+# =cut
+# 
+# sub plan_prototype {
+# 	my $self	= shift;
+# 	return qw(P \E *\ssW);
+# }
+# 
+# =item C<< plan_node_data >>
+# 
+# Returns the data for this plan node that corresponds to the values described by
+# the signature returned by C<< plan_prototype >>.
+# 
+# =cut
+# 
+# sub plan_node_data {
+# 	my $self	= shift;
+# 	my @group	= $self->groupby;
+# 	my @ops		= @{ $self->[3] };
+# 	return ($self->pattern, \@group, map { [@$_] } @ops);
+# }
 
 =item C<< distinct >>
 

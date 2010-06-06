@@ -332,7 +332,14 @@ sub _syntax_error {
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
+	
+	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
+	$near		=~ s/[\r\n ]+/ /g;
+	if ($thing) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $thing in $expect near $near";
+	} else {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";
+	}
 }
 
 sub _test {
@@ -2459,7 +2466,7 @@ sub _BrackettedExpression {
 	$self->_eat(')');
 }
 
-sub __Aggregate {
+sub _Aggregate {
 	my $self	= shift;
 	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
 	$self->_eat('(');
@@ -2472,6 +2479,7 @@ sub __Aggregate {
 	}
 	
 	my @expr;
+	my %options;
 	if ($self->_test('*')) {
 		@expr	= $self->_eat('*');
 	} else {
@@ -2485,6 +2493,18 @@ sub __Aggregate {
 				$self->_Expression;
 				push(@expr, splice(@{ $self->{stack} }));
 			}
+			$self->__consume_ws_opt;
+			if ($self->_test(qr/;/)) {
+				$self->_eat(qr/;/);
+				$self->__consume_ws_opt;
+				$self->_eat(qr/SEPERATOR/i);
+				$self->__consume_ws_opt;
+				$self->_eat(qr/=/);
+				$self->__consume_ws_opt;
+				$self->_String;
+				my ($sep)	= splice(@{ $self->{stack} });
+				$options{ seperator }	= $sep;
+			}
 		}
 	}
 	$self->__consume_ws_opt;
@@ -2496,8 +2516,10 @@ sub __Aggregate {
 	my $name	= sprintf('%s(%s)', $op, $arg);
 	$self->_eat(')');
 	
-	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), @expr ];
-	$self->_add_stack( $self->new_variable($name) );
+	$self->{build}{__aggregate}[0]{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), @expr ];
+	$self->{build}{__aggregate}[1]{ $name }	= \%options;
+	
+	$self->_add_stack( RDF::Query::Node::Variable::ExpressionProxy->new($name) );
 	
 }
 
@@ -2514,7 +2536,7 @@ sub _BuiltInCall_test {
 sub _BuiltInCall {
 	my $self	= shift;
 	if ($self->{__aggregate_call_ok} and $self->_test( $r_AGGREGATE_CALL )) {
-		$self->__Aggregate;
+		$self->_Aggregate;
 	} elsif ($self->_test(qr/(NOT\s+)?EXISTS/i)) {
 		my $op	= $self->_eat(qr/(NOT\s+)?EXISTS/i);
 		$self->__consume_ws_opt;
@@ -2808,7 +2830,8 @@ sub __solution_modifiers {
 			$having_expr	= $having;
 		}
 		
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$aggdata] } );
+		my ($agghash, $optshash)	= @$aggdata;
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$agghash], options => $optshash } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	

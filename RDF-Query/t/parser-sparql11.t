@@ -460,12 +460,13 @@ __END__
               - GROUP_CONCAT
               - !!perl/array:RDF::Query::Node::Variable
                 - title
+          - GROUP_CONCAT(?title): {}
         -
           - &1 !!perl/array:RDF::Query::Expression::Alias
             - alias
             - &2 !!perl/array:RDF::Query::Node::Variable
               - titles
-            - !!perl/array:RDF::Query::Node::Variable
+            - !!perl/array:RDF::Query::Node::Variable::ExpressionProxy
               - GROUP_CONCAT(?title)
       -
         - *2
@@ -493,7 +494,7 @@ __END__
         - FILTER
         - !!perl/array:RDF::Query::Expression::Binary
           - '>'
-          - !!perl/array:RDF::Query::Node::Variable
+          - !!perl/array:RDF::Query::Node::Variable::ExpressionProxy
             - SUM(?lprice)
           - !!perl/array:RDF::Query::Node::Literal
             - 10
@@ -537,12 +538,13 @@ __END__
                   - SUM
                   - !!perl/array:RDF::Query::Node::Variable
                     - lprice
+              - SUM(?lprice): {}
             -
               - &1 !!perl/array:RDF::Query::Expression::Alias
                 - alias
                 - &2 !!perl/array:RDF::Query::Node::Variable
                   - totalPrice
-                - !!perl/array:RDF::Query::Node::Variable
+                - !!perl/array:RDF::Query::Node::Variable::ExpressionProxy
                   - SUM(?lprice)
       -
         - *2

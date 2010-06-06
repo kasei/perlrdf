@@ -54,15 +54,16 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $groupby	= shift;
-	my (@ops);
+	my (@ops, %opts);
 	if (scalar(@_) and ref($_[0]) and reftype($_[0]) eq 'HASH') {
 		my $hash	= shift;
 		@ops		= @{ $hash->{ 'expressions' } || [] };
+		%opts		= %{ $hash->{ 'options' } || {} };
 	} else {
 		@ops		= @_;
 	}
 	
-	return bless( [ $pattern, $groupby, \@ops ] );
+	return bless( [ $pattern, $groupby, \@ops, \%opts ] );
 }
 
 =item C<< construct_args >>
@@ -100,6 +101,17 @@ sub groupby {
 	return @{ $self->[1] };
 }
 
+=item C<< options >>
+
+Returns a hash of options to this aggregate.
+
+=cut
+
+sub options {
+	my $self	= shift;
+	return %{ $self->[3] };
+}
+
 =item C<< ops >>
 
 Returns a list of tuples as ARRAY refs containing C<< $alias, $op, $col >>.
@@ -133,9 +145,22 @@ sub sse {
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
+	my %opts	= $self->options;
 	foreach my $data (@ops) {
-		my ($alias, $op, $col)	= @$data;
-		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, ($col eq '*' ? '*' : $col->sse( $context, "${prefix}${indent}" ))));
+		my ($alias, $op, @cols)	= @$data;
+		my @col_strings	= map { ($_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
+		my $col_string	= join(' ', @col_strings);
+		if (@col_strings > 1) {
+			$col_string	= '(' . $col_string . ')';
+		}
+		my %op_opts	= %{ $opts{$alias} || {} };
+		my @opts_keys	= keys %op_opts;
+		if (@opts_keys) {
+			my $opt_string	= '(' . join(' ', map { $_, qq["$op_opts{$_}"] } @opts_keys) . ')';
+			push(@ops_sse, sprintf('(alias "%s" (%s %s %s))', $alias, $op, $col_string, $opt_string));
+		} else {
+			push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, $col_string));
+		}
 	}
 	
 	my @group	= $self->groupby;

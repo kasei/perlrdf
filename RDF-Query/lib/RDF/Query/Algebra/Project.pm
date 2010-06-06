@@ -202,7 +202,6 @@ sub as_sparql {
 		my $pp	= $pattern->pattern;
 		if ($pp->isa('RDF::Query::Algebra::Aggregate')) {
 			$_sparql	= $pp->pattern->as_sparql( $context, $indent );
-			warn Dumper($pp->groupby);
 			my @groups	= $pp->groupby;
 			if (@groups) {
 				$group	= join(' ', map { $_->as_sparql($context, $indent) } @groups);

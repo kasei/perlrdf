@@ -79,6 +79,38 @@ sub as_hash {
 	};
 }
 
+package RDF::Query::Node::Variable::ExpressionProxy;
+
+use strict;
+use warnings;
+use base qw(RDF::Query::Node::Variable);
+
+=begin private
+
+=item C<< new >>
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $name	= shift;
+	my $self	= $class->SUPER::new( $name );
+	return $self;
+}
+
+=item C<< as_sparql >>
+
+=cut
+
+sub as_sparql {
+	my $self	= shift;
+	return $self->name;
+}
+
+=end private
+
+=cut
+
 1;
 
 __END__
