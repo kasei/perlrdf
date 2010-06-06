@@ -111,16 +111,6 @@ sub execute ($) {
 					my ($alias, $op, $col)	= @$data;
 					if ($op eq 'COUNT') {
 						$l->debug("- aggregate op: COUNT");
-# 						unless ($groups{ $group }) {
-# 							my %data;
-# 							foreach my $i (0 .. $#groupby) {
-# 								my $group	= $groupby[ $i ];
-# 								my $key		= $group->can('name') ? $group->name : $group->as_sparql;
-# 								my $value	= $group[ $i ];
-# 								$data{ $key }	= $value;
-# 							}
-# 							$groups{ $group }	= \%data;
-# 						}
 						my $should_inc	= 0;
 						if ($col eq '*') {
 							$should_inc	= 1;
@@ -275,6 +265,23 @@ sub execute ($) {
 						my $string	= blessed($exprval) ? $exprval->literal_value : '';
 	# 					warn "adding '$string' to group_concat aggregate";
 						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
+					} elsif ($op eq 'GROUP_CONCAT-DISTINCT') {
+						$l->debug("- aggregate op: GROUP_CONCAT-DISTINCT");
+						my $value	= $query->var_or_expr_value( $row, $col );
+						$aggregate_data->{ $alias }{ $group }[0]	= $op;
+						
+						my $str		= RDF::Query::Node::Resource->new('sparql:str');
+						my $expr	= RDF::Query::Expression::Function->new( $str, $value );
+	
+						my $query	= $context->query;
+						my $bridge	= $context->model;
+						my $exprval	= $expr->evaluate( $query, $row );
+						
+						my $string	= blessed($exprval) ? $exprval->literal_value : '';
+	# 					warn "adding '$string' to group_concat aggregate";
+						unless ($seen{ 'group_concat-distinct<<<' . $string }) {
+							push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
+						}
 					} else {
 						throw RDF::Query::Error -text => "Unknown aggregate operator $op";
 					}

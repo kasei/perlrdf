@@ -2463,7 +2463,7 @@ sub __Aggregate {
 	if ($self->_test('*')) {
 		$expr	= $self->_eat('*');
 	} else {
-		if ($op eq 'COUNT' and $self->_test( qr/DISTINCT/i )) {
+		if ($op =~ /^(COUNT|GROUP_CONCAT)$/ and $self->_test( qr/DISTINCT/i )) {
 			$self->_eat( qr/DISTINCT\s*/i );
 			$distinct	= 1;
 		}
