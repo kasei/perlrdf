@@ -537,7 +537,7 @@ sub generate_plans {
 		} elsif (scalar(@patterns) == 1) {
 			push(@plans, $self->generate_plans( @patterns, $context, %args ));
 		} else {
-			push(@plans, map { $_->[0] } $self->_triple_join_plans( $context, \@patterns, %args, method => 'patterns' ));
+			push(@plans, map { $_->[0] } $self->_join_plans( $context, \@patterns, %args, method => 'patterns' ));
 		}
 		
 		push(@return_plans, @plans);
@@ -661,9 +661,12 @@ sub generate_plans {
 						: RDF::Query::Plan::Triple->new( @nodes, { sparql => $algebra->as_sparql, bf => $algebra->bf } );
 			push(@return_plans, $plan);
 		}
+	} elsif ($type eq 'Path') {
+		my $path	= $algebra->distinguish_bnode_variables;
+		my @plans	= $self->_path_plans( $path );
+		push(@return_plans, @plans);
 	} elsif ($type eq 'Union') {
 		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
-		# XXX
 		my $plan	= RDF::Query::Plan::Union->new( map { $_->[0] } @plans );
 		push(@return_plans, $plan);
 	} elsif ($type eq 'Load') {
@@ -713,7 +716,7 @@ sub _csg_plans {
 	return @return_plans;
 }
 
-sub _triple_join_plans {
+sub _join_plans {
 	my $self	= shift;
 	my $context	= shift;
 	my $triples	= shift;
@@ -729,18 +732,32 @@ sub _triple_join_plans {
 		my @triples		= @$triples;
 		# pick a triple to use as the LHS
 		my ($t)	= splice( @triples, $i, 1 );
-		my @lhs_plans	= map { [ $_, [$t] ] } $self->generate_plans( $t, $context, %args );
+		
+		my @_lhs		= $self->generate_plans( $t, $context, %args );
+		my @lhs_plans	= map { [ $_, [$t] ] } @_lhs;
 		if (@triples) {
-			my @rhs_plans	= $self->_triple_join_plans( $context, \@triples, %args );
+			my @rhs_plans	= $self->_join_plans( $context, \@triples, %args );
 			foreach my $i (0 .. $#lhs_plans) {
 				foreach my $j (0 .. $#rhs_plans) {
 					my $a			= $lhs_plans[ $i ][0];
 					my $b			= $rhs_plans[ $j ][0];
 					my $algebra_a	= $lhs_plans[ $i ][1];
 					my $algebra_b	= $rhs_plans[ $j ][1];
+					Carp::confess 'no lhs for join: ' . Dumper(\@lhs_plans) unless (blessed($a));
+					Carp::confess 'no rhs for join: ' . Dumper(\@triples, \@rhs_plans) unless (blessed($b));
+					foreach ($algebra_a, $algebra_b) {
+						unless (ref($_) and reftype($_) eq 'ARRAY') {
+							Carp::cluck Dumper($_) 
+						}
+					}
 					foreach my $join_type (@join_types) {
 						try {
-							my @algebras	= (@$algebra_a, @$algebra_b);
+							my @algebras;
+							foreach ($algebra_a, $algebra_b) {
+								if (reftype($_) eq 'ARRAY') {
+									push(@algebras, @$_);
+								}
+							}
 							my %logging_keys;
 							if ($method eq 'triples') {
 								my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @algebras );
@@ -769,7 +786,11 @@ sub _triple_join_plans {
 	if ($opt) {
 		return @plans;
 	} else {
-		return $plans[0];	# XXX need to figure out what's the 'best' plan here
+		if (@plans) {
+			return $plans[0];	# XXX need to figure out what's the 'best' plan here
+		} else {
+			return;
+		}
 	}
 }
 
@@ -792,6 +813,106 @@ sub _add_constant_join {
 		}
 	}
 	return @return_plans;
+}
+
+sub _path_plans {
+	my $self	= shift;
+	my $algebra	= shift;
+	my $path	= $algebra->path;
+	if ($algebra->fixed_length) {
+# 		warn "Fixed length path";
+		my $start	= $algebra->start;
+		my $end		= $algebra->end;
+		return $self->__path_plan( $start, $path, $end );
+	} else {
+		throw RDF::Query::Error -text => "Unbounded-length paths not implemented yet";
+	}
+}
+
+sub __path_plan {
+	my $self	= shift;
+	my $start	= shift;
+	my $path	= shift;
+	my $end		= shift;
+	my ($op, @nodes)	= @$path;
+	if (blessed($path)) {
+		return RDF::Query::Plan::Triple->new( $start, $path, $end );
+	} elsif ($op eq '?') {
+		throw RDF::Query::Error -text => "Zero-length paths not implemented yet";
+		my $node	= shift(@nodes);
+		my $plan	= $self->__path_plan( $start, $node, $end );
+		my $v		= RDF::Query::VariableBindings->new( {} );
+		my $zero	= RDF::Query::Plan::Constant->new( $v );
+		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
+		return $union;
+	} elsif ($op eq '^') {
+		my $node	= shift(@nodes);
+	} elsif ($op eq '/') {
+		my $count	= scalar(@nodes);
+		if ($count == 1) {
+			return $self->__path_plan( $start, $nodes[0], $end );
+		} else {
+			my $joinvar		= RDF::Query::Node::Variable->new();
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar );
+			foreach my $i (2 .. $count) {
+				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[$i-1], $endvar );
+				push(@plans, $rhs);
+				$joinvar	= $endvar;
+			}
+			my @join_types	= RDF::Query::Plan::Join->join_classes;
+			my @jplans;
+			foreach my $jclass (@join_types) {
+				push(@jplans, $jclass->new( @plans[0,1], 0 ));
+			}
+			return $jplans[0];
+		}
+	} elsif ($op eq '|') {
+		my $lhs		= $self->__path_plan( $start, $nodes[0], $end );
+		my $rhs		= $self->__path_plan( $start, $nodes[1], $end );
+		my $union	= RDF::Query::Plan::Union->new( $lhs, $rhs );
+		return $union;
+	} elsif ($op =~ /^(\d+)$/) {
+# 		warn "$1-length path";
+		my $count	= $1;
+		throw RDF::Query::Error -text => "Zero-length paths not implemented yet" if ($count == 0);
+		if ($count == 1) {
+			return $self->__path_plan( $start, $nodes[0], $end );
+		} else {
+			my $joinvar		= RDF::Query::Node::Variable->new();
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar );
+			foreach my $i (2 .. $count) {
+				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[0], $endvar );
+				push(@plans, $rhs);
+				$joinvar	= $endvar;
+			}
+			my @join_types	= RDF::Query::Plan::Join->join_classes;
+			my @jplans;
+			foreach my $jclass (@join_types) {
+				push(@jplans, $jclass->new( @plans[0,1], 0 ));
+			}
+			return $jplans[0];
+		}
+	} elsif ($op =~ /^(\d+)-(\d+)$/) {
+# 		warn "$1- to $2-length path";
+		my @range	= sort { $a <=> $b } ($1, $2);
+		my $from	= $range[0];
+		my $to		= $range[1];
+		throw RDF::Query::Error -text => "Zero-length paths not implemented yet" if ($from == 0);
+		my @plans;
+		foreach my $i ($from .. $to) {
+			push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end ));
+		}
+		while (scalar(@plans) > 1) {
+			my $lhs	= shift(@plans);
+			my $rhs	= shift(@plans);
+			unshift(@plans, RDF::Query::Plan::Union->new( $lhs, $rhs ));
+		}
+		return $plans[0];
+	} else {
+		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
+	}
 }
 
 =item C<< plan_node_name >>

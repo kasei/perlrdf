@@ -1904,9 +1904,15 @@ sub _Path {
 sub _PathAlternative {
 	my $self	= shift;
 	$self->_PathSequence;
+	$self->__consume_ws_opt;
 	while ($self->_test(qr/[|]/)) {
+		my ($lhs)	= splice(@{ $self->{stack} });
 		$self->_eat(qr/[|]/);
-		$self->_PathSequence;
+		$self->__consume_ws_opt;
+		$self->_PathOneInPropertyClass;
+		$self->__consume_ws_opt;
+		my ($rhs)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
 	}
 }
 
@@ -1914,14 +1920,17 @@ sub _PathAlternative {
 sub _PathSequence {
 	my $self	= shift;
 	$self->_PathEltOrInverse;
+	$self->__consume_ws_opt;
 	while ($self->_test(qr<[/^]>)) {
 		my $op;
 		my ($lhs)	= splice(@{ $self->{stack} });
 		if ($self->_test(qr</>)) {
 			$op	= $self->_eat(qr</>);
+			$self->__consume_ws_opt;
 			$self->_PathEltOrInverse;
 		} else {
 			$op	= $self->_eat(qr<\^>);
+			$self->__consume_ws_opt;
 			$self->_PathElt;
 		}
 		my ($rhs)	= splice(@{ $self->{stack} });
@@ -1933,6 +1942,7 @@ sub _PathSequence {
 sub _PathElt {
 	my $self	= shift;
 	$self->_PathPrimary;
+#	$self->__consume_ws_opt;
 	if ($self->_PathMod_test) {
 		my @path	= splice(@{ $self->{stack} });
 		$self->_PathMod;
@@ -1953,6 +1963,7 @@ sub _PathEltOrInverse {
 	my $self	= shift;
 	if ($self->_test(qr/\^/)) {
 		$self->_eat(qr<\^>);
+		$self->__consume_ws_opt;
 		$self->_PathElt;
 		my @props	= splice(@{ $self->{stack} });
 		$self->_add_stack( [ 'PATH', '^', @props ] );
@@ -1969,22 +1980,27 @@ sub _PathMod_test {
 
 sub _PathMod {
 	my $self	= shift;
-	if ($self->_test(qr/[*?+]?/)) {
+	if ($self->_test(qr/[*?+]/)) {
 		if ($self->_test(qr/[+][.0-9]/)) {
 			return;
 		} else {
 			$self->_add_stack( $self->_eat(qr/[*?+]/) );
+			$self->__consume_ws_opt;
 		}
 	} else {
 		$self->_eat(qr/{/);
+		$self->__consume_ws_opt;
 		my $value	= $self->_eat( $r_INTEGER );
+		$self->__consume_ws_opt;
 		if ($self->_test(qr/,/)) {
 			$self->_eat(qr/,/);
+			$self->__consume_ws_opt;
 			if ($self->_test(qr/}/)) {
 				$self->_eat(qr/}/);
 				$self->_add_stack( "$value-" );
 			} else {
 				my $end	= $self->_eat( $r_INTEGER );
+				$self->__consume_ws_opt;
 				$self->_eat(qr/}/);
 				$self->_add_stack( "$value-$end" );
 			}
@@ -2006,10 +2022,13 @@ sub _PathPrimary {
 		$self->_add_stack( $type );
 	} elsif ($self->_test(qr/[!]/)) {
 		$self->_eat(qr/[!]/);
+		$self->__consume_ws_opt;
 		$self->_PathNegatedPropertyClass;
 	} else {
 		$self->_eat(qr/[(]/);
+		$self->__consume_ws_opt;
 		$self->_Path;
+		$self->__consume_ws_opt;
 		$self->_eat(qr/[)]/);
 	}
 }
@@ -2019,11 +2038,18 @@ sub _PathNegatedPropertyClass {
 	my $self	= shift;
 	if ($self->_test(qr/[(]/)) {
 		$self->_eat(qr/[(]/);
+		$self->__consume_ws_opt;
 		if ($self->_PathOneInPropertyClass_test) {
 			$self->_PathOneInPropertyClass;
+			$self->__consume_ws_opt;
 			while ($self->_test(/[|]/)) {
+				my ($lhs)	= splice(@{ $self->{stack} });
 				$self->_eat(qr/[|]/);
+				$self->__consume_ws_opt;
 				$self->_PathOneInPropertyClass;
+				$self->__consume_ws_opt;
+				my ($rhs)	= splice(@{ $self->{stack} });
+				$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
 			}
 		}
 		$self->_eat(qr/[)]/);

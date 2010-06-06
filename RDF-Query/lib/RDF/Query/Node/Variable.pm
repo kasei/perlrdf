@@ -37,6 +37,22 @@ BEGIN {
 
 =cut
 
+=item C<< new ( $name ) >>
+
+Returns a new variable object.
+
+=cut
+
+my $COUNTER	= 0;
+sub new {
+	my $class	= shift;
+	my $name	= shift;
+	unless (defined($name)) {
+		$name	= 'v' . time() . 'r' . $COUNTER++;
+	}
+	return $class->SUPER::new( $name );
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this node.

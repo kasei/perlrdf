@@ -97,6 +97,47 @@ sub end {
 	return $self->[2];
 }
 
+=item C<< distinguish_bnode_variables >>
+
+Returns a new Path object with blank nodes replaced by distinguished variables.
+
+=cut
+
+sub distinguish_bnode_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @nodes	= ($self->start, $self->end);
+	foreach my $i (0 .. $#nodes) {
+		if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+			$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
+		}
+	}
+	return $class->new( $nodes[0], $self->path, $nodes[1] );
+}
+
+sub fixed_length {
+	my $self	= shift;
+	return $self->_fixed_length( $self->path );
+}
+
+sub _fixed_length {
+	my $self	= shift;
+	my $array	= shift;
+	return 1 if blessed($array);
+	my ($op, @nodes)	= @$array;
+	return 1 if ($op eq '?');
+	return 0 if ($op =~ /^[*+]$/);
+	return 1 if ($op =~ /^\d+(-\d+)?$/);
+	return 0 if ($op =~ /^\d+-$/);
+	if ($op =~ m<^[/|^]$>) {
+		my @fixed	= map { $self->_fixed_length($_) } @nodes;
+		foreach my $f (@fixed) {
+			return 0 unless ($f);
+		}
+		return 1;
+	}
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this alegbra expression.
@@ -112,7 +153,7 @@ sub sse {
 	my $end		= $self->end->sse( $context, $prefix );
 	my $path	= $self->path;
 	my $psse	= $self->_expand_path( $path, 'sse' );
-	return sprintf( '(path %s (%s) %s)', $start, $psse, $end );
+	return sprintf( '(path %s %s %s)', $start, $psse, $end );
 }
 
 =item C<< as_sparql >>
@@ -130,7 +171,7 @@ sub as_sparql {
 	my $end		= $self->end->as_sparql( $context, $prefix );
 	my $path	= $self->path;
 	my $psse	= $self->_expand_path( $path, 'as_sparql' );
-	return sprintf( '%s (%s) %s .', $start, $psse, $end );
+	return sprintf( '%s %s %s .', $start, $psse, $end );
 }
 
 sub _expand_path {
@@ -150,11 +191,17 @@ sub _expand_path {
 		} elsif ($op eq '?') {
 			$psse	= '(' . join('/', @nodessse) . ')?';
 		} elsif ($op eq '^') {
-			$psse	= join('/', map { "^$_" } @nodessse);
+			$psse	= '(' . join('/', map { "^$_" } @nodessse) . ')';
 		} elsif ($op eq '/') {
-			$psse	= join('/', @nodessse);
+			$psse	= '(' . join('/', @nodessse) . ')';
 		} elsif ($op eq '|') {
-			$psse	= join('|', @nodessse);
+			$psse	= '(' . join('|', @nodessse) . ')';
+		} elsif ($op =~ /^(\d+)$/) {
+			$psse	= join('/', @nodessse) . '{' . $op . '}';
+		} elsif ($op =~ /^(\d+)-(\d+)$/) {
+			$psse	= join('/', @nodessse) . "{$1,$2}";
+		} elsif ($op =~ /^(\d+)-$/) {
+			$psse	= join('/', @nodessse) . "{$1,}";
 		} else {
 			die "Serialization of unknown path type $op";
 		}
