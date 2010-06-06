@@ -290,7 +290,7 @@ END
 		}
 END
 	my $sse		= $query->sse;
-	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?COUNT(?person)) (aggregate (BGP (triple ?person foaf:name ?name)) (alias "COUNT(?person)" (COUNT ?person)))))', 'sse: aggregate count(?person)' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?COUNT(?person)) (aggregate (BGP (triple ?person foaf:name ?name)) ((alias "COUNT(?person)" (COUNT ?person))))))', 'sse: aggregate count(?person)' );
 }
 
 {

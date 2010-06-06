@@ -45,7 +45,7 @@ sub new {
 	my %args	= @_;
 	my @ops		= @{ $args{ 'expressions' } || [] };
 	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
-	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
+	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { ($_->isa('RDF::Query::Node::Variable')) ? $_->name : $_->referenced_variables } @$groupby) ];
 	return $self;
 }
 
@@ -102,13 +102,22 @@ sub execute ($) {
 				$passthrough_data{ $name }	= $value;
 			}
 			
-			foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
-				$l->debug( "- row: $row" );
-# 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-				my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
-				foreach my $data (@operation_data) {
-					my $aggregate_data	= pop(@$data);
-					my ($alias, $op, $col)	= @$data;
+			my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
+			foreach my $data (@operation_data) {
+				my $aggregate_data	= pop(@$data);
+				my ($alias, $op, @cols)	= @$data;
+				my $distinct	= ($op =~ /^(.*)-DISTINCT$/);
+				$op				=~ s/-DISTINCT$//;
+				my $col	= $cols[0];
+				my %agg_group_seen;
+				foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
+					my @proj_rows	= map { $query->var_or_expr_value( $row, $col ) } @cols;
+					if ($distinct) {
+						next if ($agg_group_seen{ join('<<<', @proj_rows) }++);
+					}
+					
+					$l->debug( "- row: $row" );
+# 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					if ($op eq 'COUNT') {
 						$l->debug("- aggregate op: COUNT");
 						my $should_inc	= 0;
@@ -121,15 +130,6 @@ sub execute ($) {
 						
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						$aggregate_data->{ $alias }{ $group }[1]	+= $should_inc;
-					} elsif ($op eq 'COUNT-DISTINCT') {
-						$l->debug("- aggregate op: COUNT-DISTINCT");
-						my @cols	= (blessed($col) ? $col->name : keys %$row);
-						no warnings 'uninitialized';
-						my $values	= join('<<<', @{ $row }{ @cols });
-						$aggregate_data->{ $alias }{ $group }[0]	= $op;
-						if (exists($row->{ $col->name })) {
-							$aggregate_data->{ $alias }{ $group }[1]++ unless ($seen{ $values }++);
-						}
 					} elsif ($op eq 'SUM') {
 						$l->debug("- aggregate op: SUM");
 						my $value	= $query->var_or_expr_value( $row, $col );
@@ -252,36 +252,18 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'GROUP_CONCAT') {
 						$l->debug("- aggregate op: GROUP_CONCAT");
-						my $value	= $query->var_or_expr_value( $row, $col );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $str		= RDF::Query::Node::Resource->new('sparql:str');
-						my $expr	= RDF::Query::Expression::Function->new( $str, $value );
-	
-						my $query	= $context->query;
-						my $bridge	= $context->model;
-						my $exprval	= $expr->evaluate( $query, $row );
+
+						my @values	= map {
+							my $expr	= RDF::Query::Expression::Function->new( $str, $query->var_or_expr_value( $row, $_ ) );
+							my $val		= $expr->evaluate( $context->query, $row );
+							blessed($val) ? $val->literal_value : '';
+						} @cols;
 						
-						my $string	= blessed($exprval) ? $exprval->literal_value : '';
 	# 					warn "adding '$string' to group_concat aggregate";
-						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
-					} elsif ($op eq 'GROUP_CONCAT-DISTINCT') {
-						$l->debug("- aggregate op: GROUP_CONCAT-DISTINCT");
-						my $value	= $query->var_or_expr_value( $row, $col );
-						$aggregate_data->{ $alias }{ $group }[0]	= $op;
-						
-						my $str		= RDF::Query::Node::Resource->new('sparql:str');
-						my $expr	= RDF::Query::Expression::Function->new( $str, $value );
-	
-						my $query	= $context->query;
-						my $bridge	= $context->model;
-						my $exprval	= $expr->evaluate( $query, $row );
-						
-						my $string	= blessed($exprval) ? $exprval->literal_value : '';
-	# 					warn "adding '$string' to group_concat aggregate";
-						unless ($seen{ 'group_concat-distinct<<<' . $string }) {
-							push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
-						}
+						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, @values );
 					} else {
 						throw RDF::Query::Error -text => "Unknown aggregate operator $op";
 					}
@@ -295,7 +277,7 @@ sub execute ($) {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
 				} elsif ($op eq 'GROUP_CONCAT') {
-					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', sort @{ $aggregates{ $agg }{ $group }[1] }) );
+					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );

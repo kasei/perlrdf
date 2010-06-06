@@ -51,6 +51,7 @@ our %FUNCTION_MAP	= (
 	bnode		=> "BNODE",
 	in			=> "IN",
 	notin		=> "NOT IN",
+	if			=> "IF",
 );
 
 =head1 METHODS

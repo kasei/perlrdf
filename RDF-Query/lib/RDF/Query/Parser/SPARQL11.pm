@@ -856,7 +856,7 @@ sub _BrackettedAliasExpression {
 sub __SelectVar_test {
 	my $self	= shift;
 	local($self->{__aggregate_call_ok})	= 1;
-	return 1 if $self->_BuiltInCall_test;
+#	return 1 if $self->_BuiltInCall_test;
 	return 1 if $self->_test( qr/[(]/i);
 	return $self->{tokens} =~ m'^[?$]';
 }
@@ -866,8 +866,8 @@ sub __SelectVar {
 	local($self->{__aggregate_call_ok})	= 1;
 	if ($self->_test('(')) {
 		$self->_BrackettedAliasExpression;
-	} elsif ($self->_BuiltInCall_test) {
-		$self->_BuiltInCall;
+# 	} elsif ($self->_BuiltInCall_test) {
+# 		$self->_BuiltInCall;
 	} else {
 		$self->_Var;
 	}
@@ -1038,19 +1038,25 @@ sub _BindingValue {
 	}
 }
 
+# [20]  	GroupCondition	  ::=  	( BuiltInCall | FunctionCall | '(' Expression ( 'AS' Var )? ')' | Var )
 sub __GroupByVar_test {
 	my $self	= shift;
-	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->__SelectVar_test);
+	return 1 if ($self->_BuiltInCall_test);
+	return 1 if ($self->_IRIref_test);
+	return 1 if ($self->_test( qr/[(]/i ));
+	return 1 if ($self->_test(qr/[\$?]/));
 }
 
 sub __GroupByVar {
 	my $self	= shift;
 	if ($self->_test('(')) {
 		$self->_BrackettedAliasExpression;
+	} elsif ($self->_IRIref_test) {
+		$$self->_FunctionCall;
 	} elsif ($self->_BuiltInCall_test) {
 		$self->_BuiltInCall;
 	} else {
-		$self->__SelectVar;
+		$self->_Var;
 	}
 }
 
@@ -2458,28 +2464,39 @@ sub __Aggregate {
 	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
 	$self->_eat('(');
 	$self->__consume_ws_opt;
-	my $expr;
 	my $distinct	= 0;
+	if ($self->_test( qr/DISTINCT/i )) {
+		$self->_eat( qr/DISTINCT\s*/i );
+		$self->__consume_ws_opt;
+		$distinct	= 1;
+	}
+	
+	my @expr;
 	if ($self->_test('*')) {
-		$expr	= $self->_eat('*');
+		@expr	= $self->_eat('*');
 	} else {
-		if ($op =~ /^(COUNT|GROUP_CONCAT)$/ and $self->_test( qr/DISTINCT/i )) {
-			$self->_eat( qr/DISTINCT\s*/i );
-			$distinct	= 1;
-		}
 		$self->_Expression;
-		($expr)	= splice(@{ $self->{stack} });
+		@expr	= splice(@{ $self->{stack} });
+		if ($op eq 'GROUP_CONCAT') {
+			$self->__consume_ws_opt;
+			while ($self->_test(qr/,/)) {
+				$self->_eat(qr/,/);
+				$self->__consume_ws_opt;
+				$self->_Expression;
+				push(@expr, splice(@{ $self->{stack} }));
+			}
+		}
 	}
 	$self->__consume_ws_opt;
 	
-	my $arg	= blessed($expr) ? $expr->as_sparql : $expr;
+	my $arg	= join(',', map { blessed($_) ? $_->as_sparql : $_ } @expr);
 	if ($distinct) {
 		$arg	= 'DISTINCT ' . $arg;
 	}
 	my $name	= sprintf('%s(%s)', $op, $arg);
 	$self->_eat(')');
 	
-	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), $expr ];
+	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), @expr ];
 	$self->_add_stack( $self->new_variable($name) );
 	
 }

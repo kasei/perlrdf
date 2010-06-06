@@ -170,7 +170,7 @@ sub as_sparql {
 	
 	my $pattern	= $self->pattern;
 	
-	my ($vars, $sparql);
+	my ($vars, $_sparql);
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -182,6 +182,7 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
+	my $group	= '';
 	if ($pattern->isa('RDF::Query::Algebra::Extend')) {
 		my %seen;
 		my $vlist	= $pattern->vars;
@@ -198,14 +199,28 @@ sub as_sparql {
 		}
 		@vars	= map { exists($seen{$_}) ? $seen{$_} : $_ } @vars;
 		$vars	= join(' ', @vars);
-		$sparql	= $pattern->pattern->as_sparql( $context, $indent );
+		my $pp	= $pattern->pattern;
+		if ($pp->isa('RDF::Query::Algebra::Aggregate')) {
+			$_sparql	= $pp->pattern->as_sparql( $context, $indent );
+			warn Dumper($pp->groupby);
+			my @groups	= $pp->groupby;
+			if (@groups) {
+				$group	= join(' ', map { $_->as_sparql($context, $indent) } @groups);
+			}
+		} else {
+			$_sparql	= $pp->as_sparql( $context, $indent );
+		}
 	} else {
 		my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
 		my $svars	= join(' ', sort @vars);
 		$vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-		$sparql	= $pattern->as_sparql( $context, $indent );
+		$_sparql	= $pattern->as_sparql( $context, $indent );
 	}
-	return join(' ', $vars, 'WHERE', $sparql);
+	my $sparql	= sprintf("%s WHERE %s", $vars, $_sparql);
+	if ($group) {
+		$sparql	.= "\n${indent}GROUP BY $group";
+	}
+	return $sparql;
 }
 
 =item C<< as_hash >>

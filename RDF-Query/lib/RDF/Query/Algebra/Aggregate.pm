@@ -113,8 +113,8 @@ sub ops {
 	while (@ops) {
 		my $alias	= shift(@ops);
 		my $data	= shift(@ops);
-		my ($op, $col)	= @$data;
-		push(@tuples, [$alias, $op, $col]);
+		my ($op, @col)	= @$data;
+		push(@tuples, [$alias, $op, @col]);
 	}
 	return @tuples;
 }
@@ -139,9 +139,9 @@ sub sse {
 	}
 	
 	my @group	= $self->groupby;
-	my $group	= (@group) ? '(' . join(', ', @group) . ')' : '';
+	my $group	= (@group) ? '(' . join(', ', map {$_->sse($context, $prefix)} @group) . ')' : '';
 	return sprintf(
-		"(aggregate\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+		"(aggregate\n${prefix}${indent}%s\n${prefix}${indent}(%s)\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(', ', @ops_sse),
 		$group,

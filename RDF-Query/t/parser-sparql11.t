@@ -13,13 +13,13 @@ use RDF::Query::Node;
 use_ok( 'RDF::Query::Parser::SPARQL11' );
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.query.parser          = TRACE, Screen
-	
-	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr  = 0
-	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.parser          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 my $parser	= RDF::Query::Parser::SPARQL11->new();
@@ -419,7 +419,7 @@ __END__
 - |
   PREFIX  dc:  <http://purl.org/dc/elements/1.1/>
   PREFIX  ns:  <http://example.org/ns#>
-  SELECT GROUP_CONCAT(?title)
+  SELECT (GROUP_CONCAT(?title) AS ?titles)
      { ?x dc:title ?title . 
        ?x ns:discount ?discount 
      }
@@ -431,37 +431,44 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::Aggregate
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - x
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://purl.org/dc/elements/1.1/title
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::Aggregate
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - x
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://purl.org/dc/elements/1.1/title
+                - !!perl/array:RDF::Query::Node::Variable
+                  - title
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - x
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://example.org/ns#discount
+                - !!perl/array:RDF::Query::Node::Variable
+                  - discount
+          -
+            - !!perl/array:RDF::Query::Node::Variable
+              - discount
+          -
+            - GROUP_CONCAT(?title)
+            -
+              - GROUP_CONCAT
               - !!perl/array:RDF::Query::Node::Variable
                 - title
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - x
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://example.org/ns#discount
-              - !!perl/array:RDF::Query::Node::Variable
-                - discount
         -
-          - !!perl/array:RDF::Query::Node::Variable
-            - discount
-        -
-          - GROUP_CONCAT(?title)
-          -
-            - GROUP_CONCAT
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - titles
             - !!perl/array:RDF::Query::Node::Variable
-              - title
+              - GROUP_CONCAT(?title)
       -
-        - &1 !!perl/array:RDF::Query::Node::Variable
-          - GROUP_CONCAT(?title)
+        - *2
   variables:
     - *1
 ---
