@@ -819,14 +819,14 @@ sub _path_plans {
 	my $algebra	= shift;
 	my $context	= shift;
 	my $path	= $algebra->path;
-	if ($algebra->fixed_length) {
+# 	if ($algebra->fixed_length) {
 # 		warn "Fixed length path";
 		my $start	= $algebra->start;
 		my $end		= $algebra->end;
 		return $self->__path_plan( $start, $path, $end, $context );
-	} else {
-		throw RDF::Query::Error -text => "Unbounded-length paths not implemented yet";
-	}
+# 	} else {
+# 		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+# 	}
 }
 
 sub __path_plan {
@@ -840,6 +840,10 @@ sub __path_plan {
 		my $s	= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
 		my $e	= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
 		return RDF::Query::Plan::Triple->new( $s, $path, $e );
+	} elsif ($op eq '*') {
+		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+	} elsif ($op eq '+') {
+		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
 	} elsif ($op eq '?') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $context );
@@ -927,6 +931,8 @@ sub __path_plan {
 			unshift(@plans, RDF::Query::Plan::Union->new( $lhs, $rhs ));
 		}
 		return $plans[0];
+	} elsif ($op =~ /^(\d+)-$/) {
+		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
 	} else {
 		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
 	}
