@@ -819,7 +819,7 @@ sub _path_plans {
 	my $algebra	= shift;
 	my $context	= shift;
 	my $path	= $algebra->path;
-# 	if ($algebra->fixed_length) {
+# 	if ($algebra->bounded_length) {
 # 		warn "Fixed length path";
 		my $start	= $algebra->start;
 		my $end		= $algebra->end;

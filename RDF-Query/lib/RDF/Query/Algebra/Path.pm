@@ -115,12 +115,18 @@ sub distinguish_bnode_variables {
 	return $class->new( $nodes[0], $self->path, $nodes[1] );
 }
 
-sub fixed_length {
+=item C<< bounded_length >>
+
+Returns true if the path is of bounded length.
+
+=cut
+
+sub bounded_length {
 	my $self	= shift;
-	return $self->_fixed_length( $self->path );
+	return $self->_bounded_length( $self->path );
 }
 
-sub _fixed_length {
+sub _bounded_length {
 	my $self	= shift;
 	my $array	= shift;
 	return 1 if blessed($array);
@@ -130,7 +136,7 @@ sub _fixed_length {
 	return 1 if ($op =~ /^\d+(-\d+)?$/);
 	return 0 if ($op =~ /^\d+-$/);
 	if ($op =~ m<^[/|^]$>) {
-		my @fixed	= map { $self->_fixed_length($_) } @nodes;
+		my @fixed	= map { $self->_bounded_length($_) } @nodes;
 		foreach my $f (@fixed) {
 			return 0 unless ($f);
 		}
