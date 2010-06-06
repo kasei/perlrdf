@@ -662,8 +662,7 @@ sub generate_plans {
 			push(@return_plans, $plan);
 		}
 	} elsif ($type eq 'Path') {
-		my $path	= $algebra->distinguish_bnode_variables;
-		my @plans	= $self->_path_plans( $path );
+		my @plans	= $self->_path_plans( $algebra, $context );
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Union') {
 		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
@@ -818,12 +817,13 @@ sub _add_constant_join {
 sub _path_plans {
 	my $self	= shift;
 	my $algebra	= shift;
+	my $context	= shift;
 	my $path	= $algebra->path;
 	if ($algebra->fixed_length) {
 # 		warn "Fixed length path";
 		my $start	= $algebra->start;
 		my $end		= $algebra->end;
-		return $self->__path_plan( $start, $path, $end );
+		return $self->__path_plan( $start, $path, $end, $context );
 	} else {
 		throw RDF::Query::Error -text => "Unbounded-length paths not implemented yet";
 	}
@@ -834,15 +834,16 @@ sub __path_plan {
 	my $start	= shift;
 	my $path	= shift;
 	my $end		= shift;
+	my $context	= shift;
 	my ($op, @nodes)	= @$path;
 	if (blessed($path)) {
+		my $s	= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
+		my $e	= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
 		return RDF::Query::Plan::Triple->new( $start, $path, $end );
 	} elsif ($op eq '?') {
-		throw RDF::Query::Error -text => "Zero-length paths not implemented yet";
 		my $node	= shift(@nodes);
-		my $plan	= $self->__path_plan( $start, $node, $end );
-		my $v		= RDF::Query::VariableBindings->new( {} );
-		my $zero	= RDF::Query::Plan::Constant->new( $v );
+		my $plan	= $self->__path_plan( $start, $node, $end, $context );
+		my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
 	} elsif ($op eq '^') {
@@ -850,13 +851,13 @@ sub __path_plan {
 	} elsif ($op eq '/') {
 		my $count	= scalar(@nodes);
 		if ($count == 1) {
-			return $self->__path_plan( $start, $nodes[0], $end );
+			return $self->__path_plan( $start, $nodes[0], $end, $context );
 		} else {
 			my $joinvar		= RDF::Query::Node::Variable->new();
-			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar );
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context );
 			foreach my $i (2 .. $count) {
 				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
-				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[$i-1], $endvar );
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[$i-1], $endvar, $context );
 				push(@plans, $rhs);
 				$joinvar	= $endvar;
 			}
@@ -868,41 +869,56 @@ sub __path_plan {
 			return $jplans[0];
 		}
 	} elsif ($op eq '|') {
-		my $lhs		= $self->__path_plan( $start, $nodes[0], $end );
-		my $rhs		= $self->__path_plan( $start, $nodes[1], $end );
+		my $lhs		= $self->__path_plan( $start, $nodes[0], $end, $context );
+		my $rhs		= $self->__path_plan( $start, $nodes[1], $end, $context );
 		my $union	= RDF::Query::Plan::Union->new( $lhs, $rhs );
 		return $union;
 	} elsif ($op =~ /^(\d+)$/) {
 # 		warn "$1-length path";
 		my $count	= $1;
-		throw RDF::Query::Error -text => "Zero-length paths not implemented yet" if ($count == 0);
-		if ($count == 1) {
-			return $self->__path_plan( $start, $nodes[0], $end );
+		if ($count == 0) {
+			my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
+			return $zero;
+		} elsif ($count == 1) {
+			return $self->__path_plan( $start, $nodes[0], $end, $context );
 		} else {
 			my $joinvar		= RDF::Query::Node::Variable->new();
-			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar );
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context );
 			foreach my $i (2 .. $count) {
 				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
-				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[0], $endvar );
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[0], $endvar, $context );
 				push(@plans, $rhs);
 				$joinvar	= $endvar;
 			}
 			my @join_types	= RDF::Query::Plan::Join->join_classes;
 			my @jplans;
-			foreach my $jclass (@join_types) {
-				push(@jplans, $jclass->new( @plans[0,1], 0 ));
+			
+			my @plan	= shift(@plans);
+			while (@plans) {
+				my $q	= shift(@plans);
+				my @p;
+				foreach my $p (@plan) {
+					foreach my $jclass (@join_types) {
+						push(@p, $jclass->new( $p, $q, 0 ));
+					}
+				}
+				@plan	= @p;
 			}
-			return $jplans[0];
+			return $plan[0];
 		}
 	} elsif ($op =~ /^(\d+)-(\d+)$/) {
 # 		warn "$1- to $2-length path";
 		my @range	= sort { $a <=> $b } ($1, $2);
 		my $from	= $range[0];
 		my $to		= $range[1];
-		throw RDF::Query::Error -text => "Zero-length paths not implemented yet" if ($from == 0);
 		my @plans;
 		foreach my $i ($from .. $to) {
-			push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end ));
+			if ($i == 0) {
+				my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
+				push(@plans, $zero);
+			} else {
+				push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end, $context ));
+			}
 		}
 		while (scalar(@plans) > 1) {
 			my $lhs	= shift(@plans);
@@ -913,6 +929,45 @@ sub __path_plan {
 	} else {
 		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
 	}
+}
+
+sub __zero_length_path_plan {
+	my $self	= shift;
+	my $start	= shift;
+	my $end		= shift;
+	my $context	= shift;
+	my $model	= $context->model;
+	my @iters;
+	push(@iters, scalar($model->subjects));
+	push(@iters, scalar($model->predicates));
+	push(@iters, scalar($model->objects));
+	my %vars;
+	my $no_literals	= 0;
+	if ($start->isa('RDF::Query::Node::Variable')) {
+		warn $start->name;
+		$vars{ $start->name }++;
+		$no_literals	= 1;
+	}
+	$vars{ $end->name }++ if ($end->isa('RDF::Query::Node::Variable'));
+	
+	my $code	= sub {
+		while (1) {
+			return unless scalar(@iters);
+			my $node	= $iters[0]->next;
+			if ($node) {
+				if ($no_literals) {
+					next if ($node->isa('RDF::Query::Node::Literal'));
+				}
+				my $vb	= RDF::Query::VariableBindings->new( { map { $_ => $node } (keys %vars) } );
+				return $vb;
+			} else {
+				shift(@iters);
+			}
+		}
+	};
+	my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
+	my $nodes	= RDF::Query::Plan::Iterator->new( $iter );
+	my $plan	= RDF::Query::Plan::Distinct->new( $nodes );
 }
 
 =item C<< plan_node_name >>
