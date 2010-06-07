@@ -223,250 +223,6 @@ sub parse_expr {
 	return $data;
 }
 
-=item C<< error >>
-
-Returns the error encountered during the last parse.
-
-=cut
-
-sub error {
-	my $self	= shift;
-	return $self->{error};
-}
-
-sub _add_patterns {
-	my $self	= shift;
-	my @triples	= @_;
-	my $container	= $self->{ pattern_container_stack }[0];
-	push( @{ $container }, @triples );
-}
-
-sub _remove_pattern {
-	my $self	= shift;
-	my $container	= $self->{ pattern_container_stack }[0];
-	my $pattern		= pop( @{ $container } );
-	return $pattern;
-}
-
-sub _peek_pattern {
-	my $self	= shift;
-	my $container	= $self->{ pattern_container_stack }[0];
-	my $pattern		= $container->[-1];
-	return $pattern;
-}
-
-sub _push_pattern_container {
-	my $self	= shift;
-	my $cont	= [];
-	unshift( @{ $self->{ pattern_container_stack } }, $cont );
-	return $cont;
-}
-
-sub _pop_pattern_container {
-	my $self	= shift;
-	my $cont	= shift( @{ $self->{ pattern_container_stack } } );
-	return $cont;
-}
-
-sub _add_stack {
-	my $self	= shift;
-	my @items	= @_;
-	push( @{ $self->{stack} }, @items );
-}
-
-sub _add_filter {
-	my $self	= shift;
-	my @filters	= shift;
-	push( @{ $self->{filters} }, @filters );
-}
-
-sub _eat {
-	my $self	= shift;
-	my $thing	= shift;
-	if (not(length($self->{tokens}))) {
-		$self->_syntax_error("no tokens left");
-	}
-	
-# 	if (substr($self->{tokens}, 0, 1) eq '^') {
-# 		Carp::cluck( "eating $thing with input $self->{tokens}" );
-# 	}
-	
-	if (blessed($thing) and $thing->isa('Regexp')) {
-		if ($self->{tokens} =~ /^$thing/) {
-			my $match	= $&;
-			substr($self->{tokens}, 0, length($match))	= '';
-			return $match;
-		}
-		
-		$self->_syntax_error( $thing );
-	} elsif (looks_like_number( $thing )) {
-		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
-		return $token
-	} else {
-		### thing is a string
-		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-			substr($self->{tokens}, 0, length($thing))	= '';
-			return $thing;
-		} else {
-			$self->_syntax_error( $thing );
-		}
-	}
-	print $thing;
-	throw RDF::Query::Error;
-}
-
-sub _syntax_error {
-	my $self	= shift;
-	my $thing	= shift;
-	my $expect	= $thing;
-
-	my $level	= 2;
-	while (my $sub = (caller($level++))[3]) {
-		if ($sub =~ m/::_([A-Z]\w*)$/) {
-			$expect	= $1;
-			last;
-		}
-	}
-	
-	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
-	if ($l->is_debug) {
-		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
-	}
-	
-	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
-	$near		=~ s/[\r\n ]+/ /g;
-	if ($thing) {
-		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $thing in $expect near $near";
-	} else {
-		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";
-	}
-}
-
-sub _test {
-	my $self	= shift;
-	my $thing	= shift;
-	if (blessed($thing) and $thing->isa('Regexp')) {
-		if ($self->{tokens} =~ m/^$thing/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} else {
-		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-}
-
-sub _ws_test {
-	my $self	= shift;
-	unless (length($self->{tokens})) {
-		return 0;
-	}
-	
-	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-sub _ws {
-	my $self	= shift;
-	### #x9 | #xA | #xD | #x20 | comment
-	if ($self->_test('#')) {
-		$self->_eat(qr/#[^\x0d\x0a]*.?/);
-	} else {
-		$self->_eat(qr/[\n\r\t ]/);
-	}
-}
-
-sub __consume_ws_opt {
-	my $self	= shift;
-	if ($self->_ws_test) {
-		$self->__consume_ws;
-	}
-}
-
-sub __consume_ws {
-	my $self	= shift;
-	$self->_ws;
-	while ($self->_ws_test()) {
-		$self->_ws()
-	}
-}
-
-sub __base {
-	my $self	= shift;
-	my $build	= $self->{build};
-	if (defined($build->{base})) {
-		return $build->{base};
-	} else {
-		return;
-	}
-}
-
-sub __new_statement {
-	my $self	= shift;
-	my @nodes	= @_;
-	if (my $graph = $self->{named_graph}) {
-		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
-	} else {
-		return RDF::Query::Algebra::Triple->_new( @nodes );
-	}
-}
-
-sub __new_path {
-	my $self	= shift;
-	my $start	= shift;
-	my $pdata	= shift;
-	my $end		= shift;
-	(undef, my $op, my @nodes)	= @$pdata;
-	foreach (@nodes) {
-		if (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
-			(undef, my $op, my @nodes)	= @$_;
-			$_	= [$op, @nodes];
-		}
-	}
-	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
-	return $path;
-}
-
-sub __new_bgp {
-	# fix up BGPs that might actually have property paths in them. split those
-	# out as their own path algebra objects, and join them with the bgp with a
-	# ggp if necessary
-	my $self		= shift;
-	my @patterns	= @_;
-	my @paths		= grep { reftype($_->predicate) eq 'ARRAY' and $_->predicate->[0] eq 'PATH' } @patterns;
-	my @triples		= grep { blessed($_->predicate) } @patterns;
-	if (scalar(@patterns) > scalar(@paths) + scalar(@triples)) {
-		Carp::cluck "more than just triples and paths passed to __new_bgp: " . Dumper(\@patterns);
-	}
-	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
-	if (@paths) {
-		my @p;
-		foreach my $p (@paths) {
-			my $start	= $p->subject;
-			my $end		= $p->object;
-			my $pdata	= $p->predicate;
-			push(@p, $self->__new_path( $start, $pdata, $end ));
-		}
-		my $pgroup	= (scalar(@p) == 1)
-					? $p[0]
-					: RDF::Query::Algebra::GroupGraphPattern->new( @p );
-		if (scalar(@triples)) {
-			return RDF::Query::Algebra::GroupGraphPattern->new( $bgp, $pgroup );
-		} else {
-			return $pgroup;
-		}
-	} else {
-		return $bgp;
-	}
-}
-
 ################################################################################
 
 
@@ -1339,7 +1095,7 @@ sub __handle_GraphPatternNotTriples {
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
-		Carp::confess 'Unrecognized GraphPattern in __handle_GraphPatternNotTriples: ' . Dumper($class, \@args);
+		throw RDF::Query::Error::ParseError 'Unrecognized GraphPattern: ' . $class;
 	}
 }
 
@@ -2877,6 +2633,252 @@ sub __solution_modifiers {
 		my $pattern	= pop(@{ $self->{build}{triples} });
 		my $limited	= RDF::Query::Algebra::Limit->new( $pattern, $limit );
 		push(@{ $self->{build}{triples} }, $limited);
+	}
+}
+
+################################################################################
+
+=item C<< error >>
+
+Returns the error encountered during the last parse.
+
+=cut
+
+sub error {
+	my $self	= shift;
+	return $self->{error};
+}
+
+sub _add_patterns {
+	my $self	= shift;
+	my @triples	= @_;
+	my $container	= $self->{ pattern_container_stack }[0];
+	push( @{ $container }, @triples );
+}
+
+sub _remove_pattern {
+	my $self	= shift;
+	my $container	= $self->{ pattern_container_stack }[0];
+	my $pattern		= pop( @{ $container } );
+	return $pattern;
+}
+
+sub _peek_pattern {
+	my $self	= shift;
+	my $container	= $self->{ pattern_container_stack }[0];
+	my $pattern		= $container->[-1];
+	return $pattern;
+}
+
+sub _push_pattern_container {
+	my $self	= shift;
+	my $cont	= [];
+	unshift( @{ $self->{ pattern_container_stack } }, $cont );
+	return $cont;
+}
+
+sub _pop_pattern_container {
+	my $self	= shift;
+	my $cont	= shift( @{ $self->{ pattern_container_stack } } );
+	return $cont;
+}
+
+sub _add_stack {
+	my $self	= shift;
+	my @items	= @_;
+	push( @{ $self->{stack} }, @items );
+}
+
+sub _add_filter {
+	my $self	= shift;
+	my @filters	= shift;
+	push( @{ $self->{filters} }, @filters );
+}
+
+sub _eat {
+	my $self	= shift;
+	my $thing	= shift;
+	if (not(length($self->{tokens}))) {
+		$self->_syntax_error("no tokens left");
+	}
+	
+# 	if (substr($self->{tokens}, 0, 1) eq '^') {
+# 		Carp::cluck( "eating $thing with input $self->{tokens}" );
+# 	}
+	
+	if (blessed($thing) and $thing->isa('Regexp')) {
+		if ($self->{tokens} =~ /^$thing/) {
+			my $match	= $&;
+			substr($self->{tokens}, 0, length($match))	= '';
+			return $match;
+		}
+		
+		$self->_syntax_error( $thing );
+	} elsif (looks_like_number( $thing )) {
+		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
+		return $token
+	} else {
+		### thing is a string
+		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
+			substr($self->{tokens}, 0, length($thing))	= '';
+			return $thing;
+		} else {
+			$self->_syntax_error( $thing );
+		}
+	}
+	print $thing;
+	throw RDF::Query::Error;
+}
+
+sub _syntax_error {
+	my $self	= shift;
+	my $thing	= shift;
+	my $expect	= $thing;
+
+	my $level	= 2;
+	while (my $sub = (caller($level++))[3]) {
+		if ($sub =~ m/::_([A-Z]\w*)$/) {
+			$expect	= $1;
+			last;
+		}
+	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
+	if ($l->is_debug) {
+		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
+	}
+	
+	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
+	$near		=~ s/[\r\n ]+/ /g;
+	if ($thing) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $thing in $expect near $near";
+	} else {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";
+	}
+}
+
+sub _test {
+	my $self	= shift;
+	my $thing	= shift;
+	if (blessed($thing) and $thing->isa('Regexp')) {
+		if ($self->{tokens} =~ m/^$thing/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+}
+
+sub _ws_test {
+	my $self	= shift;
+	unless (length($self->{tokens})) {
+		return 0;
+	}
+	
+	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+sub _ws {
+	my $self	= shift;
+	### #x9 | #xA | #xD | #x20 | comment
+	if ($self->_test('#')) {
+		$self->_eat(qr/#[^\x0d\x0a]*.?/);
+	} else {
+		$self->_eat(qr/[\n\r\t ]/);
+	}
+}
+
+sub __consume_ws_opt {
+	my $self	= shift;
+	if ($self->_ws_test) {
+		$self->__consume_ws;
+	}
+}
+
+sub __consume_ws {
+	my $self	= shift;
+	$self->_ws;
+	while ($self->_ws_test()) {
+		$self->_ws()
+	}
+}
+
+sub __base {
+	my $self	= shift;
+	my $build	= $self->{build};
+	if (defined($build->{base})) {
+		return $build->{base};
+	} else {
+		return;
+	}
+}
+
+sub __new_statement {
+	my $self	= shift;
+	my @nodes	= @_;
+	if (my $graph = $self->{named_graph}) {
+		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
+	} else {
+		return RDF::Query::Algebra::Triple->_new( @nodes );
+	}
+}
+
+sub __new_path {
+	my $self	= shift;
+	my $start	= shift;
+	my $pdata	= shift;
+	my $end		= shift;
+	(undef, my $op, my @nodes)	= @$pdata;
+	foreach (@nodes) {
+		if (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+			(undef, my $op, my @nodes)	= @$_;
+			$_	= [$op, @nodes];
+		}
+	}
+	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
+	return $path;
+}
+
+sub __new_bgp {
+	# fix up BGPs that might actually have property paths in them. split those
+	# out as their own path algebra objects, and join them with the bgp with a
+	# ggp if necessary
+	my $self		= shift;
+	my @patterns	= @_;
+	my @paths		= grep { reftype($_->predicate) eq 'ARRAY' and $_->predicate->[0] eq 'PATH' } @patterns;
+	my @triples		= grep { blessed($_->predicate) } @patterns;
+	if (scalar(@patterns) > scalar(@paths) + scalar(@triples)) {
+		Carp::cluck "more than just triples and paths passed to __new_bgp: " . Dumper(\@patterns);
+	}
+	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+	if (@paths) {
+		my @p;
+		foreach my $p (@paths) {
+			my $start	= $p->subject;
+			my $end		= $p->object;
+			my $pdata	= $p->predicate;
+			push(@p, $self->__new_path( $start, $pdata, $end ));
+		}
+		my $pgroup	= (scalar(@p) == 1)
+					? $p[0]
+					: RDF::Query::Algebra::GroupGraphPattern->new( @p );
+		if (scalar(@triples)) {
+			return RDF::Query::Algebra::GroupGraphPattern->new( $bgp, $pgroup );
+		} else {
+			return $pgroup;
+		}
+	} else {
+		return $bgp;
 	}
 }
 
