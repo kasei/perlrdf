@@ -194,7 +194,7 @@ sub run_query {
 	my @choices	= grep { $_->[1] > 0 } choose($variants);
 #	warn "conneg prefers: " . Dumper(\@choices) . "\n";
 	
-	my $query	= RDF::Query->new( $sparql, { lang => 'sparqlp', defines => { plan => 1 } } );
+	my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 	unless ($query) {
 		my $error	= RDF::Query->error;
 		throw RDF::Endpoint::Error::MalformedQuery -text => $error, -value => 400;
