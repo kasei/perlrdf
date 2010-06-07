@@ -50,8 +50,7 @@ use RDF::Query::Plan::SubSelect;
 use RDF::Query::Plan::Iterator;
 use RDF::Query::Plan::Load;
 use RDF::Query::Plan::Clear;
-use RDF::Query::Plan::Insert;
-use RDF::Query::Plan::Delete;
+use RDF::Query::Plan::Update;
 use RDF::Query::Plan::Minus;
 use RDF::Query::Plan::Sequence;
 
@@ -679,15 +678,10 @@ sub generate_plans {
 		push(@return_plans, $plan);
 	} elsif ($type eq 'Load') {
 		push(@return_plans, RDF::Query::Plan::Load->new( $algebra->url, $algebra->graph ));
-	} elsif ($type eq 'Insert') {
+	} elsif ($type eq 'Update') {
 		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
 		foreach my $p (@plans) {
-			push(@return_plans, RDF::Query::Plan::Insert->new( $algebra->template, $p ));
-		}
-	} elsif ($type eq 'Delete') {
-		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
-		foreach my $p (@plans) {
-			push(@return_plans, RDF::Query::Plan::Delete->new( $algebra->template, $p ));
+			push(@return_plans, RDF::Query::Plan::Update->new( $algebra->delete_template, $algebra->insert_template, $p ));
 		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));

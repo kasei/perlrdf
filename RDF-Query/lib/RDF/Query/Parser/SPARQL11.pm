@@ -252,15 +252,15 @@ sub _RW_Query {
 				unless ($self->{update});
 			$self->_LoadUpdate();
 # 			warn Dumper($self->{build});
-		} elsif ($self->_test(qr/CLEAR GRAPH/i)) {
+		} elsif ($self->_test(qr/CLEAR\s+GRAPH/i)) {
 			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
 				unless ($self->{update});
 			$self->_ClearGraphUpdate();
-		} elsif ($self->_test(qr/INSERT DATA/i)) {
+		} elsif ($self->_test(qr/INSERT\s+DATA/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
 				unless ($self->{update});
 			$self->_InsertDataUpdate();
-		} elsif ($self->_test(qr/DELETE DATA/i)) {
+		} elsif ($self->_test(qr/DELETE\s+DATA/i)) {
 			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
 				unless ($self->{update});
 			$self->_DeleteDataUpdate();
@@ -361,7 +361,7 @@ sub _Prologue {
 
 sub _InsertDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/INSERT DATA/i);
+	$self->_eat(qr/INSERT\s+DATA/i);
 	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
@@ -382,14 +382,14 @@ sub _InsertDataUpdate {
 	$self->_eat('}');
 
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $insert	= RDF::Query::Algebra::Insert->new($data, $empty);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty);
 	$self->_add_patterns( $insert );
-	$self->{build}{method}		= 'INSERT';
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _DeleteDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/DELETE DATA/i);
+	$self->_eat(qr/DELETE\s+DATA/i);
 	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
@@ -410,9 +410,9 @@ sub _DeleteDataUpdate {
 	$self->_eat('}');
 
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $delete	= RDF::Query::Algebra::Delete->new($data, $empty);
+	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty);
 	$self->_add_patterns( $delete );
-	$self->{build}{method}		= 'DELETE';
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _InsertUpdate {
@@ -454,14 +454,16 @@ sub _InsertUpdate {
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
 	
-	my $insert	= RDF::Query::Algebra::Insert->new($data, $ggp);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp);
 	$self->_add_patterns( $insert );
-	$self->{build}{method}		= 'INSERT';
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _DeleteUpdate {
 	my $self	= shift;
 	my $graph;
+	my ($delete_data, $insert_data);
+	
 	if ($self->_test(qr/WITH/i)) {
 		$self->_eat(qr/WITH/i);
 		$self->__consume_ws_opt;
@@ -473,34 +475,55 @@ sub _DeleteUpdate {
 	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
-	my $data;
+	$self->__consume_ws_opt;
+	$self->_ModifyTemplate( $graph );
+	$self->__consume_ws_opt;
+	$self->_eat('}');
+	$delete_data	= $self->_remove_pattern;
+	
+	$self->__consume_ws_opt;
+	if ($self->_test(qr/INSERT/i)) {
+		$self->_eat(qr/INSERT/i);
+		$self->__consume_ws_opt;
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		$self->_ModifyTemplate( $graph );
+		$self->__consume_ws_opt;
+		$self->_eat('}');
+		$self->__consume_ws_opt;
+		$insert_data	= $self->_remove_pattern;
+	}
+	
+	$self->_eat(qr/WHERE/i);
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'UPDATE';
+}
+
+sub _ModifyTemplate {
+	my $self	= shift;
+	my $graph	= shift;
 	if ($self->_TriplesBlock_test) {
+		my $data;
 		$self->_push_pattern_container;
 		$self->_TriplesBlock;
 		($data)	= @{ $self->_pop_pattern_container };
 		if ($graph) {
 			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( $data );
-			$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+			my $data	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
 		}
+		$self->_add_patterns( $data );
 	} else {
 		$self->_GraphGraphPattern;
 		{
 			my ($d)	= splice(@{ $self->{stack} });
 			$self->__handle_GraphPatternNotTriples( $d );
 		}
-		$data	= $self->_remove_pattern;
 	}
-	$self->__consume_ws_opt;
-	$self->_eat('}');
-	$self->__consume_ws_opt;
-	$self->_eat(qr/WHERE/i);
-	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
-	my $ggp	= $self->_remove_pattern;
-	
-	my $insert	= RDF::Query::Algebra::Delete->new($data, $ggp);
-	$self->_add_patterns( $insert );
-	$self->{build}{method}		= 'DELETE';
 }
 
 sub _LoadUpdate {

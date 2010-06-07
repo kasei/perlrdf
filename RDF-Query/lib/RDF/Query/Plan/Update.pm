@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Delete
+# RDF::Query::Plan::Update
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Delete - Executable query plan for DELETE operations.
+RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Delete version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Update version 2.202, released 30 January 2010.
 
 =head1 METHODS
 
@@ -15,7 +15,7 @@ This document describes RDF::Query::Plan::Delete version 2.202, released 30 Janu
 
 =cut
 
-package RDF::Query::Plan::Delete;
+package RDF::Query::Plan::Update;
 
 use strict;
 use warnings;
@@ -38,15 +38,16 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $template, $pattern ) >>
+=item C<< new ( $delete_template, $insert_template, $pattern ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $temp	= shift;
+	my $delete	= shift;
+	my $insert	= shift;
 	my $pattern	= shift;
-	my $self	= $class->SUPER::new( $temp, $pattern );
+	my $self	= $class->SUPER::new( $delete, $insert, $pattern );
 	return $self;
 }
 
@@ -58,61 +59,77 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "DELETE plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "UPDATE plan can't be executed while already open";
 	}
 	
-	my $template	= $self->template;
+	my $insert_template	= $self->insert_template;
+	my $delete_template	= $self->delete_template;
 	my $plan		= $self->pattern;
 	$plan->execute( $context );
 	if ($plan->state == $self->OPEN) {
-		my $l		= Log::Log4perl->get_logger("rdf.query.plan.delete");
-		$l->trace( "executing RDF::Query::Plan::Delete" );
+		my $l		= Log::Log4perl->get_logger("rdf.query.plan.update");
+		$l->trace( "executing RDF::Query::Plan::Update" );
 		
+		my @rows;
 		while (my $row = $plan->next) {
-			my (@triples, $graph);
-			if ($template->isa('RDF::Query::Algebra::BasicGraphPattern')) {
-				@triples	= $template->triples;
-			} else {
-				@triples	= ($template->pattern->patterns)[0]->triples;
-				$graph		= $template->graph;
-			}
-			
-			foreach my $t (@triples) {
-				if ($l->is_debug) {
-					$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
+			push(@rows, $row);
+		}
+		
+		my @operations	= (
+			[$insert_template, 'add_statement'],
+			[$delete_template, 'remove_statement'],
+		);
+		
+		foreach my $data (@operations) {
+			my ($template, $method)	= @$data;
+			foreach my $row (@rows) {
+				my (@triples, $graph);
+				if ($template) {
+					if ($template->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+						@triples	= $template->triples;
+					} else {
+						@triples	= ($template->pattern->patterns)[0]->triples;
+						$graph		= $template->graph;
+					}
 				}
-				my @triple	= $t->nodes;
-				for my $i (0 .. 2) {
-					if ($triple[$i]->isa('RDF::Trine::Node::Variable')) {
-						my $name	= $triple[$i]->name;
-						$triple[$i]	= $row->{ $name };
-					} elsif ($triple[$i]->isa('RDF::Trine::Node::Blank')) {
-						my $id	= $triple[$i]->blank_identifier;
-						unless (exists($self->[0]{blank_map}{ $id })) {
-							$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
+				
+				foreach my $t (@triples) {
+					if ($l->is_debug) {
+						$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
+					}
+					my @triple	= $t->nodes;
+					for my $i (0 .. 2) {
+						if ($triple[$i]->isa('RDF::Trine::Node::Variable')) {
+							my $name	= $triple[$i]->name;
+							$triple[$i]	= $row->{ $name };
+						} elsif ($triple[$i]->isa('RDF::Trine::Node::Blank')) {
+							my $id	= $triple[$i]->blank_identifier;
+							unless (exists($self->[0]{blank_map}{ $id })) {
+								$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
+							}
+							$triple[$i]	= $self->[0]{blank_map}{ $id };
 						}
-						$triple[$i]	= $self->[0]{blank_map}{ $id };
 					}
-				}
-				my $ok	= 1;
-				foreach (@triple) {
-					if (not blessed($_)) {
-						$ok	= 0;
-					} elsif ($_->isa('RDF::Trine::Node::Variable')) {
-						$ok	= 0;
+					my $ok	= 1;
+					foreach (@triple) {
+						if (not blessed($_)) {
+							$ok	= 0;
+						} elsif ($_->isa('RDF::Trine::Node::Variable')) {
+							$ok	= 0;
+						}
 					}
+					next unless ($ok);
+					my $st	= ($graph)
+							? RDF::Trine::Statement::Quad->new( @triple[0..2], $graph )
+							: RDF::Trine::Statement->new( @triple );
+					$context->model->$method( $st );
 				}
-				next unless ($ok);
-				my $st	= ($graph)
-						? RDF::Trine::Statement::Quad->new( @triple[0..2], $graph )
-						: RDF::Trine::Statement->new( @triple );
-				$context->model->remove_statement( $st );
 			}
 		}
 		$self->[0]{ok}	= 1;
 		$self->state( $self->OPEN );
 	} else {
-		warn "could not execute Delete pattern plan";
+		warn "could not execute Update pattern plan";
 	}
 	$self;
 }
@@ -124,10 +141,10 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open DELETE";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open UPDATE";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.delete");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.update");
 	$self->close();
 	return $self->[0]{ok};
 }
@@ -139,22 +156,33 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open DELETE";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open UPDATE";
 	}
 	
 	delete $self->[0]{ok};
 	$self->SUPER::close();
 }
 
-=item C<< template >>
+=item C<< delete_template >>
 
 Returns the algebra object representing the RDF template to delete.
 
 =cut
 
-sub template {
+sub delete_template {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< insert_template >>
+
+Returns the algebra object representing the RDF template to insert.
+
+=cut
+
+sub insert_template {
+	my $self	= shift;
+	return $self->[2];
 }
 
 =item C<< pattern >>
@@ -165,7 +193,7 @@ Returns the pattern plan object.
 
 sub pattern {
 	my $self	= shift;
-	return $self->[2];
+	return $self->[3];
 }
 
 =item C<< distinct >>
@@ -195,7 +223,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'delete';
+	return 'update';
 }
 
 =item C<< plan_prototype >>
@@ -208,7 +236,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(A P);
+	return qw(A A P);
 }
 
 =item C<< plan_node_data >>
@@ -220,7 +248,7 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	return ($self->template, $self->pattern);
+	return ($self->delete_template, $self->insert_template, $self->pattern);
 }
 
 =item C<< graph ( $g ) >>

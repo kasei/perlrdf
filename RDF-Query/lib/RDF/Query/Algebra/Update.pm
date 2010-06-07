@@ -1,17 +1,17 @@
-# RDF::Query::Algebra::Delete
+# RDF::Query::Algebra::Update
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Algebra::Delete - Algebra class for DELETE operations
+RDF::Query::Algebra::Update - Algebra class for UPDATE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Delete version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Update version 2.202, released 30 January 2010.
 
 =cut
 
-package RDF::Query::Algebra::Delete;
+package RDF::Query::Algebra::Update;
 
 use strict;
 use warnings;
@@ -43,17 +43,18 @@ BEGIN {
 
 =cut
 
-=item C<new ( $template, $pattern )>
+=item C<new ( $delete_template, $insert_template, $pattern )>
 
-Returns a new DELETE structure.
+Returns a new UPDATE structure.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $temp	= shift;
+	my $delete	= shift;
+	my $insert	= shift;
 	my $pat		= shift;
-	return bless([$temp, $pat], $class);
+	return bless([$delete, $insert, $pat], $class);
 }
 
 =item C<< construct_args >>
@@ -65,7 +66,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->template, $self->pattern);
+	return ($self->delete_template, $self->insert_template, $self->pattern);
 }
 
 =item C<< sse >>
@@ -80,9 +81,12 @@ sub sse {
 	my $indent	= shift;
 	
 	my $string;
+	my $delete	= $self->delete_template;
+	my $insert	= $self->insert_template;
 	return sprintf(
-		"(delete <%s> <%s>)",
-		$self->template->sse( $context, $indent ),
+		"(update (delete %s) (insert %s) (where %s))",
+		($delete ? $delete->sse( $context, $indent ) : ''),
+		($insert ? $insert->sse( $context, $indent ) : ''),
 		$self->pattern->sse( $context, $indent ),
 	);
 }
@@ -97,19 +101,31 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift || '';
-	my $temp	= $self->template;
-	my @pats	= $self->pattern->patterns;
-	if (scalar(@pats) == 0) {
-		return sprintf(
-			"DELETE DATA {\n${indent}	%s\n${indent}}",
-			$temp->as_sparql( $context, "${indent}	" )
-		);
+	my $delete	= $self->delete_template;
+	my $insert	= $self->insert_template;
+	my $ggp		= $self->pattern;
+	my @pats	= $ggp->patterns;
+	if (not($insert) or not($delete)) {
+		my $op		= ($delete) ? 'DELETE' : 'INSERT';
+		my $temp	= ($delete) ? $delete : $insert;
+		if (scalar(@pats) == 0) {
+			return sprintf(
+				"${op} DATA {\n${indent}	%s\n${indent}}",
+				$temp->as_sparql( $context, "${indent}	" )
+			);
+		} else {
+			return sprintf(
+				"${op} {\n${indent}	%s\n${indent}} WHERE %s",
+				$temp->as_sparql( $context, "${indent}	" ),
+				$ggp->as_sparql( $context, "${indent}" ),
+			);
+		}
 	} else {
-		my $ggp	= $self->pattern;
 		return sprintf(
-			"DELETE {\n${indent}	%s\n${indent}} WHERE %s",
-			$temp->as_sparql( $context, "${indent}	" ),
-			$ggp->as_sparql( $context, "${indent}" ),
+			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}\n${indent}WHERE %s",
+			$delete->as_sparql( $context, "${indent}  " ),
+			$insert->as_sparql( $context, "${indent}  " ),
+			$ggp->as_sparql( $context, ${indent} ),
 		);
 	}
 }
@@ -134,13 +150,22 @@ sub referenced_variables {
 	return;
 }
 
-=item C<< template >>
+=item C<< delete_template >>
 
 =cut
 
-sub template {
+sub delete_template {
 	my $self	= shift;
 	return $self->[0];
+}
+
+=item C<< insert_template >>
+
+=cut
+
+sub insert_template {
+	my $self	= shift;
+	return $self->[1];
 }
 
 =item C<< pattern >>
@@ -149,7 +174,7 @@ sub template {
 
 sub pattern {
 	my $self	= shift;
-	return $self->[1];
+	return $self->[2];
 }
 
 

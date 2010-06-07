@@ -68,7 +68,7 @@ sub execute ($) {
 	unless ($graph) {
 		$graph	= RDF::Trine::Node::Nil->new;
 	}
-	warn "clearing graph " . $graph->as_string;
+# 	warn "clearing graph " . $graph->as_string;
 	my $ok	= 0;
 	try {
 		$context->model->remove_statements( undef, undef, undef, $graph );

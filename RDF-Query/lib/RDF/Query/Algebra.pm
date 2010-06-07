@@ -65,8 +65,7 @@ use RDF::Query::Algebra::Exists;
 use RDF::Query::Algebra::SubSelect;
 use RDF::Query::Algebra::Load;
 use RDF::Query::Algebra::Clear;
-use RDF::Query::Algebra::Insert;
-use RDF::Query::Algebra::Delete;
+use RDF::Query::Algebra::Update;
 use RDF::Query::Algebra::Minus;
 use RDF::Query::Algebra::Sequence;
 
