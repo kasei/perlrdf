@@ -177,7 +177,11 @@ sub _sse {
 		return $self->_sse_atom($context, $indent, $more, $p, $v);
 	} elsif ($p eq 'A') {
 		my $v	= shift(@$list);
-		return $v->sse( $context, $indent );
+		if (blessed($v)) {
+			return $v->sse( $context, $indent );
+		} else {
+			return '()';
+		}
 	} elsif (substr($p, 0, 1) eq '\\') {
 		my $rest	= substr($p, 1);
 		my $v		= shift(@$list);

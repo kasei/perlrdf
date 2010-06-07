@@ -108,15 +108,18 @@ sub as_sparql {
 	if (not($insert) or not($delete)) {
 		my $op		= ($delete) ? 'DELETE' : 'INSERT';
 		my $temp	= ($delete) ? $delete : $insert;
+		my $temps	= ($temp->isa('RDF::Query::Algebra::GroupGraphPattern'))
+					? $temp->as_sparql( $context, "${indent}	" )
+					: "{\n${indent}	" . $temp->as_sparql( $context, "${indent}	" ) . "\n${indent}}";
 		if (scalar(@pats) == 0) {
 			return sprintf(
-				"${op} DATA {\n${indent}	%s\n${indent}}",
-				$temp->as_sparql( $context, "${indent}	" )
+				"${op} DATA %s",
+				$temps
 			);
 		} else {
 			return sprintf(
-				"${op} {\n${indent}	%s\n${indent}} WHERE %s",
-				$temp->as_sparql( $context, "${indent}	" ),
+				"${op} %s WHERE %s",
+				$temps,
 				$ggp->as_sparql( $context, "${indent}" ),
 			);
 		}

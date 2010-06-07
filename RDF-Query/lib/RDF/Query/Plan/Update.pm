@@ -83,13 +83,11 @@ sub execute ($) {
 		foreach my $data (@operations) {
 			my ($template, $method)	= @$data;
 			foreach my $row (@rows) {
-				my (@triples, $graph);
+				my (@triples);
 				if ($template) {
-					if ($template->isa('RDF::Query::Algebra::BasicGraphPattern')) {
-						@triples	= $template->triples;
-					} else {
-						@triples	= ($template->pattern->patterns)[0]->triples;
-						$graph		= $template->graph;
+					foreach my $p ($template->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+						my @t	= $p->triples;
+						push(@triples, @t);
 					}
 				}
 				
@@ -97,21 +95,21 @@ sub execute ($) {
 					if ($l->is_debug) {
 						$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
 					}
-					my @triple	= $t->nodes;
-					for my $i (0 .. 2) {
-						if ($triple[$i]->isa('RDF::Trine::Node::Variable')) {
-							my $name	= $triple[$i]->name;
-							$triple[$i]	= $row->{ $name };
-						} elsif ($triple[$i]->isa('RDF::Trine::Node::Blank')) {
-							my $id	= $triple[$i]->blank_identifier;
+					my @nodes	= $t->nodes;
+					for my $i (0 .. $#nodes) {
+						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
+							my $name	= $nodes[$i]->name;
+							$nodes[$i]	= $row->{ $name };
+						} elsif ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
+							my $id	= $nodes[$i]->blank_identifier;
 							unless (exists($self->[0]{blank_map}{ $id })) {
 								$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
 							}
-							$triple[$i]	= $self->[0]{blank_map}{ $id };
+							$nodes[$i]	= $self->[0]{blank_map}{ $id };
 						}
 					}
 					my $ok	= 1;
-					foreach (@triple) {
+					foreach (@nodes) {
 						if (not blessed($_)) {
 							$ok	= 0;
 						} elsif ($_->isa('RDF::Trine::Node::Variable')) {
@@ -119,9 +117,9 @@ sub execute ($) {
 						}
 					}
 					next unless ($ok);
-					my $st	= ($graph)
-							? RDF::Trine::Statement::Quad->new( @triple[0..2], $graph )
-							: RDF::Trine::Statement->new( @triple );
+					my $st	= (scalar(@nodes) == 4)
+							? RDF::Trine::Statement::Quad->new( @nodes )
+							: RDF::Trine::Statement->new( @nodes );
 					$context->model->$method( $st );
 				}
 			}
