@@ -126,7 +126,7 @@ use RDF::Query::Plan;
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
 	$VERSION		= '2.202';
-	$DEFAULT_PARSER	= 'sparql';
+	$DEFAULT_PARSER	= 'sparql11';
 }
 
 
