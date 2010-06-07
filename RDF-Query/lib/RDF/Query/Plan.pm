@@ -53,6 +53,7 @@ use RDF::Query::Plan::Clear;
 use RDF::Query::Plan::Insert;
 use RDF::Query::Plan::Delete;
 use RDF::Query::Plan::Minus;
+use RDF::Query::Plan::Sequence;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -671,6 +672,10 @@ sub generate_plans {
 	} elsif ($type eq 'Union') {
 		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
 		my $plan	= RDF::Query::Plan::Union->new( map { $_->[0] } @plans );
+		push(@return_plans, $plan);
+	} elsif ($type eq 'Sequence') {
+		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
+		my $plan	= RDF::Query::Plan::Sequence->new( map { $_->[0] } @plans );
 		push(@return_plans, $plan);
 	} elsif ($type eq 'Load') {
 		push(@return_plans, RDF::Query::Plan::Load->new( $algebra->url, $algebra->graph ));

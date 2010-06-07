@@ -232,55 +232,85 @@ sub _RW_Query {
 	$self->__consume_ws_opt;
 	$self->_Prologue;
 	$self->__consume_ws_opt;
-	if ($self->_test(qr/SELECT/i)) {
-		$self->_SelectQuery();
-	} elsif ($self->_test(qr/CONSTRUCT/i)) {
-		$self->_ConstructQuery();
-	} elsif ($self->_test(qr/DESCRIBE/i)) {
-		$self->_DescribeQuery();
-	} elsif ($self->_test(qr/ASK/i)) {
-		$self->_AskQuery();
-	} elsif ($self->_test(qr/LOAD/i)) {
-		throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden when parsing a read-only query"
-			unless ($self->{update});
-		$self->_LoadUpdate();
-	} elsif ($self->_test(qr/CLEAR GRAPH/i)) {
-		throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
-			unless ($self->{update});
-		$self->_ClearGraphUpdate();
-	} elsif ($self->_test(qr/INSERT DATA/i)) {
-		throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
-			unless ($self->{update});
-		$self->_InsertDataUpdate();
-	} elsif ($self->_test(qr/DELETE DATA/i)) {
-		throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
-			unless ($self->{update});
-		$self->_DeleteDataUpdate();
-	} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
-		throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
-			unless ($self->{update});
-		if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
-			$self->_InsertUpdate();
-		} elsif ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?DELETE/i)) {
-			$self->_DeleteUpdate();
-		}
-	} else {
-		my $l		= Log::Log4perl->get_logger("rdf.query");
-		if ($l->is_debug) {
-			$l->logcluck("Syntax error: Expected query type with input <<$self->{tokens}>>");
-		}
-		throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
-	}
 	
+	my $read_query	= 0;
+	while (1) {
+		if ($self->_test(qr/SELECT/i)) {
+			$self->_SelectQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/CONSTRUCT/i)) {
+			$self->_ConstructQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/DESCRIBE/i)) {
+			$self->_DescribeQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/ASK/i)) {
+			$self->_AskQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/LOAD/i)) {
+			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden when parsing a read-only query"
+				unless ($self->{update});
+			$self->_LoadUpdate();
+# 			warn Dumper($self->{build});
+		} elsif ($self->_test(qr/CLEAR GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
+				unless ($self->{update});
+			$self->_ClearGraphUpdate();
+		} elsif ($self->_test(qr/INSERT DATA/i)) {
+			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
+				unless ($self->{update});
+			$self->_InsertDataUpdate();
+		} elsif ($self->_test(qr/DELETE DATA/i)) {
+			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
+				unless ($self->{update});
+			$self->_DeleteDataUpdate();
+		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
+			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
+				unless ($self->{update});
+			if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
+				$self->_InsertUpdate();
+			} elsif ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?DELETE/i)) {
+				$self->_DeleteUpdate();
+			}
+		} else {
+			my $l		= Log::Log4perl->get_logger("rdf.query");
+			if ($l->is_debug) {
+				$l->logcluck("Syntax error: Expected query type with input <<$self->{tokens}>>");
+			}
+			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
+		}
+		last if ($read_query);
+		$self->__consume_ws_opt;
+		$self->_eat(qr/;/) if ($self->_test(qr/;/));
+		$self->__consume_ws_opt;
+		if ($self->_Query_test) {
+			next;
+		}
+		last;
+	}
+	$self->_eat(qr/;/) if ($self->_test(qr/;/));
+	$self->__consume_ws_opt;
+	
+	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
 		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+	}
+	
+	if ($count > 1) {
+		my @patterns	= splice(@{ $self->{build}{triples} });
+		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
 	}
 	
 # 	my %query	= (%p, %body);
 # 	return \%query;
 }
 
+sub _Query_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|INSERT|DELETE|WITH/i));
+	return 0;
+}
 
 # [2] Prologue ::= BaseDecl? PrefixDecl*
 # [3] BaseDecl ::= 'BASE' IRI_REF
