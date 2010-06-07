@@ -2941,14 +2941,22 @@ sub __new_path {
 	my $pdata	= shift;
 	my $end		= shift;
 	(undef, my $op, my @nodes)	= @$pdata;
-	foreach (@nodes) {
-		if (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
-			(undef, my $op, my @nodes)	= @$_;
-			$_	= [$op, @nodes];
-		}
-	}
+	@nodes	= map { $self->__strip_path( $_ ) } @nodes;
 	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
 	return $path;
+}
+
+sub __strip_path {
+	my $self	= shift;
+	my $path	= shift;
+	if (blessed($_)) {
+		return $_;
+	} elsif (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+		(undef, my $op, my @nodes)	= @$path;
+		return [$op, map { $self->__strip_path($_) } @nodes];
+	} else {
+		return $_;
+	}
 }
 
 sub __new_bgp {
