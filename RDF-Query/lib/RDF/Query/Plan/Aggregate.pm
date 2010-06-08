@@ -45,7 +45,17 @@ sub new {
 	my %args	= @_;
 	my @ops		= @{ $args{ 'expressions' } || [] };
 	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
-	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { ($_->isa('RDF::Query::Node::Variable')) ? $_->name : $_->referenced_variables } @$groupby) ];
+	$self->[0]{referenced_variables}	= [
+											RDF::Query::_uniq(
+												$plan->referenced_variables,
+												map {
+													($_->isa('RDF::Query::Node::Variable'))
+														? $_->name
+														: $_->isa('RDF::Query::Node')
+															? ()
+															: $_->referenced_variables
+												} @$groupby)
+										];
 	return $self;
 }
 

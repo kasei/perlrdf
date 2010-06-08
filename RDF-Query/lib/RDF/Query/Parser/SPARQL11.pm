@@ -915,7 +915,25 @@ sub __GroupByVar_test {
 sub __GroupByVar {
 	my $self	= shift;
 	if ($self->_test('(')) {
-		$self->_BrackettedAliasExpression;
+		$self->_eat('(');
+		$self->__consume_ws_opt;
+		$self->_Expression;
+		my ($expr)	= splice(@{ $self->{stack} });
+		$self->__consume_ws_opt;
+		
+		if ($self->_test(qr/AS/i)) {
+			$self->_eat('AS');
+			$self->__consume_ws_opt;
+			$self->_Var;
+			my ($var)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			my $alias	= $self->new_alias_expression( $var, $expr );
+			$self->_add_stack( $alias );
+		} else {
+			$self->_add_stack( $expr );
+		}
+		$self->_eat(')');
+		
 	} elsif ($self->_IRIref_test) {
 		$$self->_FunctionCall;
 	} elsif ($self->_BuiltInCall_test) {
@@ -2825,7 +2843,7 @@ sub _eat {
 			substr($self->{tokens}, 0, length($thing))	= '';
 			return $thing;
 		} else {
-			$self->_syntax_error( $thing );
+			$self->_syntax_error( "Expected $thing" );
 		}
 	}
 	print $thing;
