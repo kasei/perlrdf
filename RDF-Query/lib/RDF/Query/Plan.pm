@@ -53,6 +53,7 @@ use RDF::Query::Plan::Clear;
 use RDF::Query::Plan::Update;
 use RDF::Query::Plan::Minus;
 use RDF::Query::Plan::Sequence;
+use RDF::Query::Plan::Path;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -842,15 +843,17 @@ sub __path_plan {
 	my $path	= shift;
 	my $end		= shift;
 	my $context	= shift;
-	my ($op, @nodes)	= @$path;
 	if (blessed($path)) {
 		my $s	= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
 		my $e	= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
 		return RDF::Query::Plan::Triple->new( $s, $path, $e );
-	} elsif ($op eq '*') {
-		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+	}
+	
+	my ($op, @nodes)	= @$path;
+	if ($op eq '*') {
+		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );
 	} elsif ($op eq '+') {
-		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );
 	} elsif ($op eq '?') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $context );
@@ -953,7 +956,7 @@ sub __zero_length_path_plan {
 	my $model	= $context->model;
 	my @iters;
 	push(@iters, scalar($model->subjects));
-	push(@iters, scalar($model->predicates));
+#	push(@iters, scalar($model->predicates));
 	push(@iters, scalar($model->objects));
 	my %vars;
 	my $no_literals	= 0;
