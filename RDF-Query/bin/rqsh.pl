@@ -20,12 +20,17 @@ use Term::ReadLine;
 # ] );
 ################################################################################
 
-# $SIG{ALRM}	= sub { Carp::confess };
-# alarm(30);
-
 $|			= 1;
+my $model;
+if ($ARGV[ $#ARGV ] =~ /.sqlite/) {
+	my $file	= pop(@ARGV);
+	my $dsn		= "DBI:SQLite:dbname=" . $file;
+	my $store	= RDF::Trine::Store::DBI->new($model, $dsn, '', '');
+	$model		= RDF::Trine::Model->new( $store );
+} else {
+	$model	= RDF::Trine::Model->temporary_model;
+}
 my %args	= &RDF::Query::Util::cli_parse_args();
-my $model	= RDF::Trine::Model->temporary_model;
 my $class	= delete $args{ class } || 'RDF::Query';
 my $term	= Term::ReadLine->new('rqsh');
 
