@@ -44,27 +44,37 @@ sub new {
 	my $self	= bless({ model => $model, stack => [] }, $class);
 }
 
-=item C<< push_default_graphs ( @graphs ) >>
+=item C<< push_dataset ( default => \@graphs, named => \@graphs ) >>
 
 =cut
 
-sub push_default_graphs {
+sub push_dataset {
 	my $self	= shift;
-	my @graphs	= @_;
-	unshift(@{ $self->{ stack } }, {});
-	foreach my $graph (@graphs) {
+	my %dataset	= @_;
+	
+	my @dgraphs	= @{ $dataset{ default } || [] };
+	unshift(@{ $self->{ stack } }, { default => {}, named => {} });
+	foreach my $graph (@dgraphs) {
 		my $name	= blessed($graph) ? $graph->uri_value : $graph;
 		$graph		= blessed($graph) ? $graph : RDF::Trine::Node::Resource->new( $graph );
-		$self->{stack}[0]{$name}	= $graph;
+		$self->{stack}[0]{default}{$name}	= $graph;
 	}
+	
+	my @ngraphs	= @{ $dataset{ named } || [] };
+	foreach my $graph (@ngraphs) {
+		my $name	= blessed($graph) ? $graph->uri_value : $graph;
+		$graph		= blessed($graph) ? $graph : RDF::Trine::Node::Resource->new( $graph );
+		$self->{stack}[0]{named}{$name}	= $graph;
+	}
+	
 	return 1;
 }
 
-=item C<< pop_default_graphs >>
+=item C<< pop_dataset >>
 
 =cut
 
-sub pop_default_graphs {
+sub pop_dataset {
 	my $self	= shift;
 	shift(@{ $self->{ stack } });
 	return 1;
@@ -101,7 +111,7 @@ Returns the number of statements in the model.
 
 sub size {
 	my $self	= shift;
-	return $self->model->size;
+	return $self->count_statements( undef, undef, undef, undef );
 }
 
 =item C<< count_statements ( $subject, $predicate, $object ) >>
@@ -122,17 +132,35 @@ sub count_statements {
 # 			warn "- default graph query";
 # 			warn "- " . join(', ', keys %{ $self->{stack}[0] });
 			my $count	= 0;
-			foreach my $g (values %{ $self->{stack}[0] }) {
+			foreach my $g (values %{ $self->{stack}[0]{default} }) {
 				$count	+= $self->model->count_statements( @_[0..2], $g );
 # 				warn "$count statments in graph " . $g->uri_value;
 			}
 			return $count;
+		} elsif (not(defined($quad)) or (blessed($quad) and $quad->isa('RDF::Trine::Node::Variable'))) {
+			my $iter	= $self->get_contexts;
+			my $count	= 0;
+			while (my $g = $iter->next) {
+				$count	+= $self->model->count_statements( @_[0..2], $g );
+			}
+			return $count;
 		} else {
-# 			warn "- NOT a default graph query";
-			return $self->model->count_statements( @_ );
+			my $name	= blessed($quad) ? $quad->uri_value : $quad;
+			if ($self->{stack}[0]{named}{ $name }) {
+				return $self->model->count_statements( @_[0..2], $quad );
+			} else {
+				return 0;
+			}
 		}
 	} else {
-		return $self->model->count_statements( @_ );
+		my %seen;
+		my $count	= 0;
+		my $iter	= $self->get_statements( @_[0..2], undef );
+		while (my $st = $iter->next) {
+			warn 'counting triples in dataset: ' . $st->as_string;
+			$count++ unless ($seen{ join(' ', map { $_->as_string } (map { $st->$_() } qw(subject predicate object)) ) }++);
+		}
+		return $count;
 	}
 }
 
@@ -188,14 +216,28 @@ sub get_statements {
 	return $self->model->get_statements( @_ ) unless (scalar(@{ $self->{stack} }));
 	my $bound		= 0;
 	my $use_quad	= (scalar(@_) >= 4);
+	my $nil			= RDF::Trine::Node::Nil->new();
 	if ($use_quad) {
 		my $quad	= $_[3];
 		if (blessed($quad) and not($quad->isa('RDF::Trine::Node::Variable')) and not($quad->isa('RDF::Trine::Node::Nil'))) {
-			return $self->model->get_statements( @_ );
+			if (exists($self->{stack}[0]{named}{$quad->uri_value})) {
+				return $self->model->get_statements( @_ );
+			} else {
+				return RDF::Trine::Iterator::Graph->new([]);
+			}
 		} else {
 			my @iters;
-			foreach my $g (values %{ $self->{stack}[0] }) {
-				push(@iters, $self->model->get_statements( @_[0..2], $g ));
+			foreach my $g (values %{ $self->{stack}[0]{default} }) {
+				my $iter	= $self->model->get_statements( @_[0..2], $g );
+				my $code	= sub {
+					my $st	= $iter->next;
+					return unless $st;
+					my @nodes	= $st->nodes;
+					$nodes[3]	= $nil;
+					my $quad	= RDF::Trine::Statement::Quad->new( @nodes );
+					return $quad;
+				};
+				push(@iters, RDF::Trine::Iterator::Graph->new( $code ));
 			}
 			if (not(defined($quad)) or $quad->isa('RDF::Trine::Node::Variable')) {
 				my $graphs	= $self->get_contexts;
@@ -220,9 +262,33 @@ sub get_statements {
 				}
 			};
 			my $iter	= RDF::Trine::Iterator::Graph->new( $code );
+			return $iter;
 		}
 	} else {
-		return $self->model->get_statements( @_ );
+		my %seen;
+		my @iters;
+		my $iter	= $self->get_statements( @_[0..2], $nil );
+		push(@iters, $iter);
+		my $giter	= $self->get_contexts;
+		while (my $g = $giter->next) {
+			my $iter	= $self->get_statements( @_[0..2], $g );
+			push(@iters, $iter);
+		}
+		
+		my $code	= sub {
+			while (1) {
+				return unless scalar(@iters);
+				my $st	= $iters[0]->next;
+				if ($st) {
+					my @nodes	= (map { $st->$_() } qw(subject predicate object));
+					next if ($seen{ join(' ', map { $_->as_string } @nodes ) }++);
+					return RDF::Trine::Statement->new( @nodes );
+				} else {
+					shift(@iters);
+				}
+			}
+		};
+		return RDF::Trine::Iterator::Graph->new( $code );
 	}
 }
 
@@ -244,7 +310,13 @@ sub get_pattern {
 
 sub get_contexts {
 	my $self	= shift;
-	return $self->model->get_contexts( @_ );
+	return $self->model->get_contexts unless (scalar(@{ $self->{stack} }));
+	my @nodes	= values %{ $self->{stack}[0]{named} };
+	if (wantarray) {
+		return @nodes;
+	} else {
+		return RDF::Trine::Iterator->new( \@nodes );
+	}
 }
 
 sub as_stream {
