@@ -1,4 +1,4 @@
-use Test::More tests => 23;
+use Test::More tests => 36;
 use Test::Exception;
 
 use utf8;
