@@ -191,6 +191,13 @@ sub new {
 					parser			=> $parser,
 					parsed			=> $parsed,
 				);
+	if ($options{load_data}) {
+		$self->{load_data}	= $options{load_data};
+	} elsif ($pclass =~ /^RDF::Query::Parser::(RDQL|SPARQL)$/) {
+		$self->{load_data}	= 1;
+	} else {
+		$self->{load_data}	= 0;
+	}
 	unless ($parsed->{'triples'}) {
 		$class->set_error( $parser->error );
 		$l->debug($parser->error);
@@ -281,14 +288,18 @@ sub prepare {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-	$l->trace("loading data");
-	$self->load_data();
+	if ($self->{load_data}) {
+		$l->trace("loading data");
+		$self->load_data();
+	}
 	$model		= $self->model();	# reload the model object, because load_data might have changed it.
+	
+	my $dataset	= ($model->isa('RDF::Trine::Model::Dataset')) ? $model : RDF::Trine::Model::Dataset->new($model);
 	
 	$l->trace("constructing ExecutionContext");
 	my $context	= RDF::Query::ExecutionContext->new(
 					bound						=> \%bound,
-					model						=> $model,
+					model						=> $dataset,
 					query						=> $self,
 					base						=> $parsed->{base},
 					ns							=> $parsed->{namespaces},
@@ -363,11 +374,10 @@ sub execute_plan {
 	}
 	
 	# RUN THE QUERY!
-
+	
 	$l->debug("executing the graph pattern");
 	
 	my $options	= $parsed->{options} || {};
-	
 	if ($self->{options}{plan}) {
 		warn $plan->sse({}, '');
 	}

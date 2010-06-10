@@ -42,7 +42,7 @@ END
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END" );
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql' } );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?page
 			FROM <$file>
@@ -65,7 +65,7 @@ END
 		eval "use RDF::RDFa::Parser;";
 		skip( "Need RDF::RDFa::Parser to run these tests.", 6 ) if ($@);
 		
-		my $query	= new RDF::Query ( <<"END" );
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql' } );
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT *
 			FROM <$rdfa>
