@@ -1005,13 +1005,13 @@ sub _LimitOffsetClauses {
 	my $self	= shift;
 	if ($self->_LimitClause_test) {
 		$self->_LimitClause;
-		$self->__consume_ws;
+		$self->__consume_ws_opt;
 		if ($self->_OffsetClause_test) {
 			$self->_OffsetClause;
 		}
 	} else {
 		$self->_OffsetClause;
-		$self->__consume_ws;
+		$self->__consume_ws_opt;
 		if ($self->_LimitClause_test) {
 			$self->_LimitClause;
 		}
