@@ -9,6 +9,45 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.202.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.201.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.202" ;
+                        doap:created      "2010-05-22" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added initial SPARQL 1.1 syntax and eval support for select expressions, subqueries, negation, aggregates, subqueries, and basic federation." ;
+                        asc:addition      "Added RDF::Query::VariableBindings.pm->set method." ;
+                        asc:addition      "Added RDF::Query::_new constructor without any sanity or setup code (used for subquery construction)." ;
+                        asc:addition      "Added RDF::Query::Node::Blank::new constructor to avoid RDF::Trine's N-Triples syntax requirements." ;
+                        asc:addition      "Added SAMPLE and GROUP_CONCAT aggregate support." ;
+                        asc:addition      "Added shortcut functions for constructing RDF::Query::Node objects and Algebra Triples, BGPs and GGPs." ;
+                        asc:addition      "Added warning to RDF::Query::Algebra::Project constructor for improper variable lists." ;
+                        asc:update        "Updated DAWG tests to use SPARQL 1.1 parser." ;
+                        asc:update        "Removed SPARQLP aggregate tests that don't align with new SPARQL 1.1 semantics." ;
+                        asc:update        "Updated DAWG eval tests to skip non-approved tests." ;
+                        asc:update        "Fixed handling of unicode decoding in DAWG eval tests." ;
+                        asc:update        "Bumped required version of RDF::Trine to 0.123." ;
+                        asc:update        "Updated t/models.pl to use RDF::Trine::Parser->parse_url_into_model method and redland's 'guess' parser." ;
+                        asc:update        "Fixed logging key name in RDF::Query::Plan::Exists." ;
+                        asc:update        "Fixed sse and as_sparql methods in RDF::Query::Algebra::Exists." ;
+                        asc:update        "Implemented RDF::Query::Algebra::Exists::binding_variables." ;
+                        asc:update        "Updated BGPOptimizer to estimate selectivity directly instead of using costmodel code." ;
+                        asc:update        "Removed costmodel code." ;
+                        asc:update        "Removed unused fixup and execute methods in Algebra classes." ;
+                        asc:update        "Updated RDF::Query to only instantiate DateTime parser and LWP::UserAgent if needed." ;
+                        asc:update        "Changed DBPedia network test to align with recent DBPedia update in t/dev-service-description." ;
+                        asc:update        "Updated SPARQLP parser tests to align with internal changes in RDF::Query::Algebra::Aggregate." ;
+                        asc:update        "Updated RDF::Query::Algebra::Aggregate and RDF::Query::Plan::Aggregate to syntactically handle HAVING clauses." ;
+                        asc:update        "Fixed bin/graph-bgp.pl (had bitrotted)." ;
+                        asc:update        "Changed bnodes to named variables in examples/queries/sparql-bgp-people-knows.rq." ;
+                        asc:update        "RDF::Query::Util::cli_make_query now defaults the 'class' parameter to 'RDF::Query'." ;
+                        asc:update        "Removed dependency list and added perlrdf link to POD in RDF::Trine and RDF::Query." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.201.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.200.tar.gz> ;

@@ -363,54 +363,57 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - x
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example.org/ns#price
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - x
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://purl.org/dc/elements/1.1/title
-            - !!perl/array:RDF::Query::Node::Variable
-              - title
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - x
-            - !!perl/array:RDF::Query::Node::Resource
-              - URI
-              - http://example.org/ns#discount
-            - !!perl/array:RDF::Query::Node::Variable
-              - discount
-      -
-        - &1 !!perl/array:RDF::Query::Node::Variable
-          - title
-        - &2 !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - price
-          - !!perl/array:RDF::Query::Expression::Binary
-            - '*'
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
-            - !!perl/array:RDF::Query::Expression::Binary
-              - -
-              - !!perl/array:RDF::Query::Node::Literal
-                - 1
-                - ~
-                - http://www.w3.org/2001/XMLSchema#integer
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/ns#price
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://purl.org/dc/elements/1.1/title
+              - !!perl/array:RDF::Query::Node::Variable
+                - title
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - x
+              - !!perl/array:RDF::Query::Node::Resource
+                - URI
+                - http://example.org/ns#discount
               - !!perl/array:RDF::Query::Node::Variable
                 - discount
+        -
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - price
+            - !!perl/array:RDF::Query::Expression::Binary
+              - '*'
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Expression::Binary
+                - -
+                - !!perl/array:RDF::Query::Node::Literal
+                  - 1
+                  - ~
+                  - http://www.w3.org/2001/XMLSchema#integer
+                - !!perl/array:RDF::Query::Node::Variable
+                  - discount
+      -
+        - &3 !!perl/array:RDF::Query::Node::Variable
+          - title
+        - *2
   variables:
+    - *3
     - *1
-    - *2
 ---
 - GROUP_CONCAT Aggregate
 - |
@@ -479,58 +482,61 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::Aggregate
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - org
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://books.example/affiliates
-              - !!perl/array:RDF::Query::Node::Variable
-                - auth
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - auth
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://books.example/writesBook
-              - !!perl/array:RDF::Query::Node::Variable
-                - book
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - book
-              - !!perl/array:RDF::Query::Node::Resource
-                - URI
-                - http://books.example/price
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::Aggregate
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - org
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://books.example/affiliates
+                - !!perl/array:RDF::Query::Node::Variable
+                  - auth
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - auth
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://books.example/writesBook
+                - !!perl/array:RDF::Query::Node::Variable
+                  - book
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - book
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - http://books.example/price
+                - !!perl/array:RDF::Query::Node::Variable
+                  - lprice
+          -
+            - !!perl/array:RDF::Query::Node::Variable
+              - org
+          -
+            - SUM(?lprice)
+            -
+              - SUM
               - !!perl/array:RDF::Query::Node::Variable
                 - lprice
-        -
-          - !!perl/array:RDF::Query::Node::Variable
-            - org
-        -
-          - SUM(?lprice)
           -
-            - SUM
-            - !!perl/array:RDF::Query::Node::Variable
-              - lprice
+            - !!perl/array:RDF::Query::Expression::Binary
+              - '>'
+              - !!perl/array:RDF::Query::Node::Variable
+                - SUM(?lprice)
+              - !!perl/array:RDF::Query::Node::Literal
+                - 10
+                - ~
+                - http://www.w3.org/2001/XMLSchema#integer
         -
-          - !!perl/array:RDF::Query::Expression::Binary
-            - '>'
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - totalPrice
             - !!perl/array:RDF::Query::Node::Variable
               - SUM(?lprice)
-            - !!perl/array:RDF::Query::Node::Literal
-              - 10
-              - ~
-              - http://www.w3.org/2001/XMLSchema#integer
       -
-        - &1 !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - totalPrice
-          - !!perl/array:RDF::Query::Node::Variable
-            - SUM(?lprice)
+        - *2
   variables:
     - *1
 ---

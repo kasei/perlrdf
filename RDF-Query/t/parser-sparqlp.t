@@ -5457,29 +5457,33 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - s
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
-            - !!perl/array:RDF::Query::Node::Variable
-              - o
-      - &1
-        - !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - q
-          - !!perl/array:RDF::Query::Expression::Binary
-            - +
-            - !!perl/array:RDF::Query::Node::Variable
-              - o
-            - !!perl/array:RDF::Query::Node::Literal
-              - 1
-              - ~
-              - http://www.w3.org/2001/XMLSchema#integer
-  variables: *1
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - s
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Variable
+                - o
+        -
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - q
+            - !!perl/array:RDF::Query::Expression::Binary
+              - +
+              - !!perl/array:RDF::Query::Node::Variable
+                - o
+              - !!perl/array:RDF::Query::Node::Literal
+                - 1
+                - ~
+                - http://www.w3.org/2001/XMLSchema#integer
+      -
+        - *2
+  variables:
+    - *1
 ---
 - select node and expression
 - |
@@ -5492,31 +5496,36 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Triple
-            - !!perl/array:RDF::Query::Node::Variable
-              - s
-            - !!perl/array:RDF::Query::Node::Variable
-              - p
-            - !!perl/array:RDF::Query::Node::Variable
-              - o
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Triple
+              - !!perl/array:RDF::Query::Node::Variable
+                - s
+              - !!perl/array:RDF::Query::Node::Variable
+                - p
+              - !!perl/array:RDF::Query::Node::Variable
+                - o
+        -
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - q
+            - !!perl/array:RDF::Query::Expression::Binary
+              - +
+              - !!perl/array:RDF::Query::Node::Variable
+                - o
+              - !!perl/array:RDF::Query::Node::Literal
+                - 1
+                - ~
+                - http://www.w3.org/2001/XMLSchema#integer
+      -
+        - &3 !!perl/array:RDF::Query::Node::Variable
           - p
-        - !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - q
-          - !!perl/array:RDF::Query::Expression::Binary
-            - +
-            - !!perl/array:RDF::Query::Node::Variable
-              - o
-            - !!perl/array:RDF::Query::Node::Literal
-              - 1
-              - ~
-              - http://www.w3.org/2001/XMLSchema#integer
-  variables: *1
+        - *2
+  variables:
+    - *3
+    - *1
 ---
 - 'aggregates: select count *'
 - |
@@ -5670,32 +5679,36 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::Aggregate
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-            - !!perl/array:RDF::Query::Algebra::Triple
-              - !!perl/array:RDF::Query::Node::Variable
-                - s
-              - !!perl/array:RDF::Query::Node::Variable
-                - p
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::Aggregate
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Triple
+                - !!perl/array:RDF::Query::Node::Variable
+                  - s
+                - !!perl/array:RDF::Query::Node::Variable
+                  - p
+                - !!perl/array:RDF::Query::Node::Variable
+                  - o
+          - []
+          -
+            - COUNT(?o)
+            -
+              - COUNT
               - !!perl/array:RDF::Query::Node::Variable
                 - o
-        - []
+          - []
         -
-          - COUNT(?o)
-          -
-            - COUNT
+          - &1 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &2 !!perl/array:RDF::Query::Node::Variable
+              - count
             - !!perl/array:RDF::Query::Node::Variable
-              - o
-        - []
-      - &1
-        - !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - count
-          - !!perl/array:RDF::Query::Node::Variable
-            - COUNT(?o)
-  variables: *1
+              - COUNT(?o)
+      -
+        - *2
+  variables:
+    - *1
 ---
 - 'aggregates: select count ?o with alias and group by'
 - |
@@ -5714,58 +5727,63 @@ __END__
   sources: []
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::Aggregate
-        - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-          - !!perl/array:RDF::Query::Algebra::Optional
-            - OPTIONAL
-            - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-              - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-                - !!perl/array:RDF::Query::Algebra::Triple
-                  - &1 !!perl/array:RDF::Query::Node::Variable
-                    - p
-                  - !!perl/array:RDF::Query::Node::Resource
-                    - URI
-                    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-                  - !!perl/array:RDF::Query::Node::Resource
-                    - URI
-                    - http://xmlns.com/foaf/0.1/Person
-                - !!perl/array:RDF::Query::Algebra::Triple
-                  - *1
-                  - !!perl/array:RDF::Query::Node::Resource
-                    - URI
-                    - http://xmlns.com/foaf/0.1/name
-                  - !!perl/array:RDF::Query::Node::Variable
-                    - name
-            - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-              - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-                - !!perl/array:RDF::Query::Algebra::Triple
-                  - !!perl/array:RDF::Query::Node::Variable
-                    - p
-                  - !!perl/array:RDF::Query::Node::Resource
-                    - URI
-                    - http://xmlns.com/foaf/0.1/nick
-                  - !!perl/array:RDF::Query::Node::Variable
-                    - nick
-        -
-          - !!perl/array:RDF::Query::Node::Variable
-            - name
-        -
-          - COUNT(DISTINCT ?nick)
+      - !!perl/array:RDF::Query::Algebra::Extend
+        - !!perl/array:RDF::Query::Algebra::Aggregate
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::Optional
+              - OPTIONAL
+              - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+                - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+                  - !!perl/array:RDF::Query::Algebra::Triple
+                    - &1 !!perl/array:RDF::Query::Node::Variable
+                      - p
+                    - !!perl/array:RDF::Query::Node::Resource
+                      - URI
+                      - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+                    - !!perl/array:RDF::Query::Node::Resource
+                      - URI
+                      - http://xmlns.com/foaf/0.1/Person
+                  - !!perl/array:RDF::Query::Algebra::Triple
+                    - *1
+                    - !!perl/array:RDF::Query::Node::Resource
+                      - URI
+                      - http://xmlns.com/foaf/0.1/name
+                    - !!perl/array:RDF::Query::Node::Variable
+                      - name
+              - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+                - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+                  - !!perl/array:RDF::Query::Algebra::Triple
+                    - !!perl/array:RDF::Query::Node::Variable
+                      - p
+                    - !!perl/array:RDF::Query::Node::Resource
+                      - URI
+                      - http://xmlns.com/foaf/0.1/nick
+                    - !!perl/array:RDF::Query::Node::Variable
+                      - nick
           -
-            - COUNT-DISTINCT
             - !!perl/array:RDF::Query::Node::Variable
-              - nick
-        - []
-      - &2
-        - !!perl/array:RDF::Query::Node::Variable
-          - name
-        - !!perl/array:RDF::Query::Expression::Alias
-          - alias
-          - !!perl/array:RDF::Query::Node::Variable
-            - count
-          - !!perl/array:RDF::Query::Node::Variable
+              - name
+          -
             - COUNT(DISTINCT ?nick)
-  variables: *2
+            -
+              - COUNT-DISTINCT
+              - !!perl/array:RDF::Query::Node::Variable
+                - nick
+          - []
+        -
+          - &2 !!perl/array:RDF::Query::Expression::Alias
+            - alias
+            - &3 !!perl/array:RDF::Query::Node::Variable
+              - count
+            - !!perl/array:RDF::Query::Node::Variable
+              - COUNT(DISTINCT ?nick)
+      -
+        - &4 !!perl/array:RDF::Query::Node::Variable
+          - name
+        - *3
+  variables:
+    - *4
+    - *2
 ---
 - 'FeDeRate BINDINGS (one var)'
 - |
