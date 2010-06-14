@@ -103,8 +103,25 @@ sub as_sparql {
 	my $indent	= shift || '';
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
-	my $ggp		= $self->pattern;
+	my ($ggp, $ds);
+	if ($self->pattern->isa('RDF::Query::Algebra::Dataset')) {
+		$ds			= $self->pattern;
+		$ggp		= $ds->pattern;
+	} else {
+		$ggp		= $self->pattern;
+	}
 	my @pats	= $ggp->patterns;
+
+	my $ds_string	= '';
+	if (defined $ds) {
+		my @defaults	= $ds->defaults;
+		my %named		= $ds->named;
+		my @strings;
+		push(@strings, sprintf("USING <%s>", $_->uri_value)) foreach (@defaults);
+		push(@strings, sprintf("USING NAMED <%s>", $named{$_}->uri_value)) foreach (keys %named);
+		$ds_string	= join("\n${indent}", @strings);
+	}
+
 	if (not($insert) or not($delete)) {
 		my $op		= ($delete) ? 'DELETE' : 'INSERT';
 		my $temp	= ($delete) ? $delete : $insert;
@@ -117,17 +134,29 @@ sub as_sparql {
 				$temps
 			);
 		} else {
+			if ($ds_string) {
+				$ds_string	= "\n${indent}$ds_string\n${indent}";
+			} else {
+				$ds_string	= ' ';
+			}
+#			$ds_string	= " $ds_string";
 			return sprintf(
-				"${op} %s WHERE %s",
+				"${op} %s%sWHERE %s",
 				$temps,
+				$ds_string,
 				$ggp->as_sparql( $context, "${indent}" ),
 			);
 		}
 	} else {
+		if ($ds_string) {
+			$ds_string	= "\n${indent}$ds_string";
+		}
+		my @ds_string	= ($ds_string) ? $ds_string : ();
 		return sprintf(
-			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}\n${indent}WHERE %s",
+			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}%s\n${indent}WHERE %s",
 			$delete->as_sparql( $context, "${indent}  " ),
 			$insert->as_sparql( $context, "${indent}  " ),
+			$ds_string,
 			$ggp->as_sparql( $context, ${indent} ),
 		);
 	}

@@ -264,10 +264,10 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
 				unless ($self->{update});
 			$self->_DeleteDataUpdate();
-		} elsif ($self->_test(qr/DELETE\s+WHERE/i)) {
-			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden when parsing a read-only query"
-				unless ($self->{update});
-			$self->_DeleteWhereUpdate();
+# 		} elsif ($self->_test(qr/DELETE\s+WHERE/i)) {
+# 			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden when parsing a read-only query"
+# 				unless ($self->{update});
+# 			$self->_DeleteWhereUpdate();
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
 				unless ($self->{update});
@@ -401,7 +401,7 @@ sub _DeleteDataUpdate {
 
 sub _InsertUpdate {
 	my $self	= shift;
-	my $graph;
+	my ($graph);
 	if ($self->_test(qr/WITH/i)) {
 		$self->_eat(qr/WITH/i);
 		$self->__consume_ws_opt;
@@ -418,17 +418,28 @@ sub _InsertUpdate {
 	my $data	= $self->_remove_pattern;
 	$self->_eat('}');
 	$self->__consume_ws_opt;
+	if ($graph) {
+		$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $data );
+	}
+
 	
+	my %dataset;
 	while ($self->_test(qr/USING/i)) {
 		$self->_eat(qr/USING/i);
 		$self->__consume_ws_opt;
+		my $named	= 0;
 		if ($self->_test(qr/NAMED/i)) {
 			$self->_eat(qr/NAMED/i);
 			$self->__consume_ws_opt;
-			throw RDF::Query::Error::ParseError -text => "The use of USING in DELETE/INSERT is not supported yet";	# XXX TODO
+			$named	= 1;
 		}
 		$self->_IRIref;
 		my ($iri)	= splice( @{ $self->{stack} } );
+		if ($named) {
+			$dataset{named}{$iri->uri_value}	= $iri;
+		} else {
+			push(@{ $dataset{default} }, $iri );
+		}
 		$self->__consume_ws_opt;
 	}
 	
@@ -436,6 +447,13 @@ sub _InsertUpdate {
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
+	
+	my @ds_keys	= keys %dataset;
+	if (@ds_keys) {
+		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, \%dataset );
+	} elsif ($graph) {
+		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, { default => [$graph], named => {} } );
+	}
 	
 	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp);
 	$self->_add_patterns( $insert );
@@ -456,76 +474,111 @@ sub _DeleteUpdate {
 	}
 	$self->_eat(qr/DELETE/i);
 	$self->__consume_ws_opt;
-	$self->_eat('{');
-	$self->__consume_ws_opt;
-	$self->_ModifyTemplate( $graph );
-	$self->__consume_ws_opt;
-	$self->_eat('}');
-	$delete_data	= $self->_remove_pattern;
-	
-	$self->__consume_ws_opt;
-	if ($self->_test(qr/INSERT/i)) {
-		$self->_eat(qr/INSERT/i);
-		$self->__consume_ws_opt;
+	my %dataset;
+	my $delete_where	= 0;
+	if ($self->_test(qr/WHERE/i)) {
+		if ($graph) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: WITH clause cannot be used with DELETE WHERE operations";
+		}
+		$delete_where	= 1;
+	} else {
 		$self->_eat('{');
 		$self->__consume_ws_opt;
 		$self->_ModifyTemplate( $graph );
 		$self->__consume_ws_opt;
 		$self->_eat('}');
-		$self->__consume_ws_opt;
-		$insert_data	= $self->_remove_pattern;
-	}
-	
-	while ($self->_test(qr/USING/i)) {
-		$self->_eat(qr/USING/i);
-		$self->__consume_ws_opt;
-		if ($self->_test(qr/NAMED/i)) {
-			$self->_eat(qr/NAMED/i);
-			$self->__consume_ws_opt;
-			throw RDF::Query::Error::ParseError -text => "The use of USING in DELETE/INSERT is not supported yet";	# XXX TODO
+		$delete_data	= $self->_remove_pattern;
+		if ($graph) {
+			$delete_data	= RDF::Query::Algebra::NamedGraph->new( $graph, $delete_data );
 		}
-		$self->_IRIref;
-		my ($iri)	= splice( @{ $self->{stack} } );
+		
 		$self->__consume_ws_opt;
+		if ($self->_test(qr/INSERT/i)) {
+			$self->_eat(qr/INSERT/i);
+			$self->__consume_ws_opt;
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			$self->_ModifyTemplate( $graph );
+			$self->__consume_ws_opt;
+			$self->_eat('}');
+			$self->__consume_ws_opt;
+			$insert_data	= $self->_remove_pattern;
+			if ($graph) {
+				$insert_data	= RDF::Query::Algebra::NamedGraph->new( $graph, $insert_data );
+			}
+		}
+		
+		while ($self->_test(qr/USING/i)) {
+			$self->_eat(qr/USING/i);
+			$self->__consume_ws_opt;
+			my $named	= 0;
+			if ($self->_test(qr/NAMED/i)) {
+				$self->_eat(qr/NAMED/i);
+				$self->__consume_ws_opt;
+				$named	= 1;
+			}
+			$self->_IRIref;
+			my ($iri)	= splice( @{ $self->{stack} } );
+			if ($named) {
+				$dataset{named}{$iri->uri_value}	= $iri;
+			} else {
+				push(@{ $dataset{default} }, $iri );
+			}
+			$self->__consume_ws_opt;
+		}
 	}
 	
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
+	if ($delete_where) {
+		$delete_data	= $ggp;
+		if ($graph) {
+			$delete_data	= RDF::Query::Algebra::NamedGraph->new( $graph, $delete_data );
+		}
+	}
+	
+	my @ds_keys	= keys %dataset;
+	if (@ds_keys) {
+		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, \%dataset );
+	} elsif ($graph) {
+		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, { default => [$graph], named => {} } );
+	}
+	
 	
 	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
 
-sub _DeleteWhereUpdate {
-	my $self	= shift;
-	my $graph;
-	
-	$self->_eat(qr/DELETE\s+WHERE/i);
-	$self->__consume_ws_opt;
-	$self->_eat('{');
-	$self->__consume_ws_opt;
-	$self->_ModifyTemplate( $graph );
-	$self->__consume_ws_opt;
-	my $delete_data	= $self->_remove_pattern;
-	$delete_data	= RDF::Query::Algebra::GroupGraphPattern->new( $delete_data ) unless ($delete_data->isa('RDF::Query::Algebra::GroupGraphPattern'));
-	while ($self->_ModifyTemplate_test) {
-		$self->_ModifyTemplate( $graph );
-		$self->__consume_ws_opt;
-		my $data		= $self->_remove_pattern;
-		my @patterns	= $delete_data->patterns;
-		$delete_data	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns, $data );
-	}
-	$self->_eat('}');
-	$self->__consume_ws_opt;
-	my $ggp	= $delete_data;
-	
-	my $insert	= RDF::Query::Algebra::Update->new($delete_data, undef, $ggp);
-	$self->_add_patterns( $insert );
-	$self->{build}{method}		= 'UPDATE';
-}
+# sub _DeleteWhereUpdate {
+# 	my $self	= shift;
+# 	my $graph;
+# 	
+# 	$self->_eat(qr/DELETE\s+WHERE/i);
+# 	$self->__consume_ws_opt;
+# 	$self->_eat('{');
+# 	$self->__consume_ws_opt;
+# 	$self->_ModifyTemplate( $graph );
+# 	$self->__consume_ws_opt;
+# 	my $delete_data	= $self->_remove_pattern;
+# 	$delete_data	= RDF::Query::Algebra::GroupGraphPattern->new( $delete_data ) unless ($delete_data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+# 	while ($self->_ModifyTemplate_test) {
+# 		$self->_ModifyTemplate( $graph );
+# 		$self->__consume_ws_opt;
+# 		my $data		= $self->_remove_pattern;
+# 		my @patterns	= $delete_data->patterns;
+# 		$delete_data	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns, $data );
+# 	}
+# 	$self->_eat('}');
+# 	$self->__consume_ws_opt;
+# 	my $ggp	= $delete_data;
+# 	
+# 	my $insert	= RDF::Query::Algebra::Update->new($delete_data, undef, $ggp);
+# 	$self->_add_patterns( $insert );
+# 	$self->{build}{method}		= 'UPDATE';
+# }
 
 sub _ModifyTemplate_test {
 	my $self	= shift;
