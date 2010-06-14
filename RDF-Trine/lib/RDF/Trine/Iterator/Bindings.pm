@@ -494,16 +494,18 @@ Returns a string table serialization of the stream data.
 sub as_string {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	my $count			= shift;
+	my $rescount		= shift;
 	my @names			= $self->binding_names;
 	my $headers			= \@names;
 	my @rows;
+	my $count	= 0;
 	while (my $row = $self->next) {
 		push(@rows, [ map { blessed($_) ? $_->as_string : '' } @{ $row }{ @names } ]);
+		last if ($max_result_size and ++$count >= $max_result_size);
 	}
 #	my $rows			= [ map { [ map { blessed($_) ? $_->as_string : '' } @{$_}{ @names } ] } @nodes ];
-	if (ref($count)) {
-		$$count	= scalar(@rows);
+	if (ref($rescount)) {
+		$$rescount	= scalar(@rows);
 	}
 	
 	my @rule			= qw(- +);
