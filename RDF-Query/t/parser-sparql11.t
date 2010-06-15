@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 114;
+use Test::More tests => 112;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -210,64 +210,6 @@ __END__
   variables:
     - *3
 ---
-- EXISTS graph pattern
-- |
-  SELECT *
-  WHERE {
-    EXISTS { ?s a <type> }
-  }
-- method: SELECT
-  namespaces: {}
-  sources: []
-  triples:
-    - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Exists
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Triple
-                - !!perl/array:RDF::Query::Node::Variable
-                  - s
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - type
-          - 0
-      - &1 []
-  variables: *1
----
-- NOT EXISTS graph pattern
-- |
-  SELECT *
-  WHERE {
-    NOT EXISTS { ?s a <type> }
-  }
-- method: SELECT
-  namespaces: {}
-  sources: []
-  triples:
-    - !!perl/array:RDF::Query::Algebra::Project
-      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-        - !!perl/array:RDF::Query::Algebra::Exists
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Triple
-                - !!perl/array:RDF::Query::Node::Variable
-                  - s
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - type
-          - 1
-      - &1 []
-  variables: *1
----
 - EXISTS filter
 - |
   SELECT *
@@ -316,21 +258,23 @@ __END__
     - !!perl/array:RDF::Query::Algebra::Project
       - !!perl/array:RDF::Query::Algebra::Filter
         - FILTER
-        - !!perl/array:RDF::Query::Expression::Function
-          - !!perl/array:RDF::Query::Node::Resource
-            - URI
-            - sparql:not-exists
-          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
-            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Triple
-                - !!perl/array:RDF::Query::Node::Variable
-                  - s
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
-                - !!perl/array:RDF::Query::Node::Resource
-                  - URI
-                  - type2
+        - !!perl/array:RDF::Query::Expression::Unary
+          - '!'
+          - !!perl/array:RDF::Query::Expression::Function
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - sparql:exists
+            - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+              - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+                - !!perl/array:RDF::Query::Algebra::Triple
+                  - !!perl/array:RDF::Query::Node::Variable
+                    - s
+                  - !!perl/array:RDF::Query::Node::Resource
+                    - URI
+                    - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+                  - !!perl/array:RDF::Query::Node::Resource
+                    - URI
+                    - type2
         - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
           - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
             - !!perl/array:RDF::Query::Algebra::Triple
@@ -342,10 +286,11 @@ __END__
               - !!perl/array:RDF::Query::Node::Resource
                 - URI
                 - type
-      - &1
-        - !!perl/array:RDF::Query::Node::Variable
+      -
+        - &1 !!perl/array:RDF::Query::Node::Variable
           - s
-  variables: *1
+  variables:
+    - *1
 ---
 - SELECT expression
 - |
