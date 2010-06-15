@@ -185,23 +185,30 @@ sub _expand_path {
 	my $array	= shift;
 	my $method	= shift;
 	if (blessed($array)) {
-		return $array->$method({}, '');
+		my $string	= $array->$method({}, '');
+		if ($string eq '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
+			return 'a';
+		} else {
+			return $string;
+		}
 	} else {
 		my ($op, @nodes)	= @$array;
 		my @nodessse	= map { $self->_expand_path($_, $method) } @nodes;
 		my $psse;
 		if ($op eq '+') {
-			$psse	= '(' . join('/', @nodessse) . ')+';
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
 		} elsif ($op eq '*') {
-			$psse	= '(' . join('/', @nodessse) . ')*';
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
 		} elsif ($op eq '?') {
-			$psse	= '(' . join('/', @nodessse) . ')?';
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
+		} elsif ($op eq '!') {
+			$psse	= (scalar(@nodessse) == 1) ? '!' . $nodessse[0] : '!(' . join('|', @nodessse) . ')';
 		} elsif ($op eq '^') {
-			$psse	= '(' . join('/', map { "^$_" } @nodessse) . ')';
+			$psse	= (scalar(@nodessse) == 1) ? $op . $nodessse[0] : '(' . join('/', map { "${op}$_" } @nodessse) . ')';
 		} elsif ($op eq '/') {
-			$psse	= '(' . join('/', @nodessse) . ')';
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] : '(' . join('/', @nodessse) . ')';
 		} elsif ($op eq '|') {
-			$psse	= '(' . join('|', @nodessse) . ')';
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] : '(' . join('|', @nodessse) . ')';
 		} elsif ($op =~ /^(\d+)$/) {
 			$psse	= join('/', @nodessse) . '{' . $op . '}';
 		} elsif ($op =~ /^(\d+)-(\d+)$/) {

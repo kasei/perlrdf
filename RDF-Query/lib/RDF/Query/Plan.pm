@@ -850,7 +850,48 @@ sub __path_plan {
 	}
 	
 	my ($op, @nodes)	= @$path;
-	if ($op eq '*') {
+	if ($op eq '!') {
+		my $model	= $context->model;
+		my $var		= RDF::Query::Node::Variable->new();
+		my $nvar	= RDF::Query::Node::Variable->new();
+		my $triple	= RDF::Query::Algebra::Triple->new( $start, $var, $end );
+		my $ntriple	= RDF::Query::Algebra::Triple->new( $end, $nvar, $start );
+		my @plans;
+		push(@plans, $self->generate_plans( $triple, $context ));
+		push(@plans, $self->generate_plans( $ntriple, $context ));
+		
+		my (%not, %revnot);
+		foreach my $n (@nodes) {
+			if (blessed($n)) {
+				$not{ $n->uri_value }++;
+			} else {
+				$revnot{ $n->[1]->uri_value }++;
+			}
+		}
+		
+		$_->execute( $context ) for (@plans);
+		my $code	= sub {
+			while (1) {
+				return unless (@plans);
+				my $row	= $plans[0]->next;
+				unless (blessed($row)) {
+					shift(@plans);
+					next;
+				}
+				if (my $p = $row->{ $var->name }) {
+					next if (exists $not{ $p->uri_value });
+				} else {
+					my $np	= $row->{ $nvar->name };
+					next if (exists $not{ $np->uri_value });
+				}
+				return $row;
+			}
+		};
+		my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
+		my $nplan	= RDF::Query::Plan::Iterator->new( $iter );
+# 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
+		return $nplan;
+	} elsif ($op eq '*') {
 		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );
 	} elsif ($op eq '+') {
 		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );

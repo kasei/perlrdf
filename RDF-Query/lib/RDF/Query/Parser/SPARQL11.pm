@@ -1962,6 +1962,8 @@ sub _PathPrimary {
 		$self->_eat(qr/[!]/);
 		$self->__consume_ws_opt;
 		$self->_PathNegatedPropertyClass;
+		my (@path)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', '!', @path] );
 	} else {
 		$self->_eat(qr/[(]/);
 		$self->__consume_ws_opt;
@@ -1977,20 +1979,23 @@ sub _PathNegatedPropertyClass {
 	if ($self->_test(qr/[(]/)) {
 		$self->_eat(qr/[(]/);
 		$self->__consume_ws_opt;
+		
+		my @nodes;
 		if ($self->_PathOneInPropertyClass_test) {
 			$self->_PathOneInPropertyClass;
+			push(@nodes, splice(@{ $self->{stack} }));
 			$self->__consume_ws_opt;
-			while ($self->_test(/[|]/)) {
-				my ($lhs)	= splice(@{ $self->{stack} });
+			while ($self->_test(qr/[|]/)) {
 				$self->_eat(qr/[|]/);
 				$self->__consume_ws_opt;
 				$self->_PathOneInPropertyClass;
 				$self->__consume_ws_opt;
-				my ($rhs)	= splice(@{ $self->{stack} });
-				$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
+				push(@nodes, splice(@{ $self->{stack} }));
+#				$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
 			}
 		}
 		$self->_eat(qr/[)]/);
+		$self->_add_stack( @nodes );
 	} else {
 		$self->_PathOneInPropertyClass;
 	}
@@ -2000,18 +2005,32 @@ sub _PathNegatedPropertyClass {
 sub _PathOneInPropertyClass_test {
 	my $self	= shift;
 	return 1 if $self->_IRIref_test;
-	return 1 if ($self->_test(qr/a[\n\t\r <]/));
+	return 1 if ($self->_test(qr/a[|)\n\t\r <]/));
+	return 1 if ($self->_test(qr/\^/));
 	return 0;
 }
 
 sub _PathOneInPropertyClass {
 	my $self	= shift;
-	if ($self->_test(qr/a[\n\t\r <]/)) {
+	my $rev		= 0;
+	if ($self->_test(qr/\^/)) {
+		$self->_eat(qr/\^/);
+		$rev	= 1;
+	}
+	if ($self->_test(qr/a[|)\n\t\r <]/)) {
 		$self->_eat(qr/a/);
 		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
-		$self->_add_stack( $type );
+		if ($rev) {
+			$self->_add_stack( [ 'PATH', '^', $type ] );
+		} else {
+			$self->_add_stack( $type );
+		}
 	} else {
 		$self->_IRIref;
+		if ($rev) {
+			my ($path)	= splice(@{ $self->{stack} });
+			$self->_add_stack( [ 'PATH', '^', $path ] );
+		}
 	}
 }
 
