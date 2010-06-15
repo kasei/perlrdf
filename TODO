@@ -6,17 +6,9 @@ the work, if known):
 
 ## RDF::Query
 	* RDFa support for FROM clauses [kasei]
-	* Track SPARQL 1.1 Query [kasei]
-		* Aggregates
-			* Port aggregate support from SPARQLP parser
-			* Implement HAVING clauses
-		* Project Expressions
-			* Align syntax with draft spec
-		* Basic Federated Queries
-			* Port SERVICE support from SPARQLP parser
-	* Fix nested GRAPH graph patterns (currently disallowed?) [kasei]
-	* Implement SPARQL 1.1 Update
-	* SPARQL 1.1 Property Paths
+	* Fix nested GRAPH graph patterns [kasei]
+	* Fix ModifyTemplate in SPARQL1.1 parser to only allow quads (GRAPH patterns and BGPs) and allow dots (follow the grammar in the working draft for QuadData)
+	* Test property paths inside named graphs [kasei]
 ## RDF::Trine
 	* Parsers
 		* Guess parser based on filename/content sniffing
@@ -31,7 +23,6 @@ the work, if known):
 		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
 	* Serializers
-		* Implement bounded description iterators (and remove the related code from serializer classes)
 		* Add ::RDFJSON::serialize_iterator_* methods
 		* Pretty print RDF/XML [tobyink or kasei]
 		* TriX [tobyink]
