@@ -10,7 +10,10 @@ use RDF::Query;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.exists          = TRACE, Screen
+# 	log4perl.category.rdf.query.plan.filter          = TRACE, Screen
+# 	log4perl.category.rdf.query.functions.exists     = TRACE, Screen
+# 	log4perl.category.rdf.query.plan.basicgraphpattern          = TRACE, Screen
+# 	log4perl.category.rdf.query.plan.triple          = TRACE, Screen
 # 	
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
@@ -35,9 +38,9 @@ foreach my $model (@models) {
 			SELECT *
 			WHERE {
 				?p a foaf:Person ; foaf:name ?name .
-				NOT EXISTS {
+				FILTER( NOT EXISTS {
 					?p foaf:mbox_sha1sum "f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8" .
-				}
+				} ).
 			}
 END
 		my ($plan, $ctx)	= $query->prepare( $model );

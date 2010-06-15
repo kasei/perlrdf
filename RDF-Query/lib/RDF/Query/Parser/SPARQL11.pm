@@ -1246,16 +1246,7 @@ sub __handle_GraphPatternNotTriples {
 	my $self	= shift;
 	my $data	= shift;
 	my ($class, @args)	= @$data;
-	if ($class eq 'RDF::Query::Algebra::Exists') {
-		my $cont	= $self->_pop_pattern_container;
-		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-		$self->_push_pattern_container;
-		unless ($ggp) {
-			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-		}
-		my $pat	= $class->new( $ggp, @args );
-		$self->_add_patterns( $pat );
-	} elsif ($class =~ /^RDF::Query::Algebra::(Optional|Minus)$/) {
+	if ($class =~ /^RDF::Query::Algebra::(Optional|Minus)$/) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
@@ -1388,7 +1379,7 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/SERVICE|MINUS|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
+	return $self->_test(qr/SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
@@ -1397,8 +1388,6 @@ sub _GraphPatternNotTriples {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
 		$self->_MinusGraphPattern;
-	} elsif ($self->_ExistsGraphPattern_test) {
-		$self->_ExistsGraphPattern;
 	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
 	} elsif ($self->_GroupOrUnionGraphPattern_test) {
@@ -1424,24 +1413,6 @@ sub _ServiceGraphPattern {
 	my $opt		= ['RDF::Query::Algebra::Service', $iri, $ggp];
 	$self->_add_stack( $opt );
 }
-
-# ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
-sub _ExistsGraphPattern_test {
-	my $self	= shift;
-	return $self->_test( qr/(NOT\s+)?EXISTS/i );
-}
-
-sub _ExistsGraphPattern {
-	my $self	= shift;
-	my $op		= $self->_eat( qr/(NOT\s+)?EXISTS/i );
-	my $not		= ($op =~ /^NOT/i) ? 1 : 0;
-	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
-	my $ggp	= $self->_remove_pattern;
-	my $pat		= ['RDF::Query::Algebra::Exists', $ggp, $not];
-	$self->_add_stack( $pat );
-}
-
 
 # [23] OptionalGraphPattern ::= 'OPTIONAL' GroupGraphPattern
 sub _OptionalGraphPattern_test {
@@ -2484,9 +2455,14 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_GroupGraphPattern;
 		my $cont	= $self->_remove_pattern;
-		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:exists' );
 		my $func	= $self->new_function_expression($iri, $cont);
-		$self->_add_stack( $func );
+		if ($op =~ /^NOT/i) {
+			$self->_add_stack( $self->new_unary_expression( '!', $func ) );
+		
+		} else {
+			$self->_add_stack( $func );
+		}
 	} elsif ($self->_test(qr/COALESCE|BNODE/)) {
 		my $op	= $self->_eat(qr/COALESCE|BNODE/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );

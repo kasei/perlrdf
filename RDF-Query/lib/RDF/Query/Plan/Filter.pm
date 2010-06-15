@@ -80,9 +80,14 @@ sub execute ($) {
 					# undef it if it wasn't defined before the local() call.
 					$query	= undef;
 				}
-				my $value	= $filter->evaluate( $query, $row );
+				my $value	= $filter->evaluate( $query, $row, $context );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
-			} otherwise {};
+			} catch RDF::Query::Error with {
+				my $e	= shift;
+				$l->debug( 'exception thrown during filter evaluation: ' . $e->text );
+			} otherwise {
+				$l->debug( 'error during filter evaluation: ' . $@);
+			};
 			return $bool;
 		};
 	} else {

@@ -523,7 +523,6 @@ sub generate_plans {
 		}
 		
 	} elsif ($type eq 'GroupGraphPattern') {
-		my $query	= $context->query;
 		my @patterns	= $algebra->patterns();
 		
 		my @plans;
@@ -711,6 +710,7 @@ sub _csg_plans {
 	my $context	= shift;
 	my $st		= shift;
 	my $pred	= $st->predicate;
+	Carp::confess unless (blessed($context));
 	my $query    = $context->query;
 	my @return_plans;
 	if (blessed($query) and $pred->isa('RDF::Trine::Node::Resource') and scalar(@{ $query->get_computed_statement_generators( $st->predicate->uri_value ) })) {

@@ -204,7 +204,7 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
-=item C<< evaluate ( $query, \%bound ) >>
+=item C<< evaluate ( $query, \%bound, $context ) >>
 
 Evaluates the expression using the supplied bound variables.
 Will return a RDF::Query::Node object.
@@ -213,9 +213,9 @@ Will return a RDF::Query::Node object.
 
 sub evaluate {
 	my $self	= shift;
-	die 'changed API for RDF::Query::Expression evaluate' if (scalar(@_) > 2);
 	my $query	= shift || 'RDF::Query';
 	my $bound	= shift;
+	my $context	= shift;
 	my $uri		= $self->uri;
 	
 	no warnings 'uninitialized';
@@ -257,16 +257,19 @@ sub evaluate {
 		} catch RDF::Query::Error::TypeError with {};
 		my $expr2	= $args[$index];
 		return $query->var_or_expr_value( $bound, $expr2 );
+	} elsif ($uriv eq 'sparql:exists') {
+		my $func	= $query->get_function($uri);
+		my ($ggp)	= $self->arguments;
+		return $func->( $query, $context, $bound, $ggp );
 	} else {
 		my @args	= map {
 						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bound )
+							? $_->evaluate( $query, $bound, $context )
 							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
-		Carp::confess Dumper($uri, $func) unless (reftype($func) eq 'CODE');
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

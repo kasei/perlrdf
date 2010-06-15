@@ -779,10 +779,23 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 
 $RDF::Query::functions{"sparql:exists"}	= sub {
 	my $query	= shift;
-	
+	my $context	= shift;
+	my $bound	= shift;
 	my $ggp		= shift;
-	die 'sparql:exists not implemented: ' . Dumper($ggp); # XXX
-	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
+	
+	Carp::confess unless (blessed($context));
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.exists");
+	my $copy		= $context->copy( bound => $bound );
+	$plan->execute( $copy );
+	if (my $row = $plan->next) {
+		$l->trace("got EXISTS row: $row");
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	} else {
+		$l->trace("didn't find EXISTS row");
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
 };
 
 $RDF::Query::functions{"sparql:coalesce"}	= sub {

@@ -121,7 +121,8 @@ sub execute ($) {
 			$triple[ $i ]	= $bound->{ $triple[$i]->name };
 		}
 	}
-	
+
+	$l->trace( "- triple with bound values is " . join(', ', map { blessed($_) ? $_->sse : '_' } @triple) );
 	my $nil		= RDF::Trine::Node::Nil->new();	# if we want the default graph to be a union of the named graphs, this should be undef instead
 	my $iter	= $context->model->get_statements( @triple[0..2], $nil );
 	if (blessed($iter)) {

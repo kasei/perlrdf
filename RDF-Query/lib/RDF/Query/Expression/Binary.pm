@@ -88,7 +88,7 @@ sub evaluate {
 						throw RDF::Query::Error::ExecutionError ( -text => "error in evaluating operands to binary $op" )
 							unless (blessed($_));
 						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bound )
+							? $_->evaluate( $query, $bound, @_ )
 							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
