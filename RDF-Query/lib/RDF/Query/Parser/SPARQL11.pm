@@ -449,13 +449,11 @@ sub _InsertUpdate {
 	my $ggp	= $self->_remove_pattern;
 	
 	my @ds_keys	= keys %dataset;
-	if (@ds_keys) {
-		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, \%dataset );
-	} elsif ($graph) {
-		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, { default => [$graph], named => {} } );
+	unless (@ds_keys) {
+		$dataset{ default }	= [$graph];
 	}
 	
-	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -540,14 +538,12 @@ sub _DeleteUpdate {
 	}
 	
 	my @ds_keys	= keys %dataset;
-	if (@ds_keys) {
-		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, \%dataset );
-	} elsif ($graph) {
-		$ggp	= RDF::Query::Algebra::Dataset->new( $ggp, { default => [$graph], named => {} } );
+	unless (@ds_keys) {
+		$dataset{ default }	= [$graph];
 	}
 	
 	
-	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp);
+	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }

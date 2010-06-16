@@ -134,17 +134,23 @@ sub next {
 			if ($self->op eq '*') {
 				$l->trace( 'handling zero-length paths' );
 				if ($self->[0]{start}->isa('RDF::Query::Node::Variable')) {
+					$l->trace( '- start of zero-length path is a variable' );
 					if ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
+						$l->trace( '- end of zero-length path is a variable' );
 						my $plan	= RDF::Query::Plan->__zero_length_path_plan( @{ $self->[0] }{ qw(start end context) } );
 						$plan->execute( $self->[0]{context} );
 						while (my $row = $plan->next) {
 							push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 						}
 					} else {
+						$l->trace( '- end of zero-length path is NOT a variable' );
 						my $row	= RDF::Query::VariableBindings->new( { $self->[0]{start}->name => $self->[0]{end} } );
 						push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 					}
 				} elsif ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
+					$l->trace( '- start of zero-length path is NOT a variable' );
+					$l->trace( '- end of zero-length path is a variable' );
+					warn 'start: ' . $self->[0]{start};
 					my $row	= RDF::Query::VariableBindings->new( { $self->[0]{end}->name => $self->[0]{start} } );
 					push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 				}
@@ -153,12 +159,15 @@ sub next {
 			$l->trace( 'starting path with plan: ' . $plan->sse );
 			$plan->execute( $self->[0]{context} );
 			while (my $row = $plan->next) {
+				$l->trace("got path row: $row");
 				my $s	= ($self->start->isa('RDF::Query::Node::Variable')) ? $row->{ $self->start->name } : $self->start;
 				my $e	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
 				push(@{ $self->[0]{paths} }, [$s,$e]);
 				push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 			}
 		}
+	} continue {
+		return shift(@{ $self->[0]{results} }) if (scalar(@{ $self->[0]{results} }));
 	}
 	return shift(@{ $self->[0]{results} });
 }

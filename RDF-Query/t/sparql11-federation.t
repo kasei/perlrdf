@@ -11,12 +11,7 @@ my @files	= map { "data/$_" } qw(foaf.xrdf);
 my @models	= test_models( @files );
 
 my $tests	= scalar(@models) * 11;
-if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
-	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
-	return;
-} else {
-	plan tests => $tests;
-}
+plan tests => $tests;
 
 use RDF::Query;
 

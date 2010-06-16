@@ -38,7 +38,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $delete_template, $insert_template, $pattern ) >>
+=item C<< new ( $delete_template, $insert_template, $pattern, \%dataset ) >>
 
 =cut
 
@@ -47,7 +47,8 @@ sub new {
 	my $delete	= shift;
 	my $insert	= shift;
 	my $pattern	= shift;
-	my $self	= $class->SUPER::new( $delete, $insert, $pattern );
+	my $dataset	= shift;
+	my $self	= $class->SUPER::new( $delete, $insert, $pattern, $dataset );
 	return $self;
 }
 
@@ -65,6 +66,11 @@ sub execute ($) {
 	my $insert_template	= $self->insert_template;
 	my $delete_template	= $self->delete_template;
 	my $plan		= $self->pattern;
+	if ($self->dataset) {
+		my $ds		= RDF::Trine::Model::Dataset->new( $context->model );
+		$ds->push_dataset( %$ds );
+		$context	= $context->copy( model => $ds );
+	}
 	$plan->execute( $context );
 	if ($plan->state == $self->OPEN) {
 		my $l		= Log::Log4perl->get_logger("rdf.query.plan.update");
@@ -192,6 +198,17 @@ Returns the pattern plan object.
 sub pattern {
 	my $self	= shift;
 	return $self->[3];
+}
+
+=item C<< dataset >>
+
+Returns the dataset HASH reference.
+
+=cut
+
+sub dataset {
+	my $self	= shift;
+	return $self->[4];
 }
 
 =item C<< distinct >>

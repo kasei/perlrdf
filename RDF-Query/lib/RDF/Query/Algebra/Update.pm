@@ -43,7 +43,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $delete_template, $insert_template, $pattern )>
+=item C<new ( $delete_template, $insert_template, $pattern [, \%dataset] )>
 
 Returns a new UPDATE structure.
 
@@ -54,7 +54,8 @@ sub new {
 	my $delete	= shift;
 	my $insert	= shift;
 	my $pat		= shift;
-	return bless([$delete, $insert, $pat], $class);
+	my $dataset	= shift;
+	return bless([$delete, $insert, $pat, $dataset], $class);
 }
 
 =item C<< construct_args >>
@@ -83,12 +84,31 @@ sub sse {
 	my $string;
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
-	return sprintf(
-		"(update (delete %s) (insert %s) (where %s))",
-		($delete ? $delete->sse( $context, $indent ) : ''),
-		($insert ? $insert->sse( $context, $indent ) : ''),
-		$self->pattern->sse( $context, $indent ),
-	);
+	my $dataset	= $self->dataset;
+	my @ds_keys	= keys %{ $dataset || {} };
+	if (@ds_keys) {
+		my @defaults	= sort map { $_->sse } @{ $dataset->{default} || [] };
+		my @named		= sort map { $_->sse } values %{ $dataset->{named} || {} };
+		my @strings;
+		push(@strings, (@defaults) ? '(defaults ' . join(' ', @defaults) . ')' : ());
+		push(@strings, (@named) ? '(named ' . join(' ', @named) . ')' : ());
+		
+		my $ds_string	= '(dataset ' . join(' ', @strings) . ')';
+		return sprintf(
+			"(update (delete %s) (insert %s) (where %s) %s)",
+			($delete ? $delete->sse( $context, $indent ) : ''),
+			($insert ? $insert->sse( $context, $indent ) : ''),
+			$self->pattern->sse( $context, $indent ),
+			$ds_string,
+		);
+	} else {
+		return sprintf(
+			"(update (delete %s) (insert %s) (where %s))",
+			($delete ? $delete->sse( $context, $indent ) : ''),
+			($insert ? $insert->sse( $context, $indent ) : ''),
+			$self->pattern->sse( $context, $indent ),
+		);
+	}
 }
 
 =item C<< as_sparql >>
@@ -103,25 +123,21 @@ sub as_sparql {
 	my $indent	= shift || '';
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
-	my ($ggp, $ds);
-	if ($self->pattern->isa('RDF::Query::Algebra::Dataset')) {
-		$ds			= $self->pattern;
-		$ggp		= $ds->pattern;
-	} else {
-		$ggp		= $self->pattern;
-	}
+	my $ggp		= $self->pattern;
 	my @pats	= $ggp->patterns;
-
+	
+	my $dataset	= $self->dataset;
+	my @ds_keys	= keys %{ $dataset || {} };
 	my $ds_string	= '';
-	if (defined $ds) {
-		my @defaults	= $ds->defaults;
-		my %named		= $ds->named;
+	if (@ds_keys) {
+		my @defaults	= @{ $dataset->{default} || [] };
+		my %named		= %{ $dataset->{named} || {} };
 		my @strings;
 		push(@strings, sprintf("USING <%s>", $_->uri_value)) foreach (@defaults);
 		push(@strings, sprintf("USING NAMED <%s>", $named{$_}->uri_value)) foreach (keys %named);
 		$ds_string	= join("\n${indent}", @strings);
 	}
-
+	
 	if (not($insert) or not($delete)) {
 		my $op		= ($delete) ? 'DELETE' : 'INSERT';
 		my $temp	= ($delete) ? $delete : $insert;
@@ -139,7 +155,6 @@ sub as_sparql {
 			} else {
 				$ds_string	= ' ';
 			}
-#			$ds_string	= " $ds_string";
 			return sprintf(
 				"${op} %s%sWHERE %s",
 				$temps,
@@ -151,9 +166,9 @@ sub as_sparql {
 		if ($ds_string) {
 			$ds_string	= "\n${indent}$ds_string";
 		}
-		my @ds_string	= ($ds_string) ? $ds_string : ();
+# 		my @ds_string	= ($ds_string) ? $ds_string : ();
 		return sprintf(
-			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}%s\n${indent}WHERE %s",
+			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 			$delete->as_sparql( $context, "${indent}  " ),
 			$insert->as_sparql( $context, "${indent}  " ),
 			$ds_string,
@@ -207,6 +222,15 @@ sub insert_template {
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< dataset >>
+
+=cut
+
+sub dataset {
+	my $self	= shift;
+	return $self->[3];
 }
 
 

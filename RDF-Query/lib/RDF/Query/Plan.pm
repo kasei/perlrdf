@@ -843,10 +843,13 @@ sub __path_plan {
 	my $path	= shift;
 	my $end		= shift;
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	if (blessed($path)) {
-		my $s	= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
-		my $e	= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
-		return RDF::Query::Plan::Triple->new( $s, $path, $e );
+		my $s		= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
+		my $e		= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
+		my $plan	= RDF::Query::Plan::Triple->new( $s, $path, $e );
+		$l->trace('expanded path to triple pattern: ' . $plan->sse);
+		return $plan;
 	}
 	
 	my ($op, @nodes)	= @$path;
@@ -922,6 +925,7 @@ sub __path_plan {
 			foreach my $jclass (@join_types) {
 				push(@jplans, $jclass->new( @plans[0,1], 0 ));
 			}
+			$l->trace("expanded /-path to: " . $jplans[0]->sse);
 			return $jplans[0];
 		}
 	} elsif ($op eq '|') {
@@ -1002,7 +1006,6 @@ sub __zero_length_path_plan {
 	my %vars;
 	my $no_literals	= 0;
 	if ($start->isa('RDF::Query::Node::Variable')) {
-		warn $start->name;
 		$vars{ $start->name }++;
 		$no_literals	= 1;
 	}
