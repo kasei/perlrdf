@@ -65,6 +65,28 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.124 (2010-XX-XX)
+
+     * Added RDF::Trine::Iterator->count method.
+     * Fixed RDF::Trine::Iterator::Bindings::as_string to respect $max_result_size argument.
+     * RDF::Trine::Iterator::Bindings::as_string now returns unescaped strings.
+     * Added ability to access the number of rows returned from RDF::Trine::Iterator::Bindings::as_string.
+     * Updated RDF::Trine::Parser::parse_url_into_model to fall back on file extension heuristics if the media-type based parse fails.
+     * Updated RDF::Trine::Parser::RDFJSON to throw an error if input isn't valid JSON.
+     * Updated RDF::Trine::Model to throw an error if not passed a store object.
+     * Added RDF::Trine::Model::Dataset for constructing views over a model, and RDF::Trine::Model->dataset_model constructor method.
+     * Fixed bug in handling of quads in RDF::Trine::Model::get_pattern and RDF::Trine::Store::get_pattern.
+     * Updated RDF::Trine::Store::DBI and RDF::Trine::Store::Memory to not return the default (nil) context from get_contexts.
+     * Fixed bug in RDF::Trine::Store::Memory::_get_statements_quad that would infinite loop after removing statements.
+     * RDF::Trine::Store doesn't load RDF::Redland (now only checks if it is already loaded).
+     * Fixed bug in RDF::Trine::Store subclasses registering their class names in %STORE_CLASSES.
+     * Added missing use of Encode to RDF::Trine::Store::Redland.
+     * Made $RDF::Trine::Store::Redland::NIL_TAG globally accessible.
+     * Added bin/rdf_transcode.pl for (streaming) conversion between RDF serialization formats.
+     * Updated POD tests to not use taint mode (and synced between R::T and R::Q).
+     * Changed test data in t/iterator-thaw.t.
+     * Removed RDF::Core as a prerequisite in META.yml.
+
   Version 0.123 (2010-05-13)
 
      * Added turtle utf8 decoding for Turtle parser.
