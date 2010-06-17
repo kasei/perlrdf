@@ -988,10 +988,12 @@ sub _GraphGraphPattern {
 	$self->__consume_ws;
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
 	
-	{
+	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
-		$self->__consume_ws_opt;
+		$self->_GroupGraphPattern;
+	} else {
 		$self->_GroupGraphPattern;
 	}
 	
