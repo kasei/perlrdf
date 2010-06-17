@@ -69,7 +69,18 @@ sub temporary_model {
 	$self->{threshold}	= 2000;
 	return $self;
 }
- 
+
+=item C<< dataset_model ( default => \@graphs, named => \@graphs ) >>
+
+=cut
+
+sub dataset_model {
+	my $self	= shift;
+	my $ds		= RDF::Trine::Model::Dataset->new( $self );
+	$ds->push_dataset( @_ );
+	return $ds;
+}
+
 =item C<< add_statement ( $statement [, $context] ) >>
  
 Adds the specified C<< $statement >> to the rdf store.
