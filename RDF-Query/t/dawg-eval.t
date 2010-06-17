@@ -251,7 +251,7 @@ sub get_actual_results {
 	my $sparql	= shift;
 	my $base	= shift;
 	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11' );
+	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11', load_data => 1 );
 	
 	return unless $query;
 	
