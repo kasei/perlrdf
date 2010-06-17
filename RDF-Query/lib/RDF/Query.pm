@@ -852,6 +852,7 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
+	Carp::confess Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
 		return $v->evaluate( $self, $bound );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
