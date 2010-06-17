@@ -99,6 +99,7 @@ sub new {
 		_names		=> $names,
 		_stream		=> $stream,
 		_args		=> \%args,
+		_count		=> 0,
 		_row		=> undef,
 		_peek		=> [],
 #		_source		=> Carp::longmess(),
@@ -210,6 +211,7 @@ sub next {
 
 	$self->{_open}	= 1;
 	$self->{_row}	= $value;
+	$self->{_count}++ if defined($value);
 	return $value;
 }
 
@@ -312,6 +314,14 @@ sub concat {
 	return $s;
 }
 
+=item C<< count >>
+
+=cut
+
+sub count {
+	my $self	= shift;
+	return $self->{_count};
+}
 
 =item C<get_boolean>
 
