@@ -139,7 +139,6 @@ END
 	{
 		my $iter	= $model->get_contexts;
 		my %expect	= (
-			'(nil)'	=> 1,
 			'<http://example.org/bob>'	=> 1,
 			'<http://example.org/alice>'	=> 1,
 		);
