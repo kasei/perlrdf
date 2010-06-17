@@ -316,6 +316,8 @@ sub concat {
 
 =item C<< count >>
 
+Returns the number of objects returned from this iterator.
+
 =cut
 
 sub count {
