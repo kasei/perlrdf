@@ -558,7 +558,54 @@ sub generate_plans {
 		# handled specially in named graphs -- namely, {} should be executed as an empty BGP \
 		# when in a GraphGraphPattern so GRAPH ?g {} ends up returning all the valid graph names, \
 		# instead of being optimized away into an empty variable binding.
-		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args, named_graph => $algebra->graph );
+		my @plans;
+		if ($algebra->graph->isa('RDF::Query::Node::Resource')) {
+			@plans	= $self->generate_plans( $algebra->pattern, $context, %args, named_graph => $algebra->graph );
+		} else {
+			my $name	= $algebra->graph->name;
+			my @graphs	= $context->model->get_contexts;
+			my $i		= 0;
+			my @data;
+			foreach my $i (0 .. $#graphs) {
+				my $g	= $graphs[ $i ];
+				return unless blessed($g);
+				my $ds	= $context->model->dataset_model( default => [$g], named => \@graphs );
+				my $ctx	= $context->copy( model => $ds );
+				my ($p)		= $self->generate_plans( $algebra->pattern, $ctx, %args );
+				$data[$i]	= [$p, $g, $ctx];
+			}
+			my $code	= sub {
+				while (1) {
+					return unless scalar(@data);
+					my $vb	= $data[0][0]->next;
+					my $g	= $data[0][1];
+					my $ctx	= $data[0][2];
+					if ($vb) {
+						$vb->{ $name }	= $g;
+						return $vb;
+					} else {
+						shift(@data);
+						if (scalar(@data)) {
+							$data[0][0]->execute( $data[0][2] );
+						}
+					}
+				}
+			};
+			my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
+			my $plan	= RDF::Query::Plan::Iterator->new( $iter, sub { if (scalar(@data)) { $data[0][0]->execute( $data[0][2] ) } } );
+			push(@plans, $plan);
+# 			
+# 			
+# 			
+# 				my $vb	= RDF::Query::VariableBindings->new( { $name => RDF::Query::Node->from_trine($g) } );
+# 				return $vb;
+# 			} );
+# 			my $q	= RDF::Query::Plan::Iterator->new( $iter );
+# 			my @join_types	= RDF::Query::Plan::Join->join_classes;
+# 			foreach my $jclass (@join_types) {
+# 				push(@plans, $jclass->new( $p, $q ));
+# 			}
+		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Offset') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
