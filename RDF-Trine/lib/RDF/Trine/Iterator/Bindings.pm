@@ -56,8 +56,6 @@ an reference to an array containing results or a CODE reference that
 acts as an iterator, returning successive items when called, and
 returning undef when the iterator is exhausted.
 
-$type should be one of: bindings, boolean, graph.
-
 =cut
 
 sub new {
