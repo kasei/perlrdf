@@ -71,8 +71,9 @@ sub execute ($) {
 	$self->[0]{start_time}	= [gettimeofday];
 	my @inner;
 	$self->rhs->execute( $context );
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.nestedloop");
 	while (my $row = $self->rhs->next) {
-#		warn "*** loading inner row cache with: " . Dumper($row);
+		$l->trace("loading inner row cache with: " . $row);
 		push(@inner, $row);
 	}
 	$self->lhs->execute( $context );

@@ -66,6 +66,9 @@ sub execute ($) {
 		throw RDF::Query::Error::ExecutionError -text => "PushDownNestedLoop join plan can't be executed while already open";
 	}
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.pushdownnestedloop");
+	$l->trace("executing bind join");
+	
 	$self->lhs->execute( $context );
 	if ($self->lhs->state == $self->OPEN) {
 		$self->[0]{context}			= $context;
@@ -108,20 +111,20 @@ sub next {
 				my %bound	= %{ $context->bound };
 				@bound{ keys %$outer }	= values %$outer;
 				my $copy	= $context->copy( bound => \%bound );
-#				warn "executing inner plan with bound: " . Dumper(\%bound);
+				$l->trace( "executing inner plan with bound: " . Dumper(\%bound) );
 				if ($inner->state == $inner->OPEN) {
 					$inner->close();
 				}
 				$self->[0]{inner}			= $inner->execute( $copy );
 			} else {
 				# we've exhausted the outer iterator. we're now done.
-	#			warn "exhausted";
+				$l->trace("exhausted");
 				return undef;
 			}
 		}
 		
 		while (defined(my $inner_row = $self->[0]{inner}->next)) {
-#			warn "using inner row: " . Dumper($inner_row);
+			$l->trace( "using inner row: " . Dumper($inner_row) );
 			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
 				if ($l->is_trace) {
 					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
