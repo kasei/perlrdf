@@ -30,14 +30,15 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $iter ) >>
+=item C<< new ( $iter, \&execute_cb ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $iter	= shift;
-	my $self	= $class->SUPER::new( $iter );
+	my $cb		= shift;
+	my $self	= $class->SUPER::new( $iter, $cb );
 	$self->[0]{referenced_variables}	= [];
 	return $self;
 }
@@ -51,6 +52,10 @@ sub execute ($) {
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "ITERATOR plan can't be executed while already open";
+	}
+	
+	if (ref($self->[2])) {
+		$self->[2]->( $context );
 	}
 	
 	$self->state( $self->OPEN );
