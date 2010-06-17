@@ -44,7 +44,7 @@ SHA1 b255c02278f13752e119cf83ace63a4127ddf696 lib/RDF/Trine/Iterator/Graph.pm
 SHA1 b98734b5eb1eda800e2fa5a5abb082338f5ab35a lib/RDF/Trine/Iterator/Graph/Materialized.pm
 SHA1 4ccd253ba5ad14f4d47fcdee47191c9c7ec6d6c9 lib/RDF/Trine/Iterator/SAXHandler.pm
 SHA1 a5c5da29d1c78d609831c56d325b5884b37f2e31 lib/RDF/Trine/Model.pm
-SHA1 5a0a56c1b5fc8299c3eaf6cee838eb9d39465ce0 lib/RDF/Trine/Model/Dataset.pm
+SHA1 f8067a46480ad01c761822b7f7dc17a9b4be5b16 lib/RDF/Trine/Model/Dataset.pm
 SHA1 bd08372369c03de8b9563f96a17b63beac9b9d0f lib/RDF/Trine/Model/StatementFilter.pm
 SHA1 4b986bb162b40b3a0efc0656c4a0b5a3da2c48cc lib/RDF/Trine/Model/Union.pm
 SHA1 6611614d2e4ba7e2862352ec9729f7897f4acae7 lib/RDF/Trine/Namespace.pm
@@ -536,7 +536,7 @@ SHA1 6e53848c4cf9513efcd452296b7721765272f791 t/parser-ntriples.t
 SHA1 a5f636a22fef238ddea5a97d7f8eb5cb4e172b64 t/parser-rdfa.t
 SHA1 4f5a8c3bd46aae924ae23b0df8942381d6023b7c t/parser-rdfjson.t
 SHA1 dcde9650a1f3b0cb422c614c79e6f6bcdbd5ddb3 t/parser-rdfxml-w3c.t
-SHA1 2ed2a42cbbe89dd79a1c76b8ee53573264157a8e t/parser-trig.t
+SHA1 144c1c779ba2636a42b85c938f88716967784924 t/parser-trig.t
 SHA1 9eb1d0cc6a453e387890a9d59e05906b61491248 t/parser-turtle.t
 SHA1 6c5e04ebeeabc330cc3da77aeb97953f45c05661 t/parser.t
 SHA1 fb00b8d1f3ddf8d7d2dc7575f2cbe3368a9124c3 t/pattern.t
@@ -551,18 +551,18 @@ SHA1 d33041fecba683612ba46e2739f185df20d5a3d3 t/serializer-turtle.t
 SHA1 23d4679f14591d84e00f3152c01068a915c492d2 t/serializer.t
 SHA1 8351cb945f244de6a2edb473a295cb27ee5008fc t/statement-serialization.t
 SHA1 328af6f1f43457421d0780027c77dd074c942a1f t/statement.t
-SHA1 c47ad576c2d0c5a6b0b512f6edcea3d2f097650a t/store-context.t
+SHA1 9d416bc1bae4b331910b3f1c52aa6c29498c6c0a t/store-context.t
 SHA1 3bd9f94f12b32df9222b59b09364e4ddf4c06b72 t/store-hexastore-pattern.t
 SHA1 829f7436b83a28ccc18c8cc0f3418a56af568f42 t/store-hexastore-storable.t
 SHA1 5c116bb3c7d8c1bd88b2dc02c11090d888726fc6 t/store-hexastore.t
 SHA1 fbb56511555827635d76576aac3ec86e30ccf309 t/store-sparql.t
 SHA1 0a6b72ed37ea6ffae0bbe99d369627dcc5fd9642 t/store-triple_sql.t
-SHA1 c75ec62611fd98133bb158287cc4b1a41d76f681 t/store.t
+SHA1 4903c510fb8f30ddc31a4c76b42524a73c0c8981 t/store.t
 SHA1 15ed1be16bafbae50d80842e1bcbfadc69d85bf3 t/syntax.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (Darwin)
 
-iEYEARECAAYFAkwar0UACgkQhPK6VMqoyC2r4gCeJesVHGzQgpS2OGQQu4EBObPm
-xVsAnj8vsLqQR2/1cfPXWocybihEkq09
-=9ynR
+iEYEARECAAYFAkwas6sACgkQhPK6VMqoyC19cACfcpeYAa8F8E4lIMMF767uQfJU
+/5oAn1AO+l+F6PPiSfDZt7udYEsnif+X
+=zNLD
 -----END PGP SIGNATURE-----
