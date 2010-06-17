@@ -284,7 +284,7 @@ the set of contexts of the stored quads.
 
 sub get_contexts {
 	my $self	= shift;
-	my @ctx		= values %{ $self->{ ctx_nodes } };
+	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
 

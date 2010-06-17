@@ -326,23 +326,26 @@ sub get_contexts {
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	my $sub		= sub {
-		my $row	= $sth->fetchrow_hashref;
-		return unless defined($row);
-		my $uri		= $self->_column_name( 'URI' );
-		my $name	= $self->_column_name( 'Name' );
-		my $value	= $self->_column_name( 'Value' );
-		if ($row->{ Context } == 0) {
-			return RDF::Trine::Node::Nil->new();
-		} elsif ($row->{ $uri }) {
-			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
-		} elsif ($row->{ $name }) {
-			return RDF::Trine::Node::Blank->new( $row->{ $name } );
-		} elsif (defined $row->{ $value }) {
-			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
-			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
-		} else {
-			return;
+		while (my $row = $sth->fetchrow_hashref) {
+			return unless defined($row);
+			my $uri		= $self->_column_name( 'URI' );
+			my $name	= $self->_column_name( 'Name' );
+			my $value	= $self->_column_name( 'Value' );
+			if ($row->{ Context } == 0) {
+				next;
+# 				return RDF::Trine::Node::Nil->new();
+			} elsif ($row->{ $uri }) {
+				return RDF::Trine::Node::Resource->new( $row->{ $uri } );
+			} elsif ($row->{ $name }) {
+				return RDF::Trine::Node::Blank->new( $row->{ $name } );
+			} elsif (defined $row->{ $value }) {
+				my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+				return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
+			} else {
+				return;
+			}
 		}
+		return;
 	};
 	return RDF::Trine::Iterator->new( $sub );
 }
