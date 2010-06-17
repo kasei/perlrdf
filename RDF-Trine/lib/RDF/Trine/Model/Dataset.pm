@@ -46,6 +46,8 @@ sub new {
 
 =item C<< push_dataset ( default => \@graphs, named => \@graphs ) >>
 
+Creates a new dataset view over the underlying model.
+
 =cut
 
 sub push_dataset {
@@ -71,6 +73,8 @@ sub push_dataset {
 }
 
 =item C<< pop_dataset >>
+
+Removes the last pushed dataset view.
 
 =cut
 
@@ -292,6 +296,12 @@ sub get_statements {
 	}
 }
 
+=item C<< get_pattern ( $bgp [, $context] [, %args ] ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
 sub get_pattern {
 	my $self	= shift;
 	return $self->model->get_pattern( @_ ) unless (scalar(@{ $self->{stack} }));
@@ -308,6 +318,13 @@ sub get_pattern {
 	}
 }
 
+=item C<< get_contexts >>
+
+Returns an iterator containing the nodes representing the named graphs in the
+model.
+
+=cut
+
 sub get_contexts {
 	my $self	= shift;
 	return $self->model->get_contexts unless (scalar(@{ $self->{stack} }));
@@ -319,36 +336,11 @@ sub get_contexts {
 	}
 }
 
-sub as_stream {
-	my $self	= shift;
-	return $self->model->as_stream( @_ );
-}
+=item C<< model >>
 
-sub as_hashref {
-	my $self	= shift;
-	return $self->model->as_hashref( @_ );
-}
+Returns the underlying model object.
 
-sub subjects {
-	my $self	= shift;
-	return $self->model->subjects( @_ );
-}
-sub predicates {
-	my $self	= shift;
-	return $self->model->predicates( @_ );
-}
-sub objects {
-	my $self	= shift;
-	return $self->model->objects( @_ );
-}
-sub objects_for_predicate_list {
-	my $self	= shift;
-	return $self->model->objects_for_predicate_list( @_ );
-}
-sub bounded_description {
-	my $self	= shift;
-	return $self->model->bounded_description( @_ );
-}
+=cut
 
 sub model {
 	my $self	= shift;
