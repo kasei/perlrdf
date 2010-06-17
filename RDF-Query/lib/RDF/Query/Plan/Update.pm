@@ -68,8 +68,6 @@ sub execute ($) {
 	my $plan		= $self->pattern;
 	if ($self->dataset) {
 		my $ds	= $context->model->dataset_model( %{ $self->dataset } );
-# 		my $ds		= RDF::Trine::Model::Dataset->new( $context->model );
-# 		$ds->push_dataset( % );
 		$context	= $context->copy( model => $ds );
 	}
 	$plan->execute( $context );
