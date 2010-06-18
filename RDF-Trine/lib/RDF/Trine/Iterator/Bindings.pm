@@ -573,7 +573,7 @@ sub print_xml {
 	
 	no strict 'refs';
 	print {$fh} <<"END";
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head>
 END

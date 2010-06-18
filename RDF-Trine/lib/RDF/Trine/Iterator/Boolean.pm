@@ -89,7 +89,7 @@ sub as_xml {
 	my $self	= shift;
 	my $value	= $self->get_boolean ? 'true' : 'false';
 	my $xml	= <<"END";
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head></head>
 <results>
