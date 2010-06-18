@@ -78,7 +78,7 @@ SHA1 def3a07fb821aa2b85ed9a7437861d6505f097ed lib/RDF/Trine/Store/DBI/Pg.pm
 SHA1 e9c7dcfd7fc311bd34920d3574c8ba969ca0a908 lib/RDF/Trine/Store/DBI/SQLite.pm
 SHA1 0651c47923ff7f69362c13cfa006e15c68feacde lib/RDF/Trine/Store/DBI/mysql.pm
 SHA1 f4c9a27c144b4c0f683d6ed0aa94f403057b827c lib/RDF/Trine/Store/Hexastore.pm
-SHA1 5569300bc569f69a8cb5a1dcb9072a28946a5995 lib/RDF/Trine/Store/Memory.pm
+SHA1 52c8ba89416f493bd67b20648c8abcaced77e4a4 lib/RDF/Trine/Store/Memory.pm
 SHA1 04e1ed9731165a4dd1baaf7ba2ff70e17c74bbb9 lib/RDF/Trine/Store/Redland.pm
 SHA1 697db0ec09599a0992bce4a41ffe9dc9e2d6491e lib/RDF/Trine/Store/SPARQL.pm
 SHA1 d0dafb6d920c4a47915215dcd9384a6f8b35ef3e t/00.load.t
@@ -562,7 +562,7 @@ SHA1 15ed1be16bafbae50d80842e1bcbfadc69d85bf3 t/syntax.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.10 (Darwin)
 
-iEYEARECAAYFAkwb6ksACgkQhPK6VMqoyC256QCgrxyapxXhezbzrlOqGWpZ6JWR
-jLwAn0g6mxzXsXdOwZ63opIpO8cfHhBD
-=Tr81
+iEYEARECAAYFAkwb6zkACgkQhPK6VMqoyC3MywCeIjtH+gRE4deg7MA7oS8QXhok
+fHAAn2nKIbHSVi39lSJyqiPyGp6hyzgg
+=EsH3
 -----END PGP SIGNATURE-----

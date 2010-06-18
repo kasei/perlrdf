@@ -70,7 +70,7 @@ sub new {
 
 sub _new_with_string {
 	my $class	= shift;
-	my $config	= shift;
+	my $config	= shift || '';
 	my @uris	= split(';', $config);
 	my $self	= $class->new();
 	foreach my $u (@uris) {
