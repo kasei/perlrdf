@@ -93,7 +93,8 @@ sub negotiate {
 	my $headers	= delete $options{ 'request_headers' };
 	my @variants;
 	while (my($type, $sclass) = each(%media_types)) {
-		push(@variants, [$type, 1.0, $type]);
+		my $qv	= ($type =~ /turtle/) ? 1.0 : 0.99;
+		push(@variants, [$type, $qv, $type]);
 	}
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and my $sclass = $media_types{ $stype }) {
@@ -149,6 +150,28 @@ Note that some serializers may not support the use of this method, or may
 require the full materialization of the iterator in order to serialize it.
 If materialization is required, available memeory may constrain the iterators
 that can be serialized.
+
+=cut
+
+=item C<< serialize_iterator_to_file ( $file, $iter ) >>
+
+Serializes the iterator to Turtle, printing the results to the supplied
+filehandle C<<$fh>>.
+
+=cut
+
+sub serialize_iterator_to_file {
+	my $self	= shift;
+	my $fh		= shift;
+	my $iter	= shift;
+	my %args	= @_;
+	my $model	= RDF::Trine::Model->temporary_model;
+	while (my $st = $iter->next) {
+		$model->add_statement( $st );
+	}
+	return $self->serialize_model_to_file( $fh, $model );
+}
+
 
 =item C<< serialize_iterator_to_string ( $iterator ) >>
 
