@@ -3,9 +3,6 @@ use warnings;
 
 use inc::Module::Install;
 
-my $dist = 'RDF-Endpoint-Plack';
-my $fn   = "lib/$dist.pm"; $fn =~ s#-#/#g;
-
 name                'RDF-Endpoint-Plack';
 all_from            'lib/RDF/Endpoint/Plack.pm';
 author              'Gregory Todd Williams <gwilliams@cpan.org>';
@@ -26,9 +23,8 @@ requires            'HTTP::Negotiate' => 0;
 auto_set_bugtracker;
 
 resources(
-	'homepage'   => "http://search.cpan.org/dist/$dist/",
+	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint-Plack/",
 	'repository' => "http://github.com/kasei/perlrdf/",
-	'bugtracker' => "http://rt.cpan.org/Dist/Display.html?Queue=$dist",
 );
 
 write_doap_changes;
