@@ -1,5 +1,6 @@
 {
 #		"store": "Memory"
+#		"store": "Memory;file:///Users/samofool/foaf.xrdf"
 #		"store" : "DBI;basic;DBI:SQLite:t/data/basic.db;user;pass"
 		"store": "DBI;endpoint;DBI:SQLite:dbname=endpoint.sqlite;;"
 }
