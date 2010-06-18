@@ -1,0 +1,5 @@
+{
+#		"store": "Memory"
+#		"store" : "DBI;basic;DBI:SQLite:t/data/basic.db;user;pass"
+		"store": "DBI;endpoint;DBI:SQLite:dbname=endpoint.sqlite;;"
+}
