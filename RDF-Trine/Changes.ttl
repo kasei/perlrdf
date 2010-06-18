@@ -24,6 +24,7 @@
                         asc:addition    "Added RDF::Trine::Model::Dataset for constructing views over a model, and RDF::Trine::Model->dataset_model constructor method." ;
                         asc:addition    "Added missing use of Encode to RDF::Trine::Store::Redland." ;
                         asc:addition    "Added bin/rdf_transcode.pl for (streaming) conversion between RDF serialization formats." ;
+                        asc:addition    "Added ability for RDF::Trine::Store::Memory to load RDF files by URI in _new_with_string." ;
                         asc:update      "Fixed RDF::Trine::Iterator::Bindings::as_string to respect $max_result_size argument." ;
                         asc:update      "RDF::Trine::Iterator::Bindings::as_string now returns unescaped strings." ;
                         asc:update      "Updated RDF::Trine::Parser::parse_url_into_model to fall back on file extension heuristics if the media-type based parse fails." ;
