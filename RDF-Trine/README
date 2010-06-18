@@ -67,6 +67,8 @@ VERSION HISTORY
 
   Version 0.124 (2010-XX-XX)
 
+     * Added default implementation of RDF::Trine::Serializer::serialize_iterator_to_file.
+     * RDF::Trine::Serializer::negotiate now slightly prefers turtle.
      * Added RDF::Trine::Iterator->count method.
      * Fixed RDF::Trine::Iterator::Bindings::as_string to respect $max_result_size argument.
      * RDF::Trine::Iterator::Bindings::as_string now returns unescaped strings.

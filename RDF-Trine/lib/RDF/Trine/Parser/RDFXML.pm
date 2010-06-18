@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.124_01
+This document describes RDF::Trine::Parser::RDFXML version 0.124_02
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124_01';
+	$VERSION	= '0.124_02';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;

@@ -38,6 +38,8 @@
                         asc:update      "Updated POD tests to not use taint mode (and synced between R::T and R::Q)." ;
                         asc:update      "Changed test data in t/iterator-thaw.t." ;
                         asc:update      "Removed RDF::Core as a prerequisite in META.yml." ;
+                        asc:update      "Added default implementation of RDF::Trine::Serializer::serialize_iterator_to_file." ;
+                        asc:update      "RDF::Trine::Serializer::negotiate now slightly prefers turtle." ;
                         ] .
 
 
