@@ -4,16 +4,60 @@ use strict;
 use warnings;
 use RDF::Query;
 use RDF::Trine qw(statement iri blank literal);
+
+use File::ShareDir qw(dist_dir);
 use Plack::Request;
 use Plack::Response;
 use Carp qw(confess);
 use Data::Dumper;
+use Config::JFDI;
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
+
+# warn dist_dir('RDF-Endpoint');
+
+sub service_description {
+	my $req		= shift;
+	my $model	= shift;
+	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
+	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
+	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
+	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
+	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
+	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
+
+	my $sdmodel		= RDF::Trine::Model->temporary_model;
+	my $s			= blank('service');
+	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
+	foreach my $ext (@extensions) {
+		$sdmodel->add_statement( statement( $s, $sd->languageExtension, iri($ext) ) );
+	}
+	foreach my $func (@functions) {
+		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
+	}
+	
+	my $dsd	= blank('dataset');
+	my $def	= blank('defaultGraph');
+	my $si	= blank('size');
+	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
+	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
+	
+	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
+	$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
+	$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
+	$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
+	$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+	return $sdmodel;
+}
 
 sub {
     my $env = shift;
     my $req = Plack::Request->new($env);
+	my $config = Config::JFDI->open( name => "RDF::Endpoint") or confess "Couldn't find config";
+	
+	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+	my $model	= RDF::Trine::Model->new( $store );
+	
 	my $response	= Plack::Response->new;
 	unless ($req->path eq '/') {
 		$response->status(404);
@@ -34,7 +78,6 @@ END
 	push(@variants, ['application/sparql-results+xml', 1.0, 'application/sparql-results+xml']);
 	my $stype	= choose( \@variants, $req->headers );
 	
-	my $model	= RDF::Trine::Model->temporary_model;
 	if (my $sparql = $req->param('query')) {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1, load_data => 1 } );
 		if ($query) {
@@ -56,39 +99,11 @@ END
 			$response->content( RDF::Query->error );
 		}
 	} else {
-		my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
-		my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
-		my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
-		my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
-		my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
-		my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
-
-		my $sdmodel		= RDF::Trine::Model->temporary_model;
-		my $s			= blank();
-		$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
-		foreach my $ext (@extensions) {
-			$sdmodel->add_statement( statement( $s, $sd->languageExtension, iri($ext) ) );
-		}
-		foreach my $func (@functions) {
-			$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
-		}
-		
-		my $dsd	= blank();
-		my $def	= blank();
-		my $si	= blank();
-		$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
-		$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
-		
-		$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
-		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
-		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
-		
+		my $sdmodel	= service_description( $req, $model );
 		if (my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-			my $s	= $sclass->new( {
-				sd		=> $sd->uri->uri_value,
+			my $s	= $sclass->new( namespaces => {
 				xsd		=> $xsd->uri->uri_value,
+				sd		=> 'http://www.w3.org/ns/sparql-service-description#',
 				jena	=> 'java:com.hp.hpl.jena.query.function.library.',
 				ldodds	=> 'java:com.ldodds.sparql.',
 				kasei	=> 'http://kasei.us/2007/09/functions/',
