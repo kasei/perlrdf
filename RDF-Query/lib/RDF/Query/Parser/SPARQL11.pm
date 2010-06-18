@@ -1445,12 +1445,12 @@ sub _GraphGraphPattern {
 	my ($graph)	= splice(@{ $self->{stack} });
 	$self->__consume_ws_opt;
 	
-	if ($graph->isa('RDF::Trine::Node::Resource')) {
+# 	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
 		$self->_GroupGraphPattern;
-	} else {
-		$self->_GroupGraphPattern;
-	}
+# 	} else {
+# 		$self->_GroupGraphPattern;
+# 	}
 	
 	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
