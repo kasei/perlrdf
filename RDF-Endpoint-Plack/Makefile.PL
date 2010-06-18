@@ -10,15 +10,16 @@ license             'perl';
 
 test_requires       'Test::More' => '0.61';
 
-requires            'Carp'            => 0;
-requires            'File::ShareDir'  => 0;
-requires            'RDF::Trine'      => 0.123;
-requires            'RDF::Query'      => 2.202;
-requires            'Plack::Request'  => 0;
-requires            'Plack::Response' => 0;
-requires            'Data::Dumper'    => 0;
-requires            'Config::JFDI'    => 0;
-requires            'HTTP::Negotiate' => 0;
+requires            'Carp'                 => 0;
+requires            'File::ShareDir'       => 0;
+requires            'RDF::Trine'           => 0.123;
+requires            'RDF::Query'           => 2.202;
+requires            'RDF::RDFa::Generator' => 0;
+requires            'Plack::Request'       => 0;
+requires            'Plack::Response'      => 0;
+requires            'Data::Dumper'         => 0;
+requires            'Config::JFDI'         => 0;
+requires            'HTTP::Negotiate'      => 0;
 
 auto_set_bugtracker;
 
