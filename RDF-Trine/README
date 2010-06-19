@@ -67,6 +67,7 @@ VERSION HISTORY
 
   Version 0.124 (2010-XX-XX)
 
+     * Updated quality value heuristics in RDF::Trine::Serializer::negotiate to prefer turtle if no accept headers are supplied.
      * Added ability for RDF::Trine::Store::Memory to load RDF files by URI in _new_with_string.
      * Added default implementation of RDF::Trine::Serializer::serialize_iterator_to_file.
      * RDF::Trine::Serializer::negotiate now slightly prefers turtle.
