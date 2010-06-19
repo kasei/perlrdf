@@ -70,7 +70,6 @@ throws_ok {
 
 {
 	print "# empty Accept header\n";
-	local($HTTP::Negotiate::DEBUG)	= 1;
 	my ($sname, $etype)	= ();
 	my $h	= new HTTP::Headers;
 	$h->header(Accept => "");
