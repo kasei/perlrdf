@@ -91,7 +91,10 @@ END
 			['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
 		);
 		my $stype	= choose( \@variants, $headers ) || 'text/html';
-		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1, load_data => 1 } );
+		my %args;
+		$args{ update }		= 1 if ($config->{update});
+		$args{ load_data }	= 1 if ($config->{load_data});
+		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', %args } );
 		if ($query) {
 			my $iter	= $query->execute( $model );
 			if ($iter) {
@@ -181,6 +184,15 @@ sub service_description {
 	my $sdmodel		= RDF::Trine::Model->temporary_model;
 	my $s			= blank('service');
 	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
+	
+	$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Query ) );
+	if ($config->{update}) {
+		$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Update ) );
+	}
+	if ($config->{load_data}) {
+		$sdmodel->add_statement( statement( $s, $sd->feature, $sd->DereferencesURIs ) );
+	}
+	
 	foreach my $ext (@extensions) {
 		$sdmodel->add_statement( statement( $s, $sd->languageExtension, iri($ext) ) );
 	}
