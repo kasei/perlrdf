@@ -1,0 +1,54 @@
+# -*-n3-*-
+
+@prefix dc:			<http://purl.org/dc/elements/1.1/> .
+@prefix dcterms:	<http://purl.org/dc/terms/> .
+@prefix foaf:		<http://xmlns.com/foaf/0.1/> .
+@prefix doap:		<http://usefulinc.com/ns/doap#> .
+@prefix xsd:		<http://www.w3.org/2001/XMLSchema#> .
+@prefix asc:		<http://aaronland.info/ns/changefile/> .
+@prefix my:			<http://purl.org/NET/cpan-uri/dist/RDF-Endpoint/> .
+
+<>
+	dc:title				"Changes" ;
+	dc:description          "Changes for RDF::Endpoint" ;
+	dc:subject				my:project ;
+	.
+
+
+<http://kasei.us/code/files/RDF-Endpoint-0.01.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.01" ;
+		doap:created      "2010-06-19" ;
+	] ;
+	asc:changes [
+		asc:addition	"First release." ;
+	] ;
+	.
+
+
+my:project
+	a doap:Project ;
+	doap:name					"RDF-Endpoint" ;
+	doap:shortdesc				"A SPARQL Protocol Endpoint implementation"@en ;
+	doap:programming-language	"Perl" ;
+	doap:homepage				<http://search.cpan.org/dist/RDF-Endpoint/> ;
+	doap:download-page			<http://search.cpan.org/dist/RDF-Endpoint/> ;
+	doap:bug-database			<http://rt.cpan.org/Dist/Display.html?Queue=RDF-Endpoint> ;
+	doap:maintainer				<http://kasei.us/about/foaf.xrdf#greg> ;
+	doap:developer				<http://kasei.us/about/foaf.xrdf#greg> ;
+	doap:documenter				<http://kasei.us/about/foaf.xrdf#greg> ;
+	doap:tester					<http://kasei.us/about/foaf.xrdf#greg> ;
+	doap:created				"2010-06-19"^^xsd:date ;
+	doap:license				<http://dev.perl.org/licenses/> ;
+	.
+
+<http://kasei.us/about/foaf.xrdf#greg>
+	a               foaf:Person ;
+	foaf:name       "Gregory Todd Williams" ;
+	foaf:homepage   <http://kasei.us/> ;
+	foaf:page       <http://search.cpan.org/~gwilliams/> ;
+	foaf:mbox       <mailto:gwilliams@cpan.org> ;
+	<http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/NET/cpan-uri/person/gwilliams> ;
+	.

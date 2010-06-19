@@ -21,8 +21,6 @@ requires            'Data::Dumper'         => 0;
 requires            'Config::JFDI'         => 0;
 requires            'HTTP::Negotiate'      => 0;
 
-auto_set_bugtracker;
-
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
 	'repository' => "http://github.com/kasei/perlrdf/",

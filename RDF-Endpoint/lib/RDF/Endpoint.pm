@@ -13,7 +13,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.01';
+our $VERSION	= '0.01_01';
 
 use RDF::Query;
 use RDF::Trine qw(statement iri blank literal);
@@ -28,11 +28,25 @@ use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
 use RDF::RDFa::Generator;
 
+=item C<< new ( $conf ) >>
+
+Returns a new Endpoint object. C<< $conf >> should be a HASH reference with
+configuration settings.
+
+=cut
+
 sub new {
 	my $class	= shift;
 	my $conf	= shift;
 	return bless( { conf => $conf }, $class );
 }
+
+=item C<< run ( $req ) >>
+
+Handles the request specified by the supplied Plack::Request object, returning
+an appropriate Plack::Response object.
+
+=cut
 
 sub run {
 	my $self	= shift;
@@ -143,6 +157,13 @@ END
 	return $response;
 }
 
+=item C<< service_description ( $request, $model ) >>
+
+Returns a new RDF::Trine::Model object containing a service description of this
+endpoint, generating dataset statistics from C<< $model >>.
+
+=cut
+
 sub service_description {
 	my $self	= shift;
 	my $req		= shift;
@@ -209,7 +230,7 @@ L<http://www.perlrdf.org/>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
