@@ -6,4 +6,4 @@ BEGIN {
 	use_ok( 'RDF::Endpoint' );
 }
 
-diag( "Testing RDF::LinkedData $RDF::Endpoint::VERSION, Perl $], $^X" );
+diag( "Testing RDF::Endpoint $RDF::Endpoint::VERSION, Perl $], $^X" );
