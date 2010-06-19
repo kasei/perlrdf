@@ -171,7 +171,7 @@ sub service_description {
 	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
 	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-	if ($config->{sd}{count}) {
+	if ($config->{sd}{default}) {
 		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
 		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
 		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
