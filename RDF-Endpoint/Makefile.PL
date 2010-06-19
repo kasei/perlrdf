@@ -1,35 +1,39 @@
 use strict;
 use warnings;
-no warnings 'redefine';
 
-# use ExtUtils::MakeMaker;
 use inc::Module::Install;
 
-license				'perl';
+name                'RDF-Endpoint';
+all_from            'lib/RDF/Endpoint.pm';
+author              'Gregory Todd Williams <gwilliams@cpan.org>';
+license             'perl';
 
-recommends			'Apache::DBI'				=> 0;
+test_requires       'Test::More' => '0.61';
 
-build_requires		'Test::More'				=> 0.61;
-build_requires		'Test::Exception'			=> 0;
-build_requires		'FindBin'					=> 0;
+requires            'Carp'                 => 0;
+requires            'File::ShareDir'       => 0;
+requires            'RDF::Trine'           => 0.123;
+requires            'RDF::Query'           => 2.202;
+requires            'RDF::RDFa::Generator' => 0;
+requires            'Plack::Request'       => 0;
+requires            'Plack::Response'      => 0;
+requires            'Data::Dumper'         => 0;
+requires            'Config::JFDI'         => 0;
+requires            'HTTP::Negotiate'      => 0;
 
-WriteMakefile(
-	NAME				=> 'RDF::Endpoint',
-	ABSTRACT			=> 'SPARQL Endpoint implementation for Apache and CGI',
-	VERSION_FROM		=> 'lib/RDF/Endpoint.pm',
-	AUTHOR				=> 'Gregory Todd Williams <gwilliams@cpan.org>',
-	PREREQ_PM			=> {
-					'Digest::SHA1'							=> 0,
-					'File::Slurp'							=> 0,
-					'HTTP::Server::Simple::CGI'				=> 0,
-					'List::Util'							=> 0,
-					'LWP::UserAgent'						=> 0,
-					'LWPx::ParanoidAgent'					=> 0,
-					'Module::Install::Base'					=> 0,
-					'RDF::Query'							=> 2,
-					'RDF::Trine'							=> 0,
-					'Scalar::Util'							=> 0,
-					'Template'								=> 0,
-					'URI::Escape'							=> 0,
-				},
+auto_set_bugtracker;
+
+resources(
+	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
+	'repository' => "http://github.com/kasei/perlrdf/",
 );
+
+write_doap_changes;
+write_doap_changes_xml;
+
+install_share;
+install_script glob('script/*');
+
+sign;
+
+WriteAll;
