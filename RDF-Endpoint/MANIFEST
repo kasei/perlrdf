@@ -20,3 +20,4 @@ rdf_endpoint.json
 scripts/endpoint.psgi
 share/index.html
 share/www/favicon.ico
+t/00-load.t
