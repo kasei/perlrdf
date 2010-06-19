@@ -20,6 +20,7 @@ requires            'Plack::Response'      => 0;
 requires            'Data::Dumper'         => 0;
 requires            'Config::JFDI'         => 0;
 requires            'HTTP::Negotiate'      => 0;
+requires            'IO::Compress::Gzip'   => 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",

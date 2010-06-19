@@ -27,6 +27,7 @@ use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
 use RDF::RDFa::Generator;
+use IO::Compress::Gzip qw(gzip);
 
 =item C<< new ( $conf ) >>
 
@@ -56,6 +57,7 @@ sub run {
 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
 	my $model	= RDF::Trine::Model->new( $store );
 	
+	my $content;
 	my $response	= Plack::Response->new;
 	unless ($req->path eq '/') {
 		my $path	= $req->path_info;
@@ -64,10 +66,10 @@ sub run {
 		if (-r $file) {
 			open( my $fh, '<', $file ) or die $!;
 			$response->status(200);
-			$response->body( $fh );
+			$content	= $fh;
 		} else {
 			$response->status(404);
-			$response->body(<<"END");
+			$content	= <<"END";
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n
 <h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>
 END
@@ -92,33 +94,38 @@ END
 		);
 		my $stype	= choose( \@variants, $headers ) || 'text/html';
 		my %args;
-		$args{ update }		= 1 if ($config->{update});
+		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{load_data});
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', %args } );
+		
 		if ($query) {
 			my $iter	= $query->execute( $model );
 			if ($iter) {
 				$response->status(200);
 				if ($stype =~ /html/) {
 					$response->headers->content_type( 'text/plain' );
-					my $content	= $iter->as_string;
-					$response->body( encode_utf8($content) );
+					$content	= encode_utf8($iter->as_string);
 				} elsif ($stype =~ /xml/) {
 					$response->headers->content_type( $stype );
-					$response->body( encode_utf8($iter->as_xml) );
+					$content	= encode_utf8($iter->as_xml);
 				} elsif ($stype =~ /json/) {
 					$response->headers->content_type( $stype );
-					$response->body( encode_utf8($iter->as_json) );
+					$content	= encode_utf8($iter->as_json);
 				} else {
 					$response->headers->content_type( 'text/plain' );
-					$response->body( encode_utf8($iter->as_string) );
+					$content	= encode_utf8($iter->as_string);
 				}
 			} else {
 				$response->status(500);
+				$content	= RDF::Query->error;
 			}
 		} else {
 			$response->status(500);
-			$response->body( RDF::Query->error );
+			$content	= RDF::Query->error;
+			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
+				$content	= 'Updates must use a HTTP POST request.';
+			}
+			warn $content;
 		}
 	} else {
 		my @variants;
@@ -144,7 +151,7 @@ END
 			my $s	= $sclass->new( namespaces => $ns );
 			$response->status(200);
 			$response->headers->content_type($stype);
-			$response->body( encode_utf8($s->serialize_model_to_string($sdmodel)) );
+			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
 		} else {
 			my $template	= File::Spec->catfile(dist_dir('RDF-Endpoint'), 'index.html');
 			my $parser		= XML::LibXML->new();
@@ -156,8 +163,34 @@ END
 			$doc->toFH($wh);
 			$response->status(200);
 			$response->headers->content_type('text/html');
-			$response->body($rh);
+			$content	= $rh;
 		}
+	}
+	
+	my $length	= 0;
+	my $ae		= $req->headers->header('Accept-Encoding') || '';
+	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
+	if ($ae{'gzip'}) {
+		my ($rh, $wh);
+		pipe($rh, $wh);
+		if (ref($content)) {
+			gzip $content => $wh;
+		} else {
+			gzip \$content => $wh;
+		}
+		close($wh);
+		local($/)	= undef;
+		my $body	= <$rh>;
+		$length		= bytes::length($body);
+		$response->headers->header('Content-Encoding' => 'gzip');
+		$response->headers->header('Content-Length' => $length);
+		$response->body( $body ) unless ($req->method eq 'HEAD');
+	} else {
+		local($/)	= undef;
+		my $body	= ref($content) ? <$content> : $content;
+		$length		= bytes::length($body);
+		$response->headers->header('Content-Length' => $length);
+		$response->body( $body ) unless ($req->method eq 'HEAD');
 	}
 	return $response;
 }
