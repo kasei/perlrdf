@@ -93,7 +93,10 @@ sub negotiate {
 	my $headers	= delete $options{ 'request_headers' };
 	my @variants;
 	while (my($type, $sclass) = each(%media_types)) {
-		my $qv	= ($type =~ /turtle/) ? 1.0 : 0.99;
+		my $qv	= ($type eq 'text/turtle') ? 1.0 : 0.99;
+		$qv		-= 0.01 if ($type =~ m#/x-#);
+		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);
+		$qv		-= 0.01 if ($type eq 'text/plain');
 		push(@variants, [$type, $qv, $type]);
 	}
 	my $stype	= choose( \@variants, $headers );
