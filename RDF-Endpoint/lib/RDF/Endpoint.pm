@@ -126,7 +126,9 @@ END
 		}
 		
 		my $ns	= {
-			xsd		=> $xsd->uri->uri_value,
+			xsd		=> 'http://www.w3.org/2001/XMLSchema#',
+			void	=> 'http://rdfs.org/ns/void#',
+			scovo	=> 'http://purl.org/NET/scovo#',
 			sd		=> 'http://www.w3.org/ns/sparql-service-description#',
 			jena	=> 'java:com.hp.hpl.jena.query.function.library.',
 			ldodds	=> 'java:com.ldodds.sparql.',
