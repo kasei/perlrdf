@@ -20,7 +20,7 @@ use RDF::Trine qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
-use XML::LibXML;
+use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
 use File::ShareDir qw(dist_dir);

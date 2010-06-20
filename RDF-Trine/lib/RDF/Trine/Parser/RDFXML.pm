@@ -35,7 +35,7 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Carp;
 use XML::SAX;
-use XML::LibXML;
+use XML::LibXML 1.70;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);

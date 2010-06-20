@@ -21,6 +21,7 @@ requires            'Data::Dumper'         => 0;
 requires            'Config::JFDI'         => 0;
 requires            'HTTP::Negotiate'      => 0;
 requires            'IO::Compress::Gzip'   => 0;
+requires            'XML::LibXML'          => 1.70;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
