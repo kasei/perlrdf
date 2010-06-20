@@ -248,28 +248,28 @@ sub _RW_Query {
 			$self->_AskQuery();
 			$read_query++;
 		} elsif ($self->_test(qr/LOAD/i)) {
-			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden when parsing a read-only query"
+			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_LoadUpdate();
 # 			warn Dumper($self->{build});
 		} elsif ($self->_test(qr/CLEAR\s+GRAPH/i)) {
-			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden when parsing a read-only query"
+			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_ClearGraphUpdate();
 		} elsif ($self->_test(qr/INSERT\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden when parsing a read-only query"
+			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_InsertDataUpdate();
 		} elsif ($self->_test(qr/DELETE\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden when parsing a read-only query"
+			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_DeleteDataUpdate();
 # 		} elsif ($self->_test(qr/DELETE\s+WHERE/i)) {
-# 			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden when parsing a read-only query"
+# 			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden in read-only queries"
 # 				unless ($self->{update});
 # 			$self->_DeleteWhereUpdate();
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
-			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden when parsing a read-only query"
+			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
 				unless ($self->{update});
 			if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
 				$self->_InsertUpdate();
