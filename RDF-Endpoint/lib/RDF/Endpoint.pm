@@ -157,7 +157,7 @@ END
 			my $dir			= eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= XML::LibXML->new();
-			my $doc			= $parser->parse_file( $template );
+			my $doc			= $parser->load_html( location => $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Hidden', ns => $ns );
 			$gen->inject_document($doc, $sdmodel);
 			my ($rh, $wh);
