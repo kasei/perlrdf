@@ -62,7 +62,8 @@ sub run {
 	unless ($req->path eq '/') {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
-		my $file	= File::Spec->catfile(dist_dir('RDF-Endpoint'), 'www', $path);
+		my $dir		= eval { dist_dir('RDF-Endpoint') } || 'share';
+		my $file	= File::Spec->catfile($dir, 'www', $path);
 		if (-r $file) {
 			open( my $fh, '<', $file ) or die $!;
 			$response->status(200);
@@ -153,7 +154,8 @@ END
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
 		} else {
-			my $template	= File::Spec->catfile(dist_dir('RDF-Endpoint'), 'index.html');
+			my $dir			= eval { dist_dir('RDF-Endpoint') } || 'share';
+			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= XML::LibXML->new();
 			my $doc			= $parser->parse_file( $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Hidden', ns => $ns );
