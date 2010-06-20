@@ -12,8 +12,8 @@ test_requires       'Test::More' => '0.61';
 
 requires            'Carp'                 => 0;
 requires            'File::ShareDir'       => 0;
-requires            'RDF::Trine'           => 0.123;
-requires            'RDF::Query'           => 2.202;
+requires            'RDF::Trine'           => 0.124;
+requires            'RDF::Query'           => 3.000;
 requires            'RDF::RDFa::Generator' => 0;
 requires            'Plack::Request'       => 0;
 requires            'Plack::Response'      => 0;
