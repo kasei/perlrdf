@@ -754,11 +754,9 @@ sub new_literal {
 	if (my $dt = $self->{datatype}) {	# datatype
 		$args[1]	= $dt;
 		if ($dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-			my $parsed	= 0;
 			eval {
 				if ($string =~ m/^</) {
 					my $doc 	= XML::LibXML->load_xml(string => $string);
-					$parsed		= 1;
 					my $canon	= $doc->toStringEC14N(1);
 					$string	= $canon;
 				}
