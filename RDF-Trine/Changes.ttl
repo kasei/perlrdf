@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.124" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-06-21" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Iterator->count method." ;

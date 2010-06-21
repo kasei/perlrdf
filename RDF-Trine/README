@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.124 (2010-XX-XX)
+  Version 0.124 (2010-06-21)
 
      * Updated quality value heuristics in RDF::Trine::Serializer::negotiate to prefer turtle if no accept headers are supplied.
      * Added ability for RDF::Trine::Store::Memory to load RDF files by URI in _new_with_string.
@@ -90,6 +90,8 @@ VERSION HISTORY
      * Updated POD tests to not use taint mode (and synced between R::T and R::Q).
      * Changed test data in t/iterator-thaw.t.
      * Removed RDF::Core as a prerequisite in META.yml.
+     * Added default implementation of RDF::Trine::Serializer::serialize_iterator_to_file.
+     * RDF::Trine::Serializer::negotiate now slightly prefers turtle.
 
   Version 0.123 (2010-05-13)
 
