@@ -504,8 +504,8 @@ END
 # 				my $count;
 # 				while (my $row = $stream->()) {
 # 					my ($image, $point, $lat)	= @{ $row };
-# 					ok( $query->bridge->isa_resource( $image ), 'image is resource');
-# 					my $latv	= ($lat) ? $query->bridge->literal_value( $lat ) : undef;
+# 					ok( $image->isa('RDF::Trine::Node::Resource'), 'image is resource');
+# 					my $latv	= ($lat) ? $lat->literal_value : undef;
 # 					cmp_ok( $latv, '>', 52, 'lat: ' . $latv );
 # 					cmp_ok( $latv, '<', 53, 'lat: ' . $latv );
 # 					$count++;
@@ -527,7 +527,7 @@ END
 # 				my $count;
 # 				while (my $row = $stream->()) {
 # 					my ($node)	= @{ $row };
-# 					my $name	= $query->bridge->as_string( $node );
+# 					my $name	= $node->as_string;
 # 					ok( $name, $name );
 # 				} continue { last if ++$count >= 100 };
 # 			}
@@ -548,11 +548,11 @@ END
 # 				my ($count, $last);
 # 				while (my $row = $stream->()) {
 # 					my ($p, $node)	= @{ $row };
-# 					my $name	= $query->bridge->as_string( $node );
+# 					my $name	= $node->as_string;
 # 					if (defined($last)) {
-# 						cmp_ok( $name, 'ge', $last, "In order: $name (" . $query->bridge->as_string( $p ) . ")" );
+# 						cmp_ok( $name, 'ge', $last, "In order: $name (" . $p->as_string . ")" );
 # 					} else {
-# 						ok( $name, "$name (" . $query->bridge->as_string( $p ) . ")" );
+# 						ok( $name, "$name (" . $p->as_string . ")" );
 # 					}
 # 					$last	= $name;
 # 				} continue { last if ++$count >= 200 };
@@ -575,13 +575,13 @@ END
 # 				my ($count, $last);
 # 				while (my $row = $stream->()) {
 # 					my ($node, $lat, $long)	= @{ $row };
-# 					my $name	= $query->bridge->as_string( $node );
+# 					my $name	= $node->as_string;
 # 					if (defined($last)) {
-# 						cmp_ok( $query->bridge->as_string( $long ), '<=', $last, "In order: $name (" . $query->bridge->as_string( $long ) . ")" );
+# 						cmp_ok( $long->as_string, '<=', $last, "In order: $name (" . $long->as_string . ")" );
 # 					} else {
-# 						ok( $name, "$name (" . $query->bridge->as_string( $long ) . ")" );
+# 						ok( $name, "$name (" . $long->as_string . ")" );
 # 					}
-# 					$last	= $query->bridge->as_string( $long );
+# 					$last	= $long->as_string;
 # 				} continue { last if ++$count >= 200 };
 # 			}
 # 		}

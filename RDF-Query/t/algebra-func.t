@@ -72,7 +72,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer->integer cast';
 		my $alg		= $func->new( "${xsd}integer", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', "$TEST datatype" );
@@ -81,7 +81,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'string->integer cast';
 		my $alg		= $func->new( "${xsd}integer", $l1 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', "$TEST datatype" );
@@ -90,7 +90,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(true)->integer cast';
 		my $alg		= $func->new( "${xsd}integer", $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', "$TEST datatype" );
@@ -99,7 +99,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(false)->integer cast';
 		my $alg		= $func->new( "${xsd}integer", $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 0, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', "$TEST datatype" );
@@ -109,7 +109,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'resource->integer cast (throws)';
 		my $alg		= $func->new( "${xsd}integer", $rea );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -118,7 +118,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'double->integer cast (throws)';
 		my $alg		= $func->new( "${xsd}integer", $l5d );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::FilterEvaluationError', $TEST;
 	}
@@ -130,7 +130,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer->decimal cast';
 		my $alg		= $func->new( "${xsd}decimal", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#decimal', "$TEST datatype" );
@@ -139,7 +139,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(true)->decimal cast';
 		my $alg		= $func->new( "${xsd}decimal", $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#decimal', "$TEST datatype" );
@@ -148,7 +148,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(false)->decimal cast';
 		my $alg		= $func->new( "${xsd}decimal", $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 0, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#decimal', "$TEST datatype" );
@@ -158,7 +158,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'resource->decimal cast (throws)';
 		my $alg		= $func->new( "${xsd}decimal", $rea );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -166,7 +166,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'custom->decimal cast';
 		my $alg		= $func->new( "${xsd}decimal", $cv );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#decimal', "$TEST datatype" );
@@ -178,7 +178,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer->float cast';
 		my $alg		= $func->new( "${xsd}float", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#float', "$TEST datatype" );
@@ -187,7 +187,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(true)->float cast';
 		my $alg		= $func->new( "${xsd}float", $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#float', "$TEST datatype" );
@@ -196,7 +196,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(false)->float cast';
 		my $alg		= $func->new( "${xsd}float", $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 0, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#float', "$TEST datatype" );
@@ -206,7 +206,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'resource->float cast (throws)';
 		my $alg		= $func->new( "${xsd}float", $rea );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -215,7 +215,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'custom->float cast (throws)';
 		my $alg		= $func->new( "${xsd}float", $cv );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -226,7 +226,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer->double cast';
 		my $alg		= $func->new( "${xsd}double", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#double', "$TEST datatype" );
@@ -235,7 +235,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(true)->double cast';
 		my $alg		= $func->new( "${xsd}double", $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#double', "$TEST datatype" );
@@ -244,7 +244,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bool(false)->double cast';
 		my $alg		= $func->new( "${xsd}double", $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 0, "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#double', "$TEST datatype" );
@@ -254,7 +254,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'resource->double cast (throws)';
 		my $alg		= $func->new( "${xsd}double", $rea );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -263,7 +263,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'custom->double cast (throws)';
 		my $alg		= $func->new( "${xsd}double", $cv );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -274,7 +274,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer(0)->boolean cast';
 		my $alg		= $func->new( "${xsd}boolean", $l0d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 0, "$TEST value" );
 		is( $value->literal_value, 'false', "$TEST value" );
@@ -284,7 +284,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer(1)->boolean cast';
 		my $alg		= $func->new( "${xsd}boolean", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_value, 'true', "$TEST value" );
@@ -295,7 +295,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'resource->boolean cast (throws)';
 		my $alg		= $func->new( "${xsd}boolean", $rea );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -304,7 +304,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'custom->boolean cast (throws)';
 		my $alg		= $func->new( "${xsd}boolean", $cv );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
@@ -312,7 +312,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'custom(true)->boolean cast';
 		my $alg		= $func->new( "${xsd}boolean", $ct );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->numeric_value, 1, "$TEST value" );
 		is( $value->literal_value, 'true', "$TEST value" );
@@ -325,7 +325,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'literal->string cast';
 		my $alg		= $func->new( "${xsd}string", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'a', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#string', "$TEST datatype" );
@@ -334,7 +334,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'integer->string cast';
 		my $alg		= $func->new( "${xsd}string", $l1d );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, '1', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#string', "$TEST datatype" );
@@ -343,7 +343,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'resource->string cast';
 		my $alg		= $func->new( "${xsd}string", $rea );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'http://example.org/a', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#string', "$TEST datatype" );
@@ -352,7 +352,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'boolean->string cast';
 		my $alg		= $func->new( "${xsd}string", $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#string', "$TEST datatype" );
@@ -364,7 +364,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'literal->dateTime cast';
 		my $alg		= $func->new( "${xsd}dateTime", $ldate1 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, '2008-01-01T00:00:00Z', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#dateTime', "$TEST datatype" );
@@ -373,7 +373,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'string->dateTime cast';
 		my $alg		= $func->new( "${xsd}dateTime", $ldate2 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, '2008-01-01T00:00:00Z', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#dateTime', "$TEST datatype" );
@@ -383,7 +383,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'string(bad)->dateTime cast (throws)';
 		my $alg		= $func->new( "${xsd}dateTime", $la );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 }
@@ -393,7 +393,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'str(literal)';
 		my $alg		= $func->new( "sparql:str", $ct );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		ok( not($value->has_datatype), "$TEST datatype" );
@@ -402,7 +402,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'str(resource)';
 		my $alg		= $func->new( "sparql:str", $reb );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'http://example.org/b', "$TEST value" );
 		ok( not($value->has_datatype), "$TEST datatype" );
@@ -412,7 +412,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'str(blank) (throws)';
 		my $alg		= $func->new( "sparql:str", $ba );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 }
@@ -422,7 +422,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'lang(plain) is empty';
 		my $alg		= $func->new( "sparql:lang", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, '', "$TEST value" );
 	}
@@ -430,7 +430,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'lang(english)';
 		my $alg		= $func->new( "sparql:lang", $lal );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'en', "$TEST value" );
 	}
@@ -439,7 +439,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $TEST	= 'lang(blank) (throws)';
 		my $alg		= $func->new( "sparql:lang", $ba );
 		throws_ok {
-			my $value	= $alg->evaluate( undef, undef, {} );
+			my $value	= $alg->evaluate( undef, {} );
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 }
@@ -449,7 +449,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bound(var) true';
 		my $alg		= $func->new( "sparql:bound", $va );
-		my $value	= $alg->evaluate( undef, undef, { a => $la } );
+		my $value	= $alg->evaluate( undef, { a => $la } );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -458,7 +458,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'bound(var) false';
 		my $alg		= $func->new( "sparql:bound", $vb );
-		my $value	= $alg->evaluate( undef, undef, { a => $la } );
+		my $value	= $alg->evaluate( undef, { a => $la } );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -472,7 +472,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isuri(resource)';
 		my $alg		= $func->new( "sparql:isuri", $rea );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -481,7 +481,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isuri(literal)';
 		my $alg		= $func->new( "sparql:isuri", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -490,7 +490,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isiri(resource)';
 		my $alg		= $func->new( "sparql:isiri", $rea );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -499,7 +499,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isiri(literal)';
 		my $alg		= $func->new( "sparql:isiri", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -512,7 +512,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isblank(resource)';
 		my $alg		= $func->new( "sparql:isblank", $rea );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -521,7 +521,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isblank(literal)';
 		my $alg		= $func->new( "sparql:isblank", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -530,7 +530,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isblank(blank)';
 		my $alg		= $func->new( "sparql:isblank", $ba );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -543,7 +543,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isliteral(resource)';
 		my $alg		= $func->new( "sparql:isliteral", $rea );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -552,7 +552,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isliteral(literal)';
 		my $alg		= $func->new( "sparql:isliteral", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -561,7 +561,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'isliteral(blank)';
 		my $alg		= $func->new( "sparql:isliteral", $ba );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -574,7 +574,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'langmatches(en-gb, en)';
 		my $alg		= $func->new( "sparql:langmatches", $lengb, $len );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -583,7 +583,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'langmatches(en-us, en-gb)';
 		my $alg		= $func->new( "sparql:langmatches", $lenus, $lengb );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -595,7 +595,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'sameTerm on equivalent dateTime literals';
 		my $alg		= $func->new( "sparql:sameterm", $dt1, $dt2 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -604,7 +604,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'sameTerm on identical literals';
 		my $alg		= $func->new( "sparql:sameterm", $ct, $ct2 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -613,7 +613,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'sameTerm on different typed literals with same value';
 		my $alg		= $func->new( "sparql:sameterm", $ct, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -625,7 +625,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'datatype(plain literal)';
 		my $alg		= $func->new( "sparql:datatype", $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Resource' );
 		is( $value->uri_value, 'http://www.w3.org/2001/XMLSchema#string', "$TEST value" );
 	}
@@ -633,7 +633,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'datatype(dateTime)';
 		my $alg		= $func->new( "sparql:datatype", $dt1 );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Resource' );
 		is( $value->uri_value, 'http://www.w3.org/2001/XMLSchema#dateTime', "$TEST value" );
 	}
@@ -641,7 +641,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= 'datatype(custom typed literal)';
 		my $alg		= $func->new( "sparql:datatype", $cv );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Resource' );
 		is( $value->uri_value, 'http://example.org/mytype', "$TEST value" );
 	}
@@ -653,7 +653,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "regex('abcdefg', 'a')";
 		my $alg		= $func->new( "sparql:regex", $lalpha, $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -662,7 +662,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "regex('b', 'a')";
 		my $alg		= $func->new( "sparql:regex", $lb, $la );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -671,7 +671,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "regex('abcdefg', '^b')";
 		my $alg		= $func->new( "sparql:regex", $lalpha, $lpat );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -680,7 +680,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "regex('b', '^b')";
 		my $alg		= $func->new( "sparql:regex", $lb, $lpat );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -689,7 +689,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "regex('ABCDEFG', 'b', 'i')";
 		my $alg		= $func->new( "sparql:regex", $lALPHA, $lb, $li );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -701,7 +701,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-or(T,T)";
 		my $alg		= $func->new( "sparql:logical-or", $true, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 	}
@@ -709,7 +709,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-or(T,F)";
 		my $alg		= $func->new( "sparql:logical-or", $true, $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 	}
@@ -717,7 +717,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-or(F,T)";
 		my $alg		= $func->new( "sparql:logical-or", $false, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 	}
@@ -725,7 +725,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-or(F,F)";
 		my $alg		= $func->new( "sparql:logical-or", $false, $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
@@ -733,7 +733,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-or(F,F,T)";
 		my $alg		= $func->new( "sparql:logical-or", $false, $false, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 	}
@@ -745,7 +745,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-and(T,T)";
 		my $alg		= $func->new( "sparql:logical-and", $true, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 	}
@@ -753,7 +753,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-and(T,F)";
 		my $alg		= $func->new( "sparql:logical-and", $true, $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
@@ -761,7 +761,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-and(F,T)";
 		my $alg		= $func->new( "sparql:logical-and", $false, $true );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
@@ -769,7 +769,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-and(F,F)";
 		my $alg		= $func->new( "sparql:logical-and", $false, $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
@@ -777,7 +777,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "logical-and(T,T,F)";
 		my $alg		= $func->new( "sparql:logical-and", $true, $true, $false );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 	}
@@ -791,7 +791,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "jena:sha1sum";
 		my $alg		= $func->new( "java:com.hp.hpl.jena.query.function.library.sha1sum", $lemail );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8', "$TEST value" );
 	}
@@ -799,7 +799,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "jena:now";
 		my $alg		= $func->new( "java:com.hp.hpl.jena.query.function.library.now" );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		like( $value->literal_value, qr/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/, "$TEST value" );
 	}
@@ -807,7 +807,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "jena:langeq (true)";
 		my $alg		= $func->new( "java:com.hp.hpl.jena.query.function.library.langeq", $lal, $len );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'true', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -816,7 +816,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	{
 		my $TEST	= "jena:langeq (false)";
 		my $alg		= $func->new( "java:com.hp.hpl.jena.query.function.library.langeq", $lal, $lengb );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		is( $value->literal_value, 'false', "$TEST value" );
 		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -839,7 +839,7 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my @args	= map { RDF::Query::Node::Literal->new($_, undef, 'http://www.w3.org/2001/XMLSchema#float') } qw(34.015673 -118.496947 41.8351 -71.3971);
 		my $TEST	= "ldodds:Distance";
 		my $alg		= $func->new( "java:com.ldodds.sparql.Distance", @args );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Literal' );
 		my $dist	= $value->numeric_value;
 		cmp_ok( $dist, '>', 4165, "$TEST value lower bound" );
@@ -860,14 +860,14 @@ SKIP: {
 		my $alg		= $func->new( "http://kasei.us/code/rdf-query/functions/bloom/filter", $va, $filter );
 		
 		{
-			my $value	= $alg->evaluate( undef, undef, { a => $rea } );
+			my $value	= $alg->evaluate( undef, { a => $rea } );
 			isa_ok( $value, 'RDF::Query::Node::Literal' );
 			is( $value->literal_value, 'true', "$TEST value" );
 			is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
 		}
 		
 		{
-			my $value	= $alg->evaluate( undef, undef, { a => $reb } );
+			my $value	= $alg->evaluate( undef, { a => $reb } );
 			isa_ok( $value, 'RDF::Query::Node::Literal' );
 			is( $value->literal_value, 'true', "$TEST value" );
 			is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#boolean', "$TEST datatype" );
@@ -876,7 +876,7 @@ SKIP: {
 		my @resources	= map { RDF::Query::Node::Resource->new( 'http://localhost/' . $_ ) } ('a' .. 'z', 'A' .. 'Z', 0 .. 9);
 		my $true	= 0;
 		foreach my $r (@resources) {
-			my $value	= $alg->evaluate( undef, undef, { a => $r } );
+			my $value	= $alg->evaluate( undef, { a => $r } );
 			if ($value->literal_value eq 'true') {
 				$true++;
 			}
@@ -893,7 +893,7 @@ SKIP: {
 		my $TEST	= 'datatype(jena:now())';
 		my $now		= $func->new( "java:com.hp.hpl.jena.query.function.library.now" );
 		my $alg		= $func->new( "sparql:datatype", $now );
-		my $value	= $alg->evaluate( undef, undef, {} );
+		my $value	= $alg->evaluate( undef, {} );
 		isa_ok( $value, 'RDF::Query::Node::Resource' );
 		is( $value->uri_value, 'http://www.w3.org/2001/XMLSchema#dateTime', "$TEST datatype" );
 	}

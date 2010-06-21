@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.123
+This document describes RDF::Trine::Model version 0.124
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 }
 
 use Scalar::Util qw(blessed);
@@ -33,6 +33,7 @@ use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
+use RDF::Trine::Model::Dataset;
 
 =item C<< new ( @stores ) >>
 
@@ -43,6 +44,7 @@ Returns a new model over the supplied rdf store.
 sub new {
 	my $class	= shift;
 	my $store	= shift;
+	throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
 	my %args	= @_;
 	my $self	= bless({
 		store		=> $store,
@@ -67,7 +69,18 @@ sub temporary_model {
 	$self->{threshold}	= 2000;
 	return $self;
 }
- 
+
+=item C<< dataset_model ( default => \@graphs, named => \@graphs ) >>
+
+=cut
+
+sub dataset_model {
+	my $self	= shift;
+	my $ds		= RDF::Trine::Model::Dataset->new( $self );
+	$ds->push_dataset( @_ );
+	return $ds;
+}
+
 =item C<< add_statement ( $statement [, $context] ) >>
  
 Adds the specified C<< $statement >> to the rdf store.
@@ -239,15 +252,19 @@ sub get_pattern {
 	}
 	
 	my $store	= $self->_store;
-	if ($store and $store->can('get_pattern')) {
+	# while almost all models will delegate get_pattern() to the underlying
+	# store object, in some cases this isn't possible (union models don't have
+	# a single store, so have to fall back to the model-specific get_pattern()
+	# implementation).
+	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
 		if (1 == scalar(@triples)) {
 			my $t		= shift(@triples);
 			my @nodes	= $t->nodes;
 			my %vars;
-			my @names	= qw(subject predicate object);
-			foreach my $n (0 .. 2) {
+			my @names	= qw(subject predicate object context);
+			foreach my $n (0 .. $#nodes) {
 				if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
 					$vars{ $names[ $n ] }	= $nodes[$n]->name;
 				}
@@ -290,7 +307,8 @@ sub get_pattern {
 					push(@results, $jrow);
 				}
 			}
-			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+			my $result	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+			return $result;
 		}
 	}
 }

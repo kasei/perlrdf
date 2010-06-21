@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.123
+This document describes RDF::Trine::Store::Memory version 0.124
 
 =head1 SYNOPSIS
 
@@ -36,8 +36,9 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.123";
-	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	$VERSION	= "0.124";
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
 }
 
@@ -69,8 +70,13 @@ sub new {
 
 sub _new_with_string {
 	my $class	= shift;
-	my $config	= shift;
-	return $class->new();
+	my $config	= shift || '';
+	my @uris	= split(';', $config);
+	my $self	= $class->new();
+	foreach my $u (@uris) {
+		RDF::Trine::Parser->parse_url_into_model( $u, $self );
+	}
+	return $self;
 }
 
 =item C<< temporary_store >>
@@ -199,7 +205,7 @@ sub _get_statements_quad {
 			return unless ($i <= $#{ $self->{statements} });
 			my $st	= $self->{statements}[ $i ];
 # 			warn $st;
-			while (not(blessed($st))) {
+			while (not(blessed($st)) and ($i <= $#{ $self->{statements} })) {
 				$st	= $self->{statements}[ ++$i ];
 # 				warn "null st. next: $st";
 			}
@@ -283,7 +289,7 @@ the set of contexts of the stored quads.
 
 sub get_contexts {
 	my $self	= shift;
-	my @ctx		= values %{ $self->{ ctx_nodes } };
+	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
 

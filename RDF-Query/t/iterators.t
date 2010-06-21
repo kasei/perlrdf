@@ -19,7 +19,6 @@ use RDF::Trine::Iterator (qw(sgrep smap));
 use_ok( 'RDF::Query' );
 foreach my $data (@data) {
 	my $model	= $data->{'modelobj'};
-	my $bridge	= $data->{'bridge'};
 	
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
@@ -44,68 +43,62 @@ END
 		is( $stream->binding_name( 1 ), 'homepage', 'bindging_name' );
 		
 		my $homepage	= $stream->binding_value_by_name( 'person' );
-		ok( $query->bridge->isa_resource( $homepage ), 'binding_value_by_name' );
-		is( $query->bridge->uri_value( $homepage ), 'http://kasei.us/about/foaf.xrdf#greg', 'binding_value_by_name' );
+		ok( $homepage->isa('RDF::Trine::Node::Resource'), 'binding_value_by_name' );
+		is( $homepage->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'binding_value_by_name' );
 		
 		my @values	= $stream->binding_values();
 		is( scalar(@values), 2, 'binding_values' );
 		my ($p, $h)	= @values;
-		ok( $query->bridge->isa_resource( $p ), 'binding_values' );
-		is( $query->bridge->uri_value( $p ), 'http://kasei.us/about/foaf.xrdf#greg', 'binding_values' );
-		ok( $query->bridge->isa_resource( $h ), 'binding_values' );
-		is( $query->bridge->uri_value( $h ), 'http://kasei.us/', 'binding_values' );
+		ok( $p->isa('RDF::Trine::Node::Resource'), 'binding_values' );
+		is( $p->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'binding_values' );
+		ok( $h->isa('RDF::Trine::Node::Resource'), 'binding_values' );
+		is( $h->uri_value, 'http://kasei.us/', 'binding_values' );
 		
 		my $count	= $stream->bindings_count;
 		is( $count, 2, 'bindings_count' );
 	}
 	
 	
-	SKIP: {
-		skip( "Model does not support XML sesrialization", 2 ) unless ($bridge->supports('xml'));
-		{
-			my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
-				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-				SELECT ?person
-				WHERE {
-					?person a foaf:Person ;
-						foaf:name "Gregory Todd Williams" .
-				}
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?person
+			WHERE {
+				?person a foaf:Person ;
+					foaf:name "Gregory Todd Williams" .
+			}
 END
-			my $stream	= $query->execute( $model );
-			my $string	= $stream->to_string;
-			like( $string, qr/\A\Q<?xml version="1.0"\E.*\n\Q<sparql\E/s, 'to_string xml bindings' );
-		}
-		
-		{
-			my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
-				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-				DESCRIBE ?person
-				WHERE {
-					?person a foaf:Person ;
-						foaf:name "Gregory Todd Williams" .
-				}
-END
-			my $stream	= $query->execute( $model );
-			my $string	= $stream->as_xml;
-			like( $string, qr/^\Q<rdf:RDF\E/m, 'to_string xml graph' );
-		}
+		my $stream	= $query->execute( $model );
+		my $string	= $stream->to_string;
+		like( $string, qr/\A\Q<?xml version="1.0"\E.*\n\Q<sparql\E/s, 'to_string xml bindings' );
 	}
 	
-	SKIP: {
-		skip( "Model does not support JSON sesrialization", 1 ) unless ($bridge->supports('json'));
-		{
-			my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
-				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-				SELECT ?person
-				WHERE {
-					?person a foaf:Person ;
-						foaf:name "Gregory Todd Williams" .
-				}
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			DESCRIBE ?person
+			WHERE {
+				?person a foaf:Person ;
+					foaf:name "Gregory Todd Williams" .
+			}
 END
-			my $stream	= $query->execute( $model );
-			my $string	= $stream->to_string('http://www.w3.org/2001/sw/DataAccess/json-sparql/');
-			like( $string, qr/\A\Q\E/m, 'to_string json' );
-		}
+		my $stream	= $query->execute( $model );
+		my $string	= $stream->as_xml;
+		like( $string, qr/^\Q<rdf:RDF\E/m, 'to_string xml graph' );
+	}
+	
+	{
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?person
+			WHERE {
+				?person a foaf:Person ;
+					foaf:name "Gregory Todd Williams" .
+			}
+END
+		my $stream	= $query->execute( $model );
+		my $string	= $stream->to_string('http://www.w3.org/2001/sw/DataAccess/json-sparql/');
+		like( $string, qr/\A\Q\E/m, 'to_string json' );
 	}
 	
 }

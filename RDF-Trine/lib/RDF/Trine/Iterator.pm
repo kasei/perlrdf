@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.123.
+This document describes RDF::Trine::Iterator version 0.124.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -99,6 +99,7 @@ sub new {
 		_names		=> $names,
 		_stream		=> $stream,
 		_args		=> \%args,
+		_count		=> 0,
 		_row		=> undef,
 		_peek		=> [],
 #		_source		=> Carp::longmess(),
@@ -210,6 +211,7 @@ sub next {
 
 	$self->{_open}	= 1;
 	$self->{_row}	= $value;
+	$self->{_count}++ if defined($value);
 	return $value;
 }
 
@@ -312,6 +314,16 @@ sub concat {
 	return $s;
 }
 
+=item C<< count >>
+
+Returns the number of objects returned from this iterator.
+
+=cut
+
+sub count {
+	my $self	= shift;
+	return $self->{_count};
+}
 
 =item C<get_boolean>
 

@@ -32,17 +32,16 @@ foreach my $model (@models) {
 				LIMIT 2
 END
 			my $stream	= $query->execute( $model );
-			my $bridge	= $query->bridge;
 			isa_ok( $stream, 'RDF::Trine::Iterator' );
 			my ($count, $last);
 			while (my $row = $stream->next) {
 				my ($p, $node)	= @{ $row }{qw(p name)};
-				my $name	= $bridge->literal_value( $node );
+				my $name	= $node->literal_value;
 				$seen{ $name }++;
 				if (defined($last)) {
-					cmp_ok( $name, 'ge', $last, "In order: $name (" . $bridge->as_string( $p ) . ")" );
+					cmp_ok( $name, 'ge', $last, "In order: $name (" . $p->as_string . ")" );
 				} else {
-					ok( $name, "First: $name (" . $bridge->as_string( $p ) . ")" );
+					ok( $name, "First: $name (" . $p->as_string . ")" );
 				}
 				$last	= $name;
 			} continue { ++$count };
@@ -63,17 +62,16 @@ END
 				OFFSET 2
 END
 			my $stream	= $query->execute( $model );
-			my $bridge	= $query->bridge;
 			isa_ok( $stream, 'RDF::Trine::Iterator' );
 			my ($count, $last);
 			while (my $row = $stream->next) {
 				my ($p, $node)	= @{ $row }{qw(p name)};
-				my $name	= $bridge->literal_value( $node );
+				my $name	= $node->literal_value;
 				is( exists($seen{ $name }), '', "not seen before with offset: $name" );
 				if (defined($last)) {
-					cmp_ok( $name, 'ge', $last, "In order: $name (" . $bridge->as_string( $p ) . ")" );
+					cmp_ok( $name, 'ge', $last, "In order: $name (" . $p->as_string . ")" );
 				} else {
-					ok( $name, "First: $name (" . $bridge->as_string( $p ) . ")" );
+					ok( $name, "First: $name (" . $p->as_string . ")" );
 				}
 				$last	= $name;
 			} continue { ++$count };
@@ -92,13 +90,12 @@ END
 			LIMIT 2
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($p, $node)	= @{ $row }{qw(p name)};
-			my $name	= $bridge->literal_value( $node );
-			ok( $name, "First: $name (" . $bridge->as_string( $p ) . ")" );
+			my $name	= $node->literal_value;
+			ok( $name, "First: $name (" . $p->as_string . ")" );
 		} continue { ++$count };
 		is( $count, 2, 'good LIMIT' );
 	}
@@ -115,13 +112,12 @@ END
 			OFFSET 1
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($p, $node)	= @{ $row }{qw(p name)};
-			my $name	= $bridge->literal_value( $node );
-			ok( $name, "Got person with nick: $name (" . $bridge->as_string( $p ) . ")" );
+			my $name	= $node->literal_value;
+			ok( $name, "Got person with nick: $name (" . $p->as_string . ")" );
 		} continue { ++$count };
 		is( $count, 1, "Good DISTINCT with OFFSET" );
 	}
@@ -141,12 +137,11 @@ END
 			OFFSET 1
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my ($count);
 		while (my $row = $stream->next) {
 			my ($n, $c)	= @{ $row }{qw(name camera)};
-			my $name	= $bridge->literal_value( $n );
+			my $name	= $n->literal_value;
 			ok( $name, "Got image creator: $name" );
 		} continue { ++$count };
 		is( $count, 1, "Good DISTINCT with LIMIT" );
@@ -170,15 +165,14 @@ END
 			ORDER BY ASC(xsd:float(?long * -1))
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		
 		my $min;
 		while (my $row = $stream->next) {
 			my ($i, $l)	= @{ $row }{qw(img long)};
-			my $image	= $bridge->uri_value($i);
-			my $long	= $bridge->literal_value($l);
+			my $image	= $i->uri_value;
+			my $long	= $l->literal_value;
 			if (defined($min)) {
 				cmp_ok( $long, '<=', $min, "decreasing longitude $long on $image" );
 				if ($long <= $min) {
@@ -210,15 +204,14 @@ END
 			ORDER BY DESC(xsd:float(?long * -1))
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		
 		my $max;
 		while (my $row = $stream->next) {
 			my ($i, $l)	= @{ $row }{qw(img long)};
-			my $image	= $bridge->uri_value($i);
-			my $long	= $bridge->literal_value($l);
+			my $image	= $i->uri_value;
+			my $long	= $l->literal_value;
 			if (defined($max)) {
 				cmp_ok( $long, '>=', $max, "increasing longitude $long on $image" );
 				if ($long >= $max) {

@@ -205,6 +205,24 @@ sub as_sparql {
 	}
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my $hash	= {
+		type 		=> 'node',
+		literal		=> $self->literal_value,
+	};
+	$hash->{ language }	= $self->literal_value_language if ($self->has_language);
+	$hash->{ datatype }	= $self->literal_datatype if ($self->has_datatype);
+	return $hash;
+}
+
 =item C<< is_numeric_type >>
 
 Returns true if the literal is a known (xsd) numeric type.

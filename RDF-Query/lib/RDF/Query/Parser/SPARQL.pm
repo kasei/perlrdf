@@ -988,10 +988,12 @@ sub _GraphGraphPattern {
 	$self->__consume_ws;
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
 	
-	{
+	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
-		$self->__consume_ws_opt;
+		$self->_GroupGraphPattern;
+	} else {
 		$self->_GroupGraphPattern;
 	}
 	
@@ -1773,10 +1775,10 @@ sub _String {
 		$value		= substr($string, 1, length($string) - 2);
 	}
 #	$value	=~ s/(${r_ECHAR})/"$1"/ge;
-	$value	=~ s/\\t/\n/g;
-	$value	=~ s/\\b/\n/g;
+	$value	=~ s/\\t/\t/g;
+	$value	=~ s/\\b/\x08/g;
 	$value	=~ s/\\n/\n/g;
-	$value	=~ s/\\r/\n/g;
+	$value	=~ s/\\r/\r/g;
 	$value	=~ s/\\"/"/g;
 	$value	=~ s/\\'/'/g;
 	$value	=~ s/\\\\/\\/g;	# backslash must come last, so it doesn't accidentally create a new escape

@@ -23,7 +23,7 @@ foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n";
 	
-	SKIP: {
+	{
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT	?person ?homepage
@@ -34,7 +34,6 @@ foreach my $model (@models) {
 					}
 			LIMIT 1
 END
-		skip "This model does not support xml serialization", 2 unless (RDF::Query->supports( $model, 'xml' ));
 		my $stream	= $query->execute( $model );
 		ok( $stream->is_bindings, 'Bindings result' );
 		my $xml		= $stream->as_xml;
@@ -56,12 +55,11 @@ END
 		is( $xml, $expect, 'XML Bindings Results formatting' );
 	}
 	
-	SKIP: {
+	{
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			ASK { ?person foaf:name "Gregory Todd Williams" }
 END
-		skip "This model does not support xml serialization", 2 unless (RDF::Query->supports( $model, 'xml' ));
 		my $stream	= $query->execute( $model );
 		ok( $stream->is_boolean, 'Boolean result' );
 		my $xml		= $stream->as_xml;

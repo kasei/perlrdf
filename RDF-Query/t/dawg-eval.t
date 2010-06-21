@@ -13,13 +13,10 @@ use Scalar::Util qw(blessed reftype);
 
 use RDF::Query;
 use RDF::Query::Node qw(iri);
-use RDF::Trine;
+use RDF::Trine qw(statement);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf);
 use RDF::Trine::Iterator qw(smap);
-
-use RDF::Core;
-use RDF::Query::Model::RDFCore;
 
 ################################################################################
 # Log::Log4perl::init( \q[
@@ -54,7 +51,6 @@ my $PATTERN		= shift(@ARGV) || '';
 my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 
 no warnings 'once';
-$RDF::Query::Model::RDFCore::USE_RAPPER	= 1;
 
 if ($PATTERN) {
 	$debug_results	= 1;
@@ -63,23 +59,21 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my ($bridge, $model)	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
+my $model	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
 	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 	my $inc		= $ns->include;
-	my $st		= $bridge->new_statement( undef, $inc, undef );
-	my $stream	= $bridge->get_statements( undef, $inc, undef );
-	my $statement	= $stream->next();
 	
-	if ($statement) {
-		my $list		= $statement->object;
+	
+	my $objects	= $model->objects( undef, $inc );
+	if (my $list = $objects->next) {
 		my $first		= $rdf->first;
 		my $rest		= $rdf->rest;
 		while ($list and not $list->equal( $rdf->nil )) {
-			my $value			= get_first_obj( $bridge, $list, $first );
-			$list				= get_first_obj( $bridge, $list, $rest );
+			my $value			= get_first_obj( $model, $list, $first );
+			$list				= get_first_obj( $model, $list, $rest );
 			my $manifest		= $value->uri_value;
 			next unless (defined($manifest));
 			$manifest	= relativeize_url( $manifest );
@@ -91,25 +85,25 @@ print "# Using model object from " . ref($model) . "\n";
 		use Data::Dumper;
 		warn 'manifests: ' . Dumper(\@manifests);
 	}
-	add_to_model( $bridge, @manifests );
+	add_to_model( $model, @manifests );
 }
 
-my $earl	= init_earl( $bridge );
-my $type	= $bridge->new_resource( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
-my $evalt	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
-my $mfname	= $bridge->new_resource( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
+my $earl	= init_earl( $model );
+my $type	= RDF::Trine::Node::Resource->new( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
+my $evalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
+my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
 
 {
 	print "# Evaluation Tests\n";
-	my $stream	= $bridge->get_statements( undef, $type, $evalt );
+	my $stream	= $model->get_statements( undef, $type, $evalt );
 	while (my $statement = $stream->next()) {
 		my $test		= $statement->subject;
-		my $name		= get_first_literal( $bridge, $test, $mfname );
-		unless ($bridge->uri_value( $test ) =~ /$PATTERN/) {
+		my $name		= get_first_literal( $model, $test, $mfname );
+		unless ($test->uri_value =~ /$PATTERN/) {
 			next;
 		}
 		warn "### eval test: " . $test->as_string . " >>> " . $name . "\n" if ($debug);
-		eval_test( $bridge, $test, $earl );
+		eval_test( $model, $test, $earl );
 	}
 }
 
@@ -122,7 +116,7 @@ unless ($PATTERN) {
 ################################################################################
 
 sub eval_test {
-	my $bridge		= shift;
+	my $model		= shift;
 	my $test		= shift;
 	my $earl		= shift;
 	my $man			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
@@ -136,16 +130,16 @@ sub eval_test {
 	my $reqs		= $man->requires;
 	my $approval	= $dawgt->approval;
 	
-	my $action		= get_first_obj( $bridge, $test, $mfact );
-	my $result		= get_first_obj( $bridge, $test, $mfres );
-	my $req			= get_first_obj( $bridge, $test, $reqs );
-	my $approved	= get_first_obj( $bridge, $test, $approval );
-	my $queryd		= get_first_obj( $bridge, $action, $qtquery );
-	my $data		= get_first_obj( $bridge, $action, $qtdata );
-	my @gdata		= get_all_obj( $bridge, $action, $qtgdata );
+	my $action		= get_first_obj( $model, $test, $mfact );
+	my $result		= get_first_obj( $model, $test, $mfres );
+	my $req			= get_first_obj( $model, $test, $reqs );
+	my $approved	= get_first_obj( $model, $test, $approval );
+	my $queryd		= get_first_obj( $model, $action, $qtquery );
+	my $data		= get_first_obj( $model, $action, $qtdata );
+	my @gdata		= get_all_obj( $model, $action, $qtgdata );
 	return unless ($approved);
 	
-	my $uri					= URI->new( $bridge->uri_value( $queryd ) );
+	my $uri					= URI->new( $queryd->uri_value );
 	my $filename			= $uri->file;
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
@@ -154,26 +148,26 @@ sub eval_test {
 	my $q			= $sparql;
 	$q				=~ s/\s+/ /g;
 	if ($debug) {
-		warn "### test     : " . $bridge->as_string( $test ) . "\n";
+		warn "### test     : " . $test->as_string . "\n";
 		warn "# sparql     : $q\n";
-		warn "# data       : " . $bridge->as_string( $data ) if (blessed($data));
-		warn "# graph data : " . $bridge->as_string( $_ ) for (@gdata);
-		warn "# result     : " . $bridge->as_string( $result );
-		warn "# requires   : " . $bridge->as_string( $req ) if (blessed($req));
+		warn "# data       : " . $data->as_string if (blessed($data));
+		warn "# graph data : " . $_->as_string for (@gdata);
+		warn "# result     : " . $result->as_string;
+		warn "# requires   : " . $req->as_string if (blessed($req));
 	}
 	
 	print STDERR "constructing model... " if ($debug);
-	my ($test_bridge, $test_model)	= new_model();
+	my ($test_model)	= new_model();
 	if (blessed($data)) {
-		add_to_model( $test_bridge, $bridge->uri_value( $data ) );
+		add_to_model( $test_model, $data->uri_value );
 	}
 	print STDERR "ok\n" if ($debug);
 	
-	my $resuri		= URI->new( $bridge->uri_value( $result ) );
+	my $resuri		= URI->new( $result->uri_value );
 	my $resfilename	= $resuri->file;
 	
 	TODO: {
-		local($TODO)	= (blessed($req)) ? "requires " . $bridge->as_string( $req ) : '';
+		local($TODO)	= (blessed($req)) ? "requires " . $req->as_string : '';
 		my $ok	= eval {
 			if ($debug) {
 				my $q	= $sparql;
@@ -190,14 +184,14 @@ sub eval_test {
 			print STDERR "ok\n" if ($debug);
 			
 		#	warn "comparing results...";
-			my $ok			= compare_results( $expected, $actual, $earl, $bridge->as_string( $test ), $TODO );
+			my $ok			= compare_results( $expected, $actual, $earl, $test->as_string );
 		};
 		warn $@ if ($@);
 		if ($ok) {
 			earl_pass_test( $earl, $test );
 		} else {
 			earl_fail_test( $earl, $test );
-			print "# failed: " . $bridge->as_string( $test ) . "\n";
+			print "# failed: " . $test->as_string . "\n";
 # 			die;	 # XXX
 		}
 	}
@@ -211,56 +205,27 @@ exit;
 
 sub new_model {
 	my @files		= @_;
-	my $store		= RDF::Trine::Store::DBI->temporary_store;
+	my $store		= RDF::Trine::Store::Memory->temporary_store;
 	my $model		= RDF::Trine::Model->new( $store );
-	my $bridge		= RDF::Query::Model::RDFTrine->new( $model );
-# 	my $bridge		= RDF::Query->new_bridge();
-	add_to_model( $bridge, file_uris(@files) );
-	return ($bridge, $bridge->model);
+	add_to_model( $model, file_uris(@files) );
+	return $model;
 }
 
 sub add_to_model {
-	my $bridge	= shift;
+	my $model	= shift;
 	my @files	= @_;
 	
-	if ($bridge->isa('RDF::Query::Model::RDFCore')) {
-		foreach my $file (@files) {
-			Carp::cluck unless ($file);
-			if ($file =~ /^http:/) {
-				$file	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{t/dawg/data-r2/};
-				$file	= 'file://' . File::Spec->rel2abs( $file );
-			}
-			my $data	= ($file =~ /[.]rdf/)
-						? do {
-								$file	=~ s#^file://##;
-								open(my $fh, '<', $file);
-								local($/)	= undef;
-								<$fh>
-							}
-						: do {
-#								open(my $fh, '-|', "cwm.py --n3 $file --rdf");
-								open(my $fh, '-|', "rapper -q -i turtle -o rdfxml $file");
-								local($/)	= undef;
-								<$fh>
-							};
-			
-			$data		=~ s/^(.*)<rdf:RDF/<rdf:RDF/m;
-#			warn "---------------------\n$data---------------------\n";
-			$bridge->add_string( $data, $file );
-		}
-	} else {
-		foreach my $file (@files) {
-			$bridge->add_uri( $file );
-		}
+	foreach my $file (@files) {
+		RDF::Trine::Parser->parse_url_into_model( $file, $model );
 	}
 }
 
 sub add_to_model_named {
-	my $model	= shift;
-	my $bridge	= RDF::Query->get_bridge( $model );
+	my $store	= shift;
+	my $model	= RDF::Query->get_model( $store );
 	my @files	= @_;
 	foreach my $uri (@files) {
-		$bridge->add_uri( "$uri", 1 );
+		RDF::Trine::Parser->parse_url_into_model( $uri, $model, context => $uri );
 	}
 	return 1;
 }
@@ -268,23 +233,9 @@ sub add_to_model_named {
 sub add_source_to_model {
 	my $model	= shift;
 	my @sources	= @_;
-	if ($bridge->isa('RDF::Query::Model::RDFCore')) {
-		foreach my $data (@sources) {
-# 			my $data	= do {
-# 							open(my $fh, '-|', "cwm.py --n3 $file --rdf");
-# 							local($/)	= undef;
-# 							<$fh>
-# 						};
-# 			
-# 			$data		=~ s/^(.*)<rdf:RDF/<rdf:RDF/m;
-# 			$bridge->ignore_contexts;
-# #			warn "---------------------\n$data---------------------\n";
-			$bridge->add_string( $data, 'http://kasei.us/ns#' );
-		}
-	} else {
-		foreach my $source (@sources) {
-			$bridge->add_string( $source, 'http://kasei.us/ns#' );
-		}
+	foreach my $source (@sources) {
+		open( my $fh, '<', \$source );
+		RDF::Trine::Parser->parse_into_model( 'http://kasei.us/ns#', $fh, $model );
 	}
 }
 
@@ -300,11 +251,7 @@ sub get_actual_results {
 	my $sparql	= shift;
 	my $base	= shift;
 	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11' );
-	
-	local($RDF::Query::Model::Redland::debug)	= 1 if ($debug);
-	local($RDF::Query::Model::RDFCore::debug)	= 1 if ($debug);
-	local($RDF::Query::Model::RDFTrine::debug)	= 1 if ($debug);
+	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11', load_data => 1 );
 	
 	return unless $query;
 	
@@ -340,8 +287,8 @@ sub get_expected_results {
 	my $type		= shift;
 	
 	if ($type eq 'graph') {
-		my ($bridge, $model)	= new_model( $file );
-		my $stream	= $bridge->get_statements();
+		my $model	= new_model( $file );
+		my $stream	= $model->get_statements();
 		return $stream;
 	} elsif ($file =~ /[.]srx/) {
 		my $data		= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
@@ -422,7 +369,7 @@ sub get_expected_results {
 			return sprintf( '"%s"^^<http://www.w3.org/2001/XMLSchema#boolean>', $xml->{boolean} );
 		}
 	} else {
-		my ($bridge, $model)	= new_model( $file );
+		my $model		= new_model( $file );
 		my $p_type		= iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 		my $p_rv		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#resultVariable');
 		my $p_solution	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#solution');
@@ -431,25 +378,25 @@ sub get_expected_results {
 		my $p_value		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#value');
 		my $p_variable	= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#variable');
 		my $t_rs		= iri('http://www.w3.org/2001/sw/DataAccess/tests/result-set#ResultSet');
-		my $rss			= smap { $bridge->subject($_) } $bridge->get_statements( undef, $p_type, $t_rs );
+		my $rss			= $model->subjects( $p_type, $t_rs );
 		my $rs			= $rss->next;
 		
-		if (my $bool = get_first_as_string( $bridge, $rs, $p_boolean )) {
+		if (my $bool = get_first_as_string( $model, $rs, $p_boolean )) {
 			return $bool;
 		} else {
-			my $vnodess		= smap { $bridge->literal_value( $bridge->object($_) ) } $bridge->get_statements( $rs, $p_rv, undef );
-			my @vars		= $vnodess->get_all();
-			my $rowss		= smap { $bridge->object($_) } $bridge->get_statements( $rs, $p_solution, undef );
+			my $vnodess		= $model->objects( $rs, $p_rv );
+			my @vars		= map { $_->literal_value } $vnodess->get_all();
+			my $rowss		= $model->objects( $rs, $p_solution );
 			
 			my @results;
 			while (my $row = $rowss->next) {
 				my %data;
-				my $stream		= smap { $bridge->object( $_ ) } $bridge->get_statements( $row, $p_binding, undef );
+				my $stream		= $model->objects( $row, $p_binding );
 				my @bindings	= $stream->get_all();
 #				my @bindings	= $model->targets( $row, $p_binding );
 				foreach my $b (@bindings) {
-					my $var		= get_first_as_string( $bridge, $b, $p_variable );
-					my $value	= get_first_as_string( $bridge, $b, $p_value );
+					my $var		= get_first_as_string( $model, $b, $p_variable );
+					my $value	= get_first_as_string( $model, $b, $p_value );
 					$data{ $var }	= $value;
 				}
 				push(@results, \%data);
@@ -460,34 +407,30 @@ sub get_expected_results {
 }
 
 sub model_to_arrayref {
-	my $bridge	= shift;
+	my $model	= shift;
+	my $stream	= $model->get_statements();
 	my @data;
-	my $stream	= $bridge->get_statements();
-	{
-		my %bnode_map;
-		while(my $statement = $stream->next) {
-			my $s			= $bridge->subject( $statement );
-			my $p			= $bridge->predicate( $statement );
-			my $o			= $bridge->object( $statement );
-			my @triple;
-			foreach my $node ($s, $p, $o) {
-				if ($bridge->isa_blank( $node )) {
-					my $id		= $bridge->blank_identifier( $node );
-					unless (exists( $bnode_map{ $id } )) {
-						my $blank			= [];
-						$bnode_map{ $id }	= $blank;
-					}
-					push( @triple, $bnode_map{ $id } );
-				} elsif ($bridge->isa_resource( $node )) {
-					push( @triple, $bridge->uri_value( $node ) );
-				} else {
-					push( @triple, node_as_string( $node ) );
+	my %bnode_map;
+	while(my $statement = $stream->next) {
+		my $s			= $statement->subject;
+		my $p			= $statement->predicate;
+		my $o			= $statement->object;
+		my @triple;
+		foreach my $node ($s, $p, $o) {
+			if (blessed($node) and $node->isa('RDF::Trine::Node::Blank')) {
+				my $id		= $node->blank_identifier;
+				unless (exists( $bnode_map{ $id } )) {
+					my $blank			= [];
+					$bnode_map{ $id }	= $blank;
 				}
+				push( @triple, $bnode_map{ $id } );
+			} elsif (blessed($node) and $node->isa('RDF::Trine::Node::Resource')) {
+				push( @triple, $node->uri_value );
+			} else {
+				push( @triple, node_as_string( $node ) );
 			}
-			push(@data, \@triple);
-		} continue {
-			$stream->next;
 		}
+		push(@data, \@triple);
 	}
 	return \@data;
 }
@@ -702,23 +645,22 @@ sub get_all_literal {
 
 sub get_first_uri {
 	my $node	= get_first_obj( @_ );
-	return $node ? $bridge->uri_value( $node ) : undef;
+	return $node ? $node->uri_value : undef;
 }
 
 sub get_all_uri {
 	my @nodes	= get_all_obj( @_ );
-	return map { $bridge->uri_value($_) } grep { defined($_) and $bridge->isa_resource($_) } @nodes;
+	return map { $_->uri_value } grep { defined($_) and $_->isa('RDF::Trine::Node::Resource') } @nodes;
 }
 
 sub get_first_obj {
-	my $bridge	= shift;
+	my $model	= shift;
 	my $node	= shift;
 	my $uri		= shift;
 	my @uris	= UNIVERSAL::isa($uri, 'ARRAY') ? @{ $uri } : ($uri);
-	my @preds	= map { ref($_) ? $_ : $bridge->new_resource( $_ ) } @uris;
+	my @preds	= map { ref($_) ? $_ : RDF::Trine::Node::Resource->new( $_ ) } @uris;
 	foreach my $pred (@preds) {
-		my $stream	= $bridge->get_statements( $node, $pred, undef );
-		my $targets	= smap { $bridge->object( $_ ) } $stream;
+		my $targets	= $model->objects( $node, $pred );
 		while (my $node = $targets->next) {
 			return $node if ($node);
 		}
@@ -726,22 +668,22 @@ sub get_first_obj {
 }
 
 sub get_all_obj {
-	my $bridge	= shift;
+	my $model	= shift;
 	my $node	= shift;
 	my $uri		= shift;
 	my @uris	= UNIVERSAL::isa($uri, 'ARRAY') ? @{ $uri } : ($uri);
-	my @preds	= map { ref($_) ? $_ : $bridge->new_resource( $_ ) } @uris;
+	my @preds	= map { ref($_) ? $_ : RDF::Trine::Node::Resource->new( $_ ) } @uris;
 	my @objs;
 	
 	my @streams;
 	foreach my $pred (@preds) {
-		push(@streams, $bridge->get_statements( $node, $pred, undef ));
+		push(@streams, $model->get_statements( $node, $pred, undef ));
 	}
 	my $stream	= shift(@streams);
 	while (@streams) {
 		$stream	= $stream->concat( shift(@streams) );
 	}
-	my $targets	= smap { $bridge->object( $_ ) } $stream;
+	my $targets	= smap { $_->object } $stream;
 	return $targets->get_all();
 }
 

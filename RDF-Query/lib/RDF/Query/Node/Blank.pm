@@ -87,6 +87,21 @@ sub as_sparql {
 	return $self->sse;
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'node',
+		blank		=> $self->blank_identifier,
+	};
+}
+
 =item C<< make_distinguished_variable >>
 
 Returns a new variable based on this blank node.

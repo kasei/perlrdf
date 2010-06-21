@@ -20,53 +20,59 @@ use RDF::Query;
 
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf);
 my @models	= test_models( @files );
-my $tests	= (scalar(@models) * 26);
+my $tests	= (scalar(@models) * 40);
 plan tests => $tests;
 
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
-
+	
 	
 	{
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
-			PREFIX	rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT ?thing ?name
 			WHERE	{
 						{ ?thing a foaf:Person; foaf:name ?name }
 						UNION
-						{ ?thing a rdfs:Class; rdfs:label ?name }
+						{ ?thing a geo:Point; foaf:name ?name }
 					}
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
 		while (my $row = $stream->next) {
+			$count++;
 			my ($thing, $name)	= @{ $row }{qw(thing name)};
-			like( $query->bridge->as_string( $thing ), qr/kasei|xmlns|[(]|_:/, 'union person|thing' );
-			ok( $query->bridge->isa_node( $thing ), 'node: ' . $query->bridge->as_string( $thing ) );
-			ok( $query->bridge->isa_literal( $name ), 'name: ' . $query->bridge->as_string( $name ) );
+			like( $thing->as_string, qr/^[<(]/, 'union person|point' );
+			ok( $thing->isa('RDF::Trine::Node'), 'node: ' . $thing->as_string );
+			ok( $name->isa('RDF::Trine::Node::Literal'), 'name: ' . $name->as_string );
 		}
+		is( $count, 6, 'expected result count' );
 	}
 	
 	{
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
-			PREFIX	rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			SELECT	DISTINCT ?thing ?name
+			PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+			SELECT DISTINCT ?thing ?name
 			WHERE	{
 						{ ?thing a foaf:Person; foaf:name ?name }
 						UNION
-						{ ?thing a rdfs:Class; rdfs:label ?name }
+						{ ?thing a geo:Point; foaf:name ?name }
 					}
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		my $count	= 0;
 		while (my $row = $stream->next) {
+			$count++;
 			my ($thing, $name)	= @{ $row }{qw(thing name)};
-			like( $query->bridge->as_string( $thing ), qr/kasei|xmlns|[(]|_:/, 'union person|thing' );
-			ok( $query->bridge->isa_node( $thing ), 'node: ' . $query->bridge->as_string( $thing ) );
-			ok( $query->bridge->isa_literal( $name ), 'name: ' . $query->bridge->as_string( $name ) );
+			like( $thing->as_string, qr/^[<(]/, 'union person|point' );
+			ok( $thing->isa('RDF::Trine::Node'), 'node: ' . $thing->as_string );
+			ok( $name->isa('RDF::Trine::Node::Literal'), 'name: ' . $name->as_string );
 		}
+		is( $count, 6, 'expected distinct result count' );
 	}
 }

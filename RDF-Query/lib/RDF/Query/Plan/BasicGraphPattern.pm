@@ -45,7 +45,11 @@ sub new {
 						? RDF::Trine::Statement::Quad->new( @nodes )
 						: RDF::Trine::Statement->new( @nodes )
 				} @_;
-	return $class->SUPER::new( \@triples );
+	my @vars	= map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } map { $_->nodes } @triples;
+	my @uvars	= keys %{ { map { $_ => 1 } @vars } };
+	my $self	= $class->SUPER::new( \@triples );
+	$self->[0]{referenced_variables}	= \@uvars;
+	return $self;
 }
 
 =item C<< execute ( $execution_context ) >>
@@ -72,18 +76,21 @@ sub execute ($) {
 			foreach my $i (0 .. $#nodes) {
 				next unless ($nodes[$i]->isa('RDF::Trine::Node::Variable'));
 				next unless (blessed($bound->{ $nodes[$i]->name }));
-				warn "pre-bound variable found: " . $nodes[$i]->name;
+# 				warn "pre-bound variable found: " . $nodes[$i]->name;
 				$nodes[$i]	= $bound->{ $nodes[$i]->name };
 			}
-			my $triple	= RDF::Trine::Statement->new( @nodes );
+			my $triple	= (scalar(@nodes) == 4)
+						? RDF::Trine::Statement::Quad->new( @nodes )
+						: RDF::Trine::Statement->new( @nodes );
 			push(@bound_triples, $triple);
 		}
 	} else {
 		@bound_triples	= @{ $self->[1] };
 	}
 	
-	my $bridge	= $context->model;
-	my $iter	= $bridge->get_basic_graph_pattern( $context, @bound_triples );
+	my $model	= $context->model;
+	my $pattern	= RDF::Trine::Pattern->new( @bound_triples );
+	my $iter	= $model->get_pattern( $pattern );
 	
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
@@ -91,6 +98,7 @@ sub execute ($) {
 	} else {
 		warn "no iterator in execute()";
 	}
+	$self;
 }
 
 =item C<< next >>
@@ -145,6 +153,42 @@ Returns true if the pattern is guaranteed to return ordered results.
 
 sub ordered {
 	return [];
+}
+
+=item C<< plan_node_name >>
+
+Returns the string name of this plan node, suitable for use in serialization.
+
+=cut
+
+sub plan_node_name {
+	return 'bgp';
+}
+
+=item C<< plan_prototype >>
+
+Returns a list of scalar identifiers for the type of the content (children)
+nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+identifiers.
+
+=cut
+
+sub plan_prototype {
+	my $self	= shift;
+	return qw(*T);
+}
+
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	my @triples	= @{ $self->[1] };
+	return @triples;
 }
 
 1;

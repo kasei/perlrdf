@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.123
+This document describes RDF::Trine::Store version 0.124
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -132,9 +132,10 @@ sub get_pattern {
 	if (1 == scalar(@triples)) {
 		my $t		= shift(@triples);
 		my @nodes	= $t->nodes;
+		my $size	= scalar(@nodes);
 		my %vars;
-		my @names	= qw(subject predicate object);
-		foreach my $n (0 .. 2) {
+		my @names	= qw(subject predicate object context);
+		foreach my $n (0 .. $#nodes) {
 			if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}

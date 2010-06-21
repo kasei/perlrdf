@@ -43,6 +43,33 @@ BEGIN {
 
 ######################################################################
 
+our $PREFIXES	= <<"END";
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX air: <http://www.daml.org/2001/10/html/airport-ont#>
+PREFIX bibtex: <http://purl.oclc.org/NET/nknouf/ns/bibtex#>
+PREFIX bio: <http://purl.org/vocab/bio/0.1/>
+PREFIX book: <http://purl.org/net/schemas/book/>
+PREFIX contact: <http://www.w3.org/2000/10/swap/pim/contact#>
+PREFIX cyc: <http://www.cyc.com/2004/06/04/cyc#>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
+PREFIX ical: <http://www.w3.org/2002/12/cal/icaltzd#>
+PREFIX lang: <http://purl.org/net/inkel/rdf/schemas/lang/1.1#>
+PREFIX likes: <http://rdf.netalleynetworks.com/ilike/20040830#>
+PREFIX quaff: <http://purl.org/net/schemas/quaffing/>
+PREFIX rel: <http://purl.org/vocab/relationship/>
+PREFIX trust: <http://trust.mindswap.org/ont/trust.owl#>
+PREFIX visit: <http://purl.org/net/vocab/2004/07/visit#>
+PREFIX whois: <http://www.kanzaki.com/ns/whois#>
+PREFIX wn: <http://xmlns.com/wordnet/1.6/>
+PREFIX wot: <http://xmlns.com/wot/0.1/>
+END
+
 =item C<< cli_make_query_and_model >>
 
 Returns a query object, model, and args HASHref based on the arguments in @ARGV.
@@ -72,10 +99,6 @@ sub cli_make_query {
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
 	$l->debug("creating sparql query with class $class");
 	my $query	= $class->new( $sparql, \%args );
-	
-	if ($args{ service_descriptions }) {
-		$query->add_service( $_ ) for (@{ $args{ service_descriptions } });
-	}
 	
 	if (wantarray) {
 		return ($query, \%args);
@@ -172,9 +195,7 @@ sub make_model {
 			my $file	= $files[ $i ];
 			if ($file =~ m<^https?:\/\/>) {
 				$l->debug("fetching RDF from $file ...");
-				my $uri		= URI->new( $file );
-				my $content	= get($file);
-				$parser->parse_into_model( $uri, $content, $model );
+				$parser->parse_url_into_model( $file, $model );
 			} else {
 				$file	= File::Spec->rel2abs( $file );
 				# $uri is the URI object used as the base uri for parsing
@@ -258,6 +279,8 @@ sub cli_parse_args {
 			$args{ pass }	= shift(@ARGV);
 		} elsif ($opt eq '-m') {
 			$args{ model }	= shift(@ARGV);
+		} elsif ($opt eq '-w') {
+			$args{ update }	= 1;
 		} elsif ($opt eq '--') {
 			last;
 		}
@@ -268,39 +291,19 @@ sub cli_parse_args {
 	}
 	
 	unless (defined($args{query})) {
-		my $file	= shift(@ARGV);
-		my $sparql	= ($file eq '-')
-					? do { local($/) = undef; <> }
-					: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
-		$args{ query }	= $sparql;
+		if (@ARGV) {
+			my $file	= shift(@ARGV);
+			my $sparql	= ($file eq '-')
+						? do { local($/) = undef; <> }
+						: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
+			$args{ query }	= $sparql;
+		}
 	}
 	
-	if (delete $args{ declare_namespaces }) {
-		$args{ query }	= join('', <<"END", $args{ query } );
-		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-		PREFIX owl: <http://www.w3.org/2002/07/owl#>
-		PREFIX air: <http://www.daml.org/2001/10/html/airport-ont#>
-		PREFIX bibtex: <http://purl.oclc.org/NET/nknouf/ns/bibtex#>
-		PREFIX bio: <http://purl.org/vocab/bio/0.1/>
-		PREFIX book: <http://purl.org/net/schemas/book/>
-		PREFIX contact: <http://www.w3.org/2000/10/swap/pim/contact#>
-		PREFIX cyc: <http://www.cyc.com/2004/06/04/cyc#>
-		PREFIX dc: <http://purl.org/dc/elements/1.1/>
-		PREFIX dcterms: <http://purl.org/dc/terms/>
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
-		PREFIX ical: <http://www.w3.org/2002/12/cal/icaltzd#>
-		PREFIX lang: <http://purl.org/net/inkel/rdf/schemas/lang/1.1#>
-		PREFIX likes: <http://rdf.netalleynetworks.com/ilike/20040830#>
-		PREFIX quaff: <http://purl.org/net/schemas/quaffing/>
-		PREFIX rel: <http://purl.org/vocab/relationship/>
-		PREFIX trust: <http://trust.mindswap.org/ont/trust.owl#>
-		PREFIX visit: <http://purl.org/net/vocab/2004/07/visit#>
-		PREFIX whois: <http://www.kanzaki.com/ns/whois#>
-		PREFIX wn: <http://xmlns.com/wordnet/1.6/>
-		PREFIX wot: <http://xmlns.com/wot/0.1/>
-END
+	if ($args{ query }) {
+		if (delete $args{ declare_namespaces }) {
+			$args{ query }	= join('', $PREFIXES, $args{ query } );
+		}
 	}
 	
 	return %args;
@@ -358,7 +361,7 @@ Specifies the query string I<str>.
 =item -l I<lang>
 
 Specifies the query language I<lang> used. This should be one of: B<sparql>,
-B<sparqlp>, or B<rdql>.
+B<sparql11>, or B<rdql>.
 
 =item -O
 

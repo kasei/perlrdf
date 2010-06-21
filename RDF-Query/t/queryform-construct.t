@@ -25,12 +25,11 @@ foreach my $model (@models) {
 			WHERE	{ ?person foaf:firstName ?name }
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next()) {
-			my $p	= $bridge->predicate( $stmt );
-			my $s	= $bridge->as_string( $p );
+			my $p	= $stmt->predicate;
+			my $s	= $p->as_string;
 			ok( $s, "person with firstName: $s" );
 			$count++;
 		}
@@ -45,12 +44,11 @@ END
 			WHERE		{ ?thing dc:creator ?name }
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next) {
-			my $p	= $bridge->predicate( $stmt );
-			my $s	= $bridge->as_string( $p );
+			my $p	= $stmt->predicate;
+			my $s	= $p->as_string;
 			like( $s, qr#foaf/0.1/(name|made)#, "predicate looks good: $s" );
 			$count++;
 		}
@@ -65,12 +63,11 @@ END
 			WHERE		{ ?p a foaf:Person . OPTIONAL { ?p foaf:aimChatID ?a } }
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		isa_ok( $stream, 'RDF::Trine::Iterator', 'stream' );
 		my $count	= 0;
 		while (my $stmt = $stream->next) {
-			my $p	= $bridge->predicate( $stmt );
-			my $s	= $bridge->as_string( $p );
+			my $p	= $stmt->predicate;
+			my $s	= $p->as_string;
 			like( $s, qr!(foaf/0.1/aimChatID)|(rdf-syntax-ns#type)!, "predicate looks good: $s" );
 			$count++;
 		}

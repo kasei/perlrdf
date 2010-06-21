@@ -168,6 +168,9 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
+	my $pattern	= $self->pattern;
+	
+	my ($vars, $_sparql);
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -179,10 +182,60 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-	my $svars	= join(' ', sort @vars);
-	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+	my $group	= '';
+	if ($pattern->isa('RDF::Query::Algebra::Extend')) {
+		my %seen;
+		my $vlist	= $pattern->vars;
+		foreach my $k (@$vlist) {
+			if ($k->isa('RDF::Query::Expression::Alias')) {
+				$seen{ '?' . $k->name }	= $k->as_sparql({}, '');
+			} elsif ($k->isa('RDF::Query::Expression')) {
+				push(@vars, $k->as_sparql({}, ''));
+			} elsif ($k->isa('RDF::Query::Node::Variable')) {
+				push(@vars, '?' . $k->name);
+			} else {
+				push(@vars, $k);
+			}
+		}
+		@vars	= map { exists($seen{$_}) ? $seen{$_} : $_ } @vars;
+		$vars	= join(' ', @vars);
+		my $pp	= $pattern->pattern;
+		if ($pp->isa('RDF::Query::Algebra::Aggregate')) {
+			$_sparql	= $pp->pattern->as_sparql( $context, $indent );
+			my @groups	= $pp->groupby;
+			if (@groups) {
+				$group	= join(' ', map { $_->as_sparql($context, $indent) } @groups);
+			}
+		} else {
+			$_sparql	= $pp->as_sparql( $context, $indent );
+		}
+	} else {
+		my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
+		my $svars	= join(' ', sort @vars);
+		$vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
+		$_sparql	= $pattern->as_sparql( $context, $indent );
+	}
+	my $sparql	= sprintf("%s WHERE %s", $vars, $_sparql);
+	if ($group) {
+		$sparql	.= "\n${indent}GROUP BY $group";
+	}
+	return $sparql;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		variables	=> [ map { $_->as_hash } @{ $self->vars } ],
+		pattern		=> $self->pattern->as_hash,
+	};
 }
 
 =item C<< type >>

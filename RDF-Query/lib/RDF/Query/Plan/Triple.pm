@@ -49,7 +49,7 @@ sub new {
 	$self->[0]{logging_keys}	= $keys;
 	
 	### the next two loops look for repeated variables because some backends
-	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
+	### can't distinguish a pattern like { ?a ?a ?b }
 	### from { ?a ?b ?c }. if we find repeated variables (there can be at most
 	### one since there are only three nodes in a triple), we save the positions
 	### in the triple that hold the variable, and the code in next() will filter
@@ -121,10 +121,10 @@ sub execute ($) {
 			$triple[ $i ]	= $bound->{ $triple[$i]->name };
 		}
 	}
-	
-	my $bridge	= $context->model;
-	my $iter	= $bridge->get_statements( @triple, $context->query, $context->bound );
-	
+
+	$l->trace( "- triple with bound values is " . join(', ', map { blessed($_) ? $_->sse : '_' } @triple) );
+	my $nil		= RDF::Trine::Node::Nil->new();	# if we want the default graph to be a union of the named graphs, this should be undef instead
+	my $iter	= $context->model->get_statements( @triple[0..2], $nil );
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;

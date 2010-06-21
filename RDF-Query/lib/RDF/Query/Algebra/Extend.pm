@@ -165,7 +165,7 @@ sub as_sparql {
 	my (@vars);
 	foreach my $k (@$vlist) {
 		if ($k->isa('RDF::Query::Expression')) {
-			push(@vars, $k->sse({}, ''));
+			push(@vars, $k->as_sparql({}, ''));
 		} elsif ($k->isa('RDF::Query::Node::Variable')) {
 			push(@vars, '?' . $k->name);
 		} else {
@@ -176,6 +176,22 @@ sub as_sparql {
 	my $svars	= join(' ', sort @vars);
 	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
 	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		vars		=> [ map { $_->as_hash } @{ $self->vars } ],
+	};
 }
 
 =item C<< type >>

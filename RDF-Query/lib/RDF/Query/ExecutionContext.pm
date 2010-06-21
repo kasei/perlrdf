@@ -80,7 +80,11 @@ sub popstack {
 
 sub model {
 	my $self	= shift;
-	return $self->_get_value( 'model', @_ );
+	my $model	= $self->_get_value( 'model', @_ );
+	unless ($model) {
+		$model	= RDF::Trine::Model->temporary_model;
+	}
+	return $model;
 }
 
 =item C<< query >>
@@ -144,15 +148,6 @@ sub costmodel {
 sub requested_variables {
 	my $self	= shift;
 	return $self->_get_value( 'requested_variables', @_ );
-}
-
-=item C<< model_optimize >>
-
-=cut
-
-sub model_optimize {
-	my $self	= shift;
-	return $self->_get_value( 'model_optimize', @_ );
 }
 
 =item C<< optimize >>

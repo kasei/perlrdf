@@ -19,7 +19,7 @@ foreach my $model (@models) {
 	print "### Using model: $model\n";
 	{
 		print "# select expression (node plus literal)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT (?lat AS ?latitude)
@@ -32,17 +32,16 @@ foreach my $model (@models) {
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($lat)	= @{ $row }{qw(latitude)};
-			is( $bridge->literal_value( $lat ), '51.477222', 'AS for alpha conversion' );
+			is( $lat->literal_value, '51.477222', 'AS for alpha conversion' );
 		} continue { ++$count };
 		is( $count, 1, 'expecting one statement in model' );
 	}
 
 	{
 		print "# select expression (node plus literal)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
 			SELECT ?lat (?long + 1.0 AS ?long_off)
@@ -55,11 +54,10 @@ END
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		while (my $row = $stream->next) {
 			my ($lat, $long)	= @{ $row }{qw(lat long_off)};
-			is( $bridge->literal_value( $lat ), '51.477222', 'existing latitude' );
-			cmp_ok( $bridge->literal_value( $long ), '==', 1, 'modified longitude' );
+			is( $lat->literal_value, '51.477222', 'existing latitude' );
+			cmp_ok( $long->literal_value, '==', 1, 'modified longitude' );
 		} continue { ++$count };
 		is( $count, 1, 'expecting one statement in model' );
 	}
@@ -69,7 +67,7 @@ END
 	SKIP: {
 		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 2 ) unless ($GEO_DISTANCE_LOADED);
 		print "# select expression (function)\n";
-		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX dcterms: <http://purl.org/dc/terms/>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
@@ -87,7 +85,6 @@ END
 			LIMIT 1
 END
 		my $stream	= $query->execute( $model );
-		my $bridge	= $query->bridge;
 		my $count	= 0;
 		while (my $row = $stream->next()) {
 			my ($image, $pname, $pdist)	= @{ $row }{qw(image name dist)};

@@ -5,6 +5,7 @@ use warnings;
 use URI::file;
 use Test::More;
 use Data::Dumper;
+use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
 use lib qw(. t);
@@ -12,7 +13,7 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.parser          = TRACE, Screen
+# 	log4perl.category.rdf.query.plan          = TRACE, Screen
 # 	
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
@@ -76,21 +77,23 @@ use RDF::Query::Plan;
 }
 
 foreach my $data (@models) {
-	my $bridge	= $data->{bridge};
 	my $model	= $data->{modelobj};
-	foreach my $uri (values %named) {
-		$bridge->add_uri( "$uri", 1 );
-	}
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";
-	
+	unless ($model->isa('RDF::Trine::Model')) {
+		$model	= RDF::Trine::Model->new( RDF::Trine::Store->new_with_object( $model ) );
+	}
+	my $parser	= RDF::Trine::Parser->new('rdfxml');
+	foreach my $uri (values %named) {
+		$parser->parse_url_into_model( "$uri", $model, context => iri("$uri") );
+	}
 	my $context	= RDF::Query::ExecutionContext->new(
 					bound	=> {},
-					model	=> $bridge,
+					model	=> $model,
 				);
 	
 	{
-		my $query	= RDF::Query->new( <<"END", { lang => 'sparqlp', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
 PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
 END
 		my ($plan, $context)	= $query->prepare();
@@ -112,13 +115,7 @@ END
 		my $ns		= { foaf => 'http://xmlns.com/foaf/0.1/' };
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person ; foaf:name ?name }', undef, $ns)->patterns;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $bgp, $context );
-# 		if ($bridge->supports('basic_graph_pattern')) {
-# 			isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'triple algebra to plan' );
-# 		} else {
-			isa_ok( $plan, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-			isa_ok( $plan->lhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-			isa_ok( $plan->rhs, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-# 		}
+		isa_ok( $plan, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
 	}
 	
 	{
@@ -127,26 +124,6 @@ END
 		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'ggp algebra to plan' );
-	}
-	
-	{
-		my $parser	= RDF::Query::Parser::SPARQL11->new();
-		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name NOT EXISTS { ?p foaf:firstName ?fn } }' );
-		my $algebra	= $parsed->{triples}[0];
-		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );
-		my ($plan)	= RDF::Query::Plan->generate_plans( $e, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Exists', 'ggp algebra to plan' );
-		is( _CLEAN_WS($plan->sse), '(not-exists (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?fn))', 'sse: not exists' ) or die;
-	}
-	
-	{
-		my $parser	= RDF::Query::Parser::SPARQL11->new();
-		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name exists { ?p foaf:firstName ?fn } }' );
-		my $algebra	= $parsed->{triples}[0];
-		my ($e)		= $algebra->subpatterns_of_type( 'RDF::Query::Algebra::Exists' );
-		my ($plan)	= RDF::Query::Plan->generate_plans( $e, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Exists', 'ggp algebra to plan' );
-		is( _CLEAN_WS($plan->sse), '(exists (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?fn))', 'sse: exists' ) or die;
 	}
 	
 	{
@@ -163,14 +140,11 @@ END
 		my $parser	= RDF::Query::Parser::SPARQL->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p a foaf:Person ; foaf:name ?name . FILTER(?name = "Greg") }' );
 		my $algebra	= $parsed->{triples}[0]->pattern;
-		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		my @plans	= RDF::Query::Plan->generate_plans( $algebra, $context );
+		my ($plan)	= sort @plans;
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
-# 		if ($bridge->supports('basic_graph_pattern')) {
-# 			isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
-# 		} else {
-			isa_ok( $plan->pattern, 'RDF::Query::Plan::Join', 'bgp algebra to plan' );
-# 		}
-		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (nestedloop-join (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)))', 'sse: filter' ) or die;
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bgp (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: filter' );
 	}
 	
 	############################################################################
@@ -391,7 +365,7 @@ END
 
 	SKIP: {
 		skip "network tests. Set RDFQUERY_NETWORK_TESTS to run these tests.", 2 unless (exists $ENV{RDFQUERY_NETWORK_TESTS});
-		my $parser	= RDF::Query::Parser::SPARQLP->new();
+		my $parser	= RDF::Query::Parser::SPARQL11->new();
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { SERVICE <http://kasei.us/sparql> { ?p a foaf:Person ; foaf:homepage ?page } }' );
 		my $algebra	= $parsed->{triples}[0];
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );

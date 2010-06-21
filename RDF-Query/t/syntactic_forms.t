@@ -49,7 +49,7 @@ foreach my $model (@models) {
 END
 		my ($x)	= $query->get( $model );
 		ok( $x, 'got collection element' );
-		is( $query->bridge->literal_value( $x ), 2 );
+		is( $x->literal_value, 2 );
 	}
 
 	# - Collections: (1 ?x 3)
@@ -62,7 +62,7 @@ END
 END
 		my ($x)	= $query->get( $model );
 		ok( $x, 'got collection triples' );
-		is( $query->bridge->literal_value( $x ), 2 );
+		is( $x->literal_value, 2 );
 	}
 
 	# - Collections: ?s ?p (1 ?x 3)
@@ -76,7 +76,7 @@ END
 END
 		my ($x)	= $query->get( $model );
 		ok( $x, 'got object collection triples' );
-		is( $query->bridge->literal_value( $x ), 2 );
+		is( $x->literal_value, 2 );
 	}
 
 	# - Object Lists: ?x foaf:nick "kasei", "kasei_" .
@@ -92,7 +92,7 @@ END
 END
 		my ($name)	= $query->get( $model );
 		ok( $name, 'got name' );
-		is( $query->bridge->literal_value( $name ), 'Gregory Todd Williams', 'Gregory Todd Williams' );
+		is( $name->literal_value, 'Gregory Todd Williams', 'Gregory Todd Williams' );
 	}
 
 	# - Blank Nodes: [ :p "v" ] and [] :p "v" .
@@ -107,7 +107,7 @@ END
 END
 		my ($name)	= $query->get( $model );
 		ok( $name, 'got name' );
-		is( $query->bridge->literal_value( $name ), 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
+		is( $name->literal_value, 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
 	}
 
 	# - 'a': ?x a :Class . [ a :myClass ] :p "v" .
@@ -122,6 +122,6 @@ END
 END
 		my ($name)	= $query->get( $model );
 		ok( $name, 'got name' );
-		is( $query->bridge->literal_value( $name ), 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
+		is( $name->literal_value, 'Cliffs of Moher, Ireland', 'Cliffs of Moher, Ireland' );
 	}
 }

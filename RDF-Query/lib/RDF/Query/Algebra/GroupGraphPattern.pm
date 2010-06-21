@@ -108,7 +108,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || "\t";
 	
 	my @patterns	= $self->patterns;
 	if (scalar(@patterns) == 1) {
@@ -136,9 +136,25 @@ sub as_sparql {
 	foreach my $p ($self->patterns) {
 		push(@patterns, $p->as_sparql( $context, "$indent\t" ));
 	}
+	return "{}" unless (@patterns);
 	my $patterns	= join("\n${indent}\t", @patterns);
 	my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		patterns	=> [ map { $_->as_hash } $self->patterns ],
+	};
 }
 
 =item C<< type >>
