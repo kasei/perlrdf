@@ -784,8 +784,7 @@ sub get_model {
 	} elsif ($store->isa('RDF::Core::Model')) {
 		die "RDF::Core is no longer supported";
 	} else {
-		require Data::Dumper;
-		Carp::confess "unknown store type: " . Dumper($store);
+		Carp::confess "unknown store type: $store";
 	}
 	
 	return $model;
@@ -852,7 +851,7 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
-	Carp::confess Dumper($v) unless (blessed($v));
+	Carp::confess 'not an object value in var_or_expr_value: ' . Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
 		return $v->evaluate( $self, $bound );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
