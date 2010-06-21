@@ -20,7 +20,7 @@ my $st1		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Litera
 my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, RDF::Trine::Node::Resource->new('http://kasei.us/') );
 
 my @stores	= test_stores();
-plan tests => scalar(@stores) * 6;
+plan tests => scalar(@stores) * 5;
 foreach my $store (@stores) {
 	print "### Testing store " . ref($store) . "\n";
 	isa_ok( $store, 'RDF::Trine::Store' );
@@ -29,7 +29,6 @@ foreach my $store (@stores) {
 		$store->add_statement( $_ ) for ($st0, $st1, $st2);
 		my $stream	= $store->get_contexts;
 		my $c		= $stream->next;
-		isa_ok( $c, 'RDF::Trine::Node::Nil' );
 		is( $stream->next, undef, 'expected end-of-iterator' );
 	}
 	
@@ -42,7 +41,6 @@ foreach my $store (@stores) {
 			$seen{ $c->as_string }++;
 		}
 		my %expect	= (
-			'(nil)'	=> 1,
 			'<http://kasei.us/about/foaf.xrdf>'	=> 1,
 		);
 		is_deeply( \%seen, \%expect, 'expected contexts' );
@@ -57,7 +55,6 @@ foreach my $store (@stores) {
 			$seen{ $c->as_string }++;
 		}
 		my %expect	= (
-			'(nil)'	=> 1,
 			'"Literal Context"'	=> 1,
 			'<http://kasei.us/about/foaf.xrdf>'	=> 1,
 		);
@@ -73,7 +70,6 @@ foreach my $store (@stores) {
 			$seen{ $c->as_string }++;
 		}
 		my %expect	= (
-			'(nil)'	=> 1,
 			'(blankContext)'	=> 1,
 			'"Literal Context"'	=> 1,
 			'<http://kasei.us/about/foaf.xrdf>'	=> 1,

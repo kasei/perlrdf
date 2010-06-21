@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.123
+This document describes RDF::Trine::Serializer version 0.124
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ our ($VERSION);
 our %serializer_names;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 }
 
 use LWP::UserAgent;
@@ -93,7 +93,11 @@ sub negotiate {
 	my $headers	= delete $options{ 'request_headers' };
 	my @variants;
 	while (my($type, $sclass) = each(%media_types)) {
-		push(@variants, [$type, 1.0, $type]);
+		my $qv	= ($type eq 'text/turtle') ? 1.0 : 0.99;
+		$qv		-= 0.01 if ($type =~ m#/x-#);
+		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);
+		$qv		-= 0.01 if ($type eq 'text/plain');
+		push(@variants, [$type, $qv, $type]);
 	}
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and my $sclass = $media_types{ $stype }) {
@@ -149,6 +153,28 @@ Note that some serializers may not support the use of this method, or may
 require the full materialization of the iterator in order to serialize it.
 If materialization is required, available memeory may constrain the iterators
 that can be serialized.
+
+=cut
+
+=item C<< serialize_iterator_to_file ( $file, $iter ) >>
+
+Serializes the iterator to Turtle, printing the results to the supplied
+filehandle C<<$fh>>.
+
+=cut
+
+sub serialize_iterator_to_file {
+	my $self	= shift;
+	my $fh		= shift;
+	my $iter	= shift;
+	my %args	= @_;
+	my $model	= RDF::Trine::Model->temporary_model;
+	while (my $st = $iter->next) {
+		$model->add_statement( $st );
+	}
+	return $self->serialize_model_to_file( $fh, $model );
+}
+
 
 =item C<< serialize_iterator_to_string ( $iterator ) >>
 
