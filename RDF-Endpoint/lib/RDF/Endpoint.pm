@@ -218,7 +218,8 @@ sub service_description {
 	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
 	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
 	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
-
+	my @formats		= keys %RDF::Trine::Serializer::format_uris;
+	
 	my $sdmodel		= RDF::Trine::Model->temporary_model;
 	my $s			= blank('service');
 	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
@@ -236,6 +237,9 @@ sub service_description {
 	}
 	foreach my $func (@functions) {
 		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
+	}
+	foreach my $format (@formats) {
+		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
 	
 	my $dsd	= blank('dataset');
