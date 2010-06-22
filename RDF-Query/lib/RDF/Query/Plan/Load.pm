@@ -7,7 +7,7 @@ RDF::Query::Plan::Load - Executable query plan for LOAD operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Load version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Load version 3.000_01, released 30 January 2010.
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '3.000_01';
 }
 
 ######################################################################

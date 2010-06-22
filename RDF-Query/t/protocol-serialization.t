@@ -37,8 +37,8 @@ END
 		my $stream	= $query->execute( $model );
 		ok( $stream->is_bindings, 'Bindings result' );
 		my $xml		= $stream->as_xml;
+		$xml		=~ s/^.*<sparql/<sparql/smo;	# remove xml declaration
 		my $expect	= <<"END";
-<?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head>
 	<variable name="person"/>
