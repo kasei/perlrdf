@@ -84,6 +84,7 @@ sub execute ($) {
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			} catch RDF::Query::Error with {
 				my $e	= shift;
+				no warnings 'uninitialized';
 				$l->debug( 'exception thrown during filter evaluation: ' . $e->text );
 			} otherwise {
 				$l->debug( 'error during filter evaluation: ' . $@);
