@@ -28,6 +28,8 @@ use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
 use RDF::RDFa::Generator;
 use IO::Compress::Gzip qw(gzip);
+use HTML::HTML5::Parser;
+use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 
 =item C<< new ( $conf ) >>
 
@@ -156,13 +158,14 @@ END
 		} else {
 			my $dir			= eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
-			my $parser		= XML::LibXML->new();
-			my $doc			= $parser->load_html( location => $template );
+			my $parser		= HTML::HTML5::Parser->new;
+			my $doc			= $parser->parse_file( $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Hidden', ns => $ns );
 			$gen->inject_document($doc, $sdmodel);
 			my ($rh, $wh);
 			pipe($rh, $wh);
-			$doc->toFH($wh);
+			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
+			print {$wh} $writer->document($doc);
 			$response->status(200);
 			$response->headers->content_type('text/html');
 			$content	= $rh;
