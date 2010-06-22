@@ -7,7 +7,7 @@ RDF::Query::ServiceDescription - Class for describing federated query data sourc
 
 =head1 VERSION
 
-This document describes RDF::Query::ServiceDescription version 3.000_01, released 30 January 2010.
+This document describes RDF::Query::ServiceDescription version 2.900_01, released 30 January 2010.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::ServiceDescription;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '3.000_01';
+	$VERSION	= '2.900_01';
 }
 
 use strict;
