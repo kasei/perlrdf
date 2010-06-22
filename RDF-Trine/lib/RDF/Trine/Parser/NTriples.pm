@@ -53,6 +53,7 @@ BEGIN {
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 }
 
 ######################################################################

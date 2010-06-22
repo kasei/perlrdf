@@ -47,6 +47,7 @@ our ($VERSION);
 BEGIN {
 	$VERSION	= '0.124';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
+	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
 	}

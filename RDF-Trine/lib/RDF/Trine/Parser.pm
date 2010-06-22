@@ -45,6 +45,7 @@ use Encode qw(decode);
 our ($VERSION);
 our %parser_names;
 our %media_types;
+our %format_uris;
 our %encodings;
 BEGIN {
 	$VERSION	= '0.124';

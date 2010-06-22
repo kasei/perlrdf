@@ -54,6 +54,7 @@ BEGIN {
 	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 }
 
 ######################################################################
