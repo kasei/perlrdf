@@ -51,6 +51,7 @@ BEGIN {
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDFa' }	= __PACKAGE__;
 	
 	eval "use RDF::RDFa::Parser 0.30;";
 	unless ($@) {

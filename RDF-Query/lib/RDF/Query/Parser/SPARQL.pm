@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.202, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL version 2.900.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -990,12 +990,12 @@ sub _GraphGraphPattern {
 	my ($graph)	= splice(@{ $self->{stack} });
 	$self->__consume_ws_opt;
 	
-	if ($graph->isa('RDF::Trine::Node::Resource')) {
+# 	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
 		$self->_GroupGraphPattern;
-	} else {
-		$self->_GroupGraphPattern;
-	}
+# 	} else {
+# 		$self->_GroupGraphPattern;
+# 	}
 	
 	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );

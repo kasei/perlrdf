@@ -42,7 +42,7 @@ if ($ENV{RDFQUERY_DAWGTEST}) {
 }
 
 use Data::Dumper;
-use XML::Simple;
+require XML::Simple;
 
 plan qw(no_plan);
 require "t/dawg/earl.pl";
@@ -292,7 +292,7 @@ sub get_expected_results {
 		return $stream;
 	} elsif ($file =~ /[.]srx/) {
 		my $data		= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
-		my $xml			= XMLin( $file );
+		my $xml			= XML::Simple::XMLin( $file );
 		
 		if (exists $xml->{results}) {
 			my $results	= $xml->{results}{result};

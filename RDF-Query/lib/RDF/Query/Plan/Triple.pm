@@ -7,7 +7,7 @@ RDF::Query::Plan::Triple - Executable query plan for Triples.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Triple version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Triple version 2.900.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################

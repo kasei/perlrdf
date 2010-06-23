@@ -7,14 +7,14 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.202, released 30 January 2010.
+This document describes RDF::Query version 2.900.
 
 =head1 SYNOPSIS
 
- my $query = new RDF::Query ( $sparql );
+ my $query = RDF::Query->new( $sparql );
  my $iterator = $query->execute( $model );
  while (my $row = $iterator->next) {
-   print $row->{ var }->as_string;
+   print $row->{ 'var' }->as_string;
  }
  
  my $query = new RDF::Query ( $rdql, { lang => 'rdql' } );
@@ -29,6 +29,18 @@ See L<http://www.w3.org/TR/rdf-sparql-query/> for more information on SPARQL.
 
 See L<http://www.w3.org/Submission/2004/SUBM-RDQL-20040109/> for more
 information on RDQL.
+
+=head1 CHANGES IN VERSION 2.900
+
+The 2.9xx versions of RDF::Query introduce some significant changes that will
+lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.900 introduces
+the SPARQL 1.1 features up to date with the SPARQL 1.1 working drafts as of its
+release date. Version 2.900 also is the first version to require use of
+RDF::Trine for the underlying RDF store. This change means that RDF::Core is
+no longer supported, and while Redland is still supported, its handling of
+"contexts" (named graphs) means that existing RDF triples stored in Redland
+without associated contexts will not be accessible from RDF::Query.
+See L<RDF::Trine::Store> for more information on supported backend stores.
 
 =head1 CHANGES IN VERSION 2.000
 
@@ -103,7 +115,7 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 no warnings 'numeric';
-use RDF::Trine 0.123;
+use RDF::Trine 0.124;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -125,7 +137,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.202';
+	$VERSION		= '2.900';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -138,15 +150,27 @@ BEGIN {
 
 =item C<< new ( $query, \%options ) >>
 
-=item C<< new ( $query, $baseuri, $languri, $lang, %options ) >>
-
 Returns a new RDF::Query object for the specified C<$query>.
-The query language defaults to SPARQL, but may be set specifically by
-specifying either C<$languri> or C<$lang>, whose acceptable values are:
+The query language defaults to SPARQL 1.1, but may be set specifically
+with the appropriate C<< %options >> value. Valid C<< %options >> are:
 
-  $lang: 'rdql', 'sparql11', or 'sparql'
+* lang
 
-  $languri: 'http://www.w3.org/TR/rdf-sparql-query/', or 'http://jena.hpl.hp.com/2003/07/query/RDQL'
+Specifies the query language. Acceptable values are 'sparql11', 'sparql', or 'rdql'.
+
+* base
+
+Specifies the base URI used in parsing the query.
+
+* update
+
+A boolean value indicating whether update operations are allowed during query execution.
+
+* load_data
+
+A boolean value indicating whether URIs used in SPARQL FROM and FROM NAMED clauses
+should be dereferenced and the resulting RDF content used to construct the dataset
+against which the query is run.
 
 =cut
 
@@ -784,8 +808,7 @@ sub get_model {
 	} elsif ($store->isa('RDF::Core::Model')) {
 		die "RDF::Core is no longer supported";
 	} else {
-		require Data::Dumper;
-		Carp::confess "unknown store type: " . Dumper($store);
+		Carp::confess "unknown store type: $store";
 	}
 	
 	return $model;
@@ -852,7 +875,7 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
-	Carp::confess Dumper($v) unless (blessed($v));
+	Carp::confess 'not an object value in var_or_expr_value: ' . Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
 		return $v->evaluate( $self, $bound );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {

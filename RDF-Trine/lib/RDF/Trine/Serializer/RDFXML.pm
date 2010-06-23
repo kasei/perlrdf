@@ -48,6 +48,7 @@ our ($VERSION);
 BEGIN {
 	$VERSION	= '0.124';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
+	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
 	}

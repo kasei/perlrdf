@@ -51,6 +51,7 @@ BEGIN {
 	$debug		= 0;
 	$VERSION	= '0.124';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
+	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
 	}
