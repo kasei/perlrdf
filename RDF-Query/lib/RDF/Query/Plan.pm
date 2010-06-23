@@ -670,7 +670,7 @@ sub generate_plans {
 			push(@return_plans, $plan);
 		}
 	} elsif ($type eq 'Path') {
-		my @plans	= $self->_path_plans( $algebra, $context );
+		my @plans	= $self->_path_plans( $algebra, $context, %args );
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Union') {
 		my @plans	= map { [ $self->generate_plans( $_, $context, %args ) ] } $algebra->patterns;
@@ -826,15 +826,11 @@ sub _path_plans {
 	my $self	= shift;
 	my $algebra	= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $path	= $algebra->path;
-# 	if ($algebra->bounded_length) {
-# 		warn "Fixed length path";
-		my $start	= $algebra->start;
-		my $end		= $algebra->end;
-		return $self->__path_plan( $start, $path, $end, $context );
-# 	} else {
-# 		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
-# 	}
+	my $start	= $algebra->start;
+	my $end		= $algebra->end;
+	return $self->__path_plan( $start, $path, $end, $context, %args );
 }
 
 sub __path_plan {
@@ -843,12 +839,16 @@ sub __path_plan {
 	my $path	= shift;
 	my $end		= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	if (blessed($path)) {
 		my $s		= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
 		my $e		= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
-		my $plan	= RDF::Query::Plan::Triple->new( $s, $path, $e );
-		$l->trace('expanded path to triple pattern: ' . $plan->sse);
+		my $algebra	= ($args{named_graph})
+					? RDF::Query::Algebra::Quad->new( $s, $path, $e, $args{named_graph} )
+					: RDF::Query::Algebra::Triple->new( $s, $path, $e );
+		my ($plan)	= $self->generate_plans( $algebra, $context, %args );
+		$l->trace('expanded path to pattern: ' . $plan->sse);
 		return $plan;
 	}
 	
@@ -860,8 +860,8 @@ sub __path_plan {
 		my $triple	= RDF::Query::Algebra::Triple->new( $start, $var, $end );
 		my $ntriple	= RDF::Query::Algebra::Triple->new( $end, $nvar, $start );
 		my @plans;
-		push(@plans, $self->generate_plans( $triple, $context ));
-		push(@plans, $self->generate_plans( $ntriple, $context ));
+		push(@plans, $self->generate_plans( $triple, $context, %args ));
+		push(@plans, $self->generate_plans( $ntriple, $context, %args ));
 		
 		my (%not, %revnot);
 		foreach my $n (@nodes) {
@@ -895,28 +895,28 @@ sub __path_plan {
 # 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
 		return $nplan;
 	} elsif ($op eq '*') {
-		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );
+		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end, %args );
 	} elsif ($op eq '+') {
-		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end );
+		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end, %args );
 	} elsif ($op eq '?') {
 		my $node	= shift(@nodes);
-		my $plan	= $self->__path_plan( $start, $node, $end, $context );
-		my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
+		my $plan	= $self->__path_plan( $start, $node, $end, $context, %args );
+		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
 	} elsif ($op eq '^') {
 		my $node	= shift(@nodes);
-		return $self->__path_plan( $end, $node, $start, $context );
+		return $self->__path_plan( $end, $node, $start, $context, %args );
 	} elsif ($op eq '/') {
 		my $count	= scalar(@nodes);
 		if ($count == 1) {
-			return $self->__path_plan( $start, $nodes[0], $end, $context );
+			return $self->__path_plan( $start, $nodes[0], $end, $context, %args );
 		} else {
 			my $joinvar		= RDF::Query::Node::Variable->new();
-			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context );
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context, %args );
 			foreach my $i (2 .. $count) {
 				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
-				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[$i-1], $endvar, $context );
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[$i-1], $endvar, $context, %args );
 				push(@plans, $rhs);
 				$joinvar	= $endvar;
 			}
@@ -929,24 +929,24 @@ sub __path_plan {
 			return $jplans[0];
 		}
 	} elsif ($op eq '|') {
-		my $lhs		= $self->__path_plan( $start, $nodes[0], $end, $context );
-		my $rhs		= $self->__path_plan( $start, $nodes[1], $end, $context );
+		my $lhs		= $self->__path_plan( $start, $nodes[0], $end, $context, %args );
+		my $rhs		= $self->__path_plan( $start, $nodes[1], $end, $context, %args );
 		my $union	= RDF::Query::Plan::Union->new( $lhs, $rhs );
 		return $union;
 	} elsif ($op =~ /^(\d+)$/) {
 # 		warn "$1-length path";
 		my $count	= $1;
 		if ($count == 0) {
-			my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
+			my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 			return $zero;
 		} elsif ($count == 1) {
-			return $self->__path_plan( $start, $nodes[0], $end, $context );
+			return $self->__path_plan( $start, $nodes[0], $end, $context, %args );
 		} else {
 			my $joinvar		= RDF::Query::Node::Variable->new();
-			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context );
+			my @plans		= $self->__path_plan( $start, $nodes[0], $joinvar, $context, %args );
 			foreach my $i (2 .. $count) {
 				my $endvar	= ($i == $count) ? $end : RDF::Query::Node::Variable->new();
-				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[0], $endvar, $context );
+				my ($rhs)		= $self->__path_plan( $joinvar, $nodes[0], $endvar, $context, %args );
 				push(@plans, $rhs);
 				$joinvar	= $endvar;
 			}
@@ -974,10 +974,10 @@ sub __path_plan {
 		my @plans;
 		foreach my $i ($from .. $to) {
 			if ($i == 0) {
-				my $zero	= $self->__zero_length_path_plan( $start, $end, $context );
+				my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 				push(@plans, $zero);
 			} else {
-				push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end, $context ));
+				push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end, $context, %args ));
 			}
 		}
 		while (scalar(@plans) > 1) {
@@ -998,6 +998,7 @@ sub __zero_length_path_plan {
 	my $start	= shift;
 	my $end		= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $model	= $context->model;
 	my @iters;
 	push(@iters, scalar($model->subjects));
