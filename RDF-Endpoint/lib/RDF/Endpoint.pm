@@ -15,8 +15,8 @@ use strict;
 use warnings;
 our $VERSION	= '0.01_01';
 
-use RDF::Query;
-use RDF::Trine qw(statement iri blank literal);
+use RDF::Query 2.900;
+use RDF::Trine 0.124 qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
