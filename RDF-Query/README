@@ -37,6 +37,54 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.900 (2010-06-23)
+
+     * Major Changes
+     
+     	* SPARQL 1.1 is now the default query parser.
+     	* RDF::Core is no longer supported as a backend triplestore.
+     	* Redland is still supported as a backend store, but updated handling of default and named graphs means that existing triples stored in Redland without a context (named graph) will not be accessible from RDF::Query.
+     
+     * SPARQL Language Updates
+     
+     	* Added support for SPARQL 1.1 Query features:
+     		* Basic Query Federation with BINDINGS and UNDEF support.
+     		* Functions: IF, STRDT, STRLANG, IRI, URI, BNODE.
+     		* Infix operators IN and NOT IN.
+     		* Aggregates COUNT, SUM, MIN, MAX, AVG, GROUP_CONCAT, and SAMPLE.
+     		* Property paths.
+     		* Negation with MINUS graph patterns and NOT EXISTS filters.
+     	* Added support for SPARQL 1.1 Update features:
+     		* INSERT/DELETE DATA, INSERT/DELETE WHERE, LOAD, and CLEAR
+     		* Added support for multi-statement updates.
+     
+     * API Updates
+     
+     	* Removed all bridge classes (RDF::Query::Model::*).
+     	* Removed RDF::Query::Logger class.
+     	* Removed net filter function code from RDF::Query.
+     	* Added as_hash method to Query, Algebra, and Node classes.
+     	* Removed SPARUL and SPARQLP parsers.
+     	* RDF::Query no longer loads URIs in FROM and FROM NAMED clauses with SPARQL 1.1 by default.
+     	* Added ability for RDF::Query::Plan::Iterator to fire a callback when execute() is called.
+     	* Added new RDF::Query::Plan::ComputedStatement class.
+     	* Added new RDF::Query::Plan::Iterator class.
+     
+     * Bugfixes
+     
+     	* Fixed whitespace unescaping bug in SPARQL (1.0 and 1.1) parsers.
+     
+     * Scripts
+     
+     	* Added bin/json.pl to print a JSON-formatted representation of the query algebra.
+     	* Added bin/rqsh.pl CLI interface to executing updates and queries.
+     	* Added ability to serialize algebra and plan in bin/deparse.pl.
+     	* bin/deparse.pl now catches parsing errors and prints stacktrace.
+     
+     * Optimizations
+     
+     	* Implemented optimization for COUNT(*) over a single triplepattern.
+
   Version 2.202 (2010-05-22)
 
      * Added initial SPARQL 1.1 syntax and eval support for select expressions, subqueries, negation, aggregates, subqueries, and basic federation.
