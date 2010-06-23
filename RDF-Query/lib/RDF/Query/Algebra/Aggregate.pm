@@ -7,7 +7,7 @@ RDF::Query::Algebra::Aggregate - Algebra class for aggregate patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Aggregate version 2.900_01, released 30 January 2010.
+This document describes RDF::Query::Algebra::Aggregate version 2.900.
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900_01';
+	$VERSION	= '2.900';
 }
 
 ######################################################################

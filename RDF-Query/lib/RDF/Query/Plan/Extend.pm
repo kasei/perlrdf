@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.900_01, released 30 January 2010.
+This document describes RDF::Query::Plan::Extend version 2.900.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900_01';
+	$VERSION	= '2.900';
 }
 
 ######################################################################

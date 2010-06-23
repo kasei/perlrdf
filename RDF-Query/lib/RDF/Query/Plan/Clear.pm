@@ -7,7 +7,7 @@ RDF::Query::Plan::Clear - Executable query plan for CLEAR operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Clear version 2.900_01, released 30 January 2010.
+This document describes RDF::Query::Plan::Clear version 2.900.
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900_01';
+	$VERSION	= '2.900';
 }
 
 ######################################################################

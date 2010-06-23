@@ -7,7 +7,7 @@ RDF::Query::Expression::Nary - Class for n-ary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Nary version 2.900_01, released 30 January 2010.
+This document describes RDF::Query::Expression::Nary version 2.900.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900_01';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
