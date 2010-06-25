@@ -538,7 +538,8 @@ sub count_statements {
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	my $sql		= $self->_sql_for_pattern( $st, $context, 'count-distinct' => 1, semantics => $semantics );
+	my $countkey	= ($use_quad) ? 'count' : 'count-distinct';
+	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
 	my $sth		= $dbh->prepare( $sql );
@@ -791,6 +792,9 @@ sub _sql_from_context {
 	}
 	if ($args{ 'count-distinct' }) {
 		$unique	= 1;
+	}
+	if ($args{ 'count' }) {
+		@cols	= 'COUNT(*)';
 	}
 	
 	my @sql	= (
