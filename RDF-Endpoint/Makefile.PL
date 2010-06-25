@@ -33,7 +33,7 @@ write_doap_changes;
 write_doap_changes_xml;
 
 install_share;
-install_script glob('script/*');
+install_script glob('scripts/*');
 
 sign;
 
