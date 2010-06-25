@@ -130,16 +130,20 @@ END
 				$response->status(200);
 				if ($stype =~ /html/) {
 					$response->headers->content_type( 'text/plain' );
-					$content	= encode_utf8($iter->as_string);
+					my $html	= iter_as_html($iter);
+					$content	= encode_utf8($html);
 				} elsif ($stype =~ /xml/) {
 					$response->headers->content_type( $stype );
-					$content	= encode_utf8($iter->as_xml);
+					my $xml		= iter_as_xml($iter);
+					$content	= encode_utf8($xml);
 				} elsif ($stype =~ /json/) {
 					$response->headers->content_type( $stype );
-					$content	= encode_utf8($iter->as_json);
+					my $json	= iter_as_json($iter);
+					$content	= encode_utf8($json);
 				} else {
 					$response->headers->content_type( 'text/plain' );
-					$content	= encode_utf8($iter->as_string);
+					my $text	= iter_as_text($iter);
+					$content	= encode_utf8($text);
 				}
 			} else {
 				$response->status(500);
@@ -222,6 +226,26 @@ END
 		$response->body( $body ) unless ($req->method eq 'HEAD');
 	}
 	return $response;
+}
+
+sub iter_as_html {
+	my $iter	= shift;
+	return $iter->as_string;
+}
+
+sub iter_as_text {
+	my $iter	= shift;
+	return $iter->as_string;
+}
+
+sub iter_as_xml {
+	my $iter	= shift;
+	return $iter->as_xml;
+}
+
+sub iter_as_json {
+	my $iter	= shift;
+	return $iter->as_json;
 }
 
 =item C<< service_description ( $request, $model ) >>
