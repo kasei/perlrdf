@@ -21,3 +21,5 @@ scripts/endpoint.psgi
 share/index.html
 share/www/favicon.ico
 t/00-load.t
+t/pod.t
+t/pod_coverage.t
