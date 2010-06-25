@@ -79,7 +79,10 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
 	while (my $st = $iter->next) {
 		print {$file} $self->_statement_as_string( $st );
 	}
@@ -94,7 +97,11 @@ Serializes the C<$model> to N-Triples, returning the result as a string.
 sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
@@ -157,7 +164,8 @@ sub _serialize_bounded_description {
 sub _statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
-	return join(' ', map { $_->as_ntriples } $st->nodes) . " .\n";
+	my @nodes	= $st->nodes;
+	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
 }
 
 1;
