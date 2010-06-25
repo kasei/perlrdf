@@ -64,7 +64,7 @@ sub run {
 	unless ($req->path eq '/') {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
-		my $dir		= eval { dist_dir('RDF-Endpoint') } || 'share';
+		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 		my $file	= File::Spec->catfile($dir, 'www', $path);
 		if (-r $file) {
 			open( my $fh, '<', $file ) or die $!;
@@ -96,13 +96,32 @@ END
 			['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
 		);
 		my $stype	= choose( \@variants, $headers ) || 'text/html';
+		
 		my %args;
 		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{load_data});
-		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', %args } );
 		
+		my @default	= $req->param('default-graph-uri');
+		my @named	= $req->param('named-graph-uri');
+		if (scalar(@default) or scalar(@named)) {
+			use Data::Dumper;
+			warn Dumper(\@default, \@named);
+			delete $args{ load_data };
+			$model	= RDF::Trine::Model->temporary_model;
+			foreach my $url (@named) {
+				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+			}
+			foreach my $url (@default) {
+				RDF::Trine::Parser->parse_url_into_model( $url, $model );
+			}
+		}
+		
+		my $base	= $req->base;
+		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		if ($query) {
-			my $iter	= $query->execute( $model );
+			my ($plan, $ctx)	= $query->prepare( $model );
+# 			warn $plan->sse;
+			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
 				if ($stype =~ /html/) {
@@ -123,8 +142,9 @@ END
 				$content	= RDF::Query->error;
 			}
 		} else {
-			$response->status(500);
 			$content	= RDF::Query->error;
+			my $code	= ($content =~ /Syntax/) ? 400 : 500;
+			$response->status($code);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
 			}
@@ -156,7 +176,7 @@ END
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
 		} else {
-			my $dir			= eval { dist_dir('RDF-Endpoint') } || 'share';
+			my $dir			= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
