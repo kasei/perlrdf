@@ -298,7 +298,7 @@ sub _RW_Query {
 	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
-		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
 	if ($count > 1) {

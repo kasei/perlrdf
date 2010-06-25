@@ -433,7 +433,7 @@ sub _Query {
 	
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
-		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
 # 	my %query	= (%p, %body);
