@@ -6,6 +6,49 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 This document describes RDF::Endpoint version 0.01_01.
 
+=head1 SYNOPSIS
+
+ plackup /usr/local/bin/endpoint.psgi
+
+=head1 DESCRIPTION
+
+This modules implements the SPARQL Protocol for RDF using the PSGI
+interface provided by L<Plack>. It may be run with any Plack handler.
+See L<Plack::Handler> for more details.
+
+When this module is used to create a SPARQL endpoint, configuration variables
+are loaded using L<Config::JFDI>. An example configuration file rdf_endpoint.json
+is included with this package. Valid configuration keys include:
+
+=over 4
+
+=item store
+
+A string used to define the underlying L<RDF::Trine::Store> for the endpoint.
+The string is used as the argument to the L<RDF::Trine::Store->new_with_string>
+constructor.
+
+=item update
+
+A boolean value indicating whether Update operations should be allowed to be
+executed by the endpoint.
+
+=item load_data
+
+A boolean value indicating whether the endpoint should use URLs that appear in
+FROM and FROM NAMED clauses to construct a SPARQL dataset by dereferencing the
+URLs and loading the retrieved RDF content.
+
+=item service_description
+
+An associative array (hash) containing details on which and how much information
+to include in the service description provided by the endpoint if no query is
+included for execution. The boolean values 'default' and 'named_graphs' indicate
+that the respective SPARQL dataset graphs should be described by the service
+description.
+
+=back
+
 =head1 METHODS
 
 =over 4
@@ -296,13 +339,13 @@ sub service_description {
 	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
 	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-	if ($config->{sd}{default}) {
+	if ($config->{service_description}{default}) {
 		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
 		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
 		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
 		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
 	}
-	if ($config->{sd}{named_graphs}) {
+	if ($config->{service_description}{named_graphs}) {
 		my @graphs	= $model->get_contexts;
 		foreach my $g (@graphs) {
 			my $ng		= blank();
@@ -328,7 +371,15 @@ __END__
 
 =head1 SEE ALSO
 
-L<http://www.perlrdf.org/>
+=over 4
+
+=item * L<http://www.w3.org/TR/rdf-sparql-protocol/>
+
+=item * L<http://www.perlrdf.org/>
+
+=item * L<irc://irc.perl.org/#perlrdf>
+
+=back
 
 =head1 AUTHOR
 
