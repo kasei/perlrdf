@@ -53,6 +53,33 @@ BEGIN {
 
 Returns a new storage object using the supplied RDF::Redland::Model object.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<Redland> for this backend.
+
+The following keys may also be used:
+
+=over
+
+=item C<store_name>
+
+The name of the storage factory (currently C<hashes>, C<mysql>,
+C<memory>, C<file>, C<postgresql>, C<sqlite>, C<tstore>, C<uri> or
+C<virtuoso>).
+
+=item C<name>
+
+The name of the storage.
+
+=item C<options>
+
+Any other options to be passed to L<RDF::Redland::Storage> as a hashref.
+
+=back
+
 =cut
 
 sub new {

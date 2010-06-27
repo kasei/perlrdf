@@ -59,6 +59,47 @@ BEGIN {
 Returns a new storage object using the supplied arguments to construct a DBI
 object for the underlying database.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<Memory> for this backend.
+
+This module also supports initializing the store from a file or URL,
+in which case, a C<sources> key may be used. This holds an arrayref of
+hashrefs.  To load a file, you may give the file name with a C<file>
+key in the hashref, and to load a URL, use C<url>. See example
+below. Furthermore, the following keys may be used:
+
+=over
+
+=item C<syntax>
+
+The syntax of the parsed file or URL.
+
+=item C<base_uri>
+
+The base URI to be used for a parsed file.
+
+=back
+
+The following example initializes a Hexastore store based on a local file and a remote URL:
+
+  my $store = RDF::Trine::Store->new_with_config(
+                {store => 'Hexastore',
+		 sources => [
+			      {
+			       file => 'test-23.ttl',
+			       syntax => 'turtle',
+			      },
+			      {
+			       url => 'http://www.kjetil.kjernsmo.net/foaf',
+			       syntax => 'rdfxml',
+		      	      }
+	        ]});
+
+
 =cut
 
 sub new {
