@@ -70,6 +70,7 @@ use File::Spec;
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
+use Scalar::Util qw(blessed);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
@@ -102,6 +103,8 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
+	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
+	
 	
 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
 	my $model	= RDF::Trine::Model->new( $store );
@@ -172,20 +175,20 @@ END
 			if ($iter) {
 				$response->status(200);
 				if ($stype =~ /html/) {
-					$response->headers->content_type( 'text/plain' );
-					my $html	= iter_as_html($iter);
+					$response->headers->content_type( 'text/html' );
+					my $html	= $self->iter_as_html($iter, $model);
 					$content	= encode_utf8($html);
 				} elsif ($stype =~ /xml/) {
 					$response->headers->content_type( $stype );
-					my $xml		= iter_as_xml($iter);
+					my $xml		= $self->iter_as_xml($iter, $model);
 					$content	= encode_utf8($xml);
 				} elsif ($stype =~ /json/) {
 					$response->headers->content_type( $stype );
-					my $json	= iter_as_json($iter);
+					my $json	= $self->iter_as_json($iter, $model);
 					$content	= encode_utf8($json);
 				} else {
 					$response->headers->content_type( 'text/plain' );
-					my $text	= iter_as_text($iter);
+					my $text	= $self->iter_as_text($iter, $model);
 					$content	= encode_utf8($text);
 				}
 			} else {
@@ -272,23 +275,141 @@ END
 }
 
 sub iter_as_html {
-	my $iter	= shift;
-	return $iter->as_string;
+	my $self	= shift;
+	my $stream	= shift;
+	my $model	= shift;
+	my $html	= "<html><head><title>SPARQL Results</title>\n"
+				. <<"END";
+		<style type="text/css">
+			table {
+				border: 1px solid #000;
+				border-collapse: collapse;
+			}
+			
+			th { background-color: #ddd; }
+			td, th {
+				padding: 1px 5px 1px 5px;
+				border: 1px solid #000;
+			}
+		</style>
+END
+		$html	.= "</head><body>\n";
+	if ($stream->isa('RDF::Trine::Iterator::Graph')) {
+		$html	.= "<table>\n<tr>\n";
+		
+		my @names	= qw(subject predicate object);
+		my $columns	= scalar(@names);
+		foreach my $name (@names) {
+			$html	.= "\t<th>" . $name . "</th>\n";
+		}
+		$html	.= "</tr>\n";
+		
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			$count++;
+			$html	.= "<tr>\n";
+			foreach my $k (@names) {
+				my $node	= $row->$k();
+				my $value	= $self->node_as_html($node, $model);
+				$html	.= "\t<td>" . $value . "</td>\n";
+			}
+			$html	.= "</tr>\n";
+		}
+		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
+		$html	.= "</table>\n";
+	} elsif ($stream->isa('RDF::Trine::Iterator::Boolean')) {
+		$html	.= (($stream->get_boolean) ? "True" : "False");
+	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
+		$html	.= "<table>\n<tr>\n";
+		
+		my @names	= $stream->binding_names;
+		my $columns	= scalar(@names);
+		foreach my $name (@names) {
+			$html	.= "\t<th>" . $name . "</th>\n";
+		}
+		$html	.= "</tr>\n";
+		
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			$count++;
+			$html	.= "<tr>\n";
+			foreach my $k (@names) {
+				my $node	= $row->{ $k };
+				my $value	= $self->node_as_html($node, $model);
+				$html	.= "\t<td>" . $value . "</td>\n";
+			}
+			$html	.= "</tr>\n";
+		}
+		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
+		$html	.= "</table>\n";
+	} else {
+		
+	}
+	$html	.= "</body></html>\n";
+	return $html;
 }
 
 sub iter_as_text {
+	my $self	= shift;
 	my $iter	= shift;
 	return $iter->as_string;
 }
 
 sub iter_as_xml {
+	my $self	= shift;
 	my $iter	= shift;
 	return $iter->as_xml;
 }
 
 sub iter_as_json {
+	my $self	= shift;
 	my $iter	= shift;
 	return $iter->as_json;
+}
+
+sub node_as_html {
+	my $self	= shift;
+	my $node	= shift;
+	my $model	= shift;
+	my $config	= $self->{conf};
+	return '' unless (blessed($node));
+	if ($node->isa('RDF::Trine::Node::Resource')) {
+		my $uri	= $node->uri_value;
+		for ($uri) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		my $link	= $config->{html}{resource_links};
+		my $html;
+		if ($config->{html}{embed_images}) {
+			if ($model->count_statements( $node, iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), iri('http://xmlns.com/foaf/0.1/Image') )) {
+				my $width	= $config->{html}{image_width} || 200;
+				$html	= qq[<img src="${uri}" width="${width}" />];
+			} else {
+				$html	= $uri;
+			}
+		} else {
+			$html	= $uri;
+		}
+		if ($link) {
+			$html	= qq[<a href="${uri}">$html</a>];
+		}
+		return $html;
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
+		my $html	= $node->literal_value;
+		for ($html) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		return $html;
+	} else {
+		my $html	= $node->as_string;
+		for ($html) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		return $html;
+	}
 }
 
 =item C<< service_description ( $request, $model ) >>

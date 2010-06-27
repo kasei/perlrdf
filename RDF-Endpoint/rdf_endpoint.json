@@ -5,6 +5,11 @@
 		"store": "DBI;endpoint;DBI:SQLite:dbname=endpoint.sqlite;;",
 		"update": true,
 		"load_data": true,
+		"html": {
+			"resource_links": true,
+			"embed_images": false,
+			"image_width": 200
+		},
 		"service_description": {
 			"default": true,
 			"named_graphs": true,

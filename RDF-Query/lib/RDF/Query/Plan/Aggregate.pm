@@ -123,7 +123,7 @@ sub execute ($) {
 				my $col	= $cols[0];
 				my %agg_group_seen;
 				foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
-					my @proj_rows	= map { $query->var_or_expr_value( $row, $col ) } @cols;
+					my @proj_rows	= map { (blessed($col)) ? $query->var_or_expr_value( $row, $col ) : '*' } @cols;
 					if ($distinct) {
 						next if ($agg_group_seen{ join('<<<', @proj_rows) }++);
 					}

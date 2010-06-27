@@ -247,6 +247,14 @@ sub _RW_Query {
 		} elsif ($self->_test(qr/ASK/i)) {
 			$self->_AskQuery();
 			$read_query++;
+		} elsif ($self->_test(qr/CREATE\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "CREATE GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_CreateGraph();
+		} elsif ($self->_test(qr/DROP\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "DROP GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_DropGraph();
 		} elsif ($self->_test(qr/LOAD/i)) {
 			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
 				unless ($self->{update});
@@ -285,10 +293,12 @@ sub _RW_Query {
 		}
 		last if ($read_query);
 		$self->__consume_ws_opt;
-		$self->_eat(qr/;/) if ($self->_test(qr/;/));
-		$self->__consume_ws_opt;
-		if ($self->_Query_test) {
-			next;
+		if ($self->_test(qr/;/)) {
+			$self->_eat(qr/;/) ;
+			$self->__consume_ws_opt;
+			if ($self->_Query_test) {
+				next;
+			}
 		}
 		last;
 	}
@@ -636,6 +646,30 @@ sub _ClearGraphUpdate {
 		my $pat	= RDF::Query::Algebra::Clear->new( $graph );
 		$self->_add_patterns( $pat );
 	}
+	$self->{build}{method}		= 'CLEAR';
+}
+
+sub _CreateGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/CREATE\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Create->new( $graph );
+	$self->_add_patterns( $pat );
+	$self->{build}{method}		= 'CREATE';
+}
+
+sub _DropGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/DROP\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Clear->new( $graph );
+	$self->_add_patterns( $pat );
 	$self->{build}{method}		= 'CLEAR';
 }
 
