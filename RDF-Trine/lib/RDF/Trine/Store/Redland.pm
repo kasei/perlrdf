@@ -73,6 +73,18 @@ sub _new_with_string {
 	return $class->new( $model );
 }
 
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	my $store	= RDF::Redland::Storage->new(
+						     $config->{store_name},
+						     $config->{name},
+						     $config->{options}
+						    );
+	my $model	= RDF::Redland::Model->new( $store, '' );
+	return $class->new( $model );
+}
+
 sub _new_with_object {
 	my $class	= shift;
 	my $obj		= shift;
