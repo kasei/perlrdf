@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Aggregate version 2.900.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -123,7 +123,7 @@ sub execute ($) {
 				my $col	= $cols[0];
 				my %agg_group_seen;
 				foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
-					my @proj_rows	= map { $query->var_or_expr_value( $row, $col ) } @cols;
+					my @proj_rows	= map { (blessed($col)) ? $query->var_or_expr_value( $row, $col ) : '*' } @cols;
 					if ($distinct) {
 						next if ($agg_group_seen{ join('<<<', @proj_rows) }++);
 					}

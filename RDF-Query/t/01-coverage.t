@@ -249,11 +249,10 @@ END
 			LIMIT 2
 END
 		my $stream	= $query->execute( $model );
-		my $count;
 		while (my $row = $stream->next) {
 			my ($p)	= @{ $row }{qw(p)};
 			ok( $p, $p->as_string );
-		} continue { ++$count };
+		}
 	}
 
 	{
@@ -313,16 +312,14 @@ END
 			}
 END
 		my $stream	= $query->execute( $model );
-		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $thing	= $row->{thing};
 			ok( $thing->isa('RDF::Trine::Node::Blank'), 'isa blank' );
 			
 			my $id		= $thing->blank_identifier;
 			ok( length($id), 'blank identifier' );
-			$count++;
 		}
-		is( $count, 3, '3 result' );
+		is( $stream->count, 3, '3 result' );
 	}
 
 	{
@@ -351,16 +348,14 @@ END
 		my ($id, $name)	= ('lauren', 'Lauren B');
 		my $person	= iri( "http://kasei.us/about/foaf.xrdf#${id}" );
 		my $stream	= $query->execute( $model, bind => { person => $person } );
-		my $count	= 0;
 		while (my $row = $stream->next) {
 			my $p	= $row->{person};
 			is( $p->uri_value, "http://kasei.us/about/foaf.xrdf#${id}", 'expected pre-bound person URI' );
 			my $node	= $row->{name};
 			my $value	= $node->literal_value;
 			is( $value, $name, 'expected name on pre-bound node' );
-			$count++;
 		}
-		is( $count, 1, '1 result' );
+		is( $stream->count, 1, '1 result' );
 	}
 
 	{

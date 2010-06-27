@@ -7,7 +7,7 @@ RDF::Query::Plan::BasicGraphPattern - Executable query plan for BasicGraphPatter
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::BasicGraphPattern version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::BasicGraphPattern version 2.900.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -88,12 +88,17 @@ sub execute ($) {
 		@bound_triples	= @{ $self->[1] };
 	}
 	
+	my @tmp		= grep { $_->isa('RDF::Trine::Statement::Quad') and $_->context->isa('RDF::Trine::Node::Variable') } @bound_triples;
+	my $quad	= scalar(@tmp) ? $tmp[0]->context : undef;
+	
 	my $model	= $context->model;
 	my $pattern	= RDF::Trine::Pattern->new( @bound_triples );
 	my $iter	= $model->get_pattern( $pattern );
 	
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
+		$self->[0]{quad}	= $quad;
+		$self->[0]{nil}		= RDF::Trine::Node::Nil->new();
 		$self->state( $self->OPEN );
 	} else {
 		warn "no iterator in execute()";
@@ -111,14 +116,27 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
 	}
 	
+	my $q	= $self->[0]{quad};
+	
 	my $iter	= $self->[0]{iter};
-	my $row		= $iter->next;
-	return undef unless ($row);
-	if (my $bound = $self->[0]{bound}) {
-		@{ $row }{ keys %$bound }	= values %$bound;
+	return undef unless ($iter);
+	while (my $row = $iter->next) {
+		return undef unless ($row);
+		if (my $bound = $self->[0]{bound}) {
+			@{ $row }{ keys %$bound }	= values %$bound;
+		}
+		if (blessed($q)) {
+			# skip results when we were matching over variable named graphs (GRAPH ?g {...})
+			# and where the graph variable is bound to the nil node
+			# (the nil node is used to represent the default graph, which should never match inside a GRAPH block).
+			my $node	= $row->{ $q->name };
+			if (blessed($node)) {
+				next if ($node->isa('RDF::Trine::Node::Nil'));
+			}
+		}
+		my $result	= RDF::Query::VariableBindings->new( $row );
+		return $result;
 	}
-	my $result	= RDF::Query::VariableBindings->new( $row );
-	return $result;
 }
 
 =item C<< close >>

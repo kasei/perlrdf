@@ -7,7 +7,7 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Update version 2.900.
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -68,8 +68,6 @@ sub execute ($) {
 	my $plan		= $self->pattern;
 	if ($self->dataset) {
 		my $ds	= $context->model->dataset_model( %{ $self->dataset } );
-# 		my $ds		= RDF::Trine::Model::Dataset->new( $context->model );
-# 		$ds->push_dataset( % );
 		$context	= $context->copy( model => $ds );
 	}
 	$plan->execute( $context );
@@ -79,16 +77,18 @@ sub execute ($) {
 		
 		my @rows;
 		while (my $row = $plan->next) {
+			$l->trace("Update row: $row");
 			push(@rows, $row);
 		}
 		
 		my @operations	= (
-			[$insert_template, 'add_statement'],
 			[$delete_template, 'remove_statement'],
+			[$insert_template, 'add_statement'],
 		);
 		
 		foreach my $data (@operations) {
 			my ($template, $method)	= @$data;
+			$l->trace("UPDATE running $method");
 			foreach my $row (@rows) {
 				my (@triples);
 				if ($template) {
@@ -99,9 +99,6 @@ sub execute ($) {
 				}
 				
 				foreach my $t (@triples) {
-					if ($l->is_debug) {
-						$l->debug( "- filling-in construct triple pattern: " . $t->as_string );
-					}
 					my @nodes	= $t->nodes;
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
@@ -127,6 +124,7 @@ sub execute ($) {
 					my $st	= (scalar(@nodes) == 4)
 							? RDF::Trine::Statement::Quad->new( @nodes )
 							: RDF::Trine::Statement->new( @nodes );
+					$l->trace( "$method: " . $st->as_string );
 					$context->model->$method( $st );
 				}
 			}

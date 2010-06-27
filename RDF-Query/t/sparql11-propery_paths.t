@@ -1,4 +1,4 @@
-use Test::More tests => 20;
+use Test::More tests => 32;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -111,4 +111,70 @@ END
 		$count++;
 	}
 	is_deeply( \@got, [1, 2, 3], 'all expected values seen' );
+}
+
+{
+	print "# property path in GRAPH\n";
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $insert	= RDF::Query->new(<<"END", { update => 1 });
+		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+		INSERT DATA {
+			GRAPH <g1> {
+				<eve> foaf:knows <alice>, <bob> .
+				<alice> foaf:name "Alice" .
+				<bob> foaf:name "Bob" .
+			}
+			GRAPH <g2> {
+				_:x foaf:knows <eve> .
+				<eve> foaf:name "Eve" .
+			}
+		}
+END
+	$insert->execute( $model );
+	
+	{
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH <g1> {
+					?p foaf:knows/foaf:name ?name .
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my @got;
+		while (my $row = $iter->next) {
+			like( $row->{name}, qr/Bob|Alice/, 'expected property path value restricted to graph' );
+		}
+		is( $iter->count, 2, 'expected result count' );
+	}
+	
+	{
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH ?g {
+					?p foaf:knows/foaf:name ?name .
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my @got;
+		my %expect	= (
+			'g1'	=> qr/Alice|Bob/,
+			'g2'	=> qr/Eve/,
+		);
+		while (my $row = $iter->next) {
+			my $g	= $row->{g}->uri_value;
+			like( $g, qr/^g[12]$/, 'expected graph binding' );
+			my $pat	= $expect{ $g };
+			like( $row->{name}, $pat, 'expected property path value for graph ' . $g );
+		}
+		is( $iter->count, 3, 'expected result count' );
+	}
+	
 }

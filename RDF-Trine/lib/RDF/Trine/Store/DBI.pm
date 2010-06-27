@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.123
+This document describes RDF::Trine::Store::DBI version 0.124
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.123";
+	$VERSION	= "0.124";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -538,7 +538,8 @@ sub count_statements {
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	my $sql		= $self->_sql_for_pattern( $st, $context, 'count-distinct' => 1, semantics => $semantics );
+	my $countkey	= ($use_quad) ? 'count' : 'count-distinct';
+	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
 	my $sth		= $dbh->prepare( $sql );
@@ -791,6 +792,9 @@ sub _sql_from_context {
 	}
 	if ($args{ 'count-distinct' }) {
 		$unique	= 1;
+	}
+	if ($args{ 'count' }) {
+		@cols	= 'COUNT(*)';
 	}
 	
 	my @sql	= (

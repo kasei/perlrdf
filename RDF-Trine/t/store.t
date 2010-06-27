@@ -12,7 +12,7 @@ use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my @stores	= test_stores();
-plan tests => 5 + scalar(@stores) * 168;
+plan tests => 5 + scalar(@stores) * 167;
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my @names	= ('a' .. 'z');
@@ -103,7 +103,6 @@ sub contexts_tests {
 		$seen{ $c->as_string }++;
 	}
 	my $expect	= {
-					'(nil)' => 1,
 					'<http://example.com/a>'	=> 1,
 					'<http://example.com/b>'	=> 1,
 					'<http://example.com/c>'	=> 1,

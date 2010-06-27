@@ -10,6 +10,41 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.124.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.123.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.124" ;
+                        doap:created      "2010-06-21" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Iterator->count method." ;
+                        asc:addition    "Added ability to access the number of rows returned from RDF::Trine::Iterator::Bindings::as_string." ;
+                        asc:addition    "Added RDF::Trine::Model::Dataset for constructing views over a model, and RDF::Trine::Model->dataset_model constructor method." ;
+                        asc:addition    "Added missing use of Encode to RDF::Trine::Store::Redland." ;
+                        asc:addition    "Added bin/rdf_transcode.pl for (streaming) conversion between RDF serialization formats." ;
+                        asc:addition    "Added ability for RDF::Trine::Store::Memory to load RDF files by URI in _new_with_string." ;
+                        asc:update      "Updated quality value heuristics in RDF::Trine::Serializer::negotiate to prefer turtle if no accept headers are supplied." ;
+                        asc:update      "Fixed RDF::Trine::Iterator::Bindings::as_string to respect $max_result_size argument." ;
+                        asc:update      "RDF::Trine::Iterator::Bindings::as_string now returns unescaped strings." ;
+                        asc:update      "Updated RDF::Trine::Parser::parse_url_into_model to fall back on file extension heuristics if the media-type based parse fails." ;
+                        asc:update      "Updated RDF::Trine::Parser::RDFJSON to throw an error if input isn't valid JSON." ;
+                        asc:update      "Updated RDF::Trine::Model to throw an error if not passed a store object." ;
+                        asc:update      "Fixed bug in handling of quads in RDF::Trine::Model::get_pattern and RDF::Trine::Store::get_pattern." ;
+                        asc:update      "Updated RDF::Trine::Store::DBI and RDF::Trine::Store::Memory to not return the default (nil) context from get_contexts." ;
+                        asc:update      "Fixed bug in RDF::Trine::Store::Memory::_get_statements_quad that would infinite loop after removing statements." ;
+                        asc:update      "RDF::Trine::Store doesn't load RDF::Redland (now only checks if it is already loaded)." ;
+                        asc:update      "Fixed bug in RDF::Trine::Store subclasses registering their class names in %STORE_CLASSES." ;
+                        asc:update      "Made $RDF::Trine::Store::Redland::NIL_TAG globally accessible." ;
+                        asc:update      "Updated POD tests to not use taint mode (and synced between R::T and R::Q)." ;
+                        asc:update      "Changed test data in t/iterator-thaw.t." ;
+                        asc:update      "Removed RDF::Core as a prerequisite in META.yml." ;
+                        asc:update      "Added default implementation of RDF::Trine::Serializer::serialize_iterator_to_file." ;
+                        asc:update      "RDF::Trine::Serializer::negotiate now slightly prefers turtle." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.123.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.122.tar.gz> ;

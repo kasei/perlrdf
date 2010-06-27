@@ -7,7 +7,7 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Path version 2.900.
 
 =head1 METHODS
 
@@ -32,12 +32,12 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
 
-=item C<< new ( $op, $path, $start, $end ) >>
+=item C<< new ( $op, $path, $start, $end, %args ) >>
 
 =cut
 
@@ -47,7 +47,8 @@ sub new {
 	my $path	= shift;
 	my $start	= shift;
 	my $end		= shift;
-	my $self	= $class->SUPER::new( $op, $path, $start, $end );
+	my %args	= @_;
+	my $self	= $class->SUPER::new( $op, $path, $start, $end, \%args );
 	my %vars;
 	for ($start, $end) {
 		$vars{ $_->name }++ if ($_->isa('RDF::Query::Node::Variable'));
@@ -113,7 +114,7 @@ sub next {
 		my @nodes	= @$p;
 		if (@nodes) {
 			$l->trace( 'picking up from path: (' . join('/', map { $_->sse } @nodes) . ')' );
-			my $plan	= RDF::Query::Plan->__path_plan( $nodes[ $#nodes ], $self->path, $self->end, $self->[0]{context} );
+			my $plan	= RDF::Query::Plan->__path_plan( $nodes[ $#nodes ], $self->path, $self->end, $self->[0]{context}, %{ $self->[5] } );
 			$plan->execute( $self->[0]{context} );
 			while (my $row = $plan->next) {
 				if ($self->start->isa('RDF::Query::Node::Variable')) {
@@ -155,7 +156,7 @@ sub next {
 					push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 				}
 			}
-			my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->[0]{context} );
+			my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->[0]{context}, %{ $self->[5] } );
 			$l->trace( 'starting path with plan: ' . $plan->sse );
 			$plan->execute( $self->[0]{context} );
 			while (my $row = $plan->next) {

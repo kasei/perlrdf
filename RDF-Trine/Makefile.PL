@@ -43,7 +43,7 @@ WriteMakefile(
 					'XML::CommonNS'				=> 0.04,
 					'XML::Namespace'			=> 0,
 					'XML::SAX'					=> 0,
-					'XML::LibXML'				=> 0,
+					'XML::LibXML'				=> 1.70,
 					'XML::LibXML::SAX'			=> 1.66,	# we shouldn't need this, but XML::SAX::PurePerl seems to have some major bugs with unicode in some of the RDF/XML syntax examples
 				},
 );

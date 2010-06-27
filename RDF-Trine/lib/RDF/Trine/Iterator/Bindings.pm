@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.123
+This document describes RDF::Trine::Iterator::Bindings version 0.124
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -573,7 +573,7 @@ sub print_xml {
 	
 	no strict 'refs';
 	print {$fh} <<"END";
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head>
 END
