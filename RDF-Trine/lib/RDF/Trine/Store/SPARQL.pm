@@ -76,6 +76,14 @@ sub _new_with_string {
 	return $class->new( $config );
 }
 
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{url} );
+}
+
+
+
 =item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
 
 Returns a stream object of all statements matching the specified subject,
