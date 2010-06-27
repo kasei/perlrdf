@@ -75,6 +75,48 @@ sub new_with_string {
 	}
 }
 
+
+=item C<< new_with_config ( $hashref ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied
+configuration hashref. This requires the the Store subclass to be
+supplied with a C<store> key, while other keys are required by the
+Store subclasses, please refer to each subclass for specific
+documentation.
+
+An example invocation for the DBI store may be:
+
+  my $store = RDF::Trine::Store->new_with_config({
+                                                  store    => 'DBI',
+                                                  name     => 'mymodel',
+                                                  dsn      => 'DBI:mysql:database=rdf',
+                                                  username => 'dahut',
+                                                  password => 'Str0ngPa55w0RD'
+                                                 });
+
+=cut
+
+
+sub new_with_config {
+  my $proto	= shift;
+  my $config	= shift;
+  if (defined($config)) {
+    my $class	= join('::', 'RDF::Trine::Store', $config->{store});
+    if ($class->can('_new_with_config')) {
+      return $class->_new_with_config( $config );
+    } else {
+      throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
+    }
+  } else {
+    throw RDF::Trine::Error::MethodInvocationError;
+  }
+}
+
+
+
+
+
+
 =item C<< new_with_object ( $object ) >>
 
 Returns a new RDF::Trine::Store object based on the supplied opaque C<< $object >>.
