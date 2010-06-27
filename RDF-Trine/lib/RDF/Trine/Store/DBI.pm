@@ -118,6 +118,16 @@ sub _new_with_string {
 	return $class->new( $model, $dsn, $user, $pass );
 }
 
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{name},
+			    $config->{dsn},
+			    $config->{username},
+			    $config->{password} );
+}
+
+
 sub _new_with_object {
 	my $class	= shift;
 	my $obj		= shift;
