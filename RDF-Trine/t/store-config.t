@@ -11,9 +11,6 @@ use File::Spec;
 
 my $path	= File::Spec->catfile( $Bin, 'data' );
 
-TODO: {
-  local $TODO = "Implementing Config by hashref";
-
   {
     my $store = RDF::Trine::Store->new_with_config({store => 'Memory',
 						    sources => [
@@ -27,6 +24,11 @@ TODO: {
     my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef); 
     like($it->to_string, qr/Hello World/, 'Contains Hello World string');
   }
+
+TODO: {
+  local $TODO = "Implementing Config by hashref";
+
+
 
   {
     my $store = RDF::Trine::Store->new_with_config({store => 'Hexastore',

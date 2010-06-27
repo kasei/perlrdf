@@ -79,6 +79,29 @@ sub _new_with_string {
 	return $self;
 }
 
+sub _new_with_config {
+  my $class	= shift;
+  my $config	= shift;
+  my @sources	= @{$config->{sources}};
+  my $self	= $class->new();
+  foreach my $source (@sources) {
+    if ($source->{url}) {
+      my $parser = RDF::Trine::Parser->new($source->{syntax});
+      $parser->parse_url_into_model( $source->{url}, $self );
+    } elsif ($source->{file}) {
+      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
+      my $parser = RDF::Trine::Parser->new($source->{syntax});
+      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
+    } else {
+      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+    }
+  }
+  return $self;
+}
+
+
+
 =item C<< temporary_store >>
 
 Returns a temporary (empty) triple store.
