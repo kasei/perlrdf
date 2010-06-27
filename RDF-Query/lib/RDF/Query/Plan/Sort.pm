@@ -111,6 +111,7 @@ sub _cmp_rows {
 	my $bridge	= $context->model;
 	
 	no warnings 'numeric';
+	no warnings 'uninitialized';
 	foreach my $data (@$exprs) {
 		my ($expr, $rev)	= @$data;
 		my $a_val	= $query->var_or_expr_value( $a, $expr );

@@ -689,6 +689,9 @@ sub generate_plans {
 		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
+	} elsif ($type eq 'Create') {
+		my $plan	= RDF::Query::Plan::Constant->new();
+		push(@return_plans, $plan);
 	} else {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
 	}
