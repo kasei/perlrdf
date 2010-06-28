@@ -133,7 +133,7 @@ sub execute ($) {
 					if ($op eq 'COUNT') {
 						$l->debug("- aggregate op: COUNT");
 						my $should_inc	= 0;
-						if ($col eq '*') {
+						if (not(blessed($col)) and $col eq '*') {
 							$should_inc	= 1;
 						} else {
 							my $value	= $query->var_or_expr_value( $row, $col );
