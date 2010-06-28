@@ -80,6 +80,11 @@ Any other options to be passed to L<RDF::Redland::Storage> as a hashref.
 
 =back
 
+=item C<new_with_object ( $redland_model )>
+
+Initialize the store with a L<RDF::Redland::Model> object.
+
+
 =cut
 
 sub new {
