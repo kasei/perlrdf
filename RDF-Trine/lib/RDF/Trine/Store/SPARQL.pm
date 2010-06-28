@@ -55,6 +55,23 @@ BEGIN {
 Returns a new storage object that will act as a proxy for the SPARQL endpoint
 accessible via the supplied C<$url>.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<SPARQL> for this backend.
+
+The following key must also be used:
+
+=over
+
+=item C<url>
+
+The URL of the remote endpoint.
+
+=back
+
 =cut
 
 sub new {
@@ -75,6 +92,14 @@ sub _new_with_string {
 	my $config	= shift;
 	return $class->new( $config );
 }
+
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{url} );
+}
+
+
 
 =item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
 

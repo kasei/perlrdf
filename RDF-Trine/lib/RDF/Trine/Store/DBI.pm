@@ -65,7 +65,40 @@ BEGIN {
 Returns a new storage object using the supplied arguments to construct a DBI
 object for the underlying database.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<DBI> for this backend.
+
+These keys should also be used:
+
+=over
+
+=item C<name>
+
+The name of the model.
+
+=item C<dsn>
+
+The DBI Data Source Name for the underlying database.
+
+=item C<username>
+
+The username of the database user.
+
+=item C<password>
+
+The password of the database user.
+
+=back
+
+
 =cut
+
+
+
 
 sub new {
 	my $class	= shift;
@@ -117,6 +150,16 @@ sub _new_with_string {
 	my ($model, $dsn, $user, $pass)	= split(';', $config);
 	return $class->new( $model, $dsn, $user, $pass );
 }
+
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{name},
+			    $config->{dsn},
+			    $config->{username},
+			    $config->{password} );
+}
+
 
 sub _new_with_object {
 	my $class	= shift;
