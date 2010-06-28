@@ -827,29 +827,15 @@ Loads any external data required by this query (FROM and FROM NAMED clauses).
 
 sub load_data {
 	my $self	= shift;
-	my $model	= $self->model;
 	my $parsed	= $self->{parsed};
 	
 	## LOAD ANY EXTERNAL RDF FILES
 	my $sources	= $parsed->{'sources'};
-	if (ref($sources) and reftype($sources) eq 'ARRAY') {
-		my $need_new_model	= 1;
-		my $named_query		= 0;
-		
-		# put non-named sources first, because they will cause a new model to be
-		# constructed. subsequent named data will then be loaded into the correct
-		# model object.
-		my @sources	= sort { @$a == 2 } @$sources;
-		
-		foreach my $source (@sources) {
+	if (ref($sources) and reftype($sources) eq 'ARRAY' and scalar(@$sources)) {
+		my $model	= RDF::Trine::Model->temporary_model;
+		$self->model( $model );
+		foreach my $source (@$sources) {
 			my $named_source	= (2 == @{$source} and $source->[1] eq 'NAMED');
-			if ((not $named_source) and $need_new_model) {
-				# query uses FROM <..> clauses, so create a new model so we don't add the statements to a persistent default graph
-				$model				= RDF::Trine::Model->temporary_model;
-				$self->model( $model );
-				$need_new_model	= 0;
-			}
-			
 			my $uri	= $source->[0]->uri_value;
 			$self->parse_url( $uri, $named_source );
 		}
