@@ -141,7 +141,7 @@ sub sse {
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
 		my ($alias, $op, $opts, @cols)	= @$data;
-		my @col_strings	= map { ($_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
+		my @col_strings	= map { (not(blessed($_)) and $_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
 		my $col_string	= join(' ', @col_strings);
 		if (@col_strings > 1) {
 			$col_string	= '(' . $col_string . ')';
