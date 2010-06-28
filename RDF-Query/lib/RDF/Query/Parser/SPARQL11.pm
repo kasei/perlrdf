@@ -3003,7 +3003,7 @@ sub __base {
 sub __new_statement {
 	my $self	= shift;
 	my @nodes	= @_;
-	if (my $graph = $self->{named_graph}) {
+	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
 	} else {
 		return RDF::Query::Algebra::Triple->_new( @nodes );
@@ -3017,8 +3017,11 @@ sub __new_path {
 	my $end		= shift;
 	(undef, my $op, my @nodes)	= @$pdata;
 	@nodes	= map { $self->__strip_path( $_ ) } @nodes;
-	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
-	return $path;
+	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
+		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end, $graph );
+	} else {
+		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
+	}
 }
 
 sub __strip_path {

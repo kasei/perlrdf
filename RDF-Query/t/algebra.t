@@ -201,14 +201,12 @@ END
 							bless( ['BLANK','a1'], 'RDF::Query::Node::Blank' ),
 							bless( ['URI','http://xmlns.com/foaf/0.1/name'], 'RDF::Query::Node::Resource' ),
 							bless( ['name'], 'RDF::Query::Node::Variable' ),
-							bless( ['g'], 'RDF::Query::Node::Variable' ),
-						], 'RDF::Query::Algebra::Quad' ),
+						], 'RDF::Query::Algebra::Triple' ),
 						bless( [
 							bless( ['BLANK','a1'], 'RDF::Query::Node::Blank' ),
 							bless( ['URI','http://xmlns.com/foaf/0.1/depiction'], 'RDF::Query::Node::Resource' ),
 							bless( ['img'], 'RDF::Query::Node::Variable' ),
-							bless( ['g'], 'RDF::Query::Node::Variable' ),
-						], 'RDF::Query::Algebra::Quad' )
+						], 'RDF::Query::Algebra::Triple' )
 					], 'RDF::Query::Algebra::BasicGraphPattern' )
 				], 'RDF::Query::Algebra::GroupGraphPattern' )
 			], 'RDF::Query::Algebra::NamedGraph' ),

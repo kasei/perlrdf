@@ -88,9 +88,9 @@ sub next {
 	my $row		= $plan->next;
 	unless (defined($row)) {
 		$l->trace("no remaining rows in project");
-		if ($self->[1]->state == $self->[1]->OPEN) {
-			$self->[1]->close();
-		}
+# 		if ($self->[1]->state == $self->[1]->OPEN) {
+# 			$self->[1]->close();
+# 		}
 		return;
 	}
 	if ($l->is_trace) {

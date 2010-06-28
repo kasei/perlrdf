@@ -67,7 +67,9 @@ sub execute ($) {
 	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.pushdownnestedloop");
-	$l->trace("executing bind join");
+	$l->trace("executing bind join with plans:");
+	$l->trace($self->lhs->sse);
+	$l->trace($self->rhs->sse);
 	
 	$self->lhs->execute( $context );
 	if ($self->lhs->state == $self->OPEN) {
@@ -118,13 +120,13 @@ sub next {
 				$self->[0]{inner}			= $inner->execute( $copy );
 			} else {
 				# we've exhausted the outer iterator. we're now done.
-				$l->trace("exhausted");
+				$l->trace("exhausted outer plan in bind join");
 				return undef;
 			}
 		}
 		
 		while (defined(my $inner_row = $self->[0]{inner}->next)) {
-			$l->trace( "using inner row: " . Dumper($inner_row) );
+			$l->trace( "using inner row: " . $inner_row->as_string );
 			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
 				if ($l->is_trace) {
 					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
@@ -133,10 +135,11 @@ sub next {
 				$self->[0]{inner_count}++;
 				return $joined;
 			} else {
+				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
 				if ($opt) {
+					$l->trace( "--> but operation is OPTIONAL, so returning $self->[0]{outer_row}" );
 					return $self->[0]{outer_row};
 				}
-				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
 			}
 		}
 		
