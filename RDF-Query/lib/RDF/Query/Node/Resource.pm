@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.900.
+This document describes RDF::Query::Node::Resource version 2.901_01.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901_01';
 }
 
 ######################################################################

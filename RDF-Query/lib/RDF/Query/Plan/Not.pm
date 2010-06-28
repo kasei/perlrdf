@@ -7,7 +7,7 @@ RDF::Query::Plan::Not - Executable query plan for Not blocks.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Not version 2.900.
+This document describes RDF::Query::Plan::Not version 2.901_01.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901_01';
 }
 
 ######################################################################

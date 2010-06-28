@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.900.
+This document describes RDF::Query::Plan::Filter version 2.901_01.
 
 =head1 METHODS
 
@@ -26,7 +26,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901_01';
 }
 
 ######################################################################
