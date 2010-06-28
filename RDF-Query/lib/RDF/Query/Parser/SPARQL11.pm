@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.202, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL11 version 2.900.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -95,9 +95,11 @@ sub new {
 
 ################################################################################
 
-=item C<< parse ( $query, $base_uri ) >>
+=item C<< parse ( $query, $base_uri, $update_flag ) >>
 
 Parses the C<< $query >>, using the given C<< $base_uri >>.
+If C<< $update_flag >> is true, the query will be parsed allowing
+SPARQL 1.1 Update statements.
 
 =cut
 
@@ -105,6 +107,7 @@ sub parse {
 	my $self	= shift;
 	my $input	= shift;
 	my $baseuri	= shift;
+	my $update	= shift || 0;
 	
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
@@ -117,6 +120,7 @@ sub parse {
 	local($self->{stack})					= [];
 	local($self->{filters})					= [];
 	local($self->{pattern_container_stack})	= [];
+	local($self->{update})					= $update;
 	my $triples								= $self->_push_pattern_container();
 	$self->{build}							= { sources => [], triples => $triples };
 	if ($baseuri) {
@@ -124,11 +128,11 @@ sub parse {
 	}
 	
 	try {
-		$self->_Query();
+		$self->_RW_Query();
 	} catch RDF::Query::Error with {
 		my $e	= shift;
 		$self->{build}	= undef;
-		$self->{error}	= $e->text;
+		$self->{error}	= $e->stacktrace
 	};
 	my $data								= delete $self->{build};
 #	$data->{triples}						= $self->_pop_pattern_container();
@@ -219,228 +223,108 @@ sub parse_expr {
 	return $data;
 }
 
-=item C<< error >>
-
-Returns the error encountered during the last parse.
-
-=cut
-
-sub error {
-	my $self	= shift;
-	return $self->{error};
-}
-
-sub _add_patterns {
-	my $self	= shift;
-	my @triples	= @_;
-	my $container	= $self->{ pattern_container_stack }[0];
-	push( @{ $container }, @triples );
-}
-
-sub _remove_pattern {
-	my $self	= shift;
-	my $container	= $self->{ pattern_container_stack }[0];
-	my $pattern		= pop( @{ $container } );
-	return $pattern;
-}
-
-sub _peek_pattern {
-	my $self	= shift;
-	my $container	= $self->{ pattern_container_stack }[0];
-	my $pattern		= $container->[-1];
-	return $pattern;
-}
-
-sub _push_pattern_container {
-	my $self	= shift;
-	my $cont	= [];
-	unshift( @{ $self->{ pattern_container_stack } }, $cont );
-	return $cont;
-}
-
-sub _pop_pattern_container {
-	my $self	= shift;
-	my $cont	= shift( @{ $self->{ pattern_container_stack } } );
-	return $cont;
-}
-
-sub _add_stack {
-	my $self	= shift;
-	my @items	= @_;
-	push( @{ $self->{stack} }, @items );
-}
-
-sub _add_filter {
-	my $self	= shift;
-	my @filters	= shift;
-	push( @{ $self->{filters} }, @filters );
-}
-
-sub _eat {
-	my $self	= shift;
-	my $thing	= shift;
-	if (not(length($self->{tokens}))) {
-		$self->_syntax_error("no tokens left");
-	}
-	
-# 	if (substr($self->{tokens}, 0, 1) eq '^') {
-# 		Carp::cluck( "eating $thing with input $self->{tokens}" );
-# 	}
-	
-	if (blessed($thing) and $thing->isa('Regexp')) {
-		if ($self->{tokens} =~ /^$thing/) {
-			my $match	= $&;
-			substr($self->{tokens}, 0, length($match))	= '';
-			return $match;
-		}
-		
-		$self->_syntax_error( $thing );
-	} elsif (looks_like_number( $thing )) {
-		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
-		return $token
-	} else {
-		### thing is a string
-		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-			substr($self->{tokens}, 0, length($thing))	= '';
-			return $thing;
-		} else {
-			$self->_syntax_error( $thing );
-		}
-	}
-	print $thing;
-	throw RDF::Query::Error;
-}
-
-sub _syntax_error {
-	my $self	= shift;
-	my $thing	= shift;
-	my $expect	= $thing;
-
-	my $level	= 2;
-	while (my $sub = (caller($level++))[3]) {
-		if ($sub =~ m/::_([A-Z]\w*)$/) {
-			$expect	= $1;
-			last;
-		}
-	}
-	
-	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
-	if ($l->is_debug) {
-		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
-	}
-	throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect";
-}
-
-sub _test {
-	my $self	= shift;
-	my $thing	= shift;
-	if (blessed($thing) and $thing->isa('Regexp')) {
-		if ($self->{tokens} =~ m/^$thing/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} else {
-		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-}
-
-sub _ws_test {
-	my $self	= shift;
-	unless (length($self->{tokens})) {
-		return 0;
-	}
-	
-	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-sub _ws {
-	my $self	= shift;
-	### #x9 | #xA | #xD | #x20 | comment
-	if ($self->_test('#')) {
-		$self->_eat(qr/#[^\x0d\x0a]*.?/);
-	} else {
-		$self->_eat(qr/[\n\r\t ]/);
-	}
-}
-
-sub __consume_ws_opt {
-	my $self	= shift;
-	if ($self->_ws_test) {
-		$self->__consume_ws;
-	}
-}
-
-sub __consume_ws {
-	my $self	= shift;
-	$self->_ws;
-	while ($self->_ws_test()) {
-		$self->_ws()
-	}
-}
-
-sub __base {
-	my $self	= shift;
-	my $build	= $self->{build};
-	if (defined($build->{base})) {
-		return $build->{base};
-	} else {
-		return;
-	}
-}
-
-sub __new_statement {
-	my $self	= shift;
-	my @nodes	= @_;
-	if (my $graph = $self->{named_graph}) {
-		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
-	} else {
-		return RDF::Query::Algebra::Triple->new( @nodes );
-	}
-}
-
 ################################################################################
 
 
-# [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery )
-sub _Query {
+# [1] Query ::= Prologue ( SelectQuery | ConstructQuery | DescribeQuery | AskQuery | LoadUpdate )
+sub _RW_Query {
 	my $self	= shift;
 	$self->__consume_ws_opt;
 	$self->_Prologue;
 	$self->__consume_ws_opt;
-	if ($self->_test(qr/SELECT/i)) {
-		$self->_SelectQuery();
-	} elsif ($self->_test(qr/CONSTRUCT/i)) {
-		$self->_ConstructQuery();
-	} elsif ($self->_test(qr/DESCRIBE/i)) {
-		$self->_DescribeQuery();
-	} elsif ($self->_test(qr/ASK/i)) {
-		$self->_AskQuery();
-	} else {
-		my $l		= Log::Log4perl->get_logger("rdf.query");
-		if ($l->is_debug) {
-			$l->logcluck("Syntax error: Expected query type with input <<$self->{tokens}>>");
-		}
-		throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
-	}
 	
+	my $read_query	= 0;
+	while (1) {
+		if ($self->_test(qr/SELECT/i)) {
+			$self->_SelectQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/CONSTRUCT/i)) {
+			$self->_ConstructQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/DESCRIBE/i)) {
+			$self->_DescribeQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/ASK/i)) {
+			$self->_AskQuery();
+			$read_query++;
+		} elsif ($self->_test(qr/CREATE\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "CREATE GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_CreateGraph();
+		} elsif ($self->_test(qr/DROP\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "DROP GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_DropGraph();
+		} elsif ($self->_test(qr/LOAD/i)) {
+			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_LoadUpdate();
+# 			warn Dumper($self->{build});
+		} elsif ($self->_test(qr/CLEAR\s+GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_ClearGraphUpdate();
+		} elsif ($self->_test(qr/INSERT\s+DATA/i)) {
+			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_InsertDataUpdate();
+		} elsif ($self->_test(qr/DELETE\s+DATA/i)) {
+			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_DeleteDataUpdate();
+# 		} elsif ($self->_test(qr/DELETE\s+WHERE/i)) {
+# 			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden in read-only queries"
+# 				unless ($self->{update});
+# 			$self->_DeleteWhereUpdate();
+		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
+			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
+				unless ($self->{update});
+			if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
+				$self->_InsertUpdate();
+			} elsif ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?DELETE/i)) {
+				$self->_DeleteUpdate();
+			}
+		} else {
+			my $l		= Log::Log4perl->get_logger("rdf.query");
+			if ($l->is_debug) {
+				$l->logcluck("Syntax error: Expected query type with input <<$self->{tokens}>>");
+			}
+			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
+		}
+		last if ($read_query);
+		$self->__consume_ws_opt;
+		if ($self->_test(qr/;/)) {
+			$self->_eat(qr/;/) ;
+			$self->__consume_ws_opt;
+			if ($self->_Query_test) {
+				next;
+			}
+		}
+		last;
+	}
+	$self->_eat(qr/;/) if ($self->_test(qr/;/));
+	$self->__consume_ws_opt;
+	
+	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
-		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
+	}
+	
+	if ($count > 1) {
+		my @patterns	= splice(@{ $self->{build}{triples} });
+		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
 	}
 	
 # 	my %query	= (%p, %body);
 # 	return \%query;
 }
 
+sub _Query_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|INSERT|DELETE|WITH/i));
+	return 0;
+}
 
 # [2] Prologue ::= BaseDecl? PrefixDecl*
 # [3] BaseDecl ::= 'BASE' IRI_REF
@@ -489,6 +373,305 @@ sub _Prologue {
 # 	return @data;
 }
 
+sub _InsertDataUpdate {
+	my $self	= shift;
+	$self->_eat(qr/INSERT\s+DATA/i);
+	$self->__consume_ws_opt;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	$self->_ModifyTemplate();
+	$self->__consume_ws_opt;
+	my $data	= $self->_remove_pattern;
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	
+	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'UPDATE';
+}
+
+sub _DeleteDataUpdate {
+	my $self	= shift;
+	$self->_eat(qr/DELETE\s+DATA/i);
+	$self->__consume_ws_opt;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	$self->_ModifyTemplate();
+	$self->__consume_ws_opt;
+	my $data	= $self->_remove_pattern;
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	
+	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
+	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty);
+	$self->_add_patterns( $delete );
+	$self->{build}{method}		= 'UPDATE';
+}
+
+sub _InsertUpdate {
+	my $self	= shift;
+	my ($graph);
+	if ($self->_test(qr/WITH/i)) {
+		$self->_eat(qr/WITH/i);
+		$self->__consume_ws_opt;
+		my $iri	= $self->_eat( $r_IRI_REF );
+		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
+		$self->__consume_ws_opt;
+	}
+	$self->_eat(qr/INSERT/i);
+	$self->__consume_ws_opt;
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	$self->_ModifyTemplate();
+	$self->__consume_ws_opt;
+	my $data	= $self->_remove_pattern;
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	if ($graph) {
+		$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $data );
+	}
+
+	
+	my %dataset;
+	while ($self->_test(qr/USING/i)) {
+		$self->_eat(qr/USING/i);
+		$self->__consume_ws_opt;
+		my $named	= 0;
+		if ($self->_test(qr/NAMED/i)) {
+			$self->_eat(qr/NAMED/i);
+			$self->__consume_ws_opt;
+			$named	= 1;
+		}
+		$self->_IRIref;
+		my ($iri)	= splice( @{ $self->{stack} } );
+		if ($named) {
+			$dataset{named}{$iri->uri_value}	= $iri;
+		} else {
+			push(@{ $dataset{default} }, $iri );
+		}
+		$self->__consume_ws_opt;
+	}
+	
+	$self->_eat(qr/WHERE/i);
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	
+	my @ds_keys	= keys %dataset;
+	unless (@ds_keys) {
+		$dataset{ default }	= [$graph];
+	}
+	
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'UPDATE';
+}
+
+sub _DeleteUpdate {
+	my $self	= shift;
+	my $graph;
+	my ($delete_data, $insert_data);
+	
+	if ($self->_test(qr/WITH/i)) {
+		$self->_eat(qr/WITH/i);
+		$self->__consume_ws_opt;
+		my $iri	= $self->_eat( $r_IRI_REF );
+		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
+		$self->__consume_ws_opt;
+	}
+	$self->_eat(qr/DELETE/i);
+	$self->__consume_ws_opt;
+	my %dataset;
+	my $delete_where	= 0;
+	if ($self->_test(qr/WHERE/i)) {
+		if ($graph) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: WITH clause cannot be used with DELETE WHERE operations";
+		}
+		$delete_where	= 1;
+	} else {
+		$self->_eat('{');
+		$self->__consume_ws_opt;
+		$self->_ModifyTemplate( $graph );
+		$self->__consume_ws_opt;
+		$self->_eat('}');
+		$delete_data	= $self->_remove_pattern;
+		
+		$self->__consume_ws_opt;
+		if ($self->_test(qr/INSERT/i)) {
+			$self->_eat(qr/INSERT/i);
+			$self->__consume_ws_opt;
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			$self->_ModifyTemplate( $graph );
+			$self->__consume_ws_opt;
+			$self->_eat('}');
+			$self->__consume_ws_opt;
+			$insert_data	= $self->_remove_pattern;
+		}
+		
+		while ($self->_test(qr/USING/i)) {
+			$self->_eat(qr/USING/i);
+			$self->__consume_ws_opt;
+			my $named	= 0;
+			if ($self->_test(qr/NAMED/i)) {
+				$self->_eat(qr/NAMED/i);
+				$self->__consume_ws_opt;
+				$named	= 1;
+			}
+			$self->_IRIref;
+			my ($iri)	= splice( @{ $self->{stack} } );
+			if ($named) {
+				$dataset{named}{$iri->uri_value}	= $iri;
+			} else {
+				push(@{ $dataset{default} }, $iri );
+			}
+			$self->__consume_ws_opt;
+		}
+	}
+	
+	$self->_eat(qr/WHERE/i);
+	$self->__consume_ws_opt;
+	if ($graph) {
+		local($self->{named_graph})	= $graph;
+		$self->_GroupGraphPattern;
+		my $ggp	= $self->_remove_pattern;
+		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		$self->_add_patterns( $ggp );
+	} else {
+		$self->_GroupGraphPattern;
+	}
+
+	my $ggp	= $self->_remove_pattern;
+
+	if ($delete_where) {
+		$delete_data	= $ggp;
+	}
+	
+	my @ds_keys	= keys %dataset;
+	if ($graph and not(scalar(@ds_keys))) {
+		$dataset{ default }	= [$graph];
+	}
+	
+	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset);
+	$self->_add_patterns( $insert );
+	$self->{build}{method}		= 'UPDATE';
+}
+
+sub _ModifyTemplate_test {
+	my $self	= shift;
+	return 1 if ($self->_TriplesBlock_test);
+	return 1 if ($self->_test(qr/GRAPH/i));
+	return 0;
+}
+
+sub _ModifyTemplate {
+	my $self	= shift;
+	my $graph	= shift;
+	
+	local($self->{named_graph});
+	if ($graph) {
+		$self->{named_graph}	= $graph;
+	}
+	
+	$self->__ModifyTemplate;
+	$self->__consume_ws_opt;
+	my $data	= $self->_remove_pattern;
+	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+	while ($self->_ModifyTemplate_test) {
+		$self->__ModifyTemplate( $graph );
+		$self->__consume_ws_opt;
+		my $d			= $self->_remove_pattern;
+		my @patterns	= $data->patterns;
+		$data			= RDF::Query::Algebra::GroupGraphPattern->new( @patterns, $d );
+	}
+	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+	$self->_add_patterns( $data );
+}
+
+sub __ModifyTemplate {
+	my $self	= shift;
+	my $graph	= shift;
+	if ($self->_TriplesBlock_test) {
+		my $data;
+		$self->_push_pattern_container;
+		$self->_TriplesBlock;
+		($data)	= @{ $self->_pop_pattern_container };
+		if ($graph) {
+			my $ggp	= RDF::Query::Algebra::GroupGraphPattern->new( $data );
+			my $data	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		}
+		$self->_add_patterns( $data );
+	} else {
+		$self->_GraphGraphPattern;
+		{
+			my ($d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( $d );
+		}
+	}
+}
+
+sub _LoadUpdate {
+	my $self	= shift;
+	$self->_eat(qr/LOAD/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($iri)	= splice( @{ $self->{stack} } );
+	$self->__consume_ws_opt;
+	if ($self->_test(qr/INTO GRAPH/i)) {
+		$self->_eat(qr/INTO GRAPH/i);
+		$self->_ws;
+		$self->_IRIref;
+		my ($graph)	= splice( @{ $self->{stack} } );
+		my $pat	= RDF::Query::Algebra::Load->new( $iri, $graph );
+		$self->_add_patterns( $pat );
+	} else {
+		my $pat	= RDF::Query::Algebra::Load->new( $iri );
+		$self->_add_patterns( $pat );
+	}
+	$self->{build}{method}		= 'LOAD';
+}
+
+sub _ClearGraphUpdate {
+	my $self	= shift;
+	$self->_eat(qr/CLEAR GRAPH/i);
+	$self->_ws;
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
+		my $pat	= RDF::Query::Algebra::Clear->new();
+		$self->_add_patterns( $pat );
+	} else {
+		$self->_IRIref;
+		my ($graph)	= splice( @{ $self->{stack} } );
+		my $pat	= RDF::Query::Algebra::Clear->new( $graph );
+		$self->_add_patterns( $pat );
+	}
+	$self->{build}{method}		= 'CLEAR';
+}
+
+sub _CreateGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/CREATE\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Create->new( $graph );
+	$self->_add_patterns( $pat );
+	$self->{build}{method}		= 'CREATE';
+}
+
+sub _DropGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/DROP\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Clear->new( $graph );
+	$self->_add_patterns( $pat );
+	$self->{build}{method}		= 'CLEAR';
+}
 
 # [5] SelectQuery ::= 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( Var+ | '*' ) DatasetClause* WhereClause SolutionModifier
 sub _SelectQuery {
@@ -545,9 +728,8 @@ sub _SelectQuery {
 			$self->__consume_ws_opt;
 		}
 		$self->_eat('}');
-		
-		$self->{build}{bindings}{vars}	= \@vars;
 		$self->__consume_ws_opt;
+		$self->{build}{bindings}{vars}	= \@vars;
 	}
 	
 	$self->__solution_modifiers( $star );
@@ -599,7 +781,7 @@ sub _BrackettedAliasExpression {
 sub __SelectVar_test {
 	my $self	= shift;
 	local($self->{__aggregate_call_ok})	= 1;
-	return 1 if $self->_BuiltInCall_test;
+#	return 1 if $self->_BuiltInCall_test;
 	return 1 if $self->_test( qr/[(]/i);
 	return $self->{tokens} =~ m'^[?$]';
 }
@@ -609,8 +791,8 @@ sub __SelectVar {
 	local($self->{__aggregate_call_ok})	= 1;
 	if ($self->_test('(')) {
 		$self->_BrackettedAliasExpression;
-	} elsif ($self->_BuiltInCall_test) {
-		$self->_BuiltInCall;
+# 	} elsif ($self->_BuiltInCall_test) {
+# 		$self->_BuiltInCall;
 	} else {
 		$self->_Var;
 	}
@@ -752,11 +934,11 @@ sub _Binding {
 	
 	my @terms;
 	$self->__consume_ws_opt;
-	$self->_VarOrTerm;
+	$self->_BindingValue;
 	push( @terms, splice(@{ $self->{stack} }));
 	$self->__consume_ws_opt;
-	while ($self->_VarOrTerm_test) {
-		$self->_VarOrTerm;
+	while ($self->_BindingValue_test) {
+		$self->_BindingValue;
 		push( @terms, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
@@ -765,19 +947,59 @@ sub _Binding {
 	$self->_eat( ')' );
 }
 
+sub _BindingValue_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/UNDEF|[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
+	return 0;
+}
+
+sub _BindingValue {
+	my $self	= shift;
+	if ($self->_test(qr/UNDEF/i)) {
+		$self->_eat(qr/UNDEF/i);
+		push(@{ $self->{stack} }, undef);
+	} else {
+		$self->_GraphTerm;
+	}
+}
+
+# [20]  	GroupCondition	  ::=  	( BuiltInCall | FunctionCall | '(' Expression ( 'AS' Var )? ')' | Var )
 sub __GroupByVar_test {
 	my $self	= shift;
-	return ($self->_BuiltInCall_test or $self->_test( qr/[(]/i) or $self->__SelectVar_test);
+	return 1 if ($self->_BuiltInCall_test);
+	return 1 if ($self->_IRIref_test);
+	return 1 if ($self->_test( qr/[(]/i ));
+	return 1 if ($self->_test(qr/[\$?]/));
 }
 
 sub __GroupByVar {
 	my $self	= shift;
 	if ($self->_test('(')) {
-		$self->_BrackettedAliasExpression;
+		$self->_eat('(');
+		$self->__consume_ws_opt;
+		$self->_Expression;
+		my ($expr)	= splice(@{ $self->{stack} });
+		$self->__consume_ws_opt;
+		
+		if ($self->_test(qr/AS/i)) {
+			$self->_eat('AS');
+			$self->__consume_ws_opt;
+			$self->_Var;
+			my ($var)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			my $alias	= $self->new_alias_expression( $var, $expr );
+			$self->_add_stack( $alias );
+		} else {
+			$self->_add_stack( $expr );
+		}
+		$self->_eat(')');
+		
+	} elsif ($self->_IRIref_test) {
+		$$self->_FunctionCall;
 	} elsif ($self->_BuiltInCall_test) {
 		$self->_BuiltInCall;
 	} else {
-		$self->__SelectVar;
+		$self->_Var;
 	}
 }
 
@@ -792,7 +1014,6 @@ sub _SolutionModifier {
 	
 	if ($self->_test( qr/HAVING/i )) {
 		$self->_HavingClause;
-#		die Dumper($self);
 		$self->__consume_ws_opt;
 	}
 	
@@ -829,13 +1050,9 @@ sub _HavingClause {
 	$self->_eat(qr/HAVING/i);
 	$self->__consume_ws_opt;
 	local($self->{__aggregate_call_ok})	= 1;
-	my @exprs;
-	while ($self->_Constraint_test) {
-		$self->_Constraint;
-		my ($expr)	= splice(@{ $self->{stack} });
-		push(@exprs, $expr);
-	}
-	$self->{build}{__having}	= \@exprs;
+	$self->_Constraint;
+	my ($expr) = splice(@{ $self->{stack} });
+	$self->{build}{__having}	= $expr;
 }
 
 # [15] LimitOffsetClauses ::= ( LimitClause OffsetClause? | OffsetClause LimitClause? )
@@ -848,13 +1065,13 @@ sub _LimitOffsetClauses {
 	my $self	= shift;
 	if ($self->_LimitClause_test) {
 		$self->_LimitClause;
-		$self->__consume_ws;
+		$self->__consume_ws_opt;
 		if ($self->_OffsetClause_test) {
 			$self->_OffsetClause;
 		}
 	} else {
 		$self->_OffsetClause;
-		$self->__consume_ws;
+		$self->__consume_ws_opt;
 		if ($self->_LimitClause_test) {
 			$self->_LimitClause;
 		}
@@ -1001,7 +1218,7 @@ sub _GroupGraphPatternSub {
 				$self->_TriplesBlock;
 				my $rhs		= $self->_remove_pattern;
 				my $lhs		= $self->_remove_pattern;
-				my $merged	= RDF::Query::Algebra::BasicGraphPattern->new( map { $_->triples } ($lhs, $rhs) );
+				my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
 				$self->_add_patterns( $merged );
 			} else {
 				$self->_TriplesBlock;
@@ -1036,16 +1253,7 @@ sub __handle_GraphPatternNotTriples {
 	my $self	= shift;
 	my $data	= shift;
 	my ($class, @args)	= @$data;
-	if ($class eq 'RDF::Query::Algebra::Exists') {
-		my $cont	= $self->_pop_pattern_container;
-		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-		$self->_push_pattern_container;
-		unless ($ggp) {
-			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-		}
-		my $pat	= $class->new( $ggp, @args );
-		$self->_add_patterns( $pat );
-	} elsif ($class eq 'RDF::Query::Algebra::Optional') {
+	if ($class =~ /^RDF::Query::Algebra::(Optional|Minus)$/) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
@@ -1055,14 +1263,10 @@ sub __handle_GraphPatternNotTriples {
 		}
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
-	} elsif ($class eq 'RDF::Query::Algebra::Union') {
-		# no-op
-	} elsif ($class eq 'RDF::Query::Algebra::NamedGraph') {
-		# no-op
-	} elsif ($class eq 'RDF::Query::Algebra::GroupGraphPattern') {
+	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
-		Carp::confess Dumper($class, \@args);
+		throw RDF::Query::Error::ParseError 'Unrecognized GraphPattern: ' . $class;
 	}
 }
 
@@ -1152,7 +1356,7 @@ sub _TriplesBlock {
 	$self->_push_pattern_container;
 	$self->__TriplesBlock;
 	my $triples		= $self->_pop_pattern_container;
-	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @$triples );
+	my $bgp			= $self->__new_bgp( @$triples );
 	$self->_add_patterns( $bgp );
 }
 
@@ -1161,7 +1365,7 @@ sub _TriplesBlock {
 ## the one with one underscore (_TriplesBlock) will pop everything off and make the BGP.
 sub __TriplesBlock {
 	my $self	= shift;
-	$self->_TriplesSameSubject;
+	$self->_TriplesSameSubjectPath;
 	$self->__consume_ws_opt;
 	my $got_dot	= 0;
 	while ($self->_test('.')) {
@@ -1182,15 +1386,15 @@ sub __TriplesBlock {
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/SERVICE|OPTIONAL|{|GRAPH|(NOT\s+)?EXISTS/i);
+	return $self->_test(qr/SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
 	if ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
-	} elsif ($self->_ExistsGraphPattern_test) {
-		$self->_ExistsGraphPattern;
+	} elsif ($self->_test(qr/MINUS/i)) {
+		$self->_MinusGraphPattern;
 	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
 	} elsif ($self->_GroupOrUnionGraphPattern_test) {
@@ -1217,24 +1421,6 @@ sub _ServiceGraphPattern {
 	$self->_add_stack( $opt );
 }
 
-# ExistsGraphPattern ::= 'NOT'? 'EXISTS' GroupGraphPattern
-sub _ExistsGraphPattern_test {
-	my $self	= shift;
-	return $self->_test( qr/(NOT\s+)?EXISTS/i );
-}
-
-sub _ExistsGraphPattern {
-	my $self	= shift;
-	my $op		= $self->_eat( qr/(NOT\s+)?EXISTS/i );
-	my $not		= ($op =~ /^NOT/i) ? 1 : 0;
-	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
-	my $ggp	= $self->_remove_pattern;
-	my $pat		= ['RDF::Query::Algebra::Exists', $ggp, $not];
-	$self->_add_stack( $pat );
-}
-
-
 # [23] OptionalGraphPattern ::= 'OPTIONAL' GroupGraphPattern
 sub _OptionalGraphPattern_test {
 	my $self	= shift;
@@ -1251,6 +1437,16 @@ sub _OptionalGraphPattern {
 	$self->_add_stack( $opt );
 }
 
+sub _MinusGraphPattern {
+	my $self	= shift;
+	$self->_eat( qr/MINUS/i );
+	$self->__consume_ws_opt;
+	$self->_GroupGraphPattern;
+	my $ggp	= $self->_remove_pattern;
+	my $opt		= ['RDF::Query::Algebra::Minus', $ggp];
+	$self->_add_stack( $opt );
+}
+
 # [24] GraphGraphPattern ::= 'GRAPH' VarOrIRIref GroupGraphPattern
 sub _GraphGraphPattern {
 	my $self	= shift;
@@ -1258,12 +1454,14 @@ sub _GraphGraphPattern {
 	$self->__consume_ws;
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
 	
-	{
+# 	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
-		$self->__consume_ws_opt;
 		$self->_GroupGraphPattern;
-	}
+# 	} else {
+# 		$self->_GroupGraphPattern;
+# 	}
 	
 	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
@@ -1442,6 +1640,38 @@ sub _TriplesSameSubject {
 #	return @triples;
 }
 
+# TriplesSameSubjectPath ::= VarOrTerm PropertyListNotEmptyPath | TriplesNode PropertyListPath
+sub _TriplesSameSubjectPath {
+	my $self	= shift;
+	my @triples;
+	if ($self->_TriplesNode_test) {
+		$self->_TriplesNode;
+		my ($s)	= splice(@{ $self->{stack} });
+		$self->__consume_ws_opt;
+		$self->_PropertyListPath;
+		$self->__consume_ws_opt;
+		
+		my @list	= splice(@{ $self->{stack} });
+		foreach my $data (@list) {
+			push(@triples, $self->__new_statement( $s, @$data ));
+		}
+	} else {
+		$self->_VarOrTerm;
+		my ($s)	= splice(@{ $self->{stack} });
+
+		$self->__consume_ws_opt;
+		$self->_PropertyListNotEmptyPath;
+		$self->__consume_ws_opt;
+		my (@list)	= splice(@{ $self->{stack} });
+		foreach my $data (@list) {
+			push(@triples, $self->__new_statement( $s, @$data ));
+		}
+	}
+	
+	$self->_add_patterns( @triples );
+#	return @triples;
+}
+
 # [33] PropertyListNotEmpty ::= Verb ObjectList ( ';' ( Verb ObjectList )? )*
 sub _PropertyListNotEmpty {
 	my $self	= shift;
@@ -1471,6 +1701,46 @@ sub _PropertyList {
 	my $self	= shift;
 	if ($self->_Verb_test) {
 		$self->_PropertyListNotEmpty;
+	}
+}
+
+# [33] PropertyListNotEmptyPath ::= (VerbPath | VerbSimple) ObjectList ( ';' ( (VerbPath | VerbSimple) ObjectList )? )*
+sub _PropertyListNotEmptyPath {
+	my $self	= shift;
+	if ($self->_VerbPath_test) {
+		$self->_VerbPath;
+	} else {
+		$self->_VerbSimple;
+	}
+	my ($v)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
+	$self->_ObjectList;
+	my @l	= splice(@{ $self->{stack} });
+	my @props		= map { [$v, $_] } @l;
+	while ($self->_test(qr'\s*;')) {
+		$self->_eat(';');
+		$self->__consume_ws_opt;
+		if ($self->_VerbPath_test or $self->_VerbSimple_test) {
+			if ($self->_VerbPath_test) {
+				$self->_VerbPath;
+			} else {
+				$self->_VerbSimple;
+			}
+			my ($v)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			$self->_ObjectList;
+			my @l	= splice(@{ $self->{stack} });
+			push(@props, map { [$v, $_] } @l);
+		}
+	}
+	$self->_add_stack( @props );
+}
+
+# [34] PropertyListPath ::= PropertyListNotEmptyPath?
+sub _PropertyListPath {
+	my $self	= shift;
+	if ($self->_Verb_test) {
+		$self->_PropertyListNotEmptyPath;
 	}
 }
 
@@ -1517,6 +1787,235 @@ sub _Verb {
 	}
 }
 
+# VerbSimple ::= Var
+sub _VerbSimple_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/[\$?]/));
+}
+
+sub _VerbSimple {
+	my $self	= shift;
+	$self->_Var;
+}
+
+# VerbPath ::= Path
+sub _VerbPath_test {
+	my $self	= shift;
+	return 1 if ($self->_IRIref_test);
+	return 1 if ($self->_test(qr/\^|[(a!]/));
+}
+
+sub _VerbPath {
+	my $self	= shift;
+	$self->_Path
+}
+
+# [74]  	Path	  ::=  	PathAlternative
+sub _Path {
+	my $self	= shift;
+	$self->_PathAlternative;
+}
+
+################################################################################
+
+# [75]  	PathAlternative	  ::=  	PathSequence ( '|' PathSequence )*
+sub _PathAlternative {
+	my $self	= shift;
+	$self->_PathSequence;
+	$self->__consume_ws_opt;
+	while ($self->_test(qr/[|]/)) {
+		my ($lhs)	= splice(@{ $self->{stack} });
+		$self->_eat(qr/[|]/);
+		$self->__consume_ws_opt;
+		$self->_PathOneInPropertyClass;
+		$self->__consume_ws_opt;
+		my ($rhs)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
+	}
+}
+
+# [76]  	PathSequence	  ::=  	PathEltOrInverse ( '/' PathEltOrInverse | '^' PathElt )*
+sub _PathSequence {
+	my $self	= shift;
+	$self->_PathEltOrInverse;
+	$self->__consume_ws_opt;
+	while ($self->_test(qr<[/^]>)) {
+		my $op;
+		my ($lhs)	= splice(@{ $self->{stack} });
+		if ($self->_test(qr</>)) {
+			$op	= $self->_eat(qr</>);
+			$self->__consume_ws_opt;
+			$self->_PathEltOrInverse;
+		} else {
+			$op	= $self->_eat(qr<\^>);
+			$self->__consume_ws_opt;
+			$self->_PathElt;
+		}
+		my ($rhs)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', $op, $lhs, $rhs] );
+	}
+}
+
+# [77]  	PathElt	  ::=  	PathPrimary PathMod?
+sub _PathElt {
+	my $self	= shift;
+	$self->_PathPrimary;
+#	$self->__consume_ws_opt;
+	if ($self->_PathMod_test) {
+		my @path	= splice(@{ $self->{stack} });
+		$self->_PathMod;
+		my ($mod)	= splice(@{ $self->{stack} });
+		if (defined($mod)) {
+			$self->_add_stack( ['PATH', $mod, @path] );
+		} else {
+			# this might happen if we descend into _PathMod by mistaking a + as
+			# a path modifier, but _PathMod figures out it's actually part of a
+			# signed numeric object that follows the path
+			$self->_add_stack( @path );
+		}
+	}
+}
+
+# [78]  	PathEltOrInverse	  ::=  	PathElt | '^' PathElt
+sub _PathEltOrInverse {
+	my $self	= shift;
+	if ($self->_test(qr/\^/)) {
+		$self->_eat(qr<\^>);
+		$self->__consume_ws_opt;
+		$self->_PathElt;
+		my @props	= splice(@{ $self->{stack} });
+		$self->_add_stack( [ 'PATH', '^', @props ] );
+	} else {
+		$self->_PathElt;
+	}
+}
+
+# [79]  	PathMod	  ::=  	( '*' | '?' | '+' | '{' ( Integer ( ',' ( '}' | Integer '}' ) | '}' ) ) )
+sub _PathMod_test {
+	my $self	= shift;
+	return 1 if ($self->_test(qr/[*?+{]/));
+}
+
+sub _PathMod {
+	my $self	= shift;
+	if ($self->_test(qr/[*?+]/)) {
+		if ($self->_test(qr/[+][.0-9]/)) {
+			return;
+		} else {
+			$self->_add_stack( $self->_eat(qr/[*?+]/) );
+			$self->__consume_ws_opt;
+		}
+	} else {
+		$self->_eat(qr/{/);
+		$self->__consume_ws_opt;
+		my $value	= $self->_eat( $r_INTEGER );
+		$self->__consume_ws_opt;
+		if ($self->_test(qr/,/)) {
+			$self->_eat(qr/,/);
+			$self->__consume_ws_opt;
+			if ($self->_test(qr/}/)) {
+				$self->_eat(qr/}/);
+				$self->_add_stack( "$value-" );
+			} else {
+				my $end	= $self->_eat( $r_INTEGER );
+				$self->__consume_ws_opt;
+				$self->_eat(qr/}/);
+				$self->_add_stack( "$value-$end" );
+			}
+		} else {
+			$self->_eat(qr/}/);
+			$self->_add_stack( "$value" );
+		}
+	}
+}
+
+# [80]  	PathPrimary	  ::=  	( IRIref | 'a' | '!' PathNegatedPropertyClass | '(' Path ')' )
+sub _PathPrimary {
+	my $self	= shift;
+	if ($self->_IRIref_test) {
+		$self->_IRIref;
+	} elsif ($self->_test(qr/a[\n\t\r <]/)) {
+		$self->_eat(qr/a/);
+		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
+		$self->_add_stack( $type );
+	} elsif ($self->_test(qr/[!]/)) {
+		$self->_eat(qr/[!]/);
+		$self->__consume_ws_opt;
+		$self->_PathNegatedPropertyClass;
+		my (@path)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', '!', @path] );
+	} else {
+		$self->_eat(qr/[(]/);
+		$self->__consume_ws_opt;
+		$self->_Path;
+		$self->__consume_ws_opt;
+		$self->_eat(qr/[)]/);
+	}
+}
+
+# [81]  	PathNegatedPropertyClass	  ::=  	( PathOneInPropertyClass | '(' ( PathOneInPropertyClass ( '|' PathOneInPropertyClass )* )? ')' )
+sub _PathNegatedPropertyClass {
+	my $self	= shift;
+	if ($self->_test(qr/[(]/)) {
+		$self->_eat(qr/[(]/);
+		$self->__consume_ws_opt;
+		
+		my @nodes;
+		if ($self->_PathOneInPropertyClass_test) {
+			$self->_PathOneInPropertyClass;
+			push(@nodes, splice(@{ $self->{stack} }));
+			$self->__consume_ws_opt;
+			while ($self->_test(qr/[|]/)) {
+				$self->_eat(qr/[|]/);
+				$self->__consume_ws_opt;
+				$self->_PathOneInPropertyClass;
+				$self->__consume_ws_opt;
+				push(@nodes, splice(@{ $self->{stack} }));
+#				$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
+			}
+		}
+		$self->_eat(qr/[)]/);
+		$self->_add_stack( @nodes );
+	} else {
+		$self->_PathOneInPropertyClass;
+	}
+}
+
+# [82]  	PathOneInPropertyClass	  ::=  	IRIref | 'a'
+sub _PathOneInPropertyClass_test {
+	my $self	= shift;
+	return 1 if $self->_IRIref_test;
+	return 1 if ($self->_test(qr/a[|)\n\t\r <]/));
+	return 1 if ($self->_test(qr/\^/));
+	return 0;
+}
+
+sub _PathOneInPropertyClass {
+	my $self	= shift;
+	my $rev		= 0;
+	if ($self->_test(qr/\^/)) {
+		$self->_eat(qr/\^/);
+		$rev	= 1;
+	}
+	if ($self->_test(qr/a[|)\n\t\r <]/)) {
+		$self->_eat(qr/a/);
+		my $type	= RDF::Query::Node::Resource->new( $rdf->type->uri_value );
+		if ($rev) {
+			$self->_add_stack( [ 'PATH', '^', $type ] );
+		} else {
+			$self->_add_stack( $type );
+		}
+	} else {
+		$self->_IRIref;
+		if ($rev) {
+			my ($path)	= splice(@{ $self->{stack} });
+			$self->_add_stack( [ 'PATH', '^', $path ] );
+		}
+	}
+}
+
+################################################################################
+
 # [38] TriplesNode ::= Collection | BlankNodePropertyList
 sub _TriplesNode_test {
 	my $self	= shift;
@@ -1537,7 +2036,8 @@ sub _BlankNodePropertyList {
 	my $self	= shift;
 	$self->_eat('[');
 	$self->__consume_ws_opt;
-	$self->_PropertyListNotEmpty;	
+#	$self->_PropertyListNotEmpty;
+	$self->_PropertyListNotEmptyPath;
 	$self->__consume_ws_opt;
 	$self->_eat(']');
 	
@@ -1699,11 +2199,8 @@ sub _ConditionalOrExpression {
 # [48] ConditionalAndExpression ::= ValueLogical ( '&&' ValueLogical )*
 sub _ConditionalAndExpression {
 	my $self	= shift;
-	my @list;
-	
 	$self->_ValueLogical;
-	push(@list, splice(@{ $self->{stack} }));
-	Carp::confess Dumper(\@list) if (scalar(@list) > 1);
+	my @list	= splice(@{ $self->{stack} });
 	
 	$self->__consume_ws_opt;
 	while ($self->_test('&&')) {
@@ -1743,7 +2240,34 @@ sub _RelationalExpression {
 		$self->_NumericExpression;
 		push(@list, splice(@{ $self->{stack} }));
 		$self->_add_stack( $self->new_binary_expression( $op, @list ) );
+	} elsif ($self->_test(qr/(NOT )?IN/)) {
+		my @list	= splice(@{ $self->{stack} });
+		my $op		= lc($self->_eat(qr/(NOT )?IN/));
+		$op			=~ s/\s+//g;
+		$self->__consume_ws_opt;
+		$self->_ExpressionList();
+		push(@list, splice(@{ $self->{stack} }));
+		$self->_add_stack( $self->new_function_expression( "sparql:$op", @list ) );
 	}
+}
+
+sub _ExpressionList {
+	my $self	= shift;
+	$self->_eat('(');
+	$self->__consume_ws_opt;
+	my @args;
+	unless ($self->_test(')')) {
+		$self->_Expression;
+		push( @args, splice(@{ $self->{stack} }) );
+		while ($self->_test(',')) {
+			$self->_eat(',');
+			$self->__consume_ws_opt;
+			$self->_Expression;
+			push( @args, splice(@{ $self->{stack} }) );
+		}
+	}
+	$self->_eat(')');
+	$self->_add_stack( @args );
 }
 
 # [51] NumericExpression ::= AdditiveExpression
@@ -1866,34 +2390,58 @@ sub _BrackettedExpression {
 	$self->_eat(')');
 }
 
-sub __Aggregate {
+sub _Aggregate {
 	my $self	= shift;
 	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
 	$self->_eat('(');
 	$self->__consume_ws_opt;
-	my $expr;
 	my $distinct	= 0;
+	if ($self->_test( qr/DISTINCT/i )) {
+		$self->_eat( qr/DISTINCT\s*/i );
+		$self->__consume_ws_opt;
+		$distinct	= 1;
+	}
+	
+	my (@expr, %options);
 	if ($self->_test('*')) {
-		$expr	= $self->_eat('*');
+		@expr	= $self->_eat('*');
 	} else {
-		if ($op eq 'COUNT' and $self->_test( qr/DISTINCT/i )) {
-			$self->_eat( qr/DISTINCT\s*/i );
-			$distinct	= 1;
-		}
 		$self->_Expression;
-		($expr)	= splice(@{ $self->{stack} });
+		push(@expr, splice(@{ $self->{stack} }));
+		if ($op eq 'GROUP_CONCAT') {
+			$self->__consume_ws_opt;
+			while ($self->_test(qr/,/)) {
+				$self->_eat(qr/,/);
+				$self->__consume_ws_opt;
+				$self->_Expression;
+				push(@expr, splice(@{ $self->{stack} }));
+			}
+			$self->__consume_ws_opt;
+			if ($self->_test(qr/;/)) {
+				$self->_eat(qr/;/);
+				$self->__consume_ws_opt;
+				$self->_eat(qr/SEPERATOR/i);
+				$self->__consume_ws_opt;
+				$self->_eat(qr/=/);
+				$self->__consume_ws_opt;
+				$self->_String;
+				my ($sep)	= splice(@{ $self->{stack} });
+				$options{ seperator }	= $sep;
+			}
+		}
 	}
 	$self->__consume_ws_opt;
 	
-	my $arg	= blessed($expr) ? $expr->as_sparql : $expr;
+	my $arg	= join(',', map { blessed($_) ? $_->as_sparql : $_ } @expr);
 	if ($distinct) {
 		$arg	= 'DISTINCT ' . $arg;
 	}
 	my $name	= sprintf('%s(%s)', $op, $arg);
 	$self->_eat(')');
 	
-	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), $expr ];
-	$self->_add_stack( $self->new_variable($name) );
+	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), \%options, @expr ];
+	
+	$self->_add_stack( RDF::Query::Node::Variable::ExpressionProxy->new($name) );
 	
 }
 
@@ -1904,24 +2452,29 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return $self->_test(qr/STR|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX/i);
+	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF/i);
 }
 
 sub _BuiltInCall {
 	my $self	= shift;
 	if ($self->{__aggregate_call_ok} and $self->_test( $r_AGGREGATE_CALL )) {
-		$self->__Aggregate;
+		$self->_Aggregate;
 	} elsif ($self->_test(qr/(NOT\s+)?EXISTS/i)) {
 		my $op	= $self->_eat(qr/(NOT\s+)?EXISTS/i);
 		$self->__consume_ws_opt;
 		$self->_GroupGraphPattern;
 		my $cont	= $self->_remove_pattern;
-		my $iri		= RDF::Query::Node::Resource->new( ($op =~ /^NOT/i) ? 'sparql:not-exists' : 'sparql:exists' );
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:exists' );
 		my $func	= $self->new_function_expression($iri, $cont);
-		$self->_add_stack( $func );
-	} elsif ($self->_test(qr/COALESCE/)) {
-		my $op	= $self->_eat(qr/COALESCE/i);
-		my $iri		= RDF::Query::Node::Resource->new( 'sparql:coalesce' );
+		if ($op =~ /^NOT/i) {
+			$self->_add_stack( $self->new_unary_expression( '!', $func ) );
+		
+		} else {
+			$self->_add_stack( $func );
+		}
+	} elsif ($self->_test(qr/COALESCE|BNODE/)) {
+		my $op	= $self->_eat(qr/COALESCE|BNODE/i);
+		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
 		my $func	= $self->new_function_expression( $iri, @args );
@@ -1934,12 +2487,12 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/i) {
+		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
 			$self->_add_stack( $self->new_function_expression($iri, $expr) );
-		} elsif ($op =~ /^(LANGMATCHES|sameTerm)$/i) {
+		} elsif ($op =~ /^(STRDT|STRLANG|LANGMATCHES|sameTerm)$/i) {
 			### two-arg functions that take expressions
 			$self->_Expression;
 			my ($arg1)	= splice(@{ $self->{stack} });
@@ -1949,6 +2502,21 @@ sub _BuiltInCall {
 			$self->_Expression;
 			my ($arg2)	= splice(@{ $self->{stack} });
 			$self->_add_stack( $self->new_function_expression($iri, $arg1, $arg2) );
+		} elsif ($op =~ /^IF$/i) {
+			### three-arg functions that take expressions
+			$self->_Expression;
+			my ($arg1)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			$self->_eat(',');
+			$self->__consume_ws_opt;
+			$self->_Expression;
+			my ($arg2)	= splice(@{ $self->{stack} });
+			$self->__consume_ws_opt;
+			$self->_eat(',');
+			$self->__consume_ws_opt;
+			$self->_Expression;
+			my ($arg3)	= splice(@{ $self->{stack} });
+			$self->_add_stack( $self->new_function_expression($iri, $arg1, $arg2, $arg3) );
 		} else {
 			### BOUND(Var)
 			$self->_Var;
@@ -2095,10 +2663,10 @@ sub _String {
 		$value		= substr($string, 1, length($string) - 2);
 	}
 #	$value	=~ s/(${r_ECHAR})/"$1"/ge;
-	$value	=~ s/\\t/\n/g;
+	$value	=~ s/\\t/\t/g;
 	$value	=~ s/\\b/\n/g;
 	$value	=~ s/\\n/\n/g;
-	$value	=~ s/\\r/\n/g;
+	$value	=~ s/\\r/\x08/g;
 	$value	=~ s/\\"/"/g;
 	$value	=~ s/\\'/'/g;
 	$value	=~ s/\\\\/\\/g;	# backslash must come last, so it doesn't accidentally create a new escape
@@ -2179,18 +2747,17 @@ sub __solution_modifiers {
 	my $self	= shift;
 	my $star	= shift;
 	
+	my $having_expr;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
 	if ($aggdata) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
-		my %constructor_args;
-		$constructor_args{ 'expressions' }	= [ %$aggdata ];
 		if (my $having = delete( $self->{build}{__having} )) {
-			$constructor_args{ 'having' }	= $having;
+			$having_expr	= $having;
 		}
-	
-		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, \%constructor_args );
+		
+		my $agg		= RDF::Query::Algebra::Aggregate->new( $ggp, $groupby, { expressions => [%$aggdata] } );
 		push(@{ $self->{build}{triples} }, $agg);
 	}
 	
@@ -2203,6 +2770,12 @@ sub __solution_modifiers {
 			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
 			push(@{ $self->{build}{triples} }, $proj);
 		}
+	}
+	
+	if ($having_expr) {
+		my $pattern	= pop(@{ $self->{build}{triples} });
+		my $filter	= RDF::Query::Algebra::Filter->new( $having_expr, $pattern );
+		push(@{ $self->{build}{triples} }, $filter);
 	}
 	
 	if ($self->{build}{options}{orderby}) {
@@ -2237,6 +2810,260 @@ sub __solution_modifiers {
 		my $pattern	= pop(@{ $self->{build}{triples} });
 		my $limited	= RDF::Query::Algebra::Limit->new( $pattern, $limit );
 		push(@{ $self->{build}{triples} }, $limited);
+	}
+}
+
+################################################################################
+
+=item C<< error >>
+
+Returns the error encountered during the last parse.
+
+=cut
+
+sub error {
+	my $self	= shift;
+	return $self->{error};
+}
+
+sub _add_patterns {
+	my $self	= shift;
+	my @triples	= @_;
+	my $container	= $self->{ pattern_container_stack }[0];
+	push( @{ $container }, @triples );
+}
+
+sub _remove_pattern {
+	my $self	= shift;
+	my $container	= $self->{ pattern_container_stack }[0];
+	my $pattern		= pop( @{ $container } );
+	return $pattern;
+}
+
+sub _peek_pattern {
+	my $self	= shift;
+	my $container	= $self->{ pattern_container_stack }[0];
+	my $pattern		= $container->[-1];
+	return $pattern;
+}
+
+sub _push_pattern_container {
+	my $self	= shift;
+	my $cont	= [];
+	unshift( @{ $self->{ pattern_container_stack } }, $cont );
+	return $cont;
+}
+
+sub _pop_pattern_container {
+	my $self	= shift;
+	my $cont	= shift( @{ $self->{ pattern_container_stack } } );
+	return $cont;
+}
+
+sub _add_stack {
+	my $self	= shift;
+	my @items	= @_;
+	push( @{ $self->{stack} }, @items );
+}
+
+sub _add_filter {
+	my $self	= shift;
+	my @filters	= shift;
+	push( @{ $self->{filters} }, @filters );
+}
+
+sub _eat {
+	my $self	= shift;
+	my $thing	= shift;
+	if (not(length($self->{tokens}))) {
+		$self->_syntax_error("No tokens left");
+	}
+	
+# 	if (substr($self->{tokens}, 0, 1) eq '^') {
+# 		Carp::cluck( "eating $thing with input $self->{tokens}" );
+# 	}
+	
+	if (blessed($thing) and $thing->isa('Regexp')) {
+		if ($self->{tokens} =~ /^$thing/) {
+			my $match	= $&;
+			substr($self->{tokens}, 0, length($match))	= '';
+			return $match;
+		}
+		
+		$self->_syntax_error( "Expected $thing" );
+	} elsif (looks_like_number( $thing )) {
+		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
+		return $token
+	} else {
+		### thing is a string
+		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
+			substr($self->{tokens}, 0, length($thing))	= '';
+			return $thing;
+		} else {
+			$self->_syntax_error( "Expected $thing" );
+		}
+	}
+	print $thing;
+	throw RDF::Query::Error;
+}
+
+sub _syntax_error {
+	my $self	= shift;
+	my $thing	= shift;
+	my $expect	= $thing;
+
+	my $level	= 2;
+	while (my $sub = (caller($level++))[3]) {
+		if ($sub =~ m/::_([A-Z]\w*)$/) {
+			$expect	= $1;
+			last;
+		}
+	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
+	if ($l->is_debug) {
+		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
+	}
+	
+	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
+	$near		=~ s/[\r\n ]+/ /g;
+	if ($thing) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: $thing in $expect near $near";
+	} else {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";
+	}
+}
+
+sub _test {
+	my $self	= shift;
+	my $thing	= shift;
+	if (blessed($thing) and $thing->isa('Regexp')) {
+		if ($self->{tokens} =~ m/^$thing/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+}
+
+sub _ws_test {
+	my $self	= shift;
+	unless (length($self->{tokens})) {
+		return 0;
+	}
+	
+	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+sub _ws {
+	my $self	= shift;
+	### #x9 | #xA | #xD | #x20 | comment
+	if ($self->_test('#')) {
+		$self->_eat(qr/#[^\x0d\x0a]*.?/);
+	} else {
+		$self->_eat(qr/[\n\r\t ]/);
+	}
+}
+
+sub __consume_ws_opt {
+	my $self	= shift;
+	if ($self->_ws_test) {
+		$self->__consume_ws;
+	}
+}
+
+sub __consume_ws {
+	my $self	= shift;
+	$self->_ws;
+	while ($self->_ws_test()) {
+		$self->_ws()
+	}
+}
+
+sub __base {
+	my $self	= shift;
+	my $build	= $self->{build};
+	if (defined($build->{base})) {
+		return $build->{base};
+	} else {
+		return;
+	}
+}
+
+sub __new_statement {
+	my $self	= shift;
+	my @nodes	= @_;
+	if (my $graph = $self->{named_graph}) {
+		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
+	} else {
+		return RDF::Query::Algebra::Triple->_new( @nodes );
+	}
+}
+
+sub __new_path {
+	my $self	= shift;
+	my $start	= shift;
+	my $pdata	= shift;
+	my $end		= shift;
+	(undef, my $op, my @nodes)	= @$pdata;
+	@nodes	= map { $self->__strip_path( $_ ) } @nodes;
+	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
+	return $path;
+}
+
+sub __strip_path {
+	my $self	= shift;
+	my $path	= shift;
+	if (blessed($_)) {
+		return $_;
+	} elsif (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+		(undef, my $op, my @nodes)	= @$path;
+		return [$op, map { $self->__strip_path($_) } @nodes];
+	} else {
+		return $_;
+	}
+}
+
+sub __new_bgp {
+	# fix up BGPs that might actually have property paths in them. split those
+	# out as their own path algebra objects, and join them with the bgp with a
+	# ggp if necessary
+	my $self		= shift;
+	my @patterns	= @_;
+	my @paths		= grep { reftype($_->predicate) eq 'ARRAY' and $_->predicate->[0] eq 'PATH' } @patterns;
+	my @triples		= grep { blessed($_->predicate) } @patterns;
+	if (scalar(@patterns) > scalar(@paths) + scalar(@triples)) {
+		Carp::cluck "more than just triples and paths passed to __new_bgp: " . Dumper(\@patterns);
+	}
+	my $bgp			= RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+	if (@paths) {
+		my @p;
+		foreach my $p (@paths) {
+			my $start	= $p->subject;
+			my $end		= $p->object;
+			my $pdata	= $p->predicate;
+			push(@p, $self->__new_path( $start, $pdata, $end ));
+		}
+		my $pgroup	= (scalar(@p) == 1)
+					? $p[0]
+					: RDF::Query::Algebra::GroupGraphPattern->new( @p );
+		if (scalar(@triples)) {
+			return RDF::Query::Algebra::GroupGraphPattern->new( $bgp, $pgroup );
+		} else {
+			return $pgroup;
+		}
+	} else {
+		return $bgp;
 	}
 }
 

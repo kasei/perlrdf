@@ -7,7 +7,7 @@ RDF::Query::Algebra::SubSelect - Algebra class for Subselects
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::SubSelect version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::SubSelect version 2.900.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -113,6 +113,21 @@ sub as_sparql {
 		$self->query->as_sparql( $context, $indent ),
 	);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->query->as_hash,
+	};
 }
 
 =item C<< type >>

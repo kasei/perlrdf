@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Extend version 2.900.
 
 =head1 METHODS
 
@@ -20,14 +20,14 @@ package RDF::Query::Plan::Extend;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
-
+use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -85,38 +85,45 @@ sub next {
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
 	my $plan	= $self->[1];
-	my $row		= $plan->next;
-	unless (defined($row)) {
-		$l->trace("no remaining rows in extend");
-		if ($self->[1]->state == $self->[1]->OPEN) {
-			$self->[1]->close();
+	while (1) {
+		my $row		= $plan->next;
+		unless (defined($row)) {
+			$l->trace("no remaining rows in extend");
+			if ($self->[1]->state == $self->[1]->OPEN) {
+				$self->[1]->close();
+			}
+			return;
 		}
-		return;
-	}
-	if ($l->is_trace) {
-		$l->trace( "extend on row $row" );
-	}
-	
-	my $keys	= $self->[2];
-	my $exprs	= $self->[3];
-	my $query	= $self->[0]{context}->query;
-	my $bridge	= $self->[0]{context}->model;
-	
-	my $proj	= $row->project( @{ $keys } );
-	foreach my $e (@$exprs) {
-		my $name			= $e->name;
-		my $var_or_expr	= $e->expression;
 		if ($l->is_trace) {
-			$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
+			$l->trace( "extend on row $row" );
 		}
-		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
-		if ($l->is_trace) {
-			$l->trace( "- extend value $name -> $value" );
-		}
-		$row->{ $name }	= $value;
+		
+		my $keys	= $self->[2];
+		my $exprs	= $self->[3];
+		my $query	= $self->[0]{context}->query;
+		
+		local($query->{_query_row_cache})	= {};
+		my $proj	= $row->project( @{ $keys } );
+		my $ok	= 1;
+		try {
+			foreach my $e (@$exprs) {
+				my $name			= $e->name;
+				my $var_or_expr	= $e->expression;
+				if ($l->is_trace) {
+					$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
+				}
+				my $value		= $query->var_or_expr_value( $row, $var_or_expr );
+				if ($l->is_trace) {
+					$l->trace( "- extend value $name -> $value" );
+				}
+				$row->{ $name }	= $value;
+			}
+		} otherwise {
+			$ok	= 0;
+		};
+		next unless ($ok);
+		return $row;
 	}
-	
-	return $row;
 }
 
 =item C<< close >>

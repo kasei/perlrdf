@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.123
+This document describes RDF::Trine::Store version 0.124
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -74,6 +74,48 @@ sub new_with_string {
 		throw RDF::Trine::Error::MethodInvocationError;
 	}
 }
+
+
+=item C<< new_with_config ( $hashref ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied
+configuration hashref. This requires the the Store subclass to be
+supplied with a C<store> key, while other keys are required by the
+Store subclasses, please refer to each subclass for specific
+documentation.
+
+An example invocation for the DBI store may be:
+
+  my $store = RDF::Trine::Store->new_with_config({
+                                                  store    => 'DBI',
+                                                  name     => 'mymodel',
+                                                  dsn      => 'DBI:mysql:database=rdf',
+                                                  username => 'dahut',
+                                                  password => 'Str0ngPa55w0RD'
+                                                 });
+
+=cut
+
+
+sub new_with_config {
+  my $proto	= shift;
+  my $config	= shift;
+  if (defined($config)) {
+    my $class	= join('::', 'RDF::Trine::Store', $config->{store});
+    if ($class->can('_new_with_config')) {
+      return $class->_new_with_config( $config );
+    } else {
+      throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
+    }
+  } else {
+    throw RDF::Trine::Error::MethodInvocationError;
+  }
+}
+
+
+
+
+
 
 =item C<< new_with_object ( $object ) >>
 
@@ -132,9 +174,10 @@ sub get_pattern {
 	if (1 == scalar(@triples)) {
 		my $t		= shift(@triples);
 		my @nodes	= $t->nodes;
+		my $size	= scalar(@nodes);
 		my %vars;
-		my @names	= qw(subject predicate object);
-		foreach my $n (0 .. 2) {
+		my @names	= qw(subject predicate object context);
+		foreach my $n (0 .. $#nodes) {
 			if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}

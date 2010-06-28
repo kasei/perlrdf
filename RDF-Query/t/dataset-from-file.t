@@ -37,12 +37,12 @@ END
 		is( scalar(@results), 1, 'Got one result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'Got homepage url' );
+		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{page}->uri_value, 'http://kasei.us/', 'Got homepage url' );
 	}
 	
 	{
-		my $query	= new RDF::Query ( <<"END" );
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql' } );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?page
 			FROM <$file>
@@ -54,8 +54,8 @@ END
 		is( scalar(@results), 1, 'Got one result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
-		ok( $query->bridge->isa_resource( $results[0]{page} ), 'Resource' );
-		is( $query->bridge->uri_value( $results[0]{page} ), 'http://kasei.us/', 'Got homepage url' );
+		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
+		is( $results[0]{page}->uri_value, 'http://kasei.us/', 'Got homepage url' );
 	}
 	
 	SKIP: {
@@ -65,7 +65,7 @@ END
 		eval "use RDF::RDFa::Parser;";
 		skip( "Need RDF::RDFa::Parser to run these tests.", 6 ) if ($@);
 		
-		my $query	= new RDF::Query ( <<"END" );
+		my $query	= new RDF::Query ( <<"END", { lang => 'sparql' } );
 			PREFIX dc: <http://purl.org/dc/elements/1.1/>
 			SELECT *
 			FROM <$rdfa>

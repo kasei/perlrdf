@@ -23,7 +23,7 @@ use RDF::Query;
 
 my @files	= map { "data/$_" } qw(t-sparql11-aggregates-1.rdf foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
-my $tests	= (scalar(@models) * 88);
+my $tests	= (scalar(@models) * 92);
 plan tests => $tests;
 
 foreach my $model (@models) {
@@ -222,17 +222,17 @@ END
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT COUNT(?aperture)
+			SELECT (COUNT(?aperture) AS ?count)
 			WHERE {
 				?image a foaf:Image ; exif:fNumber ?aperture
 			}
 END
-		isa_ok( $query, 'RDF::Query' );
+		isa_ok( $query, 'RDF::Query' ) or warn RDF::Query->error;
 		
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(?aperture)' => literal('4', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
+			my $expect	= RDF::Query::VariableBindings->new({ count => literal('4', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count apertures' );
 			$count++;
 		}
@@ -244,7 +244,7 @@ END
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT COUNT(DISTINCT ?aperture)
+			SELECT (COUNT(DISTINCT ?aperture) AS ?count)
 			WHERE {
 				?image a foaf:Image ; exif:fNumber ?aperture
 			}
@@ -254,7 +254,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'COUNT(DISTINCT ?aperture)' => literal('2', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
+			my $expect	= RDF::Query::VariableBindings->new({ count => literal('2', undef, 'http://www.w3.org/2001/XMLSchema#integer') });
 			is_deeply( $row, $expect, 'value for count distinct apertures' );
 			$count++;
 		}
@@ -265,7 +265,7 @@ END
 		print "# SELECT MIN(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-			SELECT MIN(?mbox)
+			SELECT (MIN(?mbox) AS ?min)
 			WHERE {
 				[ a foaf:Person ; foaf:mbox_sha1sum ?mbox ]
 			}
@@ -275,7 +275,7 @@ END
 		my $stream	= $query->execute( $model );
 		my $count	= 0;
 		while (my $row = $stream->next) {
-			my $expect	= RDF::Query::VariableBindings->new({ 'MIN(?mbox)' => literal('19fc9d0234848371668cf10a1b71ac9bd4236806') });
+			my $expect	= RDF::Query::VariableBindings->new({ min => literal('19fc9d0234848371668cf10a1b71ac9bd4236806') });
 			is_deeply( $row, $expect, 'value for min mbox_sha1sum' );
 			$count++;
 		}
@@ -335,7 +335,7 @@ END
 		print "# SELECT AVG(STR)\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 			PREFIX exif: <http://www.kanzaki.com/ns/exif#>
-			SELECT AVG(?f)
+			SELECT (AVG(?f) AS ?avg)
 			WHERE {
 				?image exif:fNumber ?f
 			}
@@ -426,7 +426,12 @@ END
 		while (my $row = $stream->next) {
 			my $dates	= $row->{dates};
 			isa_ok( $dates, 'RDF::Query::Node::Literal' );
- 			is( $dates->literal_value, '2004-09-06T15:19:20+01:00 2005-04-07T18:27:37-04:00 2005-04-07T18:27:50-04:00 2005-04-07T18:27:56-04:00 Sat, 4 Oct 2003 20:02:22 PDT-0700', 'expected GROUP_CONCAT plain-literal' );
+			my $lit	= $dates->literal_value;
+			like( $lit, qr/2004-09-06T15:19:20[+]01:00/, 'expected GROUP_CONCAT plain-literal' );
+			like( $lit, qr/2005-04-07T18:27:37-04:00/, 'expected GROUP_CONCAT plain-literal' );
+			like( $lit, qr/2005-04-07T18:27:50-04:00/, 'expected GROUP_CONCAT plain-literal' );
+			like( $lit, qr/2005-04-07T18:27:56-04:00/, 'expected GROUP_CONCAT plain-literal' );
+			like( $lit, qr/Sat, 4 Oct 2003 20:02:22 PDT-0700/, 'expected GROUP_CONCAT plain-literal' );
 			$count++;
 		}
 		is( $count, 1, 'one aggreate row' );

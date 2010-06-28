@@ -7,7 +7,7 @@ RDF::Query::Expression::Alias - Class for aliasing expressions with variable nam
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Alias version 2.202, released 30 January 2010.
+This document describes RDF::Query::Expression::Alias version 2.900.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -103,20 +103,19 @@ sub as_sparql {
 	return sprintf("(%s AS %s)", $expr->as_sparql, $alias->as_sparql);
 }
 
-=item C<< evaluate ( $query, $bridge, \%bound ) >>
+=item C<< evaluate ( $query, \%bound ) >>
 
-Evaluates the expression using the supplied context (bound variables and bridge
-object). Will return a RDF::Query::Node object.
+Evaluates the expression using the supplied bound variables.
+Will return a RDF::Query::Node object.
 
 =cut
 
 sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
-	my $bridge	= shift;
 	my $bound	= shift;
 	my $expr	= $self->expression;
-	my $value	= $query->var_or_expr_value( $bridge, $bound, $expr );
+	my $value	= $query->var_or_expr_value( $bound, $expr );
 	return $value;
 }
 

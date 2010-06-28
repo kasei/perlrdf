@@ -1,6 +1,7 @@
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_parse_xml.pl
+bin/rdf_transcode.pl
 bin/rdf_store_add_file.pl
 bin/rdf_store_makeprivate.pl
 bin/rdf_store_serialize.pl
@@ -23,6 +24,7 @@ lib/RDF/Trine/Iterator/Graph.pm
 lib/RDF/Trine/Iterator/Graph/Materialized.pm
 lib/RDF/Trine/Iterator/SAXHandler.pm
 lib/RDF/Trine/Model.pm
+lib/RDF/Trine/Model/Dataset.pm
 lib/RDF/Trine/Model/StatementFilter.pm
 lib/RDF/Trine/Model/Union.pm
 lib/RDF/Trine/Namespace.pm
@@ -504,6 +506,7 @@ t/iterator-materialized.t
 t/iterator-thaw.t
 t/iterator.t
 t/model-boundeddescription.t
+t/model-dataset.t
 t/model-filter.t
 t/model-temporary.t
 t/model-union.t

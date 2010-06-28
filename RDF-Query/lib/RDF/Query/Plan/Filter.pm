@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Filter version 2.900.
 
 =head1 METHODS
 
@@ -20,12 +20,13 @@ package RDF::Query::Plan::Filter;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+use RDF::Query::Error qw(:try);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -70,9 +71,23 @@ sub execute ($) {
 		$self->[0]{filter}	= sub {
 			my $row		= shift;
 			my $bool	= 0;
-			eval {
-				my $value	= $filter->evaluate( $query, $bridge, $row );
+			try {
+				my $qok	= ref($query);
+				local($query->{_query_row_cache})	= {};
+				unless ($qok) {
+					# $query may not be defined, but the local() call will autovivify it into a HASH.
+					# later on, if it's a ref, somebody's going to try to call a method on it, so
+					# undef it if it wasn't defined before the local() call.
+					$query	= undef;
+				}
+				my $value	= $filter->evaluate( $query, $row, $context );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
+			} catch RDF::Query::Error with {
+				my $e	= shift;
+				no warnings 'uninitialized';
+				$l->debug( 'exception thrown during filter evaluation: ' . $e->text );
+			} otherwise {
+				$l->debug( 'error during filter evaluation: ' . $@);
 			};
 			return $bool;
 		};

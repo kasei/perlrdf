@@ -7,7 +7,7 @@ RDF::Query::Algebra::Filter - Algebra class for Filter expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Filter version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Filter version 2.900.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -137,8 +137,24 @@ sub as_sparql {
 	my $expr	= $self->expr;
 	my $filter_sparql	= $expr->as_sparql( $context, $indent );
 	my $pattern_sparql	= $self->pattern->as_sparql( $context, $indent );
-	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER ${filter_sparql} .\n${indent}}#;
+	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER( ${filter_sparql} ) .\n${indent}}#;
 	return $pattern_sparql;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		expression	=> $self->expr->as_hash,
+	};
 }
 
 =item C<< type >>

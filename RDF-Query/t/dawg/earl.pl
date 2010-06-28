@@ -34,8 +34,8 @@ sub earl_pass_test {
 	my $earl	= shift;
 	my $test	= shift;
 	my $bridge	= $earl->{bridge};
-	if (blessed($test) and $bridge->isa_node( $test )) {
-		$test	= $bridge->uri_value( $test );
+	if (blessed($test) and $test->isa('RDF::Trine::Node')) {
+		$test	= $test->uri_value;
 	}
 	
 	print {$earl->{fh}} <<"END";
@@ -54,8 +54,8 @@ sub earl_fail_test {
 	my $earl	= shift;
 	my $test	= shift;
 	my $bridge	= $earl->{bridge};
-	if (blessed($test) and $bridge->isa_node( $test )) {
-		$test	= $bridge->uri_value( $test );
+	if (blessed($test) and $test->isa('RDF::Trine::Node')) {
+		$test	= $test->uri_value;
 	}
 	
 	print {$earl->{fh}} <<"END";

@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.123
+This document describes RDF::Trine::Store::Memory version 0.124
 
 =head1 SYNOPSIS
 
@@ -36,8 +36,9 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.123";
-	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	$VERSION	= "0.124";
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
 }
 
@@ -50,6 +51,52 @@ BEGIN {
 =item C<< new () >>
 
 Returns a new memory-backed storage object.
+
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<Memory> for this backend.
+
+This module also supports initializing the store from a file or URL,
+in which case, a C<sources> key may be used. This holds an arrayref of
+hashrefs.  To load a file, you may give the file name with a C<file>
+key in the hashref, and to load a URL, use C<url>. See example
+below. Furthermore, the following keys may be used:
+
+=over
+
+=item C<syntax>
+
+The syntax of the parsed file or URL.
+
+=item C<base_uri>
+
+The base URI to be used for a parsed file.
+
+=item C<graph> NOT IMPLEMENTED
+
+Use this URI as a graph name for the contents of the file or URL.
+
+=back
+
+The following example initializes a Memory store based on a local file and a remote URL:
+
+  my $store = RDF::Trine::Store->new_with_config(
+                {store => 'Memory',
+		 sources => [
+			      {
+			       file => 'test-23.ttl',
+			       syntax => 'turtle',
+			      },
+			      {
+			       url => 'http://www.kjetil.kjernsmo.net/foaf',
+			       syntax => 'rdfxml',
+                               graph => 'http://example.org/graph/remote-users'
+		      	      }
+	        ]});
+
 
 =cut
 
@@ -69,9 +116,37 @@ sub new {
 
 sub _new_with_string {
 	my $class	= shift;
-	my $config	= shift;
-	return $class->new();
+	my $config	= shift || '';
+	my @uris	= split(';', $config);
+	my $self	= $class->new();
+	foreach my $u (@uris) {
+		RDF::Trine::Parser->parse_url_into_model( $u, $self );
+	}
+	return $self;
 }
+
+sub _new_with_config {
+  my $class	= shift;
+  my $config	= shift;
+  my @sources	= @{$config->{sources}};
+  my $self	= $class->new();
+  foreach my $source (@sources) {
+    if ($source->{url}) {
+      my $parser = RDF::Trine::Parser->new($source->{syntax});
+      $parser->parse_url_into_model( $source->{url}, $self );
+    } elsif ($source->{file}) {
+      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
+      my $parser = RDF::Trine::Parser->new($source->{syntax});
+      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
+    } else {
+      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+    }
+  }
+  return $self;
+}
+
+
 
 =item C<< temporary_store >>
 
@@ -199,7 +274,7 @@ sub _get_statements_quad {
 			return unless ($i <= $#{ $self->{statements} });
 			my $st	= $self->{statements}[ $i ];
 # 			warn $st;
-			while (not(blessed($st))) {
+			while (not(blessed($st)) and ($i <= $#{ $self->{statements} })) {
 				$st	= $self->{statements}[ ++$i ];
 # 				warn "null st. next: $st";
 			}
@@ -283,7 +358,7 @@ the set of contexts of the stored quads.
 
 sub get_contexts {
 	my $self	= shift;
-	my @ctx		= values %{ $self->{ ctx_nodes } };
+	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
 

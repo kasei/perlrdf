@@ -7,7 +7,7 @@ RDF::Query::Algebra::Union - Algebra class for Union patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Union version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Union version 2.900.
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -108,7 +108,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	return sprintf(
 		"(union\n${prefix}${indent}%s\n${prefix}${indent}%s)",
@@ -133,6 +133,21 @@ sub as_sparql {
 		$self->second->as_sparql( $context, $indent ),
 	);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		patterns	=> [ map { $_->as_hash } $self->patterns ],
+	};
 }
 
 =item C<< type >>

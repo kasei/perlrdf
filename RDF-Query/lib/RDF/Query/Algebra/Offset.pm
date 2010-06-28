@@ -7,7 +7,7 @@ RDF::Query::Algebra::Offset - Algebra class for offseting query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Offset version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Offset version 2.900.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -127,6 +127,22 @@ sub as_sparql {
 		$self->offset,
 	);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		offset		=> $self->offset,
+	};
 }
 
 =item C<< type >>

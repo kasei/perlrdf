@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.202, released 30 January 2010.
+This document describes RDF::Query::Expression version 2.900.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -129,34 +129,6 @@ sub referenced_variables {
 		}
 	}
 	return RDF::Query::_uniq(@vars);
-}
-
-=item C<< fixup ( $query, $bridge, $base, \%namespaces ) >>
-
-Returns a new pattern that is ready for execution using the given bridge.
-This method replaces generic node objects with bridge-native objects.
-
-=cut
-
-sub fixup {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $query	= shift;
-	my $bridge	= shift;
-	my $base	= shift;
-	my $ns		= shift;
-	
-	if (my $opt = $bridge->fixup( $self, $query, $base, $ns )) {
-		return $opt;
-	} else {
-		my @operands	= map {
-			($_->isa('RDF::Query::Algebra'))
-				? $_->fixup( $query, $bridge, $base, $ns )
-				: $_
-		} $self->operands;
-		
-		return $class->new( $self->op, @operands );
-	}
 }
 
 1;

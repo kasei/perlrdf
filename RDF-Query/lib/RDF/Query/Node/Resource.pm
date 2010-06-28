@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.202, released 30 January 2010.
+This document describes RDF::Query::Node::Resource version 2.900.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -74,6 +74,20 @@ sub as_sparql {
 	return $self->sse( { namespaces => \%ns } );
 }
 
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'node',
+		iri			=> $self->uri_value,
+	};
+}
 
 1;
 

@@ -7,7 +7,7 @@ RDF::Query::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Literal version 2.202, released 30 January 2010.
+This document describes RDF::Query::Node::Literal version 2.900.
 
 =cut
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -203,6 +203,24 @@ sub as_sparql {
 	} else {
 		return $self->sse;
 	}
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my $hash	= {
+		type 		=> 'node',
+		literal		=> $self->literal_value,
+	};
+	$hash->{ language }	= $self->literal_value_language if ($self->has_language);
+	$hash->{ datatype }	= $self->literal_datatype if ($self->has_datatype);
+	return $hash;
 }
 
 =item C<< is_numeric_type >>

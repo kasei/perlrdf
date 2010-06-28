@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.202, released 30 January 2010.
+This document describes RDF::Query::Functions version 2.900.
 
 =cut
 
@@ -20,7 +20,7 @@ no warnings 'redefine';
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
 use RDF::Query;
-use RDF::Query::Model::RDFTrine;
+use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
 use Log::Log4perl;
@@ -35,7 +35,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -45,19 +45,18 @@ BEGIN {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#integer"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $value;
-	if ($node->is_literal) {
+	if (blessed($node) and $node->isa('RDF::Trine::Node::Literal')) {
 		my $type	= $node->literal_datatype || '';
 		$value		= $node->literal_value;
 		if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 			$value	= ($value eq 'true') ? '1' : '0';
 		} elsif ($node->is_numeric_type) {
 			if ($type eq 'http://www.w3.org/2001/XMLSchema#double') {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
+				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot cast to xsd:integer as precision would be lost" );
 			} elsif (int($value) != $value) {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
+				throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot cast to xsd:integer as precision would be lost" );
 			} else {
 				$value	= $node->numeric_value;
 			}
@@ -78,7 +77,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#integer"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#decimal"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $value;
 	if ($node->is_literal) {
@@ -107,7 +105,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#decimal"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#float"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $value;
 	if ($node->is_literal) {
@@ -136,7 +133,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#float"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#double"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $value;
 	if ($node->is_literal) {
@@ -166,7 +162,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#double"}	= sub {
 ### Effective Boolean Value
 $RDF::Query::functions{"sparql:ebv"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	
 	if ($node->is_literal) {
@@ -198,7 +193,6 @@ $RDF::Query::functions{"sparql:ebv"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#boolean"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	
 	if ($node->is_literal) {
@@ -236,7 +230,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#boolean"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#string"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	if ($node->is_literal) {
 		my $value	= $node->literal_value;
@@ -251,7 +244,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#string"}	= sub {
 
 $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#dateTime"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $f		= ref($query) ? $query->dateparser : DateTime::Format::W3CDTF->new;
 	my $value	= $node->literal_value;
@@ -267,7 +259,6 @@ $RDF::Query::functions{"http://www.w3.org/2001/XMLSchema#dateTime"}	= sub {
 
 $RDF::Query::functions{"sparql:str"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	
 	unless (blessed($node)) {
@@ -285,13 +276,82 @@ $RDF::Query::functions{"sparql:str"}	= sub {
 	}
 };
 
+$RDF::Query::functions{"sparql:strdt"}	= sub {
+	my $query	= shift;
+	my $str		= shift;
+	my $dt		= shift;
+	
+	unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($dt) and $dt->isa('RDF::Query::Node::Resource')) {
+		throw RDF::Query::Error::TypeError -text => "STRDT() must be called with a plain literal and a datatype IRI";
+	}
+	
+	my $value	= $str->literal_value;
+	my $uri		= $dt->uri_value;
+	return RDF::Query::Node::Literal->new( $value, undef, $uri );
+};
+
+$RDF::Query::functions{"sparql:strlang"}	= sub {
+	my $query	= shift;
+	my $str		= shift;
+	my $lang	= shift;
+	
+	unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($lang) and $lang->isa('RDF::Query::Node::Literal')) {
+		warn Dumper($str,$lang);
+		throw RDF::Query::Error::TypeError -text => "STRLANG() must be called with two plain literals";
+	}
+	
+	my $value	= $str->literal_value;
+	my $langtag	= $lang->literal_value;
+	return RDF::Query::Node::Literal->new( $value, $langtag );
+};
+
+$RDF::Query::functions{"sparql:uri"}	=
+$RDF::Query::functions{"sparql:iri"}	= sub {
+	my $query	= shift;
+	my $node	= shift;
+	
+	unless (blessed($node)) {
+		throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+	}
+	
+	if ($node->is_literal) {
+		my $value	= $node->literal_value;
+		return RDF::Query::Node::Resource->new( $value );
+	} elsif ($node->is_resource) {
+		return $node;
+	} else {
+		throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+	}
+};
+
+$RDF::Query::functions{"sparql:bnode"}	= sub {
+	my $query	= shift;
+	if (@_) {
+		my $node	= shift;
+		unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+			throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
+		}
+		my $value	= $node->literal_value;
+		if (my $bnode = $query->{_query_row_cache}{'sparql:bnode'}{$value}) {
+			return $bnode;
+		} else {
+			my $bnode	= RDF::Query::Node::Blank->new();
+			$query->{_query_row_cache}{'sparql:bnode'}{$value}	= $bnode;
+			return $bnode;
+		}
+	} else {
+		return RDF::Query::Node::Blank->new();
+	}
+};
+
 $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.logicalor");
+	$l->trace('executing logical-or');
 	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 	my $arg;
 	my $error;
@@ -299,15 +359,18 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 	while (1) {
 		my $bool;
 		try {
+			$l->trace('- getting logical-or operand...');
 			$arg 	= $args->();
 			if (defined($arg)) {
+				$l->trace("- logical-or operand: $arg");
 				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
-				my $value	= $func->evaluate( $query, $bridge, {} );
+				my $value	= $func->evaluate( $query, {} );
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			$l->debug("error in lhs of logical-or");
-			$error	||= shift;
+			my $e	= shift;
+			$l->debug("error in lhs of logical-or: " . $e->text);
+			$error	||= $e;
 		};
 		last unless (defined($arg));
 		if ($bool) {
@@ -315,6 +378,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 		}
 	}
 	if ($error) {
+		$l->debug('logical-or error: ' . $error->text);
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -324,11 +388,12 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 # sop:logical-and
 $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	### Arguments to sparql:logical-* functions are passed lazily via a closure
 	### so that TypeErrors in arguments can be handled properly.
 	my $args	= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.logicaland");
+	$l->trace('executing logical-and');
 	my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 	my $arg;
 	my $error;
@@ -336,15 +401,18 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 	while (1) {
 		my $bool;
 		try {
+			$l->trace('- getting logical-and operand...');
 			$arg 	= $args->();
 			if (defined($arg)) {
+				$l->trace("- logical-and operand: $arg");
 				my $func	= RDF::Query::Expression::Function->new( $ebv, $arg );
-				my $value	= $func->evaluate( $query, $bridge, {} );
+				my $value	= $func->evaluate( $query, {} );
 				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
 			}
 		} otherwise {
-			$l->debug("error in lhs of logical-or");
-			$error	||= shift;
+			my $e	= shift;
+			$l->debug("error in lhs of logical-and: " . $e->text);
+			$error	||= $e;
 		};
 		last unless (defined($arg));
 		unless ($bool) {
@@ -352,16 +420,66 @@ $RDF::Query::functions{"sparql:logical-and"}	= sub {
 		}
 	}
 	if ($error) {
+		$l->debug('logical-and error: ' . $error->text);
 		$error->throw;
 	} else {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	}
 };
 
+$RDF::Query::functions{"sparql:in"}		= sub { return __IN_FUNC('in', @_) };
+$RDF::Query::functions{"sparql:notin"}	= sub { return __IN_FUNC('notin', @_) };
+sub __IN_FUNC {
+	my $op		= shift;
+	my $query	= shift;
+	my $args	= shift;
+	my $node	= $args->();
+	unless (blessed($node)) {
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
+	
+	my $arg;
+	my $error;
+	while (1) {
+		my $bool;
+		try {
+			$l->trace("- getting $op operand...");
+			$arg 	= $args->();
+			if (defined($arg)) {
+				$l->trace("- $op operand: $arg");
+				my $expr	= RDF::Query::Expression::Binary->new('==', $node, $arg);
+				my $value	= $expr->evaluate( $query, {} );
+				$bool		= ($value->literal_value eq 'true') ? 1 : 0;
+			}
+		} catch RDF::Query::Error with {
+			my $e	= shift;
+			$l->debug("error in lhs of logical-and: " . $e->text);
+			$error	||= $e;
+		} otherwise {};
+		last unless (defined($arg));
+		if ($bool) {
+			if ($op eq 'notin') {
+				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			} else {
+				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			}
+		}
+	}
+	if ($error) {
+		$l->debug("$op error: " . $error->text);
+		$error->throw;
+	} else {
+		if ($op eq 'notin') {
+			return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		} else {
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	}
+}
+
 # sop:isBound
 $RDF::Query::functions{"sparql:bound"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	if (blessed($node)) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -373,9 +491,8 @@ $RDF::Query::functions{"sparql:bound"}	= sub {
 $RDF::Query::functions{"sparql:isuri"}	=
 $RDF::Query::functions{"sparql:isiri"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
-	if ($node->is_resource) {
+	if ($node->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -385,9 +502,8 @@ $RDF::Query::functions{"sparql:isiri"}	= sub {
 # sop:isBlank
 $RDF::Query::functions{"sparql:isblank"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
-	if ($node->is_blank) {
+	if ($node->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -397,9 +513,8 @@ $RDF::Query::functions{"sparql:isblank"}	= sub {
 # sop:isLiteral
 $RDF::Query::functions{"sparql:isliteral"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
-	if ($node->is_literal) {
+	if ($node->isa('RDF::Trine::Node::Literal')) {
 		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	} else {
 		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
@@ -409,7 +524,6 @@ $RDF::Query::functions{"sparql:isliteral"}	= sub {
 
 $RDF::Query::functions{"sparql:lang"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	if ($node->is_literal) {
 		my $lang	= ($node->has_language) ? $node->literal_value_language : '';
@@ -421,7 +535,6 @@ $RDF::Query::functions{"sparql:lang"}	= sub {
 
 $RDF::Query::functions{"sparql:langmatches"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $l		= shift;
 	my $m		= shift;
 	
@@ -441,7 +554,6 @@ $RDF::Query::functions{"sparql:langmatches"}	= sub {
 
 $RDF::Query::functions{"sparql:sameterm"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $nodea	= shift;
 	my $nodeb	= shift;
 	
@@ -482,7 +594,6 @@ $RDF::Query::functions{"sparql:sameterm"}	= sub {
 $RDF::Query::functions{"sparql:datatype"}	= sub {
 	# """Returns the datatype IRI of typedLit; returns xsd:string if the parameter is a simple literal."""
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	if ($node->is_literal) {
 		if ($node->has_language) {
@@ -502,7 +613,6 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 
 $RDF::Query::functions{"sparql:regex"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $match	= shift;
 	
@@ -532,7 +642,6 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 # # fn:compare
 # $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionscompare"}	= sub {
 # 	my $query	= shift;
-# 	my $bridge	= shift;
 # 	my $nodea	= shift;
 # 	my $nodeb	= shift;
 # 	my $cast	= 'sop:str';
@@ -542,7 +651,6 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 # # fn:not
 # $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsnot"}	= sub {
 # 	my $query	= shift;
-# 	my $bridge	= shift;
 # 	my $nodea	= shift;
 # 	my $nodeb	= shift;
 # 	my $cast	= 'sop:str';
@@ -552,7 +660,6 @@ $RDF::Query::functions{"sparql:regex"}	= sub {
 # fn:matches
 $RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $match	= shift;
 	my $f		= shift;
@@ -600,7 +707,6 @@ sub ________CUSTOM_FUNCTIONS________ {}#########################################
 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.sha1sum"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	require Digest::SHA1;
 	
@@ -618,7 +724,6 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.sha1sum"}	= 
 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $dt		= DateTime->now();
 	my $f		= ref($query) ? $query->dateparser : DateTime::Format::W3CDTF->new;
 	my $value	= $f->format_datetime( $dt );
@@ -627,7 +732,6 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub 
 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $node	= shift;
 	my $lang	= shift;
 	my $litlang	= $node->literal_value_language;
@@ -639,7 +743,6 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= s
 
 $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	
 	my $list	= shift;
 	my $value	= shift;
@@ -652,13 +755,13 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 		if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 		} else {
-			my $stream	= $bridge->get_statements( $list, $first, undef, $query, {} );
+			my $stream	= $query->model->get_statements( $list, $first, undef );
 			while (my $stmt = $stream->next()) {
 				my $member	= $stmt->object;
 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
 			}
 			
-			my $stmt	= $bridge->get_statements( $list, $rest, undef, $query, {} )->next();
+			my $stmt	= $query->model->get_statements( $list, $rest, undef )->next();
 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
 			
 			my $tail	= $stmt->object;
@@ -676,48 +779,27 @@ $RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}
 
 $RDF::Query::functions{"sparql:exists"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
-	
+	my $context	= shift;
+	my $bound	= shift;
 	my $ggp		= shift;
-	warn Dumper($ggp); # XXX
-	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
 	
-# 	my $list	= shift;
-# 	my $value	= shift;
-# 	
-# 	my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
-# 	my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
-# 	
-# 	my $result;
-# 	LIST: while ($list) {
-# 		if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-# 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-# 		} else {
-# 			my $stream	= $bridge->get_statements( $list, $first, undef, $query, {} );
-# 			while (my $stmt = $stream->next()) {
-# 				my $member	= $stmt->object;
-# 				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
-# 			}
-# 			
-# 			my $stmt	= $bridge->get_statements( $list, $rest, undef, $query, {} )->next();
-# 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
-# 			
-# 			my $tail	= $stmt->object;
-# 			if ($tail) {
-# 				$list	= $tail;
-# 				next; #next LIST;
-# 			} else {
-# 				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-# 			}
-# 		}
-# 	}
-# 	
-# 	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	Carp::confess unless (blessed($context));
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.functions.exists");
+	my $copy		= $context->copy( bound => $bound );
+	$plan->execute( $copy );
+	if (my $row = $plan->next) {
+		$l->trace("got EXISTS row: $row");
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	} else {
+		$l->trace("didn't find EXISTS row");
+		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
 };
 
 $RDF::Query::functions{"sparql:coalesce"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my @args	= @_;
 	foreach my $node (@args) {
 		if (blessed($node)) {
@@ -738,7 +820,6 @@ BEGIN {
 $RDF::Query::functions{"java:com.ldodds.sparql.Distance"}	= sub {
 	# http://xmlarmyknife.com/blog/archives/000281.html
 	my $query	= shift;
-	my $bridge	= shift;
 	my ($lat1, $lon1, $lat2, $lon2);
 	
 	unless ($GEO_DISTANCE_LOADED) {
@@ -769,7 +850,6 @@ $RDF::Query::functions{"java:com.ldodds.sparql.Distance"}	= sub {
 
 $RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	my $value	= shift;
 	my $func	= RDF::Query::Expression::Function->new( 'sparql:str', $value );
 	
@@ -798,8 +878,7 @@ BEGIN {
 	my $BLOOM_URL	= 'http://kasei.us/code/rdf-query/functions/bloom';
 	sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
 		my $query	= shift;
-		my $bridge	= shift;
-		my $stream	= shift;
+			my $stream	= shift;
 		$l->debug("bloom filter got result stream\n");
 		my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
 		$stream->add_extra_result_data('bnode-map', $nodemap);
@@ -814,8 +893,7 @@ BEGIN {
 	} );
 	$RDF::Query::functions{ $BLOOM_URL }	= sub {
 		my $query	= shift;
-		my $bridge	= shift;
-		
+			
 		my $value	= shift;
 		my $filter	= shift;
 		my $bloom;
@@ -836,6 +914,8 @@ BEGIN {
 		}
 		
 		my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
+		die; # no bridge anymore!
+		my $bridge;
 		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
 		$l->debug("- " . scalar(@names) . " identity names for node");
 		foreach my $string (@names) {
@@ -854,7 +934,6 @@ BEGIN {
 
 $RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom/filter"}	= sub {
 	my $query	= shift;
-	my $bridge	= shift;
 	
 	my $value	= shift;
 	my $filter	= shift;

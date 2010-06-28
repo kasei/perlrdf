@@ -7,7 +7,7 @@ RDF::Query::Federate::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate::Plan version 2.202, released 30 January 2010.
+This document describes RDF::Query::Federate::Plan version 2.900.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -61,7 +61,8 @@ sub generate_plans {
 		my ($type)	= ($aclass =~ m<::(\w+)$>);
 		
 		if ($type eq 'BasicGraphPattern') {
-			my ($plan)	= $self->prune_plans( $context, $self->SUPER::generate_plans( $algebra, $context, %args ) );
+# 			my ($plan)	= $self->prune_plans( $context, $self->SUPER::generate_plans( $algebra, $context, %args ) );
+			my ($plan)	= $self->SUPER::generate_plans( $algebra, $context, %args );
 			my @triples	= $algebra->triples();
 			my @fplans	= map { $_->[0] } $self->_optimistic_triple_join_plans( $context, \@triples, %args, method => 'triples' );
 			$l->debug("generating plans for federated query with algebra: $sse");

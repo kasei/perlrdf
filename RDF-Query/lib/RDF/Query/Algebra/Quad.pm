@@ -7,7 +7,7 @@ RDF::Query::Algebra::Quad - Algebra class for Quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Quad version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Quad version 2.900.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 my %QUAD_LABELS;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -64,6 +64,21 @@ sub as_sparql {
 		$self->object->as_sparql( $context ),
 	);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		nodes		=> [ map { $_->as_hash } $self->nodes ],
+	};
 }
 
 =item C<< referenced_blanks >>

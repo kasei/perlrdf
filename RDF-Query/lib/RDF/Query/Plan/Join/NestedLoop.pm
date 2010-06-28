@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::NestedLoop - Executable query plan for nested loop joins
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::NestedLoop version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Join::NestedLoop version 2.900.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::NestedLoop' }++;
 }
 
@@ -71,8 +71,9 @@ sub execute ($) {
 	$self->[0]{start_time}	= [gettimeofday];
 	my @inner;
 	$self->rhs->execute( $context );
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.nestedloop");
 	while (my $row = $self->rhs->next) {
-#		warn "*** loading inner row cache with: " . Dumper($row);
+		$l->trace("loading inner row cache with: " . $row);
 		push(@inner, $row);
 	}
 	$self->lhs->execute( $context );

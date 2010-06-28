@@ -37,7 +37,7 @@ foreach my $model (@models) {
 	
 	{
 		print "# FeDeRate BINDINGS (one var)\n";
-		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p ?name
 			WHERE {
@@ -65,7 +65,7 @@ END
 	
 	{
 		print "# FeDeRate BINDINGS (two var)\n";
-		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p
 			WHERE {

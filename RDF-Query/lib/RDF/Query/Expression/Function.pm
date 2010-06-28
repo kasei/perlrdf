@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.202, released 30 January 2010.
+This document describes RDF::Query::Expression::Function version 2.900.
 
 =cut
 
@@ -18,21 +18,24 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Expression);
 
+use RDF::Query::Error qw(:try);
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
 
 our %FUNCTION_MAP	= (
 	str			=> "STR",
+	strdt		=> "STRDT",
+	strlang		=> "STRLANG",
 	lang		=> "LANG",
 	langmatches	=> "LANGMATCHES",
 	sameterm	=> "sameTerm",
@@ -43,6 +46,12 @@ our %FUNCTION_MAP	= (
 	isblank		=> "isBlank",
 	isliteral	=> "isLiteral",
 	regex		=> "REGEX",
+	iri			=> "IRI",
+	uri			=> "IRI",
+	bnode		=> "BNODE",
+	in			=> "IN",
+	notin		=> "NOT IN",
+	if			=> "IF",
 );
 
 =head1 METHODS
@@ -100,7 +109,7 @@ sub sse {
 	my $context	= shift;
 	
 	my $uri		= $self->uri->uri_value;
-	if ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
+	if ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
 		my $func	= $2;
 		return sprintf(
 			'(%s %s)',
@@ -128,15 +137,26 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(str|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
-	my $string	= sprintf(
-		"%s( %s )",
-		$func,
-		join(', ', map { $_->as_sparql( $context, $indent ) } @args),
-	);
-	return $string;
+	if ($func eq 'IN' or $func eq 'NOT IN') {
+		my $term	= shift(@args);
+		my $string	= sprintf(
+			"%s %s (%s)",
+			$term->as_sparql( $context, $indent ),
+			$func,
+			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	} else {
+		my $string	= sprintf(
+			"%s(%s)",
+			$func,
+			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	}
 }
 
 =item C<< type >>
@@ -184,49 +204,73 @@ sub qualify_uris {
 	return $class->new( @args );
 }
 
-=item C<< evaluate ( $query, $bridge, \%bound ) >>
+=item C<< evaluate ( $query, \%bound, $context ) >>
 
-Evaluates the expression using the supplied context (bound variables and bridge
-object). Will return a RDF::Query::Node object.
+Evaluates the expression using the supplied bound variables.
+Will return a RDF::Query::Node object.
 
 =cut
 
 sub evaluate {
 	my $self	= shift;
 	my $query	= shift || 'RDF::Query';
-	my $bridge	= shift;
 	my $bound	= shift;
+	my $context	= shift;
 	my $uri		= $self->uri;
 	
 	no warnings 'uninitialized';
-	if ($uri->uri_value =~ /^sparql:logical-(.+)$/) {
+	my $uriv	= $uri->uri_value;
+	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/) {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw
 		# TypeErrors (e.g. true || fail ==> true).
 		my @args	= $self->arguments;
 		my $args	= sub {
 						my $value	= shift(@args);
-						return unless (defined $value);
-						return $value->isa('RDF::Query::Algebra')
-							? $value->evaluate( $query, $bridge, $bound )
-							: ($value->isa('RDF::Trine::Node::Variable'))
-								? $bound->{ $value->name }
-								: $value
+						return unless (blessed($value));
+						my $val	= 0;
+						try {
+							$val	= $value->isa('RDF::Query::Expression')
+								? $value->evaluate( $query, $bound )
+								: ($value->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $value->name }
+									: $value;
+						} otherwise {};
+						return $val;
 					};
 		my $func	= $query->get_function( $uri );
-		my $value	= $func->( $query, $bridge, $args );
+		my $value	= $func->( $query, $args );
 		return $value;
+	} elsif ($uriv =~ /^sparql:if$/) {
+		my @args	= $self->arguments;
+		my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
+		my $expr	= shift(@args);
+		my $index	= 1;
+		try {
+			my $exprval	= $query->var_or_expr_value( $bound, $expr );
+			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
+			my $value	= $func->evaluate( $query, {} );
+			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
+			if ($bool) {
+				$index	= 0;
+			}
+		} catch RDF::Query::Error::TypeError with {};
+		my $expr2	= $args[$index];
+		return $query->var_or_expr_value( $bound, $expr2 );
+	} elsif ($uriv eq 'sparql:exists') {
+		my $func	= $query->get_function($uri);
+		my ($ggp)	= $self->arguments;
+		return $func->( $query, $context, $bound, $ggp );
 	} else {
 		my @args	= map {
 						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bridge, $bound )
+							? $_->evaluate( $query, $bound, $context )
 							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_
 					} $self->arguments;
-		
 		my $func	= $query->get_function($uri);
-		my $value	= $func->( $query, $bridge, @args );
+		my $value	= $func->( $query, @args );
 		return $value;
 	}
 }

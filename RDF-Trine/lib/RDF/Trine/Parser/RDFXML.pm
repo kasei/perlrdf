@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.123
+This document describes RDF::Trine::Parser::RDFXML version 0.124
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Carp;
 use XML::SAX;
-use XML::LibXML;
+use XML::LibXML 1.70;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
@@ -49,11 +49,12 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 }
 
 ######################################################################
@@ -754,11 +755,9 @@ sub new_literal {
 	if (my $dt = $self->{datatype}) {	# datatype
 		$args[1]	= $dt;
 		if ($dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-			my $parsed	= 0;
 			eval {
 				if ($string =~ m/^</) {
 					my $doc 	= XML::LibXML->load_xml(string => $string);
-					$parsed		= 1;
 					my $canon	= $doc->toStringEC14N(1);
 					$string	= $canon;
 				}

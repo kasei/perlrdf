@@ -7,7 +7,7 @@ RDF::Query::ServiceDescription - Class for describing federated query data sourc
 
 =head1 VERSION
 
-This document describes RDF::Query::ServiceDescription version 2.202, released 30 January 2010.
+This document describes RDF::Query::ServiceDescription version 2.900.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::ServiceDescription;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 use strict;
@@ -172,7 +172,7 @@ END
 				my $stream	= $model->get_statements( $subj, undef, undef );
 				while (my $st = $stream->next) {
 					push(@queue, $st->object);
-					my @nodes	= map { RDF::Query::Model::RDFTrine::_cast_to_local($_) } ($subj, $st->predicate, $st->object);
+					my @nodes	= ($subj, $st->predicate, $st->object);
 					foreach my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
 							if (exists($bnode_map{ $nodes[$i]->as_string })) {
@@ -338,7 +338,7 @@ sub computed_statement_generator {
 				my $bound		= { subject => $s, object => $o };
 				my $bool		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 				my $filter		= RDF::Query::Expression::Function->new( $bool, $sofilter );
-				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $value		= $filter->evaluate( $query, $bound );
 				my $nok			= ($value->literal_value eq 'false');
 				if ($nok) {
 					$ok	= 0;
@@ -374,7 +374,6 @@ sub computed_statement_generator {
 						);
 			my $context	= RDF::Query::ExecutionContext->new(
 							bound	=> {},
-#							model	=> $bridge,
 						);
 			my ($plan)	= RDF::Query::Plan->generate_plans( $service, $context );
 			$plan->execute( $context );
@@ -459,7 +458,7 @@ sub answers_triple_pattern {
 				# XXX shouldn't require a query object in this case, since it's not going
 				# XXX to even touch a datastore, but the code needs to be changed to allow for that.
 				my $query		= RDF::Query->new("ASK {}");
-				my $value		= $filter->evaluate( $query, $bridge, $bound );
+				my $value		= $filter->evaluate( $query, $bound );
 				my $nok			= ($value->literal_value eq 'false');
 				if ($nok) {
 					$l->debug( "triple pattern doesn't match the sofilter" );

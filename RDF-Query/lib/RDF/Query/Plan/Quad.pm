@@ -7,7 +7,7 @@ RDF::Query::Plan::Quad - Executable query plan for Quads.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Quad version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Quad version 2.900.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -45,7 +45,7 @@ sub new {
 	my $self	= $class->SUPER::new( @quad );
 	
 	### the next two loops look for repeated variables because some backends
-	### (Redland and RDF::Core) can't distinguish a pattern like { ?a ?a ?b }
+	### can't distinguish a pattern like { ?a ?a ?b }
 	### from { ?a ?b ?c }. if we find repeated variables (there can be at most
 	### two since there are only four nodes in a quad), we save the positions
 	### in the quad that hold the variable(s), and the code in next() will filter
@@ -115,8 +115,8 @@ sub execute ($) {
 		}
 	}
 	
-	my $bridge	= $context->model;
-	my $iter	= $bridge->get_named_statements( @quad, $context->query, $context->bound );
+	my $model	= $context->model;
+	my $iter	= $model->get_statements( @quad[0..3] );
 	
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
@@ -150,6 +150,10 @@ sub next {
 					}
 				}
 			}
+		}
+		
+		if ($row->context->isa('RDF::Trine::Node::Nil')) {
+			next;
 		}
 		
 		my $binding	= {};

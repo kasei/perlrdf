@@ -7,7 +7,7 @@ RDF::Query::Algebra::Aggregate - Algebra class for aggregate patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Aggregate version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Aggregate version 2.900.
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -40,7 +40,7 @@ BEGIN {
 
 =item C<new ( $pattern, \@groupby, $alias => [$op => $col] )>
 
-=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op => $col] ], having => \@constraint )>
+=item C<new ( $pattern, \@groupby, expressions => [ $alias => [$op, \%options, @cols] ] )>
 
 Returns a new Aggregate structure. Groups by the named bindings in C<< @groupby >>,
 and returns new bindings for the named C<< $alias >> for the operation C<< $op >>
@@ -54,16 +54,21 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $groupby	= shift;
-	my (@ops, @having);
+	my @ops;
 	if (scalar(@_) and ref($_[0]) and reftype($_[0]) eq 'HASH') {
 		my $hash	= shift;
 		@ops		= @{ $hash->{ 'expressions' } || [] };
-		@having		= @{ $hash->{ 'having' } || [] };
 	} else {
+		while (@_) {
+			my ($alias, $data)	= splice(@_,0,2,());
+			my $op	= shift(@$data);
+			my @data	= ($op, {}, @$data);
+			push(@ops, $alias, \@data);
+		}
 		@ops		= @_;
 	}
 	
-	return bless( [ $pattern, $groupby, \@ops, \@having ] );
+	return bless( [ $pattern, $groupby, \@ops ] );
 }
 
 =item C<< construct_args >>
@@ -76,12 +81,7 @@ will produce a clone of this algebra pattern.
 sub construct_args {
 	my $self	= shift;
 	my @ops		= @{ $self->[2] };
-	my %args	= ( expressions => \@ops );
-	my @having	= $self->having;
-	if (scalar(@having)) {
-		$args{ having }	= \@having;
-	}
-	return ($self->pattern, [ $self->groupby ], \%args);
+	return ($self->pattern, [ $self->groupby ], { expressions => \@ops });
 }
 
 =item C<< pattern >>
@@ -106,20 +106,9 @@ sub groupby {
 	return @{ $self->[1] };
 }
 
-=item C<< having >>
-
-Returns the aggregate's HAVING clause.
-
-=cut
-
-sub having {
-	my $self	= shift;
-	return @{ $self->[3] };
-}
-
 =item C<< ops >>
 
-Returns a list of tuples as ARRAY refs containing C<< $alias, $op, $col >>.
+Returns a list of tuples as ARRAY refs containing C<< $alias, $op, @cols >>.
 
 =cut
 
@@ -130,8 +119,8 @@ sub ops {
 	while (@ops) {
 		my $alias	= shift(@ops);
 		my $data	= shift(@ops);
-		my ($op, $col)	= @$data;
-		push(@tuples, [$alias, $op, $col]);
+		my ($op, $opts, @col)	= @$data;
+		push(@tuples, [$alias, $op, $opts, @col]);
 	}
 	return @tuples;
 }
@@ -146,19 +135,31 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
-		my ($alias, $op, $col)	= @$data;
-		push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, ($col eq '*' ? '*' : $col->sse( $context, "${prefix}${indent}" ))));
+		my ($alias, $op, $opts, @cols)	= @$data;
+		my @col_strings	= map { ($_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
+		my $col_string	= join(' ', @col_strings);
+		if (@col_strings > 1) {
+			$col_string	= '(' . $col_string . ')';
+		}
+		my %op_opts	= %{ $opts || {} };
+		my @opts_keys	= keys %op_opts;
+		if (@opts_keys) {
+			my $opt_string	= '(' . join(' ', map { $_, qq["$op_opts{$_}"] } @opts_keys) . ')';
+			push(@ops_sse, sprintf('(alias "%s" (%s %s %s))', $alias, $op, $col_string, $opt_string));
+		} else {
+			push(@ops_sse, sprintf('(alias "%s" (%s %s))', $alias, $op, $col_string));
+		}
 	}
 	
 	my @group	= $self->groupby;
-	my $group	= (@group) ? '(' . join(', ', @group) . ')' : '';
+	my $group	= (@group) ? '(' . join(', ', map {$_->sse($context, $prefix)} @group) . ')' : '';
 	return sprintf(
-		"(aggregate\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+		"(aggregate\n${prefix}${indent}%s\n${prefix}${indent}(%s)\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 		join(', ', @ops_sse),
 		$group,
@@ -176,6 +177,23 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	throw RDF::Query::Error::SerializationError -text => "Aggregates can't be serialized as SPARQL";
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		groupby		=> [ map { $_->as_hash } $self->groupby ],
+		expressions	=> [ map { $_->as_hash } $self->ops ],
+	};
 }
 
 =item C<< type >>

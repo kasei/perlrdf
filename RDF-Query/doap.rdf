@@ -19,7 +19,7 @@
 	<shortdesc xml:lang="en">RDF::Query RDF Query Engine.</shortdesc>
 	<homepage rdf:resource="http://kasei.us/code/rdf-query/"/>
 	<created>2004-07-05</created>
-	<description xml:lang="en">An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Redland and RDF::Core.</description>
+	<description xml:lang="en">An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.</description>
 	<rdfs:seeAlso rdf:resource="Changes.ttl"/>
 
 	<maintainer>
@@ -34,8 +34,8 @@
 	<release>
 		<Version>
 			<name>stable</name>
-			<created>2009-03-19</created>
-			<revision>2.100</revision>
+			<created>2010-06-23</created>
+			<revision>2.900</revision>
 		</Version>
 	</release>
 

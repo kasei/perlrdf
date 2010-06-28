@@ -13,7 +13,7 @@
 	</style>
 </head>
 <body>
-	<h1>RDF::Query - A SPARQL/RDQL implementation for RDF::Redland and RDF::Core</h1>
+	<h1>RDF::Query - A SPARQL/RDQL implementation for RDF::Trine.</h1>
 	<p>RDF::Query allows RDQL and SPARQL queries to be run against an RDF model, returning rows of matching results.</p>
 	
 	<h2>Requirements</h2>
@@ -36,11 +36,8 @@
 		</ul>
 		<p>The following additional modules are recommended for some functionality:</p>
 		<ul>
-			<li>RDF::Core</li>
 			<li>RDF::Redland</li>
-			<li>JavaScript</li>
 			<li>Geo::Distance</li>
-			<li>Bloom::Filter</li>
 		</ul>
 	<h2 id="installing">Installing RDF::Query</h2>
 		<p>To install, run:</p>
@@ -51,7 +48,68 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_201">Version 2.202 (2010-05-22)</h3>
+		<h3 id="v2_900">Version 2.900 (2010-06-23)</h3>
+			<ul>
+				<li>Major Changes
+					<ul>
+						<li>SPARQL 1.1 is now the default query parser.</li>
+						<li>RDF::Core is no longer supported as a backend triplestore.</li>
+						<li>Redland is still supported as a backend store, but updated handling of default and named graphs means that existing triples stored in Redland without a context (named graph) will not be accessible from RDF::Query.</li>
+					</ul>
+				</li>
+				<li>SPARQL Language Updates
+					<ul>
+						<li>Added support for SPARQL 1.1 Query features:
+							<ul>
+								<li>Basic Query Federation with BINDINGS and UNDEF support.</li>
+								<li>Functions: IF, STRDT, STRLANG, IRI, URI, BNODE.</li>
+								<li>Infix operators IN and NOT IN.</li>
+								<li>Aggregates COUNT, SUM, MIN, MAX, AVG, GROUP_CONCAT, and SAMPLE.</li>
+								<li>Property paths.</li>
+								<li>Negation with MINUS graph patterns and NOT EXISTS filters.</li>
+							</ul>
+						</li>
+						<li>Added support for SPARQL 1.1 Update features:</li>
+							<ul>
+								<li>INSERT/DELETE DATA, INSERT/DELETE WHERE, LOAD, and CLEAR</li>
+								<li>Added support for multi-statement updates.</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>API Updates
+					<ul>
+						<li>Removed all bridge classes (RDF::Query::Model::*).</li>
+						<li>Removed RDF::Query::Logger class.</li>
+						<li>Removed net filter function code from RDF::Query.</li>
+						<li>Added as_hash method to Query, Algebra, and Node classes.</li>
+						<li>Removed SPARUL and SPARQLP parsers.</li>
+						<li>RDF::Query no longer loads URIs in FROM and FROM NAMED clauses with SPARQL 1.1 by default.</li>
+						<li>Added ability for RDF::Query::Plan::Iterator to fire a callback when execute() is called.</li>
+						<li>Added new RDF::Query::Plan::ComputedStatement class.</li>
+						<li>Added new RDF::Query::Plan::Iterator class.</li>
+					</ul>
+				</li>
+				<li>Bugfixes
+					<ul>
+						<li>Fixed whitespace unescaping bug in SPARQL (1.0 and 1.1) parsers.</li>
+					</ul>
+				</li>
+				<li>Scripts
+					<ul>
+						<li>Added bin/json.pl to print a JSON-formatted representation of the query algebra.</li>
+						<li>Added bin/rqsh.pl CLI interface to executing updates and queries.</li>
+						<li>Added ability to serialize algebra and plan in bin/deparse.pl.</li>
+						<li>bin/deparse.pl now catches parsing errors and prints stacktrace.</li>
+					</ul>
+				</li>
+				<li>Optimizations
+					<ul>
+						<li>Implemented optimization for COUNT(*) over a single triplepattern.</li>
+					</ul>
+				</li>
+			</ul>
+		<h3 id="v2_202">Version 2.202 (2010-05-22)</h3>
 			<ul>
 				<li>Added initial SPARQL 1.1 syntax and eval support for select expressions, subqueries, negation, aggregates, subqueries, and basic federation.</li>
 				<li>Added RDF::Query::VariableBindings.pm->set method.</li>

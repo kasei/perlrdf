@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.202, released 30 January 2010.
+This document describes RDF::Query::Expression::Binary version 2.900.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -70,24 +70,25 @@ sub as_sparql {
 }
 
 
-=item C<< evaluate ( $query, $bridge, \%bound ) >>
+=item C<< evaluate ( $query, \%bound ) >>
 
-Evaluates the expression using the supplied context (bound variables and bridge
-object). Will return a RDF::Query::Node object.
+Evaluates the expression using the supplied bound variables.
+Will return a RDF::Query::Node object.
 
 =cut
 
 sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
-	my $bridge	= shift;
 	my $bound	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.expression.binary");
 	my $op		= $self->op;
 	my @operands	= $self->operands;
 	my ($lhs, $rhs)	= map {
+						throw RDF::Query::Error::ExecutionError ( -text => "error in evaluating operands to binary $op" )
+							unless (blessed($_));
 						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bridge, $bound )
+							? $_->evaluate( $query, $bound, @_ )
 							: ($_->isa('RDF::Trine::Node::Variable'))
 								? $bound->{ $_->name }
 								: $_

@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested lo
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.900.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
 
@@ -65,6 +65,9 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "PushDownNestedLoop join plan can't be executed while already open";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.pushdownnestedloop");
+	$l->trace("executing bind join");
 	
 	$self->lhs->execute( $context );
 	if ($self->lhs->state == $self->OPEN) {
@@ -108,20 +111,20 @@ sub next {
 				my %bound	= %{ $context->bound };
 				@bound{ keys %$outer }	= values %$outer;
 				my $copy	= $context->copy( bound => \%bound );
-#				warn "executing inner plan with bound: " . Dumper(\%bound);
+				$l->trace( "executing inner plan with bound: " . Dumper(\%bound) );
 				if ($inner->state == $inner->OPEN) {
 					$inner->close();
 				}
 				$self->[0]{inner}			= $inner->execute( $copy );
 			} else {
 				# we've exhausted the outer iterator. we're now done.
-	#			warn "exhausted";
+				$l->trace("exhausted");
 				return undef;
 			}
 		}
 		
 		while (defined(my $inner_row = $self->[0]{inner}->next)) {
-#			warn "using inner row: " . Dumper($inner_row);
+			$l->trace( "using inner row: " . Dumper($inner_row) );
 			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
 				if ($l->is_trace) {
 					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");

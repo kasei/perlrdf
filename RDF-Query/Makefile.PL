@@ -9,7 +9,6 @@ license				'perl';
 
 recommends			'LWP::Simple'				=> 0;
 recommends			'RDF::Redland'				=> 1;
-recommends			'JavaScript'				=> 0;
 recommends			'Getopt::Simple'			=> 0;
 recommends			'Geo::Distance'				=> 0.09;
 recommends			'Crypt::GPG'				=> 0;
@@ -35,8 +34,7 @@ WriteMakefile(
 					'File::Temp'				=> 0,
 					'JSON'						=> 2,
 					'Parse::RecDescent'			=> 0,
-					'RDF::Core'					=> 0,
-					'RDF::Trine'				=> 0.114,
+					'RDF::Trine'				=> 0.124,
 					'Scalar::Util'				=> 0,
 					'Scalar::Util'				=> 0,
 					'Set::Scalar'				=> 0,

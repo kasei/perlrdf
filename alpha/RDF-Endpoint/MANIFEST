@@ -1,0 +1,23 @@
+bin/endpoint.cgi
+bin/server.pl
+Changes.ttl
+docs/admin/index.html
+docs/index.html
+inc/Module/Install.pm
+inc/Module/Install/Base.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/MakeMaker.pm
+inc/Module/Install/Metadata.pm
+include/admin_index.html
+include/endpoint_description.rdf
+include/error.html
+include/index.html
+include/login.html
+include/results.html
+lib/RDF/Endpoint.pm
+lib/RDF/Endpoint/Apache.pm
+lib/RDF/Endpoint/Apache/Admin.pm
+lib/RDF/Endpoint/CGI.pm
+lib/RDF/Endpoint/Server.pm
+Makefile.PL
+MANIFEST			This list of files

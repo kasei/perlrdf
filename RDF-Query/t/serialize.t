@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 32;
+use Test::More tests => 30;
 
 use_ok( 'RDF::Query' );
 
@@ -35,7 +35,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER REGEX( STR( ?homepage ), "^http://www.rpi.edu/.+" ) . }', 'sparql to sparql with regex filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p WHERE { ?p a foaf:Person . ?p foaf:homepage ?homepage . FILTER( REGEX(STR(?homepage), "^http://www.rpi.edu/.+") ) . }', 'sparql to sparql with regex filter' );
 };
 
 {
@@ -43,7 +43,7 @@ use_ok( 'RDF::Query' );
 	my $query	= new RDF::Query ( $sparql );
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
-	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER (?name < "Greg") . }', 'sparql to sparql with less-than filter' );
+	is( $string, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?name WHERE { ?person a foaf:Person . ?person foaf:name ?name . FILTER( (?name < "Greg") ) . }', 'sparql to sparql with less-than filter' );
 }
 
 {
@@ -131,7 +131,7 @@ END
 }
 
 {
-	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT *
 		WHERE {
@@ -170,19 +170,6 @@ END
 	my $qagain	= RDF::Query->new( $sparql );
 	my $again	= $qagain->as_sparql;
 	is( $sparql, $again, 'as_sparql: select DISTINCT' );
-}
-
-{
-	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		SELECT COUNT(?person)
-		WHERE {
-			?person foaf:name ?name .
-		}
-END
-	throws_ok {
-		$query->as_sparql;
-	} 'RDF::Query::Error::SerializationError';
 }
 
 ################################################################################
@@ -270,7 +257,7 @@ END
 }
 
 {
-	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
+	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql11' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT *
 		WHERE {
@@ -279,18 +266,6 @@ END
 END
 	my $sse		= $query->sse;
 	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person ?name) (union (BGP (triple ?person foaf:name ?name)) (BGP (triple ?person foaf:nick ?name)))))', 'sse: select with filter regex' );
-}
-
-{
-	my $query	= new RDF::Query ( <<"END", undef, undef, 'sparqlp' );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		SELECT COUNT(?person)
-		WHERE {
-			?person foaf:name ?name .
-		}
-END
-	my $sse		= $query->sse;
-	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?COUNT(?person)) (aggregate (BGP (triple ?person foaf:name ?name)) (alias "COUNT(?person)" (COUNT ?person)))))', 'sse: aggregate count(?person)' );
 }
 
 {

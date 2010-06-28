@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.123
+This document describes RDF::Trine::Store::DBI version 0.124
 
 =head1 SYNOPSIS
 
@@ -47,8 +47,9 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.123";
-	$RDF::Trine::Store::STORE_CLASSES{ __PACKAGE__ }	= $VERSION;
+	$VERSION	= "0.124";
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
 
 ######################################################################
@@ -64,7 +65,40 @@ BEGIN {
 Returns a new storage object using the supplied arguments to construct a DBI
 object for the underlying database.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<DBI> for this backend.
+
+These keys should also be used:
+
+=over
+
+=item C<name>
+
+The name of the model.
+
+=item C<dsn>
+
+The DBI Data Source Name for the underlying database.
+
+=item C<username>
+
+The username of the database user.
+
+=item C<password>
+
+The password of the database user.
+
+=back
+
+
 =cut
+
+
+
 
 sub new {
 	my $class	= shift;
@@ -116,6 +150,16 @@ sub _new_with_string {
 	my ($model, $dsn, $user, $pass)	= split(';', $config);
 	return $class->new( $model, $dsn, $user, $pass );
 }
+
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{name},
+			    $config->{dsn},
+			    $config->{username},
+			    $config->{password} );
+}
+
 
 sub _new_with_object {
 	my $class	= shift;
@@ -325,23 +369,26 @@ sub get_contexts {
 	my $sth		= $dbh->prepare( $sql );
 	$sth->execute();
 	my $sub		= sub {
-		my $row	= $sth->fetchrow_hashref;
-		return unless defined($row);
-		my $uri		= $self->_column_name( 'URI' );
-		my $name	= $self->_column_name( 'Name' );
-		my $value	= $self->_column_name( 'Value' );
-		if ($row->{ Context } == 0) {
-			return RDF::Trine::Node::Nil->new();
-		} elsif ($row->{ $uri }) {
-			return RDF::Trine::Node::Resource->new( $row->{ $uri } );
-		} elsif ($row->{ $name }) {
-			return RDF::Trine::Node::Blank->new( $row->{ $name } );
-		} elsif (defined $row->{ $value }) {
-			my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
-			return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
-		} else {
-			return;
+		while (my $row = $sth->fetchrow_hashref) {
+			return unless defined($row);
+			my $uri		= $self->_column_name( 'URI' );
+			my $name	= $self->_column_name( 'Name' );
+			my $value	= $self->_column_name( 'Value' );
+			if ($row->{ Context } == 0) {
+				next;
+# 				return RDF::Trine::Node::Nil->new();
+			} elsif ($row->{ $uri }) {
+				return RDF::Trine::Node::Resource->new( $row->{ $uri } );
+			} elsif ($row->{ $name }) {
+				return RDF::Trine::Node::Blank->new( $row->{ $name } );
+			} elsif (defined $row->{ $value }) {
+				my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+				return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
+			} else {
+				return;
+			}
 		}
+		return;
 	};
 	return RDF::Trine::Iterator->new( $sub );
 }
@@ -534,7 +581,8 @@ sub count_statements {
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	my $sql		= $self->_sql_for_pattern( $st, $context, 'count-distinct' => 1, semantics => $semantics );
+	my $countkey	= ($use_quad) ? 'count' : 'count-distinct';
+	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
 	my $sth		= $dbh->prepare( $sql );
@@ -787,6 +835,9 @@ sub _sql_from_context {
 	}
 	if ($args{ 'count-distinct' }) {
 		$unique	= 1;
+	}
+	if ($args{ 'count' }) {
+		@cols	= 'COUNT(*)';
 	}
 	
 	my @sql	= (

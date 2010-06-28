@@ -7,7 +7,7 @@ RDF::Query::Algebra::Construct - Algebra class for construct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Construct version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Construct version 2.900.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -106,7 +106,6 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
 	
-	die;
 	return sprintf(
 		'(construct\n${prefix}${indent}%s)',
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
@@ -133,6 +132,23 @@ sub as_sparql {
 		$self->pattern->as_sparql( $context, $indent ),
 	);
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( @{ $self->triples } );
+	return {
+		type 		=> lc($self->type),
+		pattern		=> $self->pattern->as_hash,
+		construct	=> $bgp->as_hash,
+	};
 }
 
 =item C<< type >>

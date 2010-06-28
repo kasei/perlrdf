@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::Aggregate version 2.900.
 
 =head1 METHODS
 
@@ -20,20 +20,21 @@ package RDF::Query::Plan::Aggregate;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
+use Scalar::Util qw(blessed);
 
 use RDF::Query::Error qw(:try);
-use Scalar::Util qw(blessed);
+use RDF::Query::Node qw(literal);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
 
-=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, $attribute ], ... ], having => \@constraings ) >>
+=item C<< new ( $pattern, \@group_by, expressions => [ [ $alias, $op, \%options, @attributes ], ... ] ) >>
 
 =cut
 
@@ -43,9 +44,18 @@ sub new {
 	my $groupby	= shift;
 	my %args	= @_;
 	my @ops		= @{ $args{ 'expressions' } || [] };
-	my @having	= @{ $args{ 'having' } || [] };
-	my $self	= $class->SUPER::new( $plan, $groupby, \@ops, \@having );
-	$self->[0]{referenced_variables}	= [ RDF::Query::_uniq($plan->referenced_variables, map { $_->name } @$groupby) ];
+	my $self	= $class->SUPER::new( $plan, $groupby, \@ops );
+	$self->[0]{referenced_variables}	= [
+											RDF::Query::_uniq(
+												$plan->referenced_variables,
+												map {
+													($_->isa('RDF::Query::Node::Variable'))
+														? $_->name
+														: $_->isa('RDF::Query::Node')
+															? ()
+															: $_->referenced_variables
+												} @$groupby)
+										];
 	return $self;
 }
 
@@ -71,14 +81,13 @@ sub execute ($) {
 		my %groups;
 		my %group_data;
 		my @groupby	= $self->groupby;
-		my @having	= $self->having;
 		my @ops		= @{ $self->[3] };
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		
 		while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
-			my @group	= map { $query->var_or_expr_value( $bridge, $row, $_ ) } @groupby;
-			my $group	= join('<<<', map { $bridge->as_string( $_ ) } @group);
+			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
 			foreach my $i (0 .. $#groupby) {
@@ -90,7 +99,7 @@ sub execute ($) {
 		my @rows;
 		GROUP: foreach my $group (keys %{ $group_data{ 'rows' } }) {
 			$l->debug( "group: $group" );
-			my %having;
+			my %options;
 			my %aggregates;
 			my %passthrough_data;
 			my @group	= @{ $group_data{ 'groups' }{ $group } };
@@ -104,47 +113,38 @@ sub execute ($) {
 				$passthrough_data{ $name }	= $value;
 			}
 			
-			foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
-				$l->debug( "- row: $row" );
-# 				$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
-				my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
-				foreach my $data (@operation_data) {
-					my $aggregate_data	= pop(@$data);
-					my ($alias, $op, $col)	= @$data;
+			my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
+			foreach my $data (@operation_data) {
+				my $aggregate_data	= pop(@$data);
+				my ($alias, $op, $opts, @cols)	= @$data;
+				$options{ $alias }	= $opts;
+				my $distinct	= ($op =~ /^(.*)-DISTINCT$/);
+				$op				=~ s/-DISTINCT$//;
+				my $col	= $cols[0];
+				my %agg_group_seen;
+				foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
+					my @proj_rows	= map { (blessed($col)) ? $query->var_or_expr_value( $row, $col ) : '*' } @cols;
+					if ($distinct) {
+						next if ($agg_group_seen{ join('<<<', @proj_rows) }++);
+					}
+					
+					$l->debug( "- row: $row" );
+# 					$groups{ $group }	||= { map { $_ => $row->{ $_ } } @groupby };
 					if ($op eq 'COUNT') {
 						$l->debug("- aggregate op: COUNT");
-# 						unless ($groups{ $group }) {
-# 							my %data;
-# 							foreach my $i (0 .. $#groupby) {
-# 								my $group	= $groupby[ $i ];
-# 								my $key		= $group->can('name') ? $group->name : $group->as_sparql;
-# 								my $value	= $group[ $i ];
-# 								$data{ $key }	= $value;
-# 							}
-# 							$groups{ $group }	= \%data;
-# 						}
 						my $should_inc	= 0;
 						if ($col eq '*') {
 							$should_inc	= 1;
 						} else {
-							my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+							my $value	= $query->var_or_expr_value( $row, $col );
 							$should_inc	= (defined $value) ? 1 : 0;
 						}
 						
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						$aggregate_data->{ $alias }{ $group }[1]	+= $should_inc;
-					} elsif ($op eq 'COUNT-DISTINCT') {
-						$l->debug("- aggregate op: COUNT-DISTINCT");
-						my @cols	= (blessed($col) ? $col->name : keys %$row);
-						no warnings 'uninitialized';
-						my $values	= join('<<<', @{ $row }{ @cols });
-						$aggregate_data->{ $alias }{ $group }[0]	= $op;
-						if (exists($row->{ $col->name })) {
-							$aggregate_data->{ $alias }{ $group }[1]++ unless ($seen{ $values }++);
-						}
 					} elsif ($op eq 'SUM') {
 						$l->debug("- aggregate op: SUM");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -167,7 +167,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MAX') {
 						$l->debug("- aggregate op: MAX");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -198,7 +198,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MIN') {
 						$l->debug("- aggregate op: MIN");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -230,7 +230,7 @@ sub execute ($) {
 					} elsif ($op eq 'SAMPLE') {
 						### this is just the MIN code from above, without the strict comparison checking
 						$l->debug("- aggregate op: SAMPLE");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -245,7 +245,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'AVG') {
 						$l->debug("- aggregate op: AVG");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -264,19 +264,18 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'GROUP_CONCAT') {
 						$l->debug("- aggregate op: GROUP_CONCAT");
-						my $value	= $query->var_or_expr_value( $bridge, $row, $col );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $str		= RDF::Query::Node::Resource->new('sparql:str');
-						my $expr	= RDF::Query::Expression::Function->new( $str, $value );
-	
-						my $query	= $context->query;
-						my $bridge	= $context->model;
-						my $exprval	= $expr->evaluate( $query, $bridge, $row );
+
+						my @values	= map {
+							my $expr	= RDF::Query::Expression::Function->new( $str, $query->var_or_expr_value( $row, $_ ) );
+							my $val		= $expr->evaluate( $context->query, $row );
+							blessed($val) ? $val->literal_value : '';
+						} @cols;
 						
-						my $string	= blessed($exprval) ? $exprval->literal_value : '';
 	# 					warn "adding '$string' to group_concat aggregate";
-						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, $string );
+						push( @{ $aggregate_data->{ $alias }{ $group }[1] }, @values );
 					} else {
 						throw RDF::Query::Error -text => "Unknown aggregate operator $op";
 					}
@@ -290,7 +289,8 @@ sub execute ($) {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
 				} elsif ($op eq 'GROUP_CONCAT') {
-					$row{ $agg }	= RDF::Query::Node::Literal->new( join(' ', sort @{ $aggregates{ $agg }{ $group }[1] }) );
+					my $j	= (exists $options{$agg}{seperator}) ? $options{$agg}{seperator} : ' ';
+					$row{ $agg }	= RDF::Query::Node::Literal->new( join($j, @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
 					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
@@ -302,17 +302,6 @@ sub execute ($) {
 			
 			my $vars	= RDF::Query::VariableBindings->new( \%row );
 			$l->debug("aggregate row: $vars");
-			
-			foreach my $h (@having) {
-				$l->debug( "- evaluating aggregate row against HAVING clause: " . $h->sse );
-				my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $h );
-				my $bool	= $alg->evaluate( $query, $bridge, $vars );
-				if ($bool->literal_value eq 'false') {
-					$l->debug("aggregate failed having clause " . $h->sse);
-					next GROUP;
-				}
-			}
-			
 			push(@rows, $vars);
 		}
 		
@@ -372,17 +361,6 @@ sub groupby {
 	return @{ $self->[2] || [] };
 }
 
-=item C<< having >>
-
-Returns the aggregate's HAVING clause.
-
-=cut
-
-sub having {
-	my $self	= shift;
-	return @{ $self->[4] || [] };
-}
-
 =item C<< plan_node_name >>
 
 Returns the string name of this plan node, suitable for use in serialization.
@@ -393,33 +371,65 @@ sub plan_node_name {
 	return 'aggregate';
 }
 
-=item C<< plan_prototype >>
-
-Returns a list of scalar identifiers for the type of the content (children)
-nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
-identifiers.
+=item C<< sse ( $context, $indent ) >>
 
 =cut
 
-sub plan_prototype {
+sub sse {
 	my $self	= shift;
-	return qw(P \E \E *\ssW);
+	my $context	= shift;
+	my $indent	= shift;
+	my $more	= '    ';
+	my $psse	= $self->pattern->sse( $context, "${indent}${more}" );
+	my @group	= map { $_->sse($context, "${indent}${more}") } $self->groupby;
+	my $gsse	= join(' ', @group);
+	my @ops;
+	foreach my $p (@{ $self->[3] }) {
+		my ($alias, $op, $options, @cols)	= @$p;
+		my $cols	= '(' . join(' ', map { $_->sse($context, "${indent}${more}") } @cols) . ')';
+		my @opts_keys	= keys %$options;
+		if (@opts_keys) {
+			my $opt_string	= '(' . join(' ', map { $_, qq["$options->{$_}"] } @opts_keys) . ')';
+			push(@ops, qq[("$alias" "$op" $cols $opt_string)]);
+		} else {
+			push(@ops, qq[("$alias" "$op" $cols)]);
+		}
+	}
+	my $osse	= join(' ', @ops);
+	return sprintf(
+		"(aggregate\n${indent}${more}%s\n${indent}${more}(%s)\n${indent}${more}(%s))",
+		$psse,
+		$gsse,
+		$osse,
+	);
 }
 
-=item C<< plan_node_data >>
-
-Returns the data for this plan node that corresponds to the values described by
-the signature returned by C<< plan_prototype >>.
-
-=cut
-
-sub plan_node_data {
-	my $self	= shift;
-	my @group	= $self->groupby;
-	my @having	= $self->having;
-	my @ops		= @{ $self->[3] };
-	return ($self->pattern, \@group, \@having, map { [@$_] } @ops);
-}
+# =item C<< plan_prototype >>
+# 
+# Returns a list of scalar identifiers for the type of the content (children)
+# nodes of this plan node. See L<RDF::Query::Plan> for a list of the allowable
+# identifiers.
+# 
+# =cut
+# 
+# sub plan_prototype {
+# 	my $self	= shift;
+# 	return qw(P \E *\ssW);
+# }
+# 
+# =item C<< plan_node_data >>
+# 
+# Returns the data for this plan node that corresponds to the values described by
+# the signature returned by C<< plan_prototype >>.
+# 
+# =cut
+# 
+# sub plan_node_data {
+# 	my $self	= shift;
+# 	my @group	= $self->groupby;
+# 	my @ops		= @{ $self->[3] };
+# 	return ($self->pattern, \@group, map { [@$_] } @ops);
+# }
 
 =item C<< distinct >>
 

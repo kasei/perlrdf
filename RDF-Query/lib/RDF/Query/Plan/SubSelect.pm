@@ -7,7 +7,7 @@ RDF::Query::Plan::SubSelect - Executable query plan for sub-select queries.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::SubSelect version 2.202, released 30 January 2010.
+This document describes RDF::Query::Plan::SubSelect version 2.900.
 
 =head1 METHODS
 
@@ -34,7 +34,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.202';
+	$VERSION		= '2.900';
 }
 
 ######################################################################
@@ -68,7 +68,7 @@ sub execute ($) {
 	}
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.subselect");
 	my $query	= $self->query;
-	my $iter	= $query->execute( $context->model->model );
+	my $iter	= $query->execute( $context->model );
 	if ($iter) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{'open'}	= 1;

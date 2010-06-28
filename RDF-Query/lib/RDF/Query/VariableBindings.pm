@@ -7,7 +7,7 @@ RDF::Query::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Query::VariableBindings version 2.202, released 30 January 2010.
+This document describes RDF::Query::VariableBindings version 2.900.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -111,15 +111,15 @@ If the two variable binding objects cannot be joined, returns undef.
 sub join {
 	my $self	= shift;
 	my $class	= ref($self);
-	my $rowa	= shift;
+	my $rowb	= shift;
 	
 	my %keysa;
 	my @keysa	= keys %$self;
 	@keysa{ @keysa }	= (1) x scalar(@keysa);
-	my @shared	= grep { exists $keysa{ $_ } } (keys %$rowa);
+	my @shared	= grep { exists $keysa{ $_ } } (keys %$rowb);
 	foreach my $key (@shared) {
 		my $val_a	= $self->{ $key };
-		my $val_b	= $rowa->{ $key };
+		my $val_b	= $rowb->{ $key };
 		next unless (defined($val_a) and defined($val_b));
 		my $equal	= $val_a->equal( $val_b );
 		unless ($equal) {
@@ -127,10 +127,10 @@ sub join {
 		}
 	}
 	
-	my $row	= { (map { $_ => $self->{$_} } grep { defined($self->{$_}) } keys %$self), (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa) };
+	my $row	= { (map { $_ => $self->{$_} } grep { defined($self->{$_}) } keys %$self), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
 	my $joined	= $class->new( $row );
 	$joined->copy_labels_from( $self );
-	$joined->copy_labels_from( $rowa );
+	$joined->copy_labels_from( $rowb );
 	
 	return $joined;
 }

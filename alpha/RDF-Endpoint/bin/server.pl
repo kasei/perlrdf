@@ -5,6 +5,7 @@ use warnings;
 no warnings 'redefine';
 use lib qw(lib ../RDF-Query/lib ../RDF-Trine/lib);
 
+use CGI;
 use Log::Log4perl;
 use RDF::Query;
 use RDF::Query::Util;
@@ -22,10 +23,10 @@ use RDF::Endpoint::Server;
 ################################################################################
 
 
-unless (@ARGV) {
+if (join(' ', '', @ARGV, '') =~ / --help /) {
 	print STDERR <<"END";
 USAGE:
-       $0 [-p PORT] [-b] data.rdf
+       $0 [-p PORT] [-b] [data.rdf]
 
 Starts a SPARQL endpoint on the specified port (defaults to 9680). After
 starting, the endpoint is accessible over HTTP at, e.g.

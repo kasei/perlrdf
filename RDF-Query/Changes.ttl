@@ -9,6 +9,44 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.900.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.202.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.900" ;
+                        doap:created      "2010-06-23" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added bin/json.pl to print a JSON-formatted representation of the query algebra." ;
+                        asc:addition      "Added bin/rqsh.pl CLI interface to executing updates and queries." ;
+                        asc:addition      "Added ability to serialize algebra and plan in bin/deparse.pl." ;
+                        asc:addition      "Added support for SPARQL 1.1 Basic Query Federation with BINDINGS and UNDEF support." ;
+                        asc:addition      "Added support for SPARQL 1.1 functions: IF, STRDT, STRLANG, IRI, URI, BNODE." ;
+                        asc:addition      "Added support for SPARQL 1.1 infix operators IN and NOT IN." ;
+                        asc:addition      "Added support for SPARQL 1.1 Aggregates COUNT, SUM, MIN, MAX, AVG, GROUP_CONCAT, and SAMPLE." ;
+                        asc:addition      "Added support for SPARQL 1.1 Property paths." ;
+                        asc:addition      "Added support for SPARQL 1.1 Negation with MINUS graph patterns and NOT EXISTS filters." ;
+                        asc:addition      "Added support for SPARQL 1.1 INSERT/DELETE DATA, INSERT/DELETE WHERE, LOAD, and CLEAR operations." ;
+                        asc:addition      "Added support for multi-statement SPARQL 1.1 Updates." ;
+                        asc:addition      "Added as_hash method to Query, Algebra, and Node classes." ;
+                        asc:addition      "Added new RDF::Query::Plan::ComputedStatement class." ;
+                        asc:addition      "Added new RDF::Query::Plan::Iterator class." ;
+                        asc:addition      "Implemented optimization for COUNT(*) over a single triplepattern." ;
+                        asc:update        "SPARQL 1.1 is now the default query parser." ;
+                        asc:update        "RDF::Core is no longer supported as a backend triplestore." ;
+                        asc:update        "Redland is still supported as a backend store, but updated handling of default and named graphs means that existing triples stored in Redland without a context (named graph) will not be accessible from RDF::Query." ;
+                        asc:update        "Removed all bridge classes (RDF::Query::Model::*)." ;
+                        asc:update        "Removed RDF::Query::Logger class." ;
+                        asc:update        "Removed net filter function code from RDF::Query." ;
+                        asc:update        "Removed SPARUL and SPARQLP parsers." ;
+                        asc:update        "RDF::Query no longer loads URIs in FROM and FROM NAMED clauses with SPARQL 1.1 by default." ;
+                        asc:update        "Added ability for RDF::Query::Plan::Iterator to fire a callback when execute() is called." ;
+                        asc:update        "Fixed whitespace unescaping bug in SPARQL (1.0 and 1.1) parsers." ;
+                        asc:update        "bin/deparse.pl now catches parsing errors and prints stacktrace." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.202.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.201.tar.gz> ;

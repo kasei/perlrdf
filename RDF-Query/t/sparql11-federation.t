@@ -10,13 +10,8 @@ BEGIN { require "models.pl"; }
 my @files	= map { "data/$_" } qw(foaf.xrdf);
 my @models	= test_models( @files );
 
-my $tests	= scalar(@models) * 8;
-if (not exists $ENV{RDFQUERY_DEV_TESTS}) {
-	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
-	return;
-} else {
-	plan tests => $tests;
-}
+my $tests	= scalar(@models) * 11;
+plan tests => $tests;
 
 use RDF::Query;
 
@@ -36,7 +31,7 @@ foreach my $model (@models) {
 	
 	
 	{
-		print "# FeDeRate BINDINGS (one var)\n";
+		print "# BINDINGS (one var)\n";
 		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p ?name
@@ -64,7 +59,7 @@ END
 	}
 	
 	{
-		print "# FeDeRate BINDINGS (two var)\n";
+		print "# BINDINGS (two var)\n";
 		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p
@@ -80,5 +75,49 @@ END
 			$count++;
 		}
 		is( $count, 0, 'expected result count' );
+	}
+
+	{
+		print "# BINDINGS with UNDEF\n";
+		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				?p a foaf:Person ; foaf:name ?name ; foaf:schoolHomepage ?school .
+			}
+			BINDINGS ?name ?school { (UNDEF <http://www.samohi.smmusd.org/>) }
+END
+		my $count	= 0;
+		my $stream	= $query->execute( $model );
+		isa_ok( $stream, 'RDF::Trine::Iterator' );
+		while (my $d = $stream->next) {
+			$count++;
+		}
+		is( $count, 4, 'expected result count' );
+	}
+	
+	
+	SKIP: {
+		print "# Remote SERVICE invocations\n";
+		my $why	= "No network. Set RDFQUERY_NETWORK_TESTS to run these tests.";
+		skip $why, 1 unless ($ENV{RDFQUERY_NETWORK_TESTS});
+		
+		{
+			my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } ) or warn RDF::Query->error;
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+				SELECT DISTINCT *
+				WHERE {
+					SERVICE <http://kasei.us/sparql> {
+						?p a foaf:Person ; foaf:name "Gregory Todd Williams" .
+						FILTER(ISIRI(?p))
+					}
+				}
+				LIMIT 1
+END
+			my $iter	= $query->execute( $model );
+			while (my $row = $iter->next) {
+				is( $row->{p}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'expected URI value from remote SERVICE' );
+			}
+		}
 	}
 }

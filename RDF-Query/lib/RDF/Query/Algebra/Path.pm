@@ -7,7 +7,7 @@ RDF::Query::Algebra::Path - Algebra class for path patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Path version 2.202, released 30 January 2010.
+This document describes RDF::Query::Algebra::Path version 2.900.
 
 =cut
 
@@ -18,7 +18,6 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
-use Data::Dumper;
 use Set::Scalar;
 use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
@@ -28,7 +27,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -98,6 +97,53 @@ sub end {
 	return $self->[2];
 }
 
+=item C<< distinguish_bnode_variables >>
+
+Returns a new Path object with blank nodes replaced by distinguished variables.
+
+=cut
+
+sub distinguish_bnode_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my @nodes	= ($self->start, $self->end);
+	foreach my $i (0 .. $#nodes) {
+		if ($nodes[$i]->isa('RDF::Query::Node::Blank')) {
+			$nodes[$i]	= $nodes[$i]->make_distinguished_variable;
+		}
+	}
+	return $class->new( $nodes[0], $self->path, $nodes[1] );
+}
+
+=item C<< bounded_length >>
+
+Returns true if the path is of bounded length.
+
+=cut
+
+sub bounded_length {
+	my $self	= shift;
+	return $self->_bounded_length( $self->path );
+}
+
+sub _bounded_length {
+	my $self	= shift;
+	my $array	= shift;
+	return 1 if blessed($array);
+	my ($op, @nodes)	= @$array;
+	return 1 if ($op eq '?');
+	return 0 if ($op =~ /^[*+]$/);
+	return 1 if ($op =~ /^\d+(-\d+)?$/);
+	return 0 if ($op =~ /^\d+-$/);
+	if ($op =~ m<^[/|^]$>) {
+		my @fixed	= map { $self->_bounded_length($_) } @nodes;
+		foreach my $f (@fixed) {
+			return 0 unless ($f);
+		}
+		return 1;
+	}
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this alegbra expression.
@@ -109,8 +155,11 @@ sub sse {
 	my $context	= shift;
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
-	
-	die 'SSE serialization of path expressions not implemented';
+	my $start	= $self->start->sse( $context, $prefix );
+	my $end		= $self->end->sse( $context, $prefix );
+	my $path	= $self->path;
+	my $psse	= $self->_expand_path( $path, 'sse' );
+	return sprintf( '(path %s %s %s)', $start, $psse, $end );
 }
 
 =item C<< as_sparql >>
@@ -122,14 +171,55 @@ Returns the SPARQL string for this alegbra expression.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
-	my $indent	= shift;
-	die 'SPARQL serialization of path expressions not implemented';
-	my $string	= sprintf(
-		"%s\n${indent}UNION\n${indent}%s",
-		$self->first->as_sparql( $context, $indent ),
-		$self->second->as_sparql( $context, $indent ),
-	);
-	return $string;
+	my $prefix	= shift || '';
+	my $indent	= $context->{indent};
+	my $start	= $self->start->as_sparql( $context, $prefix );
+	my $end		= $self->end->as_sparql( $context, $prefix );
+	my $path	= $self->path;
+	my $psse	= $self->_expand_path( $path, 'as_sparql' );
+	return sprintf( '%s %s %s .', $start, $psse, $end );
+}
+
+sub _expand_path {
+	my $self	= shift;
+	my $array	= shift;
+	my $method	= shift;
+	if (blessed($array)) {
+		my $string	= $array->$method({}, '');
+		if ($string eq '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>') {
+			return 'a';
+		} else {
+			return $string;
+		}
+	} else {
+		my ($op, @nodes)	= @$array;
+		my @nodessse	= map { $self->_expand_path($_, $method) } @nodes;
+		my $psse;
+		if ($op eq '+') {
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
+		} elsif ($op eq '*') {
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
+		} elsif ($op eq '?') {
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
+		} elsif ($op eq '!') {
+			$psse	= (scalar(@nodessse) == 1) ? '!' . $nodessse[0] : '!(' . join('|', @nodessse) . ')';
+		} elsif ($op eq '^') {
+			$psse	= (scalar(@nodessse) == 1) ? $op . $nodessse[0] : '(' . join('/', map { "${op}$_" } @nodessse) . ')';
+		} elsif ($op eq '/') {
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] : '(' . join('/', @nodessse) . ')';
+		} elsif ($op eq '|') {
+			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] : '(' . join('|', @nodessse) . ')';
+		} elsif ($op =~ /^(\d+)$/) {
+			$psse	= join('/', @nodessse) . '{' . $op . '}';
+		} elsif ($op =~ /^(\d+)-(\d+)$/) {
+			$psse	= join('/', @nodessse) . "{$1,$2}";
+		} elsif ($op =~ /^(\d+)-$/) {
+			$psse	= join('/', @nodessse) . "{$1,}";
+		} else {
+			die "Serialization of unknown path type $op";
+		}
+		return $psse;
+	}
 }
 
 =item C<< type >>

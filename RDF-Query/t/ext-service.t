@@ -58,14 +58,14 @@ use RDF::Query;
 END
 	if (0){
 		print "# bgp using default graph (local rdf) with k:bloom FILTER produces bnode identity hints in XML results\n";
-		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql11' );
 		my $stream	= $query->execute();
 		my $xml		= $stream->as_xml;
 		like( $xml, qr#<link href="data:text/xml,%3Cextra%20name=%22bnode-map#sm, 'xml serialization has good looking bnode map' );
 	}
 	{
 		print "# bgp using default graph (local rdf) with k:bloom FILTER\n";
-		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparqlp' );
+		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql11' );
 		my $stream	= $query->execute();
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		
@@ -82,7 +82,7 @@ END
 
 {
 	print "# join using default graph (remote rdf) and remote SERVICE (kasei.us), joining on IRI\n";
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		SELECT DISTINCT *
 		FROM <http://kasei.us/about/foaf.xrdf>
@@ -110,7 +110,7 @@ TODO: {
 	local($TODO)	= 'bnode joining based on bloom filter identities needs to be fixed in the plan generation code';
 	print "# join using default graph (local rdf) and remote SERVICE (kasei.us), joining on bnode\n";
 	my $file	= URI::file->new_abs( 'data/bnode-person.rdf' );
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		PREFIX k: <http://kasei.us/code/rdf-query/functions/>
@@ -138,7 +138,7 @@ END
 
 {
 	print "# join using default graph (remote rdf) and remote SERVICE (dbpedia), joining on IRI\n";
-	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparqlp' );
+	my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 		SELECT DISTINCT *
 		FROM <http://dbpedia.org/resource/Vancouver_Island>

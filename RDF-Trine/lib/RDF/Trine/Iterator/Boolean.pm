@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query result
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.123
+This document describes RDF::Trine::Iterator::Boolean version 0.124
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.123';
+	$VERSION	= '0.124';
 }
 
 =item C<new ( \@results, %args )>
@@ -89,7 +89,7 @@ sub as_xml {
 	my $self	= shift;
 	my $value	= $self->get_boolean ? 'true' : 'false';
 	my $xml	= <<"END";
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
 <head></head>
 <results>

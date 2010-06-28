@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.202, released 30 January 2010.
+This document describes RDF::Query::Parser::SPARQL version 2.900.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -433,7 +433,7 @@ sub _Query {
 	
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
-		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
 # 	my %query	= (%p, %body);
@@ -988,12 +988,14 @@ sub _GraphGraphPattern {
 	$self->__consume_ws;
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
+	$self->__consume_ws_opt;
 	
-	{
+# 	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
-		$self->__consume_ws_opt;
 		$self->_GroupGraphPattern;
-	}
+# 	} else {
+# 		$self->_GroupGraphPattern;
+# 	}
 	
 	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
@@ -1773,10 +1775,10 @@ sub _String {
 		$value		= substr($string, 1, length($string) - 2);
 	}
 #	$value	=~ s/(${r_ECHAR})/"$1"/ge;
-	$value	=~ s/\\t/\n/g;
-	$value	=~ s/\\b/\n/g;
+	$value	=~ s/\\t/\t/g;
+	$value	=~ s/\\b/\x08/g;
 	$value	=~ s/\\n/\n/g;
-	$value	=~ s/\\r/\n/g;
+	$value	=~ s/\\r/\r/g;
 	$value	=~ s/\\"/"/g;
 	$value	=~ s/\\'/'/g;
 	$value	=~ s/\\\\/\\/g;	# backslash must come last, so it doesn't accidentally create a new escape

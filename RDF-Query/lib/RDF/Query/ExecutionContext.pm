@@ -7,7 +7,7 @@ RDF::Query::ExecutionContext - Query execution context
 
 =head1 VERSION
 
-This document describes RDF::Query::ExecutionContext version 2.202, released 30 January 2010.
+This document describes RDF::Query::ExecutionContext version 2.900.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use warnings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -80,7 +80,11 @@ sub popstack {
 
 sub model {
 	my $self	= shift;
-	return $self->_get_value( 'model', @_ );
+	my $model	= $self->_get_value( 'model', @_ );
+	unless ($model) {
+		$model	= RDF::Trine::Model->temporary_model;
+	}
+	return $model;
 }
 
 =item C<< query >>
@@ -144,15 +148,6 @@ sub costmodel {
 sub requested_variables {
 	my $self	= shift;
 	return $self->_get_value( 'requested_variables', @_ );
-}
-
-=item C<< model_optimize >>
-
-=cut
-
-sub model_optimize {
-	my $self	= shift;
-	return $self->_get_value( 'model_optimize', @_ );
 }
 
 =item C<< optimize >>

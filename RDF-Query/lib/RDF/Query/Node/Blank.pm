@@ -7,7 +7,7 @@ RDF::Query::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Blank version 2.202, released 30 January 2010.
+This document describes RDF::Query::Node::Blank version 2.900.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.202';
+	$VERSION	= '2.900';
 }
 
 ######################################################################
@@ -85,6 +85,21 @@ Returns the SPARQL string for this node.
 sub as_sparql {
 	my $self	= shift;
 	return $self->sse;
+}
+
+=item C<< as_hash >>
+
+Returns the query as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'node',
+		blank		=> $self->blank_identifier,
+	};
 }
 
 =item C<< make_distinguished_variable >>

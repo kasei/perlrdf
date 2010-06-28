@@ -29,10 +29,10 @@ foreach my $model (@models) {
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$n)	= @{ $row }{qw(person nick)};
-		ok( $query->bridge->isa_node( $p ), 'isa_node' );
+		ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
 		is( $n, undef, 'missing nick' );
 	}
 	
@@ -47,15 +47,14 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		while ($stream and not $stream->finished) {
-			my $row		= $stream->current;
+		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n)	= @{ $row }{qw(person nick)};
-			ok( $query->bridge->isa_node( $p ), 'isa_node' );
-			ok( $query->bridge->isa_literal( $n ), 'isa_literal(nick)' );
-			like( ($n and $query->bridge->as_string( $n )), qr/kasei|The Samo Fool/, ($n and $query->bridge->as_string( $n )) );
+			ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
+			ok( $n->isa('RDF::Trine::Node::Literal'), 'isa_literal(nick)' );
+			like( ($n and $n->as_string), qr/kasei|The Samo Fool/, ($n and $n->as_string) );
 			last;
-		} continue { $stream->next }
+		}
 	}
 	
 	{
@@ -74,16 +73,17 @@ END
 		while (my $row = $stream->next) {
 			isa_ok( $row, "HASH" );
 			my ($p,$n,$h)	= @{ $row }{qw(person nick page)};
-			ok( $query->bridge->isa_node( $p ), 'isa_node' );
-			ok( $query->bridge->isa_literal( $n ), 'isa_literal(nick)' );
-			ok( $query->bridge->isa_resource( $h ), 'isa_resource(homepage)' );
-			is( $query->bridge->uri_value( $h ), 'http://kasei.us/' );
-			like( ($n and $query->bridge->as_string( $n )), qr/kasei|The Samo Fool/, ($n and $query->bridge->as_string( $n )) );
+			ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
+			ok( $n->isa('RDF::Trine::Node::Literal'), 'isa_literal(nick)' );
+			ok( $h->isa('RDF::Trine::Node::Resource'), 'isa_resource(homepage)' );
+			is( $h->uri_value, 'http://kasei.us/' );
+			like( ($n and $n->as_string), qr/kasei|The Samo Fool/, ($n and $n->as_string) );
 			last;
 		}
 	}
 	
 	{
+		print "# 1-triple optional\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
@@ -97,14 +97,15 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$h)	= @{ $row }{qw(person h)};
-		ok( $query->bridge->isa_node( $p ), 'isa_node(person)' );
-		ok( $query->bridge->isa_node( $h ), 'isa_node(homepage)' );
+		ok( $p->isa('RDF::Trine::Node'), 'isa_node(person)' );
+		ok( $h->isa('RDF::Trine::Node'), 'isa_node(homepage)' );
 	}
 	
 	{
+		print "# 2-triple optional\n";
 		my $query	= new RDF::Query ( <<"END", undef, undef, 'sparql' );
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
 			PREFIX	dc: <http://purl.org/dc/elements/1.1/>
@@ -119,10 +120,10 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		isa_ok( $row, "HASH" );
 		my ($p,$h,$t)	= @{ $row }{qw(person h title)};
-		ok( $query->bridge->isa_node( $p ), 'isa_node' );
+		ok( $p->isa('RDF::Trine::Node'), 'isa_node' );
 		is( $h, undef, 'no homepage' );
 		is( $t, undef, 'no homepage title' );
 	}
@@ -139,7 +140,7 @@ END
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
-		my $row		= $stream->current;
+		my $row		= $stream->next;
 		ok( not($row), 'no results: successful BOUND() filter' );
 	}
 	
@@ -157,12 +158,12 @@ END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $count	= 0;
-		while ($stream and not $stream->finished) {
-			my $row		= $stream->current;
+		while (my $row = $stream->next) {
 			my $school	= $row->{school};
-			my $str		= $query->bridge->as_string( $school );
+			my $str		= $school->as_string;
 			like( $str, qr<(smmusd|wheatonma)>, "exected school: $str" );
-		} continue { $stream->next; $count++ }
+			$count++;
+		}
 		is( $count, 2, 'expected result count' );
 	}
 	
