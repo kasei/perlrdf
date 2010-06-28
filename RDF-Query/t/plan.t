@@ -5,6 +5,7 @@ use warnings;
 use URI::file;
 use Test::More;
 use Data::Dumper;
+use Scalar::Util qw(blessed);
 use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
@@ -13,7 +14,7 @@ BEGIN { require "models.pl"; }
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan          = TRACE, Screen
+# 	log4perl.category.rdf.query.plan.quad          = TRACE, Screen
 # 	
 # 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr  = 0
@@ -41,35 +42,36 @@ use RDF::Trine::Namespace qw(rdf foaf);
 
 use RDF::Query::Plan;
 
+my $nil	= RDF::Trine::Node::Nil->new();
 ################################################################################
 
 {
 	{
 		my $var		= RDF::Trine::Node::Variable->new('s');
-		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $triple	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->Person, $nil );
 		my $plan	= RDF::Query::Plan::Limit->new( 2, $triple );
-		is( _CLEAN_WS($plan->sse), '(limit 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))', 'sse: triple' ) or die;
+		is( _CLEAN_WS($plan->sse), '(limit 2 (quad ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> (nil)))', 'sse: triple' ) or die;
 	}
 
 	{
 		my $var		= RDF::Trine::Node::Variable->new('s');
-		my $triple	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
+		my $triple	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->Person, $nil );
 		my $plan	= RDF::Query::Plan::Offset->new( 2, $triple );
-		is( _CLEAN_WS($plan->sse), '(offset 2 (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>))', 'sse: offset' ) or die;
+		is( _CLEAN_WS($plan->sse), '(offset 2 (quad ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> (nil)))', 'sse: offset' ) or die;
 	}
 
 	{
 		my $var	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page'), $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name'), $nil );
 		my $plan	= RDF::Query::Plan::ThresholdUnion->new( 7, $plan_a, $plan_b );
-		is( _CLEAN_WS($plan->sse), '(threshold-union 7 (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: threshold-union' ) or die;
+		is( _CLEAN_WS($plan->sse), '(threshold-union 7 (quad ?p <http://xmlns.com/foaf/0.1/homepage> ?page (nil)) (quad ?p <http://xmlns.com/foaf/0.1/name> ?name (nil)))', 'sse: threshold-union' ) or die;
 	}
 
 	{
 		my $var	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->Person, $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page'), $nil );
 		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
 		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
 		is( _CLEAN_WS($plan->sse), '(service <http://kasei.us/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }")', 'sse: service' ) or die;
@@ -97,7 +99,7 @@ foreach my $data (@models) {
 PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
 END
 		my ($plan, $context)	= $query->prepare();
-		is( _CLEAN_WS($plan->sse), '(project (p name) (bind-join (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?name) (table (row [?name "Gregory"]) (row [?name "Gary"]))))', 'sse: constant' ) or die;
+		is( _CLEAN_WS($plan->sse), '(project (p name) (bind-join (quad ?p <http://xmlns.com/foaf/0.1/firstName> ?name (nil)) (table (row [?name "Gregory"]) (row [?name "Gary"]))))', 'sse: constant' ) or die;
 	}
 	
 	{
@@ -106,8 +108,8 @@ END
 		my ($bgp)	= $parser->parse_pattern('{ ?p a foaf:Person }', undef, $ns)->patterns;
 		my ($t)		= $bgp->triples;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $t, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-		is( $plan->sse, '(triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>)', 'sse: triple plan' ) or die;
+		isa_ok( $plan, 'RDF::Query::Plan::Quad', 'quad algebra to plan' );
+		is( $plan->sse, '(quad ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> (nil))', 'sse: triple plan' ) or die;
 	}
 	
 	{
@@ -123,7 +125,7 @@ END
 		my $parsed	= $parser->parse( 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT * WHERE { ?p foaf:name ?name }' );
 		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
-		isa_ok( $plan, 'RDF::Query::Plan::Triple', 'ggp algebra to plan' );
+		isa_ok( $plan, 'RDF::Query::Plan::Quad', 'ggp algebra to plan' );
 	}
 	
 	{
@@ -132,8 +134,8 @@ END
 		my $algebra	= $parsed->{triples}[0]->pattern;
 		my ($plan)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		isa_ok( $plan, 'RDF::Query::Plan::Sort', 'sort algebra to plan' );
-		isa_ok( $plan->pattern, 'RDF::Query::Plan::Triple', 'triple algebra to plan' );
-		is( _CLEAN_WS($plan->sse), '(order (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) ((asc ?name)))', 'sse: sort' ) or die;
+		isa_ok( $plan->pattern, 'RDF::Query::Plan::Quad', 'triple algebra to plan' );
+		is( _CLEAN_WS($plan->sse), '(order (quad ?p <http://xmlns.com/foaf/0.1/name> ?name (nil)) ((asc ?name)))', 'sse: sort' ) or die;
 	}
 	
 	{
@@ -144,7 +146,7 @@ END
 		my ($plan)	= sort @plans;
 		isa_ok( $plan, 'RDF::Query::Plan::Filter', 'filter algebra to plan' );
 		isa_ok( $plan->pattern, 'RDF::Query::Plan::BasicGraphPattern', 'bgp algebra to plan' );
-		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bgp (triple ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: filter' );
+		is( _CLEAN_WS($plan->sse), '(filter (== ?name "Greg") (bgp (quad ?p <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> (nil)) (quad ?p <http://xmlns.com/foaf/0.1/name> ?name (nil))))', 'sse: filter' );
 	}
 	
 	############################################################################
@@ -156,7 +158,7 @@ END
 			$rdf->type,
 			$foaf->Person,
 		);
-		my $plan	= RDF::Query::Plan::Triple->new( @triple );
+		my $plan	= RDF::Query::Plan::Quad->new( @triple, $nil );
 		
 		my $count	= 0;
 		$plan->execute( $context );
@@ -175,7 +177,7 @@ END
 			RDF::Trine::Node::Variable->new('type'),
 			RDF::Trine::Node::Variable->new('obj'),
 		);
-		my $plan	= RDF::Query::Plan::Triple->new( @triple );
+		my $plan	= RDF::Query::Plan::Quad->new( @triple, $nil );
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -205,12 +207,14 @@ END
 		while (my $row = $plan->next) {
 			isa_ok( $row, 'RDF::Query::VariableBindings', 'variable bindings' );
 			my $name	= lc($row->{name}->literal_value);
-			like( $row->{name}, qr#(Alice|Bob)#i, 'expected person name from named graph' );
-			like( $row->{c}, qr#${name}[.]rdf>$#, 'graph name matches person name' );
+			like( $row->{name}, qr#(Alice|Bob|Gary|Gregory|Liz|Lauren)#i, 'expected person name from named graph' );
+			unless (blessed($row->{c}) and $row->{c}->isa('RDF::Trine::Node::Nil')) {
+				like( $row->{c}, qr#${name}[.]rdf>$#, 'graph name matches person name' );
+			}
 			$count++;
 		}
 		$plan->close;
-		is( $count, 2, "expected result count for quad (?p foaf:name ?name ?c)" );
+		is( $count, 6, "expected result count for quad (?p foaf:name ?name ?c)" );
 	}
 	
 	{
@@ -236,13 +240,12 @@ END
 	{
 		# repeats of the same variable in one quad
 		my @quad	= (
-			RDF::Trine::Node::Variable->new('prop'),
-			RDF::Trine::Node::Variable->new('prop'),
-			RDF::Trine::Node::Variable->new('obj'),
-			RDF::Trine::Node::Variable->new('c'),
+			RDF::Query::Node::Variable->new('prop'),
+			RDF::Query::Node::Variable->new('prop'),
+			RDF::Query::Node::Variable->new('obj'),
+			RDF::Query::Node::Variable->new('c'),
 		);
 		my $plan	= RDF::Query::Plan::Quad->new( @quad );
-		
 		foreach my $pass (1..2) {
 			my $count	= 0;
 			$plan->execute( $context );
@@ -251,7 +254,7 @@ END
 				like( $row->{prop}, qr[#(type|label)>$], 'expected property' );
 				$count++;
 			}
-			is( $count, 2, "expected result count for quad with repeated variables (pass $pass)" );
+			is( $count, 3, "expected result count for quad with repeated variables (pass $pass)" );
 			$plan->close;
 		}
 	}
@@ -282,10 +285,10 @@ END
 	{
 		# nested loop join
 		my $var	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page'), RDF::Trine::Node::Nil->new() );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name'), RDF::Trine::Node::Nil->new() );
 		my $plan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
-		is( _CLEAN_WS($plan->sse), '(nestedloop-join (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page) (triple ?p <http://xmlns.com/foaf/0.1/name> ?name))', 'sse: nestedloop-join' ) or die;
+		is( _CLEAN_WS($plan->sse), '(nestedloop-join (quad ?p <http://xmlns.com/foaf/0.1/homepage> ?page (nil)) (quad ?p <http://xmlns.com/foaf/0.1/name> ?name (nil)))', 'sse: nestedloop-join' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -304,10 +307,10 @@ END
 	{
 		# OPTIONAL nested loop join
 		my $var	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name') );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page') );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $foaf->name, RDF::Trine::Node::Variable->new('name'), $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page'), $nil );
 		my $plan	= RDF::Query::Plan::Join::PushDownNestedLoop->new( $plan_a, $plan_b, 1 );
-		is( _CLEAN_WS($plan->sse), '(bind-leftjoin (triple ?p <http://xmlns.com/foaf/0.1/name> ?name) (triple ?p <http://xmlns.com/foaf/0.1/homepage> ?page))', 'sse: bind-leftjoin' ) or die;
+		is( _CLEAN_WS($plan->sse), '(bind-leftjoin (quad ?p <http://xmlns.com/foaf/0.1/name> ?name (nil)) (quad ?p <http://xmlns.com/foaf/0.1/homepage> ?page (nil)))', 'sse: bind-leftjoin' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -324,10 +327,10 @@ END
 	{
 		# union
 		my $var		= RDF::Trine::Node::Variable->new('s');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->Person );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $var, $rdf->type, $foaf->PersonalProfileDocument );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->Person, $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->PersonalProfileDocument, $nil );
 		my $plan	= RDF::Query::Plan::Union->new( $plan_a, $plan_b );
-		is( _CLEAN_WS($plan->sse), '(union (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person>) (triple ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/PersonalProfileDocument>))' ) or die;
+		is( _CLEAN_WS($plan->sse), '(union (quad ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> (nil)) (quad ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/PersonalProfileDocument> (nil)))' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -395,9 +398,9 @@ END
 		# project on ?p { ?s ?p foaf:Person }
 		my $s	= RDF::Trine::Node::Variable->new('s');
 		my $p	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $p, $foaf->Person );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $s, $p, $foaf->Person, $nil );
 		my $plan	= RDF::Query::Plan::Project->new( $plan_a, ['p'] );
-		is( _CLEAN_WS($plan->sse), '(project (p) (triple ?s ?p <http://xmlns.com/foaf/0.1/Person>))', 'sse: project' ) or die;
+		is( _CLEAN_WS($plan->sse), '(project (p) (quad ?s ?p <http://xmlns.com/foaf/0.1/Person> (nil)))', 'sse: project' ) or die;
 		
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -419,12 +422,12 @@ END
 		my $f	= RDF::Trine::Node::Variable->new('__f');
 		my $r	= RDF::Trine::Node::Variable->new('__r');
 		my $p	= RDF::Trine::Node::Variable->new('p');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $f );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $s, $p, $r );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $s, $rdf->first, $f, $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $s, $p, $r, $nil );
 		my $join	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
 		my $proj	= RDF::Query::Plan::Project->new( $join, ['p'] );
 		my $plan	= RDF::Query::Plan::Distinct->new( $proj );
-		is( _CLEAN_WS($plan->sse), '(distinct (project (p) (nestedloop-join (triple ?__s <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> ?__f) (triple ?__s ?p ?__r))))', 'sse: distinct-project-join' ) or die;
+		is( _CLEAN_WS($plan->sse), '(distinct (project (p) (nestedloop-join (quad ?__s <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> ?__f (nil)) (quad ?__s ?p ?__r (nil)))))', 'sse: distinct-project-join' ) or die;
 
 		foreach my $pass (1..2) {
 			my $count	= 0;
@@ -443,7 +446,7 @@ END
 		# simple variable sort with numerics
 		my $s		= RDF::Trine::Node::Variable->new('__s');
 		my $var		= RDF::Trine::Node::Variable->new('v');
-		my $triple	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
+		my $triple	= RDF::Query::Plan::Quad->new( $s, $rdf->first, $var, $nil );
 		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
 		
 		foreach my $data ([0 => [1,2,3]], [1 => [3,2,1]]) {
@@ -463,7 +466,7 @@ END
 		# simple variable sort with plain literals
 		my $s		= RDF::Trine::Node::Variable->new('__s');
 		my $var		= RDF::Trine::Node::Variable->new('v');
-		my $triple	= RDF::Query::Plan::Triple->new( $s, $foaf->name, $var );
+		my $triple	= RDF::Query::Plan::Quad->new( $s, $foaf->name, $var, $nil );
 		my $proj	= RDF::Query::Plan::Project->new( $triple, ['v'] );
 		my $expr	= RDF::Query::Expression::Function->new( 'sparql:str', $var );
 		
@@ -487,8 +490,8 @@ END
 		my $s2		= RDF::Trine::Node::Variable->new('__s2');
 		my $var		= RDF::Trine::Node::Variable->new('v');
 		my $name	= RDF::Trine::Node::Variable->new('name');
-		my $plan_a	= RDF::Query::Plan::Triple->new( $s, $rdf->first, $var );
-		my $plan_b	= RDF::Query::Plan::Triple->new( $s2, $foaf->name, $name );
+		my $plan_a	= RDF::Query::Plan::Quad->new( $s, $rdf->first, $var, $nil );
+		my $plan_b	= RDF::Query::Plan::Quad->new( $s2, $foaf->name, $name, $nil );
 		my $join	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
 		my $proj	= RDF::Query::Plan::Project->new( $join, [qw(v name)] );
 		my $expr1	= RDF::Query::Expression::Binary->new(
@@ -534,7 +537,7 @@ END
 		my ($pat)	= RDF::Query::Plan->generate_plans( $algebra, $context );
 		my $st		= RDF::Trine::Statement->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $plan	= RDF::Query::Plan::Construct->new( $pat, [ $st ] );
-		is( _CLEAN_WS($plan->sse), '(construct (triple ?p <http://xmlns.com/foaf/0.1/firstName> ?name) ((triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: construct' ) or die;
+		is( _CLEAN_WS($plan->sse), '(construct (quad ?p <http://xmlns.com/foaf/0.1/firstName> ?name (nil)) ((triple ?p <http://xmlns.com/foaf/0.1/name> ?name)))', 'sse: construct' ) or die;
 		
 		$plan->execute( $context );
 		my $count	= 0;

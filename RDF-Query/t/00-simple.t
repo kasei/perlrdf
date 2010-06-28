@@ -30,7 +30,8 @@ END
 		isa_ok( $query, 'RDF::Query' );
 		
 		print "# (?var qname literal)\n";
-		my @results	= $query->execute( $model );
+		my ($p, $c)	= $query->prepare( $model );
+		my @results	= $query->execute_plan( $p, $c );
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 # 		use Data::Dumper;
@@ -77,7 +78,8 @@ END
 END
 		isa_ok( $query, 'RDF::Query' );
 		
-		my @results	= $query->execute( $model );
+		my ($p, $c)	= $query->prepare( $model );
+		my @results	= $query->execute_plan( $p, $c );
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );

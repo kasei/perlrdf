@@ -89,7 +89,7 @@ sub from_trine {
 	} elsif ($n->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Query::Node::Blank->new( $n->blank_identifier );
 	} elsif ($n->isa('RDF::Trine::Node::Nil')) {
-		return;
+		return $n;
 	} else {
 		use Data::Dumper;
 		Carp::confess "from_trine called with unrecognized node type:" . Dumper($n);

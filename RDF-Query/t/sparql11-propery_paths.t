@@ -130,7 +130,8 @@ END
 			}
 		}
 END
-	$insert->execute( $model );
+	my ($p, $c)	= $insert->prepare( $model );
+	$insert->execute_plan( $p, $c );
 	
 	{
 		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
@@ -142,7 +143,8 @@ END
 				}
 			}
 END
-		my $iter	= $query->execute( $model );
+		my ($p, $c)	= $query->prepare( $model );
+		my $iter	= $query->execute_plan( $p, $c );
 		isa_ok( $iter, 'RDF::Trine::Iterator' );
 		my @got;
 		while (my $row = $iter->next) {
@@ -161,7 +163,10 @@ END
 				}
 			}
 END
-		my $iter	= $query->execute( $model );
+		my ($p, $c)	= $query->prepare( $model );
+# 		warn $query->pattern->sse;
+# 		warn $p->sse;
+		my $iter	= $query->execute_plan( $p, $c );
 		isa_ok( $iter, 'RDF::Trine::Iterator' );
 		my @got;
 		my %expect	= (

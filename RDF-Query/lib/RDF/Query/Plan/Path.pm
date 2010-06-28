@@ -37,7 +37,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $op, $path, $start, $end, %args ) >>
+=item C<< new ( $op, $path, $start, $end, $graph, %args ) >>
 
 =cut
 
@@ -47,8 +47,9 @@ sub new {
 	my $path	= shift;
 	my $start	= shift;
 	my $end		= shift;
+	my $graph	= shift;
 	my %args	= @_;
-	my $self	= $class->SUPER::new( $op, $path, $start, $end, \%args );
+	my $self	= $class->SUPER::new( $op, $path, $start, $end, $graph, \%args );
 	my %vars;
 	for ($start, $end) {
 		$vars{ $_->name }++ if ($_->isa('RDF::Query::Node::Variable'));
@@ -73,9 +74,11 @@ sub execute ($) {
 	
 	my $start	= $self->start;
 	my $end		= $self->end;
+	my $graph	= $self->graph;
 	my $bound	= $context->bound;
 	if (%$bound) {
-		for ($start, $end) {
+		for ($start, $end, $graph) {
+			next unless (blessed($_));
 			next unless ($_->isa('RDF::Trine::Node::Variable'));
 			next unless (blessed($bound->{ $_->name }));
 			$_	= $bound->{ $_->name };
@@ -84,6 +87,7 @@ sub execute ($) {
 	
 	$self->[0]{end}		= $end;
 	$self->[0]{start}	= $start;
+	$self->[0]{graph}	= $graph;
 	$self->[0]{paths}	= [[]];
 	$self->[0]{results}	= [];
 	$self->[0]{bound}	= $bound;
@@ -114,7 +118,7 @@ sub next {
 		my @nodes	= @$p;
 		if (@nodes) {
 			$l->trace( 'picking up from path: (' . join('/', map { $_->sse } @nodes) . ')' );
-			my $plan	= RDF::Query::Plan->__path_plan( $nodes[ $#nodes ], $self->path, $self->end, $self->[0]{context}, %{ $self->[5] } );
+			my $plan	= RDF::Query::Plan->__path_plan( $nodes[ $#nodes ], $self->path, $self->end, $self->graph, $self->[0]{context}, %{ $self->[6] } );
 			$plan->execute( $self->[0]{context} );
 			while (my $row = $plan->next) {
 				if ($self->start->isa('RDF::Query::Node::Variable')) {
@@ -151,12 +155,12 @@ sub next {
 				} elsif ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
 					$l->trace( '- start of zero-length path is NOT a variable' );
 					$l->trace( '- end of zero-length path is a variable' );
-					warn 'start: ' . $self->[0]{start};
+# 					warn 'start: ' . $self->[0]{start};
 					my $row	= RDF::Query::VariableBindings->new( { $self->[0]{end}->name => $self->[0]{start} } );
 					push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
 				}
 			}
-			my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->[0]{context}, %{ $self->[5] } );
+			my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->graph, $self->[0]{context}, %{ $self->[6] } );
 			$l->trace( 'starting path with plan: ' . $plan->sse );
 			$plan->execute( $self->[0]{context} );
 			while (my $row = $plan->next) {
@@ -238,6 +242,17 @@ sub end {
 	return $self->[4];
 }
 
+=item C<< graph >>
+
+Returns the named graph.
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	return $self->[5];
+}
+
 =item C<< distinct >>
 
 Returns true if the pattern is guaranteed to return distinct results.
@@ -278,7 +293,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(s N N);
+	return qw(s N N N);
 }
 
 =item C<< plan_node_data >>
@@ -290,7 +305,7 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	return ($self->op, $self->start, $self->end);
+	return ($self->op, $self->start, $self->end, $self->graph);
 }
 
 1;

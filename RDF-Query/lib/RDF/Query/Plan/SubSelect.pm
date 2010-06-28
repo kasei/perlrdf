@@ -172,7 +172,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(Q);
+	return qw(q);
 }
 
 =item C<< plan_node_data >>

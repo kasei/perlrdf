@@ -68,8 +68,15 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open CONSTANT";
 	}
 	my $binds	= $self->[1];
-	return undef if ($self->[0]{'index'} > $#{ $binds });
-	return $binds->[ $self->[0]{'index'}++ ];
+	if ($self->[0]{'index'} > $#{ $binds }) {
+		return;
+	}
+	my $row	= $binds->[ $self->[0]{'index'}++ ];
+	if ($row) {
+		return RDF::Query::VariableBindings->new( $row );
+	} else {
+		return;
+	}
 }
 
 =item C<< close >>

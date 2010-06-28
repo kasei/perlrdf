@@ -79,7 +79,8 @@ END
 					GRAPH ?src { ?x <foo:bar> ?name }
 				}
 END
-			my $stream	= $query->execute( $model );
+			my ($plan, $ctx)	= $query->prepare( $model );
+			my $stream	= $query->execute_plan( $plan, $ctx );
 			my $row		= $stream->next;
 			is( $row, undef, 'no results' );
 		}
@@ -125,9 +126,7 @@ END
 END
 			my ($plan, $ctx)	= $query->prepare( $model );
 			my $iter	= $query->execute_plan( $plan, $ctx );
-			my $counter	= 0;
 			while (my $row = $iter->next) {
-				warn $row;
 				my $src		= $row->{src};
 				my $mbox	= $row->{mbox};
 				ok( $src, 'got source' );
@@ -135,7 +134,7 @@ END
 				is( $src->uri_value, $alice, 'graph uri' );
 				is( $mbox->uri_value, 'mailto:alice@work.example', 'mbox uri' );
 			}
-			is( $counter, 1, 'expected result count' );
+			is( $iter->count, 1, 'expected result count' );
 		}
 		
 		{
@@ -199,7 +198,6 @@ END
 								$bob	=> "Bob",
 							);
 			
-			my $count	= 0;
 			my $stream	= $query->execute( $model );
 			while (my $row = $stream->next) {
 				isa_ok( $row, 'HASH' );
@@ -218,10 +216,9 @@ END
 				my $l_topic	= $topic->literal_value;
 				is( $l_name, $expect, "got name: $l_name" );
 				is( $l_topic, $expect, "got topic: $l_topic" );
-				$count++;
 			}
 			
-			is( $count, 2, 'got results' );
+			is( $stream->count, 2, 'got results' );
 		}
 	}
 

@@ -41,6 +41,7 @@ sub new {
 	my $class	= shift;
 	my @triples	= map {
 					my @nodes	= $_->nodes;
+					$nodes[3]	||= RDF::Trine::Node::Nil->new();
 					(scalar(@nodes) == 4)
 						? RDF::Trine::Statement::Quad->new( @nodes )
 						: RDF::Trine::Statement->new( @nodes )
@@ -93,6 +94,7 @@ sub execute ($) {
 	
 	my $model	= $context->model;
 	my $pattern	= RDF::Trine::Pattern->new( @bound_triples );
+	$l->trace( "BGP: " . $pattern->sse );
 	my $iter	= $model->get_pattern( $pattern );
 	
 	if (blessed($iter)) {

@@ -37,6 +37,8 @@ BEGIN {
 
 =cut
 
+use overload	'""'	=> sub { $_[0]->sse };
+
 =item C<< new ( $name ) >>
 
 Returns a new variable object.
