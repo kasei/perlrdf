@@ -94,6 +94,10 @@ The password of the database user.
 
 =back
 
+=item C<new_with_object ( $dbi_db )>
+
+Initialize the store with a L<DBI::db> object.
+
 
 =cut
 
