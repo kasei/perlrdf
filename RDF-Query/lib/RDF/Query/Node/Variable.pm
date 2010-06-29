@@ -7,7 +7,7 @@ RDF::Query::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Variable version 2.900.
+This document describes RDF::Query::Node::Variable version 2.901.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -36,6 +36,8 @@ BEGIN {
 =over 4
 
 =cut
+
+use overload	'""'	=> sub { $_[0]->sse };
 
 =item C<< new ( $name ) >>
 

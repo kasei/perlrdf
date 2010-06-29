@@ -2683,7 +2683,7 @@ __END__
             - src
           - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
             - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Quad
+              - !!perl/array:RDF::Query::Algebra::Triple
                 - !!perl/array:RDF::Query::Node::Variable
                   - x
                 - !!perl/array:RDF::Query::Node::Resource
@@ -2691,7 +2691,6 @@ __END__
                   - http://xmlns.com/foaf/0.1/name
                 - !!perl/array:RDF::Query::Node::Variable
                   - name
-                - *1
       - &2
         - !!perl/array:RDF::Query::Node::Variable
           - src
@@ -3695,7 +3694,7 @@ __END__
             - time
           - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
             - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-              - !!perl/array:RDF::Query::Algebra::Quad
+              - !!perl/array:RDF::Query::Algebra::Triple
                 - !!perl/array:RDF::Query::Node::Variable
                   - p
                 - !!perl/array:RDF::Query::Node::Resource
@@ -3704,7 +3703,6 @@ __END__
                 - !!perl/array:RDF::Query::Node::Resource
                   - URI
                   - mailto:gtw@cs.umd.edu
-                - *1
         - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
           - !!perl/array:RDF::Query::Algebra::Triple
             - !!perl/array:RDF::Query::Node::Variable
@@ -4666,7 +4664,7 @@ __END__
                 - g
               - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
                 - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
-                  - !!perl/array:RDF::Query::Algebra::Quad
+                  - !!perl/array:RDF::Query::Algebra::Triple
                     - &2 !!perl/array:RDF::Query::Node::Blank
                       - BLANK
                       - a1
@@ -4675,15 +4673,13 @@ __END__
                       - http://xmlns.com/foaf/0.1/name
                     - !!perl/array:RDF::Query::Node::Variable
                       - name
-                    - *1
-                  - !!perl/array:RDF::Query::Algebra::Quad
+                  - !!perl/array:RDF::Query::Algebra::Triple
                     - *2
                     - !!perl/array:RDF::Query::Node::Resource
                       - URI
                       - http://xmlns.com/foaf/0.1/depiction
                     - !!perl/array:RDF::Query::Node::Variable
                       - img
-                    - *1
       - &3
         - !!perl/array:RDF::Query::Node::Variable
           - name

@@ -4,7 +4,54 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.01, released XX XXXX 2010.
+This document describes RDF::Endpoint version 0.01_01.
+
+=head1 SYNOPSIS
+
+ plackup /usr/local/bin/endpoint.psgi
+
+=head1 DESCRIPTION
+
+This modules implements the SPARQL Protocol for RDF using the PSGI
+interface provided by L<Plack>. It may be run with any Plack handler.
+See L<Plack::Handler> for more details.
+
+When this module is used to create a SPARQL endpoint, configuration variables
+are loaded using L<Config::JFDI>. An example configuration file rdf_endpoint.json
+is included with this package. Valid configuration keys include:
+
+=over 4
+
+=item store
+
+A string used to define the underlying L<RDF::Trine::Store> for the endpoint.
+The string is used as the argument to the L<RDF::Trine::Store->new_with_string>
+constructor.
+
+=item update
+
+A boolean value indicating whether Update operations should be allowed to be
+executed by the endpoint.
+
+=item load_data
+
+A boolean value indicating whether the endpoint should use URLs that appear in
+FROM and FROM NAMED clauses to construct a SPARQL dataset by dereferencing the
+URLs and loading the retrieved RDF content.
+
+=item service_description
+
+An associative array (hash) containing details on which and how much information
+to include in the service description provided by the endpoint if no query is
+included for execution. The boolean values 'default' and 'named_graphs' indicate
+that the respective SPARQL dataset graphs should be described by the service
+description.
+
+=back
+
+=head1 METHODS
+
+=over 4
 
 =cut
 
@@ -15,14 +62,15 @@ use strict;
 use warnings;
 our $VERSION	= '0.01_01';
 
-use RDF::Query;
-use RDF::Trine qw(statement iri blank literal);
+use RDF::Query 2.900;
+use RDF::Trine 0.124 qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
+use Scalar::Util qw(blessed);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
@@ -55,6 +103,8 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
+	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
+	
 	
 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
 	my $model	= RDF::Trine::Model->new( $store );
@@ -64,7 +114,7 @@ sub run {
 	unless ($req->path eq '/') {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
-		my $dir		= eval { dist_dir('RDF-Endpoint') } || 'share';
+		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 		my $file	= File::Spec->catfile($dir, 'www', $path);
 		if (-r $file) {
 			open( my $fh, '<', $file ) or die $!;
@@ -96,35 +146,59 @@ END
 			['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
 		);
 		my $stype	= choose( \@variants, $headers ) || 'text/html';
+		
 		my %args;
 		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{load_data});
-		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', %args } );
 		
+		my @default	= $req->param('default-graph-uri');
+		my @named	= $req->param('named-graph-uri');
+		if (scalar(@default) or scalar(@named)) {
+			use Data::Dumper;
+			warn Dumper(\@default, \@named);
+			delete $args{ load_data };
+			$model	= RDF::Trine::Model->temporary_model;
+			foreach my $url (@named) {
+				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+			}
+			foreach my $url (@default) {
+				RDF::Trine::Parser->parse_url_into_model( $url, $model );
+			}
+		}
+		
+		my $base	= $req->base;
+		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		if ($query) {
-			my $iter	= $query->execute( $model );
+			my ($plan, $ctx)	= $query->prepare( $model );
+# 			warn $plan->sse;
+			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
 				if ($stype =~ /html/) {
-					$response->headers->content_type( 'text/plain' );
-					$content	= encode_utf8($iter->as_string);
+					$response->headers->content_type( 'text/html' );
+					my $html	= $self->iter_as_html($iter, $model);
+					$content	= encode_utf8($html);
 				} elsif ($stype =~ /xml/) {
 					$response->headers->content_type( $stype );
-					$content	= encode_utf8($iter->as_xml);
+					my $xml		= $self->iter_as_xml($iter, $model);
+					$content	= encode_utf8($xml);
 				} elsif ($stype =~ /json/) {
 					$response->headers->content_type( $stype );
-					$content	= encode_utf8($iter->as_json);
+					my $json	= $self->iter_as_json($iter, $model);
+					$content	= encode_utf8($json);
 				} else {
 					$response->headers->content_type( 'text/plain' );
-					$content	= encode_utf8($iter->as_string);
+					my $text	= $self->iter_as_text($iter, $model);
+					$content	= encode_utf8($text);
 				}
 			} else {
 				$response->status(500);
 				$content	= RDF::Query->error;
 			}
 		} else {
-			$response->status(500);
 			$content	= RDF::Query->error;
+			my $code	= ($content =~ /Syntax/) ? 400 : 500;
+			$response->status($code);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
 			}
@@ -156,7 +230,7 @@ END
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
 		} else {
-			my $dir			= eval { dist_dir('RDF-Endpoint') } || 'share';
+			my $dir			= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
@@ -198,6 +272,144 @@ END
 		$response->body( $body ) unless ($req->method eq 'HEAD');
 	}
 	return $response;
+}
+
+sub iter_as_html {
+	my $self	= shift;
+	my $stream	= shift;
+	my $model	= shift;
+	my $html	= "<html><head><title>SPARQL Results</title>\n"
+				. <<"END";
+		<style type="text/css">
+			table {
+				border: 1px solid #000;
+				border-collapse: collapse;
+			}
+			
+			th { background-color: #ddd; }
+			td, th {
+				padding: 1px 5px 1px 5px;
+				border: 1px solid #000;
+			}
+		</style>
+END
+		$html	.= "</head><body>\n";
+	if ($stream->isa('RDF::Trine::Iterator::Graph')) {
+		$html	.= "<table>\n<tr>\n";
+		
+		my @names	= qw(subject predicate object);
+		my $columns	= scalar(@names);
+		foreach my $name (@names) {
+			$html	.= "\t<th>" . $name . "</th>\n";
+		}
+		$html	.= "</tr>\n";
+		
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			$count++;
+			$html	.= "<tr>\n";
+			foreach my $k (@names) {
+				my $node	= $row->$k();
+				my $value	= $self->node_as_html($node, $model);
+				$html	.= "\t<td>" . $value . "</td>\n";
+			}
+			$html	.= "</tr>\n";
+		}
+		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
+		$html	.= "</table>\n";
+	} elsif ($stream->isa('RDF::Trine::Iterator::Boolean')) {
+		$html	.= (($stream->get_boolean) ? "True" : "False");
+	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
+		$html	.= "<table>\n<tr>\n";
+		
+		my @names	= $stream->binding_names;
+		my $columns	= scalar(@names);
+		foreach my $name (@names) {
+			$html	.= "\t<th>" . $name . "</th>\n";
+		}
+		$html	.= "</tr>\n";
+		
+		my $count	= 0;
+		while (my $row = $stream->next) {
+			$count++;
+			$html	.= "<tr>\n";
+			foreach my $k (@names) {
+				my $node	= $row->{ $k };
+				my $value	= $self->node_as_html($node, $model);
+				$html	.= "\t<td>" . $value . "</td>\n";
+			}
+			$html	.= "</tr>\n";
+		}
+		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
+		$html	.= "</table>\n";
+	} else {
+		
+	}
+	$html	.= "</body></html>\n";
+	return $html;
+}
+
+sub iter_as_text {
+	my $self	= shift;
+	my $iter	= shift;
+	return $iter->as_string;
+}
+
+sub iter_as_xml {
+	my $self	= shift;
+	my $iter	= shift;
+	return $iter->as_xml;
+}
+
+sub iter_as_json {
+	my $self	= shift;
+	my $iter	= shift;
+	return $iter->as_json;
+}
+
+sub node_as_html {
+	my $self	= shift;
+	my $node	= shift;
+	my $model	= shift;
+	my $config	= $self->{conf};
+	return '' unless (blessed($node));
+	if ($node->isa('RDF::Trine::Node::Resource')) {
+		my $uri	= $node->uri_value;
+		for ($uri) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		my $link	= $config->{html}{resource_links};
+		my $html;
+		if ($config->{html}{embed_images}) {
+			if ($model->count_statements( $node, iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), iri('http://xmlns.com/foaf/0.1/Image') )) {
+				my $width	= $config->{html}{image_width} || 200;
+				$html	= qq[<img src="${uri}" width="${width}" />];
+			} else {
+				$html	= $uri;
+			}
+		} else {
+			$html	= $uri;
+		}
+		if ($link) {
+			$html	= qq[<a href="${uri}">$html</a>];
+		}
+		return $html;
+	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
+		my $html	= $node->literal_value;
+		for ($html) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		return $html;
+	} else {
+		my $html	= $node->as_string;
+		for ($html) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+		}
+		return $html;
+	}
 }
 
 =item C<< service_description ( $request, $model ) >>
@@ -248,13 +460,13 @@ sub service_description {
 	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
 	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-	if ($config->{sd}{default}) {
+	if ($config->{service_description}{default}) {
 		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
 		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
 		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
 		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
 	}
-	if ($config->{sd}{named_graphs}) {
+	if ($config->{service_description}{named_graphs}) {
 		my @graphs	= $model->get_contexts;
 		foreach my $g (@graphs) {
 			my $ng		= blank();
@@ -276,15 +488,25 @@ sub service_description {
 
 __END__
 
+=back
+
 =head1 SEE ALSO
 
-L<http://www.perlrdf.org/>
+=over 4
+
+=item * L<http://www.w3.org/TR/rdf-sparql-protocol/>
+
+=item * L<http://www.perlrdf.org/>
+
+=item * L<irc://irc.perl.org/#perlrdf>
+
+=back
 
 =head1 AUTHOR
 
  Gregory Todd Williams <gwilliams@cpan.org>
 
-=head1 COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
 Copyright (c) 2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under

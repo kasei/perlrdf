@@ -7,7 +7,7 @@ RDF::Query::Algebra::Path - Algebra class for path patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Path version 2.900.
+This document describes RDF::Query::Algebra::Path version 2.901.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -38,7 +38,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $start, [ $op, @paths ], $end )>
+=item C<new ( $start, [ $op, @paths ], $end, $graph )>
 
 Returns a new Path structure.
 
@@ -49,7 +49,8 @@ sub new {
 	my $start	= shift;
 	my $path	= shift;
 	my $end		= shift;
-	return bless( [ $start, $path, $end ], $class );
+	my $graph	= shift;
+	return bless( [ $start, $path, $end, $graph ], $class );
 }
 
 =item C<< construct_args >>
@@ -61,7 +62,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->start, $self->path, $self->end);
+	return ($self->start, $self->path, $self->end, $self->graph);
 }
 
 =item C<< path >>
@@ -95,6 +96,17 @@ Returns the path destination node.
 sub end {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< graph >>
+
+Returns the named graph.
+
+=cut
+
+sub graph {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinguish_bnode_variables >>
@@ -159,7 +171,12 @@ sub sse {
 	my $end		= $self->end->sse( $context, $prefix );
 	my $path	= $self->path;
 	my $psse	= $self->_expand_path( $path, 'sse' );
-	return sprintf( '(path %s %s %s)', $start, $psse, $end );
+	if ($self->graph) {
+		my $graph	= $self->graph->sse( $context, $prefix );
+		return sprintf( '(path %s %s %s %s)', $start, $psse, $end, $graph );
+	} else {
+		return sprintf( '(path %s %s %s)', $start, $psse, $end );
+	}
 }
 
 =item C<< as_sparql >>

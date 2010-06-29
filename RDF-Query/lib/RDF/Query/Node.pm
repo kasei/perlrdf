@@ -7,7 +7,7 @@ RDF::Query::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node version 2.900.
+This document describes RDF::Query::Node version 2.901.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Node::Variable;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -89,7 +89,7 @@ sub from_trine {
 	} elsif ($n->isa('RDF::Trine::Node::Blank')) {
 		return RDF::Query::Node::Blank->new( $n->blank_identifier );
 	} elsif ($n->isa('RDF::Trine::Node::Nil')) {
-		return;
+		return $n;
 	} else {
 		use Data::Dumper;
 		Carp::confess "from_trine called with unrecognized node type:" . Dumper($n);

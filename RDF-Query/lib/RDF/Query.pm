@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.900.
+This document describes RDF::Query version 2.901.
 
 =head1 SYNOPSIS
 
@@ -33,9 +33,9 @@ information on RDQL.
 =head1 CHANGES IN VERSION 2.900
 
 The 2.9xx versions of RDF::Query introduce some significant changes that will
-lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.900 introduces
+lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.901 introduces
 the SPARQL 1.1 features up to date with the SPARQL 1.1 working drafts as of its
-release date. Version 2.900 also is the first version to require use of
+release date. Version 2.901 also is the first version to require use of
 RDF::Trine for the underlying RDF store. This change means that RDF::Core is
 no longer supported, and while Redland is still supported, its handling of
 "contexts" (named graphs) means that existing RDF triples stored in Redland
@@ -137,7 +137,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.900';
+	$VERSION		= '2.901';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -622,6 +622,7 @@ sub pattern {
 									or $triples[0]->isa('RDF::Query::Algebra::Construct')
 									or $triples[0]->isa('RDF::Query::Algebra::Load')
 									or $triples[0]->isa('RDF::Query::Algebra::Clear')
+									or $triples[0]->isa('RDF::Query::Algebra::Create')
 									or $triples[0]->isa('RDF::Query::Algebra::Update')
 								)) {
 		my $ggp		= $triples[0];
@@ -647,7 +648,7 @@ sub as_sparql {
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
 	
-	if ($method =~ /^(LOAD|CLEAR|UPDATE)$/) {
+	if ($method =~ /^(LOAD|CLEAR|CREATE|UPDATE)$/) {
 		return $ggp->as_sparql;
 	} else {
 		{
@@ -826,29 +827,15 @@ Loads any external data required by this query (FROM and FROM NAMED clauses).
 
 sub load_data {
 	my $self	= shift;
-	my $model	= $self->model;
 	my $parsed	= $self->{parsed};
 	
 	## LOAD ANY EXTERNAL RDF FILES
 	my $sources	= $parsed->{'sources'};
-	if (ref($sources) and reftype($sources) eq 'ARRAY') {
-		my $need_new_model	= 1;
-		my $named_query		= 0;
-		
-		# put non-named sources first, because they will cause a new model to be
-		# constructed. subsequent named data will then be loaded into the correct
-		# model object.
-		my @sources	= sort { @$a == 2 } @$sources;
-		
-		foreach my $source (@sources) {
+	if (ref($sources) and reftype($sources) eq 'ARRAY' and scalar(@$sources)) {
+		my $model	= RDF::Trine::Model->temporary_model;
+		$self->model( $model );
+		foreach my $source (@$sources) {
 			my $named_source	= (2 == @{$source} and $source->[1] eq 'NAMED');
-			if ((not $named_source) and $need_new_model) {
-				# query uses FROM <..> clauses, so create a new model so we don't add the statements to a persistent default graph
-				$model				= RDF::Trine::Model->temporary_model;
-				$self->model( $model );
-				$need_new_model	= 0;
-			}
-			
 			my $uri	= $source->[0]->uri_value;
 			$self->parse_url( $uri, $named_source );
 		}

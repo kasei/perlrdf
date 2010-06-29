@@ -12,8 +12,8 @@ test_requires       'Test::More' => '0.61';
 
 requires			'Carp'					=> 0;
 requires			'File::ShareDir'		=> 0;
-requires			'RDF::Trine'			=> 0.125;
-requires			'RDF::Query'			=> 3.000;
+requires			'RDF::Trine'			=> 0.124;
+requires			'RDF::Query'			=> 2.900;
 requires			'RDF::RDFa::Generator'	=> 0;
 requires			'Plack::Request'		=> 0;
 requires			'Plack::Response'		=> 0;
@@ -33,7 +33,7 @@ write_doap_changes;
 write_doap_changes_xml;
 
 install_share;
-install_script glob('script/*');
+install_script glob('scripts/*');
 
 sign;
 

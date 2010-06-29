@@ -199,7 +199,7 @@ END
 		}
 END
 	my $sse	= $query->sse;
-	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?name) (namedgraph ?g (BGP (quad _:a1 foaf:name "Gregory Todd Williams" ?g)))))', 'sse: select with named graph' );
+	is( _CLEAN_WS($sse), '(prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?name) (namedgraph ?g (BGP (triple _:a1 foaf:name "Gregory Todd Williams")))))', 'sse: select with named graph' );
 }
 
 {

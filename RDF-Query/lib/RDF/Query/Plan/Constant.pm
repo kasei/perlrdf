@@ -7,7 +7,7 @@ RDF::Query::Plan::Constant - Executable query plan for Constants.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Constant version 2.900.
+This document describes RDF::Query::Plan::Constant version 2.901.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -68,8 +68,15 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open CONSTANT";
 	}
 	my $binds	= $self->[1];
-	return undef if ($self->[0]{'index'} > $#{ $binds });
-	return $binds->[ $self->[0]{'index'}++ ];
+	if ($self->[0]{'index'} > $#{ $binds }) {
+		return;
+	}
+	my $row	= $binds->[ $self->[0]{'index'}++ ];
+	if ($row) {
+		return RDF::Query::VariableBindings->new( $row );
+	} else {
+		return;
+	}
 }
 
 =item C<< close >>

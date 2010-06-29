@@ -1,17 +1,17 @@
-# RDF::Query::Algebra::Load
+# RDF::Query::Algebra::Create
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Algebra::Load - Algebra class for LOAD operations
+RDF::Query::Algebra::Create - Algebra class for CREATE GRAPH operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Load version 2.901.
+This document describes RDF::Query::Algebra::Create version 2.901.
 
 =cut
 
-package RDF::Query::Algebra::Load;
+package RDF::Query::Algebra::Create;
 
 use strict;
 use warnings;
@@ -43,17 +43,19 @@ BEGIN {
 
 =cut
 
-=item C<new ( $url )>
+=item C<new ( $graph )>
 
-Returns a new LOAD structure.
+Returns a new CREATE GRAPH structure.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $url		= shift;
 	my $graph	= shift;
-	return bless([$url, $graph], $class);
+	unless ($graph) {
+		$graph	= RDF::Trine::Node::Nil->new;
+	}
+	return bless([$graph], $class);
 }
 
 =item C<< construct_args >>
@@ -65,36 +67,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->url, $self->graph);
-}
-
-=item C<< sse >>
-
-Returns the SSE string for this alegbra expression.
-
-=cut
-
-sub sse {
-	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
-	
-	my $url		= $self->url;
-	my $graph	= $self->graph;
-	my $string;
-	if ($graph) {
-		$string	= sprintf(
-			"(load <%s> <%s>)",
-			$url->uri_value,
-			$graph->uri_value,
-		);
-	} else {
-		$string	= sprintf(
-			"(load <%s>)",
-			$url->uri_value,
-		);
-	}
-	return $string;
+	return ($self->graph);
 }
 
 =item C<< as_sparql >>
@@ -108,21 +81,24 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
-	my $url		= $self->url;
 	my $graph	= $self->graph;
-	my $string;
-	if ($graph) {
-		$string	= sprintf(
-			"LOAD <%s> INTO GRAPH <%s>",
-			$url->uri_value,
-			$graph->uri_value,
-		);
-	} else {
-		$string	= sprintf(
-			"LOAD <%s>",
-			$url->uri_value,
-		);
-	}
+	my $string	= sprintf( "CREATE GRAPH <%s>", $graph->uri_value );
+	return $string;
+}
+
+=item C<< sse >>
+
+Returns the SSE string for this alegbra expression.
+
+=cut
+
+sub sse {
+	my $self	= shift;
+	my $context	= shift;
+	my $indent	= shift;
+	
+	my $graph	= $self->graph;
+	my $string	= sprintf( "(create <%s>)", $graph->uri_value );
 	return $string;
 }
 
@@ -146,24 +122,14 @@ sub referenced_variables {
 	return;
 }
 
-=item C<< url >>
-
-=cut
-
-sub url {
-	my $self	= shift;
-	return $self->[0];
-}
-
 =item C<< graph >>
 
 =cut
 
 sub graph {
 	my $self	= shift;
-	return $self->[1];
+	return $self->[0];
 }
-
 
 1;
 

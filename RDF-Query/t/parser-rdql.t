@@ -2,6 +2,7 @@
 use strict;
 use Test::More tests => 5;
 
+use RDF::Query::Node qw(variable);
 use_ok( 'RDF::Query::Parser::RDQL' );
 my $parser	= new RDF::Query::Parser::RDQL (undef);
 isa_ok( $parser, 'RDF::Query::Parser::RDQL' );
@@ -181,7 +182,7 @@ END
 					   ],
 		'sources'		=> undef,
 		'namespaces'	=> {'foaf' => 'http://xmlns.com/foaf/0.1/','geo' => 'http://www.w3.org/2003/01/geo/wgs84_pos#','dcterms' => 'http://purl.org/dc/terms/','rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'},
-		'variables'		=> [['image'],['point'],['lat']]
+		'variables'		=> [variable('image'),variable('point'),variable('lat')]
 	};
 	my $parsed	= $parser->parse( $rdql );
 	is_deeply( $parsed, $correct, 'VarUri EQ OR constraint, numeric comparison constraint' );

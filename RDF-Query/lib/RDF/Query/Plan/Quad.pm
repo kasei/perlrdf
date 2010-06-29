@@ -7,7 +7,7 @@ RDF::Query::Plan::Quad - Executable query plan for Quads.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Quad version 2.900.
+This document describes RDF::Query::Plan::Quad version 2.901.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -105,6 +105,10 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "QUAD plan can't be executed while already open";
 	}
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.quad");
+	$l->trace( "executing RDF::Query::Plan::Quad:" );
+	
 	my @quad	= @{ $self }[ 1..4 ];
 	my $bound	= $context->bound;
 	if (%$bound) {
@@ -116,9 +120,15 @@ sub execute ($) {
 	}
 	
 	my $model	= $context->model;
-	my $iter	= $model->get_statements( @quad[0..3] );
 	
+	my @names	= qw(subject predicate object context);
+	foreach my $i (0 .. 3) {
+		$l->trace( sprintf("- quad %10s: %s", $names[$i], $quad[$i]) );
+	}
+	
+	my $iter	= $model->get_statements( @quad[0..3] );
 	if (blessed($iter)) {
+		$l->trace("got quad iterator");
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;
 		$self->state( $self->OPEN );
@@ -138,7 +148,11 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open QUAD";
 	}
 	my $iter	= $self->[0]{iter};
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.quad");
+	$l->trace("next() called on Quad plan");
 	LOOP: while (my $row = $iter->next) {
+		$l->trace("got quad: " . $row->as_string);
 		if (my $data = $self->[0]{dups}) {
 			foreach my $pos (values %$data) {
 				my @pos	= @$pos;
@@ -146,15 +160,17 @@ sub next {
 				my $first			= $row->$first_method();
 				foreach my $p (@pos) {
 					unless ($first->equal( $row->$p() )) {
+						use Data::Dumper;
+						$l->trace("Quad $first_method and $p didn't match: " . Dumper($first, $row->$p()));
 						next LOOP;
 					}
 				}
 			}
 		}
 		
-		if ($row->context->isa('RDF::Trine::Node::Nil')) {
-			next;
-		}
+# 		if ($row->context->isa('RDF::Trine::Node::Nil')) {
+# 			next;
+# 		}
 		
 		my $binding	= {};
 		foreach my $key (keys %{ $self->[0]{mappings} }) {
@@ -171,6 +187,7 @@ sub next {
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		return $bindings;
 	}
+	$l->trace("No more quads");
 	return;
 }
 
@@ -181,6 +198,7 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
+		Carp::cluck;
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open QUAD";
 	}
 	delete $self->[0]{iter};

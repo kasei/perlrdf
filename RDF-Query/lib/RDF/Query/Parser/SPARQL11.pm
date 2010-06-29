@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.900.
+This document describes RDF::Query::Parser::SPARQL11 version 2.901.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -247,6 +247,14 @@ sub _RW_Query {
 		} elsif ($self->_test(qr/ASK/i)) {
 			$self->_AskQuery();
 			$read_query++;
+		} elsif ($self->_test(qr/CREATE\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "CREATE GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_CreateGraph();
+		} elsif ($self->_test(qr/DROP\s+(SILENT\s+)?GRAPH/i)) {
+			throw RDF::Query::Error::PermissionError -text => "DROP GRAPH update forbidden in read-only queries"
+				unless ($self->{update});
+			$self->_DropGraph();
 		} elsif ($self->_test(qr/LOAD/i)) {
 			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
 				unless ($self->{update});
@@ -285,10 +293,12 @@ sub _RW_Query {
 		}
 		last if ($read_query);
 		$self->__consume_ws_opt;
-		$self->_eat(qr/;/) if ($self->_test(qr/;/));
-		$self->__consume_ws_opt;
-		if ($self->_Query_test) {
-			next;
+		if ($self->_test(qr/;/)) {
+			$self->_eat(qr/;/) ;
+			$self->__consume_ws_opt;
+			if ($self->_Query_test) {
+				next;
+			}
 		}
 		last;
 	}
@@ -298,7 +308,7 @@ sub _RW_Query {
 	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
-		throw RDF::Query::Error::ParseError -text => "Remaining input after query: $remaining";
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
 	if ($count > 1) {
@@ -636,6 +646,30 @@ sub _ClearGraphUpdate {
 		my $pat	= RDF::Query::Algebra::Clear->new( $graph );
 		$self->_add_patterns( $pat );
 	}
+	$self->{build}{method}		= 'CLEAR';
+}
+
+sub _CreateGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/CREATE\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Create->new( $graph );
+	$self->_add_patterns( $pat );
+	$self->{build}{method}		= 'CREATE';
+}
+
+sub _DropGraph {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/DROP\s+(SILENT\s+)?GRAPH/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	$self->_IRIref;
+	my ($graph)	= splice( @{ $self->{stack} } );
+	my $pat	= RDF::Query::Algebra::Clear->new( $graph );
+	$self->_add_patterns( $pat );
 	$self->{build}{method}		= 'CLEAR';
 }
 
@@ -2969,7 +3003,7 @@ sub __base {
 sub __new_statement {
 	my $self	= shift;
 	my @nodes	= @_;
-	if (my $graph = $self->{named_graph}) {
+	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
 	} else {
 		return RDF::Query::Algebra::Triple->_new( @nodes );
@@ -2983,8 +3017,11 @@ sub __new_path {
 	my $end		= shift;
 	(undef, my $op, my @nodes)	= @$pdata;
 	@nodes	= map { $self->__strip_path( $_ ) } @nodes;
-	my $path	= RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
-	return $path;
+	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
+		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end, $graph );
+	} else {
+		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
+	}
 }
 
 sub __strip_path {

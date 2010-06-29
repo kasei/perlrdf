@@ -7,7 +7,7 @@ RDF::Query::Plan::Project - Executable query plan for Projects.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.900.
+This document describes RDF::Query::Plan::Project version 2.901.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -88,9 +88,9 @@ sub next {
 	my $row		= $plan->next;
 	unless (defined($row)) {
 		$l->trace("no remaining rows in project");
-		if ($self->[1]->state == $self->[1]->OPEN) {
-			$self->[1]->close();
-		}
+# 		if ($self->[1]->state == $self->[1]->OPEN) {
+# 			$self->[1]->close();
+# 		}
 		return;
 	}
 	if ($l->is_trace) {

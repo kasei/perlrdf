@@ -7,7 +7,7 @@ RDF::Query::Algebra::Aggregate - Algebra class for aggregate patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Aggregate version 2.900.
+This document describes RDF::Query::Algebra::Aggregate version 2.901.
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.901';
 }
 
 ######################################################################
@@ -141,7 +141,7 @@ sub sse {
 	my @ops		= $self->ops;
 	foreach my $data (@ops) {
 		my ($alias, $op, $opts, @cols)	= @$data;
-		my @col_strings	= map { ($_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
+		my @col_strings	= map { (not(blessed($_)) and $_ eq '*') ? '*' : $_->sse( $context, "${prefix}${indent}" ) } @cols;
 		my $col_string	= join(' ', @col_strings);
 		if (@col_strings > 1) {
 			$col_string	= '(' . $col_string . ')';

@@ -65,7 +65,44 @@ BEGIN {
 Returns a new storage object using the supplied arguments to construct a DBI
 object for the underlying database.
 
+=item C<new_with_config ( $hashref )>
+
+Returns a new storage object configured with a hashref with certain
+keys as arguments.
+
+The C<store> key must be C<DBI> for this backend.
+
+These keys should also be used:
+
+=over
+
+=item C<name>
+
+The name of the model.
+
+=item C<dsn>
+
+The DBI Data Source Name for the underlying database.
+
+=item C<username>
+
+The username of the database user.
+
+=item C<password>
+
+The password of the database user.
+
+=back
+
+=item C<new_with_object ( $dbi_db )>
+
+Initialize the store with a L<DBI::db> object.
+
+
 =cut
+
+
+
 
 sub new {
 	my $class	= shift;
@@ -117,6 +154,16 @@ sub _new_with_string {
 	my ($model, $dsn, $user, $pass)	= split(';', $config);
 	return $class->new( $model, $dsn, $user, $pass );
 }
+
+sub _new_with_config {
+	my $class	= shift;
+	my $config	= shift;
+	return $class->new( $config->{name},
+			    $config->{dsn},
+			    $config->{username},
+			    $config->{password} );
+}
+
 
 sub _new_with_object {
 	my $class	= shift;
@@ -538,7 +585,8 @@ sub count_statements {
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	my $sql		= $self->_sql_for_pattern( $st, $context, 'count-distinct' => 1, semantics => $semantics );
+	my $countkey	= ($use_quad) ? 'count' : 'count-distinct';
+	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
 	my $sth		= $dbh->prepare( $sql );
@@ -791,6 +839,9 @@ sub _sql_from_context {
 	}
 	if ($args{ 'count-distinct' }) {
 		$unique	= 1;
+	}
+	if ($args{ 'count' }) {
+		@cols	= 'COUNT(*)';
 	}
 	
 	my @sql	= (
