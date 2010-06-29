@@ -19,10 +19,13 @@
 	<h2>Requirements</h2>
 		<p>To install RDF::Query you'll need the following perl modules installed:</p>
 		<ul>
+			<li>Data::UUID</li>
+			<li>Digest::SHA1</li>
 			<li>DateTime</li>
 			<li>DateTime::Format::W3CDTF</li>
-			<li>Digest::SHA1</li>
 			<li>Error</li>
+			<li>File::Spec</li>
+			<li>File::Temp</li>
 			<li>I18N::LangTags</li>
 			<li>JSON</li>
 			<li>List::Util</li>
@@ -48,6 +51,18 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
+		<h3 id="v2_901">Version 2.901 (2010-06-29)</h3>
+			<ul>
+				<li>Fixed named graph handling.</li>
+				<li>Fixed bug in handling of * aggregates.</li>
+				<li>Simplified code to create new temporary models when FROM clauses dereference graph data.</li>
+				<li>Added support for SPARQL 1.1 CREATE/DROP GRAPH update operations.</li>
+				<li>Fixed infinite loop bug on parsing certain invalid SPARQL 1.1 update queries.</li>
+				<li>Fixed handling of BGPs within named graphs in RDF::Query::Plan::BasicGraphPattern.</li>
+				<li>Updated syntax error exception messages in SPARQL parsers.</li>
+				<li>Fixed property path evaluation within named graphs.</li>
+				<li>Converted Makefile.PL to properly use Module::Install.</li>
+			</ul>
 		<h3 id="v2_900">Version 2.900 (2010-06-23)</h3>
 			<ul>
 				<li>Major Changes

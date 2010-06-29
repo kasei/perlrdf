@@ -31,9 +31,9 @@ requires			'JSON'						=> 2;
 requires			'Parse::RecDescent'			=> 0;
 requires			'RDF::Trine'				=> 0.124;
 requires			'Scalar::Util'				=> 0;
-requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
 requires			'URI'						=> 0;
+requires			'I18N::LangTags'			=> 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Query/",

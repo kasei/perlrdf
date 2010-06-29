@@ -37,6 +37,18 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.901 (2010-06-29)
+
+     * Added support for SPARQL 1.1 CREATE/DROP GRAPH update operations.
+     * Fixed named graph handling.
+     * Fixed bug in handling of * aggregates.
+     * Simplified code to create new temporary models when FROM clauses dereference graph data.
+     * Fixed infinite loop bug on parsing certain invalid SPARQL 1.1 update queries.
+     * Fixed handling of BGPs within named graphs in RDF::Query::Plan::BasicGraphPattern.
+     * Updated syntax error exception messages in SPARQL parsers.
+     * Fixed property path evaluation within named graphs.
+     * Converted Makefile.PL to properly use Module::Install.
+
   Version 2.900 (2010-06-23)
 
      * Major Changes
