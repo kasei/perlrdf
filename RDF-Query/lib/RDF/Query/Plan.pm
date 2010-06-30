@@ -996,10 +996,18 @@ sub __zero_length_path_plan {
 	my $context	= shift;
 	my %args	= @_;
 	my $model	= $context->model;
+	my $bound	= $args{ bound } || {};
+	my $g		= $args{ named_graph };
+	if ($g and $g->isa('RDF::Trine::Node::Variable')) {
+		my $bg	= $bound->{ $g->name };
+		$g	= $bg if (blessed($bg));
+	}
+	my @node_args	= ($g) ? (undef, undef, $g) : (undef, undef, RDF::Trine::Node::Nil->new());
+	
 	my @iters;
-	push(@iters, scalar($model->subjects));
-#	push(@iters, scalar($model->predicates));
-	push(@iters, scalar($model->objects));
+	push(@iters, scalar($model->subjects(@node_args)));
+#	push(@iters, scalar($model->predicates(@node_args)));
+	push(@iters, scalar($model->objects(@node_args)));
 	my %vars;
 	my $no_literals	= 0;
 	if ($start->isa('RDF::Query::Node::Variable')) {

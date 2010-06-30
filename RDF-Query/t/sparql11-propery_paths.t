@@ -1,4 +1,4 @@
-use Test::More tests => 32;
+use Test::More tests => 52;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -21,98 +21,99 @@ use RDF::Query;
 # ] );
 ################################################################################
 
-my $model	= RDF::Trine::Model->temporary_model;
-RDF::Query->new(<<"END", { update => 1 })->execute($model);
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-INSERT DATA {
-	<listpointer> <mylist> <list1> .
-	<list1> rdf:first 1 ;
-		rdf:rest <list2> .
-	<list2> rdf:first 2 ;
-		rdf:rest <list3> .
-	<list3> rdf:first 3 ;
-		rdf:rest rdf:nil .
-}
-END
-RDF::Query->new(<<"END", { update => 1 })->execute($model);
-PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-INSERT DATA {
-	<bob> foaf:name "Bob" .
-	<alice> foaf:name "Alice" .
-	<eve> foaf:knows <alice>, <bob> .
-}
-END
-
 {
-	print "# /-path\n";
-	my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
-		PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-		SELECT ?name
-		WHERE {
-			?p foaf:knows/foaf:name ?name
-		}
-END
-	my $count	= 0;
-	my $iter	= $query->execute( $model );
-	isa_ok( $iter, 'RDF::Trine::Iterator' );
-	while (my $row = $iter->next) {
-		isa_ok( $row->{name}, 'RDF::Query::Node::Literal' );
-		like($row->{name}->literal_value, qr/Alice|Bob/, 'expected person name');
-		$count++;
+	my $model	= RDF::Trine::Model->temporary_model;
+	RDF::Query->new(<<"END", { update => 1 })->execute($model);
+	PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	INSERT DATA {
+		<listpointer> <mylist> <list1> .
+		<list1> rdf:first 1 ;
+			rdf:rest <list2> .
+		<list2> rdf:first 2 ;
+			rdf:rest <list3> .
+		<list3> rdf:first 3 ;
+			rdf:rest rdf:nil .
 	}
-	is( $count, 2, 'expected result count' );
-}
-
-{
-	print "# rdf:List +-path\n";
-	my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
-		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX test: <http://kasei.us/e/ns/test#>
-		SELECT *
-		WHERE {
-			<listpointer> <mylist> ?list .
-			?list rdf:rest+/rdf:first ?value .
-		}
 END
-	my $count	= 0;
-	my $iter	= $query->execute( $model );
-	isa_ok( $iter, 'RDF::Trine::Iterator' );
-	my @got;
-	while (my $row = $iter->next) {
-		my $value	= $row->{value};
-		isa_ok( $value, 'RDF::Query::Node::Literal' );
-		like($value->literal_value, qr/^[123]$/, 'expected list value');
-		$got[ $value->literal_value - 1 ]	= $value->literal_value;
-		$count++;
+	RDF::Query->new(<<"END", { update => 1 })->execute($model);
+	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+	INSERT DATA {
+		<bob> foaf:name "Bob" .
+		<alice> foaf:name "Alice" .
+		<eve> foaf:knows <alice>, <bob> .
 	}
-	is_deeply( \@got, [undef, 2, 3], 'all expected values seen' );
-}
-
-{
-	print "# rdf:List *-path\n";
-	my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
-		PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-		PREFIX test: <http://kasei.us/e/ns/test#>
-		SELECT *
-		WHERE {
-			<listpointer> <mylist> ?list .
-			?list rdf:rest*/rdf:first ?value .
-		}
 END
-	my $count	= 0;
-	my $iter	= $query->execute( $model );
-	isa_ok( $iter, 'RDF::Trine::Iterator' );
-	my @got;
-	while (my $row = $iter->next) {
-		my $value	= $row->{value};
-		isa_ok( $value, 'RDF::Query::Node::Literal' );
-		like($value->literal_value, qr/^[123]$/, 'expected list value');
-		$got[ $value->literal_value - 1 ]	= $value->literal_value;
-		$count++;
+	
+	{
+		print "# /-path\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT ?name
+			WHERE {
+				?p foaf:knows/foaf:name ?name
+			}
+END
+		my $count	= 0;
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		while (my $row = $iter->next) {
+			isa_ok( $row->{name}, 'RDF::Query::Node::Literal' );
+			like($row->{name}->literal_value, qr/Alice|Bob/, 'expected person name');
+			$count++;
+		}
+		is( $count, 2, 'expected result count' );
 	}
-	is_deeply( \@got, [1, 2, 3], 'all expected values seen' );
+	
+	{
+		print "# rdf:List +-path\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX test: <http://kasei.us/e/ns/test#>
+			SELECT *
+			WHERE {
+				<listpointer> <mylist> ?list .
+				?list rdf:rest+/rdf:first ?value .
+			}
+END
+		my $count	= 0;
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my @got;
+		while (my $row = $iter->next) {
+			my $value	= $row->{value};
+			isa_ok( $value, 'RDF::Query::Node::Literal' );
+			like($value->literal_value, qr/^[123]$/, 'expected list value');
+			$got[ $value->literal_value - 1 ]	= $value->literal_value;
+			$count++;
+		}
+		is_deeply( \@got, [undef, 2, 3], 'all expected values seen' );
+	}
+	
+	{
+		print "# rdf:List *-path\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+			PREFIX test: <http://kasei.us/e/ns/test#>
+			SELECT *
+			WHERE {
+				<listpointer> <mylist> ?list .
+				?list rdf:rest*/rdf:first ?value .
+			}
+END
+		my $count	= 0;
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my @got;
+		while (my $row = $iter->next) {
+			my $value	= $row->{value};
+			isa_ok( $value, 'RDF::Query::Node::Literal' );
+			like($value->literal_value, qr/^[123]$/, 'expected list value');
+			$got[ $value->literal_value - 1 ]	= $value->literal_value;
+			$count++;
+		}
+		is_deeply( \@got, [1, 2, 3], 'all expected values seen' );
+	}
 }
-
 {
 	print "# property path in GRAPH\n";
 	my $model	= RDF::Trine::Model->temporary_model;
@@ -182,4 +183,65 @@ END
 		is( $iter->count, 3, 'expected result count' );
 	}
 	
+}
+
+{
+	my $model	= RDF::Trine::Model->temporary_model;
+	RDF::Query->new(<<"END", { update => 1 })->execute($model);
+	PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	INSERT DATA {
+		<a> <b> <c> .
+		GRAPH <g> {
+			<x> <y> <z> .
+		}
+	}
+END
+	
+	{
+		print "# zero-length path binding tests in DEFAULT graph\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				?s <ZZZ>{0} ?o
+			}
+END
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my %expect	= ( a => [qw(a a)], c => [qw(c c)] );
+		while (my $row = $iter->next) {
+			my @values	= @{ $row }{ qw(s o) };
+			foreach my $n (@values) {
+				isa_ok( $n, 'RDF::Query::Node::Resource' );
+			}
+			my @got	= map { $_->uri_value } @values;
+			is_deeply( \@got, $expect{$got[0]} );
+		}
+	}
+
+	TODO: {
+		local($TODO)	= "Zero-length property path bindings need to match only the active graph inside a GRAPH block";
+		print "# zero-length path binding tests in NAMED graph\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH ?g {
+					?s <ZZZ>{0} ?o
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my %expect	= ( x => [qw(x x)], z => [qw(z z)] );
+		while (my $row = $iter->next) {
+			my @values	= @{ $row }{ qw(s o) };
+			foreach my $n (@values) {
+				isa_ok( $n, 'RDF::Query::Node::Resource' );
+			}
+			my @got	= map { $_->uri_value } @values;
+#			warn Dumper(\@got, \%expect);
+			is_deeply( \@got, $expect{$got[0]} );
+		}
+	}
 }

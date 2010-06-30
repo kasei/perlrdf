@@ -142,7 +142,7 @@ sub next {
 					$l->trace( '- start of zero-length path is a variable' );
 					if ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
 						$l->trace( '- end of zero-length path is a variable' );
-						my $plan	= RDF::Query::Plan->__zero_length_path_plan( @{ $self->[0] }{ qw(start end context) } );
+						my $plan	= RDF::Query::Plan->__zero_length_path_plan( @{ $self->[0] }{ qw(start end context) }, %{ $self->[6] }, bound => $self->[0]{bound} );
 						$plan->execute( $self->[0]{context} );
 						while (my $row = $plan->next) {
 							push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
