@@ -49,6 +49,20 @@ description.
 
 =back
 
+=head1 EXAMPLE CONFIGURATIONS
+
+=head2 Using L<Plack::Handler::Apache2>
+
+Using L<Plack::Handler::Apache2>, mod_perl2 can be configured to serve and
+endpoint using the following configuration:
+
+  <Location /sparql>
+    SetHandler perl-script
+    PerlResponseHandler Plack::Handler::Apache2
+    PerlSetVar psgi_app /path/to/endpoint.psgi
+    PerlSetEnv RDF_ENDPOINT_CONFIG /path/to/rdf_endpoint.json
+  </Location>
+
 =head1 METHODS
 
 =over 4
@@ -78,6 +92,15 @@ use RDF::RDFa::Generator;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
+
+my $NAMESPACES	= {
+	xsd		=> 'http://www.w3.org/2001/XMLSchema#',
+	void	=> 'http://rdfs.org/ns/void#',
+	scovo	=> 'http://purl.org/NET/scovo#',
+	sd		=> 'http://www.w3.org/ns/sparql-service-description#',
+	jena	=> 'java:com.hp.hpl.jena.query.function.library.',
+	ldodds	=> 'java:com.ldodds.sparql.',
+};
 
 =item C<< new ( $conf ) >>
 
@@ -137,16 +160,6 @@ END
 	}
 	
 	if (my $sparql = $req->param('query')) {
-		my @variants	= (
-			['text/html', 1.0, 'text/html'],
-			['text/plain', 0.9, 'text/plain'],
-			['application/json', 1.0, 'application/json'],
-			['application/xml', 0.9, 'application/xml'],
-			['text/xml', 0.9, 'text/xml'],
-			['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
-		);
-		my $stype	= choose( \@variants, $headers ) || 'text/html';
-		
 		my %args;
 		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{load_data});
@@ -154,8 +167,6 @@ END
 		my @default	= $req->param('default-graph-uri');
 		my @named	= $req->param('named-graph-uri');
 		if (scalar(@default) or scalar(@named)) {
-			use Data::Dumper;
-			warn Dumper(\@default, \@named);
 			delete $args{ load_data };
 			$model	= RDF::Trine::Model->temporary_model;
 			foreach my $url (@named) {
@@ -174,22 +185,53 @@ END
 			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
-				if ($stype =~ /html/) {
-					$response->headers->content_type( 'text/html' );
-					my $html	= $self->iter_as_html($iter, $model);
-					$content	= encode_utf8($html);
-				} elsif ($stype =~ /xml/) {
-					$response->headers->content_type( $stype );
-					my $xml		= $self->iter_as_xml($iter, $model);
-					$content	= encode_utf8($xml);
-				} elsif ($stype =~ /json/) {
-					$response->headers->content_type( $stype );
-					my $json	= $self->iter_as_json($iter, $model);
-					$content	= encode_utf8($json);
+				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
+					my @variants	= (['text/html', 1.0, 'text/html']);
+					my %media_types	= %RDF::Trine::Serializer::media_types;
+					while (my($type, $sclass) = each(%media_types)) {
+						next if ($type =~ /html/);
+						push(@variants, [$type, 0.99, $type]);
+					}
+					my $stype	= choose( \@variants, $headers );
+					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
+						my $s	= $sclass->new( namespaces => $NAMESPACES );
+						$response->status(200);
+						$response->headers->content_type($stype);
+						$content	= encode_utf8($s->serialize_iterator_to_string($iter));
+					} else {
+						$response->headers->content_type( 'text/html' );
+						my $html	= $self->iter_as_html($iter, $model);
+						$content	= encode_utf8($html);
+					}
 				} else {
-					$response->headers->content_type( 'text/plain' );
-					my $text	= $self->iter_as_text($iter, $model);
-					$content	= encode_utf8($text);
+					my @variants	= (
+						['text/html', 1.0, 'text/html'],
+						['text/plain', 0.9, 'text/plain'],
+						['application/json', 0.95, 'application/json'],
+						['application/rdf+xml', 0.95, 'application/rdf+xml'],
+						['text/turtle', 0.95, 'text/turtle'],
+						['application/xml', 0.9, 'application/xml'],
+						['text/xml', 0.9, 'text/xml'],
+						['application/sparql-results+xml', 0.99, 'application/sparql-results+xml'],
+					);
+					my $stype	= choose( \@variants, $headers ) || 'text/html';
+					if ($stype =~ /html/) {
+						$response->headers->content_type( 'text/html' );
+						my $html	= $self->iter_as_html($iter, $model);
+						$content	= encode_utf8($html);
+					} elsif ($stype =~ /xml/) {
+						$response->headers->content_type( $stype );
+						my $xml		= $self->iter_as_xml($iter, $model);
+						$content	= encode_utf8($xml);
+					} elsif ($stype =~ /json/) {
+						$response->headers->content_type( $stype );
+						my $json	= $self->iter_as_json($iter, $model);
+						$content	= encode_utf8($json);
+					} else {
+						$response->headers->content_type( 'text/plain' );
+						my $text	= $self->iter_as_text($iter, $model);
+						$content	= encode_utf8($text);
+					}
 				}
 			} else {
 				$response->status(500);
@@ -209,23 +251,13 @@ END
 		my %media_types	= %RDF::Trine::Serializer::media_types;
 		while (my($type, $sclass) = each(%media_types)) {
 			next if ($type =~ /html/);
-			push(@variants, [$type, 1.0, $type]);
+			push(@variants, [$type, 0.99, $type]);
 		}
-		
-		my $ns	= {
-			xsd		=> 'http://www.w3.org/2001/XMLSchema#',
-			void	=> 'http://rdfs.org/ns/void#',
-			scovo	=> 'http://purl.org/NET/scovo#',
-			sd		=> 'http://www.w3.org/ns/sparql-service-description#',
-			jena	=> 'java:com.hp.hpl.jena.query.function.library.',
-			ldodds	=> 'java:com.ldodds.sparql.',
-			kasei	=> 'http://kasei.us/2007/09/functions/',
-		};
 		push(@variants, ['text/html', 1.0, 'text/html']);
 		my $stype	= choose( \@variants, $headers );
 		my $sdmodel	= $self->service_description( $req, $model );
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-			my $s	= $sclass->new( namespaces => $ns );
+			my $s	= $sclass->new( namespaces => $NAMESPACES );
 			$response->status(200);
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
@@ -234,7 +266,7 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Hidden', ns => $ns );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => $NAMESPACES );
 			$gen->inject_document($doc, $sdmodel);
 			my ($rh, $wh);
 			pipe($rh, $wh);
@@ -352,7 +384,12 @@ END
 sub iter_as_text {
 	my $self	= shift;
 	my $iter	= shift;
-	return $iter->as_string;
+	if ($iter->isa('RDF::Trine::Iterator::Graph')) {
+		my $serializer	= RDF::Trine::Serializer->new('ntriples');
+		return $serializer->serialize_iterator_to_string( $iter );
+	} else {
+		return $iter->as_string;
+	}
 }
 
 sub iter_as_xml {
@@ -457,7 +494,7 @@ sub service_description {
 	my $dsd	= blank('dataset');
 	my $def	= blank('defaultGraph');
 	my $si	= blank('size');
-	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
+	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
 	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
 	if ($config->{service_description}{default}) {
