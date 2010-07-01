@@ -27,7 +27,6 @@ use warnings;
 no warnings 'redefine';
 
 use URI::file;
-use RDF::Query;
 use RDF::Trine::Iterator qw(smap swatch);
 use Scalar::Util qw(blessed);
 use LWP::UserAgent;

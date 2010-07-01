@@ -19,7 +19,6 @@ no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Literal);
 
 use DateTime;
-use RDF::Query;
 use RDF::Query::Error;
 use Data::Dumper;
 use Log::Log4perl;

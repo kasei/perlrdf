@@ -19,7 +19,6 @@ no warnings 'redefine';
 
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
-use RDF::Query;
 use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
