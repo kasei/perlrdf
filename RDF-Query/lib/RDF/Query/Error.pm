@@ -7,7 +7,7 @@ RDF::Query::Error - Error classes for RDF::Query.
 
 =head1 VERSION
 
-This document describes RDF::Query::Error version 2.901.
+This document describes RDF::Query::Error version 2.902_01.
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use base qw(Error);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.901';
+	$VERSION	= '2.902_01';
 }
 
 ######################################################################
