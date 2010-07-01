@@ -268,13 +268,11 @@ END
 			my $doc			= $parser->parse_file( $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => $NAMESPACES );
 			$gen->inject_document($doc, $sdmodel);
-			my ($rh, $wh);
-			pipe($rh, $wh);
+			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
-			print {$wh} $writer->document($doc);
+			$content	= encode_utf8( $writer->document($doc) );
 			$response->status(200);
 			$response->headers->content_type('text/html');
-			$content	= $rh;
 		}
 	}
 	
