@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.902_01.
+This document describes RDF::Query::Expression::Binary version 2.902.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902_01';
+	$VERSION	= '2.902';
 }
 
 ######################################################################

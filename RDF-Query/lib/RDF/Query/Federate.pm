@@ -7,7 +7,7 @@ RDF::Query::Federate - A subclass of RDF::Query for efficient federated query ex
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate version 2.902_01.
+This document describes RDF::Query::Federate version 2.902.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.902_01';
+	$VERSION		= '2.902';
 }
 
 

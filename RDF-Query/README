@@ -37,6 +37,10 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.902 (2010-07-02)
+
+     * Fixed bug in requiring prerequisite modules.
+
   Version 2.901 (2010-06-29)
 
      * Added support for SPARQL 1.1 CREATE/DROP GRAPH update operations.
