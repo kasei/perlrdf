@@ -844,6 +844,14 @@ sub __path_plan {
 		return $plan;
 	}
 	
+	# _simple_path will return an algebra object if the path can be expanded
+	# into a simple basic graph pattern (for fixed-length paths)
+	if (my $a = $self->_simple_path( $start, $path, $end, $graph )) {
+		my ($plan)	= $self->generate_plans( $a, $context, %args );
+		$l->trace('expanded path to pattern: ' . $plan->sse);
+		return $plan;
+	}
+	
 	my ($op, @nodes)	= @$path;
 	if ($op eq '!') {
 		my $model	= $context->model;
@@ -987,6 +995,42 @@ sub __path_plan {
 	} else {
 		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
 	}
+}
+
+sub _simple_path {
+	my $self	= shift;
+	my $start	= shift;
+	my $path	= shift;
+	my $end		= shift;
+	my $graph	= shift;
+	if (blessed($path)) {
+		return ($graph)
+			? RDF::Query::Algebra::Quad->new( $start, $path, $end, $graph )
+			: RDF::Query::Algebra::Triple->new( $start, $path, $end );
+	}
+	return unless (reftype($path) eq 'ARRAY');
+	my $op	= $path->[0];
+	if ($op eq '/') {
+		my @patterns;
+		my @jvars	= map { RDF::Query::Node::Variable->new() } (2 .. $#{ $path });
+		foreach my $i (1 .. $#{ $path }) {
+			my $s		= ($i == 1) ? $start : $jvars[ $i-2 ];
+			my $e		= ($i == $#{ $path }) ? $end : $jvars[ $i-1 ];
+			my $triple	= $self->_simple_path( $s, $path->[ $i ], $e, $graph );
+			return unless ($triple);
+			push(@patterns, $triple);
+		}
+		my @triples	= map { $_->isa('RDF::Query::Algebra::BasicGraphPattern') ? $_->triples : $_ } @patterns;
+		return RDF::Query::Algebra::BasicGraphPattern->new( @triples );
+	} elsif ($op eq '^' and scalar(@$path) == 2 and blessed($path->[1])) {
+		return ($graph)
+			? RDF::Query::Algebra::Quad->new( $end, $path, $start, $graph )
+			: RDF::Query::Algebra::Triple->new( $end, $path, $start );
+	} elsif ($op =~ /^\d+$/ and $op == 1) {
+		return $self->_simple_path( $start, $path->[1], $end, $graph );
+	}
+	
+	return;
 }
 
 sub __zero_length_path_plan {
