@@ -9,6 +9,19 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.902.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.901.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.902" ;
+                        doap:created      "2010-07-02" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed bug in requiring prerequisite modules." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.901.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.900.tar.gz> ;

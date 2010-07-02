@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.901.
+This document describes RDF::Query version 2.902.
 
 =head1 SYNOPSIS
 
@@ -33,9 +33,9 @@ information on RDQL.
 =head1 CHANGES IN VERSION 2.900
 
 The 2.9xx versions of RDF::Query introduce some significant changes that will
-lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.901 introduces
+lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.902 introduces
 the SPARQL 1.1 features up to date with the SPARQL 1.1 working drafts as of its
-release date. Version 2.901 also is the first version to require use of
+release date. Version 2.902 also is the first version to require use of
 RDF::Trine for the underlying RDF store. This change means that RDF::Core is
 no longer supported, and while Redland is still supported, its handling of
 "contexts" (named graphs) means that existing RDF triples stored in Redland
@@ -137,7 +137,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.901';
+	$VERSION		= '2.902';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 

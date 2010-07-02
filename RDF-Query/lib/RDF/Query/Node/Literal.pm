@@ -7,7 +7,7 @@ RDF::Query::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Literal version 2.901.
+This document describes RDF::Query::Node::Literal version 2.902.
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Literal);
 
 use DateTime;
-use RDF::Query;
+use DateTime::Format::W3CDTF;
 use RDF::Query::Error;
 use Data::Dumper;
 use Log::Log4perl;
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.901';
+	$VERSION	= '2.902';
 }
 
 ######################################################################

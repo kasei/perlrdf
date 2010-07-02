@@ -8,7 +8,7 @@ use Test::More tests => 112;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
-use RDF::Query::Node;
+use RDF::Query;
 
 use_ok( 'RDF::Query::Parser::SPARQL11' );
 
