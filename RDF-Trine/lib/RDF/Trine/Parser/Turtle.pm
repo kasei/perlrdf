@@ -51,10 +51,10 @@ BEGIN {
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
 	my $class										= __PACKAGE__;
 	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');

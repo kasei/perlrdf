@@ -1,4 +1,4 @@
-use Test::More tests => 52;
+use Test::More tests => 53;
 use strict;
 use warnings;
 use Data::Dumper;
@@ -10,6 +10,7 @@ use Data::Dumper;
 # my @models	= test_models( @files );
 
 use RDF::Query;
+use RDF::Query::Node qw(iri);
 
 ################################################################################
 # Log::Log4perl::init( \q[
@@ -219,8 +220,7 @@ END
 		}
 	}
 
-	TODO: {
-		local($TODO)	= "Zero-length property path bindings need to match only the active graph inside a GRAPH block";
+	{
 		print "# zero-length path binding tests in NAMED graph\n";
 		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
@@ -232,7 +232,7 @@ END
 			}
 END
 		my $iter	= $query->execute( $model );
-		isa_ok( $iter, 'RDF::Trine::Iterator' );
+# 		isa_ok( $iter, 'RDF::Trine::Iterator' );
 		my %expect	= ( x => [qw(x x)], z => [qw(z z)] );
 		while (my $row = $iter->next) {
 			my @values	= @{ $row }{ qw(s o) };
@@ -241,7 +241,65 @@ END
 			}
 			my @got	= map { $_->uri_value } @values;
 #			warn Dumper(\@got, \%expect);
-			is_deeply( \@got, $expect{$got[0]} );
+			is_deeply( \@got, $expect{$got[0]}, 'expected results from GRAPH ?g zero-length property path' );
 		}
+		is( $iter->count, 2, 'expected result count' );
+	}
+
+	{
+		print "# zero-length path binding tests in NAMED graph with bound path node\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH ?g {
+					?s <ZZZ>{0} <o>
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+# 		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my %expect	= (g => RDF::Query::VariableBindings->new( { 'g' => iri('g'), 's' => iri('o') } ));
+		while (my $row = $iter->next) {
+			my $value	= $row->{ 's' };
+			isa_ok( $value, 'RDF::Query::Node::Resource' );
+			my $got		= $value->uri_value;
+			my $expect	= $expect{ $row->{g}->uri_value };
+#			warn Dumper(\@got, \%expect);
+			is_deeply( $row, $expect, 'expected results from GRAPH ?g zero-length property path with bound term' );
+		}
+		is( $iter->count, 1, 'expected result count' );
+	}
+
+	{
+		print "# zero-length path binding tests in NAMED graph with two non-equal bound path nodes\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH ?g {
+					<n> <ZZZ>{0} <o>
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+		my @results	= $iter->get_all;
+		is_deeply( \@results, [], 'expected empty result set from two non-equal bound zero-length path nodes' );
+	}
+
+	{
+		print "# zero-length path binding tests in NAMED graph with two equal bound path nodes\n";
+		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
+			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+			SELECT *
+			WHERE {
+				GRAPH ?g {
+					<n> <ZZZ>{0} <n>
+				}
+			}
+END
+		my $iter	= $query->execute( $model );
+		my @results	= $iter->get_all;
+		is_deeply( \@results, [RDF::Query::VariableBindings->new({g=>iri('g')})], 'expected result set from two equal bound zero-length path nodes' );
 	}
 }

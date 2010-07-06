@@ -94,12 +94,13 @@ use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 
 my $NAMESPACES	= {
-	xsd		=> 'http://www.w3.org/2001/XMLSchema#',
-	void	=> 'http://rdfs.org/ns/void#',
-	scovo	=> 'http://purl.org/NET/scovo#',
-	sd		=> 'http://www.w3.org/ns/sparql-service-description#',
-	jena	=> 'java:com.hp.hpl.jena.query.function.library.',
-	ldodds	=> 'java:com.ldodds.sparql.',
+	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
+	'format'	=> 'http://www.w3.org/ns/formats/',
+	void		=> 'http://rdfs.org/ns/void#',
+	scovo		=> 'http://purl.org/NET/scovo#',
+	sd			=> 'http://www.w3.org/ns/sparql-service-description#',
+	jena		=> 'java:com.hp.hpl.jena.query.function.library.',
+	ldodds		=> 'java:com.ldodds.sparql.',
 };
 
 =item C<< new ( $conf ) >>
