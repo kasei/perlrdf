@@ -898,14 +898,19 @@ sub __path_plan {
 		my $nplan	= RDF::Query::Plan::Iterator->new( $iter );
 # 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
 		return $nplan;
-	} elsif ($op eq '*') {
-		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end, $graph, %args );
-	} elsif ($op eq '+') {
-		return RDF::Query::Plan::Path->new( $op, $nodes[0], $start, $end, $graph, %args );
-	} elsif ($op eq '?') {
+	} elsif ($op eq '*' or $op eq '0-') {
+# 		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
+		my $zero	= RDF::Query::Plan::Path->new( '0', $nodes[0], $start, $end, $graph, %args );
+		my $plan	= RDF::Query::Plan::Path->new( '*', $nodes[0], $start, $end, $graph, %args );
+		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
+		return $union;
+	} elsif ($op eq '+' or $op eq '1-') {
+		return RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
+	} elsif ($op eq '?' or $op eq '0-1') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $graph, $context, %args );
-		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
+# 		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
+		my $zero	= RDF::Query::Plan::Path->new( '0', undef, $start, $end, $graph, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
 	} elsif ($op eq '^') {
@@ -941,8 +946,10 @@ sub __path_plan {
 # 		warn "$1-length path";
 		my $count	= $1;
 		if ($count == 0) {
-			my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
-			return $zero;
+			if (my $g = $args{ named_graph }) {
+				$graph	= $g;
+			}
+			return RDF::Query::Plan::Path->new( '0', [], $start, $end, $graph, %args );
 		} elsif ($count == 1) {
 			return $self->__path_plan( $start, $nodes[0], $end, $graph, $context, %args );
 		} else {
@@ -978,7 +985,8 @@ sub __path_plan {
 		my @plans;
 		foreach my $i ($from .. $to) {
 			if ($i == 0) {
-				my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
+				my $zero	= RDF::Query::Plan::Path->new( '0', [], $start, $end, $graph, %args );
+# 				my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 				push(@plans, $zero);
 			} else {
 				push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end, $graph, $context, %args ));
