@@ -338,7 +338,8 @@ sub prepare {
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
-	my $plan		= $self->query_plan( $context );
+	my %plan_args	= %{ $args{ planner_args } || {} };
+	my $plan		= $self->query_plan( $context, %plan_args );
 	$l->trace("-> done.");
 	
 	unless ($plan) {
@@ -475,6 +476,7 @@ current query.
 sub query_plan {
 	my $self	= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $parsed	= $self->{parsed};
 	my %constant_plan;
 	if (my $b = $self->{parsed}{bindings}) {
@@ -500,7 +502,7 @@ sub query_plan {
 	
 	my $algebra		= $self->pattern;
 	my $pclass		= $self->plan_class;
-	my @plans		= $pclass->generate_plans( $algebra, $context, %constant_plan );
+	my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
