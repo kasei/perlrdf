@@ -167,7 +167,7 @@ sub close {
 	delete $self->[0]{outer};
 	delete $self->[0]{needs_new_outer};
 	delete $self->[0]{inner_count};
-	if ($self->lhs->state == $self->lhs->OPEN) {
+	if (blessed($self->lhs) and $self->lhs->state == $self->lhs->OPEN) {
 		$self->lhs->close();
 	}
 	$self->SUPER::close();
