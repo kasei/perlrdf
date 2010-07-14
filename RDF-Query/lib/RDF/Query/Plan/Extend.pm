@@ -59,7 +59,7 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "PROJECT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "EXTEND plan can't be executed while already open";
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
