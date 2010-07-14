@@ -46,7 +46,7 @@ use Data::Dumper;
 require XML::Simple;
 
 plan qw(no_plan);
-require "t/dawg/earl.pl";
+require "xt/dawg/earl.pl";
 	
 my $PATTERN		= shift(@ARGV) || '';
 my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
@@ -60,7 +60,7 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
+my $model	= new_model( glob( "xt/dawg/data-r2/manifest-evaluation.ttl" ) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
@@ -691,7 +691,7 @@ sub get_all_obj {
 sub relativeize_url {
 	my $uri	= shift;
 	if ($uri =~ /^http:/) {
-		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{t/dawg/data-r2/};
+		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{xt/dawg/data-r2/};
 		$uri	= 'file://' . File::Spec->rel2abs( $uri );
 	}
 	return $uri;

@@ -40,6 +40,8 @@ resources(
 	'repository' => "http://github.com/kasei/perlrdf/",
 );
 
+author_tests('xt');
+
 sign;
 
 WriteAll;

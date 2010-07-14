@@ -563,7 +563,7 @@ sub describe {
 	$self->{'describe_nodes'}	= [];
 	foreach my $node (@nodes) {
 		push(@{ $self->{'describe_nodes'} }, $node);
-		push(@streams, $model->get_statements( $node ));
+		push(@streams, $model->bounded_description( $node ));
 		push(@streams, $model->get_statements( undef, undef, $node ));
 	}
 	

@@ -440,7 +440,8 @@ sub subjects {
 	my $self	= shift;
 	my $pred	= shift;
 	my $obj		= shift;
-	my $iter	= $self->get_statements( undef, $pred, $obj );
+	my $graph	= shift;
+	my $iter	= $self->get_statements( undef, $pred, $obj, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
 		my $subj	= $st->subject;
@@ -465,7 +466,8 @@ sub predicates {
 	my $self	= shift;
 	my $subj	= shift;
 	my $obj		= shift;
-	my $iter	= $self->get_statements( $subj, undef, $obj );
+	my $graph	= shift;
+	my $iter	= $self->get_statements( $subj, undef, $obj, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
 		my $pred	= $st->predicate;
@@ -490,7 +492,8 @@ sub objects {
 	my $self	= shift;
 	my $subj	= shift;
 	my $pred	= shift;
-	my $iter	= $self->get_statements( $subj, $pred );
+	my $graph	= shift;
+	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
 		my $obj	= $st->object;

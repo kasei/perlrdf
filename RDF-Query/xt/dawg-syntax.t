@@ -21,13 +21,13 @@ require Encode;
 require Data::Dumper;
 
 plan qw(no_plan);
-require "t/dawg/earl.pl";
+require "xt/dawg/earl.pl";
 
 my $PATTERN	= shift(@ARGV);
 
 
 my @manifests;
-my ($model)	= new_model( glob( "t/dawg/data-r2/manifest-syntax.ttl" ) );
+my ($model)	= new_model( glob( "xt/dawg/data-r2/manifest-syntax.ttl" ) );
 
 {
 	my $ns		= 'http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#';
@@ -249,7 +249,7 @@ sub get_all_obj {
 sub relativeize_url {
 	my $uri	= shift;
 	if ($uri =~ /^http:/) {
-		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{t/dawg/data-r2/};
+		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{xt/dawg/data-r2/};
 		$uri	= 'file://' . File::Spec->rel2abs( $uri );
 	}
 	return $uri;

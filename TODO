@@ -7,6 +7,7 @@ the work, if known):
 ## RDF::Query
 	* RDFa support for FROM clauses [kasei]
 	* Fix ModifyTemplate in SPARQL1.1 parser to only allow quads (GRAPH patterns and BGPs) and allow dots (follow the grammar in the working draft for QuadData)
+	* Fix simple property path plan generation to generate BGPs, not joins of quads.
 ## RDF::Trine
 	* Parsers
 		* Guess parser based on filename/content sniffing
