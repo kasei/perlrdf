@@ -626,7 +626,9 @@ sub generate_plans {
 		push(@return_plans, @plans);
 	} elsif ($type eq 'SubSelect') {
 		my $query	= $algebra->query;
-		push(@return_plans, RDF::Query::Plan::SubSelect->new( $query ));
+		my $model	= $context->model;
+		my ($plan)	= $query->prepare( $context->model, planner_args => \%args );
+		push(@return_plans, RDF::Query::Plan::SubSelect->new( $query, $plan ));
 	} elsif ($type eq 'Sort') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @order	= $algebra->orderby;
@@ -901,7 +903,7 @@ sub __path_plan {
 	} elsif ($op eq '*' or $op eq '0-') {
 # 		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 		my $zero	= RDF::Query::Plan::Path->new( '0', $nodes[0], $start, $end, $graph, %args );
-		my $plan	= RDF::Query::Plan::Path->new( '*', $nodes[0], $start, $end, $graph, %args );
+		my $plan	= RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
 	} elsif ($op eq '+' or $op eq '1-') {
@@ -1032,8 +1034,8 @@ sub _simple_path {
 		return RDF::Query::Algebra::BasicGraphPattern->new( @triples );
 	} elsif ($op eq '^' and scalar(@$path) == 2 and blessed($path->[1])) {
 		return ($graph)
-			? RDF::Query::Algebra::Quad->new( $end, $path, $start, $graph )
-			: RDF::Query::Algebra::Triple->new( $end, $path, $start );
+			? RDF::Query::Algebra::Quad->new( $end, $path->[1], $start, $graph )
+			: RDF::Query::Algebra::Triple->new( $end, $path->[1], $start );
 	} elsif ($op =~ /^\d+$/ and $op == 1) {
 		return $self->_simple_path( $start, $path->[1], $end, $graph );
 	}
