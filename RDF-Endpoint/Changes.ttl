@@ -20,7 +20,7 @@
 	
 	doap:Version [
 		doap:revision     "0.01" ;
-		doap:created      "2010-06-30" ;
+		doap:created      "2010-07-14" ;
 	] ;
 	asc:changes [
 		asc:addition	"First release." ;
