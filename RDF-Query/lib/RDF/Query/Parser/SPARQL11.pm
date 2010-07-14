@@ -767,7 +767,7 @@ sub _BrackettedAliasExpression {
 	$self->_Expression;
 	my ($expr)	= splice(@{ $self->{stack} });
 	$self->__consume_ws_opt;
-	$self->_eat('AS');
+	$self->_eat(qr/AS/i);
 	$self->__consume_ws_opt;
 	$self->_Var;
 	my ($var)	= splice(@{ $self->{stack} });
@@ -1280,6 +1280,7 @@ sub _SubSelect {
 	my $pattern;
 	{
 		local($self->{error});
+		local($self->{named_graph})				= $self->{named_graph};
 		local($self->{namespaces})				= $self->{namespaces};
 		local($self->{blank_ids})				= $self->{blank_ids};
 		local($self->{stack})					= [];
