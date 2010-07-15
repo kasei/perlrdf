@@ -50,6 +50,9 @@ sub new {
 	my $class	= shift;
 	my $query	= shift;
 	my $plan	= shift;
+	unless (blessed($plan) and $plan->isa('RDF::Query::Plan')) {
+		Carp::confess;
+	}
 	my $keys	= {};
 	my $self	= $class->SUPER::new( $query, $plan );
 	$self->[0]{referenced_variables}	= [ $query->variables ];

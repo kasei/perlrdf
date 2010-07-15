@@ -267,6 +267,29 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
+=item C<< bind_variables ( \%bound ) >>
+
+Returns a new algebra pattern with variables named in %bound replaced by their corresponding bound values.
+
+=cut
+
+sub bind_variables {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $bound	= shift;
+	my $pattern	= $self->pattern->bind_variables( $bound );
+	my $vars	= $self->vars;
+	my @vars;
+	foreach my $v (@$vars) {
+		if (blessed($v) and $v->isa('RDF::Query::Node::Variable') and exists $bound->{ $v->name }) {
+			push(@vars, $bound->{ $v->name });
+		} else {
+			push(@vars, $v);
+		}
+	}
+	return $class->new( $pattern, \@vars );
+}
+
 =item C<< binding_variables >>
 
 Returns a list of the variable names used in this algebra expression that will

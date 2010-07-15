@@ -533,7 +533,7 @@ sub _DeleteUpdate {
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
 	if ($graph) {
-		local($self->{named_graph})	= $graph;
+#  		local($self->{named_graph})	= $graph;
 		$self->_GroupGraphPattern;
 		my $ggp	= $self->_remove_pattern;
 		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
@@ -592,6 +592,7 @@ sub _ModifyTemplate {
 sub __ModifyTemplate {
 	my $self	= shift;
 	my $graph	= shift;
+	local($self->{_modify_template})	= 1;
 	if ($self->_TriplesBlock_test) {
 		my $data;
 		$self->_push_pattern_container;
@@ -1280,7 +1281,6 @@ sub _SubSelect {
 	my $pattern;
 	{
 		local($self->{error});
-		local($self->{named_graph})				= $self->{named_graph};
 		local($self->{namespaces})				= $self->{namespaces};
 		local($self->{blank_ids})				= $self->{blank_ids};
 		local($self->{stack})					= [];
@@ -1457,12 +1457,12 @@ sub _GraphGraphPattern {
 	my ($graph)	= splice(@{ $self->{stack} });
 	$self->__consume_ws_opt;
 	
-# 	if ($graph->isa('RDF::Trine::Node::Resource')) {
+	if ($graph->isa('RDF::Trine::Node::Resource')) {
 		local($self->{named_graph})	= $graph;
 		$self->_GroupGraphPattern;
-# 	} else {
-# 		$self->_GroupGraphPattern;
-# 	}
+	} else {
+		$self->_GroupGraphPattern;
+	}
 	
 	my $ggp	= $self->_remove_pattern;
 	my $pattern	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
@@ -3004,7 +3004,7 @@ sub __base {
 sub __new_statement {
 	my $self	= shift;
 	my @nodes	= @_;
-	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
+	if ($self->{_modify_template} and my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Algebra::Quad->new( @nodes, $graph );
 	} else {
 		return RDF::Query::Algebra::Triple->_new( @nodes );
@@ -3018,11 +3018,11 @@ sub __new_path {
 	my $end		= shift;
 	(undef, my $op, my @nodes)	= @$pdata;
 	@nodes	= map { $self->__strip_path( $_ ) } @nodes;
-	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
-		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end, $graph );
-	} else {
+# 	if (my $graph = $self->{named_graph} and $self->{named_graph}->isa('RDF::Trine::Node::Resource')) {
+# 		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end, $graph );
+# 	} else {
 		return RDF::Query::Algebra::Path->new( $start, [$op, @nodes], $end );
-	}
+# 	}
 }
 
 sub __strip_path {

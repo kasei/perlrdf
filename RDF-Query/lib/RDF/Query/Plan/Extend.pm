@@ -122,6 +122,7 @@ sub next {
 			$ok	= 0;
 		};
 		next unless ($ok);
+		$l->trace( "Extended result: $row" );
 		return $row;
 	}
 }
