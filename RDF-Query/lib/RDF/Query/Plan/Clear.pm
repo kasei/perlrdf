@@ -71,7 +71,16 @@ sub execute ($) {
 # 	warn "clearing graph " . $graph->as_string;
 	my $ok	= 0;
 	try {
-		$context->model->remove_statements( undef, undef, undef, $graph );
+		if (blessed($graph)) {
+			$context->model->remove_statements( undef, undef, undef, $graph );
+		} elsif ($graph eq 'ALL') {
+			$context->model->remove_statements( undef, undef, undef, undef );
+		} elsif ($graph eq 'NAMED') {
+			my $citer	= $context->model->get_contexts;
+			while (my $graph = $citer->next) {
+				$context->model->remove_statements( undef, undef, undef, $graph );
+			}
+		}
 		$ok		= 1;
 	} catch RDF::Trine::Error with {};
 	$self->[0]{ok}	= $ok;
