@@ -60,7 +60,7 @@ accessible via the supplied C<$url>.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<SPARQL> for this backend.
+The C<storetype> key must be C<SPARQL> for this backend.
 
 The following key must also be used:
 

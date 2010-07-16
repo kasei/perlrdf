@@ -80,18 +80,18 @@ sub new_with_string {
 
 Returns a new RDF::Trine::Store object based on the supplied
 configuration hashref. This requires the the Store subclass to be
-supplied with a C<store> key, while other keys are required by the
+supplied with a C<storetype> key, while other keys are required by the
 Store subclasses, please refer to each subclass for specific
 documentation.
 
 An example invocation for the DBI store may be:
 
   my $store = RDF::Trine::Store->new_with_config({
-                                                  store    => 'DBI',
-                                                  name     => 'mymodel',
-                                                  dsn      => 'DBI:mysql:database=rdf',
-                                                  username => 'dahut',
-                                                  password => 'Str0ngPa55w0RD'
+                                                  storetype => 'DBI',
+                                                  name      => 'mymodel',
+                                                  dsn       => 'DBI:mysql:database=rdf',
+                                                  username  => 'dahut',
+                                                  password  => 'Str0ngPa55w0RD'
                                                  });
 
 =cut
@@ -101,7 +101,7 @@ sub new_with_config {
   my $proto	= shift;
   my $config	= shift;
   if (defined($config)) {
-    my $class	= join('::', 'RDF::Trine::Store', $config->{store});
+    my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
     if ($class->can('_new_with_config')) {
       return $class->_new_with_config( $config );
     } else {
