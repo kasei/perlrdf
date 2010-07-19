@@ -9,9 +9,11 @@ Changes.ttl
 examples/foaf_labels.pl
 inc/Module/Install.pm
 inc/Module/Install/Base.pm
-inc/Module/Install/Makefile.pm
-inc/Module/Install/MakeMaker.pm
 inc/Module/Install/Metadata.pm
+inc/Module/Install/Can.pm
+inc/Module/Install/Fetch.pm
+inc/Module/Install/Win32.pm
+inc/Module/Install/WriteAll.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
 lib/RDF/Trine/Exporter/CSV.pm
@@ -544,4 +546,5 @@ t/store-hexastore.t
 t/store-triple_sql.t
 t/store-sparql.t
 t/store.t
+t/store-config.t
 t/syntax.t

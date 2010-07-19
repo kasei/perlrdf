@@ -7,7 +7,7 @@ RDF::Trine::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Trine::VariableBindings version 0.124
+This document describes RDF::Trine::VariableBindings version 0.125_01
 
 =head1 METHODS
 

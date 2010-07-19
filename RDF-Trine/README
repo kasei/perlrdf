@@ -65,6 +65,25 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.125 (2010-XX-XX)
+
+     * Added RDF::Trine::VariableBindings class (ported from RDF::Query).
+     * Iterators constructed from SPARQL XML Results format now return variable bindings objects.
+     * Turtle serialization to strings now only declares prefixes that are used in the data.
+     * Added media types and URIs for N-Quads parser and serializer.
+     * Added RDF::Trine::Statement->rdf_compatible method (patch from tobyink).
+     * Changed RDF::Trine::Model node methods (subjects, predicates, objects) to use quad semantics and accept a graph parameter.
+     * Add documentation for new_with_object.
+     * Add documentation for the hashref config.
+     * Improved efficiency of counting quad patterns in RDF::Trine::Store::DBI.
+     * Fixed bug in N-Triples serializer (was serializing quads).
+     * Added %format_uris registry for parsers and serializers.
+     * Added RDF::Trine::Model::as_string method.
+     * Require XML::LibXML 1.70.
+     * Removed unused variable in RDF::Trine::Parser::RDFXML.
+     * Added character encoding declaration to RDF::Trine::Iterator::Bindings->print_xml.
+     * Added character encoding declaration to RDF::Trine::Iterator::Boolean->print_xml.
+
   Version 0.124 (2010-06-21)
 
      * Updated quality value heuristics in RDF::Trine::Serializer::negotiate to prefer turtle if no accept headers are supplied.

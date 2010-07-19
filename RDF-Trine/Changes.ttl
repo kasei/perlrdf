@@ -10,6 +10,33 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.125.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.124.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.125" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::VariableBindings class (ported from RDF::Query)." ;
+                        asc:addition    "Added media types and URIs for N-Quads parser and serializer." ;
+                        asc:addition    "Added RDF::Trine::Statement->rdf_compatible method (patch from tobyink)." ;
+                        asc:addition    "Added documentation for new_with_object and hashref config." ;
+                        asc:addition    "Added %format_uris registry for parsers and serializers." ;
+                        asc:addition    "Added RDF::Trine::Model::as_string method." ;
+                        asc:addition    "Added character encoding declaration to RDF::Trine::Iterator::Bindings->print_xml." ;
+                        asc:addition    "Added character encoding declaration to RDF::Trine::Iterator::Boolean->print_xml." ;
+                        asc:update      "Iterators constructed from SPARQL XML Results format now return variable bindings objects." ;
+                        asc:update      "Turtle serialization to strings now only declares prefixes that are used in the data." ;
+                        asc:update      "Changed RDF::Trine::Model node methods (subjects, predicates, objects) to use quad semantics and accept a graph parameter." ;
+                        asc:update      "Improved efficiency of counting quad patterns in RDF::Trine::Store::DBI." ;
+                        asc:update      "Fixed bug in N-Triples serializer (was serializing quads)." ;
+                        asc:update      "Require XML::LibXML 1.70." ;
+                        asc:update      "Removed unused variable in RDF::Trine::Parser::RDFXML." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.124.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.123.tar.gz> ;
