@@ -32,6 +32,7 @@ use base qw(XML::SAX::Base);
 
 use Data::Dumper;
 use Time::HiRes qw(time);
+use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
@@ -233,7 +234,8 @@ sub end_element {
 	} elsif ($tag eq 'result') {
 		my $result	= delete( $bindings{ $addr } );
 		$result_count{ $addr }++;
-		push( @{ $results{ $addr } }, $result );
+		my $vb	= RDF::Trine::VariableBindings->new( $result );
+		push( @{ $results{ $addr } }, $vb );
 	} elsif ($tag eq 'bnode') {
 		$values{ $addr }	= RDF::Trine::Node::Blank->new( $string );
 	} elsif ($tag eq 'uri') {
