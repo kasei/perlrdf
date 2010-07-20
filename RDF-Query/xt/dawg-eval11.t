@@ -20,25 +20,19 @@ use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
-# 	log4perl.category.rdf.query.plan.namedgraph		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.subselect		= TRACE, Screen
+# #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
 # 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
 
-our $debug			= 0;
-our $debug_results	= 0;
+our $debug				= 1;
+our $debug_results		= 0;
+our $STRICT_APPROVAL	= 1;
 if ($] < 5.007003) {
 	plan skip_all => 'perl >= 5.7.3 required';
-	exit;
-}
-
-if ($ENV{RDFQUERY_DAWGTEST}) {
-#	plan qw(no_plan);
-} else {
-	plan skip_all => 'Developer tests. Set RDFQUERY_DAWGTEST to run these tests.';
 	exit;
 }
 
@@ -46,7 +40,7 @@ use Data::Dumper;
 require XML::Simple;
 
 plan qw(no_plan);
-require "t/dawg/earl.pl";
+require "xt/dawg/earl.pl";
 	
 my $PATTERN		= shift(@ARGV) || '';
 my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
@@ -60,7 +54,7 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( glob( "t/dawg/data-r2/manifest-evaluation.ttl" ) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(project-expression property-path subquery) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
@@ -109,7 +103,7 @@ my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAcc
 }
 
 unless ($PATTERN) {
-	open( my $fh, '>', 'earl-eval.ttl' ) or die $!;
+	open( my $fh, '>', 'earl-eval-11.ttl' ) or die $!;
 	print {$fh} earl_output( $earl );
 	close($fh);
 }
@@ -138,12 +132,17 @@ sub eval_test {
 	my $queryd		= get_first_obj( $model, $action, $qtquery );
 	my $data		= get_first_obj( $model, $action, $qtdata );
 	my @gdata		= get_all_obj( $model, $action, $qtgdata );
+	
 	return unless ($approved);
+	if ($STRICT_APPROVAL) {
+		return if ($approved->uri_value eq 'http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#NotClassified');
+	}
 	
 	my $uri					= URI->new( $queryd->uri_value );
 	my $filename			= $uri->file;
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
+	warn "Loading SPARQL query from file $filename" if ($debug);
 	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename); binmode($fh, ':utf8'); <$fh> };
 	
 	my $q			= $sparql;
@@ -208,7 +207,11 @@ sub new_model {
 	my @files		= @_;
 	my $store		= RDF::Trine::Store::Memory->temporary_store;
 	my $model		= RDF::Trine::Model->new( $store );
-	add_to_model( $model, file_uris(@files) );
+	my @uris		= file_uris(@files);
+	foreach my $u (@uris) {
+		warn "loading uri: $u" if ($debug);
+		add_to_model( $model, $u );
+	}
 	return $model;
 }
 
@@ -254,7 +257,10 @@ sub get_actual_results {
 	my @gdata	= @_;
 	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11', load_data => 1 );
 	
-	return unless $query;
+	unless ($query) {
+		warn RDF::Query->error if ($debug);
+		return;
+	}
 	
 	my $results	= $query->execute_with_named_graphs( $model, @gdata );
 	if ($results->is_bindings) {
@@ -442,11 +448,9 @@ sub compare_results {
 	my $earl		= shift;
 	my $test		= shift;
 	my $TODO		= shift;
-	warn 'compare_results: ' . Data::Dumper->Dump([$expected, $actual], [qw(expected actual)]) if ($debug or $debug_results);
-	
-	
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
+		warn_results( $expected, $actual ) if ($debug_results and not($ok));
 		return $ok;
 	} elsif (blessed($actual) and $actual->isa('RDF::Trine::Iterator::Graph')) {
 		die unless (blessed($expected) and $expected->isa('RDF::Trine::Iterator::Graph'));
@@ -573,6 +577,7 @@ sub compare_results {
 				
 				unless ($passed) {
 	#				warn 'did not pass test. actual data: ' . Dumper($actual);
+					warn_results( $expected, $actual ) if ($debug_results);
 					fail( "$test: expected but didn't find: " . join(', ', @{ $row }{ @keys }) );
 					return 0;
 				}
@@ -581,7 +586,10 @@ sub compare_results {
 		
 		my @remaining	= keys %actual_flat;
 		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if ($debug and (@remaining));
-		return is( scalar(@remaining), 0, "$test: no unchecked results" );
+		my $ok	= scalar(@remaining) == 0;
+		warn_results( $expected, $actual ) if ($debug_results and not($ok));
+		ok( $ok, "$test: no unchecked results" );
+		return $ok;
 	}
 }
 
@@ -691,8 +699,14 @@ sub get_all_obj {
 sub relativeize_url {
 	my $uri	= shift;
 	if ($uri =~ /^http:/) {
-		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{t/dawg/data-r2/};
+		$uri	=~ s{^http://www.w3.org/2001/sw/DataAccess/tests/}{xt/dawg/data-r2/};
 		$uri	= 'file://' . File::Spec->rel2abs( $uri );
 	}
 	return $uri;
+}
+
+sub warn_results {
+	my $expected	= shift;
+	my $actual		= shift;
+	warn 'compare_results: ' . Data::Dumper->Dump([$expected, $actual], [qw(expected actual)]);
 }

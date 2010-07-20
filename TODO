@@ -6,9 +6,7 @@ the work, if known):
 
 ## RDF::Query
 	* RDFa support for FROM clauses [kasei]
-	* Fix nested GRAPH graph patterns [kasei] (see http://www.w3.org/TR/rdf-sparql-query/#sparqlAlgebra, "Definition: Evaluation of a Graph Pattern")
 	* Fix ModifyTemplate in SPARQL1.1 parser to only allow quads (GRAPH patterns and BGPs) and allow dots (follow the grammar in the working draft for QuadData)
-	* Test property paths inside named graphs [kasei]
 ## RDF::Trine
 	* Parsers
 		* Guess parser based on filename/content sniffing
@@ -37,6 +35,5 @@ the work, if known):
 		* Atom [tobyink]
 ## RDF::Endpoint
 	* Clean up and release to CPAN [kasei]
-	* Implement SPARQL 1.1 Service Description [kasei]
 ## RDF::LinkedData
 	* Implement SPARQL 1.1 HTTP RDF Update

@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.900.
+This document describes RDF::Query::Plan::Extend version 2.902.
 
 =head1 METHODS
 
@@ -27,7 +27,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.902';
 }
 
 ######################################################################
@@ -59,7 +59,7 @@ sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "PROJECT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "EXTEND plan can't be executed while already open";
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
@@ -122,6 +122,7 @@ sub next {
 			$ok	= 0;
 		};
 		next unless ($ok);
+		$l->trace( "Extended result: $row" );
 		return $row;
 	}
 }

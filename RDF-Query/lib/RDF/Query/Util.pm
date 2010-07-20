@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.900.
+This document describes RDF::Query::Util version 2.902.
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use LWP::Simple;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.902';
 }
 
 ######################################################################

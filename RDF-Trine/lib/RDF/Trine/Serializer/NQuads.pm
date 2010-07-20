@@ -47,9 +47,10 @@ our ($VERSION);
 BEGIN {
 	$VERSION	= '0.124';
 	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
-# 	foreach my $type (qw(text/plain)) {
-# 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-# 	}
+	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
+	foreach my $type (qw(text/x-nquads)) {
+		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
+	}
 }
 
 ######################################################################

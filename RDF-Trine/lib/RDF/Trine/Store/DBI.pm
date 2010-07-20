@@ -70,7 +70,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<DBI> for this backend.
+The C<storetype> key must be C<DBI> for this backend.
 
 These keys should also be used:
 

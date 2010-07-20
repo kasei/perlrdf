@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.900.
+This document describes RDF::Query::Functions version 2.902.
 
 =cut
 
@@ -19,7 +19,6 @@ no warnings 'redefine';
 
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
-use RDF::Query;
 use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
 
@@ -35,7 +34,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.900';
+	$VERSION	= '2.902';
 }
 
 ######################################################################

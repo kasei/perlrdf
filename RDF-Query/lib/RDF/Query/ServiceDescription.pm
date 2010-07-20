@@ -7,7 +7,7 @@ RDF::Query::ServiceDescription - Class for describing federated query data sourc
 
 =head1 VERSION
 
-This document describes RDF::Query::ServiceDescription version 2.900.
+This document describes RDF::Query::ServiceDescription version 2.902.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::ServiceDescription;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.900';
+	$VERSION	= '2.902';
 }
 
 use strict;
@@ -27,7 +27,6 @@ use warnings;
 no warnings 'redefine';
 
 use URI::file;
-use RDF::Query;
 use RDF::Trine::Iterator qw(smap swatch);
 use Scalar::Util qw(blessed);
 use LWP::UserAgent;

@@ -1,10 +1,11 @@
 use strict;
 use warnings;
-no warnings 'redefine';
 
-# use ExtUtils::MakeMaker;
 use inc::Module::Install;
 
+name				'RDF-Query';
+all_from			'lib/RDF/Query.pm';
+author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'perl';
 
 recommends			'LWP::Simple'				=> 0;
@@ -20,24 +21,27 @@ build_requires		'Test::Exception'			=> 0;
 build_requires		'YAML'						=> 0;
 build_requires		'FindBin'					=> 0;
 
-WriteMakefile(
-	NAME				=> 'RDF::Query',
-	ABSTRACT			=> 'A pure-perl impelmentation of the RDF query languages SPARQL and RDQL.',
-	VERSION_FROM		=> 'lib/RDF/Query.pm',
-	AUTHOR				=> 'Gregory Todd Williams <gwilliams@cpan.org>',
-	PREREQ_PM			=> {
-					'Data::UUID'				=> 0,
-					'Digest::SHA1'				=> 0,
-					'DateTime::Format::W3CDTF'	=> 0,
-					'Error'						=> 0,
-					'File::Spec'				=> 0,
-					'File::Temp'				=> 0,
-					'JSON'						=> 2,
-					'Parse::RecDescent'			=> 0,
-					'RDF::Trine'				=> 0.124,
-					'Scalar::Util'				=> 0,
-					'Scalar::Util'				=> 0,
-					'Set::Scalar'				=> 0,
-					'URI'						=> 0,
-				},
+requires			'Data::UUID'				=> 0;
+requires			'Digest::SHA1'				=> 0;
+requires			'DateTime::Format::W3CDTF'	=> 0;
+requires			'Error'						=> 0;
+requires			'File::Spec'				=> 0;
+requires			'File::Temp'				=> 0;
+requires			'JSON'						=> 2;
+requires			'Parse::RecDescent'			=> 0;
+requires			'RDF::Trine'				=> 0.124;
+requires			'Scalar::Util'				=> 0;
+requires			'Set::Scalar'				=> 0;
+requires			'URI'						=> 0;
+requires			'I18N::LangTags'			=> 0;
+
+resources(
+	'homepage'   => "http://search.cpan.org/dist/RDF-Query/",
+	'repository' => "http://github.com/kasei/perlrdf/",
 );
+
+author_tests('xt');
+
+sign;
+
+WriteAll;

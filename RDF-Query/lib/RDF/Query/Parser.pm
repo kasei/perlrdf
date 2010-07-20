@@ -7,7 +7,7 @@ RDF::Query::Parser - Parser base class
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser version 2.900.
+This document describes RDF::Query::Parser version 2.902.
 
 =cut
 
@@ -32,7 +32,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.900';
+	$VERSION		= '2.902';
 }
 
 ######################################################################

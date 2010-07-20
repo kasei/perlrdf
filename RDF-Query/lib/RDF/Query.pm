@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.900.
+This document describes RDF::Query version 2.902.
 
 =head1 SYNOPSIS
 
@@ -33,9 +33,9 @@ information on RDQL.
 =head1 CHANGES IN VERSION 2.900
 
 The 2.9xx versions of RDF::Query introduce some significant changes that will
-lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.900 introduces
+lead to a stable 3.000 release supporting SPARQL 1.1. Version 2.902 introduces
 the SPARQL 1.1 features up to date with the SPARQL 1.1 working drafts as of its
-release date. Version 2.900 also is the first version to require use of
+release date. Version 2.902 also is the first version to require use of
 RDF::Trine for the underlying RDF store. This change means that RDF::Core is
 no longer supported, and while Redland is still supported, its handling of
 "contexts" (named graphs) means that existing RDF triples stored in Redland
@@ -137,7 +137,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.900';
+	$VERSION		= '2.902';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -338,7 +338,8 @@ sub prepare {
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
-	my $plan		= $self->query_plan( $context );
+	my %plan_args	= %{ $args{ planner_args } || {} };
+	my $plan		= $self->query_plan( $context, %plan_args );
 	$l->trace("-> done.");
 	
 	unless ($plan) {
@@ -475,6 +476,7 @@ current query.
 sub query_plan {
 	my $self	= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $parsed	= $self->{parsed};
 	my %constant_plan;
 	if (my $b = $self->{parsed}{bindings}) {
@@ -500,7 +502,7 @@ sub query_plan {
 	
 	my $algebra		= $self->pattern;
 	my $pclass		= $self->plan_class;
-	my @plans		= $pclass->generate_plans( $algebra, $context, %constant_plan );
+	my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
@@ -563,7 +565,7 @@ sub describe {
 	$self->{'describe_nodes'}	= [];
 	foreach my $node (@nodes) {
 		push(@{ $self->{'describe_nodes'} }, $node);
-		push(@streams, $model->get_statements( $node ));
+		push(@streams, $model->bounded_description( $node ));
 		push(@streams, $model->get_statements( undef, undef, $node ));
 	}
 	

@@ -349,6 +349,34 @@ sub from_redland {
 	return $st;
 }
 
+=item C<< rdf_compatible >>
+
+Returns true if and only if the statement can be expressed in RDF. That is,
+the subject of the statement must be a resource or blank node; the predicate
+must be a resource; and the object must be a resource, blank node or literal.
+
+RDF::Trine::Statement does allow statements to be created which cannot be
+expressed in RDF - for instance, statements including variables.
+
+=cut
+
+sub rdf_compatible {
+	my $self	= shift;
+
+	return
+		unless $self->subject->is_resource
+		||     $self->subject->is_blank;
+	
+	return
+		unless $self->predicate->is_resource;
+	
+	return
+		unless $self->object->is_resource
+		||     $self->object->is_blank
+		||     $self->object->is_literal;
+	
+	return $self;
+}
 
 1;
 

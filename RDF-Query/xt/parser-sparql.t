@@ -10,7 +10,7 @@ use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
 
-use RDF::Query::Node;
+use RDF::Query;
 use_ok( 'RDF::Query::Parser::SPARQL' );
 my $parser	= new RDF::Query::Parser::SPARQL ();
 isa_ok( $parser, 'RDF::Query::Parser::SPARQL' );

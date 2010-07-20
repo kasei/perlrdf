@@ -58,7 +58,7 @@ Returns a new storage object using the supplied RDF::Redland::Model object.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Redland> for this backend.
+The C<storetype> key must be C<Redland> for this backend.
 
 The following keys may also be used:
 

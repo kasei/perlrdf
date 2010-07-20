@@ -9,6 +9,40 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.902.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.901.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.902" ;
+                        doap:created      "2010-07-02" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed bug in requiring prerequisite modules." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.901.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.900.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.901" ;
+                        doap:created      "2010-06-29" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for SPARQL 1.1 CREATE/DROP GRAPH update operations." ;
+                        asc:update        "Fixed named graph handling." ;
+                        asc:update        "Fixed bug in handling of * aggregates." ;
+                        asc:update        "Simplified code to create new temporary models when FROM clauses dereference graph data." ;
+                        asc:update        "Fixed infinite loop bug on parsing certain invalid SPARQL 1.1 update queries." ;
+                        asc:update        "Fixed handling of BGPs within named graphs in RDF::Query::Plan::BasicGraphPattern." ;
+                        asc:update        "Updated syntax error exception messages in SPARQL parsers." ;
+                        asc:update        "Fixed property path evaluation within named graphs." ;
+                        asc:update        "Converted Makefile.PL to properly use Module::Install." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.900.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.202.tar.gz> ;

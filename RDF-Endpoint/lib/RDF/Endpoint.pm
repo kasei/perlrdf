@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.01_01.
+This document describes RDF::Endpoint version 0.01_03.
 
 =head1 SYNOPSIS
 
@@ -49,6 +49,20 @@ description.
 
 =back
 
+=head1 EXAMPLE CONFIGURATIONS
+
+=head2 Using L<Plack::Handler::Apache2>
+
+Using L<Plack::Handler::Apache2>, mod_perl2 can be configured to serve and
+endpoint using the following configuration:
+
+  <Location /sparql>
+    SetHandler perl-script
+    PerlResponseHandler Plack::Handler::Apache2
+    PerlSetVar psgi_app /path/to/endpoint.psgi
+    PerlSetEnv RDF_ENDPOINT_CONFIG /path/to/rdf_endpoint.json
+  </Location>
+
 =head1 METHODS
 
 =over 4
@@ -60,7 +74,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.01_01';
+our $VERSION	= '0.01';
 
 use RDF::Query 2.900;
 use RDF::Trine 0.124 qw(statement iri blank literal);
@@ -78,6 +92,16 @@ use RDF::RDFa::Generator;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
+
+my $NAMESPACES	= {
+	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
+	'format'	=> 'http://www.w3.org/ns/formats/',
+	void		=> 'http://rdfs.org/ns/void#',
+	scovo		=> 'http://purl.org/NET/scovo#',
+	sd			=> 'http://www.w3.org/ns/sparql-service-description#',
+	jena		=> 'java:com.hp.hpl.jena.query.function.library.',
+	ldodds		=> 'java:com.ldodds.sparql.',
+};
 
 =item C<< new ( $conf ) >>
 
@@ -137,16 +161,6 @@ END
 	}
 	
 	if (my $sparql = $req->param('query')) {
-		my @variants	= (
-			['text/html', 1.0, 'text/html'],
-			['text/plain', 0.9, 'text/plain'],
-			['application/json', 1.0, 'application/json'],
-			['application/xml', 0.9, 'application/xml'],
-			['text/xml', 0.9, 'text/xml'],
-			['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
-		);
-		my $stype	= choose( \@variants, $headers ) || 'text/html';
-		
 		my %args;
 		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{load_data});
@@ -154,8 +168,6 @@ END
 		my @default	= $req->param('default-graph-uri');
 		my @named	= $req->param('named-graph-uri');
 		if (scalar(@default) or scalar(@named)) {
-			use Data::Dumper;
-			warn Dumper(\@default, \@named);
 			delete $args{ load_data };
 			$model	= RDF::Trine::Model->temporary_model;
 			foreach my $url (@named) {
@@ -174,22 +186,53 @@ END
 			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
-				if ($stype =~ /html/) {
-					$response->headers->content_type( 'text/html' );
-					my $html	= $self->iter_as_html($iter, $model);
-					$content	= encode_utf8($html);
-				} elsif ($stype =~ /xml/) {
-					$response->headers->content_type( $stype );
-					my $xml		= $self->iter_as_xml($iter, $model);
-					$content	= encode_utf8($xml);
-				} elsif ($stype =~ /json/) {
-					$response->headers->content_type( $stype );
-					my $json	= $self->iter_as_json($iter, $model);
-					$content	= encode_utf8($json);
+				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
+					my @variants	= (['text/html', 1.0, 'text/html']);
+					my %media_types	= %RDF::Trine::Serializer::media_types;
+					while (my($type, $sclass) = each(%media_types)) {
+						next if ($type =~ /html/);
+						push(@variants, [$type, 0.99, $type]);
+					}
+					my $stype	= choose( \@variants, $headers );
+					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
+						my $s	= $sclass->new( namespaces => $NAMESPACES );
+						$response->status(200);
+						$response->headers->content_type($stype);
+						$content	= encode_utf8($s->serialize_iterator_to_string($iter));
+					} else {
+						$response->headers->content_type( 'text/html' );
+						my $html	= $self->iter_as_html($iter, $model);
+						$content	= encode_utf8($html);
+					}
 				} else {
-					$response->headers->content_type( 'text/plain' );
-					my $text	= $self->iter_as_text($iter, $model);
-					$content	= encode_utf8($text);
+					my @variants	= (
+						['text/html', 1.0, 'text/html'],
+						['text/plain', 0.9, 'text/plain'],
+						['application/json', 0.95, 'application/json'],
+						['application/rdf+xml', 0.95, 'application/rdf+xml'],
+						['text/turtle', 0.95, 'text/turtle'],
+						['application/xml', 0.9, 'application/xml'],
+						['text/xml', 0.9, 'text/xml'],
+						['application/sparql-results+xml', 0.99, 'application/sparql-results+xml'],
+					);
+					my $stype	= choose( \@variants, $headers ) || 'text/html';
+					if ($stype =~ /html/) {
+						$response->headers->content_type( 'text/html' );
+						my $html	= $self->iter_as_html($iter, $model);
+						$content	= encode_utf8($html);
+					} elsif ($stype =~ /xml/) {
+						$response->headers->content_type( $stype );
+						my $xml		= $self->iter_as_xml($iter, $model);
+						$content	= encode_utf8($xml);
+					} elsif ($stype =~ /json/) {
+						$response->headers->content_type( $stype );
+						my $json	= $self->iter_as_json($iter, $model);
+						$content	= encode_utf8($json);
+					} else {
+						$response->headers->content_type( 'text/plain' );
+						my $text	= $self->iter_as_text($iter, $model);
+						$content	= encode_utf8($text);
+					}
 				}
 			} else {
 				$response->status(500);
@@ -209,23 +252,13 @@ END
 		my %media_types	= %RDF::Trine::Serializer::media_types;
 		while (my($type, $sclass) = each(%media_types)) {
 			next if ($type =~ /html/);
-			push(@variants, [$type, 1.0, $type]);
+			push(@variants, [$type, 0.99, $type]);
 		}
-		
-		my $ns	= {
-			xsd		=> 'http://www.w3.org/2001/XMLSchema#',
-			void	=> 'http://rdfs.org/ns/void#',
-			scovo	=> 'http://purl.org/NET/scovo#',
-			sd		=> 'http://www.w3.org/ns/sparql-service-description#',
-			jena	=> 'java:com.hp.hpl.jena.query.function.library.',
-			ldodds	=> 'java:com.ldodds.sparql.',
-			kasei	=> 'http://kasei.us/2007/09/functions/',
-		};
 		push(@variants, ['text/html', 1.0, 'text/html']);
 		my $stype	= choose( \@variants, $headers );
 		my $sdmodel	= $self->service_description( $req, $model );
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-			my $s	= $sclass->new( namespaces => $ns );
+			my $s	= $sclass->new( namespaces => $NAMESPACES );
 			$response->status(200);
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
@@ -234,15 +267,13 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Hidden', ns => $ns );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => $NAMESPACES );
 			$gen->inject_document($doc, $sdmodel);
-			my ($rh, $wh);
-			pipe($rh, $wh);
+			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
-			print {$wh} $writer->document($doc);
+			$content	= encode_utf8( $writer->document($doc) );
 			$response->status(200);
 			$response->headers->content_type('text/html');
-			$content	= $rh;
 		}
 	}
 	
@@ -273,6 +304,84 @@ END
 	}
 	return $response;
 }
+
+=item C<< service_description ( $request, $model ) >>
+
+Returns a new RDF::Trine::Model object containing a service description of this
+endpoint, generating dataset statistics from C<< $model >>.
+
+=cut
+
+sub service_description {
+	my $self	= shift;
+	my $req		= shift;
+	my $model	= shift;
+	my $config	= $self->{conf};
+	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
+	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
+	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
+	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
+	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
+	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
+	my @formats		= keys %RDF::Trine::Serializer::format_uris;
+	
+	my $sdmodel		= RDF::Trine::Model->temporary_model;
+	my $s			= blank('service');
+	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
+	
+	$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Query ) );
+	if ($config->{update}) {
+		$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Update ) );
+	}
+	if ($config->{load_data}) {
+		$sdmodel->add_statement( statement( $s, $sd->feature, $sd->DereferencesURIs ) );
+	}
+	
+	foreach my $ext (@extensions) {
+		$sdmodel->add_statement( statement( $s, $sd->languageExtension, iri($ext) ) );
+	}
+	foreach my $func (@functions) {
+		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
+	}
+	foreach my $format (@formats) {
+		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
+	}
+	
+	my $dsd	= blank('dataset');
+	my $def	= blank('defaultGraph');
+	my $si	= blank('size');
+	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
+	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
+	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
+	if ($config->{service_description}{default}) {
+		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
+		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
+		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
+		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+	}
+	if ($config->{service_description}{named_graphs}) {
+		my @graphs	= $model->get_contexts;
+		foreach my $g (@graphs) {
+			my $ng		= blank();
+			my $graph	= blank();
+			my $si		= blank();
+			my $count	= $model->count_statements( undef, undef, undef, $g );
+			$sdmodel->add_statement( statement( $dsd, $sd->namedGraph, $ng ) );
+			$sdmodel->add_statement( statement( $ng, $sd->name, $g ) );
+			$sdmodel->add_statement( statement( $ng, $sd->graph, $graph ) );
+			$sdmodel->add_statement( statement( $graph, $void->statItem, $si ) );
+			$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
+			$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+		}
+	}
+	return $sdmodel;
+}
+
+=begin private
+
+=item C<< iter_as_html ( $iter, $model ) >>
+
+=cut
 
 sub iter_as_html {
 	my $self	= shift;
@@ -349,11 +458,24 @@ END
 	return $html;
 }
 
+=item C<< iter_as_text ( $iter ) >>
+
+=cut
+
 sub iter_as_text {
 	my $self	= shift;
 	my $iter	= shift;
-	return $iter->as_string;
+	if ($iter->isa('RDF::Trine::Iterator::Graph')) {
+		my $serializer	= RDF::Trine::Serializer->new('ntriples');
+		return $serializer->serialize_iterator_to_string( $iter );
+	} else {
+		return $iter->as_string;
+	}
 }
+
+=item C<< iter_as_xml ( $iter ) >>
+
+=cut
 
 sub iter_as_xml {
 	my $self	= shift;
@@ -361,11 +483,19 @@ sub iter_as_xml {
 	return $iter->as_xml;
 }
 
+=item C<< iter_as_json ( $iter ) >>
+
+=cut
+
 sub iter_as_json {
 	my $self	= shift;
 	my $iter	= shift;
 	return $iter->as_json;
 }
+
+=item C<< node_as_html ( $node, $model ) >>
+
+=cut
 
 sub node_as_html {
 	my $self	= shift;
@@ -412,77 +542,9 @@ sub node_as_html {
 	}
 }
 
-=item C<< service_description ( $request, $model ) >>
-
-Returns a new RDF::Trine::Model object containing a service description of this
-endpoint, generating dataset statistics from C<< $model >>.
+=end private
 
 =cut
-
-sub service_description {
-	my $self	= shift;
-	my $req		= shift;
-	my $model	= shift;
-	my $config	= $self->{conf};
-	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
-	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
-	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
-	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
-	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
-	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
-	my @formats		= keys %RDF::Trine::Serializer::format_uris;
-	
-	my $sdmodel		= RDF::Trine::Model->temporary_model;
-	my $s			= blank('service');
-	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
-	
-	$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Query ) );
-	if ($config->{update}) {
-		$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Update ) );
-	}
-	if ($config->{load_data}) {
-		$sdmodel->add_statement( statement( $s, $sd->feature, $sd->DereferencesURIs ) );
-	}
-	
-	foreach my $ext (@extensions) {
-		$sdmodel->add_statement( statement( $s, $sd->languageExtension, iri($ext) ) );
-	}
-	foreach my $func (@functions) {
-		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
-	}
-	foreach my $format (@formats) {
-		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
-	}
-	
-	my $dsd	= blank('dataset');
-	my $def	= blank('defaultGraph');
-	my $si	= blank('size');
-	$sdmodel->add_statement( statement( $s, $sd->url, iri($req->path) ) );
-	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
-	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-	if ($config->{service_description}{default}) {
-		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
-		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
-		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
-	}
-	if ($config->{service_description}{named_graphs}) {
-		my @graphs	= $model->get_contexts;
-		foreach my $g (@graphs) {
-			my $ng		= blank();
-			my $graph	= blank();
-			my $si		= blank();
-			my $count	= $model->count_statements( undef, undef, undef, $g );
-			$sdmodel->add_statement( statement( $dsd, $sd->namedGraph, $ng ) );
-			$sdmodel->add_statement( statement( $ng, $sd->name, $g ) );
-			$sdmodel->add_statement( statement( $ng, $sd->graph, $graph ) );
-			$sdmodel->add_statement( statement( $graph, $void->statItem, $si ) );
-			$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-			$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
-		}
-	}
-	return $sdmodel;
-}
 
 1;
 
