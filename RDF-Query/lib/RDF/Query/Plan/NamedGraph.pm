@@ -19,6 +19,7 @@ package RDF::Query::Plan::NamedGraph;
 
 use strict;
 use warnings;
+use Scalar::Util qw(blessed);
 use base qw(RDF::Query::Plan);
 
 ######################################################################
@@ -61,15 +62,12 @@ sub execute ($) {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.namedgraph");
 	$l->trace('executing named graph plan');
 	my $model	= $context->model;
-	my @graphs	= $model->get_contexts;
-	$self->[0]{graphs}	= \@graphs;
+	my $graphs	= $model->get_contexts;
+	$self->[0]{graphs}	= $graphs;
 	$self->[0]{bound}	= $context->bound || {};
 	$self->[0]{context}	= $context;
 	
-	if (@graphs) {
-		$l->trace('available named graphs: ');
-		$l->trace('- ' . $_->as_string) for (@graphs);
-		my $g		= shift(@{ $self->[0]{graphs} });
+	if (my $g = $self->[0]{graphs}->next) {
 		my %bound	= %{ $self->[0]{bound} };
 		$bound{ $self->graph->name }	= $g;
 		my $ctx		= $context->copy( bound => \%bound );
@@ -110,10 +108,10 @@ sub next {
 			$row->{ $self->graph->name }	= $g;
 			return $row;
 		} else {
-			unless (scalar(@{ $self->[0]{graphs} })) {
+			my $g		= $self->[0]{graphs}->next;
+			unless (blessed($g)) {
 				return;
 			}
-			my $g		= shift(@{ $self->[0]{graphs} });
 			my %bound	= %{ $self->[0]{bound} };
 			$bound{ $self->graph->name }	= $g;
 			my $ctx		= $self->[0]{context}->copy( bound => \%bound );
