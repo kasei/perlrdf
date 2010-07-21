@@ -378,7 +378,8 @@ sub get_contexts {
 			my $uri		= $self->_column_name( 'URI' );
 			my $name	= $self->_column_name( 'Name' );
 			my $value	= $self->_column_name( 'Value' );
-			if ($row->{ Context } == 0) {
+			my $ctx		= $self->_column_name( 'Context' );
+			if ($row->{ $ctx } == 0) {
 				next;
 # 				return RDF::Trine::Node::Nil->new();
 			} elsif ($row->{ $uri }) {
