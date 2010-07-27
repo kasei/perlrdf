@@ -7,13 +7,14 @@ bin/rdf_store_makeprivate.pl
 bin/rdf_store_serialize.pl
 Changes.ttl
 examples/foaf_labels.pl
-inc/Module/Install.pm
 inc/Module/Install/Base.pm
-inc/Module/Install/Metadata.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
+inc/Module/Install/Makefile.pm
+inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
+inc/Module/Install.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
 lib/RDF/Trine/Exporter/CSV.pm
