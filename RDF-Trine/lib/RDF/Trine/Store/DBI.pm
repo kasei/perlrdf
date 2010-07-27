@@ -541,13 +541,14 @@ sub _add_node {
 		}
 	}
 	
-	my $sql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
-	my $sth	= $dbh->prepare( $sql );
-	$sth->execute( @values{ @cols } );
+	my $ssql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
+	my $sth	= $dbh->prepare( $ssql );
+	my @values	= map {"$_"} @values{ @cols };
+	$sth->execute( @values );
 	unless ($sth->fetch) {
 		my $sql	= "INSERT INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 		my $sth	= $dbh->prepare( $sql );
-		$sth->execute( map "$_", @values{ @cols } );
+		$sth->execute( @values );
 	}
 }
 
@@ -1173,7 +1174,10 @@ sub _mysql_node_hash {
 		my $value	= $node->blank_identifier;
 		$data	= 'B' . $value;
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
-		my $value	= $node->literal_value || '';
+		my $value	= $node->literal_value;
+		unless (defined($value)) {
+			$value	= '';
+		}
 		my $lang	= $node->literal_value_language || '';
 		my $dt		= $node->literal_datatype || '';
 		no warnings 'uninitialized';
