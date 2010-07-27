@@ -15,6 +15,7 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Module/Install.pm
+inc/Module/Install/AuthorTests.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
 lib/RDF/Trine/Exporter/CSV.pm
@@ -549,3 +550,4 @@ t/store-sparql.t
 t/store.t
 t/store-config.t
 t/syntax.t
+xt/store-sparql.t
