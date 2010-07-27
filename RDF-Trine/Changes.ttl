@@ -27,6 +27,7 @@
                         asc:addition    "Added RDF::Trine::Model::as_string method." ;
                         asc:addition    "Added character encoding declaration to RDF::Trine::Iterator::Bindings->print_xml." ;
                         asc:addition    "Added character encoding declaration to RDF::Trine::Iterator::Boolean->print_xml." ;
+                        asc:update      "Fixed hash collision bug in RDF::Trine::Store::DBI handling of literals with values '' and '0'." ;
                         asc:update      "Iterators constructed from SPARQL XML Results format now return variable bindings objects." ;
                         asc:update      "Turtle serialization to strings now only declares prefixes that are used in the data." ;
                         asc:update      "Changed RDF::Trine::Model node methods (subjects, predicates, objects) to use quad semantics and accept a graph parameter." ;

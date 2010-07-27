@@ -67,6 +67,7 @@ VERSION HISTORY
 
   Version 0.125 (2010-XX-XX)
 
+     * Fixed hash collision bug in RDF::Trine::Store::DBI handling of literals with values '' and '0'.
      * Added RDF::Trine::VariableBindings class (ported from RDF::Query).
      * Iterators constructed from SPARQL XML Results format now return variable bindings objects.
      * Turtle serialization to strings now only declares prefixes that are used in the data.
