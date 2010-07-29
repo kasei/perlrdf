@@ -21,8 +21,6 @@ the work, if known):
 		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
 	* Serializers
-		* Add ::RDFJSON::serialize_iterator_* methods
-		* Pretty print RDF/XML [tobyink or kasei]
 		* TriX [tobyink]
 		* TriG
 		* RDFa (refactor from RDF::LinkedData) [kasei]
@@ -33,7 +31,6 @@ the work, if known):
 		* KML [tobyink]
 		* M3U [tobyink]
 		* Atom [tobyink]
-## RDF::Endpoint
-	* Clean up and release to CPAN [kasei]
 ## RDF::LinkedData
 	* Implement SPARQL 1.1 HTTP RDF Update
+## RDF::Endpoint
