@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.124
+This document describes RDF::Trine::Serializer::Turtle version 0.125
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.124';
+	$VERSION	= '0.125';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
@@ -101,7 +101,7 @@ sub serialize_model_to_file {
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	
-	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t", model => $model );
+	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, model => $model );
 	return 1;
 }
 
@@ -116,7 +116,7 @@ sub serialize_model_to_string {
 	my $model	= shift;
 	my $string	= '';
 	open( my $fh, '>', \$string );
-	$self->serialize_model_to_file( $fh, $model, {}, 0, "\t", model => $model );
+	$self->serialize_model_to_file( $fh, $model, seen => {}, levell => 0, tab => "\t", @_, model => $model, string => 1 );
 	close($fh);
 	return $string;
 }
@@ -132,20 +132,30 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $iter	= shift;
-	my $seen	= shift || {};
-	my $level	= scalar(@_) ? shift : 0;
-	my $tab		= scalar(@_) ? shift : "\t";
 	my %args	= @_;
+	my $seen	= $args{ seen } || {};
+	my $level	= $args{ level } || 0;
+	my $tab		= $args{ tab } || "\t";
 	my $indent	= $tab x $level;
 	
 	my %ns		= reverse %{ $self->{ns} };
 	my @nskeys	= sort keys %ns;
-	if (@nskeys) {
-		foreach my $ns (@nskeys) {
-			my $uri	= $ns{ $ns };
-			print {$fh} "\@prefix $ns: <$uri> .\n";
+	my $seekloc	= tell($fh);
+	
+	my ($tmp_buffer, $tmp_fh);
+	if ($args{ string }) {
+		$tmp_buffer	= '';
+		$tmp_fh	= $fh;
+		$fh		= undef;
+		open( $fh, '>', \$tmp_buffer );
+	} else {
+		if (@nskeys) {
+			foreach my $ns (@nskeys) {
+				my $uri	= $ns{ $ns };
+				print {$fh} "\@prefix $ns: <$uri> .\n";
+			}
+			print {$fh} "\n";
 		}
-		print {$fh} "\n";
 	}
 	
 	my $last_subj;
@@ -253,6 +263,20 @@ sub serialize_iterator_to_file {
 	if ($open_triple) {
 		print {$fh} qq[ .\n];
 	}
+	
+	if ($args{ string }) {
+#		close($fh);
+		$fh	= $tmp_fh;
+		my @used_nskeys	= keys %{ $self->{used_ns} };
+		if (@used_nskeys) {
+			foreach my $ns (@used_nskeys) {
+				my $uri	= $ns{ $ns };
+				print {$fh} "\@prefix $ns: <$uri> .\n";
+			}
+			print {$fh} "\n";
+		}
+		print {$fh} $tmp_buffer;
+	}
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
@@ -266,7 +290,7 @@ sub serialize_iterator_to_string {
 	my $iter	= shift;
 	my $string	= '';
 	open( my $fh, '>', \$string );
-	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t" );
+	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, string => 1 );
 	close($fh);
 	return $string;
 }
@@ -526,6 +550,7 @@ sub _turtle {
 				my ($ns,$local)	= $dtr->qname;
 				if (exists $self->{ns}{$ns}) {
 					$qname	= join(':', $self->{ns}{$ns}, $local);
+					$self->{used_ns}{ $self->{ns}{$ns} }++;
 				}
 			} catch RDF::Trine::Error with {};
 			if ($qname) {
@@ -540,6 +565,7 @@ sub _turtle {
 			my ($ns,$local)	= $obj->qname;
 			if (exists $self->{ns}{$ns}) {
 				$value	= join(':', $self->{ns}{$ns}, $local);
+				$self->{used_ns}{ $self->{ns}{$ns} }++;
 			}
 		} catch RDF::Trine::Error with {};
 		if ($value) {

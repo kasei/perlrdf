@@ -1,4 +1,4 @@
-use Test::More tests => 35;
+use Test::More tests => 37;
 use Test::Exception;
 
 use strict;
@@ -356,6 +356,47 @@ END
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ foaf => 'http://xmlns.com/foaf/0.1/', foo => 'foo://', bar => 'http://bar/' });
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+[] foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single namespace Qnames (ignoring extra namespaces)');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ foaf => 'http://xmlns.com/foaf/0.1/', foo => 'foo://', bar => 'http://bar/' });
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix bar: <http://bar/> .
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+\@prefix foo: <foo://> .
+
+[] foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle	= '';
+	open( my $fh, '>', \$turtle );
+	$serializer->serialize_model_to_file($fh, $model);
+	close($fh);
+	is($turtle, $expect, 'single namespace Qnames (including extra namespaces)');
 }
 
 {

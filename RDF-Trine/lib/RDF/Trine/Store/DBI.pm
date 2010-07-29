@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.124
+This document describes RDF::Trine::Store::DBI version 0.125
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.125";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -70,7 +70,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<DBI> for this backend.
+The C<storetype> key must be C<DBI> for this backend.
 
 These keys should also be used:
 
@@ -541,13 +541,14 @@ sub _add_node {
 		}
 	}
 	
-	my $sql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
-	my $sth	= $dbh->prepare( $sql );
-	$sth->execute( @values{ @cols } );
+	my $ssql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
+	my $sth	= $dbh->prepare( $ssql );
+	my @values	= map {"$_"} @values{ @cols };
+	$sth->execute( @values );
 	unless ($sth->fetch) {
 		my $sql	= "INSERT INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 		my $sth	= $dbh->prepare( $sql );
-		$sth->execute( map "$_", @values{ @cols } );
+		$sth->execute( @values );
 	}
 }
 
@@ -1173,7 +1174,10 @@ sub _mysql_node_hash {
 		my $value	= $node->blank_identifier;
 		$data	= 'B' . $value;
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
-		my $value	= $node->literal_value || '';
+		my $value	= $node->literal_value;
+		unless (defined($value)) {
+			$value	= '';
+		}
 		my $lang	= $node->literal_value_language || '';
 		my $dt		= $node->literal_datatype || '';
 		no warnings 'uninitialized';
