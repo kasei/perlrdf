@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.125" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-07-29" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::VariableBindings class (ported from RDF::Query)." ;
