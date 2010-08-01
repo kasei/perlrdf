@@ -109,7 +109,7 @@ sub _emit_statement {
 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {
 # 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => "Not valid N-Quads data at line $lineno";
+		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Quads data at line $lineno];
 	}
 	
 	$handler->( $st );
