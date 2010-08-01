@@ -141,7 +141,7 @@ my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::
 		{
 			my $stream	= $model->get_pattern( $st0 );
 			my $empty	= $stream->next;
-			is_deeply( $empty, {}, 'empty binding on no-variable pattern' );
+			is_deeply( $empty, RDF::Trine::VariableBindings->new({}), 'empty binding on no-variable pattern' );
 			is( $stream->next, undef, 'end-of-stream' );
 		}
 	}

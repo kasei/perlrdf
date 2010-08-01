@@ -340,7 +340,7 @@ sub get_pattern {
 				$bindings{ $nodename }	= undef;
 			}
 		}
-		return \%bindings;
+		return RDF::Trine::VariableBindings->new( \%bindings );
 	};
 	
 	my @args;
@@ -520,7 +520,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-# 	Carp::confess unless (blessed($node));
+	return 1 if ($node->is_nil);
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -1360,6 +1360,19 @@ sub _cleanup {
 			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
 		}
 	}
+}
+
+sub _begin_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	$dbh->{AutoCommit}	= 0;
+}
+
+sub _end_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	$dbh->commit;
+	$dbh->{AutoCommit}	= 1;
 }
 
 sub DESTROY {
