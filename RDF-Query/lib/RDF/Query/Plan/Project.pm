@@ -113,6 +113,7 @@ sub next {
 		$proj->{ $name }	= $value;
 	}
 	
+	$l->trace( "- projected row: $proj" );
 	return $proj;
 }
 
