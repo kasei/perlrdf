@@ -10,6 +10,7 @@ use URI::file;
 use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
+use Storable qw(dclone);
 
 use RDF::Query;
 use RDF::Query::Node qw(iri);
@@ -21,7 +22,7 @@ use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.subselect		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.path		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -465,9 +466,11 @@ sub compare_results {
 	my $test		= shift;
 	my $comment		= shift || do { my $foo; \$foo };
 	my $TODO		= shift;
+	my $_expected	= eval { dclone($expected) };
+	my $_actual		= eval { dclone($actual) };
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
-		warn_results( $expected, $actual ) if ($debug_results and not($ok));
+		warn_results( $_expected, $_actual ) if ($debug_results and not($ok));
 		return $ok;
 	} elsif (blessed($actual) and $actual->isa('RDF::Trine::Iterator::Graph')) {
 		die unless (blessed($expected) and $expected->isa('RDF::Trine::Iterator::Graph'));
@@ -594,7 +597,7 @@ sub compare_results {
 				
 				unless ($passed) {
 	#				warn 'did not pass test. actual data: ' . Dumper($actual);
-					warn_results( $expected, $actual ) if ($debug_results);
+					warn_results( $_expected, $_actual ) if ($debug_results);
 					$$comment	= "expected but didn't find: " . join(', ', @{ $row }{ @keys });
 					fail( "$test: $$comment" );
 					return 0;
@@ -605,7 +608,7 @@ sub compare_results {
 		my @remaining	= keys %actual_flat;
 		warn "remaining: " . Data::Dumper::Dumper(\@remaining) if ($debug and (@remaining));
 		my $ok	= scalar(@remaining) == 0;
-		warn_results( $expected, $actual ) if ($debug_results and not($ok));
+		warn_results( $_expected, $_actual ) if ($debug_results and not($ok));
 		ok( $ok, "$test: no unchecked results" );
 		return $ok;
 	}
