@@ -122,24 +122,30 @@ sub _new_with_string {
 
 # TODO: Refactor, almost identical to Memory
 sub _new_with_config {
-  my $class	= shift;
-  my $config	= shift;
-  my @sources	= @{$config->{sources}};
-  my $self	= $class->new();
-  foreach my $source (@sources) {
-    if ($source->{url}) {
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_url_into_model( $source->{url}, $self );
-    } elsif ($source->{file}) {
-      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	my $class	= shift;
+	my $config	= shift;
+	my @sources = @{$config->{sources}};
+	my $self	= $class->new();
+	foreach my $source (@sources) {
+		my %args;
+		if (my $g = $source->{graph}) {
+			$args{context}	= (blessed($g) ? $g : iri($g));
+		}
+		if ($source->{url}) {
+			my $parser	= RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_url_into_model( $source->{url}, $model, %args );
+		} elsif ($source->{file}) {
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
-    } else {
-      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
-    }
-  }
-  return $self;
+			my $parser = RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
+		} else {
+			throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+		}
+	}
+	return $self;
 }
 
 
