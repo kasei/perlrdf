@@ -202,7 +202,11 @@ sub parse_into_model {
 			$model->add_statement( $st );
 		}
 	};
-	return $self->parse( $uri, $input, $handler );
+	
+	$model->begin_bulk_ops();
+	my $s	= $self->parse( $uri, $input, $handler );
+	$model->end_bulk_ops();
+	return $s;
 }
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
@@ -234,7 +238,11 @@ sub parse_file_into_model {
 			$model->add_statement( $st );
 		}
 	};
-	return $self->parse_file( $uri, $fh, $handler );
+	
+	$model->begin_bulk_ops();
+	my $s	= $self->parse_file( $uri, $fh, $handler );
+	$model->end_bulk_ops();
+	return $s;
 }
 
 =item C<< parse_file ( $base, $fh, $handler ) >>
