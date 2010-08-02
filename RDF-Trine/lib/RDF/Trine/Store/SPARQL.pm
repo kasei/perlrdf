@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.124
+This document describes RDF::Trine::Store::SPARQL version 0.125
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.125";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -262,8 +262,23 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
+	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
+	}
 	
-	throw RDF::Trine::Error::UnimplementedError;
+	my $sparql;
+	if ($st->isa('RDF::Trine::Statement::Quad')) {
+		$sparql	= 'INSERT DATA { GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' } }';
+	} else {
+		$sparql	= 'INSERT DATA { ' . join(' ', map { $_->as_ntriples } $st->nodes) . ' }';
+	}
+	
+	if ($self->{BulkOps}) {
+		throw RDF::Trine::Error::UnimplementedError;
+	} else {
+		my $iter	= $self->_get_iterator( $sparql );
+		my $row		= $iter->next;
+	}
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -276,8 +291,23 @@ sub remove_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
-
-	throw RDF::Trine::Error::UnimplementedError;
+	
+	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statement";
+	}
+	my $sparql;
+	if ($st->isa('RDF::Trine::Statement::Quad')) {
+		$sparql	= 'DELETE DATA { GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' } }';
+	} else {
+		$sparql	= 'DELETE DATA { ' . join(' ', map { $_->as_ntriples } $st->nodes) . ' }';
+	}
+	
+	if ($self->{BulkOps}) {
+		throw RDF::Trine::Error::UnimplementedError;
+	} else {
+		my $iter	= $self->_get_iterator( $sparql );
+		my $row		= $iter->next;
+	}
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
@@ -288,15 +318,24 @@ Removes the specified C<$statement> from the underlying model.
 
 sub remove_statements {
 	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
+	my $st		= shift;
 	my $context	= shift;
-
-	throw RDF::Trine::Error::UnimplementedError;
-	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
-	while (my $st = $iter->next) {
-		$self->remove_statement( $st );
+	
+	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statements";
+	}
+	my $sparql;
+	if ($st->isa('RDF::Trine::Statement::Quad')) {
+		$sparql	= 'DELETE WHERE { GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } ($st->nodes)[0..2]) . ' } }';
+	} else {
+		$sparql	= 'DELETE WHERE { ' . join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } $st->nodes) . ' }';
+	}
+	
+	if ($self->{BulkOps}) {
+		throw RDF::Trine::Error::UnimplementedError;
+	} else {
+		my $iter	= $self->_get_iterator( $sparql );
+		my $row		= $iter->next;
 	}
 }
 
@@ -325,13 +364,39 @@ sub count_statements {
 		}
 	}
 	
-	# XXX try to send a COUNT() query and fall back if it fails
-	my $iter	= $self->get_statements( @_ );
-	my $count	= 0;
-	while (my $st = $iter->next) {
-		$count++;
+	my $sparql;
+	if ($use_quad) {
+		my $nodes;
+		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
+			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+			$nodes		= "GRAPH ?__rt_graph { $triple }";
+		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
+			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+		} else {
+			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
+			$nodes		= "GRAPH $graph { $triple }";
+		}
+		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
+	} else {
+		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }";
 	}
-	return $count;
+	my $iter	= $self->_get_iterator( $sparql );
+	my $row		= $iter->next;
+	return $row->{ 'count' };
+	
+# 	
+# 	
+# 	
+# 	
+# 	
+# 	# XXX try to send a COUNT() query and fall back if it fails
+# 	my $iter	= $self->get_statements( @_ );
+# 	my $count	= 0;
+# 	while (my $st = $iter->next) {
+# 		$count++;
+# 	}
+# 	return $count;
 }
 
 =item C<< size >>
@@ -366,6 +431,16 @@ sub _get_iterator {
 #		warn $sparql;
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
+}
+
+sub _begin_bulk_ops {
+	my $self			= shift;
+	$self->{BulkOps}	= 1;
+}
+
+sub _end_bulk_ops {
+	my $self			= shift;
+	$self->{BulkOps}	= 0;
 }
 
 1;

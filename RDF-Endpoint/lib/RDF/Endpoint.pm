@@ -360,8 +360,8 @@ sub service_description {
 		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
 	}
 	if ($config->{service_description}{named_graphs}) {
-		my @graphs	= $model->get_contexts;
-		foreach my $g (@graphs) {
+		my $iter	= $model->get_contexts;
+		while (my $g = $iter->next) {
 			my $ng		= blank();
 			my $graph	= blank();
 			my $si		= blank();
