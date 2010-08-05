@@ -54,6 +54,12 @@ sub earl_fail_test {
 	my $earl	= shift;
 	my $test	= shift;
 	my $msg		= shift;
+	no warnings 'uninitialized';
+	$msg		=~ s/\n/\\n/g;
+	$msg		=~ s/\t/\\t/g;
+	$msg		=~ s/\r/\\r/g;
+	$msg		=~ s/"/\\"/g;
+	
 	my $bridge	= $earl->{bridge};
 	if (blessed($test) and $test->isa('RDF::Trine::Node')) {
 		$test	= $test->uri_value;
@@ -66,7 +72,7 @@ sub earl_fail_test {
 		a earl:TestResult ;
 		earl:outcome earl:fail ;
 END
-	print qq[\t\trdfs:comment "$msg" ;\n] if (defined $msg);
+	print {$earl->{fh}} qq[\t\trdfs:comment "$msg" ;\n] if (defined $msg);
 	print {$earl->{fh}} <<"END";
 	] ;
 	earl:subject rdfquery:project ;
