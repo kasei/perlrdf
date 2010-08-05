@@ -58,6 +58,8 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
+	$l->trace( "executing extend plan: " . $self->sse );
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "EXTEND plan can't be executed while already open";
 	}
@@ -103,7 +105,7 @@ sub next {
 		my $query	= $self->[0]{context}->query;
 		
 		local($query->{_query_row_cache})	= {};
-		my $proj	= $row->project( @{ $keys } );
+#		my $proj	= $row->project( @{ $keys } );
 		my $ok	= 1;
 		try {
 			foreach my $e (@$exprs) {
@@ -118,6 +120,8 @@ sub next {
 				}
 				$row->{ $name }	= $value;
 			}
+		} catch RDF::Query::Error with {
+			$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
 		} otherwise {
 			$ok	= 0;
 		};
