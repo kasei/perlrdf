@@ -728,7 +728,7 @@ sub _SelectQuery {
 			push(@vars, @v);
 		}
 		@vars	= RDF::Query::_uniq( @vars );
-		$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
+		push( @{ $self->{build}{variables} }, map { $self->new_variable($_) } @vars );
 	}
 
 	$self->__consume_ws_opt;
@@ -769,21 +769,24 @@ sub _SelectQuery {
 sub __SelectVars {
 	my $self	= shift;
 	my $star	= 0;
-	if ($self->_test('*')) {
-		$self->_eat('*');
-		$star	= 1;
-		$self->__consume_ws_opt;
-	} else {
-		my @vars;
-		$self->__SelectVar;
-		push( @vars, splice(@{ $self->{stack} }));
-		$self->__consume_ws_opt;
-		while ($self->__SelectVar_test) {
+	my @vars;
+	my $count	= 0;
+	while ($self->_test('*') or $self->__SelectVar_test) {
+		if ($self->_test('*')) {
+			$self->_eat('*');
+			$star	= 1;
+			$self->__consume_ws_opt;
+			$count++;
+		} else {
 			$self->__SelectVar;
 			push( @vars, splice(@{ $self->{stack} }));
 			$self->__consume_ws_opt;
+			$count++;
 		}
-		$self->{build}{variables}	= \@vars;
+	}
+	$self->{build}{variables}	= \@vars;
+	if ($count == 0) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: No select variable or expression specified";
 	}
 	return $star;
 }
@@ -1289,6 +1292,7 @@ sub __handle_GraphPatternNotTriples {
 		unless ($ggp) {
 			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
 		}
+		
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
@@ -1342,7 +1346,7 @@ sub _SubSelect {
 				push(@vars, @v);
 			}
 			@vars	= RDF::Query::_uniq( @vars );
-			$self->{build}{variables}	= [ map { $self->new_variable($_) } @vars ];
+			push( @{ $self->{build}{variables} }, map { $self->new_variable($_) } @vars );
 		}
 		
 		$self->__consume_ws_opt;
@@ -1458,6 +1462,24 @@ sub _OptionalGraphPattern_test {
 sub _OptionalGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/OPTIONAL/i );
+	{	# If there are filters to the left of the OPTIONAL, they need to be added to the implicit GGP to the left of the OPTIONAL
+		my @filters		= splice(@{ $self->{filters} });
+		use Data::Dumper;
+		if (@filters) {
+			my $cont	= $self->_pop_pattern_container;
+			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+			$self->_push_pattern_container;
+			# my $ggp	= $self->_remove_pattern();
+			unless ($ggp) {
+				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+			}
+			while (my $f = shift @filters) {
+				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
+			}
+			$self->_add_patterns($ggp);
+		}
+	}	
+	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
@@ -1468,6 +1490,24 @@ sub _OptionalGraphPattern {
 sub _MinusGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/MINUS/i );
+	{	# If there are filters to the left of the MINUS, they need to be added to the implicit GGP to the left of the MINUS
+		my @filters		= splice(@{ $self->{filters} });
+		use Data::Dumper;
+		if (@filters) {
+			my $cont	= $self->_pop_pattern_container;
+			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+			$self->_push_pattern_container;
+			# my $ggp	= $self->_remove_pattern();
+			unless ($ggp) {
+				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+			}
+			while (my $f = shift @filters) {
+				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
+			}
+			$self->_add_patterns($ggp);
+		}
+	}	
+	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
