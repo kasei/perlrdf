@@ -88,7 +88,7 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SORT";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open NAMED GRAPH";
 	}
 	my $context	= $self->[0]{context};
 	
