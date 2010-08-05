@@ -100,13 +100,37 @@ sub evaluate {
 		my $type	= $self->promote_type( $op, $lhs, $rhs );
 		my $value;
 		if ($op eq '+') {
-			$value	= $lhs->numeric_value + $rhs->numeric_value;
+			my $lhsv	= $lhs->numeric_value;
+			my $rhsv	= $rhs->numeric_value;
+			if (defined($lhsv) and defined($rhsv)) {
+				$value		= $lhsv + $rhsv;
+			} else {
+				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<+> on non-numeric types";
+			}
 		} elsif ($op eq '-') {
-			$value	= $lhs->numeric_value - $rhs->numeric_value;
+			my $lhsv	= $lhs->numeric_value;
+			my $rhsv	= $rhs->numeric_value;
+			if (defined($lhsv) and defined($rhsv)) {
+				$value		= $lhsv - $rhsv;
+			} else {
+				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<-> on non-numeric types";
+			}
 		} elsif ($op eq '*') {
-			$value	= $lhs->numeric_value * $rhs->numeric_value;
+			my $lhsv	= $lhs->numeric_value;
+			my $rhsv	= $rhs->numeric_value;
+			if (defined($lhsv) and defined($rhsv)) {
+				$value		= $lhsv * $rhsv;
+			} else {
+				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<*> on non-numeric types";
+			}
 		} elsif ($op eq '/') {
-			$value	= $lhs->numeric_value / $rhs->numeric_value;
+			my $lhsv	= $lhs->numeric_value;
+			my $rhsv	= $rhs->numeric_value;
+			if (defined($lhsv) and defined($rhsv)) {
+				$value		= $lhsv / $rhsv;
+			} else {
+				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
+			}
 		} else {
 			die;
 		}
