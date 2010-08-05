@@ -1371,7 +1371,9 @@ sub _begin_bulk_ops {
 sub _end_bulk_ops {
 	my $self			= shift;
 	my $dbh				= $self->dbh;
-	$dbh->commit;
+	unless ($dbh->{AutoCommit}) {
+		$dbh->commit;
+	}
 	$dbh->{AutoCommit}	= 1;
 }
 
