@@ -56,8 +56,8 @@ sub new {
 	
 	if ($USE_XMLLITERALS and defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
 		return RDF::Trine::Node::Literal::XML->new( $literal, $lang, $dt );
-	} elsif ($USE_FORMULAE and defined($dt) and $dt eq RDF::Trine::Node::Formulae->literal_datatype) {
-		return RDF::Trine::Node::Formulae->new( $literal );
+	} elsif ($USE_FORMULAE and defined($dt) and $dt eq RDF::Trine::Node::Formula->literal_datatype) {
+		return RDF::Trine::Node::Formula->new( $literal );
 	} else {
 		return $class->_new( $literal, $lang, $dt );
 	}
