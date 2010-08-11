@@ -36,6 +36,9 @@ BEGIN {
 	$VERSION	= '0.125';
 }
 
+use overload	'=='	=> \&RDF::Trine::Graph::equals,
+				'eq'	=> \&RDF::Trine::Graph::equals;
+
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
