@@ -157,13 +157,6 @@ that can be serialized.
 
 =cut
 
-=item C<< serialize_iterator_to_file ( $file, $iter ) >>
-
-Serializes the iterator to Turtle, printing the results to the supplied
-filehandle C<<$fh>>.
-
-=cut
-
 sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $fh		= shift;
