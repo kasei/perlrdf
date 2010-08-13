@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.125 (2010-XX-XX)
+  Version 0.126 (2010-XX-XX)
 
      * Fixed N-Triples serialization escaping bug for strings whose only escapable character is '\'.
      * Fixed typo in handling of RDF::Trine::Node::Formula extension.
@@ -80,6 +80,7 @@ VERSION HISTORY
      * Updated RDF::Trine::Parser to call begin_bulk_ops() and end_bulk_ops() on model object.
      * Updated DBI backend to use transactions when bulk_ops hints are used.
      * Added '==' and 'eq' overloading to RDF::Trine::Graph class.
+     * Updated RDF::Trine::Model->bounded_description to traverse backwards links across blank nodes.
 
   Version 0.125 (2010-07-29)
 

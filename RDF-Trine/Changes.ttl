@@ -32,6 +32,7 @@
                         asc:update      "Updated Memory and Hexastore backends to support 'graph' key in _new_with_config()." ;
                         asc:update      "Improved error messages in N-Triples and N-Quads parsers." ;
                         asc:update      "Fixed column naming bug in RDF::Trine::Store::DBI->get_contexts." ;
+                        asc:update      "Updated RDF::Trine::Model->bounded_description to traverse backwards links across blank nodes." ;
                         ] .
 
 
