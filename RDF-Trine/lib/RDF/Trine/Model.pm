@@ -619,16 +619,33 @@ sub bounded_description {
 			if (not(@statements)) {
 				return unless (scalar(@nodes));
 				my $n	= shift(@nodes);
-				next if ($seen{ $n->sse }++);
-				my $sts	= $self->get_statements( $n );
-				push(@statements, $sts->get_all);
+# 				warn "CBD handling node " . $n->sse . "\n";
+				next if ($seen{ $n->sse });
+				{
+					my $sts	= $self->get_statements( $n );
+					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
+# 					warn "+ " . $_->sse . "\n" for (@s);
+					push(@statements, @s);
+				}
+				{
+					my $sts	= $self->get_statements( undef, undef, $n );
+					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
+# 					warn "- " . $_->sse . "\n" for (@s);
+					push(@statements, @s);
+				}
+				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
 		}
 		return unless (scalar(@statements));
 		my $st	= shift(@statements);
-		if ($st->object->isa('RDF::Trine::Node::Blank')) {
+		if ($st->object->isa('RDF::Trine::Node::Blank') and not($seen{ $st->object->sse })) {
+# 			warn "+ CBD pushing " . $st->object->sse . "\n";
 			push(@nodes, $st->object);
+		}
+		if ($st->subject->isa('RDF::Trine::Node::Blank') and not($seen{ $st->subject->sse })) {
+# 			warn "- CBD pushing " . $st->subject->sse . "\n";
+			push(@nodes, $st->subject);
 		}
 		return $st;
 	};
