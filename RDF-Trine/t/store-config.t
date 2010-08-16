@@ -58,10 +58,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 							     ]});
   isa_ok($store, 'RDF::Trine::Store::Memory');
   is($store->size, 2, "Two statements in the model");
-TODO: {
-  local $TODO = "Need to support graph key";
   is($store->count_statements(undef, undef, undef, RDF::Trine::Node::Resource->new('http://example.org/local-stuff')), 1, "Only one statement in the graph");
-}
   my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef);
   like($it->to_string, qr/Hello World/, 'Contains Hello World string');
 }

@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.125
+This document describes RDF::Trine::Store::DBI version 0.126
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.125";
+	$VERSION	= "0.126";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -340,7 +340,7 @@ sub get_pattern {
 				$bindings{ $nodename }	= undef;
 			}
 		}
-		return \%bindings;
+		return RDF::Trine::VariableBindings->new( \%bindings );
 	};
 	
 	my @args;
@@ -378,7 +378,8 @@ sub get_contexts {
 			my $uri		= $self->_column_name( 'URI' );
 			my $name	= $self->_column_name( 'Name' );
 			my $value	= $self->_column_name( 'Value' );
-			if ($row->{ Context } == 0) {
+			my $ctx		= $self->_column_name( 'Context' );
+			if ($row->{ $ctx } == 0) {
 				next;
 # 				return RDF::Trine::Node::Nil->new();
 			} elsif ($row->{ $uri }) {
@@ -519,7 +520,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-# 	Carp::confess unless (blessed($node));
+	return 1 if ($node->is_nil);
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -1359,6 +1360,21 @@ sub _cleanup {
 			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
 		}
 	}
+}
+
+sub _begin_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	$dbh->{AutoCommit}	= 0;
+}
+
+sub _end_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	unless ($dbh->{AutoCommit}) {
+		$dbh->commit;
+	}
+	$dbh->{AutoCommit}	= 1;
 }
 
 sub DESTROY {

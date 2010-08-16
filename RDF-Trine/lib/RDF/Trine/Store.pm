@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.125
+This document describes RDF::Trine::Store version 0.126
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.125';
+	$VERSION	= '0.126';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -188,7 +188,7 @@ sub get_pattern {
 			my $row	= $_iter->next;
 			return undef unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
-			return \%data;
+			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
@@ -217,7 +217,7 @@ sub get_pattern {
 				}
 				
 				my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
-				push(@results, $jrow);
+				push(@results, RDF::Trine::VariableBindings->new($jrow));
 			}
 		}
 		$iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
@@ -329,6 +329,8 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+sub _begin_bulk_ops {}
+sub _end_bulk_ops {}
 
 1;
 

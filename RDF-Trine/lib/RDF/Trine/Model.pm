@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.125
+This document describes RDF::Trine::Model version 0.126
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.125';
+	$VERSION	= '0.126';
 }
 
 use Scalar::Util qw(blessed);
@@ -43,16 +43,20 @@ Returns a new model over the supplied rdf store.
 
 sub new {
 	my $class	= shift;
-	my $store	= shift;
-	throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
-	my %args	= @_;
-	my $self	= bless({
-		store		=> $store,
-		temporary	=> 0,
-		added		=> 0,
-		threshold	=> -1,
-		%args
-	}, $class);
+	if (@_) {
+		my $store	= shift;
+		throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
+		my %args	= @_;
+		my $self	= bless({
+			store		=> $store,
+			temporary	=> 0,
+			added		=> 0,
+			threshold	=> -1,
+			%args
+		}, $class);
+	} else {
+		return $class->temporary_model;
+	}
 }
 
 =item C<< temporary_model >>
@@ -64,13 +68,18 @@ Returns a new temporary (non-persistent) model.
 sub temporary_model {
 	my $class	= shift;
 	my $store	= RDF::Trine::Store::Memory->new();
+# 	my $store	= RDF::Trine::Store::DBI->temporary_store();
 	my $self	= $class->new( $store );
 	$self->{temporary}	= 1;
 	$self->{threshold}	= 2000;
 	return $self;
 }
 
-=item C<< dataset_model ( default => \@graphs, named => \@graphs ) >>
+=item C<< dataset_model ( default => \@dgraphs, named => \@ngraphs ) >>
+
+Returns a new model object with the default graph mapped to the union of the
+graphs named in C<< @dgraphs >>, and with available named graphs named in
+C<< @ngraphs >>.
 
 =cut
 
@@ -81,10 +90,43 @@ sub dataset_model {
 	return $ds;
 }
 
+=item C<< begin_bulk_ops >>
+
+Provides a hint to the backend that many update operations are about to occur.
+The backend may use this hint to, for example, aggregate many operations into a
+single operation, or delay index maintenence. After the update operations have
+been executed, C<< end_bulk_ops >> should be called to ensure the updates are
+committed to the backend.
+
+=cut
+
+sub begin_bulk_ops {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if (blessed($store) and $store->can('_begin_bulk_ops')) {
+		$store->_begin_bulk_ops();
+	}
+}
+
+=item C<< end_bulk_ops >>
+
+Provides a hint to the backend that a set of bulk operations have been completed
+and may be committed to the backend.
+
+=cut
+
+sub end_bulk_ops {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if (blessed($store) and $store->can('_end_bulk_ops')) {
+		$store->_end_bulk_ops();
+	}
+}
+
 =item C<< add_statement ( $statement [, $context] ) >>
- 
+
 Adds the specified C<< $statement >> to the rdf store.
- 
+
 =cut
  
 sub add_statement {
@@ -188,6 +230,7 @@ Returns the number of statements in the model.
 
 sub size {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	return $self->count_statements();
 }
 
@@ -200,6 +243,7 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub count_statements {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	return $self->_store->count_statements( @_ );
 }
 
@@ -219,6 +263,7 @@ the underlying store).
 
 sub get_statements {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	return $self->_store->get_statements( @_ );
 }
 
@@ -244,6 +289,7 @@ sub get_pattern {
 	my $context	= shift;
 	my @args	= @_;
 	
+	$self->end_bulk_ops();
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
 					? $bgp
 					: $bgp->triples;
@@ -259,57 +305,69 @@ sub get_pattern {
 	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
-		if (1 == scalar(@triples)) {
-			my $t		= shift(@triples);
-			my @nodes	= $t->nodes;
-			my %vars;
-			my @names	= qw(subject predicate object context);
-			foreach my $n (0 .. $#nodes) {
-				if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
-					$vars{ $names[ $n ] }	= $nodes[$n]->name;
-				}
+		return $self->_get_pattern( $bgp, $context, @args );
+	}
+}
+
+sub _get_pattern {
+	my $self	= shift;
+	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	
+	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
+					? $bgp
+					: $bgp->triples;
+	if (1 == scalar(@triples)) {
+		my $t		= shift(@triples);
+		my @nodes	= $t->nodes;
+		my %vars;
+		my @names	= qw(subject predicate object context);
+		foreach my $n (0 .. $#nodes) {
+			if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
+				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
-			my $iter	= $self->get_statements( @nodes, $context, @args );
-			my @vars	= values %vars;
-			my $sub		= sub {
-				my $row	= $iter->next;
-				return undef unless ($row);
-				my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
-				return \%data;
-			};
-			return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
-		} else {
-			my $t		= shift(@triples);
-			my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
-			my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
-			my @inner;
-			while (my $row = $rhs->next) {
-				push(@inner, $row);
-			}
-			my @results;
-			while (my $row = $lhs->next) {
-				RESULT: foreach my $irow (@inner) {
-					my %keysa;
-					my @keysa	= keys %$irow;
-					@keysa{ @keysa }	= (1) x scalar(@keysa);
-					my @shared	= grep { exists $keysa{ $_ } } (keys %$row);
-					foreach my $key (@shared) {
-						my $val_a	= $irow->{ $key };
-						my $val_b	= $row->{ $key };
-						next unless (defined($val_a) and defined($val_b));
-						my $equal	= $val_a->equal( $val_b );
-						unless ($equal) {
-							next RESULT;
-						}
-					}
-					
-					my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
-					push(@results, $jrow);
-				}
-			}
-			my $result	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
-			return $result;
 		}
+		my $iter	= $self->get_statements( @nodes, $context, @args );
+		my @vars	= values %vars;
+		my $sub		= sub {
+			my $row	= $iter->next;
+			return undef unless ($row);
+			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
+			return RDF::Trine::VariableBindings->new( \%data );
+		};
+		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+	} else {
+		my $t		= shift(@triples);
+		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+		my @inner;
+		while (my $row = $rhs->next) {
+			push(@inner, $row);
+		}
+		my @results;
+		while (my $row = $lhs->next) {
+			RESULT: foreach my $irow (@inner) {
+				my %keysa;
+				my @keysa	= keys %$irow;
+				@keysa{ @keysa }	= (1) x scalar(@keysa);
+				my @shared	= grep { exists $keysa{ $_ } } (keys %$row);
+				foreach my $key (@shared) {
+					my $val_a	= $irow->{ $key };
+					my $val_b	= $row->{ $key };
+					next unless (defined($val_a) and defined($val_b));
+					my $equal	= $val_a->equal( $val_b );
+					unless ($equal) {
+						next RESULT;
+					}
+				}
+				
+				my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
+				push(@results, RDF::Trine::VariableBindings->new($jrow));
+			}
+		}
+		my $result	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+		return $result;
 	}
 }
 
@@ -323,6 +381,7 @@ model.
 sub get_contexts {
 	my $self	= shift;
 	my $store	= $self->_store;
+	$self->end_bulk_ops();
 	my $iter	= $store->get_contexts( @_ );
 	if (wantarray) {
 		return $iter->get_all;
@@ -339,6 +398,7 @@ Returns an iterator object containing every statement in the model.
 
 sub as_stream {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	my $st		= RDF::Trine::Statement::Quad->new( map { variable($_) } qw(s p o g) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
@@ -393,6 +453,7 @@ library for PHP.
 
 sub as_hashref {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	my $stream	= $self->as_stream;
 	my $index = {};
 	while (my $statement = $stream->next) {
@@ -441,6 +502,7 @@ sub subjects {
 	my $pred	= shift;
 	my $obj		= shift;
 	my $graph	= shift;
+	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( undef, $pred, $obj, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
@@ -467,6 +529,7 @@ sub predicates {
 	my $subj	= shift;
 	my $obj		= shift;
 	my $graph	= shift;
+	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( $subj, undef, $obj, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
@@ -493,6 +556,7 @@ sub objects {
 	my $subj	= shift;
 	my $pred	= shift;
 	my $graph	= shift;
+	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
@@ -519,6 +583,7 @@ sub objects_for_predicate_list {
 	my $self	= shift;
 	my $node	= shift;
 	my @preds	= @_;
+	$self->end_bulk_ops();
 	my @objects;
 	foreach my $p (@preds) {
 		my $iter	= $self->get_statements( $node, $p );
@@ -544,6 +609,7 @@ with C<< node >> and stopping at non-blank nodes).
 sub bounded_description {
 	my $self	= shift;
 	my $node	= shift;
+	$self->end_bulk_ops();
 	my %seen;
 	my @nodes	= $node;
 	my @statements;
@@ -553,16 +619,33 @@ sub bounded_description {
 			if (not(@statements)) {
 				return unless (scalar(@nodes));
 				my $n	= shift(@nodes);
-				next if ($seen{ $n->sse }++);
-				my $sts	= $self->get_statements( $n );
-				push(@statements, $sts->get_all);
+# 				warn "CBD handling node " . $n->sse . "\n";
+				next if ($seen{ $n->sse });
+				{
+					my $sts	= $self->get_statements( $n );
+					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
+# 					warn "+ " . $_->sse . "\n" for (@s);
+					push(@statements, @s);
+				}
+				{
+					my $sts	= $self->get_statements( undef, undef, $n );
+					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
+# 					warn "- " . $_->sse . "\n" for (@s);
+					push(@statements, @s);
+				}
+				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
 		}
 		return unless (scalar(@statements));
 		my $st	= shift(@statements);
-		if ($st->object->isa('RDF::Trine::Node::Blank')) {
+		if ($st->object->isa('RDF::Trine::Node::Blank') and not($seen{ $st->object->sse })) {
+# 			warn "+ CBD pushing " . $st->object->sse . "\n";
 			push(@nodes, $st->object);
+		}
+		if ($st->subject->isa('RDF::Trine::Node::Blank') and not($seen{ $st->subject->sse })) {
+# 			warn "- CBD pushing " . $st->subject->sse . "\n";
+			push(@nodes, $st->subject);
 		}
 		return $st;
 	};
@@ -575,6 +658,7 @@ sub bounded_description {
 
 sub as_string {
 	my $self	= shift;
+	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( undef, undef, undef, undef );
 	my @rows;
 	my @names	= qw[subject predicate object context];

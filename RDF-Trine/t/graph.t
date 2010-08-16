@@ -1,4 +1,4 @@
-use Test::More tests => 24;
+use Test::More tests => 26;
 use Test::Exception;
 
 use strict;
@@ -126,17 +126,9 @@ END
 	};
 	my $graph_expect	= RDF::Trine::Graph->new( $model_expect );
 	ok( $graph->equals( $graph_expect ), 'graph equality from statement iterator' );
+	cmp_ok( $graph, 'eq', $graph_expect, 'graph equality from overloaded eq' );
+	cmp_ok( $graph, '==', $graph_expect, 'graph equality from overloaded ==' );
 }
-
-
-
-
-
-
-
-
-
-
 
 sub test_graph_equality {
 	my $rdf_a	= shift;
