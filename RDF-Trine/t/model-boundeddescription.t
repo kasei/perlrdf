@@ -28,12 +28,13 @@ END
 	my $iter	= $model->bounded_description( iri('a') );
 	isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
 	my @st	= $iter->get_all;
-	is( scalar(@st), 4, 'expected triple count' );
+	is( scalar(@st), 5, 'expected triple count' );
 	my @expect	= (
 		'(triple <a> <a> <a>)',
 		'(triple <a> <b> <c>)',
 		'(triple <a> <b> _:a)',
-		'(triple <a> <d> "D")'
+		'(triple <a> <d> "D")',
+		'(triple <c> <b> <a>)',
 	);
 	my @seen	= sort map { $_->as_string } @st;
 	is_deeply( \@seen, \@expect, 'BD with 0-outdegree bnode' );

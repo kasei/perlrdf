@@ -10,6 +10,32 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.126.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.125.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.126" ;
+                        doap:created      "2010-08-16" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added begin_bulk_ops() and end_bulk_ops() hint methods to RDF::Trine::Model." ;
+                        asc:addition    "Updated RDF::Trine::Parser to call begin_bulk_ops() and end_bulk_ops() on model object." ;
+                        asc:addition    "Updated DBI backend to use transactions when bulk_ops hints are used." ;
+                        asc:addition    "Added '==' and 'eq' overloading to RDF::Trine::Graph class." ;
+                        asc:update      "Fixed N-Triples serialization escaping bug for strings whose only escapable character is '\\'." ;
+                        asc:update      "Fixed typo in handling of RDF::Trine::Node::Formula extension." ;
+                        asc:update      "RDF::Trine::Model->new will now return a temporary model when called with no arguments." ;
+                        asc:update      "Updated get_pattern methods in Model and Store classes to return VariableBindings objects." ;
+                        asc:update      "Updated DBI backend to allow no-op adding of the nil node." ;
+                        asc:update      "Updated SPARQL backend to use SPARQL 1.1 Update and Aggregate operations." ;
+                        asc:update      "Updated Memory and Hexastore backends to support 'graph' key in _new_with_config()." ;
+                        asc:update      "Improved error messages in N-Triples and N-Quads parsers." ;
+                        asc:update      "Fixed column naming bug in RDF::Trine::Store::DBI->get_contexts." ;
+                        asc:update      "Updated RDF::Trine::Model->bounded_description to traverse backwards links across blank nodes." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.125.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.124.tar.gz> ;
