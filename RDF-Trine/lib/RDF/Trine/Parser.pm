@@ -142,16 +142,29 @@ sub parse_url_into_model {
 		my $parser	= RDF::Trine::Parser::RDFXML->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]ttl/) {
+	} elsif ($url =~ /[.]ttl$/) {
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]nt/) {
+	} elsif ($url =~ /[.]trig$/) {
+		my $parser	= RDF::Trine::Parser::Trig->new();
+		my $data	= decode('utf8', $content);
+		$parser->parse_into_model( $url, $data, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]nt$/) {
 		my $parser	= RDF::Trine::Parser::NTriples->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]x?html/) {
+	} elsif ($url =~ /[.]nq$/) {
+		my $parser	= RDF::Trine::Parser::NQuads->new();
+		$parser->parse_into_model( $url, $content, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]js(?:on)?$/) {
+		my $parser	= RDF::Trine::Parser::RDFJSON->new();
+		$parser->parse_into_model( $url, $content, $model, %args );
+		return 1;
+	} elsif ($url =~ /[.]x?html?$/) {
 		my $parser	= RDF::Trine::Parser::RDFa->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
