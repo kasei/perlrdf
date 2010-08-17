@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.125
+This document describes RDF::Trine::Serializer version 0.126
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.125';
+	$VERSION	= '0.126';
 }
 
 use LWP::UserAgent;
@@ -154,13 +154,6 @@ Note that some serializers may not support the use of this method, or may
 require the full materialization of the iterator in order to serialize it.
 If materialization is required, available memeory may constrain the iterators
 that can be serialized.
-
-=cut
-
-=item C<< serialize_iterator_to_file ( $file, $iter ) >>
-
-Serializes the iterator to Turtle, printing the results to the supplied
-filehandle C<<$fh>>.
 
 =cut
 

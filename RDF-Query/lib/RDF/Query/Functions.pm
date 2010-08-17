@@ -594,6 +594,9 @@ $RDF::Query::functions{"sparql:datatype"}	= sub {
 	# """Returns the datatype IRI of typedLit; returns xsd:string if the parameter is a simple literal."""
 	my $query	= shift;
 	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node')) {
+		throw RDF::Query::Error::MethodInvocationError -text => "DATATYPE() called without a valid RDF Term";
+	}
 	if ($node->is_literal) {
 		if ($node->has_language) {
 			throw RDF::Query::Error::TypeError ( -text => "cannot call datatype() on a language-tagged literal" );

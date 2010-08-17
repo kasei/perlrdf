@@ -40,15 +40,16 @@ BEGIN {
 sub new {
 	my $class		= shift;
 	my $bindings	= shift;
-	my $self		= { %$bindings };
-	foreach my $k (keys %$self) {
-		my $node	= $self->{$k};
+	my $data		= { %$bindings };
+	foreach my $k (keys %$data) {
+		my $node	= $data->{$k};
 		if (ref($node) and not($node->isa('RDF::Query::Node'))) {
-			$self->{$k}	= RDF::Query::Node->from_trine( $node );
+			$data->{$k}	= RDF::Query::Node->from_trine( $node );
 		}
 	}
 	
-	return $class->SUPER::new( $self );
+	my $self	= $class->SUPER::new( $data );
+	return $self;
 }
 
 =item C<< sse ( \%context, $indent ) >>

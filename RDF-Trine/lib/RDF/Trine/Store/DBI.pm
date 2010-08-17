@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.125
+This document describes RDF::Trine::Store::DBI version 0.126
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.125";
+	$VERSION	= "0.126";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -1371,7 +1371,9 @@ sub _begin_bulk_ops {
 sub _end_bulk_ops {
 	my $self			= shift;
 	my $dbh				= $self->dbh;
-	$dbh->commit;
+	unless ($dbh->{AutoCommit}) {
+		$dbh->commit;
+	}
 	$dbh->{AutoCommit}	= 1;
 }
 
