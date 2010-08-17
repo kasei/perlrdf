@@ -29,6 +29,7 @@ BEGIN {
 use Scalar::Util qw(blessed);
 use Log::Log4perl;
 
+use RDF::Trine::Error qw(:try);
 use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
@@ -621,18 +622,18 @@ sub bounded_description {
 				my $n	= shift(@nodes);
 # 				warn "CBD handling node " . $n->sse . "\n";
 				next if ($seen{ $n->sse });
-				{
+				try {
 					my $sts	= $self->get_statements( $n );
 					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
 # 					warn "+ " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				}
-				{
+				} catch RDF::Trine::Error::UnimplementedError with {};
+				try {
 					my $sts	= $self->get_statements( undef, undef, $n );
 					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
 # 					warn "- " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				}
+				} catch RDF::Trine::Error::UnimplementedError with {};
 				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
