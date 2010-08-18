@@ -10,6 +10,21 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.127.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.126.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.127" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL." ;
+                        asc:update      "RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions." ;
+                        asc:update      "Added heuristics support for TriG, RDF/JSON, and N-Quads to RDF::Trine::Parser->parse_url_into_model." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.126.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.125.tar.gz> ;

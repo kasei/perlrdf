@@ -7,7 +7,7 @@ RDF::Trine::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Blank version 0.126
+This document describes RDF::Trine::Node::Blank version 0.127_01
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.127_01';
 }
 
 ######################################################################

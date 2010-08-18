@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.126
+This document describes RDF::Trine::Serializer::NTriples version 0.127_01
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.127_01';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
