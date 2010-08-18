@@ -39,7 +39,6 @@ requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0;
 requires			'XML::LibXML'				=> 1.70;
-requires			'XML::LibXML::SAX'			=> 1.66;	# we shouldn't need this, but XML::SAX::PurePerl seems to have some major bugs with unicode in some of the RDF/XML syntax examples
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",
