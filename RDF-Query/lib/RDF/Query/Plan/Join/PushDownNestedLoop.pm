@@ -51,6 +51,11 @@ sub new {
 		# for example.
 		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support optional patterns as RHS due to bottom-up variable scoping rules (use NestedLoop instead)";
 	}
+	
+	if ($rhs->sse =~ /aggregate/sm) {
+		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support aggregates in the RHS due to aggregate group fragmentation";
+	}
+	
 	my $self	= $class->SUPER::new( $lhs, $rhs, $opt );
 	return $self;
 }
@@ -167,7 +172,7 @@ sub close {
 	delete $self->[0]{outer};
 	delete $self->[0]{needs_new_outer};
 	delete $self->[0]{inner_count};
-	if ($self->lhs->state == $self->lhs->OPEN) {
+	if (blessed($self->lhs) and $self->lhs->state == $self->lhs->OPEN) {
 		$self->lhs->close();
 	}
 	$self->SUPER::close();

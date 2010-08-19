@@ -23,7 +23,7 @@ my %name_expect	= (
 );
 
 my %type_expect	= (
-	'nquads'	=> [],
+	'nquads'	=> [qw(text/x-nquads)],
 	'ntriples'	=> [qw(text/plain)],
 	'ntriples-canonical'	=> [],
 	'rdfjson'	=> [qw(application/json application/x-rdf+json)],

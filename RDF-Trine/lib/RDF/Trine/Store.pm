@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.124
+This document describes RDF::Trine::Store version 0.126
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.126';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -80,18 +80,18 @@ sub new_with_string {
 
 Returns a new RDF::Trine::Store object based on the supplied
 configuration hashref. This requires the the Store subclass to be
-supplied with a C<store> key, while other keys are required by the
+supplied with a C<storetype> key, while other keys are required by the
 Store subclasses, please refer to each subclass for specific
 documentation.
 
 An example invocation for the DBI store may be:
 
   my $store = RDF::Trine::Store->new_with_config({
-                                                  store    => 'DBI',
-                                                  name     => 'mymodel',
-                                                  dsn      => 'DBI:mysql:database=rdf',
-                                                  username => 'dahut',
-                                                  password => 'Str0ngPa55w0RD'
+                                                  storetype => 'DBI',
+                                                  name      => 'mymodel',
+                                                  dsn       => 'DBI:mysql:database=rdf',
+                                                  username  => 'dahut',
+                                                  password  => 'Str0ngPa55w0RD'
                                                  });
 
 =cut
@@ -101,7 +101,7 @@ sub new_with_config {
   my $proto	= shift;
   my $config	= shift;
   if (defined($config)) {
-    my $class	= join('::', 'RDF::Trine::Store', $config->{store});
+    my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
     if ($class->can('_new_with_config')) {
       return $class->_new_with_config( $config );
     } else {
@@ -188,7 +188,7 @@ sub get_pattern {
 			my $row	= $_iter->next;
 			return undef unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
-			return \%data;
+			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
@@ -217,7 +217,7 @@ sub get_pattern {
 				}
 				
 				my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
-				push(@results, $jrow);
+				push(@results, RDF::Trine::VariableBindings->new($jrow));
 			}
 		}
 		$iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
@@ -329,6 +329,8 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+sub _begin_bulk_ops {}
+sub _end_bulk_ops {}
 
 1;
 

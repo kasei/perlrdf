@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 0.124
+This document describes RDF::Trine::Parser::NQuads version 0.126
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.126';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $type (qw(text/x-nquads)) {
@@ -109,7 +109,7 @@ sub _emit_statement {
 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {
 # 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => "Not valid N-Quads data at line $lineno";
+		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Quads data at line $lineno];
 	}
 	
 	$handler->( $st );

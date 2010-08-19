@@ -91,7 +91,7 @@ sub sse {
 	my $indent	= $context->{indent} || '  ';
 	
 	return sprintf(
-		'(distinct\n${prefix}${indent}%s)',
+		"(distinct\n${prefix}${indent}%s)",
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }

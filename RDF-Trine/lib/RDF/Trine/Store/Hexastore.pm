@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.124
+This document describes RDF::Trine::Store::Hexastore version 0.126
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.126";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -64,7 +64,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Memory> for this backend.
+The C<storetype> key must be C<Memory> for this backend.
 
 This module also supports initializing the store from a file or URL,
 in which case, a C<sources> key may be used. This holds an arrayref of
@@ -87,7 +87,7 @@ The base URI to be used for a parsed file.
 The following example initializes a Hexastore store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {store => 'Hexastore',
+                {storetype => 'Hexastore',
 		 sources => [
 			      {
 			       file => 'test-23.ttl',
@@ -122,24 +122,30 @@ sub _new_with_string {
 
 # TODO: Refactor, almost identical to Memory
 sub _new_with_config {
-  my $class	= shift;
-  my $config	= shift;
-  my @sources	= @{$config->{sources}};
-  my $self	= $class->new();
-  foreach my $source (@sources) {
-    if ($source->{url}) {
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_url_into_model( $source->{url}, $self );
-    } elsif ($source->{file}) {
-      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	my $class	= shift;
+	my $config	= shift;
+	my @sources = @{$config->{sources}};
+	my $self	= $class->new();
+	foreach my $source (@sources) {
+		my %args;
+		if (my $g = $source->{graph}) {
+			$args{context}	= (blessed($g) ? $g : iri($g));
+		}
+		if ($source->{url}) {
+			my $parser	= RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_url_into_model( $source->{url}, $model, %args );
+		} elsif ($source->{file}) {
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
-    } else {
-      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
-    }
-  }
-  return $self;
+			my $parser = RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
+		} else {
+			throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+		}
+	}
+	return $self;
 }
 
 

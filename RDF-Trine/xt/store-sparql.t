@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 14;
 use Test::Exception;
 
 use strict;
@@ -14,9 +14,9 @@ use RDF::Trine::Parser;
 my $store	= RDF::Trine::Store::SPARQL->new('http://kasei.us/sparql');
 my $model	= RDF::Trine::Model->new( $store );
 
-throws_ok { $store->add_statement() } 'RDF::Trine::Error::UnimplementedError', 'add_statement throws unimplemented error';
-throws_ok { $store->remove_statement() } 'RDF::Trine::Error::UnimplementedError', 'remove_statement throws unimplemented error';
-throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::UnimplementedError', 'remove_statements throws unimplemented error';
+throws_ok { $store->add_statement() } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws error with no statement';
+throws_ok { $store->remove_statement() } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws error with no statement';
+# throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::UnimplementedError', 'remove_statements throws unimplemented error';
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {

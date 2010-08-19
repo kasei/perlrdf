@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.124
+This document describes RDF::Trine::Store::Redland version 0.126
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.126";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -58,7 +58,7 @@ Returns a new storage object using the supplied RDF::Redland::Model object.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Redland> for this backend.
+The C<storetype> key must be C<Redland> for this backend.
 
 The following keys may also be used:
 

@@ -7,7 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 0.124
+This document describes RDF::Trine::Node version 0.126
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.126';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -258,7 +258,7 @@ sub _unicode_escape {
 	my $self	= shift;
 	my $str		= shift;
 	
-	if ($str =~ /\A[^\n\t\r"\x{10000}-\x{10ffff}\x{7f}-\x{ffff}\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]*\z/sm) {
+	if ($str =~ /\A[^\\\n\t\r"\x{10000}-\x{10ffff}\x{7f}-\x{ffff}\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]*\z/sm) {
 		# hot path - no special characters to escape, just printable ascii
 		return $str;
 	} else {
@@ -284,11 +284,11 @@ sub _unicode_escape {
 				}
 			}
 		}
+#	 	$rslt		=~ s/\\/\\\\/g;
 		$rslt		=~ s/\n/\\n/g;
 		$rslt		=~ s/\t/\\t/g;
 		$rslt		=~ s/\r/\\r/g;
 		$rslt		=~ s/"/\\"/g;
-	# 	$rslt		=~ s/\\/\\\\/g;
 		return $rslt;
 	}
 }

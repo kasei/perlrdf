@@ -7,7 +7,7 @@ RDF::Trine::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Variable version 0.124
+This document describes RDF::Trine::Node::Variable version 0.126
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.126';
 }
 
 ######################################################################
