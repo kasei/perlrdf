@@ -70,6 +70,7 @@ VERSION HISTORY
      * Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL.
      * RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions.
      * Added heuristics support for TriG, RDF/JSON, and N-Quads to RDF::Trine::Parser->parse_url_into_model.
+     * Added ability to specify the base URI for serializing RDF/XML and Turtle (patch from KjetilK).
 
   Version 0.126 (2010-08-16)
 

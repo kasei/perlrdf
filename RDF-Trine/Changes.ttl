@@ -22,6 +22,7 @@
                         asc:update      "Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL." ;
                         asc:update      "RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions." ;
                         asc:update      "Added heuristics support for TriG, RDF/JSON, and N-Quads to RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Added ability to specify the base URI for serializing RDF/XML and Turtle (patch from KjetilK)." ;
                         ] .
 
 
