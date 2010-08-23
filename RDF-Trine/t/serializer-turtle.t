@@ -1,4 +1,4 @@
-use Test::More tests => 37;
+use Test::More tests => 38;
 use Test::Exception;
 
 use strict;
@@ -356,6 +356,23 @@ END
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames');
+}
+
+TODO: {
+  local $TODO = "Set base";
+	my $serializer = RDF::Trine::Serializer::Turtle->new(base => 'http://example.org/foo');
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]
+	}};
+	my $expect	= <<"END";
+\@base <http://example.org/foo> .
+
+[] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single base URI');
 }
 
 {
