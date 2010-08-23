@@ -57,7 +57,7 @@ TODO: {
 		},
 	});
 	
-	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( base => 'http://example.org/');
 	my $expect	= <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xml:base="http://example.org/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">

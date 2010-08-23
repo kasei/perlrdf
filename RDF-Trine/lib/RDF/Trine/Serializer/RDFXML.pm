@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.126
+This document describes RDF::Trine::Serializer::RDFXML version 0.127
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.127';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -56,7 +56,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces ) >>
+=item C<< new ( namespaces => \%namespaces, base => $baseuri ) >>
 
 Returns a new RDF/XML serializer object.
 
@@ -71,6 +71,9 @@ sub new {
 		my %nsmap	= reverse %ns;
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
+	if ($args{base}) {
+ 	        $self->{base} = $args{base};
+        }
 	return $self;
 }
 
@@ -110,7 +113,11 @@ sub serialize_iterator_to_file {
 	my $iter	= shift;
 	
 	my $ns		= $self->_top_xmlns();
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $ns>\n];
+	my $base        = '';
+	if ($self->{base}) {
+	  $base = "xml:base=\"$self->{base}\" ";
+	}
+	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
 	
 	my $st			= $iter->next;
 	my @statements;
@@ -213,7 +220,11 @@ sub _serialize_bounded_description {
 	my $seen	= {};
 	
 	my $ns		= $self->_top_xmlns();
-	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $ns>\n];
+	my $base        = '';
+	if ($self->{base}) {
+	  $base = "xml:base=\"$self->{base}\" ";
+	}
+	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
 	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
