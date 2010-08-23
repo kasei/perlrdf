@@ -61,7 +61,7 @@ The valid key-values used in C<< %options >> are specific to a particular
 serializer implementation. For serializers that support namespace declarations
 (to allow more concise serialization), use C<< namespaces => \%namespaces >> in
 C<< %options >>, where the keys of C<< %namespaces >> are namespace names and
-the values are (partial) URIs.
+the values are (partial) URIs. For serializers that support base URI declarations, use C<< base => $base_uri >> .
 
 =cut
 
