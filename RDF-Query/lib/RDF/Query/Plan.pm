@@ -389,7 +389,7 @@ sub generate_plans {
 							my $bgp	= $bgp[0];
 							my @triples	= $bgp->triples;
 							if (scalar(@triples) == 1) {
-								$l->debug("TODO: Potential optimization for COUNT(*) on 1-triple BGP: " . $bgp->sse({ indent => '  ' }, ''));
+								$l->debug("Optimizing for COUNT(*) on 1-triple BGP: " . $bgp->sse({ indent => '  ' }, ''));
 								my $vars	= $algebra->vars;
 								my $alias	= $vars->[0];
 								my $name	= $alias->name;
@@ -399,8 +399,10 @@ sub generate_plans {
 									return if ($done);
 									$done	= 1;
 									my $count	= $model->count_statements( $triples[0]->nodes );
+									my $lit		= RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer');
 									my $vb	= RDF::Query::VariableBindings->new( {
-										$name => RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer')
+										$name 		=> $lit,
+										'COUNT(*)'	=> $lit,	# this has to be kept around in case a HAVING clause needs it without the alias $name
 									} );
 								};
 								my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
