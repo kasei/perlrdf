@@ -358,8 +358,7 @@ END
 	is($turtle, $expect, 'single namespace Qnames');
 }
 
-TODO: {
-  local $TODO = "Set base";
+{
 	my $serializer = RDF::Trine::Serializer::Turtle->new(base => 'http://example.org/foo');
 	my $hash	= {
 		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]

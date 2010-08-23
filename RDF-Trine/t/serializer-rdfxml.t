@@ -44,8 +44,7 @@ END
 	}
 }
 
-TODO: {
-  local $TODO = "Set base";
+{
 	my $model = RDF::Trine::Model->temporary_model;
 	$model->add_hashref({
 		'./doc' => {
