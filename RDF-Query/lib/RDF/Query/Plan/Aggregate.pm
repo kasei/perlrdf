@@ -386,7 +386,7 @@ sub sse {
 	my @ops;
 	foreach my $p (@{ $self->[3] }) {
 		my ($alias, $op, $options, @cols)	= @$p;
-		my $cols	= '(' . join(' ', map { $_->sse($context, "${indent}${more}") } @cols) . ')';
+		my $cols	= '(' . join(' ', map { ref($_) ? $_->sse($context, "${indent}${more}") : '*' } @cols) . ')';
 		my @opts_keys	= keys %$options;
 		if (@opts_keys) {
 			my $opt_string	= '(' . join(' ', map { $_, qq["$options->{$_}"] } @opts_keys) . ')';
