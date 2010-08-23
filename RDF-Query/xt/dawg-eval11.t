@@ -22,7 +22,7 @@ use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.path		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -56,7 +56,7 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(negation project-expression property-path subquery) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates negation project-expression property-path subquery) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
