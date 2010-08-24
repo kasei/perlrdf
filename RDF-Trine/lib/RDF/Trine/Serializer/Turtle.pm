@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.126
+This document describes RDF::Trine::Serializer::Turtle version 0.127
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.126';
+	$VERSION	= '0.127';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
@@ -59,7 +59,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces ) >>
+=item C<< new ( namespaces => \%namespaces, base => $base_uri ) >>
 
 Returns a new Turtle serializer object.
 
@@ -68,11 +68,16 @@ Returns a new Turtle serializer object.
 sub new {
 	my $class	= shift;
 	my $ns	= {};
+	my $base;
+
 	if (@_) {
 		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
 			$ns	= shift;
 		} else {
 			my %args	= @_;
+			if (exists $args{ base }) {
+			        $base   = $args{ base };
+			}
 			if (exists $args{ namespaces }) {
 				$ns	= $args{ namespaces };
 			}
@@ -80,6 +85,7 @@ sub new {
 	}
 	my $self = bless( {
 		ns			=> { reverse %$ns },
+		base 	                => $base,
 	}, $class );
 	return $self;
 }
@@ -156,6 +162,9 @@ sub serialize_iterator_to_file {
 			}
 			print {$fh} "\n";
 		}
+	}
+	if ($self->{base}) {
+	        print {$fh} "\@base <$self->{base}> .\n\n";
 	}
 	
 	my $last_subj;

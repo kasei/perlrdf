@@ -1,4 +1,4 @@
-use Test::More tests => 19;
+use Test::More tests => 20;
 use Test::Exception;
 
 use strict;
@@ -41,6 +41,36 @@ END
 		my $iter	= $model->as_stream;
 		my $xml = $serializer->serialize_iterator_to_string($iter);
 		is($xml, $expect, 'serialize_iterator_to_string 1');
+	}
+}
+
+{
+	my $model = RDF::Trine::Model->temporary_model;
+	$model->add_hashref({
+		'./doc' => {
+			'./predicate' => [
+				{'type' => 'literal','value' => 'Foo'},
+				{'type' => 'uri','value' => './bar'},
+				'baz@en'
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( base => 'http://example.org/');
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xml:base="http://example.org/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description xmlns:ns1="./" rdf:about="./doc">
+	<ns1:predicate rdf:resource="./bar"/>
+	<ns1:predicate>Foo</ns1:predicate>
+	<ns1:predicate xml:lang="en">baz</ns1:predicate>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	{
+		my $xml = $serializer->serialize_model_to_string($model);
+		is($xml, $expect, 'serialize_model_to_string 1');
 	}
 }
 
