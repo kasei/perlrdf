@@ -161,7 +161,7 @@ sub add_hashref {
 	
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
-		         RDF::Trine::Node::Blank->new($1) :
+					RDF::Trine::Node::Blank->new($1) :
 					RDF::Trine::Node::Resource->new($s);
 		
 		foreach my $p (keys %{ $index->{$s} }) {
@@ -618,6 +618,7 @@ sub bounded_description {
 		return if (not(@statements) and not(@nodes));
 		while (1) {
 			if (not(@statements)) {
+				my $l = Log::Log4perl->get_logger("rdf.trine.model");
 				return unless (scalar(@nodes));
 				my $n	= shift(@nodes);
 # 				warn "CBD handling node " . $n->sse . "\n";
@@ -627,13 +628,17 @@ sub bounded_description {
 					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
 # 					warn "+ " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				} catch RDF::Trine::Error::UnimplementedError with {};
+				} catch RDF::Trine::Error::UnimplementedError with {
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
 				try {
 					my $sts	= $self->get_statements( undef, undef, $n );
 					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
 # 					warn "- " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				} catch RDF::Trine::Error::UnimplementedError with {};
+				} catch RDF::Trine::Error::UnimplementedError with {
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
 				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
