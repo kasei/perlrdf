@@ -275,7 +275,7 @@ sub get_actual_results {
 	my $query	= RDF::Query->new( $sparql, $base, undef, 'sparql11', load_data => 1 );
 	
 	unless ($query) {
-		warn RDF::Query->error if ($debug);
+		warn RDF::Query->error if ($debug or $PATTERN);
 		return;
 	}
 	
