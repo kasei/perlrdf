@@ -115,7 +115,7 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 no warnings 'numeric';
-use RDF::Trine 0.124;
+use RDF::Trine 0.126;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -566,7 +566,6 @@ sub describe {
 	foreach my $node (@nodes) {
 		push(@{ $self->{'describe_nodes'} }, $node);
 		push(@streams, $model->bounded_description( $node ));
-		push(@streams, $model->get_statements( undef, undef, $node ));
 	}
 	
 	my $ret	= sub {

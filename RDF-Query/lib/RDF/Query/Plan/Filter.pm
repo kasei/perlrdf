@@ -111,7 +111,7 @@ sub next {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.filter");
 	while (1) {
 		my $row	= $plan->next;
-		unless ($row) {
+		unless (defined($row)) {
 			$l->debug("no remaining rows in filter");
 			return;
 		}

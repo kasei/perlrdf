@@ -2958,7 +2958,7 @@ sub _eat {
 # 		Carp::cluck( "eating $thing with input $self->{tokens}" );
 # 	}
 	
-	if (blessed($thing) and $thing->isa('Regexp')) {
+	if (ref($thing) and $thing->isa('Regexp')) {
 		if ($self->{tokens} =~ /^$thing/) {
 			my $match	= $&;
 			substr($self->{tokens}, 0, length($match))	= '';
