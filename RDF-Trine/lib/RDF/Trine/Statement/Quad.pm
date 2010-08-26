@@ -65,11 +65,7 @@ Returns the subject, predicate and object of the triple pattern.
 
 sub nodes {
 	my $self	= shift;
-	my $s		= $self->subject;
-	my $p		= $self->predicate;
-	my $o		= $self->object;
-	my $c		= $self->context;
-	return ($s, $p, $o, $c);
+	return @$self;
 }
 
 =item C<< node_names >>

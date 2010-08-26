@@ -134,11 +134,9 @@ sub sse {
 	my $literal	= $self->literal_value;
 	my $escaped	= $self->_unicode_escape( $literal );
 	$literal	= $escaped;
-	if ($self->has_language) {
-		my $lang	= $self->literal_value_language;
+	if (defined(my $lang = $self->literal_value_language)) {
 		return qq("${literal}"\@${lang});
-	} elsif ($self->has_datatype) {
-		my $dt		= $self->literal_datatype;
+	} elsif (defined(my $dt = $self->literal_datatype)) {
 		return qq("${literal}"^^<${dt}>);
 	} else {
 		return qq("${literal}");
@@ -154,10 +152,10 @@ Returns a string representation of the node.
 sub as_string {
 	my $self	= shift;
 	my $string	= '"' . $self->literal_value . '"';
-	if ($self->has_datatype) {
-		$string	.= '^^<' . $self->literal_datatype . '>';
-	} elsif ($self->has_language) {
-		$string	.= '@' . $self->literal_value_language;
+	if (defined(my $dt = $self->literal_datatype)) {
+		$string	.= '^^<' . $dt . '>';
+	} elsif (defined(my $lang = $self->literal_value_language)) {
+		$string	.= '@' . $lang;
 	}
 	return $string;
 }
@@ -173,11 +171,9 @@ sub as_ntriples {
 	my $literal	= $self->literal_value;
 	my $escaped	= $self->_unicode_escape( $literal );
 	$literal	= $escaped;
-	if ($self->has_language) {
-		my $lang	= $self->literal_value_language;
+	if (defined(my $lang = $self->literal_value_language)) {
 		return qq("${literal}"\@${lang});
-	} elsif ($self->has_datatype) {
-		my $dt		= $self->literal_datatype;
+	} elsif (defined(my $dt = $self->literal_datatype)) {
 		return qq("${literal}"^^<${dt}>);
 	} else {
 		return qq("${literal}");

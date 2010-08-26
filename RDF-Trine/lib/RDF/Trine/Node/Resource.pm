@@ -21,12 +21,12 @@ use base qw(RDF::Trine::Node);
 use URI 1.52;
 use Encode;
 use Data::Dumper;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, %sse, %ntriples);
 BEGIN {
 	$VERSION	= '0.126';
 }
@@ -116,6 +116,8 @@ sub uri {
 	my $self	= shift;
 	if (@_) {
 		$self->[1]	= shift;
+		delete $sse{ refaddr($self) };
+		delete $ntriples{ refaddr($self) };
 	}
 	return $self->[1];
 }
@@ -129,20 +131,29 @@ Returns the SSE string for this resource.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
-	my $uri		= $self->uri_value;
 	
-	my $ns		= $context->{namespaces} || {};
-	my %ns		= %$ns;
-	foreach my $k (keys %ns) {
-		my $v	= $ns{ $k };
-		if (index($uri, $v) == 0) {
-			my $qname	= join(':', $k, substr($uri, length($v)));
-			return $qname;
+	if ($context) {
+		my $uri		= $self->uri_value;
+		my $ns		= $context->{namespaces} || {};
+		my %ns		= %$ns;
+		foreach my $k (keys %ns) {
+			my $v	= $ns{ $k };
+			if (index($uri, $v) == 0) {
+				my $qname	= join(':', $k, substr($uri, length($v)));
+				return $qname;
+			}
 		}
 	}
 	
-	my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
-	return '<' . $string . '>';
+	my $ra	= refaddr($self);
+	if ($sse{ $ra }) {
+		return $sse{ $ra };
+	} else {
+		my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $sse		= '<' . $string . '>';
+		$sse{ $ra }	= $sse;
+		return $sse;
+	}
 	
 # 	my $string	= $uri;
 # 	my $escaped	= $self->_unicode_escape( $string );
@@ -169,8 +180,15 @@ Returns the node in a string form suitable for NTriples serialization.
 sub as_ntriples {
 	my $self	= shift;
 	my $context	= shift;
-	my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
-	return '<' . $string . '>';
+	my $ra		= refaddr($self);
+	if ($ntriples{ $ra }) {
+		return $ntriples{ $ra };
+	} else {
+		my $string		= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $ntriples	= '<' . $string . '>';
+		$ntriples{ $ra }	= $ntriples;
+		return $ntriples;
+	}
 	
 # 	my $uri		= $self->uri_value;
 # 	my $string	= $uri;
@@ -202,8 +220,10 @@ Returns true if the two nodes are equal, false otherwise.
 sub equal {
 	my $self	= shift;
 	my $node	= shift;
+	return 0 unless defined($node);
+	return 1 if ($self == $node);
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
-	return ($self->uri_value eq $node->uri_value);
+	return ($self->[1] eq $node->[1]);
 }
 
 # called to compare two nodes of the same type
@@ -234,6 +254,12 @@ sub qname {
 	} else {
 		throw RDF::Trine::Error -text => "Can't turn IRI $uri into a QName.";
 	}
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $sse{ refaddr($self) };
+	delete $ntriples{ refaddr($self) };
 }
 
 1;
