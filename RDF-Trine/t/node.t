@@ -84,7 +84,7 @@ is( $l->as_ntriples, '"value"', 'plain literal as_ntriples' );
 is( $ll->as_ntriples, '"value"@en', 'language literal as_ntriples' );
 is( $dl->as_ntriples, '"123"^^<http://www.w3.org/2001/XMLSchema#integer>', 'datatype literal as_ntriples' );
 is( $p->as_ntriples, '<http://kasei.us/about/foaf.xrdf#greg>', 'resource as_ntriples' );
-is( $k->as_ntriples, '<http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#\\u98DF\\u3079\\u308B>', 'unicode literal as_ntriples' );
+is( $k->as_ntriples, '<http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#%E9%A3%9F%E3%81%B9%E3%82%8B>', 'unicode literal as_ntriples' );
 throws_ok { $v->as_ntriples } 'RDF::Trine::Error::UnimplementedError', 'RDF::Trine::Node::Variable::as_ntriples throws';
 
 {

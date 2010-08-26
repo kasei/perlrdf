@@ -56,6 +56,7 @@ BEGIN {
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
+use RDF::Trine::Graph;
 use RDF::Trine::Parser;
 use RDF::Trine::Serializer;
 use RDF::Trine::Node;

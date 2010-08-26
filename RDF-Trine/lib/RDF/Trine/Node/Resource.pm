@@ -18,7 +18,8 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
-use URI;
+use URI 1.52;
+use Encode;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
@@ -49,44 +50,48 @@ sub new {
 	my $uri		= shift;
 	my $base	= shift;
 	
-	my @uni;
-	my $count	= 0;
-	
-	my $buri;
 	if (defined($base)) {
-		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
-		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-			my $text	= $1;
-			push(@uni, $text);
-			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
-			$count++;
-		}
+		$base	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+		$uri	= URI->new_abs($uri, $base)->as_iri;
 	}
-	
-	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-		my $text	= $1;
-		push(@uni, $text);
-		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
-		$count++;
-	}
-	
-	if (defined($base)) {
-		### We have to work around the URI module not accepting IRIs. If there's
-		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-		### the URI into an absolute URI, and then replace the breadcrumbs with
-		### the Unicode.
-		
-		my $abs			= URI->new_abs( $uri, $buri );
-		$uri			= $abs->as_string;
-	}
-
-	while ($uri =~ /,____rq(\d+)____,/) {
-		my $num	= $1;
-		my $i	= index($uri, ",____rq${num}____,");
-		my $len	= 12 + length($num);
-		substr($uri, $i, $len)	= shift(@uni);
-	}
-	
+# 	my @uni;
+# 	my $count	= 0;
+# 	
+# 	my $buri;
+# 	if (defined($base)) {
+# 		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+# 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+# 			my $text	= $1;
+# 			push(@uni, $text);
+# 			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
+# 			$count++;
+# 		}
+# 	}
+# 	
+# 	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+# 		my $text	= $1;
+# 		push(@uni, $text);
+# 		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
+# 		$count++;
+# 	}
+# 	
+# 	if (defined($base)) {
+# 		### We have to work around the URI module not accepting IRIs. If there's
+# 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
+# 		### the URI into an absolute URI, and then replace the breadcrumbs with
+# 		### the Unicode.
+# 		
+# 		my $abs			= URI->new_abs( $uri, $buri );
+# 		$uri			= $abs->as_string;
+# 	}
+# 
+# 	while ($uri =~ /,____rq(\d+)____,/) {
+# 		my $num	= $1;
+# 		my $i	= index($uri, ",____rq${num}____,");
+# 		my $len	= 12 + length($num);
+# 		substr($uri, $i, $len)	= shift(@uni);
+# 	}
+# 	
 	return bless( [ 'URI', $uri ], $class );
 }
 
@@ -136,9 +141,12 @@ sub sse {
 		}
 	}
 	
-	my $string	= $uri;
-	my $escaped	= $self->_unicode_escape( $string );
-	return '<' . $escaped . '>';
+	my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+	return '<' . $string . '>';
+	
+# 	my $string	= $uri;
+# 	my $escaped	= $self->_unicode_escape( $string );
+# 	return '<' . $escaped . '>';
 }
 
 =item C<< as_string >>
@@ -161,16 +169,18 @@ Returns the node in a string form suitable for NTriples serialization.
 sub as_ntriples {
 	my $self	= shift;
 	my $context	= shift;
-	my $uri		= $self->uri_value;
+	my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+	return '<' . $string . '>';
 	
-	my $string	= $uri;
-	$string	=~ s/\\/\\\\/g;
-	my $escaped	= $self->_unicode_escape( $string );
-	$escaped	=~ s/"/\\"/g;
-	$escaped	=~ s/\n/\\n/g;
-	$escaped	=~ s/\r/\\r/g;
-	$escaped	=~ s/\t/\\t/g;
-	return '<' . $escaped . '>';
+# 	my $uri		= $self->uri_value;
+# 	my $string	= $uri;
+# 	$string	=~ s/\\/\\\\/g;
+# 	my $escaped	= $self->_unicode_escape( $string );
+# 	$escaped	=~ s/"/\\"/g;
+# 	$escaped	=~ s/\n/\\n/g;
+# 	$escaped	=~ s/\r/\\r/g;
+# 	$escaped	=~ s/\t/\\t/g;
+# 	return '<' . $escaped . '>';
 }
 
 =item C<< type >>

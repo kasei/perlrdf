@@ -225,39 +225,35 @@ foreach my $file (@good) {
 			my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
 			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 			my (undef, undef, $test)	= File::Spec->splitpath( $file );
-			my $nt;
+			my $model;
 			lives_ok {
 				my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
 				my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
 				my $prefix	= $PREFIXES{ $filename } || 'genid';
 				my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
-				my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
+				$model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
 				$parser->parse_into_model( $url, $data, $model );
-				$nt			=  $s->serialize_model_to_string( $model );
 			} "parsing $name lives";
 			
-			compare( $nt, $file );
+			compare( $model, $file );
 		}
 	}
 }
 
 sub compare {
-	my $nt		= shift;
+	my $model	= shift;
 	my $file	= shift;
+	my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
+	my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
 	my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
 	$file		=~ s/[.]rdf$/.nt/;
+	my $parser	= RDF::Trine::Parser->new( 'ntriples' );
+	my $emodel	= RDF::Trine::Model->temporary_model;
 	open( my $fh, '<', $file );
-	my $got		= join("\n", sort map { anon($_) } split(/\n/, $nt));
-	my $expect	= join("\n", sort map { anon($_) } grep { not(m/^#/ or m/^\s*$/) } map { my $l = $_; $l =~ s/\r?\n//; $l } <$fh>);
+	$parser->parse_file_into_model ( $url, $fh, $emodel );
 	
-	chomp($expect);
-	chomp($got);
+	my $got		= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $model );
+	my $expect	= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $emodel );
+	
 	is( $got, $expect, "expected triples: $name" );
-}
-
-	### XXX HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK HACK
-sub anon {
-	my $string	= shift;
-	$string	=~ s/_:[a-zA-Z0-9]+/_:BLANK/gms;
-	return $string;
 }
