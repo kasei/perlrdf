@@ -9,7 +9,7 @@ require "models.pl";
 
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf);
 my @models	= test_models( @files );
-my $tests	= 1 + (scalar(@models) * 113);
+my $tests	= 1 + (scalar(@models) * 123);
 plan tests => $tests;
 
 use_ok( 'RDF::Query' );
@@ -34,7 +34,7 @@ END
 			ok( $s, $s );
 			++$count;
 		}
-		is( $count, 49, 'describe person expected graph size' );
+		is( $count, 54, 'describe person expected graph size' );
 	}
 	
 	{
@@ -55,7 +55,7 @@ END
 			ok( $s, $s );
 			++$count;
 		}
-		is( $count, 49, 'describe person expected graph size' );
+		is( $count, 54, 'describe person expected graph size' );
 	}
 	
 	{
