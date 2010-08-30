@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.126
+This document describes RDF::Trine::Serializer version 0.127
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.127';
 }
 
 use LWP::UserAgent;
@@ -61,7 +61,7 @@ The valid key-values used in C<< %options >> are specific to a particular
 serializer implementation. For serializers that support namespace declarations
 (to allow more concise serialization), use C<< namespaces => \%namespaces >> in
 C<< %options >>, where the keys of C<< %namespaces >> are namespace names and
-the values are (partial) URIs.
+the values are (partial) URIs. For serializers that support base URI declarations, use C<< base => $base_uri >> .
 
 =cut
 

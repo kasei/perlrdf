@@ -106,6 +106,13 @@ SPARQL 1.1 Update statements.
 sub parse {
 	my $self	= shift;
 	my $input	= shift;
+	
+	unless (defined($input)) {
+		$self->{build}	= undef;
+		$self->{error}	= "No query string found to parse";
+		return;
+	}
+	
 	my $baseuri	= shift;
 	my $update	= shift || 0;
 	

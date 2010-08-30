@@ -9,6 +9,15 @@ use RDF::Query;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Util;
 
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.plan		= TRACE, Screen
+# 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr			= 0
+# 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
 my $sparql	= 0;
 my $algebra	= 0;
 my $plan	= 0;

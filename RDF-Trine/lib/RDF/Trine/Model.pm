@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.126
+This document describes RDF::Trine::Model version 0.127
 
 =head1 METHODS
 
@@ -23,12 +23,13 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.127';
 }
 
 use Scalar::Util qw(blessed);
 use Log::Log4perl;
 
+use RDF::Trine::Error qw(:try);
 use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
@@ -160,7 +161,7 @@ sub add_hashref {
 	
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
-		         RDF::Trine::Node::Blank->new($1) :
+					RDF::Trine::Node::Blank->new($1) :
 					RDF::Trine::Node::Resource->new($s);
 		
 		foreach my $p (keys %{ $index->{$s} }) {
@@ -617,22 +618,27 @@ sub bounded_description {
 		return if (not(@statements) and not(@nodes));
 		while (1) {
 			if (not(@statements)) {
+				my $l = Log::Log4perl->get_logger("rdf.trine.model");
 				return unless (scalar(@nodes));
 				my $n	= shift(@nodes);
 # 				warn "CBD handling node " . $n->sse . "\n";
 				next if ($seen{ $n->sse });
-				{
+				try {
 					my $sts	= $self->get_statements( $n );
 					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
 # 					warn "+ " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				}
-				{
+				} catch RDF::Trine::Error::UnimplementedError with {
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
+				try {
 					my $sts	= $self->get_statements( undef, undef, $n );
 					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
 # 					warn "- " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
-				}
+				} catch RDF::Trine::Error::UnimplementedError with {
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
 				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
