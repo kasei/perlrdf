@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.127 (2010-XX-XX)
+  Version 0.127 (2010-08-30)
 
      * Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL.
      * RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions.

@@ -7,7 +7,7 @@ RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results fo
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::SAXHandler version 0.127_03
+This document describes RDF::Trine::Iterator::SAXHandler version 0.127
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.127_03';
+	$VERSION	= '0.127';
 }
 
 my %strings;
