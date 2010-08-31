@@ -413,6 +413,22 @@ sub construct_args {
 	return ($type, [], %$args);
 }
 
+=item C<< each ( \&callback ) >>
+
+Calls the callback function once for each item in the iterator, passing the
+item as an argument to the function. Any arguments to C<< each >> beyond the
+callback function will be passed as supplemental arguments to the callback
+function.
+
+=cut
+
+sub each {
+	my ($self, $coderef) = (shift, shift);
+	while (my $row = $self->next) {
+		$coderef->($row, @_);
+	}
+}
+
 =begin private
 
 =item C<< debug >>
