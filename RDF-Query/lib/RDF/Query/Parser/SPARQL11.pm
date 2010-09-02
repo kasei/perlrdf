@@ -648,7 +648,7 @@ sub _CreateGraph {
 
 sub _ClearGraphUpdate {
 	my $self	= shift;
-	my $op		= $self->_eat(qr/CLEAR\s+(SILENT)?/i);
+	my $op		= $self->_eat(qr/CLEAR(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
 	if ($self->_test(qr/GRAPH/i)) {
@@ -676,7 +676,7 @@ sub _ClearGraphUpdate {
 
 sub _DropGraph {
 	my $self	= shift;
-	my $op		= $self->_eat(qr/DROP\s+(SILENT)?/i);
+	my $op		= $self->_eat(qr/DROP(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
 	if ($self->_test(qr/GRAPH/i)) {
@@ -1398,9 +1398,10 @@ sub _TriplesBlock {
 ## the one with one underscore (_TriplesBlock) will pop everything off and make the BGP.
 sub __TriplesBlock {
 	my $self	= shift;
+	my $got_dot	= 0;
+TRIPLESBLOCKLOOP:	
 	$self->_TriplesSameSubjectPath;
 	$self->__consume_ws_opt;
-	my $got_dot	= 0;
 	while ($self->_test('.')) {
 		if ($got_dot) {
 			throw RDF::Query::Error::ParseError -text => "Syntax error: found extra DOT after TriplesBlock";
@@ -1410,10 +1411,11 @@ sub __TriplesBlock {
 		$self->__consume_ws_opt;
 		if ($self->_TriplesBlock_test) {
 			$got_dot	= 0;
-			$self->__TriplesBlock;
-			$self->__consume_ws_opt;
+			goto TRIPLESBLOCKLOOP;
 		}
+		$self->__consume_ws_opt;
 	}
+	$self->__consume_ws_opt;
 }
 
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
