@@ -1275,8 +1275,10 @@ sub _GroupGraphPatternSub {
 	my @filters		= splice(@{ $self->{filters} });
 	my @patterns;
 	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-	while (my $f = shift @filters) {
-		$pattern	= RDF::Query::Algebra::Filter->new( $f, $pattern );
+	if (@filters) {
+		while (my $f = shift @filters) {
+			$pattern	= RDF::Query::Algebra::Filter->new( $f, $pattern );
+		}
 	}
 	$self->_add_patterns( $pattern );
 }
@@ -2533,6 +2535,7 @@ sub _BuiltInCall {
 	} elsif ($self->_test(qr/(NOT\s+)?EXISTS/i)) {
 		my $op	= $self->_eat(qr/(NOT\s+)?EXISTS/i);
 		$self->__consume_ws_opt;
+		local($self->{filters})					= [];
 		$self->_GroupGraphPattern;
 		my $cont	= $self->_remove_pattern;
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:exists' );

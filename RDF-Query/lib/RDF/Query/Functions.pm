@@ -368,7 +368,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 			}
 		} otherwise {
 			my $e	= shift;
-			$l->debug("error in lhs of logical-or: " . $e->text);
+			$l->debug("error in lhs of logical-or: " . $e->text . " at " . $e->file . " line " . $e->line);
 			$error	||= $e;
 		};
 		last unless (defined($arg));
