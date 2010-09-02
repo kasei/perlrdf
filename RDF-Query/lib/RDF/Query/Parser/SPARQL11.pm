@@ -286,10 +286,18 @@ sub _RW_Query {
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
 				unless ($self->{update});
-			if ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?INSERT/i)) {
-				$self->_InsertUpdate();
-			} elsif ($self->_test(qr/(WITH\s*${r_IRI_REF}\s*)?DELETE/i)) {
-				$self->_DeleteUpdate();
+			my ($graph);
+			if ($self->_test(qr/WITH/)) {
+				$self->_eat(qr/WITH/i);
+				$self->__consume_ws_opt;
+				$self->_IRIref;
+				($graph)	= splice( @{ $self->{stack} } );
+				$self->__consume_ws_opt;
+			}
+			if ($self->_test(qr/INSERT/ims)) {
+				$self->_InsertUpdate($graph);
+			} elsif ($self->_test(qr/DELETE/ims)) {
+				$self->_DeleteUpdate($graph);
 			}
 		} else {
 			my $l		= Log::Log4perl->get_logger("rdf.query");
@@ -418,14 +426,7 @@ sub _DeleteDataUpdate {
 
 sub _InsertUpdate {
 	my $self	= shift;
-	my ($graph);
-	if ($self->_test(qr/WITH/i)) {
-		$self->_eat(qr/WITH/i);
-		$self->__consume_ws_opt;
-		my $iri	= $self->_eat( $r_IRI_REF );
-		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
-		$self->__consume_ws_opt;
-	}
+	my $graph	= shift;
 	$self->_eat(qr/INSERT/i);
 	$self->__consume_ws_opt;
 	$self->_eat('{');
@@ -477,16 +478,9 @@ sub _InsertUpdate {
 
 sub _DeleteUpdate {
 	my $self	= shift;
-	my $graph;
+	my $graph	= shift;
 	my ($delete_data, $insert_data);
 	
-	if ($self->_test(qr/WITH/i)) {
-		$self->_eat(qr/WITH/i);
-		$self->__consume_ws_opt;
-		my $iri	= $self->_eat( $r_IRI_REF );
-		$graph	= RDF::Query::Node::Resource->new( substr($iri,1,length($iri)-2), $self->__base );
-		$self->__consume_ws_opt;
-	}
 	$self->_eat(qr/DELETE/i);
 	$self->__consume_ws_opt;
 	my %dataset;
