@@ -69,6 +69,13 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
+	
+	unless (blessed($iter) and $iter->isa('RDF::Trine::Iterator::Bindings')) {
+		my $type	= ref($iter);
+		$type		=~ s/^RDF::Trine::Iterator:://;
+		throw RDF::Trine::Error::MethodInvocationError -text => "CSV Exporter must be called with a VariableBindings iterator, not a $type iterator";
+	}
+	
 	my $csv		= $self->{csv};
 	my $quote	= $self->{quote};
 	my @keys;
