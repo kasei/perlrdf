@@ -42,7 +42,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $string, $lang, $datatype )>
+=item C<new ( $string, $lang, $datatype, $canonical_flag )>
 
 Returns a new Literal structure.
 
@@ -53,6 +53,11 @@ sub new {
 	my $literal	= shift;
 	my $lang	= shift;
 	my $dt		= shift;
+	my $canon	= shift;
+	
+	if ($dt and $canon) {
+		$literal	= $class->canonicalize_literal_value( $literal, $dt );
+	}
 	
 	if ($USE_XMLLITERALS and defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
 		return RDF::Trine::Node::Literal::XML->new( $literal, $lang, $dt );
@@ -256,6 +261,93 @@ sub _compare {
 	}
 	
 	return 0;
+}
+
+=item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
+
+If C<< $datatype >> is a recognized datatype, returns the canonical lexical
+representation of the value C<< $string >>. Otherwise returns C<< $string >>.
+
+Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
+Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
+will trigger a warning.
+
+=cut
+
+sub canonicalize_literal_value {
+	my $self	= shift;
+	my $value	= shift;
+	my $dt		= shift;
+	my $warn	= shift;
+	
+	if ($dt eq 'http://www.w3.org/2001/XMLSchema#integer') {
+		if ($value =~ m/^([-+])?(\d+)$/) {
+			my $sign	= $1 || '';
+			my $num		= $2;
+			$sign		= '' if ($sign eq '+');
+			$num		=~ s/^0+(.)/$1/;
+			return "${sign}${num}";
+		} else {
+			warn "Bad lexical form for xsd:integer: '$value'" if ($warn);
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
+		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
+			my $sign	= $1 || '';
+			my $num		= $2;
+			my $int		= $3;
+			my $frac	= $4;
+			$sign		= '' if ($sign eq '+');
+			unless ($frac =~ m/[1-9]/) {
+				$num	= $int;
+			}
+			$num		=~ s/^0+(.)/$1/;
+			return "${sign}${num}";
+		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
+			my $sign	= $1 || '';
+			my $num		= $2;
+			$sign		= '' if ($sign eq '+');
+			$num		=~ s/^0+(.)/$1/;
+			return "${sign}${num}";
+		} else {
+			warn "Bad lexical form for xsd:deciaml: '$value'" if ($warn);
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
+		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+			return $value;
+		} else {
+			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
+			$value	= sprintf('%E', $value);
+			$value	=~ s/E[+]/E/;
+			$value	=~ s/E0+(\d)/E$1/;
+			$value	=~ s/(\d)0+E/$1E/;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
+		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)? |[-+]?INF|NaN$/) {
+			return $value;
+		} else {
+			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
+			$value	= sprintf('%E', $value);
+			$value	=~ s/E[+]/E/;
+			$value	=~ s/E0+(\d)/E$1/;
+			$value	=~ s/(\d)0+E/$1E/;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		if ($value =~ m/^(true|false|0|1)$/) {
+			$value	= 'true' if ($value eq '1');
+			$value	= 'false' if ($value eq '0');
+			return $value;
+		} else {
+			warn "Bad lexical form for xsd:boolean: '$value'" if ($warn);
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
+		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
+			# XXX need to canonicalize the dateTime
+			return $value;
+		} else {
+			warn "Bad lexical form for xsd:boolean: '$value'" if ($warn);
+		}
+	}
+	return $value;
 }
 
 1;

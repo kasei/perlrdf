@@ -166,7 +166,7 @@ sub parse {
 						if ($to->isa('RDF::Trine::Node::Literal') and $to->has_datatype) {
 							my $value	= $to->literal_value;
 							my $dt		= $to->literal_datatype;
-							my $canon	= $self->canonicalize_literal_value( $value, $dt );
+							my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 							$to	= literal( $canon, undef, $dt );
 						}
 					}

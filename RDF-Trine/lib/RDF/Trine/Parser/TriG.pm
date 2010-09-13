@@ -60,7 +60,7 @@ sub _triple {
 		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
 			my $value	= $o->literal_value;
 			my $dt		= $o->literal_datatype;
-			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 			$o	= literal( $canon, undef, $dt );
 		}
 	}
