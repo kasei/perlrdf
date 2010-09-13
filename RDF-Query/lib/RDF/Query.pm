@@ -181,8 +181,8 @@ sub new {
 	my ($baseuri, $languri, $lang, %options);
 	if (@_ and ref($_[0])) {
 		%options	= %{ shift() };
-		$lang		= $options{ lang };
-		$baseuri	= $options{ base };
+		$lang		= delete $options{ lang };
+		$baseuri	= delete $options{ base };
 	} else {
 		($baseuri, $languri, $lang, %options)	= @_;
 	}
@@ -205,7 +205,7 @@ sub new {
 		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
 	}
 	
-	my $update	= ($options{update} ? 1 : 0);
+	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
 	my $parsed	= $parser->parse( $query, $baseuri, $update );
@@ -215,8 +215,8 @@ sub new {
 					parser			=> $parser,
 					parsed			=> $parsed,
 				);
-	if ($options{load_data}) {
-		$self->{load_data}	= $options{load_data};
+	if (exists $options{load_data}) {
+		$self->{load_data}	= delete $options{load_data};
 	} elsif ($pclass =~ /^RDF::Query::Parser::(RDQL|SPARQL)$/) {
 		$self->{load_data}	= 1;
 	} else {
@@ -229,29 +229,34 @@ sub new {
 	}
 	
 	if (defined $options{defines}) {
-		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ $options{defines} };
+		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ delete $options{defines} };
 	}
 	
 	if ($options{logger}) {
 		$l->debug("got external logger");
-		$self->{logger}	= $options{logger};
+		$self->{logger}	= delete $options{logger};
 	}
 	
-	if (my $opt = $options{optimize}) {
+	if (my $opt = delete $options{optimize}) {
 		$l->debug("got optimization flag: $opt");
 		$self->{optimize}	= $opt;
 	} else {
 		$self->{optimize}	= 0;
 	}
 	
-	if (my $opt = $options{force_no_optimization}) {
+	if (my $opt = delete $options{force_no_optimization}) {
 		$l->debug("got force_no_optimization flag");
 		$self->{force_no_optimization}	= 1;
 	}
 	
-	if (my $time = $options{optimistic_threshold_time}) {
+	if (my $time = delete $options{optimistic_threshold_time}) {
 		$l->debug("got optimistic_threshold_time flag");
 		$self->{optimistic_threshold_time}	= $time;
+	}
+	
+	my @leftover	= keys %options;
+	if (@leftover) {
+		warn "Unrecognized options passed to $class->new:\n\t" . join("\n\t", sort @leftover);
 	}
 	
 	# add rdf as a default namespace to RDQL queries
