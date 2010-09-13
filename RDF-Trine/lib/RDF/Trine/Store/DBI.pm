@@ -185,6 +185,22 @@ sub temporary_store {
 	return $self;
 }
 
+=item C<< clear_restrictions >>
+
+Clear's the restrictions put on the binding of node types to the different
+statement positions. By default, the subject position is restricted to resources
+and blank nodes, and the predicate position to only resources. Calling this
+method will allow any node type in any statement position.
+
+=cut
+
+sub clear_restrictions {
+	my $self	= shift;
+	foreach my $pos (qw(subject predicate object context)) {
+		$self->{restrictions}{$pos}   = [];
+	}
+	return;
+}
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
@@ -1011,7 +1027,7 @@ sub _sql_for_equality_expr {
 sub _sql_for_triple { &_sql_for_statement; }
 sub _sql_for_quad { &_sql_for_statement; }
 {
-	my %restrictions	= (
+	my %default_restrictions	= (
 		subject		=> ['literal'],
 		predicate	=> [qw(literal blank)],
 		object		=> [],
@@ -1024,6 +1040,10 @@ sub _sql_for_statement {
 	my $context	= shift;
 	my %args	= @_;
 	
+	my %restrictions = defined $self->{restrictions}
+		? %{ $self->{restrictions} }
+		: %default_restrictions;
+
 	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
 	no warnings 'uninitialized';
 	if ($args{semantics} eq 'triple') {
