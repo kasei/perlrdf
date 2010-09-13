@@ -42,15 +42,14 @@ my $mfaction	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#ac
 	while (my $statement = $stream->next) {
 		my $test		= $statement->subject;
 		no warnings 'uninitialized';
+		next unless ($test->uri_value =~ /$PATTERN/);	# XXX
 		my $name		= get_first_literal( $model, $test, $mfname );
-		my $action		= get_first_obj( $model, $test, $mfaction );
-		next unless ($name =~ /$PATTERN/);	# XXX
 		my $ok			= positive_syntax_test( $model, $test );
 		ok( $ok, $name );
 		if ($ok) {
-			earl_pass_test( $earl, $action );
+			earl_pass_test( $earl, $test );
 		} else {
-			earl_fail_test( $earl, $action );
+			earl_fail_test( $earl, $test );
 			warn RDF::Query->error;
 		}
 #	} continue {
@@ -64,15 +63,14 @@ my $mfaction	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#ac
 	while (my $statement = $stream->next) {
 		my $test		= $statement->subject;
 		no warnings 'uninitialized';
+		next unless ($test->uri_value =~ /$PATTERN/);	# XXX
 		my $name		= get_first_literal( $model, $test, $mfname );
-		my $action		= get_first_obj( $model, $test, $mfaction );
-		next unless ($name =~ /$PATTERN/);	# XXX
 		my $ok			= negative_syntax_test( $model, $test );
 		ok( $ok, $name );
 		if ($ok) {
-			earl_pass_test( $earl, $action );
+			earl_pass_test( $earl, $test );
 		} else {
-			earl_fail_test( $earl, $action );
+			earl_fail_test( $earl, $test );
 		}
 	} continue {
 		$stream->next;
