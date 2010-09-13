@@ -310,6 +310,7 @@ sub canonicalize_literal_value {
 			return "${sign}${num}";
 		} else {
 			warn "Bad lexical form for xsd:deciaml: '$value'" if ($warn);
+			$value		= sprintf('%f', $value);
 		}
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
 		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
