@@ -268,10 +268,7 @@ sub add_statement {
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	unless ($self->count_statements( @nodes )) {
-# 		warn "adding " . $rst->as_string . ' to context: ' . $rnodes[3]->as_string . "\n";
-		$model->add_statement( $rst, $rnodes[3] );
-	}
+	$model->add_statement( $rst, $rnodes[3] );
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -340,8 +337,7 @@ sub count_statements {
 		my $iter	= $self->_model->find_statements( $st );
 		my $count	= 0;
 		my %seen;
-		while ($iter and not($iter->end)) {
-			my $st	= $iter->current;
+		while ($iter and my $st = $iter->current) {
 			unless ($seen{ $st->as_string }++) {
 				$count++;
 			}
@@ -353,9 +349,8 @@ sub count_statements {
 		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 		my $iter	= $self->_model->find_statements( $st, $rnodes[3] );
 		my $count	= 0;
-		while ($iter and not($iter->end)) {
+		while ($iter and my $st = $iter->current) {
 			$count++;
-			my $st	= $iter->current;
 			my $ctx	= $iter->context;
 			$iter->next;
 		}
