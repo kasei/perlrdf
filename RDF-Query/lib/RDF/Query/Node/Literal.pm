@@ -251,7 +251,8 @@ sub numeric_value {
 	if ($self->is_numeric_type) {
 		my $value	= $self->literal_value;
 		if (looks_like_number($value)) {
-			return 0 + $value;
+			my $v	= 0 + eval "$value";
+			return $v;
 		} else {
 			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
 		}

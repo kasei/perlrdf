@@ -97,7 +97,7 @@ sub evaluate {
 	$l->debug("Binary Operator '$op': " . Dumper($lhs, $rhs));
 	
 	if ($op =~ m#^[-+/*]$#) {
-		my $type	= $self->promote_type( $op, $lhs, $rhs );
+		my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
 		my $value;
 		if ($op eq '+') {
 			my $lhsv	= $lhs->numeric_value;
@@ -196,10 +196,10 @@ my %rel	= (
 	"${xsd}double"				=> 15,
 );
 
-=item C<< promote_type ( $op, $lhs, $rhs ) >>
+=item C<< promote_type ( $op, $lhs_datatype, $rhs_datatype ) >>
 
 Returns the XSD type URI (as a string) for the resulting value of performing the
-supplied operation on the arguments.
+supplied operation on arguments of the indicated XSD types.
 
 =cut
 
@@ -207,7 +207,7 @@ sub promote_type {
 	my $self	= shift;
 	my $op		= shift;
 	no warnings 'uninitialized';
-	my @types	= sort { $rel{$b} <=> $rel{$a} } map { $_->literal_datatype } @_;
+	my @types	= sort { $rel{$b} <=> $rel{$a} } @_;
 	
 	my $type	= $types[0];
 	$type		= "${xsd}integer" if ($integer_types{ $type });
