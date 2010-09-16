@@ -299,7 +299,8 @@ bind values during execution.
 
 sub potentially_bound {
 	my $self	= shift;
-	my @vars	= $self->pattern->potentially_bound;
+	my @vars;
+#	push(@vars, $self->pattern->potentially_bound);
 	foreach my $v (@{ $self->vars }) {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			push(@vars, $v->name);

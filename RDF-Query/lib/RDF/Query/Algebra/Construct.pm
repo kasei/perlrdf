@@ -181,7 +181,7 @@ bind values during execution.
 
 sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->potentially_bound);
+	return $self->pattern->potentially_bound;
 }
 
 =item C<< definite_variables >>
