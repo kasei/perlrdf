@@ -227,9 +227,19 @@ bind values during execution.
 
 sub binding_variables {
 	my $self	= shift;
-	my @aliases	= map { $_->[0] } $self->ops;
-	throw Error; # XXX unimplemented
-	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
+	my @vars;
+#	push(@vars, map { $_->[0] } $self->ops);
+	foreach my $g ($self->groupby) {
+		if (blessed($g)) {
+			if ($g->isa('RDF::Query::Node::Variable')) {
+				push(@vars, $g->name);
+			} elsif ($g->isa('RDF::Query::Expression::Alias')) {
+				push(@vars, $g->name);
+			}
+		}
+	}
+	return RDF::Query::_uniq(@vars);
+#	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
 =item C<< definite_variables >>
