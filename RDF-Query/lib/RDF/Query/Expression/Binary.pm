@@ -132,7 +132,7 @@ sub evaluate {
 				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
 			}
 		} else {
-			die;
+			throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 		}
 		return RDF::Query::Node::Literal->new( $value, undef, $type );
 	} elsif ($op =~ m#^([<>]=?)|!?=$#) {
@@ -164,7 +164,7 @@ sub evaluate {
 		} elsif ($op eq '!=') {
 			$bool	= ($lhs != $rhs);
 		} else {
-			die;
+			throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 		}
 		
 		my $value	= ($bool) ? 'true' : 'false';

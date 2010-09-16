@@ -106,7 +106,7 @@ sub evaluate {
 		}
 	} else {
 		warn "unknown unary op: $op";
-		die;
+		throw RDF::Query::Error::ExecutionError -text => "Unknown unary op '$op'";
 	}
 }
 
