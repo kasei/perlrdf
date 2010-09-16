@@ -129,7 +129,6 @@ sub run {
 	my $config	= $self->{conf};
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	
-	
 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
 	my $model	= RDF::Trine::Model->new( $store );
 	
@@ -177,6 +176,15 @@ END
 				RDF::Trine::Parser->parse_url_into_model( $url, $model );
 			}
 		}
+
+		my $match	= $headers->header('if-none-match') || '';
+		my $etag	= $model->etag;
+		if (length($match)) {
+			if (defined($etag) and ($etag eq $match)) {
+				$response->status(304);
+				return $response;
+			}
+		}
 		
 		my $base	= $req->base;
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
@@ -186,6 +194,9 @@ END
 			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
+				if (defined($etag)) {
+					$response->headers->header( ETag => $etag );
+				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 					my @variants	= (['text/html', 1.0, 'text/html']);
 					my %media_types	= %RDF::Trine::Serializer::media_types;
