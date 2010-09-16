@@ -81,6 +81,7 @@ use RDF::Trine 0.124 qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
+use Digest::MD5 qw(md5_hex);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
@@ -155,9 +156,13 @@ END
 	
 	
 	my $headers	= $req->headers;
-	if (my $type = $req->param('media-type')) {
+	my $type	= $headers->header('Accept');
+	if (my $t = $req->param('media-type')) {
+		$type	= $t;
 		$headers->header('Accept' => $type);
 	}
+	
+	my $ae		= $req->headers->header('Accept-Encoding') || '';
 	
 	if (my $sparql = $req->param('query')) {
 		my %args;
@@ -176,9 +181,9 @@ END
 				RDF::Trine::Parser->parse_url_into_model( $url, $model );
 			}
 		}
-
+		
 		my $match	= $headers->header('if-none-match') || '';
-		my $etag	= $model->etag;
+		my $etag	= md5_hex( join('#', $model->etag, $type, $ae, $sparql) );
 		if (length($match)) {
 			if (defined($etag) and ($etag eq $match)) {
 				$response->status(304);
@@ -289,7 +294,6 @@ END
 	}
 	
 	my $length	= 0;
-	my $ae		= $req->headers->header('Accept-Encoding') || '';
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
 		my ($rh, $wh);
