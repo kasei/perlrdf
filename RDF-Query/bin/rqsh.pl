@@ -22,7 +22,7 @@ use Term::ReadLine;
 
 $|			= 1;
 my $model;
-if ($ARGV[ $#ARGV ] =~ /.sqlite/) {
+if (scalar(@ARGV) and $ARGV[ $#ARGV ] =~ /.sqlite/) {
 	my $file	= pop(@ARGV);
 	my $dsn		= "DBI:SQLite:dbname=" . $file;
 	my $store	= RDF::Trine::Store::DBI->new($model, $dsn, '', '');
@@ -86,6 +86,8 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		} catch RDF::Query::Error with {
 			my $e	= shift;
 			print "Error: $e\n";
+		} otherwise {
+			warn "died: " . Dumper(\@_);
 		};
 	}
 }
