@@ -235,6 +235,24 @@ sub size {
 	return $self->count_statements();
 }
 
+=item C<< etag >>
+
+If the model is based on a store that has the capability and knowledge to
+support caching, this method returns a persistent token that will remain
+consistent as long as the store's data doesn't change. This token is acceptable
+for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->etag;
+	}
+	return;
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,

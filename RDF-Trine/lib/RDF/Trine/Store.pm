@@ -329,6 +329,18 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	return;
+}
+
 sub _begin_bulk_ops {}
 sub _end_bulk_ops {}
 

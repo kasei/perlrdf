@@ -25,6 +25,7 @@ use base qw(RDF::Trine::Store);
 
 use Set::Scalar;
 use Data::Dumper;
+use Digest::MD5 ('md5_hex');
 use List::Util qw(first);
 use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
@@ -111,7 +112,9 @@ sub new {
 		object		=> {},
 		context		=> {},
 		ctx_nodes	=> {},
+		md5			=> Digest::MD5->new,
 	}, $class);
+
 	return $self;
 }
 
@@ -120,9 +123,11 @@ sub _new_with_string {
 	my $config	= shift || '';
 	my @uris	= split(';', $config);
 	my $self	= $class->new();
+	
 	foreach my $u (@uris) {
 		RDF::Trine::Parser->parse_url_into_model( $u, $self );
 	}
+	
 	return $self;
 }
 
@@ -416,6 +421,7 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
+			$self->{md5}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -456,6 +462,7 @@ sub remove_statement {
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
 		$self->{statements}[ $id ]	= undef;
+		$self->{md5}->add('-' . $st->as_string);
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
@@ -583,6 +590,19 @@ sub count_statements {
 		}
 		return $count;
 	}
+}
+
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	return $self->{md5}->hexdigest;
 }
 
 =item C<< size >>
