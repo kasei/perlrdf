@@ -733,7 +733,7 @@ sub _SelectQuery {
 		my $triples	= $self->{build}{triples} || [];
 		my @vars;
 		foreach my $t (@$triples) {
-			my @v	= $t->binding_variables;
+			my @v	= $t->potentially_bound;
 			push(@vars, @v);
 		}
 		@vars	= RDF::Query::_uniq( @vars );
@@ -1352,7 +1352,7 @@ sub _SubSelect {
 			my $triples	= $self->{build}{triples} || [];
 			my @vars;
 			foreach my $t (@$triples) {
-				my @v	= $t->binding_variables;
+				my @v	= $t->potentially_bound;
 				push(@vars, @v);
 			}
 			@vars	= RDF::Query::_uniq( @vars );

@@ -87,14 +87,14 @@ use constant SSE_TAGS	=> {
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
 };
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	return $self->referenced_variables;
 }

@@ -161,19 +161,19 @@ sub referenced_variables {
 	);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
-		$self->pattern->binding_variables,
-		$self->time_triples->binding_variables,
+		$self->pattern->potentially_bound,
+		$self->time_triples->potentially_bound,
 	);
 }
 

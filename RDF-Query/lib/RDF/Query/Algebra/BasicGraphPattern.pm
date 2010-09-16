@@ -162,16 +162,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq(map { $_->binding_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->potentially_bound } $self->triples);
 }
 
 =item C<< definite_variables >>
