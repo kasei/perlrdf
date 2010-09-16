@@ -129,19 +129,27 @@ sub parse {
 	local($self->{pattern_container_stack})	= [];
 	local($self->{update})					= $update;
 	my $triples								= $self->_push_pattern_container();
-	$self->{build}							= { sources => [], triples => $triples };
+	local($self->{build});
+	my $build								= { sources => [], triples => $triples };
+	$self->{build}							= $build;
 	if ($baseuri) {
 		$self->{build}{base}	= $baseuri;
 	}
-	
+
 	try {
 		$self->_RW_Query();
 	} catch RDF::Query::Error with {
 		my $e	= shift;
 		$self->{build}	= undef;
 		$self->{error}	= $e->stacktrace
+	} otherwise {
+		my $e	= shift;
+		$self->{build}	= undef;
+		$build			= undef;
+		$self->{error}	= $e->stacktrace
 	};
-	my $data								= delete $self->{build};
+
+	my $data								= $build;
 #	$data->{triples}						= $self->_pop_pattern_container();
 	return $data;
 }
@@ -1321,8 +1329,7 @@ sub _SubSelect {
 		local($self->{filters})					= [];
 		local($self->{pattern_container_stack})	= [];
 		my $triples								= $self->_push_pattern_container();
-		local($self->{build})					= {};
-		$self->{build}{triples}					= $triples;
+		local($self->{build})					= { triples => $triples};
 		if ($self->{baseURI}) {
 			$self->{build}{base}	= $self->{baseURI};
 		}
@@ -1364,8 +1371,8 @@ sub _SubSelect {
 		$self->__solution_modifiers( $star );
 		
 		delete $self->{build}{options};
-		$self->{build}{method}		= 'SELECT';
 		my $data	= delete $self->{build};
+		$data->{method}	= 'SELECT';
 		my $query	= RDF::Query->_new(
 			base			=> $self->{baseURI},
 #			parser			=> $self,
