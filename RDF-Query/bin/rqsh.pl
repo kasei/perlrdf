@@ -4,6 +4,7 @@ use warnings;
 no warnings 'redefine';
 use lib qw(../lib lib);
 
+use Cwd;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use RDF::Query;
@@ -28,9 +29,14 @@ if (scalar(@ARGV) and $ARGV[ $#ARGV ] =~ /.sqlite/) {
 	my $store	= RDF::Trine::Store::DBI->new($model, $dsn, '', '');
 	$model		= RDF::Trine::Model->new( $store );
 } else {
-	$model	= RDF::Trine::Model->temporary_model;
+	$model			= memory_model();
 }
 my %args	= &RDF::Query::Util::cli_parse_args();
+unless (exists $args{update}) {
+	$args{update}	= 1;
+}
+$args{ base }	= 'file://' . getcwd . '/';
+
 my $class	= delete $args{ class } || 'RDF::Query';
 my $term	= Term::ReadLine->new('rqsh');
 
@@ -38,6 +44,10 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 	my $sparql	= $_;
 	next unless (length($sparql));
 	if ($sparql eq 'debug') {
+		print "# model = $model\n";
+		if (my $store = $model->_store) {
+			print "# store = $store\n";
+		}
 		my $iter	= $model->get_statements( undef, undef, undef, undef );
 		my @rows;
 		my @names	= qw[subject predicate object context];
@@ -62,6 +72,38 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 			);
 		my $size	= scalar(@rows);
 		print "$size statements\n";
+	} elsif ($sparql =~ /^use (\w+)\s*;?\s*$/) {
+		my $name	= $1;
+		my $sclass	= RDF::Trine::Store->class_by_name( $name );
+		if ($sclass) {
+			if ($sclass eq 'RDF::Trine::Store::Memory') {
+				$model	= memory_model();
+				next;
+			} else {
+				if ($sclass->can('_config_meta')) {
+					my $meta	= $sclass->_config_meta;
+					my $keys	= $meta->{required_keys};
+					my $config	= {};
+					foreach my $k (@$keys) {
+						get_value( $meta, $k, $config );
+					}
+					my $store	= $sclass->new_with_config( $config );
+					my $m		= RDF::Trine::Model->new( $store );
+					if ($m) {
+						$model	= $m;
+						next;
+					} else {
+						print "Failed to construct '$name'-backed model.\n";
+						next;
+					}
+				} else {
+					print "Cannot construct model from '$name' storage class.\n";
+				}
+			}
+		} else {
+			print "No storage class named '$name' found\n";
+			next;
+		}
 	} else {
 		my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
 		my $query	= $class->new( $psparql, \%args );
@@ -91,3 +133,44 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		};
 	}
 }
+
+
+sub get_value {
+	my $meta	= shift;
+	my $k		= shift;
+	my $config	= shift;
+	if (my $v = $config->{$k}) {
+		return;
+	} elsif (defined($meta->{fields}{$k}{'value'})) {
+		$config->{ $k }	= $meta->{fields}{$k}{'value'};
+	} elsif (defined($meta->{fields}{$k}{'template'})) {
+		my $template	= $meta->{fields}{$k}{'template'};
+		my @subkeys	= ($template =~ m/\[%(\w+)%\]/g);
+		foreach my $sk (@subkeys) {
+			get_value( $meta, $sk, $config );
+		}
+		while ($template =~ m/\[%(\w+)%\]/) {
+			my $key	= $1;
+			my $v	= $config->{$key};
+			$template	=~ s/\[%$key%\]/$v/e;
+		}
+		$config->{ $k }	= $template;
+	} else {
+		my $desc	= $meta->{fields}{$k}{description};
+		print "$desc: ";
+		my $value	= <>;
+		chomp($value);
+		$config->{ $k }	= $value;
+	}
+}
+
+{ my $memory_model;
+sub memory_model {
+	if (defined($memory_model)) {
+		return $memory_model;
+	} else {
+		my $model			= RDF::Trine::Model->temporary_model;
+		$memory_model	= $model;
+		return $model;
+	}
+}}
