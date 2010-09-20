@@ -98,23 +98,19 @@ An example invocation for the DBI store may be:
 
 
 sub new_with_config {
-  my $proto	= shift;
-  my $config	= shift;
-  if (defined($config)) {
-    my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
-    if ($class->can('_new_with_config')) {
-      return $class->_new_with_config( $config );
-    } else {
-      throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
-    }
-  } else {
-    throw RDF::Trine::Error::MethodInvocationError;
-  }
+	my $proto		= shift;
+	my $config	= shift;
+	if (defined($config)) {
+		my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
+		if ($class->can('_new_with_config')) {
+			return $class->_new_with_config( $config );
+		} else {
+			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
+		}
+	} else {
+		throw RDF::Trine::Error::MethodInvocationError;
+	}
 }
-
-
-
-
 
 
 =item C<< new_with_object ( $object ) >>
@@ -135,6 +131,24 @@ sub new_with_object {
 			if ($s) {
 				return $s;
 			}
+		}
+	}
+	return;
+}
+
+=item C<< class_by_name ( $name ) >>
+
+Returns the class of the storage implementation with the given name.
+For example, C<< 'Memory' >> would return C<< 'RDF::Trine::Store::Memory' >>.
+
+=cut
+
+sub class_by_name {
+	my $proto	= shift;
+	my $name	= shift;
+	foreach my $class (keys %STORE_CLASSES) {
+		if (lc($class) =~ m/::${name}$/i) {
+			return $class;
 		}
 	}
 	return;
