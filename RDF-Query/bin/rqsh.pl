@@ -11,6 +11,7 @@ use RDF::Query;
 use RDF::Query::Error qw(:try);
 use RDF::Query::Util;
 use Term::ReadLine;
+use Term::ReadKey;
 
 ################################################################################
 # Log::Log4perl::init( \q[
@@ -87,15 +88,16 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 					foreach my $k (@$keys) {
 						get_value( $meta, $k, $config );
 					}
-					my $store	= $sclass->new_with_config( $config );
-					my $m		= RDF::Trine::Model->new( $store );
-					if ($m) {
-						$model	= $m;
-						next;
-					} else {
-						print "Failed to construct '$name'-backed model.\n";
-						next;
+					my $store	= eval { $sclass->new_with_config( $config ) };
+					if ($store) {
+						my $m		= RDF::Trine::Model->new( $store );
+						if ($m) {
+							$model	= $m;
+							next;
+						}
 					}
+					print "Failed to construct '$name'-backed model.\n";
+					next;
 				} else {
 					print "Cannot construct model from '$name' storage class.\n";
 				}
@@ -157,9 +159,23 @@ sub get_value {
 		$config->{ $k }	= $template;
 	} else {
 		my $desc	= $meta->{fields}{$k}{description};
-		print "$desc: ";
-		my $value	= <>;
-		chomp($value);
+		my $type	= $meta->{fields}{$k}{type};
+		my $value;
+		if ($type eq 'password') {
+			print "$desc: ";
+			ReadMode('noecho');
+			$value	= ReadLine(0);
+			chomp($value);
+			warn "password: $value";
+		} elsif ($type eq 'filename') {
+			my $attribs	= $term->Attribs;
+			$attribs->{completion_entry_function}	= $attribs->{filename_completion_function};
+			$value	= $term->readline("$desc: ");
+		} else {
+			print "$desc: ";
+			$value	= <>;
+			chomp($value);
+		}
 		$config->{ $k }	= $value;
 	}
 }
