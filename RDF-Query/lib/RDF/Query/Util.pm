@@ -216,7 +216,7 @@ The allowable arguments are listed below.
 =cut
 
 sub cli_parse_args {
-	my %args;
+	my %args	= @_;
 	$args{ class }	= 'RDF::Query';
 	my @service_descriptions;
 	
@@ -280,7 +280,17 @@ sub cli_parse_args {
 		} elsif ($opt eq '-m') {
 			$args{ model }	= shift(@ARGV);
 		} elsif ($opt eq '-w') {
-			$args{ update }	= 1;
+			if (exists($args{update}) and not($args{update})) {
+				warn "Model requested to be both read-only and read-write.\n";
+			} else {
+				$args{ update }	= 1;
+			}
+		} elsif ($opt eq '-r') {
+			if (exists($args{update}) and $args{update}) {
+				warn "Model requested to be both read-only and read-write.\n";
+			} else {
+				$args{ update }	= 0;
+			}
 		} elsif ($opt eq '--') {
 			last;
 		}
