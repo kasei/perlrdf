@@ -141,6 +141,7 @@ sub parse {
 	} catch RDF::Query::Error with {
 		my $e	= shift;
 		$self->{build}	= undef;
+		$build			= undef;
 		$self->{error}	= $e->stacktrace
 	} otherwise {
 		my $e	= shift;
