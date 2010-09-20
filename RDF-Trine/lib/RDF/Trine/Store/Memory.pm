@@ -86,19 +86,20 @@ Use this URI as a graph name for the contents of the file or URL.
 The following example initializes a Memory store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {storetype => 'Memory',
-		 sources => [
-			      {
-			       file => 'test-23.ttl',
-			       syntax => 'turtle',
-			      },
-			      {
-			       url => 'http://www.kjetil.kjernsmo.net/foaf',
-			       syntax => 'rdfxml',
-                               graph => 'http://example.org/graph/remote-users'
-		      	      }
-	        ]});
-
+                {
+                  storetype => 'Memory',
+                  sources => [
+                    {
+                      file => 'test-23.ttl',
+                      syntax => 'turtle',
+                    },
+                    {
+                      url => 'http://www.kjetil.kjernsmo.net/foaf',
+                      syntax => 'rdfxml',
+                      graph => 'http://example.org/graph/remote-users'
+                    }
+                  ]
+                });
 
 =cut
 
@@ -129,6 +130,12 @@ sub _new_with_string {
 	}
 	
 	return $self;
+}
+
+sub _config_meta {
+	return {
+		required_keys	=> []
+	}
 }
 
 sub _new_with_config {

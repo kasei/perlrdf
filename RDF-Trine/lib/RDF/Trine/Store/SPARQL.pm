@@ -99,6 +99,14 @@ sub _new_with_config {
 	return $class->new( $config->{url} );
 }
 
+sub _config_meta {
+	return {
+		required_keys	=> [qw(url)],
+		fields			=> {
+			url	=> { description => 'Endpoint URL', type => 'string' },
+		}
+	}
+}
 
 
 =item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>

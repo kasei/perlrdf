@@ -124,6 +124,17 @@ sub _new_with_object {
 	return $class->new( $obj );
 }
 
+sub _config_meta {
+	return {
+		required_keys	=> [qw(store_name name options)]
+		fields			=> {
+			store_name	=> { description => 'Redland Storage Type', type => 'string' },
+			name		=> { description => 'Storage Name', type => 'string' },
+			options		=> { description => 'Options String', type => 'string' },
+		}
+	}
+}
+
 =item C<< temporary_store >>
 
 Returns a temporary (empty) triple store.

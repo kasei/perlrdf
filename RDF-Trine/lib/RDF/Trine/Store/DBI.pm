@@ -164,7 +164,6 @@ sub _new_with_config {
 			    $config->{password} );
 }
 
-
 sub _new_with_object {
 	my $class	= shift;
 	my $obj		= shift;
