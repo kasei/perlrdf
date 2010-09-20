@@ -33,6 +33,8 @@ use Carp qw(carp croak confess);
 use URI::file;
 use RDF::Query;
 use LWP::Simple;
+use File::Spec;
+use JSON;
 
 ######################################################################
 
@@ -69,6 +71,15 @@ PREFIX whois: <http://www.kanzaki.com/ns/whois#>
 PREFIX wn: <http://xmlns.com/wordnet/1.6/>
 PREFIX wot: <http://xmlns.com/wot/0.1/>
 END
+
+{
+	my $file	= File::Spec->catfile($ENV{HOME}, '.prefix-cmd', 'prefixes.json');
+	if (-r $file) {
+		my $json		= do { local($/) = undef; open( my $fh, '<', $file ) or next; <$fh> };
+		my $prefixes	= from_json($json);
+		$PREFIXES	= join("\n", map { "PREFIX $_: <" . $prefixes->{$_} . ">" } (keys %$prefixes));
+	}
+}
 
 =item C<< cli_make_query_and_model >>
 
