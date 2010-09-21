@@ -84,4 +84,5 @@ if ($file =~ qr[^http(s?)://]) {
 # 
 
 my $parser	= RDF::Trine::Parser::RDFXML->new();
-$parser->parse_into_model( $base, $data, $store );
+my $m		= RDF::Trine::Model->new( $store );
+$parser->parse_into_model( $base, $data, $m );
