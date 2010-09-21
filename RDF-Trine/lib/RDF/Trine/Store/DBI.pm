@@ -1333,8 +1333,6 @@ sub init {
             PRIMARY KEY (Subject, Predicate, Object, Context)
         );
 END
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
@@ -1364,8 +1362,10 @@ END
         );
 END
     
+	$dbh->commit or warn $dbh->errstr;
 	
-	$dbh->commit or die $dbh->errstr;
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 }
 
 sub _cleanup {
