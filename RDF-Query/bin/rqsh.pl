@@ -43,18 +43,29 @@ my $term	= Term::ReadLine->new('rqsh', \*STDIN, \*STDOUT);
 
 print "rqsh v1.0\n\n";
 while ( defined ($_ = $term->readline('rqsh> ')) ) {
-	my $sparql	= $_;
-	next unless (length($sparql));
-	if ($sparql =~ /^use (\w+)\s*;?\s*$/) {
+	my $line	= $_;
+	next unless (length($line));
+	if ($line =~ /^use (\w+)\s*;?\s*$/) {
 		my $name	= $1;
 		my $nmodel	= model( $name );
 		if ($nmodel) {
 			$model	= $nmodel;
 		}
-	} elsif ($sparql eq 'debug') {
-		debug( $model, $term, $sparql );
+	} elsif ($line eq 'init') {
+		init( $model, $term, $line );
+	} elsif ($line eq 'debug') {
+		debug( $model, $term, $line );
 	} else {
-		query( $model, $term, $sparql );
+		query( $model, $term, $line );
+	}
+}
+
+sub init {
+	my $model	= shift;
+	my $term	= shift;
+	my $line	= shift;
+	if (my $store = $model->_store) {
+		$store->init;
 	}
 }
 
