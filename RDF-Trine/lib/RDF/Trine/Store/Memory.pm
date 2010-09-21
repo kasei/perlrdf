@@ -125,8 +125,9 @@ sub _new_with_string {
 	my @uris	= split(';', $config);
 	my $self	= $class->new();
 	
+	my $model	= RDF::Trine::Model->new( $self );
 	foreach my $u (@uris) {
-		RDF::Trine::Parser->parse_url_into_model( $u, $self );
+		RDF::Trine::Parser->parse_url_into_model( $u, $model );
 	}
 	
 	return $self;
