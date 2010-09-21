@@ -1324,6 +1324,18 @@ sub init {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+        CREATE TABLE Statements${id} (
+            Subject NUMERIC(20) NOT NULL,
+            Predicate NUMERIC(20) NOT NULL,
+            Object NUMERIC(20) NOT NULL,
+            Context NUMERIC(20) NOT NULL DEFAULT 0,
+            PRIMARY KEY (Subject, Predicate, Object, Context)
+        );
+END
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Literals (
@@ -1352,18 +1364,6 @@ END
         );
 END
     
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Statements${id} (
-            Subject NUMERIC(20) NOT NULL,
-            Predicate NUMERIC(20) NOT NULL,
-            Object NUMERIC(20) NOT NULL,
-            Context NUMERIC(20) NOT NULL DEFAULT 0,
-            PRIMARY KEY (Subject, Predicate, Object, Context)
-        );
-END
-
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	
 	$dbh->commit or die $dbh->errstr;
 }
