@@ -93,6 +93,19 @@ sub _new_with_string {
 	return $class->new( $config );
 }
 
+=item C<< new_with_config ( \%config ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied configuration hashref.
+
+=cut
+
+sub new_with_config {
+	my $proto	= shift;
+	my $config	= shift;
+	$config->{storetype}	= 'SPARQL';
+	return $proto->SUPER::new_with_config( $config );
+}
+
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
@@ -124,9 +137,9 @@ sub get_statements {
 	
 	my $use_quad	= 0;
 	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
 		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
+		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
+			$use_quad	= 1;
 			$bound++;
 			$bound{ 3 }	= $g;
 		}
