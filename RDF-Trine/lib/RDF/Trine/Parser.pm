@@ -139,7 +139,7 @@ sub parse_url_into_model {
 	}
 	
 	### FALLBACK
-	if ($url =~ /[.]x?rdf$/) {
+	if ($url =~ /[.](x?rdf|owl)$/) {
 		my $parser	= RDF::Trine::Parser::RDFXML->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
