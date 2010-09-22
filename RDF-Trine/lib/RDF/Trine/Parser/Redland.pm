@@ -70,7 +70,7 @@ BEGIN {
 			(@{$FORMATS{$format}[1]});
 	}
 	
-	eval "use RDF::Redland 1.001001;";
+	eval "use RDF::Redland 1.000701;";
 	unless ($@) {
 		$HAVE_REDLAND_PARSER	= 1;
 	}
@@ -90,7 +90,7 @@ sub new {
 	my %args	= @_;
 	unless ($HAVE_REDLAND_PARSER) {
 		throw RDF::Trine::Error
-			-text => "Failed to load RDF::Redland >= 1.0.10.1";
+			-text => "Failed to load RDF::Redland >= 1.0.7.1";
 	}
 	unless (defined $args{name}) {
 		throw RDF::Trine::Error
