@@ -31,6 +31,8 @@
                         asc:update      "Updated RDF::Trine::Store::Redland to improve efficiency (based on suggestions from Dorian Taylor)." ;
                         asc:update      "Made code updates to improve performance based on profiling." ;
                         asc:update      "Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds." ;
+                        asc:update      "Added content-sniffing to fallback parser guessing code for RDF/XML and Turtle." ;
+                        asc:update      "Lowered required version of redland in RDF::Trine::Parser::Redland to 1.0.7.1." ;
                         asc:addition    "Added new_with_config method to allow interactive configuration via rqsh.pl." ;
                         asc:addition    "Added introspective _config_meta method to RDF::Trine::Store subclasses to allow interactive configuration." ;
                         asc:addition    "Added RDF::Trine::Store->class_by_name class method." ;
@@ -38,6 +40,8 @@
                         asc:addition    "Added RDF::Trine::Store::DBI->clear_restrictions method (suggestion and partial patch from tobyink)." ;
                         asc:addition    "Added native redland parser class and tests (patch from Dorian Taylor)." ;
                         asc:addition    "Added RDF::Trine::Iterator->each method (requested by tobyink)." ;
+                        asc:addition    "Added RDF::Trine::Serializer->serializer_names method for listing available serializers." ;
+                        asc:addition    "Added as_string method to RDF::Trine::Iterator::Boolean and RDF::Trine::Iterator::Graph." ;
                         ] .
 
 
