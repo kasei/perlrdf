@@ -51,6 +51,16 @@ use RDF::Trine::Serializer::Turtle;
 
 =over 4
 
+=item C<< serializer_names >>
+
+Returns a list of valid serializer names for use as arguments to the serializer constructor.
+
+=cut
+
+sub serializer_names {
+	return keys %serializer_names;
+}
+
 =item C<< new ( $serializer_name, %options ) >>
 
 Returns a new RDF::Trine::Serializer object for the serializer with the
