@@ -477,7 +477,7 @@ sub _InsertUpdate {
 	
 	my @ds_keys	= keys %dataset;
 	unless (@ds_keys) {
-		$dataset{ default }	= [$graph];
+		$dataset{ default }	= [$graph || ()];
 	}
 	
 	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
@@ -560,7 +560,7 @@ sub _DeleteUpdate {
 	
 	my @ds_keys	= keys %dataset;
 	if ($graph and not(scalar(@ds_keys))) {
-		$dataset{ default }	= [$graph];
+		$dataset{ default }	= [$graph || ()];
 	}
 	
 	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset);
