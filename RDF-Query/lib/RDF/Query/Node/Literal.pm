@@ -56,7 +56,7 @@ my %INSIDE_OUT_DATES;
 sub _cmp {
 	my $nodea	= shift;
 	my $nodeb	= shift;
-	my $op	= shift;
+	my $op		= shift;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.node.literal");
 	$l->debug('literal comparison: ' . Dumper($nodea, $nodeb));
@@ -71,17 +71,24 @@ sub _cmp {
 	my $datetype	= '^http://www.w3.org/2001/XMLSchema#dateTime';
 	my $datecmp		= ($dta =~ $datetype and $dtb =~ $datetype);
 	my $numericcmp	= ($nodea->is_numeric_type and $nodeb->is_numeric_type);
-
+	
 	if ($datecmp) {
 		$l->trace('datecmp');
 		my $datea	= $nodea->datetime;
 		my $dateb	= $nodeb->datetime;
-		return DateTime->compare( $datea, $dateb );
-	} elsif ($numericcmp) {
+		if ($datea and $dateb) {
+			my $cmp		= eval { DateTime->compare_ignore_floating( $datea, $dateb ) };
+			return $cmp unless ($@);
+		}
+	}
+	
+	if ($numericcmp) {
 		$l->trace('both numeric cmp');
 		return 0 if ($nodea->equal( $nodeb ));	# if the nodes are identical, return true (even if the lexical values don't appear to be numeric). i.e., "xyz"^^xsd:integer should equal itself, even though it's not a valid integer.
 		return $nodea->numeric_value <=> $nodeb->numeric_value;
-	} else {
+	}
+	
+	{
 		$l->trace('other cmp');
 		
 		if ($nodea->has_language and $nodeb->has_language) {
