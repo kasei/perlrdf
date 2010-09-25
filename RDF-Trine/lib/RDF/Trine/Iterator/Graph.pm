@@ -169,6 +169,57 @@ sub is_graph {
 	return 1;
 }
 
+=item C<as_string ( $max_size [, \$count] )>
+
+Returns a string table serialization of the stream data.
+
+=cut
+
+sub as_string {
+	my $self			= shift;
+	my $max_result_size	= shift || 0;
+	my $rescount		= shift;
+	my @names			= qw(subject predicate object);
+	my $headers			= \@names;
+	my @rows;
+	my $count	= 0;
+	while (my $row = $self->next) {
+		push(@rows, [ map { blessed($_) ? $_->as_string : '' } map { $row->$_() } qw(subject predicate object) ]);
+		last if ($max_result_size and ++$count >= $max_result_size);
+	}
+#	my $rows			= [ map { [ map { blessed($_) ? $_->as_string : '' } @{$_}{ @names } ] } @nodes ];
+	if (ref($rescount)) {
+		$$rescount	= scalar(@rows);
+	}
+	
+	my @rule			= qw(- +);
+	my @headers			= (\q"| ");
+	push(@headers, map { $_ => \q" | " } @$headers);
+	pop	@headers;
+	push @headers => (\q" |");
+	
+	if ('ARRAY' eq ref $rows[0]) {
+		if (@$headers == @{ $rows[0] }) {
+			my $table = Text::Table->new(@headers);
+			$table->rule(@rule);
+			$table->body_rule(@rule);
+			$table->load(@rows);
+		
+			return join('',
+					$table->rule(@rule),
+					$table->title,
+					$table->rule(@rule),
+					map({ $table->body($_) } 0 .. @rows),
+					$table->rule(@rule)
+				);
+		} else {
+			die("make_table() rows must be an AoA with rows being same size as headers");
+		}
+	} else {
+		return '';
+	}
+}
+
 =item C<as_xml ( $max_size )>
 
 Returns an XML serialization of the stream data.

@@ -79,6 +79,18 @@ sub is_boolean {
 	return 1;
 }
 
+=item C<as_string ( $max_size [, \$count] )>
+
+Returns a string serialization of the stream data.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	my $value	= $self->get_boolean ? 'true' : 'false';
+	return $value;
+}
+
 =item C<as_xml ( $max_size )>
 
 Returns an XML serialization of the stream data.
