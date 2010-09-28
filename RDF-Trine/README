@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.128 (2010-XX-XX)
+  Version 0.128 (2010-09-28)
 
      * Added .owl as a recognized RDF/XML file extension for the fallback parser guessing code.
      * Fixed bug in RDF::Trine::Store::SPARQL preventing access to the default graph.

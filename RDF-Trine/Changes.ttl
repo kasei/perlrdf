@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.128" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-09-28" ;
                         ];
         asc:changes     [
                         asc:update      "Added .owl as a recognized RDF/XML file extension for the fallback parser guessing code." ;
