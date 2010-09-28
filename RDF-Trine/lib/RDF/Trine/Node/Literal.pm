@@ -55,6 +55,10 @@ sub new {
 	my $dt		= shift;
 	my $canon	= shift;
 	
+	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
+		$dt	= $dt->uri_value;
+	}
+	
 	if ($dt and $canon) {
 		$literal	= $class->canonicalize_literal_value( $literal, $dt );
 	}
@@ -297,10 +301,11 @@ sub canonicalize_literal_value {
 			my $int		= $3;
 			my $frac	= $4;
 			$sign		= '' if ($sign eq '+');
-			unless ($frac =~ m/[1-9]/) {
-				$num	= $int;
-			}
 			$num		=~ s/^0+(.)/$1/;
+			$num		=~ s/[.](\d)0+$/.$1/;
+			if ($num =~ /^[.]/) {
+				$num	= "0$num";
+			}
 			return "${sign}${num}";
 		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
 			my $sign	= $1 || '';
@@ -313,8 +318,21 @@ sub canonicalize_literal_value {
 			$value		= sprintf('%f', $value);
 		}
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return $value;
+		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
+			my $sign	= $1;
+			my $num		= $2;
+			my $exp		= $3;
+			my $inf		= $4;
+			my $nan		= $5;
+			no warnings 'uninitialized';
+			$sign		= '' if ($sign eq '+');
+			$exp	=~ tr/e/E/;
+			$exp	=~ s/E[+]/E/;
+			$exp	=~ s/E0+([1-9])$/E$1/;
+			$exp	=~ s/E0+$/E0/;
+			return "${sign}$inf" if ($inf);
+			return $nan if ($nan);
+			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
 			$value	= sprintf('%E', $value);
@@ -323,8 +341,21 @@ sub canonicalize_literal_value {
 			$value	=~ s/(\d)0+E/$1E/;
 		}
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)? |[-+]?INF|NaN$/) {
-			return $value;
+		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
+			my $sign	= $1;
+			my $num		= $2;
+			my $exp		= $3;
+			my $inf		= $4;
+			my $nan		= $5;
+			no warnings 'uninitialized';
+			$sign		= '' if ($sign eq '+');
+			$exp	=~ tr/e/E/;
+			$exp	=~ s/E[+]/E/;
+			$exp	=~ s/E0+([1-9])$/E$1/;
+			$exp	=~ s/E0+$/E0/;
+			return "${sign}$inf" if ($inf);
+			return $nan if ($nan);
+			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
 			$value	= sprintf('%E', $value);
@@ -349,6 +380,65 @@ sub canonicalize_literal_value {
 		}
 	}
 	return $value;
+}
+
+=item C<< is_valid_lexical_form >>
+
+Returns true if the node is of a recognized datatype and has a valid lexical form
+for that datatype. If the lexical form is invalid, returns false. If the datatype
+is unrecognized, returns zero-but-true.
+
+=cut
+
+sub is_valid_lexical_form {
+	my $self	= shift;
+	my $value	= $self->literal_value;
+	my $dt		= $self->literal_datatype;
+	
+	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
+	}
+	
+	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+		if ($value =~ m/^([-+])?(\d+)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
+		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
+			return 1;
+		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
+		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
+		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)? |[-+]?INF|NaN$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		if ($value =~ m/^(true|false|0|1)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
+		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	return 0;
 }
 
 1;

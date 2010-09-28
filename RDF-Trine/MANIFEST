@@ -519,6 +519,7 @@ t/model-union.t
 t/model.t
 t/namespace-export.t
 t/namespace-uri.t
+t/node-literal.t
 t/node-resource-i18n.t
 t/node-serialization.t
 t/node.t
