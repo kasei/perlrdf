@@ -48,19 +48,19 @@ print "rqsh v1.0\n\n";
 while ( defined ($_ = $term->readline('rqsh> ')) ) {
 	my $line	= $_;
 	next unless (length($line));
-	if ($line eq 'help') {
+	if ($line =~ /help/i) {
 		help();
-	} elsif ($line =~ /^explain (.*)$/) {
+	} elsif ($line =~ /^explain (.*)$/i) {
 		explain($model, $term, $1);
-	} elsif ($line =~ /^use (\w+)\s*;?\s*$/) {
+	} elsif ($line =~ /^use (\w+)\s*;?\s*$/i) {
 		my $name	= $1;
 		my $nmodel	= model( $name );
 		if ($nmodel) {
 			$model	= $nmodel;
 		}
-	} elsif ($line eq 'init') {
+	} elsif ($line =~ /init/i) {
 		init( $model, $term, $line );
-	} elsif ($line =~ m/^serializer (\w+)$/) {
+	} elsif ($line =~ m/^serializer (\w+)$/i) {
 		if (exists($serializer{ $1 })) {
 			$serializer	= $serializer{ $1 };
 		} else {
@@ -80,7 +80,7 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 				print "\n";
 			}
 		}
-	} elsif ($line eq 'debug') {
+	} elsif ($line =~ /debug/i) {
 		debug( $model, $term, $line );
 	} else {
 		query( $model, $term, $line );
