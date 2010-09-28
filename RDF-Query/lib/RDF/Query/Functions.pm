@@ -520,6 +520,16 @@ $RDF::Query::functions{"sparql:isliteral"}	= sub {
 	}
 };
 
+# sparql:isNumeric
+$RDF::Query::functions{"sparql:isnumeric"}	= sub {
+	my $query	= shift;
+	my $node	= shift;
+	if ($node->isa('RDF::Query::Node::Literal') and $node->is_numeric_type) {
+		return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	}
+	return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+};
+
 
 $RDF::Query::functions{"sparql:lang"}	= sub {
 	my $query	= shift;
