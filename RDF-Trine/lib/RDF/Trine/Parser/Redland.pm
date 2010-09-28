@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.127
+This document describes RDF::Trine::Parser::RDFa version 0.128
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,7 @@ BEGIN {
 					 [qw(application/xhtml+xml)]]
 	);
 	
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = __PACKAGE__;
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[0] } = __PACKAGE__
@@ -70,7 +70,7 @@ BEGIN {
 			(@{$FORMATS{$format}[1]});
 	}
 	
-	eval "use RDF::Redland 1.001001;";
+	eval "use RDF::Redland 1.000701;";
 	unless ($@) {
 		$HAVE_REDLAND_PARSER	= 1;
 	}
@@ -90,7 +90,7 @@ sub new {
 	my %args	= @_;
 	unless ($HAVE_REDLAND_PARSER) {
 		throw RDF::Trine::Error
-			-text => "Failed to load RDF::Redland >= 1.0.10.1";
+			-text => "Failed to load RDF::Redland >= 1.0.7.1";
 	}
 	unless (defined $args{name}) {
 		throw RDF::Trine::Error

@@ -1,4 +1,4 @@
-use Test::More qw(no_plan);
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
@@ -7,6 +7,12 @@ use File::Spec;
 use RDF::Trine qw(literal);
 use RDF::Trine::Parser;
 use RDF::Trine::Parser::Redland;
+
+if ($RDF::Trine::Parser::Redland::HAVE_REDLAND_PARSER) {
+	plan qw(no_plan);
+} else {
+	plan skip_all => "Redland parser is not available.";
+}
 
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle' );
 my @good	= bsd_glob("${path}/test*.ttl");

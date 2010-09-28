@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.127
+This document describes RDF::Trine::Parser version 0.128
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 }
 
 use Scalar::Util qw(blessed);
@@ -139,11 +139,11 @@ sub parse_url_into_model {
 	}
 	
 	### FALLBACK
-	if ($url =~ /[.]x?rdf$/) {
+	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
 		my $parser	= RDF::Trine::Parser::RDFXML->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]ttl$/) {
+	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
