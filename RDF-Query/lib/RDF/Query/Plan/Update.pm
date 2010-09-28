@@ -274,7 +274,7 @@ sub graph {
 	my $g		= shift;
 	my $label	= $self->graph_labels;
 	my $url		= $self->url->uri_value;
-	die;
+	throw RDF::Query::Error::ExecutionError -text => "RDF::Query::Plan::Update->graph not implemented.";
 # 	$g->add_node( "$self", label => "delete" . $self->graph_labels );
 # 	$g->add_node( "${self}$url", label => $url );
 # 	$g->add_edge( "$self" => "${self}$url", label => 'url' );

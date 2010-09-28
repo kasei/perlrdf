@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.127
+This document describes RDF::Trine::Store::DBI version 0.128
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.127";
+	$VERSION	= "0.128";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -164,7 +164,6 @@ sub _new_with_config {
 			    $config->{password} );
 }
 
-
 sub _new_with_object {
 	my $class	= shift;
 	my $obj		= shift;
@@ -185,6 +184,22 @@ sub temporary_store {
 	return $self;
 }
 
+=item C<< clear_restrictions >>
+
+Clear's the restrictions put on the binding of node types to the different
+statement positions. By default, the subject position is restricted to resources
+and blank nodes, and the predicate position to only resources. Calling this
+method will allow any node type in any statement position.
+
+=cut
+
+sub clear_restrictions {
+	my $self	= shift;
+	foreach my $pos (qw(subject predicate object context)) {
+		$self->{restrictions}{$pos}   = [];
+	}
+	return;
+}
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
@@ -1011,7 +1026,7 @@ sub _sql_for_equality_expr {
 sub _sql_for_triple { &_sql_for_statement; }
 sub _sql_for_quad { &_sql_for_statement; }
 {
-	my %restrictions	= (
+	my %default_restrictions	= (
 		subject		=> ['literal'],
 		predicate	=> [qw(literal blank)],
 		object		=> [],
@@ -1024,6 +1039,10 @@ sub _sql_for_statement {
 	my $context	= shift;
 	my %args	= @_;
 	
+	my %restrictions = defined $self->{restrictions}
+		? %{ $self->{restrictions} }
+		: %default_restrictions;
+
 	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
 	no warnings 'uninitialized';
 	if ($args{semantics} eq 'triple') {
@@ -1305,6 +1324,16 @@ sub init {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
+	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+        CREATE TABLE Statements${id} (
+            Subject NUMERIC(20) NOT NULL,
+            Predicate NUMERIC(20) NOT NULL,
+            Object NUMERIC(20) NOT NULL,
+            Context NUMERIC(20) NOT NULL DEFAULT 0,
+            PRIMARY KEY (Subject, Predicate, Object, Context)
+        );
+END
+	
 	$dbh->begin_work;
 	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
         CREATE TABLE Literals (
@@ -1333,20 +1362,10 @@ END
         );
 END
     
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Statements${id} (
-            Subject NUMERIC(20) NOT NULL,
-            Predicate NUMERIC(20) NOT NULL,
-            Object NUMERIC(20) NOT NULL,
-            Context NUMERIC(20) NOT NULL DEFAULT 0,
-            PRIMARY KEY (Subject, Predicate, Object, Context)
-        );
-END
-
+	$dbh->commit or warn $dbh->errstr;
+	
 	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-	
-	$dbh->commit or die $dbh->errstr;
 }
 
 sub _cleanup {

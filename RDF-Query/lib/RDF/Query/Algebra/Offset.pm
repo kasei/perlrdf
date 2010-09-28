@@ -166,16 +166,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq($self->pattern->referenced_variables);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->binding_variables);
+	return $self->pattern->potentially_bound;
 }
 
 =item C<< definite_variables >>

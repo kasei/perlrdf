@@ -81,6 +81,7 @@ use RDF::Trine 0.124 qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
+use Digest::MD5 qw(md5_hex);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
@@ -129,7 +130,6 @@ sub run {
 	my $config	= $self->{conf};
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	
-	
 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
 	my $model	= RDF::Trine::Model->new( $store );
 	
@@ -156,9 +156,13 @@ END
 	
 	
 	my $headers	= $req->headers;
-	if (my $type = $req->param('media-type')) {
+	my $type	= $headers->header('Accept');
+	if (my $t = $req->param('media-type')) {
+		$type	= $t;
 		$headers->header('Accept' => $type);
 	}
+	
+	my $ae		= $req->headers->header('Accept-Encoding') || '';
 	
 	if (my $sparql = $req->param('query')) {
 		my %args;
@@ -178,6 +182,15 @@ END
 			}
 		}
 		
+		my $match	= $headers->header('if-none-match') || '';
+		my $etag	= md5_hex( join('#', $model->etag, $type, $ae, $sparql) );
+		if (length($match)) {
+			if (defined($etag) and ($etag eq $match)) {
+				$response->status(304);
+				return $response;
+			}
+		}
+		
 		my $base	= $req->base;
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		if ($query) {
@@ -186,6 +199,9 @@ END
 			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
+				if (defined($etag)) {
+					$response->headers->header( ETag => $etag );
+				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 					my @variants	= (['text/html', 1.0, 'text/html']);
 					my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -278,7 +294,6 @@ END
 	}
 	
 	my $length	= 0;
-	my $ae		= $req->headers->header('Accept-Encoding') || '';
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
 		my ($rh, $wh);

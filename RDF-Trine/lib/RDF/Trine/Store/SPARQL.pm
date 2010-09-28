@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.127
+This document describes RDF::Trine::Store::SPARQL version 0.128
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.127";
+	$VERSION	= "0.128";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -93,12 +93,33 @@ sub _new_with_string {
 	return $class->new( $config );
 }
 
+=item C<< new_with_config ( \%config ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied configuration hashref.
+
+=cut
+
+sub new_with_config {
+	my $proto	= shift;
+	my $config	= shift;
+	$config->{storetype}	= 'SPARQL';
+	return $proto->SUPER::new_with_config( $config );
+}
+
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
 	return $class->new( $config->{url} );
 }
 
+sub _config_meta {
+	return {
+		required_keys	=> [qw(url)],
+		fields			=> {
+			url	=> { description => 'Endpoint URL', type => 'string' },
+		}
+	}
+}
 
 
 =item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
@@ -116,9 +137,9 @@ sub get_statements {
 	
 	my $use_quad	= 0;
 	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
 		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
+		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
+			$use_quad	= 1;
 			$bound++;
 			$bound{ 3 }	= $g;
 		}

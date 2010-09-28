@@ -1,3 +1,4 @@
+bin/dawg11-status.pl
 bin/deparse.pl
 bin/failing_earl_tests.sh
 bin/fedoptimize.pl
@@ -159,14 +160,8 @@ t/constraints.t
 t/dataset-from-file.t
 t/dataset-from-net.t
 t/dev-computed-statements.t
-t/dev-service-description.t
-t/dev-sql-compiler.t
-t/dev-time-intervals.t
 t/distance.js
-t/ext-federate-bindings.t
 t/ext-select-expr.t
-t/ext-service.t
-t/federate.t
 t/filters.t
 t/functions.rdf
 t/functions.t
@@ -176,9 +171,6 @@ t/literals.t
 t/models.pl
 t/named-graphs.t
 t/optional.t
-t/parser-rdql.t
-t/parser-sparql.t
-t/parser-sparql11.t
 t/plan.t
 t/pod_coverage.t
 t/pod.t
@@ -200,3 +192,14 @@ t/sparql11-update.t
 t/streams.t.deprecated
 t/syntactic_forms.t
 t/union.t
+xt/dawg-eval11.t
+xt/dawg-syntax11.t
+xt/dev-service-description.t
+xt/dev-sql-compiler.t
+xt/dev-time-intervals.t
+xt/ext-federate-bindings.t
+xt/ext-service.t
+xt/federate.t
+xt/parser-rdql.t
+xt/parser-sparql.t
+xt/parser-sparql11.t

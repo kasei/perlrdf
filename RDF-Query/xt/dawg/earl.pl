@@ -61,8 +61,10 @@ sub earl_fail_test {
 	$msg		=~ s/"/\\"/g;
 	
 	my $bridge	= $earl->{bridge};
-	if (blessed($test) and $test->isa('RDF::Trine::Node')) {
+	if (blessed($test) and $test->isa('RDF::Trine::Node::Resource')) {
 		$test	= $test->uri_value;
+	} elsif (blessed($test) and $test->isa('RDF::Trine::Node')) {
+		$test	= $test->as_string;
 	}
 	
 	print {$earl->{fh}} <<"END";

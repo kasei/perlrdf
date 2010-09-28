@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 0.127
+This document describes RDF::Trine::Parser::NQuads version 0.128
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $type (qw(text/x-nquads)) {
@@ -98,7 +98,7 @@ sub _emit_statement {
 		if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
 			my $value	= $nodes->[2]->literal_value;
 			my $dt		= $nodes->[2]->literal_datatype;
-			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 			$nodes->[2]	= literal( $canon, undef, $dt );
 		}
 	}

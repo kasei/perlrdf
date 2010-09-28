@@ -218,18 +218,28 @@ sub referenced_variables {
 	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	my @aliases	= map { $_->[0] } $self->ops;
-	throw Error; # XXX unimplemented
-	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
+	my @vars;
+#	push(@vars, map { $_->[0] } $self->ops);
+	foreach my $g ($self->groupby) {
+		if (blessed($g)) {
+			if ($g->isa('RDF::Query::Node::Variable')) {
+				push(@vars, $g->name);
+			} elsif ($g->isa('RDF::Query::Expression::Alias')) {
+				push(@vars, $g->name);
+			}
+		}
+	}
+	return RDF::Query::_uniq(@vars);
+#	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
 =item C<< definite_variables >>

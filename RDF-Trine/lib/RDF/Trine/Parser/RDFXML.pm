@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.127
+This document describes RDF::Trine::Parser::RDFXML version 0.128
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -583,7 +583,7 @@ sub assert {
 			if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
 				my $value	= $o->literal_value;
 				my $dt		= $o->literal_datatype;
-				my $canon	= $self->canonicalize_literal_value( $value, $dt );
+				my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 				$o	= literal( $canon, undef, $dt );
 				$st->object( $o );
 			}

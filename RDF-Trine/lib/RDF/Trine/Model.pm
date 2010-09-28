@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.127
+This document describes RDF::Trine::Model version 0.128
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 }
 
 use Scalar::Util qw(blessed);
@@ -233,6 +233,24 @@ sub size {
 	my $self	= shift;
 	$self->end_bulk_ops();
 	return $self->count_statements();
+}
+
+=item C<< etag >>
+
+If the model is based on a store that has the capability and knowledge to
+support caching, this method returns a persistent token that will remain
+consistent as long as the store's data doesn't change. This token is acceptable
+for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->etag;
+	}
+	return;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object ) >>

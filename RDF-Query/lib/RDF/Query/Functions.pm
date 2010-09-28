@@ -368,7 +368,7 @@ $RDF::Query::functions{"sparql:logical-or"}	= sub {
 			}
 		} otherwise {
 			my $e	= shift;
-			$l->debug("error in lhs of logical-or: " . $e->text);
+			$l->debug("error in lhs of logical-or: " . $e->text . " at " . $e->file . " line " . $e->line);
 			$error	||= $e;
 		};
 		last unless (defined($arg));
@@ -916,7 +916,7 @@ BEGIN {
 		}
 		
 		my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
-		die; # no bridge anymore!
+		die 'kasei:bloom died: no bridge anymore'; # no bridge anymore!
 		my $bridge;
 		my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
 		$l->debug("- " . scalar(@names) . " identity names for node");

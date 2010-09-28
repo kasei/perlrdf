@@ -20,7 +20,8 @@ package RDF::Query::VariableBindings;
 use strict;
 use warnings;
 use base qw(RDF::Trine::VariableBindings);
-use overload	'""'	=> sub { $_[0]->as_string };
+use overload	'""'	=> sub { $_[0]->as_string },
+				'bool'	=> sub { return 1 };
 
 use Scalar::Util qw(blessed refaddr);
 

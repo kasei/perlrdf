@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.127
+This document describes RDF::Trine::Parser::RDFa version 0.128
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
@@ -105,7 +105,7 @@ sub parse {
 					if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
 						my $value	= $o->literal_value;
 						my $dt		= $o->literal_datatype;
-						my $canon	= $self->canonicalize_literal_value( $value, $dt );
+						my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 						$o	= literal( $canon, undef, $dt );
 						$st->object( $o );
 					}

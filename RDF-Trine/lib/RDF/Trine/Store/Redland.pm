@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.127
+This document describes RDF::Trine::Store::Redland version 0.128
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.127";
+	$VERSION	= "0.128";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -122,6 +122,17 @@ sub _new_with_object {
 	my $obj		= shift;
 	return unless (blessed($obj) and $obj->isa('RDF::Redland::Model'));
 	return $class->new( $obj );
+}
+
+sub _config_meta {
+	return {
+		required_keys	=> [qw(store_name name options)]
+		fields			=> {
+			store_name	=> { description => 'Redland Storage Type', type => 'string' },
+			name		=> { description => 'Storage Name', type => 'string' },
+			options		=> { description => 'Options String', type => 'string' },
+		}
+	}
 }
 
 =item C<< temporary_store >>
@@ -268,10 +279,7 @@ sub add_statement {
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	unless ($self->count_statements( @nodes )) {
-# 		warn "adding " . $rst->as_string . ' to context: ' . $rnodes[3]->as_string . "\n";
-		$model->add_statement( $rst, $rnodes[3] );
-	}
+	$model->add_statement( $rst, $rnodes[3] );
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -340,8 +348,7 @@ sub count_statements {
 		my $iter	= $self->_model->find_statements( $st );
 		my $count	= 0;
 		my %seen;
-		while ($iter and not($iter->end)) {
-			my $st	= $iter->current;
+		while ($iter and my $st = $iter->current) {
 			unless ($seen{ $st->as_string }++) {
 				$count++;
 			}
@@ -353,9 +360,8 @@ sub count_statements {
 		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 		my $iter	= $self->_model->find_statements( $st, $rnodes[3] );
 		my $count	= 0;
-		while ($iter and not($iter->end)) {
+		while ($iter and my $st = $iter->current) {
 			$count++;
-			my $st	= $iter->current;
 			my $ctx	= $iter->context;
 			$iter->next;
 		}

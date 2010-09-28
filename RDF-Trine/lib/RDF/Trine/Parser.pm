@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.127
+This document describes RDF::Trine::Parser version 0.128
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 }
 
 use Scalar::Util qw(blessed);
@@ -83,11 +83,12 @@ sub new {
 	my $name	= shift;
 	my $key		= lc($name);
 	$key		=~ s/[^a-z]//g;
-	
+
 	if ($name eq 'guess') {
 		throw RDF::Trine::Error::UnimplementedError -text => "guess parser heuristics are not implemented yet";
 	} elsif (my $class = $parser_names{ $key }) {
-		return $class->new( @_ );
+        # re-add name for multiformat (e.g. Redland) parsers
+		return $class->new( name => $key, @_ );
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
 	}
@@ -138,11 +139,11 @@ sub parse_url_into_model {
 	}
 	
 	### FALLBACK
-	if ($url =~ /[.]x?rdf$/) {
+	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
 		my $parser	= RDF::Trine::Parser::RDFXML->new();
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]ttl$/) {
+	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
@@ -284,83 +285,6 @@ sub parse_file {
 
 =cut
 
-
-=item C<< canonicalize_literal_value ( $string, $datatype ) >>
-
-If C<< $datatype >> is a recognized datatype, returns the canonical lexical
-representation of the value C<< $string >>. Otherwise returns C<< $string >>.
-
-Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
-Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
-will trigger a warning.
-
-=cut
-
-sub canonicalize_literal_value {
-	my $self	= shift;
-	my $value	= shift;
-	my $dt		= shift;
-	if ($dt eq 'http://www.w3.org/2001/XMLSchema#integer') {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(.)/$1/;
-			return "${sign}${num}";
-		} else {
-			warn "Bad lexical form for xsd:integer: '$value'";
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			my $int		= $3;
-			my $frac	= $4;
-			$sign		= '' if ($sign eq '+');
-			unless ($frac =~ m/[1-9]/) {
-				$num	= $int;
-			}
-			$num		=~ s/^0+(.)/$1/;
-			return "${sign}${num}";
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(.)/$1/;
-			return "${sign}${num}";
-		} else {
-			warn "Bad lexical form for xsd:deciaml: '$value'";
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:float: '$value'";
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)? |[-+]?INF|NaN$/) {
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:double: '$value'";
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false|0|1)$/) {
-			$value	= 'true' if ($value eq '1');
-			$value	= 'false' if ($value eq '0');
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:boolean: '$value'";
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			# XXX need to canonicalize the dateTime
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:boolean: '$value'";
-		}
-	}
-	return $value;
-}
 
 1;
 

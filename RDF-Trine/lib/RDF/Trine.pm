@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.127
+This document describes RDF::Trine version 0.128
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ no warnings 'redefine';
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -56,6 +56,7 @@ BEGIN {
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
+use RDF::Trine::Graph;
 use RDF::Trine::Parser;
 use RDF::Trine::Serializer;
 use RDF::Trine::Node;

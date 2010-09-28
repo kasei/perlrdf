@@ -88,6 +88,9 @@ print <<"END";
 	<th>Result</th>
 </tr>
 END
+
+my $total	= 0;
+my $pass	= 0;
 while (my $row = $iter->next) {
 	my ($t, $o, $a)	= map { (blessed($_) and $_->can('uri_value')) ? $_->uri_value : $_ } @{ $row }{ qw(test outcome approval comment) };
 	my $c	= $row->{comment};
@@ -96,8 +99,13 @@ while (my $row = $iter->next) {
 	}
 	$t	=~ s{http://www.w3.org/2001/sw/DataAccess/tests/data-r2/}{};
 	$t	=~ s{http://www.w3.org/2009/sparql/docs/tests/data-sparql11/}{};
+	$t	=~ s{file:///Users/samofool/data/prog/git/perlrdf/RDF-Query/xt/dawg11/}{};
 	$a	=~ s{http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#}{};
 	$o	=~ s{http://www.w3.org/ns/earl#}{};
+	
+	$total++;
+	$pass++ if ($o eq 'pass');
+	
 	print <<"END";
 <tr>
 	<td>$t</td>
@@ -106,8 +114,12 @@ while (my $row = $iter->next) {
 </tr>
 END
 }
+
+my $perc	= sprintf('%.1f', (100*$pass/$total));
+
 print <<"END";
 </table>
+<p>Passed $pass of $total tests (${perc}%).</p>
 </body>
 </html>
 END

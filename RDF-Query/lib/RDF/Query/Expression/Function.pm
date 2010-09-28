@@ -231,7 +231,7 @@ sub evaluate {
 						my $val	= 0;
 						try {
 							$val	= $value->isa('RDF::Query::Expression')
-								? $value->evaluate( $query, $bound )
+								? $value->evaluate( $query, $bound, $context )
 								: ($value->isa('RDF::Trine::Node::Variable'))
 									? $bound->{ $value->name }
 									: $value;
@@ -249,7 +249,7 @@ sub evaluate {
 		try {
 			my $exprval	= $query->var_or_expr_value( $bound, $expr );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
-			my $value	= $func->evaluate( $query, {} );
+			my $value	= $func->evaluate( $query, {}, $context );
 			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			if ($bool) {
 				$index	= 0;

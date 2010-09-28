@@ -7,7 +7,7 @@ RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.127
+This document describes RDF::Trine::Statement version 0.128
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.128';
 }
 
 ######################################################################
@@ -80,10 +80,7 @@ Returns the subject, predicate and object of the triple pattern.
 
 sub nodes {
 	my $self	= shift;
-	my $s		= $self->subject;
-	my $p		= $self->predicate;
-	my $o		= $self->object;
-	return ($s, $p, $o);
+	return @$self;
 }
 
 =item C<< node_names >>

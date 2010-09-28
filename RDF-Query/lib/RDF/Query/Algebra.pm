@@ -60,8 +60,6 @@ use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
 use RDF::Query::Algebra::Project;
 use RDF::Query::Algebra::Extend;
-use RDF::Query::Algebra::Not;
-use RDF::Query::Algebra::Exists;
 use RDF::Query::Algebra::SubSelect;
 use RDF::Query::Algebra::Load;
 use RDF::Query::Algebra::Clear;
@@ -89,14 +87,14 @@ use constant SSE_TAGS	=> {
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
 };
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	return $self->referenced_variables;
 }

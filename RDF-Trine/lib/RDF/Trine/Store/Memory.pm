@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.127
+This document describes RDF::Trine::Store::Memory version 0.128
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,7 @@ use base qw(RDF::Trine::Store);
 
 use Set::Scalar;
 use Data::Dumper;
+use Digest::MD5 ('md5_hex');
 use List::Util qw(first);
 use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
@@ -37,7 +38,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.127";
+	$VERSION	= "0.128";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -85,19 +86,20 @@ Use this URI as a graph name for the contents of the file or URL.
 The following example initializes a Memory store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {storetype => 'Memory',
-		 sources => [
-			      {
-			       file => 'test-23.ttl',
-			       syntax => 'turtle',
-			      },
-			      {
-			       url => 'http://www.kjetil.kjernsmo.net/foaf',
-			       syntax => 'rdfxml',
-                               graph => 'http://example.org/graph/remote-users'
-		      	      }
-	        ]});
-
+                {
+                  storetype => 'Memory',
+                  sources => [
+                    {
+                      file => 'test-23.ttl',
+                      syntax => 'turtle',
+                    },
+                    {
+                      url => 'http://www.kjetil.kjernsmo.net/foaf',
+                      syntax => 'rdfxml',
+                      graph => 'http://example.org/graph/remote-users'
+                    }
+                  ]
+                });
 
 =cut
 
@@ -111,7 +113,9 @@ sub new {
 		object		=> {},
 		context		=> {},
 		ctx_nodes	=> {},
+		md5			=> Digest::MD5->new,
 	}, $class);
+
 	return $self;
 }
 
@@ -120,10 +124,19 @@ sub _new_with_string {
 	my $config	= shift || '';
 	my @uris	= split(';', $config);
 	my $self	= $class->new();
+	
+	my $model	= RDF::Trine::Model->new( $self );
 	foreach my $u (@uris) {
-		RDF::Trine::Parser->parse_url_into_model( $u, $self );
+		RDF::Trine::Parser->parse_url_into_model( $u, $model );
 	}
+	
 	return $self;
+}
+
+sub _config_meta {
+	return {
+		required_keys	=> []
+	}
 }
 
 sub _new_with_config {
@@ -416,6 +429,7 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
+			$self->{md5}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -456,6 +470,7 @@ sub remove_statement {
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
 		$self->{statements}[ $id ]	= undef;
+		$self->{md5}->add('-' . $st->as_string);
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
@@ -583,6 +598,19 @@ sub count_statements {
 		}
 		return $count;
 	}
+}
+
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	return $self->{md5}->hexdigest;
 }
 
 =item C<< size >>

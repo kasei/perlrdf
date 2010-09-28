@@ -79,11 +79,12 @@ sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
 	my $bound	= shift;
+	my $context	= shift;
 	my $op		= $self->op;
 	my ($data)	= $self->operands;
 	if ($op eq '+' or $op eq '-') {
 		my $l		= $data->isa('RDF::Query::Algebra')
-					? $data->evaluate( $query, $bound, @_ )
+					? $data->evaluate( $query, $bound, $context, @_ )
 					: ($data->isa('RDF::Query::Node::Variable'))
 						? $bound->{ $data->name }
 						: $data;
@@ -97,7 +98,7 @@ sub evaluate {
 		return RDF::Query::Node::Literal->new( $value, undef, $l->literal_datatype );
 	} elsif ($op eq '!') {
 		my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $data );
-		my $bool	= $alg->evaluate( $query, $bound, @_ );
+		my $bool	= $alg->evaluate( $query, $bound, $context, @_ );
 		if ($bool->literal_value eq 'true') {
 			return RDF::Query::Node::Literal->new( 'false', undef, 'http://www.w3.org/2001/XMLSchema#boolean' );
 		} else {
@@ -105,7 +106,7 @@ sub evaluate {
 		}
 	} else {
 		warn "unknown unary op: $op";
-		die;
+		throw RDF::Query::Error::ExecutionError -text => "Unknown unary op '$op'";
 	}
 }
 

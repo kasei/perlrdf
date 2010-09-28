@@ -223,21 +223,22 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	my @vars	= $self->pattern->binding_variables;
+	my @vars;
+	push(@vars, $self->pattern->potentially_bound);
 	foreach my $v (@{ $self->vars }) {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			push(@vars, $v->name);
 		} else {
-			push(@vars, $v->binding_variables);
+			push(@vars, $v->potentially_bound);
 		}
 	}
 	return RDF::Query::_uniq(@vars);
