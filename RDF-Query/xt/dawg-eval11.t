@@ -17,7 +17,7 @@ use RDF::Query::Node qw(iri);
 use RDF::Trine qw(statement);
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
-use RDF::Trine::Namespace qw(rdf);
+use RDF::Trine::Namespace qw(rdf rdfs);
 use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
@@ -50,13 +50,14 @@ my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 no warnings 'once';
 
 if ($PATTERN) {
+	$debug			= 1;
 	$debug_results	= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates negation project-expression property-path subquery) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates negation project-expression property-path subquery delete delete-data delete-where) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
@@ -87,20 +88,35 @@ print "# Using model object from " . ref($model) . "\n";
 
 my $earl	= init_earl( $model );
 my $type	= RDF::Trine::Node::Resource->new( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
-my $evalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
+my $qevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
+my $uevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2009/sparql/tests/test-update#UpdateEvaluationTest" );
 my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
 
 {
-	print "# Evaluation Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $evalt );
+	print "# Query Evaluation Tests\n";
+	my $stream	= $model->get_statements( undef, $type, $qevalt );
 	while (my $statement = $stream->next()) {
 		my $test		= $statement->subject;
 		my $name		= get_first_literal( $model, $test, $mfname );
 		unless ($test->uri_value =~ /$PATTERN/) {
 			next;
 		}
-		warn "### eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
-		eval_test( $model, $test, $earl );
+		warn "### query eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+		query_eval_test( $model, $test, $earl );
+	}
+}
+
+{
+	print "# Update Evaluation Tests\n";
+	my $stream	= $model->get_statements( undef, $type, $uevalt );
+	while (my $statement = $stream->next()) {
+		my $test		= $statement->subject;
+		my $name		= get_first_literal( $model, $test, $mfname );
+		unless ($test->uri_value =~ /$PATTERN/) {
+			next;
+		}
+		warn "### update eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+		update_eval_test( $model, $test, $earl );
 	}
 }
 
@@ -112,7 +128,155 @@ unless ($PATTERN) {
 
 ################################################################################
 
-sub eval_test {
+sub update_eval_test {
+	my $model		= shift;
+	my $test		= shift;
+	my $earl		= shift;
+	my $man			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
+	my $rq			= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
+	my $dawgt		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#');
+	my $ut			= RDF::Trine::Namespace->new('http://www.w3.org/2009/sparql/tests/test-update#');
+	my $mfact		= $man->action;
+	my $mfres		= $man->result;
+	my $qtquery		= $rq->query;
+	my $qtdata		= $rq->data;
+	my $qtgdata		= $rq->graphData;
+	my $reqs		= $man->requires;
+	my $approval	= $dawgt->approval;
+	
+	my $action		= get_first_obj( $model, $test, $mfact );
+	my $result		= get_first_obj( $model, $test, $mfres );
+	my $req			= get_first_obj( $model, $test, $reqs );
+	my $approved	= get_first_obj( $model, $test, $approval );
+	my $queryd		= get_first_obj( $model, $action, $qtquery );
+	my $data		= get_first_obj( $model, $action, $qtdata );
+	my @gdata		= get_all_obj( $model, $action, $qtgdata );
+	
+	if ($STRICT_APPROVAL) {
+		unless ($approved) {
+			warn "- skipping test because it isn't approved\n" if ($debug);
+			return;
+		}
+		if ($approved->uri_value eq 'http://www.w3.org/2001/sw/DataAccess/tests/test-dawg#NotClassified') {
+			warn "- skipping test because its approval is dawgt:NotClassified\n" if ($debug);
+			return;
+		}
+	}
+	
+	my $uri					= URI->new( $queryd->uri_value );
+	my $filename			= $uri->file;
+	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
+	$base					= "file://${base}";
+	warn "Loading SPARQL query from file $filename" if ($debug);
+	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
+
+	my $q			= $sparql;
+	$q				=~ s/\s+/ /g;
+	if ($debug) {
+		warn "### test     : " . $test->as_string . "\n";
+		warn "# sparql     : $q\n";
+		warn "# data       : " . $data->as_string if (blessed($data));
+		warn "# graph data : " . $_->as_string for (@gdata);
+		warn "# result     : " . $result->as_string;
+		warn "# requires   : " . $req->as_string if (blessed($req));
+	}
+	
+	print STDERR "constructing model... " if ($debug);
+	my ($test_model)	= new_model();
+	try {
+		if (blessed($data)) {
+			add_to_model( $test_model, $data->uri_value );
+		}
+	} catch Error with {
+		my $e	= shift;
+		fail($test->as_string);
+		earl_fail_test( $earl, $test, $e->text );
+		print "# died: " . $test->as_string . ": $e\n";
+		return;
+	};
+	
+	foreach my $gdata (@gdata) {
+		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
+		my $uri		= $graph->literal_value;
+		try {
+			warn "test data file: " . $data->uri_value . "\n" if ($debug);
+			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $test_model, context => RDF::Trine::Node::Resource->new($uri) );
+		} catch Error with {
+			my $e	= shift;
+			fail($test->as_string);
+			earl_fail_test( $earl, $test, $e->text );
+			print "# died: " . $test->as_string . ": $e\n";
+			return;
+		};
+	}
+	
+	my $result_status	= get_first_obj( $model, $result, $ut->result );
+	my @resgdata			= get_all_obj( $model, $result, $qtgdata );
+	my $expected_model	= new_model();
+	my $resdata		= get_first_obj( $model, $result, $qtdata );
+	try {
+		if (blessed($resdata)) {
+			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
+		}
+	} catch Error with {
+		my $e	= shift;
+		fail($test->as_string);
+		earl_fail_test( $earl, $test, $e->text );
+		print "# died: " . $test->as_string . ": $e\n";
+		return;
+	};
+	foreach my $gdata (@resgdata) {
+		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
+		my $uri		= $graph->literal_value;
+		try {
+			warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
+			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
+		} catch Error with {
+			my $e	= shift;
+			fail($test->as_string);
+			earl_fail_test( $earl, $test, $e->text );
+			print "# died: " . $test->as_string . ": $e\n";
+			return;
+		};
+	}
+	
+	my $ok	= 0;
+	eval {
+		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
+		unless ($query) {
+			warn RDF::Query->error;
+			return;
+		}
+		$query->execute( $test_model );
+		
+		my $test_graph		= RDF::Trine::Graph->new( $test_model );
+		my $expected_graph	= RDF::Trine::Graph->new( $expected_model );
+		
+		
+		if ($debug_results) {
+			warn "GOT: ---------------------------------------------\n";
+			warn $test_model->as_string;
+			warn "EXPECTED: ----------------------------------------\n";
+			warn $expected_model->as_string;
+			warn "--------------------------------------------------\n";
+		}
+		
+		my $eq	= $test_graph->equals( $expected_graph );
+		$ok	= is( $eq, 1, $test->as_string );
+	};
+	if ($ok) {
+		earl_pass_test( $earl, $test );
+	} else {
+		earl_fail_test( $earl, $test, $@ );
+		print "# failed: " . $test->as_string . "\n";
+	}
+	
+	print STDERR "ok\n" if ($debug);
+}
+
+sub query_eval_test {
 	my $model		= shift;
 	my $test		= shift;
 	my $earl		= shift;
@@ -226,7 +390,7 @@ sub new_model {
 	my $model		= RDF::Trine::Model->new( $store );
 	my @uris		= file_uris(@files);
 	foreach my $u (@uris) {
-		warn "loading uri: $u" if ($debug);
+		warn "loading uri: $u" if ($debug > 1);
 		add_to_model( $model, $u );
 	}
 	return $model;
