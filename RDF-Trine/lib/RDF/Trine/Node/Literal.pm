@@ -289,7 +289,7 @@ sub canonicalize_literal_value {
 			my $sign	= $1 || '';
 			my $num		= $2;
 			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(.)/$1/;
+			$num		=~ s/^0+(\d)/$1/;
 			return "${sign}${num}";
 		} else {
 			warn "Bad lexical form for xsd:integer: '$value'" if ($warn);
@@ -320,18 +320,25 @@ sub canonicalize_literal_value {
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
 		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
 			my $sign	= $1;
-			my $num		= $2;
-			my $exp		= $3;
 			my $inf		= $4;
 			my $nan		= $5;
 			no warnings 'uninitialized';
 			$sign		= '' if ($sign eq '+');
+			return "${sign}$inf" if ($inf);
+			return $nan if ($nan);
+
+			$value		= sprintf('%E', $value);
+			$value 		=~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/;
+			$sign		= $1;
+			$inf		= $4;
+			$nan		= $5;
+			my $num		= $2;
+			my $exp		= $3;
+			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
 			$exp	=~ s/E0+([1-9])$/E$1/;
 			$exp	=~ s/E0+$/E0/;
-			return "${sign}$inf" if ($inf);
-			return $nan if ($nan);
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
@@ -343,18 +350,25 @@ sub canonicalize_literal_value {
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
 		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
 			my $sign	= $1;
-			my $num		= $2;
-			my $exp		= $3;
 			my $inf		= $4;
 			my $nan		= $5;
 			no warnings 'uninitialized';
 			$sign		= '' if ($sign eq '+');
+			return "${sign}$inf" if ($inf);
+			return $nan if ($nan);
+
+			$value		= sprintf('%E', $value);
+			$value 		=~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/;
+			$sign		= $1;
+			$inf		= $4;
+			$nan		= $5;
+			my $num		= $2;
+			my $exp		= $3;
+			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
 			$exp	=~ s/E0+([1-9])$/E$1/;
 			$exp	=~ s/E0+$/E0/;
-			return "${sign}$inf" if ($inf);
-			return $nan if ($nan);
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
