@@ -124,7 +124,6 @@ sub as_sparql {
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
 	my $ggp		= $self->pattern;
-	my @pats	= $ggp->patterns;
 	
 	my $dataset	= $self->dataset;
 	my @ds_keys	= keys %{ $dataset || {} };
@@ -138,7 +137,37 @@ sub as_sparql {
 		$ds_string	= join("\n${indent}", @strings);
 	}
 	
-	if (not($insert) or not($delete)) {
+	if ($insert or $delete) {
+		# TODO: $(delete|insert)->as_sparql here isn't properly serializing GRAPH blocks, because even though they contain Quad objects inside of BGPs, there's no containing NamedGraph object...
+		if ($ds_string) {
+			$ds_string	= "\n${indent}$ds_string";
+		}
+		
+		if ($insert and $delete) {
+			return sprintf(
+				"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
+				$delete->as_sparql( $context, "${indent}  " ),
+				$insert->as_sparql( $context, "${indent}  " ),
+				$ds_string,
+				$ggp->as_sparql( $context, ${indent} ),
+			);
+		} elsif ($insert) {
+			return sprintf(
+				"INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
+				$insert->as_sparql( $context, "${indent}  " ),
+				$ds_string,
+				$ggp->as_sparql( $context, ${indent} ),
+			);
+		} else {
+			return sprintf(
+				"DELETE {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
+				$delete->as_sparql( $context, "${indent}  " ),
+				$ds_string,
+				$ggp->as_sparql( $context, ${indent} ),
+			);
+		}
+	} else {
+		my @pats	= $ggp->patterns;
 		my $op		= ($delete) ? 'DELETE' : 'INSERT';
 		my $temp	= ($delete) ? $delete : $insert;
 		my $temps	= ($temp->isa('RDF::Query::Algebra::GroupGraphPattern'))
@@ -162,18 +191,6 @@ sub as_sparql {
 				$ggp->as_sparql( $context, "${indent}" ),
 			);
 		}
-	} else {
-		if ($ds_string) {
-			$ds_string	= "\n${indent}$ds_string";
-		}
-# 		my @ds_string	= ($ds_string) ? $ds_string : ();
-		return sprintf(
-			"DELETE {\n${indent}	%s\n${indent}}\n${indent}INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
-			$delete->as_sparql( $context, "${indent}  " ),
-			$insert->as_sparql( $context, "${indent}  " ),
-			$ds_string,
-			$ggp->as_sparql( $context, ${indent} ),
-		);
 	}
 }
 
