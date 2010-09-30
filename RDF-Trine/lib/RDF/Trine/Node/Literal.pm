@@ -337,8 +337,8 @@ sub canonicalize_literal_value {
 			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E0+([1-9])$/E$1/;
-			$exp	=~ s/E0+$/E0/;
+			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
+			$exp	=~ s/E(-?)0+$/E${1}0/;
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
@@ -367,8 +367,8 @@ sub canonicalize_literal_value {
 			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E0+([1-9])$/E$1/;
-			$exp	=~ s/E0+$/E0/;
+			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
+			$exp	=~ s/E(-?)0+$/E${1}0/;
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
