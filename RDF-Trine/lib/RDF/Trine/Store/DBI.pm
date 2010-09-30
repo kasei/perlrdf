@@ -120,6 +120,14 @@ sub new {
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		$l->trace("got a DBD handle");
 		$dbh		= shift;
+		my $name	= $dbh->get_info(17);
+		if ($name eq 'MySQL') {
+			$class	= 'RDF::Trine::Store::DBI::mysql';
+		} elsif ($name eq 'PostgreSQL') {
+			$class	= 'RDF::Trine::Store::DBI::Pg';
+		} elsif ($name eq 'SQLite') {
+			$class	= 'RDF::Trine::Store::DBI::SQLite';
+		}
 	} else {
 		my $dsn		= shift;
 		my $user	= shift;
