@@ -173,7 +173,7 @@ END
 		my @named	= $req->param('named-graph-uri');
 		if (scalar(@default) or scalar(@named)) {
 			delete $args{ load_data };
-			$model	= RDF::Trine::Model->temporary_model;
+			$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
 			foreach my $url (@named) {
 				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
 			}
