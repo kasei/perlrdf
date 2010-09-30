@@ -65,6 +65,14 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.129 (2010-XX-XX)
+
+     * Updated Makefile.PL and RDF::Trine to require perl v5.8.3.
+     * Fixed bug in promotion of temporary models from memory-backed to a SQLite-backed store.
+     * Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink).
+     * Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types.
+     * Added RDF::Trine::Node::Literal->is_valid_lexical_form method.
+
   Version 0.128 (2010-09-28)
 
      * Added .owl as a recognized RDF/XML file extension for the fallback parser guessing code.
