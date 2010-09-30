@@ -1072,6 +1072,7 @@ sub _GroupClause {
 	my $self	= shift;
 	$self->_eat( qr/GROUP\s+BY/i );
 	
+	$self->{build}{__aggregate}	||= {};
 	my @vars;
 	$self->__consume_ws_opt;
 	$self->__GroupByVar;
@@ -1090,6 +1091,7 @@ sub _HavingClause {
 	my $self	= shift;
 	$self->_eat(qr/HAVING/i);
 	$self->__consume_ws_opt;
+	$self->{build}{__aggregate}	||= {};
 	local($self->{__aggregate_call_ok})	= 1;
 	$self->_Constraint;
 	my ($expr) = splice(@{ $self->{stack} });
