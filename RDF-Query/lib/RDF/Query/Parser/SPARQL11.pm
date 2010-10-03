@@ -1076,11 +1076,13 @@ sub _GroupClause {
 	my @vars;
 	$self->__consume_ws_opt;
 	$self->__GroupByVar;
-	push( @vars, splice(@{ $self->{stack} }));
+	my ($v)	= splice(@{ $self->{stack} });
+	push( @vars, $v );
 	$self->__consume_ws_opt;
 	while ($self->__GroupByVar_test) {
 		$self->__GroupByVar;
-		push( @vars, splice(@{ $self->{stack} }));
+		my ($v)	= splice(@{ $self->{stack} });
+		push( @vars, $v );
 		$self->__consume_ws_opt;
 	}
 	$self->{build}{__group_by}	= \@vars;

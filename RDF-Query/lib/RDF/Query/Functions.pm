@@ -812,12 +812,13 @@ $RDF::Query::functions{"sparql:exists"}	= sub {
 
 $RDF::Query::functions{"sparql:coalesce"}	= sub {
 	my $query	= shift;
-	my @args	= @_;
-	foreach my $node (@args) {
+	my $args	= shift;
+	while (defined(my $node = $args->())) {
 		if (blessed($node)) {
 			return $node;
 		}
 	}
+	return;
 };
 
 our $GEO_DISTANCE_LOADED;
