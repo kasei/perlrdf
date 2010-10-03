@@ -1,4 +1,4 @@
-use Test::More tests => 38;
+use Test::More tests => 41;
 use Test::Exception;
 
 use utf8;
@@ -31,6 +31,14 @@ $model->add_statement( $_ ) for ($st0, $st1, $st2, $st3, $st4);
 
 count_tests( $model );
 get_statements_tests( $model );
+get_statements_union_graph( $model );
+
+sub get_statements_union_graph {
+	my $model	= shift;
+	is( $model->count_statements( undef, $ex->r, undef, undef ), 3, 'count of statements with undef context' );
+	is( $model->count_statements( undef, $ex->r, undef, $ex->g2 ), 1, 'count of statements with iri context' );
+	is( $model->count_statements( undef, $ex->r, undef, iri('tag:gwilliams@cpan.org,2010-01-01:RT:ALL') ), 3, 'count of statements with special union-graph iri' );
+}
 
 sub count_tests {
 	my $_model	= shift;

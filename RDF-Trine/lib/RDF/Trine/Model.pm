@@ -271,6 +271,13 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub count_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
+
+	if (scalar(@_) >= 4) {
+		my $graph	= $_[3];
+		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+			$_[3]	= undef;
+		}
+	}
 	return $self->_store->count_statements( @_ );
 }
 
@@ -291,6 +298,13 @@ the underlying store).
 sub get_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
+	
+	if (scalar(@_) >= 4) {
+		my $graph	= $_[3];
+		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+			$_[3]	= undef;
+		}
+	}
 	return $self->_store->get_statements( @_ );
 }
 
@@ -723,11 +737,23 @@ sub _store {
 
 sub _debug {
 	my $self	= shift;
+	my $warn	= shift;
 	my $stream	= $self->get_statements( undef, undef, undef, undef );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
 	$l->debug( 'model statements:' );
+	if ($warn) {
+		warn "Model $self:\n";
+	}
+	my $count	= 0;
 	while (my $s = $stream->next) {
+		$count++;
+		if ($warn) {
+			warn $s->as_string . "\n";
+		}
 		$l->debug('[model]' . $s->as_string);
+	}
+	if ($warn) {
+		warn "$count statements\n";
 	}
 }
 
