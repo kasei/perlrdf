@@ -51,8 +51,11 @@ BEGIN {
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(iri blank literal variable statement store);
+	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
 }
+
+use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
+use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
