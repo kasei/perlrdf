@@ -86,7 +86,16 @@ sub execute ($) {
 		
 		while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
-			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+			my @group;
+			foreach my $g (@groupby) {
+				my $v	= $query->var_or_expr_value( $row, $g );
+				if ($g->isa('RDF::Query::Expression::Alias')) {
+					$row->{ $g->name }	= $v;
+				}
+				push(@group, $v);
+			}
+			
+# 			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
 			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
