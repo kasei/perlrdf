@@ -108,7 +108,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent} || "\t";
+	my $indent	= ($context->{indent} ||= "\t");
 	
 	my @patterns	= $self->patterns;
 	if (scalar(@patterns) == 1) {
