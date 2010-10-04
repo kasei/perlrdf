@@ -72,6 +72,8 @@ VERSION HISTORY
      * Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink).
      * Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types.
      * Added RDF::Trine::Node::Literal->is_valid_lexical_form method.
+     * Added support for special union-graph 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL'.
+     * Added exportable constants for UNION_GRAPH and NIL_GRAPH in RDF::Trine.
 
   Version 0.128 (2010-09-28)
 

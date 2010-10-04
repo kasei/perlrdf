@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.129" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-10-04" ;
                         ];
         asc:changes     [
                         asc:update      "Updated Makefile.PL and RDF::Trine to require perl v5.8.3." ;
@@ -24,6 +24,8 @@
                         asc:update      "Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink)." ;
                         asc:update      "Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types." ;
                         asc:addition    "Added RDF::Trine::Node::Literal->is_valid_lexical_form method." ;
+                        asc:addition    "Added support for special union-graph 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL'." ;
+                        asc:addition    "Added exportable constants for UNION_GRAPH and NIL_GRAPH in RDF::Trine." ;
                         ] .
 
 
