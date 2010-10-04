@@ -10,6 +10,25 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.129.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.128.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.129" ;
+                        doap:created      "2010-10-04" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Updated Makefile.PL and RDF::Trine to require perl v5.8.3." ;
+                        asc:update      "Fixed bug in promotion of temporary models from memory-backed to a SQLite-backed store." ;
+                        asc:update      "Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink)." ;
+                        asc:update      "Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types." ;
+                        asc:addition    "Added RDF::Trine::Node::Literal->is_valid_lexical_form method." ;
+                        asc:addition    "Added support for special union-graph 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL'." ;
+                        asc:addition    "Added exportable constants for UNION_GRAPH and NIL_GRAPH in RDF::Trine." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.128.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.127.tar.gz> ;

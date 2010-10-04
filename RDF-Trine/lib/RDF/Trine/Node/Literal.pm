@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.128
+This document describes RDF::Trine::Node::Literal version 0.129
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.128';
+	$VERSION	= '0.129';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -337,8 +337,8 @@ sub canonicalize_literal_value {
 			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E0+([1-9])$/E$1/;
-			$exp	=~ s/E0+$/E0/;
+			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
+			$exp	=~ s/E(-?)0+$/E${1}0/;
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
@@ -367,8 +367,8 @@ sub canonicalize_literal_value {
 			$num		=~ s/[.](\d+?)0+/.$1/;
 			$exp	=~ tr/e/E/;
 			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E0+([1-9])$/E$1/;
-			$exp	=~ s/E0+$/E0/;
+			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
+			$exp	=~ s/E(-?)0+$/E${1}0/;
 			return "${sign}${num}${exp}";
 		} else {
 			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
