@@ -38,6 +38,9 @@ unless (exists $args{update}) {
 }
 $args{ base }	= 'file://' . getcwd . '/';
 
+my $def_format	= 'ntriples';
+my $serializer	= RDF::Trine::Serializer->new($def_format);
+my %serializer	= ($def_format => $serializer);
 my $class	= delete $args{ class } || 'RDF::Query';
 my $term	= Term::ReadLine->new('rqsh', \*STDIN, \*STDOUT);
 
@@ -45,19 +48,64 @@ print "rqsh v1.0\n\n";
 while ( defined ($_ = $term->readline('rqsh> ')) ) {
 	my $line	= $_;
 	next unless (length($line));
-	if ($line =~ /^use (\w+)\s*;?\s*$/) {
+	if ($line =~ /help/i) {
+		help();
+	} elsif ($line =~ /^explain (.*)$/i) {
+		explain($model, $term, $1);
+	} elsif ($line =~ /^use (\w+)\s*;?\s*$/i) {
 		my $name	= $1;
 		my $nmodel	= model( $name );
 		if ($nmodel) {
 			$model	= $nmodel;
 		}
-	} elsif ($line eq 'init') {
+	} elsif ($line =~ /init/i) {
 		init( $model, $term, $line );
-	} elsif ($line eq 'debug') {
+	} elsif ($line =~ m/^serializer (\w+)$/i) {
+		if (exists($serializer{ $1 })) {
+			$serializer	= $serializer{ $1 };
+		} else {
+			my $ser;
+			try {
+				$ser	= RDF::Trine::Serializer->new( $1 );
+			} catch RDF::Trine::Error::SerializationError with {};
+			if ($ser) {
+				$serializer{ $1 }	= $ser;
+				$serializer			= $ser;
+			} else {
+				print "Unrecognized serializer name '$1'\n";
+				print "Valid serializers are:\n";
+				foreach my $name (RDF::Trine::Serializer->serializer_names) {
+					print "    $name\n";
+				}
+				print "\n";
+			}
+		}
+	} elsif ($line =~ /debug/i) {
 		debug( $model, $term, $line );
 	} else {
 		query( $model, $term, $line );
 	}
+}
+
+sub help {
+	print <<"END";
+Commands:
+    help                Show this help information.
+    use [backend]       Switch the storage backend (e.g. "use mysql").
+    init                Initialize the storage backend (creating necessary indexes, etc.).
+    serializer [format] Set the serializer used for RDF results (e.g. "serializer turtle").
+    debug               Print all the quads in the storage backend.
+    explain [sparql]    Explain the execution plan for the SPARQL 1.1 query/update.
+    SELECT ...          Execute the SPARQL 1.1 query.
+    ASK ...             Execute the SPARQL 1.1 query.
+    CONSTRUCT ...       Execute the SPARQL 1.1 query.
+    DESCRIBE ...        Execute the SPARQL 1.1 query.
+    INSERT ...          Execute the SPARQL 1.1 update.
+    DELETE ...          Execute the SPARQL 1.1 update.
+    LOAD <uri>          Execute the SPARQL 1.1 update.
+    CLEAR ...           Execute the SPARQL 1.1 update.
+
+END
 }
 
 sub init {
@@ -103,6 +151,20 @@ sub model {
 	}
 }
 
+sub explain {
+	my $model	= shift;
+	my $term	= shift;
+	my $sparql	= shift;
+	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
+	my $query	= $class->new( $psparql, \%args );
+	unless ($query) {
+		print "Error: " . RDF::Query->error . "\n";
+		return;
+	}
+	my ($plan, $ctx)	= $query->prepare( $model );
+	print $plan->sse . "\n";
+}
+
 sub query {
 	my $model	= shift;
 	my $term	= shift;
@@ -119,7 +181,11 @@ sub query {
 		my $iter	= $query->execute_plan( $plan, $ctx );
 		my $count	= -1;
 		if (blessed($iter)) {
-			print $iter->as_string( 0, \$count );
+			if ($iter->isa('RDF::Trine::Iterator::Graph')) {
+				$serializer->serialize_iterator_to_file( $term->OUT, $iter );
+			} else {
+				print $iter->as_string( 0, \$count );
+			}
 		}
 		if ($plan->is_update) {
 			my $size	= $model->size;

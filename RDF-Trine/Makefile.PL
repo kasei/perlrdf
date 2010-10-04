@@ -12,6 +12,8 @@ build_requires		'Test::More'				=> 0.61;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 
+perl_version		'5.008003';
+
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
 requires			'DBD::SQLite'				=> 1.14;

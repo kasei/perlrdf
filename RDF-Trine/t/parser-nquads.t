@@ -63,7 +63,7 @@ END
 		my $model = RDF::Trine::Model->temporary_model;
 		my $ntriples	= qq[_:a <http://example.com/decimal> "+100000.00"^^<http://www.w3.org/2001/XMLSchema#decimal> <g> .\n];
 		$parser->parse_into_model(undef, $ntriples, $model);
-		is( $model->count_statements(undef, undef, literal('100000', undef, 'http://www.w3.org/2001/XMLSchema#decimal')), 1, 'expected 1 count for canonical decimal value' );
+		is( $model->count_statements(undef, undef, literal('100000.0', undef, 'http://www.w3.org/2001/XMLSchema#decimal')), 1, 'expected 1 count for canonical decimal value' );
 	}
 	{
 		my $model = RDF::Trine::Model->temporary_model;

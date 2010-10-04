@@ -82,7 +82,7 @@ sub execute ($) {
 		}
 		
 		my @operations	= (
-			[$delete_template, 'remove_statement'],
+			[$delete_template, 'remove_statements'],
 			[$insert_template, 'add_statement'],
 		);
 		
@@ -112,20 +112,30 @@ sub execute ($) {
 							$nodes[$i]	= $self->[0]{blank_map}{ $id };
 						}
 					}
-					my $ok	= 1;
-					foreach (@nodes) {
-						if (not blessed($_)) {
-							$ok	= 0;
-						} elsif ($_->isa('RDF::Trine::Node::Variable')) {
-							$ok	= 0;
+# 					my $ok	= 1;
+					foreach my $i (0 .. 3) {
+						my $n	= $nodes[ $i ];
+						if (not blessed($n)) {
+							if ($i == 3) {
+								$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
+							} else {
+								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+							}
+# 							$ok	= 0;
+# 						} elsif ($n->isa('RDF::Trine::Node::Variable')) {
+# 							$ok	= 0;
 						}
 					}
-					next unless ($ok);
+# 					next unless ($ok);
 					my $st	= (scalar(@nodes) == 4)
 							? RDF::Trine::Statement::Quad->new( @nodes )
 							: RDF::Trine::Statement->new( @nodes );
 					$l->trace( "$method: " . $st->as_string );
-					$context->model->$method( $st );
+					if ($method eq 'remove_statements') {
+						$context->model->$method( $st->nodes );
+					} else {
+						$context->model->$method( $st );
+					}
 				}
 			}
 		}
