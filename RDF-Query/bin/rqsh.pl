@@ -52,6 +52,8 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		help();
 	} elsif ($line =~ /^explain (.*)$/i) {
 		explain($model, $term, $1);
+	} elsif ($line =~ /^parse (.*)$/i) {
+		parse($model, $term, $1);
 	} elsif ($line =~ /^use (\w+)\s*;?\s*$/i) {
 		my $name	= $1;
 		my $nmodel	= model( $name );
@@ -163,6 +165,20 @@ sub explain {
 	}
 	my ($plan, $ctx)	= $query->prepare( $model );
 	print $plan->sse . "\n";
+}
+
+sub parse {
+	my $model	= shift;
+	my $term	= shift;
+	my $sparql	= shift;
+	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
+	my $query	= $class->new( $psparql, \%args );
+	unless ($query) {
+		print "Error: " . RDF::Query->error . "\n";
+		return;
+	}
+	my $pattern	= $query->pattern;
+	print $pattern->sse . "\n";
 }
 
 sub query {
