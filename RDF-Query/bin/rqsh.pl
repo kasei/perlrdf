@@ -97,6 +97,7 @@ Commands:
     init                Initialize the storage backend (creating necessary indexes, etc.).
     serializer [format] Set the serializer used for RDF results (e.g. "serializer turtle").
     debug               Print all the quads in the storage backend.
+    parse [sparql]      Print the parsed algebra for the SPARQL 1.1 query/update.
     explain [sparql]    Explain the execution plan for the SPARQL 1.1 query/update.
     SELECT ...          Execute the SPARQL 1.1 query.
     ASK ...             Execute the SPARQL 1.1 query.
