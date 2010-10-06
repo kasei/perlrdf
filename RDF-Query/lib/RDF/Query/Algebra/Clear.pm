@@ -82,9 +82,16 @@ sub as_sparql {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "CLEAR DEFAULT";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "CLEAR $1";
+	} else {
+		$string	= ($graph->is_nil)
 				? 'CLEAR GRAPH DEFAULT'
 				: sprintf( "CLEAR GRAPH <%s>", $graph->uri_value );
+	}
 	return $string;
 }
 
@@ -100,9 +107,16 @@ sub sse {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "(clear default)";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "(clear " . lc($1) . ")";
+	} else {
+		$string	= ($graph->is_nil)
 				? '(clear default)'
 				: sprintf( "(clear <%s>)", $graph->uri_value );
+	}
 	return $string;
 }
 

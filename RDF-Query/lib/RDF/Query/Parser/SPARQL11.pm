@@ -673,11 +673,11 @@ sub _ClearGraphUpdate {
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/NAMED/i)) {
 		$self->_eat(qr/NAMED/i);
-		my $pat	= RDF::Query::Algebra::Clear->new( 'NAMED' );
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Query::Node::Resource->new('tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') );
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/ALL/i)) {
 		$self->_eat(qr/ALL/i);
-		my $pat	= RDF::Query::Algebra::Clear->new( 'ALL' );
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Query::Node::Resource->new('tag:gwilliams@cpan.org,2010-01-01:RT:ALL') );
 		$self->_add_patterns( $pat );
 	}
 	$self->{build}{method}		= 'CLEAR';
