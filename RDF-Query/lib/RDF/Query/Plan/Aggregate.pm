@@ -84,7 +84,7 @@ sub execute ($) {
 		my @ops		= @{ $self->[3] };
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		
-		while (my $row = $plan->next) {
+		ROW: while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
 			my @group;
 			foreach my $g (@groupby) {
@@ -92,6 +92,7 @@ sub execute ($) {
 				if ($g->isa('RDF::Query::Expression::Alias')) {
 					$row->{ $g->name }	= $v;
 				}
+				next ROW unless (blessed($v));
 				push(@group, $v);
 			}
 			
