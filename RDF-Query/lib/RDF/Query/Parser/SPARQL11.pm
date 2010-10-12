@@ -1309,8 +1309,18 @@ sub __handle_GraphPatternNotTriples {
 			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
 		}
 		
-		my $opt	= $class->new( $ggp, @args );
-		$self->_add_patterns( $opt );
+		my $opt;
+		if ($class =~ /Optional/ and scalar(@args) and blessed($args[0]) and $args[0]->isa('RDF::Query::Algebra::Filter')) {
+			my $filter	= $args[0];
+			my $pat		= $filter->pattern;
+			$args[0]	= $pat;
+			my $opt		= $class->new( $ggp, @args );
+			$filter->pattern( $opt );
+			$self->_add_patterns( $filter );
+		} else {
+			my $opt	= $class->new( $ggp, @args );
+			$self->_add_patterns( $opt );
+		}
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
@@ -1481,7 +1491,6 @@ sub _OptionalGraphPattern {
 	$self->_eat( qr/OPTIONAL/i );
 	{	# If there are filters to the left of the OPTIONAL, they need to be added to the implicit GGP to the left of the OPTIONAL
 		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
 		if (@filters) {
 			my $cont	= $self->_pop_pattern_container;
 			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
@@ -1509,7 +1518,6 @@ sub _MinusGraphPattern {
 	$self->_eat( qr/MINUS/i );
 	{	# If there are filters to the left of the MINUS, they need to be added to the implicit GGP to the left of the MINUS
 		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
 		if (@filters) {
 			my $cont	= $self->_pop_pattern_container;
 			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
