@@ -48,6 +48,11 @@ our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
 	$VERSION	= '0.129';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
+	foreach my $ext (qw(html xhtml htm)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/xhtml+xml';
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}

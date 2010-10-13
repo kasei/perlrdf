@@ -51,6 +51,11 @@ our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_
 BEGIN {
 	$VERSION				= '0.129';
 	$RDF::Trine::Parser::parser_names{ 'rdfjson' }	= __PACKAGE__;
+	foreach my $ext (qw(json js)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/json';
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}

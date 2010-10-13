@@ -39,6 +39,9 @@ our ($VERSION);
 BEGIN {
 	$VERSION				= '0.129';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
+	foreach my $ext (qw(trig)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
 # 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 # 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 # 	}

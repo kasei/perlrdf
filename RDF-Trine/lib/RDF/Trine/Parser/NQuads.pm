@@ -51,6 +51,11 @@ BEGIN {
 	$VERSION	= '0.129';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
+	foreach my $ext (qw(nq)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/x-nquads';
 	foreach my $type (qw(text/x-nquads)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
