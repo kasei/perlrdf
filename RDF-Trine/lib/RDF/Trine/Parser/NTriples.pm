@@ -125,7 +125,7 @@ LINE:
 		
 		my @nodes	= ();
 		try {
-			while (my $n = $self->_eat_node( $lineno, $line )) {
+			while (my $n = $self->_eat_node( $base, $lineno, $line )) {
 				push(@nodes, $n);
 				$line	=~ s/^\s*//;
 			}
@@ -171,6 +171,7 @@ sub _emit_statement {
 
 sub _eat_node {
 	my $self	= shift;
+	my $base	= shift;
 	my $lineno	= shift;
 	$_[0]	=~ s/^\s*//;
 	return unless length($_[0]);
@@ -180,7 +181,7 @@ sub _eat_node {
 	if ($char eq '<') {
 		my ($uri)	= $_[0] =~ m/^<([^>]*)>/;
 		substr($_[0], 0, length($uri)+2)	= '';
-		return RDF::Trine::Node::Resource->new( _unescape($uri, $lineno) );
+		return RDF::Trine::Node::Resource->new( _unescape($uri, $lineno), $base );
 	} elsif ($char eq '_') {
 		my ($name)	= $_[0] =~ m/^_:([A-Za-z][A-Za-z0-9]*)/;
 		substr($_[0], 0, length($name)+2)	= '';
