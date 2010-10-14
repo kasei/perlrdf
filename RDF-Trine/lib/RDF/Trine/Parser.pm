@@ -99,7 +99,7 @@ Returns the parser class appropriate for parsing content of the specified media 
 
 =cut
 
-sub parsr_by_media_type {
+sub parser_by_media_type {
 	my $proto	= shift;
 	my $type	= shift;
 	my $class	= $media_types{ $type };
