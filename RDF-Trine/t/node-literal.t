@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 31;
+use Test::More tests => 30;
 
 use utf8;
 
@@ -15,7 +15,6 @@ ok( literal('1', undef, $xsd->integer)->is_valid_lexical_form, 'integer valid le
 ok( literal('01', undef, $xsd->integer)->is_valid_lexical_form, 'integer valid lexical form' );
 ok( not(literal('02 ', undef, $xsd->integer)->is_valid_lexical_form), 'integer valid lexical form' );
 ok( not(literal('abc', undef, $xsd->integer)->is_valid_lexical_form), 'integer valid lexical form' );
-ok( not(literal('1', undef, $xsd->double)->is_valid_lexical_form), 'double valid lexical form' );
 
 my %values	= (
 	integer	=> {
