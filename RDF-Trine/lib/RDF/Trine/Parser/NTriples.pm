@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.129
+This document describes RDF::Trine::Parser::NTriples version 0.130_01
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.129';
+	$VERSION	= '0.130_01';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
