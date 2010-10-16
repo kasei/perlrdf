@@ -75,14 +75,13 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
-statement parsed, will call C<< $model->add_statement( $statement ) >>.
+Parses the C<< $data >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle C<< $fh >>, using the given
-C<< $base_uri >>. For each RDF statement parsed, will call
-C<< $model->add_statement( $statement ) >>.
+Parses all data read from the filehandle C<< $fh >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
 
@@ -181,7 +180,7 @@ sub _eat_node {
 	if ($char eq '<') {
 		my ($uri)	= $_[0] =~ m/^<([^>]*)>/;
 		substr($_[0], 0, length($uri)+2)	= '';
-		return RDF::Trine::Node::Resource->new( _unescape($uri, $lineno), $base );
+		return RDF::Trine::Node::Resource->new( _unescape($uri, $lineno) );
 	} elsif ($char eq '_') {
 		my ($name)	= $_[0] =~ m/^_:([A-Za-z][A-Za-z0-9]*)/;
 		substr($_[0], 0, length($name)+2)	= '';
