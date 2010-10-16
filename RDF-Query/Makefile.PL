@@ -42,6 +42,8 @@ resources(
 
 author_tests('xt');
 
+install_script 'bin/rqsh';
+
 sign;
 
 WriteAll;

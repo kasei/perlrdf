@@ -13,7 +13,7 @@ bin/parse_profile.pl
 bin/parse.pl
 bin/passing_earl_tests.sh
 bin/query.pl
-bin/rqsh.pl
+bin/rqsh
 bin/rqsh-server.pl
 Changes.ttl
 data/about.xrdf
