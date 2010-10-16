@@ -434,7 +434,7 @@ sub is_valid_lexical_form {
 			return 0;
 		}
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)? |[-+]?INF|NaN$/) {
+		if ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
 			return 1;
 		} else {
 			return 0;
