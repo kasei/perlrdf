@@ -10,6 +10,21 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.130.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.129.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.130" ;
+                        doap:created      "2010-10-18" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double." ;
+                        asc:update      "Updated RDF::Trine::Iterator::Bindings->as_string to use concise turtle syntax." ;
+                        asc:addition    "Added RDF::Trine::Parser methods media_type(), media_types(), parser_by_media_type(), and guess_parser_by_filename()." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.129.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.128.tar.gz> ;

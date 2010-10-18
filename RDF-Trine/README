@@ -65,7 +65,13 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.129 (2010-XX-XX)
+  Version 0.130 (2010-10-18)
+
+     * Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double.
+     * Updated RDF::Trine::Iterator::Bindings->as_string to use concise turtle syntax.
+     * Added RDF::Trine::Parser methods media_type(), media_types(), parser_by_media_type(), and guess_parser_by_filename().
+
+  Version 0.129 (2010-10-04)
 
      * Updated Makefile.PL and RDF::Trine to require perl v5.8.3.
      * Fixed bug in promotion of temporary models from memory-backed to a SQLite-backed store.
