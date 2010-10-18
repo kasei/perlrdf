@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.129
+This document describes RDF::Trine::Serializer::Turtle version 0.130
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.129';
+	$VERSION	= '0.130';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
@@ -513,6 +513,63 @@ sub _turtle_rdf_list {
 	print {$fh} ')';
 }
 
+sub _node_concise_string {
+	my $self	= shift;
+	my $obj		= shift;
+	if ($obj->is_literal and $obj->has_datatype) {
+		my $dt	= $obj->literal_datatype;
+		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$> and $obj->is_valid_lexical_form) {
+			my $value	= $obj->literal_value;
+			return $value;
+		} else {
+			my $dtr	= iri($dt);
+			my $literal	= $obj->literal_value;
+			my $qname;
+			try {
+				my ($ns,$local)	= $dtr->qname;
+				if (exists $self->{ns}{$ns}) {
+					$qname	= join(':', $self->{ns}{$ns}, $local);
+					$self->{used_ns}{ $self->{ns}{$ns} }++;
+				}
+			} catch RDF::Trine::Error with {};
+			if ($qname) {
+				my $escaped	= $obj->_unicode_escape( $literal );
+				return qq["$escaped"^^$qname];
+			}
+		}
+	} elsif ($obj->isa('RDF::Trine::Node::Resource')) {
+		my $value;
+		try {
+			my ($ns,$local)	= $obj->qname;
+			if (exists $self->{ns}{$ns}) {
+				$value	= join(':', $self->{ns}{$ns}, $local);
+				$self->{used_ns}{ $self->{ns}{$ns} }++;
+			}
+		} catch RDF::Trine::Error with {} otherwise {};
+		if ($value) {
+			return $value;
+		}
+	}
+	return;
+}
+
+=item C<< node_as_concise_string >>
+
+Returns a string representation using common Turtle syntax shortcuts (e.g. for numeric literals).
+
+=cut
+
+sub node_as_concise_string {
+	my $self	= shift;
+	my $obj		= shift;
+	my $str		= $self->_node_concise_string( $obj );
+	if (defined($str)) {
+		return $str;
+	} else {
+		return $obj->as_ntriples;
+	}
+}
+
 sub _turtle {
 	my $self	= shift;
 	my $fh		= shift;
@@ -536,51 +593,9 @@ sub _turtle {
 				return;
 			}
 		}
-	} elsif ($obj->is_literal and $obj->has_datatype) {
-		my $dt	= $obj->literal_datatype;
-		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$>) {
-			my $type	= $1;
-			my $value	= $obj->literal_value;
-			if ($type eq 'integer' and $value =~ m/^[-+]?[0-9]+$/) {
-				print {$fh} $value;
-				return;
-			} elsif ($type eq 'double' and $value =~ m/^[-+]?([0-9]+[.][0-9]*[eE][-+]?[0-9]+|[.][0-9]+[eE][-+]?[0-9]+|[0-9]+[eE][-+]?[0-9]+)$/) {
-				print {$fh} $value;
-				return;
-			} elsif ($type eq 'decimal' and $value =~ m/^[-+]?([0-9]+[.][0-9]*|[.][0-9]+|[0-9]+)$/) {
-				print {$fh} $value;
-				return;
-			}
-		} else {
-			my $dtr	= iri($dt);
-			my $literal	= $obj->literal_value;
-			my $qname;
-			try {
-				my ($ns,$local)	= $dtr->qname;
-				if (exists $self->{ns}{$ns}) {
-					$qname	= join(':', $self->{ns}{$ns}, $local);
-					$self->{used_ns}{ $self->{ns}{$ns} }++;
-				}
-			} catch RDF::Trine::Error with {};
-			if ($qname) {
-				my $escaped	= $obj->_unicode_escape( $literal );
-				print {$fh} qq["$escaped"^^$qname];
-				return;
-			}
-		}
-	} elsif ($obj->isa('RDF::Trine::Node::Resource')) {
-		my $value;
-		try {
-			my ($ns,$local)	= $obj->qname;
-			if (exists $self->{ns}{$ns}) {
-				$value	= join(':', $self->{ns}{$ns}, $local);
-				$self->{used_ns}{ $self->{ns}{$ns} }++;
-			}
-		} catch RDF::Trine::Error with {};
-		if ($value) {
-			print {$fh} $value;
-			return;
-		}
+	} elsif (defined(my $str = $self->_node_concise_string( $obj ))) {
+		print {$fh} $str;
+		return;
 	}
 	
 	print {$fh} $obj->as_ntriples;

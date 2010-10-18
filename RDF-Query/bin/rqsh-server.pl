@@ -5,6 +5,8 @@ no warnings 'redefine';
 use lib qw(../lib lib);
 
 use Cwd;
+use Net::hostent;
+use IO::Socket::INET;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use RDF::Query;
@@ -23,69 +25,90 @@ use Term::ReadKey;
 ################################################################################
 
 $|			= 1;
-my $model;
-if (scalar(@ARGV) and $ARGV[ $#ARGV ] =~ /.sqlite/) {
-	my $file	= pop(@ARGV);
-	my $dsn		= "DBI:SQLite:dbname=" . $file;
-	my $store	= RDF::Trine::Store::DBI->new($model, $dsn, '', '');
-	$model		= RDF::Trine::Model->new( $store );
-} else {
-	$model			= memory_model();
-}
-my %args	= &RDF::Query::Util::cli_parse_args();
-unless (exists $args{update}) {
-	$args{update}	= 1;
-}
-$args{ base }	= 'file://' . getcwd . '/';
+my $model	= memory_model();
+my %args	= ( update => 1, base => 'http://myrdf.us/rqsh/' );
 
 my $def_format	= 'ntriples';
 my $serializer	= RDF::Trine::Serializer->new($def_format);
 my %serializer	= ($def_format => $serializer);
 my $class	= delete $args{ class } || 'RDF::Query';
-my $term	= Term::ReadLine->new('rqsh', \*STDIN, \*STDOUT);
 
-print "rqsh v1.0\n\n";
-while ( defined ($_ = $term->readline('rqsh> ')) ) {
-	my $line	= $_;
-	next unless (length($line));
-	if ($line =~ /help/i) {
-		help();
-	} elsif ($line =~ /^explain (.*)$/i) {
-		explain($model, $term, $1);
-	} elsif ($line =~ /^parse (.*)$/i) {
-		parse($model, $term, $1);
-	} elsif ($line =~ /^use (\w+)\s*;?\s*$/i) {
-		my $name	= $1;
-		my $nmodel	= model( $name );
-		if ($nmodel) {
-			$model	= $nmodel;
-		}
-	} elsif ($line =~ /init/i) {
-		init( $model, $term, $line );
-	} elsif ($line =~ m/^serializer (\w+)$/i) {
-		if (exists($serializer{ $1 })) {
-			$serializer	= $serializer{ $1 };
-		} else {
-			my $ser;
-			try {
-				$ser	= RDF::Trine::Serializer->new( $1 );
-			} catch RDF::Trine::Error::SerializationError with {};
-			if ($ser) {
-				$serializer{ $1 }	= $ser;
-				$serializer			= $ser;
+
+
+$SIG{CHLD} = 'IGNORE';
+my $port	= 8082;
+my $server	= IO::Socket::INET->new(
+	LocalPort => $port,
+	Type      => SOCK_STREAM,
+	Reuse     => 1,
+	Listen    => 10,
+) or die "Couln't start server: $!\n";
+
+print "rqsh server started on port $port\n";
+
+my $client;
+while ($client = $server->accept) {
+	my $hostinfo	= gethostbyaddr($client->peeraddr);
+	printf "[Connect from %s]\n", $hostinfo ? $hostinfo->name : $client->peerhost;
+	unless (my $pid = fork) {
+		open STDERR, '>&STDOUT';
+		handle( $client );
+		$client->shutdown(2);
+		close($client);
+		exit;
+	}
+}
+
+exit;
+
+
+sub handle {
+	my $handle	= shift;
+	my $term	= Term::ReadLine->new('rqsh', $handle, $handle);
+	select($handle);
+	print {$handle} "rqsh v1.0\n\n";
+	while ( defined ($_ = $term->readline('rqsh> ')) ) {
+		my $line	= $_;
+		next unless (length($line));
+		if ($line =~ /exit|close/i) {
+			return;
+		} elsif ($line =~ /help/i) {
+			help();
+		} elsif ($line =~ /^explain (.*)$/i) {
+			explain($model, $term, $1);
+# 		} elsif ($line =~ /^use (\w+)\s*;?\s*$/i) {
+# 			my $name	= $1;
+# 			my $nmodel	= model( $name );
+# 			if ($nmodel) {
+# 				$model	= $nmodel;
+# 			}
+# 		} elsif ($line =~ /init/i) {
+# 			init( $model, $term, $line );
+		} elsif ($line =~ m/^serializer (\w+)$/i) {
+			if (exists($serializer{ $1 })) {
+				$serializer	= $serializer{ $1 };
 			} else {
-				print "Unrecognized serializer name '$1'\n";
-				print "Valid serializers are:\n";
-				foreach my $name (RDF::Trine::Serializer->serializer_names) {
-					print "    $name\n";
+				my $ser;
+				try {
+					$ser	= RDF::Trine::Serializer->new( $1 );
+				} catch RDF::Trine::Error::SerializationError with {};
+				if ($ser) {
+					$serializer{ $1 }	= $ser;
+					$serializer			= $ser;
+				} else {
+					print {$handle} "Unrecognized serializer name '$1'\n";
+					print {$handle} "Valid serializers are:\n";
+					foreach my $name (RDF::Trine::Serializer->serializer_names) {
+						print {$handle} "    $name\n";
+					}
+					print {$handle} "\n";
 				}
-				print "\n";
 			}
+		} elsif ($line =~ /debug/i) {
+			debug( $model, $term, $line );
+		} else {
+			query( $model, $term, $line );
 		}
-	} elsif ($line =~ /debug/i) {
-		debug( $model, $term, $line );
-	} else {
-		query( $model, $term, $line );
 	}
 }
 
@@ -93,11 +116,8 @@ sub help {
 	print <<"END";
 Commands:
     help                Show this help information.
-    use [backend]       Switch the storage backend (e.g. "use mysql").
-    init                Initialize the storage backend (creating necessary indexes, etc.).
     serializer [format] Set the serializer used for RDF results (e.g. "serializer turtle").
     debug               Print all the quads in the storage backend.
-    parse [sparql]      Print the parsed algebra for the SPARQL 1.1 query/update.
     explain [sparql]    Explain the execution plan for the SPARQL 1.1 query/update.
     SELECT ...          Execute the SPARQL 1.1 query.
     ASK ...             Execute the SPARQL 1.1 query.
@@ -120,39 +140,40 @@ sub init {
 	}
 }
 
-sub model {
-	my $name	= shift;
-	my $sclass	= RDF::Trine::Store->class_by_name( $name );
-	if ($sclass) {
-		if ($sclass eq 'RDF::Trine::Store::Memory') {
-			$model	= memory_model();
-			return;
-		} else {
-			if ($sclass->can('_config_meta')) {
-				my $meta	= $sclass->_config_meta;
-				my $keys	= $meta->{required_keys};
-				my $config	= {};
-				foreach my $k (@$keys) {
-					get_value( $term, $meta, $k, $config );
-				}
-				my $store	= eval { $sclass->new_with_config( $config ) };
-				if ($store) {
-					my $m		= RDF::Trine::Model->new( $store );
-					if ($m) {
-						return $m;
-					}
-				}
-				print "Failed to construct '$name'-backed model.\n";
-				return;
-			} else {
-				print "Cannot construct model from '$name' storage class.\n";
-			}
-		}
-	} else {
-		print "No storage class named '$name' found\n";
-		return;
-	}
-}
+# sub model {
+# 	my $term	= shift;
+# 	my $name	= shift;
+# 	my $sclass	= RDF::Trine::Store->class_by_name( $name );
+# 	if ($sclass) {
+# 		if ($sclass eq 'RDF::Trine::Store::Memory') {
+# 			$model	= memory_model();
+# 			return;
+# 		} else {
+# 			if ($sclass->can('_config_meta')) {
+# 				my $meta	= $sclass->_config_meta;
+# 				my $keys	= $meta->{required_keys};
+# 				my $config	= {};
+# 				foreach my $k (@$keys) {
+# 					get_value( $term, $meta, $k, $config );
+# 				}
+# 				my $store	= eval { $sclass->new_with_config( $config ) };
+# 				if ($store) {
+# 					my $m		= RDF::Trine::Model->new( $store );
+# 					if ($m) {
+# 						return $m;
+# 					}
+# 				}
+# 				print "Failed to construct '$name'-backed model.\n";
+# 				return;
+# 			} else {
+# 				print "Cannot construct model from '$name' storage class.\n";
+# 			}
+# 		}
+# 	} else {
+# 		print "No storage class named '$name' found\n";
+# 		return;
+# 	}
+# }
 
 sub explain {
 	my $model	= shift;
@@ -166,20 +187,6 @@ sub explain {
 	}
 	my ($plan, $ctx)	= $query->prepare( $model );
 	print $plan->sse . "\n";
-}
-
-sub parse {
-	my $model	= shift;
-	my $term	= shift;
-	my $sparql	= shift;
-	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
-	my $query	= $class->new( $psparql, \%args );
-	unless ($query) {
-		print "Error: " . RDF::Query->error . "\n";
-		return;
-	}
-	my $pattern	= $query->pattern;
-	print $pattern->sse . "\n";
 }
 
 sub query {
@@ -279,7 +286,6 @@ sub get_value {
 		my $value;
 		if ($type eq 'password') {
 			print "$desc: ";
-			ReadMode('noecho');
 			$value	= ReadLine(0, $term->IN);
 			chomp($value);
 		} elsif ($type eq 'filename') {

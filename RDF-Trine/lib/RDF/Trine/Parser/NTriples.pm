@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.129
+This document describes RDF::Trine::Parser::NTriples version 0.130
 
 =head1 SYNOPSIS
 
@@ -48,8 +48,13 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.129';
+	$VERSION	= '0.130';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
+	foreach my $ext (qw(nt)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/plain';
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -70,14 +75,13 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
-statement parsed, will call C<< $model->add_statement( $statement ) >>.
+Parses the C<< $data >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle C<< $fh >>, using the given
-C<< $base_uri >>. For each RDF statement parsed, will call
-C<< $model->add_statement( $statement ) >>.
+Parses all data read from the filehandle C<< $fh >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
 
@@ -120,7 +124,7 @@ LINE:
 		
 		my @nodes	= ();
 		try {
-			while (my $n = $self->_eat_node( $lineno, $line )) {
+			while (my $n = $self->_eat_node( $base, $lineno, $line )) {
 				push(@nodes, $n);
 				$line	=~ s/^\s*//;
 			}
@@ -166,6 +170,7 @@ sub _emit_statement {
 
 sub _eat_node {
 	my $self	= shift;
+	my $base	= shift;
 	my $lineno	= shift;
 	$_[0]	=~ s/^\s*//;
 	return unless length($_[0]);

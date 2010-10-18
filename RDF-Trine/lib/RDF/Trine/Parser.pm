@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.129
+This document describes RDF::Trine::Parser version 0.130
 
 =head1 SYNOPSIS
 
@@ -43,12 +43,14 @@ use Data::Dumper;
 use Encode qw(decode);
 
 our ($VERSION);
+our %file_extensions;
 our %parser_names;
+our %canonical_media_types;
 our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.129';
+	$VERSION	= '0.130';
 }
 
 use Scalar::Util qw(blessed);
@@ -62,6 +64,63 @@ use RDF::Trine::Parser::TriG;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
+
+=item C<< media_type >>
+
+Returns the canonical media type associated with this parser.
+
+=cut
+
+sub media_type {
+	my $self	= shift;
+	my $class	= ref($self) || $self;
+	return $canonical_media_types{ $class };
+}
+
+=item C<< media_types >>
+
+Returns the media types associated with this parser.
+
+=cut
+
+sub media_types {
+	my $self	= shift;
+	my @types;
+	foreach my $type (keys %media_types) {
+		my $class	= $media_types{ $type };
+		push(@types, $type) if ($self->isa($class));
+	}
+	return @types;
+}
+
+=item C<< parser_by_media_type ( $media_type ) >>
+
+Returns the parser class appropriate for parsing content of the specified media type.
+
+=cut
+
+sub parser_by_media_type {
+	my $proto	= shift;
+	my $type	= shift;
+	my $class	= $media_types{ $type };
+	return $class;
+}
+
+=item C<< guess_parser_by_filename ( $filename ) >>
+
+Returns the best-guess parser class to parse a file with the given filename.
+
+=cut
+
+sub guess_parser_by_filename {
+	my $class	= shift;
+	my $file	= shift;
+	if ($file =~ m/[.](\w+)$/) {
+		my $ext	= $1;
+		return $file_extensions{ $ext } if exists $file_extensions{ $ext };
+	}
+	return 'RDF::Trine::Parser::RDFXML';
+}
 
 =item C<< new ( $parser_name, @args ) >>
 

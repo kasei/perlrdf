@@ -220,7 +220,7 @@ sub evaluate {
 	
 	no warnings 'uninitialized';
 	my $uriv	= $uri->uri_value;
-	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/) {
+	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/ or $uriv eq 'sparql:coalesce') {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw
 		# TypeErrors (e.g. true || fail ==> true).
@@ -236,7 +236,7 @@ sub evaluate {
 									? $bound->{ $value->name }
 									: $value;
 						} otherwise {};
-						return $val;
+						return $val || 0;
 					};
 		my $func	= $query->get_function( $uri );
 		my $value	= $func->( $query, $args );

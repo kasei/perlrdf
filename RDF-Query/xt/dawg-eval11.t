@@ -57,7 +57,7 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates negation project-expression property-path subquery delete delete-data delete-where) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates grouping negation project-expression property-path subquery delete delete-data delete-where) );
 print "# Using model object from " . ref($model) . "\n";
 
 {

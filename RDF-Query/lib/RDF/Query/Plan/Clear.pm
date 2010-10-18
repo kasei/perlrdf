@@ -71,15 +71,16 @@ sub execute ($) {
 # 	warn "clearing graph " . $graph->as_string;
 	my $ok	= 0;
 	try {
-		if (blessed($graph)) {
-			$context->model->remove_statements( undef, undef, undef, $graph );
-		} elsif ($graph eq 'ALL') {
+		my $uri	= $graph->uri_value;
+		if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
 			$context->model->remove_statements( undef, undef, undef, undef );
-		} elsif ($graph eq 'NAMED') {
+		} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
 			my $citer	= $context->model->get_contexts;
 			while (my $graph = $citer->next) {
 				$context->model->remove_statements( undef, undef, undef, $graph );
 			}
+		} else {
+			$context->model->remove_statements( undef, undef, undef, $graph );
 		}
 		$ok		= 1;
 	} catch RDF::Trine::Error with {};
@@ -168,7 +169,12 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(N);
+	my $g	= $self->namedgraph;
+	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		return qw(w);
+	} else {
+		return qw(N);
+	}
 }
 
 =item C<< plan_node_data >>
@@ -180,8 +186,12 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	Carp::cluck $self;
-	return ($self->namedgraph);
+	my $g	= $self->namedgraph;
+	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		return $1;
+	} else {
+		return ($self->namedgraph);
+	}
 }
 
 =item C<< graph ( $g ) >>

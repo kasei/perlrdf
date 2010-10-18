@@ -17,3 +17,4 @@ test-geo.pl
 lib/RDF/Query/Model/SQL/Statement.pm
 t/24-optimizer-multiget.t.disabled
 t/disabled/
+inc/Module/Install/AuthorTests.pm

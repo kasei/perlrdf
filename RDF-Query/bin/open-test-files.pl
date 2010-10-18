@@ -16,7 +16,7 @@ my $editor	= $ENV{EDITOR} || '/usr/bin/bbedit';
 while (my $test = shift) {
 	my $file	= $test;
 	$file		=~ s/#.*$/.ttl/;
-	$file		=~ s#^#t/dawg/data-r2/#;
+	$file		=~ s#^#xt/dawg/data-r2/#;
 	my $parse	= RDF::Trine::Parser->new('turtle');
 	my $store	= RDF::Trine::Store->temporary_store();
 	my $model	= RDF::Trine::Model->new( $store );
@@ -42,7 +42,7 @@ END
 	while (my $row = $iter->next) {
 		my @nodes	= map { $_->uri_value } grep { $_->isa('RDF::Trine::Node::Resource') } values %$row;
 		for (@nodes) {
-			substr($_, 0, index($_, "data-r2/")+8) = "t/dawg/data-r2/";
+			substr($_, 0, index($_, "data-r2/")+8) = "xt/dawg/data-r2/";
 		}
 		system( $editor, @nodes );
 	}

@@ -1,4 +1,4 @@
-use Test::More tests => 38;
+use Test::More tests => 37;
 use Test::Exception;
 
 use strict;
@@ -277,20 +277,11 @@ my @tests	= (
 	[
 		{
 			'http://example.com/foo' => {
-				'http://example.com/bar' => [ {'type' => 'literal','value' => '123', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
-			},
-		},
-		qq[<http://example.com/foo> <http://example.com/bar> "123"^^<http://www.w3.org/2001/XMLSchema#double> .\n],
-		'xsd:double with bad lexical value 1'
-	],
-	[
-		{
-			'http://example.com/foo' => {
 				'http://example.com/bar' => [ {'type' => 'literal','value' => 'quux', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
 			},
 		},
 		qq[<http://example.com/foo> <http://example.com/bar> "quux"^^<http://www.w3.org/2001/XMLSchema#double> .\n],
-		'xsd:double with bad lexical value 2'
+		'xsd:double with bad lexical value'
 	],
 	### decimals
 	[
