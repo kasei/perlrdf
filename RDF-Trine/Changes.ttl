@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.130" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-10-18" ;
                         ];
         asc:changes     [
                         asc:update      "Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double." ;

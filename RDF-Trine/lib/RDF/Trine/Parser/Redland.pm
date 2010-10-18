@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.130_01
+This document describes RDF::Trine::Parser::RDFa version 0.130
 
 =head1 SYNOPSIS
 
@@ -61,7 +61,7 @@ BEGIN {
 					 [qw(application/xhtml+xml)]]
 	);
 	
-	$VERSION	= '0.130_01';
+	$VERSION	= '0.130';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = __PACKAGE__;
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[0] } = __PACKAGE__

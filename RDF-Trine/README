@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.130 (2010-XX-XX)
+  Version 0.130 (2010-10-18)
 
      * Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double.
      * Updated RDF::Trine::Iterator::Bindings->as_string to use concise turtle syntax.
