@@ -515,7 +515,8 @@ sub get_expected_results {
 					if ($type eq 'HASH') {
 						if (exists($binding->{literal})) {
 							if (ref($binding->{literal})) {
-								my $value	= $binding->{literal}{content} || '';
+								my $value	= $binding->{literal}{content};
+								$value		= '' unless (defined($value));
 								my $lang	= $binding->{literal}{'xml:lang'};
 								my $dt		= $binding->{literal}{'datatype'};
 								my $string	= literal_as_string( $value, $lang, $dt );
