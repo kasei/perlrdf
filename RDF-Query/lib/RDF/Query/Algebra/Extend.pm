@@ -139,7 +139,6 @@ sub _from_sse {
 			
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;
-				warn "extend: " . Dumper(\@nodes);
 				return RDF::Query::Algebra::Extend->new( $pattern, \@nodes );
 			} else {
 				throw RDF::Trine::Error -text => "Cannot parse end-of-extend from SSE string: >>$_<<";
@@ -173,7 +172,6 @@ sub as_sparql {
 		}
 	}
 	
-	warn Dumper($indent);
 	my $ggp		= $self->pattern->as_sparql( $context, $indent );
 	my $sparql	= $ggp;
 	foreach my $v (@vars) {
