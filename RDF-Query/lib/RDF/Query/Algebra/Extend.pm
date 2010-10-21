@@ -172,10 +172,14 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-	my $svars	= join(' ', sort @vars);
-	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+	
+	warn Dumper($indent);
+	my $ggp		= $self->pattern->as_sparql( $context, $indent );
+	my $sparql	= $ggp;
+	foreach my $v (@vars) {
+		$sparql	.=	"\n${indent}BIND" . $v;
+	}
+	return $sparql;
 }
 
 =item C<< as_hash >>
