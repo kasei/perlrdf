@@ -51,7 +51,118 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_901">Version 2.902 (2010-07-02)</h3>
+		<h3 id="v2_903">Version 2.903 (2010-XX-XX)</h3>
+			<ul>
+				<li>SPARQL 1.1
+					<ul>
+						<li>New features
+							<ul>
+								<li>Added support for BIND(expr AS ?var) operator.</li>
+								<li>Added isNumeric built-in function, checking for proper datatype and valid lexical forms for numerics.</li>
+							</ul>
+						</li>	
+						<li>Updates
+							<ul>
+								<li>Updated SPARQL 1.1 parser to handle WITH clauses with PrefixedNames.</li>
+								<li>SPARQL 1.1 parser now sets error and returns if no query string is supplied.</li>
+								<li>Added more exception handling in RDF::Query::Parser::SPARQL11.</li>
+								<li>Updated CLEAR and DROP handling in SPARQL 1.1 parser and engine to handle 'NAMED' and 'ALL' variants.</li>
+								<li>Renamed 'binding_variables' methods to 'potentially_bound' to align with current SPARQL 1.1 terminology.</li>
+								<li>Results returned by property path plans are now RDF::Query::VariableBindings objects and are properly projected.</li>
+								<li>The query planner now interprets simple paths as basic graph patterns.</li>
+								<li>Removed Algebra and Plan classes for Not and Exists operations (now handled in other classes).</li>
+								<li>Updated RDF::Query::Plan::Extend to drop the extended variable binding if evaluating the extension yields an error.</li>
+								<li>Updated RDF::Query::Plan::Update to accept delete patterns with variables.</li>
+								<li>Updated subquery plan objects to use a sub-plan, not a full query object.</li>
+							</ul>
+						</li>
+						<li>Bug fixes
+							<ul>
+								<li>Fixed SPARQL 1.1 parser bug that was returning partial data from a failed parse call.</li>
+								<li>Fixed SPARQL 1.1 parser bug for queries with multiple FILTERs in a GGP including an EXISTS filter.</li>
+								<li>Fixed SPARQL 1.1 parser bug for DROP/CLEAR queries.</li>
+								<li>Fixed SPARQL 1.1 parser typo of 'SEPARATOR' argument to GROUP_CONCAT aggregate.</li>
+								<li>Fixed SPARQL 1.1 parser to handle FITLERS to the left of MINUS/OPTIONAL and allow projecting '*' with other vars/epressions.</li>
+								<li>Fixed SPARQL 1.1 parser case sensitivity of project expression 'AS' token.</li>
+								<li>Fixed SPARQL 1.1 parser handling of of subqueries within GRAPH blocks.</li>
+								<li>Fixed miscellaneous bugs and improved performance of parsing SPARQL 1.1 queries.</li>
+								<li>Made parsing of very large triple blocks non-recursive in SPARQL 1.1 parser.</li>
+								<li>Fixed COALESCE function to handle errors properly.</li>
+								<li>Fixed RDF::Query::Plan::Aggregate to extend results using AliasExpressions from HAVING clauses.</li>
+								<li>Fixed bug that was ignoring GROUP BY clauses when no aggregate operations were present.</li>
+								<li>Fixed bad looping on start node of unbounded property paths.</li>
+								<li>Fixed bug in query planning of '^' property paths.</li>
+								<li>Fixed zero-length property path evaluation within GRAPH blocks.</li>
+								<li>Removed plan duplication of zero-length case in '*' property paths.</li>
+								<li>Fixed handling of named graphs within subqueries (changes to active graph handling in the query planner).</li>
+								<li>Fixed type-promotion and handling of numeric types in aggregate handling.</li>
+								<li>Fixed RDF::Query::Algebra::Update->as_sparql to handle INSERT/DELETE updates properly.</li>
+								<li>Fixed RDF::Query::Plan::Aggregate->sse to allow handling of (non-blessed, scalar) '*' columns.</li>
+							</ul>
+						</li>
+					</ul>
+				</li>
+				<li>Query Engine
+					<ul>
+						<li>Added ability to pass through arguments to the query planner in RDF::Query->prepare.</li>
+						<li>Updated RDF::Query::Node::Literal::_cmp to handle literals that fail to parse as DateTime objects.</li>
+						<li>Updated RDF::Query::Plan::Limit to use the limit accessor internally.</li>
+						<li>RDF::Query::Plan::NamedGraph now uses lazy iterator for graph names.</li>
+						<li>Updated RDF::Query::VariableBindings to subclass the new RDF::Trine::VariableBindings.</li>
+						<li>RDF::Query::Algebra::Project now implements bind_variables().</li>
+						<li>Updated RDF::Query->describe to use $model->bounded_description instead of simply outgoing arcs.</li>
+						<li>Fixed bug in evaluation of function expressions in which the execution context object was lost (causing EXISTS filters to fail).</li>
+						<li>Fixed optimization of COUNT(*) over 1-triple BGPs to keep the variable binding for the pseudo-variable ?COUNT(*).</li>
+						<li>Fixed sse serialization in RDF::Query::Algebra::Distinct.</li>
+						<li>Fixed RDF::Query::Plan::Join::PushDownNestedLoop to close sub-plans in close() method.</li>
+					</ul>
+				</li>
+				<li>rqsh - RDF::Query Shell
+					<ul>
+						<li>Added ability to show the parsed algebra with 'parse' command.</li>
+						<li>Added abiility to show the query execution plan with the 'explain' command.</li>
+						<li>Added ability to change the RDF serializer with the 'serializer' command.</li>
+						<li>Added ability to initialize new stores with the 'init' command.</li>
+						<li>Added ability to change underlying store with the 'use' command.</li>
+						<li>Added 'help' command.</li>
+						<li>Updated packaging to install rqsh script (renamed from old bin/rqsh.pl).</li>
+						<li>Updated to catch errors thrown while trying to create new storage backends (e.g. DBI->connect failing).</li>
+						<li>rqsh now defaults to read-write models.</li>
+						<li>rqsh now sets a base URI for the current working directory.</li>
+						<li>Password input now doesn't echo to the terminal.</li>
+						<li>Filename input now autocompletes via Term::ReadLine.</li>
+					</ul>
+				</li>
+				<li>Warning and Error Handling
+					<ul>
+						<li>Replaced calls to die with throwing exceptions.</li>
+						<li>RDF::Query->new now warns about unrecognized options.</li>
+						<li>DATATYPE() now throws an exception unless passed a valid node object.</li>
+						<li>RDF::Query::Expresion::Binary now throws exceptions on numeric comparisions with non-numeric operands.</li>
+						<li>Fixed error message in RDF::Query::Plan::NamedGraph.</li>
+						<li>Added trace debugging to RDF::Query::Plan::Union.</li>
+						<li>Added trace debugging to RDF::Query::Plan::Project.</li>
+						<li>Added trace debugging to RDF::Query::Plan::Path.</li>
+					</ul>
+				</li>
+				<li>Tests and Miscellany
+					<ul>
+						<li>Added SPARQL 1.1 syntax and eval test harnesses.</li>
+						<li>Fixed bug in xt/dawg-eval11.t parsing of srx files containing literal values that evaluate to false in perl (e.g. '0').</li>
+						<li>Fixed turtle output for rdfs:comments in xt/dawg/earl.pl.</li>
+						<li>Moved developer tests from t/ to xt/.</li>
+						<li>Refactored RDF::Query::Functions into several auto-loaded sub-packages via Module::Pluggable (patch from tobyink).</li>
+						<li>Removed references to the now-deprecated mac.com in network-based tests.</li>
+						<li>Updated expected values in t/queryform-describe.t for results using bounded descriptions.</li>
+						<li>Updated RDF::Query::Util to look for .prefix-cmd cache of common namespace names.</li>
+						<li>Updated RDF::Query::Util::cli_parse_args to accept '-r' as a read-only flag.</li>
+						<li>Updated required version of RDF::Trine to 0.126.</li>
+						<li>Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds.</li>
+						<li>Made code updates to improve performance based on profiling.</li>
+					</ul>
+				</li>
+			</ul>
+		<h3 id="v2_902">Version 2.902 (2010-07-02)</h3>
 			<ul>
 				<li>Fixed bug in requiring prerequisite modules.</li>
 			</ul>
@@ -997,5 +1108,5 @@
 				<li>Moving over to redland's query API (pass in the model when query is executed)</li>
 			</ul>
 	<h2>Copyright</h2>
-		<p>Copyright &copy; 2005&#8211;2009 Gregory Williams. All rights reserved. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
+		<p>Copyright &copy; 2005&#8211;2010 Gregory Williams. All rights reserved. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
 </body></html>
