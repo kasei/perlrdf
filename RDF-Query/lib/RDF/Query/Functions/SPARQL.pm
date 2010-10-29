@@ -80,6 +80,8 @@ Defines the following functions:
 
 package RDF::Query::Functions::SPARQL;
 
+use strict;
+use warnings;
 use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {

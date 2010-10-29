@@ -20,6 +20,8 @@ Defines the following function:
 
 package RDF::Query::Functions::Xpath;
 
+use strict;
+use warnings;
 use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {

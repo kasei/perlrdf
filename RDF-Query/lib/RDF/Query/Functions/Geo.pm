@@ -20,8 +20,9 @@ Defines the following function:
 
 package RDF::Query::Functions::Geo;
 
+use strict;
+use warnings;
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
-
 use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
