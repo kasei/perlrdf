@@ -1390,9 +1390,9 @@ L<http://www.perlrdf.org/>
 
  Gregory Todd Williams <gwilliams@cpan.org>
 
-=head1 COPYRIGHT
+=head1 LICENSE
 
-Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2005-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
