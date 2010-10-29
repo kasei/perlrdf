@@ -49,6 +49,7 @@ examples/query.pl
 examples/service_descriptions/dbpedia_org.ttl
 examples/service_descriptions/kasei_us.ttl
 inc/Module/Install.pm
+inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
