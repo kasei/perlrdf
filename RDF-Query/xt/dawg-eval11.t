@@ -148,9 +148,9 @@ sub update_eval_test {
 	my $result		= get_first_obj( $model, $test, $mfres );
 	my $req			= get_first_obj( $model, $test, $reqs );
 	my $approved	= get_first_obj( $model, $test, $approval );
-	my $queryd		= get_first_obj( $model, $action, $qtquery );
-	my $data		= get_first_obj( $model, $action, $qtdata );
-	my @gdata		= get_all_obj( $model, $action, $qtgdata );
+	my $queryd		= get_first_obj( $model, $action, $ut->request );
+	my $data		= get_first_obj( $model, $action, $ut->data );
+	my @gdata		= get_all_obj( $model, $action, $ut->graphData );
 	
 	if ($STRICT_APPROVAL) {
 		unless ($approved) {
@@ -196,7 +196,7 @@ sub update_eval_test {
 	};
 	
 	foreach my $gdata (@gdata) {
-		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $data	= get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
@@ -212,9 +212,9 @@ sub update_eval_test {
 	}
 	
 	my $result_status	= get_first_obj( $model, $result, $ut->result );
-	my @resgdata			= get_all_obj( $model, $result, $qtgdata );
+	my @resgdata			= get_all_obj( $model, $result, $ut->graphData );
 	my $expected_model	= new_model();
-	my $resdata		= get_first_obj( $model, $result, $qtdata );
+	my $resdata		= get_first_obj( $model, $result, $ut->data );
 	try {
 		if (blessed($resdata)) {
 			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
@@ -227,7 +227,7 @@ sub update_eval_test {
 		return;
 	};
 	foreach my $gdata (@resgdata) {
-		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $data	= get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
