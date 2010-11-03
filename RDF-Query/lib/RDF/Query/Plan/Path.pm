@@ -7,7 +7,7 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.903_01.
+This document describes RDF::Query::Plan::Path version 2.903.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903_01';
+	$VERSION	= '2.903';
 }
 
 ######################################################################

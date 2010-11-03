@@ -4,7 +4,7 @@ RDF::Query::Functions::SPARQL - SPARQL built-in functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::SPARQL version 2.903_01.
+This document describes RDF::Query::Functions::SPARQL version 2.903.
 
 =head1 DESCRIPTION
 
@@ -86,7 +86,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.sparql");
-	$VERSION	= '2.903_01';
+	$VERSION	= '2.903';
 }
 
 use Carp qw(carp croak confess);
