@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use Scalar::Util qw(refaddr reftype);
+use Scalar::Util qw(blessed refaddr reftype);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -79,6 +79,34 @@ Returns a list of triples belonging to this BGP.
 sub triples {
 	my $self	= shift;
 	return @$self;
+}
+
+=item C<< quads >>
+
+Returns a list of the (implicit) quads belonging to this BGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @triples	= $self->triples;
+	my @quads;
+	foreach my $t (@triples) {
+		my @nodes	= $t->nodes;
+		foreach my $i (0 .. 3) {
+			my $n	= $nodes[ $i ];
+			if (not blessed($n)) {
+				if ($i == 3) {
+					$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
+				} else {
+					$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+				}
+			}
+		}
+		my $st	= RDF::Trine::Statement::Quad->new( @nodes );
+		push(@quads, $st);
+	}
+	return @quads;
 }
 
 =item C<< sse >>

@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use List::Util qw(first);
 use Carp qw(carp croak confess);
@@ -96,6 +96,29 @@ sub add_pattern {
 	my $self	= shift;
 	my $pattern	= shift;
 	push( @{ $self }, $pattern );
+}
+
+=item C<< quads >>
+
+Returns a list of the quads belonging to this GGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	my %bgps;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::NamedGraph')) {
+		push(@quads, $p->quads);
+		foreach my $bgp ($p->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+			$bgps{ refaddr($bgp) }++;
+		}
+	}
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		next if ($bgps{ refaddr($p) });
+		push(@quads, $p->quads);
+	}
+	return @quads;
 }
 
 =item C<< sse >>

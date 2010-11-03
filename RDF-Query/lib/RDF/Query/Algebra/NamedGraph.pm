@@ -92,6 +92,31 @@ sub pattern {
 	return $self->[2];
 }
 
+=item C<< quads >>
+
+Returns a list of the quads belonging to this NamedGraph.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		push(@quads, $p->quads);
+	}
+	my @graphquads;
+	foreach my $q (@quads) {
+		my $st	= RDF::Trine::Statement::Quad->new(
+					$q->subject,
+					$q->predicate,
+					$q->object,
+					$self->graph,
+				);
+		push(@graphquads, $st);
+	}
+	return @graphquads;
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this alegbra expression.

@@ -90,13 +90,7 @@ sub execute ($) {
 			my ($template, $method)	= @$data;
 			$l->trace("UPDATE running $method");
 			foreach my $row (@rows) {
-				my (@triples);
-				if ($template) {
-					foreach my $p ($template->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
-						my @t	= $p->triples;
-						push(@triples, @t);
-					}
-				}
+				my @triples	= blessed($template) ? $template->quads : ();
 				
 				foreach my $t (@triples) {
 					my @nodes	= $t->nodes;
