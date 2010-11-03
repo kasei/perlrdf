@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.902.
+This document describes RDF::Query::Parser::SPARQL11 version 2.903.
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -701,11 +701,11 @@ sub _DropGraph {
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/NAMED/i)) {
 		$self->_eat(qr/NAMED/i);
-		my $pat	= RDF::Query::Algebra::Clear->new( 'NAMED' );
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Query::Node::Resource->new('tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') );
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/ALL/i)) {
 		$self->_eat(qr/ALL/i);
-		my $pat	= RDF::Query::Algebra::Clear->new( 'ALL' );
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Query::Node::Resource->new('tag:gwilliams@cpan.org,2010-01-01:RT:ALL') );
 		$self->_add_patterns( $pat );
 	}
 	$self->{build}{method}		= 'CLEAR';
@@ -1311,6 +1311,18 @@ sub __handle_GraphPatternNotTriples {
 		
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
+	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		
+		my ($alias)	= @args;
+		my $opt		= $class->new( $ggp, [$alias] );
+		$self->_add_patterns( $opt );
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
@@ -1435,7 +1447,7 @@ TRIPLESBLOCKLOOP:
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return $self->_test(qr/SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
+	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
@@ -1444,6 +1456,8 @@ sub _GraphPatternNotTriples {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
 		$self->_MinusGraphPattern;
+	} elsif ($self->_test(qr/BIND/i)) {
+		$self->_Bind;
 	} elsif ($self->_OptionalGraphPattern_test) {
 		$self->_OptionalGraphPattern;
 	} elsif ($self->_GroupOrUnionGraphPattern_test) {
@@ -1451,6 +1465,16 @@ sub _GraphPatternNotTriples {
 	} else {
 		$self->_GraphGraphPattern;
 	}
+}
+
+sub _Bind {
+	my $self	= shift;
+	$self->_eat(qr/BIND/i);
+	$self->__consume_ws_opt;
+	$self->_BrackettedAliasExpression;
+	my ($alias)	= splice(@{ $self->{stack} });
+	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
+	$self->_add_stack( $opt );
 }
 
 sub _ServiceGraphPattern {

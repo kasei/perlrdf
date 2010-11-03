@@ -4,7 +4,7 @@ RDF::Query::Functions::Kasei - RDF-Query-specific functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Kasei version 2.902.
+This document describes RDF::Query::Functions::Kasei version 2.903.
 
 =head1 DESCRIPTION
 
@@ -24,11 +24,13 @@ Defines the following functions:
 
 package RDF::Query::Functions::Kasei;
 
+use strict;
+use warnings;
 use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.kasei");
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 use Data::Dumper;

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Extend - Algebra class for extending the variable projectio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Extend version 2.902.
+This document describes RDF::Query::Algebra::Extend version 2.903.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -139,7 +139,6 @@ sub _from_sse {
 			
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;
-				warn "extend: " . Dumper(\@nodes);
 				return RDF::Query::Algebra::Extend->new( $pattern, \@nodes );
 			} else {
 				throw RDF::Trine::Error -text => "Cannot parse end-of-extend from SSE string: >>$_<<";
@@ -172,10 +171,13 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-	my $svars	= join(' ', sort @vars);
-	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+	
+	my $ggp		= $self->pattern->as_sparql( $context, $indent );
+	my $sparql	= $ggp;
+	foreach my $v (@vars) {
+		$sparql	.=	"\n${indent}BIND" . $v;
+	}
+	return $sparql;
 }
 
 =item C<< as_hash >>

@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.902.
+This document describes RDF::Query version 2.903.
 
 =head1 SYNOPSIS
 
@@ -137,7 +137,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.902';
+	$VERSION		= '2.903';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -1390,9 +1390,9 @@ L<http://www.perlrdf.org/>
 
  Gregory Todd Williams <gwilliams@cpan.org>
 
-=head1 COPYRIGHT
+=head1 LICENSE
 
-Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2005-2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

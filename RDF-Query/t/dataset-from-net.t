@@ -31,7 +31,7 @@ my $has_backend	= 0;
 		SELECT
 			?page
 		FROM
-			<http://homepage.mac.com/samofool/rdf-query/test-data/foaf.rdf>
+			<http://kasei.us/code/rdf-query/test-data/foaf.rdf>
 		WHERE
 			(?person foaf:name "Gregory Todd Williams")
 			(?person foaf:homepage ?page)

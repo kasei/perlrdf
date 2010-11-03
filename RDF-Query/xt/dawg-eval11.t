@@ -50,14 +50,26 @@ my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 no warnings 'once';
 
 if ($PATTERN) {
-	$debug			= 1;
+	$debug			= 0;
 	$debug_results	= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates grouping negation project-expression property-path subquery delete delete-data delete-where) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
+	qw(
+		aggregates
+		bind
+		delete
+		delete-data
+		delete-where
+		grouping
+		negation
+		project-expression
+		property-path
+		subquery
+	) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
@@ -515,7 +527,8 @@ sub get_expected_results {
 					if ($type eq 'HASH') {
 						if (exists($binding->{literal})) {
 							if (ref($binding->{literal})) {
-								my $value	= $binding->{literal}{content} || '';
+								my $value	= $binding->{literal}{content};
+								$value		= '' unless (defined($value));
 								my $lang	= $binding->{literal}{'xml:lang'};
 								my $dt		= $binding->{literal}{'datatype'};
 								my $string	= literal_as_string( $value, $lang, $dt );
