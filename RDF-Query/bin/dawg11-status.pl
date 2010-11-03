@@ -79,7 +79,7 @@ print <<"END";
 </style></head>
 <body>
 <h1>SPARQL 1.1 Test Results for RDF::Query</h1>
-<p>As of $date, running with commit $rev (<a href="http://github.com/kasei/perlrdf/tree/dev">HEAD of dev branch at github</a>)</p>
+<p>As of $date, running with commit $rev (<a href="http://github.com/kasei/perlrdf/tree/master">HEAD of master branch at github</a>)</p>
 
 <table>
 <tr>
