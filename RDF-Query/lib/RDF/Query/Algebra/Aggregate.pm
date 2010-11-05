@@ -7,7 +7,7 @@ RDF::Query::Algebra::Aggregate - Algebra class for aggregate patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Aggregate version 2.902.
+This document describes RDF::Query::Algebra::Aggregate version 2.903.
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -135,7 +135,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent} || '  ';
+	my $indent	= ($context->{indent} ||= '  ');
 	
 	my @ops_sse;
 	my @ops		= $self->ops;
@@ -218,18 +218,28 @@ sub referenced_variables {
 	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	my @aliases	= map { $_->[0] } $self->ops;
-	throw Error; # XXX unimplemented
-	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
+	my @vars;
+#	push(@vars, map { $_->[0] } $self->ops);
+	foreach my $g ($self->groupby) {
+		if (blessed($g)) {
+			if ($g->isa('RDF::Query::Node::Variable')) {
+				push(@vars, $g->name);
+			} elsif ($g->isa('RDF::Query::Expression::Alias')) {
+				push(@vars, $g->name);
+			}
+		}
+	}
+	return RDF::Query::_uniq(@vars);
+#	return RDF::Query::_uniq( @aliases, $self->pattern->referenced_variables );
 }
 
 =item C<< definite_variables >>

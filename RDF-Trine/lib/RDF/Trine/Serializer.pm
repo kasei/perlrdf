@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.127
+This document describes RDF::Trine::Serializer version 0.130
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.127';
+	$VERSION	= '0.130';
 }
 
 use LWP::UserAgent;
@@ -50,6 +50,16 @@ use RDF::Trine::Serializer::Turtle;
 =head1 METHODS
 
 =over 4
+
+=item C<< serializer_names >>
+
+Returns a list of valid serializer names for use as arguments to the serializer constructor.
+
+=cut
+
+sub serializer_names {
+	return keys %serializer_names;
+}
 
 =item C<< new ( $serializer_name, %options ) >>
 

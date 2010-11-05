@@ -7,7 +7,7 @@ RDF::Query::Algebra::Service - Algebra class for SERVICE (federation) patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Service version 2.902.
+This document describes RDF::Query::Algebra::Service version 2.903.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -203,16 +203,16 @@ sub referenced_variables {
 	return @list;
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return $self->pattern->binding_variables;
+	return $self->pattern->potentially_bound;
 }
 
 =item C<< definite_variables >>

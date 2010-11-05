@@ -65,6 +65,55 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.130 (2010-10-18)
+
+     * Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double.
+     * Updated RDF::Trine::Iterator::Bindings->as_string to use concise turtle syntax.
+     * Added RDF::Trine::Parser methods media_type(), media_types(), parser_by_media_type(), and guess_parser_by_filename().
+
+  Version 0.129 (2010-10-04)
+
+     * Updated Makefile.PL and RDF::Trine to require perl v5.8.3.
+     * Fixed bug in promotion of temporary models from memory-backed to a SQLite-backed store.
+     * Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink).
+     * Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types.
+     * Added RDF::Trine::Node::Literal->is_valid_lexical_form method.
+     * Added support for special union-graph 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL'.
+     * Added exportable constants for UNION_GRAPH and NIL_GRAPH in RDF::Trine.
+
+  Version 0.128 (2010-09-28)
+
+     * Added .owl as a recognized RDF/XML file extension for the fallback parser guessing code.
+     * Fixed bug in RDF::Trine::Store::SPARQL preventing access to the default graph.
+     * Added new_with_config method to allow interactive configuration via rqsh.pl.
+     * Updated RDF::Trine::Store::DBI->init to (partially) work if called for a new model (but the database has already been initialized).
+     * Fixed call to RDF::Trine::Parser->parse_into_model in bin/rdf_store_add_file.pl.
+     * Fixed call to RDF::Trine::Parser->parse_url_into_model in RDF::Trine::Store::Memory.
+     * Removed RDF::Redland dependency in bin/rdf_store_add_file.pl.
+     * Added introspective _config_meta method to RDF::Trine::Store subclasses to allow interactive configuration.
+     * Added RDF::Trine::Store->class_by_name class method.
+     * Added etag method to RDF::Trine::Model and RDF::Trine::Store::Memory to allow for HTTP caching.
+     * Updated RDF::Trine::Node::Literal->canonicalize_literal_value coercion of xsd:decimal values.
+     * Added optional flag to RDF::Trine::Node::Literal->new to attempt to canonicalize recognized XSD values.
+     * Updated RDF::Trine::Exporter::CSV to accept a graph iterator (for serializing s,p,o as CSV).
+     * Added RDF::Trine::Store::DBI->clear_restrictions method (suggestion and partial patch from tobyink).
+     * Updated RDF::Trine::Store::Redland to improve efficiency (based on suggestions from Dorian Taylor).
+     * Added native redland parser class and tests (patch from Dorian Taylor).
+     * Added RDF::Trine::Iterator->each method (requested by tobyink).
+     * Made code updates to improve performance based on profiling.
+     * Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds.
+     * Added content-sniffing to fallback parser guessing code for RDF/XML and Turtle.
+     * Lowered required version of redland in RDF::Trine::Parser::Redland to 1.0.7.1.
+     * Added RDF::Trine::Serializer->serializer_names method for listing available serializers.
+     * Added as_string method to RDF::Trine::Iterator::Boolean and RDF::Trine::Iterator::Graph.
+
+  Version 0.127 (2010-08-30)
+
+     * Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL.
+     * RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions.
+     * Added heuristics support for TriG, RDF/JSON, and N-Quads to RDF::Trine::Parser->parse_url_into_model.
+     * Added ability to specify the base URI for serializing RDF/XML and Turtle (patch from KjetilK).
+
   Version 0.126 (2010-08-16)
 
      * Fixed N-Triples serialization escaping bug for strings whose only escapable character is '\'.

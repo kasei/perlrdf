@@ -7,7 +7,7 @@ RDF::Query::Algebra::Optional - Algebra class for Optional patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Optional version 2.902.
+This document describes RDF::Query::Algebra::Optional version 2.903.
 
 =cut
 
@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -94,7 +94,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	return sprintf(
 		"(leftjoin\n${prefix}${indent}%s\n${prefix}${indent}%s)",
@@ -158,16 +158,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq($self->pattern->referenced_variables, $self->optional->referenced_variables);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->binding_variables, $self->optional->binding_variables);
+	return RDF::Query::_uniq($self->pattern->potentially_bound, $self->optional->potentially_bound);
 }
 
 =item C<< definite_variables >>

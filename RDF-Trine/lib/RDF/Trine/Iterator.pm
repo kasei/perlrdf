@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.126.
+This document describes RDF::Trine::Iterator version 0.130.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::SAXHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -373,7 +373,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		$node_label	= "<unbound/>";
+		return;
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;
@@ -411,6 +411,22 @@ sub construct_args {
 	my $type	= $self->type;
 	my $args	= $self->_args || {};
 	return ($type, [], %$args);
+}
+
+=item C<< each ( \&callback ) >>
+
+Calls the callback function once for each item in the iterator, passing the
+item as an argument to the function. Any arguments to C<< each >> beyond the
+callback function will be passed as supplemental arguments to the callback
+function.
+
+=cut
+
+sub each {
+	my ($self, $coderef) = (shift, shift);
+	while (my $row = $self->next) {
+		$coderef->($row, @_);
+	}
 }
 
 =begin private

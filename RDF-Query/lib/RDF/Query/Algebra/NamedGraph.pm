@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.902.
+This document describes RDF::Query::Algebra::NamedGraph version 2.903.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -90,6 +90,31 @@ Returns the graph pattern of the named graph expression.
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< quads >>
+
+Returns a list of the quads belonging to this NamedGraph.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		push(@quads, $p->quads);
+	}
+	my @graphquads;
+	foreach my $q (@quads) {
+		my $st	= RDF::Trine::Statement::Quad->new(
+					$q->subject,
+					$q->predicate,
+					$q->object,
+					$self->graph,
+				);
+		push(@graphquads, $st);
+	}
+	return @graphquads;
 }
 
 =item C<< sse >>
@@ -170,17 +195,17 @@ sub referenced_variables {
 	return @list;
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	my @list	= RDF::Query::_uniq(
-		$self->pattern->binding_variables,
+		$self->pattern->potentially_bound,
 		(map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph)),
 	);
 	return @list;

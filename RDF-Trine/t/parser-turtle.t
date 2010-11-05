@@ -1,10 +1,11 @@
+use utf8;
 use Test::More qw(no_plan);
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
 use File::Spec;
 
-use RDF::Trine qw(literal);
+use RDF::Trine qw(iri literal);
 use RDF::Trine::Parser;
 
 
@@ -52,7 +53,7 @@ foreach my $file (@bad) {
 		my $model = RDF::Trine::Model->temporary_model;
 		my $ntriples	= qq[_:a <http://example.com/decimal> "+100000.00"^^<http://www.w3.org/2001/XMLSchema#decimal> .\n];
 		$parser->parse_into_model(undef, $ntriples, $model);
-		is( $model->count_statements(undef, undef, literal('100000', undef, 'http://www.w3.org/2001/XMLSchema#decimal')), 1, 'expected 1 count for canonical decimal value' );
+		is( $model->count_statements(undef, undef, literal('100000.0', undef, 'http://www.w3.org/2001/XMLSchema#decimal')), 1, 'expected 1 count for canonical decimal value' );
 	}
 	{
 		my $model = RDF::Trine::Model->temporary_model;
@@ -67,6 +68,24 @@ foreach my $file (@bad) {
 		is( $model->count_statements(undef, undef, literal('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')), 1, 'expected 1 count for canonical boolean value' );
 	}
 }	
+
+{
+	my $parser	= RDF::Trine::Parser->new( 'turtle' );
+	my $model = RDF::Trine::Model->temporary_model;
+	my $ttl		= <<'END';
+# This document contains a graph with non-ASCII chars.
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ex: <http://www.example.org/vocabulary#> .
+_:a foaf:name "Bob" . 
+_:a ex:likes "Blåbærsyltetøy"@no .
+END
+	$parser->parse_into_model(undef, $ttl, $model);
+	my $iter = $model->get_statements( undef, iri('http://www.example.org/vocabulary#likes'), undef );
+	my $st = $iter->next;
+	my $got		= $st->object->literal_value;
+	my $expect	= 'Blåbærsyltetøy';
+	is($got, $expect, "Finding UTF-8 string");
+}
 
 
 sub _SILENCE {

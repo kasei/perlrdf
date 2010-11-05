@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.902.
+This document describes RDF::Query::Plan version 2.903.
 
 =head1 METHODS
 
@@ -34,8 +34,6 @@ use RDF::Query::Plan::Filter;
 use RDF::Query::Plan::Join::NestedLoop;
 use RDF::Query::Plan::Join::PushDownNestedLoop;
 use RDF::Query::Plan::Limit;
-use RDF::Query::Plan::Not;
-use RDF::Query::Plan::Exists;
 use RDF::Query::Plan::Offset;
 use RDF::Query::Plan::Project;
 use RDF::Query::Plan::Extend;
@@ -66,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -446,22 +444,6 @@ sub generate_plans {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;
 		push(@return_plans, @plans);
-	} elsif ($type eq 'Not') {
-		my @patt	= $self->generate_plans( $algebra->pattern, $context, %args );
-		my @npatt	= $self->generate_plans( $algebra->not_pattern, $context, %args );
-		foreach my $p (@patt) {
-			foreach my $n (@npatt) {
-				push(@return_plans, RDF::Query::Plan::Not->new( $p, $n ));
-			}
-		}
-	} elsif ($type eq 'Exists') {
-		my @patt	= $self->generate_plans( $algebra->pattern, $context, %args );
-		my @npatt	= $self->generate_plans( $algebra->exists_pattern, $context, %args );
-		foreach my $p (@patt) {
-			foreach my $n (@npatt) {
-				push(@return_plans, RDF::Query::Plan::Exists->new( $p, $n, $algebra->not_flag ));
-			}
-		}
 	} elsif ($type eq 'Filter') {
 		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
 		my $expr	= $algebra->expr;
@@ -727,7 +709,7 @@ sub _csg_plans {
 	my $context	= shift;
 	my $st		= shift;
 	my $pred	= $st->predicate;
-	Carp::confess unless (blessed($context));
+	return unless (blessed($context));
 	my $query    = $context->query;
 	my @return_plans;
 	if (blessed($query) and $pred->isa('RDF::Trine::Node::Resource') and scalar(@{ $query->get_computed_statement_generators( $st->predicate->uri_value ) })) {

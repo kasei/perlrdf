@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.126
+This document describes RDF::Trine::Model version 0.130
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 }
 
 use Scalar::Util qw(blessed);
@@ -72,7 +72,7 @@ sub temporary_model {
 # 	my $store	= RDF::Trine::Store::DBI->temporary_store();
 	my $self	= $class->new( $store );
 	$self->{temporary}	= 1;
-	$self->{threshold}	= 2000;
+	$self->{threshold}	= 25_000;
 	return $self;
 }
 
@@ -136,11 +136,19 @@ sub add_statement {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
 			my $store	= RDF::Trine::Store::DBI->temporary_store;
-			my $iter	= $self->get_statements();
+			my $iter	= $self->get_statements(undef, undef, undef, undef);
+			if ($store->can('_begin_bulk_ops')) {
+				$store->_begin_bulk_ops();
+			}
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
+			if ($store->can('_end_bulk_ops')) {
+				$store->_end_bulk_ops();
+			}
 			$self->{store}	= $store;
+			$self->{temporary}	= 0;
+# 			warn "*** upgraded to a DBI store";
 		}
 	}
 	return $self->_store->add_statement( @_ );
@@ -161,7 +169,7 @@ sub add_hashref {
 	
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
-		         RDF::Trine::Node::Blank->new($1) :
+					RDF::Trine::Node::Blank->new($1) :
 					RDF::Trine::Node::Resource->new($s);
 		
 		foreach my $p (keys %{ $index->{$s} }) {
@@ -235,6 +243,24 @@ sub size {
 	return $self->count_statements();
 }
 
+=item C<< etag >>
+
+If the model is based on a store that has the capability and knowledge to
+support caching, this method returns a persistent token that will remain
+consistent as long as the store's data doesn't change. This token is acceptable
+for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->etag;
+	}
+	return;
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
@@ -245,6 +271,13 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub count_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
+
+	if (scalar(@_) >= 4) {
+		my $graph	= $_[3];
+		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+			$_[3]	= undef;
+		}
+	}
 	return $self->_store->count_statements( @_ );
 }
 
@@ -265,6 +298,13 @@ the underlying store).
 sub get_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
+	
+	if (scalar(@_) >= 4) {
+		my $graph	= $_[3];
+		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+			$_[3]	= undef;
+		}
+	}
 	return $self->_store->get_statements( @_ );
 }
 
@@ -618,7 +658,7 @@ sub bounded_description {
 		return if (not(@statements) and not(@nodes));
 		while (1) {
 			if (not(@statements)) {
-                                my $l = Log::Log4perl->get_logger("rdf.trine.model");
+				my $l = Log::Log4perl->get_logger("rdf.trine.model");
 				return unless (scalar(@nodes));
 				my $n	= shift(@nodes);
 # 				warn "CBD handling node " . $n->sse . "\n";
@@ -629,16 +669,16 @@ sub bounded_description {
 # 					warn "+ " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
-                                    $l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
-                                };
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
 				try {
 					my $sts	= $self->get_statements( undef, undef, $n );
 					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
 # 					warn "- " . $_->sse . "\n" for (@s);
 					push(@statements, @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
-                                    $l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
-                                };
+					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
+				};
 				$seen{ $n->sse }++
 			}
 			last if (scalar(@statements));
@@ -697,11 +737,23 @@ sub _store {
 
 sub _debug {
 	my $self	= shift;
+	my $warn	= shift;
 	my $stream	= $self->get_statements( undef, undef, undef, undef );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.model");
 	$l->debug( 'model statements:' );
+	if ($warn) {
+		warn "Model $self:\n";
+	}
+	my $count	= 0;
 	while (my $s = $stream->next) {
+		$count++;
+		if ($warn) {
+			warn $s->as_string . "\n";
+		}
 		$l->debug('[model]' . $s->as_string);
+	}
+	if ($warn) {
+		warn "$count statements\n";
 	}
 }
 

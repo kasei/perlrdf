@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.126
+This document describes RDF::Trine::Statement::Quad version 0.130
 
 =cut
 
@@ -24,7 +24,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 }
 
 ######################################################################
@@ -65,11 +65,7 @@ Returns the subject, predicate and object of the triple pattern.
 
 sub nodes {
 	my $self	= shift;
-	my $s		= $self->subject;
-	my $p		= $self->predicate;
-	my $o		= $self->object;
-	my $c		= $self->context;
-	return ($s, $p, $o, $c);
+	return @$self;
 }
 
 =item C<< node_names >>

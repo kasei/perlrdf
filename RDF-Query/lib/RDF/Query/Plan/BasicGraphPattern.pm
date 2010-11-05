@@ -7,7 +7,7 @@ RDF::Query::Plan::BasicGraphPattern - Executable query plan for BasicGraphPatter
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::BasicGraphPattern version 2.902.
+This document describes RDF::Query::Plan::BasicGraphPattern version 2.903.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -122,9 +122,8 @@ sub next {
 	
 	my $iter	= $self->[0]{iter};
 	return undef unless ($iter);
-	while (my $row = $iter->next) {
-		return undef unless ($row);
-		if (my $bound = $self->[0]{bound}) {
+	while (ref(my $row = $iter->next)) {
+		if (ref(my $bound = $self->[0]{bound})) {
 			@{ $row }{ keys %$bound }	= values %$bound;
 		}
 		if (blessed($q)) {
@@ -139,6 +138,7 @@ sub next {
 		my $result	= RDF::Query::VariableBindings->new( $row );
 		return $result;
 	}
+	return;
 }
 
 =item C<< close >>

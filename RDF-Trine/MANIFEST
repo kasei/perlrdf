@@ -44,6 +44,7 @@ lib/RDF/Trine/Parser/NTriples.pm
 lib/RDF/Trine/Parser/RDFa.pm
 lib/RDF/Trine/Parser/RDFJSON.pm
 lib/RDF/Trine/Parser/RDFXML.pm
+lib/RDF/Trine/Parser/Redland.pm
 lib/RDF/Trine/Parser/TriG.pm
 lib/RDF/Trine/Parser/Turtle.pm
 lib/RDF/Trine/Pattern.pm
@@ -518,6 +519,7 @@ t/model-union.t
 t/model.t
 t/namespace-export.t
 t/namespace-uri.t
+t/node-literal.t
 t/node-resource-i18n.t
 t/node-serialization.t
 t/node.t
@@ -526,6 +528,7 @@ t/parser-ntriples.t
 t/parser-rdfa.t
 t/parser-rdfjson.t
 t/parser-rdfxml-w3c.t
+t/parser-redland.t
 t/parser-trig.t
 t/parser-turtle.t
 t/parser.t

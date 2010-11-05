@@ -7,7 +7,7 @@ RDF::Query::Algebra::Path - Algebra class for path patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Path version 2.902.
+This document describes RDF::Query::Algebra::Path version 2.903.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -261,14 +261,14 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->name } @vars);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	my @vars	= grep { $_->isa('RDF::Query::Node::Variable') } ($self->start, $self->end);
 	return RDF::Query::_uniq(map { $_->name } @vars);

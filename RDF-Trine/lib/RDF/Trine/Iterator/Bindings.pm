@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.126
+This document describes RDF::Trine::Iterator::Bindings version 0.130
 
 =head1 SYNOPSIS
 
@@ -38,13 +38,14 @@ use Text::Table;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator::Bindings::Materialized;
+use RDF::Trine::Serializer::Turtle;
 
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -498,10 +499,9 @@ sub as_string {
 	my @rows;
 	my $count	= 0;
 	while (my $row = $self->next) {
-		push(@rows, [ map { blessed($_) ? $_->as_string : '' } @{ $row }{ @names } ]);
+		push(@rows, [ map { blessed($_) ? RDF::Trine::Serializer::Turtle->node_as_concise_string($_) : '' } @{ $row }{ @names } ]);
 		last if ($max_result_size and ++$count >= $max_result_size);
 	}
-#	my $rows			= [ map { [ map { blessed($_) ? $_->as_string : '' } @{$_}{ @names } ] } @nodes ];
 	if (ref($rescount)) {
 		$$rescount	= scalar(@rows);
 	}

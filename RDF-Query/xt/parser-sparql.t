@@ -3555,7 +3555,7 @@ __END__
   PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
   PREFIX	geo: <http://www.w3.org/2003/01/geo/wgs84_pos#>
   SELECT	?lat ?long
-  FROM	<http://homepage.mac.com/samofool/rdf-query/test-data/greenwich.rdf>
+  FROM	<http://kasei.us/code/rdf-query/test-data/greenwich.rdf>
   WHERE	{
   	?point a geo:Point ;
   		geo:lat ?lat ;
@@ -3569,7 +3569,7 @@ __END__
     -
       - !!perl/array:RDF::Query::Node::Resource
         - URI
-        - http://homepage.mac.com/samofool/rdf-query/test-data/greenwich.rdf
+        - http://kasei.us/code/rdf-query/test-data/greenwich.rdf
   triples:
     - !!perl/array:RDF::Query::Algebra::Project
       - !!perl/array:RDF::Query::Algebra::GroupGraphPattern

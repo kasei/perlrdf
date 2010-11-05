@@ -7,7 +7,7 @@ RDF::Query::Algebra - Base class for Algebra expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra version 2.902.
+This document describes RDF::Query::Algebra version 2.903.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::Algebra;
 
 our (@ISA, @EXPORT_OK);
 BEGIN {
-	our $VERSION	= '2.902';
+	our $VERSION	= '2.903';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -60,8 +60,6 @@ use RDF::Query::Algebra::Distinct;
 use RDF::Query::Algebra::Path;
 use RDF::Query::Algebra::Project;
 use RDF::Query::Algebra::Extend;
-use RDF::Query::Algebra::Not;
-use RDF::Query::Algebra::Exists;
 use RDF::Query::Algebra::SubSelect;
 use RDF::Query::Algebra::Load;
 use RDF::Query::Algebra::Clear;
@@ -89,14 +87,14 @@ use constant SSE_TAGS	=> {
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
 };
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	return $self->referenced_variables;
 }
@@ -264,7 +262,7 @@ sub subpatterns_of_type {
 	push(@patterns, $self) if ($self->isa($type));
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@patterns, $arg->subpatterns_of_type($type));
+			push(@patterns, $arg->subpatterns_of_type($type, $block));
 		}
 	}
 	return @patterns;

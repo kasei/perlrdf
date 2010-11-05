@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.126
+This document describes RDF::Trine::Store version 0.130
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -98,23 +98,19 @@ An example invocation for the DBI store may be:
 
 
 sub new_with_config {
-  my $proto	= shift;
-  my $config	= shift;
-  if (defined($config)) {
-    my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
-    if ($class->can('_new_with_config')) {
-      return $class->_new_with_config( $config );
-    } else {
-      throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
-    }
-  } else {
-    throw RDF::Trine::Error::MethodInvocationError;
-  }
+	my $proto		= shift;
+	my $config	= shift;
+	if (defined($config)) {
+		my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
+		if ($class->can('_new_with_config')) {
+			return $class->_new_with_config( $config );
+		} else {
+			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
+		}
+	} else {
+		throw RDF::Trine::Error::MethodInvocationError;
+	}
 }
-
-
-
-
 
 
 =item C<< new_with_object ( $object ) >>
@@ -135,6 +131,24 @@ sub new_with_object {
 			if ($s) {
 				return $s;
 			}
+		}
+	}
+	return;
+}
+
+=item C<< class_by_name ( $name ) >>
+
+Returns the class of the storage implementation with the given name.
+For example, C<< 'Memory' >> would return C<< 'RDF::Trine::Store::Memory' >>.
+
+=cut
+
+sub class_by_name {
+	my $proto	= shift;
+	my $name	= shift;
+	foreach my $class (keys %STORE_CLASSES) {
+		if (lc($class) =~ m/::${name}$/i) {
+			return $class;
 		}
 	}
 	return;
@@ -327,6 +341,18 @@ Returns the number of statements in the store.
 sub size {
 	my $self	= shift;
 	return $self->count_statements( undef, undef, undef, undef );
+}
+
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	return;
 }
 
 sub _begin_bulk_ops {}

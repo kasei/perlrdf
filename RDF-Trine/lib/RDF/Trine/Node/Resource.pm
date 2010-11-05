@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.126
+This document describes RDF::Trine::Node::Resource version 0.130
 
 =cut
 
@@ -18,16 +18,17 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
-use URI;
+use URI 1.52;
+use Encode;
 use Data::Dumper;
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 }
 
 ######################################################################
@@ -49,44 +50,48 @@ sub new {
 	my $uri		= shift;
 	my $base	= shift;
 	
-	my @uni;
-	my $count	= 0;
-	
-	my $buri;
 	if (defined($base)) {
-		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
-		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-			my $text	= $1;
-			push(@uni, $text);
-			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
-			$count++;
-		}
+		$base	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+		$uri	= URI->new_abs($uri, $base)->as_iri;
 	}
-	
-	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-		my $text	= $1;
-		push(@uni, $text);
-		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
-		$count++;
-	}
-	
-	if (defined($base)) {
-		### We have to work around the URI module not accepting IRIs. If there's
-		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-		### the URI into an absolute URI, and then replace the breadcrumbs with
-		### the Unicode.
-		
-		my $abs			= URI->new_abs( $uri, $buri );
-		$uri			= $abs->as_string;
-	}
-
-	while ($uri =~ /,____rq(\d+)____,/) {
-		my $num	= $1;
-		my $i	= index($uri, ",____rq${num}____,");
-		my $len	= 12 + length($num);
-		substr($uri, $i, $len)	= shift(@uni);
-	}
-	
+# 	my @uni;
+# 	my $count	= 0;
+# 	
+# 	my $buri;
+# 	if (defined($base)) {
+# 		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+# 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+# 			my $text	= $1;
+# 			push(@uni, $text);
+# 			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
+# 			$count++;
+# 		}
+# 	}
+# 	
+# 	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
+# 		my $text	= $1;
+# 		push(@uni, $text);
+# 		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
+# 		$count++;
+# 	}
+# 	
+# 	if (defined($base)) {
+# 		### We have to work around the URI module not accepting IRIs. If there's
+# 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
+# 		### the URI into an absolute URI, and then replace the breadcrumbs with
+# 		### the Unicode.
+# 		
+# 		my $abs			= URI->new_abs( $uri, $buri );
+# 		$uri			= $abs->as_string;
+# 	}
+# 
+# 	while ($uri =~ /,____rq(\d+)____,/) {
+# 		my $num	= $1;
+# 		my $i	= index($uri, ",____rq${num}____,");
+# 		my $len	= 12 + length($num);
+# 		substr($uri, $i, $len)	= shift(@uni);
+# 	}
+# 	
 	return bless( [ 'URI', $uri ], $class );
 }
 
@@ -111,6 +116,8 @@ sub uri {
 	my $self	= shift;
 	if (@_) {
 		$self->[1]	= shift;
+		delete $sse{ refaddr($self) };
+		delete $ntriples{ refaddr($self) };
 	}
 	return $self->[1];
 }
@@ -124,21 +131,33 @@ Returns the SSE string for this resource.
 sub sse {
 	my $self	= shift;
 	my $context	= shift;
-	my $uri		= $self->uri_value;
 	
-	my $ns		= $context->{namespaces} || {};
-	my %ns		= %$ns;
-	foreach my $k (keys %ns) {
-		my $v	= $ns{ $k };
-		if (index($uri, $v) == 0) {
-			my $qname	= join(':', $k, substr($uri, length($v)));
-			return $qname;
+	if ($context) {
+		my $uri		= $self->uri_value;
+		my $ns		= $context->{namespaces} || {};
+		my %ns		= %$ns;
+		foreach my $k (keys %ns) {
+			my $v	= $ns{ $k };
+			if (index($uri, $v) == 0) {
+				my $qname	= join(':', $k, substr($uri, length($v)));
+				return $qname;
+			}
 		}
 	}
 	
-	my $string	= $uri;
-	my $escaped	= $self->_unicode_escape( $string );
-	return '<' . $escaped . '>';
+	my $ra	= refaddr($self);
+	if ($sse{ $ra }) {
+		return $sse{ $ra };
+	} else {
+		my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $sse		= '<' . $string . '>';
+		$sse{ $ra }	= $sse;
+		return $sse;
+	}
+	
+# 	my $string	= $uri;
+# 	my $escaped	= $self->_unicode_escape( $string );
+# 	return '<' . $escaped . '>';
 }
 
 =item C<< as_string >>
@@ -161,16 +180,25 @@ Returns the node in a string form suitable for NTriples serialization.
 sub as_ntriples {
 	my $self	= shift;
 	my $context	= shift;
-	my $uri		= $self->uri_value;
+	my $ra		= refaddr($self);
+	if ($ntriples{ $ra }) {
+		return $ntriples{ $ra };
+	} else {
+		my $string		= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $ntriples	= '<' . $string . '>';
+		$ntriples{ $ra }	= $ntriples;
+		return $ntriples;
+	}
 	
-	my $string	= $uri;
-	$string	=~ s/\\/\\\\/g;
-	my $escaped	= $self->_unicode_escape( $string );
-	$escaped	=~ s/"/\\"/g;
-	$escaped	=~ s/\n/\\n/g;
-	$escaped	=~ s/\r/\\r/g;
-	$escaped	=~ s/\t/\\t/g;
-	return '<' . $escaped . '>';
+# 	my $uri		= $self->uri_value;
+# 	my $string	= $uri;
+# 	$string	=~ s/\\/\\\\/g;
+# 	my $escaped	= $self->_unicode_escape( $string );
+# 	$escaped	=~ s/"/\\"/g;
+# 	$escaped	=~ s/\n/\\n/g;
+# 	$escaped	=~ s/\r/\\r/g;
+# 	$escaped	=~ s/\t/\\t/g;
+# 	return '<' . $escaped . '>';
 }
 
 =item C<< type >>
@@ -192,8 +220,10 @@ Returns true if the two nodes are equal, false otherwise.
 sub equal {
 	my $self	= shift;
 	my $node	= shift;
+	return 0 unless defined($node);
+	return 1 if ($self == $node);
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
-	return ($self->uri_value eq $node->uri_value);
+	return ($self->[1] eq $node->[1]);
 }
 
 # called to compare two nodes of the same type
@@ -224,6 +254,12 @@ sub qname {
 	} else {
 		throw RDF::Trine::Error -text => "Can't turn IRI $uri into a QName.";
 	}
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $sse{ refaddr($self) };
+	delete $ntriples{ refaddr($self) };
 }
 
 1;

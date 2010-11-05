@@ -7,7 +7,7 @@ RDF::Query::Algebra::Clear - Algebra class for CLEAR operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Clear version 2.902.
+This document describes RDF::Query::Algebra::Clear version 2.903.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -82,9 +82,16 @@ sub as_sparql {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "CLEAR DEFAULT";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "CLEAR $1";
+	} else {
+		$string	= ($graph->is_nil)
 				? 'CLEAR GRAPH DEFAULT'
 				: sprintf( "CLEAR GRAPH <%s>", $graph->uri_value );
+	}
 	return $string;
 }
 
@@ -100,9 +107,16 @@ sub sse {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "(clear default)";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "(clear " . lc($1) . ")";
+	} else {
+		$string	= ($graph->is_nil)
 				? '(clear default)'
 				: sprintf( "(clear <%s>)", $graph->uri_value );
+	}
 	return $string;
 }
 

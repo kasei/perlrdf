@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query result
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.126
+This document describes RDF::Trine::Iterator::Boolean version 0.130
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.126';
+	$VERSION	= '0.130';
 }
 
 =item C<new ( \@results, %args )>
@@ -77,6 +77,18 @@ Returns true if the underlying result is a boolean value.
 sub is_boolean {
 	my $self			= shift;
 	return 1;
+}
+
+=item C<as_string ( $max_size [, \$count] )>
+
+Returns a string serialization of the stream data.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	my $value	= $self->get_boolean ? 'true' : 'false';
+	return $value;
 }
 
 =item C<as_xml ( $max_size )>

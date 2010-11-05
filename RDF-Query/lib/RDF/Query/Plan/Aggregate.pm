@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.902.
+This document describes RDF::Query::Plan::Aggregate version 2.903.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -84,10 +84,20 @@ sub execute ($) {
 		my @ops		= @{ $self->[3] };
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		
-		while (my $row = $plan->next) {
+		ROW: while (my $row = $plan->next) {
 			$l->debug("aggregate on $row");
-			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
-			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
+			my @group;
+			foreach my $g (@groupby) {
+				my $v	= $query->var_or_expr_value( $row, $g );
+				if ($g->isa('RDF::Query::Expression::Alias')) {
+					$row->{ $g->name }	= $v;
+				}
+				push(@group, $v);
+			}
+			
+# 			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
+			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } map { blessed($_) ? $query->var_or_expr_value( $row, $_ ) : '' } @group);
+			
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
 			foreach my $i (0 .. $#groupby) {
@@ -106,11 +116,18 @@ sub execute ($) {
 			
 			my $row_sample	= $group_data{ 'groupby_sample' }{ $group };
 			foreach my $g (@groupby) {
-				my $name	= ($g->isa('RDF::Query::Expression::Alias') or $g->isa('RDF::Query::Node::Variable'))
-							? $g->name
-							: $g->sse;
-				my $value	= $row_sample->{ $name };
-				$passthrough_data{ $name }	= $value;
+				if ($g->isa('RDF::Query::Expression::Alias') or $g->isa('RDF::Query::Node::Variable')) {
+					my $name	= $g->name;
+					$passthrough_data{ $name }	= $row_sample->{ $name };
+				} elsif ($g->isa('RDF::Query::Expression')) {
+					my @names	= $g->referenced_variables;
+					foreach my $name (@names) {
+						$passthrough_data{ $name }	= $row_sample->{ $name };
+					}
+				} else {
+					my $name	= $g->sse;
+					$passthrough_data{ $name }	= $row_sample->{ $name };
+				}
 			}
 			
 			my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);
@@ -149,18 +166,18 @@ sub execute ($) {
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $strict	= 1;
-						my $v	= $value->literal_value;
+						my $v	= $value->numeric_value;
 						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
-							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2] and not($value->is_numeric_type and blessed($aggregate_data->{ $alias }{ $group }[1]) and $aggregate_data->{ $alias }{ $group }[1]->isa('RDF::Query::Node::Literal') and $aggregate_data->{ $alias }{ $group }[1]->is_numeric_type)) {
 								if ($context->strict_errors) {
-									throw RDF::Query::Error::ComparisonError -text => "Cannot compute SUM aggregate over nodes of multiple types";
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute SUM aggregate over nodes of multiple, non-numeric types";
 								} else {
 									$strict	= 0;
 								}
 							}
 							
 							$aggregate_data->{ $alias }{ $group }[1]	+= $v;
-							$aggregate_data->{ $alias }{ $group }[2]	= $type;
+							$aggregate_data->{ $alias }{ $group }[2]	= RDF::Query::Expression::Binary->promote_type('+', $type, $aggregate_data->{ $alias }{ $group }[2]);
 						} else {
 							$aggregate_data->{ $alias }{ $group }[1]	= $v;
 							$aggregate_data->{ $alias }{ $group }[2]	= $type;
@@ -173,9 +190,9 @@ sub execute ($) {
 						
 						my $strict	= 1;
 						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
-							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2] and not($value->is_numeric_type and blessed($aggregate_data->{ $alias }{ $group }[1]) and $aggregate_data->{ $alias }{ $group }[1]->isa('RDF::Query::Node::Literal') and $aggregate_data->{ $alias }{ $group }[1]->is_numeric_type)) {
 								if ($context->strict_errors) {
-									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple types";
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MAX aggregate over nodes of multiple, non-numeric types";
 								} else {
 									$strict	= 0;
 								}
@@ -204,9 +221,9 @@ sub execute ($) {
 						
 						my $strict	= 1;
 						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
-							if ($type ne $aggregate_data->{ $alias }{ $group }[2]) {
+							if ($type ne $aggregate_data->{ $alias }{ $group }[2] and not($value->is_numeric_type and blessed($aggregate_data->{ $alias }{ $group }[1]) and $aggregate_data->{ $alias }{ $group }[1]->isa('RDF::Query::Node::Literal') and $aggregate_data->{ $alias }{ $group }[1]->is_numeric_type)) {
 								if ($context->strict_errors) {
-									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple types";
+									throw RDF::Query::Error::ComparisonError -text => "Cannot compute MIN aggregate over nodes of multiple, non-numeric types";
 								} else {
 									$strict	= 0;
 								}
@@ -249,18 +266,20 @@ sub execute ($) {
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
-						if (my $cmp = $aggregate_data->{ $alias }{ $group }[3]) {
-							if ($type ne $cmp) {
-								if ($context->strict_errors) {
-									throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over nodes of multiple types";
-								}
+						unless (blessed($value) and $value->isa('RDF::Query::Node::Literal') and $value->is_numeric_type) {
+							if ($context->strict_errors) {
+								throw RDF::Query::Error::ComparisonError -text => "Cannot compute AVG aggregate over non-numeric nodes";
 							}
 						}
 						
 						if (blessed($value) and $value->isa('RDF::Query::Node::Literal') and $value->is_numeric_type) {
 							$aggregate_data->{ $alias }{ $group }[1]++;
 							$aggregate_data->{ $alias }{ $group }[2]	+= $value->numeric_value;
-							$aggregate_data->{ $alias }{ $group }[3]	= $type;
+							if ($aggregate_data->{ $alias }{ $group }[3]) {
+								$aggregate_data->{ $alias }{ $group }[3]	= RDF::Query::Expression::Binary->promote_type('+', $type, $aggregate_data->{ $alias }{ $group }[3]);
+							} else {
+								$aggregate_data->{ $alias }{ $group }[3]	= $type;
+							}
 						}
 					} elsif ($op eq 'GROUP_CONCAT') {
 						$l->debug("- aggregate op: GROUP_CONCAT");
@@ -287,16 +306,16 @@ sub execute ($) {
 				my $op			= $aggregates{ $agg }{ $group }[0];
 				if ($op eq 'AVG') {
 					my $value	= ($aggregates{ $agg }{ $group }[2] / $aggregates{ $agg }{ $group }[1]);
-					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#float' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, $aggregates{ $agg }{ $group }[3], 1 );
 				} elsif ($op eq 'GROUP_CONCAT') {
 					my $j	= (exists $options{$agg}{seperator}) ? $options{$agg}{seperator} : ' ';
 					$row{ $agg }	= RDF::Query::Node::Literal->new( join($j, @{ $aggregates{ $agg }{ $group }[1] }) );
 				} elsif ($op =~ /COUNT/) {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer' );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#integer', 1 );
 				} else {
 					my $value	= $aggregates{ $agg }{ $group }[1];
-					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, $aggregates{ $agg }{ $group }[2] );
+					$row{ $agg }	= (blessed($value) and $value->isa('RDF::Trine::Node')) ? $value : RDF::Trine::Node::Literal->new( $value, undef, $aggregates{ $agg }{ $group }[2], 1 );
 				}
 			}
 			

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Project - Algebra class for projection
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Project version 2.902.
+This document describes RDF::Query::Algebra::Project version 2.903.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -290,21 +290,22 @@ sub bind_variables {
 	return $class->new( $pattern, \@vars );
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	my @vars	= $self->pattern->binding_variables;
+	my @vars;
+#	push(@vars, $self->pattern->potentially_bound);
 	foreach my $v (@{ $self->vars }) {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			push(@vars, $v->name);
 		} else {
-			push(@vars, $v->binding_variables);
+			push(@vars, $v->potentially_bound);
 		}
 	}
 	return RDF::Query::_uniq(@vars);

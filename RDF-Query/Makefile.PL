@@ -29,10 +29,10 @@ requires			'File::Spec'				=> 0;
 requires			'File::Temp'				=> 0;
 requires			'JSON'						=> 2;
 requires			'Parse::RecDescent'			=> 0;
-requires			'RDF::Trine'				=> 0.125;
+requires			'RDF::Trine'				=> 0.126;
 requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
-requires			'URI'						=> 0;
+requires			'URI'						=> 1.52;
 requires			'I18N::LangTags'			=> 0;
 
 resources(
@@ -41,6 +41,8 @@ resources(
 );
 
 author_tests('xt');
+
+install_script 'bin/rqsh';
 
 sign;
 

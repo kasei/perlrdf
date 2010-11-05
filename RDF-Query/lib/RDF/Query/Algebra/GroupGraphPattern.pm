@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.902.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.903.
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use List::Util qw(first);
 use Carp qw(carp croak confess);
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
@@ -98,6 +98,29 @@ sub add_pattern {
 	push( @{ $self }, $pattern );
 }
 
+=item C<< quads >>
+
+Returns a list of the quads belonging to this GGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	my %bgps;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::NamedGraph')) {
+		push(@quads, $p->quads);
+		foreach my $bgp ($p->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+			$bgps{ refaddr($bgp) }++;
+		}
+	}
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		next if ($bgps{ refaddr($p) });
+		push(@quads, $p->quads);
+	}
+	return @quads;
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this alegbra expression.
@@ -108,7 +131,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent} || "\t";
+	my $indent	= ($context->{indent} ||= "\t");
 	
 	my @patterns	= $self->patterns;
 	if (scalar(@patterns) == 1) {
@@ -178,16 +201,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->patterns);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq(map { $_->binding_variables } $self->patterns);
+	return RDF::Query::_uniq(map { $_->potentially_bound } $self->patterns);
 }
 
 =item C<< definite_variables >>

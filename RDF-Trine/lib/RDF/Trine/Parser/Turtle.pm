@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.126
+This document describes RDF::Trine::Parser::Turtle version 0.130
 
 =head1 SYNOPSIS
 
@@ -36,22 +36,27 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Data::UUID;
 use Log::Log4perl;
+use Encode qw(decode);
+use Scalar::Util qw(blessed looks_like_number);
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Error;
-use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.126';
+	$VERSION				= '0.130';
+	foreach my $ext (qw(ttl)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
 	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
 	my $class										= __PACKAGE__;
 	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
 	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/turtle';
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -211,7 +216,7 @@ sub _triple {
 		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
 			my $value	= $o->literal_value;
 			my $dt		= $o->literal_datatype;
-			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 			$o	= literal( $canon, undef, $dt );
 		}
 	}
@@ -849,7 +854,8 @@ sub _string {
 	$self->_eat('"');
 	my $value	= $self->_eat_re_save( $r_scharacters );
 	$self->_eat('"');
-	return $self->_parse_short( $value );
+	my $string	= $self->_parse_short( $value );
+	return decode('utf8', $string);
 }
 
 sub _longString_test {
@@ -867,7 +873,8 @@ sub _longString {
 	$self->_eat('"""');
 	my $value	= $self->_eat_re_save( $r_lcharacters );
 	$self->_eat('"""');
-	return $self->_parse_long( $value );
+	my $string	= $self->_parse_long( $value );
+	return decode('utf8', $string);
 }
 
 ################################################################################
@@ -883,7 +890,7 @@ sub _parse_short {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s );
+	return Unicode::Escape::unescape( $s, 'utf8' );
 }
 
 sub _parse_long {
@@ -896,7 +903,7 @@ sub _parse_long {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s );
+	return Unicode::Escape::unescape( $s, 'utf8' );
 }
 
 sub _join_uri {

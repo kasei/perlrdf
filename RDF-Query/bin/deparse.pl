@@ -29,6 +29,7 @@ while ($ARGV[0] =~ /^-([aps])$/) {
 }
 $sparql	= 1 unless ($algebra || $plan || $sparql);
 
+unshift(@ARGV, '-w');
 my $query;
 try {
 	local($Error::Debug)	= 1;

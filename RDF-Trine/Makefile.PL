@@ -12,6 +12,8 @@ build_requires		'Test::More'				=> 0.61;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 
+perl_version		'5.008003';
+
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
 requires			'DBD::SQLite'				=> 1.14;
@@ -34,7 +36,7 @@ requires			'Text::Table'				=> 0;
 requires			'Time::HiRes'				=> 0;
 requires			'Unicode::Escape'			=> 0;
 requires			'Unicode::String'			=> 2.09;
-requires			'URI'						=> 0;
+requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0;

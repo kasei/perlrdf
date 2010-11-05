@@ -7,7 +7,7 @@ RDF::Query::Algebra::BasicGraphPattern - Algebra class for BasicGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::BasicGraphPattern version 2.902.
+This document describes RDF::Query::Algebra::BasicGraphPattern version 2.903.
 
 =cut
 
@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use Scalar::Util qw(refaddr reftype);
+use Scalar::Util qw(blessed refaddr reftype);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -79,6 +79,34 @@ Returns a list of triples belonging to this BGP.
 sub triples {
 	my $self	= shift;
 	return @$self;
+}
+
+=item C<< quads >>
+
+Returns a list of the (implicit) quads belonging to this BGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @triples	= $self->triples;
+	my @quads;
+	foreach my $t (@triples) {
+		my @nodes	= $t->nodes;
+		foreach my $i (0 .. 3) {
+			my $n	= $nodes[ $i ];
+			if (not blessed($n)) {
+				if ($i == 3) {
+					$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
+				} else {
+					$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+				}
+			}
+		}
+		my $st	= RDF::Trine::Statement::Quad->new( @nodes );
+		push(@quads, $st);
+	}
+	return @quads;
 }
 
 =item C<< sse >>
@@ -162,16 +190,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq(map { $_->binding_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->potentially_bound } $self->triples);
 }
 
 =item C<< definite_variables >>

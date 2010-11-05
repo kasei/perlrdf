@@ -7,7 +7,7 @@ RDF::Query::Plan::Limit - Executable query plan for Limits.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Limit version 2.902.
+This document describes RDF::Query::Plan::Limit version 2.903.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.903';
 }
 
 ######################################################################
@@ -74,7 +74,7 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open LIMIT";
 	}
-	return undef if ($self->[0]{count} >= $self->[1]);
+	return undef if ($self->[0]{count} >= $self->limit);
 	my $plan	= $self->[2];
 	my $row		= $plan->next;
 	return undef unless ($row);
@@ -183,7 +183,8 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $c		= $self->pattern->graph( $g );
-	$g->add_node( "$self", label => "Limit ($self->[1])" . $self->graph_labels );
+	my $limit	= $self->limit;
+	$g->add_node( "$self", label => "Limit ($limit)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
 }
