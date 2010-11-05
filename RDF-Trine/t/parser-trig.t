@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Spec;
@@ -163,3 +163,32 @@ END
 		is_deeply( \%got, \%expect, 'expected statement counts per graph name' );
 	}
 }
+
+{
+	my $model = RDF::Trine::Model->temporary_model;
+	my $trig	= <<'END';
+# TriG Example Document 4
+# This document contains a default graph and one named graphs with non-ASCII chars.
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix ex: <http://www.example.org/vocabulary#> .
+# default graph
+    { 
+      <http://example.org/bob> dc:publisher "Bob" . 
+      <http://example.org/alice> dc:publisher "Alice" .
+    }
+
+<http://example.org/bob> 
+    { 
+       _:a foaf:name "Bob" . 
+       _:a ex:likes "Blåbærsyltetøy"@no .
+    }
+
+END
+	$parser->parse_into_model(undef, $trig, $model);
+	my $iter = $model->get_statements( undef,
+					   RDF::Trine::Node::Resource->new('http://www.example.org/vocabulary#likes'),
+					   undef, undef );
+	my $st = $iter->next;
+	is($st->object->literal_value, 'Blåbærsyltetøy', "Finding UTF-8 string");
+}
+
