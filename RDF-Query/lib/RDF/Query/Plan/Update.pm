@@ -92,7 +92,7 @@ sub execute ($) {
 			foreach my $row (@rows) {
 				my @triples	= blessed($template) ? $template->quads : ();
 				
-				foreach my $t (@triples) {
+				TRIPLE: foreach my $t (@triples) {
 					my @nodes	= $t->nodes;
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
@@ -113,7 +113,8 @@ sub execute ($) {
 							if ($i == 3) {
 								$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
 							} else {
-								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+								next TRIPLE;
+# 								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
 							}
 # 							$ok	= 0;
 # 						} elsif ($n->isa('RDF::Trine::Node::Variable')) {
