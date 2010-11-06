@@ -192,18 +192,17 @@ sub make_model {
 		return $model;
 	} else {
 		# create a temporary triplestore, and wrap it into a model
-		my $store	= RDF::Trine::Store::DBI->temporary_store();
-		my $model	= RDF::Trine::Model->new( $store );
+		my $model	= RDF::Trine::Model->temporary_model;
 		
 		# read in the list of files with RDF/XML content for querying
 		my @files	= @_;
 		
-		# create a rdf/xml parser object that we'll use to read in the rdf data
-		my $parser	= RDF::Trine::Parser->new('rdfxml');
-		
 		# loop over all the files
 		foreach my $i (0 .. $#files) {
 			my $file	= $files[ $i ];
+			my $pclass	= RDF::Trine::Parser->guess_parser_by_filename( $file ) || 'RDF::Trine::Parser::RDFXML';
+			my $parser	= $pclass->new();
+			
 			if ($file =~ m<^https?:\/\/>) {
 				$l->debug("fetching RDF from $file ...");
 				$parser->parse_url_into_model( $file, $model );
