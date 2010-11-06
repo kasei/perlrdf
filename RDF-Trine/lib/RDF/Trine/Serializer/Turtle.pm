@@ -121,7 +121,7 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
+	open( my $fh, '>:utf8', \$string );
 	$self->serialize_model_to_file( $fh, $model, seen => {}, levell => 0, tab => "\t", @_, model => $model, string => 1 );
 	close($fh);
 	return $string;
@@ -153,7 +153,7 @@ sub serialize_iterator_to_file {
 		$tmp_buffer	= '';
 		$tmp_fh	= $fh;
 		$fh		= undef;
-		open( $fh, '>', \$tmp_buffer );
+		open( $fh, '>:utf8', \$tmp_buffer );
 	} else {
 		if (@nskeys) {
 			foreach my $ns (@nskeys) {
@@ -298,7 +298,7 @@ sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
+	open( my $fh, '>:utf8', \$string );
 	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, string => 1 );
 	close($fh);
 	return $string;
