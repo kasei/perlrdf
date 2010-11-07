@@ -327,7 +327,7 @@ sub query_eval_test {
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
 	warn "Loading SPARQL query from file $filename" if ($debug);
-	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
+	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { warn("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
 	
 	my $q			= $sparql;
 	$q				=~ s/\s+/ /g;
