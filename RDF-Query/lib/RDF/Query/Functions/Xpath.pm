@@ -61,7 +61,7 @@ sub install {
 	# };
 
 	# fn:matches
-	$RDF::Query::functions{"http://www.w3.org/2005/04/xpath-functionsmatches"}	= sub {
+	$RDF::Query::functions{"http://www.w3.org/2005/xpath-functions#matches"}	= sub {
 		my $query	= shift;
 		my $node	= shift;
 		my $match	= shift;
