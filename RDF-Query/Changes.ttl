@@ -9,6 +9,31 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.904.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.903.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.904" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added 'results' command to rqsh to allow serializing query results in SPARQL XML format." ;
+                        asc:addition      "Added 'set prefix' and 'time' commands to rqsh." ;
+                        asc:addition      "Added string concatenation overloading of binary +." ;
+                        asc:update        "Fixed bug in property path evaluation on encountering blank path nodes." ;
+                        asc:update        "Fixed use of binary '*' in FILTER without numeric data in t/resultforms.t." ;
+                        asc:update        "Fixed bin/dawg11-status.pl to only load SPARQL 1.1 earl result files." ;
+                        asc:update        "Fixed RDF::Query::Plan::Update to ignore non-ground triples (unbound variables don't act as wildcards)." ;
+                        asc:update        "Fixed handling of named graph data in insert/delete patterns of update operations." ;
+                        asc:update        "Updated RDF::Query::Util to use RDF::Trine::Model->temporary_model and guess an appropriate parser based on filenames." ;
+                        asc:update        "Updated namespace URI in RDF::Query::Functions::Jena to <http://jena.hpl.hp.com/ARQ/function#>." ;
+                        asc:update        "Updated namespace URI in RDF::Query::Functions::Xpath to <http://www.w3.org/2005/xpath-functions#>." ;
+                        asc:update        "Updated xt/dawg-eval11.t to align with updated test case manifest schemas." ;
+                        asc:update        "Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.903.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.902.tar.gz> ;

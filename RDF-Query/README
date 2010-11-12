@@ -37,6 +37,21 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.904 (2010-XX-XX)
+
+     * Added 'set prefix' and 'time' commands to rqsh.
+     * Added string concatenation overloading of binary +.
+     * Fixed bug in property path evaluation on encountering blank path nodes.
+     * Fixed use of binary '*' in FILTER without numeric data in t/resultforms.t.
+     * Fixed bin/dawg11-status.pl to only load SPARQL 1.1 earl result files.
+     * Fixed RDF::Query::Plan::Update to ignore non-ground triples (unbound variables don't act as wildcards).
+     * Fixed handling of named graph data in insert/delete patterns of update operations.
+     * Updated RDF::Query::Util to use RDF::Trine::Model->temporary_model and guess an appropriate parser based on filenames.
+     * Updated namespace URI in RDF::Query::Functions::Jena to <http://jena.hpl.hp.com/ARQ/function#>.
+     * Updated namespace URI in RDF::Query::Functions::Xpath to <http://www.w3.org/2005/xpath-functions#>.
+     * Updated xt/dawg-eval11.t to align with updated test case manifest schemas.
+     * Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped).
+
   Version 2.903 (2010-11-03)
 
      * SPARQL 1.1
