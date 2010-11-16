@@ -119,7 +119,7 @@ sub guess_parser_by_filename {
 		my $ext	= $1;
 		return $file_extensions{ $ext } if exists $file_extensions{ $ext };
 	}
-	return 'RDF::Trine::Parser::RDFXML';
+	return $class->parser_by_media_type( 'application/rdf+xml' ) || 'RDF::Trine::Parser::RDFXML';
 }
 
 =item C<< new ( $parser_name, @args ) >>
