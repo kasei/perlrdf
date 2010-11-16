@@ -527,7 +527,7 @@ sub _node_concise_string {
 			my $qname;
 			try {
 				my ($ns,$local)	= $dtr->qname;
-				if (exists $self->{ns}{$ns}) {
+				if (blessed($self) and exists $self->{ns}{$ns}) {
 					$qname	= join(':', $self->{ns}{$ns}, $local);
 					$self->{used_ns}{ $self->{ns}{$ns} }++;
 				}
@@ -541,7 +541,7 @@ sub _node_concise_string {
 		my $value;
 		try {
 			my ($ns,$local)	= $obj->qname;
-			if (exists $self->{ns}{$ns}) {
+			if (blessed($self) and exists $self->{ns}{$ns}) {
 				$value	= join(':', $self->{ns}{$ns}, $local);
 				$self->{used_ns}{ $self->{ns}{$ns} }++;
 			}
