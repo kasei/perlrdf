@@ -43,7 +43,7 @@ BEGIN {
 
 =cut
 
-=item C<new ( $graph )>
+=item C<new ( $graph [, $silent] )>
 
 Returns a new CLEAR structure.
 
@@ -52,10 +52,12 @@ Returns a new CLEAR structure.
 sub new {
 	my $class	= shift;
 	my $graph	= shift;
+	my $silent	= shift;
 	unless ($graph) {
+		throw RDF::Query::Error::MethodInvocationError -text => "A graph argument is required in RDF::Query::Algebra::Clear->new";
 		$graph	= RDF::Trine::Node::Nil->new;
 	}
-	return bless([$graph], $class);
+	return bless([$graph, $silent], $class);
 }
 
 =item C<< construct_args >>
@@ -67,7 +69,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->graph);
+	return ($self->graph, $self->silent);
 }
 
 =item C<< as_sparql >>
@@ -147,6 +149,15 @@ sub referenced_variables {
 sub graph {
 	my $self	= shift;
 	return $self->[0];
+}
+
+=item C<< silent >>
+
+=cut
+
+sub silent {
+	my $self	= shift;
+	return $self->[1];
 }
 
 1;
