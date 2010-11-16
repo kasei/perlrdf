@@ -88,7 +88,7 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent} || '  ';
 	
-	my @patterns	= sort map { $_->sse( $context ) } $self->patterns;
+	my @patterns	= map { $_->sse( $context ) } $self->patterns;
 	return sprintf(
 		"(sequence\n${prefix}${indent}%s\n${prefix})",
 		join("\n${prefix}${indent}", @patterns)
