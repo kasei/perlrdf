@@ -11,12 +11,13 @@ This document describes RDF::Trine::Iterator::Boolean version 0.130
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator::Boolean;
-    
-    my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
-    if ($iterator->get_boolean) {
-    	# ...
-    }
+ use RDF::Trine::Iterator::Boolean;
+ 
+ my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
+ my $bool = $iterator->get_boolean;
+ if ($bool) {
+ 	print "Yes.\n";
+ }
 
 =head1 METHODS
 
