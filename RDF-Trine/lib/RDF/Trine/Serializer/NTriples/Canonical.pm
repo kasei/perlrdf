@@ -43,6 +43,9 @@ canonical representation for digital signing).
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer::NTriples> class.
+
 =over 4
 
 =cut

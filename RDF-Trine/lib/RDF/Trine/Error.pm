@@ -15,8 +15,9 @@ This document describes RDF::Trine::Error version 0.130
 
 =head1 DESCRIPTION
 
-RDF::Trine::Error provides an class hierarchy of errors that other RDF::Trine
-classes may throw using the L<Error|Error> API. See L<Error> for more information.
+RDF::Trine::Error provides a class hierarchy of errors that other RDF::Trine
+classes may throw using the L<Error|Error> API. See L<Error> for more
+information.
 
 =head1 REQUIRES
 

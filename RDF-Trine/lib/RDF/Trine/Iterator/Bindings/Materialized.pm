@@ -32,6 +32,9 @@ This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.1
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator::Bindings> class.
+
 =over 4
 
 =cut

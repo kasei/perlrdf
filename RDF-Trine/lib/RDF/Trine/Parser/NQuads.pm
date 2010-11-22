@@ -21,6 +21,9 @@ This document describes RDF::Trine::Parser::NQuads version 0.130
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
+
 =over 4
 
 =cut

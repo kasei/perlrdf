@@ -23,6 +23,9 @@ and where possible the more concise syntax is used for rdf:Lists.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
+
 =over 4
 
 =cut
