@@ -65,7 +65,13 @@
 				<li>Updated namespace URI in RDF::Query::Functions::Xpath to &lt;http://www.w3.org/2005/xpath-functions#&gt;.</li>
 				<li>Updated xt/dawg-eval11.t to align with updated test case manifest schemas.</li>
 				<li>Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped).</li>
-				<li></li>
+				<li>Added xpath function implementations.</li>
+				<li>Added SPARQL 1.1 Update shortcut syntax support for COPY, MOVE, and ADD graph operations.</li>
+				<li>Fixed bug in RDF::Query::Plan::Construct that wasn't giving each result a new set of blank nodes (RT 63155).</li>
+				<li>Updated SYNOPSIS and execute() and execute_plan() methods POD (RT 63153 comment from Ivan Shmakov).</li>
+				<li>Updated documentation to explicitly discuss inherited methods due to subclassing.</li>
+				<li>Fixed RDF::Query::Algebra::Sequence->sse to serialize operations in proper order.</li>
+				<li>Added $silent argument to RDF::Query::Algebra::Clear constructor.</li>
 			</ul>
 		<h3 id="v2_903">Version 2.903 (2010-11-03)</h3>
 			<ul>

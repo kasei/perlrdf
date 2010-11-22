@@ -21,6 +21,8 @@
                         asc:addition      "Added 'results' command to rqsh to allow serializing query results in SPARQL XML format." ;
                         asc:addition      "Added 'set prefix' and 'time' commands to rqsh." ;
                         asc:addition      "Added string concatenation overloading of binary +." ;
+                        asc:addition      "Added xpath function implementations." ;
+                        asc:addition      "Added SPARQL 1.1 Update shortcut syntax support for COPY, MOVE, and ADD graph operations." ;
                         asc:update        "Fixed bug in property path evaluation on encountering blank path nodes." ;
                         asc:update        "Fixed use of binary '*' in FILTER without numeric data in t/resultforms.t." ;
                         asc:update        "Fixed bin/dawg11-status.pl to only load SPARQL 1.1 earl result files." ;
@@ -31,6 +33,11 @@
                         asc:update        "Updated namespace URI in RDF::Query::Functions::Xpath to <http://www.w3.org/2005/xpath-functions#>." ;
                         asc:update        "Updated xt/dawg-eval11.t to align with updated test case manifest schemas." ;
                         asc:update        "Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped)." ;
+                        asc:update        "Updated documentation to explicitly discuss inherited methods due to subclassing." ;
+                        asc:update        "Fixed bug in RDF::Query::Plan::Construct that wasn't giving each result a new set of blank nodes (RT 63155)." ;
+                        asc:update        "Updated SYNOPSIS and execute() and execute_plan() methods POD (RT 63153 comment from Ivan Shmakov)." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Sequence->sse to serialize operations in proper order." ;
+                        asc:update        "Added $silent argument to RDF::Query::Algebra::Clear constructor." ;
                         ] .
 
 
