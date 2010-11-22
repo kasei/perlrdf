@@ -96,6 +96,7 @@ sub next {
 		}
 		my $row	= $plan->next;
 		return undef unless ($row);
+		$self->[0]{blank_map}	= {};
 		
 		if ($l->is_debug) {
 			$l->debug( "- got construct bindings from pattern: " . $row->as_string );
