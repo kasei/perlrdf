@@ -21,6 +21,9 @@ This document describes RDF::Query::Parser::SPARQL11 version 2.904_01.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Parser> class.
+
 =over 4
 
 =cut
@@ -275,7 +278,6 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_LoadUpdate();
-# 			warn Dumper($self->{build});
 		} elsif ($self->_test(qr/CLEAR\s+(SILENT\s+)?/i)) {
 			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden in read-only queries"
 				unless ($self->{update});
@@ -288,10 +290,6 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_DeleteDataUpdate();
-# 		} elsif ($self->_test(qr/DELETE\s+WHERE/i)) {
-# 			throw RDF::Query::Error::PermissionError -text => "DELETE WHERE update forbidden in read-only queries"
-# 				unless ($self->{update});
-# 			$self->_DeleteWhereUpdate();
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
 				unless ($self->{update});
@@ -308,6 +306,12 @@ sub _RW_Query {
 			} elsif ($self->_test(qr/DELETE/ims)) {
 				$self->_DeleteUpdate($graph);
 			}
+		} elsif ($self->_test(qr/COPY/i)) {
+			$self->_CopyUpdate();
+		} elsif ($self->_test(qr/MOVE/i)) {
+			$self->_MoveUpdate();
+		} elsif ($self->_test(qr/ADD/i)) {
+			$self->_AddUpdate();
 		} else {
 			my $l		= Log::Log4perl->get_logger("rdf.query");
 			if ($l->is_debug) {
@@ -669,7 +673,7 @@ sub _ClearGraphUpdate {
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/DEFAULT/i)) {
 		$self->_eat(qr/DEFAULT/i);
-		my $pat	= RDF::Query::Algebra::Clear->new();
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Trine::Node::Nil->new );
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/NAMED/i)) {
 		$self->_eat(qr/NAMED/i);
@@ -697,7 +701,7 @@ sub _DropGraph {
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/DEFAULT/i)) {
 		$self->_eat(qr/DEFAULT/i);
-		my $pat	= RDF::Query::Algebra::Clear->new();
+		my $pat	= RDF::Query::Algebra::Clear->new( RDF::Trine::Node::Nil->new );
 		$self->_add_patterns( $pat );
 	} elsif ($self->_test(qr/NAMED/i)) {
 		$self->_eat(qr/NAMED/i);
@@ -709,6 +713,90 @@ sub _DropGraph {
 		$self->_add_patterns( $pat );
 	}
 	$self->{build}{method}		= 'CLEAR';
+}
+
+sub _CopyUpdate {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/COPY(\s+SILENT)?/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	return $self->__UpdateShortcuts( 'COPY', $silent );
+}
+
+sub _MoveUpdate {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/MOVE(\s+SILENT)?/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	return $self->__UpdateShortcuts( 'MOVE', $silent );
+}
+
+sub _AddUpdate {
+	my $self	= shift;
+	my $op		= $self->_eat(qr/ADD(\s+SILENT)?/i);
+	my $silent	= ($op =~ /SILENT/i);
+	$self->_ws;
+	return $self->__UpdateShortcuts( 'ADD', $silent );
+}
+
+sub __UpdateShortcuts {
+	my $self	= shift;
+	my $op		= shift;
+	my $silent	= shift;
+	my ($from, $to);
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
+	} else {
+		$self->_IRIref;
+		($from)	= splice( @{ $self->{stack} } );
+	}
+	$self->_ws;
+	$self->_eat(qr/TO/i);
+	$self->_ws;
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
+	} else {
+		$self->_IRIref;
+		($to)	= splice( @{ $self->{stack} } );
+	}
+	
+	my $from_pattern	= RDF::Query::Algebra::GroupGraphPattern->new(
+							RDF::Query::Algebra::BasicGraphPattern->new(
+								RDF::Query::Algebra::Triple->new(
+									map { RDF::Query::Node::Variable->new( $_ ) } qw(s p o)
+								)
+							)
+						);
+	if (defined($from)) {
+		$from_pattern	= RDF::Query::Algebra::NamedGraph->new( $from, $from_pattern );
+	}
+
+	my $to_pattern	= RDF::Query::Algebra::GroupGraphPattern->new(
+							RDF::Query::Algebra::BasicGraphPattern->new(
+								RDF::Query::Algebra::Triple->new(
+									map { RDF::Query::Node::Variable->new( $_ ) } qw(s p o)
+								)
+							)
+						);
+	if (defined($to)) {
+		$to_pattern	= RDF::Query::Algebra::NamedGraph->new( $to, $to_pattern );
+	}
+	
+	my $to_graph	= $to || RDF::Trine::Node::Nil->new;
+	my $from_graph	= $from || RDF::Trine::Node::Nil->new;
+	my $drop_to		= RDF::Query::Algebra::Clear->new( $to_graph, $silent );
+	my $update		= RDF::Query::Algebra::Update->new( undef, $to_pattern, $from_pattern );
+	my $drop_from	= RDF::Query::Algebra::Clear->new( $from_graph );
+	my $pattern;
+	if ($op eq 'MOVE') {
+		$pattern		= RDF::Query::Algebra::Sequence->new( $drop_to, $update, $drop_from );
+	} elsif ($op eq 'COPY') {
+		$pattern		= RDF::Query::Algebra::Sequence->new( $drop_to, $update );
+	} else {
+		$pattern		= $update;
+	}
+	$self->_add_patterns( $pattern );
+	$self->{build}{method}		= 'UPDATE';
 }
 
 # [5] SelectQuery ::= 'SELECT' ( 'DISTINCT' | 'REDUCED' )? ( Var+ | '*' ) DatasetClause* WhereClause SolutionModifier

@@ -48,6 +48,9 @@ BEGIN {
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
+
 =over 4
 
 =item C<< new ( $url ) >>

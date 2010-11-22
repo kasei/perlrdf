@@ -11,14 +11,18 @@ This document describes RDF::Trine::Iterator::Graph version 0.130
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator;
-    
-    my $iterator = RDF::Trine::Iterator::Graph->new( \&data );
-    while (my $statement = $iterator->next) {
-    	# do something with $statement
-    }
+ use RDF::Trine::Iterator::Graph;
+ 
+ my $iterator = RDF::Trine::Iterator::Graph->new( \&data );
+ while (my $st = $iterator->next) {
+   # $st is a RDF::Trine::Statement object
+   print $st->as_string;
+ }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator> class.
 
 =over 4
 

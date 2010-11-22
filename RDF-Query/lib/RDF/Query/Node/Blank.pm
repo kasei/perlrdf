@@ -11,6 +11,9 @@ This document describes RDF::Query::Node::Blank version 2.904_01.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Blank> classes.
+
 =over 4
 
 =cut

@@ -11,6 +11,9 @@ This document describes RDF::Query::Plan::Construct version 2.904_01.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
+
 =over 4
 
 =cut
@@ -96,6 +99,7 @@ sub next {
 		}
 		my $row	= $plan->next;
 		return undef unless ($row);
+		$self->[0]{blank_map}	= {};
 		
 		if ($l->is_debug) {
 			$l->debug( "- got construct bindings from pattern: " . $row->as_string );

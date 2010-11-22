@@ -49,6 +49,9 @@ my %INSIDE_OUT_DATES;
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Literal> classes.
+
 =over 4
 
 =cut

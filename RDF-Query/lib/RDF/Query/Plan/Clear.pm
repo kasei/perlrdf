@@ -11,6 +11,9 @@ This document describes RDF::Query::Plan::Clear version 2.904_01.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
+
 =over 4
 
 =cut

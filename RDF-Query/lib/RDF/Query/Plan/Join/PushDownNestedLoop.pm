@@ -11,6 +11,9 @@ This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.904
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan::Join> class.
+
 =over 4
 
 =cut

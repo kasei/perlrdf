@@ -35,6 +35,9 @@ BEGIN {
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Resource> classes.
+
 =over 4
 
 =cut
