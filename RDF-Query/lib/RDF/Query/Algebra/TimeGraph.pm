@@ -32,6 +32,9 @@ BEGIN {
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
+
 =over 4
 
 =cut

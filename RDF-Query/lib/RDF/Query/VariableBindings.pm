@@ -11,6 +11,9 @@ This document describes RDF::Query::VariableBindings version 2.903.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::VariableBindings> class.
+
 =over 4
 
 =cut

@@ -11,6 +11,9 @@ This document describes RDF::Query::Plan::Quad version 2.903.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
+
 =over 4
 
 =cut
