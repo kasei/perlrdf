@@ -30,6 +30,7 @@ no warnings 'redefine';
 
 our $BLOOM_FILTER_LOADED;
 
+use Scalar::Util qw(refaddr);
 use Log::Log4perl;
 
 use Module::Pluggable
