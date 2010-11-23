@@ -16,6 +16,10 @@ C<< RDF::Query::Functions::* >>. Each of those modules
 has an C<install> method that simply adds coderefs
 to C<< %RDF::Query::functions >>.
 
+=head1 METHODS
+
+=over 4
+
 =cut
 
 package RDF::Query::Functions;
@@ -45,6 +49,26 @@ BEGIN {
 
 ######################################################################
 
+=item C<< install_function ( $uri, \&func ) >>
+
+=item C<< install_function ( \@uris, \&func ) >>
+
+Install the supplied CODE reference as the implementation for the given function URI(s).
+
+=cut
+
+sub install_function {
+	my $class	= shift;
+	while (@_) {
+		my $uris	= shift;
+		my $func	= shift;
+		$RDF::Query::preferred_function_name{ refaddr($func) }	= ref($uris) ? $uris->[0] : $uris;
+		foreach my $uri (ref($uris) ? @$uris : $uris) {
+			$RDF::Query::functions{$uri}	= $func;
+		}
+	}
+}
+
 foreach my $function_set (__PACKAGE__->function_sets) {
 	$function_set->install;
 }
@@ -52,6 +76,8 @@ foreach my $function_set (__PACKAGE__->function_sets) {
 1;
 
 __END__
+
+=back
 
 =head1 SEE ALSO
 

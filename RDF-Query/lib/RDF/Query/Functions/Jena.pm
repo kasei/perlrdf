@@ -50,81 +50,89 @@ Documented in L<RDF::Query::Functions>.
 =cut
 
 sub install {
-	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#sha1sum"}	=
-	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.sha1sum"}	= sub {
-		my $query	= shift;
-		my $node	= shift;
-		require Digest::SHA1;
-		
-		my $value;
-		if ($node->isa('RDF::Query::Node::Literal')) {
-			$value	= $node->literal_value;
-		} elsif ($node->isa('RDF::Query::Node::Resource')) {
-			$value	= $node->uri_value;
-		} else {
-			throw RDF::Query::Error::TypeError -text => "jena:sha1sum called without a literal or resource";
-		}
-		my $hash	= Digest::SHA1::sha1_hex( $value );
-		return RDF::Query::Node::Literal->new( $hash );
-	};
-
-	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#now"}	=
-	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub {
-		my $query	= shift;
-		my $dt		= DateTime->now();
-		my $f		= ref($query) ? $query->dateparser : DateTime::Format::W3CDTF->new;
-		my $value	= $f->format_datetime( $dt );
-		return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
-	};
-
-	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#langeq"}	=
-	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= sub {
-		my $query	= shift;
-		my $node	= shift;
-		my $lang	= shift;
-		my $litlang	= $node->literal_value_language;
-		my $match	= $lang->literal_value;
-		return I18N::LangTags::is_dialect_of( $litlang, $match )
-			? RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')
-			: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	};
-
-	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#listMember"}	=
-	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}	= sub {
-		my $query	= shift;
-		
-		my $list	= shift;
-		my $value	= shift;
-		
-		my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
-		my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
-		
-		my $result;
-		LIST: while ($list) {
-			if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
-				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+	RDF::Query::Functions->install_function(
+		["http://jena.hpl.hp.com/ARQ/function#sha1sum", "java:com.hp.hpl.jena.query.function.library.sha1sum"],
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			require Digest::SHA1;
+			
+			my $value;
+			if ($node->isa('RDF::Query::Node::Literal')) {
+				$value	= $node->literal_value;
+			} elsif ($node->isa('RDF::Query::Node::Resource')) {
+				$value	= $node->uri_value;
 			} else {
-				my $stream	= $query->model->get_statements( $list, $first, undef );
-				while (my $stmt = $stream->next()) {
-					my $member	= $stmt->object;
-					return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
-				}
-				
-				my $stmt	= $query->model->get_statements( $list, $rest, undef )->next();
-				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
-				
-				my $tail	= $stmt->object;
-				if ($tail) {
-					$list	= $tail;
-					next; #next LIST;
-				} else {
+				throw RDF::Query::Error::TypeError -text => "jena:sha1sum called without a literal or resource";
+			}
+			my $hash	= Digest::SHA1::sha1_hex( $value );
+			return RDF::Query::Node::Literal->new( $hash );
+		}
+	);
+	
+	RDF::Query::Functions->install_function(
+		["http://jena.hpl.hp.com/ARQ/function#now", "java:com.hp.hpl.jena.query.function.library.now"],
+		sub {
+			my $query	= shift;
+			my $dt		= DateTime->now();
+			my $f		= ref($query) ? $query->dateparser : DateTime::Format::W3CDTF->new;
+			my $value	= $f->format_datetime( $dt );
+			return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
+		}
+	);
+	
+	RDF::Query::Functions->install_function(
+		["http://jena.hpl.hp.com/ARQ/function#langeq", "java:com.hp.hpl.jena.query.function.library.langeq"],
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			my $lang	= shift;
+			my $litlang	= $node->literal_value_language;
+			my $match	= $lang->literal_value;
+			return I18N::LangTags::is_dialect_of( $litlang, $match )
+				? RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')
+				: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+		}
+	);
+	
+	RDF::Query::Functions->install_function(
+		["http://jena.hpl.hp.com/ARQ/function#listMember", "java:com.hp.hpl.jena.query.function.library.listMember"],
+		sub {
+			my $query	= shift;
+			
+			my $list	= shift;
+			my $value	= shift;
+			
+			my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
+			my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
+			
+			my $result;
+			LIST: while ($list) {
+				if ($list->is_resource and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil') {
 					return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+				} else {
+					my $stream	= $query->model->get_statements( $list, $first, undef );
+					while (my $stmt = $stream->next()) {
+						my $member	= $stmt->object;
+						return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean') if ($value->equal( $member ));
+					}
+					
+					my $stmt	= $query->model->get_statements( $list, $rest, undef )->next();
+					return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean') unless ($stmt);
+					
+					my $tail	= $stmt->object;
+					if ($tail) {
+						$list	= $tail;
+						next; #next LIST;
+					} else {
+						return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+					}
 				}
 			}
+			
+			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 		}
-		
-		return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-	};
+	);
 }
 
 1;
