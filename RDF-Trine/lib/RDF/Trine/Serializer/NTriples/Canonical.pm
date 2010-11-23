@@ -43,6 +43,9 @@ canonical representation for digital signing).
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer::NTriples> class.
+
 =over 4
 
 =cut
@@ -240,7 +243,7 @@ sub serialize_model_to_string {
 	}
 
 	$rv .= "\r\n"
-		if lc $self->{'onfail'} eq 'space';
+		if (defined($self->{'onfail'}) && (lc $self->{'onfail'} eq 'space'));
 	
 	foreach my $st (@otherStatements) {
 		$rv .= $st->{'lex'} . " .\r\n";

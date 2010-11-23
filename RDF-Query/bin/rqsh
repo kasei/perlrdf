@@ -5,6 +5,7 @@ no warnings 'redefine';
 use lib qw(../lib lib);
 
 use Cwd;
+use Benchmark;
 use Scalar::Util qw(blessed);
 use Data::Dumper;
 use RDF::Query;
@@ -38,18 +39,36 @@ unless (exists $args{update}) {
 }
 $args{ base }	= 'file://' . getcwd . '/';
 
+my $NAMESPACES	= $RDF::Query::Util::PREFIXES;
+my $vb_format	= 'table';
 my $def_format	= 'ntriples';
 my $serializer	= RDF::Trine::Serializer->new($def_format);
 my %serializer	= ($def_format => $serializer);
 my $class	= delete $args{ class } || 'RDF::Query';
 my $term	= Term::ReadLine->new('rqsh', \*STDIN, \*STDOUT);
 
-print "rqsh v1.0\n\n";
+print "rqsh v1.0, RDF::Query v${RDF::Query::VERSION}\n\n";
 while ( defined ($_ = $term->readline('rqsh> ')) ) {
 	my $line	= $_;
 	next unless (length($line));
+	handle_cmd( $line );
+}
+
+sub handle_cmd {
+	my $line	= shift;
 	if ($line =~ /help/i) {
 		help();
+	} elsif ($line =~ /^set (prefix (\w+): <([^>]+)>)/i) {
+		my $query	= RDF::Query->new( "$1                              SELECT * WHERE {}" );
+		if ($query) {
+			$NAMESPACES	.= "PREFIX $2: <$3>\n";
+		} else {
+			warn RDF::Query->error;
+		}
+	} elsif ($line =~ /^time (.*)/i) {
+		timethis( 1, sub {
+			handle_cmd( $1 );
+		} );
 	} elsif ($line =~ /^explain (.*)$/i) {
 		explain($model, $term, $1);
 	} elsif ($line =~ /^parse (.*)$/i) {
@@ -62,6 +81,8 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 		}
 	} elsif ($line =~ /init/i) {
 		init( $model, $term, $line );
+	} elsif ($line =~ m/^results (table|srx)$/i) {
+		$vb_format	= lc($1);
 	} elsif ($line =~ m/^serializer (\w+)$/i) {
 		if (exists($serializer{ $1 })) {
 			$serializer	= $serializer{ $1 };
@@ -92,21 +113,24 @@ while ( defined ($_ = $term->readline('rqsh> ')) ) {
 sub help {
 	print <<"END";
 Commands:
-    help                Show this help information.
-    use [backend]       Switch the storage backend (e.g. "use mysql").
-    init                Initialize the storage backend (creating necessary indexes, etc.).
-    serializer [format] Set the serializer used for RDF results (e.g. "serializer turtle").
-    debug               Print all the quads in the storage backend.
-    parse [sparql]      Print the parsed algebra for the SPARQL 1.1 query/update.
-    explain [sparql]    Explain the execution plan for the SPARQL 1.1 query/update.
-    SELECT ...          Execute the SPARQL 1.1 query.
-    ASK ...             Execute the SPARQL 1.1 query.
-    CONSTRUCT ...       Execute the SPARQL 1.1 query.
-    DESCRIBE ...        Execute the SPARQL 1.1 query.
-    INSERT ...          Execute the SPARQL 1.1 update.
-    DELETE ...          Execute the SPARQL 1.1 update.
-    LOAD <uri>          Execute the SPARQL 1.1 update.
-    CLEAR ...           Execute the SPARQL 1.1 update.
+    help                   Show this help information.
+    use [backend]          Switch the storage backend (e.g. "use mysql").
+    init                   Initialize the storage backend (creating necessary indexes, etc.).
+    set prefix [ns]: [uri] Set a namespace for use in subsequent queries.
+    results (table|srx)    Set the serializer used for tabular variable binding results.
+    serializer [format]    Set the serializer used for RDF results (e.g. "serializer turtle").
+    debug                  Print all the quads in the storage backend.
+    parse [sparql]         Print the parsed algebra for the SPARQL 1.1 query/update.
+    explain [sparql]       Explain the execution plan for the SPARQL 1.1 query/update.
+    time [command]         Time the execution of the command.
+    SELECT ...             Execute the SPARQL 1.1 query.
+    ASK ...                Execute the SPARQL 1.1 query.
+    CONSTRUCT ...          Execute the SPARQL 1.1 query.
+    DESCRIBE ...           Execute the SPARQL 1.1 query.
+    INSERT ...             Execute the SPARQL 1.1 update.
+    DELETE ...             Execute the SPARQL 1.1 update.
+    LOAD <uri>             Execute the SPARQL 1.1 update.
+    CLEAR ...              Execute the SPARQL 1.1 update.
 
 END
 }
@@ -158,7 +182,7 @@ sub explain {
 	my $model	= shift;
 	my $term	= shift;
 	my $sparql	= shift;
-	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
+	my $psparql	= join("\n", $NAMESPACES, $sparql);
 	my $query	= $class->new( $psparql, \%args );
 	unless ($query) {
 		print "Error: " . RDF::Query->error . "\n";
@@ -172,7 +196,7 @@ sub parse {
 	my $model	= shift;
 	my $term	= shift;
 	my $sparql	= shift;
-	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
+	my $psparql	= join("\n", $NAMESPACES, $sparql);
 	my $query	= $class->new( $psparql, \%args );
 	unless ($query) {
 		print "Error: " . RDF::Query->error . "\n";
@@ -186,7 +210,7 @@ sub query {
 	my $model	= shift;
 	my $term	= shift;
 	my $sparql	= shift;
-	my $psparql	= join("\n", $RDF::Query::Util::PREFIXES, $sparql);
+	my $psparql	= join("\n", $NAMESPACES, $sparql);
 	my $query	= $class->new( $psparql, \%args );
 	unless ($query) {
 		print "Error: " . RDF::Query->error . "\n";
@@ -201,7 +225,11 @@ sub query {
 			if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 				$serializer->serialize_iterator_to_file( $term->OUT, $iter );
 			} else {
-				print $iter->as_string( 0, \$count );
+				if ($vb_format eq 'srx') {
+					print $iter->as_xml( 0 );
+				} else {
+					print $iter->as_string( 0, \$count );
+				}
 			}
 		}
 		if ($plan->is_update) {

@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.903.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.904.
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use List::Util qw(first);
 use Carp qw(carp croak confess);
@@ -32,13 +32,16 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -96,6 +99,29 @@ sub add_pattern {
 	my $self	= shift;
 	my $pattern	= shift;
 	push( @{ $self }, $pattern );
+}
+
+=item C<< quads >>
+
+Returns a list of the quads belonging to this GGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	my %bgps;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::NamedGraph')) {
+		push(@quads, $p->quads);
+		foreach my $bgp ($p->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+			$bgps{ refaddr($bgp) }++;
+		}
+	}
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		next if ($bgps{ refaddr($p) });
+		push(@quads, $p->quads);
+	}
+	return @quads;
 }
 
 =item C<< sse >>

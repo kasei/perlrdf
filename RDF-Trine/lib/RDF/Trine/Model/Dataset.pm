@@ -11,6 +11,9 @@ This document describes RDF::Trine::Model::Dataset version 0.130
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Model> class.
+
 =over 4
 
 =cut

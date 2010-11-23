@@ -21,6 +21,9 @@ This document describes RDF::Trine::Parser::Turtle version 0.130
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
+
 =over 4
 
 =cut
@@ -36,13 +39,14 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Data::UUID;
 use Log::Log4perl;
+use Encode qw(decode);
+use Scalar::Util qw(blessed looks_like_number);
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Error;
-use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
@@ -853,7 +857,8 @@ sub _string {
 	$self->_eat('"');
 	my $value	= $self->_eat_re_save( $r_scharacters );
 	$self->_eat('"');
-	return $self->_parse_short( $value );
+	my $string	= $self->_parse_short( $value );
+	return decode('utf8', $string);
 }
 
 sub _longString_test {
@@ -871,7 +876,8 @@ sub _longString {
 	$self->_eat('"""');
 	my $value	= $self->_eat_re_save( $r_lcharacters );
 	$self->_eat('"""');
-	return $self->_parse_long( $value );
+	my $string	= $self->_parse_long( $value );
+	return decode('utf8', $string);
 }
 
 ################################################################################
@@ -887,7 +893,7 @@ sub _parse_short {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s );
+	return Unicode::Escape::unescape( $s, 'utf8' );
 }
 
 sub _parse_long {
@@ -900,7 +906,7 @@ sub _parse_long {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s );
+	return Unicode::Escape::unescape( $s, 'utf8' );
 }
 
 sub _join_uri {

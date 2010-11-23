@@ -7,9 +7,12 @@ RDF::Query::Plan::Constant - Executable query plan for Constants.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Constant version 2.903.
+This document describes RDF::Query::Plan::Constant version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -25,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################

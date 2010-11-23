@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.903.
+This document describes RDF::Query::Algebra::NamedGraph version 2.904.
 
 =cut
 
@@ -29,12 +29,15 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -90,6 +93,31 @@ Returns the graph pattern of the named graph expression.
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< quads >>
+
+Returns a list of the quads belonging to this NamedGraph.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		push(@quads, $p->quads);
+	}
+	my @graphquads;
+	foreach my $q (@quads) {
+		my $st	= RDF::Trine::Statement::Quad->new(
+					$q->subject,
+					$q->predicate,
+					$q->object,
+					$self->graph,
+				);
+		push(@graphquads, $st);
+	}
+	return @graphquads;
 }
 
 =item C<< sse >>

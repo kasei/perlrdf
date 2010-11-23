@@ -186,9 +186,9 @@ sub from_string {
 }
 
 
-=item C<< next >>
-
 =item C<< next_result >>
+
+=item C<< next >>
 
 Returns the next item in the stream.
 
@@ -333,7 +333,7 @@ Returns the boolean value of the first item in the stream.
 
 sub get_boolean {
 	my $self	= shift;
-	my $data	= $self->next_result;
+	my $data	= $self->next;
 	return +$data;
 }
 
@@ -373,7 +373,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		$node_label	= "<unbound/>";
+		return;
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;

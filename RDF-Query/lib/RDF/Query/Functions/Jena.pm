@@ -4,7 +4,7 @@ RDF::Query::Functions::Jena - Jena/ARQ work-alike functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Jena version 2.903.
+This document describes RDF::Query::Functions::Jena version 2.904.
 
 =head1 DESCRIPTION
 
@@ -32,7 +32,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.jena");
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 use Digest::SHA1 qw(sha1_hex);
@@ -50,6 +50,7 @@ Documented in L<RDF::Query::Functions>.
 =cut
 
 sub install {
+	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#sha1sum"}	=
 	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.sha1sum"}	= sub {
 		my $query	= shift;
 		my $node	= shift;
@@ -67,6 +68,7 @@ sub install {
 		return RDF::Query::Node::Literal->new( $hash );
 	};
 
+	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#now"}	=
 	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.now"}	= sub {
 		my $query	= shift;
 		my $dt		= DateTime->now();
@@ -75,6 +77,7 @@ sub install {
 		return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
 	};
 
+	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#langeq"}	=
 	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.langeq"}	= sub {
 		my $query	= shift;
 		my $node	= shift;
@@ -86,6 +89,7 @@ sub install {
 			: RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 	};
 
+	$RDF::Query::functions{"http://jena.hpl.hp.com/ARQ/function#listMember"}	=
 	$RDF::Query::functions{"java:com.hp.hpl.jena.query.function.library.listMember"}	= sub {
 		my $query	= shift;
 		
