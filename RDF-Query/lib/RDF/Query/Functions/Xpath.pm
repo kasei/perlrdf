@@ -4,7 +4,7 @@ RDF::Query::Functions::Xpath - XPath functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Xpath version 2.903_02.
+This document describes RDF::Query::Functions::Xpath version 2.904.
 
 =head1 DESCRIPTION
 
@@ -31,7 +31,7 @@ use RDF::Trine::Namespace qw(xsd);
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.xpath");
-	$VERSION	= '2.903_02';
+	$VERSION	= '2.904';
 }
 
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
