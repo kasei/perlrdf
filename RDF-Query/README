@@ -37,7 +37,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.904 (2010-XX-XX)
+  Version 2.904 (2010-11-23)
 
      * Added SPARQL 1.1 Update shortcut syntax support for COPY, MOVE, and ADD graph operations.
      * Added 'set prefix' and 'time' commands to rqsh.
