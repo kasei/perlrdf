@@ -89,11 +89,16 @@ BEGIN {
 	$VERSION	= '2.904';
 }
 
+use POSIX;
+use URI::Escape;
 use Carp qw(carp croak confess);
 use Data::Dumper;
 use I18N::LangTags;
 use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
+use DateTime::Format::W3CDTF;
+use RDF::Trine::Namespace qw(xsd);
+
 
 =begin private
 
@@ -333,12 +338,15 @@ sub install {
 			my $node	= shift;
 			my $f		= ref($query) ? $query->dateparser : DateTime::Format::W3CDTF->new;
 			my $value	= $node->literal_value;
+			unless ($value =~ m<-?\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d([.]\d+)?(Z|[-+]\d\d:\d\d)?>) {
+				throw RDF::Query::Error::TypeError -text => "Not a valid lexical form for xsd:dateTime: '$value'";
+			}
 			my $dt		= eval { $f->parse_datetime( $value ) };
 			if ($dt) {
-				my $value	= $f->format_datetime( $dt );
+				my $value	= DateTime::Format::W3CDTF->new->format_datetime( $dt );
 				return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
 			} else {
-				throw RDF::Query::Error::TypeError;
+				throw RDF::Query::Error::TypeError -text => "Failed to parse lexical form as xsd:dateTime: '$value'";
 			}
 		}
 	);
@@ -836,6 +844,256 @@ sub install {
 			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 		}
 	);
+	
+	# sparql:abs
+	RDF::Query::Functions->install_function(
+		"sparql:abs",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal') and $node->is_numeric_type) {
+				my $value	= $node->numeric_value;
+				return RDF::Query::Node::Literal->new( abs($value), undef, $node->literal_datatype );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:abs called without a numeric literal";
+			}
+		}
+	);
+	
+
+	# sparql:ceil
+	RDF::Query::Functions->install_function(
+		"sparql:ceil",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal') and $node->is_numeric_type) {
+				my $value	= $node->numeric_value;
+				return RDF::Query::Node::Literal->new( ceil($value), undef, $node->literal_datatype );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:ceil called without a numeric literal";
+			}
+		}
+	);
+	
+
+	# sparql:floor
+	RDF::Query::Functions->install_function(
+		"sparql:floor",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal') and $node->is_numeric_type) {
+				my $value	= $node->numeric_value;
+				return RDF::Query::Node::Literal->new( floor($value), undef, $node->literal_datatype );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:floor called without a numeric literal";
+			}
+		}
+	);
+	
+
+	# sparql:round
+	RDF::Query::Functions->install_function(
+		"sparql:round",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal') and $node->is_numeric_type) {
+				my $value	= $node->numeric_value;
+				my $mult	= 1;
+				if ($value < 0) {
+					$mult	= -1;
+					$value	= -$value;
+				}
+				my $round	= $mult * POSIX::floor($value + 0.50000000000008);
+				return RDF::Query::Node::Literal->new( $round, undef, $node->literal_datatype );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:round called without a numeric literal";
+			}
+		}
+	);
+	
+
+	# sparql:concat
+	RDF::Query::Functions->install_function(
+		"sparql:concat",
+		sub {
+			my $query	= shift;
+			my $model	= $query->model;
+			my @nodes	= @_;
+			my @strings	= map { $query->call_function($model, {}, 'sparql:str', $_) } @nodes;
+			my $value	= join('', map { $_->literal_value } @strings);
+			return RDF::Query::Node::Literal->new($value);
+		}
+	);
+	
+
+	# sparql:substring
+	RDF::Query::Functions->install_function(
+		"sparql:substring",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			my @args	= @_;
+			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:substring called without a literal arg1 term";
+			}
+			my $value	= $node->literal_value;
+			my @nums;
+			foreach my $i (0 .. $#args) {
+				my $argnum	= $i + 2;
+				my $arg		= $args[ $i ];
+				unless (blessed($arg) and $arg->isa('RDF::Query::Node::Literal') and $arg->is_numeric_type) {
+					throw RDF::Query::Error::TypeError -text => "sparql:substring called without a numeric literal arg${argnum} term";
+				}
+				push(@nums, $arg->numeric_value);
+			}
+			
+			$nums[0]--;
+			my $substring	= (scalar(@nums) > 1) ? substr($value, $nums[0], $nums[1]) : substr($value, $nums[0]);
+			return RDF::Query::Node::Literal->new($substring);
+		}
+	);
+	
+
+	# sparql:length
+	RDF::Query::Functions->install_function(
+		"sparql:length",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				my $value	= $node->literal_value;
+				return RDF::Query::Node::Literal->new( length($value), undef, $xsd->integer );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:length called without a literal term";
+			}
+		}
+	);
+	
+
+	# sparql:ucase
+	RDF::Query::Functions->install_function(
+		"sparql:ucase",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				my $value	= $node->literal_value;
+				return RDF::Query::Node::Literal->new( uc($value) );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:ucase called without a literal term";
+			}
+		}
+	);
+	
+
+	# sparql:lcase
+	RDF::Query::Functions->install_function(
+		"sparql:lcase",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				my $value	= $node->literal_value;
+				return RDF::Query::Node::Literal->new( lc($value) );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:lcase called without a literal term";
+			}
+		}
+	);
+	
+
+	# sparql:encode
+	RDF::Query::Functions->install_function(
+		"sparql:encode",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				my $value	= $node->literal_value;
+				return RDF::Query::Node::Literal->new( uri_escape($value) );
+			} else {
+				throw RDF::Query::Error::TypeError -text => "sparql:escape called without a literal term";
+			}
+		}
+	);
+	
+
+	# sparql:contains
+	RDF::Query::Functions->install_function(
+		"sparql:contains",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			my $pat		= shift;
+			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg1 term";
+			}
+			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg2 term";
+			}
+			my $lit		= $node->literal_value;
+			my $plit	= $pat->literal_value;
+			my $pos		= index($lit, $plit);
+			if ($pos >= 0) {
+				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+			} else {
+				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+			}
+		}
+	);
+	
+
+	# sparql:starts
+	RDF::Query::Functions->install_function(
+		"sparql:starts",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			my $pat		= shift;
+			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg1 term";
+			}
+			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg2 term";
+			}
+			if (index($node->literal_value, $pat->literal_value) == 0) {
+				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+			} else {
+				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+			}
+		}
+	);
+	
+
+	# sparql:ends
+	RDF::Query::Functions->install_function(
+		"sparql:ends",
+		sub {
+			my $query	= shift;
+			my $node	= shift;
+			my $pat		= shift;
+			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg1 term";
+			}
+			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg2 term";
+			}
+			
+			my $lit		= $node->literal_value;
+			my $plit	= $pat->literal_value;
+			my $pos	= length($lit) - length($plit);
+			if (rindex($lit, $plit) == $pos) {
+				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+			} else {
+				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+			}
+		}
+	);
+	
+	
 }
 
 1;
