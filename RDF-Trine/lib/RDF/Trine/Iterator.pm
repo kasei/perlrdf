@@ -385,7 +385,15 @@ sub format_node_xml ($$$$) {
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
-		$node_label	= qq(<literal>${node_label}</literal>);
+		if ($node->has_language) {
+			my $lang	= $node->literal_value_language;
+			$node_label	= qq(<literal xml:lang="${lang}">${node_label}</literal>);
+		} elsif ($node->has_datatype) {
+			my $dt	= $node->literal_datatype;
+			$node_label	= qq(<literal datatype="${dt}">${node_label}</literal>);
+		} else {
+			$node_label	= qq(<literal>${node_label}</literal>);
+		}
 	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		$node_label	= $node->blank_identifier;
 		$node_label	=~ s/&/&amp;/g;
