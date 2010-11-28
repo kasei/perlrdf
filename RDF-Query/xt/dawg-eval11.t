@@ -64,6 +64,7 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 		delete
 		delete-data
 		delete-where
+		functions
 		grouping
 		negation
 		project-expression
