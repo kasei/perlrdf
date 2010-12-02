@@ -125,6 +125,8 @@ sub _cmp {
 				$c	= -1;
 			} elsif (not($nb->has_datatype) or $nb->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
 				$c	= $nodea->literal_value cmp $nodeb->literal_value;
+			} elsif ($LAZY_COMPARISONS) {
+				return $nodea->as_string cmp $nodeb->as_string;
 			} else {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare typed-literal with xsd:string.";
 			}
