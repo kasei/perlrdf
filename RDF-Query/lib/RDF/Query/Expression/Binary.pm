@@ -109,7 +109,7 @@ sub evaluate {
 	}
 	
 	if ($op =~ m#^[-+/*]$#) {
-		if (blessed($lhs) and blessed($rhs) and $lhs->is_numeric_type and $rhs->is_numeric_type) {
+		if (blessed($lhs) and blessed($rhs) and $lhs->isa('RDF::Query::Node::Literal') and $rhs->isa('RDF::Query::Node::Literal') and $lhs->is_numeric_type and $rhs->is_numeric_type) {
 			my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
 			my $value;
 			if ($op eq '+') {
