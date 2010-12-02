@@ -10,6 +10,30 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.131.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.130.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.131" ;
+                        doap:created      "2010-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Model->as_graphviz method." ;
+                        asc:update      "Fixed SPARQL XML Results serialization to omit unbound variables and properly declare literal languages and datatypes." ;
+                        asc:update      "Copied implementations of is_numeric_type() and numeric_value() from RDF::Query::Node::Literal to RDF::Trine::Node::Literal." ;
+                        asc:update      "Updated documentation to explicitly discuss inherited methods due to subclassing  (RT 63153 comment from Ivan Shmakov)." ;
+                        asc:update      "Updated POD for RDF::Trine::Iterator subclasses (RT 63153 comment from Ivan Shmakov)." ;
+                        asc:update      "Fixed RDF::Trine::Parser->guess_parser_by_filename to get RDF/XML parser class from parser_by_media_type() instead of being hardcoded." ;
+                        asc:update      "Fixed RDF::Trine::Serializer::Turtle::_node_concise_string to allow call as class method." ;
+                        asc:update      "Added RDF::Trine::Parser::Redland subclasses to allow calling new() with no 'name' argument." ;
+                        asc:update      "Added file extensions to parser registry for RDF::Trine::Parser::Redland." ;
+                        asc:update      "Added checks to avoid undefined warnings in RDF::Trine::Serializer::NTriples::Canonical (suggestion from KjetilK)." ;
+                        asc:update      "Set :utf8 mode on string-backed filehandles in RDF::Trine::Serializer::Turtle." ;
+                        asc:update      "Attempt at patching utf8 turtle/trig parsing bug submitted by KjetilK." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.130.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.129.tar.gz> ;
