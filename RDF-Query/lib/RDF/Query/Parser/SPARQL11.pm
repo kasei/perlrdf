@@ -2671,7 +2671,7 @@ sub _BuiltInCall {
 		} else {
 			$self->_add_stack( $func );
 		}
-	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTRING/)) {
+	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTRING/i)) {
 		# n-arg functions that take expressions
 		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTRING/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
