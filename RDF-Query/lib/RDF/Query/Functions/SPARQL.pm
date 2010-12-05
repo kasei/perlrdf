@@ -1123,6 +1123,18 @@ sub install {
 		}
 	);
 	
+
+	# sparql:rand
+	RDF::Query::Functions->install_function(
+		"sparql:rand",
+		sub {
+			my $query	= shift;
+			my $r		= rand();
+			# TODO: support seed argument
+			return RDF::Query::Node::Literal->new("$r", undef, $xsd->decimal);
+		}
+	);
+	
 	
 }
 

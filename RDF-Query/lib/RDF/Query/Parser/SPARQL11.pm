@@ -2649,7 +2649,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTRING|LENGTH|UCASE|LCASE|ENCODE|CONTAINS|STARTS|ENDS/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTRING|LENGTH|UCASE|LCASE|ENCODE|CONTAINS|STARTS|ENDS|RAND/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2671,9 +2671,9 @@ sub _BuiltInCall {
 		} else {
 			$self->_add_stack( $func );
 		}
-	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTRING/i)) {
+	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTRING|RAND/i)) {
 		# n-arg functions that take expressions
-		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTRING/i);
+		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTRING|RAND/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
