@@ -146,7 +146,7 @@ sub new {
 	if ($name eq 'guess') {
 		throw RDF::Trine::Error::UnimplementedError -text => "guess parser heuristics are not implemented yet";
 	} elsif (my $class = $parser_names{ $key }) {
-        # re-add name for multiformat (e.g. Redland) parsers
+		# re-add name for multiformat (e.g. Redland) parsers
 		return $class->new( name => $key, @_ );
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
