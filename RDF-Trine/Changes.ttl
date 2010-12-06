@@ -31,7 +31,7 @@
                         asc:update      "Added checks to avoid undefined warnings in RDF::Trine::Serializer::NTriples::Canonical (suggestion from KjetilK)." ;
                         asc:update      "Set :utf8 mode on string-backed filehandles in RDF::Trine::Serializer::Turtle." ;
                         asc:update      "Attempt at patching utf8 turtle/trig parsing bug submitted by KjetilK." ;
-                        asc:update      "Updated required version of Test::More to 0.86 (bugreport from @danbri)." ;
+                        asc:update      "Updated required version of Test::More to 0.88 (bugreport from @danbri)." ;
                         ] .
 
 
