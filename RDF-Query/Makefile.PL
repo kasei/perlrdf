@@ -16,7 +16,7 @@ recommends			'Crypt::GPG'				=> 0;
 recommends			'Bloom::Filter'				=> 1;
 
 build_requires		'Test::JSON'				=> 0;
-build_requires		'Test::More'				=> 0.61;
+build_requires		'Test::More'				=> 0.86;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'YAML'						=> 0;
 build_requires		'FindBin'					=> 0;
