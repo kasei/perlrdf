@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.130_02
+This document describes RDF::Trine::Parser version 0.130_03
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.130_02';
+	$VERSION	= '0.130_03';
 }
 
 use Scalar::Util qw(blessed);

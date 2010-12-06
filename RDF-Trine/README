@@ -79,6 +79,7 @@ VERSION HISTORY
      * Added checks to avoid undefined warnings in RDF::Trine::Serializer::NTriples::Canonical (suggestion from KjetilK).
      * Set :utf8 mode on string-backed filehandles in RDF::Trine::Serializer::Turtle.
      * Attempt at patching utf8 turtle/trig parsing bug submitted by KjetilK.
+     * Updated required version of Test::More to 0.86 (bugreport from @danbri).
 
   Version 0.130 (2010-10-18)
 
