@@ -281,6 +281,19 @@ sub numeric_value {
 	}
 }
 
+=item C<< type_list >>
+
+Returns a two-item list suitable for use as the second and third arguments to
+RDF::Query::Node::Literal constructor. The two returned values correspond to
+literal language tag and literal datatype URI, respectively.
+
+=cut
+
+sub type_list {
+	my $self	= shift;
+	return ($self->literal_value_language, $self->literal_datatype);
+}
+
 sub DESTROY {
 	my $self	= shift;
 	my $addr	= refaddr($self);
