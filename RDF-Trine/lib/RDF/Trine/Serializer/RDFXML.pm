@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.130
+This document describes RDF::Trine::Serializer::RDFXML version 0.131
 
 =head1 SYNOPSIS
 
@@ -21,6 +21,9 @@ The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
 graphs to the RDF/XML syntax.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
 
 =over 4
 
@@ -46,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {

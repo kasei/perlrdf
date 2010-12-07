@@ -7,9 +7,12 @@ RDF::Query::Plan::NamedGraph - Executable query plan for named graphs.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::NamedGraph version 2.902.
+This document describes RDF::Query::Plan::NamedGraph version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -26,7 +29,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################

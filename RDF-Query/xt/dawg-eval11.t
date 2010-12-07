@@ -50,14 +50,27 @@ my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 no warnings 'once';
 
 if ($PATTERN) {
-	$debug			= 1;
+	$debug			= 0;
 	$debug_results	= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(aggregates grouping negation project-expression property-path subquery delete delete-data delete-where) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
+	qw(
+		aggregates
+		bind
+		delete
+		delete-data
+		delete-where
+		functions
+		grouping
+		negation
+		project-expression
+		property-path
+		subquery
+	) );
 print "# Using model object from " . ref($model) . "\n";
 
 {
@@ -148,9 +161,9 @@ sub update_eval_test {
 	my $result		= get_first_obj( $model, $test, $mfres );
 	my $req			= get_first_obj( $model, $test, $reqs );
 	my $approved	= get_first_obj( $model, $test, $approval );
-	my $queryd		= get_first_obj( $model, $action, $qtquery );
-	my $data		= get_first_obj( $model, $action, $qtdata );
-	my @gdata		= get_all_obj( $model, $action, $qtgdata );
+	my $queryd		= get_first_obj( $model, $action, $ut->request );
+	my $data		= get_first_obj( $model, $action, $ut->data );
+	my @gdata		= get_all_obj( $model, $action, $ut->graphData );
 	
 	if ($STRICT_APPROVAL) {
 		unless ($approved) {
@@ -196,7 +209,7 @@ sub update_eval_test {
 	};
 	
 	foreach my $gdata (@gdata) {
-		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $data	= get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
@@ -212,9 +225,9 @@ sub update_eval_test {
 	}
 	
 	my $result_status	= get_first_obj( $model, $result, $ut->result );
-	my @resgdata			= get_all_obj( $model, $result, $qtgdata );
+	my @resgdata			= get_all_obj( $model, $result, $ut->graphData );
 	my $expected_model	= new_model();
-	my $resdata		= get_first_obj( $model, $result, $qtdata );
+	my $resdata		= get_first_obj( $model, $result, $ut->data );
 	try {
 		if (blessed($resdata)) {
 			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
@@ -227,7 +240,7 @@ sub update_eval_test {
 		return;
 	};
 	foreach my $gdata (@resgdata) {
-		my $data	= get_first_obj( $model, $gdata, $qtdata );
+		my $data	= get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
@@ -315,7 +328,7 @@ sub query_eval_test {
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
 	warn "Loading SPARQL query from file $filename" if ($debug);
-	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
+	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { warn("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
 	
 	my $q			= $sparql;
 	$q				=~ s/\s+/ /g;
@@ -515,7 +528,8 @@ sub get_expected_results {
 					if ($type eq 'HASH') {
 						if (exists($binding->{literal})) {
 							if (ref($binding->{literal})) {
-								my $value	= $binding->{literal}{content} || '';
+								my $value	= $binding->{literal}{content};
+								$value		= '' unless (defined($value));
 								my $lang	= $binding->{literal}{'xml:lang'};
 								my $dt		= $binding->{literal}{'datatype'};
 								my $string	= literal_as_string( $value, $lang, $dt );

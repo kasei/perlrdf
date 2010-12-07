@@ -7,7 +7,7 @@ RDF::Query::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Variable version 2.902.
+This document describes RDF::Query::Node::Variable version 2.904.
 
 =cut
 
@@ -26,12 +26,17 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+=head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Variable> classes.
 
 =over 4
 

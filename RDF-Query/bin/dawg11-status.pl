@@ -9,7 +9,7 @@ use RDF::Trine::Error qw(:try);
 use Scalar::Util qw(blessed);
 
 my @manifests	= glob( "xt/dawg11/*/manifest.ttl" );
-my @files	= scalar(@ARGV) ? @ARGV : glob('earl*.ttl');
+my @files	= scalar(@ARGV) ? @ARGV : glob('earl*11.ttl');
 my $model	= RDF::Trine::Model->temporary_model;
 my $parser	= RDF::Trine::Parser->new('turtle');
 foreach my $f (@files, @manifests) {
@@ -79,7 +79,7 @@ print <<"END";
 </style></head>
 <body>
 <h1>SPARQL 1.1 Test Results for RDF::Query</h1>
-<p>As of $date, running with commit $rev (<a href="http://github.com/kasei/perlrdf/tree/dev">HEAD of dev branch at github</a>)</p>
+<p>As of $date, running with commit $rev (<a href="http://github.com/kasei/perlrdf/tree/master">HEAD of master branch at github</a>)</p>
 
 <table>
 <tr>

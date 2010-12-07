@@ -7,9 +7,12 @@ RDF::Trine::Model::Dataset - Model for SPARQL datasets
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Dataset version 0.130
+This document describes RDF::Trine::Model::Dataset version 0.131
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Model> class.
 
 =over 4
 
@@ -27,7 +30,7 @@ use RDF::Trine::Model;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 }
 
 ################################################################################

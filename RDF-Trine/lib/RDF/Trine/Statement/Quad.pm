@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.130
+This document describes RDF::Trine::Statement::Quad version 0.131
 
 =cut
 
@@ -24,12 +24,15 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Statement> class.
 
 =over 4
 

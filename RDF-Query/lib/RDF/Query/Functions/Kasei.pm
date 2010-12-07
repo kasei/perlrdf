@@ -4,7 +4,7 @@ RDF::Query::Functions::Kasei - RDF-Query-specific functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Kasei version 2.902.
+This document describes RDF::Query::Functions::Kasei version 2.904.
 
 =head1 DESCRIPTION
 
@@ -24,11 +24,13 @@ Defines the following functions:
 
 package RDF::Query::Functions::Kasei;
 
+use strict;
+use warnings;
 use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.kasei");
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 use Data::Dumper;
@@ -64,16 +66,19 @@ Documented in L<RDF::Query::Functions>.
 
 sub install
 {	
-	$RDF::Query::functions{"http://kasei.us/2007/09/functions/warn"}	= sub {
-		my $query	= shift;
-		my $value	= shift;
-		my $func	= RDF::Query::Expression::Function->new( 'sparql:str', $value );
-		
-		my $string	= Dumper( $func->evaluate( undef, undef, {} ) );
-		no warnings 'uninitialized';
-		warn "FILTER VALUE: $string\n";
-		return $value;
-	};
+	RDF::Query::Functions->install_function(
+		"http://kasei.us/2007/09/functions/warn",
+		sub {
+			my $query	= shift;
+			my $value	= shift;
+			my $func	= RDF::Query::Expression::Function->new( 'sparql:str', $value );
+			
+			my $string	= Dumper( $func->evaluate( undef, undef, {} ) );
+			no warnings 'uninitialized';
+			warn "FILTER VALUE: $string\n";
+			return $value;
+		}
+	);
 
 	{
 		sub _BLOOM_ADD_NODE_MAP_TO_STREAM {
@@ -91,78 +96,84 @@ sub install
 				$query->add_hook_once( 'http://kasei.us/code/rdf-query/hooks/post-execute', \&_BLOOM_ADD_NODE_MAP_TO_STREAM, "${BLOOM_URL}#add_node_map" );
 			}
 		} );
-		$RDF::Query::functions{ $BLOOM_URL }	= sub {
-			my $query	= shift;
+		RDF::Query::Functions->install_function(
+			$BLOOM_URL,
+			sub {
+				my $query	= shift;
+					
+				my $value	= shift;
+				my $filter	= shift;
+				my $bloom;
 				
+				unless ($BLOOM_FILTER_LOADED) {
+					$l->warn("Cannot compute bloom filter because Bloom::Filter is not available");
+					throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
+				}
+				
+				$l->debug("k:bloom being executed with node " . $value);
+				
+				if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
+					$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };
+				} else {
+					my $value	= $filter->literal_value;
+					$bloom	= Bloom::Filter->thaw( $value );
+					$query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter }	= $bloom;
+				}
+				
+				my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
+				die 'kasei:bloom died: no bridge anymore'; # no bridge anymore!
+				my $bridge;
+				my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
+				$l->debug("- " . scalar(@names) . " identity names for node");
+				foreach my $string (@names) {
+					$l->debug("checking bloom filter for --> '$string'\n");
+					my $ok	= $bloom->check( $string );
+					$l->debug("-> ok") if ($ok);
+					if ($ok) {
+						my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
+						push( @{ $nodemap->{ $value->as_string } }, $string );
+						return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+					}
+				}
+				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			}
+		);
+	}
+	
+	RDF::Query::Functions->install_function(
+		"http://kasei.us/code/rdf-query/functions/bloom/filter",
+		sub {
+			my $query	= shift;
+			
 			my $value	= shift;
 			my $filter	= shift;
 			my $bloom;
 			
 			unless ($BLOOM_FILTER_LOADED) {
-				$l->warn("Cannot compute bloom filter because Bloom::Filter is not available");
 				throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
 			}
 			
-			$l->debug("k:bloom being executed with node " . $value);
-			
-			if (exists( $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter } )) {
-				$bloom	= $query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter };
+			if (ref($query) and exists( $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter } )) {
+				$bloom	= $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter };
 			} else {
 				my $value	= $filter->literal_value;
 				$bloom	= Bloom::Filter->thaw( $value );
-				$query->{_query_cache}{ $BLOOM_URL }{ 'filters' }{ $filter }	= $bloom;
-			}
-			
-			my $seen	= $query->{_query_cache}{ $BLOOM_URL }{ 'node_name_cache' }	= {};
-			die 'kasei:bloom died: no bridge anymore'; # no bridge anymore!
-			my $bridge;
-			my @names	= RDF::Query::Algebra::Service->_names_for_node( $value, $query, $bridge, {}, {}, 0, '', $seen );
-			$l->debug("- " . scalar(@names) . " identity names for node");
-			foreach my $string (@names) {
-				$l->debug("checking bloom filter for --> '$string'\n");
-				my $ok	= $bloom->check( $string );
-				$l->debug("-> ok") if ($ok);
-				if ($ok) {
-					my $nodemap	= $query->{_query_cache}{ $BLOOM_URL }{ 'nodemap' };
-					push( @{ $nodemap->{ $value->as_string } }, $string );
-					return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+				if (ref($query)) {
+					$query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter }	= $bloom;
 				}
 			}
-			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-		};
-	}
-
-	$RDF::Query::functions{"http://kasei.us/code/rdf-query/functions/bloom/filter"}	= sub {
-		my $query	= shift;
-		
-		my $value	= shift;
-		my $filter	= shift;
-		my $bloom;
-		
-		unless ($BLOOM_FILTER_LOADED) {
-			throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute bloom filter because Bloom::Filter is not available" );
-		}
-		
-		if (ref($query) and exists( $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter } )) {
-			$bloom	= $query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter };
-		} else {
-			my $value	= $filter->literal_value;
-			$bloom	= Bloom::Filter->thaw( $value );
-			if (ref($query)) {
-				$query->{_query_cache}{ "http://kasei.us/code/rdf-query/functions/bloom/filter" }{ 'filters' }{ $filter }	= $bloom;
+			
+			my $string	= $value->as_string;
+			$l->debug("checking bloom filter for --> '$string'\n");
+			my $ok	= $bloom->check( $string );
+			$l->debug("-> ok") if ($ok);
+			if ($ok) {
+				return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
+			} else {
+				return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 			}
 		}
-		
-		my $string	= $value->as_string;
-		$l->debug("checking bloom filter for --> '$string'\n");
-		my $ok	= $bloom->check( $string );
-		$l->debug("-> ok") if ($ok);
-		if ($ok) {
-			return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-		} else {
-			return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-		}
-	};
+	);
 }
 
 

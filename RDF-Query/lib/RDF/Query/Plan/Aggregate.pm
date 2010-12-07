@@ -7,9 +7,12 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.902.
+This document describes RDF::Query::Plan::Aggregate version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -29,7 +32,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
@@ -92,12 +95,12 @@ sub execute ($) {
 				if ($g->isa('RDF::Query::Expression::Alias')) {
 					$row->{ $g->name }	= $v;
 				}
-				next ROW unless (blessed($v));
 				push(@group, $v);
 			}
 			
 # 			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
-			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } @group);
+			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } map { blessed($_) ? $query->var_or_expr_value( $row, $_ ) : '' } @group);
+			
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
 			foreach my $i (0 .. $#groupby) {
@@ -116,11 +119,18 @@ sub execute ($) {
 			
 			my $row_sample	= $group_data{ 'groupby_sample' }{ $group };
 			foreach my $g (@groupby) {
-				my $name	= ($g->isa('RDF::Query::Expression::Alias') or $g->isa('RDF::Query::Node::Variable'))
-							? $g->name
-							: $g->sse;
-				my $value	= $row_sample->{ $name };
-				$passthrough_data{ $name }	= $value;
+				if ($g->isa('RDF::Query::Expression::Alias') or $g->isa('RDF::Query::Node::Variable')) {
+					my $name	= $g->name;
+					$passthrough_data{ $name }	= $row_sample->{ $name };
+				} elsif ($g->isa('RDF::Query::Expression')) {
+					my @names	= $g->referenced_variables;
+					foreach my $name (@names) {
+						$passthrough_data{ $name }	= $row_sample->{ $name };
+					}
+				} else {
+					my $name	= $g->sse;
+					$passthrough_data{ $name }	= $row_sample->{ $name };
+				}
 			}
 			
 			my @operation_data	= (map { [ @{ $_ }, \%aggregates ] } @ops);

@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.130
+This document describes RDF::Trine::Model version 0.131
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 }
 
 use Scalar::Util qw(blessed);
@@ -522,6 +522,37 @@ sub as_hashref {
 		push @{ $index->{$s}->{$p} }, $o;
 	}
 	return $index;
+}
+
+=item C<< as_graphviz >>
+
+Returns a L<GraphViz> object of the RDF graph of this model, ignoring graph
+names/contexts.
+
+This method will attempt to load the L<GraphViz> module at runtime and will fail
+if the module is unavailable.
+
+=cut
+
+sub as_graphviz {
+	my $self	= shift;
+	require GraphViz;
+	my $g	= GraphViz->new();
+	my %seen;
+	my $iter	= $self->as_stream;
+	while (my $t = $iter->next) {
+		my @nodes;
+		foreach my $pos (qw(subject object)) {
+			my $n	= $t->$pos();
+			my $label	= ($n->isa('RDF::Trine::Node::Literal')) ? $n->literal_value : $n->as_string;
+			push(@nodes, $label);
+			unless ($seen{ $label }++) {
+				$g->add_node( $label );
+			}
+		}
+		$g->add_edge( @nodes, label => $t->predicate->as_string );
+	}
+	return $g;
 }
 
 =back

@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.130
+This document describes RDF::Trine::Parser::RDFa version 0.131
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::RDFa version 0.130
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -46,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
 	foreach my $ext (qw(html xhtml htm)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;

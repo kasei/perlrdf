@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.130
+This document describes RDF::Trine::Node::Literal version 0.131
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -37,6 +37,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Node> class.
 
 =over 4
 
@@ -453,6 +456,52 @@ sub is_valid_lexical_form {
 		}
 	}
 	return 0;
+}
+
+=item C<< is_numeric_type >>
+
+Returns true if the literal is a known (xsd) numeric type.
+
+=cut
+
+sub is_numeric_type {
+	my $self	= shift;
+	return 0 unless ($self->has_datatype);
+	my $type	= $self->literal_datatype;
+	if ($type =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
+
+=item C<< numeric_value >>
+
+Returns the numeric value of the literal (even if the literal isn't a known numeric type.
+
+=cut
+
+sub numeric_value {
+	my $self	= shift;
+	if ($self->is_numeric_type) {
+		my $value	= $self->literal_value;
+		if (looks_like_number($value)) {
+			my $v	= 0 + eval "$value";
+			return $v;
+		} else {
+			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
+		}
+	} elsif (not $self->has_datatype) {
+		if (looks_like_number($self->literal_value)) {
+			return 0+$self->literal_value;
+		} else {
+			return;
+		}
+	} elsif ($self->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		return ($self->literal_value eq 'true') ? 1 : 0;
+	} else {
+		return;
+	}
 }
 
 1;

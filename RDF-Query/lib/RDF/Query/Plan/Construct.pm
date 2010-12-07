@@ -7,9 +7,12 @@ RDF::Query::Plan::Construct - Executable query plan for constructing a graph fro
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Construct version 2.902.
+This document describes RDF::Query::Plan::Construct version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -28,7 +31,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
@@ -96,6 +99,7 @@ sub next {
 		}
 		my $row	= $plan->next;
 		return undef unless ($row);
+		$self->[0]{blank_map}	= {};
 		
 		if ($l->is_debug) {
 			$l->debug( "- got construct bindings from pattern: " . $row->as_string );

@@ -261,7 +261,7 @@ END
 	{
 		my $sparql	= <<"END";
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
-			PREFIX	xpath: <http://www.w3.org/2005/04/xpath-functions>
+			PREFIX	xpath: <http://www.w3.org/2005/xpath-functions#>
 			SELECT	?p
 			WHERE	{
 				?p foaf:mbox ?mbox .

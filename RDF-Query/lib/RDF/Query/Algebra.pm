@@ -7,7 +7,7 @@ RDF::Query::Algebra - Base class for Algebra expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra version 2.902.
+This document describes RDF::Query::Algebra version 2.904.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::Algebra;
 
 our (@ISA, @EXPORT_OK);
 BEGIN {
-	our $VERSION	= '2.902';
+	our $VERSION	= '2.904';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -262,7 +262,7 @@ sub subpatterns_of_type {
 	push(@patterns, $self) if ($self->isa($type));
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@patterns, $arg->subpatterns_of_type($type));
+			push(@patterns, $arg->subpatterns_of_type($type, $block));
 		}
 	}
 	return @patterns;

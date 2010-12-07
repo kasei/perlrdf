@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.130
+This document describes RDF::Trine::Node::Resource version 0.131
 
 =cut
 
@@ -28,12 +28,15 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Node> class.
 
 =over 4
 

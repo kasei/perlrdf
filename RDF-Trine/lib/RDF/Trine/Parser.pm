@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.130
+This document describes RDF::Trine::Parser version 0.131
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.131';
 }
 
 use Scalar::Util qw(blessed);
@@ -119,7 +119,7 @@ sub guess_parser_by_filename {
 		my $ext	= $1;
 		return $file_extensions{ $ext } if exists $file_extensions{ $ext };
 	}
-	return 'RDF::Trine::Parser::RDFXML';
+	return $class->parser_by_media_type( 'application/rdf+xml' ) || 'RDF::Trine::Parser::RDFXML';
 }
 
 =item C<< new ( $parser_name, @args ) >>

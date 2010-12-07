@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.902.
+This document describes RDF::Query::Expression::Binary version 2.904.
 
 =cut
 
@@ -27,12 +27,15 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Expression> class.
 
 =over 4
 
@@ -96,45 +99,58 @@ sub evaluate {
 	
 	$l->debug("Binary Operator '$op': " . Dumper($lhs, $rhs));
 	
-	if ($op =~ m#^[-+/*]$#) {
-		my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
-		my $value;
-		if ($op eq '+') {
-			my $lhsv	= $lhs->numeric_value;
-			my $rhsv	= $rhs->numeric_value;
-			if (defined($lhsv) and defined($rhsv)) {
-				$value		= $lhsv + $rhsv;
-			} else {
-				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<+> on non-numeric types";
+	if ($op eq '+') {
+		if (blessed($lhs) and $lhs->isa('RDF::Query::Node::Literal') and blessed($rhs) and $rhs->isa('RDF::Query::Node::Literal')) {
+			if (not($lhs->has_datatype) and not($rhs->has_datatype)) {
+				my $value	= $lhs->literal_value . $rhs->literal_value;
+				return RDF::Query::Node::Literal->new( $value );
 			}
-		} elsif ($op eq '-') {
-			my $lhsv	= $lhs->numeric_value;
-			my $rhsv	= $rhs->numeric_value;
-			if (defined($lhsv) and defined($rhsv)) {
-				$value		= $lhsv - $rhsv;
-			} else {
-				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<-> on non-numeric types";
-			}
-		} elsif ($op eq '*') {
-			my $lhsv	= $lhs->numeric_value;
-			my $rhsv	= $rhs->numeric_value;
-			if (defined($lhsv) and defined($rhsv)) {
-				$value		= $lhsv * $rhsv;
-			} else {
-				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<*> on non-numeric types";
-			}
-		} elsif ($op eq '/') {
-			my $lhsv	= $lhs->numeric_value;
-			my $rhsv	= $rhs->numeric_value;
-			if (defined($lhsv) and defined($rhsv)) {
-				$value		= $lhsv / $rhsv;
-			} else {
-				throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
-			}
-		} else {
-			throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 		}
-		return RDF::Query::Node::Literal->new( $value, undef, $type );
+	}
+	
+	if ($op =~ m#^[-+/*]$#) {
+		if (blessed($lhs) and blessed($rhs) and $lhs->is_numeric_type and $rhs->is_numeric_type) {
+			my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
+			my $value;
+			if ($op eq '+') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv + $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<+> on non-numeric types";
+				}
+			} elsif ($op eq '-') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv - $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<-> on non-numeric types";
+				}
+			} elsif ($op eq '*') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv * $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<*> on non-numeric types";
+				}
+			} elsif ($op eq '/') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv / $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
+				}
+			} else {
+				throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
+			}
+			return RDF::Query::Node::Literal->new( $value, undef, $type );
+		} else {
+			throw RDF::Query::Error::ExecutionError -text => "Numeric binary operator '$op' with non-numeric data";
+		}
 	} elsif ($op =~ m#^([<>]=?)|!?=$#) {
 		my @types	= qw(RDF::Query::Node::Literal RDF::Query::Node::Resource RDF::Query::Node::Blank);
 		

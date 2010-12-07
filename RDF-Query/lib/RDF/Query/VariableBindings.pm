@@ -7,9 +7,12 @@ RDF::Query::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Query::VariableBindings version 2.902.
+This document describes RDF::Query::VariableBindings version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::VariableBindings> class.
 
 =over 4
 
@@ -29,7 +32,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################

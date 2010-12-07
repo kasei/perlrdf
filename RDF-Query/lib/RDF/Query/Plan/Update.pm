@@ -7,9 +7,12 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.902.
+This document describes RDF::Query::Plan::Update version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -33,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
@@ -90,15 +93,9 @@ sub execute ($) {
 			my ($template, $method)	= @$data;
 			$l->trace("UPDATE running $method");
 			foreach my $row (@rows) {
-				my (@triples);
-				if ($template) {
-					foreach my $p ($template->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
-						my @t	= $p->triples;
-						push(@triples, @t);
-					}
-				}
+				my @triples	= blessed($template) ? $template->quads : ();
 				
-				foreach my $t (@triples) {
+				TRIPLE: foreach my $t (@triples) {
 					my @nodes	= $t->nodes;
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
@@ -119,7 +116,8 @@ sub execute ($) {
 							if ($i == 3) {
 								$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
 							} else {
-								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+								next TRIPLE;
+# 								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
 							}
 # 							$ok	= 0;
 # 						} elsif ($n->isa('RDF::Trine::Node::Variable')) {
