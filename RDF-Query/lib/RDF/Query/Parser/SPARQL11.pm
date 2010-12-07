@@ -2649,7 +2649,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTRING|LENGTH|UCASE|LCASE|ENCODE|CONTAINS|STARTS|ENDS|RAND/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTRING|STRLEN|UCASE|LCASE|ENCODE|CONTAINS|STARTS|ENDS|RAND/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2687,7 +2687,7 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|LENGTH|UCASE|LCASE|ENCODE)$/i) {
+		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });

@@ -954,14 +954,14 @@ sub install {
 			
 			$nums[0]--;
 			my $substring	= (scalar(@nums) > 1) ? substr($value, $nums[0], $nums[1]) : substr($value, $nums[0]);
-			return RDF::Query::Node::Literal->new($substring, $node->literal_value_language, $node->literal_datatype);
+			return RDF::Query::Node::Literal->new($substring, $node->type_list);
 		}
 	);
 	
 
-	# sparql:length
+	# sparql:strlen
 	RDF::Query::Functions->install_function(
-		"sparql:length",
+		"sparql:strlen",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
@@ -969,7 +969,7 @@ sub install {
 				my $value	= $node->literal_value;
 				return RDF::Query::Node::Literal->new( length($value), undef, $xsd->integer );
 			} else {
-				throw RDF::Query::Error::TypeError -text => "sparql:length called without a literal term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strlen called without a literal term";
 			}
 		}
 	);
@@ -983,7 +983,7 @@ sub install {
 			my $node	= shift;
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( uc($value), $node->literal_value_language, $node->literal_datatype );
+				return RDF::Query::Node::Literal->new( uc($value), $node->type_list );
 			} else {
 				throw RDF::Query::Error::TypeError -text => "sparql:ucase called without a literal term";
 			}
@@ -999,7 +999,7 @@ sub install {
 			my $node	= shift;
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( lc($value), $node->literal_value_language, $node->literal_datatype );
+				return RDF::Query::Node::Literal->new( lc($value), $node->type_list );
 			} else {
 				throw RDF::Query::Error::TypeError -text => "sparql:lcase called without a literal term";
 			}
