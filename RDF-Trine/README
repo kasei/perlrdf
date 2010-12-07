@@ -65,7 +65,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.131 (2010-XX-XX)
+  Version 0.131 (2010-12-07)
 
      * Fixed SPARQL XML Results serialization to omit unbound variables and properly declare literal languages and datatypes.
      * Copied implementations of is_numeric_type() and numeric_value() from RDF::Query::Node::Literal to RDF::Trine::Node::Literal.

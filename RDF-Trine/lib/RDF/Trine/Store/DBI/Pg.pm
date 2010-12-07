@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::Pg - PostgreSQL subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::Pg version 0.130_03
+This document describes RDF::Trine::Store::DBI::Pg version 0.131
 
 
 =head1 SYNOPSIS
@@ -26,7 +26,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.130_03";
+	$VERSION	= "0.131";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
