@@ -151,6 +151,7 @@ sub run {
 <h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>
 END
 		}
+		$response->body($content);
 		return $response;
 	}
 	
@@ -588,5 +589,8 @@ __END__
 Copyright (c) 2010 Gregory Todd Williams. All rights reserved. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
+
+The CodeMirror (Javascript and CSS) files contained in this package are
+copyright (c) 2007-2010 Marijn Haverbeke.
 
 =cut
