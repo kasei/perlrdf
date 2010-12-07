@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.131" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-12-07" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Model->as_graphviz method." ;
