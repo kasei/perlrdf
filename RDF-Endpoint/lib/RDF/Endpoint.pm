@@ -113,8 +113,10 @@ configuration settings.
 
 sub new {
 	my $class	= shift;
-	my $conf	= shift;
-	return bless( { conf => $conf }, $class );
+	my $config	= shift;
+	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+	my $model	= RDF::Trine::Model->new( $store );
+	return bless( { conf => $config, model => $model }, $class );
 }
 
 =item C<< run ( $req ) >>
@@ -129,9 +131,9 @@ sub run {
 	my $req		= shift;
 	my $config	= $self->{conf};
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
-	
-	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
-	my $model	= RDF::Trine::Model->new( $store );
+	my $model	= $self->{model};
+# 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+# 	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $content;
 	my $response	= Plack::Response->new;
