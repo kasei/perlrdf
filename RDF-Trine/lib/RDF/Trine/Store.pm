@@ -45,6 +45,32 @@ BEGIN {
 
 =cut
 
+=item C<< new ( $data ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied data value.
+This constructor delegates to one of the following methods depending on the
+value of C<< $data >>:
+
+* C<< new_with_string >> if C<< $data >> is not a reference
+
+* C<< new_with_config >> if C<< $data >> is a HASH reference
+
+* C<< new_with_object >> if C<< $data >> is a blessed object
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $data	= shift;
+	if (blessed($data)) {
+		return $class->new_with_object($data);
+	} elsif (ref($data)) {
+		return $class->new_with_config($data);
+	} else {
+		return $class->new_with_string($data);
+	}
+}
+
 =item C<< new_with_string ( $config ) >>
 
 Returns a new RDF::Trine::Store object based on the supplied configuration
@@ -76,7 +102,7 @@ sub new_with_string {
 }
 
 
-=item C<< new_with_config ( $hashref ) >>
+=item C<< new_with_config ( \%config ) >>
 
 Returns a new RDF::Trine::Store object based on the supplied
 configuration hashref. This requires the the Store subclass to be
