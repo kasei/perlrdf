@@ -3,10 +3,20 @@ var SparqlParser = Editor.Parser = (function() {
     return new RegExp("^(?:" + words.join("|") + ")$", "i");
   }
   var ops = wordRegexp(["str", "lang", "langmatches", "datatype", "bound", "sameterm", "isiri", "isuri",
-                        "isblank", "isliteral", "union", "a"]);
+                        "isblank", "isliteral", "union", "a",
+                        // SPARQL 1.1
+                        "abs", "ceil", "floor", "round", "concat", "substring", "strlen", "ucase",
+                        "lcase", "encode", "contains", "starts", "ends", "rand", "strdt", "strlang",
+                        "bnode", "iri", "uri", "datatype", "regex", "isnumeric", "if", "coalesce",
+                        "count", "sum", "min", "max", "avg", "group_concat", "sample"
+                        ]);
   var keywords = wordRegexp(["base", "prefix", "select", "distinct", "reduced", "construct", "describe",
                              "ask", "from", "named", "where", "order", "limit", "offset", "filter", "optional",
-                             "graph", "by", "asc", "desc"]);
+                             "graph", "by", "asc", "desc",
+                             // SPARQL 1.1
+                             "group",
+                             "insert", "delete", "data", "load", "clear", "drop", "graph", "default",
+                             "using", "with"]);
   var operatorChars = /[*+\-<>=&|]/;
 
   var tokenizeSparql = (function() {
