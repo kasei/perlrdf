@@ -12,15 +12,29 @@ Defines the following functions:
 
 =over
 
+=item * sparql:abs
+
 =item * sparql:bnode
 
 =item * sparql:bound
 
+=item * sparql:ceil
+
 =item * sparql:coalesce
+
+=item * sparql:concat
+
+=item * sparql:contains
 
 =item * sparql:datatype
 
 =item * sparql:ebv
+
+=item * sparql:ends
+
+=item * sparql:floor
+
+=item * sparql:encode
 
 =item * sparql:exists
 
@@ -42,21 +56,47 @@ Defines the following functions:
 
 =item * sparql:langmatches
 
+=item * sparql:lcase
+
 =item * sparql:logical-and
 
 =item * sparql:logical-or
 
+=item * sparql:md5
+
 =item * sparql:notin
+
+=item * sparql:rand
 
 =item * sparql:regex
 
+=item * sparql:round
+
 =item * sparql:sameterm
+
+=item * sparql:sha1
+
+=item * sparql:sha224
+
+=item * sparql:sha256
+
+=item * sparql:sha384
+
+=item * sparql:sha512
+
+=item * sparql:starts
 
 =item * sparql:str
 
 =item * sparql:strdt
 
 =item * sparql:strlang
+
+=item * sparql:strlen
+
+=item * sparql:substring
+
+=item * sparql:ucase
 
 =item * sparql:uri
 
@@ -94,12 +134,15 @@ use URI::Escape;
 use Carp qw(carp croak confess);
 use Data::Dumper;
 use I18N::LangTags;
-use RDF::Query::Error qw(:try);
 use List::Util qw(sum);
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 use DateTime::Format::W3CDTF;
 use RDF::Trine::Namespace qw(xsd);
+use Digest::MD5 qw(md5_hex);
+use Digest::SHA  qw(sha1_hex sha224_hex sha256_hex sha384_hex sha512_hex);
 
+use RDF::Query::Error qw(:try);
+use RDF::Query::Node qw(literal);
 
 =begin private
 
@@ -1135,6 +1178,12 @@ sub install {
 		}
 	);
 	
+	RDF::Query::Functions->install_function("sparql:md5", \&md5);
+	RDF::Query::Functions->install_function("sparql:sha1", \&sha1);
+	RDF::Query::Functions->install_function("sparql:sha224", \&sha224);
+	RDF::Query::Functions->install_function("sparql:sha256", \&sha256);
+	RDF::Query::Functions->install_function("sparql:sha384", \&sha384);
+	RDF::Query::Functions->install_function("sparql:sha512", \&sha512);
 	
 }
 
@@ -1186,6 +1235,43 @@ sub _categorize_strings {
 		return;
 	}
 }
+
+sub md5 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( md5_hex($node->literal_value) );
+}
+
+sub sha1 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha1_hex($node->literal_value) );
+}
+
+sub sha224 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha224_hex($node->literal_value) );
+}
+
+sub sha256 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha256_hex($node->literal_value) );
+}
+
+sub sha384 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha384_hex($node->literal_value) );
+}
+
+sub sha512 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha512_hex($node->literal_value) );
+}
+
 
 1;
 
