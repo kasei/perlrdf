@@ -130,6 +130,7 @@ BEGIN {
 }
 
 use POSIX;
+use Encode;
 use URI::Escape;
 use Carp qw(carp croak confess);
 use Data::Dumper;
@@ -1239,37 +1240,39 @@ sub _categorize_strings {
 sub md5 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( md5_hex($node->literal_value) );
+	my $hex		= eval { md5_hex(encode_utf8($node->literal_value)) };
+	warn $hex;
+	return literal( $hex );
 }
 
 sub sha1 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( sha1_hex($node->literal_value) );
+	return literal( sha1_hex(encode_utf8($node->literal_value)) );
 }
 
 sub sha224 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( sha224_hex($node->literal_value) );
+	return literal( sha224_hex(encode_utf8($node->literal_value)) );
 }
 
 sub sha256 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( sha256_hex($node->literal_value) );
+	return literal( sha256_hex(encode_utf8($node->literal_value)) );
 }
 
 sub sha384 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( sha384_hex($node->literal_value) );
+	return literal( sha384_hex(encode_utf8($node->literal_value)) );
 }
 
 sub sha512 {
 	my $query	= shift;
 	my $node	= shift;
-	return literal( sha512_hex($node->literal_value) );
+	return literal( sha512_hex(encode_utf8($node->literal_value)) );
 }
 
 
