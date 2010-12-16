@@ -10,7 +10,7 @@ This document describes RDF::Query::Functions::SPARQL version 2.904.
 
 Defines the following functions:
 
-=over
+=over 4
 
 =item * sparql:abs
 
@@ -62,8 +62,6 @@ Defines the following functions:
 
 =item * sparql:logical-or
 
-=item * sparql:md5
-
 =item * sparql:notin
 
 =item * sparql:rand
@@ -73,16 +71,6 @@ Defines the following functions:
 =item * sparql:round
 
 =item * sparql:sameterm
-
-=item * sparql:sha1
-
-=item * sparql:sha224
-
-=item * sparql:sha256
-
-=item * sparql:sha384
-
-=item * sparql:sha512
 
 =item * sparql:starts
 
@@ -99,22 +87,6 @@ Defines the following functions:
 =item * sparql:ucase
 
 =item * sparql:uri
-
-=item * http://www.w3.org/2001/XMLSchema#boolean
-
-=item * http://www.w3.org/2001/XMLSchema#dateTime
-
-=item * http://www.w3.org/2001/XMLSchema#decimal
-
-=item * http://www.w3.org/2001/XMLSchema#double
-
-=item * http://www.w3.org/2001/XMLSchema#float
-
-=item * http://www.w3.org/2001/XMLSchema#integer
-
-=item * http://www.w3.org/2001/XMLSchema#string
-
-=back
 
 =cut
 
@@ -1179,13 +1151,20 @@ sub install {
 		}
 	);
 	
-	RDF::Query::Functions->install_function("sparql:md5", \&md5);
-	RDF::Query::Functions->install_function("sparql:sha1", \&sha1);
-	RDF::Query::Functions->install_function("sparql:sha224", \&sha224);
-	RDF::Query::Functions->install_function("sparql:sha256", \&sha256);
-	RDF::Query::Functions->install_function("sparql:sha384", \&sha384);
-	RDF::Query::Functions->install_function("sparql:sha512", \&sha512);
+	RDF::Query::Functions->install_function("sparql:md5", \&_md5);
+	RDF::Query::Functions->install_function("sparql:sha1", \&_sha1);
+	RDF::Query::Functions->install_function("sparql:sha224", \&_sha224);
+	RDF::Query::Functions->install_function("sparql:sha256", \&_sha256);
+	RDF::Query::Functions->install_function("sparql:sha384", \&_sha384);
+	RDF::Query::Functions->install_function("sparql:sha512", \&_sha512);
 	
+	RDF::Query::Functions->install_function("sparql:year", \&_year);
+	RDF::Query::Functions->install_function("sparql:month", \&_month);
+	RDF::Query::Functions->install_function("sparql:day", \&_day);
+	RDF::Query::Functions->install_function("sparql:hours", \&_hours);
+	RDF::Query::Functions->install_function("sparql:minutes", \&_minutes);
+	RDF::Query::Functions->install_function("sparql:seconds", \&_seconds);
+	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
 }
 
 sub _categorize_strings {
@@ -1237,48 +1216,235 @@ sub _categorize_strings {
 	}
 }
 
-sub md5 {
+=item * sparql:md5
+
+=cut
+
+sub _md5 {
 	my $query	= shift;
 	my $node	= shift;
-	my $hex		= eval { md5_hex(encode_utf8($node->literal_value)) };
-	warn $hex;
-	return literal( $hex );
+	return literal( md5_hex(encode_utf8($node->literal_value)) );
 }
 
-sub sha1 {
+=item * sparql:sha1
+
+=cut
+
+sub _sha1 {
 	my $query	= shift;
 	my $node	= shift;
 	return literal( sha1_hex(encode_utf8($node->literal_value)) );
 }
 
-sub sha224 {
+=item * sparql:sha224
+
+=cut
+
+sub _sha224 {
 	my $query	= shift;
 	my $node	= shift;
 	return literal( sha224_hex(encode_utf8($node->literal_value)) );
 }
 
-sub sha256 {
+=item * sparql:sha256
+
+=cut
+
+sub _sha256 {
 	my $query	= shift;
 	my $node	= shift;
 	return literal( sha256_hex(encode_utf8($node->literal_value)) );
 }
 
-sub sha384 {
+=item * sparql:sha384
+
+=cut
+
+sub _sha384 {
 	my $query	= shift;
 	my $node	= shift;
 	return literal( sha384_hex(encode_utf8($node->literal_value)) );
 }
 
-sub sha512 {
+=item * sparql:sha512
+
+=cut
+
+sub _sha512 {
 	my $query	= shift;
 	my $node	= shift;
 	return literal( sha512_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:year
+
+=cut
+
+sub _year {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:year called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->year, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:year called without a valid dateTime";
+	}
+}
+
+=item * sparql:month
+
+=cut
+
+sub _month {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:month called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->month, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:month called without a valid dateTime";
+	}
+}
+
+=item * sparql:day
+
+=cut
+
+sub _day {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:day called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->day, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:day called without a valid dateTime";
+	}
+}
+
+=item * sparql:hours
+
+=cut
+
+sub _hours {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:hours called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->hour, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:hours called without a valid dateTime";
+	}
+}
+
+=item * sparql:minutes
+
+=cut
+
+sub _minutes {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:minutes called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->minute, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:minutes called without a valid dateTime";
+	}
+}
+
+=item * sparql:seconds
+
+=cut
+
+sub _seconds {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:seconds called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->second, undef, $xsd->decimal);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:seconds called without a valid dateTime";
+	}
+}
+
+=item * sparql:timezone
+
+=cut
+
+sub _timezone {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		my $tz		= $dt->time_zone;
+		if ($tz) {
+			my $offset	= $tz->offset_for_datetime( $dt );
+			my $minus	= '';
+			if ($offset < 0) {
+				$minus	= '-';
+				$offset	= -$offset;
+			}
+
+			my $duration	= "${minus}PT";
+			if ($offset >= 60*60) {
+				my $h	= int($offset / (60*60));
+				$duration	.= "${h}H" if ($h > 0);
+				$offset	= $offset % (60*60);
+			}
+			if ($offset >= 60) {
+				my $m	= int($offset / 60);
+				$duration	.= "${m}M" if ($m > 0);
+				$offset	= $offset % 60;
+			}
+			my $s	= int($offset);
+			$duration	.= "${s}S" if ($s > 0 or $duration eq 'PT');
+			
+			return RDF::Query::Node::Literal->new($duration);
+		}
+	}
+	throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a valid dateTime";
 }
 
 
 1;
 
 __END__
+
+=item * http://www.w3.org/2001/XMLSchema#boolean
+
+=item * http://www.w3.org/2001/XMLSchema#dateTime
+
+=item * http://www.w3.org/2001/XMLSchema#decimal
+
+=item * http://www.w3.org/2001/XMLSchema#double
+
+=item * http://www.w3.org/2001/XMLSchema#float
+
+=item * http://www.w3.org/2001/XMLSchema#integer
+
+=item * http://www.w3.org/2001/XMLSchema#string
+
+=back
 
 =head1 AUTHOR
 
