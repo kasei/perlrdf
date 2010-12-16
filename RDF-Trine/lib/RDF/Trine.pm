@@ -43,6 +43,7 @@ use 5.008003;
 use strict;
 use warnings;
 no warnings 'redefine';
+use Module::Load::Conditional qw[can_load];
 
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
@@ -52,6 +53,12 @@ BEGIN {
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
+	
+	can_load( modules => {
+		'RDF::Redland'					=> undef,
+		'RDF::Trine::Store::Redland'	=> undef,
+		'RDF::Trine::Parser::Redland'	=> undef,
+	} );
 }
 
 use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
@@ -71,6 +78,8 @@ use RDF::Trine::Store;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
+
+
 
 sub _uniq {
 	my %seen;

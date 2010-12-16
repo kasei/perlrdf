@@ -18,7 +18,7 @@ foreach my $file (@good) {
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	lives_ok {
 		my $url	= 'file://' . $file;
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} $test;
 }
@@ -29,14 +29,14 @@ foreach my $file (@bad) {
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	throws_ok {
 		my $url	= 'file://' . $file;
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} 'RDF::Trine::Error::ParserError', $test;
 }
 
 {
 	# Canonicalization tests
-	my $parser	= RDF::Trine::Parser->new( 'turtle', canonicalize => 1 );
+	my $parser	= RDF::Trine::Parser::Turtle->new( canonicalize => 1 );
 	{
 		my $model = RDF::Trine::Model->temporary_model;
 		my $ntriples	= qq[_:a <http://example.com/integer> "-0123"^^<http://www.w3.org/2001/XMLSchema#integer> .\n];
@@ -70,7 +70,7 @@ foreach my $file (@bad) {
 }	
 
 {
-	my $parser	= RDF::Trine::Parser->new( 'turtle' );
+	my $parser	= RDF::Trine::Parser::Turtle->new();
 	my $model = RDF::Trine::Model->temporary_model;
 	my $ttl		= <<'END';
 # This document contains a graph with non-ASCII chars.
