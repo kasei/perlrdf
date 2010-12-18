@@ -74,16 +74,20 @@ sub execute ($) {
 # 	warn "clearing graph " . $graph->as_string;
 	my $ok	= 0;
 	try {
-		my $uri	= $graph->uri_value;
-		if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
-			$context->model->remove_statements( undef, undef, undef, undef );
-		} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
-			my $citer	= $context->model->get_contexts;
-			while (my $graph = $citer->next) {
+		if ($graph->is_nil) {
+			$context->model->remove_statements( undef, undef, undef, $graph );
+		} else {
+			my $uri	= $graph->uri_value;
+			if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+				$context->model->remove_statements( undef, undef, undef, undef );
+			} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
+				my $citer	= $context->model->get_contexts;
+				while (my $graph = $citer->next) {
+					$context->model->remove_statements( undef, undef, undef, $graph );
+				}
+			} else {
 				$context->model->remove_statements( undef, undef, undef, $graph );
 			}
-		} else {
-			$context->model->remove_statements( undef, undef, undef, $graph );
 		}
 		$ok		= 1;
 	} catch RDF::Trine::Error with {};
