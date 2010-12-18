@@ -61,6 +61,7 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
 		aggregates
 		bind
+		clear
 		delete
 		delete-data
 		delete-where
@@ -228,7 +229,15 @@ sub update_eval_test {
 	my $resdata		= get_first_obj( $model, $result, $ut->data );
 	try {
 		if (blessed($resdata)) {
-			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
+			try {
+				RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
+			} catch Error with {
+				my $e	= shift;
+				fail($test->as_string);
+				earl_fail_test( $earl, $test, $e->text );
+				print "# died: " . $test->as_string . ": $e\n";
+				return;
+			};
 		}
 	} catch Error with {
 		my $e	= shift;
@@ -243,7 +252,15 @@ sub update_eval_test {
 		my $uri		= $graph->literal_value;
 		try {
 			warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
-			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
+			try {
+				RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
+			} catch Error with {
+				my $e	= shift;
+				fail($test->as_string);
+				earl_fail_test( $earl, $test, $e->text );
+				print "# died: " . $test->as_string . ": $e\n";
+				return;
+			};
 		} catch Error with {
 			my $e	= shift;
 			fail($test->as_string);
@@ -412,7 +429,12 @@ sub add_to_model {
 	my @files	= @_;
 	
 	foreach my $file (@files) {
-		RDF::Trine::Parser->parse_url_into_model( $file, $model );
+		try {
+			RDF::Trine::Parser->parse_url_into_model( $file, $model );
+		} catch Error with {
+			my $e	= shift;
+			warn "Failed to load $file into model: " . $e->text;
+		};
 	}
 }
 
