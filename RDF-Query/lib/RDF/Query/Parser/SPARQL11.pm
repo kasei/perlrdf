@@ -2649,7 +2649,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTRING|STRLEN|UCASE|LCASE|ENCODE|CONTAINS|STARTS|ENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STARTS|ENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2671,9 +2671,9 @@ sub _BuiltInCall {
 		} else {
 			$self->_add_stack( $func );
 		}
-	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTRING|RAND/i)) {
+	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i)) {
 		# n-arg functions that take expressions
-		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTRING|RAND/i);
+		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
@@ -2687,7 +2687,7 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE)$/i) {
+		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
