@@ -186,6 +186,29 @@ sub as_sparql {
 		}
 	}
 	my $group	= '';
+	
+	my %agg_projections;
+	{
+		# aggregate check
+		my $p	= $pattern;
+		$p	= $p->pattern if ($p->isa('RDF::Query::Algebra::Sort'));
+		$p	= $p->pattern if ($p->isa('RDF::Query::Algebra::Filter'));
+		$p	= ($p->patterns)[0] if ($p->isa('RDF::Query::Algebra::GroupGraphPattern') and scalar(@{[$p->patterns]}) == 1);
+		if ($p->isa('RDF::Query::Algebra::Extend') and $p->pattern->isa('RDF::Query::Algebra::Aggregate')) {
+			my $vlist	= $p->vars;
+			foreach my $k (@$vlist) {
+				if ($k->isa('RDF::Query::Expression::Alias')) {
+					my $var		= $k->name;
+					my $expr	= $k->expression->name;
+					my $str		= "($expr AS ?$var)";
+					$agg_projections{ '?' . $var }	= $str;
+				} else {
+					warn Dumper($k) . ' ';
+				}
+			}
+		}
+	}
+	
 	if ($pattern->isa('RDF::Query::Algebra::Extend')) {
 		my %seen;
 		my $vlist	= $pattern->vars;
@@ -213,9 +236,9 @@ sub as_sparql {
 			$_sparql	= $pp->as_sparql( $context, $indent );
 		}
 	} else {
-		my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-		my $svars	= join(' ', sort @vars);
-		$vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
+		my $pvars	= join(' ', map { my $agg = $agg_projections{ "?$_" }; defined($agg) ? $agg : "?$_" } sort $self->pattern->referenced_variables);
+		my $svars	= join(' ', map { my $agg = $agg_projections{ $_ }; defined($agg) ? $agg : $_ } sort @vars);
+		$vars		= ($pvars eq $svars) ? '*' : join(' ', map { my $agg = $agg_projections{ $_ }; defined($agg) ? $agg : $_ } @vars);
 		$_sparql	= $pattern->as_sparql( $context, $indent );
 	}
 	my $sparql	= sprintf("%s WHERE %s", $vars, $_sparql);
