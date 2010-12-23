@@ -62,6 +62,7 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 		aggregates
 		bind
 		clear
+		drop
 		delete
 		delete-data
 		delete-where
