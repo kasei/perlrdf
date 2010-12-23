@@ -119,7 +119,7 @@ sub as_sparql {
 	my $string	= sprintf(
 		"%s\n${indent}OPTIONAL %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->optional->as_sparql( $context, $indent ),
+		$self->optional->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
 	);
 	return $string;
 }

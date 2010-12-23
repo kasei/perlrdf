@@ -155,17 +155,29 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
+	my $force	= $context->{force_ggp_braces};
+	$force		= 0 unless (defined($force));
+	if ($force) {
+		$context->{force_ggp_braces}--;
+	}
 	
 	my @patterns;
-	foreach my $p ($self->patterns) {
-		push(@patterns, $p->as_sparql( $context, "$indent\t" ));
+	my @p	= $self->patterns;
+	
+	if (scalar(@p) == 0) {
+		return "{}";
+	} elsif (scalar(@p) == 1 and not($force)) {
+		return $p[0]->as_sparql($context, $indent);
+	} else {
+		foreach my $p (@p) {
+			push(@patterns, $p->as_sparql( $context, "$indent\t" ));
+		}
+		my $patterns	= join("\n${indent}\t", @patterns);
+		my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
+		return $string;
 	}
-	return "{}" unless (@patterns);
-	my $patterns	= join("\n${indent}\t", @patterns);
-	my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
-	return $string;
 }
 
 =item C<< as_hash >>

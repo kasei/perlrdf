@@ -123,16 +123,27 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	my $triples	= $self->triples;
 	my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( @$triples );
 	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
-
+	my $force	= $context->{ force_ggp_braces } || 0;
+	
+	my ($template, $pattern);
+	{
+		$context->{ force_ggp_braces }	= $force + 1;
+		$template	= $ggp->as_sparql( $context, $indent );
+	}
+	{
+		$context->{ force_ggp_braces }	= $force + 1;
+		$pattern		= $self->pattern->as_sparql( $context, $indent );
+	}
+	
 	my $string	= sprintf(
 		"CONSTRUCT %s\n${indent}WHERE %s",
-		$ggp->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$template,
+		$pattern,
 	);
 	return $string;
 }

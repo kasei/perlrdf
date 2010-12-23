@@ -7,12 +7,28 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 30;
+use Test::More tests => 31;
 
 use_ok( 'RDF::Query' );
 
 ################################################################################
 ### AS_SPARQL TESTS
+
+{
+	my $sparql	= <<"END";
+PREFIX ex: <http://example.com/>
+SELECT ?x (SUM(?o) AS ?sum) WHERE {
+	?x ex:price ?o
+}
+GROUP BY ?x
+HAVING (SUM(?o) > 5)
+ORDER BY ?sum
+END
+	my $query	= new RDF::Query ( $sparql );
+	my $string	= $query->as_sparql;
+	$string		=~ s/\s+/ /gms;
+	is( $string, "PREFIX ex: <http://example.com/> SELECT ?x (SUM(?o) AS ?sum) WHERE { ?x ex:price ?o . } GROUP BY ?x HAVING (SUM(?o) > 5) ORDER BY ?sum", 'sparql to sparql aggregate' );
+}
 
 {
 	my $rdql	= qq{SELECT ?person WHERE (?person foaf:name "Gregory Todd Williams") USING foaf FOR <http://xmlns.com/foaf/0.1/>};

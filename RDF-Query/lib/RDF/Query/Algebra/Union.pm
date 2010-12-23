@@ -132,8 +132,8 @@ sub as_sparql {
 	my $indent	= shift;
 	my $string	= sprintf(
 		"%s\n${indent}UNION\n${indent}%s",
-		$self->first->as_sparql( $context, $indent ),
-		$self->second->as_sparql( $context, $indent ),
+		$self->first->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
+		$self->second->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
 	);
 	return $string;
 }

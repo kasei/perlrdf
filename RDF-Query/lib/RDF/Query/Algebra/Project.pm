@@ -168,10 +168,11 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
 	my $pattern	= $self->pattern;
+	$context->{ force_ggp_braces }++;
 	
 	my ($vars, $_sparql);
 	my $vlist	= $self->vars;
@@ -185,16 +186,30 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $group	= '';
 	
+	my $aggregate	= 0;
+	my $group	= '';
+	my $having	= '';
+	my $order	= '';
 	my %agg_projections;
-	{
+	my @aggs	= $pattern->subpatterns_of_type( 'RDF::Query::Algebra::Aggregate' );
+	if (@aggs) {
 		# aggregate check
 		my $p	= $pattern;
-		$p	= $p->pattern if ($p->isa('RDF::Query::Algebra::Sort'));
-		$p	= $p->pattern if ($p->isa('RDF::Query::Algebra::Filter'));
+		if ($p->isa('RDF::Query::Algebra::Sort')) {
+			$context->{ skip_sort }++;
+			$order	= $p->_as_sparql_order_exprs( $context, $indent );
+			$p	= $p->pattern
+		}
+		if ($p->isa('RDF::Query::Algebra::Filter')) {
+			$context->{ skip_filter }++;
+			$having	= $p->expr->as_sparql( $context, $indent );
+			$p		= $p->pattern;
+		}
 		$p	= ($p->patterns)[0] if ($p->isa('RDF::Query::Algebra::GroupGraphPattern') and scalar(@{[$p->patterns]}) == 1);
 		if ($p->isa('RDF::Query::Algebra::Extend') and $p->pattern->isa('RDF::Query::Algebra::Aggregate')) {
+			my $pp	= $p->pattern;
+			$context->{ skip_extend }++;
 			my $vlist	= $p->vars;
 			foreach my $k (@$vlist) {
 				if ($k->isa('RDF::Query::Expression::Alias')) {
@@ -205,6 +220,11 @@ sub as_sparql {
 				} else {
 					warn Dumper($k) . ' ';
 				}
+			}
+			
+			my @groups	= $pp->groupby;
+			if (@groups) {
+				$group	= join(' ', map { $_->as_sparql($context, $indent) } @groups);
 			}
 		}
 	}
@@ -244,6 +264,12 @@ sub as_sparql {
 	my $sparql	= sprintf("%s WHERE %s", $vars, $_sparql);
 	if ($group) {
 		$sparql	.= "\n${indent}GROUP BY $group";
+	}
+	if ($having) {
+		$sparql	.= "\n${indent}HAVING $having";
+	}
+	if ($order) {
+		$sparql	.= "\n${indent}ORDER BY $order";
 	}
 	return $sparql;
 }

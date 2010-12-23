@@ -678,6 +678,11 @@ sub as_sparql {
 	
 	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
+	
+	if ($method =~ /^(DESCRIBE|ASK)$/i) {
+		$context->{force_ggp_braces}	= 1;
+	}
+	
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;

@@ -147,12 +147,14 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	my $pcontext	= { %$context, force_ggp_braces => 1 };
+	
 	my $string	= sprintf(
 		"GRAPH %s %s",
 		$self->graph->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( $pcontext, $indent ),
 	);
 	return $string;
 }
