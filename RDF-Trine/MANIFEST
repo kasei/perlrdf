@@ -476,12 +476,6 @@ t/data/turtle/test-12.out
 t/data/turtle/test-12.ttl
 t/data/turtle/test-13.out
 t/data/turtle/test-13.ttl
-t/data/turtle/test-14.out
-t/data/turtle/test-14.ttl
-t/data/turtle/test-15.out
-t/data/turtle/test-15.ttl
-t/data/turtle/test-16.out
-t/data/turtle/test-16.ttl
 t/data/turtle/test-17.out
 t/data/turtle/test-17.ttl
 t/data/turtle/test-18.out
@@ -552,4 +546,11 @@ t/store-triple_sql.t
 t/store.t
 t/store-config.t
 t/syntax.t
+xt/data/turtle/test-14.out
+xt/data/turtle/test-14.ttl
+xt/data/turtle/test-15.out
+xt/data/turtle/test-15.ttl
+xt/data/turtle/test-16.out
+xt/data/turtle/test-16.ttl
+xt/parser-turtle.t
 xt/store-sparql.t
