@@ -65,6 +65,13 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.132 (2010-12-23)
+
+     * Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional.
+     * Added auto-initialization of DBI stores during object construction.
+     * Added RDF::Trine::Store->new method to delegate to existing constructors.
+     * Moved slow turtle parser tests into developer tests directory xt/.
+
   Version 0.131 (2010-12-07)
 
      * Fixed SPARQL XML Results serialization to omit unbound variables and properly declare literal languages and datatypes.
