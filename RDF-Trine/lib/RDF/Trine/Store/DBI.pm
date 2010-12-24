@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.131
+This document describes RDF::Trine::Store::DBI version 0.132
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.131";
+	$VERSION	= "0.132";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -141,6 +141,8 @@ sub new {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
 		} elsif ($dsn =~ /^DBI:SQLite:/) {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
+			$user	= '';
+			$pass	= '';
 		}
 		$l->trace("Connecting to $dsn ($user, $pass)");
 		$dbh		= DBI->connect( $dsn, $user, $pass );
@@ -155,7 +157,7 @@ sub new {
 		statements_table_prefix	=> 'Statements',
 		%args
 	}, $class );
-	
+	$self->init();
 	return $self;
 }
 
@@ -1335,48 +1337,62 @@ sub init {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
-        CREATE TABLE Statements${id} (
-            Subject NUMERIC(20) NOT NULL,
-            Predicate NUMERIC(20) NOT NULL,
-            Object NUMERIC(20) NOT NULL,
-            Context NUMERIC(20) NOT NULL DEFAULT 0,
-            PRIMARY KEY (Subject, Predicate, Object, Context)
-        );
+	unless ($self->_table_exists("Statements${id}")) {
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+			CREATE TABLE Statements${id} (
+				Subject NUMERIC(20) NOT NULL,
+				Predicate NUMERIC(20) NOT NULL,
+				Object NUMERIC(20) NOT NULL,
+				Context NUMERIC(20) NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
 END
+	}
 	
-	$dbh->begin_work;
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Literals (
-            ID NUMERIC(20) PRIMARY KEY,
-            Value text NOT NULL,
-            Language text NOT NULL DEFAULT '',
-            Datatype text NOT NULL DEFAULT ''
-        );
+	unless ($self->_table_exists("Literals")) {
+		$dbh->begin_work;
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Literals (
+				ID NUMERIC(20) PRIMARY KEY,
+				Value text NOT NULL,
+				Language text NOT NULL DEFAULT '',
+				Datatype text NOT NULL DEFAULT ''
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Resources (
-            ID NUMERIC(20) PRIMARY KEY,
-            URI text NOT NULL
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Resources (
+				ID NUMERIC(20) PRIMARY KEY,
+				URI text NOT NULL
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Bnodes (
-            ID NUMERIC(20) PRIMARY KEY,
-            Name text NOT NULL
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Bnodes (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Models (
-            ID NUMERIC(20) PRIMARY KEY,
-            Name text NOT NULL
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Models (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
 END
-    
-	$dbh->commit or warn $dbh->errstr;
+		
+		$dbh->commit or warn $dbh->errstr;
+	}
 	
 	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+}
+
+sub _table_exists {
+	my $self	= shift;
+	my $name	= shift;
+	my $dbh		= $self->{dbh};
+	my $type	= 'TABLE';
+	my $sth		= $dbh->table_info(undef, undef, $name, 'TABLE');
+	my $row		= $sth->fetchrow_hashref;
+	return ref($row) ? 1 : 0;
 }
 
 sub _cleanup {

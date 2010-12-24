@@ -10,13 +10,29 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.132.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.131.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.132" ;
+                        doap:created      "2010-12-23" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional." ;
+                        asc:addition    "Added auto-initialization of DBI stores during object construction." ;
+                        asc:addition    "Added RDF::Trine::Store->new method to delegate to existing constructors." ;
+                        asc:update      "Moved slow turtle parser tests into developer tests directory xt/." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.131.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.130.tar.gz> ;
 
         doap:Version    [
                         doap:revision     "0.131" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-12-07" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Model->as_graphviz method." ;

@@ -125,6 +125,8 @@ sub _cmp {
 				$c	= -1;
 			} elsif (not($nb->has_datatype) or $nb->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
 				$c	= $nodea->literal_value cmp $nodeb->literal_value;
+			} elsif ($LAZY_COMPARISONS) {
+				return $nodea->as_string cmp $nodeb->as_string;
 			} else {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare typed-literal with xsd:string.";
 			}
@@ -277,6 +279,19 @@ sub numeric_value {
 	} else {
 		return;
 	}
+}
+
+=item C<< type_list >>
+
+Returns a two-item list suitable for use as the second and third arguments to
+RDF::Query::Node::Literal constructor. The two returned values correspond to
+literal language tag and literal datatype URI, respectively.
+
+=cut
+
+sub type_list {
+	my $self	= shift;
+	return ($self->literal_value_language, $self->literal_datatype);
 }
 
 sub DESTROY {

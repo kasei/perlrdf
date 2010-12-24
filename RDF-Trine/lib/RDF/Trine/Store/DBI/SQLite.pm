@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::SQLite version 0.131
+This document describes RDF::Trine::Store::DBI::SQLite version 0.132
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.131";
+	$VERSION	= "0.132";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -86,12 +86,15 @@ sub init {
 	$self->SUPER::init();
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	
-	$dbh->begin_work;
-	$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);" ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);" ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);" ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);" ) || do { $dbh->rollback; return undef };
-	$dbh->commit;
+	my $table	= "Statements${id}";
+	unless ($self->_table_exists($table)) {
+		$dbh->begin_work;
+		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);" ) || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);" ) || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);" ) || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);" ) || do { $dbh->rollback; return undef };
+		$dbh->commit;
+	}
 }
 
 

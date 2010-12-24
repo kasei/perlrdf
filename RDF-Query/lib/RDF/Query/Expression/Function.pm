@@ -273,6 +273,9 @@ sub evaluate {
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
+		unless ($func) {
+			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";
+		}
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

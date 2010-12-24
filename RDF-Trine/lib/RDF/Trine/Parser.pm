@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.131
+This document describes RDF::Trine::Parser version 0.132
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.131';
+	$VERSION	= '0.132';
 }
 
 use Scalar::Util qw(blessed);
@@ -146,7 +146,7 @@ sub new {
 	if ($name eq 'guess') {
 		throw RDF::Trine::Error::UnimplementedError -text => "guess parser heuristics are not implemented yet";
 	} elsif (my $class = $parser_names{ $key }) {
-        # re-add name for multiformat (e.g. Redland) parsers
+		# re-add name for multiformat (e.g. Redland) parsers
 		return $class->new( name => $key, @_ );
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";

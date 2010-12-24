@@ -10,17 +10,31 @@ This document describes RDF::Query::Functions::SPARQL version 2.904.
 
 Defines the following functions:
 
-=over
+=over 4
+
+=item * sparql:abs
 
 =item * sparql:bnode
 
 =item * sparql:bound
 
+=item * sparql:ceil
+
 =item * sparql:coalesce
+
+=item * sparql:concat
+
+=item * sparql:contains
 
 =item * sparql:datatype
 
 =item * sparql:ebv
+
+=item * sparql:ends
+
+=item * sparql:floor
+
+=item * sparql:encode
 
 =item * sparql:exists
 
@@ -42,15 +56,23 @@ Defines the following functions:
 
 =item * sparql:langmatches
 
+=item * sparql:lcase
+
 =item * sparql:logical-and
 
 =item * sparql:logical-or
 
 =item * sparql:notin
 
+=item * sparql:rand
+
 =item * sparql:regex
 
+=item * sparql:round
+
 =item * sparql:sameterm
+
+=item * sparql:starts
 
 =item * sparql:str
 
@@ -58,23 +80,13 @@ Defines the following functions:
 
 =item * sparql:strlang
 
+=item * sparql:strlen
+
+=item * sparql:substring
+
+=item * sparql:ucase
+
 =item * sparql:uri
-
-=item * http://www.w3.org/2001/XMLSchema#boolean
-
-=item * http://www.w3.org/2001/XMLSchema#dateTime
-
-=item * http://www.w3.org/2001/XMLSchema#decimal
-
-=item * http://www.w3.org/2001/XMLSchema#double
-
-=item * http://www.w3.org/2001/XMLSchema#float
-
-=item * http://www.w3.org/2001/XMLSchema#integer
-
-=item * http://www.w3.org/2001/XMLSchema#string
-
-=back
 
 =cut
 
@@ -90,15 +102,20 @@ BEGIN {
 }
 
 use POSIX;
+use Encode;
 use URI::Escape;
 use Carp qw(carp croak confess);
 use Data::Dumper;
 use I18N::LangTags;
-use RDF::Query::Error qw(:try);
+use List::Util qw(sum);
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 use DateTime::Format::W3CDTF;
 use RDF::Trine::Namespace qw(xsd);
+use Digest::MD5 qw(md5_hex);
+use Digest::SHA  qw(sha1_hex sha224_hex sha256_hex sha384_hex sha512_hex);
 
+use RDF::Query::Error qw(:try);
+use RDF::Query::Node qw(literal);
 
 =begin private
 
@@ -922,9 +939,10 @@ sub install {
 			my $query	= shift;
 			my $model	= $query->model;
 			my @nodes	= @_;
-			my @strings	= map { $query->call_function($model, {}, 'sparql:str', $_) } @nodes;
-			my $value	= join('', map { $_->literal_value } @strings);
-			return RDF::Query::Node::Literal->new($value);
+			my @strtype	= _categorize_strings( "sparql:concat", @nodes );
+			
+			my $value	= join('', map { $_->literal_value } @nodes);
+			return RDF::Query::Node::Literal->new($value, @strtype);
 		}
 	);
 	
@@ -952,14 +970,14 @@ sub install {
 			
 			$nums[0]--;
 			my $substring	= (scalar(@nums) > 1) ? substr($value, $nums[0], $nums[1]) : substr($value, $nums[0]);
-			return RDF::Query::Node::Literal->new($substring);
+			return RDF::Query::Node::Literal->new($substring, $node->type_list);
 		}
 	);
 	
 
-	# sparql:length
+	# sparql:strlen
 	RDF::Query::Functions->install_function(
-		"sparql:length",
+		"sparql:strlen",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
@@ -967,7 +985,7 @@ sub install {
 				my $value	= $node->literal_value;
 				return RDF::Query::Node::Literal->new( length($value), undef, $xsd->integer );
 			} else {
-				throw RDF::Query::Error::TypeError -text => "sparql:length called without a literal term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strlen called without a literal term";
 			}
 		}
 	);
@@ -981,7 +999,7 @@ sub install {
 			my $node	= shift;
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( uc($value) );
+				return RDF::Query::Node::Literal->new( uc($value), $node->type_list );
 			} else {
 				throw RDF::Query::Error::TypeError -text => "sparql:ucase called without a literal term";
 			}
@@ -997,7 +1015,7 @@ sub install {
 			my $node	= shift;
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( lc($value) );
+				return RDF::Query::Node::Literal->new( lc($value), $node->type_list );
 			} else {
 				throw RDF::Query::Error::TypeError -text => "sparql:lcase called without a literal term";
 			}
@@ -1011,6 +1029,7 @@ sub install {
 		sub {
 			my $query	= shift;
 			my $node	= shift;
+			# TODO: If $node has a language tag, should this error?
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
 				return RDF::Query::Node::Literal->new( uri_escape($value) );
@@ -1034,6 +1053,16 @@ sub install {
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
 				throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg2 term";
 			}
+			
+			# TODO: what should be returned if one or both arguments are typed as xsd:string?
+			if ($node->has_language and $pat->has_language) {
+				# TODO: if the language tags are different, does this error, or just return false?
+				if ($node->literal_value_language ne $pat->literal_value_language) {
+					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+				}
+			}
+			
+			
 			my $lit		= $node->literal_value;
 			my $plit	= $pat->literal_value;
 			my $pos		= index($lit, $plit);
@@ -1059,6 +1088,15 @@ sub install {
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
 				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg2 term";
 			}
+
+			# TODO: what should be returned if one or both arguments are typed as xsd:string?
+			if ($node->has_language and $pat->has_language) {
+				# TODO: if the language tags are different, does this error, or just return false?
+				if ($node->literal_value_language ne $pat->literal_value_language) {
+					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+				}
+			}
+			
 			if (index($node->literal_value, $pat->literal_value) == 0) {
 				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
 			} else {
@@ -1082,6 +1120,14 @@ sub install {
 				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg2 term";
 			}
 			
+			# TODO: what should be returned if one or both arguments are typed as xsd:string?
+			if ($node->has_language and $pat->has_language) {
+				# TODO: if the language tags are different, does this error, or just return false?
+				if ($node->literal_value_language ne $pat->literal_value_language) {
+					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+				}
+			}
+			
 			my $lit		= $node->literal_value;
 			my $plit	= $pat->literal_value;
 			my $pos	= length($lit) - length($plit);
@@ -1093,12 +1139,312 @@ sub install {
 		}
 	);
 	
+
+	# sparql:rand
+	RDF::Query::Functions->install_function(
+		"sparql:rand",
+		sub {
+			my $query	= shift;
+			my $r		= rand();
+			# TODO: support seed argument
+			return RDF::Query::Node::Literal->new("$r", undef, $xsd->decimal);
+		}
+	);
 	
+	RDF::Query::Functions->install_function("sparql:md5", \&_md5);
+	RDF::Query::Functions->install_function("sparql:sha1", \&_sha1);
+	RDF::Query::Functions->install_function("sparql:sha224", \&_sha224);
+	RDF::Query::Functions->install_function("sparql:sha256", \&_sha256);
+	RDF::Query::Functions->install_function("sparql:sha384", \&_sha384);
+	RDF::Query::Functions->install_function("sparql:sha512", \&_sha512);
+	
+	RDF::Query::Functions->install_function("sparql:year", \&_year);
+	RDF::Query::Functions->install_function("sparql:month", \&_month);
+	RDF::Query::Functions->install_function("sparql:day", \&_day);
+	RDF::Query::Functions->install_function("sparql:hours", \&_hours);
+	RDF::Query::Functions->install_function("sparql:minutes", \&_minutes);
+	RDF::Query::Functions->install_function("sparql:seconds", \&_seconds);
+	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
 }
+
+sub _categorize_strings {
+	my $func		= shift;
+	my $simple		= 0;
+	my $xsd_string	= 0;
+	my $other		= 0;
+	my $lang		= {};
+	my $other_types	= {};
+	my $count		= scalar(@_);
+	foreach my $n (@_) {
+		unless (blessed($n) and $n->isa('RDF::Query::Node::Literal')) {
+			$other++;
+			next;
+		}
+		if ($n->has_language) {
+			$lang->{ $n->literal_value_language }++;
+		} elsif ($n->has_datatype) {
+			my $dt	= $n->literal_datatype;
+			if ($dt eq 'http://www.w3.org/2001/XMLSchema#string') {
+				$xsd_string++;
+			} else {
+				$other_types->{ $dt }++;
+			}
+		} else {
+			$simple++;
+		}
+	}
+	my $other_count	= sum(values %$other_types) || 0;
+	my $lang_count	= sum(values %$lang) || 0;
+	my $same_lang	= (1 == scalar(@{[keys %$lang]}));
+	if ($other or $other_count) {
+		throw RDF::Query::Error::TypeError -text => "$func called with a value that is not a plain literal or an xsd:string literal";
+	}
+	if ($count == $simple) {
+		return;
+	} elsif ($simple >= 0 and $xsd_string > 0 and $lang_count == 0) {
+		return (undef, $xsd->string);
+	} elsif ($simple >= 0 and $lang_count > 0 and not($same_lang)) {
+		return;
+	} elsif ($simple >= 0 and $xsd_string > 0 and $lang_count > 0) {
+		if ($same_lang) {
+			return (keys %$lang)[0];
+		} else {
+			return (undef, $xsd->string);
+		}
+	} else {
+		return;
+	}
+}
+
+=item * sparql:md5
+
+=cut
+
+sub _md5 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( md5_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:sha1
+
+=cut
+
+sub _sha1 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha1_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:sha224
+
+=cut
+
+sub _sha224 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha224_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:sha256
+
+=cut
+
+sub _sha256 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha256_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:sha384
+
+=cut
+
+sub _sha384 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha384_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:sha512
+
+=cut
+
+sub _sha512 {
+	my $query	= shift;
+	my $node	= shift;
+	return literal( sha512_hex(encode_utf8($node->literal_value)) );
+}
+
+=item * sparql:year
+
+=cut
+
+sub _year {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:year called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->year, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:year called without a valid dateTime";
+	}
+}
+
+=item * sparql:month
+
+=cut
+
+sub _month {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:month called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->month, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:month called without a valid dateTime";
+	}
+}
+
+=item * sparql:day
+
+=cut
+
+sub _day {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:day called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->day, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:day called without a valid dateTime";
+	}
+}
+
+=item * sparql:hours
+
+=cut
+
+sub _hours {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:hours called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->hour, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:hours called without a valid dateTime";
+	}
+}
+
+=item * sparql:minutes
+
+=cut
+
+sub _minutes {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:minutes called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->minute, undef, $xsd->integer);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:minutes called without a valid dateTime";
+	}
+}
+
+=item * sparql:seconds
+
+=cut
+
+sub _seconds {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:seconds called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		return RDF::Query::Node::Literal->new($dt->second, undef, $xsd->decimal);
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:seconds called without a valid dateTime";
+	}
+}
+
+=item * sparql:timezone
+
+=cut
+
+sub _timezone {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		my $tz		= $dt->time_zone;
+		if ($tz) {
+			my $offset	= $tz->offset_for_datetime( $dt );
+			my $minus	= '';
+			if ($offset < 0) {
+				$minus	= '-';
+				$offset	= -$offset;
+			}
+
+			my $duration	= "${minus}PT";
+			if ($offset >= 60*60) {
+				my $h	= int($offset / (60*60));
+				$duration	.= "${h}H" if ($h > 0);
+				$offset	= $offset % (60*60);
+			}
+			if ($offset >= 60) {
+				my $m	= int($offset / 60);
+				$duration	.= "${m}M" if ($m > 0);
+				$offset	= $offset % 60;
+			}
+			my $s	= int($offset);
+			$duration	.= "${s}S" if ($s > 0 or $duration eq 'PT');
+			
+			return RDF::Query::Node::Literal->new($duration);
+		}
+	}
+	throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a valid dateTime";
+}
+
 
 1;
 
 __END__
+
+=item * http://www.w3.org/2001/XMLSchema#boolean
+
+=item * http://www.w3.org/2001/XMLSchema#dateTime
+
+=item * http://www.w3.org/2001/XMLSchema#decimal
+
+=item * http://www.w3.org/2001/XMLSchema#double
+
+=item * http://www.w3.org/2001/XMLSchema#float
+
+=item * http://www.w3.org/2001/XMLSchema#integer
+
+=item * http://www.w3.org/2001/XMLSchema#string
+
+=back
 
 =head1 AUTHOR
 

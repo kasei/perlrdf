@@ -99,17 +99,18 @@ sub evaluate {
 	
 	$l->debug("Binary Operator '$op': " . Dumper($lhs, $rhs));
 	
-	if ($op eq '+') {
-		if (blessed($lhs) and $lhs->isa('RDF::Query::Node::Literal') and blessed($rhs) and $rhs->isa('RDF::Query::Node::Literal')) {
-			if (not($lhs->has_datatype) and not($rhs->has_datatype)) {
-				my $value	= $lhs->literal_value . $rhs->literal_value;
-				return RDF::Query::Node::Literal->new( $value );
-			}
-		}
-	}
+### This does overloading of infix<+> on literal values to perform string concatenation
+# 	if ($op eq '+') {
+# 		if (blessed($lhs) and $lhs->isa('RDF::Query::Node::Literal') and blessed($rhs) and $rhs->isa('RDF::Query::Node::Literal')) {
+# 			if (not($lhs->has_datatype) and not($rhs->has_datatype)) {
+# 				my $value	= $lhs->literal_value . $rhs->literal_value;
+# 				return RDF::Query::Node::Literal->new( $value );
+# 			}
+# 		}
+# 	}
 	
 	if ($op =~ m#^[-+/*]$#) {
-		if (blessed($lhs) and blessed($rhs) and $lhs->is_numeric_type and $rhs->is_numeric_type) {
+		if (blessed($lhs) and blessed($rhs) and $lhs->isa('RDF::Query::Node::Literal') and $rhs->isa('RDF::Query::Node::Literal') and $lhs->is_numeric_type and $rhs->is_numeric_type) {
 			my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
 			my $value;
 			if ($op eq '+') {

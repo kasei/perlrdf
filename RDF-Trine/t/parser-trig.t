@@ -20,7 +20,7 @@ Log::Log4perl::init( \q[
 ] );
 ################################################################################
 
-my $parser	= RDF::Trine::Parser->new( 'trig' );
+my $parser	= RDF::Trine::Parser::TriG->new();
 isa_ok( $parser, 'RDF::Trine::Parser::TriG' );
 
 {

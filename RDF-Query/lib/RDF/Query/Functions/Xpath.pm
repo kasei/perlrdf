@@ -561,7 +561,7 @@ sub install {
 						$offset	= $offset % 60;
 					}
 					my $s	= int($offset);
-					$duration	.= "${s}S" if ($s > 0);
+					$duration	.= "${s}S" if ($s > 0 or $duration eq 'PT');
 					
 					return RDF::Query::Node::Literal->new($duration);
 				}
