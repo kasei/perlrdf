@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.132" ;
-                        doap:created      "2010-XX-XX" ;
+                        doap:created      "2010-12-23" ;
                         ];
         asc:changes     [
                         asc:addition    "Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional." ;
