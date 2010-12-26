@@ -60,6 +60,7 @@ my @manifests;
 my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
 		aggregates
+		basic-update
 		bind
 		clear
 		drop
@@ -209,7 +210,7 @@ sub update_eval_test {
 	};
 	
 	foreach my $gdata (@gdata) {
-		my $data	= get_first_obj( $model, $gdata, $ut->graph );
+		my $data	= get_first_obj( $model, $gdata, $ut->data ) || get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
@@ -225,20 +226,12 @@ sub update_eval_test {
 	}
 	
 	my $result_status	= get_first_obj( $model, $result, $ut->result );
-	my @resgdata			= get_all_obj( $model, $result, $ut->graphData );
+	my @resgdata		= get_all_obj( $model, $result, $ut->graphData );
 	my $expected_model	= new_model();
-	my $resdata		= get_first_obj( $model, $result, $ut->data );
+	my $resdata			= get_first_obj( $model, $result, $ut->data );
 	try {
 		if (blessed($resdata)) {
-			try {
-				RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
-			} catch Error with {
-				my $e	= shift;
-				fail($test->as_string);
-				earl_fail_test( $earl, $test, $e->text );
-				print "# died: " . $test->as_string . ": $e\n";
-				return;
-			};
+			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
 		}
 	} catch Error with {
 		my $e	= shift;
@@ -248,27 +241,23 @@ sub update_eval_test {
 		return;
 	};
 	foreach my $gdata (@resgdata) {
-		my $data	= get_first_obj( $model, $gdata, $ut->graph );
+		my $data	= get_first_obj( $model, $gdata, $ut->data ) || get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
-		try {
-			warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
+		my $return	= 0;
+		if ($data) {
 			try {
+				warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
 				RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
 			} catch Error with {
 				my $e	= shift;
 				fail($test->as_string);
 				earl_fail_test( $earl, $test, $e->text );
 				print "# died: " . $test->as_string . ": $e\n";
-				return;
+				$return	= 1;
 			};
-		} catch Error with {
-			my $e	= shift;
-			fail($test->as_string);
-			earl_fail_test( $earl, $test, $e->text );
-			print "# died: " . $test->as_string . ": $e\n";
-			return;
-		};
+			return if ($return);
+		}
 	}
 	
 	my $ok	= 0;
