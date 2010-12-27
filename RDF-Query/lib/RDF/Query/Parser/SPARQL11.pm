@@ -2649,7 +2649,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STARTS|ENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2692,7 +2692,7 @@ sub _BuiltInCall {
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
 			$self->_add_stack( $self->new_function_expression($iri, $expr) );
-		} elsif ($op =~ /^(STRDT|STRLANG|LANGMATCHES|sameTerm|CONTAINS|STARTS|ENDS)$/i) {
+		} elsif ($op =~ /^(STRDT|STRLANG|LANGMATCHES|sameTerm|CONTAINS|STRSTARTS|STRENDS)$/i) {
 			### two-arg functions that take expressions
 			$self->_Expression;
 			my ($arg1)	= splice(@{ $self->{stack} });

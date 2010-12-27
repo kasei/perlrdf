@@ -30,7 +30,7 @@ Defines the following functions:
 
 =item * sparql:ebv
 
-=item * sparql:ends
+=item * sparql:strends
 
 =item * sparql:floor
 
@@ -72,7 +72,7 @@ Defines the following functions:
 
 =item * sparql:sameterm
 
-=item * sparql:starts
+=item * sparql:strstarts
 
 =item * sparql:str
 
@@ -1108,18 +1108,18 @@ sub install {
 	);
 	
 
-	# sparql:starts
+	# sparql:strstarts
 	RDF::Query::Functions->install_function(
-		"sparql:starts",
+		"sparql:strstarts",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
 			my $pat		= shift;
 			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg1 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg1 term";
 			}
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg2 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg2 term";
 			}
 
 			# TODO: what should be returned if one or both arguments are typed as xsd:string?
@@ -1139,18 +1139,18 @@ sub install {
 	);
 	
 
-	# sparql:ends
+	# sparql:strends
 	RDF::Query::Functions->install_function(
-		"sparql:ends",
+		"sparql:strends",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
 			my $pat		= shift;
 			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg1 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg1 term";
 			}
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg2 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg2 term";
 			}
 			
 			# TODO: what should be returned if one or both arguments are typed as xsd:string?
