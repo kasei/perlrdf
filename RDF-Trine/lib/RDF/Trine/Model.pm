@@ -616,31 +616,65 @@ sub predicates {
 	}
 }
 
-=item C<< objects ( $subject, $predicate ) >>
+=item C<< objects ( $subject, $predicate [, $graph ] [, %options ] ) >>
 
 Returns a list of the nodes that appear as the object of statements with the
-specified C<< $subject >> and C<< $predicate >>. Either of the two arguments may
-be undef to signify a wildcard.
+specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
+may be undef to signify a wildcard. You can further filter objects by type
+with the C<< type >> objects (node, nil, blank, resource, literal, variable)
+and with C<< language >> and C<< datatype >> for literal objects.
 
 =cut
 
 sub objects {
-	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $graph	= shift;
-	$self->end_bulk_ops();
-	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
-	my %nodes;
-	while (my $st = $iter->next) {
-		my $obj	= $st->object;
-		$nodes{ $obj->as_string }	= $obj;
-	}
-	if (wantarray) {
-		return values(%nodes);
-	} else {
-		return RDF::Trine::Iterator->new( [values(%nodes)] );
-	}
+        my $self        = shift;
+        my $subj        = shift;
+        my $pred        = shift;
+        my ($graph, %options) = (@_ % 2 == 0) ? (undef, @_) : @_;
+        my $type        = $options{type};
+
+        # TODO: options language or datatype (which both imply type => 'literal')
+	#       language could also be a regexp (?)
+
+        if ( defined $type ) {
+                if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+                        $type = "is_$type";
+                } else {
+                        throw RDF::Trine::Error::CompilationError -text => "unknown type"
+                }
+        }
+        $self->end_bulk_ops();
+        my $iter        = $self->get_statements( $subj, $pred, undef, $graph );
+        my %nodes;
+        while (my $st = $iter->next) {
+                my $obj = $st->object;
+                if ( defined $type ) {
+                        next unless $obj->$type;
+                }
+                $nodes{ $obj->as_string }       = $obj;
+        }
+        if (wantarray) {
+                return values(%nodes);
+        } else {
+                return RDF::Trine::Iterator->new( [values(%nodes)] );
+        }
+}
+
+=item C<< object_values ( $subject, $predicate [, $graph ] [, %options ] ) >>
+
+Returns a list of object values (uris for resources, literal values for literal nodes).
+
+=cut
+
+sub RDF::Trine::Model::object_values {
+        my $self        = shift;
+        my @objects = $self->objects( @_ );
+        return
+                grep { defined $_ }
+                map {   if ($_->is_resource) { $_->uri_value }
+                        elsif ($_->is_literal) { $_->literal_value }
+                        else { undef } }
+                @objects;
 }
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
