@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 14;
 use Test::Exception;
 
 use strict;
