@@ -36,9 +36,10 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::Dataset;
 
-=item C<< new ( @stores ) >>
+=item C<< new ( [ $store ] ) >>
 
-Returns a new model over the supplied rdf store.
+Returns a new model over the supplied L<rdf store|RDF::Trine::Store> or a new temporary model.
+If you provide an unblessed value, it will be used to create a new rdf store.
 
 =cut
 
@@ -46,7 +47,7 @@ sub new {
 	my $class	= shift;
 	if (@_) {
 		my $store	= shift;
-		throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
+		$store          = RDF::Trine::Store->new( $store ) unless (blessed($store));
 		my %args	= @_;
 		my $self	= bless({
 			store		=> $store,
@@ -283,9 +284,9 @@ sub count_statements {
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
-Returns an iterator of all statements matching the specified subject,
-predicate and objects from the rdf store. Any of the arguments may be undef to
-match any value.
+Returns an L<iterator|RDF::Trine::Iterator> of all statements matching the specified 
+subject, predicate and objects from the rdf store. Any of the arguments may be undef 
+to match any value.
 
 If three or fewer arguments are given, the statements returned will be matched
 based on triple semantics (the graph union of triples from all the named
@@ -414,8 +415,8 @@ sub _get_pattern {
 
 =item C<< get_contexts >>
 
-Returns an iterator containing the nodes representing the named graphs in the
-model.
+Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
+the named graphs in the model.
 
 =cut
 
@@ -433,7 +434,7 @@ sub get_contexts {
 
 =item C<< as_stream >>
 
-Returns an iterator object containing every statement in the model.
+Returns an L<iterator|RDF::Trine::Iterator> containing every statement in the model.
 
 =cut
 

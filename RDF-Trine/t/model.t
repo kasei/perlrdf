@@ -28,7 +28,10 @@ my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Litera
 
 my ($stores, $remove)	= stores();
 
-plan tests => 81 * scalar(@$stores);
+plan tests => 1 + 81 * scalar(@$stores);
+
+print "### Testing auto-creation of store\n";
+isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
 
 foreach my $store (@$stores) {
 	print "### Testing store " . ref($store) . "\n";
