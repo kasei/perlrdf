@@ -133,6 +133,9 @@ sub parse {
 		$self->{handle_triple}	= $handler;
 	}
 	local($self->{baseURI})	= $uri;
+	
+	$input	=~ s/^\x{FEFF}//;
+	
 	local($self->{tokens})	= $input;
 	$self->_Document();
 	return;
