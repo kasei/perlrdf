@@ -58,6 +58,6 @@ END
 	my @obj	= $model->objects();
 	is( scalar(@obj), 1, 'one object' );
 	isa_ok( $obj[0], 'RDF::Trine::Node::Blank', 'blank node obj' );
-	isnt( $subj[0], $obj[0], 'different subejct and obejct nodes' );
+	isnt( $subj[0]->blank_identifier, $obj[0]->blank_identifier, 'different subejct and obejct nodes' );
 }
 
