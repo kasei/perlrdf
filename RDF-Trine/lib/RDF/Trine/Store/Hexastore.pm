@@ -424,10 +424,10 @@ sub get_pattern {
 			while (not($i1->finished) and not($i2->finished)) {
 				my $i1cur	= $i1->current->{ $shrkey };
 				my $i2cur	= $i2->current->{ $shrkey };
-				if ($i1->current->{ $shrkey } == $i2->current->{ $shrkey }) {
+				if ($i1->current->{ $shrkey }->equal( $i2->current->{ $shrkey } )) {
 					my @matching_i2_rows;
 					my $match_value	= $i1->current->{ $shrkey };
-					while ($match_value == $i2->current->{ $shrkey }) {
+					while ($match_value->equal( $i2->current->{ $shrkey } )) {
 						push( @matching_i2_rows, $i2->current );
 						unless ($i2->next) {
 #							warn "no more from i2";
@@ -435,7 +435,7 @@ sub get_pattern {
 						}
 					}
 					
-					while ($match_value == $i1->current->{ $shrkey }) {
+					while ($match_value->equal( $i1->current->{ $shrkey } )) {
 						foreach my $i2_row (@matching_i2_rows) {
 							my $new	= $self->_join( $i1->current, $i2_row );
 							push( @results, $new );
@@ -445,7 +445,7 @@ sub get_pattern {
 							last;
 						}
 					}
-				} elsif ($i1->current->{ $shrkey } < $i2->current->{ $shrkey }) {
+				} elsif ($i1->current->{ $shrkey }->compare( $i2->current->{ $shrkey } ) == -1) {
 					my $i1v	= $i1->current->{ $shrkey };
 					my $i2v	= $i2->current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
