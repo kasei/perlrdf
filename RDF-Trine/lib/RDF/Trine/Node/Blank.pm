@@ -31,6 +31,9 @@ BEGIN {
 
 ######################################################################
 
+use overload	'""'	=> sub { $_[0]->sse },
+			;
+
 =head1 METHODS
 
 Beyond the methods documented below, this class inherits methods from the

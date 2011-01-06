@@ -33,6 +33,9 @@ BEGIN {
 
 ######################################################################
 
+use overload	'""'	=> sub { $_[0]->sse },
+			;
+
 =head1 METHODS
 
 Beyond the methods documented below, this class inherits methods from the
@@ -224,7 +227,7 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless defined($node);
-	return 1 if ($self == $node);
+	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
 	return ($self->[1] eq $node->[1]);
 }
