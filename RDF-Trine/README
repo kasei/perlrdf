@@ -5,7 +5,10 @@ RDF::Trine - An RDF Framework for Perl.
    components:
 
    * RDF::Trine::Model - RDF model providing access to a triple store.
-   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, and RDF/JSON).
+   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, RDF/JSON,
+     TriG, N-Triples, and N-Quads).
+   * RDF::Trine::Serializer, a set of native RDF serializers for RDF/XML, Turtle,
+     RDF/JSON, N-Triples, Canonical N-Triples, and N-Quads.
    * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
      Redland schema.
    * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
