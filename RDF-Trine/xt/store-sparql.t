@@ -20,7 +20,7 @@ throws_ok { $store->remove_statement() } 'RDF::Trine::Error::MethodInvocationErr
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {
-		skip( "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.", 12 );
+		skip( "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.", 11 );
 	}
 	
 	{

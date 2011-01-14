@@ -407,7 +407,9 @@ sub count_statements {
 	}
 	my $iter	= $self->_get_iterator( $sparql );
 	my $row		= $iter->next;
-	return $row->{ 'count' };
+	my $count	= $row->{count};
+	return unless ($count);
+	return $count->literal_value;
 	
 # 	
 # 	
