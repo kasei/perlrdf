@@ -193,11 +193,18 @@ sub serialize_iterator_to_file {
 		my $pred	= $st->predicate;
 		my $obj		= $st->object;
 		
-# 		my $valid_list_head	= 0;
-# 		my $valid_list		= 0;
+		# we're abusing the seen hash here as the key isn't really a node value,
+		# but since it isn't a valid node string being used it shouldn't collide
+		# with real data. we set this here so that later on when we check for
+		# single-owner bnodes (when attempting to use the [...] concise syntax),
+		# bnodes that have already been serialized as the 'head' of a statement
+		# aren't considered as single-owner. This is because the output string
+		# is acting as a second ownder of the node -- it's already been emitted
+		# as something like '_:foobar', so it can't also be output as '[...]'.
+		$seen->{ '  heads' }{ $subj->as_string }++;
+		
 		if (my $model = $args{model}) {
 			if (my $head = $self->_statement_describes_list($model, $st)) {
-# 				$valid_list	= 1;
 				warn "found a rdf:List head " . $head->as_string . " for the subject in statement " . $st->as_string if ($debug);
 				if ($model->count_statements(undef, undef, $head)) {
 					# the rdf:List appears as the object of a statement, and so
@@ -206,34 +213,12 @@ sub serialize_iterator_to_file {
 					warn "next" if ($debug);
 					next;
 				}
-# 				
-# 				if ($head->equal( $subj )) {
-# 					# the rdf:List doesn't appear as the object of any statement,
-# 					# so it needs to be serialized here.
-# 					warn $head->as_string . " is a valid rdf:List head" if ($debug);
-# 					$valid_list_head	= 1;
-# 				} else {
-# 					warn "next" if ($debug);
-# 					next;
-# 				}
 			}
 		}
 		
 		if ($seen->{ $subj->as_string }) {
-# 			if ($valid_list) {
-# 				if ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
-# 					warn "next" if ($debug);
-# 					next;
-# 				} else {
-# 					# don't skip these statements, because while we've "seen" the list head already
-# 					# that only means we've serialized the expected list part of it (e.g. "(1 2)")
-# 					# not any other links hanging off of the list head (e.g. "(1 2) ex:p <object>").
-# 					warn "don't skip" if ($debug);
-# 				}
-# 			} else {
-				warn "next" if ($debug);
-				next;
-# 			}
+			warn "next on seen subject " . $st->as_string if ($debug);
+			next;
 		}
 		
 		if ($subj->equal( $last_subj )) {
@@ -244,11 +229,7 @@ sub serialize_iterator_to_file {
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
 			} else {
 				# start a new predicate
-# 				if ($valid_list_head) {
-# 					print {$fh} ' ';
-# 				} else {
-					print {$fh} qq[ ;\n${indent}$tab];
-# 				}
+				print {$fh} qq[ ;\n${indent}$tab];
 				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
 				print {$fh} ' ';
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
@@ -259,20 +240,13 @@ sub serialize_iterator_to_file {
 				print {$fh} qq[ .\n${indent}];
 			}
 			$open_triple	= 1;
-# 			if ($valid_list_head) {
-# 				$self->_turtle_rdf_list( $fh, $subj, $args{model}, $seen, $level, $tab, %args );
-# 				$seen->{ $subj->as_string }++;
-# 			} else {
-				$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
-# 			}
+			$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
 			
 			warn '-> ' . $pred->as_string if ($debug);
-# 			if (not($valid_list_head) or ($valid_list_head and not($pred->equal($rdf->first)) and not($pred->equal($rdf->rest)))) {
-				print {$fh} ' ';
-				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-				print {$fh} ' ';
-				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
-# 			}
+			print {$fh} ' ';
+			$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
+			print {$fh} ' ';
+			$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
 		}
 	} continue {
 		if (blessed($last_subj) and not($last_subj->equal($st->subject))) {
@@ -337,8 +311,9 @@ sub _serialize_object_to_file {
 			} else {
 				my $count	= $model->count_statements( undef, undef, $subj );
 				my $rec		= $model->count_statements( $subj, undef, $subj );
+				warn "count=$count, rec=$rec for node " . $subj->as_string if ($debug);
 				if ($count == 1 and $rec == 0) {
-					unless ($seen->{ $subj->as_string }++) {
+					unless ($seen->{ $subj->as_string }++ or $seen->{ '  heads' }{ $subj->as_string }) {
 						my $iter	= $model->get_statements( $subj, undef, undef );
 						my $last_pred;
 						my $triple_count	= 0;
