@@ -319,6 +319,12 @@ sub _prefixID {
 	
 	my $uri = $self->_uriref();
 	$self->{bindings}{$prefix}	= $uri;
+	
+	if (blessed(my $ns = $self->{namespaces})) {
+		unless ($ns->namespace_uri($prefix)) {
+			$ns->add_mapping( $prefix => $uri );
+		}
+	}
 }
 
 

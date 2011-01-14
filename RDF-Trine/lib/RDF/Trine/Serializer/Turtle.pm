@@ -79,16 +79,28 @@ sub new {
 		} else {
 			my %args	= @_;
 			if (exists $args{ base }) {
-			        $base   = $args{ base };
+				$base   = $args{ base };
 			}
 			if (exists $args{ namespaces }) {
 				$ns	= $args{ namespaces };
 			}
 		}
 	}
+	
+	my %rev;
+	while (my ($ns, $uri) = each(%{ $ns })) {
+		if (blessed($uri)) {
+			$uri	= $uri->uri_value;
+			if (blessed($uri)) {
+				$uri	= $uri->uri_value;
+			}
+		}
+		$rev{ $uri }	= $ns;
+	}
+	
 	my $self = bless( {
-		ns			=> { reverse %$ns },
-		base 	                => $base,
+		ns		=> \%rev,
+		base	=> $base,
 	}, $class );
 	return $self;
 }
@@ -147,7 +159,7 @@ sub serialize_iterator_to_file {
 	my $tab		= $args{ tab } || "\t";
 	my $indent	= $tab x $level;
 	
-	my %ns		= reverse %{ $self->{ns} };
+	my %ns		= reverse(%{ $self->{ns} });
 	my @nskeys	= sort keys %ns;
 	my $seekloc	= tell($fh);
 	

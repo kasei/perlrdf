@@ -184,6 +184,14 @@ sub parse {
 
 		$stream->next;
 	}
+	
+	if (my $map = $self->{ namespaces }) {
+		my %seen	= $self->{parser}->namespaces_seen;
+		while (my ($ns, $uri) = each(%seen)) {
+			$map->add_mapping( $ns => $uri->as_string );
+		}
+	}
+	return;
 }
 
 package RDF::Trine::Parser::Redland::RDFXML;

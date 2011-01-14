@@ -187,6 +187,9 @@ sub new {
 					nodes			=> [],
 					chars_ok		=> 0,
 				}, $class );
+	if (my $ns = $args{ namespaces }) {
+		$self->{namespaces}	= $ns;
+	}
 	if (my $base = $args{ base }) {
 		$self->push_base( $base );
 	}
@@ -412,7 +415,7 @@ sub start_element {
 # 		warn "GOT: $uri\n";
 		
 # 		warn 'start_element: ' . Dumper($el);
-# 		warn 'namespaces: ' . Dumper($self->{namespaces});
+# 		warn 'namespaces: ' . Dumper($self->{_namespaces});
 	}
 }
 
@@ -662,6 +665,11 @@ sub handle_scoped_values {
 			my ($prefix)	= substr($n, 31);
 			my $value		= $el->{Attributes}{$n}{Value};
 			$new{ $prefix }	= $value;
+			if (blessed(my $ns = $self->{namespaces})) {
+				unless ($ns->namespace_uri($prefix)) {
+					$ns->add_mapping( $prefix => $value );
+				}
+			}
 		}
 		
 		if (exists($el->{Attributes}{'{}xmlns'})) {
@@ -725,19 +733,19 @@ sub get_language {
 sub push_namespace_pad {
 	my $self	= shift;
 	my $pad		= shift;
-	unshift( @{ $self->{namespaces} }, $pad );
+	unshift( @{ $self->{_namespaces} }, $pad );
 }
 
 sub pop_namespace_pad {
 	my $self	= shift;
-	shift( @{ $self->{namespaces} } );
+	shift( @{ $self->{_namespaces} } );
 }
 
 sub get_namespace {
 	my $self	= shift;
 	my $prefix	= shift;
-	foreach my $level (0 .. $#{ $self->{namespaces} }) {
-		my $pad		= $self->{namespaces}[ $level ];
+	foreach my $level (0 .. $#{ $self->{_namespaces} }) {
+		my $pad		= $self->{_namespaces}[ $level ];
 		if (exists($pad->{ $prefix })) {
 			my $uri		= $pad->{ $prefix };
 			return $uri;
