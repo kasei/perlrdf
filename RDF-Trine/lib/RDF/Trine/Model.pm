@@ -36,9 +36,10 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::Dataset;
 
-=item C<< new ( @stores ) >>
+=item C<< new ( [ $store ] ) >>
 
-Returns a new model over the supplied rdf store.
+Returns a new model over the supplied L<rdf store|RDF::Trine::Store> or a new temporary model.
+If you provide an unblessed value, it will be used to create a new rdf store.
 
 =cut
 
@@ -46,7 +47,7 @@ sub new {
 	my $class	= shift;
 	if (@_) {
 		my $store	= shift;
-		throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
+		$store          = RDF::Trine::Store->new( $store ) unless (blessed($store));
 		my %args	= @_;
 		my $self	= bless({
 			store		=> $store,
@@ -283,9 +284,9 @@ sub count_statements {
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
-Returns an iterator of all statements matching the specified subject,
-predicate and objects from the rdf store. Any of the arguments may be undef to
-match any value.
+Returns an L<iterator|RDF::Trine::Iterator> of all statements matching the specified 
+subject, predicate and objects from the rdf store. Any of the arguments may be undef 
+to match any value.
 
 If three or fewer arguments are given, the statements returned will be matched
 based on triple semantics (the graph union of triples from all the named
@@ -414,8 +415,8 @@ sub _get_pattern {
 
 =item C<< get_contexts >>
 
-Returns an iterator containing the nodes representing the named graphs in the
-model.
+Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
+the named graphs in the model.
 
 =cut
 
@@ -433,7 +434,7 @@ sub get_contexts {
 
 =item C<< as_stream >>
 
-Returns an iterator object containing every statement in the model.
+Returns an L<iterator|RDF::Trine::Iterator> containing every statement in the model.
 
 =cut
 
@@ -615,31 +616,65 @@ sub predicates {
 	}
 }
 
-=item C<< objects ( $subject, $predicate ) >>
+=item C<< objects ( $subject, $predicate [, $graph ] [, %options ] ) >>
 
 Returns a list of the nodes that appear as the object of statements with the
-specified C<< $subject >> and C<< $predicate >>. Either of the two arguments may
-be undef to signify a wildcard.
+specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
+may be undef to signify a wildcard. You can further filter objects by type
+with the C<< type >> objects (node, nil, blank, resource, literal, variable)
+and with C<< language >> and C<< datatype >> for literal objects.
 
 =cut
 
 sub objects {
-	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $graph	= shift;
-	$self->end_bulk_ops();
-	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
-	my %nodes;
-	while (my $st = $iter->next) {
-		my $obj	= $st->object;
-		$nodes{ $obj->as_string }	= $obj;
-	}
-	if (wantarray) {
-		return values(%nodes);
-	} else {
-		return RDF::Trine::Iterator->new( [values(%nodes)] );
-	}
+        my $self        = shift;
+        my $subj        = shift;
+        my $pred        = shift;
+        my ($graph, %options) = (@_ % 2 == 0) ? (undef, @_) : @_;
+        my $type        = $options{type};
+
+        # TODO: options language or datatype (which both imply type => 'literal')
+	#       language could also be a regexp (?)
+
+        if ( defined $type ) {
+                if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+                        $type = "is_$type";
+                } else {
+                        throw RDF::Trine::Error::CompilationError -text => "unknown type"
+                }
+        }
+        $self->end_bulk_ops();
+        my $iter        = $self->get_statements( $subj, $pred, undef, $graph );
+        my %nodes;
+        while (my $st = $iter->next) {
+                my $obj = $st->object;
+                if ( defined $type ) {
+                        next unless $obj->$type;
+                }
+                $nodes{ $obj->as_string }       = $obj;
+        }
+        if (wantarray) {
+                return values(%nodes);
+        } else {
+                return RDF::Trine::Iterator->new( [values(%nodes)] );
+        }
+}
+
+=item C<< object_values ( $subject, $predicate [, $graph ] [, %options ] ) >>
+
+Returns a list of object values (uris for resources, literal values for literal nodes).
+
+=cut
+
+sub RDF::Trine::Model::object_values {
+        my $self        = shift;
+        my @objects = $self->objects( @_ );
+        return
+                grep { defined $_ }
+                map {   if ($_->is_resource) { $_->uri_value }
+                        elsif ($_->is_literal) { $_->literal_value }
+                        else { undef } }
+                @objects;
 }
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
