@@ -36,7 +36,7 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::Dataset;
 
-=item C<< new ( [ $store ] ) >>
+=item C<< new ( $store ) >>
 
 Returns a new model over the supplied L<rdf store|RDF::Trine::Store> or a new temporary model.
 If you provide an unblessed value, it will be used to create a new rdf store.
@@ -47,7 +47,7 @@ sub new {
 	my $class	= shift;
 	if (@_) {
 		my $store	= shift;
-		$store          = RDF::Trine::Store->new( $store ) unless (blessed($store));
+		$store		= RDF::Trine::Store->new( $store ) unless (blessed($store));
 		my %args	= @_;
 		my $self	= bless({
 			store		=> $store,
@@ -507,15 +507,15 @@ sub as_hashref {
 		
 		my $o = {};
 		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}     = 'literal';
-			$o->{'value'}    = $statement->object->literal_value;
-			$o->{'lang'}     = $statement->object->literal_value_language
+			$o->{'type'}		= 'literal';
+			$o->{'value'}		= $statement->object->literal_value;
+			$o->{'lang'}		= $statement->object->literal_value_language
 				if $statement->object->has_language;
-			$o->{'datatype'} = $statement->object->literal_datatype
+			$o->{'datatype'}	= $statement->object->literal_datatype
 				if $statement->object->has_datatype;
 		} else {
-			$o->{'type'}  = $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'} = $statement->object->isa('RDF::Trine::Node::Blank') ? 
+			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
 				('_:'.$statement->object->blank_identifier) :
 				$statement->object->uri ;
 		}
@@ -627,54 +627,36 @@ and with C<< language >> and C<< datatype >> for literal objects.
 =cut
 
 sub objects {
-        my $self        = shift;
-        my $subj        = shift;
-        my $pred        = shift;
-        my ($graph, %options) = (@_ % 2 == 0) ? (undef, @_) : @_;
-        my $type        = $options{type};
-
-        # TODO: options language or datatype (which both imply type => 'literal')
-	#       language could also be a regexp (?)
-
-        if ( defined $type ) {
-                if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
-                        $type = "is_$type";
-                } else {
-                        throw RDF::Trine::Error::CompilationError -text => "unknown type"
-                }
-        }
-        $self->end_bulk_ops();
-        my $iter        = $self->get_statements( $subj, $pred, undef, $graph );
-        my %nodes;
-        while (my $st = $iter->next) {
-                my $obj = $st->object;
-                if ( defined $type ) {
-                        next unless $obj->$type;
-                }
-                $nodes{ $obj->as_string }       = $obj;
-        }
-        if (wantarray) {
-                return values(%nodes);
-        } else {
-                return RDF::Trine::Iterator->new( [values(%nodes)] );
-        }
-}
-
-=item C<< object_values ( $subject, $predicate [, $graph ] [, %options ] ) >>
-
-Returns a list of object values (uris for resources, literal values for literal nodes).
-
-=cut
-
-sub RDF::Trine::Model::object_values {
-        my $self        = shift;
-        my @objects = $self->objects( @_ );
-        return
-                grep { defined $_ }
-                map {   if ($_->is_resource) { $_->uri_value }
-                        elsif ($_->is_literal) { $_->literal_value }
-                        else { undef } }
-                @objects;
+	my $self	= shift;
+	my $subj	= shift;
+	my $pred	= shift;
+	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;
+	my $type	= $options{type};
+	
+	# TODO: options language or datatype (which both imply type => 'literal') language could also be a regexp (?)
+	
+	if ( defined $type ) {
+			if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+				$type = "is_$type";
+			} else {
+				throw RDF::Trine::Error::CompilationError -text => "unknown type"
+			}
+	}
+	$self->end_bulk_ops();
+	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
+	my %nodes;
+	while (my $st = $iter->next) {
+		my $obj = $st->object;
+		if ( defined $type ) {
+			next unless $obj->$type;
+		}
+		$nodes{ $obj->as_string }	= $obj;
+	}
+	if (wantarray) {
+		return values(%nodes);
+	} else {
+		return RDF::Trine::Iterator->new( [values(%nodes)] );
+	}
 }
 
 =item C<< objects_for_predicate_list ( $subject, @predicates ) >>
