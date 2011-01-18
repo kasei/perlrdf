@@ -20,6 +20,8 @@ This document describes RDF::Trine::NamespaceMap version 0.132
     my $foaf_namespace = $map->foaf;
     my $foaf_person    = $map->foaf('Person');
 
+    sub ns { return $map->uri($_[0]); }
+
 =head1 DESCRIPTION
 
 This module provides an object to manage multiple namespaces for
@@ -160,7 +162,8 @@ __END__
 
 Please avoid using the names 'can', 'isa', 'VERSION', and 'DOES' as
 namespace prefix, because these names are defined as method for
-every Perl object by default.
+every Perl object by default. The method names 'new' and 'uri' are
+also forbidden.
 
 =head1 BUGS
 
