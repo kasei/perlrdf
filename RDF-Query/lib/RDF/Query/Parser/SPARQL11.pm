@@ -476,7 +476,16 @@ sub _InsertUpdate {
 	
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
+	if ($graph) {
+#  		local($self->{named_graph})	= $graph;
+		$self->_GroupGraphPattern;
+		my $ggp	= $self->_remove_pattern;
+		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		$self->_add_patterns( $ggp );
+	} else {
+		$self->_GroupGraphPattern;
+	}
+	
 	my $ggp	= $self->_remove_pattern;
 	
 	my @ds_keys	= keys %dataset;
@@ -932,11 +941,21 @@ sub _ConstructQuery {
 	my $self	= shift;
 	$self->_eat(qr/CONSTRUCT/i);
 	$self->__consume_ws_opt;
-	$self->_ConstructTemplate;
-	$self->__consume_ws_opt;
+	my $shortcut	= 1;
+	if ($self->_test( qr/[{]/ )) {
+		$shortcut	= 0;
+		$self->_ConstructTemplate;
+		$self->__consume_ws_opt;
+	}
 	$self->_DatasetClause();
 	$self->__consume_ws_opt;
-	$self->_WhereClause;
+	if ($shortcut) {
+		$self->_eat(qr/WHERE/i);
+		# '{' TriplesTemplate? '}'
+		# set $self->{build}{construct_triples}
+	} else {
+		$self->_WhereClause;
+	}
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -990,6 +1009,11 @@ sub _AskQuery {
 	
 	$self->{build}{variables}	= [];
 	$self->{build}{method}		= 'ASK';
+}
+
+sub _DatasetClause_test {
+	my $self	= shift;
+	return $self->_test( qr/FROM/i );
 }
 
 # [9] DatasetClause ::= 'FROM' ( DefaultGraphClause | NamedGraphClause )
@@ -2649,7 +2673,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2687,7 +2711,7 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE)$/i) {
+		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
