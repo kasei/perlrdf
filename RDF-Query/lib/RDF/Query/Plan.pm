@@ -692,20 +692,24 @@ sub generate_plans {
 		my $named	= $ds->{'named'} || {};
 		my $dcount	= scalar(@$default);
 		my $ncount	= scalar(@{[ keys %$named ]});
-		warn 'Update dataset: ' . Dumper($algebra->dataset);
+# 		warn 'Update dataset: ' . Dumper($algebra->dataset);
 		my @plans;
 		
+		my @dataset	= ($ds);
 		if ($dcount == 1 and $ncount == 0) {
 			# if it's just a single named graph to be used as the default graph,
 			# then rewrite the pattern to use the named graph (and check to make
 			# sure there aren't any GRAPH blocks)
-			@plans	= $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $default->[0] );
+			@dataset	= ();
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $default->[0] );
+		} elsif ($dcount == 0 and $ncount == 0) {
+			@dataset	= ();
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args );
 		} else {
-			# TODO: use the dataset part of the update algebra to change the dataset that $algebra->pattern is matched against
-			@plans	= $self->generate_plans( $algebra->pattern, $context, %args );
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args );
 		}
 		foreach my $p (@plans) {
-			push(@return_plans, RDF::Query::Plan::Update->new( $algebra->delete_template, $algebra->insert_template, $p ));
+			push(@return_plans, RDF::Query::Plan::Update->new( $algebra->delete_template, $algebra->insert_template, $p, @dataset ));
 		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
