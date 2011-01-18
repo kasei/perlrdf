@@ -1198,6 +1198,7 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:minutes", \&_minutes);
 	RDF::Query::Functions->install_function("sparql:seconds", \&_seconds);
 	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
+	RDF::Query::Functions->install_function("sparql:tz", \&_tz);
 }
 
 =item * sparql:md5
@@ -1381,6 +1382,9 @@ sub _timezone {
 	my $dt		= $node->datetime;
 	if ($dt) {
 		my $tz		= $dt->time_zone;
+		if ($tz->is_floating) {
+			throw RDF::Query::Error::TypeError -text => "sparql:timezone called with a dateTime without a timezone";
+		}
 		if ($tz) {
 			my $offset	= $tz->offset_for_datetime( $dt );
 			my $minus	= '';
@@ -1407,6 +1411,54 @@ sub _timezone {
 		}
 	}
 	throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a valid dateTime";
+}
+
+=item * sparql:tz
+
+=cut
+
+sub _tz {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:tz called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		my $tz		= $dt->time_zone;
+		if ($tz->is_floating) {
+			return RDF::Query::Node::Literal->new('');
+		}
+		if ($tz->is_utc) {
+			return RDF::Query::Node::Literal->new('Z');
+		}
+		if ($tz) {
+			my $offset	= $tz->offset_for_datetime( $dt );
+			my $hours	= 0;
+			my $minutes	= 0;
+			my $minus	= '+';
+			if ($offset < 0) {
+				$minus	= '-';
+				$offset	= -$offset;
+			}
+
+			if ($offset >= 60*60) {
+				$hours	= int($offset / (60*60));
+				$offset	= $offset % (60*60);
+			}
+			if ($offset >= 60) {
+				$minutes	= int($offset / 60);
+				$offset	= $offset % 60;
+			}
+			my $seconds	= int($offset);
+			
+			my $tz	= sprintf('%s%02d:%02d', $minus, $hours, $minutes);
+			return RDF::Query::Node::Literal->new($tz);
+		} else {
+			return RDF::Query::Node::Literal->new('');
+		}
+	}
+	throw RDF::Query::Error::TypeError -text => "sparql:tz called without a valid dateTime";
 }
 
 
