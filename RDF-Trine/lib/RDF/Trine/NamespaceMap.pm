@@ -16,9 +16,16 @@ This document describes RDF::Trine::NamespaceMap version 0.132
     my $map = RDF::Trine::NamespaceMap->new( \%namespaces );
     $serializer->serialize_model_to_string( $model, namespaces => $map );
 
+    $map->add_mapping( foaf => 'http://xmlns.com/foaf/0.1/' );
+    my $foaf_namespace = $map->foaf;
+    my $foaf_person    = $map->foaf('Person');
+
+    sub ns { return $map->uri($_[0]); }
+
 =head1 DESCRIPTION
 
-TODO
+This module provides an object to manage multiple namespaces for
+creating L<RDF::Trine::Node::Resource> objects and for serializing.
 
 =head1 METHODS
 
@@ -38,26 +45,33 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 }
 
 ######################################################################
 
-=item C<< new ( \%namespaces ) >>
+=item C<< new ( [ \%namespaces | $name => $uri, ... ] ) >>
 
-Returns a new namespace map object.
+Returns a new namespace map object. You can pass a hash or hash 
+reference with mappings from local names to namespace URIs (given
+as string or L<RDF::Trine::Node::Resource>).
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $map		= shift || {};
-	return bless( { %$map }, $class );
+	my $map		= (@_ == 1) ? (shift || {}) : ({ @_ });
+	my $self	= bless( { }, $class );
+	foreach my $name ( keys %$map ) {
+		$self->add_mapping( $name => $map->{$name} );
+	}
+	return $self;
 }
 
 =item C<< add_mapping ( $name => $uri ) >>
 
-Adds a new namespace to the map.
+Adds a new namespace to the map. The namespace URI can be passed
+as string or some object, that provides an uri_value method.
 
 =cut
 
@@ -65,13 +79,18 @@ sub add_mapping {
 	my $self	= shift;
 	my $name	= shift;
 	my $ns		= shift;
-	unless (blessed($ns)) {
-		$ns	= RDF::Trine::Node::Resource->new( $ns );
+	foreach (qw(1 2)) {
+		if (blessed($ns) and $ns->can('uri_value')) {
+			$ns = $ns->uri_value;
+		}
 	}
+	$ns	= RDF::Trine::Namespace->new( $ns );
 	$self->{ $name }	= $ns;
 }
 
 =item C<< remove_mapping ( $name ) >>
+
+Removes a namespace from the map.
 
 =cut
 
@@ -93,6 +112,32 @@ sub namespace_uri {
 	return $self->{ $name };
 }
 
+=item C<< uri ( $prefixed_name ) >>
+
+Returns the URI (as L<RDF::Trine::Node::Resource>) of an abbreviated
+name such as 'foaf:Person'.
+
+=cut
+
+sub uri {
+	my $self	= shift;
+	my $abbr	= shift;
+	my $ns;
+	my $local	= "";
+	if ($abbr =~ m/^([^:]+):(.*)$/) {
+		$ns	= $self->{ $1 };
+		$local	= $2;
+	} else {
+		$ns	= $self->{ $abbr };
+	}
+	return unless (blessed($ns));
+	if ($local ne '') {
+		return $ns->$local();
+	} else {
+		return $ns->uri_value;
+	}
+}
+
 sub AUTOLOAD {
 	my $self	= shift;
 	our $AUTOLOAD;
@@ -112,6 +157,13 @@ sub AUTOLOAD {
 __END__
 
 =back
+
+=head1 WARNING
+
+Please avoid using the names 'can', 'isa', 'VERSION', and 'DOES' as
+namespace prefix, because these names are defined as method for
+every Perl object by default. The method names 'new' and 'uri' are
+also forbidden.
 
 =head1 BUGS
 
