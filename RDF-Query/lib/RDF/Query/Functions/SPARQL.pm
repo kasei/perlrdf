@@ -1062,8 +1062,9 @@ sub install {
 			my $node	= shift;
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( uri_escape($value), $node->type_list );
+				return RDF::Query::Node::Literal->new( uri_escape_utf8($value) );
 			} else {
+				warn "sparql:encode_for_uri called without a literal term";
 				throw RDF::Query::Error::TypeError -text => "sparql:encode_for_uri called without a literal term";
 			}
 		}
@@ -1407,7 +1408,7 @@ sub _timezone {
 			my $s	= int($offset);
 			$duration	.= "${s}S" if ($s > 0 or $duration eq 'PT');
 			
-			return RDF::Query::Node::Literal->new($duration);
+			return RDF::Query::Node::Literal->new($duration, undef, $xsd->dayTimeDuration);
 		}
 	}
 	throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a valid dateTime";
