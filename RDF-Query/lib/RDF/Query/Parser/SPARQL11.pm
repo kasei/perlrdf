@@ -282,14 +282,6 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_ClearGraphUpdate();
-		} elsif ($self->_test(qr/INSERT\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
-				unless ($self->{update});
-			$self->_InsertDataUpdate();
-		} elsif ($self->_test(qr/DELETE\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
-				unless ($self->{update});
-			$self->_DeleteDataUpdate();
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
 				unless ($self->{update});
@@ -302,9 +294,29 @@ sub _RW_Query {
 				$self->__consume_ws_opt;
 			}
 			if ($self->_test(qr/INSERT/ims)) {
-				$self->_InsertUpdate($graph);
+				$self->_eat(qr/INSERT/i);
+				$self->__consume_ws_opt;
+				if ($self->_test(qr/DATA/i)) {
+					throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
+						unless ($self->{update});
+					$self->_eat(qr/DATA/i);
+					$self->__consume_ws_opt;
+					$self->_InsertDataUpdate();
+				} else {
+					$self->_InsertUpdate($graph);
+				}
 			} elsif ($self->_test(qr/DELETE/ims)) {
-				$self->_DeleteUpdate($graph);
+				$self->_eat(qr/DELETE/i);
+				$self->__consume_ws_opt;
+				if ($self->_test(qr/DATA/i)) {
+					throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
+						unless ($self->{update});
+					$self->_eat(qr/DATA/i);
+					$self->__consume_ws_opt;
+					$self->_DeleteDataUpdate();
+				} else {
+					$self->_DeleteUpdate($graph);
+				}
 			}
 		} elsif ($self->_test(qr/COPY/i)) {
 			$self->_CopyUpdate();
@@ -403,8 +415,6 @@ sub _Prologue {
 
 sub _InsertDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/INSERT\s+DATA/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -421,8 +431,6 @@ sub _InsertDataUpdate {
 
 sub _DeleteDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/DELETE\s+DATA/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -440,8 +448,6 @@ sub _DeleteDataUpdate {
 sub _InsertUpdate {
 	my $self	= shift;
 	my $graph	= shift;
-	$self->_eat(qr/INSERT/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -503,8 +509,6 @@ sub _DeleteUpdate {
 	my $graph	= shift;
 	my ($delete_data, $insert_data);
 	
-	$self->_eat(qr/DELETE/i);
-	$self->__consume_ws_opt;
 	my %dataset;
 	my $delete_where	= 0;
 	if ($self->_test(qr/WHERE/i)) {
@@ -597,17 +601,19 @@ sub _ModifyTemplate {
 		$self->{named_graph}	= $graph;
 	}
 	
-	$self->__ModifyTemplate;
-	$self->__consume_ws_opt;
-	my $data	= $self->_remove_pattern;
-	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+# 	$self->__ModifyTemplate;
+# 	$self->__consume_ws_opt;
+# 	my $data	= $self->_remove_pattern;
+# 	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+	my $data;
 	while ($self->_ModifyTemplate_test) {
 		$self->__ModifyTemplate( $graph );
 		$self->__consume_ws_opt;
 		my $d			= $self->_remove_pattern;
-		my @patterns	= $data->patterns;
+		my @patterns	= blessed($data) ? $data->patterns : ();
 		$data			= RDF::Query::Algebra::GroupGraphPattern->new( @patterns, $d );
 	}
+	$data	= RDF::Query::Algebra::GroupGraphPattern->new() unless (blessed($data));
 	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
 	$self->_add_patterns( $data );
 }
