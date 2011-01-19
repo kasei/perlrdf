@@ -45,23 +45,23 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.132';
 }
 
 ######################################################################
 
-=item C<< new ( [ \%namespaces | $name => $uri, ... ] ) >>
+=item C<< new ( [ \%namespaces ] ) >>
 
-Returns a new namespace map object. You can pass a hash or hash 
-reference with mappings from local names to namespace URIs (given
-as string or L<RDF::Trine::Node::Resource>).
+Returns a new namespace map object. You can pass a hash reference with
+mappings from local names to namespace URIs (given as string or
+L<RDF::Trine::Node::Resource>).
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $map		= (@_ == 1) ? (shift || {}) : ({ @_ });
-	my $self	= bless( { }, $class );
+	my $map		= shift || {};
+	my $self	= bless( {}, $class );
 	foreach my $name ( keys %$map ) {
 		$self->add_mapping( $name => $map->{$name} );
 	}
@@ -78,8 +78,16 @@ as string or some object, that provides an uri_value method.
 sub add_mapping {
 	my $self	= shift;
 	my $name	= shift;
+	if ($name =~ /^(new|uri|can|isa|VERSION|DOES)$/) {
+		# reserved names
+		throw RDF::Trine::Error::MethodInvocationError -text => "Cannot use reserved name '$name' as a namespace prefix";
+	}
+	
 	my $ns		= shift;
 	foreach (qw(1 2)) {
+		# loop twice because the first call to C<<uri_value>> might return a
+		# RDF::Trine::Namespace. Calling C<<uri_value>> on the namespace object
+		# will then return a URI string value.
 		if (blessed($ns) and $ns->can('uri_value')) {
 			$ns = $ns->uri_value;
 		}
@@ -114,8 +122,8 @@ sub namespace_uri {
 
 =item C<< uri ( $prefixed_name ) >>
 
-Returns the URI (as L<RDF::Trine::Node::Resource>) of an abbreviated
-name such as 'foaf:Person'.
+Returns a URI (as L<RDF::Trine::Node::Resource>) for an abbreviated
+string such as 'foaf:Person'.
 
 =cut
 
@@ -160,10 +168,9 @@ __END__
 
 =head1 WARNING
 
-Please avoid using the names 'can', 'isa', 'VERSION', and 'DOES' as
-namespace prefix, because these names are defined as method for
-every Perl object by default. The method names 'new' and 'uri' are
-also forbidden.
+Please avoid using the names 'can', 'isa', 'VERSION', and 'DOES' as namespace
+prefix, because these names are defined as method for every Perl object by
+default. The method names 'new' and 'uri' are also forbidden.
 
 =head1 BUGS
 

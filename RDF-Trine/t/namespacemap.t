@@ -10,7 +10,7 @@ my $foaf	= RDF::Trine::Namespace->new( 'http://xmlns.com/foaf/0.1/' );
 my $map		= RDF::Trine::NamespaceMap->new( { foaf => $foaf, rdf => $rdf } );
 isa_ok( $map, 'RDF::Trine::NamespaceMap' );
 
-$map		= RDF::Trine::NamespaceMap->new( foaf => $foaf, rdf => $rdf, xsd => 'http://www.w3.org/2001/XMLSchema#' );
+$map		= RDF::Trine::NamespaceMap->new( { foaf => $foaf, rdf => $rdf, xsd => 'http://www.w3.org/2001/XMLSchema#' } );
 isa_ok( $map, 'RDF::Trine::NamespaceMap' );
 
 my $ns		= $map->xsd;
