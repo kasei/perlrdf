@@ -1430,17 +1430,9 @@ sub __handle_GraphPatternNotTriples {
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
-		my $cont	= $self->_pop_pattern_container;
-		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+ 		my ($bind)	= @args;
 		$self->_push_pattern_container;
-		# my $ggp	= $self->_remove_pattern();
-		unless ($ggp) {
-			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-		}
-		
-		my ($alias)	= @args;
-		my $opt		= $class->new( $ggp, [$alias] );
-		$self->_add_patterns( $opt );
+		$self->_add_patterns( $bind );
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
@@ -1587,12 +1579,21 @@ sub _GraphPatternNotTriples {
 
 sub _Bind {
 	my $self	= shift;
+	$self->__close_bgp_with_filters;
+	my $cont	= $self->_pop_pattern_container || [];
+	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 	$self->_eat(qr/BIND/i);
 	$self->__consume_ws_opt;
 	$self->_BrackettedAliasExpression;
 	my ($alias)	= splice(@{ $self->{stack} });
-	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
-	$self->_add_stack( $opt );
+
+	unless ($ggp) {
+		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+	}
+	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
+	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind] );
+#	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
+#	$self->_add_stack( $opt );
 }
 
 sub _ServiceGraphPattern {
@@ -1618,26 +1619,29 @@ sub _OptionalGraphPattern_test {
 	return $self->_test( qr/OPTIONAL/i );
 }
 
+sub __close_bgp_with_filters {
+	my $self	= shift;
+	my @filters		= splice(@{ $self->{filters} });
+	use Data::Dumper;
+	if (@filters) {
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		while (my $f = shift @filters) {
+			$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
+		}
+		$self->_add_patterns($ggp);
+	}
+}
+
 sub _OptionalGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/OPTIONAL/i );
-	{	# If there are filters to the left of the OPTIONAL, they need to be added to the implicit GGP to the left of the OPTIONAL
-		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
-		if (@filters) {
-			my $cont	= $self->_pop_pattern_container;
-			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-			$self->_push_pattern_container;
-			# my $ggp	= $self->_remove_pattern();
-			unless ($ggp) {
-				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-			}
-			while (my $f = shift @filters) {
-				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
-			}
-			$self->_add_patterns($ggp);
-		}
-	}	
+	$self->__close_bgp_with_filters;
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
@@ -1649,23 +1653,7 @@ sub _OptionalGraphPattern {
 sub _MinusGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/MINUS/i );
-	{	# If there are filters to the left of the MINUS, they need to be added to the implicit GGP to the left of the MINUS
-		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
-		if (@filters) {
-			my $cont	= $self->_pop_pattern_container;
-			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-			$self->_push_pattern_container;
-			# my $ggp	= $self->_remove_pattern();
-			unless ($ggp) {
-				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-			}
-			while (my $f = shift @filters) {
-				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
-			}
-			$self->_add_patterns($ggp);
-		}
-	}	
+	$self->__close_bgp_with_filters;
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
