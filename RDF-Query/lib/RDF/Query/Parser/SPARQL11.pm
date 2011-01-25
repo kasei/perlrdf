@@ -282,14 +282,6 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "CLEAR GRAPH update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_ClearGraphUpdate();
-		} elsif ($self->_test(qr/INSERT\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
-				unless ($self->{update});
-			$self->_InsertDataUpdate();
-		} elsif ($self->_test(qr/DELETE\s+DATA/i)) {
-			throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
-				unless ($self->{update});
-			$self->_DeleteDataUpdate();
 		} elsif ($self->_test(qr/(WITH|INSERT|DELETE)/i)) {
 			throw RDF::Query::Error::PermissionError -text => "INSERT/DELETE update forbidden in read-only queries"
 				unless ($self->{update});
@@ -302,9 +294,29 @@ sub _RW_Query {
 				$self->__consume_ws_opt;
 			}
 			if ($self->_test(qr/INSERT/ims)) {
-				$self->_InsertUpdate($graph);
+				$self->_eat(qr/INSERT/i);
+				$self->__consume_ws_opt;
+				if ($self->_test(qr/DATA/i)) {
+					throw RDF::Query::Error::PermissionError -text => "INSERT DATA update forbidden in read-only queries"
+						unless ($self->{update});
+					$self->_eat(qr/DATA/i);
+					$self->__consume_ws_opt;
+					$self->_InsertDataUpdate();
+				} else {
+					$self->_InsertUpdate($graph);
+				}
 			} elsif ($self->_test(qr/DELETE/ims)) {
-				$self->_DeleteUpdate($graph);
+				$self->_eat(qr/DELETE/i);
+				$self->__consume_ws_opt;
+				if ($self->_test(qr/DATA/i)) {
+					throw RDF::Query::Error::PermissionError -text => "DELETE DATA update forbidden in read-only queries"
+						unless ($self->{update});
+					$self->_eat(qr/DATA/i);
+					$self->__consume_ws_opt;
+					$self->_DeleteDataUpdate();
+				} else {
+					$self->_DeleteUpdate($graph);
+				}
 			}
 		} elsif ($self->_test(qr/COPY/i)) {
 			$self->_CopyUpdate();
@@ -403,8 +415,6 @@ sub _Prologue {
 
 sub _InsertDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/INSERT\s+DATA/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -421,8 +431,6 @@ sub _InsertDataUpdate {
 
 sub _DeleteDataUpdate {
 	my $self	= shift;
-	$self->_eat(qr/DELETE\s+DATA/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -440,8 +448,6 @@ sub _DeleteDataUpdate {
 sub _InsertUpdate {
 	my $self	= shift;
 	my $graph	= shift;
-	$self->_eat(qr/INSERT/i);
-	$self->__consume_ws_opt;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	$self->_ModifyTemplate();
@@ -476,7 +482,16 @@ sub _InsertUpdate {
 	
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
-	$self->_GroupGraphPattern;
+	if ($graph) {
+#  		local($self->{named_graph})	= $graph;
+		$self->_GroupGraphPattern;
+		my $ggp	= $self->_remove_pattern;
+		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
+		$self->_add_patterns( $ggp );
+	} else {
+		$self->_GroupGraphPattern;
+	}
+	
 	my $ggp	= $self->_remove_pattern;
 	
 	my @ds_keys	= keys %dataset;
@@ -494,8 +509,6 @@ sub _DeleteUpdate {
 	my $graph	= shift;
 	my ($delete_data, $insert_data);
 	
-	$self->_eat(qr/DELETE/i);
-	$self->__consume_ws_opt;
 	my %dataset;
 	my $delete_where	= 0;
 	if ($self->_test(qr/WHERE/i)) {
@@ -588,17 +601,19 @@ sub _ModifyTemplate {
 		$self->{named_graph}	= $graph;
 	}
 	
-	$self->__ModifyTemplate;
-	$self->__consume_ws_opt;
-	my $data	= $self->_remove_pattern;
-	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+# 	$self->__ModifyTemplate;
+# 	$self->__consume_ws_opt;
+# 	my $data	= $self->_remove_pattern;
+# 	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
+	my $data;
 	while ($self->_ModifyTemplate_test) {
 		$self->__ModifyTemplate( $graph );
 		$self->__consume_ws_opt;
 		my $d			= $self->_remove_pattern;
-		my @patterns	= $data->patterns;
+		my @patterns	= blessed($data) ? $data->patterns : ();
 		$data			= RDF::Query::Algebra::GroupGraphPattern->new( @patterns, $d );
 	}
+	$data	= RDF::Query::Algebra::GroupGraphPattern->new() unless (blessed($data));
 	$data	= RDF::Query::Algebra::GroupGraphPattern->new( $data ) unless ($data->isa('RDF::Query::Algebra::GroupGraphPattern'));
 	$self->_add_patterns( $data );
 }
@@ -932,11 +947,21 @@ sub _ConstructQuery {
 	my $self	= shift;
 	$self->_eat(qr/CONSTRUCT/i);
 	$self->__consume_ws_opt;
-	$self->_ConstructTemplate;
-	$self->__consume_ws_opt;
+	my $shortcut	= 1;
+	if ($self->_test( qr/[{]/ )) {
+		$shortcut	= 0;
+		$self->_ConstructTemplate;
+		$self->__consume_ws_opt;
+	}
 	$self->_DatasetClause();
 	$self->__consume_ws_opt;
-	$self->_WhereClause;
+	if ($shortcut) {
+		$self->_eat(qr/WHERE/i);
+		# '{' TriplesTemplate? '}'
+		# set $self->{build}{construct_triples}
+	} else {
+		$self->_WhereClause;
+	}
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -990,6 +1015,11 @@ sub _AskQuery {
 	
 	$self->{build}{variables}	= [];
 	$self->{build}{method}		= 'ASK';
+}
+
+sub _DatasetClause_test {
+	my $self	= shift;
+	return $self->_test( qr/FROM/i );
 }
 
 # [9] DatasetClause ::= 'FROM' ( DefaultGraphClause | NamedGraphClause )
@@ -1400,17 +1430,9 @@ sub __handle_GraphPatternNotTriples {
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
-		my $cont	= $self->_pop_pattern_container;
-		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+ 		my ($bind)	= @args;
 		$self->_push_pattern_container;
-		# my $ggp	= $self->_remove_pattern();
-		unless ($ggp) {
-			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-		}
-		
-		my ($alias)	= @args;
-		my $opt		= $class->new( $ggp, [$alias] );
-		$self->_add_patterns( $opt );
+		$self->_add_patterns( $bind );
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
@@ -1557,12 +1579,21 @@ sub _GraphPatternNotTriples {
 
 sub _Bind {
 	my $self	= shift;
+	$self->__close_bgp_with_filters;
+	my $cont	= $self->_pop_pattern_container || [];
+	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 	$self->_eat(qr/BIND/i);
 	$self->__consume_ws_opt;
 	$self->_BrackettedAliasExpression;
 	my ($alias)	= splice(@{ $self->{stack} });
-	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
-	$self->_add_stack( $opt );
+
+	unless ($ggp) {
+		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+	}
+	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
+	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind] );
+#	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
+#	$self->_add_stack( $opt );
 }
 
 sub _ServiceGraphPattern {
@@ -1588,26 +1619,29 @@ sub _OptionalGraphPattern_test {
 	return $self->_test( qr/OPTIONAL/i );
 }
 
+sub __close_bgp_with_filters {
+	my $self	= shift;
+	my @filters		= splice(@{ $self->{filters} });
+	use Data::Dumper;
+	if (@filters) {
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+		while (my $f = shift @filters) {
+			$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
+		}
+		$self->_add_patterns($ggp);
+	}
+}
+
 sub _OptionalGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/OPTIONAL/i );
-	{	# If there are filters to the left of the OPTIONAL, they need to be added to the implicit GGP to the left of the OPTIONAL
-		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
-		if (@filters) {
-			my $cont	= $self->_pop_pattern_container;
-			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-			$self->_push_pattern_container;
-			# my $ggp	= $self->_remove_pattern();
-			unless ($ggp) {
-				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-			}
-			while (my $f = shift @filters) {
-				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
-			}
-			$self->_add_patterns($ggp);
-		}
-	}	
+	$self->__close_bgp_with_filters;
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
@@ -1619,23 +1653,7 @@ sub _OptionalGraphPattern {
 sub _MinusGraphPattern {
 	my $self	= shift;
 	$self->_eat( qr/MINUS/i );
-	{	# If there are filters to the left of the MINUS, they need to be added to the implicit GGP to the left of the MINUS
-		my @filters		= splice(@{ $self->{filters} });
-		use Data::Dumper;
-		if (@filters) {
-			my $cont	= $self->_pop_pattern_container;
-			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-			$self->_push_pattern_container;
-			# my $ggp	= $self->_remove_pattern();
-			unless ($ggp) {
-				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-			}
-			while (my $f = shift @filters) {
-				$ggp	= RDF::Query::Algebra::Filter->new( $f, $ggp );
-			}
-			$self->_add_patterns($ggp);
-		}
-	}	
+	$self->__close_bgp_with_filters;
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
@@ -2649,7 +2667,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2687,7 +2705,7 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE)$/i) {
+		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
