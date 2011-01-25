@@ -284,15 +284,16 @@ sub parse_into_model {
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle C<< $fh >>, using the given
-C<< $base_uri >>. For each RDF statement parsed, will call
+Parses all data read from the filehandle or file C<< $fh >>, using the 
+given C<< $base_uri >>. For each RDF statement parsed, will call
 C<< $model->add_statement( $statement ) >>.
 
 =cut
 
 sub parse_file_into_model {
 	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
+	my $self	= (blessed($proto) or $proto eq  __PACKAGE__)
+			? $proto : $proto->new();
 	my $uri		= shift;
 	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
 		$uri	= $uri->uri_value;
@@ -318,7 +319,11 @@ sub parse_file_into_model {
 	return $s;
 }
 
-=item C<< parse_file ( $base, $fh, $handler ) >>
+=item C<< parse_file ( $base_uri, $fh, $handler ) >>
+
+Parses all data read from the filehandle or file C<< $fh >>, using the given
+C<< $base_uri >>. If C<< $fh >> is a filename, this method can guess the
+associated parse. For each RDF statement parses C<< $handler >> is called.
 
 =cut
 
@@ -327,15 +332,23 @@ sub parse_file {
 	my $base	= shift;
 	my $fh		= shift;
 	my $handler	= shift;
-	
+
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
+		unless ($self->can('parse')) {
+			my $pclass = $self->guess_parser_by_filename( $filename );
+			$self = $pclass->new() if ($pclass and $pclass->can('new'));
+		}
 		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
-	
-	my $content	= do { local($/) = undef; <$fh> };
-	return $self->parse( $base, $content, $handler, @_ );
+
+	if ($self and $self->can('parse')) {
+		my $content	= do { local($/) = undef; <$fh> };
+		return $self->parse( $base, $content, $handler, @_ );
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Cannot parse unknown serialization";
+	}
 }
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>

@@ -622,7 +622,7 @@ Returns a list of the nodes that appear as the object of statements with the
 specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
 may be undef to signify a wildcard. You can further filter objects by type
 with the C<< type >> objects (node, nil, blank, resource, literal, variable)
-and with C<< language >> and C<< datatype >> for literal objects.
+and with C<< language >> and C<< datatype >>, which imply literal objects.
 
 =cut
 
@@ -632,15 +632,17 @@ sub objects {
 	my $pred	= shift;
 	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;
 	my $type	= $options{type};
-	
-	# TODO: options language or datatype (which both imply type => 'literal') language could also be a regexp (?)
+	$type = 'literal' if ($options{language} or $options{datatype});
+	if ( $options{datatype} and not blessed($options{datatype}) ) {
+		$options{datatype} = RDF::Trine::Node::Resource->new($options{datatype});
+	}
 	
 	if ( defined $type ) {
-			if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
-				$type = "is_$type";
-			} else {
-				throw RDF::Trine::Error::CompilationError -text => "unknown type"
-			}
+		if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+			$type = "is_$type";
+		} else {
+			throw RDF::Trine::Error::CompilationError -text => "unknown type"
+		}
 	}
 	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
@@ -649,6 +651,13 @@ sub objects {
 		my $obj = $st->object;
 		if ( defined $type ) {
 			next unless $obj->$type;
+			if ($options{language}) {
+				my $lang = $obj->literal_value_language;
+				next unless ($lang and $lang eq $options{language});
+			} elsif ($options{datatype}) {
+				my $dt = $obj->literal_datatype;
+				next unless ($dt and $dt eq $options{datatype}->uri_value);
+			}
 		}
 		$nodes{ $obj->as_string }	= $obj;
 	}

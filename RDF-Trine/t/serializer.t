@@ -1,4 +1,4 @@
-use Test::More tests => 30;
+use Test::More tests => 33;
 use Test::Exception;
 
 use strict;
@@ -60,13 +60,31 @@ while (my($k,$v) = each(%name_expect)) {
 			warn "# $accept";
 		}
 	}
+
+	my $h = new HTTP::Headers;
+	$h->header(Accept=>"application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,*/*;0.5");
+	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h );
+	ok ( $type, 'choose some serializer for Accept: */*' );
+
+	$h = new HTTP::Headers;
+	$h->header(Accept=>"application/rdf+xml;q=1,text/turtle;q=0.7");
+	($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => [ 'turtle' ] );
+	is ( $type, 'text/turtle', 'choose less wanted serializer with among option' );
 }
 
-throws_ok {
-	my $h	= new HTTP::Headers;
-	$h->header(Accept => "image/jpeg");
-	my $s	= RDF::Trine::Serializer->negotiate( request_headers => $h );
-} 'RDF::Trine::Error::SerializationError', 'HTTP negotiated serialization throws on unknown media type';
+
+my %negotiate_fail	= (
+	"image/jpeg" =>	undef,
+	"application/rdf+xml" => ['turtle','rdfjson']
+);
+
+while (my ($accept,$among) = each(%negotiate_fail)) {
+	throws_ok {
+		my $h = new HTTP::Headers;
+		$h->header(Accept => $accept);
+		my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => $among );
+	} 'RDF::Trine::Error::SerializationError', "HTTP negotiated serialization throws on unknown/unwanted media type $accept";
+}
 
 {
 	print "# empty Accept header\n";
