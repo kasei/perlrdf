@@ -235,6 +235,17 @@ sub as_hash {
 	return $hash;
 }
 
+=item C<< is_simple_literal >>
+
+Returns true if the literal is "simple" -- is a literal without datatype or language.
+
+=cut
+
+sub is_simple_literal {
+	my $self	= shift;
+	return not($self->has_language or $self->has_datatype);
+}
+
 =item C<< is_numeric_type >>
 
 Returns true if the literal is a known (xsd) numeric type.
