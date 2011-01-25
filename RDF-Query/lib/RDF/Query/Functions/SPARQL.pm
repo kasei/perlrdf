@@ -402,6 +402,10 @@ sub install {
 				throw RDF::Query::Error::TypeError -text => "STRDT() must be called with a plain literal and a datatype IRI";
 			}
 			
+			unless ($str->is_simple_literal) {
+				throw RDF::Query::Error::TypeError -text => "STRDT() not called with a simple literal";
+			}
+			
 			my $value	= $str->literal_value;
 			my $uri		= $dt->uri_value;
 			return RDF::Query::Node::Literal->new( $value, undef, $uri );
@@ -416,8 +420,11 @@ sub install {
 			my $lang	= shift;
 			
 			unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($lang) and $lang->isa('RDF::Query::Node::Literal')) {
-				warn Dumper($str,$lang);
 				throw RDF::Query::Error::TypeError -text => "STRLANG() must be called with two plain literals";
+			}
+			
+			unless ($str->is_simple_literal) {
+				throw RDF::Query::Error::TypeError -text => "STRLANG() not called with a simple literal";
 			}
 			
 			my $value	= $str->literal_value;
@@ -1064,7 +1071,6 @@ sub install {
 				my $value	= $node->literal_value;
 				return RDF::Query::Node::Literal->new( uri_escape_utf8($value) );
 			} else {
-				warn "sparql:encode_for_uri called without a literal term";
 				throw RDF::Query::Error::TypeError -text => "sparql:encode_for_uri called without a literal term";
 			}
 		}
