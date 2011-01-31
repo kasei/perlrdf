@@ -210,6 +210,29 @@ sub add_hashref {
 	}
 }
 
+=item C<< add_list ( @elements ) >>
+
+Adds an rdf:List to the model with the given elements. Returns the node object
+that is the head of the list.
+
+=cut
+
+sub add_list {
+	my $self		= shift;
+	my @elements	= @_;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	if (scalar(@elements) == 0) {
+		return $rdf->nil;
+	} else {
+		my $head		= RDF::Query::Node::Blank->new();
+		my $node		= shift(@elements);
+		my $rest		= $self->add_list( @elements );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		return $head;
+	}
+}
+
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<< $statement >> from the rdf store.
