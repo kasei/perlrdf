@@ -14,7 +14,7 @@ build_requires		'Test::JSON'				=> 0;
 
 perl_version		'5.008003';
 
-requires			'Module::Load::Conditional'	=> 0;
+requires			'Module::Load::Conditional'	=> 0.40;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
 requires			'DBD::SQLite'				=> 1.14;
