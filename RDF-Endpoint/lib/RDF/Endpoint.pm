@@ -101,7 +101,10 @@ my $NAMESPACES	= {
 	scovo		=> 'http://purl.org/NET/scovo#',
 	sd			=> 'http://www.w3.org/ns/sparql-service-description#',
 	jena		=> 'java:com.hp.hpl.jena.query.function.library.',
+	arq			=> 'http://jena.hpl.hp.com/ARQ/function#',
 	ldodds		=> 'java:com.ldodds.sparql.',
+	fn			=> 'http://www.w3.org/2005/xpath-functions#',
+	sparql		=> 'http://www.w3.org/ns/sparql#',
 };
 
 =item C<< new ( $conf ) >>
@@ -113,8 +116,12 @@ configuration settings.
 
 sub new {
 	my $class	= shift;
-	my $conf	= shift;
-	return bless( { conf => $conf }, $class );
+	my $config	= shift;
+	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+	my $model	= RDF::Trine::Model->new( $store );
+	my $self	= bless( { conf => $config, model => $model }, $class );
+	$self->service_description();	# pre-generate the service description
+	return $self;
 }
 
 =item C<< run ( $req ) >>
@@ -129,9 +136,9 @@ sub run {
 	my $req		= shift;
 	my $config	= $self->{conf};
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
-	
-	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
-	my $model	= RDF::Trine::Model->new( $store );
+	my $model	= $self->{model};
+# 	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+# 	my $model	= RDF::Trine::Model->new( $store );
 	
 	my $content;
 	my $response	= Plack::Response->new;
@@ -151,6 +158,7 @@ sub run {
 <h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>
 END
 		}
+		$response->body($content);
 		return $response;
 	}
 	
@@ -272,7 +280,7 @@ END
 		}
 		push(@variants, ['text/html', 1.0, 'text/html']);
 		my $stype	= choose( \@variants, $headers );
-		my $sdmodel	= $self->service_description( $req, $model );
+		my $sdmodel	= $self->service_description();
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
 			my $s	= $sclass->new( namespaces => $NAMESPACES );
 			$response->status(200);
@@ -328,14 +336,23 @@ endpoint, generating dataset statistics from C<< $model >>.
 =cut
 
 sub service_description {
-	my $self	= shift;
-	my $req		= shift;
-	my $model	= shift;
-	my $config	= $self->{conf};
+	my $self		= shift;
+	my $model		= $self->{model};
+	my $etag		= $model->etag || '';
+	
+	if (exists $self->{ sd_cache }) {
+		my ($cached_etag, $model) = @{ $self->{ sd_cache } };
+		if (defined($cached_etag) and $etag eq $cached_etag) {
+			return $model;
+		}
+	}
+	
+	my $config		= $self->{conf};
 	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
 	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
 	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
 	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
+	
 	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
 	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
 	my @formats		= keys %RDF::Trine::Serializer::format_uris;
@@ -362,33 +379,33 @@ sub service_description {
 		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
 	
-	my $dsd	= blank('dataset');
-	my $def	= blank('defaultGraph');
-	my $si	= blank('size');
+	my $dataset		= blank('dataset');
+	my $def_graph	= blank('defaultGraph');
 	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
-	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
-	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
+	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
+	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
 	if ($config->{service_description}{default}) {
-		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
-		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
-		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+		$sdmodel->add_statement( statement( $dataset, $sd->defaultGraph, $def_graph ) );
+		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $sd->Graph ) );
+		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $void->Dataset ) );
+		$sdmodel->add_statement( statement( $def_graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
 	}
 	if ($config->{service_description}{named_graphs}) {
 		my $iter	= $model->get_contexts;
 		while (my $g = $iter->next) {
 			my $ng		= blank();
 			my $graph	= blank();
-			my $si		= blank();
 			my $count	= $model->count_statements( undef, undef, undef, $g );
-			$sdmodel->add_statement( statement( $dsd, $sd->namedGraph, $ng ) );
+			$sdmodel->add_statement( statement( $dataset, $sd->namedGraph, $ng ) );
 			$sdmodel->add_statement( statement( $ng, $sd->name, $g ) );
 			$sdmodel->add_statement( statement( $ng, $sd->graph, $graph ) );
-			$sdmodel->add_statement( statement( $graph, $void->statItem, $si ) );
-			$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-			$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+			$sdmodel->add_statement( statement( $graph, $rdf->type, $sd->Graph ) );
+			$sdmodel->add_statement( statement( $graph, $rdf->type, $void->Dataset ) );
+			$sdmodel->add_statement( statement( $graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
 		}
 	}
+	
+	$self->{ sd_cache }	= [ $etag, $sdmodel ];
 	return $sdmodel;
 }
 
@@ -577,6 +594,8 @@ __END__
 
 =item * L<irc://irc.perl.org/#perlrdf>
 
+=item * L<http://codemirror.net/>
+
 =back
 
 =head1 AUTHOR
@@ -585,8 +604,32 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010 Gregory Todd Williams. All rights reserved. This
-program is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+Copyright (c) 2010 Gregory Todd Williams.
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+   not claim that you wrote the original software. If you use this
+   software in a product, an acknowledgment in the product
+   documentation would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must
+   not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+   distribution.
+
+With the exception of the CodeMirror files, the files in this package may also
+be redistributed and/or modified under the same terms as Perl itself.
+
+The CodeMirror (Javascript and CSS) files contained in this package are
+copyright (c) 2007-2010 Marijn Haverbeke, and licensed under the terms of the
+same zlib license as this code.
 
 =cut

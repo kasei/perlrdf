@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.903.
+This document describes RDF::Query::Expression::Function version 2.904.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
@@ -55,6 +55,9 @@ our %FUNCTION_MAP	= (
 );
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Expression> class.
 
 =over 4
 
@@ -270,6 +273,9 @@ sub evaluate {
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
+		unless ($func) {
+			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";
+		}
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

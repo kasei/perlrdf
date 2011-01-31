@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NQuads - N-Quads Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NQuads version 0.130
+This document describes RDF::Trine::Serializer::NQuads version 0.132
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ The RDF::Trine::Serializer::NQuads class provides an API for serializing RDF
 graphs to the N-Quads syntax.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
 
 =over 4
 
@@ -45,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $type (qw(text/x-nquads)) {

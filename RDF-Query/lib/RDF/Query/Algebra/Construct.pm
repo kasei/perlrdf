@@ -7,7 +7,7 @@ RDF::Query::Algebra::Construct - Algebra class for construct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Construct version 2.903.
+This document describes RDF::Query::Algebra::Construct version 2.904.
 
 =cut
 
@@ -28,12 +28,15 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -120,16 +123,27 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	my $triples	= $self->triples;
 	my $bgp		= RDF::Query::Algebra::BasicGraphPattern->new( @$triples );
 	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( $bgp );
-
+	my $force	= $context->{ force_ggp_braces } || 0;
+	
+	my ($template, $pattern);
+	{
+		$context->{ force_ggp_braces }	= $force + 1;
+		$template	= $ggp->as_sparql( $context, $indent );
+	}
+	{
+		$context->{ force_ggp_braces }	= $force + 1;
+		$pattern		= $self->pattern->as_sparql( $context, $indent );
+	}
+	
 	my $string	= sprintf(
 		"CONSTRUCT %s\n${indent}WHERE %s",
-		$ggp->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$template,
+		$pattern,
 	);
 	return $string;
 }

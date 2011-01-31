@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.130
+This document describes RDF::Trine::Parser::RDFa version 0.132
 
 =head1 SYNOPSIS
 
@@ -23,6 +23,9 @@ This document describes RDF::Trine::Parser::RDFa version 0.130
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -50,24 +53,47 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION, $HAVE_REDLAND_PARSER, %FORMATS);
 BEGIN {
 	%FORMATS = (
-	rdfxml	 => ['http://www.w3.org/ns/formats/RDF_XML',
-					[qw(application/rdf+xml)]],
-	ntriples => ['http://www.w3.org/ns/formats/data/N-Triples',
-					[qw(text/plain)]],
-	turtle	 => ['http://www.w3.org/ns/formats/Turtle',
-					 [qw(application/x-turtle application/turtle text/turtle)]],
-	trig	 => [undef, []],
-	rdfa	 => ['http://www.w3.org/ns/formats/data/RDFa',
-					 [qw(application/xhtml+xml)]]
+	rdfxml	 => [
+					'RDF::Trine::Parser::Redland::RDFXML',
+					'http://www.w3.org/ns/formats/RDF_XML',
+					[qw(application/rdf+xml)],
+					[qw(rdf xrdf rdfx)]
+				],
+	ntriples => [
+					'RDF::Trine::Parser::Redland::NTriples',
+					'http://www.w3.org/ns/formats/data/N-Triples',
+					[qw(text/plain)],
+					[qw(nt)]
+				],
+	turtle	 => [
+					'RDF::Trine::Parser::Redland::Turtle',
+					'http://www.w3.org/ns/formats/Turtle',
+					[qw(application/x-turtle application/turtle text/turtle)],
+					[qw(ttl)]
+				],
+	trig	 => [
+					'RDF::Trine::Parser::Redland::Trig',
+					undef,
+					[],
+					[qw(trig)]
+				],
+	rdfa	 => [
+					'RDF::Trine::Parser::Redland::RDFa',
+					'http://www.w3.org/ns/formats/data/RDFa',
+					[qw(application/xhtml+xml)],
+					[qw(html xhtml)]
+				],
 	);
 	
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 	for my $format (keys %FORMATS) {
-		$RDF::Trine::Parser::parser_names{$format} = __PACKAGE__;
-		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[0] } = __PACKAGE__
-			if defined $FORMATS{$format}[0];
-		map { $RDF::Trine::Parser::media_types{$_} = __PACKAGE__ }
-			(@{$FORMATS{$format}[1]});
+		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
+		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
+			if defined $FORMATS{$format}[1];
+		map { $RDF::Trine::Parser::media_types{$_} = $FORMATS{$format}[0] }
+			(@{$FORMATS{$format}[2]});
+		map { $RDF::Trine::Parser::file_extensions{$_} = $FORMATS{$format}[0] }
+			(@{$FORMATS{$format}[3]});
 	}
 	
 	eval "use RDF::Redland 1.000701;";
@@ -158,7 +184,45 @@ sub parse {
 
 		$stream->next;
 	}
+	
+	if (my $map = $self->{ namespaces }) {
+		my %seen	= $self->{parser}->namespaces_seen;
+		while (my ($ns, $uri) = each(%seen)) {
+			$map->add_mapping( $ns => $uri->as_string );
+		}
+	}
+	return;
 }
+
+package RDF::Trine::Parser::Redland::RDFXML;
+use strict;
+use warnings;
+use base qw(RDF::Trine::Parser::Redland);
+sub new { shift->SUPER::new( @_, name => 'rdfxml' ) }
+
+package RDF::Trine::Parser::Redland::NTriples;
+use strict;
+use warnings;
+use base qw(RDF::Trine::Parser::Redland);
+sub new { shift->SUPER::new( @_, name => 'ntriples' ) }
+
+package RDF::Trine::Parser::Redland::Turtle;
+use strict;
+use warnings;
+use base qw(RDF::Trine::Parser::Redland);
+sub new { shift->SUPER::new( @_, name => 'turtle' ) }
+
+package RDF::Trine::Parser::Redland::Trig;
+use strict;
+use warnings;
+use base qw(RDF::Trine::Parser::Redland);
+sub new { shift->SUPER::new( @_, name => 'trig' ) }
+
+package RDF::Trine::Parser::Redland::RDFa;
+use strict;
+use warnings;
+use base qw(RDF::Trine::Parser::Redland);
+sub new { shift->SUPER::new( @_, name => 'rdfa' ) }
 
 
 1;

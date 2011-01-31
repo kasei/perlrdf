@@ -38,7 +38,10 @@ END
 ################################################################################
 
 # construct a query from the command line arguments
-my ($query, $model)	= &RDF::Query::Util::cli_make_query_and_model or die RDF::Query->error;
+my ($query, $model)	= &RDF::Query::Util::cli_make_query_and_model;
+unless ($query and $model) {
+	die RDF::Query->error;
+}
 
 # execute the query against data contained in the model
 my $iter	= $query->execute( $model );

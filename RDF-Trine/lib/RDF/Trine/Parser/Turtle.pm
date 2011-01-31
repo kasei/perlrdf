@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.130
+This document describes RDF::Trine::Parser::Turtle version 0.132
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::Turtle version 0.130
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -48,7 +51,7 @@ use RDF::Trine::Error;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.130';
+	$VERSION				= '0.132';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -130,6 +133,9 @@ sub parse {
 		$self->{handle_triple}	= $handler;
 	}
 	local($self->{baseURI})	= $uri;
+	
+	$input	=~ s/^\x{FEFF}//;
+	
 	local($self->{tokens})	= $input;
 	$self->_Document();
 	return;
@@ -313,6 +319,12 @@ sub _prefixID {
 	
 	my $uri = $self->_uriref();
 	$self->{bindings}{$prefix}	= $uri;
+	
+	if (blessed(my $ns = $self->{namespaces})) {
+		unless ($ns->namespace_uri($prefix)) {
+			$ns->add_mapping( $prefix => $uri );
+		}
+	}
 }
 
 

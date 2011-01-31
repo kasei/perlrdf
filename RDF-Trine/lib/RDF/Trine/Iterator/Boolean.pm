@@ -7,18 +7,22 @@ RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query result
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.130
+This document describes RDF::Trine::Iterator::Boolean version 0.132
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator::Boolean;
-    
-    my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
-    if ($iterator->get_boolean) {
-    	# ...
-    }
+ use RDF::Trine::Iterator::Boolean;
+ 
+ my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
+ my $bool = $iterator->get_boolean;
+ if ($bool) {
+ 	print "Yes.\n";
+ }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator> class.
 
 =over 4
 
@@ -34,7 +38,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 }
 
 =item C<new ( \@results, %args )>

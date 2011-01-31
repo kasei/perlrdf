@@ -6,7 +6,7 @@ use inc::Module::Install;
 name				'RDF-Endpoint';
 all_from			'lib/RDF/Endpoint.pm';
 author				'Gregory Todd Williams <gwilliams@cpan.org>';
-license				'perl';
+license				'zlib';
 
 test_requires       'Test::More' => '0.61';
 

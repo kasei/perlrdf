@@ -7,9 +7,12 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.903.
+This document describes RDF::Query::Plan::Path version 2.904.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -32,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
@@ -120,10 +123,12 @@ sub execute ($) {
 				$nodes{ $n->as_string }	= $n;
 			}
 			foreach my $n (values %nodes) {
-				my $vb		= RDF::Query::VariableBindings->new({});
-				foreach my $name (@names) {
-					$vb->{ $name }	= $n;
-				}
+				my %data;
+				@data{ @names }	= ($n) x scalar(@names);
+				my $vb		= RDF::Query::VariableBindings->new(\%data);
+# 				foreach my $name (@names) {
+# 					$vb->{ $name }	= $n;
+# 				}
 				push(@{ $self->[0]{results} }, $vb);
 			}
 		}

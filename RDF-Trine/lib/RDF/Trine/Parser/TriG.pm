@@ -7,7 +7,7 @@ RDF::Trine::Parser::TriG - TriG RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::TriG version 0.130
+This document describes RDF::Trine::Parser::TriG version 0.132
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::TriG version 0.130
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -37,7 +40,7 @@ use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '0.130';
+	$VERSION				= '0.132';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
 	foreach my $ext (qw(trig)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;

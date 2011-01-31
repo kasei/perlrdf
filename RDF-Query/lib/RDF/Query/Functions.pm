@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.903.
+This document describes RDF::Query::Functions version 2.904.
 
 =head1 DESCRIPTION
 
@@ -15,6 +15,10 @@ This stub module simply loads all other modules named
 C<< RDF::Query::Functions::* >>. Each of those modules
 has an C<install> method that simply adds coderefs
 to C<< %RDF::Query::functions >>.
+
+=head1 METHODS
+
+=over 4
 
 =cut
 
@@ -26,6 +30,7 @@ no warnings 'redefine';
 
 our $BLOOM_FILTER_LOADED;
 
+use Scalar::Util qw(refaddr);
 use Log::Log4perl;
 
 use Module::Pluggable
@@ -40,10 +45,30 @@ use Module::Pluggable
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
+
+=item C<< install_function ( $uri, \&func ) >>
+
+=item C<< install_function ( \@uris, \&func ) >>
+
+Install the supplied CODE reference as the implementation for the given function URI(s).
+
+=cut
+
+sub install_function {
+	my $class	= shift;
+	while (@_) {
+		my $uris	= shift;
+		my $func	= shift;
+		$RDF::Query::preferred_function_name{ refaddr($func) }	= ref($uris) ? $uris->[0] : $uris;
+		foreach my $uri (ref($uris) ? @$uris : $uris) {
+			$RDF::Query::functions{$uri}	= $func;
+		}
+	}
+}
 
 foreach my $function_set (__PACKAGE__->function_sets) {
 	$function_set->install;
@@ -52,6 +77,8 @@ foreach my $function_set (__PACKAGE__->function_sets) {
 1;
 
 __END__
+
+=back
 
 =head1 SEE ALSO
 

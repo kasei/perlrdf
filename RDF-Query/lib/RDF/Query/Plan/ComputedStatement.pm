@@ -11,6 +11,9 @@ This document describes RDF::Query::Plan::ComputedStatement version 2.201, relea
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
+
 =over 4
 
 =cut

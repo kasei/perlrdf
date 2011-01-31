@@ -7,7 +7,7 @@ RDF::Query::Algebra::Distinct - Algebra class for distinct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Distinct version 2.903.
+This document describes RDF::Query::Algebra::Distinct version 2.904.
 
 =cut
 
@@ -28,12 +28,15 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -123,6 +126,18 @@ sub as_hash {
 		type 		=> lc($self->type),
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $xsd		= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+	my $q		= $self->pattern->as_spin( $model );
+	
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->distinct, RDF::Query::Node::Literal->new('true', undef, $xsd->boolean)) );
+	
+	return $q;
 }
 
 =item C<< type >>

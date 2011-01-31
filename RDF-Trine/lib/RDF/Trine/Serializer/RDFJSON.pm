@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDF/JSON version 0.130
+This document describes RDF::Trine::Serializer::RDF/JSON version 0.132
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
 graphs to the RDF/JSON syntax.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
 
 =over 4
 
@@ -45,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfjson' }	= __PACKAGE__;
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;

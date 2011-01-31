@@ -7,7 +7,7 @@ RDF::Query::Algebra::Update - Algebra class for UPDATE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Update version 2.903.
+This document describes RDF::Query::Algebra::Update version 2.904.
 
 =cut
 
@@ -32,12 +32,15 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -119,7 +122,7 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
@@ -149,21 +152,21 @@ sub as_sparql {
 				$delete->as_sparql( $context, "${indent}  " ),
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} elsif ($insert) {
 			return sprintf(
 				"INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} else {
 			return sprintf(
 				"DELETE {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$delete->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		}
 	} else {
@@ -188,7 +191,7 @@ sub as_sparql {
 				"${op} %s%sWHERE %s",
 				$temps,
 				$ds_string,
-				$ggp->as_sparql( $context, "${indent}" ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, "${indent}" ),
 			);
 		}
 	}
