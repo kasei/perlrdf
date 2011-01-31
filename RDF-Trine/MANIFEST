@@ -32,6 +32,7 @@ lib/RDF/Trine/Model/Dataset.pm
 lib/RDF/Trine/Model/StatementFilter.pm
 lib/RDF/Trine/Model/Union.pm
 lib/RDF/Trine/Namespace.pm
+lib/RDF/Trine/NamespaceMap.pm
 lib/RDF/Trine/Node.pm
 lib/RDF/Trine/Node/Blank.pm
 lib/RDF/Trine/Node/Literal.pm
