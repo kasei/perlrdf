@@ -105,6 +105,7 @@ sub negotiate {
 	my %options	= @_;
 	my $headers	= delete $options{ 'request_headers' };
 	my $among	= delete $options{ 'among' };
+	my $extend	= delete $options{ 'extend' } || {};
 	my %sclasses;
 	if (ref($among) && ref($among) eq 'ARRAY') {
 		$sclasses{ $serializer_names{$_} } = 1 for @$among;
@@ -115,13 +116,26 @@ sub negotiate {
 	while (my($type, $sclass) = each(%media_types)) {
 		next unless $sclasses{$sclass};
 		my $class = $media_types{$type};
-		my $qv	= ($type eq 'text/turtle') ? 1.0 : 0.99;
-		$qv		-= 0.01 if ($type =~ m#/x-#);
-		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);
-		$qv		-= 0.01 if ($type eq 'text/plain');
+		my $qv	= ($type eq 'text/turtle') ? 0.9 : 0.89;	# slightly prefer turtle as a readable format to others
+		$qv		-= 0.01 if ($type =~ m#/x-#);				# prefer non experimental media types
+		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
+		$qv		-= 0.01 if ($type eq 'text/plain');			# prefer types that are more specific than just text/plain
 		push(@variants, [$type, $qv, $type]);
 	}
+	
+	my %custom_thunks;
+	while (my($type,$thunk) = each(%$extend)) {
+		push(@variants, [$thunk, 1.0, $type]);
+		$custom_thunks{ $thunk }	= [$type, $thunk];
+	}
+	
 	my $stype	= choose( \@variants, $headers );
+	if (defined($stype) and $custom_thunks{ $stype }) {
+		my $thunk	= $stype;
+		my $type	= $custom_thunks{ $stype }[0];
+		return ($type, $thunk);
+	}
+	
 	if (defined($stype) and my $sclass = $media_types{ $stype }) {
 		return ($stype, $sclass->new( %options ));
 	} else {
