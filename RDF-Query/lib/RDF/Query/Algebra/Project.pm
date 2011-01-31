@@ -301,28 +301,12 @@ sub as_spin {
 	$model->add_statement( RDF::Trine::Statement->new($q, $rdf->type, $spin->Select) );
 	
 	my @vars	= map { RDF::Query::Node::Blank->new( "variable_" . $_->name ) } @{ $self->vars };
-	my $vlist	= _list( $model, @vars );
+	my $vlist	= $model->add_list( @vars );
 	$model->add_statement( RDF::Trine::Statement->new($q, $spin->resultVariables, $vlist) );
 	
-	my $list	= _list( $model, @nodes );
+	my $list	= $model->add_list( @nodes );
 	$model->add_statement( RDF::Trine::Statement->new($q, $spin->where, $list) );
 	return $q;
-}
-
-sub _list {
-	my $model		= shift;
-	my @elements	= @_;
-	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-	if (scalar(@elements) == 0) {
-		return $rdf->nil;
-	} else {
-		my $head		= RDF::Query::Node::Blank->new();
-		my $node		= shift(@elements);
-		my $rest		= _list( $model, @elements );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
-		return $head;
-	}
 }
 
 =item C<< type >>

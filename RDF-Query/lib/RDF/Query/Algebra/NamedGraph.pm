@@ -183,27 +183,11 @@ sub as_spin {
 	my @t		= $self->pattern->as_spin( $model );
 	
 	my $ng		= RDF::Query::Node::Blank->new();
-	my $list	= _list( $model, @t );
+	my $list	= $model->add_list( @t );
 	$model->add_statement( RDF::Trine::Statement->new($ng, $rdf->type, $spin->NamedGraph) );
 	$model->add_statement( RDF::Trine::Statement->new($ng, $spin->elements, $list) );
 	
 	return $ng;
-}
-
-sub _list {
-	my $model		= shift;
-	my @elements	= @_;
-	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-	if (scalar(@elements) == 0) {
-		return $rdf->nil;
-	} else {
-		my $head		= RDF::Query::Node::Blank->new();
-		my $node		= shift(@elements);
-		my $rest		= _list( $model, @elements );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
-		return $head;
-	}
 }
 
 =item C<< type >>
