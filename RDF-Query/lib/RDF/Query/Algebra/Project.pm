@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
-use Scalar::Util qw(reftype blessed);
+use Scalar::Util qw(reftype blessed refaddr);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(sgrep);
 
@@ -288,6 +288,41 @@ sub as_hash {
 		variables	=> [ map { $_->as_hash } @{ $self->vars } ],
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my $q		= RDF::Query::Node::Blank->new();
+	my @nodes	= $self->pattern->as_spin( $model );
+	
+	$model->add_statement( RDF::Trine::Statement->new($q, $rdf->type, $spin->Select) );
+	
+	my @vars	= map { RDF::Query::Node::Blank->new( "variable_" . $_->name ) } @{ $self->vars };
+	my $vlist	= _list( $model, @vars );
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->resultVariables, $vlist) );
+	
+	my $list	= _list( $model, @nodes );
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->where, $list) );
+	return $q;
+}
+
+sub _list {
+	my $model		= shift;
+	my @elements	= @_;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	if (scalar(@elements) == 0) {
+		return $rdf->nil;
+	} else {
+		my $head		= RDF::Query::Node::Blank->new();
+		my $node		= shift(@elements);
+		my $rest		= _list( $model, @elements );
+		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
+		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		return $head;
+	}
 }
 
 =item C<< type >>

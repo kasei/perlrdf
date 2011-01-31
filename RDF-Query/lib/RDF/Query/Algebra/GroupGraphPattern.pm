@@ -195,6 +195,13 @@ sub as_hash {
 	};
 }
 
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	return map { $_->as_spin($model) } $self->patterns;
+	
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.

@@ -172,6 +172,14 @@ sub as_hash {
 	};
 }
 
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my @t		= $self->triples;
+	my @nodes	= map { $_->as_spin( $model ) } @t;
+	return @nodes;
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.

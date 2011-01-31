@@ -21,10 +21,12 @@ use RDF::Query::Util;
 my $sparql	= 0;
 my $algebra	= 0;
 my $plan	= 0;
-while ($ARGV[0] =~ /^-([aps])$/) {
+my $spin	= 0;
+while ($ARGV[0] =~ /^-([apsS])$/) {
 	$algebra	= 1 if ($1 eq 'a');
 	$plan		= 1 if ($1 eq 'p');
 	$sparql		= 1 if ($1 eq 's');
+	$spin		= 1 if ($1 eq 'S');
 	shift(@ARGV);
 }
 $sparql	= 1 unless ($algebra || $plan || $sparql);
@@ -49,6 +51,16 @@ if ($query) {
 	if ($algebra) {
 		print "\n# Algebra:\n";
 		print $query->pattern->sse . "\n";
+	}
+	
+	if ($spin) {
+		print "\n# SPIN:\n";
+		my $model	= RDF::Trine::Model->temporary_model;
+		$query->pattern->as_spin( $model );
+		my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+		my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+		my $s	= RDF::Trine::Serializer::Turtle->new( namespaces => { spin => $spin, rdf => $rdf } );
+		$s->serialize_model_to_file( \*STDOUT, $model );
 	}
 	
 	if ($plan) {

@@ -124,6 +124,36 @@ sub as_sparql {
 	return $string;
 }
 
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @lhs		= $self->pattern->as_spin($model);
+	my @rhs		= $self->optional->as_spin($model);
+	my $opt		= RDF::Query::Node::Blank->new();
+	my $list	= _list( $model, @rhs );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $rdf->type, $spin->Optional) );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $spin->elements, $list) );
+	return (@lhs, $opt);
+}
+
+sub _list {
+	my $model		= shift;
+	my @elements	= @_;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	if (scalar(@elements) == 0) {
+		return $rdf->nil;
+	} else {
+		my $head		= RDF::Query::Node::Blank->new();
+		my $node		= shift(@elements);
+		my $rest		= _list( $model, @elements );
+		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
+		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		return $head;
+	}
+}
+
 =item C<< as_hash >>
 
 Returns the query as a nested set of plain data structures (no objects).
