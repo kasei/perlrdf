@@ -29,7 +29,7 @@ while ($ARGV[0] =~ /^-([apsS])$/) {
 	$spin		= 1 if ($1 eq 'S');
 	shift(@ARGV);
 }
-$sparql	= 1 unless ($algebra || $plan || $sparql);
+$sparql	= 1 unless ($algebra || $plan || $sparql || $spin);
 
 unshift(@ARGV, '-w');
 my $query;
