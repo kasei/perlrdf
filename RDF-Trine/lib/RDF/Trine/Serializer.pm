@@ -125,7 +125,7 @@ sub negotiate {
 	
 	my %custom_thunks;
 	while (my($type,$thunk) = each(%$extend)) {
-		push(@variants, [$thunk, 1.0, $type]);
+		push(@variants, [$thunk, 0.85, $type]);
 		$custom_thunks{ $thunk }	= [$type, $thunk];
 	}
 	
