@@ -214,8 +214,14 @@ sub as_sparql {
 			foreach my $k (@$vlist) {
 				if ($k->isa('RDF::Query::Expression::Alias')) {
 					my $var		= $k->name;
-					my $expr	= $k->expression->name;
-					my $str		= "($expr AS ?$var)";
+					my $expr	= $k->expression;
+					my $exprstr;
+					if ($expr->isa('RDF::Query::Expression::Binary')) {
+						$exprstr	= $expr->as_sparql( $context, $indent );
+					} else {
+						$exprstr	= $k->expression->name;
+					}
+					my $str		= "($exprstr AS ?$var)";
 					$agg_projections{ '?' . $var }	= $str;
 				} else {
 					warn Dumper($k) . ' ';
