@@ -726,12 +726,21 @@ sub as_sparql {
 		}
 		
 		my $ns	= scalar(@ns) ? join("\n", @ns, '') : '';
-		my $sparql	= sprintf(
-			"$ns%s %s\n%s",
-			$methoddata,
-			$ggp->as_sparql( $context, '' ),
-			$mod,
-		);
+		my $sparql;
+		if ($methoddata or $ns) {
+			$sparql	= sprintf(
+				"$ns%s %s\n%s",
+				$methoddata,
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		} else {
+			$sparql	= sprintf(
+				"%s\n%s",
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		}
 		
 		chomp($sparql);
 		return $sparql;
