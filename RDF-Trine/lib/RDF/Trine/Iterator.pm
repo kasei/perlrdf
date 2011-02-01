@@ -30,7 +30,6 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use JSON;
 use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp);
@@ -39,6 +38,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 use XML::SAX;
 use RDF::Trine::Node;
 use RDF::Trine::Iterator::SAXHandler;
+use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
@@ -164,7 +164,7 @@ sub to_string {
 	}
 }
 
-=item C<from_string ( $xml )>
+=item C<< from_string ( $xml ) >>
 
 Returns a new iterator using the supplied XML in the SPARQL XML Results format.
 
@@ -183,6 +183,17 @@ sub from_string {
 	$p->parse_file( $string );
 	my $iter	= $handler->iterator;
 	return $iter;
+}
+
+=item C<< from_json ( $json ) >>
+
+=cut
+
+sub from_json {
+	my $class	= shift;
+	my $json	= shift;
+	my $p		= RDF::Trine::Iterator::JSONHandler->new();
+	return $p->parse( $json );
 }
 
 
