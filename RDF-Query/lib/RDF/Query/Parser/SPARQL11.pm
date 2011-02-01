@@ -850,22 +850,22 @@ sub _SelectQuery {
 	$self->__consume_ws_opt;
 	if ($self->_test( qr/BINDINGS/i )) {
 		$self->_eat( qr/BINDINGS/i );
-		
+		$self->__consume_ws_opt;
 		my @vars;
-		$self->__consume_ws_opt;
-		$self->_Var;
-		push( @vars, splice(@{ $self->{stack} }));
-		$self->__consume_ws_opt;
+# 		$self->_Var;
+# 		push( @vars, splice(@{ $self->{stack} }));
+# 		$self->__consume_ws_opt;
 		while ($self->_test(qr/[\$?]/)) {
 			$self->_Var;
 			push( @vars, splice(@{ $self->{stack} }));
 			$self->__consume_ws_opt;
 		}
 		
+		my $count	= scalar(@vars);
 		$self->_eat('{');
 		$self->__consume_ws_opt;
 		while ($self->_Binding_test) {
-			$self->_Binding;
+			$self->_Binding($count);
 			$self->__consume_ws_opt;
 		}
 		$self->_eat('}');
@@ -886,6 +886,7 @@ sub __SelectVars {
 	my $count	= 0;
 	while ($self->_test('*') or $self->__SelectVar_test) {
 		if ($self->_test('*')) {
+			$self->{build}{star}++;
 			$self->_eat('*');
 			$star	= 1;
 			$self->__consume_ws_opt;
@@ -897,6 +898,20 @@ sub __SelectVars {
 			$count++;
 		}
 	}
+	
+	my %seen;
+	foreach my $v (@vars) {
+		if ($v->isa('RDF::Query::Node::Variable') or $v->isa('RDF::Query::Expression::Alias')) {
+			my $name	= $v->name;
+			if ($v->isa('RDF::Query::Expression::Alias')) {
+				if ($seen{ $name }) {
+					throw RDF::Query::Error::ParseError -text => "Syntax error: Repeated variable ($name) used in projection list";
+				}
+			}
+			$seen{ $name }++;
+		}
+	}
+	
 	$self->{build}{variables}	= \@vars;
 	if ($count == 0) {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: No select variable or expression specified";
@@ -956,15 +971,15 @@ sub _ConstructQuery {
 	$self->_DatasetClause();
 	$self->__consume_ws_opt;
 	if ($shortcut) {
-		$self->_eat(qr/WHERE/i);
-		# '{' TriplesTemplate? '}'
-		# set $self->{build}{construct_triples}
+		$self->_TriplesWhereClause;
 	} else {
 		$self->_WhereClause;
 	}
+	
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
+	
 	my $triples		= delete $self->{build}{construct_triples};
 	my $construct	= RDF::Query::Algebra::Construct->new( $pattern, $triples );
 	$self->{build}{triples}[0]	= $construct;
@@ -1081,6 +1096,26 @@ sub _WhereClause {
 	$ggp->check_duplicate_blanks;
 }
 
+sub _TriplesWhereClause {
+	my $self	= shift;
+	$self->_push_pattern_container;
+	
+	$self->_eat( qr/WHERE/i );
+	$self->__consume_ws_opt;
+	$self->_eat(qr/{/);
+	$self->__consume_ws_opt;
+	if ($self->_TriplesBlock_test) {
+		$self->_TriplesBlock;
+	}
+	$self->_eat(qr/}/);
+	
+	my $cont		= $self->_pop_pattern_container;
+	$self->{build}{construct_triples}	= $cont->[0];
+	
+	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+	$self->_add_patterns( $pattern );
+}
+
 sub _Binding_test {
 	my $self	= shift;
 	return $self->_test( '(' );
@@ -1088,15 +1123,17 @@ sub _Binding_test {
 
 sub _Binding {
 	my $self	= shift;
+	my $count	= shift;
+	
 	$self->_eat( '(' );
 	$self->__consume_ws_opt;
 	
 	my @terms;
-	$self->__consume_ws_opt;
-	$self->_BindingValue;
-	push( @terms, splice(@{ $self->{stack} }));
-	$self->__consume_ws_opt;
-	while ($self->_BindingValue_test) {
+	foreach my $i (1..$count) {
+		unless ($self->_BindingValue_test) {
+			my $found	= $i-1;
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $count BindingValues but only found $found";
+		}
 		$self->_BindingValue;
 		push( @terms, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
@@ -1190,6 +1227,10 @@ sub _GroupClause {
 	my $self	= shift;
 	$self->_eat( qr/GROUP\s+BY/i );
 	
+	if ($self->{build}{star}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: SELECT * cannot be used with aggregate grouping";
+	}
+	
 	$self->{build}{__aggregate}	||= {};
 	my @vars;
 	$self->__consume_ws_opt;
@@ -1203,6 +1244,25 @@ sub _GroupClause {
 		push( @vars, $v );
 		$self->__consume_ws_opt;
 	}
+
+	my %seen;
+	foreach my $v (@vars) {
+		if ($v->isa('RDF::Query::Node::Variable') or $v->isa('RDF::Query::Expression::Alias')) {
+			my $name	= $v->name;
+			$seen{ $name }++;
+		}
+	}
+	foreach my $v (@{ $self->{build}{variables} }) {
+		if ($v->isa('RDF::Query::Node::Variable') or $v->isa('RDF::Query::Expression::Alias')) {
+			my $name	= $v->name;
+			if ($v->isa('RDF::Query::Node::Variable')) {
+				unless ($seen{ $name }) {
+					throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
+				}
+			}
+		}
+	}
+	
 	$self->{build}{__group_by}	= \@vars;
 	$self->__consume_ws_opt;
 }
@@ -1597,7 +1657,8 @@ sub _Bind {
 
 sub _ServiceGraphPattern {
 	my $self	= shift;
-	$self->_eat( qr/SERVICE/i );
+	my $op		= $self->_eat( qr/SERVICE(\s+SILENT)?/i );
+	my $silent	= ($op =~ /SILENT/i);
 	$self->__consume_ws_opt;
 	$self->_IRIref;
 	my ($iri)	= splice( @{ $self->{stack} } );
@@ -1605,7 +1666,7 @@ sub _ServiceGraphPattern {
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
 	
-	my $pattern	= RDF::Query::Algebra::Service->new( $iri, $ggp );
+	my $pattern	= RDF::Query::Algebra::Service->new( $iri, $ggp, $silent );
 	$self->_add_patterns( $pattern );
 	
 	my $opt		= ['RDF::Query::Algebra::Service', $iri, $ggp];
