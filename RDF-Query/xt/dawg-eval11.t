@@ -502,6 +502,41 @@ sub get_expected_results {
 		my $model	= new_model( $file );
 		my $stream	= $model->get_statements();
 		return $stream;
+	} elsif ($file =~ /[.](srj|json)/) {
+		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
+		my $iter	= RDF::Trine::Iterator->from_json( $data );
+		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
+			return sprintf( '"%s"^^<http://www.w3.org/2001/XMLSchema#boolean>', ($iter->next ? 'true' : 'false') );
+		} else {
+			my @results;
+			my %bnode_map;
+			my $bnode_next	= 0;
+			while (my $r = $iter->next) {
+				my %result;
+				foreach my $v (keys %$r) {
+					my $node	= $r->{ $v };
+					if (blessed($node)) {
+						if ($node->isa('RDF::Trine::Node::Literal')) {
+							$result{ $v }	= literal_as_string( $node->literal_value, $node->literal_value_language, $node->literal_datatype );					
+						} elsif ($node->isa('RDF::Trine::Node::Blank')) {
+							my $id;
+							my $bnode	= $node->blank_identifier;
+							if (exists $bnode_map{ $bnode }) {
+								$id	= $bnode_map{ $bnode };
+							} else {
+								$id	= join('', 'r', $bnode_next++);
+								$bnode_map{ $bnode }	= $id;
+							}
+							$result{ $v }	= $id;
+						} else {
+							$result{ $v }	= $node->uri_value;
+						}
+					}
+				}
+				push(@results, \%result);
+			}
+			return \@results;
+		}
 	} elsif ($file =~ /[.]srx/) {
 		my $data		= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
 		my $xml			= XML::Simple::XMLin( $file );
