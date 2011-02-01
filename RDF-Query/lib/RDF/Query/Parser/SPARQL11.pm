@@ -1579,7 +1579,6 @@ sub _GraphPatternNotTriples {
 
 sub _Bind {
 	my $self	= shift;
-	$self->__close_bgp_with_filters;
 	my $cont	= $self->_pop_pattern_container || [];
 	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 	$self->_eat(qr/BIND/i);
