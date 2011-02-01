@@ -233,6 +233,33 @@ sub add_list {
 	}
 }
 
+=item C<< get_list ( $head ) >>
+
+Returns a list of nodes that are elements of the rdf:List represented by the
+supplied head node.
+
+=cut
+
+sub get_list {
+	my $self	= shift;
+	my $head	= shift;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @elements;
+	my %seen;
+	while (blessed($head) and not($head->equals( $rdf->nil ))) {
+		if ($seen{ $head->as_string }++) {
+			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
+		}
+		my @n		= $self->objects( $head, $rdf->first );
+		if (scalar(@n) != 1) {
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
+		}
+		push(@elements, @n);
+		($head)	= $self->objects( $head, $rdf->rest );
+	}
+	return @elements;
+}
+
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<< $statement >> from the rdf store.
