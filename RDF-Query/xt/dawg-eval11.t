@@ -63,12 +63,14 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 		basic-update
 		bind
 		clear
-		drop
+		construct
 		delete
 		delete-data
 		delete-where
+		drop
 		functions
 		grouping
+		json-res
 		negation
 		project-expression
 		property-path
@@ -79,7 +81,6 @@ print "# Using model object from " . ref($model) . "\n";
 {
 	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 	my $inc		= $ns->include;
-	
 	
 	my $objects	= $model->objects( undef, $inc );
 	if (my $list = $objects->next) {
@@ -264,7 +265,7 @@ sub update_eval_test {
 	eval {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 		unless ($query) {
-			warn RDF::Query->error;
+			warn 'Query error: ' . RDF::Query->error;
 			return;
 		}
 		$query->execute( $test_model );
