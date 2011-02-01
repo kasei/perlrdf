@@ -1,4 +1,4 @@
-use Test::More tests => 35;
+use Test::More tests => 37;
 use Test::Exception;
 
 use strict;
@@ -89,6 +89,19 @@ while (my($k,$v) = each(%name_expect)) {
 	);
 	is( $type, 'application/xhtml+xml', "negotiation with both 'among' restriction and 'extend' custom type" );
 	is( $s, 'xhtml', 'negotiation custom type thunk' );
+}
+
+{
+	my $h = new HTTP::Headers;
+	$h->header(Accept=>"application/rdf+xml;q=0.9,text/turtle;q=0.7");
+	my ($type, $s)	= RDF::Trine::Serializer->negotiate(
+		request_headers => $h,
+		extend => {
+			'application/rdf+xml'	=> 'rdfxml',
+		},
+	);
+	is($type, 'application/rdf+xml', 'extended negotiation with media type collision');
+	is($s, 'rdfxml', 'extended negotiation with media type collision');
 }
 
 

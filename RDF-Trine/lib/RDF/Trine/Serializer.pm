@@ -112,7 +112,7 @@ sub negotiate {
 	} else {
 		%sclasses = reverse %serializer_names;
 	}
-	my @variants;
+	my @default_variants;
 	while (my($type, $sclass) = each(%media_types)) {
 		next unless $sclasses{$sclass};
 		my $class = $media_types{$type};
@@ -120,14 +120,19 @@ sub negotiate {
 		$qv		-= 0.01 if ($type =~ m#/x-#);				# prefer non experimental media types
 		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
 		$qv		-= 0.01 if ($type eq 'text/plain');			# prefer types that are more specific than just text/plain
-		push(@variants, [$type, $qv, $type]);
+		push(@default_variants, [$type, $qv, $type]);
 	}
 	
 	my %custom_thunks;
+	my @custom_variants;
 	while (my($type,$thunk) = each(%$extend)) {
-		push(@variants, [$thunk, 1.0, $type]);
+		push(@custom_variants, [$thunk, 1.0, $type]);
 		$custom_thunks{ $thunk }	= [$type, $thunk];
 	}
+	
+	# remove variants with media types that are in custom_variants from @variants
+	my @variants	= grep { not exists $extend->{ $_->[2] } } @default_variants;
+	push(@variants, @custom_variants);
 	
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and $custom_thunks{ $stype }) {
