@@ -108,32 +108,45 @@ my $type	= RDF::Trine::Node::Resource->new( "http://www.w3.org/1999/02/22-rdf-sy
 my $qevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
 my $uevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2009/sparql/tests/test-update#UpdateEvaluationTest" );
 my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
+my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 
 {
 	print "# Query Evaluation Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $qevalt );
-	while (my $statement = $stream->next()) {
-		my $test		= $statement->subject;
-		my $name		= get_first_literal( $model, $test, $mfname );
-		unless ($test->uri_value =~ /$PATTERN/) {
-			next;
+	my @manifests	= $model->subjects( $type, $mf->Manifest );
+	foreach my $m (@manifests) {
+		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		my ($list)	= $model->objects( $m, $mf->entries );
+		my @tests	= $model->get_list( $list );
+		foreach my $test (@tests) {
+			if ($model->count_statements($test, $type, $qevalt)) {
+				my $name		= get_first_literal( $model, $test, $mfname );
+				unless ($test->uri_value =~ /$PATTERN/) {
+					next;
+				}
+				warn "### query eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+				query_eval_test( $model, $test, $earl );
+			}
 		}
-		warn "### query eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
-		query_eval_test( $model, $test, $earl );
 	}
 }
 
 {
 	print "# Update Evaluation Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $uevalt );
-	while (my $statement = $stream->next()) {
-		my $test		= $statement->subject;
-		my $name		= get_first_literal( $model, $test, $mfname );
-		unless ($test->uri_value =~ /$PATTERN/) {
-			next;
+	my @manifests	= $model->subjects( $type, $mf->Manifest );
+	foreach my $m (@manifests) {
+		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		my ($list)	= $model->objects( $m, $mf->entries );
+		my @tests	= $model->get_list( $list );
+		foreach my $test (@tests) {
+			if ($model->count_statements($test, $type, $uevalt)) {
+				my $name		= get_first_literal( $model, $test, $mfname );
+				unless ($test->uri_value =~ /$PATTERN/) {
+					next;
+				}
+				warn "### update eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+				update_eval_test( $model, $test, $earl );
+			}
 		}
-		warn "### update eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
-		update_eval_test( $model, $test, $earl );
 	}
 }
 
