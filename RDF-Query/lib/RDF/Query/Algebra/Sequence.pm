@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sequence - Algebra class for a sequence of algebra operatio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sequence version 2.903.
+This document describes RDF::Query::Algebra::Sequence version 2.904.
 
 =cut
 
@@ -30,12 +30,15 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -88,7 +91,7 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent} || '  ';
 	
-	my @patterns	= sort map { $_->sse( $context ) } $self->patterns;
+	my @patterns	= map { $_->sse( $context ) } $self->patterns;
 	return sprintf(
 		"(sequence\n${prefix}${indent}%s\n${prefix})",
 		join("\n${prefix}${indent}", @patterns)

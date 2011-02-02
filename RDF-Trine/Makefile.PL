@@ -8,12 +8,13 @@ all_from			'lib/RDF/Trine.pm';
 author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'perl';
 
-build_requires		'Test::More'				=> 0.61;
+build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 
 perl_version		'5.008003';
 
+requires			'Module::Load::Conditional'	=> 0.40;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
 requires			'DBD::SQLite'				=> 1.14;

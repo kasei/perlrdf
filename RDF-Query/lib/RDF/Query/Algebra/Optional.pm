@@ -7,7 +7,7 @@ RDF::Query::Algebra::Optional - Algebra class for Optional patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Optional version 2.903.
+This document describes RDF::Query::Algebra::Optional version 2.904.
 
 =cut
 
@@ -26,12 +26,15 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -116,9 +119,23 @@ sub as_sparql {
 	my $string	= sprintf(
 		"%s\n${indent}OPTIONAL %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->optional->as_sparql( $context, $indent ),
+		$self->optional->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
 	);
 	return $string;
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @lhs		= $self->pattern->as_spin($model);
+	my @rhs		= $self->optional->as_spin($model);
+	my $opt		= RDF::Query::Node::Blank->new();
+	my $list	= $model->add_list( @rhs );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $rdf->type, $spin->Optional) );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $spin->elements, $list) );
+	return (@lhs, $opt);
 }
 
 =item C<< as_hash >>

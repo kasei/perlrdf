@@ -5,7 +5,10 @@ RDF::Trine - An RDF Framework for Perl.
    components:
 
    * RDF::Trine::Model - RDF model providing access to a triple store.
-   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, and RDF/JSON).
+   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, RDF/JSON,
+     TriG, N-Triples, and N-Quads).
+   * RDF::Trine::Serializer, a set of native RDF serializers for RDF/XML, Turtle,
+     RDF/JSON, N-Triples, Canonical N-Triples, and N-Quads.
    * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
      Redland schema.
    * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
@@ -64,6 +67,29 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.132 (2010-12-23)
+
+     * Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional.
+     * Added auto-initialization of DBI stores during object construction.
+     * Added RDF::Trine::Store->new method to delegate to existing constructors.
+     * Moved slow turtle parser tests into developer tests directory xt/.
+
+  Version 0.131 (2010-12-07)
+
+     * Fixed SPARQL XML Results serialization to omit unbound variables and properly declare literal languages and datatypes.
+     * Copied implementations of is_numeric_type() and numeric_value() from RDF::Query::Node::Literal to RDF::Trine::Node::Literal.
+     * Updated documentation to explicitly discuss inherited methods due to subclassing  (RT 63153 comment from Ivan Shmakov).
+     * Updated POD for RDF::Trine::Iterator subclasses (RT 63153 comment from Ivan Shmakov).
+     * Fixed RDF::Trine::Parser->guess_parser_by_filename to get RDF/XML parser class from parser_by_media_type() instead of being hardcoded.
+     * Fixed RDF::Trine::Serializer::Turtle::_node_concise_string to allow call as class method.
+     * Added RDF::Trine::Parser::Redland subclasses to allow calling new() with no 'name' argument.
+     * Added file extensions to parser registry for RDF::Trine::Parser::Redland.
+     * Added RDF::Trine::Model->as_graphviz method.
+     * Added checks to avoid undefined warnings in RDF::Trine::Serializer::NTriples::Canonical (suggestion from KjetilK).
+     * Set :utf8 mode on string-backed filehandles in RDF::Trine::Serializer::Turtle.
+     * Attempt at patching utf8 turtle/trig parsing bug submitted by KjetilK.
+     * Updated required version of Test::More to 0.88 (bugreport from @danbri).
 
   Version 0.130 (2010-10-18)
 

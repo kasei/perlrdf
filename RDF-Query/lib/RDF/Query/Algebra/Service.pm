@@ -7,7 +7,7 @@ RDF::Query::Algebra::Service - Algebra class for SERVICE (federation) patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Service version 2.903.
+This document describes RDF::Query::Algebra::Service version 2.904.
 
 =cut
 
@@ -32,18 +32,21 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
+
 =over 4
 
 =cut
 
-=item C<new ( $endpoint, $pattern )>
+=item C<new ( $endpoint, $pattern, $silent )>
 
 Returns a new Service structure.
 
@@ -53,7 +56,8 @@ sub new {
 	my $class		= shift;
 	my $endpoint	= shift;
 	my $pattern		= shift;
-	return bless( [ 'SERVICE', $endpoint, $pattern ], $class );
+	my $silent		= shift || 0;
+	return bless( [ 'SERVICE', $endpoint, $pattern, $silent ], $class );
 }
 
 =item C<< construct_args >>
@@ -97,6 +101,17 @@ sub pattern {
 		$self->[2]	= $pattern;
 	}
 	return $self->[2];
+}
+
+=item C<< silent >>
+
+Returns true if the service operation is to ignore errors during execution.
+
+=cut
+
+sub silent {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< add_bloom ( $variable, $filter ) >>
@@ -157,10 +172,12 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift;
+	my $op		= ($self->silent) ? 'SERVICE SILENT' : 'SERVICE';
 	my $string	= sprintf(
-		"SERVICE %s %s",
+		"%s %s %s",
+		$op,
 		$self->endpoint->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
 	);
 	return $string;
 }

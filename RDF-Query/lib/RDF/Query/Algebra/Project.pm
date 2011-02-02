@@ -7,7 +7,7 @@ RDF::Query::Algebra::Project - Algebra class for projection
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Project version 2.903.
+This document describes RDF::Query::Algebra::Project version 2.904.
 
 =cut
 
@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Set::Scalar;
-use Scalar::Util qw(reftype blessed);
+use Scalar::Util qw(reftype blessed refaddr);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(sgrep);
 
@@ -28,12 +28,15 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -165,10 +168,11 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
 	my $pattern	= $self->pattern;
+	$context->{ force_ggp_braces }++;
 	
 	my ($vars, $_sparql);
 	my $vlist	= $self->vars;
@@ -182,7 +186,55 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
+	
+	my $aggregate	= 0;
 	my $group	= '';
+	my $having	= '';
+	my $order	= '';
+	my %agg_projections;
+	my @aggs	= $pattern->subpatterns_of_type( 'RDF::Query::Algebra::Aggregate' );
+	if (@aggs) {
+		# aggregate check
+		my $p	= $pattern;
+		if ($p->isa('RDF::Query::Algebra::Sort')) {
+			$context->{ skip_sort }++;
+			$order	= $p->_as_sparql_order_exprs( $context, $indent );
+			$p	= $p->pattern
+		}
+		if ($p->isa('RDF::Query::Algebra::Filter')) {
+			$context->{ skip_filter }++;
+			$having	= $p->expr->as_sparql( $context, $indent );
+			$p		= $p->pattern;
+		}
+		$p	= ($p->patterns)[0] if ($p->isa('RDF::Query::Algebra::GroupGraphPattern') and scalar(@{[$p->patterns]}) == 1);
+		if ($p->isa('RDF::Query::Algebra::Extend') and $p->pattern->isa('RDF::Query::Algebra::Aggregate')) {
+			my $pp	= $p->pattern;
+			$context->{ skip_extend }++;
+			my $vlist	= $p->vars;
+			foreach my $k (@$vlist) {
+				if ($k->isa('RDF::Query::Expression::Alias')) {
+					my $var		= $k->name;
+					my $expr	= $k->expression;
+					my $exprstr;
+					if ($expr->isa('RDF::Query::Expression::Binary')) {
+						$exprstr	= $expr->as_sparql( $context, $indent );
+					} else {
+						$exprstr	= $k->expression->name;
+					}
+					my $str		= "($exprstr AS ?$var)";
+					$agg_projections{ '?' . $var }	= $str;
+				} else {
+					warn Dumper($k) . ' ';
+				}
+			}
+			
+			my @groups	= $pp->groupby;
+			if (@groups) {
+				$group	= join(' ', map { $_->as_sparql($context, $indent) } @groups);
+			}
+		}
+	}
+	
 	if ($pattern->isa('RDF::Query::Algebra::Extend')) {
 		my %seen;
 		my $vlist	= $pattern->vars;
@@ -210,14 +262,20 @@ sub as_sparql {
 			$_sparql	= $pp->as_sparql( $context, $indent );
 		}
 	} else {
-		my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-		my $svars	= join(' ', sort @vars);
-		$vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
+		my $pvars	= join(' ', map { my $agg = $agg_projections{ "?$_" }; defined($agg) ? $agg : "?$_" } sort $self->pattern->referenced_variables);
+		my $svars	= join(' ', map { my $agg = $agg_projections{ $_ }; defined($agg) ? $agg : $_ } sort @vars);
+		$vars		= ($pvars eq $svars) ? '*' : join(' ', map { my $agg = $agg_projections{ $_ }; defined($agg) ? $agg : $_ } @vars);
 		$_sparql	= $pattern->as_sparql( $context, $indent );
 	}
 	my $sparql	= sprintf("%s WHERE %s", $vars, $_sparql);
 	if ($group) {
 		$sparql	.= "\n${indent}GROUP BY $group";
+	}
+	if ($having) {
+		$sparql	.= "\n${indent}HAVING $having";
+	}
+	if ($order) {
+		$sparql	.= "\n${indent}ORDER BY $order";
 	}
 	return $sparql;
 }
@@ -236,6 +294,25 @@ sub as_hash {
 		variables	=> [ map { $_->as_hash } @{ $self->vars } ],
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my $q		= RDF::Query::Node::Blank->new();
+	my @nodes	= $self->pattern->as_spin( $model );
+	
+	$model->add_statement( RDF::Trine::Statement->new($q, $rdf->type, $spin->Select) );
+	
+	my @vars	= map { RDF::Query::Node::Blank->new( "variable_" . $_->name ) } @{ $self->vars };
+	my $vlist	= $model->add_list( @vars );
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->resultVariables, $vlist) );
+	
+	my $list	= $model->add_list( @nodes );
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->where, $list) );
+	return $q;
 }
 
 =item C<< type >>

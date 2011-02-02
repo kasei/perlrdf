@@ -12,7 +12,7 @@ binmode( \*STDERR, ':utf8' );
 use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Parser;
 
-my $parser	= RDF::Trine::Parser->new( 'ntriples' );
+my $parser	= RDF::Trine::Parser::NTriples->new();
 isa_ok( $parser, 'RDF::Trine::Parser::NTriples' );
 
 {

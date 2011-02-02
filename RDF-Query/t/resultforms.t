@@ -162,7 +162,7 @@ END
 						?img dcterms:spatial ?point .
 						?point geo:long ?long .
 					}
-			ORDER BY ASC(xsd:float(?long * -1))
+			ORDER BY ASC(xsd:float(xsd:decimal(?long) * -1))
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
@@ -201,7 +201,7 @@ END
 						?img dcterms:spatial ?point .
 						?point geo:long ?long .
 					}
-			ORDER BY DESC(xsd:float(?long * -1))
+			ORDER BY DESC(xsd:float(xsd:decimal(?long) * -1))
 END
 		my $stream	= $query->execute( $model );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );

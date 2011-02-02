@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.130
+This document describes RDF::Trine::Serializer::RDFXML version 0.132
 
 =head1 SYNOPSIS
 
@@ -21,6 +21,9 @@ The RDF::Trine::Serializer::Turtle class provides an API for serializing RDF
 graphs to the RDF/XML syntax.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
 
 =over 4
 
@@ -46,7 +49,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -68,7 +71,11 @@ sub new {
 	my $self = bless( { namespaces => { 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf' } }, $class);
 	if (my $ns = $args{namespaces}) {
 		my %ns		= %{ $ns };
-		my %nsmap	= reverse %ns;
+		my %nsmap;
+		while (my ($ns, $uri) = each(%ns)) {
+			my $uri	= blessed($uri) ? $uri->uri_value : $uri;
+			$nsmap{ $uri }	= $ns;
+		}
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
@@ -174,8 +181,11 @@ sub _statements_same_subject_as_string {
 		my $prefix	= $namespaces{ $ns };
 		if ($o->isa('RDF::Trine::Node::Literal')) {
 			my $lv		= $o->literal_value;
-			$lv			=~ s/&/&amp;/g;
-			$lv			=~ s/</&lt;/g;
+			for ($lv) {
+				s/&/&amp;/g;
+				s/</&lt;/g;
+				s/"/&quot;/g;
+			}
 			my $lang	= $o->literal_value_language;
 			my $dt		= $o->literal_datatype;
 			my $tag	= join(':', $prefix, $ln);
@@ -188,9 +198,19 @@ sub _statements_same_subject_as_string {
 			}
 		} elsif ($o->isa('RDF::Trine::Node::Blank')) {
 			my $b	= $o->blank_identifier;
+			for ($b) {
+				s/&/&amp;/g;
+				s/</&lt;/g;
+				s/"/&quot;/g;
+			}
 			$string	.= qq[\t<${prefix}:$ln rdf:nodeID="$b"/>\n];
 		} else {
 			my $u	= $o->uri_value;
+			for ($u) {
+				s/&/&amp;/g;
+				s/</&lt;/g;
+				s/"/&quot;/g;
+			}
 			$string	.= qq[\t<${prefix}:$ln rdf:resource="$u"/>\n];
 		}
 	}

@@ -9,7 +9,7 @@ use RDF::Trine::Error qw(:try);
 use Scalar::Util qw(blessed);
 
 my @manifests	= glob( "xt/dawg11/*/manifest.ttl" );
-my @files	= scalar(@ARGV) ? @ARGV : glob('earl*.ttl');
+my @files	= scalar(@ARGV) ? @ARGV : glob('earl*11.ttl');
 my $model	= RDF::Trine::Model->temporary_model;
 my $parser	= RDF::Trine::Parser->new('turtle');
 foreach my $f (@files, @manifests) {

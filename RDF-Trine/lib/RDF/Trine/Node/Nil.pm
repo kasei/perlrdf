@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 0.130
+This document describes RDF::Trine::Node::Nil version 0.132
 
 =cut
 
@@ -27,12 +27,18 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 }
 
 ######################################################################
 
+use overload	'""'	=> sub { $_[0]->sse },
+			;
+
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Node> class.
 
 =over 4
 

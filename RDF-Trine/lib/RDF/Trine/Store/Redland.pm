@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.130
+This document describes RDF::Trine::Store::Redland version 0.132
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.130";
+	$VERSION	= "0.132";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -46,6 +46,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
 
 =over 4
 
@@ -126,12 +129,12 @@ sub _new_with_object {
 
 sub _config_meta {
 	return {
-		required_keys	=> [qw(store_name name options)]
+		required_keys	=> [qw(store_name name options)],
 		fields			=> {
 			store_name	=> { description => 'Redland Storage Type', type => 'string' },
 			name		=> { description => 'Storage Name', type => 'string' },
 			options		=> { description => 'Options String', type => 'string' },
-		}
+		},
 	}
 }
 

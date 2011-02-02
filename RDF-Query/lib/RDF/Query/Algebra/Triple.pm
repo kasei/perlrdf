@@ -7,7 +7,7 @@ RDF::Query::Algebra::Triple - Algebra class for Triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Triple version 2.903.
+This document describes RDF::Query::Algebra::Triple version 2.904.
 
 =cut
 
@@ -32,12 +32,15 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -110,6 +113,24 @@ sub as_hash {
 		type 	=> lc($self->type),
 		nodes	=> [ map { $_->as_hash } $self->nodes ],
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $t		= RDF::Query::Node::Blank->new();
+	my @nodes	= $self->nodes;
+	foreach (@nodes) {
+		if (blessed($_) and $_->isa('RDF::Trine::Node::Variable')) {
+			$_	= RDF::Query::Node::Blank->new( "variable_" . $_->name );
+		}
+	}
+	
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->subject, $nodes[0]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->predicate, $nodes[1]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->object, $nodes[2]) );
+	return $t;
 }
 
 =item C<< referenced_blanks >>

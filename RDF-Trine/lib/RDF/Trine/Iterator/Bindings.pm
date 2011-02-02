@@ -7,19 +7,23 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.130
+This document describes RDF::Trine::Iterator::Bindings version 0.132
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator;
-    
-    my $iterator = RDF::Trine::Iterator::Bindings->new( \&data, \@names );
-    while (my $row = $iterator->next) {
-    	my @vars	= keys %$row;
-    	# do something with @vars
-    }
+ use RDF::Trine::Iterator::Bindings;
+ 
+ my $iterator = RDF::Trine::Iterator::Bindings->new( \&data, \@names );
+ while (my $row = $iterator->next) {
+   # $row is a HASHref containing variable name -> RDF Term bindings
+   my @vars = keys %$row;
+   print $row->{ 'var' }->as_string;
+ }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator> class.
 
 =over 4
 
@@ -45,7 +49,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.132';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -53,7 +57,7 @@ BEGIN {
 =item C<new ( \&results, \@names, %args )>
 
 Returns a new SPARQL Result interator object. Results must be either
-an reference to an array containing results or a CODE reference that
+a reference to an array containing results or a CODE reference that
 acts as an iterator, returning successive items when called, and
 returning undef when the iterator is exhausted.
 

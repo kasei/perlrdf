@@ -247,7 +247,7 @@ sub compare {
 	my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
 	my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
 	$file		=~ s/[.]rdf$/.nt/;
-	my $parser	= RDF::Trine::Parser->new( 'ntriples' );
+	my $parser	= RDF::Trine::Parser::NTriples->new();
 	my $emodel	= RDF::Trine::Model->temporary_model;
 	open( my $fh, '<', $file );
 	$parser->parse_file_into_model ( $url, $fh, $emodel );

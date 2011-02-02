@@ -60,11 +60,17 @@ my @manifests;
 my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
 		aggregates
+		basic-update
 		bind
+		clear
+		construct
 		delete
 		delete-data
 		delete-where
+		drop
+		functions
 		grouping
+		json-res
 		negation
 		project-expression
 		property-path
@@ -75,7 +81,6 @@ print "# Using model object from " . ref($model) . "\n";
 {
 	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 	my $inc		= $ns->include;
-	
 	
 	my $objects	= $model->objects( undef, $inc );
 	if (my $list = $objects->next) {
@@ -132,11 +137,9 @@ my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAcc
 	}
 }
 
-unless ($PATTERN) {
-	open( my $fh, '>', 'earl-eval-11.ttl' ) or die $!;
-	print {$fh} earl_output( $earl );
-	close($fh);
-}
+open( my $fh, '>', 'earl-eval-11.ttl' ) or die $!;
+print {$fh} earl_output( $earl );
+close($fh);
 
 ################################################################################
 
@@ -180,7 +183,7 @@ sub update_eval_test {
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
 	warn "Loading SPARQL query from file $filename" if ($debug);
-	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
+	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: $filename; " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
 
 	my $q			= $sparql;
 	$q				=~ s/\s+/ /g;
@@ -208,7 +211,7 @@ sub update_eval_test {
 	};
 	
 	foreach my $gdata (@gdata) {
-		my $data	= get_first_obj( $model, $gdata, $ut->graph );
+		my $data	= get_first_obj( $model, $gdata, $ut->data ) || get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
 		try {
@@ -224,9 +227,9 @@ sub update_eval_test {
 	}
 	
 	my $result_status	= get_first_obj( $model, $result, $ut->result );
-	my @resgdata			= get_all_obj( $model, $result, $ut->graphData );
+	my @resgdata		= get_all_obj( $model, $result, $ut->graphData );
 	my $expected_model	= new_model();
-	my $resdata		= get_first_obj( $model, $result, $ut->data );
+	my $resdata			= get_first_obj( $model, $result, $ut->data );
 	try {
 		if (blessed($resdata)) {
 			RDF::Trine::Parser->parse_url_into_model( $resdata->uri_value, $expected_model );
@@ -239,26 +242,30 @@ sub update_eval_test {
 		return;
 	};
 	foreach my $gdata (@resgdata) {
-		my $data	= get_first_obj( $model, $gdata, $ut->graph );
+		my $data	= get_first_obj( $model, $gdata, $ut->data ) || get_first_obj( $model, $gdata, $ut->graph );
 		my $graph	= get_first_obj( $model, $gdata, $rdfs->label );
 		my $uri		= $graph->literal_value;
-		try {
-			warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
-			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
-		} catch Error with {
-			my $e	= shift;
-			fail($test->as_string);
-			earl_fail_test( $earl, $test, $e->text );
-			print "# died: " . $test->as_string . ": $e\n";
-			return;
-		};
+		my $return	= 0;
+		if ($data) {
+			try {
+				warn "expected result data file: " . $data->uri_value . "\n" if ($debug);
+				RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $expected_model, context => RDF::Trine::Node::Resource->new($uri) );
+			} catch Error with {
+				my $e	= shift;
+				fail($test->as_string);
+				earl_fail_test( $earl, $test, $e->text );
+				print "# died: " . $test->as_string . ": $e\n";
+				$return	= 1;
+			};
+			return if ($return);
+		}
 	}
 	
 	my $ok	= 0;
 	eval {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 		unless ($query) {
-			warn RDF::Query->error;
+			warn 'Query error: ' . RDF::Query->error;
 			return;
 		}
 		$query->execute( $test_model );
@@ -327,7 +334,7 @@ sub query_eval_test {
 	my (undef,$base,undef)	= File::Spec->splitpath( $filename );
 	$base					= "file://${base}";
 	warn "Loading SPARQL query from file $filename" if ($debug);
-	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { fail("$!: " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
+	my $sparql				= do { local($/) = undef; open(my $fh, '<', $filename) or do { warn("$!: $filename; " . $test->as_string); return }; binmode($fh, ':utf8'); <$fh> };
 	
 	my $q			= $sparql;
 	$q				=~ s/\s+/ /g;
@@ -413,7 +420,12 @@ sub add_to_model {
 	my @files	= @_;
 	
 	foreach my $file (@files) {
-		RDF::Trine::Parser->parse_url_into_model( $file, $model );
+		try {
+			RDF::Trine::Parser->parse_url_into_model( $file, $model );
+		} catch Error with {
+			my $e	= shift;
+			warn "Failed to load $file into model: " . $e->text;
+		};
 	}
 }
 

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Create - Algebra class for CREATE GRAPH operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Create version 2.903.
+This document describes RDF::Query::Algebra::Create version 2.904.
 
 =cut
 
@@ -32,12 +32,15 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 

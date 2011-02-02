@@ -7,12 +7,28 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 30;
+use Test::More tests => 33;
 
 use_ok( 'RDF::Query' );
 
 ################################################################################
 ### AS_SPARQL TESTS
+
+{
+	my $sparql	= <<"END";
+PREFIX ex: <http://example.com/>
+SELECT ?x (SUM(?o) AS ?sum) WHERE {
+	?x ex:price ?o
+}
+GROUP BY ?x
+HAVING (SUM(?o) > 5)
+ORDER BY ?sum
+END
+	my $query	= new RDF::Query ( $sparql );
+	my $string	= $query->as_sparql;
+	$string		=~ s/\s+/ /gms;
+	is( $string, "PREFIX ex: <http://example.com/> SELECT ?x (SUM(?o) AS ?sum) WHERE { ?x ex:price ?o . } GROUP BY ?x HAVING (SUM(?o) > 5) ORDER BY ?sum", 'sparql to sparql aggregate' );
+}
 
 {
 	my $rdql	= qq{SELECT ?person WHERE (?person foaf:name "Gregory Todd Williams") USING foaf FOR <http://xmlns.com/foaf/0.1/>};
@@ -277,6 +293,23 @@ END
 END
 	my $sse	= $query->sse;
 	is( _CLEAN_WS($sse), '(base <http://xmlns.com/> (prefix ((foaf: <http://xmlns.com/foaf/0.1/>)) (project (?person) (BGP (triple ?person foaf:name "Gregory Todd Williams")))))', 'sse: select' );
+}
+
+{
+	my $query	= new RDF::Query ( <<"END", { update => 1 } );
+		LOAD <documentURI> INTO GRAPH <uri>
+END
+	my $sse	= $query->sse;
+	is( _CLEAN_WS($sse), '(load <documentURI> <uri>)', 'sse: load' );
+}
+
+{
+	my $query	= new RDF::Query ( <<"END", { update => 1 } );
+		LOAD <documentURI> ;
+		SELECT * WHERE { ?s ?p ?o }
+END
+	my $sse	= $query->sse;
+	is( _CLEAN_WS($sse), '(sequence (load <documentURI>) (project (?s ?p ?o) (BGP (triple ?s ?p ?o))))', 'sse: sequence' );
 }
 
 {

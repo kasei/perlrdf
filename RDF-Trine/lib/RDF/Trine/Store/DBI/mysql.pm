@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.130
+This document describes RDF::Trine::Store::DBI::mysql version 0.132
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.130";
+	$VERSION	= "0.132";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -46,6 +46,9 @@ sub _config_meta {
 }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store::DBI> class.
 
 =over 4
 

@@ -7,7 +7,7 @@ RDF::Query::Algebra::BasicGraphPattern - Algebra class for BasicGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::BasicGraphPattern version 2.903.
+This document describes RDF::Query::Algebra::BasicGraphPattern version 2.904.
 
 =cut
 
@@ -30,12 +30,15 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.903';
+	$VERSION	= '2.904';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -167,6 +170,14 @@ sub as_hash {
 		type 		=> lc($self->type),
 		patterns	=> [ map { $_->as_hash } $self->triples ],
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my @t		= $self->triples;
+	my @nodes	= map { $_->as_spin( $model ) } @t;
+	return @nodes;
 }
 
 =item C<< type >>

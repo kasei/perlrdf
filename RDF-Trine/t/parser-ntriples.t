@@ -12,7 +12,7 @@ binmode( \*STDERR, ':utf8' );
 use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Parser;
 
-my $parser	= RDF::Trine::Parser->new( 'ntriples' );
+my $parser	= RDF::Trine::Parser::NTriples->new();
 isa_ok( $parser, 'RDF::Trine::Parser::NTriples' );
 
 {
@@ -75,7 +75,7 @@ END
 
 {
 	# Canonicalization tests
-	my $parser	= RDF::Trine::Parser->new( 'ntriples', canonicalize => 1 );
+	my $parser	= RDF::Trine::Parser::NTriples->new( canonicalize => 1 );
 	{
 		my $model = RDF::Trine::Model->temporary_model;
 		my $ntriples	= qq[_:a <http://example.com/integer> "-0123"^^<http://www.w3.org/2001/XMLSchema#integer> .\n];
