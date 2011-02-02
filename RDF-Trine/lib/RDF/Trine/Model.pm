@@ -246,7 +246,7 @@ sub get_list {
 	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	my @elements;
 	my %seen;
-	while (blessed($head) and not($head->equals( $rdf->nil ))) {
+	while (blessed($head) and not($head->isa('RDF::Trine::Node::Resource') and $head->uri_value eq $rdf->nil->uri_value)) {
 		if ($seen{ $head->as_string }++) {
 			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
 		}
