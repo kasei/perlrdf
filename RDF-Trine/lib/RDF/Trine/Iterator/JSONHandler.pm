@@ -36,10 +36,23 @@ BEGIN {
 	$VERSION	= '0.132';
 }
 
+=item C<< new >>
+
+Returns a new JSON SPARQL Results parser object.
+
+=cut
+
 sub new {
 	my $class	= shift;
 	return bless({}, $class);
 }
+
+=item C<< parse ( $json ) >>
+
+Returns a RDF::Trine::Iterator object containing the data from the supplied JSON
+in JSON SPARQL Results format.
+
+=cut
 
 sub parse {
 	my $self	= shift;
