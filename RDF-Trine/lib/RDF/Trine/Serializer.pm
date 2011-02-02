@@ -115,11 +115,18 @@ sub negotiate {
 	my @default_variants;
 	while (my($type, $sclass) = each(%media_types)) {
 		next unless $sclasses{$sclass};
-		my $class = $media_types{$type};
-		my $qv	= ($type eq 'text/turtle') ? 0.9 : 0.89;	# slightly prefer turtle as a readable format to others
+		my $qv;
+		# slightly prefer turtle as a readable format to others
+		# try hard to avoid using ntriples as 'text/plain' isn't very useful for conneg
+		if ($type eq 'text/turtle') {
+			$qv	= 1.0;
+		} elsif ($type eq 'text/plain') {
+			$qv	= 0.2;
+		} else {
+			$qv	= 0.99;
+		}
 		$qv		-= 0.01 if ($type =~ m#/x-#);				# prefer non experimental media types
 		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
-		$qv		-= 0.01 if ($type eq 'text/plain');			# prefer types that are more specific than just text/plain
 		push(@default_variants, [$type, $qv, $type]);
 	}
 	
