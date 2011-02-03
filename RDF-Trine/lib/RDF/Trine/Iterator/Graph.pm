@@ -250,6 +250,7 @@ sub print_xml {
 	my $fh				= shift;
 	my $max_result_size	= shift || 0;
 	my $graph			= $self->unique();
+	binmode($fh, ':utf8');
 	
 	my $count	= 0;
 	no strict 'refs';

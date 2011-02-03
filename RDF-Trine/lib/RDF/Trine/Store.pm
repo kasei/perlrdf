@@ -113,12 +113,12 @@ documentation.
 An example invocation for the DBI store may be:
 
   my $store = RDF::Trine::Store->new_with_config({
-                                                  storetype => 'DBI',
-                                                  name      => 'mymodel',
-                                                  dsn       => 'DBI:mysql:database=rdf',
-                                                  username  => 'dahut',
-                                                  password  => 'Str0ngPa55w0RD'
-                                                 });
+                storetype => 'DBI',
+                name      => 'mymodel',
+                dsn       => 'DBI:mysql:database=rdf',
+                username  => 'dahut',
+                password  => 'Str0ngPa55w0RD'
+              });
 
 =cut
 
