@@ -1,4 +1,4 @@
-use Test::More tests => 37;
+use Test::More tests => 39;
 use Test::Exception;
 
 use strict;
@@ -119,12 +119,29 @@ while (my ($accept,$restrict) = each(%negotiate_fail)) {
 }
 
 {
-	print "# empty Accept header\n";
 	my ($sname, $etype)	= ();
 	my $h	= new HTTP::Headers;
 	$h->header(Accept => "");
 	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h );
-	like( $type, qr'^(text|application)/turtle$', "expected media type" );
+	like( $type, qr'^(text|application)/turtle$', "expected media type with empty accept header" );
 	isa_ok( $s, "RDF::Trine::Serializer::Turtle", "HTTP negotiated empty accept header to proper serializer" );
 }
 
+
+{
+	my $rdf	= <<'END';
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix : <http://example.com/> .
+
+:me a foaf:Person .
+END
+
+	my $map		= RDF::Trine::NamespaceMap->new();
+	my $model	= RDF::Trine::Model->new();
+	my $parser	= RDF::Trine::Parser->new( 'turtle', namespaces => $map );
+	$parser->parse_into_model( 'http://base/', $rdf, $model );
+	my $s		= RDF::Trine::Serializer->new( 'rdfxml', namespaces => $map );
+	my $xml		= $s->serialize_model_to_string( $model );
+	like( $xml, qr[xmlns="http://example.com/"]sm, 'good XML namespaces using namespacemap from parser' );
+	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/"]sm, 'good XML namespaces using namespacemap from parser' );
+}

@@ -73,7 +73,9 @@ sub new {
 		my %ns		= %{ $ns };
 		my %nsmap;
 		while (my ($ns, $uri) = each(%ns)) {
-			my $uri	= blessed($uri) ? $uri->uri_value : $uri;
+			for (1..2) {
+				$uri	= $uri->uri_value if (blessed($uri));
+			}
 			$nsmap{ $uri }	= $ns;
 		}
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
@@ -219,7 +221,13 @@ sub _statements_same_subject_as_string {
 	
 	# rdf namespace is already defined in the <rdf:RDF> tag, so ignore it here
 	my %seen	= %{ $self->{namespaces} };
-	my $ns	= join(' ', map { my $ns = $namespaces{$_}; qq[xmlns:${ns}="$_"] } sort { $namespaces{$a} cmp $namespaces{$b} } grep { not($seen{$_}) } (keys %namespaces));
+	my @ns;
+	foreach my $uri (sort { $namespaces{$a} cmp $namespaces{$b} } grep { not($seen{$_}) } (keys %namespaces)) {
+		my $ns	= $namespaces{$uri};
+		my $str	= ($ns eq '') ? qq[xmlns="$uri"] : qq[xmlns:${ns}="$uri"];
+		push(@ns, $str);
+	}
+	my $ns	= join(' ', @ns);
 	if ($ns) {
 		return qq[<rdf:Description ${ns} $id>\n] . $string;
 	} else {
@@ -282,7 +290,11 @@ sub _top_xmlns {
 	my @ns;
 	foreach my $v (@keys) {
 		my $k	= $namespaces->{$v};
-		push(@ns, qq[xmlns:$k="$v"]);
+		if (blessed($v)) {
+			$v	= $v->uri_value;
+		}
+		my $str	= ($k eq '') ? qq[xmlns="$v"] : qq[xmlns:$k="$v"];
+		push(@ns, $str);
 	}
 	my $ns		= join(' ', @ns);
 	return $ns;
