@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.132
+This document describes RDF::Trine::Serializer version 0.132_01
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.132_01';
 }
 
 use LWP::UserAgent;
