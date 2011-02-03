@@ -94,7 +94,7 @@ Returns a two-element list containing an appropriate media type and
 RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.
 If the C<< 'request_headers' >> key-value is supplied, the
 C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
-The option C<< 'among' >>, set to a list of serializer names, can be 
+The option C<< 'restrict' >>, set to a list of serializer names, can be 
 used to limit the serializers to choose from. The rest of 
 C<< %options >> is passed through to the serializer constructor.
 
@@ -104,11 +104,11 @@ sub negotiate {
 	my $class	= shift;
 	my %options	= @_;
 	my $headers	= delete $options{ 'request_headers' };
-	my $among	= delete $options{ 'among' };
+	my $restrict	= delete $options{ 'restrict' };
 	my $extend	= delete $options{ 'extend' } || {};
 	my %sclasses;
-	if (ref($among) && ref($among) eq 'ARRAY') {
-		$sclasses{ $serializer_names{$_} } = 1 for @$among;
+	if (ref($restrict) && ref($restrict) eq 'ARRAY') {
+		$sclasses{ $serializer_names{$_} } = 1 for @$restrict;
 	} else {
 		%sclasses = reverse %serializer_names;
 	}

@@ -72,8 +72,8 @@ while (my($k,$v) = each(%name_expect)) {
 {
 	my $h = new HTTP::Headers;
 	$h->header(Accept=>"application/rdf+xml;q=1,text/turtle;q=0.7");
-	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => [ 'turtle' ] );
-	is ( $type, 'text/turtle', 'choose less wanted serializer with among option' );
+	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, restrict => [ 'turtle' ] );
+	is ( $type, 'text/turtle', 'choose less wanted serializer with restrict option' );
 }
 
 {
@@ -81,13 +81,13 @@ while (my($k,$v) = each(%name_expect)) {
 	$h->header(Accept=>"application/xhtml+xml;q=0.8,application/rdf+xml;q=0.9,text/turtle;q=0.7");
 	my ($type, $s)	= RDF::Trine::Serializer->negotiate(
 		request_headers => $h,
-		among => [ 'turtle' ],
+		restrict => [ 'turtle' ],
 		extend => {
 			'text/html'	=> 'html',
 			'application/xhtml+xml' => 'xhtml',
 		},
 	);
-	is( $type, 'application/xhtml+xml', "negotiation with both 'among' restriction and 'extend' custom type" );
+	is( $type, 'application/xhtml+xml', "negotiation with both 'restrict' restriction and 'extend' custom type" );
 	is( $s, 'xhtml', 'negotiation custom type thunk' );
 }
 
@@ -110,11 +110,11 @@ my %negotiate_fail	= (
 	"application/rdf+xml" => ['turtle','rdfjson']
 );
 
-while (my ($accept,$among) = each(%negotiate_fail)) {
+while (my ($accept,$restrict) = each(%negotiate_fail)) {
 	throws_ok {
 		my $h = new HTTP::Headers;
 		$h->header(Accept => $accept);
-		my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => $among );
+		my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, restrict => $restrict );
 	} 'RDF::Trine::Error::SerializationError', "HTTP negotiated serialization throws on unknown/unwanted media type $accept";
 }
 
