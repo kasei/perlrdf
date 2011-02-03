@@ -101,11 +101,7 @@ The password of the database user.
 
 Initialize the store with a L<DBI::db> object.
 
-
 =cut
-
-
-
 
 sub new {
 	my $class	= shift;
@@ -465,9 +461,9 @@ sub add_statement {
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( @values );
 	unless ($sth->fetch) {
-		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values );
+		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
 		my $sth		= $dbh->prepare( $sql );
-		$sth->execute();
+		$sth->execute(@values);
 	}
 }
 
