@@ -36,6 +36,8 @@
                         asc:update      "Updated conneg code setting default q-values in RDF::Trine::Serializer." ;
                         asc:update      "Updated RDF::Trine::Iterator::Graph->print_xml to set utf8 binmode on the output filehandle." ;
                         asc:update      "Changed required version of Module::Load::Conditional to 0.38 (based on version in debian)." ;
+                        asc:update      "Fixed RDF/XML xmlns serialization bug when used with RDF::Trine::NamespaceMap objects." ;
+                        asc:update      "Added text/rdf+n3 as a media type for RDF::Trine::Serializer::Turtle." ;
                         ] .
 
 
