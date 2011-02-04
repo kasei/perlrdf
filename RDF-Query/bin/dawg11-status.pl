@@ -14,7 +14,12 @@ my $model	= RDF::Trine::Model->temporary_model;
 my $parser	= RDF::Trine::Parser->new('turtle');
 foreach my $f (@files, @manifests) {
 	try {
-		$parser->parse_file_into_model( 'file://', $f, $model );
+		my $base	= "file://";
+		if ($f =~ /manifest/) {
+			my ($dir)	= ($f =~ m{xt/dawg11/([^/]+)/manifest.ttl});
+			$base	= "http://www.w3.org/2009/sparql/docs/tests/data-sparql11/${dir}/manifest#";
+		}
+		$parser->parse_file_into_model( $base, $f, $model );
 	} catch Error with {
 		my $e	= shift;
 	};
@@ -79,7 +84,7 @@ print <<"END";
 </style></head>
 <body>
 <h1>SPARQL 1.1 Test Results for RDF::Query</h1>
-<p>As of $date, running with commit $rev (<a href="http://github.com/kasei/perlrdf/tree/master">HEAD of master branch at github</a>)</p>
+<p>As of $date, running with <a href="https://github.com/kasei/perlrdf/commit/$rev">commit $rev</a> (<a href="http://github.com/kasei/perlrdf/tree/master">HEAD of master branch at github</a>)</p>
 
 <table>
 <tr>

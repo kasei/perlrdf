@@ -13,11 +13,11 @@ use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
 
 use RDF::Query;
-use RDF::Query::Node qw(iri);
+use RDF::Query::Node qw(iri blank literal variable);
 use RDF::Trine qw(statement);
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
-use RDF::Trine::Namespace qw(rdf rdfs);
+use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
@@ -63,12 +63,14 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 		basic-update
 		bind
 		clear
-		drop
+		construct
 		delete
 		delete-data
 		delete-where
+		drop
 		functions
 		grouping
+		json-res
 		negation
 		project-expression
 		property-path
@@ -79,7 +81,6 @@ print "# Using model object from " . ref($model) . "\n";
 {
 	my $ns		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 	my $inc		= $ns->include;
-	
 	
 	my $objects	= $model->objects( undef, $inc );
 	if (my $list = $objects->next) {
@@ -107,32 +108,45 @@ my $type	= RDF::Trine::Node::Resource->new( "http://www.w3.org/1999/02/22-rdf-sy
 my $qevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#QueryEvaluationTest" );
 my $uevalt	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2009/sparql/tests/test-update#UpdateEvaluationTest" );
 my $mfname	= RDF::Trine::Node::Resource->new( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
+my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 
 {
 	print "# Query Evaluation Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $qevalt );
-	while (my $statement = $stream->next()) {
-		my $test		= $statement->subject;
-		my $name		= get_first_literal( $model, $test, $mfname );
-		unless ($test->uri_value =~ /$PATTERN/) {
-			next;
+	my @manifests	= $model->subjects( $type, $mf->Manifest );
+	foreach my $m (@manifests) {
+		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		my ($list)	= $model->objects( $m, $mf->entries );
+		my @tests	= $model->get_list( $list );
+		foreach my $test (@tests) {
+			if ($model->count_statements($test, $type, $qevalt)) {
+				my $name		= get_first_literal( $model, $test, $mfname );
+				unless ($test->uri_value =~ /$PATTERN/) {
+					next;
+				}
+				warn "### query eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+				query_eval_test( $model, $test, $earl );
+			}
 		}
-		warn "### query eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
-		query_eval_test( $model, $test, $earl );
 	}
 }
 
 {
 	print "# Update Evaluation Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $uevalt );
-	while (my $statement = $stream->next()) {
-		my $test		= $statement->subject;
-		my $name		= get_first_literal( $model, $test, $mfname );
-		unless ($test->uri_value =~ /$PATTERN/) {
-			next;
+	my @manifests	= $model->subjects( $type, $mf->Manifest );
+	foreach my $m (@manifests) {
+		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		my ($list)	= $model->objects( $m, $mf->entries );
+		my @tests	= $model->get_list( $list );
+		foreach my $test (@tests) {
+			if ($model->count_statements($test, $type, $uevalt)) {
+				my $name		= get_first_literal( $model, $test, $mfname );
+				unless ($test->uri_value =~ /$PATTERN/) {
+					next;
+				}
+				warn "### update eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
+				update_eval_test( $model, $test, $earl );
+			}
 		}
-		warn "### update eval test: " . $test->as_string . " >>> " . $name->literal_value . "\n" if ($debug);
-		update_eval_test( $model, $test, $earl );
 	}
 }
 
@@ -264,7 +278,7 @@ sub update_eval_test {
 	eval {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 		unless ($query) {
-			warn RDF::Query->error;
+			warn 'Query error: ' . RDF::Query->error;
 			return;
 		}
 		$query->execute( $test_model );
@@ -374,11 +388,11 @@ sub query_eval_test {
 				warn $q;
 			}
 			print STDERR "getting actual results... " if ($debug);
-			my $actual		= get_actual_results( $test_model, $sparql, $base, @gdata );
+			my ($actual, $type)		= get_actual_results( $test_model, $sparql, $base, @gdata );
 			print STDERR "ok\n" if ($debug);
 			
 			print STDERR "getting expected results... " if ($debug);
-			my $type		= (blessed($actual) and $actual->isa( 'RDF::Trine::Iterator::Graph' )) ? 'graph' : '';
+#			my $type		= (blessed($actual) and $actual->isa( 'RDF::Trine::Iterator::Graph' )) ? 'graph' : '';
 			my $expected	= get_expected_results( $resfilename, $type );
 			print STDERR "ok\n" if ($debug);
 			
@@ -404,8 +418,7 @@ exit;
 
 sub new_model {
 	my @files		= @_;
-	my $store		= RDF::Trine::Store::Memory->temporary_store;
-	my $model		= RDF::Trine::Model->new( $store );
+	my $model		= RDF::Trine::Model->temporary_model;
 	my @uris		= file_uris(@files);
 	foreach my $u (@uris) {
 		warn "loading uri: $u" if ($debug > 1);
@@ -466,26 +479,30 @@ sub get_actual_results {
 		return;
 	}
 	
+	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
+	my $rmodel	= new_model();
 	my $results	= $query->execute_with_named_graphs( $model, @gdata );
 	if ($results->is_bindings) {
+		my $result_number	= 'result_1';
 		my @keys	= $results->binding_names;
 		my @results;
 		while (my $row = $results->next) {
-			my %data;
+			my $result_iri	= $testns->$result_number();
+			$result_number++;
 			foreach my $key (keys %$row) {
-				my $value	= node_as_string( $row->{ $key } );
-				if (defined $value) {
-#					my $string	= $bridge->as_string( $row->{ $key } );
-					$data{ $key }	= $value;
+				my $node	= $row->{$key};
+				if (blessed($node)) {
+					my $st	= statement( $result_iri, $testns->$key(), $node );
+					$rmodel->add_statement( $st );
 				}
 			}
-			push(@results, \%data);
 		}
-		return \@results;
+		return ($rmodel->get_statements, 'bindings');
 	} elsif ($results->is_boolean) {
-		return sprintf( '"%s"^^<http://www.w3.org/2001/XMLSchema#boolean>', ($results->get_boolean) ? 'true' : 'false' );
+		$rmodel->add_statement( statement( $testns->result, $testns->boolean, literal(($results->get_boolean ? 'true' : 'false'), undef, $xsd->boolean) ) );
+		return ($rmodel->get_statements, 'boolean');
 	} elsif ($results->is_graph) {
-		return $results;
+		return ($results, 'graph');
 # 		my $xml		= $results->as_xml;
 # 		my ($bridge, $model)	= new_model();
 # 		add_source_to_model( $bridge, $xml );
@@ -497,11 +514,39 @@ sub get_expected_results {
 	my $file		= shift;
 	my $type		= shift;
 	
+	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
 	if ($type eq 'graph') {
 		my $model	= new_model( $file );
 		my $stream	= $model->get_statements();
 		return $stream;
+	} elsif ($file =~ /[.](srj|json)/) {
+		my $model	= new_model();
+		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
+		my $iter	= RDF::Trine::Iterator->from_json( $data );
+		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($iter->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+			return $model->get_statements;
+		} else {
+			my @results;
+			my %bnode_map;
+			my $bnode_next	= 0;
+			my $result_number	= 'result_1';
+			while (my $r = $iter->next) {
+				my $result_iri	= $testns->$result_number();
+				$result_number++;
+				
+				my %result;
+				foreach my $v (keys %$r) {
+					my $node	= $r->{ $v };
+					if (blessed($node)) {
+						$model->add_statement( statement( $result_iri, $testns->$v(), $node ) );
+					}
+				}
+			}
+			return $model->get_statements;
+		}
 	} elsif ($file =~ /[.]srx/) {
+		my $model	= new_model();
 		my $data		= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
 		my $xml			= XML::Simple::XMLin( $file );
 		
@@ -517,68 +562,44 @@ sub get_expected_results {
 			my @results;
 			my %bnode_map;
 			my $bnode_next	= 0;
+			my $result_number	= 'result_1';
 			foreach my $r (@xml_results) {
-				my $binding	= $r->{binding};
-				my @bindings;
-				if (exists $binding->{name}) {
-					my $name	= $binding->{name};
-					push(@bindings, [$name, $binding]);
-				} else {
-					foreach my $key (keys %$binding) {
-						push(@bindings, [$key, $binding->{$key}]);
-					}
-				}
+				my $result_iri	= $testns->$result_number();
+				$result_number++;
 				
-				my $result	= {};
-				foreach my $data (@bindings) {
-					my $name	= $data->[0];
-					my $binding	= $data->[1];
-					
-					my $type	= reftype($binding);
-					if ($type eq 'HASH') {
-						if (exists($binding->{literal})) {
-							if (ref($binding->{literal})) {
-								my $value	= $binding->{literal}{content};
-								$value		= '' unless (defined($value));
-								my $lang	= $binding->{literal}{'xml:lang'};
-								my $dt		= $binding->{literal}{'datatype'};
-								my $string	= literal_as_string( $value, $lang, $dt );
-	#							push(@results, { $name => $string });
-								$result->{ $name }	= $string;
-							} else {
-								my $string	= literal_as_string( $binding->{literal}, undef, undef );
-	#							push(@results, { $name => $string });
-								$result->{ $name }	= $string;
-							}
-						} elsif (exists($binding->{bnode})) {
-							my $bnode	= $binding->{bnode};
-							my $id;
-							if (exists $bnode_map{ $bnode }) {
-								$id	= $bnode_map{ $bnode };
-							} else {
-								$id	= join('', 'r', $bnode_next++);
-								$bnode_map{ $bnode }	= $id;
-							}
-	#						push(@results, { $name => $id });
-							$result->{ $name }	= $id;
-						} elsif (exists($binding->{uri})) {
-							$result->{ $name }	= $binding->{uri};
-	#						push(@results, { $name => $binding->{uri} });
+				my $binding	= $r->{binding};
+				if (exists($binding->{name}) and not(ref($binding->{name}))) {
+					my $name	= delete($binding->{name});
+					$binding	= { $name => $binding };
+				}
+				my @bindings;
+				foreach my $v (keys %$binding) {
+					my $value	= $binding->{ $v };
+					if (exists($value->{ literal })) {
+						my $node;
+						if (ref($binding->{literal})) {
+							my $value	= $binding->{literal}{content};
+							$value		= '' unless (defined($value));
+							my $lang	= $binding->{literal}{'xml:lang'};
+							my $dt		= $binding->{literal}{'datatype'};
+							$node	= RDF::Trine::Node::Literal->new($value, $lang, $dt);
 						} else {
-	#						push(@results, {});
-	#						die "Uh oh. Unrecognized binding node type: " . Dumper($binding);
+							$node	= RDF::Trine::Node::Literal->new($value->{literal});
 						}
-					} elsif ($type eq 'ARRAY') {
-						die "Uh oh. ARRAY binding type: " . Data::Dumper::Dumper($binding);
-					} else {
-						die "Uh oh. Unknown result reftype: " . Data::Dumper::Dumper($r);
+						$model->add_statement( statement( $result_iri, $testns->$v(), $node ) );
+					} elsif (exists($value->{ bnode })) {
+						my $node	= RDF::Trine::Node::Blank->new($value->{bnode});
+						$model->add_statement( statement( $result_iri, $testns->$v(), $node ) );
+					} elsif (exists($value->{ uri })) {
+						my $node	= RDF::Trine::Node::Resource->new($value->{uri});
+						$model->add_statement( statement( $result_iri, $testns->$v(), $node ) );
 					}
 				}
-				push(@results, $result);
 			}
-			return \@results;
+			return $model->get_statements;
 		} elsif (exists $xml->{boolean}) {
-			return sprintf( '"%s"^^<http://www.w3.org/2001/XMLSchema#boolean>', $xml->{boolean} );
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal($xml->{boolean}, undef, $xsd->boolean) ) );
+			return $model->get_statements;
 		}
 	} else {
 		my $model		= new_model( $file );
@@ -663,7 +684,7 @@ sub compare_results {
 	} elsif (blessed($actual) and $actual->isa('RDF::Trine::Iterator::Graph')) {
 		die unless (blessed($expected) and $expected->isa('RDF::Trine::Iterator::Graph'));
 		
-		local($debug)	= 1 if ($PATTERN);
+#		local($debug)	= 1 if ($PATTERN);
 		warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n" if ($debug);
 		my $actualxml		= $actual->as_xml;
 		warn $actualxml if ($debug);
@@ -678,6 +699,11 @@ sub compare_results {
 		my $eq	= $act_graph->equals( $exp_graph );
 		return is( $eq, 1, $test );
 	} else {
+	
+		die Dumper($actual, $expected);
+	
+	
+	
 		my %actual_flat;
 		foreach my $i (0 .. $#{ $actual }) {
 			my $row	= $actual->[ $i ];

@@ -214,8 +214,14 @@ sub as_sparql {
 			foreach my $k (@$vlist) {
 				if ($k->isa('RDF::Query::Expression::Alias')) {
 					my $var		= $k->name;
-					my $expr	= $k->expression->name;
-					my $str		= "($expr AS ?$var)";
+					my $expr	= $k->expression;
+					my $exprstr;
+					if ($expr->isa('RDF::Query::Expression::Binary')) {
+						$exprstr	= $expr->as_sparql( $context, $indent );
+					} else {
+						$exprstr	= $k->expression->name;
+					}
+					my $str		= "($exprstr AS ?$var)";
 					$agg_projections{ '?' . $var }	= $str;
 				} else {
 					warn Dumper($k) . ' ';
@@ -301,28 +307,12 @@ sub as_spin {
 	$model->add_statement( RDF::Trine::Statement->new($q, $rdf->type, $spin->Select) );
 	
 	my @vars	= map { RDF::Query::Node::Blank->new( "variable_" . $_->name ) } @{ $self->vars };
-	my $vlist	= _list( $model, @vars );
+	my $vlist	= $model->add_list( @vars );
 	$model->add_statement( RDF::Trine::Statement->new($q, $spin->resultVariables, $vlist) );
 	
-	my $list	= _list( $model, @nodes );
+	my $list	= $model->add_list( @nodes );
 	$model->add_statement( RDF::Trine::Statement->new($q, $spin->where, $list) );
 	return $q;
-}
-
-sub _list {
-	my $model		= shift;
-	my @elements	= @_;
-	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
-	if (scalar(@elements) == 0) {
-		return $rdf->nil;
-	} else {
-		my $head		= RDF::Query::Node::Blank->new();
-		my $node		= shift(@elements);
-		my $rest		= _list( $model, @elements );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
-		$model->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
-		return $head;
-	}
 }
 
 =item C<< type >>

@@ -201,13 +201,63 @@ sub add_hashref {
 						RDF::Trine::Node::Resource->new($O->{'value'});
 				}
 				
-				if ( $ts && $tp && $to ) {
+				if ($ts and $tp and $to) {
 					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
 					$self->add_statement($st, $context);
 				}
 			}
 		}
 	}
+}
+
+=item C<< add_list ( @elements ) >>
+
+Adds an rdf:List to the model with the given elements. Returns the node object
+that is the head of the list.
+
+=cut
+
+sub add_list {
+	my $self		= shift;
+	my @elements	= @_;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	if (scalar(@elements) == 0) {
+		return $rdf->nil;
+	} else {
+		my $head		= RDF::Query::Node::Blank->new();
+		my $node		= shift(@elements);
+		my $rest		= $self->add_list( @elements );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		return $head;
+	}
+}
+
+=item C<< get_list ( $head ) >>
+
+Returns a list of nodes that are elements of the rdf:List represented by the
+supplied head node.
+
+=cut
+
+sub get_list {
+	my $self	= shift;
+	my $head	= shift;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @elements;
+	my %seen;
+	while (blessed($head) and not($head->isa('RDF::Trine::Node::Resource') and $head->uri_value eq $rdf->nil->uri_value)) {
+		if ($seen{ $head->as_string }++) {
+			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
+		}
+		my @n		= $self->objects( $head, $rdf->first );
+		if (scalar(@n) != 1) {
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
+		}
+		push(@elements, @n);
+		($head)	= $self->objects( $head, $rdf->rest );
+	}
+	return @elements;
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -620,9 +670,12 @@ sub predicates {
 
 Returns a list of the nodes that appear as the object of statements with the
 specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
-may be undef to signify a wildcard. You can further filter objects by type
-with the C<< type >> objects (node, nil, blank, resource, literal, variable)
-and with C<< language >> and C<< datatype >>, which imply literal objects.
+may be undef to signify a wildcard. You can further filter objects using the
+C<< %options >> argument. Keys in C<< %options >> indicate the restriction type
+and may be 'type', 'language', or 'datatype'. The value of the 'type' key may be
+one of 'node', 'nil', 'blank', 'resource', 'literal', or 'variable'. The use of
+either 'language' or 'datatype' restrict objects to literal nodes with a
+specific language or datatype value, respectively.
 
 =cut
 
@@ -633,12 +686,12 @@ sub objects {
 	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;
 	my $type	= $options{type};
 	$type = 'literal' if ($options{language} or $options{datatype});
-	if ( $options{datatype} and not blessed($options{datatype}) ) {
+	if ($options{datatype} and not blessed($options{datatype})) {
 		$options{datatype} = RDF::Trine::Node::Resource->new($options{datatype});
 	}
 	
-	if ( defined $type ) {
-		if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+	if (defined $type) {
+		if ($type =~ /^(node|nil|blank|resource|literal|variable)$/) {
 			$type = "is_$type";
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "unknown type"
@@ -649,7 +702,7 @@ sub objects {
 	my %nodes;
 	while (my $st = $iter->next) {
 		my $obj = $st->object;
-		if ( defined $type ) {
+		if (defined $type) {
 			next unless $obj->$type;
 			if ($options{language}) {
 				my $lang = $obj->literal_value_language;

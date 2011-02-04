@@ -94,7 +94,7 @@ Returns a two-element list containing an appropriate media type and
 RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.
 If the C<< 'request_headers' >> key-value is supplied, the
 C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
-The option C<< 'among' >>, set to a list of serializer names, can be 
+The option C<< 'restrict' >>, set to a list of serializer names, can be 
 used to limit the serializers to choose from. The rest of 
 C<< %options >> is passed through to the serializer constructor.
 
@@ -104,30 +104,42 @@ sub negotiate {
 	my $class	= shift;
 	my %options	= @_;
 	my $headers	= delete $options{ 'request_headers' };
-	my $among	= delete $options{ 'among' };
+	my $restrict	= delete $options{ 'restrict' };
 	my $extend	= delete $options{ 'extend' } || {};
 	my %sclasses;
-	if (ref($among) && ref($among) eq 'ARRAY') {
-		$sclasses{ $serializer_names{$_} } = 1 for @$among;
+	if (ref($restrict) && ref($restrict) eq 'ARRAY') {
+		$sclasses{ $serializer_names{$_} } = 1 for @$restrict;
 	} else {
 		%sclasses = reverse %serializer_names;
 	}
-	my @variants;
+	my @default_variants;
 	while (my($type, $sclass) = each(%media_types)) {
 		next unless $sclasses{$sclass};
-		my $class = $media_types{$type};
-		my $qv	= ($type eq 'text/turtle') ? 0.9 : 0.89;	# slightly prefer turtle as a readable format to others
+		my $qv;
+		# slightly prefer turtle as a readable format to others
+		# try hard to avoid using ntriples as 'text/plain' isn't very useful for conneg
+		if ($type eq 'text/turtle') {
+			$qv	= 1.0;
+		} elsif ($type eq 'text/plain') {
+			$qv	= 0.2;
+		} else {
+			$qv	= 0.99;
+		}
 		$qv		-= 0.01 if ($type =~ m#/x-#);				# prefer non experimental media types
 		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
-		$qv		-= 0.01 if ($type eq 'text/plain');			# prefer types that are more specific than just text/plain
-		push(@variants, [$type, $qv, $type]);
+		push(@default_variants, [$type, $qv, $type]);
 	}
 	
 	my %custom_thunks;
+	my @custom_variants;
 	while (my($type,$thunk) = each(%$extend)) {
-		push(@variants, [$thunk, 1.0, $type]);
+		push(@custom_variants, [$thunk, 1.0, $type]);
 		$custom_thunks{ $thunk }	= [$type, $thunk];
 	}
+	
+	# remove variants with media types that are in custom_variants from @variants
+	my @variants	= grep { not exists $extend->{ $_->[2] } } @default_variants;
+	push(@variants, @custom_variants);
 	
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and $custom_thunks{ $stype }) {

@@ -101,9 +101,9 @@ sub add_statement {
 		};
 		push(@values, $cid);
 	}
-	my $sql		= sprintf( "INSERT IGNORE INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values );
+	my $sql		= sprintf( "INSERT IGNORE INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
 	my $sth		= $dbh->prepare( $sql );
-	$sth->execute();
+	$sth->execute(@values);
 }
 
 sub _add_node {

@@ -107,10 +107,12 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
+	my $triples	= join("\n${prefix}${indent}${indent}", map { $_->sse( $context, "${prefix}${indent}${indent}" ) } @{$self->triples});
 	
 	return sprintf(
-		'(construct\n${prefix}${indent}%s)',
+		"(construct\n${prefix}${indent}(\n${prefix}${indent}${indent}%s\n${prefix}${indent})\n${prefix}${indent}%s)",
+		$triples,
 		$self->pattern->sse( $context, "${prefix}${indent}" ),
 	);
 }
