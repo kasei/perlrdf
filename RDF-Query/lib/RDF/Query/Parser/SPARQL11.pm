@@ -882,7 +882,8 @@ sub _SelectQuery {
 	my $pattern	= $self->{build}{triples}[0];
 	my @agg		= $pattern->subpatterns_of_type( 'RDF::Query::Algebra::Aggregate', 'RDF::Query::Algebra::SubSelect' );
 	if (@agg) {
-		my @gvars	= @{ $self->{build}{__group_by} || [] };
+		my ($agg)	= @agg;
+		my @gvars	= $agg->groupby;
 		if (scalar(@gvars) == 0) {
 			# aggregate query with no explicit group keys
 			foreach my $v (@{ $self->{build}{variables} }) {
@@ -2773,7 +2774,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ|NOW/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2795,9 +2796,9 @@ sub _BuiltInCall {
 		} else {
 			$self->_add_stack( $func );
 		}
-	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i)) {
+	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND|NOW/i)) {
 		# n-arg functions that take expressions
-		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i);
+		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND|NOW/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
