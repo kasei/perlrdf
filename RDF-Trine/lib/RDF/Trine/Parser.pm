@@ -198,34 +198,38 @@ sub parse_url_into_model {
 	}
 	
 	### FALLBACK
+	my %options;
+	if (defined $args{canonicalize}) {
+		$options{ canonicalize }	= $args{canonicalize};
+	}
 	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
-		my $parser	= RDF::Trine::Parser::RDFXML->new();
+		my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
-		my $parser	= RDF::Trine::Parser::Turtle->new();
+		my $parser	= RDF::Trine::Parser::Turtle->new(%options);
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]trig$/) {
-		my $parser	= RDF::Trine::Parser::Trig->new();
+		my $parser	= RDF::Trine::Parser::Trig->new(%options);
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]nt$/) {
-		my $parser	= RDF::Trine::Parser::NTriples->new();
+		my $parser	= RDF::Trine::Parser::NTriples->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]nq$/) {
-		my $parser	= RDF::Trine::Parser::NQuads->new();
+		my $parser	= RDF::Trine::Parser::NQuads->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]js(?:on)?$/) {
-		my $parser	= RDF::Trine::Parser::RDFJSON->new();
+		my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]x?html?$/) {
-		my $parser	= RDF::Trine::Parser::RDFa->new();
+		my $parser	= RDF::Trine::Parser::RDFa->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} else {
@@ -235,7 +239,7 @@ sub parse_url_into_model {
 			if (my $e = $encodings{ $pclass }) {
 				$data	= decode( $e, $content );
 			}
-			my $parser	= $pclass->new();
+			my $parser	= $pclass->new(%options);
 			my $ok		= 0;
 			try {
 				$parser->parse_into_model( $url, $data, $model, %args );
