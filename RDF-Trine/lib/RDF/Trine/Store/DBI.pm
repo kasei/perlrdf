@@ -462,7 +462,7 @@ sub add_statement {
 	$sth->execute( @values );
 	unless ($sth->fetch) {
 		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
-		my $sth		= $dbh->prepare( $sql );
+		my $sth		= $dbh->prepare_cached( $sql );
 		$sth->execute(@values);
 	}
 }
