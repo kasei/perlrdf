@@ -443,9 +443,11 @@ sub install {
 				throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
 			}
 			
+			my $base	= $query->{parsed}{base};
+			
 			if ($node->is_literal) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Resource->new( $value );
+				return RDF::Query::Node::Resource->new( $value, $base );
 			} elsif ($node->is_resource) {
 				return $node;
 			} else {
@@ -1200,8 +1202,8 @@ sub _strends {
 sub _rand {
 	my $query	= shift;
 	my $r		= rand();
-	# TODO: support seed argument
-	return RDF::Query::Node::Literal->new("$r", undef, $xsd->decimal);
+	my $value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $r, $xsd->double->as_string );
+	return RDF::Query::Node::Literal->new($value, undef, $xsd->double);
 }
 
 =item * sparql:md5
