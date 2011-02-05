@@ -312,6 +312,9 @@ sub canonicalize_literal_value {
 			if ($num =~ /^[.]/) {
 				$num	= "0$num";
 			}
+			if ($num !~ /[.]/) {
+				$num	= "${num}.0";
+			}
 			return "${sign}${num}";
 		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
 			my $sign	= $1 || '';
