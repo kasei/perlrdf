@@ -28,7 +28,7 @@ my %type_expect	= (
 	'ntriples-canonical'	=> [],
 	'rdfjson'	=> [qw(application/json application/x-rdf+json)],
 	'rdfxml'	=> [qw(application/rdf+xml)],
-	'turtle'	=> [qw(application/turtle application/x-turtle text/turtle)],
+	'turtle'	=> [qw(application/turtle application/x-turtle text/rdf+n3 text/turtle)],
 );
 
 while (my($k,$v) = each(%name_expect)) {
