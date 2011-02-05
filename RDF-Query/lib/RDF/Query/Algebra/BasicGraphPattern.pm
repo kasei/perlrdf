@@ -245,7 +245,7 @@ sub _check_duplicate_blanks {
 
 =item C<< connected >>
 
-Returns true if the pattern is connected through shared variables, fase otherwise.
+Returns true if the pattern is connected through shared variables, false otherwise.
 
 =cut
 
