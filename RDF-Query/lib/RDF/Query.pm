@@ -479,11 +479,13 @@ sub execute_with_named_graphs {
 	my $store		= shift;
 	my @graphs;
 	my @options;
-	if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
-		@graphs		= @{ shift(@_) };
-		@options	= @_;
-	} else {
-		@graphs		= @_;
+	if (scalar(@_)) {
+		if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
+			@graphs		= @{ shift(@_) };
+			@options	= @_;
+		} else {
+			@graphs		= @_;
+		}
 	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
