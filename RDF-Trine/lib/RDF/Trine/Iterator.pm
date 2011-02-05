@@ -192,7 +192,7 @@ sub from_string {
 sub from_json {
 	my $class	= shift;
 	my $json	= shift;
-	my $p		= RDF::Trine::Iterator::JSONHandler->new();
+	my $p		= RDF::Trine::Iterator::JSONHandler->new( @_ );
 	return $p->parse( $json );
 }
 
