@@ -235,7 +235,7 @@ sub end_element {
 		my $value	= delete( $values{ $addr } );
 		$bindings{ $addr }{ $name }	= $value;
 	} elsif ($tag eq 'result') {
-		my $result	= delete( $bindings{ $addr } );
+		my $result	= delete( $bindings{ $addr } ) || {};
 		$result_count{ $addr }++;
 		my $vb	= RDF::Trine::VariableBindings->new( $result );
 		push( @{ $results{ $addr } }, $vb );
