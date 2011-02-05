@@ -152,7 +152,9 @@ sub parse {
 		$build			= undef;
 		$self->{error}	= $e->stacktrace
 	};
-
+	
+	delete $self->{build}{star};
+	
 	my $data								= $build;
 #	$data->{triples}						= $self->_pop_pattern_container();
 	return $data;
