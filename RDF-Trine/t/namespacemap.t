@@ -64,5 +64,5 @@ END
 	$parser->parse_into_model( 'http://base/', $rdf, $model );
 	my $s		= RDF::Trine::Serializer->new( 'turtle', namespaces => $map );
 	my $ttl		= $s->serialize_model_to_string( $model );
-	like( $ttl, qr<:me a foaf:Person>sm, 'namespaces pass through parser to serializer' );
+	like( $ttl, qr< a foaf:Person>sm, 'namespaces pass through parser to serializer' );
 }
