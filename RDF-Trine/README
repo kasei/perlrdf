@@ -68,6 +68,32 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.133 (2011-02-07)
+
+     * BUG FIXES
+       Fixed bug in Turtle parser that wouldn't allow a Unicode BOM in the input.
+       Fixed bug in turtle serialization of blank nodes used in graph cycles (reported by tobyink).
+       Fixed bug in RDF::Trine::Serializer::RDFXML that wasn't escaping XML entities in IRIs and bnode labels (github issue 3 from nichtich).
+       Updated RDF::Trine::Store::Hexastore to use equal() method instead of op<==> for testing node equality.
+       Updated t/parser-rdfjson.t to test bnode equality using identifier strings, not with op<==>.
+       Fixed RDF/XML xmlns serialization bug when used with RDF::Trine::NamespaceMap objects.
+     * NEW FEATURES
+       Added RDF::Trine::NamespaceMap class.
+       Added support to populate RDF::Trine::NamespaceMap objects during RDF parsing.
+       Added RDF::Trine::Model get_list and add_list methods for managing rdf:List structures.
+       Added support for parsing SPARQL JSON Results format in RDF::Trine::Iterator->from_json.
+       RDF::Trine::Parser subclasses now allow parse_file_into_model and parse_file being called as class methods.
+       Added 'restrict' and 'extend' options to RDF::Trine::Serializer->negotiate to allow more control over content negotiation.
+       Added the ability to restrict the nodes returned from the RDF::Trine::Model->objects method by node type or by literal language/datatype.
+     * ENHANCEMENTS
+       Updated RDF::Trine::Store::SPARQL to allow bulk-update operations.
+       Added string overloading to RDF::Trine::Node subclasses.
+       Added text/rdf+n3 as a media type for RDF::Trine::Serializer::Turtle.
+     * OTHER
+       Updated conneg code setting default q-values in RDF::Trine::Serializer.
+       Updated RDF::Trine::Iterator::Graph->print_xml to set utf8 binmode on the output filehandle.
+       Changed required version of Module::Load::Conditional to 0.38 (based on version in debian).
+
   Version 0.132 (2010-12-23)
 
      * Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional.
