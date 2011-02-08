@@ -8,7 +8,7 @@ RDF::Trine::Namespace - Abbreviated syntax for constructing RDF node objects
 
 =head1 VERSION
 
-This document describes RDF::Trine::Namespace version 0.132_03
+This document describes RDF::Trine::Namespace version 0.133
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(XML::Namespace);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.132_03';
+	$VERSION	= '0.133';
 }
 
 ######################################################################

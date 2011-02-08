@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.133 (2011-XX-XX)
+  Version 0.133 (2011-02-07)
 
      * BUG FIXES
        Fixed bug in Turtle parser that wouldn't allow a Unicode BOM in the input.

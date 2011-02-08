@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.133" ;
-                        doap:created      "2011-XX-XX" ;
+                        doap:created      "2011-02-07" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::NamespaceMap class." ;
