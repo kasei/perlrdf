@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 no warnings 'redefine';
-use Test::More qw(no_plan);
+use Test::More;
 
 use_ok( 'RDF::Query' );
 use lib qw(. t);
@@ -53,3 +53,5 @@ END
 		is( $h->uri_value, 'http://kasei.us/pictures/2005/20050422-WCCS_Dinner/images/DSC_8057.jpg', 'Got image by typed date' );
 	}
 }
+
+done_testing;
