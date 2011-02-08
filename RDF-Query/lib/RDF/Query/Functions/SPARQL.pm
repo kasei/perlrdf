@@ -30,11 +30,11 @@ Defines the following functions:
 
 =item * sparql:ebv
 
-=item * sparql:ends
+=item * sparql:strends
 
 =item * sparql:floor
 
-=item * sparql:encode
+=item * sparql:encode_for_uri
 
 =item * sparql:exists
 
@@ -72,7 +72,7 @@ Defines the following functions:
 
 =item * sparql:sameterm
 
-=item * sparql:starts
+=item * sparql:strstarts
 
 =item * sparql:str
 
@@ -82,7 +82,7 @@ Defines the following functions:
 
 =item * sparql:strlen
 
-=item * sparql:substring
+=item * sparql:substr
 
 =item * sparql:ucase
 
@@ -402,6 +402,10 @@ sub install {
 				throw RDF::Query::Error::TypeError -text => "STRDT() must be called with a plain literal and a datatype IRI";
 			}
 			
+			unless ($str->is_simple_literal) {
+				throw RDF::Query::Error::TypeError -text => "STRDT() not called with a simple literal";
+			}
+			
 			my $value	= $str->literal_value;
 			my $uri		= $dt->uri_value;
 			return RDF::Query::Node::Literal->new( $value, undef, $uri );
@@ -416,8 +420,11 @@ sub install {
 			my $lang	= shift;
 			
 			unless (blessed($str) and $str->isa('RDF::Query::Node::Literal') and blessed($lang) and $lang->isa('RDF::Query::Node::Literal')) {
-				warn Dumper($str,$lang);
 				throw RDF::Query::Error::TypeError -text => "STRLANG() must be called with two plain literals";
+			}
+			
+			unless ($str->is_simple_literal) {
+				throw RDF::Query::Error::TypeError -text => "STRLANG() not called with a simple literal";
 			}
 			
 			my $value	= $str->literal_value;
@@ -939,23 +946,54 @@ sub install {
 			my $query	= shift;
 			my $model	= $query->model;
 			my @nodes	= @_;
-			my @strtype	= _categorize_strings( "sparql:concat", @nodes );
 			
+			my $lang;
+			my $all_lang	= 1;
+			my $all_str		= 1;
+			foreach my $n (@nodes) {
+				unless ($n->isa('RDF::Query::Node::Literal')) {
+					throw RDF::Query::Error::TypeError -text => "sparql:concat called with a non-literal argument";
+				}
+				if ($n->has_datatype) {
+					$all_lang	= 0;
+					my $dt	= $n->literal_datatype;
+					if ($dt ne 'http://www.w3.org/2001/XMLSchema#string') {
+						throw RDF::Query::Error::TypeError -text => "sparql:concat called with a datatyped-literal other than xsd:string";
+					}
+				} elsif ($n->has_language) {
+					$all_str	= 0;
+					if (defined($lang) and $lang ne $n->literal_value_language) {
+						$all_lang	= 0;
+					} else {
+						$lang	= $n->literal_value_language;
+					}
+				} else {
+					$all_lang	= 0;
+					$all_str	= 0;
+				}
+			}
+			
+			my @strtype;
+			if ($all_lang) {
+				$strtype[0]	= $lang;
+			} elsif ($all_str) {
+				$strtype[1]	= 'http://www.w3.org/2001/XMLSchema#string'
+			}
 			my $value	= join('', map { $_->literal_value } @nodes);
 			return RDF::Query::Node::Literal->new($value, @strtype);
 		}
 	);
 	
 
-	# sparql:substring
+	# sparql:substr
 	RDF::Query::Functions->install_function(
-		"sparql:substring",
+		"sparql:substr",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
 			my @args	= @_;
 			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:substring called without a literal arg1 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:substr called without a literal arg1 term";
 			}
 			my $value	= $node->literal_value;
 			my @nums;
@@ -963,7 +1001,7 @@ sub install {
 				my $argnum	= $i + 2;
 				my $arg		= $args[ $i ];
 				unless (blessed($arg) and $arg->isa('RDF::Query::Node::Literal') and $arg->is_numeric_type) {
-					throw RDF::Query::Error::TypeError -text => "sparql:substring called without a numeric literal arg${argnum} term";
+					throw RDF::Query::Error::TypeError -text => "sparql:substr called without a numeric literal arg${argnum} term";
 				}
 				push(@nums, $arg->numeric_value);
 			}
@@ -1023,18 +1061,17 @@ sub install {
 	);
 	
 
-	# sparql:encode
+	# sparql:encode_for_uri
 	RDF::Query::Functions->install_function(
-		"sparql:encode",
+		"sparql:encode_for_uri",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
-			# TODO: If $node has a language tag, should this error?
 			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( uri_escape($value) );
+				return RDF::Query::Node::Literal->new( uri_escape_utf8($value) );
 			} else {
-				throw RDF::Query::Error::TypeError -text => "sparql:escape called without a literal term";
+				throw RDF::Query::Error::TypeError -text => "sparql:encode_for_uri called without a literal term";
 			}
 		}
 	);
@@ -1056,12 +1093,15 @@ sub install {
 			
 			# TODO: what should be returned if one or both arguments are typed as xsd:string?
 			if ($node->has_language and $pat->has_language) {
+				if ($node->literal_value_language ne $pat->literal_value_language) {
+					throw RDF::Query::Error::TypeError -text => "sparql:contains called with literals of different languages";
+				}
+				
 				# TODO: if the language tags are different, does this error, or just return false?
 				if ($node->literal_value_language ne $pat->literal_value_language) {
 					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
 				}
 			}
-			
 			
 			my $lit		= $node->literal_value;
 			my $plit	= $pat->literal_value;
@@ -1075,18 +1115,18 @@ sub install {
 	);
 	
 
-	# sparql:starts
+	# sparql:strstarts
 	RDF::Query::Functions->install_function(
-		"sparql:starts",
+		"sparql:strstarts",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
 			my $pat		= shift;
 			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg1 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg1 term";
 			}
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:starts called without a literal arg2 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg2 term";
 			}
 
 			# TODO: what should be returned if one or both arguments are typed as xsd:string?
@@ -1106,18 +1146,18 @@ sub install {
 	);
 	
 
-	# sparql:ends
+	# sparql:strends
 	RDF::Query::Functions->install_function(
-		"sparql:ends",
+		"sparql:strends",
 		sub {
 			my $query	= shift;
 			my $node	= shift;
 			my $pat		= shift;
 			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg1 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg1 term";
 			}
 			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:ends called without a literal arg2 term";
+				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg2 term";
 			}
 			
 			# TODO: what should be returned if one or both arguments are typed as xsd:string?
@@ -1165,55 +1205,7 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:minutes", \&_minutes);
 	RDF::Query::Functions->install_function("sparql:seconds", \&_seconds);
 	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
-}
-
-sub _categorize_strings {
-	my $func		= shift;
-	my $simple		= 0;
-	my $xsd_string	= 0;
-	my $other		= 0;
-	my $lang		= {};
-	my $other_types	= {};
-	my $count		= scalar(@_);
-	foreach my $n (@_) {
-		unless (blessed($n) and $n->isa('RDF::Query::Node::Literal')) {
-			$other++;
-			next;
-		}
-		if ($n->has_language) {
-			$lang->{ $n->literal_value_language }++;
-		} elsif ($n->has_datatype) {
-			my $dt	= $n->literal_datatype;
-			if ($dt eq 'http://www.w3.org/2001/XMLSchema#string') {
-				$xsd_string++;
-			} else {
-				$other_types->{ $dt }++;
-			}
-		} else {
-			$simple++;
-		}
-	}
-	my $other_count	= sum(values %$other_types) || 0;
-	my $lang_count	= sum(values %$lang) || 0;
-	my $same_lang	= (1 == scalar(@{[keys %$lang]}));
-	if ($other or $other_count) {
-		throw RDF::Query::Error::TypeError -text => "$func called with a value that is not a plain literal or an xsd:string literal";
-	}
-	if ($count == $simple) {
-		return;
-	} elsif ($simple >= 0 and $xsd_string > 0 and $lang_count == 0) {
-		return (undef, $xsd->string);
-	} elsif ($simple >= 0 and $lang_count > 0 and not($same_lang)) {
-		return;
-	} elsif ($simple >= 0 and $xsd_string > 0 and $lang_count > 0) {
-		if ($same_lang) {
-			return (keys %$lang)[0];
-		} else {
-			return (undef, $xsd->string);
-		}
-	} else {
-		return;
-	}
+	RDF::Query::Functions->install_function("sparql:tz", \&_tz);
 }
 
 =item * sparql:md5
@@ -1397,6 +1389,9 @@ sub _timezone {
 	my $dt		= $node->datetime;
 	if ($dt) {
 		my $tz		= $dt->time_zone;
+		if ($tz->is_floating) {
+			throw RDF::Query::Error::TypeError -text => "sparql:timezone called with a dateTime without a timezone";
+		}
 		if ($tz) {
 			my $offset	= $tz->offset_for_datetime( $dt );
 			my $minus	= '';
@@ -1419,10 +1414,58 @@ sub _timezone {
 			my $s	= int($offset);
 			$duration	.= "${s}S" if ($s > 0 or $duration eq 'PT');
 			
-			return RDF::Query::Node::Literal->new($duration);
+			return RDF::Query::Node::Literal->new($duration, undef, $xsd->dayTimeDuration);
 		}
 	}
 	throw RDF::Query::Error::TypeError -text => "sparql:timezone called without a valid dateTime";
+}
+
+=item * sparql:tz
+
+=cut
+
+sub _tz {
+	my $query	= shift;
+	my $node	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:tz called without a literal term";
+	}
+	my $dt		= $node->datetime;
+	if ($dt) {
+		my $tz		= $dt->time_zone;
+		if ($tz->is_floating) {
+			return RDF::Query::Node::Literal->new('');
+		}
+		if ($tz->is_utc) {
+			return RDF::Query::Node::Literal->new('Z');
+		}
+		if ($tz) {
+			my $offset	= $tz->offset_for_datetime( $dt );
+			my $hours	= 0;
+			my $minutes	= 0;
+			my $minus	= '+';
+			if ($offset < 0) {
+				$minus	= '-';
+				$offset	= -$offset;
+			}
+
+			if ($offset >= 60*60) {
+				$hours	= int($offset / (60*60));
+				$offset	= $offset % (60*60);
+			}
+			if ($offset >= 60) {
+				$minutes	= int($offset / 60);
+				$offset	= $offset % 60;
+			}
+			my $seconds	= int($offset);
+			
+			my $tz	= sprintf('%s%02d:%02d', $minus, $hours, $minutes);
+			return RDF::Query::Node::Literal->new($tz);
+		} else {
+			return RDF::Query::Node::Literal->new('');
+		}
+	}
+	throw RDF::Query::Error::TypeError -text => "sparql:tz called without a valid dateTime";
 }
 
 

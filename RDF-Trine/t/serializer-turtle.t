@@ -1,4 +1,4 @@
-use Test::More tests => 37;
+use Test::More tests => 38;
 use Test::Exception;
 
 use strict;
@@ -634,3 +634,35 @@ END
 	like( $got, qr/"\^\^xsd:dateTime/sm, 'qname literal datatype' );
 }
 
+{
+	# Date: Sun, 2 Jan 2011 22:17:55 +0000
+	# From: Toby Inkster <mail@tobyinkster.co.uk>
+	# To: dev@lists.perlrdf.org
+	# Subject: Turtle serialisation bug
+	# Message-ID: <20110102221755.78db000f@miranda.g5n.co.uk>
+	
+	my $turtle	= <<"END";
+_:a <q> [
+	<p> [
+		<r> _:b ];
+	<t> _:c ] .
+# _:a <x> _:b .
+_:c <e> _:a .
+END
+
+# _:a <q> [
+# 	<p> [
+# 		<r> _:b ];
+# 	<t> [ <e> _:a ] ] ;
+# 	<x> _:b .
+
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $base	= 'http://example.org/';
+	$parser->parse_into_model( $base, $turtle, $model );
+	my $serializer	= RDF::Trine::Serializer::Turtle->new();
+	my $got			= $serializer->serialize_model_to_string($model);
+	my $gotmodel	= RDF::Trine::Model->temporary_model;
+	$parser->parse_into_model( $base, $got, $gotmodel );
+	is( $gotmodel->size, $model->size, 'bnode concise syntax' );
+}

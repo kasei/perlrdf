@@ -122,7 +122,7 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
@@ -152,21 +152,21 @@ sub as_sparql {
 				$delete->as_sparql( $context, "${indent}  " ),
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} elsif ($insert) {
 			return sprintf(
 				"INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} else {
 			return sprintf(
 				"DELETE {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$delete->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		}
 	} else {
@@ -191,7 +191,7 @@ sub as_sparql {
 				"${op} %s%sWHERE %s",
 				$temps,
 				$ds_string,
-				$ggp->as_sparql( $context, "${indent}" ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, "${indent}" ),
 			);
 		}
 	}

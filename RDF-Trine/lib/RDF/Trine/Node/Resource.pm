@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.132
+This document describes RDF::Trine::Node::Resource version 0.133
 
 =cut
 
@@ -28,10 +28,13 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 }
 
 ######################################################################
+
+use overload	'""'	=> sub { $_[0]->sse },
+			;
 
 =head1 METHODS
 
@@ -224,7 +227,7 @@ sub equal {
 	my $self	= shift;
 	my $node	= shift;
 	return 0 unless defined($node);
-	return 1 if ($self == $node);
+	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
 	return ($self->[1] eq $node->[1]);
 }

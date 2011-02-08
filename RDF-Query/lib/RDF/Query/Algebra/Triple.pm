@@ -115,6 +115,24 @@ sub as_hash {
 	};
 }
 
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $t		= RDF::Query::Node::Blank->new();
+	my @nodes	= $self->nodes;
+	foreach (@nodes) {
+		if (blessed($_) and $_->isa('RDF::Trine::Node::Variable')) {
+			$_	= RDF::Query::Node::Blank->new( "variable_" . $_->name );
+		}
+	}
+	
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->subject, $nodes[0]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->predicate, $nodes[1]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->object, $nodes[2]) );
+	return $t;
+}
+
 =item C<< referenced_blanks >>
 
 Returns a list of the blank node names used in this algebra expression.

@@ -134,8 +134,13 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
+	
+	if ($context->{ skip_filter }) {
+		$context->{ skip_filter }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
 	
 	my $expr	= $self->expr;
 	my $filter_sparql	= $expr->as_sparql( $context, $indent );
@@ -158,6 +163,12 @@ sub as_hash {
 		pattern		=> $self->pattern->as_hash,
 		expression	=> $self->expr->as_hash,
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	return $self->pattern->as_spin($model);
 }
 
 =item C<< type >>

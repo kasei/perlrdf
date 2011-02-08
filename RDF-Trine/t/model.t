@@ -18,17 +18,26 @@ use File::Temp qw(tempfile);
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
+my $xsd		= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 my $b		= RDF::Trine::Node::Blank->new();
 my $p		= RDF::Trine::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
+my $intval	= RDF::Trine::Node::Literal->new('23',undef,$xsd->int);
+my $langval	= RDF::Trine::Node::Literal->new('gwilliams','en');
 my $st0		= RDF::Trine::Statement->new( $p, $rdf->type, $foaf->Person );
 my $st1		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 my $st2		= RDF::Trine::Statement->new( $b, $rdf->type, $foaf->Person );
 my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
+my $st4		= RDF::Trine::Statement->new( $p, $foaf->knows, $b );
+my $st5		= RDF::Trine::Statement->new( $p, $foaf->nick, $langval );
+my $st6		= RDF::Trine::Statement->new( $p, $foaf->age, $intval);
 
 my ($stores, $remove)	= stores();
 
-plan tests => 81 * scalar(@$stores);
+plan tests => 7 + 81 * scalar(@$stores);
+
+print "### Testing auto-creation of store\n";
+isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
 
 foreach my $store (@$stores) {
 	print "### Testing store " . ref($store) . "\n";
@@ -244,6 +253,23 @@ foreach my $store (@$stores) {
 foreach my $file (@$remove) {
 	unlink( $file );
 }
+
+{ # test optional parameters of RDF::Trine::Model::objects
+	my $model = RDF::Trine::Model->new;
+	$model->add_statement( $_ ) for ($st0, $st1, $st3, $st4, $st5, $st6);
+	my %types = (blank => 1, literal => 3, resource => 1);
+	while (my ($type,$count) = each(%types)) {
+		my @objs	= $model->objects( $p, undef, type => $type );
+		is( scalar(@objs), $count, "expected objects count on type $type");
+	}
+	my @objs	= $model->objects( $p, undef, language => 'en' );
+	ok( $objs[0]->equal( $langval ), 'expected integer value as object' );
+	foreach my $dt ( $xsd->int, $xsd->int->uri_value ) { 
+		@objs	= $model->objects( $p, undef, datatype => $dt );
+		ok( $objs[0]->equal( $intval ), 'expected integer value as object' );
+	}
+}
+
 
 sub stores {
 	my @stores;

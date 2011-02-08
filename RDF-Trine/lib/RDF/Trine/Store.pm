@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.132
+This document describes RDF::Trine::Store version 0.133
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -113,12 +113,12 @@ documentation.
 An example invocation for the DBI store may be:
 
   my $store = RDF::Trine::Store->new_with_config({
-                                                  storetype => 'DBI',
-                                                  name      => 'mymodel',
-                                                  dsn       => 'DBI:mysql:database=rdf',
-                                                  username  => 'dahut',
-                                                  password  => 'Str0ngPa55w0RD'
-                                                 });
+                storetype => 'DBI',
+                name      => 'mymodel',
+                dsn       => 'DBI:mysql:database=rdf',
+                username  => 'dahut',
+                password  => 'Str0ngPa55w0RD'
+              });
 
 =cut
 

@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 0.132
+This document describes RDF::Trine::Iterator::Graph version 0.133
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 }
 
 ######################################################################
@@ -250,6 +250,7 @@ sub print_xml {
 	my $fh				= shift;
 	my $max_result_size	= shift || 0;
 	my $graph			= $self->unique();
+	binmode($fh, ':utf8');
 	
 	my $count	= 0;
 	no strict 'refs';

@@ -130,8 +130,28 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	
+	if ($context->{ skip_sort }) {
+		$context->{ skip_sort }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
+	
+	my $order_exprs	= $self->_as_sparql_order_exprs($context, $indent);
+	
+	my $string	= sprintf(
+		"%s\nORDER BY %s",
+		$self->pattern->as_sparql( $context, $indent ),
+		$order_exprs,
+	);
+	return $string;
+}
+
+sub _as_sparql_order_exprs {
+	my $self	= shift;
+	my $context	= shift;
+	my $intent	= shift;
 	
 	my @order_sparql;
 	my @orderby	= $self->orderby;
@@ -143,13 +163,7 @@ sub as_sparql {
 						: sprintf("%s(%s)", $dir, $val->as_sparql( $context ));
 		push(@order_sparql, $str);
 	}
-	
-	my $string	= sprintf(
-		"%s\nORDER BY %s",
-		$self->pattern->as_sparql( $context, $indent ),
-		join(' ', @order_sparql),
-	);
-	return $string;
+	return join(' ', @order_sparql);
 }
 
 =item C<< as_hash >>

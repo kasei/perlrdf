@@ -123,10 +123,12 @@ sub execute ($) {
 				$nodes{ $n->as_string }	= $n;
 			}
 			foreach my $n (values %nodes) {
-				my $vb		= RDF::Query::VariableBindings->new({});
-				foreach my $name (@names) {
-					$vb->{ $name }	= $n;
-				}
+				my %data;
+				@data{ @names }	= ($n) x scalar(@names);
+				my $vb		= RDF::Query::VariableBindings->new(\%data);
+# 				foreach my $name (@names) {
+# 					$vb->{ $name }	= $n;
+# 				}
 				push(@{ $self->[0]{results} }, $vb);
 			}
 		}

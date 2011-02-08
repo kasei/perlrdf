@@ -10,6 +10,7 @@ use Test::More;
 use Scalar::Util qw(blessed);
 use RDF::Trine::Iterator qw(smap);
 use RDF::Query::Node qw(iri);
+use LWP::Simple;
 
 our $debug	= 0;
 if ($] < 5.007003) {
@@ -27,29 +28,40 @@ my $PATTERN	= shift(@ARGV);
 
 
 my @manifests;
-my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) } qw(syntax-update-1 syntax-update-2) );
+my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
+	qw(
+		syntax-query
+		syntax-update-1
+		syntax-update-2
+	) );
 
-my $earl	= init_earl( $model );
-my $type	= iri( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
-my $pos		= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#PositiveUpdateSyntaxTest11" );
-my $neg		= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#NegativeUpdateSyntaxTest11" );
-my $mfname	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
+my $earl		= init_earl( $model );
+my $type		= iri( "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" );
+my $pos_query	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#PositiveSyntaxTest11" );
+my $pos_update	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#PositiveUpdateSyntaxTest11" );
+my $neg_query	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#NegativeSyntaxTest11" );
+my $neg_update	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#NegativeUpdateSyntaxTest11" );
+my $mfname		= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#name" );
 my $mfaction	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#action" );
 
 {
 	print "# Positive Syntax Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $pos );
-	while (my $statement = $stream->next) {
-		my $test		= $statement->subject;
+	my @tests;
+	push(@tests, $model->subjects( $type, $pos_query ));
+	push(@tests, $model->subjects( $type, $pos_update ));
+	foreach my $test (@tests) {
+# 	my $stream	= $model->get_statements( undef, $type, $pos );
+# 	while (my $statement = $stream->next) {
+# 		my $test		= $statement->subject;
 		no warnings 'uninitialized';
 		next unless ($test->uri_value =~ /$PATTERN/);	# XXX
 		my $name		= get_first_literal( $model, $test, $mfname );
 		my $ok			= positive_syntax_test( $model, $test );
 		ok( $ok, $name );
 		if ($ok) {
-			earl_pass_test( $earl, $test );
+			earl_pass_test( $earl, globalize_uri_filename($test) );
 		} else {
-			earl_fail_test( $earl, $test );
+			earl_fail_test( $earl, globalize_uri_filename($test) );
 			warn RDF::Query->error;
 		}
 #	} continue {
@@ -59,21 +71,25 @@ my $mfaction	= iri( "http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#ac
 
 {
 	print "# Negative Syntax Tests\n";
-	my $stream	= $model->get_statements( undef, $type, $neg );
-	while (my $statement = $stream->next) {
-		my $test		= $statement->subject;
+	my @tests;
+	push(@tests, $model->subjects( $type, $neg_query ));
+	push(@tests, $model->subjects( $type, $neg_update ));
+	foreach my $test (@tests) {
+#	my $stream	= $model->get_statements( undef, $type, $neg );
+#	while (my $statement = $stream->next) {
+#		my $test		= $statement->subject;
 		no warnings 'uninitialized';
 		next unless ($test->uri_value =~ /$PATTERN/);	# XXX
 		my $name		= get_first_literal( $model, $test, $mfname );
 		my $ok			= negative_syntax_test( $model, $test );
 		ok( $ok, $name );
 		if ($ok) {
-			earl_pass_test( $earl, $test );
+			earl_pass_test( $earl, globalize_uri_filename($test) );
 		} else {
-			earl_fail_test( $earl, $test );
+			earl_fail_test( $earl, globalize_uri_filename($test) );
 		}
-	} continue {
-		$stream->next;
+# 	} continue {
+# 		$stream->next;
 	}
 }
 
@@ -92,7 +108,7 @@ sub positive_syntax_test {
 	my $file	= get_first_obj( $model, $test, $action );
 	my $url		= $file->uri_value;
 	my $uri		= URI->new( relativeize_url( $url ) );
-	my $filename	= $uri->file;
+	my $filename	= localize_uri_filename( $uri->file );
 	my $sparql	= do { local($/) = undef; open(my $fh, '<', $filename); <$fh> };
 	my $query	= eval { RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } ) };
 	return 0 if ($@);
@@ -110,7 +126,7 @@ sub negative_syntax_test {
 	my $sparql	= do { local($/) = undef; open(my $fh, '<', $filename); <$fh> };
 	my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql11' );
 	return 1 if ($@);
-	warn Data::Dumper::Dumper($query->{parsed}) if (blessed($query));
+	warn 'Test expected failure but successfully parsed: ' . Data::Dumper::Dumper($query->{parsed}) if (blessed($query));
 	warn $query->error if (blessed($query));
 	return blessed($query) ? 0 : 1;
 }
@@ -132,13 +148,30 @@ sub add_to_model {
 	my $model	= shift;
 	my @files	= @_;
 	foreach my $file (@files) {
-		RDF::Trine::Parser->parse_url_into_model( $file, $model );
+		my $pclass	= RDF::Trine::Parser->guess_parser_by_filename( $file );
+		my $parser	= $pclass->new();
+		my $rdf		= get($file);
+		$parser->parse_into_model( $file, $rdf, $model );
 	}
+}
+
+sub localize_uri_filename {
+	my $uri	= shift;
+	$uri	=~ s{^http://www.w3.org/2009/sparql/docs/tests/data-sparql11/}{xt/dawg11/};
+	return $uri;
+}
+
+sub globalize_uri_filename {
+	my $uri	= shift;
+	$uri	= $uri->uri_value;
+	$uri	=~ s{^.*xt/dawg11/}{http://www.w3.org/2009/sparql/docs/tests/data-sparql11/};
+	return RDF::Trine::Node::Resource->new($uri);
 }
 
 sub file_uris {
 	my @files	= @_;
-	return map { "$_" } map { URI::file->new_abs( $_ ) } @files;
+	my @uris	= map { "$_" } map { URI::file->new_abs( $_ ) } @files;
+	return @uris;
 }
 
 ######################################################################

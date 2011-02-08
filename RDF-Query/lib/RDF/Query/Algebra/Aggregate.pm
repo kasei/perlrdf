@@ -179,7 +179,7 @@ sub as_sparql {
 	my $self	= shift;
 	my $context	= shift;
 	my $indent	= shift;
-	throw RDF::Query::Error::SerializationError -text => "Aggregates can't be serialized as SPARQL";
+	return $self->pattern->as_sparql($context, $indent);
 }
 
 =item C<< as_hash >>

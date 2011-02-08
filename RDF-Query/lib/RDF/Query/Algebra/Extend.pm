@@ -160,9 +160,15 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
+	if ($context->{ skip_extend }) {
+		$context->{ skip_extend }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
+	
+	my $pattern	= $self->pattern;
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -175,7 +181,7 @@ sub as_sparql {
 		}
 	}
 	
-	my $ggp		= $self->pattern->as_sparql( $context, $indent );
+	my $ggp		= $pattern->as_sparql( $context, $indent );
 	my $sparql	= $ggp;
 	foreach my $v (@vars) {
 		$sparql	.=	"\n${indent}BIND" . $v;

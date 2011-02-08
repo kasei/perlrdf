@@ -10,6 +10,37 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.133.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.132.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.133" ;
+                        doap:created      "2011-02-07" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::NamespaceMap class." ;
+                        asc:addition    "Added support to populate RDF::Trine::NamespaceMap objects during RDF parsing." ;
+                        asc:addition    "Added RDF::Trine::Model get_list and add_list methods for managing rdf:List structures." ;
+                        asc:addition    "Added support for parsing SPARQL JSON Results format in RDF::Trine::Iterator->from_json." ;
+                        asc:addition    "RDF::Trine::Parser subclasses now allow parse_file_into_model and parse_file being called as class methods." ;
+                        asc:addition    "Added 'restrict' and 'extend' options to RDF::Trine::Serializer->negotiate to allow more control over content negotiation." ;
+                        asc:addition    "Added the ability to restrict the nodes returned from the RDF::Trine::Model->objects method by node type or by literal language/datatype." ;
+                        asc:update      "Fixed bug in Turtle parser that wouldn't allow a Unicode BOM in the input." ;
+                        asc:update      "Fixed bug in turtle serialization of blank nodes used in graph cycles (reported by tobyink)." ;
+                        asc:update      "Fixed bug in RDF::Trine::Serializer::RDFXML that wasn't escaping XML entities in IRIs and bnode labels (github issue 3 from nichtich)." ;
+                        asc:update      "Updated RDF::Trine::Store::Hexastore to use equal() method instead of op<==> for testing node equality." ;
+                        asc:update      "Updated t/parser-rdfjson.t to test bnode equality using identifier strings, not with op<==>." ;
+                        asc:update      "Updated RDF::Trine::Store::SPARQL to allow bulk-update operations." ;
+                        asc:update      "Added string overloading to RDF::Trine::Node subclasses." ;
+                        asc:update      "Updated conneg code setting default q-values in RDF::Trine::Serializer." ;
+                        asc:update      "Updated RDF::Trine::Iterator::Graph->print_xml to set utf8 binmode on the output filehandle." ;
+                        asc:update      "Changed required version of Module::Load::Conditional to 0.38 (based on version in debian)." ;
+                        asc:update      "Fixed RDF/XML xmlns serialization bug when used with RDF::Trine::NamespaceMap objects." ;
+                        asc:update      "Added text/rdf+n3 as a media type for RDF::Trine::Serializer::Turtle." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.132.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.131.tar.gz> ;

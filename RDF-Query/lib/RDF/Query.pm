@@ -678,6 +678,11 @@ sub as_sparql {
 	
 	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
+	
+	if ($method =~ /^(DESCRIBE|ASK)$/i) {
+		$context->{force_ggp_braces}	= 1;
+	}
+	
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
@@ -721,12 +726,21 @@ sub as_sparql {
 		}
 		
 		my $ns	= scalar(@ns) ? join("\n", @ns, '') : '';
-		my $sparql	= sprintf(
-			"$ns%s %s\n%s",
-			$methoddata,
-			$ggp->as_sparql( $context, '' ),
-			$mod,
-		);
+		my $sparql;
+		if ($methoddata or $ns) {
+			$sparql	= sprintf(
+				"$ns%s %s\n%s",
+				$methoddata,
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		} else {
+			$sparql	= sprintf(
+				"%s\n%s",
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		}
 		
 		chomp($sparql);
 		return $sparql;

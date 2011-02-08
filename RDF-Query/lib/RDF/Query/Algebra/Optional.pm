@@ -119,9 +119,23 @@ sub as_sparql {
 	my $string	= sprintf(
 		"%s\n${indent}OPTIONAL %s",
 		$self->pattern->as_sparql( $context, $indent ),
-		$self->optional->as_sparql( $context, $indent ),
+		$self->optional->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
 	);
 	return $string;
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @lhs		= $self->pattern->as_spin($model);
+	my @rhs		= $self->optional->as_spin($model);
+	my $opt		= RDF::Query::Node::Blank->new();
+	my $list	= $model->add_list( @rhs );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $rdf->type, $spin->Optional) );
+	$model->add_statement( RDF::Trine::Statement->new($opt, $spin->elements, $list) );
+	return (@lhs, $opt);
 }
 
 =item C<< as_hash >>

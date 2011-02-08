@@ -147,12 +147,14 @@ Returns the SPARQL string for this alegbra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	my $pcontext	= { %$context, force_ggp_braces => 1 };
+	
 	my $string	= sprintf(
 		"GRAPH %s %s",
 		$self->graph->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( $pcontext, $indent ),
 	);
 	return $string;
 }
@@ -171,6 +173,21 @@ sub as_hash {
 		graph		=> $self->graph,
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @t		= $self->pattern->as_spin( $model );
+	
+	my $ng		= RDF::Query::Node::Blank->new();
+	my $list	= $model->add_list( @t );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $rdf->type, $spin->NamedGraph) );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $spin->elements, $list) );
+	
+	return $ng;
 }
 
 =item C<< type >>

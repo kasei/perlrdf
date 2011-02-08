@@ -9,7 +9,7 @@ BEGIN { require "models.pl"; }
 
 use Test::More;
 
-my $tests	= 13;
+my $tests	= 23;
 my @models	= test_models( qw(data/foaf.xrdf data/about.xrdf) );
 plan tests => 1 + ($tests * scalar(@models));
 
@@ -196,6 +196,67 @@ END
 				$count++;
 			}
 			is($count, 4, 'coalesce type-error');
+		}
+		
+		{
+			# IRI
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+				SELECT (IRI("http://example.org/") AS ?i) WHERE {}
+END
+			warn RDF::Query->error unless ($query);
+			
+			my $iter	= $query->execute( $model );
+			my @r		= $iter->get_all;
+			my $iri		= RDF::Query::Node::Resource->new('http://example.org/');
+			is_deeply( \@r, [RDF::Query::VariableBindings->new({i=>$iri})], 'IRI() cast' );
+		}
+		
+		{
+			# BNODE
+			my $query	= new RDF::Query ( <<"END", { lang => 'sparql11' } );
+				SELECT (BNODE("xyz") AS ?x) (BNODE("abc") AS ?y) (BNODE("xyz") AS ?z) WHERE {}
+END
+			warn RDF::Query->error unless ($query);
+			
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			isa_ok( $row->{'x'}, 'RDF::Query::Node::Blank' );
+			isa_ok( $row->{'y'}, 'RDF::Query::Node::Blank' );
+			isa_ok( $row->{'z'}, 'RDF::Query::Node::Blank' );
+			is( $row->{'x'}->blank_identifier, $row->{'z'}->blank_identifier );
+			isnt( $row->{'x'}->blank_identifier, $row->{'y'}->blank_identifier );
+		}
+		
+		{
+			# IN
+			my $query	= new RDF::Query ( 'SELECT * WHERE { FILTER(2 IN (1, 2, 3)) }', { lang => 'sparql11' } );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			isa_ok( $row, 'RDF::Query::VariableBindings', 'IN' );
+		}
+		
+		{
+			# IN
+			my $query	= new RDF::Query ( 'SELECT * WHERE { FILTER(2 IN (1, 3)) }', { lang => 'sparql11' } );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			ok( not(defined($row)), 'IN 2' );
+		}
+		
+		{
+			# NOT IN
+			my $query	= new RDF::Query ( 'SELECT * WHERE { FILTER(2 NOT IN ()) }', { lang => 'sparql11' } );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			isa_ok( $row, 'RDF::Query::VariableBindings', 'NOT IN' );
+		}
+		
+		{
+			# NOT IN
+			my $query	= new RDF::Query ( 'SELECT * WHERE { FILTER(2 NOT IN (1/0, 2)) }', { lang => 'sparql11' } );
+			my $iter	= $query->execute( $model );
+			my $row		= $iter->next;
+			ok( not(defined($row)), 'NOT IN 2' );
 		}
 		
 	}
