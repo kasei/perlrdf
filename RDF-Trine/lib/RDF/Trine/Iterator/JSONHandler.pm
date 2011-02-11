@@ -7,7 +7,7 @@ RDF::Trine::Iterator::JSONHandler - JSON Handler for parsing SPARQL JSON Results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::JSONHandler version 0.132
+This document describes RDF::Trine::Iterator::JSONHandler version 0.133
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 }
 
 =item C<< new >>
@@ -44,7 +44,8 @@ Returns a new JSON SPARQL Results parser object.
 
 sub new {
 	my $class	= shift;
-	return bless({}, $class);
+	my %args	= %{ shift || {} };
+	return bless(\%args, $class);
 }
 
 =item C<< parse ( $json ) >>
@@ -87,6 +88,9 @@ sub parse {
 					} elsif ($type eq 'typed-literal') {
 						my $data	= $value->{value};
 						my $dt		= $value->{datatype};
+						if ($self->{canonicalize}) {
+							$data	= RDF::Trine::Node::Literal->canonicalize_literal_value( $data, $dt, 0 );
+						}
 						$data{ $v }	= RDF::Trine::Node::Literal->new( $data, undef, $dt );
 					} else {
 						warn Dumper($data, $b);

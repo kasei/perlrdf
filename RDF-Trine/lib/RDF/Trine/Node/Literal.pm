@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.132
+This document describes RDF::Trine::Node::Literal version 0.133
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -311,6 +311,9 @@ sub canonicalize_literal_value {
 			$num		=~ s/[.](\d)0+$/.$1/;
 			if ($num =~ /^[.]/) {
 				$num	= "0$num";
+			}
+			if ($num !~ /[.]/) {
+				$num	= "${num}.0";
 			}
 			return "${sign}${num}";
 		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {

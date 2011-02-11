@@ -26,6 +26,7 @@ lib/RDF/Trine/Iterator/Bindings/Materialized.pm
 lib/RDF/Trine/Iterator/Boolean.pm
 lib/RDF/Trine/Iterator/Graph.pm
 lib/RDF/Trine/Iterator/Graph/Materialized.pm
+lib/RDF/Trine/Iterator/JSONHandler.pm
 lib/RDF/Trine/Iterator/SAXHandler.pm
 lib/RDF/Trine/Model.pm
 lib/RDF/Trine/Model/Dataset.pm
@@ -512,6 +513,7 @@ t/model-filter.t
 t/model-temporary.t
 t/model-union.t
 t/model.t
+t/namespacemap.t
 t/namespace-export.t
 t/namespace-uri.t
 t/node-literal.t

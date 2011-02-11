@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.132
+This document describes RDF::Trine::Model version 0.133
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.132';
+	$VERSION	= '0.133';
 }
 
 use Scalar::Util qw(blessed);
@@ -201,7 +201,7 @@ sub add_hashref {
 						RDF::Trine::Node::Resource->new($O->{'value'});
 				}
 				
-				if ( $ts && $tp && $to ) {
+				if ($ts and $tp and $to) {
 					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
 					$self->add_statement($st, $context);
 				}
@@ -670,9 +670,12 @@ sub predicates {
 
 Returns a list of the nodes that appear as the object of statements with the
 specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
-may be undef to signify a wildcard. You can further filter objects by type
-with the C<< type >> objects (node, nil, blank, resource, literal, variable)
-and with C<< language >> and C<< datatype >>, which imply literal objects.
+may be undef to signify a wildcard. You can further filter objects using the
+C<< %options >> argument. Keys in C<< %options >> indicate the restriction type
+and may be 'type', 'language', or 'datatype'. The value of the 'type' key may be
+one of 'node', 'nil', 'blank', 'resource', 'literal', or 'variable'. The use of
+either 'language' or 'datatype' restrict objects to literal nodes with a
+specific language or datatype value, respectively.
 
 =cut
 
@@ -683,12 +686,12 @@ sub objects {
 	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;
 	my $type	= $options{type};
 	$type = 'literal' if ($options{language} or $options{datatype});
-	if ( $options{datatype} and not blessed($options{datatype}) ) {
+	if ($options{datatype} and not blessed($options{datatype})) {
 		$options{datatype} = RDF::Trine::Node::Resource->new($options{datatype});
 	}
 	
-	if ( defined $type ) {
-		if ( $type =~ /^(node|nil|blank|resource|literal|variable)$/ ) {
+	if (defined $type) {
+		if ($type =~ /^(node|nil|blank|resource|literal|variable)$/) {
 			$type = "is_$type";
 		} else {
 			throw RDF::Trine::Error::CompilationError -text => "unknown type"
@@ -699,7 +702,7 @@ sub objects {
 	my %nodes;
 	while (my $st = $iter->next) {
 		my $obj = $st->object;
-		if ( defined $type ) {
+		if (defined $type) {
 			next unless $obj->$type;
 			if ($options{language}) {
 				my $lang = $obj->literal_value_language;

@@ -1,4 +1,4 @@
-use Test::More tests => 37;
+use Test::More tests => 39;
 use Test::Exception;
 
 use strict;
@@ -28,7 +28,7 @@ my %type_expect	= (
 	'ntriples-canonical'	=> [],
 	'rdfjson'	=> [qw(application/json application/x-rdf+json)],
 	'rdfxml'	=> [qw(application/rdf+xml)],
-	'turtle'	=> [qw(application/turtle application/x-turtle text/turtle)],
+	'turtle'	=> [qw(application/turtle application/x-turtle text/rdf+n3 text/turtle)],
 );
 
 while (my($k,$v) = each(%name_expect)) {
@@ -72,8 +72,8 @@ while (my($k,$v) = each(%name_expect)) {
 {
 	my $h = new HTTP::Headers;
 	$h->header(Accept=>"application/rdf+xml;q=1,text/turtle;q=0.7");
-	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => [ 'turtle' ] );
-	is ( $type, 'text/turtle', 'choose less wanted serializer with among option' );
+	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, restrict => [ 'turtle' ] );
+	is ( $type, 'text/turtle', 'choose less wanted serializer with restrict option' );
 }
 
 {
@@ -81,13 +81,13 @@ while (my($k,$v) = each(%name_expect)) {
 	$h->header(Accept=>"application/xhtml+xml;q=0.8,application/rdf+xml;q=0.9,text/turtle;q=0.7");
 	my ($type, $s)	= RDF::Trine::Serializer->negotiate(
 		request_headers => $h,
-		among => [ 'turtle' ],
+		restrict => [ 'turtle' ],
 		extend => {
 			'text/html'	=> 'html',
 			'application/xhtml+xml' => 'xhtml',
 		},
 	);
-	is( $type, 'application/xhtml+xml', "negotiation with both 'among' restriction and 'extend' custom type" );
+	is( $type, 'application/xhtml+xml', "negotiation with both 'restrict' restriction and 'extend' custom type" );
 	is( $s, 'xhtml', 'negotiation custom type thunk' );
 }
 
@@ -110,21 +110,38 @@ my %negotiate_fail	= (
 	"application/rdf+xml" => ['turtle','rdfjson']
 );
 
-while (my ($accept,$among) = each(%negotiate_fail)) {
+while (my ($accept,$restrict) = each(%negotiate_fail)) {
 	throws_ok {
 		my $h = new HTTP::Headers;
 		$h->header(Accept => $accept);
-		my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, among => $among );
+		my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h, restrict => $restrict );
 	} 'RDF::Trine::Error::SerializationError', "HTTP negotiated serialization throws on unknown/unwanted media type $accept";
 }
 
 {
-	print "# empty Accept header\n";
 	my ($sname, $etype)	= ();
 	my $h	= new HTTP::Headers;
 	$h->header(Accept => "");
 	my ($type, $s)	= RDF::Trine::Serializer->negotiate( request_headers => $h );
-	like( $type, qr'^(text|application)/turtle$', "expected media type" );
+	like( $type, qr'^(text|application)/turtle$', "expected media type with empty accept header" );
 	isa_ok( $s, "RDF::Trine::Serializer::Turtle", "HTTP negotiated empty accept header to proper serializer" );
 }
 
+
+{
+	my $rdf	= <<'END';
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix : <http://example.com/> .
+
+:me a foaf:Person .
+END
+
+	my $map		= RDF::Trine::NamespaceMap->new();
+	my $model	= RDF::Trine::Model->new();
+	my $parser	= RDF::Trine::Parser->new( 'turtle', namespaces => $map );
+	$parser->parse_into_model( 'http://base/', $rdf, $model );
+	my $s		= RDF::Trine::Serializer->new( 'rdfxml', namespaces => $map );
+	my $xml		= $s->serialize_model_to_string( $model );
+	like( $xml, qr[xmlns="http://example.com/"]sm, 'good XML namespaces using namespacemap from parser' );
+	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/"]sm, 'good XML namespaces using namespacemap from parser' );
+}

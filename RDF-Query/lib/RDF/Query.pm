@@ -477,6 +477,16 @@ query. Otherwise, acts just like C<< execute >>.
 sub execute_with_named_graphs {
 	my $self		= shift;
 	my $store		= shift;
+	my @graphs;
+	my @options;
+	if (scalar(@_)) {
+		if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
+			@graphs		= @{ shift(@_) };
+			@options	= @_;
+		} else {
+			@graphs		= @_;
+		}
+	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 #	$self->{model}	= $model;
@@ -487,12 +497,12 @@ sub execute_with_named_graphs {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-	foreach my $gdata (@_) {
+	foreach my $gdata (@graphs) {
 		$l->debug("-> adding graph data " . $gdata->uri_value);
 		$self->parse_url( $gdata->uri_value, 1 );
 	}
 	
-	return $self->execute( $model );
+	return $self->execute( $model, @options );
 }
 
 =begin private
