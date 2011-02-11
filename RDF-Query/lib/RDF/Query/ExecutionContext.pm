@@ -7,7 +7,7 @@ RDF::Query::ExecutionContext - Query execution context
 
 =head1 VERSION
 
-This document describes RDF::Query::ExecutionContext version 2.904.
+This document describes RDF::Query::ExecutionContext version 2.904_01.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use warnings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.904_01';
 }
 
 ######################################################################
