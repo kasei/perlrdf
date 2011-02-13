@@ -7,7 +7,7 @@ RDF::Query::Algebra::SubSelect - Algebra class for Subselects
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::SubSelect version 2.904_01.
+This document describes RDF::Query::Algebra::SubSelect version 2.904_02.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.904_01';
+	$VERSION	= '2.904_02';
 }
 
 ######################################################################
