@@ -8,6 +8,7 @@ REQUIREMENTS
 
      * DateTime
      * DateTime::Format::W3CDTF
+     * Digest::SHA
      * Digest::SHA1
      * Error
      * I18N::LangTags
