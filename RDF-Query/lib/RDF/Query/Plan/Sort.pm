@@ -117,8 +117,8 @@ sub _cmp_rows {
 	no warnings 'uninitialized';
 	foreach my $data (@$exprs) {
 		my ($expr, $rev)	= @$data;
-		my $a_val	= $query->var_or_expr_value( $a, $expr );
-		my $b_val	= $query->var_or_expr_value( $b, $expr );
+		my $a_val	= $query->var_or_expr_value( $a, $expr, $context );
+		my $b_val	= $query->var_or_expr_value( $b, $expr, $context );
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $cmp		= $a_val <=> $b_val;
 		if ($cmp != 0) {

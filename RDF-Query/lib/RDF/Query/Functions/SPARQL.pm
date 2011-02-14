@@ -830,7 +830,7 @@ sub install {
 			my $ggp		= shift;
 			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
 			
-			Carp::confess unless (blessed($context));
+			Carp::confess "No execution contexted passed to sparql:exists" unless (blessed($context));
 			
 			my $l		= Log::Log4perl->get_logger("rdf.query.functions.exists");
 			my $copy		= $context->copy( bound => $bound );

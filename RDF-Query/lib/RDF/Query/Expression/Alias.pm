@@ -106,7 +106,7 @@ sub as_sparql {
 	return sprintf("(%s AS %s)", $expr->as_sparql, $alias->as_sparql);
 }
 
-=item C<< evaluate ( $query, \%bound ) >>
+=item C<< evaluate ( $query, \%bound, $context ) >>
 
 Evaluates the expression using the supplied bound variables.
 Will return a RDF::Query::Node object.
@@ -117,8 +117,9 @@ sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
 	my $bound	= shift;
+	my $ctx		= shift;
 	my $expr	= $self->expression;
-	my $value	= $query->var_or_expr_value( $bound, $expr );
+	my $value	= $query->var_or_expr_value( $bound, $expr, $ctx );
 	return $value;
 }
 
