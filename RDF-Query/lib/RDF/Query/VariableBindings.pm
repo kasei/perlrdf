@@ -43,7 +43,7 @@ BEGIN {
 
 sub new {
 	my $class		= shift;
-	my $bindings	= shift;
+	my $bindings	= shift || {};
 	my $data		= { %$bindings };
 	foreach my $k (keys %$data) {
 		my $node	= $data->{$k};

@@ -148,8 +148,8 @@ sub logging_keys {
 
 sub sse {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
+	my $context	= shift || {};
+	my $indent	= shift || '';
 	my $more	= '    ';
 	my @proto	= $self->plan_prototype;
 	my @data	= $self->plan_node_data;
@@ -245,6 +245,8 @@ sub _sse_atom {
 		}
 	} elsif ($p =~ m/^[PNETV]$/) {
 		if (blessed($v)) {
+		
+			Carp::cluck unless ($v->can('sse'));
 			return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
 		} else {
 			return '()';
@@ -876,8 +878,6 @@ sub __path_plan {
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	if (blessed($path)) {
-# 		my $s		= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
-# 		my $e		= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
 		my $s	= $start;
 		my $e	= $end;
 		my $algebra	= $graph
@@ -945,10 +945,8 @@ sub __path_plan {
 # 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
 		return $nplan;
 	} elsif ($op eq '*' or $op eq '0-') {
-		my $zero	= RDF::Query::Plan::Path->new( '0', $nodes[0], $start, $end, $graph, %args );
-		my $plan	= RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
-		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
-		return $union;
+		my $plan	= RDF::Query::Plan::Path->new( '*', $nodes[0], $start, $end, $graph, %args );
+		return $plan;
 	} elsif ($op eq '+' or $op eq '1-') {
 		return RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
 	} elsif ($op eq '?' or $op eq '0-1') {
