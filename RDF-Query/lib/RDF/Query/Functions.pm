@@ -7,7 +7,7 @@ RDF::Query::Functions - Standard Extension Functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions version 2.904.
+This document describes RDF::Query::Functions version 2.905.
 
 =head1 DESCRIPTION
 
@@ -45,7 +45,7 @@ use Module::Pluggable
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions");
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
