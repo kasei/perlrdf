@@ -38,7 +38,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.905 (2011-XX-XX)
+  Version 2.905 (2011-02-18)
 
      * BUG FIXES
        Fixed mistaken case sensitivity of COALESCE, BNODE, CONCAT, and SUBSTR keywords in SPARQL 1.1 parser.

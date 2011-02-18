@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.904_02.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.905.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.904_02';
+	$VERSION	= '2.905';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 

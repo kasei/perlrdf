@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.905" ;
-                        doap:created      "2011-XX-XX" ;
+                        doap:created      "2011-02-18" ;
                         ];
         asc:changes     [
                         asc:addition      "Added SPARQL 1.1 numeric functions: ABS, CEIL, FLOOR, ROUND, RAND" ;
