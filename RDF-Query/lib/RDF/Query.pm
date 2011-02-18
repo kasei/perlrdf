@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.904.
+This document describes RDF::Query version 2.905.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.904';
+	$VERSION		= '2.905';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -477,6 +477,16 @@ query. Otherwise, acts just like C<< execute >>.
 sub execute_with_named_graphs {
 	my $self		= shift;
 	my $store		= shift;
+	my @graphs;
+	my @options;
+	if (scalar(@_)) {
+		if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
+			@graphs		= @{ shift(@_) };
+			@options	= @_;
+		} else {
+			@graphs		= @_;
+		}
+	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 #	$self->{model}	= $model;
@@ -487,12 +497,12 @@ sub execute_with_named_graphs {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-	foreach my $gdata (@_) {
+	foreach my $gdata (@graphs) {
 		$l->debug("-> adding graph data " . $gdata->uri_value);
 		$self->parse_url( $gdata->uri_value, 1 );
 	}
 	
-	return $self->execute( $model );
+	return $self->execute( $model, @options );
 }
 
 =begin private
@@ -678,6 +688,11 @@ sub as_sparql {
 	
 	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
+	
+	if ($method =~ /^(DESCRIBE|ASK)$/i) {
+		$context->{force_ggp_braces}	= 1;
+	}
+	
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
@@ -721,12 +736,21 @@ sub as_sparql {
 		}
 		
 		my $ns	= scalar(@ns) ? join("\n", @ns, '') : '';
-		my $sparql	= sprintf(
-			"$ns%s %s\n%s",
-			$methoddata,
-			$ggp->as_sparql( $context, '' ),
-			$mod,
-		);
+		my $sparql;
+		if ($methoddata or $ns) {
+			$sparql	= sprintf(
+				"$ns%s %s\n%s",
+				$methoddata,
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		} else {
+			$sparql	= sprintf(
+				"%s\n%s",
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		}
 		
 		chomp($sparql);
 		return $sparql;

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Distinct - Algebra class for distinct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Distinct version 2.904.
+This document describes RDF::Query::Algebra::Distinct version 2.905.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -83,7 +83,7 @@ sub pattern {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -101,7 +101,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -126,6 +126,25 @@ sub as_hash {
 		type 		=> lc($self->type),
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $xsd		= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+	my $q		= $self->pattern->as_spin( $model );
+	
+	$model->add_statement( RDF::Trine::Statement->new($q, $spin->distinct, RDF::Query::Node::Literal->new('true', undef, $xsd->boolean)) );
+	
+	return $q;
 }
 
 =item C<< type >>

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Load - Algebra class for LOAD operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Load version 2.904.
+This document describes RDF::Query::Algebra::Load version 2.905.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -73,7 +73,7 @@ sub construct_args {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -102,7 +102,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 

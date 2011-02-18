@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.904.
+This document describes RDF::Query::Plan version 2.905.
 
 =head1 METHODS
 
@@ -64,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -687,9 +687,29 @@ sub generate_plans {
 	} elsif ($type eq 'Load') {
 		push(@return_plans, RDF::Query::Plan::Load->new( $algebra->url, $algebra->graph ));
 	} elsif ($type eq 'Update') {
-		my @plans	= $self->generate_plans( $algebra->pattern, $context, %args );
+		my $ds		= $algebra->dataset || {};
+		my $default	= $ds->{'default'} || [];
+		my $named	= $ds->{'named'} || {};
+		my $dcount	= scalar(@$default);
+		my $ncount	= scalar(@{[ keys %$named ]});
+# 		warn 'Update dataset: ' . Dumper($algebra->dataset);
+		my @plans;
+		
+		my @dataset	= ($ds);
+		if ($dcount == 1 and $ncount == 0) {
+			# if it's just a single named graph to be used as the default graph,
+			# then rewrite the pattern to use the named graph (and check to make
+			# sure there aren't any GRAPH blocks)
+			@dataset	= ();
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $default->[0] );
+		} elsif ($dcount == 0 and $ncount == 0) {
+			@dataset	= ();
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args );
+		} else {
+			@plans		= $self->generate_plans( $algebra->pattern, $context, %args );
+		}
 		foreach my $p (@plans) {
-			push(@return_plans, RDF::Query::Plan::Update->new( $algebra->delete_template, $algebra->insert_template, $p ));
+			push(@return_plans, RDF::Query::Plan::Update->new( $algebra->delete_template, $algebra->insert_template, $p, @dataset ));
 		}
 	} elsif ($type eq 'Clear') {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
@@ -840,7 +860,6 @@ sub _path_plans {
 	my $end		= $algebra->end;
 	for ($start, $end) {
 		if ($_->isa('RDF::Query::Node::Blank')) {
-			warn '*** making distinguished variable ' . $_;
 			$_	= $_->make_distinguished_variable;
 		}
 	}
@@ -926,7 +945,6 @@ sub __path_plan {
 # 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
 		return $nplan;
 	} elsif ($op eq '*' or $op eq '0-') {
-# 		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 		my $zero	= RDF::Query::Plan::Path->new( '0', $nodes[0], $start, $end, $graph, %args );
 		my $plan	= RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
@@ -936,7 +954,6 @@ sub __path_plan {
 	} elsif ($op eq '?' or $op eq '0-1') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $graph, $context, %args );
-# 		my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 		my $zero	= RDF::Query::Plan::Path->new( '0', undef, $start, $end, $graph, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
@@ -1013,7 +1030,6 @@ sub __path_plan {
 		foreach my $i ($from .. $to) {
 			if ($i == 0) {
 				my $zero	= RDF::Query::Plan::Path->new( '0', [], $start, $end, $graph, %args );
-# 				my $zero	= $self->__zero_length_path_plan( $start, $end, $context, %args );
 				push(@plans, $zero);
 			} else {
 				push(@plans, $self->__path_plan( $start, [$i, $nodes[0]], $end, $graph, $context, %args ));
@@ -1066,53 +1082,6 @@ sub _simple_path {
 	}
 	
 	return;
-}
-
-sub __zero_length_path_plan {
-	my $self	= shift;
-	my $start	= shift;
-	my $end		= shift;
-	my $context	= shift;
-	my %args	= @_;
-	my $model	= $context->model;
-	my $bound	= $args{ bound } || {};
-	my $g		= $args{ active_graph };
-	if ($g and $g->isa('RDF::Trine::Node::Variable')) {
-		my $bg	= $bound->{ $g->name };
-		$g	= $bg if (blessed($bg));
-	}
-	my @node_args	= (undef, undef, $g);
-	
-	my @iters;
-	push(@iters, scalar($model->subjects(@node_args)));
-#	push(@iters, scalar($model->predicates(@node_args)));
-	push(@iters, scalar($model->objects(@node_args)));
-	my %vars;
-	my $no_literals	= 0;
-	if ($start->isa('RDF::Query::Node::Variable')) {
-		$vars{ $start->name }++;
-		$no_literals	= 1;
-	}
-	$vars{ $end->name }++ if ($end->isa('RDF::Query::Node::Variable'));
-	
-	my $code	= sub {
-		while (1) {
-			return unless scalar(@iters);
-			my $node	= $iters[0]->next;
-			if ($node) {
-				if ($no_literals) {
-					next if ($node->isa('RDF::Query::Node::Literal'));
-				}
-				my $vb	= RDF::Query::VariableBindings->new( { map { $_ => $node } (keys %vars) } );
-				return $vb;
-			} else {
-				shift(@iters);
-			}
-		}
-	};
-	my $iter	= RDF::Trine::Iterator::Bindings->new( $code, [] );
-	my $nodes	= RDF::Query::Plan::Iterator->new( $iter );
-	my $plan	= RDF::Query::Plan::Distinct->new( $nodes );
 }
 
 =item C<< plan_node_name >>

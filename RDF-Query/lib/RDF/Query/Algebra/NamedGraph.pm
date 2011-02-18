@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.904.
+This document describes RDF::Query::Algebra::NamedGraph version 2.905.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -122,7 +122,7 @@ sub quads {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -141,18 +141,20 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	my $pcontext	= { %$context, force_ggp_braces => 1 };
+	
 	my $string	= sprintf(
 		"GRAPH %s %s",
 		$self->graph->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( $pcontext, $indent ),
 	);
 	return $string;
 }
@@ -171,6 +173,28 @@ sub as_hash {
 		graph		=> $self->graph,
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @t		= $self->pattern->as_spin( $model );
+	
+	my $ng		= RDF::Query::Node::Blank->new();
+	my $list	= $model->add_list( @t );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $rdf->type, $spin->NamedGraph) );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $spin->elements, $list) );
+	
+	return $ng;
 }
 
 =item C<< type >>

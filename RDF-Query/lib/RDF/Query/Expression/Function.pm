@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.904.
+This document describes RDF::Query::Expression::Function version 2.905.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -103,7 +103,7 @@ sub arguments {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -130,7 +130,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -273,6 +273,9 @@ sub evaluate {
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
+		unless ($func) {
+			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";
+		}
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.130
+This document describes RDF::Trine::Parser version 0.133
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ our %media_types;
 our %format_uris;
 our %encodings;
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.133';
 }
 
 use Scalar::Util qw(blessed);
@@ -146,7 +146,7 @@ sub new {
 	if ($name eq 'guess') {
 		throw RDF::Trine::Error::UnimplementedError -text => "guess parser heuristics are not implemented yet";
 	} elsif (my $class = $parser_names{ $key }) {
-        # re-add name for multiformat (e.g. Redland) parsers
+		# re-add name for multiformat (e.g. Redland) parsers
 		return $class->new( name => $key, @_ );
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser known named $name";
@@ -198,34 +198,38 @@ sub parse_url_into_model {
 	}
 	
 	### FALLBACK
+	my %options;
+	if (defined $args{canonicalize}) {
+		$options{ canonicalize }	= $args{canonicalize};
+	}
 	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
-		my $parser	= RDF::Trine::Parser::RDFXML->new();
+		my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
-		my $parser	= RDF::Trine::Parser::Turtle->new();
+		my $parser	= RDF::Trine::Parser::Turtle->new(%options);
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]trig$/) {
-		my $parser	= RDF::Trine::Parser::Trig->new();
+		my $parser	= RDF::Trine::Parser::Trig->new(%options);
 		my $data	= decode('utf8', $content);
 		$parser->parse_into_model( $url, $data, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]nt$/) {
-		my $parser	= RDF::Trine::Parser::NTriples->new();
+		my $parser	= RDF::Trine::Parser::NTriples->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]nq$/) {
-		my $parser	= RDF::Trine::Parser::NQuads->new();
+		my $parser	= RDF::Trine::Parser::NQuads->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]js(?:on)?$/) {
-		my $parser	= RDF::Trine::Parser::RDFJSON->new();
+		my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} elsif ($url =~ /[.]x?html?$/) {
-		my $parser	= RDF::Trine::Parser::RDFa->new();
+		my $parser	= RDF::Trine::Parser::RDFa->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
 	} else {
@@ -235,7 +239,7 @@ sub parse_url_into_model {
 			if (my $e = $encodings{ $pclass }) {
 				$data	= decode( $e, $content );
 			}
-			my $parser	= $pclass->new();
+			my $parser	= $pclass->new(%options);
 			my $ok		= 0;
 			try {
 				$parser->parse_into_model( $url, $data, $model, %args );
@@ -284,15 +288,16 @@ sub parse_into_model {
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle C<< $fh >>, using the given
-C<< $base_uri >>. For each RDF statement parsed, will call
+Parses all data read from the filehandle or file C<< $fh >>, using the 
+given C<< $base_uri >>. For each RDF statement parsed, will call
 C<< $model->add_statement( $statement ) >>.
 
 =cut
 
 sub parse_file_into_model {
 	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
+	my $self	= (blessed($proto) or $proto eq  __PACKAGE__)
+			? $proto : $proto->new();
 	my $uri		= shift;
 	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
 		$uri	= $uri->uri_value;
@@ -318,7 +323,11 @@ sub parse_file_into_model {
 	return $s;
 }
 
-=item C<< parse_file ( $base, $fh, $handler ) >>
+=item C<< parse_file ( $base_uri, $fh, $handler ) >>
+
+Parses all data read from the filehandle or file C<< $fh >>, using the given
+C<< $base_uri >>. If C<< $fh >> is a filename, this method can guess the
+associated parse. For each RDF statement parses C<< $handler >> is called.
 
 =cut
 
@@ -327,15 +336,23 @@ sub parse_file {
 	my $base	= shift;
 	my $fh		= shift;
 	my $handler	= shift;
-	
+
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
-		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		unless ($self->can('parse')) {
+			my $pclass = $self->guess_parser_by_filename( $filename );
+			$self = $pclass->new() if ($pclass and $pclass->can('new'));
+		}
+		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
-	
-	my $content	= do { local($/) = undef; <$fh> };
-	return $self->parse( $base, $content, $handler, @_ );
+
+	if ($self and $self->can('parse')) {
+		my $content	= do { local($/) = undef; <$fh> };
+		return $self->parse( $base, $content, $handler, @_ );
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Cannot parse unknown serialization";
+	}
 }
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>

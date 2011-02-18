@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.130
+This document describes RDF::Trine::Graph version 0.133
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.130';
+	$VERSION	= '0.133';
 }
 
 use overload	'=='	=> \&RDF::Trine::Graph::equals,
@@ -87,7 +87,8 @@ sub equals {
 	my $self	= shift;
 	my $graph	= shift;
 	unless (blessed($graph) and $graph->isa('RDF::Trine::Graph')) {
-		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::equals must be called with a Graph argument";
+		$self->{error}	= "RDF::Trine::Graph::equals must be called with a Graph argument";
+		throw RDF::Trine::Error::MethodInvocationError -text => $self->{error};
 	}
 	
 	my @graphs	= ($self, $graph);
@@ -96,13 +97,13 @@ sub equals {
 	if (scalar(@$nba) != scalar(@$nbb)) {
 		my $nbac	= scalar(@$nba);
 		my $nbbc	= scalar(@$nbb);
-# 		warn "count of non-blank statements didn't match ($nbac != $nbbc)" if ($debug);
+		$self->{error}	= "count of non-blank statements didn't match ($nbac != $nbbc)";
 		return 0;
 	}
 	my $bac	= scalar(@$ba);
 	my $bbc	= scalar(@$bb);
 	if ($bac != $bbc) {
-# 		warn "count of blank statements didn't match ($bac != $bbc)" if ($debug);
+		$self->{error}	= "count of blank statements didn't match ($bac != $bbc)";
 		return 0;
 	}
 	
@@ -112,13 +113,13 @@ sub equals {
 	
 	foreach my $i (0 .. $#{ $nba }) {
 		unless ($nba->[$i] eq $nbb->[$i]) {
-# 			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
+			$self->{error}	= "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
 			return 0;
 		}
 	}
 	
 	if ($bac == 0) {
-# 		warn "no blank nodes -- models match\n" if ($debug);
+#		$self->{error}	=  "no blank nodes -- models match\n";
 		return 1;
 	}
 	
@@ -142,7 +143,7 @@ sub equals {
 	MAPPING: foreach my $mapping (@kbp) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
-# 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
+		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
 		my %bb	= map { $_->as_string => 1 } @$bb;
 		foreach my $st (@$ba) {
@@ -151,7 +152,7 @@ sub equals {
 				my $n	= $st->$method();
 				if ($n->isa('RDF::Trine::Node::Blank')) {
 					my $id	= $mapping{ $n->blank_identifier };
-# 					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
+					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
 					push(@nodes, RDF::Trine::Node::Blank->new( $id ));
 				} else {
 					push(@nodes, $n);
@@ -159,18 +160,18 @@ sub equals {
 			}
 			my $class	= ref($st);
 			my $mapped_st	= $class->new( @nodes )->as_string;
-# 			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
+			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
 			if ($bb{ $mapped_st }) {
 				delete $bb{ $mapped_st };
 			} else {
 				next MAPPING;
 			}
 		}
-# 		warn "found mapping: " . Dumper(\%mapping) if ($debug);
+		$self->{error}	=  "found mapping: " . Dumper(\%mapping) if ($debug);
 		return 1;
 	}
 	
-# 	warn "didn't find mapping\n" if ($debug);
+	$self->{error}	=  "didn't find blank node mapping\n";
 	return 0;
 }
 
@@ -204,6 +205,17 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 sub get_statements {
 	my $self	= shift;
 	return $self->{model}->get_statements();
+}
+
+=item C<< error >>
+
+Returns an error string explaining the last failed C<< equal >> call.
+
+=cut
+
+sub error {
+	my $self	= shift;
+	return $self->{error};
 }
 
 1;

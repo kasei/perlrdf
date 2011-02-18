@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.130
+This document describes RDF::Trine::Model version 0.133
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.133';
 }
 
 use Scalar::Util qw(blessed);
@@ -36,9 +36,10 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Model::Dataset;
 
-=item C<< new ( @stores ) >>
+=item C<< new ( $store ) >>
 
-Returns a new model over the supplied rdf store.
+Returns a new model over the supplied L<rdf store|RDF::Trine::Store> or a new temporary model.
+If you provide an unblessed value, it will be used to create a new rdf store.
 
 =cut
 
@@ -46,7 +47,7 @@ sub new {
 	my $class	= shift;
 	if (@_) {
 		my $store	= shift;
-		throw RDF::Trine::Error -text => "no store in model constructor" unless (blessed($store));
+		$store		= RDF::Trine::Store->new( $store ) unless (blessed($store));
 		my %args	= @_;
 		my $self	= bless({
 			store		=> $store,
@@ -200,13 +201,63 @@ sub add_hashref {
 						RDF::Trine::Node::Resource->new($O->{'value'});
 				}
 				
-				if ( $ts && $tp && $to ) {
+				if ($ts and $tp and $to) {
 					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
 					$self->add_statement($st, $context);
 				}
 			}
 		}
 	}
+}
+
+=item C<< add_list ( @elements ) >>
+
+Adds an rdf:List to the model with the given elements. Returns the node object
+that is the head of the list.
+
+=cut
+
+sub add_list {
+	my $self		= shift;
+	my @elements	= @_;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	if (scalar(@elements) == 0) {
+		return $rdf->nil;
+	} else {
+		my $head		= RDF::Query::Node::Blank->new();
+		my $node		= shift(@elements);
+		my $rest		= $self->add_list( @elements );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
+		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		return $head;
+	}
+}
+
+=item C<< get_list ( $head ) >>
+
+Returns a list of nodes that are elements of the rdf:List represented by the
+supplied head node.
+
+=cut
+
+sub get_list {
+	my $self	= shift;
+	my $head	= shift;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @elements;
+	my %seen;
+	while (blessed($head) and not($head->isa('RDF::Trine::Node::Resource') and $head->uri_value eq $rdf->nil->uri_value)) {
+		if ($seen{ $head->as_string }++) {
+			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
+		}
+		my @n		= $self->objects( $head, $rdf->first );
+		if (scalar(@n) != 1) {
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
+		}
+		push(@elements, @n);
+		($head)	= $self->objects( $head, $rdf->rest );
+	}
+	return @elements;
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -283,9 +334,9 @@ sub count_statements {
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
-Returns an iterator of all statements matching the specified subject,
-predicate and objects from the rdf store. Any of the arguments may be undef to
-match any value.
+Returns an L<iterator|RDF::Trine::Iterator> of all statements matching the specified 
+subject, predicate and objects from the rdf store. Any of the arguments may be undef 
+to match any value.
 
 If three or fewer arguments are given, the statements returned will be matched
 based on triple semantics (the graph union of triples from all the named
@@ -414,8 +465,8 @@ sub _get_pattern {
 
 =item C<< get_contexts >>
 
-Returns an iterator containing the nodes representing the named graphs in the
-model.
+Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
+the named graphs in the model.
 
 =cut
 
@@ -433,7 +484,7 @@ sub get_contexts {
 
 =item C<< as_stream >>
 
-Returns an iterator object containing every statement in the model.
+Returns an L<iterator|RDF::Trine::Iterator> containing every statement in the model.
 
 =cut
 
@@ -506,15 +557,15 @@ sub as_hashref {
 		
 		my $o = {};
 		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}     = 'literal';
-			$o->{'value'}    = $statement->object->literal_value;
-			$o->{'lang'}     = $statement->object->literal_value_language
+			$o->{'type'}		= 'literal';
+			$o->{'value'}		= $statement->object->literal_value;
+			$o->{'lang'}		= $statement->object->literal_value_language
 				if $statement->object->has_language;
-			$o->{'datatype'} = $statement->object->literal_datatype
+			$o->{'datatype'}	= $statement->object->literal_datatype
 				if $statement->object->has_datatype;
 		} else {
-			$o->{'type'}  = $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'} = $statement->object->isa('RDF::Trine::Node::Blank') ? 
+			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
 				('_:'.$statement->object->blank_identifier) :
 				$statement->object->uri ;
 		}
@@ -615,11 +666,16 @@ sub predicates {
 	}
 }
 
-=item C<< objects ( $subject, $predicate ) >>
+=item C<< objects ( $subject, $predicate [, $graph ] [, %options ] ) >>
 
 Returns a list of the nodes that appear as the object of statements with the
-specified C<< $subject >> and C<< $predicate >>. Either of the two arguments may
-be undef to signify a wildcard.
+specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
+may be undef to signify a wildcard. You can further filter objects using the
+C<< %options >> argument. Keys in C<< %options >> indicate the restriction type
+and may be 'type', 'language', or 'datatype'. The value of the 'type' key may be
+one of 'node', 'nil', 'blank', 'resource', 'literal', or 'variable'. The use of
+either 'language' or 'datatype' restrict objects to literal nodes with a
+specific language or datatype value, respectively.
 
 =cut
 
@@ -627,12 +683,35 @@ sub objects {
 	my $self	= shift;
 	my $subj	= shift;
 	my $pred	= shift;
-	my $graph	= shift;
+	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;
+	my $type	= $options{type};
+	$type = 'literal' if ($options{language} or $options{datatype});
+	if ($options{datatype} and not blessed($options{datatype})) {
+		$options{datatype} = RDF::Trine::Node::Resource->new($options{datatype});
+	}
+	
+	if (defined $type) {
+		if ($type =~ /^(node|nil|blank|resource|literal|variable)$/) {
+			$type = "is_$type";
+		} else {
+			throw RDF::Trine::Error::CompilationError -text => "unknown type"
+		}
+	}
 	$self->end_bulk_ops();
 	my $iter	= $self->get_statements( $subj, $pred, undef, $graph );
 	my %nodes;
 	while (my $st = $iter->next) {
-		my $obj	= $st->object;
+		my $obj = $st->object;
+		if (defined $type) {
+			next unless $obj->$type;
+			if ($options{language}) {
+				my $lang = $obj->literal_value_language;
+				next unless ($lang and $lang eq $options{language});
+			} elsif ($options{datatype}) {
+				my $dt = $obj->literal_datatype;
+				next unless ($dt and $dt eq $options{datatype}->uri_value);
+			}
+		}
 		$nodes{ $obj->as_string }	= $obj;
 	}
 	if (wantarray) {

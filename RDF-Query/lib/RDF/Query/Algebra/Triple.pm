@@ -7,7 +7,7 @@ RDF::Query::Algebra::Triple - Algebra class for Triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Triple version 2.904.
+This document describes RDF::Query::Algebra::Triple version 2.905.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -73,7 +73,7 @@ sub _new {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -113,6 +113,31 @@ sub as_hash {
 		type 	=> lc($self->type),
 		nodes	=> [ map { $_->as_hash } $self->nodes ],
 	};
+}
+
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $t		= RDF::Query::Node::Blank->new();
+	my @nodes	= $self->nodes;
+	foreach (@nodes) {
+		if (blessed($_) and $_->isa('RDF::Trine::Node::Variable')) {
+			$_	= RDF::Query::Node::Blank->new( "variable_" . $_->name );
+		}
+	}
+	
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->subject, $nodes[0]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->predicate, $nodes[1]) );
+	$model->add_statement( RDF::Trine::Statement->new($t, $spin->object, $nodes[2]) );
+	return $t;
 }
 
 =item C<< referenced_blanks >>

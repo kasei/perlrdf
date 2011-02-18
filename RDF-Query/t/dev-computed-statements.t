@@ -68,7 +68,7 @@ sub __compute_list_member {
 	my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
 	my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
 	
-	use Scalar::Util qw(blessed);use Data::Dumper;
+	use Scalar::Util qw(blessed);
 	if (blessed($p) and $p->isa('RDF::Query::Node::Resource') and $p->uri_value( 'http://www.jena.hpl.hp.com/ARQ/list#member' )) {
 		my @lists;
 		my $lists	= ($c)
@@ -77,7 +77,6 @@ sub __compute_list_member {
 		while (my $l = $lists->next) {
 			push(@lists, [$l, $l->subject]);
 		}
-# 		warn 'inital lists: ' . Dumper(\@lists);
 		my %seen;
 		my $sub		= sub {
 # 			warn 'trying to compute list:member';

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Extend - Algebra class for extending the variable projectio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Extend version 2.904.
+This document describes RDF::Query::Algebra::Extend version 2.905.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -100,7 +100,7 @@ sub vars {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -154,15 +154,21 @@ sub _from_sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
+	if ($context->{ skip_extend }) {
+		$context->{ skip_extend }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
+	
+	my $pattern	= $self->pattern;
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -175,7 +181,7 @@ sub as_sparql {
 		}
 	}
 	
-	my $ggp		= $self->pattern->as_sparql( $context, $indent );
+	my $ggp		= $pattern->as_sparql( $context, $indent );
 	my $sparql	= $ggp;
 	foreach my $v (@vars) {
 		$sparql	.=	"\n${indent}BIND" . $v;

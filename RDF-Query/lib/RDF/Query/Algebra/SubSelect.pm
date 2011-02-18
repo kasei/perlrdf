@@ -7,7 +7,7 @@ RDF::Query::Algebra::SubSelect - Algebra class for Subselects
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::SubSelect version 2.904.
+This document describes RDF::Query::Algebra::SubSelect version 2.905.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -88,7 +88,7 @@ sub query {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -103,7 +103,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 

@@ -34,8 +34,6 @@ END
 		my @results	= $query->execute_plan( $p, $c );
 		ok( scalar(@results), 'got result' );
 		isa_ok( $results[0], 'HASH' );
-# 		use Data::Dumper;
-# 		warn Dumper(\@results);
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
 		ok( $results[0]{'person'}->isa('RDF::Trine::Node::Resource'), 'Resource' );
 		is( $results[0]{'person'}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'got person uri' );

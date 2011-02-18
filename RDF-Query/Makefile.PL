@@ -16,12 +16,13 @@ recommends			'Crypt::GPG'				=> 0;
 recommends			'Bloom::Filter'				=> 1;
 
 build_requires		'Test::JSON'				=> 0;
-build_requires		'Test::More'				=> 0.61;
+build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'YAML'						=> 0;
 build_requires		'FindBin'					=> 0;
 
 requires			'Data::UUID'				=> 0;
+requires			'Digest::SHA'				=> 0;
 requires			'Digest::SHA1'				=> 0;
 requires			'DateTime::Format::W3CDTF'	=> 0;
 requires			'Error'						=> 0;
@@ -29,7 +30,7 @@ requires			'File::Spec'				=> 0;
 requires			'File::Temp'				=> 0;
 requires			'JSON'						=> 2;
 requires			'Parse::RecDescent'			=> 0;
-requires			'RDF::Trine'				=> 0.126;
+requires			'RDF::Trine'				=> 0.133;
 requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
 requires			'URI'						=> 1.52;

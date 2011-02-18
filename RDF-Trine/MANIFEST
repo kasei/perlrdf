@@ -26,12 +26,14 @@ lib/RDF/Trine/Iterator/Bindings/Materialized.pm
 lib/RDF/Trine/Iterator/Boolean.pm
 lib/RDF/Trine/Iterator/Graph.pm
 lib/RDF/Trine/Iterator/Graph/Materialized.pm
+lib/RDF/Trine/Iterator/JSONHandler.pm
 lib/RDF/Trine/Iterator/SAXHandler.pm
 lib/RDF/Trine/Model.pm
 lib/RDF/Trine/Model/Dataset.pm
 lib/RDF/Trine/Model/StatementFilter.pm
 lib/RDF/Trine/Model/Union.pm
 lib/RDF/Trine/Namespace.pm
+lib/RDF/Trine/NamespaceMap.pm
 lib/RDF/Trine/Node.pm
 lib/RDF/Trine/Node/Blank.pm
 lib/RDF/Trine/Node/Literal.pm
@@ -476,12 +478,6 @@ t/data/turtle/test-12.out
 t/data/turtle/test-12.ttl
 t/data/turtle/test-13.out
 t/data/turtle/test-13.ttl
-t/data/turtle/test-14.out
-t/data/turtle/test-14.ttl
-t/data/turtle/test-15.out
-t/data/turtle/test-15.ttl
-t/data/turtle/test-16.out
-t/data/turtle/test-16.ttl
 t/data/turtle/test-17.out
 t/data/turtle/test-17.ttl
 t/data/turtle/test-18.out
@@ -517,6 +513,7 @@ t/model-filter.t
 t/model-temporary.t
 t/model-union.t
 t/model.t
+t/namespacemap.t
 t/namespace-export.t
 t/namespace-uri.t
 t/node-literal.t
@@ -552,4 +549,11 @@ t/store-triple_sql.t
 t/store.t
 t/store-config.t
 t/syntax.t
+xt/data/turtle/test-14.out
+xt/data/turtle/test-14.ttl
+xt/data/turtle/test-15.out
+xt/data/turtle/test-15.ttl
+xt/data/turtle/test-16.out
+xt/data/turtle/test-16.ttl
+xt/parser-turtle.t
 xt/store-sparql.t

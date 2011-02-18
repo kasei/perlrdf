@@ -7,7 +7,7 @@ RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results fo
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::SAXHandler version 0.130
+This document describes RDF::Trine::Iterator::SAXHandler version 0.133
 
 =head1 SYNOPSIS
 
@@ -39,7 +39,7 @@ use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.130';
+	$VERSION	= '0.133';
 }
 
 my %strings;
@@ -235,7 +235,7 @@ sub end_element {
 		my $value	= delete( $values{ $addr } );
 		$bindings{ $addr }{ $name }	= $value;
 	} elsif ($tag eq 'result') {
-		my $result	= delete( $bindings{ $addr } );
+		my $result	= delete( $bindings{ $addr } ) || {};
 		$result_count{ $addr }++;
 		my $vb	= RDF::Trine::VariableBindings->new( $result );
 		push( @{ $results{ $addr } }, $vb );

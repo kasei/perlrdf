@@ -7,7 +7,7 @@ RDF::Query::Algebra::Update - Algebra class for UPDATE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Update version 2.904.
+This document describes RDF::Query::Algebra::Update version 2.905.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -75,7 +75,7 @@ sub construct_args {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -116,13 +116,13 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
 	my $delete	= $self->delete_template;
 	my $insert	= $self->insert_template;
@@ -152,21 +152,21 @@ sub as_sparql {
 				$delete->as_sparql( $context, "${indent}  " ),
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} elsif ($insert) {
 			return sprintf(
 				"INSERT {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$insert->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		} else {
 			return sprintf(
 				"DELETE {\n${indent}	%s\n${indent}}\n${indent}%s\n${indent}WHERE %s",
 				$delete->as_sparql( $context, "${indent}  " ),
 				$ds_string,
-				$ggp->as_sparql( $context, ${indent} ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, ${indent} ),
 			);
 		}
 	} else {
@@ -191,7 +191,7 @@ sub as_sparql {
 				"${op} %s%sWHERE %s",
 				$temps,
 				$ds_string,
-				$ggp->as_sparql( $context, "${indent}" ),
+				$ggp->as_sparql( { %$context, force_ggp_braces => 1 }, "${indent}" ),
 			);
 		}
 	}

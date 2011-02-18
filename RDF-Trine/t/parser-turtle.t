@@ -1,5 +1,5 @@
 use utf8;
-use Test::More qw(no_plan);
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
@@ -13,12 +13,31 @@ my $path	= File::Spec->catfile( $Bin, 'data', 'turtle' );
 my @good	= bsd_glob("${path}/test*.ttl");
 my @bad		= bsd_glob("${path}/bad*.ttl");
 
+{
+	my $file = $good[0];
+	my $base = 'file://' . $file;
+	my $model = RDF::Trine::Model->temporary_model;
+	RDF::Trine::Parser->parse_file_into_model( $base, $file, $model );
+	is( $model->size, 1, 'parse_file_into_model, guessed from filename' );
+	my $ok = 0;
+	RDF::Trine::Parser->parse_file( $base, $file, sub { $ok = 1; } );
+	ok( $ok, 'parse_file, guessed from filename' );
+}
+
+{
+	my $file	= File::Spec->catfile( $Bin, 'data', 'bugs', 'ttl-with-bom.ttl' );
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $p		= RDF::Trine::Parser::Turtle->new();
+	$p->parse_file_into_model( $base, $file, $model );
+	is( $model->size, 1, 'expected model size from turtle file with BOM' );
+}
+
 foreach my $file (@good) {
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	lives_ok {
 		my $url	= 'file://' . $file;
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} $test;
 }
@@ -29,14 +48,14 @@ foreach my $file (@bad) {
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	throws_ok {
 		my $url	= 'file://' . $file;
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} 'RDF::Trine::Error::ParserError', $test;
 }
 
 {
 	# Canonicalization tests
-	my $parser	= RDF::Trine::Parser->new( 'turtle', canonicalize => 1 );
+	my $parser	= RDF::Trine::Parser::Turtle->new( canonicalize => 1 );
 	{
 		my $model = RDF::Trine::Model->temporary_model;
 		my $ntriples	= qq[_:a <http://example.com/integer> "-0123"^^<http://www.w3.org/2001/XMLSchema#integer> .\n];
@@ -70,7 +89,7 @@ foreach my $file (@bad) {
 }	
 
 {
-	my $parser	= RDF::Trine::Parser->new( 'turtle' );
+	my $parser	= RDF::Trine::Parser::Turtle->new();
 	my $model = RDF::Trine::Model->temporary_model;
 	my $ttl		= <<'END';
 # This document contains a graph with non-ASCII chars.
@@ -87,6 +106,7 @@ END
 	is($got, $expect, "Finding UTF-8 string");
 }
 
+done_testing();
 
 sub _SILENCE {
 	Log::Log4perl->init( {

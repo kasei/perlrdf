@@ -1,11 +1,11 @@
-use Test::More tests => 20;
+use Test::More tests => 21;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(iri);
+use RDF::Trine qw(iri statement);
 use_ok('RDF::Trine::Serializer::RDFXML');
 
 
@@ -420,5 +420,16 @@ END
 	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:lang="http://purl.org/net/inkel/rdf/schemas/lang/1.1#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"]sm, 'xmlns sorted in rdf:RDF tag' );
 	like( $xml, qr[<lang:masters>en</lang:masters>]sm, 'Qname literal tag' );
 	like( $xml, qr[<rdfs:seeAlso rdf:resource="http://eve.example.com/"/>]sm, 'Qname resource tag' );
+}
+
+{
+	my $serializer	= RDF::Trine::Serializer::RDFXML->new();
+	my $model		= RDF::Trine::Model->temporary_model;
+	my $base		= 'http://example.org/';
+	my $url_with_amp	= "$base?foo=bar&doz=baz";
+	$model->add_statement( statement( iri($base), iri("http://xmlns.com/foaf/0.1/page"), iri($url_with_amp) ) );
+	
+	my $xml = $serializer->serialize_model_to_string($model);
+	like( $xml, qr[&amp;]sm, 'XML entity escaping' );
 }
 
