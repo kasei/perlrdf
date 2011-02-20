@@ -112,6 +112,12 @@ sub parse_file {
 	my $fh		= shift;
 	my $handler	= shift;
 	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	
 	my $lineno	= 0;
 	while (defined(my $line = <$fh>)) {
 LINE:
