@@ -11,6 +11,10 @@ use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
+use Log::Log4perl;
+
+Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
+
 my @stores	= test_stores();
 plan tests => 5 + scalar(@stores) * 167;
 
