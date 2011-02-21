@@ -7,7 +7,7 @@ RDF::Query::Algebra::Union - Algebra class for Union patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Union version 2.904.
+This document describes RDF::Query::Algebra::Union version 2.905.
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################

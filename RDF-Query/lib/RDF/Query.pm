@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.904.
+This document describes RDF::Query version 2.905.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.904';
+	$VERSION		= '2.905';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -904,7 +904,7 @@ sub load_data {
 
 =begin private
 
-=item C<< var_or_expr_value ( \%bound, $value ) >>
+=item C<< var_or_expr_value ( \%bound, $value, $context ) >>
 
 Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
 If  C<< $value >> is  a node object, it is simply returned. If it is an
@@ -920,9 +920,10 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
+	my $ctx		= shift;
 	Carp::confess 'not an object value in var_or_expr_value: ' . Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
-		return $v->evaluate( $self, $bound );
+		return $v->evaluate( $self, $bound, $ctx );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
 	} elsif ($v->isa('RDF::Query::Node')) {

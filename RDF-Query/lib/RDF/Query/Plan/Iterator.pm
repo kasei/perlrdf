@@ -7,7 +7,7 @@ RDF::Query::Plan::Iterator - Executable query plan for result-generating iterato
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Iterator version 2.904.
+This document describes RDF::Query::Plan::Iterator version 2.905.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################

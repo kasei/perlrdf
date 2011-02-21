@@ -24,7 +24,7 @@ use RDF::Redland;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.path		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -45,13 +45,24 @@ require XML::Simple;
 plan qw(no_plan);
 require "xt/dawg/earl.pl";
 	
-my $PATTERN		= shift(@ARGV) || '';
+my $PATTERN	= '';
+my %args;
+
+while (defined(my $opt = shift)) {
+	if ($opt =~ /^-(.*)$/) {
+		$args{ $1 }	= 1;
+	} else {
+		$PATTERN	= $opt;
+	}
+}
+
+
 my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
 
 no warnings 'once';
 
 if ($PATTERN) {
-	$debug			= 0;
+	$debug			= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
@@ -89,7 +100,7 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 {
 	my @manifests	= $model->subjects( $rdf->type, $mf->Manifest );
 	foreach my $m (@manifests) {
-		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		warn "Manifest: " . $m->as_string . "\n" if ($debug > 1);
 		my ($list)	= $model->objects( $m, $mf->entries );
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
@@ -331,7 +342,7 @@ sub query_eval_test {
 			print STDERR "ok\n" if ($debug);
 			
 		#	warn "comparing results...";
-			my $ok			= compare_results( $expected, $actual, $earl, $test->as_string, \$comment );
+			compare_results( $expected, $actual, $earl, $test->as_string, \$comment );
 		};
 		warn $@ if ($@);
 		if ($ok) {
@@ -378,6 +389,11 @@ sub get_actual_results {
 	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
 	my $rmodel	= RDF::Trine::Model->temporary_model;
 	my $results	= $query->execute_with_named_graphs( $model, \@gdata );	# strict_errors => 1
+	if ($args{ results }) {
+		$results	= $results->materialize;
+		warn "Got actual results:\n";
+		warn $results->as_string;
+	}
 	if ($results->is_bindings) {
 		return (binding_results_data( $results ), 'bindings');
 	} elsif ($results->is_boolean) {
@@ -441,7 +457,7 @@ sub compare_results {
 		my $act_graph	= RDF::Trine::Graph->new( $actual );
 		my $exp_graph	= RDF::Trine::Graph->new( $expected );
 		
- 		local($debug)	= 1 if ($PATTERN);
+#  		local($debug)	= 1 if ($PATTERN);
 		if ($debug) {
 			warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
 			my $actualxml		= $act_graph->get_statements->as_string;
@@ -465,6 +481,8 @@ sub compare_results {
 			warn "Result count ($acount) didn't match expected ($ecount)" if ($debug);
 			return fail($test);
 		}
+		
+# 		warn Data::Dumper->Dump([\@aresults, \@eresults], [qw(actual expected)]);
 		
 		my ($awith, $awithout)	= split_results_with_blank_nodes( @aresults );
 		my ($ewith, $ewithout)	= split_results_with_blank_nodes( @eresults );

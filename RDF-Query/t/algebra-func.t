@@ -4,7 +4,6 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Data::Dumper;
 use Test::More tests => 210;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
@@ -110,7 +109,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}integer", $rea );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
@@ -119,7 +117,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}integer", $l5d );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::FilterEvaluationError', $TEST;
 	}
 }
@@ -159,7 +156,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}decimal", $rea );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
@@ -207,7 +203,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}float", $rea );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
@@ -216,7 +211,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}float", $cv );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 }
@@ -255,7 +249,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}double", $rea );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
@@ -264,7 +257,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}double", $cv );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 }
@@ -296,7 +288,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}boolean", $rea );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 
@@ -305,7 +296,6 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $alg		= $func->new( "${xsd}boolean", $cv );
 		throws_ok {
 			my $value	= $alg->evaluate( undef, {} );
-			warn Dumper($value);
 		} 'RDF::Query::Error::TypeError', $TEST;
 	}
 

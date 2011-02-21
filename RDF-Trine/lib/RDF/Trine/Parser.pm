@@ -344,7 +344,7 @@ sub parse_file {
 			my $pclass = $self->guess_parser_by_filename( $filename );
 			$self = $pclass->new() if ($pclass and $pclass->can('new'));
 		}
-		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 
 	if ($self and $self->can('parse')) {

@@ -1,5 +1,5 @@
 use utf8;
-use Test::More qw(no_plan);
+use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
@@ -13,7 +13,6 @@ my $path	= File::Spec->catfile( $Bin, 'data', 'turtle' );
 my @good	= bsd_glob("${path}/test*.ttl");
 my @bad		= bsd_glob("${path}/bad*.ttl");
 
-
 {
 	my $file = $good[0];
 	my $base = 'file://' . $file;
@@ -23,6 +22,14 @@ my @bad		= bsd_glob("${path}/bad*.ttl");
 	my $ok = 0;
 	RDF::Trine::Parser->parse_file( $base, $file, sub { $ok = 1; } );
 	ok( $ok, 'parse_file, guessed from filename' );
+}
+
+{
+	my $file	= File::Spec->catfile( $Bin, 'data', 'bugs', 'ttl-with-bom.ttl' );
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $p		= RDF::Trine::Parser::Turtle->new();
+	$p->parse_file_into_model( $base, $file, $model );
+	is( $model->size, 1, 'expected model size from turtle file with BOM' );
 }
 
 foreach my $file (@good) {
@@ -99,6 +106,7 @@ END
 	is($got, $expect, "Finding UTF-8 string");
 }
 
+done_testing();
 
 sub _SILENCE {
 	Log::Log4perl->init( {
