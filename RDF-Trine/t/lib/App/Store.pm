@@ -20,13 +20,12 @@ Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 our @EXPORT = qw(create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads orderby_tests remove_statement_tests);
 
 
-my $ex		= RDF::Trine::Namespace->new('http://example.com/');
-my @names	= ('a' .. 'z');
-my @triples;
-my @quads;
-my $nil	= RDF::Trine::Node::Nil->new();
-
 sub create_data {
+  my $ex		= RDF::Trine::Namespace->new('http://example.com/');
+  my @names	= ('a' .. 'z');
+  my @triples;
+  my @quads;
+  my $nil	= RDF::Trine::Node::Nil->new();
   foreach my $i (@names[0..2]) {
 	my $w	= $ex->$i();
 	foreach my $j (@names[0..2]) {
@@ -43,11 +42,19 @@ sub create_data {
 		}
 	}
       }
-
+  return { ex => $ex, names => \@names, triples => \@triples, quads => \@quads, nil => $nil };
 }
 
 sub all_store_tests {
-        my $store = shift;
+        my ($store, $data) = @_;
+
+	my $ex	    = $data->{ex};
+	my @names   = @{$data->{names}};
+	my @triples = @{$data->{triples}};
+	my @quads   = @{$data->{quads}};
+	my $nil	    = $data->{nil};
+
+
 
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
@@ -62,29 +69,29 @@ sub all_store_tests {
 		$store->remove_statement( $st, $ex->e );
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
-	add_statement_tests_simple( $store );
-	count_statements_tests_simple( $store );
-	add_quads( $store );
-	count_statements_tests_quads( $store );
-	add_triples( $store );
-	count_statements_tests_triples( $store );
+	add_statement_tests_simple( $store, $ex );
+	count_statements_tests_simple( $store, $ex );
+	add_quads( $store, @quads );
+	count_statements_tests_quads( $store, $ex );
+	add_triples( $store, @triples );
+	count_statements_tests_triples( $store, $ex, $nil );
 	contexts_tests( $store );
-	get_statements_tests_triples( $store );
-	get_statements_tests_quads( $store );
+	get_statements_tests_triples( $store, $ex );
+	get_statements_tests_quads( $store, $ex, $nil  );
 # 	orderby_tests( $store );
-	remove_statement_tests( $store );
+	remove_statement_tests( $store, $ex, @names );
 }
 
 
 sub add_quads {
-	my $store	= shift;
+	my ($store, @quads) = @_;
 	foreach my $q (@quads) {
 		$store->add_statement( $q );
 	}
 }
 
 sub add_triples {
-	my $store	= shift;
+	my ($store, @triples) = @_;
 	foreach my $t (@triples) {
 		$store->add_statement( $t );
 	}
@@ -110,7 +117,7 @@ sub contexts_tests {
 
 sub add_statement_tests_simple {
 	note "simple add_statement tests";
-	my $store	= shift;
+	my ($store, $ex) = @_;
 	
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
@@ -134,7 +141,7 @@ sub add_statement_tests_simple {
 
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
-	my $store	= shift;
+	my ($store, $ex) = @_;
 	
 	{
 		is( $store->size, 0, 'expected zero size before add statement' );
@@ -172,7 +179,7 @@ sub count_statements_tests_simple {
 
 sub count_statements_tests_quads {
 	note " quad count_statements tests";
-	my $store	= shift;
+	my ($store, $ex) = @_;
 	{
 		is( $store->count_statements, 27, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff )' );
@@ -186,7 +193,7 @@ sub count_statements_tests_quads {
 
 sub count_statements_tests_triples {
 	note " triple count_statements tests";
-	my $store	= shift;
+	my ($store, $ex, $nil) = @_;
 	
 	{
 		is( $store->count_statements, 27, 'count_statements() after triples added' );
@@ -201,7 +208,7 @@ sub count_statements_tests_triples {
 
 sub get_statements_tests_triples {
 	note " triple get_statements tests";
-	my $store	= shift;
+	my ($store, $ex) = @_;
 	
 	{
 		my $iter	= $store->get_statements( undef, undef, undef );
@@ -238,7 +245,7 @@ sub get_statements_tests_triples {
 
 sub get_statements_tests_quads {
 	note " quad get_statements tests";
-	my $store	= shift;
+	my ($store, $ex, $nil) = @_;
 	
 	{
 		my $iter	= $store->get_statements( undef, undef, undef, undef );
@@ -339,7 +346,7 @@ sub orderby_tests {
 
 sub remove_statement_tests {
 	note " remove_statement tests";
-	my $store	= shift;
+	my ($store, $ex, @names) = @_;
 	is( $store->count_statements( undef, undef, undef, undef ), 108, 'store size before quad removal' );
 	foreach my $i (@names[0..2]) {
 		my $w	= $ex->$i();

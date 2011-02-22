@@ -22,9 +22,11 @@ plan tests => 3 + scalar(@stores) * 167;
 	isa_ok( RDF::Trine::Store->new_with_string( 'SPARQL;http://example/' ), 'RDF::Trine::Store::SPARQL' );
 }
 
-App::Store::create_data;
+my $data = App::Store::create_data;
+
+
 foreach (@stores) {
-  App::Store::all_store_tests($_);
+  App::Store::all_store_tests($_, $data);
 }
 
 sub test_stores {
