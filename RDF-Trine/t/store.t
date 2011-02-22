@@ -1,15 +1,11 @@
 use Test::More;
-use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
 use RDF::Trine qw(iri variable store literal);
-use RDF::Trine::Node;
-use RDF::Trine::Statement;
-use RDF::Trine::Store::DBI;
-use RDF::Trine::Namespace;
+use RDF::Trine::Store;
 
 use FindBin '$Bin';
 use lib "$Bin/lib";
