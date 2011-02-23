@@ -11,7 +11,7 @@ use RDF::Trine qw(iri variable store literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
-use RDF::Trine::Namespace;
+use RDF::Trine::Namespace qw(xsd);
 
 use Log::Log4perl;
 
@@ -70,7 +70,8 @@ sub all_store_tests {
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
 	add_statement_tests_simple( $store, $ex );
-	add_statement_blank_node_tests_simple( $store, $ex );
+	literals_tests_simple( $store, $ex );
+	blank_node_tests_simple( $store, $ex );
 	count_statements_tests_simple( $store, $ex );
 	add_quads( $store, @quads );
 	count_statements_tests_quads( $store, $ex );
@@ -140,8 +141,100 @@ sub add_statement_tests_simple {
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
-sub add_statement_blank_node_tests_simple {
-	note "simple add_statement tests with blank nodes";
+sub literals_tests_simple {
+	note "simple tests with literals";
+	my ($store, $ex) = @_;
+	
+	my $litplain    = RDF::Trine::Node::Literal->new('dahut');
+	my $litlang1    = RDF::Trine::Node::Literal->new('dahu', 'fr' );
+	my $litlang2    = RDF::Trine::Node::Literal->new('dahut', 'en' );
+	my $litstring   = RDF::Trine::Node::Literal->new('dahut', undef, $xsd->string);
+	my $litint      = RDF::Trine::Node::Literal->new(42, undef, $xsd->integer);
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
+	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
+	$store->add_statement( $triple, $ex->d );
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
+	$store->add_statement( $quad );
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
+
+	$store->add_statement( $quad );
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litlang2, $ex->d);
+	$store->add_statement( $quad2 );
+	is( $store->size, 2, 'store has 2 statements after (quad) add' );
+	
+	{
+	  my $count	= $store->count_statements( undef, undef, $litplain, undef );
+	  is( $count, 1, 'expected 1 plain literal' );
+	}
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $litlang2, undef );
+	  is( $count, 1, 'expected 1 language literal' );
+	}
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $litlang1, undef );
+	  is( $count, 0, 'expected 0 language literal' );
+	}
+
+	my $quad3	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litlang1, $ex->d);
+	$store->add_statement( $quad3 );
+	is( $store->size, 3, 'store has 3 statements after integer literal add' );
+
+	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $litstring);
+	$store->add_statement( $triple2 );
+	is( $store->size, 4, 'store has 4 statements after (triple) add' );
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $litplain, undef );
+	  is( $count, 1, 'expected 1 plain literal' );
+	}
+	{
+	  my $count	= $store->count_statements( undef, undef, $litstring, undef );
+	  is( $count, 1, 'expected 1 string literal' );
+	}
+	{
+	  my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
+	  is( $count, 0, 'expected 0 string literal with context' );
+	}
+
+	$store->remove_statement($quad);
+	is( $store->size, 3, 'store has 3 statements after plain literal remove' );
+
+	my $quad4	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litint, $ex->d);
+	$store->add_statement( $quad4 );
+	is( $store->size, 4, 'store has 4 statements after integer literal add' );
+
+	{
+	  my $count	= $store->count_statements( $ex->a, $ex->b, undef, undef);
+	  is( $count, 4, 'expected 4 triples with all literals' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $ex->a, $ex->b, $litint, undef );
+	  is( $count, 1, 'expected 1 triple with integer literal' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $ex->a, undef, $litlang1, undef );
+	  is( $count, 1, 'expected 1 triple with language literal' );
+	}
+
+
+	$store->remove_statement($triple2);
+	is( $store->size, 3, 'store has 2 statements after string literal remove' );
+
+	$store->remove_statements(undef, undef, $litlang2, undef );
+	is( $store->size, 2, 'expected 2 statements after language remove statements' );
+
+	$store->remove_statements($ex->a, $ex->b, undef, undef );
+	is( $store->size, 0, 'expected zero size after remove statements' );
+}
+
+sub blank_node_tests_simple {
+	note "simple tests with blank nodes";
 	my ($store, $ex) = @_;
 	
 	my $blankfoo    = RDF::Trine::Node::Blank->new('foo');
