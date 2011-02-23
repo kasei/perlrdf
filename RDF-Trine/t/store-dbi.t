@@ -1,4 +1,4 @@
-use Test::More tests => 168;
+use Test::More tests => 184;
 
 use strict;
 use warnings;

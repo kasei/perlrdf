@@ -1,7 +1,7 @@
 use Test::More;
 
 if ($RDF::Trine::Store::HAVE_REDLAND) {
-  plan tests => 168;
+  plan tests => 184;
 } else {
   plan skip_all => 'Redland was not found';
 }

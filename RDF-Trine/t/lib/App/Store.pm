@@ -70,6 +70,7 @@ sub all_store_tests {
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
 	add_statement_tests_simple( $store, $ex );
+	add_statement_blank_node_tests_simple( $store, $ex );
 	count_statements_tests_simple( $store, $ex );
 	add_quads( $store, @quads );
 	count_statements_tests_quads( $store, $ex );
@@ -138,6 +139,76 @@ sub add_statement_tests_simple {
 	$store->remove_statement( $quad2 );
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
+
+sub add_statement_blank_node_tests_simple {
+	note "simple add_statement tests with blank nodes";
+	my ($store, $ex) = @_;
+	
+	my $blankfoo    = RDF::Trine::Node::Blank->new('foo');
+	my $blankbar    = RDF::Trine::Node::Blank->new('bar');
+	my $triple	= RDF::Trine::Statement->new($blankfoo, $ex->b, $ex->c);
+	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
+	$store->add_statement( $triple, $ex->d );
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
+	$store->add_statement( $quad );
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
+	
+	my $quad2	= RDF::Trine::Statement::Quad->new($blankbar, $ex->b, $ex->c, $ex->d);
+	$store->add_statement( $quad2 );
+	is( $store->size, 1, 'store has 1 statement after (quad) add' );
+	$store->add_statement( $quad );
+	is( $store->size, 2, 'store has 2 statements after (quad) add' );
+
+	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $blankfoo);
+	$store->add_statement( $triple2 );
+	is( $store->size, 3, 'store has 3 statements after (quad) add' );
+
+	{
+	  my $count	= $store->count_statements( undef, undef, undef, $ex->d );
+	  is( $count, 2, 'expected count of specific-context statements' );
+	}
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $blankfoo, $ex->d );
+	  is( $count, 0, 'expected zero of specific-context statements' );
+	}
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $blankfoo, undef );
+	  is( $count, 1, 'expected one object blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankbar, undef, $blankfoo, undef );
+	  is( $count, 0, 'expected zero subject-object blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankbar, undef, undef, undef );
+	  is( $count, 1, 'expected one subject blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankfoo, undef, undef, $ex->d );
+	  is( $count, 1, 'expected one subject-context blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankfoo, $ex->b, undef, undef );
+	  is( $count, 1, 'expected one subject-predicate blank node' );
+	}
+
+	$store->remove_statements( undef, undef, $blankfoo, undef );
+	is( $store->size, 2, 'expected two triples after remove statements' );
+	
+	$store->remove_statement( $quad2 );
+	is( $store->size, 1, 'expected single triples after remove statement' );
+	$store->remove_statement( $quad );
+	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
 
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
