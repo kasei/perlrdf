@@ -1,4 +1,4 @@
-use Test::More tests => 169;
+use Test::More tests => 171;
 
 use strict;
 use warnings;
@@ -18,6 +18,7 @@ my $ex = $data->{ex};
 
 {
 	my $store	= RDF::Trine::Store::Memory->new();
+	isa_ok( $store, 'RDF::Trine::Store::Memory' );
 	$store->add_statement( RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d) );
 	$store->add_statement( RDF::Trine::Statement::Quad->new($ex->r, $ex->t, $ex->u, $ex->v) );
 	is( $store->_statement_id($ex->a, $ex->t, $ex->c, $ex->d), -1, '_statement_id' );
@@ -26,5 +27,6 @@ my $ex = $data->{ex};
 
 {
   my $store	= RDF::Trine::Store::Memory->temporary_store();
+  isa_ok( $store, 'RDF::Trine::Store::Memory' );
   App::Store::all_store_tests($store, $data);
 }
