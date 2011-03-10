@@ -437,6 +437,7 @@ sub _DeleteDataUpdate {
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	local($self->{__data_pattern})	= 1;
+	local($self->{__no_bnodes})		= "DELETE DATA block";
 	$self->_ModifyTemplate();
 	$self->__consume_ws_opt;
 	my $data	= $self->_remove_pattern;
@@ -521,11 +522,14 @@ sub _DeleteUpdate {
 		}
 		$delete_where	= 1;
 	} else {
-		$self->_eat('{');
-		$self->__consume_ws_opt;
-		$self->_ModifyTemplate( $graph );
-		$self->__consume_ws_opt;
-		$self->_eat('}');
+		{
+			local($self->{__no_bnodes})		= "DELETE block";
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			$self->_ModifyTemplate( $graph );
+			$self->__consume_ws_opt;
+			$self->_eat('}');
+		}
 		$delete_data	= $self->_remove_pattern;
 		
 		$self->__consume_ws_opt;
@@ -565,12 +569,16 @@ sub _DeleteUpdate {
 	$self->__consume_ws_opt;
 	if ($graph) {
 #  		local($self->{named_graph})	= $graph;
+		$self->{__no_bnodes}	= "DELETE WHERE block" if ($delete_where);
 		$self->_GroupGraphPattern;
+		delete $self->{__no_bnodes};
 		my $ggp	= $self->_remove_pattern;
 		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
 		$self->_add_patterns( $ggp );
 	} else {
+		$self->{__no_bnodes}	= "DELETE WHERE block" if ($delete_where);
 		$self->_GroupGraphPattern;
+		delete $self->{__no_bnodes};
 	}
 
 	my $ggp	= $self->_remove_pattern;
@@ -2227,8 +2235,14 @@ sub _PathMod {
 	} else {
 		$self->_eat(qr/{/);
 		$self->__consume_ws_opt;
-		my $value	= $self->_eat( $r_INTEGER );
-		$self->__consume_ws_opt;
+		my $value	= 0;
+		if ($self->_test(qr/}/)) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
+		}
+		if ($self->_test($r_INTEGER)) {
+			$value	= $self->_eat( $r_INTEGER );
+			$self->__consume_ws_opt;
+		}
 		if ($self->_test(qr/,/)) {
 			$self->_eat(qr/,/);
 			$self->__consume_ws_opt;
@@ -2353,6 +2367,9 @@ sub _TriplesNode {
 # [39] BlankNodePropertyList ::= '[' PropertyListNotEmpty ']'
 sub _BlankNodePropertyList {
 	my $self	= shift;
+	if (my $where = $self->{__no_bnodes}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Blank nodes not allowed in $where";
+	}
 	$self->_eat('[');
 	$self->__consume_ws_opt;
 #	$self->_PropertyListNotEmpty;
@@ -3053,6 +3070,9 @@ sub _PrefixedName {
 # [69] BlankNode ::= BLANK_NODE_LABEL | ANON
 sub _BlankNode {
 	my $self	= shift;
+	if (my $where = $self->{__no_bnodes}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Blank nodes not allowed in $where";
+	}
 	if ($self->_test( $r_BLANK_NODE_LABEL )) {
 		my $label	= $self->_eat( $r_BLANK_NODE_LABEL );
 		my $id		= substr($label,2);
