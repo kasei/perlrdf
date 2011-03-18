@@ -260,6 +260,36 @@ sub get_list {
 	return @elements;
 }
 
+=item C<< get_sequence ( $seq ) >>
+
+Returns a list of nodes that are elements of the rdf:Seq sequence.
+
+=cut
+
+sub get_sequence {
+	my $self	= shift;
+	my $head	= shift;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @elements;
+	my $i		= 1;
+	while (1) {
+		my $method	= '_' . $i;
+		my (@elem)	= $self->objects( $head, $rdf->$method() );
+		unless (scalar(@elem)) {
+			last;
+		}
+		if (scalar(@elem) > 1) {
+			my $count	= scalar(@elem);
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:Seq access: $count elements found for element $i";
+		}
+		my $elem	= $elem[0];
+		last unless (blessed($elem));
+		push(@elements, $elem);
+		$i++;
+	}
+	return @elements;
+}
+
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<< $statement >> from the rdf store.
