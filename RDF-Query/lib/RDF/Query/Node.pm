@@ -96,6 +96,15 @@ sub from_trine {
 	}
 }
 
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}" . $self->as_sparql . "\n";
+	return $string;
+}
+
 =back
 
 =head1 FUNCTIONS

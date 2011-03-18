@@ -318,7 +318,6 @@ sub graph {
 	return "$self";
 }
 
-
 1;
 
 __END__

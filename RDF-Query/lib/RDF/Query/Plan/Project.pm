@@ -221,6 +221,19 @@ sub graph {
 	return "$self";
 }
 
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
+	my @exprs	= @{$self->[3]};
+	$string		.= join(' ', @vars, @exprs);
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
+}
 
 
 1;

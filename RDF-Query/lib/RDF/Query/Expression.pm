@@ -101,6 +101,19 @@ sub sse {
 	);
 }
 
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->op;
+	my $string	= "${indent}${type}\n";
+	foreach my $p ($self->operands) {
+		$string	.= $p->explain( $s, $count+1 );
+	}
+	return $string;
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.
