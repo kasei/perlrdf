@@ -89,6 +89,17 @@ sub as_string {
 	return '?' . $self->name;
 }
 
+=item C<< value >>
+
+Returns the variable name.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->name;
+}
+
 =item C<< as_ntriples >>
 
 Returns the node in a string form suitable for NTriples serialization.

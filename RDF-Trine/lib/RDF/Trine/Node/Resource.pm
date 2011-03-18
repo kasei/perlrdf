@@ -112,6 +112,17 @@ sub uri_value {
 	return $self->[1];
 }
 
+=item C<< value >>
+
+Returns the URI/IRI value.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->uri_value;
+}
+
 =item C<< uri ( $uri ) >>
 
 Returns the URI value of this resource, optionally updating the URI.

@@ -138,6 +138,17 @@ sub literal_datatype {
 	return $self->[2];
 }
 
+=item C<< value >>
+
+Returns the literal value.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->literal_value;
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this literal.
