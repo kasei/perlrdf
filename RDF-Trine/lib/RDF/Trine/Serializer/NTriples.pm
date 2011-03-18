@@ -36,7 +36,6 @@ use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
-use XML::SAX;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 
