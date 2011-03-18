@@ -100,11 +100,21 @@ sub execute ($) {
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
 							my $name	= $nodes[$i]->name;
-							$nodes[$i]	= $row->{ $name };
+							if ($method eq 'remove_statements') {
+								if (exists($row->{ $name })) {
+									$nodes[$i]	= $row->{ $name };
+								}
+							} else {
+								$nodes[$i]	= $row->{ $name };
+							}
 						} elsif ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
 							my $id	= $nodes[$i]->blank_identifier;
 							unless (exists($self->[0]{blank_map}{ $id })) {
-								$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
+								if ($method eq 'remove_statements') {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Variable->new();
+								} else {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Blank->new();
+								}
 							}
 							$nodes[$i]	= $self->[0]{blank_map}{ $id };
 						}
