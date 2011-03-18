@@ -20,11 +20,11 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-use RDF::Redland;
+# use RDF::Redland;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.path		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.update		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -51,18 +51,18 @@ my %args;
 while (defined(my $opt = shift)) {
 	if ($opt =~ /^-(.*)$/) {
 		$args{ $1 }	= 1;
+	} elsif ($opt eq '-v') {
+		$debug++;
 	} else {
 		$PATTERN	= $opt;
 	}
 }
 
 
-my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
-
 no warnings 'once';
 
 if ($PATTERN) {
-	$debug			= 1;
+# 	$debug			= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
@@ -77,6 +77,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		construct
 		delete
 		delete-data
+		delete-insert
 		delete-where
 		drop
 		functions
@@ -185,6 +186,11 @@ sub update_eval_test {
 		earl_fail_test( $earl, $test, $e->text );
 		print "# died: " . $test->as_string . ": $e\n";
 		return;
+	} except {
+		my $e	= shift;
+		die $e->text;
+	} otherwise {
+		warn '*** failed to construct model';
 	};
 	
 	foreach my $gdata (@gdata) {
@@ -253,10 +259,16 @@ sub update_eval_test {
 		
 		my $eq	= $test_graph->equals( $expected_graph );
 		$ok	= is( $eq, 1, $test->as_string );
+		unless ($ok) {
+			warn $test_graph->error;
+			warn $test_model->as_string;
+			warn $expected_model->as_string;
+		}
 	};
 	if ($ok) {
 		earl_pass_test( $earl, $test );
 	} else {
+		fail($test->as_string);
 		earl_fail_test( $earl, $test, $@ );
 		print "# failed: " . $test->as_string . "\n";
 	}
@@ -318,6 +330,11 @@ sub query_eval_test {
 		earl_fail_test( $earl, $test, $e->text );
 		print "# died: " . $test->as_string . ": $e\n";
 		return;
+	} except {
+		my $e	= shift;
+		die $e->text;
+	} otherwise {
+		warn '*** failed to construct model';
 	};
 	print STDERR "ok\n" if ($debug);
 	
@@ -419,22 +436,32 @@ sub get_expected_results {
 	} elsif ($file =~ /[.](srj|json)/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
-		my $iter	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
-		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($iter->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+		my $results	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
+		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
 			return $model->get_statements;
 		} else {
-			return binding_results_data( $iter );
+			if ($args{ results }) {
+				$results	= $results->materialize;
+				warn "Got expected results:\n";
+				warn $results->as_string;
+			}
+			return binding_results_data( $results );
 		}
 	} elsif ($file =~ /[.]srx/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
-		my $iter	= RDF::Trine::Iterator->from_string( $data, { canonicalize => 1 } );
-		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($iter->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+		my $results	= RDF::Trine::Iterator->from_string( $data, { canonicalize => 1 } );
+		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
 			return $model->get_statements;
 		} else {
-			return binding_results_data( $iter );
+			if ($args{ results }) {
+				$results	= $results->materialize;
+				warn "Got expected results:\n";
+				warn $results->as_string;
+			}
+			return binding_results_data( $results );
 		}
 	} else {
 		die;

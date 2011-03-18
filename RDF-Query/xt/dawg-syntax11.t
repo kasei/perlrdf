@@ -40,6 +40,7 @@ my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 		construct
 		delete
 		delete-data
+		delete-insert
 		delete-where
 		drop
 		functions
