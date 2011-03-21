@@ -310,11 +310,21 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 # into a subclass of RDF::Trine::Model via object delegation. This feature
 # is undocumented as it's not clear whether this is desirable or not.
 
+=begin private
+
+=item C<< isa >>
+
+=cut
+
 sub isa {
 	my ($proto, $queried) = @_;
 	$proto = ref($proto) if ref($proto);
 	return UNIVERSAL::isa($proto, $queried) || RDF::Trine::Model->isa($queried);
 }
+
+=item C<< can >>
+
+=cut
 
 sub can {
 	my ($proto, $queried) = @_;
@@ -328,6 +338,8 @@ sub AUTOLOAD {
 	$AUTOLOAD =~ s/^(.+)::([^:]+)$/$2/;
 	return $self->{model}->$AUTOLOAD(@_);
 }
+
+=end private
 
 =item C<< error >>
 
