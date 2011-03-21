@@ -10,6 +10,37 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.134.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.133.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.134" ;
+                        doap:created      "2011-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added srx2csv and srx2table scripts." ;
+                        asc:addition    "Added API for stream parsing of srx results to RDF::Trine::Iterator::SAXHandler." ;
+                        asc:addition    "Added RDF::Trine::Model->get_sequence method for accessing rdf:Seq structures." ;
+                        asc:addition    "Added 'value' method to RDF::Trine::Node subclasses for accessing the primary scalar value of a node." ;
+                        asc:addition    "Added RDF::Trine::Graph->error method to explain failures in RDF::Trine::Graph->equal." ;
+                        asc:addition    "Updated RDF::Trine::Graph to support: subgraph testing, access to injection map, delegation to RDF::Trine::Model (patch from tobyink)." ;
+                        asc:update      "Deprecated RDF::Trine::Iterator->count." ;
+                        asc:update      "Fixed bug in RDF::Trine::Iterator::SAXHandler on data with empty results." ;
+                        asc:update      "Fixed canonicalization bug in RDF::Trine::Node::Literal for xsd:decimals with no decimal point." ;
+                        asc:update      "Fixed RDF::Trine::Node::Resource->qname handling of unicode IRIs." ;
+                        asc:update      "Fixed RDF::Trine::Parser::NTriples->parse_file to accept filenames just like the superclass implementation." ;
+                        asc:update      "Fixed RDF::Trine::Parser->parse_file to open files as utf8." ;
+                        asc:update      "Fixed RDF::Trine::Parser->parse_url_into_model to pass through 'canonicalize' argument to actual parser method call." ;
+                        asc:update      "Allow 'canonicalize' argument to RDF::Trine::Iterator->from_json method." ;
+                        asc:update      "Made diagnostic messages less noisy in t/store-hexastore-storable.t." ;
+                        asc:update      "Silenced an uninitialized warning in RDF::Trine::Parser::NTriples." ;
+                        asc:update      "Removed use of XML::SAX in RDF::Trine::Serializer subclasses." ;
+                        asc:update      "Added turtle parser test for file with BOM." ;
+                        asc:update      "Updated RDF::Trine::Store::DBI and RDF::Trine::Store::DBI::mysql to use DBI placeholders." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.133.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.132.tar.gz> ;
