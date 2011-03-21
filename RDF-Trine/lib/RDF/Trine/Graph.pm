@@ -30,14 +30,44 @@ no warnings 'redefine';
 
 use Math::Combinatorics qw(permute);
 
-our ($VERSION, $debug);
+our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= '0.133';
 }
 
-use overload	'=='	=> \&RDF::Trine::Graph::equals,
-				'eq'	=> \&RDF::Trine::Graph::equals;
+use overload
+	'=='	=> \&RDF::Trine::Graph::_eq,
+	'eq'	=> \&RDF::Trine::Graph::_eq,
+	'le'	=> \&RDF::Trine::Graph::_le,
+	'ge'	=> \&RDF::Trine::Graph::_ge,
+	'lt'	=> \&RDF::Trine::Graph::_lt,
+	'gt'	=> \&RDF::Trine::Graph::_gt,
+	;
+
+sub _eq {
+	my ($x, $y) = @_;
+	return $x->equals($y);
+}
+
+sub _le {
+	my ($x, $y) = @_;
+	return $x->is_subgraph_of($y);
+}
+
+sub _ge {
+	return _le(@_[1,0]);
+}
+
+sub _lt {
+	my ($x, $y) = @_;
+#	Test::More::diag(sprintf('%s // %s', ref($x), ref($y)));
+	return ($x->size < $y->size) && ($x->is_subgraph_of($y));
+}
+
+sub _gt {
+	return _lt(@_[1,0]);
+}
 
 use Data::Dumper;
 use Log::Log4perl;
@@ -84,6 +114,13 @@ there exists a bijection between the RDF statements of the invocant and $graph).
 =cut
 
 sub equals {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	return $self->_check_equality($graph) ? 1 : 0;
+}
+
+sub _check_equality {
 	my $self	= shift;
 	my $graph	= shift;
 	unless (blessed($graph) and $graph->isa('RDF::Trine::Graph')) {
@@ -118,9 +155,76 @@ sub equals {
 		}
 	}
 	
-	if ($bac == 0) {
-#		$self->{error}	=  "no blank nodes -- models match\n";
-		return 1;
+	return _find_mapping($self, $ba, $bb);
+}
+
+=item C<< is_subgraph_of ( $graph ) >>
+
+Returns true if the invocant is a subgraph of $graph. (i.e. there exists an
+injection of RDF statements from the invocant to $graph.)
+
+=cut
+
+sub is_subgraph_of {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	return $self->_check_subgraph($graph) ? 1 : 0;
+}
+
+=item C<< injection_map ( $graph ) >>
+
+If the invocant is a subgraph of $graph, returns a mapping of blank node
+identifiers from the invocant graph to $graph as a hashref. Otherwise
+returns false. The solution is not always unique; where there exist multiple
+solutions, the solution returned is arbitrary.
+
+=cut
+
+sub injection_map {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	my $map   = $self->_check_subgraph($graph);
+	return $map if $map;
+	return;
+}
+
+sub _check_subgraph {
+	my $self	= shift;
+	my $graph	= shift;
+	unless (blessed($graph) and $graph->isa('RDF::Trine::Graph')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::equals must be called with a Graph argument";
+	}
+	
+	my @graphs	= ($self, $graph);
+	my ($ba, $nba)	= $self->split_blank_statements;
+	my ($bb, $nbb)	= $graph->split_blank_statements;
+	
+	if (scalar(@$nba) > scalar(@$nbb)) {
+		$self->{error}	= "invocant had too many blank node statements to be a subgraph of argument";
+		return 0;
+	} elsif (scalar(@$ba) > scalar(@$bb)) {
+		$self->{error}	= "invocant had too many non-blank node statements to be a subgraph of argument";
+		return 0;
+	}
+
+	my %NBB = map { $_->as_string => 1 } @$nbb;
+	
+	foreach my $st (@$nba) {
+		unless ($NBB{ $st->as_string }) {
+			return 0;
+		}
+	}
+	
+	return _find_mapping($self, $ba, $bb);
+}
+
+sub _find_mapping {
+	my ($self, $ba, $bb) = @_;
+
+	if (scalar(@$ba) == 0) {
+		return {};
 	}
 	
 	my %blank_ids_a;
@@ -168,7 +272,7 @@ sub equals {
 			}
 		}
 		$self->{error}	=  "found mapping: " . Dumper(\%mapping) if ($debug);
-		return 1;
+		return \%mapping;
 	}
 	
 	$self->{error}	=  "didn't find blank node mapping\n";
@@ -202,9 +306,27 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 
 =cut
 
-sub get_statements {
-	my $self	= shift;
-	return $self->{model}->get_statements();
+# The code below actually goes further now and makes RDF::Trine::Graph
+# into a subclass of RDF::Trine::Model via object delegation. This feature
+# is undocumented as it's not clear whether this is desirable or not.
+
+sub isa {
+	my ($proto, $queried) = @_;
+	$proto = ref($proto) if ref($proto);
+	return UNIVERSAL::isa($proto, $queried) || RDF::Trine::Model->isa($queried);
+}
+
+sub can {
+	my ($proto, $queried) = @_;
+	$proto = ref($proto) if ref($proto);
+	return UNIVERSAL::can($proto, $queried) || RDF::Trine::Model->can($queried);
+}
+
+sub AUTOLOAD {
+	my $self = shift;
+	return if $AUTOLOAD =~ /::DESTROY$/;
+	$AUTOLOAD =~ s/^(.+)::([^:]+)$/$2/;
+	return $self->{model}->$AUTOLOAD(@_);
 }
 
 =item C<< error >>
