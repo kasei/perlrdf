@@ -2129,7 +2129,8 @@ sub _VerbSimple {
 sub _VerbPath_test {
 	my $self	= shift;
 	return 1 if ($self->_IRIref_test);
-	return 1 if ($self->_test(qr/\^|[(a!]/));
+	return 1 if ($self->_test(qr/\^|[|(a!]/));
+	return 0;
 }
 
 sub _VerbPath {
@@ -2154,7 +2155,8 @@ sub _PathAlternative {
 		my ($lhs)	= splice(@{ $self->{stack} });
 		$self->_eat(qr/[|]/);
 		$self->__consume_ws_opt;
-		$self->_PathOneInPropertyClass;
+#		$self->_PathOneInPropertyClass;
+		$self->_PathSequence;
 		$self->__consume_ws_opt;
 		my ($rhs)	= splice(@{ $self->{stack} });
 		$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
@@ -3275,6 +3277,7 @@ sub _syntax_error {
 	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
 	$near		=~ s/[\r\n ]+/ /g;
 	if ($thing) {
+# 		Carp::cluck Dumper($self->{tokens});	# XXX
 		throw RDF::Query::Error::ParseError -text => "Syntax error: $thing in $expect near $near";
 	} else {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";
