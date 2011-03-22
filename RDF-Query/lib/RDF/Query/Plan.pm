@@ -142,6 +142,41 @@ sub logging_keys {
 	return $self->[0]{logging_keys} || {};
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	foreach my $p ($self->plan_node_data) {
+		if (blessed($p)) {
+			if ($p->isa('RDF::Trine::Statement::Quad')) {
+				$string	.= "${indent}${s}" . $p->as_string . "\n";
+			} elsif ($p->isa('RDF::Trine::Node::Nil')) {
+				$string	.= "${indent}${s}(nil)\n";
+			} else {
+				$string	.= $p->explain( $s, $count+1 );
+			}
+		} elsif (ref($p)) {
+			die 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
+		} else {
+			$string	.= "${indent}${s}$p\n";
+		}
+	}
+	return $string;
+}
+
 =item C<< sse >>
 
 =cut
@@ -1129,28 +1164,6 @@ the signature returned by C<< plan_prototype >>.
 =cut
 
 sub plan_node_data;
-
-sub explain {
-	my $self	= shift;
-	my ($s, $count)	= ('  ', 0);
-	if (@_) {
-		$s		= shift;
-		$count	= shift;
-	}
-	my $indent	= $s x $count;
-	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
-	foreach my $p ($self->plan_node_data) {
-		if ($p->isa('RDF::Trine::Statement::Quad')) {
-			$string	.= "${indent}${s}" . $p->as_string . "\n";
-		} elsif ($p->isa('RDF::Trine::Node::Nil')) {
-			$string	.= "${indent}${s}(nil)\n";
-		} else {
-			$string	.= $p->explain( $s, $count+1 );
-		}
-	}
-	return $string;
-}
 
 1;
 
