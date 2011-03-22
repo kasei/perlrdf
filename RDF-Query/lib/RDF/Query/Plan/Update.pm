@@ -103,6 +103,8 @@ sub execute ($) {
 							if ($method eq 'remove_statements') {
 								if (exists($row->{ $name })) {
 									$nodes[$i]	= $row->{ $name };
+								} else {
+									next TRIPLE;
 								}
 							} else {
 								$nodes[$i]	= $row->{ $name };
