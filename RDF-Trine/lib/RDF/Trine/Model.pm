@@ -342,7 +342,7 @@ sub etag {
 	return;
 }
 
-=item C<< supports ( [ $feature ] )
+=item C<< supports ( [ $feature ] ) >>
 
 If C<< $feature >> is specified, returns true if the feature is supported by the
 underlying store, false otherwise. If C<< $feature >> is not specified, returns
@@ -446,6 +446,17 @@ sub get_pattern {
 	} else {
 		return $self->_get_pattern( $bgp, $context, @args );
 	}
+}
+
+=item C<< get_sparql ( $sparql ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_sparql {
+	my $self	= shift;
+	return $self->_store->get_sparql( @_ );
 }
 
 sub _get_pattern {

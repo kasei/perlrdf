@@ -383,7 +383,7 @@ sub size {
 	return $self->_model->size;
 }
 
-=item C<< supports ( [ $feature ] )
+=item C<< supports ( [ $feature ] ) >>
 
 If C<< $feature >> is specified, returns true if the feature is supported by the
 store, false otherwise. If C<< $feature >> is not specified, returns a list of
