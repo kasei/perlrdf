@@ -24,6 +24,8 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Scalar::Util qw(blessed reftype);
+
 ######################################################################
 
 our ($VERSION);
@@ -34,6 +36,8 @@ BEGIN {
 ######################################################################
 
 =item C<< new ( $iter, \&execute_cb ) >>
+
+=item C<< new ( \&create_iterator_cb ) >>
 
 =cut
 
@@ -59,6 +63,11 @@ sub execute ($) {
 	
 	if (ref($self->[2])) {
 		$self->[2]->( $context );
+	}
+	
+	# if we don't have an actual iterator, but only a promise of one, construct it now
+	if (reftype($self->[1]) eq 'CODE' and not(blessed($self->[1]) and $self->[1]->isa('RDF::Trine::Iterator'))) {
+		$self->[1]	= $self->[1]->( $context );
 	}
 	
 	$self->state( $self->OPEN );
