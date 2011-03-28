@@ -11,9 +11,9 @@ This document describes RDF::Trine::Iterator::JSONHandler version 0.133
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator::JSONHandler;
-    my $handler = RDF::Trine::Iterator::SAXHandler->new();
-    my $iter = $handler->parse( $json );
+ use RDF::Trine::Iterator::JSONHandler;
+ my $handler = RDF::Trine::Iterator::JSONHandler->new();
+ my $iter = $handler->parse( $json );
 
 =head1 METHODS
 
