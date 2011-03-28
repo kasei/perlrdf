@@ -218,6 +218,9 @@ sub new {
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',
 					'http://www.w3.org/TR/rdf-sparql-query/'	=> 'RDF::Query::Parser::SPARQL',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL10Query'	=> 'RDF::Query::Parser::SPARQL',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL11Query'	=> 'RDF::Query::Parser::SPARQL11',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	
 	if ($baseuri) {
@@ -233,6 +236,8 @@ sub new {
 					base			=> $baseuri,
 					parser			=> $parser,
 					parsed			=> $parsed,
+					query_string	=> $query,
+					update			=> $update,
 				);
 	if (exists $options{load_data}) {
 		$self->{load_data}	= delete $options{load_data};
@@ -308,7 +313,7 @@ sub get {
 	}
 }
 
-=item C<< prepare ( $store ) >>
+=item C<< prepare ( $model ) >>
 
 Prepares the query, constructing a query execution plan, and returns a list
 containing ($plan, $context). To execute the plan, call
@@ -318,17 +323,20 @@ C<< execute_plan( $plan, $context ) >>.
 
 sub prepare {
 	my $self	= shift;
-	my $store	= shift;
+	my $_model	= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
-	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
+	my %bound;
+	if ($args{ 'bind' }) {
+		%bound	= %{ $args{ 'bind' } };
+	}
 	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
-	my $model	= $self->{model} || $self->get_model( $store, %args );
+	my $model	= $self->{model} || $self->get_model( $_model, %args );
 	if ($model) {
 		$self->model( $model );
 		$l->debug("got model $model");
@@ -340,6 +348,7 @@ sub prepare {
 		$l->trace("loading data");
 		$self->load_data();
 	}
+	
 	$model		= $self->model();	# reload the model object, because load_data might have changed it.
 	
 	my $dataset	= ($model->isa('RDF::Trine::Model::Dataset')) ? $model : RDF::Trine::Model::Dataset->new($model);
@@ -373,9 +382,9 @@ sub prepare {
 	return ($plan, $context);
 }
 
-=item C<execute ( $store, %args )>
+=item C<execute ( $model, %args )>
 
-Executes the query using the specified RDF C<< $store >>. If called in a list
+Executes the query using the specified RDF C<< $model >>. If called in a list
 context, returns an array of rows, otherwise returns an L<RDF::Trine::Iterator>
 object. The iterator returned may be an instance of several subclasses of
 L<RDF::Trine::Iterator>:
@@ -390,12 +399,12 @@ L<RDF::Trine::Iterator>:
 
 sub execute {
 	my $self	= shift;
-	my $store	= shift;
+	my $model	= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
-	$l->debug("executing query with model " . ($store or ''));
+	$l->debug("executing query with model " . ($model or ''));
 	
-	my ($plan, $context)	= $self->prepare( $store, %args );
+	my ($plan, $context)	= $self->prepare( $model, %args );
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
@@ -466,9 +475,9 @@ sub execute_plan {
 	}
 }
 
-=item C<< execute_with_named_graphs ( $store, @uris ) >>
+=item C<< execute_with_named_graphs ( $model, @uris ) >>
 
-Executes the query using the specified RDF C<< $store >>, loading the contents
+Executes the query using the specified RDF C<< $model >>, loading the contents
 of the specified C<@uris> into named graphs immediately prior to matching the
 query. Otherwise, acts just like C<< execute >>.
 
@@ -476,7 +485,7 @@ query. Otherwise, acts just like C<< execute >>.
 
 sub execute_with_named_graphs {
 	my $self		= shift;
-	my $store		= shift;
+	my $_model		= shift;
 	my @graphs;
 	my @options;
 	if (scalar(@_)) {
@@ -490,7 +499,7 @@ sub execute_with_named_graphs {
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 #	$self->{model}	= $model;
-	my $model		= $self->get_model( $store );
+	my $model		= $self->get_model( $_model );
 	if ($model) {
 		$self->model( $model );
 	} else {
@@ -521,41 +530,57 @@ sub query_plan {
 	my $context	= shift;
 	my %args	= @_;
 	my $parsed	= $self->{parsed};
-	my %constant_plan;
-	if (my $b = $self->{parsed}{bindings}) {
-		my $vars	= $b->{vars};
-		my $values	= $b->{terms};
-		my @names	= map { $_->name } @{ $vars };
-		my @constants;
-		while (my $values = shift(@{ $b->{terms} })) {
-			my %bound;
-#			@bound{ @names }	= @{ $values };
-			foreach my $i (0 .. $#names) {
-				my $k	= $names[$i];
-				my $v	= $values->[$i];
-				next unless defined($v);
-				$bound{ $k }	= $v;
-			}
-			my $bound			= RDF::Query::VariableBindings->new( \%bound );
-			push(@constants, $bound);
-		}
-		my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
-		%constant_plan		= ( constants => [ $constant_plan ] );
-	}
 	
-	my $algebra		= $self->pattern;
-	my $pclass		= $self->plan_class;
-	my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
-	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
-	if (wantarray) {
-		return @plans;
+	my $bound	= $context->bound;
+	my @bkeys	= keys %{ $bound };
+	my $model	= $context->model;
+	my $delegate_key	= $self->{update}
+						? 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'
+						: 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
+	if (scalar(@bkeys) == 0 and $model->supports($delegate_key)) {
+		my $plan	= RDF::Query::Plan::Iterator->new( sub {
+			my $context	= shift;
+			my $model	= $context->model;
+			my $iter	= $model->get_sparql( $self->{query_string} );
+			return $iter;
+		} );
 	} else {
-		my ($plan)	= @plans;	# XXX need to figure out what's the 'best' plan here
-		if ($l->is_debug) {
-			$l->debug("using query plan: " . $plan->sse({}, ''));
+		my %constant_plan;
+		if (my $b = $self->{parsed}{bindings}) {
+			my $vars	= $b->{vars};
+			my $values	= $b->{terms};
+			my @names	= map { $_->name } @{ $vars };
+			my @constants;
+			while (my $values = shift(@{ $b->{terms} })) {
+				my %bound;
+	#			@bound{ @names }	= @{ $values };
+				foreach my $i (0 .. $#names) {
+					my $k	= $names[$i];
+					my $v	= $values->[$i];
+					next unless defined($v);
+					$bound{ $k }	= $v;
+				}
+				my $bound			= RDF::Query::VariableBindings->new( \%bound );
+				push(@constants, $bound);
+			}
+			my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
+			%constant_plan		= ( constants => [ $constant_plan ] );
 		}
-		return $plan;
+		
+		my $algebra		= $self->pattern;
+		my $pclass		= $self->plan_class;
+		my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
+		
+		my $l		= Log::Log4perl->get_logger("rdf.query.plan");
+		if (wantarray) {
+			return @plans;
+		} else {
+			my ($plan)	= @plans;	# XXX need to figure out what's the 'best' plan here
+			if ($l->is_debug) {
+				$l->debug("using query plan: " . $plan->sse({}, ''));
+			}
+			return $plan;
+		}
 	}
 }
 
@@ -819,7 +844,7 @@ sub dateparser {
 
 =begin private
 
-=item C<supports ( $store, $feature )>
+=item C<< supports ( $model, $feature ) >>
 
 Returns a boolean value representing the support of $feature for the given model.
 
@@ -829,8 +854,8 @@ Returns a boolean value representing the support of $feature for the given model
 
 sub supports {
 	my $self	= shift;
-	my $store	= shift;
-	my $model	= $self->get_model( $store );
+	my $obj		= shift;
+	my $model	= $self->get_model( $obj );
 	return $model->supports( @_ );
 }
 
@@ -1192,7 +1217,7 @@ sub run_hook {
 
 =begin private
 
-=item C<parse_url ( $url, $named )>
+=item C<< parse_url ( $url, $named ) >>
 
 Retrieve a remote file by URL, and parse RDF into the RDF store.
 If $named is TRUE, associate all parsed triples with a named graph.
