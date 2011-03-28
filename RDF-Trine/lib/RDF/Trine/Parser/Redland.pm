@@ -77,11 +77,11 @@ BEGIN {
 					[],
 					[qw(trig)]
 				],
-	rdfa	 => [
+	librdfa	 => [
 					'RDF::Trine::Parser::Redland::RDFa',
 					'http://www.w3.org/ns/formats/data/RDFa',
-					[qw(application/xhtml+xml)],
-					[qw(html xhtml)]
+					[], #[qw(application/xhtml+xml)],
+					[], #[qw(html xhtml)]
 				],
 	);
 	
@@ -222,7 +222,7 @@ package RDF::Trine::Parser::Redland::RDFa;
 use strict;
 use warnings;
 use base qw(RDF::Trine::Parser::Redland);
-sub new { shift->SUPER::new( @_, name => 'rdfa' ) }
+sub new { shift->SUPER::new( @_, name => 'librdfa' ) }
 
 
 1;
