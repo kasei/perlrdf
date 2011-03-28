@@ -40,7 +40,7 @@ requires			'Unicode::String'			=> 2.09;
 requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
-requires			'XML::SAX'					=> 0;
+requires			'XML::SAX'					=> 0.96;
 requires			'XML::LibXML'				=> 1.70;
 
 resources(
