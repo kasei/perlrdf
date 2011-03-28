@@ -200,7 +200,7 @@ END
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
-Returns a stream object of all bindings matching the specified graph pattern.
+Returns an iterator object of all bindings matching the specified graph pattern.
 
 =cut
 
@@ -495,6 +495,12 @@ sub supports {
 		return keys %features;
 	}
 }
+
+=item C<< get_sparql ( $sparql ) >>
+
+Returns an iterator object of all bindings matching the specified SPARQL query.
+
+=cut
 
 sub get_sparql {
 	my $self	= shift;
