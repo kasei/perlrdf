@@ -628,6 +628,18 @@ sub size {
 	return $size;
 }
 
+=item C<< supports ( [ $feature ] )
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
+}
+
 sub _statement_id {
 	my $self	= shift;
 	my @nodes	= @_;

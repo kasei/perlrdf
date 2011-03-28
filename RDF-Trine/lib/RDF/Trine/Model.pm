@@ -342,6 +342,23 @@ sub etag {
 	return;
 }
 
+=item C<< supports ( [ $feature ] )
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+underlying store, false otherwise. If C<< $feature >> is not specified, returns
+a list of supported features.
+
+=cut
+
+sub supports {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->supports( @_ );
+	}
+	return;
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,

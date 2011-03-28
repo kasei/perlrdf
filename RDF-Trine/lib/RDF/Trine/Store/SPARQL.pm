@@ -473,6 +473,29 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+=item C<< supports ( [ $feature ] )
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	my %features	= map { $_ => 1 } qw(
+		sparql10
+		sparql11
+		http://www.w3.org/ns/sparql-service-description#SPARQL10Query
+		http://www.w3.org/ns/sparql-service-description#SPARQL11Query
+		http://www.w3.org/ns/sparql-service-description#SPARQL11Update
+	);
+	if (@_) {
+		return $features{ shift };
+	} else {
+		return keys %features;
+	}
+}
+
 sub _get_iterator {
 	my $self	= shift;
 	my $sparql	= shift;
