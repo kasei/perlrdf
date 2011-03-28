@@ -17,7 +17,13 @@ use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads orderby_tests remove_statement_tests);
+our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads orderby_tests remove_statement_tests);
+
+# Returns the number of tests, remember to update whenever adding tests
+
+sub number_of_tests {
+  return 204;
+}
 
 
 sub create_data {
