@@ -92,6 +92,17 @@ sub type {
 	return 'NIL';
 }
 
+=item C<< value >>
+
+Returns the empty string.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return '';
+}
+
 =item C<< equal ( $node ) >>
 
 Returns true if the two nodes are equal, false otherwise.

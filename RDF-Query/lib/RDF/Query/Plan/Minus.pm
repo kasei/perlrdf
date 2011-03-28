@@ -131,11 +131,11 @@ sub next {
 			my @shared	= grep { exists $self->[0]{outer_row_vars}{ $_ } } $inner_row->variables;
 			if (scalar(@shared) == 0) {
 				if ($l->is_trace) {
-					$l->trace("no intersection of domains in minus: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("no intersection of domains in minus: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 			} elsif (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 				if ($l->is_trace) {
-					$l->trace("joined bindings in minus: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("joined bindings in minus: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
@@ -144,7 +144,7 @@ sub next {
 				last;
 			} else {
 				if ($l->is_trace) {
-					$l->trace("failed to join bindings in minus: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("failed to join bindings in minus: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 			}
 		}

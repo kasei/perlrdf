@@ -79,6 +79,17 @@ sub blank_identifier {
 	return $self->[1];
 }
 
+=item C<< value >>
+
+Returns the blank identifier.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->blank_identifier;
+}
+
 =item C<< sse >>
 
 Returns the SSE string for this blank node.

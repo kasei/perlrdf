@@ -327,12 +327,17 @@ sub concat {
 
 =item C<< count >>
 
-Returns the number of objects returned from this iterator.
+DEPRECATED. Returns the number of objects returned from this iterator.
+
+This method is deprecated. The C<< length >> method from either
+RDF::Trine::Iterator::Bindings::Materialized or
+RDF::Trine::Iterator::Graph::Materialized should be used instead.
 
 =cut
 
 sub count {
 	my $self	= shift;
+	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
 	return $self->{_count};
 }
 

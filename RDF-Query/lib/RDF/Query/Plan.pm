@@ -142,6 +142,41 @@ sub logging_keys {
 	return $self->[0]{logging_keys} || {};
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	foreach my $p ($self->plan_node_data) {
+		if (blessed($p)) {
+			if ($p->isa('RDF::Trine::Statement::Quad')) {
+				$string	.= "${indent}${s}" . $p->as_string . "\n";
+			} elsif ($p->isa('RDF::Trine::Node::Nil')) {
+				$string	.= "${indent}${s}(nil)\n";
+			} else {
+				$string	.= $p->explain( $s, $count+1 );
+			}
+		} elsif (ref($p)) {
+			die 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
+		} else {
+			$string	.= "${indent}${s}$p\n";
+		}
+	}
+	return $string;
+}
+
 =item C<< sse >>
 
 =cut
@@ -1040,7 +1075,11 @@ sub __path_plan {
 		}
 		return $plans[0];
 	} elsif ($op =~ /^(\d+)-$/) {
-		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+		my $min			= $1;
+		# expand :p{n,} into :p{n}/:p*
+		my $path		= [ '/', [ $1, @nodes ], [ '*', @nodes ] ];
+		my $plan		= $self->__path_plan( $start, $path, $end, $graph, $context, %args );
+		return $plan;
 	} else {
 		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
 	}

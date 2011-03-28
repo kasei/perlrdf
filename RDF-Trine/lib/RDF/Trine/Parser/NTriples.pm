@@ -119,6 +119,7 @@ sub parse_file {
 	}
 	
 	my $lineno	= 0;
+	no warnings 'uninitialized';
 	while (defined(my $line = <$fh>)) {
 LINE:
 		($line, my @extra)	= split(/\r\n|\r|\n/, $line, 2);

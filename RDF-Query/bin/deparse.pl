@@ -21,15 +21,17 @@ use RDF::Query::Util;
 my $sparql	= 0;
 my $algebra	= 0;
 my $plan	= 0;
+my $explain	= 0;
 my $spin	= 0;
-while ($ARGV[0] =~ /^-([apsS])$/) {
+while ($ARGV[0] =~ /^-([apPsS])$/) {
 	$algebra	= 1 if ($1 eq 'a');
 	$plan		= 1 if ($1 eq 'p');
+	$explain	= 1 if ($1 eq 'P');
 	$sparql		= 1 if ($1 eq 's');
 	$spin		= 1 if ($1 eq 'S');
 	shift(@ARGV);
 }
-$sparql	= 1 unless ($algebra || $plan || $sparql || $spin);
+$sparql	= 1 unless ($algebra || $plan || $sparql || $spin || $explain);
 
 unshift(@ARGV, '-w');
 my $query;
@@ -61,6 +63,13 @@ if ($query) {
 		my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 		my $s	= RDF::Trine::Serializer::Turtle->new( namespaces => { spin => $spin, rdf => $rdf } );
 		$s->serialize_model_to_file( \*STDOUT, $model );
+	}
+	
+	if ($explain) {
+		print "\n# Plan:\n";
+		my $model	= RDF::Trine::Model->temporary_model;
+		my ($plan, $ctx)	= $query->prepare( $model );
+		print $plan->explain("  ", 0);
 	}
 	
 	if ($plan) {

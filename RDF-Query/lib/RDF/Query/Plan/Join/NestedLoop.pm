@@ -129,14 +129,14 @@ sub next {
 	#		warn "using inner row: " . Dumper($inner_row);
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 				if ($l->is_trace) {
-					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("joined bindings: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				$self->[0]{count}++;
 				return $joined;
 			} else {
-				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
+				$l->trace("failed to join bindings: $inner_row ⋈ $self->[0]{outer_row}");
 			}
 		}
 		
