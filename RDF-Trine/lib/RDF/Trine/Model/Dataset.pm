@@ -121,7 +121,7 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
-=item C<< supports ( [ $feature ] )
+=item C<< supports ( [ $feature ] ) >>
 
 If C<< $feature >> is specified, returns true if the feature is supported by the
 underlying store, false otherwise. If C<< $feature >> is not specified, returns
@@ -336,6 +336,18 @@ sub get_pattern {
 	} else {
 		return $self->model->get_pattern( @_ );
 	}
+}
+
+=item C<< get_sparql ( $sparql ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_sparql {
+	my $self	= shift;
+	return $self->model->get_sparql( @_ ) unless (scalar(@{ $self->{stack} }));
+	throw RDF::Trine::Error::UnimplementedError -text => "Cannot execute SPARQL queries against a complex dataset model";
 }
 
 =item C<< get_contexts >>
