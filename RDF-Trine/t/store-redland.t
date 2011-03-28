@@ -3,6 +3,12 @@ use Test::More;
 use FindBin '$Bin';
 use lib "$Bin/lib";
 
+use Module::Load::Conditional qw[can_load];
+
+BEGIN {
+  can_load(modules => {'RDF::Redland' => 0});
+}
+
 use RDF::Redland;
 
 use App::Store qw(all_store_tests number_of_tests);
