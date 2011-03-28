@@ -483,7 +483,7 @@ supported features.
 
 sub supports {
 	my $self	= shift;
-	my %features	= map { $_ => 1 } (qw(sparql10 sparql11),
+	my %features	= map { $_ => 1 } (
 		'http://www.w3.org/ns/sparql-service-description#SPARQL10Query',
 		'http://www.w3.org/ns/sparql-service-description#SPARQL11Query',
 		'http://www.w3.org/ns/sparql-service-description#SPARQL11Update',
