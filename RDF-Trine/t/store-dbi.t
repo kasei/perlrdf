@@ -1,4 +1,10 @@
-use Test::More tests => 204;
+use FindBin '$Bin';
+use lib "$Bin/lib";
+
+
+use App::Store qw(all_store_tests number_of_tests);
+
+use Test::More tests => 1 + App::Store::number_of_tests;
 
 use strict;
 use warnings;
@@ -7,11 +13,7 @@ no warnings 'redefine';
 use RDF::Trine qw(iri variable store literal);
 use RDF::Trine::Store;
 
-use FindBin '$Bin';
-use lib "$Bin/lib";
 
-
-use App::Store qw(all_store_tests);
 
 my $data = App::Store::create_data;
 my $store	= RDF::Trine::Store::DBI->temporary_store();

@@ -22,7 +22,7 @@ our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_tripl
 # Returns the number of tests, remember to update whenever adding tests
 
 sub number_of_tests {
-  return 204;
+  return 203;
 }
 
 
