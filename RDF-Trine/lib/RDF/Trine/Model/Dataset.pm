@@ -121,6 +121,23 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+=item C<< supports ( [ $feature ] )
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+underlying store, false otherwise. If C<< $feature >> is not specified, returns
+a list of supported features.
+
+=cut
+
+sub supports {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->supports( @_ );
+	}
+	return;
+}
+
 =item C<< count_statements ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
@@ -352,7 +369,7 @@ sub model {
 
 sub _store {
 	my $self	= shift;
-	return;
+	return $self->model->_store;
 }
 
 1;

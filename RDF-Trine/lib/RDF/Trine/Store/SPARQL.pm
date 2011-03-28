@@ -166,7 +166,7 @@ sub get_statements {
 		my $names	= join(' ', map { '?' . $_->name } @vars);
 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
 		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
-		$iter	= $self->_get_iterator( <<"END" );
+		$iter	= $self->get_sparql( <<"END" );
 SELECT $names WHERE {
 	GRAPH $g {
 		$nodes
@@ -177,7 +177,7 @@ END
 		my @vars	= grep { $_->is_variable } @triple;
 		my $names	= join(' ', map { '?' . $_->name } @vars);
 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		$iter	= $self->_get_iterator( <<"END" );
+		$iter	= $self->get_sparql( <<"END" );
 SELECT $names WHERE { $nodes }
 END
 	}
@@ -200,7 +200,7 @@ END
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
-Returns a stream object of all bindings matching the specified graph pattern.
+Returns an iterator object of all bindings matching the specified graph pattern.
 
 =cut
 
@@ -252,7 +252,7 @@ END
 		}
 	}
 	
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	return $iter;
 }
 
@@ -266,7 +266,7 @@ the set of contexts of the stored quads.
 sub get_contexts {
 	my $self	= shift;
 	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g {} }';
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	my $sub	= sub {
 		my $row	= $iter->next;
 		return unless $row;
@@ -442,7 +442,7 @@ sub count_statements {
 	} else {
 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }";
 	}
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
 	my $count	= $row->{count};
 	return unless ($count);
@@ -482,21 +482,27 @@ supported features.
 =cut
 
 sub supports {
-	my %features	= map { $_ => 1 } qw(
-		sparql10
-		sparql11
-		http://www.w3.org/ns/sparql-service-description#SPARQL10Query
-		http://www.w3.org/ns/sparql-service-description#SPARQL11Query
-		http://www.w3.org/ns/sparql-service-description#SPARQL11Update
+	my $self	= shift;
+	my %features	= map { $_ => 1 } (qw(sparql10 sparql11),
+		'http://www.w3.org/ns/sparql-service-description#SPARQL10Query',
+		'http://www.w3.org/ns/sparql-service-description#SPARQL11Query',
+		'http://www.w3.org/ns/sparql-service-description#SPARQL11Update',
 	);
 	if (@_) {
-		return $features{ shift };
+		my $f	= shift;
+		return $features{ $f };
 	} else {
 		return keys %features;
 	}
 }
 
-sub _get_iterator {
+=item C<< get_sparql ( $sparql ) >>
+
+Returns an iterator object of all bindings matching the specified SPARQL query.
+
+=cut
+
+sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();

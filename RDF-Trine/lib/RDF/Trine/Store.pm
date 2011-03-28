@@ -21,6 +21,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
@@ -91,7 +92,7 @@ sub new_with_string {
 	if (defined($string)) {
 		my ($subclass, $config)	= split(/;/, $string, 2);
 		my $class	= join('::', 'RDF::Trine::Store', $subclass);
-		if ($class->can('_new_with_string')) {
+		if (can_load(modules => { $class => 0 }) and $class->can('_new_with_string')) {
 			return $class->_new_with_string( $config );
 		} else {
 			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_string";
