@@ -539,7 +539,7 @@ sub query_plan {
 	if (not exists $self->{options}{'rdf.query.plan.delegate'} or $self->{options}{'rdf.query.plan.delegate'}) {
 		my $delegate_key	= $self->{update}
 							? 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'
-							: 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
+							: "http://www.w3.org/ns/sparql-service-description#SPARQL10Query";	# TODO: need to determine if the query is only 1.0, and if so, check for 1.0 support. otherwise check for 1.1 support
 		if (scalar(@bkeys) == 0 and $model->supports($delegate_key)) {
 			my $plan	= RDF::Query::Plan::Iterator->new( sub {
 				my $context	= shift;
