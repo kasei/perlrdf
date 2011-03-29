@@ -238,6 +238,7 @@ sub new {
 					parsed			=> $parsed,
 					query_string	=> $query,
 					update			=> $update,
+					options			=> \%options,
 				);
 	if (exists $options{load_data}) {
 		$self->{load_data}	= delete $options{load_data};
@@ -534,53 +535,57 @@ sub query_plan {
 	my $bound	= $context->bound;
 	my @bkeys	= keys %{ $bound };
 	my $model	= $context->model;
-	my $delegate_key	= $self->{update}
-						? 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'
-						: 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
-	if (scalar(@bkeys) == 0 and $model->supports($delegate_key)) {
-		my $plan	= RDF::Query::Plan::Iterator->new( sub {
-			my $context	= shift;
-			my $model	= $context->model;
-			my $iter	= $model->get_sparql( $self->{query_string} );
-			return $iter;
-		} );
-	} else {
-		my %constant_plan;
-		if (my $b = $self->{parsed}{bindings}) {
-			my $vars	= $b->{vars};
-			my $values	= $b->{terms};
-			my @names	= map { $_->name } @{ $vars };
-			my @constants;
-			while (my $values = shift(@{ $b->{terms} })) {
-				my %bound;
-	#			@bound{ @names }	= @{ $values };
-				foreach my $i (0 .. $#names) {
-					my $k	= $names[$i];
-					my $v	= $values->[$i];
-					next unless defined($v);
-					$bound{ $k }	= $v;
-				}
-				my $bound			= RDF::Query::VariableBindings->new( \%bound );
-				push(@constants, $bound);
-			}
-			my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
-			%constant_plan		= ( constants => [ $constant_plan ] );
-		}
-		
-		my $algebra		= $self->pattern;
-		my $pclass		= $self->plan_class;
-		my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
-		
-		my $l		= Log::Log4perl->get_logger("rdf.query.plan");
-		if (wantarray) {
-			return @plans;
-		} else {
-			my ($plan)	= @plans;	# XXX need to figure out what's the 'best' plan here
-			if ($l->is_debug) {
-				$l->debug("using query plan: " . $plan->sse({}, ''));
-			}
+	
+	if (not exists $self->{options}{'rdf.query.plan.delegate'} or $self->{options}{'rdf.query.plan.delegate'}) {
+		my $delegate_key	= $self->{update}
+							? 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'
+							: 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
+		if (scalar(@bkeys) == 0 and $model->supports($delegate_key)) {
+			my $plan	= RDF::Query::Plan::Iterator->new( sub {
+				my $context	= shift;
+				my $model	= $context->model;
+				my $iter	= $model->get_sparql( $self->{query_string} );
+				return $iter;
+			} );
 			return $plan;
 		}
+	}
+	
+	my %constant_plan;
+	if (my $b = $self->{parsed}{bindings}) {
+		my $vars	= $b->{vars};
+		my $values	= $b->{terms};
+		my @names	= map { $_->name } @{ $vars };
+		my @constants;
+		while (my $values = shift(@{ $b->{terms} })) {
+			my %bound;
+#			@bound{ @names }	= @{ $values };
+			foreach my $i (0 .. $#names) {
+				my $k	= $names[$i];
+				my $v	= $values->[$i];
+				next unless defined($v);
+				$bound{ $k }	= $v;
+			}
+			my $bound			= RDF::Query::VariableBindings->new( \%bound );
+			push(@constants, $bound);
+		}
+		my $constant_plan	= RDF::Query::Plan::Constant->new( @constants );
+		%constant_plan		= ( constants => [ $constant_plan ] );
+	}
+	
+	my $algebra		= $self->pattern;
+	my $pclass		= $self->plan_class;
+	my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
+	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
+	if (wantarray) {
+		return @plans;
+	} else {
+		my ($plan)	= @plans;	# XXX need to figure out what's the 'best' plan here
+		if ($l->is_debug) {
+			$l->debug("using query plan: " . $plan->sse({}, ''));
+		}
+		return $plan;
 	}
 }
 
