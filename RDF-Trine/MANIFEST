@@ -532,6 +532,11 @@ t/parser.t
 t/pattern.t
 t/pod-coverage.t
 t/pod.t
+t/remove-list.t
+t/lib/App/Store.pm
+t/store-dbi.t
+t/store-memory.t
+t/store-redland.t
 t/serializer-nquads.t
 t/serializer-ntriples-canonical.t
 t/serializer-ntriples.t
