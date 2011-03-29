@@ -809,7 +809,7 @@ sub sse {
 	my $ggp		= $self->pattern;
 	my $ns		= $parsed->{namespaces};
 	my $nscount	= scalar(@{ [ keys %$ns ] });
-	my $base_uri	= $parsed->{base_uri};
+	my $base_uri	= $parsed->{base};
 	
 	my $indent	= '  ';
 	my $context	= { namespaces => $ns, indent => $indent };
