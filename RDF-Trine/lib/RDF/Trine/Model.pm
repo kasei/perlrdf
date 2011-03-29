@@ -260,6 +260,54 @@ sub get_list {
 	return @elements;
 }
 
+=item C<< remove_list ( $head [, orphan_check => 1] ) >>
+
+Removes the nodes of type rdf:List that make up the list. Optionally checks each node
+before removal to make sure that it is not used in any other statements. Returns false
+if the list was removed completely; returns the first remaining node if the removal
+was abandoned because of an orphan check.
+
+=cut
+
+sub remove_list {
+	my $self = shift;
+	my $head = shift;
+	my $rdf  = RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my %args = @_;
+	my %seen;
+	
+	while (blessed($head) and not($head->isa('RDF::Trine::Node::Resource') and $head->uri_value eq $rdf->nil->uri_value)) {
+		if ($seen{ $head->as_string }++) {
+			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
+		}
+		my $stream = $self->get_statements($head, undef, undef);
+		my %statements;
+		while (my $st = $stream->next) {
+			my $statement_type = {
+				$rdf->first->uri  => 'rdf:first',
+				$rdf->rest->uri   => 'rdf:rest',
+				$rdf->type->uri   => 'rdf:type',
+				}->{$st->predicate->uri} || 'other';
+			$statement_type = 'other'
+				if $statement_type eq 'rdf:type' && !$st->object->equal($rdf->List);
+			push @{$statements{$statement_type}}, $st;
+		}
+		if ($args{orphan_check}) {
+			return $head if defined $statements{other} && scalar(@{ $statements{other} }) > 0;
+			return $head if $self->count_statements(undef, undef, $head) > 0;
+		}
+		unless (scalar(@{ $statements{'rdf:first'} })==1 and scalar(@{ $statements{'rdf:rest'} })==1) {
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
+		}
+		$self->remove_statement($_)
+			foreach (@{$statements{'rdf:first'}}, @{$statements{'rdf:rest'}}, @{$statements{'rdf:type'}});
+		
+		$head = $statements{'rdf:rest'}->[0]->object;
+	}
+	
+	return;
+}
+
 =item C<< get_sequence ( $seq ) >>
 
 Returns a list of nodes that are elements of the rdf:Seq sequence.
