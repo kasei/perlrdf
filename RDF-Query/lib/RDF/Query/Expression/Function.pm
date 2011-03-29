@@ -172,7 +172,7 @@ sub type {
 	return 'FUNCTION';
 }
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
+=item C<< qualify_uris ( \%namespaces, $base_uri ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
 QNames (ns:local) are qualified using the supplied %namespaces.
@@ -183,11 +183,11 @@ sub qualify_uris {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $ns		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my @args;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@args, $arg->qualify_uris( $ns, $base ));
+			push(@args, $arg->qualify_uris( $ns, $base_uri ));
 		} elsif (blessed($arg) and $arg->isa('RDF::Query::Node::Resource')) {
 			my $uri	= $arg->uri;
 			if (ref($uri)) {
@@ -195,7 +195,7 @@ sub qualify_uris {
 				unless (exists($ns->{ $n })) {
 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base_uri );
 				push(@args, $resolved);
 			} else {
 				push(@args, $arg);
