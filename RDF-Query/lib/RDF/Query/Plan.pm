@@ -646,9 +646,13 @@ sub generate_plans {
 		my @plans;
 		foreach my $plan (@base) {
 			my $ns			= $context->ns;
+			my $pstr		= $pattern->as_sparql({namespaces => $ns}, '');
+			unless (substr($pstr, 0, 1) eq '{') {
+				$pstr	= "{ $pstr }";
+			}
 			my $sparql		= join("\n",
 								(map { sprintf("PREFIX %s: <%s>", $_, $ns->{$_}) } (keys %$ns)),
-								sprintf("SELECT * WHERE %s", $pattern->as_sparql({namespaces => $ns}, ''))
+								sprintf("SELECT * WHERE %s", $pstr)
 							);
 			push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
 		}
