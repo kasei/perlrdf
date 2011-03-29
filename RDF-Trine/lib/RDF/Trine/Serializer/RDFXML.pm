@@ -58,7 +58,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces, base => $baseuri ) >>
+=item C<< new ( namespaces => \%namespaces, base_uri => $baseuri ) >>
 
 Returns a new RDF/XML serializer object.
 
@@ -80,7 +80,10 @@ sub new {
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
- 	        $self->{base} = $args{base};
+ 	        $self->{base_uri} = $args{base};
+        }
+	if ($args{base_uri}) {
+ 	        $self->{base_uri} = $args{base_uri};
         }
 	return $self;
 }
@@ -121,11 +124,11 @@ sub serialize_iterator_to_file {
 	my $iter	= shift;
 	
 	my $ns		= $self->_top_xmlns();
-	my $base        = '';
-	if ($self->{base}) {
-	  $base = "xml:base=\"$self->{base}\" ";
+	my $base_uri        = '';
+	if ($self->{base_uri}) {
+	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
+	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
 	
 	my $st			= $iter->next;
 	my @statements;
@@ -247,11 +250,11 @@ sub _serialize_bounded_description {
 	my $seen	= {};
 	
 	my $ns		= $self->_top_xmlns();
-	my $base        = '';
-	if ($self->{base}) {
-	  $base = "xml:base=\"$self->{base}\" ";
+	my $base_uri        = '';
+	if ($self->{base_uri}) {
+	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
-	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
+	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
 	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
