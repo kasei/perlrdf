@@ -1,4 +1,4 @@
-use Test::More tests => 38;
+use Test::More tests => 39;
 use Test::Exception;
 
 use strict;
@@ -350,7 +350,7 @@ END
 }
 
 {
-	my $serializer = RDF::Trine::Serializer::Turtle->new(base => 'http://example.org/foo');
+	my $serializer = RDF::Trine::Serializer::Turtle->new(base_uri => 'http://example.org/foo');
 	my $hash	= {
 		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]
 	}};
@@ -363,6 +363,23 @@ END
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single base URI');
+}
+
+{
+  # Retained for backwards compatibility
+	my $serializer = RDF::Trine::Serializer::Turtle->new(base => 'http://example.org/foo');
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]
+	}};
+	my $expect	= <<"END";
+\@base <http://example.org/foo> .
+
+[] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single base URI, old style');
 }
 
 {
@@ -549,8 +566,8 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= {
 		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
 		xsd		=> 'http://www.w3.org/2001/XMLSchema#',
@@ -600,8 +617,8 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= {
 		rdf		=> 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
@@ -626,8 +643,8 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= { xsd => 'http://www.w3.org/2001/XMLSchema#' };
 	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
 	my $got			= $serializer->serialize_model_to_string($model);
@@ -658,11 +675,11 @@ END
 
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://example.org/';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://example.org/';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $serializer	= RDF::Trine::Serializer::Turtle->new();
 	my $got			= $serializer->serialize_model_to_string($model);
 	my $gotmodel	= RDF::Trine::Model->temporary_model;
-	$parser->parse_into_model( $base, $got, $gotmodel );
+	$parser->parse_into_model( $base_uri, $got, $gotmodel );
 	is( $gotmodel->size, $model->size, 'bnode concise syntax' );
 }
