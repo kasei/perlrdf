@@ -296,7 +296,7 @@ sub remove_list {
 			return $head if defined $statements{other} && scalar(@{ $statements{other} }) > 0;
 			return $head if $self->count_statements(undef, undef, $head) > 0;
 		}
-		unless (scalar(@{ $statements{'rdf:first'} })==1 and scalar(@{ $statements{'rdf:rest'} })==1) {
+		unless (defined $statements{'rdf:first'} and defined $statements{'rdf:rest'} and scalar(@{$statements{'rdf:first'} })==1 and scalar(@{ $statements{'rdf:rest'} })==1) {
 			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
 		}
 		$self->remove_statement($_)
