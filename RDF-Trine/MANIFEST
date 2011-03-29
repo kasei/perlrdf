@@ -1,3 +1,4 @@
+bin/graph.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_parse_xml.pl
@@ -5,6 +6,8 @@ bin/rdf_transcode.pl
 bin/rdf_store_add_file.pl
 bin/rdf_store_makeprivate.pl
 bin/rdf_store_serialize.pl
+bin/srx2csv
+bin/srx2table
 Changes.ttl
 examples/foaf_labels.pl
 inc/Module/Install/Base.pm
@@ -12,6 +15,7 @@ inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
 inc/Module/Install/Makefile.pm
 inc/Module/Install/Metadata.pm
+inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 inc/Module/Install.pm
@@ -75,6 +79,7 @@ META.yml
 README
 SIGNATURE
 t/00.load.t
+t/data/bugs/ttl-with-bom.ttl
 t/data/rdfa/test-sd.nt
 t/data/rdfa/test-sd.xhtml
 t/data/rdfxml-w3c/amp-in-url/test001.nt
@@ -498,6 +503,7 @@ t/data/turtle/test-25.out
 t/data/turtle/test-25.ttl
 t/exporter-csv.t
 t/graph.t
+t/graph-subgraphs.t
 t/iterator-bindings-join.t
 t/iterator-bindings-materialize.t
 t/iterator-bindings.t
