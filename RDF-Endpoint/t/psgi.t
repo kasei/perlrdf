@@ -10,7 +10,9 @@ use Test::WWW::Mechanize::PSGI;
 
 use RDF::Endpoint;
 use RDF::Trine qw(iri);
-use RDF::Trine::Namespace qw(sd);
+use RDF::Trine::Namespace;
+
+my $sd	= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
 
 my $config	= {
 	endpoint	=> {
