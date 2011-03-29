@@ -341,6 +341,18 @@ sub count {
 	return $self->{_count};
 }
 
+=item C<< seen_count >>
+
+Returns the count of elements that have been returned by this iterator at the
+point of invocation.
+
+=cut
+
+sub seen_count {
+	my $self	= shift;
+	return $self->{_count};
+}
+
 =item C<get_boolean>
 
 Returns the boolean value of the first item in the stream.
