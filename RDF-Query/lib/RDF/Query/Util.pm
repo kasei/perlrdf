@@ -241,6 +241,10 @@ sub cli_parse_args {
 			$args{ optimize }	= 1;
 		} elsif ($opt eq '-o') {
 			$args{ force_no_optimization }	= 1;
+		} elsif ($opt eq '-C') {
+			my $k	= shift(@ARGV);
+			my $v	= shift(@ARGV);
+			$args{ $k }	= $v;
 		} elsif ($opt eq '-c') {
 			my $class		= shift(@ARGV);
 			eval "require $class";
