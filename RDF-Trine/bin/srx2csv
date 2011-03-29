@@ -1,0 +1,42 @@
+#!/usr/bin/perl -l
+
+use strict;
+use warnings;
+use RDF::Trine;
+use Text::CSV;
+use Scalar::Util qw(reftype);
+
+my $fh;
+if (scalar(@ARGV) and -r $ARGV[0]) {
+	my $file	= shift;
+	open($fh, '<:utf8', $file) or die $!;
+} else {
+	$fh	= \*STDIN;
+}
+
+my $csv		= Text::CSV->new ( { binary => 1 } );
+my $handler	= RDF::Trine::Iterator::SAXHandler->new( sub {
+		our @keys;
+		my $vb	= shift;
+		if (reftype($vb) eq 'ARRAY') {
+			@keys	= @$vb;
+			$csv->print( \*STDOUT, \@keys );
+		} else {
+			print_vb( $csv, $vb )
+		}
+	},
+	{
+		variables => 1
+	}
+);
+my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+$p->parse_file( $fh );
+
+
+
+sub print_vb {
+	our @keys;
+	my $csv	= shift;
+	my $vb	= shift;
+	$csv->print( \*STDOUT, [ map { $_->value } @{ $vb }{ @keys } ] );
+}

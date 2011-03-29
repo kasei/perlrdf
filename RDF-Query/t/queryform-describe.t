@@ -2,15 +2,13 @@
 use strict;
 use warnings;
 no warnings 'redefine';
-use Test::More qw(no_plan);
+use Test::More;
 
 use lib qw(. t);
 require "models.pl";
 
 my @files	= map { "data/$_" } qw(about.xrdf foaf.xrdf);
 my @models	= test_models( @files );
-# my $tests	= 1 + (scalar(@models) * 123);
-# plan tests => $tests;
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -75,3 +73,5 @@ END
 		is( $count, 6, 'describe resource expected graph size' );
 	}
 }
+
+done_testing;

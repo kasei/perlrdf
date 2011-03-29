@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.133
+This document describes RDF::Trine::Model version 0.134
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 }
 
 use Scalar::Util qw(blessed);
@@ -256,6 +256,36 @@ sub get_list {
 		}
 		push(@elements, @n);
 		($head)	= $self->objects( $head, $rdf->rest );
+	}
+	return @elements;
+}
+
+=item C<< get_sequence ( $seq ) >>
+
+Returns a list of nodes that are elements of the rdf:Seq sequence.
+
+=cut
+
+sub get_sequence {
+	my $self	= shift;
+	my $head	= shift;
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @elements;
+	my $i		= 1;
+	while (1) {
+		my $method	= '_' . $i;
+		my (@elem)	= $self->objects( $head, $rdf->$method() );
+		unless (scalar(@elem)) {
+			last;
+		}
+		if (scalar(@elem) > 1) {
+			my $count	= scalar(@elem);
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:Seq access: $count elements found for element $i";
+		}
+		my $elem	= $elem[0];
+		last unless (blessed($elem));
+		push(@elements, $elem);
+		$i++;
 	}
 	return @elements;
 }

@@ -7,7 +7,7 @@ RDF::Trine::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Variable version 0.133
+This document describes RDF::Trine::Node::Variable version 0.134
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 }
 
 ######################################################################
@@ -87,6 +87,17 @@ Returns a string representation of the node.
 sub as_string {
 	my $self	= shift;
 	return '?' . $self->name;
+}
+
+=item C<< value >>
+
+Returns the variable name.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->name;
 }
 
 =item C<< as_ntriples >>

@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.133
+This document describes RDF::Trine::Parser::NTriples version 0.134
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -112,7 +112,14 @@ sub parse_file {
 	my $fh		= shift;
 	my $handler	= shift;
 	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	
 	my $lineno	= 0;
+	no warnings 'uninitialized';
 	while (defined(my $line = <$fh>)) {
 LINE:
 		($line, my @extra)	= split(/\r\n|\r|\n/, $line, 2);

@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.133
+This document describes RDF::Trine::Serializer::RDFXML version 0.134
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,6 @@ use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
-use XML::SAX;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 
@@ -49,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {

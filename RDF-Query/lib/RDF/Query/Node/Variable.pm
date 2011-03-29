@@ -7,7 +7,7 @@ RDF::Query::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Variable version 2.904.
+This document describes RDF::Query::Node::Variable version 2.905.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -91,6 +91,7 @@ package RDF::Query::Node::Variable::ExpressionProxy;
 use strict;
 use warnings;
 use base qw(RDF::Query::Node::Variable);
+use Scalar::Util qw(blessed refaddr);
 
 =begin private
 
@@ -98,10 +99,15 @@ use base qw(RDF::Query::Node::Variable);
 
 =cut
 
+{my %vars;
 sub new {
 	my $class	= shift;
 	my $name	= shift;
+	my @vars	= @_;
 	my $self	= $class->SUPER::new( $name );
+	if (@vars) {
+		$vars{ refaddr($self) }	= [map {blessed($_) ? $_ : RDF::Query::Node::Variable->new($_)} @vars];
+	}
 	return $self;
 }
 
@@ -112,6 +118,22 @@ sub new {
 sub as_sparql {
 	my $self	= shift;
 	return $self->name;
+}
+
+=item C<< referenced_variables >>
+
+=cut
+
+sub referenced_variables {
+	my $self	= shift;
+	my @vars	= map { blessed($_) ? $_->name : $_ } @{ $vars{ refaddr($self) } || [] };
+	return RDF::Query::_uniq(@vars);
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $vars{ refaddr($self) };
+}
 }
 
 =end private

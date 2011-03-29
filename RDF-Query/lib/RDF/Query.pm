@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.904.
+This document describes RDF::Query version 2.905.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.904';
+	$VERSION		= '2.905';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -477,6 +477,16 @@ query. Otherwise, acts just like C<< execute >>.
 sub execute_with_named_graphs {
 	my $self		= shift;
 	my $store		= shift;
+	my @graphs;
+	my @options;
+	if (scalar(@_)) {
+		if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
+			@graphs		= @{ shift(@_) };
+			@options	= @_;
+		} else {
+			@graphs		= @_;
+		}
+	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 #	$self->{model}	= $model;
@@ -487,12 +497,12 @@ sub execute_with_named_graphs {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-	foreach my $gdata (@_) {
+	foreach my $gdata (@graphs) {
 		$l->debug("-> adding graph data " . $gdata->uri_value);
 		$self->parse_url( $gdata->uri_value, 1 );
 	}
 	
-	return $self->execute( $model );
+	return $self->execute( $model, @options );
 }
 
 =begin private
@@ -894,7 +904,7 @@ sub load_data {
 
 =begin private
 
-=item C<< var_or_expr_value ( \%bound, $value ) >>
+=item C<< var_or_expr_value ( \%bound, $value, $context ) >>
 
 Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
 If  C<< $value >> is  a node object, it is simply returned. If it is an
@@ -910,9 +920,10 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
+	my $ctx		= shift;
 	Carp::confess 'not an object value in var_or_expr_value: ' . Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
-		return $v->evaluate( $self, $bound );
+		return $v->evaluate( $self, $bound, $ctx );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
 	} elsif ($v->isa('RDF::Query::Node')) {

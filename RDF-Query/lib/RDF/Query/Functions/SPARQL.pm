@@ -4,7 +4,7 @@ RDF::Query::Functions::SPARQL - SPARQL built-in functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::SPARQL version 2.904.
+This document describes RDF::Query::Functions::SPARQL version 2.905.
 
 =head1 DESCRIPTION
 
@@ -98,7 +98,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.sparql");
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 use POSIX;
@@ -443,9 +443,11 @@ sub install {
 				throw RDF::Query::Error::TypeError -text => "URI/IRI() must be called with either a literal or resource";
 			}
 			
+			my $base	= $query->{parsed}{base};
+			
 			if ($node->is_literal) {
 				my $value	= $node->literal_value;
-				return RDF::Query::Node::Resource->new( $value );
+				return RDF::Query::Node::Resource->new( $value, $base );
 			} elsif ($node->is_resource) {
 				return $node;
 			} else {
@@ -828,7 +830,7 @@ sub install {
 			my $ggp		= shift;
 			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
 			
-			Carp::confess unless (blessed($context));
+			Carp::confess "No execution contexted passed to sparql:exists" unless (blessed($context));
 			
 			my $l		= Log::Log4perl->get_logger("rdf.query.functions.exists");
 			my $copy		= $context->copy( bound => $bound );
@@ -1060,136 +1062,11 @@ sub install {
 		}
 	);
 	
-
-	# sparql:encode_for_uri
-	RDF::Query::Functions->install_function(
-		"sparql:encode_for_uri",
-		sub {
-			my $query	= shift;
-			my $node	= shift;
-			if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				my $value	= $node->literal_value;
-				return RDF::Query::Node::Literal->new( uri_escape_utf8($value) );
-			} else {
-				throw RDF::Query::Error::TypeError -text => "sparql:encode_for_uri called without a literal term";
-			}
-		}
-	);
-	
-
-	# sparql:contains
-	RDF::Query::Functions->install_function(
-		"sparql:contains",
-		sub {
-			my $query	= shift;
-			my $node	= shift;
-			my $pat		= shift;
-			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg1 term";
-			}
-			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg2 term";
-			}
-			
-			# TODO: what should be returned if one or both arguments are typed as xsd:string?
-			if ($node->has_language and $pat->has_language) {
-				if ($node->literal_value_language ne $pat->literal_value_language) {
-					throw RDF::Query::Error::TypeError -text => "sparql:contains called with literals of different languages";
-				}
-				
-				# TODO: if the language tags are different, does this error, or just return false?
-				if ($node->literal_value_language ne $pat->literal_value_language) {
-					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-				}
-			}
-			
-			my $lit		= $node->literal_value;
-			my $plit	= $pat->literal_value;
-			my $pos		= index($lit, $plit);
-			if ($pos >= 0) {
-				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
-			} else {
-				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-			}
-		}
-	);
-	
-
-	# sparql:strstarts
-	RDF::Query::Functions->install_function(
-		"sparql:strstarts",
-		sub {
-			my $query	= shift;
-			my $node	= shift;
-			my $pat		= shift;
-			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg1 term";
-			}
-			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg2 term";
-			}
-
-			# TODO: what should be returned if one or both arguments are typed as xsd:string?
-			if ($node->has_language and $pat->has_language) {
-				# TODO: if the language tags are different, does this error, or just return false?
-				if ($node->literal_value_language ne $pat->literal_value_language) {
-					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-				}
-			}
-			
-			if (index($node->literal_value, $pat->literal_value) == 0) {
-				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
-			} else {
-				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-			}
-		}
-	);
-	
-
-	# sparql:strends
-	RDF::Query::Functions->install_function(
-		"sparql:strends",
-		sub {
-			my $query	= shift;
-			my $node	= shift;
-			my $pat		= shift;
-			unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg1 term";
-			}
-			unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
-				throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg2 term";
-			}
-			
-			# TODO: what should be returned if one or both arguments are typed as xsd:string?
-			if ($node->has_language and $pat->has_language) {
-				# TODO: if the language tags are different, does this error, or just return false?
-				if ($node->literal_value_language ne $pat->literal_value_language) {
-					return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-				}
-			}
-			
-			my $lit		= $node->literal_value;
-			my $plit	= $pat->literal_value;
-			my $pos	= length($lit) - length($plit);
-			if (rindex($lit, $plit) == $pos) {
-				return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
-			} else {
-				return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
-			}
-		}
-	);
-	
-
-	# sparql:rand
-	RDF::Query::Functions->install_function(
-		"sparql:rand",
-		sub {
-			my $query	= shift;
-			my $r		= rand();
-			# TODO: support seed argument
-			return RDF::Query::Node::Literal->new("$r", undef, $xsd->decimal);
-		}
-	);
+	RDF::Query::Functions->install_function("sparql:encode_for_uri", \&_encode_for_uri);
+	RDF::Query::Functions->install_function("sparql:contains", \&_contains);
+	RDF::Query::Functions->install_function("sparql:strstarts", \&_strstarts);
+	RDF::Query::Functions->install_function("sparql:strends", \&_strends);
+	RDF::Query::Functions->install_function("sparql:rand", \&_rand);
 	
 	RDF::Query::Functions->install_function("sparql:md5", \&_md5);
 	RDF::Query::Functions->install_function("sparql:sha1", \&_sha1);
@@ -1206,6 +1083,127 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:seconds", \&_seconds);
 	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
 	RDF::Query::Functions->install_function("sparql:tz", \&_tz);
+	RDF::Query::Functions->install_function("sparql:now", \&_now);
+}
+
+=item * sparql:encode_for_uri
+
+=cut
+
+sub _encode_for_uri {
+	my $query	= shift;
+	my $node	= shift;
+	if (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		my $value	= $node->literal_value;
+		return RDF::Query::Node::Literal->new( uri_escape_utf8($value) );
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:encode_for_uri called without a literal term";
+	}
+}
+
+=item * sparql:contains
+
+=cut
+
+sub _contains {
+	my $query	= shift;
+	my $node	= shift;
+	my $pat		= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg1 term";
+	}
+	unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:contains called without a literal arg2 term";
+	}
+	
+	# TODO: what should be returned if one or both arguments are typed as xsd:string?
+	if ($node->has_language and $pat->has_language) {
+		if ($node->literal_value_language ne $pat->literal_value_language) {
+			throw RDF::Query::Error::TypeError -text => "sparql:contains called with literals of different languages";
+		}
+	}
+	
+	my $lit		= $node->literal_value;
+	my $plit	= $pat->literal_value;
+	my $pos		= index($lit, $plit);
+	if ($pos >= 0) {
+		return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+	} else {
+		return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+	}
+}
+
+=item * sparql:strstarts
+
+=cut
+
+sub _strstarts {
+	my $query	= shift;
+	my $node	= shift;
+	my $pat		= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg1 term";
+	}
+	unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strstarts called without a literal arg2 term";
+	}
+
+	# TODO: what should be returned if one or both arguments are typed as xsd:string?
+	if ($node->has_language and $pat->has_language) {
+		# TODO: if the language tags are different, does this error, or just return false?
+		if ($node->literal_value_language ne $pat->literal_value_language) {
+			return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+		}
+	}
+	
+	if (index($node->literal_value, $pat->literal_value) == 0) {
+		return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+	} else {
+		return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+	}
+}
+=item * sparql:strends
+
+=cut
+
+sub _strends {
+	my $query	= shift;
+	my $node	= shift;
+	my $pat		= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg1 term";
+	}
+	unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strends called without a literal arg2 term";
+	}
+	
+	# TODO: what should be returned if one or both arguments are typed as xsd:string?
+	if ($node->has_language and $pat->has_language) {
+		# TODO: if the language tags are different, does this error, or just return false?
+		if ($node->literal_value_language ne $pat->literal_value_language) {
+			return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+		}
+	}
+	
+	my $lit		= $node->literal_value;
+	my $plit	= $pat->literal_value;
+	my $pos	= length($lit) - length($plit);
+	if (rindex($lit, $plit) == $pos) {
+		return RDF::Query::Node::Literal->new('true', undef, $xsd->boolean);
+	} else {
+		return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
+	}
+}
+
+=item * sparql:rand
+
+=cut
+
+sub _rand {
+	my $query	= shift;
+	my $r		= rand();
+	my $value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $r, $xsd->double->as_string );
+	return RDF::Query::Node::Literal->new($value, undef, $xsd->double);
 }
 
 =item * sparql:md5
@@ -1466,6 +1464,17 @@ sub _tz {
 		}
 	}
 	throw RDF::Query::Error::TypeError -text => "sparql:tz called without a valid dateTime";
+}
+
+=item * sparql:now
+
+=cut
+
+sub _now {
+	my $query	= shift;
+	my $dt		= DateTime->now;
+	my $value	= DateTime::Format::W3CDTF->new->format_datetime( $dt );
+	return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
 }
 
 

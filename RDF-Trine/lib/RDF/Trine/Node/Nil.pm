@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 0.133
+This document describes RDF::Trine::Node::Nil version 0.134
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 }
 
 ######################################################################
@@ -90,6 +90,17 @@ Returns the type string of this node.
 
 sub type {
 	return 'NIL';
+}
+
+=item C<< value >>
+
+Returns the empty string.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return '';
 }
 
 =item C<< equal ( $node ) >>

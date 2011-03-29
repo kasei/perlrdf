@@ -50,6 +50,9 @@ resources(
 
 author_tests('xt');
 
+install_script glob('bin/srx2csv');
+install_script glob('bin/srx2table');
+
 sign;
 
 WriteAll;

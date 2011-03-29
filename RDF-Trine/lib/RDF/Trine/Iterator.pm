@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.133.
+This document describes RDF::Trine::Iterator version 0.134.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.134';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -192,7 +192,7 @@ sub from_string {
 sub from_json {
 	my $class	= shift;
 	my $json	= shift;
-	my $p		= RDF::Trine::Iterator::JSONHandler->new();
+	my $p		= RDF::Trine::Iterator::JSONHandler->new( @_ );
 	return $p->parse( $json );
 }
 
@@ -327,12 +327,17 @@ sub concat {
 
 =item C<< count >>
 
-Returns the number of objects returned from this iterator.
+DEPRECATED. Returns the number of objects returned from this iterator.
+
+This method is deprecated. The C<< length >> method from either
+RDF::Trine::Iterator::Bindings::Materialized or
+RDF::Trine::Iterator::Graph::Materialized should be used instead.
 
 =cut
 
 sub count {
 	my $self	= shift;
+	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
 	return $self->{_count};
 }
 

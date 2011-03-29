@@ -7,7 +7,7 @@ RDF::Query::Expression::Alias - Class for aliasing expressions with variable nam
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Alias version 2.904.
+This document describes RDF::Query::Expression::Alias version 2.905.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -76,7 +76,7 @@ sub expression {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -93,7 +93,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -106,7 +106,7 @@ sub as_sparql {
 	return sprintf("(%s AS %s)", $expr->as_sparql, $alias->as_sparql);
 }
 
-=item C<< evaluate ( $query, \%bound ) >>
+=item C<< evaluate ( $query, \%bound, $context ) >>
 
 Evaluates the expression using the supplied bound variables.
 Will return a RDF::Query::Node object.
@@ -117,8 +117,9 @@ sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
 	my $bound	= shift;
+	my $ctx		= shift;
 	my $expr	= $self->expression;
-	my $value	= $query->var_or_expr_value( $bound, $expr );
+	my $value	= $query->var_or_expr_value( $bound, $expr, $ctx );
 	return $value;
 }
 

@@ -7,7 +7,7 @@ RDF::Query::Plan::Project - Executable query plan for Projects.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.904.
+This document describes RDF::Query::Plan::Project version 2.905.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -82,6 +82,7 @@ sub execute ($) {
 
 sub next {
 	my $self	= shift;
+	my $ctx		= $self->[0]{context};
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
@@ -109,7 +110,7 @@ sub next {
 	foreach my $e (@$exprs) {
 		my $name		= $e->sse;
 		my $var_or_expr	= $e;
-		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr );
+		my $value		= $query->var_or_expr_value( $bridge, $row, $var_or_expr, $ctx );
 		if ($l->is_trace) {
 			$l->trace( "- project value $name -> $value" );
 		}
@@ -220,6 +221,19 @@ sub graph {
 	return "$self";
 }
 
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
+	my @exprs	= @{$self->[3]};
+	$string		.= join(' ', @vars, @exprs);
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
+}
 
 
 1;

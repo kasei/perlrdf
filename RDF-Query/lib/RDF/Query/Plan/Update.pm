@@ -7,7 +7,7 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.904.
+This document describes RDF::Query::Plan::Update version 2.905.
 
 =head1 METHODS
 
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -100,11 +100,21 @@ sub execute ($) {
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
 							my $name	= $nodes[$i]->name;
-							$nodes[$i]	= $row->{ $name };
+							if ($method eq 'remove_statements') {
+								if (exists($row->{ $name })) {
+									$nodes[$i]	= $row->{ $name };
+								}
+							} else {
+								$nodes[$i]	= $row->{ $name };
+							}
 						} elsif ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
 							my $id	= $nodes[$i]->blank_identifier;
 							unless (exists($self->[0]{blank_map}{ $id })) {
-								$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
+								if ($method eq 'remove_statements') {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Variable->new();
+								} else {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Blank->new();
+								}
 							}
 							$nodes[$i]	= $self->[0]{blank_map}{ $id };
 						}

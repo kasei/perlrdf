@@ -23,9 +23,6 @@ my @models	= test_models();
 
 my $tests	= 66;
 plan tests => 1 + ($tests * scalar(@models));
-# plan qw(no_plan);	# the number of tests is currently broken because named graphs
-# 					# are adding triples to the underyling model. when that's fixed,
-# 					# this should be changed back to a test number.
 
 my $alice	= URI::file->new_abs( 'data/named_graphs/alice.rdf' );
 my $bob		= URI::file->new_abs( 'data/named_graphs/bob.rdf' );

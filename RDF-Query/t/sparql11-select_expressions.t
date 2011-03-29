@@ -64,7 +64,6 @@ END
 		my @expect	= qw(http://www.realify.com/~gary/ http://kasei.us/);
 		while (my $row = $stream->next) {
 			$count++;
-			use Data::Dumper;
 			my $page	= $row->{page};
 			is_deeply([$row->variables], [qw(page)], 'expected variable list after projection');
 			isa_ok( $page, 'RDF::Trine::Node::Literal', 'expected literal cast from a resource' );
@@ -91,7 +90,6 @@ END
 		my @expect	= qw(http://kasei.us/ http://www.realify.com/~gary/);
 		while (my $row = $stream->next) {
 			$count++;
-			use Data::Dumper;
 			my $page	= $row->{page};
 			is_deeply([$row->variables], [qw(page)], 'expected variable list after projection');
 			isa_ok( $page, 'RDF::Trine::Node::Literal', 'expected literal cast from a resource' );

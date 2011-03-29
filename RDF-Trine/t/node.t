@@ -130,12 +130,9 @@ SKIP: {
 	is( $l->literal_value, '787', 'literal value after modification' );
 }
 
-TODO: {
-	local($TODO)	= 'RDF::Trine::Node::Resource::qname broken on Unicode IRIs';
+{
 	my ($ns, $l);
-	try {
-		($ns, $l)	= $k->qname;
-	} catch RDF::Trine::Error with {};
+	($ns, $l)	= $k->qname;
 	is( $l, '食べる', 'unicode qname separation' );
 }
 

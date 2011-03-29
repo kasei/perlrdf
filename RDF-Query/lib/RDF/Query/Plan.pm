@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.904.
+This document describes RDF::Query::Plan version 2.905.
 
 =head1 METHODS
 
@@ -64,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -148,8 +148,8 @@ sub logging_keys {
 
 sub sse {
 	my $self	= shift;
-	my $context	= shift;
-	my $indent	= shift;
+	my $context	= shift || {};
+	my $indent	= shift || '';
 	my $more	= '    ';
 	my @proto	= $self->plan_prototype;
 	my @data	= $self->plan_node_data;
@@ -245,6 +245,8 @@ sub _sse_atom {
 		}
 	} elsif ($p =~ m/^[PNETV]$/) {
 		if (blessed($v)) {
+		
+			Carp::cluck unless ($v->can('sse'));
 			return $v->sse( { namespaces => \%ns }, "${indent}${more}" );
 		} else {
 			return '()';
@@ -876,8 +878,6 @@ sub __path_plan {
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	if (blessed($path)) {
-# 		my $s		= ($start->isa('RDF::Query::Node::Blank')) ? $start->make_distinguished_variable : $start;
-# 		my $e		= ($end->isa('RDF::Query::Node::Blank')) ? $end->make_distinguished_variable : $end;
 		my $s	= $start;
 		my $e	= $end;
 		my $algebra	= $graph
@@ -945,10 +945,8 @@ sub __path_plan {
 # 		my $dnplan	= RDF::Query::Plan::Distinct->new( $nplan );
 		return $nplan;
 	} elsif ($op eq '*' or $op eq '0-') {
-		my $zero	= RDF::Query::Plan::Path->new( '0', $nodes[0], $start, $end, $graph, %args );
-		my $plan	= RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
-		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
-		return $union;
+		my $plan	= RDF::Query::Plan::Path->new( '*', $nodes[0], $start, $end, $graph, %args );
+		return $plan;
 	} elsif ($op eq '+' or $op eq '1-') {
 		return RDF::Query::Plan::Path->new( '+', $nodes[0], $start, $end, $graph, %args );
 	} elsif ($op eq '?' or $op eq '0-1') {
@@ -1042,7 +1040,11 @@ sub __path_plan {
 		}
 		return $plans[0];
 	} elsif ($op =~ /^(\d+)-$/) {
-		throw RDF::Query::Error -text => "Unbounded paths not implemented yet";
+		my $min			= $1;
+		# expand :p{n,} into :p{n}/:p*
+		my $path		= [ '/', [ $1, @nodes ], [ '*', @nodes ] ];
+		my $plan		= $self->__path_plan( $start, $path, $end, $graph, $context, %args );
+		return $plan;
 	} else {
 		throw RDF::Query::Error -text => "Cannot generate plan for unknown path type $op";
 	}
@@ -1127,6 +1129,28 @@ the signature returned by C<< plan_prototype >>.
 =cut
 
 sub plan_node_data;
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	foreach my $p ($self->plan_node_data) {
+		if ($p->isa('RDF::Trine::Statement::Quad')) {
+			$string	.= "${indent}${s}" . $p->as_string . "\n";
+		} elsif ($p->isa('RDF::Trine::Node::Nil')) {
+			$string	.= "${indent}${s}(nil)\n";
+		} else {
+			$string	.= $p->explain( $s, $count+1 );
+		}
+	}
+	return $string;
+}
 
 1;
 

@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.904.
+This document describes RDF::Query::Expression::Function version 2.905.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -103,7 +103,7 @@ sub arguments {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -130,7 +130,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -250,7 +250,7 @@ sub evaluate {
 		my $expr	= shift(@args);
 		my $index	= 1;
 		try {
-			my $exprval	= $query->var_or_expr_value( $bound, $expr );
+			my $exprval	= $query->var_or_expr_value( $bound, $expr, $context );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
 			my $value	= $func->evaluate( $query, {}, $context );
 			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
@@ -259,7 +259,7 @@ sub evaluate {
 			}
 		} catch RDF::Query::Error::TypeError with {};
 		my $expr2	= $args[$index];
-		return $query->var_or_expr_value( $bound, $expr2 );
+		return $query->var_or_expr_value( $bound, $expr2, $context );
 	} elsif ($uriv eq 'sparql:exists') {
 		my $func	= $query->get_function($uri);
 		my ($ggp)	= $self->arguments;

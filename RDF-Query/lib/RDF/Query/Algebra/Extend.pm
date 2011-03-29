@@ -7,7 +7,7 @@ RDF::Query::Algebra::Extend - Algebra class for extending the variable projectio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Extend version 2.904.
+This document describes RDF::Query::Algebra::Extend version 2.905.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -100,7 +100,7 @@ sub vars {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -154,7 +154,7 @@ sub _from_sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 

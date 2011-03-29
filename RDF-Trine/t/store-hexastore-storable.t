@@ -33,23 +33,23 @@ END
 
 {
 	my $store	= RDF::Trine::Store::Hexastore->load( $filename );
-        _do_tests($store, "loading $filename directly");
+	_do_tests($store, "loading $filename directly");
 }
 
 {
 	my $store	= RDF::Trine::Store->new_with_string('Hexastore;Storable;file='.$filename );
-        _do_tests($store, "using $filename in config string");
+	_do_tests($store, "using $filename in config string");
 }
 
 sub _do_tests {
-    my ($store, $group) = @_;
-    diag "Tests for $group";
-    isa_ok( $store, 'RDF::Trine::Store::Hexastore' );
-    is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo') ), 3, 'count_statements(bff) returned 3' );
-    is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/zzz') ), 1, 'count_statements(bff) returned 1' );
-    is( $store->count_statements( undef, RDF::Trine::Node::Resource->new('http://example.org/bar'), undef ), 3, 'count_statements(fbf) returned 3' );
-    is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/bar'), undef ), 2, 'count_statements(bbf) returned 2' );
-    is( $store->count_statements, 4, 'count_statements(fff) returned expected 4' );
+	my ($store, $group) = @_;
+	note "Tests for $group";
+	isa_ok( $store, 'RDF::Trine::Store::Hexastore' );
+	is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo') ), 3, 'count_statements(bff) returned 3' );
+	is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/zzz') ), 1, 'count_statements(bff) returned 1' );
+	is( $store->count_statements( undef, RDF::Trine::Node::Resource->new('http://example.org/bar'), undef ), 3, 'count_statements(fbf) returned 3' );
+	is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/bar'), undef ), 2, 'count_statements(bbf) returned 2' );
+	is( $store->count_statements, 4, 'count_statements(fff) returned expected 4' );
 }
 
 

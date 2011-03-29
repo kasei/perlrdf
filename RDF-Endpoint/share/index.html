@@ -4,9 +4,11 @@
 <head>
 	<title>SPARQL</title>
 	<link rel="stylesheet" type="text/css" href="/css/docs.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
     <script src="/js/codemirror.js" type="text/javascript"></script>
+	<script type="text/javascript" src="/js/sparql_form.js"></script>
 </head><body>
-	<form action="" method="post">
+	<form id="queryform" action="" method="post">
 	<p>
 		<textarea id="query" name="query" rows="10" cols="60">
 PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/>
@@ -30,5 +32,4 @@ ORDER BY ?name
 		<input name="submit" id="submit" type="submit" value="Submit" />
 	</p>
 	</form>
-<script type="text/javascript" src="/js/sparql_form.js"></script>
 </body></html>

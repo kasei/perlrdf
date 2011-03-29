@@ -4,7 +4,6 @@ use warnings;
 
 use URI::file;
 use Test::More;
-use Data::Dumper;
 use Scalar::Util qw(blessed);
 use RDF::Query::Node qw(iri);
 use RDF::Query::Error qw(:try);
@@ -33,8 +32,6 @@ if ($@) {
 } elsif (not exists $ENV{RDFQUERY_DEV_TESTS}) {
 	plan skip_all => 'Developer tests. Set RDFQUERY_DEV_TESTS to run these tests.';
 	return;
-} else {
-	plan qw(no_plan); #tests => scalar(@models) * $model_tests + $nomodel_tests;
 }
 
 use RDF::Query;
@@ -554,7 +551,7 @@ END
 	}
 }
 
-
+done_testing;
 
 sub _CLEAN_WS {
 	my $string	= shift;

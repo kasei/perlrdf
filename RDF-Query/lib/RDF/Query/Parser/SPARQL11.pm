@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.904.
+This document describes RDF::Query::Parser::SPARQL11 version 2.905.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.904';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -152,7 +152,9 @@ sub parse {
 		$build			= undef;
 		$self->{error}	= $e->stacktrace
 	};
-
+	
+	delete $self->{build}{star};
+	
 	my $data								= $build;
 #	$data->{triples}						= $self->_pop_pattern_container();
 	return $data;
@@ -342,7 +344,7 @@ sub _RW_Query {
 		}
 		last;
 	}
-	$self->_eat(qr/;/) if ($self->_test(qr/;/));
+#	$self->_eat(qr/;/) if ($self->_test(qr/;/));
 	$self->__consume_ws_opt;
 	
 	my $count	= scalar(@{ $self->{build}{triples} });
@@ -417,6 +419,7 @@ sub _InsertDataUpdate {
 	my $self	= shift;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
+	local($self->{__data_pattern})	= 1;
 	$self->_ModifyTemplate();
 	$self->__consume_ws_opt;
 	my $data	= $self->_remove_pattern;
@@ -433,6 +436,8 @@ sub _DeleteDataUpdate {
 	my $self	= shift;
 	$self->_eat('{');
 	$self->__consume_ws_opt;
+	local($self->{__data_pattern})	= 1;
+	local($self->{__no_bnodes})		= "DELETE DATA block";
 	$self->_ModifyTemplate();
 	$self->__consume_ws_opt;
 	my $data	= $self->_remove_pattern;
@@ -517,11 +522,14 @@ sub _DeleteUpdate {
 		}
 		$delete_where	= 1;
 	} else {
-		$self->_eat('{');
-		$self->__consume_ws_opt;
-		$self->_ModifyTemplate( $graph );
-		$self->__consume_ws_opt;
-		$self->_eat('}');
+		{
+			local($self->{__no_bnodes})		= "DELETE block";
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			$self->_ModifyTemplate( $graph );
+			$self->__consume_ws_opt;
+			$self->_eat('}');
+		}
 		$delete_data	= $self->_remove_pattern;
 		
 		$self->__consume_ws_opt;
@@ -561,12 +569,16 @@ sub _DeleteUpdate {
 	$self->__consume_ws_opt;
 	if ($graph) {
 #  		local($self->{named_graph})	= $graph;
+		$self->{__no_bnodes}	= "DELETE WHERE block" if ($delete_where);
 		$self->_GroupGraphPattern;
+		delete $self->{__no_bnodes};
 		my $ggp	= $self->_remove_pattern;
 		$ggp	= RDF::Query::Algebra::NamedGraph->new( $graph, $ggp );
 		$self->_add_patterns( $ggp );
 	} else {
+		$self->{__no_bnodes}	= "DELETE WHERE block" if ($delete_where);
 		$self->_GroupGraphPattern;
+		delete $self->{__no_bnodes};
 	}
 
 	my $ggp	= $self->_remove_pattern;
@@ -634,6 +646,7 @@ sub __ModifyTemplate {
 		$self->_add_patterns( $data );
 	} else {
 		$self->_GraphGraphPattern;
+		
 		{
 			my ($d)	= splice(@{ $self->{stack} });
 			$self->__handle_GraphPatternNotTriples( $d );
@@ -874,6 +887,23 @@ sub _SelectQuery {
 	}
 	
 	$self->__solution_modifiers( $star );
+	
+	
+	my $pattern	= $self->{build}{triples}[0];
+	my @agg		= $pattern->subpatterns_of_type( 'RDF::Query::Algebra::Aggregate', 'RDF::Query::Algebra::SubSelect' );
+	if (@agg) {
+		my ($agg)	= @agg;
+		my @gvars	= $agg->groupby;
+		if (scalar(@gvars) == 0) {
+			# aggregate query with no explicit group keys
+			foreach my $v (@{ $self->{build}{variables} }) {
+				if ($v->isa('RDF::Query::Node::Variable')) {
+					my $name	= $v->name;
+					throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
+				}
+			}
+		}
+	}
 	
 	delete $self->{build}{options};
 	$self->{build}{method}		= 'SELECT';
@@ -1253,11 +1283,23 @@ sub _GroupClause {
 		}
 	}
 	foreach my $v (@{ $self->{build}{variables} }) {
-		if ($v->isa('RDF::Query::Node::Variable') or $v->isa('RDF::Query::Expression::Alias')) {
+		if ($v->isa('RDF::Query::Node::Variable')) {
 			my $name	= $v->name;
-			if ($v->isa('RDF::Query::Node::Variable')) {
-				unless ($seen{ $name }) {
-					throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
+			unless ($seen{ $name }) {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
+			}
+		} elsif ($v->isa('RDF::Query::Expression::Alias')) {
+			my $expr	= $v->expression;
+# 			warn 'expression: ' . Dumper($expr);
+			if ($expr->isa('RDF::Query::Node::Variable::ExpressionProxy')) {
+				# RDF::Query::Node::Variable::ExpressionProxy is used for aggregate operations.
+				# we can ignore these because any variable used in an aggreate is valid, even if it's not mentioned in the grouping keys
+			} elsif ($expr->isa('RDF::Query::Expression')) {
+				my @vars	= $expr->referenced_variables;
+				foreach my $name (@vars) {
+					unless ($seen{ $name }) {
+						throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
+					}
 				}
 			}
 		}
@@ -1725,6 +1767,12 @@ sub _MinusGraphPattern {
 # [24] GraphGraphPattern ::= 'GRAPH' VarOrIRIref GroupGraphPattern
 sub _GraphGraphPattern {
 	my $self	= shift;
+	if ($self->{__data_pattern}) {
+		if ($self->{__graph_nesting_level}++) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Nested named GRAPH blocks not allowed in data template.";
+		}
+	}
+	
 	$self->_eat( qr/GRAPH/i );
 	$self->__consume_ws;
 	$self->_VarOrIRIref;
@@ -1736,6 +1784,10 @@ sub _GraphGraphPattern {
 		$self->_GroupGraphPattern;
 	} else {
 		$self->_GroupGraphPattern;
+	}
+
+	if ($self->{__data_pattern}) {
+		$self->{__graph_nesting_level}--;
 	}
 	
 	my $ggp	= $self->_remove_pattern;
@@ -2183,8 +2235,14 @@ sub _PathMod {
 	} else {
 		$self->_eat(qr/{/);
 		$self->__consume_ws_opt;
-		my $value	= $self->_eat( $r_INTEGER );
-		$self->__consume_ws_opt;
+		my $value	= 0;
+		if ($self->_test(qr/}/)) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
+		}
+		if ($self->_test($r_INTEGER)) {
+			$value	= $self->_eat( $r_INTEGER );
+			$self->__consume_ws_opt;
+		}
 		if ($self->_test(qr/,/)) {
 			$self->_eat(qr/,/);
 			$self->__consume_ws_opt;
@@ -2309,6 +2367,9 @@ sub _TriplesNode {
 # [39] BlankNodePropertyList ::= '[' PropertyListNotEmpty ']'
 sub _BlankNodePropertyList {
 	my $self	= shift;
+	if (my $where = $self->{__no_bnodes}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Blank nodes not allowed in $where";
+	}
 	$self->_eat('[');
 	$self->__consume_ws_opt;
 #	$self->_PropertyListNotEmpty;
@@ -2419,6 +2480,10 @@ sub _VarOrIRIref {
 # [44] Var ::= VAR1 | VAR2
 sub _Var {
 	my $self	= shift;
+	if ($self->{__data_pattern}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Variable found where Term expected";
+	}
+
 	my $var		= ($self->_test( $r_VAR1 )) ? $self->_eat( $r_VAR1 ) : $self->_eat( $r_VAR2 );
 	$self->_add_stack( RDF::Query::Node::Variable->new( substr($var,1) ) );
 }
@@ -2716,7 +2781,8 @@ sub _Aggregate {
 	
 	$self->{build}{__aggregate}{ $name }	= [ (($distinct) ? "${op}-DISTINCT" : $op), \%options, @expr ];
 	
-	$self->_add_stack( RDF::Query::Node::Variable::ExpressionProxy->new($name) );
+	my @vars	= grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } @expr;
+	$self->_add_stack( RDF::Query::Node::Variable::ExpressionProxy->new($name, @vars) );
 	
 }
 
@@ -2727,7 +2793,7 @@ sub _BuiltInCall_test {
 		return 1 if ($self->_test( $r_AGGREGATE_CALL ));
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
-	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ/i);
+	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ|NOW/i);
 	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
@@ -2749,9 +2815,9 @@ sub _BuiltInCall {
 		} else {
 			$self->_add_stack( $func );
 		}
-	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i)) {
+	} elsif ($self->_test(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND|NOW/i)) {
 		# n-arg functions that take expressions
-		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND/i);
+		my $op	= $self->_eat(qr/COALESCE|BNODE|CONCAT|SUBSTR|RAND|NOW/i);
 		my $iri		= RDF::Query::Node::Resource->new( 'sparql:' . lc($op) );
 		$self->_ArgList;
 		my @args	= splice(@{ $self->{stack} });
@@ -3004,6 +3070,9 @@ sub _PrefixedName {
 # [69] BlankNode ::= BLANK_NODE_LABEL | ANON
 sub _BlankNode {
 	my $self	= shift;
+	if (my $where = $self->{__no_bnodes}) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Blank nodes not allowed in $where";
+	}
 	if ($self->_test( $r_BLANK_NODE_LABEL )) {
 		my $label	= $self->_eat( $r_BLANK_NODE_LABEL );
 		my $id		= substr($label,2);
