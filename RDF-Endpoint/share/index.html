@@ -8,7 +8,7 @@
     <script src="/js/codemirror.js" type="text/javascript"></script>
 	<script type="text/javascript" src="/js/sparql_form.js"></script>
 </head><body>
-	<form id="queryform" action="" method="post">
+	<form id="queryform" action="" method="get">
 	<p>
 		<textarea id="query" name="query" rows="10" cols="60">
 PREFIX foaf: &lt;http://xmlns.com/foaf/0.1/>
@@ -18,10 +18,6 @@ WHERE {
 }
 ORDER BY ?name
 </textarea><br/>
-<!-- 
-		Default Graph URL: <input name="default-graph-uri" id="default-graph-uri" type="text" size="32" /><br/>
-		Named Graph URL: <input name="named-graph-uri" id="named-graph-uri" type="text" size="32" /><br/>
- -->
 		<select id="media-type" name="media-type">
 			<option value="">Result Format...</option>
 			<option label="HTML" value="text/html">HTML</option>
@@ -32,4 +28,18 @@ ORDER BY ?name
 		<input name="submit" id="submit" type="submit" value="Submit" />
 	</p>
 	</form>
+<style type="text/css">
+<!--
+tr:nth-child(odd) {
+	background-color: #eeeefa;
+	border-bottom: 1px solid #dddde9;
+	border-top: 1px solid #dddde9;
+}
+
+th {
+	background-color: #ddf;
+	border-bottom: 2px solid #000;
+}
+// -->
+</style>
 </body></html>

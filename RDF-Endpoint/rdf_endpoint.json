@@ -3,15 +3,17 @@
 #		"store": "Memory;file:///Users/samofool/foaf.xrdf",
 #		"store" : "DBI;basic;DBI:SQLite:t/data/basic.db;user;pass",
 		"store": "DBI;endpoint;DBI:SQLite:dbname=endpoint.sqlite;;",
-		"update": true,				# allow SPARQL Update operations
-		"load_data": true,			# allow loading RDF data via SPARQL Protocol or FROM/FROM NAMED clauses
-		"html": {
-			"resource_links": true,	# turn resources into links in HTML query result pages
-			"embed_images": false,	# display foaf:Images as images in HTML query result pages
-			"image_width": 200,		# with 'embed_images', scale images to this width
-		},
-		"service_description": {
-			"default": true,		# generate dataset description of the default graph
-			"named_graphs": true,	# generate dataset description of the available named graphs
+		"endpoint": {
+			"update": true,				# allow SPARQL Update operations
+			"load_data": true,			# allow loading RDF data via SPARQL Protocol or FROM/FROM NAMED clauses
+			"html": {
+				"resource_links": true,	# turn resources into links in HTML query result pages
+				"embed_images": false,	# display foaf:Images as images in HTML query result pages
+				"image_width": 200,		# with 'embed_images', scale images to this width
+			},
+			"service_description": {
+				"default": true,		# generate dataset description of the default graph
+				"named_graphs": true,	# generate dataset description of the available named graphs
+			}
 		}
 }
