@@ -6,10 +6,8 @@ the work, if known):
 
 ## RDF::Query
 	* RDFa support for FROM clauses [kasei]
-	* Fix ModifyTemplate in SPARQL1.1 parser to only allow quads (GRAPH patterns and BGPs) and allow dots (follow the grammar in the working draft for QuadData)
 ## RDF::Trine
 	* Parsers
-		* Guess parser based on filename/content sniffing
 		* XRD [tobyink]
 		* TriX [tobyink]
 		* GRDDL [tobyink]
@@ -32,5 +30,6 @@ the work, if known):
 		* M3U [tobyink]
 		* Atom [tobyink]
 ## RDF::LinkedData
-	* Implement SPARQL 1.1 HTTP RDF Update
+	* Implement SPARQL 1.1 HTTP Graph Store Protocol
 ## RDF::Endpoint
+	* Align with SPARQL 1.1 Protocol
