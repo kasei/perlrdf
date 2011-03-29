@@ -62,7 +62,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces, base => $base_uri ) >>
+=item C<< new ( namespaces => \%namespaces, base_uri => $base_uri ) >>
 
 Returns a new Turtle serializer object.
 
@@ -71,7 +71,7 @@ Returns a new Turtle serializer object.
 sub new {
 	my $class	= shift;
 	my $ns	= {};
-	my $base;
+	my $base_uri;
 
 	if (@_) {
 		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
@@ -79,7 +79,10 @@ sub new {
 		} else {
 			my %args	= @_;
 			if (exists $args{ base }) {
-				$base   = $args{ base };
+				$base_uri   = $args{ base };
+			}
+			if (exists $args{ base_uri }) {
+				$base_uri   = $args{ base_uri };
 			}
 			if (exists $args{ namespaces }) {
 				$ns	= $args{ namespaces };
@@ -100,7 +103,7 @@ sub new {
 	
 	my $self = bless( {
 		ns		=> \%rev,
-		base	=> $base,
+		base_uri	=> $base_uri,
 	}, $class );
 	return $self;
 }
@@ -178,8 +181,8 @@ sub serialize_iterator_to_file {
 			print {$fh} "\n";
 		}
 	}
-	if ($self->{base}) {
-	        print {$fh} "\@base <$self->{base}> .\n\n";
+	if ($self->{base_uri}) {
+	        print {$fh} "\@base <$self->{base_uri}> .\n\n";
 	}
 	
 	my $last_subj;

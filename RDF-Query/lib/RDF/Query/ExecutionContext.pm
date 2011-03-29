@@ -105,13 +105,25 @@ sub bound {
 	return $self->_get_value( 'bound', @_ ) || {};
 }
 
+=item C<< base_uri >>
+
+=cut
+
+sub base_uri {
+	my $self	= shift;
+	return $self->_get_value( 'base_uri', @_ ) || {};
+}
+
 =item C<< base >>
+
+Deprecated, use base_uri.
 
 =cut
 
 sub base {
 	my $self	= shift;
-	return $self->_get_value( 'base', @_ ) || {};
+	warn "The RDF::QueryExecutionContext base method is deprecated in favor of base_uri";
+	return $self->base_uri(@_);
 }
 
 =item C<< ns >>

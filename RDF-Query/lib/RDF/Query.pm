@@ -177,7 +177,7 @@ with the appropriate C<< %options >> value. Valid C<< %options >> are:
 
 Specifies the query language. Acceptable values are 'sparql11', 'sparql', or 'rdql'.
 
-* base
+* base_uri
 
 Specifies the base URI used in parsing the query.
 
@@ -197,13 +197,15 @@ sub new {
 	my $class	= shift;
 	my $query	= shift;
 
-	my ($baseuri, $languri, $lang, %options);
+	my ($base_uri, $languri, $lang, %options);
 	if (@_ and ref($_[0])) {
 		%options	= %{ shift() };
 		$lang		= delete $options{ lang };
-		$baseuri	= delete $options{ base };
+		$base_uri	= $options{ base_uri } || $options{ base } ;
+		delete $options{ base_uri };
+		delete $options{ base };
 	} else {
-		($baseuri, $languri, $lang, %options)	= @_;
+		($base_uri, $languri, $lang, %options)	= @_;
 	}
 	$class->clear_error;
 	
@@ -223,17 +225,17 @@ sub new {
 					'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	
-	if ($baseuri) {
-		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
+	if ($base_uri) {
+		$base_uri	= RDF::Query::Node::Resource->new( $base_uri );
 	}
 	
 	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
-	my $parsed	= $parser->parse( $query, $baseuri, $update );
+	my $parsed	= $parser->parse( $query, $base_uri, $update );
 	
 	my $self	= $class->_new(
-					base			=> $baseuri,
+					base_uri		=> $base_uri,
 					parser			=> $parser,
 					parsed			=> $parsed,
 					query_string	=> $query,
@@ -359,8 +361,8 @@ sub prepare {
 					bound						=> \%bound,
 					model						=> $dataset,
 					query						=> $self,
-					base						=> $parsed->{base},
-					ns							=> $parsed->{namespaces},
+					base_uri		       			=> $parsed->{base_uri},
+					ns			       			=> $parsed->{namespaces},
 					logger						=> $self->logger,
 					optimize					=> $self->{optimize},
 					force_no_optimization		=> $self->{force_no_optimization},
@@ -812,12 +814,12 @@ sub sse {
 	my $ggp		= $self->pattern;
 	my $ns		= $parsed->{namespaces};
 	my $nscount	= scalar(@{ [ keys %$ns ] });
-	my $base	= $parsed->{base};
+	my $base_uri	= $parsed->{base};
 	
 	my $indent	= '  ';
 	my $context	= { namespaces => $ns, indent => $indent };
 	my $indentcount	= 0;
-	$indentcount++ if ($base);
+	$indentcount++ if ($base_uri);
 	$indentcount++ if ($nscount);
 	my $prefix	= $indent x $indentcount;
 	
@@ -827,8 +829,8 @@ sub sse {
 		$sse		= sprintf("(prefix (%s)\n${prefix}%s)", join("\n${indent}" . ' 'x9, map { "(${_}: <$ns->{$_}>)" } (sort keys %$ns)), $sse);
 	}
 	
-	if ($base) {
-		$sse	= sprintf("(base <%s>\n${indent}%s)", $base->uri_value, $sse);
+	if ($base_uri) {
+		$sse	= sprintf("(base <%s>\n${indent}%s)", $base_uri->uri_value, $sse);
 	}
 	
 	chomp($sse);
