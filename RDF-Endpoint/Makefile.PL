@@ -9,6 +9,7 @@ author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'zlib';
 
 test_requires       'Test::More' => '0.61';
+test_requires       'Test::WWW::Mechanize::PSGI' => 0;
 
 requires			'Carp'					=> 0;
 requires			'File::ShareDir'		=> 0;
