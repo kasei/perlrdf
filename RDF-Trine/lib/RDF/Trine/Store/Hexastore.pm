@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.133_01
+This document describes RDF::Trine::Store::Hexastore version 0.134
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.133_01";
+	$VERSION	= "0.134";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }

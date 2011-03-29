@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.134 (2011-XX-XX)
+  Version 0.134 (2011-03-29)
 
      * API CHANGES
          Deprecated RDF::Trine::Iterator->count.

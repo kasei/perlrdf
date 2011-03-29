@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.134" ;
-                        doap:created      "2011-XX-XX" ;
+                        doap:created      "2011-03-29" ;
                         ];
         asc:changes     [
                         asc:addition    "Added srx2csv and srx2table scripts." ;

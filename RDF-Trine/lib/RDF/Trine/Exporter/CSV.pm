@@ -7,7 +7,7 @@ RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::CSV version 0.133_01
+This document describes RDF::Trine::Exporter::CSV version 0.134
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133_01';
+	$VERSION	= '0.134';
 }
 
 =head1 METHODS
