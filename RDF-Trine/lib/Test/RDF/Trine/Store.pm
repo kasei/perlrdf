@@ -1,4 +1,45 @@
-package App::Store;
+=head1 NAME
+
+Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
+
+=head1 VERSION
+
+This document describes RDF::Trine version 0.134
+
+=head1 SYNOPSIS
+
+For example, to test a Memory store, do something like:
+
+  use Test::RDF::Trine::Store qw(all_store_tests number_of_tests);
+  use Test::More tests => 1 + Test::RDF::Trine::Store::number_of_tests;
+
+  use RDF::Trine qw(iri variable store literal);
+  use RDF::Trine::Store;
+
+  my $data = Test::RDF::Trine::Store::create_data;
+
+  my $store	= RDF::Trine::Store::Memory->temporary_store();
+  isa_ok( $store, 'RDF::Trine::Store::Memory' );
+  Test::RDF::Trine::Store::all_store_tests($store, $data);
+
+
+
+=head1 DESCRIPTION
+
+This packages a few functions that you can call to test a
+L<RDF::Trine::Store>, also if it is outside of the main RDF-Trine
+distribution.
+
+There are different functions that will test different parts of the
+functionality, but you should run them all at some point, thus for the
+most part, you would just like to run the C<all_store_tests> function.
+
+All the below functions are exported.
+
+
+=cut
+
+package Test::RDF::Trine::Store;
 
 use Test::More;
 use Test::Exception;
@@ -17,13 +58,31 @@ use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads orderby_tests remove_statement_tests);
+our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
 
-# Returns the number of tests, remember to update whenever adding tests
+
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item C<< number_of_tests >>
+
+Returns the number of tests run with C<all_store_tests>.
+
+=cut
 
 sub number_of_tests {
-  return 203;
+  return 203; # Remember to update whenever adding tests
 }
+
+
+=item C<< create_data >>
+
+Returns a hashref with generated test data nodes to be used by other
+tests.
+
+=cut
 
 
 sub create_data {
@@ -51,8 +110,16 @@ sub create_data {
   return { ex => $ex, names => \@names, triples => \@triples, quads => \@quads, nil => $nil };
 }
 
+=item C<< all_store_tests ($store, $data, $todo) >>
+
+Will run all available tests for the given store, given the data from
+C<create_data>. You may also set a third argument to some true value
+to mark all tests as TODO in case the store is in development.
+
+=cut
+
 sub all_store_tests {
-        my ($store, $data) = @_;
+        my ($store, $data, $todo) = @_;
 
 	my $ex	    = $data->{ex};
 	my @names   = @{$data->{names}};
@@ -64,7 +131,7 @@ sub all_store_tests {
 	isa_ok( $store, 'RDF::Trine::Store' );
 
       TODO: {
-	local $TODO = $store->isa('RDF::Trine::Store::Redland') ? 'Redland has context issues' : undef;
+	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 	  
 	throws_ok {
 	  my $st	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
@@ -88,11 +155,15 @@ sub all_store_tests {
 	contexts_tests( $store );
 	get_statements_tests_triples( $store, $ex );
 	get_statements_tests_quads( $store, $ex, $nil  );
-# 	orderby_tests( $store );
 	remove_statement_tests( $store, $ex, @names );
       }
 }
 
+=item C<< add_quads($store, @quads) >>
+
+Helper function to add an array of quads to the given store.
+
+=cut
 
 
 sub add_quads {
@@ -102,12 +173,26 @@ sub add_quads {
 	}
 }
 
+
+=item C<< add_triples($store, @triples) >>
+
+Helper function to add an array of triples to the given store.
+
+=cut
+
 sub add_triples {
 	my ($store, @triples) = @_;
 	foreach my $t (@triples) {
 		$store->add_statement( $t );
 	}
 }
+
+=item C<< contexts_tests( $store ) >>
+
+Testing contexts (aka. "graphs")
+
+=cut
+
 
 sub contexts_tests {
 	note "contexts tests";
@@ -126,6 +211,14 @@ sub contexts_tests {
 				};
 	is_deeply( \%seen, $expect, 'expected contexts' );
 }
+
+
+=item C<< add_statement_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check add_statement.
+
+=cut
+
 
 sub add_statement_tests_simple {
 	note "simple add_statement tests";
@@ -150,6 +243,13 @@ sub add_statement_tests_simple {
 	$store->remove_statement( $quad2 );
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
+
+
+=item C<< literals_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check literals support.
+
+=cut
 
 sub literals_tests_simple {
 	note "simple tests with literals";
@@ -243,6 +343,14 @@ sub literals_tests_simple {
 	is( $store->size, 0, 'expected zero size after remove statements' );
 }
 
+
+=item C<< blank_node_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check blank node support.
+
+=cut
+
+
 sub blank_node_tests_simple {
 	note "simple tests with blank nodes";
 	my ($store, $ex) = @_;
@@ -313,6 +421,12 @@ sub blank_node_tests_simple {
 }
 
 
+=item C<< count_statements_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check that counts are correct.
+
+=cut
+
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
 	my ($store, $ex) = @_;
@@ -351,6 +465,15 @@ sub count_statements_tests_simple {
 	
 }
 
+
+=item C<< count_statements_tests_quads( $store, $data->{ex} )  >>
+
+Count statement tests for quads.
+
+
+=cut
+
+
 sub count_statements_tests_quads {
 	note " quad count_statements tests";
 	my ($store, $ex) = @_;
@@ -364,6 +487,15 @@ sub count_statements_tests_quads {
 		is( $store->count_statements( $ex->a, undef, undef, $ex->a ), 9, 'count_statements( bffb )' );
 	}
 }
+
+
+=item C<<  count_statements_tests_triples( $store, $data->{ex}, $data->{nil} ) >>
+
+More tests for counts, with triples.
+
+
+=cut
+
 
 sub count_statements_tests_triples {
 	note " triple count_statements tests";
@@ -379,6 +511,14 @@ sub count_statements_tests_triples {
 		is( $store->count_statements( $ex->a, undef, undef, $nil ), 9, 'count_statements( bffb )' );
 	}
 }
+
+
+=item C<< get_statements_tests_triples( $store, $data->{ex} )  >>
+
+Tests for getting statements using triples.
+
+=cut
+
 
 sub get_statements_tests_triples {
 	note " triple get_statements tests";
@@ -416,6 +556,15 @@ sub get_statements_tests_triples {
 		is( $count, 0, 'get_statements( bff ) expected empty results'  );
 	}
 }
+
+
+=item C<< get_statements_tests_quads( $store, $data->{ex}, $data->{nil}  )  >>
+
+Tests for getting statements using quads.
+
+=cut
+
+
 
 sub get_statements_tests_quads {
 	note " quad get_statements tests";
@@ -498,25 +647,15 @@ sub get_statements_tests_quads {
 	
 }
 
-sub orderby_tests {
-	note " orderby tests";
-	my $store	= shift;
-	
-	{
-		my $iter	= $store->get_statements( undef, undef, undef, undef, orderby => 'predicate' );
-		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
-		my $last;
-		while (my $st = $iter->next) {
-			my $pred	= $st->predicate;
-			
-			if (defined($last)) {
-				my $cmp	= $last->compare( $pred );
-				cmp_ok( $cmp, '<=', 0 );
-			}
-			$last	= $pred;
-		}
-	}
-}
+
+
+=item C<< remove_statement_tests( $store, $data->{ex}, @{$data->{names}} );  >>
+
+Tests for removing statements.
+
+
+=cut
+
 
 sub remove_statement_tests {
 	note " remove_statement tests";
@@ -558,3 +697,12 @@ sub remove_statement_tests {
 
 
 1;
+__END__
+
+=back
+
+=head1 AUTHOR
+
+ Gregory Todd Williams <gwilliams@cpan.org> and Kjetil Kjernsmo <kjetilk@cpan.org>
+
+=cut

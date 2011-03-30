@@ -1,9 +1,9 @@
 use FindBin '$Bin';
 use lib "$Bin/lib";
 
-use App::Store qw(all_store_tests number_of_tests);
+use Test::RDF::Trine::Store qw(all_store_tests number_of_tests);
 
-use Test::More tests => 4 + App::Store::number_of_tests;
+use Test::More tests => 4 + Test::RDF::Trine::Store::number_of_tests;
 
 use strict;
 use warnings;
@@ -14,7 +14,7 @@ use RDF::Trine::Store;
 
 
 
-my $data = App::Store::create_data;
+my $data = Test::RDF::Trine::Store::create_data;
 my $ex = $data->{ex};
 
 {
@@ -29,5 +29,5 @@ my $ex = $data->{ex};
 {
   my $store	= RDF::Trine::Store::Memory->temporary_store();
   isa_ok( $store, 'RDF::Trine::Store::Memory' );
-  App::Store::all_store_tests($store, $data);
+  Test::RDF::Trine::Store::all_store_tests($store, $data);
 }
