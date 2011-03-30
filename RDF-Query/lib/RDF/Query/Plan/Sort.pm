@@ -217,6 +217,30 @@ sub graph {
 	return "$self";
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	$string		.= "${indent}${s}sory by:\n";
+	my $exprs	= $self->[2];
+	foreach my $e (@$exprs) {
+		my $dir		= ($e->[1] == 0 ? 'asc  ' : 'desc ');
+		$string		.= "${indent}${s}${s}${dir}" . $e->[0] . "\n";
+	}
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
+}
+
 
 1;
 
