@@ -58,7 +58,7 @@ use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads orderby_tests remove_statement_tests);
+our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
 
 
 
@@ -154,7 +154,6 @@ sub all_store_tests {
 	contexts_tests( $store );
 	get_statements_tests_triples( $store, $ex );
 	get_statements_tests_quads( $store, $ex, $nil  );
-# 	orderby_tests( $store );
 	remove_statement_tests( $store, $ex, @names );
       }
 }
@@ -647,33 +646,6 @@ sub get_statements_tests_quads {
 	
 }
 
-
-=item C<< orderby_tests( $store );  >>
-
-Orderby functionality is not yet implemented.
-
-=cut
-
-
-sub orderby_tests {
-	note " orderby tests";
-	my $store	= shift;
-	
-	{
-		my $iter	= $store->get_statements( undef, undef, undef, undef, orderby => 'predicate' );
-		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
-		my $last;
-		while (my $st = $iter->next) {
-			my $pred	= $st->predicate;
-			
-			if (defined($last)) {
-				my $cmp	= $last->compare( $pred );
-				cmp_ok( $cmp, '<=', 0 );
-			}
-			$last	= $pred;
-		}
-	}
-}
 
 
 =item C<< remove_statement_tests( $store, $data->{ex}, @{$data->{names}} );  >>
