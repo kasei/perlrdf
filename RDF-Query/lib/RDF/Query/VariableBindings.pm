@@ -69,6 +69,27 @@ sub sse {
 	return sprintf('(row %s)', CORE::join(' ', map { '[' . CORE::join(' ', '?' . $_, ($self->{$_}) ? $self->{$_}->as_string : ()) . ']' } (@keys)));
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the variable bindings appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}Variable Bindings\n";
+
+	my @keys	= sort keys %$self;
+	foreach my $k (@keys) {
+		$string	.= "${indent}${s}$k: " . $self->{$k}->as_string . "\n";
+	}
+	return $string;
+}
+
 1;
 
 __END__

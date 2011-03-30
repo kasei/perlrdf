@@ -285,6 +285,43 @@ sub plan_node_data {
 	return ($self->delete_template, $self->insert_template, $self->pattern);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}$type\n";
+	
+	if (my $d = $self->delete_template) {
+		$string	.= "${indent}${s}delete:\n";
+		$string	.= $d->explain( $s, $count+2 );
+	}
+
+	if (my $i = $self->insert_template) {
+		$string	.= "${indent}${s}insert:\n";
+		$string	.= $i->explain( $s, $count+2 );
+	}
+
+	if (my $p = $self->pattern) {
+		if ($p->isa('RDF::Query::Plan::Constant') and $p->is_unit) {
+			
+		} else {
+			$string	.= "${indent}${s}where:\n";
+			$string	.= $p->explain( $s, $count+2 );
+		}
+	}
+	
+	return $string;
+}
+
 =item C<< graph ( $g ) >>
 
 =cut
