@@ -592,7 +592,9 @@ END
 		undef $fh;
 		open( $fh, '>', \$delayed ) or die $!;
 	} else {
-		print {$fh} "${t}\n";
+		if ($t) {
+			print {$fh} "${t}\n";
+		}
 	}
 	
 	print {$fh} <<"END";
