@@ -454,13 +454,6 @@ sub execute_plan {
 	
 	$plan->execute( $context );
 	my $stream	= $plan->as_iterator( $context );
-# 	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
-	
-	$l->debug("performing projection");
-	my $expr	= 0;
-	foreach my $v (@{ $parsed->{'variables'} }) {
-		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
-	}
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
