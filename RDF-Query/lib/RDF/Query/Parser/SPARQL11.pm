@@ -326,6 +326,13 @@ sub _RW_Query {
 			$self->_MoveUpdate();
 		} elsif ($self->_test(qr/ADD/i)) {
 			$self->_AddUpdate();
+		} elsif ($self->_test(qr/;/)) {
+			$self->_eat(qr/;/) ;
+			$self->__consume_ws_opt;
+			next if ($self->_Query_test);
+			last;
+		} elsif ($self->{tokens} eq '') {
+			last;
 		} else {
 			my $l		= Log::Log4perl->get_logger("rdf.query");
 			if ($l->is_debug) {
@@ -333,6 +340,7 @@ sub _RW_Query {
 			}
 			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 		}
+		
 		last if ($read_query);
 		$self->__consume_ws_opt;
 		if ($self->_test(qr/;/)) {
@@ -353,7 +361,7 @@ sub _RW_Query {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
-	if ($count > 1) {
+	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
 		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
 	}
