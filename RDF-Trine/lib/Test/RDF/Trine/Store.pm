@@ -110,15 +110,16 @@ sub create_data {
   return { ex => $ex, names => \@names, triples => \@triples, quads => \@quads, nil => $nil };
 }
 
-=item C<< all_store_tests ($store, $data) >>
+=item C<< all_store_tests ($store, $data, $todo) >>
 
 Will run all available tests for the given store, given the data from
-C<create_data>.
+C<create_data>. You may also set a third argument to some true value
+to mark all tests as TODO in case the store is in development.
 
 =cut
 
 sub all_store_tests {
-        my ($store, $data) = @_;
+        my ($store, $data, $todo) = @_;
 
 	my $ex	    = $data->{ex};
 	my @names   = @{$data->{names}};
@@ -130,7 +131,7 @@ sub all_store_tests {
 	isa_ok( $store, 'RDF::Trine::Store' );
 
       TODO: {
-	local $TODO = $store->isa('RDF::Trine::Store::Redland') ? 'Redland has context issues' : undef;
+	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 	  
 	throws_ok {
 	  my $st	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);

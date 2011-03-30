@@ -6,7 +6,7 @@ use lib "$Bin/lib";
 use Module::Load::Conditional qw[can_load];
 
 BEGIN {
-  can_load(modules => {'RDF::Redland' => 0});
+ can_load(modules => {'RDF::Redland' => 0});
 }
 
 use RDF::Redland;
@@ -33,6 +33,6 @@ my $data = Test::RDF::Trine::Store::create_data;
 my $store	= RDF::Trine::Store::Redland->temporary_store();
 isa_ok( $store, 'RDF::Trine::Store::Redland' );
 
-Test::RDF::Trine::Store::all_store_tests($store, $data);
+Test::RDF::Trine::Store::all_store_tests($store, $data, 1);
 
 done_testing;
