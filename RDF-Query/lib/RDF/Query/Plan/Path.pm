@@ -144,8 +144,11 @@ sub execute ($) {
 			my $partial_result	= RDF::Query::VariableBindings->new();
 			unless ($fwd) {
 				@{ $self }[3,4]	= @{ $self }[4,3];	# swap start and end nodes
+				$self->[2]		= [ '^', $self->[2] ];
 			}
 			
+			use Data::Dumper;
+			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
 			push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
 		} else {
 			$l->trace( '- ZeroOrMore path is ff' );
@@ -275,10 +278,12 @@ sub next {
 		while (scalar(@{ $self->[0]{alp_state} })) {
 			$self->_alp;
 			if (my $r = $self->_alp_result) {
+				$l->trace( 'returning path result: ' . $r );
 				return $r;
 			}
 		}
 		my $r	= $self->_alp_result;
+		$l->trace( 'returning path result: ' . $r ) if (defined($r));
 		return $r;
 	} elsif ($op eq '+') {
 		while (scalar(@{ $self->[0]{alp_state} })) {
