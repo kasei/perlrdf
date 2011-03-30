@@ -1,4 +1,4 @@
-package App::Store;
+package Test::RDF::Trine::Store;
 
 use Test::More;
 use Test::Exception;
