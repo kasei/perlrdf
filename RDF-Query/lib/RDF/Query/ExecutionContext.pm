@@ -96,6 +96,15 @@ sub query {
 	return $self->_get_value( 'query', @_ );
 }
 
+=item C<< options >>
+
+=cut
+
+sub options {
+	my $self	= shift;
+	return $self->_get_value( 'options', @_ );
+}
+
 =item C<< bound >>
 
 =cut
