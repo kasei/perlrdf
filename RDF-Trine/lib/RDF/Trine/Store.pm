@@ -128,7 +128,7 @@ sub new_with_config {
 	my $proto		= shift;
 	my $config	= shift;
 	if (defined($config)) {
-		my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
+		my $class	= $config->{storeclass} || join('::', 'RDF::Trine::Store', $config->{storetype});
 		if ($class->can('_new_with_config')) {
 			return $class->_new_with_config( $config );
 		} else {
@@ -162,6 +162,14 @@ sub new_with_object {
 	}
 	return;
 }
+
+=item C<< nuke >>
+
+Permanently removes the store and its data.
+
+=cut
+
+sub nuke {}
 
 =item C<< class_by_name ( $name ) >>
 
@@ -337,27 +345,51 @@ sub _map_sort_data {
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
+=cut
+
+sub get_statements;
+
 =item C<< get_contexts >>
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
+=cut
+
+sub get_contexts;
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
+
+=cut
+
+sub add_statement;
 
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
 
+=cut
+
+sub remove_statement;
+
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=cut
+
+sub remove_statements;
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_statements;
 
 =item C<< size >>
 
