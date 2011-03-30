@@ -271,7 +271,7 @@ END
 					}
 				} else {
 					my @variants	= (
-						['text/html', 1.0, 'text/html'],
+						['text/html', 0.99, 'text/html'],
 						['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
 						['application/json', 0.95, 'application/json'],
 						['application/rdf+xml', 0.95, 'application/rdf+xml'],
@@ -280,7 +280,7 @@ END
 						['application/xml', 0.4, 'application/xml'],
 						['text/plain', 0.2, 'text/plain'],
 					);
-					my $stype	= choose( \@variants, $headers ) || 'text/html';
+					my $stype	= choose( \@variants, $headers ) || 'application/sparql-results+xml';
 					if ($stype =~ /html/) {
 						$response->headers->content_type( 'text/html' );
 						my $html	= $self->iter_as_html($iter, $model, $sparql);
