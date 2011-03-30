@@ -240,7 +240,7 @@ sub new {
 					parsed			=> $parsed,
 					query_string	=> $query,
 					update			=> $update,
-					options			=> \%options,
+					options			=> { %options },
 				);
 	if (exists $options{load_data}) {
 		$self->{load_data}	= delete $options{load_data};
@@ -279,11 +279,6 @@ sub new {
 	if (my $time = delete $options{optimistic_threshold_time}) {
 		$l->debug("got optimistic_threshold_time flag");
 		$self->{optimistic_threshold_time}	= $time;
-	}
-	
-	my @leftover	= keys %options;
-	if (@leftover) {
-		warn "Unrecognized options passed to $class->new:\n\t" . join("\n\t", sort @leftover);
 	}
 	
 	# add rdf as a default namespace to RDQL queries
@@ -361,7 +356,7 @@ sub prepare {
 					bound						=> \%bound,
 					model						=> $dataset,
 					query						=> $self,
-					base_uri		       			=> $parsed->{base_uri},
+					base_uri					=> $parsed->{base_uri},
 					ns			       			=> $parsed->{namespaces},
 					logger						=> $self->logger,
 					optimize					=> $self->{optimize},
@@ -369,6 +364,7 @@ sub prepare {
 					optimistic_threshold_time	=> $self->{optimistic_threshold_time} || 0,
 					requested_variables			=> \@vars,
 					strict_errors				=> $errors,
+					options						=> $self->{options},
 				);
 	
 	$self->{model}		= $model;
