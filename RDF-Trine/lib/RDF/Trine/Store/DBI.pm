@@ -180,6 +180,26 @@ sub _new_with_object {
 	return $class->new( $obj );
 }
 
+=item C<< nuke >>
+
+Permanently removes the store and its data. Note that because of this module's
+use of the Redland schema, removing a store with this method will only delete
+the Statements table and remove the model's entry in the Models table. The node
+entries in the Literals, Bnodes, and Resources tables will still exist.
+
+=cut
+
+sub nuke {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= _mysql_hash( $name );
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
+	$dbh->do( "DROP TABLE Statements${id};" ) || do { $l->trace( $dbh->errstr ); return undef };
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+}
+
 =item C<< supports ( [ $feature ] ) >>
 
 If C<< $feature >> is specified, returns true if the feature is supported by the
