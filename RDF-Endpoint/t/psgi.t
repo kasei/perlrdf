@@ -1,5 +1,7 @@
 #!perl
 
+use strict;
+use warnings;
 use Test::More;
 
 use URI::QueryParam;
@@ -53,9 +55,10 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 	
 	my $sd_content	= $mech->content;
 	my $sdmodel	= RDF::Trine::Model->new();
+	my $e		= 'http://endpoint.local/';
 	RDF::Trine::Parser::RDFXML->parse_into_model( $e, $sd_content, $sdmodel );
 	ok( $sdmodel->size, 'parsed triples' );
-	my @st	= $sdmodel->get_statements( undef, $sd->url, undef );
+	my @st	= $sdmodel->get_statements( iri($e), $sd->url, undef );
 	cmp_ok( scalar(@st), '>', 0, 'expected sd:url triple' );
 }
 
