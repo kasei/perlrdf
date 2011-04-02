@@ -148,7 +148,7 @@ sub execute ($) {
 			}
 			
 			use Data::Dumper;
-			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
+# 			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
 			push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
 		} else {
 			$l->trace( '- ZeroOrMore path is ff' );
