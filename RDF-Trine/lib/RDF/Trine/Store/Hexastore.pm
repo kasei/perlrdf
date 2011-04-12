@@ -67,7 +67,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<storetype> key must be C<Memory> for this backend.
+The C<storetype> key must be C<Hexastore> for this backend.
 
 This module also supports initializing the store from a file or URL,
 in which case, a C<sources> key may be used. This holds an arrayref of
