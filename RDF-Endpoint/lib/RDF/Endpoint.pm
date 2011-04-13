@@ -24,9 +24,10 @@ is included with this package. Valid top-level configuration keys include:
 
 =item store
 
-A string used to define the underlying L<RDF::Trine::Store> for the endpoint.
-The string is used as the argument to the L<RDF::Trine::Store->new_with_string>
-constructor.
+This is used to define the underlying L<RDF::Trine::Store> for the
+endpoint.  It can be a hashref of the type that can be passed to
+L<RDF::Trine::Store>->new_with_config, but a simple string can also be
+used.
 
 =item endpoint
 
@@ -136,7 +137,7 @@ sub new {
 		delete $config->{store};
 	} else {
 		$config		= $arg;
-		my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+		my $store	= RDF::Trine::Store->new( $config->{store} );
 		$model		= RDF::Trine::Model->new( $store );
 	}
 	unless ($config->{endpoint}) {
