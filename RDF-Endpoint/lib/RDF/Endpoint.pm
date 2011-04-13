@@ -104,6 +104,8 @@ use RDF::RDFa::Generator;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
+use Hash::Merge::Simple qw/ merge /;
+
 
 my $NAMESPACES	= {
 	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
@@ -213,7 +215,9 @@ END
 			$sparql = $req->param('update');
 		}
 	}
-	
+
+	my $ns = merge $config->{namespaces}, $NAMESPACES;
+
 	if ($sparql) {
 		my %args;
 		$args{ update }		= 1 if ($config->{endpoint}{update} and $req->method eq 'POST');
@@ -261,7 +265,7 @@ END
 					}
 					my $stype	= choose( \@variants, $headers );
 					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-						my $s	= $sclass->new( namespaces => $NAMESPACES );
+						my $s	= $sclass->new( namespaces => $ns );
 						$response->status(200);
 						$response->headers->content_type($stype);
 						$content	= encode_utf8($s->serialize_iterator_to_string($iter));
@@ -324,7 +328,7 @@ END
 		my $stype	= choose( \@variants, $headers );
 		my $sdmodel	= $self->service_description();
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-			my $s	= $sclass->new( namespaces => $NAMESPACES );
+			my $s	= $sclass->new( namespaces => $ns );
 			$response->status(200);
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
@@ -333,7 +337,7 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$NAMESPACES } );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$ns } );
 			$gen->inject_document($doc, $sdmodel);
 			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
