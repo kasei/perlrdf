@@ -25,6 +25,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
 use Data::Dumper;
+use RDF::Trine qw(iri);
 use RDF::Trine::Error;
 use List::Util qw(first);
 use List::MoreUtils qw(any mesh);
