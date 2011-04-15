@@ -73,6 +73,15 @@ endpoint using the following configuration:
     PerlSetEnv RDF_ENDPOINT_CONFIG /path/to/rdf_endpoint.json
   </Location>
 
+To get syntax highlighting and other pretty features, in the
+VirtualHost section of your server, add three aliases:
+
+  Alias /js/ /path/to/share/www/js/
+  Alias /favicon.ico /path/to/share/www/favicon.ico
+  Alias /css/ /path/to/share/www/css/
+
+The exact location can be determined by finding where the file C<sparql_form.js>.
+
 =head1 METHODS
 
 =over 4
