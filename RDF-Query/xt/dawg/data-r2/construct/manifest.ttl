@@ -75,3 +75,7 @@
               qt:data   <data-opt.ttl> ] ;
      mf:result  <result-construct-optional.ttl> ;
     .
+
+:construct-6 rdf:type mf:PositiveSyntaxTest ;
+	     mf:name  "dawg-construct-limit" ;
+	     mf:action  <query-limit.rq> .
