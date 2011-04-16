@@ -1014,6 +1014,7 @@ sub _ConstructQuery {
 		$self->_WhereClause;
 	}
 	
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -1051,6 +1052,7 @@ sub _DescribeQuery {
 		$self->_WhereClause;
 	}
 	
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	$self->{build}{method}		= 'DESCRIBE';
 }
