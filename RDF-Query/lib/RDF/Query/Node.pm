@@ -7,7 +7,7 @@ RDF::Query::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node version 2.902.
+This document describes RDF::Query::Node version 2.905.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Node::Variable;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -94,6 +94,23 @@ sub from_trine {
 		use Data::Dumper;
 		Carp::confess "from_trine called with unrecognized node type:" . Dumper($n);
 	}
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the node appropriate for display on the
+command line. This method is primarily used by the C<< explain >> method of
+the subclasses of RDF::Query::Plan.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}" . $self->as_sparql . "\n";
+	return $string;
 }
 
 =back

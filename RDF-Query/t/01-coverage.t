@@ -15,8 +15,6 @@ my @models	= test_models( @files );
 
 use Test::More;
 
-plan tests => 1 + (57 * scalar(@models));
-
 use_ok( 'RDF::Query' );
 use RDF::Query::Node qw(iri);
 foreach my $model (@models) {
@@ -319,7 +317,7 @@ END
 			my $id		= $thing->blank_identifier;
 			ok( length($id), 'blank identifier' );
 		}
-		is( $stream->count, 3, '3 result' );
+		is( $stream->seen_count, 3, '3 result' );
 	}
 
 	{
@@ -355,7 +353,7 @@ END
 			my $value	= $node->literal_value;
 			is( $value, $name, 'expected name on pre-bound node' );
 		}
-		is( $stream->count, 1, '1 result' );
+		is( $stream->seen_count, 1, '1 result' );
 	}
 
 	{
@@ -390,3 +388,5 @@ END
 		is( $row->{person}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg' );
 	}
 }
+
+done_testing();

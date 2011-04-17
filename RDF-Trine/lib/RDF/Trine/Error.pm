@@ -7,7 +7,7 @@ RDF::Trine::Error - Error classes for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Error version 0.124
+This document describes RDF::Trine::Error version 0.134
 
 =head1 SYNOPSIS
 
@@ -15,8 +15,9 @@ This document describes RDF::Trine::Error version 0.124
 
 =head1 DESCRIPTION
 
-RDF::Trine::Error provides an class hierarchy of errors that other RDF::Trine
-classes may throw using the L<Error|Error> API. See L<Error> for more information.
+RDF::Trine::Error provides a class hierarchy of errors that other RDF::Trine
+classes may throw using the L<Error|Error> API. See L<Error> for more
+information.
 
 =head1 REQUIRES
 
@@ -37,7 +38,7 @@ use base qw(Error);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 ######################################################################
@@ -80,7 +81,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.124
+This document describes RDF::Trine version 0.134
 
 =head1 SYNOPSIS
 
@@ -39,33 +39,48 @@ components:
 
 package RDF::Trine;
 
+use 5.008003;
 use strict;
 use warnings;
 no warnings 'redefine';
+use Module::Load::Conditional qw[can_load];
 
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
-	@EXPORT_OK	= qw(iri blank literal variable statement store);
+	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
+	
+	can_load( modules => {
+		'RDF::Redland'					=> undef,
+		'RDF::Trine::Store::Redland'	=> undef,
+		'RDF::Trine::Parser::Redland'	=> undef,
+	} );
 }
+
+use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
+use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
+use RDF::Trine::Graph;
 use RDF::Trine::Parser;
 use RDF::Trine::Serializer;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
+use RDF::Trine::NamespaceMap;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
+
+
 
 sub _uniq {
 	my %seen;
@@ -171,7 +186,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

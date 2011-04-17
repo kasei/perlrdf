@@ -21,12 +21,6 @@ use Test::More;
 
 my @models	= test_models();
 
-my $tests	= 66;
-plan tests => 1 + ($tests * scalar(@models));
-# plan qw(no_plan);	# the number of tests is currently broken because named graphs
-# 					# are adding triples to the underyling model. when that's fixed,
-# 					# this should be changed back to a test number.
-
 my $alice	= URI::file->new_abs( 'data/named_graphs/alice.rdf' );
 my $bob		= URI::file->new_abs( 'data/named_graphs/bob.rdf' );
 my $meta	= URI::file->new_abs( 'data/named_graphs/meta.rdf' );
@@ -134,7 +128,7 @@ END
 				is( $src->uri_value, $alice, 'graph uri' );
 				is( $mbox->uri_value, 'mailto:alice@work.example', 'mbox uri' );
 			}
-			is( $iter->count, 1, 'expected result count' );
+			is( $iter->seen_count, 1, 'expected result count' );
 		}
 		
 		{
@@ -218,7 +212,7 @@ END
 				is( $l_topic, $expect, "got topic: $l_topic" );
 			}
 			
-			is( $stream->count, 2, 'got results' );
+			is( $stream->seen_count, 2, 'got results' );
 		}
 	}
 
@@ -327,3 +321,5 @@ END
 		is( $count, 2, 'two expected graph names' );
 	}
 }
+
+done_testing();

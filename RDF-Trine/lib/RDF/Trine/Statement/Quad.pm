@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.124
+This document describes RDF::Trine::Statement::Quad version 0.134
 
 =cut
 
@@ -24,12 +24,15 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Statement> class.
 
 =over 4
 
@@ -65,11 +68,7 @@ Returns the subject, predicate and object of the triple pattern.
 
 sub nodes {
 	my $self	= shift;
-	my $s		= $self->subject;
-	my $p		= $self->predicate;
-	my $o		= $self->object;
-	my $c		= $self->context;
-	return ($s, $p, $o, $c);
+	return @$self;
 }
 
 =item C<< node_names >>
@@ -98,7 +97,7 @@ sub context {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -189,7 +188,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

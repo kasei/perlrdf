@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings::Materialized - Materialized bindings class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.124
+This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.134
 
 =head1 SYNOPSIS
 
@@ -32,6 +32,9 @@ This document describes RDF::Trine::Iterator::Bindings::Materialized version 0.1
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator::Bindings> class.
+
 =over 4
 
 =cut
@@ -48,7 +51,7 @@ use Scalar::Util qw(blessed reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 =item C<< new ( \@results, \@names, %args ) >>
@@ -140,7 +143,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

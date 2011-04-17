@@ -7,19 +7,23 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.124
+This document describes RDF::Trine::Iterator::Bindings version 0.134
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator;
-    
-    my $iterator = RDF::Trine::Iterator::Bindings->new( \&data, \@names );
-    while (my $row = $iterator->next) {
-    	my @vars	= keys %$row;
-    	# do something with @vars
-    }
+ use RDF::Trine::Iterator::Bindings;
+ 
+ my $iterator = RDF::Trine::Iterator::Bindings->new( \&data, \@names );
+ while (my $row = $iterator->next) {
+   # $row is a HASHref containing variable name -> RDF Term bindings
+   my @vars = keys %$row;
+   print $row->{ 'var' }->as_string;
+ }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator> class.
 
 =over 4
 
@@ -38,13 +42,14 @@ use Text::Table;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator::Bindings::Materialized;
+use RDF::Trine::Serializer::Turtle;
 
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -52,7 +57,7 @@ BEGIN {
 =item C<new ( \&results, \@names, %args )>
 
 Returns a new SPARQL Result interator object. Results must be either
-an reference to an array containing results or a CODE reference that
+a reference to an array containing results or a CODE reference that
 acts as an iterator, returning successive items when called, and
 returning undef when the iterator is exhausted.
 
@@ -498,10 +503,9 @@ sub as_string {
 	my @rows;
 	my $count	= 0;
 	while (my $row = $self->next) {
-		push(@rows, [ map { blessed($_) ? $_->as_string : '' } @{ $row }{ @names } ]);
+		push(@rows, [ map { blessed($_) ? RDF::Trine::Serializer::Turtle->node_as_concise_string($_) : '' } @{ $row }{ @names } ]);
 		last if ($max_result_size and ++$count >= $max_result_size);
 	}
-#	my $rows			= [ map { [ map { blessed($_) ? $_->as_string : '' } @{$_}{ @names } ] } @nodes ];
 	if (ref($rescount)) {
 		$$rescount	= scalar(@rows);
 	}
@@ -588,7 +592,9 @@ END
 		undef $fh;
 		open( $fh, '>', \$delayed ) or die $!;
 	} else {
-		print {$fh} "${t}\n";
+		if ($t) {
+			print {$fh} "${t}\n";
+		}
 	}
 	
 	print {$fh} <<"END";
@@ -719,7 +725,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

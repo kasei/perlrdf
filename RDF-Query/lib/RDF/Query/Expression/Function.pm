@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.902.
+This document describes RDF::Query::Expression::Function version 2.905.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -55,6 +55,9 @@ our %FUNCTION_MAP	= (
 );
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Expression> class.
 
 =over 4
 
@@ -100,7 +103,7 @@ sub arguments {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -127,7 +130,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -169,7 +172,7 @@ sub type {
 	return 'FUNCTION';
 }
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
+=item C<< qualify_uris ( \%namespaces, $base_uri ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
 QNames (ns:local) are qualified using the supplied %namespaces.
@@ -180,11 +183,11 @@ sub qualify_uris {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $ns		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my @args;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@args, $arg->qualify_uris( $ns, $base ));
+			push(@args, $arg->qualify_uris( $ns, $base_uri ));
 		} elsif (blessed($arg) and $arg->isa('RDF::Query::Node::Resource')) {
 			my $uri	= $arg->uri;
 			if (ref($uri)) {
@@ -192,7 +195,7 @@ sub qualify_uris {
 				unless (exists($ns->{ $n })) {
 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base_uri );
 				push(@args, $resolved);
 			} else {
 				push(@args, $arg);
@@ -220,7 +223,7 @@ sub evaluate {
 	
 	no warnings 'uninitialized';
 	my $uriv	= $uri->uri_value;
-	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/) {
+	if ($uriv =~ /^sparql:logical-(.+)$/ or $uriv =~ /^sparql:(not)?in$/ or $uriv eq 'sparql:coalesce') {
 		# logical operators must have their arguments passed lazily, because
 		# some of them can still succeed even if some of their arguments throw
 		# TypeErrors (e.g. true || fail ==> true).
@@ -231,12 +234,12 @@ sub evaluate {
 						my $val	= 0;
 						try {
 							$val	= $value->isa('RDF::Query::Expression')
-								? $value->evaluate( $query, $bound )
+								? $value->evaluate( $query, $bound, $context )
 								: ($value->isa('RDF::Trine::Node::Variable'))
 									? $bound->{ $value->name }
 									: $value;
 						} otherwise {};
-						return $val;
+						return $val || 0;
 					};
 		my $func	= $query->get_function( $uri );
 		my $value	= $func->( $query, $args );
@@ -247,16 +250,16 @@ sub evaluate {
 		my $expr	= shift(@args);
 		my $index	= 1;
 		try {
-			my $exprval	= $query->var_or_expr_value( $bound, $expr );
+			my $exprval	= $query->var_or_expr_value( $bound, $expr, $context );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
-			my $value	= $func->evaluate( $query, {} );
+			my $value	= $func->evaluate( $query, {}, $context );
 			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			if ($bool) {
 				$index	= 0;
 			}
 		} catch RDF::Query::Error::TypeError with {};
 		my $expr2	= $args[$index];
-		return $query->var_or_expr_value( $bound, $expr2 );
+		return $query->var_or_expr_value( $bound, $expr2, $context );
 	} elsif ($uriv eq 'sparql:exists') {
 		my $func	= $query->get_function($uri);
 		my ($ggp)	= $self->arguments;
@@ -270,6 +273,9 @@ sub evaluate {
 								: $_
 					} $self->arguments;
 		my $func	= $query->get_function($uri);
+		unless ($func) {
+			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";
+		}
 		my $value	= $func->( $query, @args );
 		return $value;
 	}

@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.902.
+This document describes RDF::Query::Node::Resource version 2.905.
 
 =cut
 
@@ -27,13 +27,16 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Resource> classes.
 
 =over 4
 

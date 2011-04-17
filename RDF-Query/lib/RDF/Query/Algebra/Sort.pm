@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sort - Algebra class for sorting
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sort version 2.902.
+This document describes RDF::Query::Algebra::Sort version 2.905.
 
 =cut
 
@@ -29,12 +29,15 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -95,7 +98,7 @@ sub orderby {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -121,14 +124,34 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	
+	if ($context->{ skip_sort }) {
+		$context->{ skip_sort }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
+	
+	my $order_exprs	= $self->_as_sparql_order_exprs($context, $indent);
+	
+	my $string	= sprintf(
+		"%s\nORDER BY %s",
+		$self->pattern->as_sparql( $context, $indent ),
+		$order_exprs,
+	);
+	return $string;
+}
+
+sub _as_sparql_order_exprs {
+	my $self	= shift;
+	my $context	= shift;
+	my $intent	= shift;
 	
 	my @order_sparql;
 	my @orderby	= $self->orderby;
@@ -140,13 +163,7 @@ sub as_sparql {
 						: sprintf("%s(%s)", $dir, $val->as_sparql( $context ));
 		push(@order_sparql, $str);
 	}
-	
-	my $string	= sprintf(
-		"%s\nORDER BY %s",
-		$self->pattern->as_sparql( $context, $indent ),
-		join(' ', @order_sparql),
-	);
-	return $string;
+	return join(' ', @order_sparql);
 }
 
 =item C<< as_hash >>
@@ -186,16 +203,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq($self->pattern->referenced_variables);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->binding_variables);
+	return RDF::Query::_uniq($self->pattern->potentially_bound);
 }
 
 =item C<< definite_variables >>

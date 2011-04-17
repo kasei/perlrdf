@@ -4,34 +4,13 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.124
+This document describes RDF::Trine::Store::DBI::mysql version 0.134
 
 =head1 SYNOPSIS
 
     use RDF::Trine::Store::DBI::mysql;
 
-=for author to fill in:
-    Brief code example(s) here showing commonest usage(s).
-    This section will be as far as many users bother reading
-    so make it as educational and exeplary as possible.
-  
-  
 =head1 DESCRIPTION
-
-=for author to fill in:
-    Write a full description of the module and its features here.
-    Use subsections (=head2, =head3) as appropriate.
-
-
-=head1 DEPENDENCIES
-
-=for author to fill in:
-    A list of all the other modules that this module relies upon,
-    including any restrictions on versions, and an indication whether
-    the module is part of the standard Perl distribution, part of the
-    module's distribution, or must be installed separately. ]
-
-None.
 
 =cut
 
@@ -44,13 +23,47 @@ use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 
-our $VERSION	= "0.124";
+our $VERSION;
+BEGIN {
+	$VERSION	= "0.134";
+	my $class	= __PACKAGE__;
+	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
+}
 
 
+sub _config_meta {
+	return {
+		required_keys	=> [qw(dsn username password name)],
+		fields			=> {
+			name		=> { description => 'Model Name', type => 'string' },
+			dsn			=> { description => 'DSN', type => 'string', template => 'DBI:mysql:database=[%database%]' },
+			database	=> { description => 'Database Name', type => 'string' },
+			username	=> { description => 'Username', type => 'string' },
+			password	=> { description => 'Password', type => 'password' },
+			driver		=> { description => 'Driver', type => 'string', value => 'mysql' },
+		},
+	}
+}
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store::DBI> class.
+
 =over 4
+
+=item C<< new_with_config ( \%config ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied configuration hashref.
+
+=cut
+
+sub new_with_config {
+	my $proto	= shift;
+	my $config	= shift;
+	$config->{storetype}	= 'DBI::mysql';
+	return $proto->SUPER::new_with_config( $config );
+}
 
 =item C<< add_statement ( $statement [, $context] ) >>
 
@@ -88,9 +101,9 @@ sub add_statement {
 		};
 		push(@values, $cid);
 	}
-	my $sql		= sprintf( "INSERT IGNORE INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values );
+	my $sql		= sprintf( "INSERT IGNORE INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
 	my $sth		= $dbh->prepare( $sql );
-	$sth->execute();
+	$sth->execute(@values);
 }
 
 sub _add_node {
@@ -209,7 +222,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

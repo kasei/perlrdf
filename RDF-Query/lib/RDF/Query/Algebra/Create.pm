@@ -7,7 +7,7 @@ RDF::Query::Algebra::Create - Algebra class for CREATE GRAPH operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Create version 2.902.
+This document describes RDF::Query::Algebra::Create version 2.905.
 
 =cut
 
@@ -32,12 +32,15 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -72,7 +75,7 @@ sub construct_args {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -88,7 +91,7 @@ sub as_sparql {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 

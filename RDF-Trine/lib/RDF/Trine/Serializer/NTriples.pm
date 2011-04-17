@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.124
+This document describes RDF::Trine::Serializer::NTriples version 0.134
 
 =head1 SYNOPSIS
 
@@ -21,6 +21,9 @@ graphs to the N-Triples syntax.
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
+
 =over 4
 
 =cut
@@ -33,7 +36,6 @@ use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
-use XML::SAX;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 
@@ -45,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
@@ -184,7 +186,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

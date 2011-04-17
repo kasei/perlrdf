@@ -12,7 +12,7 @@ use File::Spec;
 my $path	= File::Spec->catfile( $Bin, 'data' );
 
 {
-  my $store = RDF::Trine::Store->new_with_config({store => 'Memory',
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'Memory',
 						  sources => [
 							      {
 							       file => File::Spec->catfile($path, 'turtle', 'test-23.ttl'),
@@ -26,7 +26,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 }
 
 {
-  my $store = RDF::Trine::Store->new_with_config({store => 'Hexastore',
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'Hexastore',
 						  sources => [
 							      {
 							       file => File::Spec->catfile($path, 'turtle', 'test-23.ttl'),
@@ -44,7 +44,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 }
 
 {
-  my $store = RDF::Trine::Store->new_with_config({store => 'Memory',
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'Memory',
 						  sources => [
 							      {
 							       file => File::Spec->catfile($path, 'turtle', 'test-23.ttl'),
@@ -58,10 +58,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 							     ]});
   isa_ok($store, 'RDF::Trine::Store::Memory');
   is($store->size, 2, "Two statements in the model");
-TODO: {
-  local $TODO = "Need to support graph key";
   is($store->count_statements(undef, undef, undef, RDF::Trine::Node::Resource->new('http://example.org/local-stuff')), 1, "Only one statement in the graph");
-}
   my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef);
   like($it->to_string, qr/Hello World/, 'Contains Hello World string');
 }
@@ -73,7 +70,7 @@ SKIP: {
     skip( "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.", 2 );
   }
   
-  my $store = RDF::Trine::Store->new_with_config({store => 'Memory',
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'Memory',
 						  sources => [
 							      {
 							       file => File::Spec->catfile($path, 'turtle', 'test-23.ttl'),
@@ -91,7 +88,7 @@ SKIP: {
 
 
 throws_ok {
-  my $store = RDF::Trine::Store->new_with_config({store => 'Memory',
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'Memory',
 						  sources => [
 							      {
 							       file => File::Spec->catfile($path, 'turtle', 'bad-00.ttl'),
@@ -102,7 +99,7 @@ throws_ok {
 
 
 throws_ok {
-  my $store = RDF::Trine::Store->new_with_config({store => 'FooBar'});
+  my $store = RDF::Trine::Store->new_with_config({storetype => 'FooBar'});
 } 'RDF::Trine::Error', 'Throws on parsing non-existent Store.';
 
 

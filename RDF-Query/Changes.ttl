@@ -9,6 +9,169 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.905.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.904.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.905" ;
+                        doap:created      "2011-02-18" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added SPARQL 1.1 numeric functions: ABS, CEIL, FLOOR, ROUND, RAND" ;
+                        asc:addition      "Added SPARQL 1.1 string functions: CONCAT, SUBSTR, STRLEN, UCASE, LCASE, ENCODE_FOR_URI, CONTAINS, STRSTARTS, STRENDS" ;
+                        asc:addition      "Added SPARQL 1.1 date functions: NOW, TIMEZONE, TZ, YEAR, MONTH, DAY, HOURS, MINUTES, SECONDS" ;
+                        asc:addition      "Added SPARQL 1.1 hashing functions: MD5, SHA1, SHA224, SHA256, SHA384, and SHA512" ;
+                        asc:addition      "Added RDF::Query::Functions->install_function method, and implementations for fn:compare, fn:concat, and fn:substring." ;
+                        asc:addition      "Updated RDF::Query->execute_with_named_graphs to accept optional arguments to be passed to C<< execute >>." ;
+                        asc:addition      "Added support for CONSTRUCT WHERE syntax shortcut." ;
+                        asc:addition      "Added support for SILENT modifier to SERVICE patterns." ;
+                        asc:addition      "Added SILENT flag in RDF::Query::Algebra::Service." ;
+                        asc:addition      "Added initial code to create SPIN serializations of queries." ;
+                        asc:addition      "Added RDF::Query::Node::Literal->type_list method." ;
+                        asc:update        "Fixed mistaken case sensitivity of COALESCE, BNODE, CONCAT, and SUBSTR keywords in SPARQL 1.1 parser." ;
+                        asc:update        "Fixed parsing ambiguity between MIN aggregate and MINUTES function." ;
+                        asc:update        "Fixed Xpath fn:timezone-from-dateTime function return for UTC timezones." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Project->as_sparql handling of binary select expressions." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Construct->sse serialization to include construct triples." ;
+                        asc:update        "Updated handling of BIND() to not close group scope (which was applying filters in the wrong place)." ;
+                        asc:update        "Fixed RDF::Query::Parser::SPARQL11 to handle whitespace between tokens in 'INSERT DATA' and 'DELETE DATA'." ;
+                        asc:update        "Fixed RDF::Query::Parser::SPARQL11 to handle empty ModifyTemplates." ;
+                        asc:update        "Fixed SPARQL 1.1 parser to properly set relevant datasets for update operations." ;
+                        asc:update        "Fixed plan code for zero-length paths to return RDF::Query::Node-based results (not Trine-based)." ;
+                        asc:update        "Fixed bug in RDF::Query::Plan::Clear when attempting to clear the default graph." ;
+                        asc:update        "Fixed exception throwing on numeric binary expression eval without numeric literal arguments." ;
+                        asc:update        "Updated RDF::Query::Plan to handle update operations with different datasets for matching (USING clause)." ;
+                        asc:update        "Updated xt/dawg-syntax11.t to find more syntax queries in the dawg test data." ;
+                        asc:update        "SPARQL 1.1 parser now throws errors for more classes of syntactically invalid queries (repeated expression aliases, wrong number of BINDINGS values, SELECT * with use of grouping)." ;
+                        asc:update        "Added support for non-strict comparisons of xsd:strings in RDF::Query::Node::Literal (based on $LAZY_COMPARISONS variable)." ;
+                        asc:update        "Major refactor of xt/dawg-eval11.t test harness." ;
+                        asc:update        "Updated required version of Test::More to 0.88 (0.86 doesn't have done_testing() used in t/store-config.t)." ;
+                        asc:update        "Updated RDF::Query::Expression::Function->evaluate to throw an error if no function coderef is found." ;
+
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.904.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.903.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.904" ;
+                        doap:created      "2010-11-23" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added 'results' command to rqsh to allow serializing query results in SPARQL XML format." ;
+                        asc:addition      "Added 'set prefix' and 'time' commands to rqsh." ;
+                        asc:addition      "Added string concatenation overloading of binary +." ;
+                        asc:addition      "Added xpath function implementations." ;
+                        asc:addition      "Added SPARQL 1.1 Update shortcut syntax support for COPY, MOVE, and ADD graph operations." ;
+                        asc:update        "Fixed bug in property path evaluation on encountering blank path nodes." ;
+                        asc:update        "Fixed use of binary '*' in FILTER without numeric data in t/resultforms.t." ;
+                        asc:update        "Fixed bin/dawg11-status.pl to only load SPARQL 1.1 earl result files." ;
+                        asc:update        "Fixed RDF::Query::Plan::Update to ignore non-ground triples (unbound variables don't act as wildcards)." ;
+                        asc:update        "Fixed handling of named graph data in insert/delete patterns of update operations." ;
+                        asc:update        "Updated RDF::Query::Util to use RDF::Trine::Model->temporary_model and guess an appropriate parser based on filenames." ;
+                        asc:update        "Updated namespace URI in RDF::Query::Functions::Jena to <http://jena.hpl.hp.com/ARQ/function#>." ;
+                        asc:update        "Updated namespace URI in RDF::Query::Functions::Xpath to <http://www.w3.org/2005/xpath-functions#>." ;
+                        asc:update        "Updated xt/dawg-eval11.t to align with updated test case manifest schemas." ;
+                        asc:update        "Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped)." ;
+                        asc:update        "Updated documentation to explicitly discuss inherited methods due to subclassing." ;
+                        asc:update        "Fixed bug in RDF::Query::Plan::Construct that wasn't giving each result a new set of blank nodes (RT 63155)." ;
+                        asc:update        "Updated SYNOPSIS and execute() and execute_plan() methods POD (RT 63153 comment from Ivan Shmakov)." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Sequence->sse to serialize operations in proper order." ;
+                        asc:update        "Added $silent argument to RDF::Query::Algebra::Clear constructor." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.903.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.902.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.903" ;
+                        doap:created      "2010-11-03" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for BIND(expr AS ?var) operator." ;
+                        asc:addition      "Added isNumeric built-in function, checking for proper datatype and valid lexical forms for numerics." ;
+                        asc:addition      "Added ability to show the parsed algebra with 'parse' command in rqsh." ;
+                        asc:addition      "Added abiility to show the query execution plan with the 'explain' command in rqsh." ;
+                        asc:addition      "Added ability to change the RDF serializer with the 'serializer' command in rqsh." ;
+                        asc:addition      "Added ability to initialize new stores with the 'init' command in rqsh." ;
+                        asc:addition      "Added ability to change underlying store with the 'use' command in rqsh." ;
+                        asc:addition      "Added 'help' command in rqsh." ;
+                        asc:addition      "Added trace debugging to RDF::Query::Plan::Union." ;
+                        asc:addition      "Added trace debugging to RDF::Query::Plan::Project." ;
+                        asc:addition      "Added trace debugging to RDF::Query::Plan::Path." ;
+                        asc:addition      "Added SPARQL 1.1 syntax and eval test harnesses." ;
+                        asc:update        "Updated packaging to install rqsh script (renamed from old bin/rqsh.pl)." ;
+                        asc:update        "Updated rqsh to catch errors thrown while trying to create new storage backends (e.g. DBI->connect failing)." ;
+                        asc:update        "rqsh now defaults to read-write models." ;
+                        asc:update        "rqsh now sets a base URI for the current working directory." ;
+                        asc:update        "Password input now doesn't echo to the terminal in rqsh." ;
+                        asc:update        "Filename input now autocompletes via Term::ReadLine in rqsh." ;
+                        asc:update        "Updated SPARQL 1.1 parser to handle WITH clauses with PrefixedNames." ;
+                        asc:update        "SPARQL 1.1 parser now sets error and returns if no query string is supplied." ;
+                        asc:update        "Added more exception handling in RDF::Query::Parser::SPARQL11." ;
+                        asc:update        "Updated CLEAR and DROP handling in SPARQL 1.1 parser and engine to handle 'NAMED' and 'ALL' variants." ;
+                        asc:update        "Renamed 'binding_variables' methods to 'potentially_bound' to align with current SPARQL 1.1 terminology." ;
+                        asc:update        "Results returned by property path plans are now RDF::Query::VariableBindings objects and are properly projected." ;
+                        asc:update        "The query planner now interprets simple paths as basic graph patterns." ;
+                        asc:update        "Removed Algebra and Plan classes for Not and Exists operations (now handled in other classes)." ;
+                        asc:update        "Updated RDF::Query::Plan::Extend to drop the extended variable binding if evaluating the extension yields an error." ;
+                        asc:update        "Updated RDF::Query::Plan::Update to accept delete patterns with variables." ;
+                        asc:update        "Updated subquery plan objects to use a sub-plan, not a full query object." ;
+                        asc:update        "Fixed SPARQL 1.1 parser bug that was returning partial data from a failed parse call." ;
+                        asc:update        "Fixed SPARQL 1.1 parser bug for queries with multiple FILTERs in a GGP including an EXISTS filter." ;
+                        asc:update        "Fixed SPARQL 1.1 parser bug for DROP/CLEAR queries." ;
+                        asc:update        "Fixed SPARQL 1.1 parser typo of 'SEPARATOR' argument to GROUP_CONCAT aggregate." ;
+                        asc:update        "Fixed SPARQL 1.1 parser to handle FITLERS to the left of MINUS/OPTIONAL and allow projecting '*' with other vars/epressions." ;
+                        asc:update        "Fixed SPARQL 1.1 parser case sensitivity of project expression 'AS' token." ;
+                        asc:update        "Fixed SPARQL 1.1 parser handling of of subqueries within GRAPH blocks." ;
+                        asc:update        "Fixed miscellaneous bugs and improved performance of parsing SPARQL 1.1 queries." ;
+                        asc:update        "Made parsing of very large triple blocks non-recursive in SPARQL 1.1 parser." ;
+                        asc:update        "Fixed COALESCE function to handle errors properly." ;
+                        asc:update        "Fixed RDF::Query::Plan::Aggregate to extend results using AliasExpressions from HAVING clauses." ;
+                        asc:update        "Fixed bug that was ignoring GROUP BY clauses when no aggregate operations were present." ;
+                        asc:update        "Fixed bad looping on start node of unbounded property paths." ;
+                        asc:update        "Fixed bug in query planning of '^' property paths." ;
+                        asc:update        "Fixed zero-length property path evaluation within GRAPH blocks." ;
+                        asc:update        "Removed plan duplication of zero-length case in '*' property paths." ;
+                        asc:update        "Fixed handling of named graphs within subqueries (changes to active graph handling in the query planner)." ;
+                        asc:update        "Fixed type-promotion and handling of numeric types in aggregate handling." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Update->as_sparql to handle INSERT/DELETE updates properly." ;
+                        asc:update        "Fixed RDF::Query::Plan::Aggregate->sse to allow handling of (non-blessed, scalar) '*' columns." ;
+                        asc:update        "Added ability to pass through arguments to the query planner in RDF::Query->prepare." ;
+                        asc:update        "Updated RDF::Query::Node::Literal::_cmp to handle literals that fail to parse as DateTime objects." ;
+                        asc:update        "Updated RDF::Query::Plan::Limit to use the limit accessor internally." ;
+                        asc:update        "RDF::Query::Plan::NamedGraph now uses lazy iterator for graph names." ;
+                        asc:update        "Updated RDF::Query::VariableBindings to subclass the new RDF::Trine::VariableBindings." ;
+                        asc:update        "RDF::Query::Algebra::Project now implements bind_variables()." ;
+                        asc:update        "Updated RDF::Query->describe to use $model->bounded_description instead of simply outgoing arcs." ;
+                        asc:update        "Fixed bug in evaluation of function expressions in which the execution context object was lost (causing EXISTS filters to fail)." ;
+                        asc:update        "Fixed optimization of COUNT(*) over 1-triple BGPs to keep the variable binding for the pseudo-variable ?COUNT(*)." ;
+                        asc:update        "Fixed sse serialization in RDF::Query::Algebra::Distinct." ;
+                        asc:update        "Fixed RDF::Query::Plan::Join::PushDownNestedLoop to close sub-plans in close() method." ;
+                        asc:update        "Replaced calls to die with throwing exceptions." ;
+                        asc:update        "RDF::Query->new now warns about unrecognized options." ;
+                        asc:update        "DATATYPE() now throws an exception unless passed a valid node object." ;
+                        asc:update        "RDF::Query::Expresion::Binary now throws exceptions on numeric comparisions with non-numeric operands." ;
+                        asc:update        "Fixed error message in RDF::Query::Plan::NamedGraph." ;
+                        asc:update        "Fixed bug in xt/dawg-eval11.t parsing of srx files containing literal values that evaluate to false in perl (e.g. '0')." ;
+                        asc:update        "Fixed turtle output for rdfs:comments in xt/dawg/earl.pl." ;
+                        asc:update        "Moved developer tests from t/ to xt/." ;
+                        asc:update        "Refactored RDF::Query::Functions into several auto-loaded sub-packages via Module::Pluggable (patch from tobyink)." ;
+                        asc:update        "Removed references to the now-deprecated mac.com in network-based tests." ;
+                        asc:update        "Updated expected values in t/queryform-describe.t for results using bounded descriptions." ;
+                        asc:update        "Updated RDF::Query::Util to look for .prefix-cmd cache of common namespace names." ;
+                        asc:update        "Updated RDF::Query::Util::cli_parse_args to accept '-r' as a read-only flag." ;
+                        asc:update        "Updated required version of RDF::Trine to 0.126." ;
+                        asc:update        "Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds." ;
+                        asc:update        "Made code updates to improve performance based on profiling." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.902.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.901.tar.gz> ;

@@ -7,9 +7,12 @@ RDF::Query::Plan::Clear - Executable query plan for CLEAR operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Clear version 2.902.
+This document describes RDF::Query::Plan::Clear version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -33,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -71,7 +74,21 @@ sub execute ($) {
 # 	warn "clearing graph " . $graph->as_string;
 	my $ok	= 0;
 	try {
-		$context->model->remove_statements( undef, undef, undef, $graph );
+		if ($graph->is_nil) {
+			$context->model->remove_statements( undef, undef, undef, $graph );
+		} else {
+			my $uri	= $graph->uri_value;
+			if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
+				$context->model->remove_statements( undef, undef, undef, undef );
+			} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
+				my $citer	= $context->model->get_contexts;
+				while (my $graph = $citer->next) {
+					$context->model->remove_statements( undef, undef, undef, $graph );
+				}
+			} else {
+				$context->model->remove_statements( undef, undef, undef, $graph );
+			}
+		}
 		$ok		= 1;
 	} catch RDF::Trine::Error with {};
 	$self->[0]{ok}	= $ok;
@@ -159,7 +176,12 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(N);
+	my $g	= $self->namedgraph;
+	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		return qw(w);
+	} else {
+		return qw(N);
+	}
 }
 
 =item C<< plan_node_data >>
@@ -171,8 +193,12 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	Carp::cluck $self;
-	return ($self->namedgraph);
+	my $g	= $self->namedgraph;
+	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		return $1;
+	} else {
+		return ($self->namedgraph);
+	}
 }
 
 =item C<< graph ( $g ) >>

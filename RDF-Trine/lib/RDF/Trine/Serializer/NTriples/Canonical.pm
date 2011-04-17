@@ -4,7 +4,7 @@ RDF::Trine::Serializer::NTriples::Canonical - Canonical representation of an RDF
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.124
+This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.134
 
 =head1 SYNOPSIS
 
@@ -43,6 +43,9 @@ canonical representation for digital signing).
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer::NTriples> class.
+
 =over 4
 
 =cut
@@ -61,7 +64,7 @@ use base qw(RDF::Trine::Serializer::NTriples);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples-canonical' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -240,7 +243,7 @@ sub serialize_model_to_string {
 	}
 
 	$rv .= "\r\n"
-		if lc $self->{'onfail'} eq 'space';
+		if (defined($self->{'onfail'}) && (lc $self->{'onfail'} eq 'space'));
 	
 	foreach my $st (@otherStatements) {
 		$rv .= $st->{'lex'} . " .\r\n";

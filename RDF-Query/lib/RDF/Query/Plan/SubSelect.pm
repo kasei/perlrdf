@@ -7,9 +7,12 @@ RDF::Query::Plan::SubSelect - Executable query plan for sub-select queries.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::SubSelect version 2.902.
+This document describes RDF::Query::Plan::SubSelect version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -34,7 +37,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.902';
+	$VERSION		= '2.905';
 }
 
 ######################################################################
@@ -49,8 +52,12 @@ representing a SELECT query.
 sub new {
 	my $class	= shift;
 	my $query	= shift;
-	my $keys	= shift || {};
-	my $self	= $class->SUPER::new( $query );
+	my $plan	= shift;
+	unless (blessed($plan) and $plan->isa('RDF::Query::Plan')) {
+		Carp::confess;
+	}
+	my $keys	= {};
+	my $self	= $class->SUPER::new( $query, $plan );
 	$self->[0]{referenced_variables}	= [ $query->variables ];
 	$self->[0]{logging_keys}	= $keys;
 	return $self;
@@ -66,9 +73,11 @@ sub execute ($) {
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SUBSELECT plan can't be executed while already open";
 	}
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.subselect");
-	my $query	= $self->query;
-	my $iter	= $query->execute( $context->model );
+	my $l				= Log::Log4perl->get_logger("rdf.query.plan.subselect");
+	$l->trace("executing subselect");
+	my $plan			= $self->plan;
+	$l->trace("subselect plan: " . $plan->sse);
+	my $iter			= $plan->execute( $context );
 	if ($iter) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{'open'}	= 1;
@@ -90,11 +99,13 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SERVICE";
 	}
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.subselect");
 	return undef unless ($self->[0]{'open'});
 	my $iter	= $self->[0]{iter};
 	my $result	= $iter->next;
 	
 	return undef unless $result;
+	$l->trace("- got subselect result $result");
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
 	return $row;
@@ -109,6 +120,8 @@ sub close {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
+	my $plan			= $self->plan;
+	$plan->close();
 	delete $self->[0]{iter};
 	delete $self->[0]{args};
 	delete $self->[0]{count};
@@ -124,6 +137,17 @@ Returns the sub-select query object.
 sub query {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< plan >>
+
+Returns the sub-select query plan object.
+
+=cut
+
+sub plan {
+	my $self	= shift;
+	return $self->[2];
 }
 
 =item C<< distinct >>
@@ -172,7 +196,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	return qw(q);
+	return qw(P);
 }
 
 =item C<< plan_node_data >>
@@ -184,7 +208,7 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	return ($self->query);
+	return ($self->plan);
 }
 
 =item C<< graph ( $g ) >>

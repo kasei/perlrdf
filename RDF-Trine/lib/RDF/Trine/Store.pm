@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.124
+This document describes RDF::Trine::Store version 0.134
 
 =cut
 
@@ -21,6 +21,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
@@ -31,7 +32,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -44,6 +45,32 @@ BEGIN {
 =over 4
 
 =cut
+
+=item C<< new ( $data ) >>
+
+Returns a new RDF::Trine::Store object based on the supplied data value.
+This constructor delegates to one of the following methods depending on the
+value of C<< $data >>:
+
+* C<< new_with_string >> if C<< $data >> is not a reference
+
+* C<< new_with_config >> if C<< $data >> is a HASH reference
+
+* C<< new_with_object >> if C<< $data >> is a blessed object
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $data	= shift;
+	if (blessed($data)) {
+		return $class->new_with_object($data);
+	} elsif (ref($data)) {
+		return $class->new_with_config($data);
+	} else {
+		return $class->new_with_string($data);
+	}
+}
 
 =item C<< new_with_string ( $config ) >>
 
@@ -65,7 +92,7 @@ sub new_with_string {
 	if (defined($string)) {
 		my ($subclass, $config)	= split(/;/, $string, 2);
 		my $class	= join('::', 'RDF::Trine::Store', $subclass);
-		if ($class->can('_new_with_string')) {
+		if (can_load(modules => { $class => 0 }) and $class->can('_new_with_string')) {
 			return $class->_new_with_string( $config );
 		} else {
 			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_string";
@@ -76,45 +103,41 @@ sub new_with_string {
 }
 
 
-=item C<< new_with_config ( $hashref ) >>
+=item C<< new_with_config ( \%config ) >>
 
 Returns a new RDF::Trine::Store object based on the supplied
 configuration hashref. This requires the the Store subclass to be
-supplied with a C<store> key, while other keys are required by the
+supplied with a C<storetype> key, while other keys are required by the
 Store subclasses, please refer to each subclass for specific
 documentation.
 
 An example invocation for the DBI store may be:
 
   my $store = RDF::Trine::Store->new_with_config({
-                                                  store    => 'DBI',
-                                                  name     => 'mymodel',
-                                                  dsn      => 'DBI:mysql:database=rdf',
-                                                  username => 'dahut',
-                                                  password => 'Str0ngPa55w0RD'
-                                                 });
+                storetype => 'DBI',
+                name      => 'mymodel',
+                dsn       => 'DBI:mysql:database=rdf',
+                username  => 'dahut',
+                password  => 'Str0ngPa55w0RD'
+              });
 
 =cut
 
 
 sub new_with_config {
-  my $proto	= shift;
-  my $config	= shift;
-  if (defined($config)) {
-    my $class	= join('::', 'RDF::Trine::Store', $config->{store});
-    if ($class->can('_new_with_config')) {
-      return $class->_new_with_config( $config );
-    } else {
-      throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
-    }
-  } else {
-    throw RDF::Trine::Error::MethodInvocationError;
-  }
+	my $proto		= shift;
+	my $config	= shift;
+	if (defined($config)) {
+		my $class	= $config->{storeclass} || join('::', 'RDF::Trine::Store', $config->{storetype});
+		if ($class->can('_new_with_config')) {
+			return $class->_new_with_config( $config );
+		} else {
+			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_config";
+		}
+	} else {
+		throw RDF::Trine::Error::MethodInvocationError;
+	}
 }
-
-
-
-
 
 
 =item C<< new_with_object ( $object ) >>
@@ -135,6 +158,32 @@ sub new_with_object {
 			if ($s) {
 				return $s;
 			}
+		}
+	}
+	return;
+}
+
+=item C<< nuke >>
+
+Permanently removes the store and its data.
+
+=cut
+
+sub nuke {}
+
+=item C<< class_by_name ( $name ) >>
+
+Returns the class of the storage implementation with the given name.
+For example, C<< 'Memory' >> would return C<< 'RDF::Trine::Store::Memory' >>.
+
+=cut
+
+sub class_by_name {
+	my $proto	= shift;
+	my $name	= shift;
+	foreach my $class (keys %STORE_CLASSES) {
+		if (lc($class) =~ m/::${name}$/i) {
+			return $class;
 		}
 	}
 	return;
@@ -188,7 +237,7 @@ sub get_pattern {
 			my $row	= $_iter->next;
 			return undef unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
-			return \%data;
+			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
@@ -217,7 +266,7 @@ sub get_pattern {
 				}
 				
 				my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
-				push(@results, $jrow);
+				push(@results, RDF::Trine::VariableBindings->new($jrow));
 			}
 		}
 		$iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
@@ -296,27 +345,51 @@ sub _map_sort_data {
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
+=cut
+
+sub get_statements;
+
 =item C<< get_contexts >>
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
+=cut
+
+sub get_contexts;
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
+
+=cut
+
+sub add_statement;
 
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
 
+=cut
+
+sub remove_statement;
+
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=cut
+
+sub remove_statements;
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_statements;
 
 =item C<< size >>
 
@@ -329,6 +402,32 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	return;
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
+}
+
+sub _begin_bulk_ops {}
+sub _end_bulk_ops {}
 
 1;
 
@@ -342,7 +441,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

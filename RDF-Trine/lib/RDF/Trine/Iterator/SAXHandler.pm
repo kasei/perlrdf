@@ -7,7 +7,7 @@ RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results fo
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::SAXHandler version 0.124
+This document describes RDF::Trine::Iterator::SAXHandler version 0.134
 
 =head1 SYNOPSIS
 
@@ -18,6 +18,9 @@ This document describes RDF::Trine::Iterator::SAXHandler version 0.124
     my $iter = $handler->iterator;
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<XML::SAX::Base> class.
 
 =over 4
 
@@ -32,10 +35,11 @@ use base qw(XML::SAX::Base);
 
 use Data::Dumper;
 use Time::HiRes qw(time);
+use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 my %strings;
@@ -51,8 +55,31 @@ my %has_head;
 my %has_end;
 my %start_time;
 my %result_count;
+my %result_handlers;
+my %config;
 
 my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
+
+=item C<< new ( [ \&handler ] ) >>
+
+Returns a new XML::SAX handler object. If C<< &handler >> is supplied, it will
+be called with a variable bindings object as each is parsed, bypassing the
+normal process of collecting the results for retrieval via an iterator object.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $self	= $class->SUPER::new();
+	if (@_) {
+		my $addr	= refaddr( $self );
+		my $code	= shift;
+		my $args	= shift || {};
+		$result_handlers{ $addr }	= $code;
+		$config{ $addr }			= { %$args };
+	}
+	return $self;
+}
 
 =item C<< iterator >>
 
@@ -220,6 +247,11 @@ sub end_element {
 	
 	if ($tag eq 'head') {
 		$has_head{ $addr }	= 1;
+		if (my $code = $result_handlers{ $addr }) {
+			if ($config{ $addr }{ variables }) {
+				$code->( $variables{ $addr } );
+			}
+		}
 	} elsif ($tag eq 'sparql') {
 		$has_end{ $addr }	= 1;
 	} elsif ($tag eq 'variable') {
@@ -231,9 +263,15 @@ sub end_element {
 		my $value	= delete( $values{ $addr } );
 		$bindings{ $addr }{ $name }	= $value;
 	} elsif ($tag eq 'result') {
-		my $result	= delete( $bindings{ $addr } );
+		my $result	= delete( $bindings{ $addr } ) || {};
 		$result_count{ $addr }++;
-		push( @{ $results{ $addr } }, $result );
+		my $vb	= RDF::Trine::VariableBindings->new( $result );
+		
+		if (my $code = $result_handlers{ $addr }) {
+			$code->( $vb );
+		} else {
+			push( @{ $results{ $addr } }, $vb );
+		}
 	} elsif ($tag eq 'bnode') {
 		$values{ $addr }	= RDF::Trine::Node::Blank->new( $string );
 	} elsif ($tag eq 'uri') {
@@ -313,6 +351,8 @@ sub DESTROY {
 	delete $has_end{ $addr };
 	delete $start_time{ $addr };
 	delete $result_count{ $addr };
+	delete $result_handlers{ $addr };
+	delete $config{ $addr };
 }
 
 
@@ -330,7 +370,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

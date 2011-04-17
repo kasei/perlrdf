@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.124
+This document describes RDF::Trine::Parser::NTriples version 0.134
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::NTriples version 0.124
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -48,8 +51,13 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
+	foreach my $ext (qw(nt)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/plain';
 	foreach my $type (qw(text/plain)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -70,14 +78,13 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
-statement parsed, will call C<< $model->add_statement( $statement ) >>.
+Parses the C<< $data >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle C<< $fh >>, using the given
-C<< $base_uri >>. For each RDF statement parsed, will call
-C<< $model->add_statement( $statement ) >>.
+Parses all data read from the filehandle C<< $fh >>.
+For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
 
@@ -105,7 +112,14 @@ sub parse_file {
 	my $fh		= shift;
 	my $handler	= shift;
 	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	
 	my $lineno	= 0;
+	no warnings 'uninitialized';
 	while (defined(my $line = <$fh>)) {
 LINE:
 		($line, my @extra)	= split(/\r\n|\r|\n/, $line, 2);
@@ -120,7 +134,7 @@ LINE:
 		
 		my @nodes	= ();
 		try {
-			while (my $n = $self->_eat_node( $lineno, $line )) {
+			while (my $n = $self->_eat_node( $base, $lineno, $line )) {
 				push(@nodes, $n);
 				$line	=~ s/^\s*//;
 			}
@@ -150,7 +164,7 @@ sub _emit_statement {
 			if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
 				my $value	= $nodes->[2]->literal_value;
 				my $dt		= $nodes->[2]->literal_datatype;
-				my $canon	= $self->canonicalize_literal_value( $value, $dt );
+				my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 				$nodes->[2]	= literal( $canon, undef, $dt );
 			}
 		}
@@ -159,13 +173,14 @@ sub _emit_statement {
 # 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {
 # 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => "Not valid N-Triples data at line $lineno";
+		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples data at line $lineno];
 	}
 	$handler->( $st );
 }
 
 sub _eat_node {
 	my $self	= shift;
+	my $base	= shift;
 	my $lineno	= shift;
 	$_[0]	=~ s/^\s*//;
 	return unless length($_[0]);
@@ -206,15 +221,15 @@ sub _eat_node {
 						$value	.= "\\";
 						substr($_[0],0,2)	= '';
 					} elsif ($1 eq 'u') {
-						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => "Bad N-Triples \\u escape at line $lineno";
+						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,6)	= '';
 					} elsif ($1 eq 'U') {
-						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => "Bad N-Triples \\U escape at line $lineno";
+						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,10)	= '';
 					} else {
-						die $_[0];
+						throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples escape character '\\$1' at line $lineno, near "$_[0]"];
 					}
 				}
 			}
@@ -238,7 +253,7 @@ sub _eat_node {
 			return RDF::Trine::Node::Literal->new($value);
 		}
 	} else {
-		throw RDF::Trine::Error::ParserError -text => "Not valid N-Triples node start character '$char' at line $lineno";
+		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples node start character '$char' at line $lineno, near "$_[0]"];
 	}
 }
 
@@ -269,11 +284,11 @@ sub _unescape {
 					$value	.= "\\";
 					substr($string,0,2)	= '';
 				} elsif ($1 eq 'u') {
-					$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => "Bad N-Triples \\u escape at line $lineno";
+					$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
 					$value	.= chr(oct('0x' . $1));
 					substr($string,0,6)	= '';
 				} elsif ($1 eq 'U') {
-					$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => "Bad N-Triples \\U escape at line $lineno";
+					$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
 					$value	.= chr(oct('0x' . $1));
 					substr($string,0,10)	= '';
 				} else {
@@ -297,7 +312,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

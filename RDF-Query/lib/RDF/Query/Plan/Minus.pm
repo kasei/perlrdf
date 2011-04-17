@@ -7,9 +7,12 @@ RDF::Query::Plan::Minus - Executable query plan for minus operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Minus version 2.902.
+This document describes RDF::Query::Plan::Minus version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -32,7 +35,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -127,10 +130,12 @@ sub next {
 	#		warn "using inner row: " . Dumper($inner_row);
 			my @shared	= grep { exists $self->[0]{outer_row_vars}{ $_ } } $inner_row->variables;
 			if (scalar(@shared) == 0) {
-				$l->trace("no intersection of domains in minus: $inner_row |><| $self->[0]{outer_row}");
+				if ($l->is_trace) {
+					$l->trace("no intersection of domains in minus: $inner_row ⋈ $self->[0]{outer_row}");
+				}
 			} elsif (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 				if ($l->is_trace) {
-					$l->trace("joined bindings in minus: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("joined bindings in minus: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
@@ -138,7 +143,9 @@ sub next {
 				$ok	= 0;
 				last;
 			} else {
-				$l->trace("failed to join bindings in minus: $inner_row |><| $self->[0]{outer_row}");
+				if ($l->is_trace) {
+					$l->trace("failed to join bindings in minus: $inner_row ⋈ $self->[0]{outer_row}");
+				}
 			}
 		}
 		

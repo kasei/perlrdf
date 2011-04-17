@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.902.
+This document describes RDF::Query::Expression version 2.905.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -86,7 +86,7 @@ sub operands {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -99,6 +99,27 @@ sub sse {
 		$self->op,
 		join(' ', map { $_->sse( $context ) } $self->operands),
 	);
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the expression appropriate for display on the
+command line. This method is primarily used by the C<< explain >> method of
+the subclasses of RDF::Query::Plan.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->op;
+	my $string	= "${indent}${type}\n";
+	foreach my $p ($self->operands) {
+		$string	.= $p->explain( $s, $count+1 );
+	}
+	return $string;
 }
 
 =item C<< type >>

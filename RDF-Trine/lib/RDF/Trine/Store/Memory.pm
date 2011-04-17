@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.124
+This document describes RDF::Trine::Store::Memory version 0.134
 
 =head1 SYNOPSIS
 
@@ -25,10 +25,12 @@ use base qw(RDF::Trine::Store);
 
 use Set::Scalar;
 use Data::Dumper;
+use Digest::MD5 ('md5_hex');
 use List::Util qw(first);
 use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 
+use RDF::Trine qw(iri);
 use RDF::Trine::Error;
 
 ######################################################################
@@ -36,7 +38,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.134";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -45,6 +47,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
 
 =over 4
 
@@ -57,7 +62,7 @@ Returns a new memory-backed storage object.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Memory> for this backend.
+The C<storetype> key must be C<Memory> for this backend.
 
 This module also supports initializing the store from a file or URL,
 in which case, a C<sources> key may be used. This holds an arrayref of
@@ -84,19 +89,20 @@ Use this URI as a graph name for the contents of the file or URL.
 The following example initializes a Memory store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {store => 'Memory',
-		 sources => [
-			      {
-			       file => 'test-23.ttl',
-			       syntax => 'turtle',
-			      },
-			      {
-			       url => 'http://www.kjetil.kjernsmo.net/foaf',
-			       syntax => 'rdfxml',
-                               graph => 'http://example.org/graph/remote-users'
-		      	      }
-	        ]});
-
+                {
+                  storetype => 'Memory',
+                  sources => [
+                    {
+                      file => 'test-23.ttl',
+                      syntax => 'turtle',
+                    },
+                    {
+                      url => 'http://www.kjetil.kjernsmo.net/foaf',
+                      syntax => 'rdfxml',
+                      graph => 'http://example.org/graph/remote-users'
+                    }
+                  ]
+                });
 
 =cut
 
@@ -110,7 +116,9 @@ sub new {
 		object		=> {},
 		context		=> {},
 		ctx_nodes	=> {},
+		md5			=> Digest::MD5->new,
 	}, $class);
+
 	return $self;
 }
 
@@ -119,31 +127,47 @@ sub _new_with_string {
 	my $config	= shift || '';
 	my @uris	= split(';', $config);
 	my $self	= $class->new();
+	
+	my $model	= RDF::Trine::Model->new( $self );
 	foreach my $u (@uris) {
-		RDF::Trine::Parser->parse_url_into_model( $u, $self );
+		RDF::Trine::Parser->parse_url_into_model( $u, $model );
 	}
+	
 	return $self;
 }
 
+sub _config_meta {
+	return {
+		required_keys	=> []
+	}
+}
+
 sub _new_with_config {
-  my $class	= shift;
-  my $config	= shift;
-  my @sources	= @{$config->{sources}};
-  my $self	= $class->new();
-  foreach my $source (@sources) {
-    if ($source->{url}) {
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_url_into_model( $source->{url}, $self );
-    } elsif ($source->{file}) {
-      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	my $class	= shift;
+	my $config	= shift;
+	my @sources	= @{$config->{sources}};
+	my $self	= $class->new();
+	foreach my $source (@sources) {
+		my %args;
+		if (my $g = $source->{graph}) {
+			$args{context}	= (blessed($g) ? $g : iri($g));
+		}
+		if ($source->{url}) {
+			my $parser	= RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_url_into_model( $source->{url}, $model, %args );
+			
+		} elsif ($source->{file}) {
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
-    } else {
-      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
-    }
-  }
-  return $self;
+			my $parser = RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
+		} else {
+			throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+		}
+	}
+	return $self;
 }
 
 
@@ -408,6 +432,7 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
+			$self->{md5}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -448,6 +473,7 @@ sub remove_statement {
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
 		$self->{statements}[ $id ]	= undef;
+		$self->{md5}->add('-' . $st->as_string);
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
@@ -577,6 +603,19 @@ sub count_statements {
 	}
 }
 
+=item C<< etag >>
+
+If the store has the capability and knowledge to support caching, returns a
+persistent token that will remain consistent as long as the store's data doesn't
+change. This token is acceptable for use as an HTTP ETag.
+
+=cut
+
+sub etag {
+	my $self	= shift;
+	return $self->{md5}->hexdigest;
+}
+
 =item C<< size >>
 
 Returns the number of statements in the store.
@@ -587,6 +626,18 @@ sub size {
 	my $self	= shift;
 	my $size	= $self->{size};
 	return $size;
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
 }
 
 sub _statement_id {
@@ -660,7 +711,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.124
+This document describes RDF::Trine::Store::Hexastore version 0.134
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.134";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -51,6 +51,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
 
 =over 4
 
@@ -64,7 +67,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Memory> for this backend.
+The C<storetype> key must be C<Memory> for this backend.
 
 This module also supports initializing the store from a file or URL,
 in which case, a C<sources> key may be used. This holds an arrayref of
@@ -87,7 +90,7 @@ The base URI to be used for a parsed file.
 The following example initializes a Hexastore store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {store => 'Hexastore',
+                {storetype => 'Hexastore',
 		 sources => [
 			      {
 			       file => 'test-23.ttl',
@@ -122,24 +125,30 @@ sub _new_with_string {
 
 # TODO: Refactor, almost identical to Memory
 sub _new_with_config {
-  my $class	= shift;
-  my $config	= shift;
-  my @sources	= @{$config->{sources}};
-  my $self	= $class->new();
-  foreach my $source (@sources) {
-    if ($source->{url}) {
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_url_into_model( $source->{url}, $self );
-    } elsif ($source->{file}) {
-      open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+	my $class	= shift;
+	my $config	= shift;
+	my @sources = @{$config->{sources}};
+	my $self	= $class->new();
+	foreach my $source (@sources) {
+		my %args;
+		if (my $g = $source->{graph}) {
+			$args{context}	= (blessed($g) ? $g : iri($g));
+		}
+		if ($source->{url}) {
+			my $parser	= RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_url_into_model( $source->{url}, $model, %args );
+		} elsif ($source->{file}) {
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
-      my $parser = RDF::Trine::Parser->new($source->{syntax});
-      $parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $self );
-    } else {
-      throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
-    }
-  }
-  return $self;
+			my $parser = RDF::Trine::Parser->new($source->{syntax});
+			my $model	= RDF::Trine::Model->new( $self );
+			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
+		} else {
+			throw RDF::Trine::Error::MethodInvocationError -text => "$class needs a url or file argument";
+		}
+	}
+	return $self;
 }
 
 
@@ -415,10 +424,10 @@ sub get_pattern {
 			while (not($i1->finished) and not($i2->finished)) {
 				my $i1cur	= $i1->current->{ $shrkey };
 				my $i2cur	= $i2->current->{ $shrkey };
-				if ($i1->current->{ $shrkey } == $i2->current->{ $shrkey }) {
+				if ($i1->current->{ $shrkey }->equal( $i2->current->{ $shrkey } )) {
 					my @matching_i2_rows;
 					my $match_value	= $i1->current->{ $shrkey };
-					while ($match_value == $i2->current->{ $shrkey }) {
+					while ($match_value->equal( $i2->current->{ $shrkey } )) {
 						push( @matching_i2_rows, $i2->current );
 						unless ($i2->next) {
 #							warn "no more from i2";
@@ -426,7 +435,7 @@ sub get_pattern {
 						}
 					}
 					
-					while ($match_value == $i1->current->{ $shrkey }) {
+					while ($match_value->equal( $i1->current->{ $shrkey } )) {
 						foreach my $i2_row (@matching_i2_rows) {
 							my $new	= $self->_join( $i1->current, $i2_row );
 							push( @results, $new );
@@ -436,7 +445,7 @@ sub get_pattern {
 							last;
 						}
 					}
-				} elsif ($i1->current->{ $shrkey } < $i2->current->{ $shrkey }) {
+				} elsif ($i1->current->{ $shrkey }->compare( $i2->current->{ $shrkey } ) == -1) {
 					my $i1v	= $i1->current->{ $shrkey };
 					my $i2v	= $i2->current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
@@ -470,6 +479,18 @@ sub get_pattern {
 	} else {
 		return $self->SUPER::get_pattern( $bgp );
 	}
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
 }
 
 sub _join {
@@ -837,7 +858,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

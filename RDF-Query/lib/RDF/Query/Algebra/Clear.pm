@@ -7,7 +7,7 @@ RDF::Query::Algebra::Clear - Algebra class for CLEAR operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Clear version 2.902.
+This document describes RDF::Query::Algebra::Clear version 2.905.
 
 =cut
 
@@ -32,18 +32,21 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
+
 =over 4
 
 =cut
 
-=item C<new ( $graph )>
+=item C<new ( $graph [, $silent] )>
 
 Returns a new CLEAR structure.
 
@@ -52,10 +55,12 @@ Returns a new CLEAR structure.
 sub new {
 	my $class	= shift;
 	my $graph	= shift;
+	my $silent	= shift;
 	unless ($graph) {
+		throw RDF::Query::Error::MethodInvocationError -text => "A graph argument is required in RDF::Query::Algebra::Clear->new";
 		$graph	= RDF::Trine::Node::Nil->new;
 	}
-	return bless([$graph], $class);
+	return bless([$graph, $silent], $class);
 }
 
 =item C<< construct_args >>
@@ -67,12 +72,12 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->graph);
+	return ($self->graph, $self->silent);
 }
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -82,15 +87,22 @@ sub as_sparql {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "CLEAR DEFAULT";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "CLEAR $1";
+	} else {
+		$string	= ($graph->is_nil)
 				? 'CLEAR GRAPH DEFAULT'
 				: sprintf( "CLEAR GRAPH <%s>", $graph->uri_value );
+	}
 	return $string;
 }
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -100,9 +112,16 @@ sub sse {
 	my $indent	= shift;
 	
 	my $graph	= $self->graph;
-	my $string	= ($graph->is_nil)
+	my $string;
+	if ($graph->is_nil) {
+		$string	= "(clear default)";
+	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
+		$string	= "(clear " . lc($1) . ")";
+	} else {
+		$string	= ($graph->is_nil)
 				? '(clear default)'
 				: sprintf( "(clear <%s>)", $graph->uri_value );
+	}
 	return $string;
 }
 
@@ -133,6 +152,15 @@ sub referenced_variables {
 sub graph {
 	my $self	= shift;
 	return $self->[0];
+}
+
+=item C<< silent >>
+
+=cut
+
+sub silent {
+	my $self	= shift;
+	return $self->[1];
 }
 
 1;

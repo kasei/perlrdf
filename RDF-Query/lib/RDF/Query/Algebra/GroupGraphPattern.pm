@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.902.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.905.
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Algebra);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 use List::Util qw(first);
 use Carp qw(carp croak confess);
@@ -32,13 +32,16 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -98,9 +101,32 @@ sub add_pattern {
 	push( @{ $self }, $pattern );
 }
 
+=item C<< quads >>
+
+Returns a list of the quads belonging to this GGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	my %bgps;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::NamedGraph')) {
+		push(@quads, $p->quads);
+		foreach my $bgp ($p->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+			$bgps{ refaddr($bgp) }++;
+		}
+	}
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		next if ($bgps{ refaddr($p) });
+		push(@quads, $p->quads);
+	}
+	return @quads;
+}
+
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -108,7 +134,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent} || "\t";
+	my $indent	= ($context->{indent} ||= "\t");
 	
 	my @patterns	= $self->patterns;
 	if (scalar(@patterns) == 1) {
@@ -121,25 +147,62 @@ sub sse {
 	}
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}group graph pattern\n";
+
+	my @patterns	= $self->patterns;
+	if (scalar(@patterns) == 1) {
+		$string	.= $patterns[0]->explain( $s, $count+1 );
+	} else {
+		foreach my $p (@patterns) {
+			$string	.= $p->explain( $s, $count+1 );
+		}
+	}
+	return $string;
+}
+
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift || '';
+	my $force	= $context->{force_ggp_braces};
+	$force		= 0 unless (defined($force));
+	if ($force) {
+		$context->{force_ggp_braces}--;
+	}
 	
 	my @patterns;
-	foreach my $p ($self->patterns) {
-		push(@patterns, $p->as_sparql( $context, "$indent\t" ));
+	my @p	= $self->patterns;
+	
+	if (scalar(@p) == 0) {
+		return "{}";
+	} elsif (scalar(@p) == 1 and not($force)) {
+		return $p[0]->as_sparql($context, $indent);
+	} else {
+		foreach my $p (@p) {
+			push(@patterns, $p->as_sparql( $context, "$indent\t" ));
+		}
+		my $patterns	= join("\n${indent}\t", @patterns);
+		my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
+		return $string;
 	}
-	return "{}" unless (@patterns);
-	my $patterns	= join("\n${indent}\t", @patterns);
-	my $string		= sprintf("{\n${indent}\t%s\n${indent}}", $patterns);
-	return $string;
 }
 
 =item C<< as_hash >>
@@ -155,6 +218,20 @@ sub as_hash {
 		type 		=> lc($self->type),
 		patterns	=> [ map { $_->as_hash } $self->patterns ],
 	};
+}
+
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	return map { $_->as_spin($model) } $self->patterns;
+	
 }
 
 =item C<< type >>
@@ -178,16 +255,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->patterns);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq(map { $_->binding_variables } $self->patterns);
+	return RDF::Query::_uniq(map { $_->potentially_bound } $self->patterns);
 }
 
 =item C<< definite_variables >>

@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.124
+This document describes RDF::Trine::Parser::RDFa version 0.134
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::RDFa version 0.124
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -46,8 +49,13 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
+	foreach my $ext (qw(html xhtml htm)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/xhtml+xml';
 	foreach my $type (qw(application/xhtml+xml)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -105,7 +113,7 @@ sub parse {
 					if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
 						my $value	= $o->literal_value;
 						my $dt		= $o->literal_datatype;
-						my $canon	= $self->canonicalize_literal_value( $value, $dt );
+						my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 						$o	= literal( $canon, undef, $dt );
 						$st->object( $o );
 					}
@@ -131,7 +139,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

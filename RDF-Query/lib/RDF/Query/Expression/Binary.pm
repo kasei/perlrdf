@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.902.
+This document describes RDF::Query::Expression::Binary version 2.905.
 
 =cut
 
@@ -27,12 +27,15 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Expression> class.
 
 =over 4
 
@@ -40,7 +43,7 @@ BEGIN {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -57,7 +60,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -96,21 +99,59 @@ sub evaluate {
 	
 	$l->debug("Binary Operator '$op': " . Dumper($lhs, $rhs));
 	
+### This does overloading of infix<+> on literal values to perform string concatenation
+# 	if ($op eq '+') {
+# 		if (blessed($lhs) and $lhs->isa('RDF::Query::Node::Literal') and blessed($rhs) and $rhs->isa('RDF::Query::Node::Literal')) {
+# 			if (not($lhs->has_datatype) and not($rhs->has_datatype)) {
+# 				my $value	= $lhs->literal_value . $rhs->literal_value;
+# 				return RDF::Query::Node::Literal->new( $value );
+# 			}
+# 		}
+# 	}
+	
 	if ($op =~ m#^[-+/*]$#) {
-		my $type	= $self->promote_type( $op, $lhs, $rhs );
-		my $value;
-		if ($op eq '+') {
-			$value	= $lhs->numeric_value + $rhs->numeric_value;
-		} elsif ($op eq '-') {
-			$value	= $lhs->numeric_value - $rhs->numeric_value;
-		} elsif ($op eq '*') {
-			$value	= $lhs->numeric_value * $rhs->numeric_value;
-		} elsif ($op eq '/') {
-			$value	= $lhs->numeric_value / $rhs->numeric_value;
+		if (blessed($lhs) and blessed($rhs) and $lhs->isa('RDF::Query::Node::Literal') and $rhs->isa('RDF::Query::Node::Literal') and $lhs->is_numeric_type and $rhs->is_numeric_type) {
+			my $type	= $self->promote_type( $op, $lhs->literal_datatype, $rhs->literal_datatype );
+			my $value;
+			if ($op eq '+') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv + $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<+> on non-numeric types";
+				}
+			} elsif ($op eq '-') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv - $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<-> on non-numeric types";
+				}
+			} elsif ($op eq '*') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv * $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:<*> on non-numeric types";
+				}
+			} elsif ($op eq '/') {
+				my $lhsv	= $lhs->numeric_value;
+				my $rhsv	= $rhs->numeric_value;
+				if (defined($lhsv) and defined($rhsv)) {
+					$value		= $lhsv / $rhsv;
+				} else {
+					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
+				}
+			} else {
+				throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
+			}
+			return RDF::Query::Node::Literal->new( $value, undef, $type );
 		} else {
-			die;
+			throw RDF::Query::Error::ExecutionError -text => "Numeric binary operator '$op' with non-numeric data";
 		}
-		return RDF::Query::Node::Literal->new( $value, undef, $type );
 	} elsif ($op =~ m#^([<>]=?)|!?=$#) {
 		my @types	= qw(RDF::Query::Node::Literal RDF::Query::Node::Resource RDF::Query::Node::Blank);
 		
@@ -140,7 +181,7 @@ sub evaluate {
 		} elsif ($op eq '!=') {
 			$bool	= ($lhs != $rhs);
 		} else {
-			die;
+			throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 		}
 		
 		my $value	= ($bool) ? 'true' : 'false';
@@ -172,10 +213,10 @@ my %rel	= (
 	"${xsd}double"				=> 15,
 );
 
-=item C<< promote_type ( $op, $lhs, $rhs ) >>
+=item C<< promote_type ( $op, $lhs_datatype, $rhs_datatype ) >>
 
 Returns the XSD type URI (as a string) for the resulting value of performing the
-supplied operation on the arguments.
+supplied operation on arguments of the indicated XSD types.
 
 =cut
 
@@ -183,7 +224,7 @@ sub promote_type {
 	my $self	= shift;
 	my $op		= shift;
 	no warnings 'uninitialized';
-	my @types	= sort { $rel{$b} <=> $rel{$a} } map { $_->literal_datatype } @_;
+	my @types	= sort { $rel{$b} <=> $rel{$a} } @_;
 	
 	my $type	= $types[0];
 	$type		= "${xsd}integer" if ($integer_types{ $type });

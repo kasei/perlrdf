@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.124
+This document describes RDF::Trine::Store::Redland version 0.134
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.134";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -46,6 +46,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
 
 =over 4
 
@@ -58,7 +61,7 @@ Returns a new storage object using the supplied RDF::Redland::Model object.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<Redland> for this backend.
+The C<storetype> key must be C<Redland> for this backend.
 
 The following keys may also be used:
 
@@ -122,6 +125,17 @@ sub _new_with_object {
 	my $obj		= shift;
 	return unless (blessed($obj) and $obj->isa('RDF::Redland::Model'));
 	return $class->new( $obj );
+}
+
+sub _config_meta {
+	return {
+		required_keys	=> [qw(store_name name options)],
+		fields			=> {
+			store_name	=> { description => 'Redland Storage Type', type => 'string' },
+			name		=> { description => 'Storage Name', type => 'string' },
+			options		=> { description => 'Options String', type => 'string' },
+		},
+	}
 }
 
 =item C<< temporary_store >>
@@ -268,10 +282,7 @@ sub add_statement {
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	unless ($self->count_statements( @nodes )) {
-# 		warn "adding " . $rst->as_string . ' to context: ' . $rnodes[3]->as_string . "\n";
-		$model->add_statement( $rst, $rnodes[3] );
-	}
+	$model->add_statement( $rst, $rnodes[3] );
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -340,8 +351,7 @@ sub count_statements {
 		my $iter	= $self->_model->find_statements( $st );
 		my $count	= 0;
 		my %seen;
-		while ($iter and not($iter->end)) {
-			my $st	= $iter->current;
+		while ($iter and my $st = $iter->current) {
 			unless ($seen{ $st->as_string }++) {
 				$count++;
 			}
@@ -353,9 +363,8 @@ sub count_statements {
 		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 		my $iter	= $self->_model->find_statements( $st, $rnodes[3] );
 		my $count	= 0;
-		while ($iter and not($iter->end)) {
+		while ($iter and my $st = $iter->current) {
 			$count++;
-			my $st	= $iter->current;
 			my $ctx	= $iter->context;
 			$iter->next;
 		}
@@ -372,6 +381,18 @@ Returns the number of statements in the store.
 sub size {
 	my $self	= shift;
 	return $self->_model->size;
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
 }
 
 sub _model {
@@ -442,7 +463,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

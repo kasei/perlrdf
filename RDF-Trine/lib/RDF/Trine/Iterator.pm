@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.124.
+This document describes RDF::Trine::Iterator version 0.134.
 
 =head1 SYNOPSIS
 
@@ -30,7 +30,6 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use JSON;
 use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp);
@@ -39,10 +38,11 @@ use Scalar::Util qw(blessed reftype refaddr);
 use XML::SAX;
 use RDF::Trine::Node;
 use RDF::Trine::Iterator::SAXHandler;
+use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -164,7 +164,7 @@ sub to_string {
 	}
 }
 
-=item C<from_string ( $xml )>
+=item C<< from_string ( $xml ) >>
 
 Returns a new iterator using the supplied XML in the SPARQL XML Results format.
 
@@ -185,10 +185,21 @@ sub from_string {
 	return $iter;
 }
 
+=item C<< from_json ( $json ) >>
 
-=item C<< next >>
+=cut
+
+sub from_json {
+	my $class	= shift;
+	my $json	= shift;
+	my $p		= RDF::Trine::Iterator::JSONHandler->new( @_ );
+	return $p->parse( $json );
+}
+
 
 =item C<< next_result >>
+
+=item C<< next >>
 
 Returns the next item in the stream.
 
@@ -316,11 +327,28 @@ sub concat {
 
 =item C<< count >>
 
-Returns the number of objects returned from this iterator.
+DEPRECATED. Returns the number of objects returned from this iterator.
+
+This method is deprecated. The C<< length >> method from either
+RDF::Trine::Iterator::Bindings::Materialized or
+RDF::Trine::Iterator::Graph::Materialized should be used instead.
 
 =cut
 
 sub count {
+	my $self	= shift;
+	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
+	return $self->{_count};
+}
+
+=item C<< seen_count >>
+
+Returns the count of elements that have been returned by this iterator at the
+point of invocation.
+
+=cut
+
+sub seen_count {
 	my $self	= shift;
 	return $self->{_count};
 }
@@ -333,7 +361,7 @@ Returns the boolean value of the first item in the stream.
 
 sub get_boolean {
 	my $self	= shift;
-	my $data	= $self->next_result;
+	my $data	= $self->next;
 	return +$data;
 }
 
@@ -373,7 +401,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		$node_label	= "<unbound/>";
+		return;
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;
@@ -385,7 +413,15 @@ sub format_node_xml ($$$$) {
 		$node_label	=~ s/&/&amp;/g;
 		$node_label	=~ s/</&lt;/g;
 		$node_label	=~ s/"/&quot;/g;
-		$node_label	= qq(<literal>${node_label}</literal>);
+		if ($node->has_language) {
+			my $lang	= $node->literal_value_language;
+			$node_label	= qq(<literal xml:lang="${lang}">${node_label}</literal>);
+		} elsif ($node->has_datatype) {
+			my $dt	= $node->literal_datatype;
+			$node_label	= qq(<literal datatype="${dt}">${node_label}</literal>);
+		} else {
+			$node_label	= qq(<literal>${node_label}</literal>);
+		}
 	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
 		$node_label	= $node->blank_identifier;
 		$node_label	=~ s/&/&amp;/g;
@@ -411,6 +447,22 @@ sub construct_args {
 	my $type	= $self->type;
 	my $args	= $self->_args || {};
 	return ($type, [], %$args);
+}
+
+=item C<< each ( \&callback ) >>
+
+Calls the callback function once for each item in the iterator, passing the
+item as an argument to the function. Any arguments to C<< each >> beyond the
+callback function will be passed as supplemental arguments to the callback
+function.
+
+=cut
+
+sub each {
+	my ($self, $coderef) = (shift, shift);
+	while (my $row = $self->next) {
+		$coderef->($row, @_);
+	}
 }
 
 =begin private
@@ -615,7 +667,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

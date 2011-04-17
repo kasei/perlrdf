@@ -7,9 +7,12 @@ RDF::Query::Plan::Union - Executable query plan for unions.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Union version 2.902.
+This document describes RDF::Query::Plan::Union version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -29,7 +32,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -81,6 +84,7 @@ sub execute ($) {
 
 sub next {
 	my $self	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.union");
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open BGP";
 	}
@@ -88,6 +92,7 @@ sub next {
 	return undef unless ($iter);
 	my $row		= $iter->next;
 	if (defined($row)) {
+		$l->trace( "union row: $row" );
 		return $row;
 	} else {
 		$self->[0]{iter}	= undef;
@@ -98,12 +103,14 @@ sub next {
 			my $iter	= $self->[1][ $index ];
 			$iter->execute( $self->[0]{context} );
 			if ($iter->state == $self->OPEN) {
+				$l->trace( "union moving to next branch" );
 				$self->[0]{iter}	= $iter;
 				return $self->next;
 			} else {
 				throw RDF::Query::Error::ExecutionError -text => "execute() on RHS of UNION failed during next()";
 			}
 		} else {
+			$l->trace( "union reached end of last branch" );
 			$iter->close();
 			delete $self->[0]{iter};
 			return undef;

@@ -7,18 +7,37 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.902.
+This document describes RDF::Query version 2.905.
 
 =head1 SYNOPSIS
 
- my $query = RDF::Query->new( $sparql );
+ # SPARQL SELECT Query
+ my $query = RDF::Query->new( 'SELECT * WHERE ...' );
  my $iterator = $query->execute( $model );
  while (my $row = $iterator->next) {
+   # $row is a HASHref containing variable name -> RDF Term bindings
    print $row->{ 'var' }->as_string;
  }
  
+ # SPARQL CONSTRUCT/DESCRIBE Query
+ my $query = RDF::Query->new( 'CONSTRUCT { ... } WHERE ...' );
+ my $iterator = $query->execute( $model );
+ while (my $st = $iterator->next) {
+   # $st is a RDF::Trine::Statement object representing an RDF triple
+   print $st->as_string;
+ }
+ 
+ # SPARQL ASK Query
+ my $query = RDF::Query->new( 'ASK WHERE ...' );
+ my $iterator = $query->execute( $model );
+ my $bool = $iterator->get_boolean;
+ if ($bool) {
+   print "Yes!\n";
+ }
+ 
+ # RDQL Query
  my $query = new RDF::Query ( $rdql, { lang => 'rdql' } );
- my @rows = $query->execute( $model );
+ my @rows = $query->execute( $model ); # in list context, returns all results
 
 =head1 DESCRIPTION
 
@@ -115,7 +134,7 @@ use Log::Log4perl qw(:easy);
 Log::Log4perl->easy_init($ERROR);
 
 no warnings 'numeric';
-use RDF::Trine 0.124;
+use RDF::Trine 0.126;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -137,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.902';
+	$VERSION		= '2.905';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -158,7 +177,7 @@ with the appropriate C<< %options >> value. Valid C<< %options >> are:
 
 Specifies the query language. Acceptable values are 'sparql11', 'sparql', or 'rdql'.
 
-* base
+* base_uri
 
 Specifies the base URI used in parsing the query.
 
@@ -178,13 +197,15 @@ sub new {
 	my $class	= shift;
 	my $query	= shift;
 
-	my ($baseuri, $languri, $lang, %options);
+	my ($base_uri, $languri, $lang, %options);
 	if (@_ and ref($_[0])) {
 		%options	= %{ shift() };
-		$lang		= $options{ lang };
-		$baseuri	= $options{ base };
+		$lang		= delete $options{ lang };
+		$base_uri	= $options{ base_uri } || $options{ base } ;
+		delete $options{ base_uri };
+		delete $options{ base };
 	} else {
-		($baseuri, $languri, $lang, %options)	= @_;
+		($base_uri, $languri, $lang, %options)	= @_;
 	}
 	$class->clear_error;
 	
@@ -199,24 +220,30 @@ sub new {
 	my %uris	= (
 					'http://jena.hpl.hp.com/2003/07/query/RDQL'	=> 'RDF::Query::Parser::RDQL',
 					'http://www.w3.org/TR/rdf-sparql-query/'	=> 'RDF::Query::Parser::SPARQL',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL10Query'	=> 'RDF::Query::Parser::SPARQL',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL11Query'	=> 'RDF::Query::Parser::SPARQL11',
+					'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'	=> 'RDF::Query::Parser::SPARQL11',
 				);
 	
-	if ($baseuri) {
-		$baseuri	= RDF::Query::Node::Resource->new( $baseuri );
+	if ($base_uri) {
+		$base_uri	= RDF::Query::Node::Resource->new( $base_uri );
 	}
 	
-	my $update	= ($options{update} ? 1 : 0);
+	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new();
-	my $parsed	= $parser->parse( $query, $baseuri, $update );
+	my $parsed	= $parser->parse( $query, $base_uri, $update );
 	
 	my $self	= $class->_new(
-					base			=> $baseuri,
+					base_uri		=> $base_uri,
 					parser			=> $parser,
 					parsed			=> $parsed,
+					query_string	=> $query,
+					update			=> $update,
+					options			=> { %options },
 				);
-	if ($options{load_data}) {
-		$self->{load_data}	= $options{load_data};
+	if (exists $options{load_data}) {
+		$self->{load_data}	= delete $options{load_data};
 	} elsif ($pclass =~ /^RDF::Query::Parser::(RDQL|SPARQL)$/) {
 		$self->{load_data}	= 1;
 	} else {
@@ -229,27 +256,27 @@ sub new {
 	}
 	
 	if (defined $options{defines}) {
-		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ $options{defines} };
+		@{ $self->{options} }{ keys %{ $options{defines} } }	= values %{ delete $options{defines} };
 	}
 	
 	if ($options{logger}) {
 		$l->debug("got external logger");
-		$self->{logger}	= $options{logger};
+		$self->{logger}	= delete $options{logger};
 	}
 	
-	if (my $opt = $options{optimize}) {
+	if (my $opt = delete $options{optimize}) {
 		$l->debug("got optimization flag: $opt");
 		$self->{optimize}	= $opt;
 	} else {
 		$self->{optimize}	= 0;
 	}
 	
-	if (my $opt = $options{force_no_optimization}) {
+	if (my $opt = delete $options{force_no_optimization}) {
 		$l->debug("got force_no_optimization flag");
 		$self->{force_no_optimization}	= 1;
 	}
 	
-	if (my $time = $options{optimistic_threshold_time}) {
+	if (my $time = delete $options{optimistic_threshold_time}) {
 		$l->debug("got optimistic_threshold_time flag");
 		$self->{optimistic_threshold_time}	= $time;
 	}
@@ -284,7 +311,7 @@ sub get {
 	}
 }
 
-=item C<< prepare ( $store ) >>
+=item C<< prepare ( $model ) >>
 
 Prepares the query, constructing a query execution plan, and returns a list
 containing ($plan, $context). To execute the plan, call
@@ -294,17 +321,20 @@ C<< execute_plan( $plan, $context ) >>.
 
 sub prepare {
 	my $self	= shift;
-	my $store	= shift;
+	my $_model	= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	
 	$self->{_query_cache}	= {};	# a new scratch hash for each execution.
-	my %bound	= ($args{ 'bind' }) ? %{ $args{ 'bind' } } : ();
+	my %bound;
+	if ($args{ 'bind' }) {
+		%bound	= %{ $args{ 'bind' } };
+	}
 	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
-	my $model	= $self->{model} || $self->get_model( $store, %args );
+	my $model	= $self->{model} || $self->get_model( $_model, %args );
 	if ($model) {
 		$self->model( $model );
 		$l->debug("got model $model");
@@ -316,6 +346,7 @@ sub prepare {
 		$l->trace("loading data");
 		$self->load_data();
 	}
+	
 	$model		= $self->model();	# reload the model object, because load_data might have changed it.
 	
 	my $dataset	= ($model->isa('RDF::Trine::Model::Dataset')) ? $model : RDF::Trine::Model::Dataset->new($model);
@@ -325,20 +356,22 @@ sub prepare {
 					bound						=> \%bound,
 					model						=> $dataset,
 					query						=> $self,
-					base						=> $parsed->{base},
-					ns							=> $parsed->{namespaces},
+					base_uri					=> $parsed->{base_uri},
+					ns			       			=> $parsed->{namespaces},
 					logger						=> $self->logger,
 					optimize					=> $self->{optimize},
 					force_no_optimization		=> $self->{force_no_optimization},
 					optimistic_threshold_time	=> $self->{optimistic_threshold_time} || 0,
 					requested_variables			=> \@vars,
 					strict_errors				=> $errors,
+					options						=> $self->{options},
 				);
 	
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
-	my $plan		= $self->query_plan( $context );
+	my %plan_args	= %{ $args{ planner_args } || {} };
+	my $plan		= $self->query_plan( $context, %plan_args );
 	$l->trace("-> done.");
 	
 	unless ($plan) {
@@ -348,21 +381,29 @@ sub prepare {
 	return ($plan, $context);
 }
 
-=item C<execute ( $store, %args )>
+=item C<execute ( $model, %args )>
 
-Executes the query using the specified RDF C<< $store >>. If called in a list
-context, returns an array of rows, otherwise returns an iterator.
+Executes the query using the specified RDF C<< $model >>. If called in a list
+context, returns an array of rows, otherwise returns an L<RDF::Trine::Iterator>
+object. The iterator returned may be an instance of several subclasses of
+L<RDF::Trine::Iterator>:
+
+* A L<RDF::Trine::Iterator::Bindings> object is returned for query forms producing variable binding results (SELECT queries).
+
+* A L<RDF::Trine::Iterator::Graph> object is returned for query forms producing in an RDF graph result (DESCRIBE and CONSTRUCT queries).
+
+* A L<RDF::Trine::Iterator::Boolean> object is returned for query forms producing a true/false result (ASK queries).
 
 =cut
 
 sub execute {
 	my $self	= shift;
-	my $store	= shift;
+	my $model	= shift;
 	my %args	= @_;
 	my $l		= Log::Log4perl->get_logger("rdf.query");
-	$l->debug("executing query with model " . ($store or ''));
+	$l->debug("executing query with model " . ($model or ''));
 	
-	my ($plan, $context)	= $self->prepare( $store, %args );
+	my ($plan, $context)	= $self->prepare( $model, %args );
 	if ($l->is_trace) {
 		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 		$l->trace($self->as_sparql);
@@ -373,8 +414,9 @@ sub execute {
 
 =item C<< execute_plan ( $plan, $context ) >>
 
-Executes the query using the supplied ExecutionContext. If called in a list
-context, returns an array of rows, otherwise returns an iterator.
+Executes the query plan generated by the C<<prepare>> method using the supplied
+L<RDF::Query::ExecutionContext>> object. Return value(s) are the same as for the
+C<<execute>> method.
 
 =cut
 
@@ -408,13 +450,6 @@ sub execute_plan {
 	
 	$plan->execute( $context );
 	my $stream	= $plan->as_iterator( $context );
-# 	my $stream	= RDF::Trine::Iterator::Bindings->new( sub { $plan->next }, \@vars, distinct => $plan->distinct, sorted_by => $plan->ordered );
-	
-	$l->debug("performing projection");
-	my $expr	= 0;
-	foreach my $v (@{ $parsed->{'variables'} }) {
-		$expr	= 1 if ($v->isa('RDF::Query::Expression::Alias'));
-	}
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
 		$stream	= $self->describe( $stream );
@@ -432,9 +467,9 @@ sub execute_plan {
 	}
 }
 
-=item C<< execute_with_named_graphs ( $store, @uris ) >>
+=item C<< execute_with_named_graphs ( $model, @uris ) >>
 
-Executes the query using the specified RDF C<< $store >>, loading the contents
+Executes the query using the specified RDF C<< $model >>, loading the contents
 of the specified C<@uris> into named graphs immediately prior to matching the
 query. Otherwise, acts just like C<< execute >>.
 
@@ -442,23 +477,33 @@ query. Otherwise, acts just like C<< execute >>.
 
 sub execute_with_named_graphs {
 	my $self		= shift;
-	my $store		= shift;
+	my $_model		= shift;
+	my @graphs;
+	my @options;
+	if (scalar(@_)) {
+		if (not(blessed($_[0])) and reftype($_[0]) eq 'ARRAY') {
+			@graphs		= @{ shift(@_) };
+			@options	= @_;
+		} else {
+			@graphs		= @_;
+		}
+	}
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 #	$self->{model}	= $model;
-	my $model		= $self->get_model( $store );
+	my $model		= $self->get_model( $_model );
 	if ($model) {
 		$self->model( $model );
 	} else {
 		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
 	}
 	
-	foreach my $gdata (@_) {
+	foreach my $gdata (@graphs) {
 		$l->debug("-> adding graph data " . $gdata->uri_value);
 		$self->parse_url( $gdata->uri_value, 1 );
 	}
 	
-	return $self->execute( $model );
+	return $self->execute( $model, @options );
 }
 
 =begin private
@@ -475,7 +520,28 @@ current query.
 sub query_plan {
 	my $self	= shift;
 	my $context	= shift;
+	my %args	= @_;
 	my $parsed	= $self->{parsed};
+	
+	my $bound	= $context->bound;
+	my @bkeys	= keys %{ $bound };
+	my $model	= $context->model;
+	
+	if (not exists $self->{options}{'rdf.query.plan.delegate'} or $self->{options}{'rdf.query.plan.delegate'}) {
+		my $delegate_key	= $self->{update}
+							? 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update'
+							: "http://www.w3.org/ns/sparql-service-description#SPARQL10Query";	# TODO: need to determine if the query is only 1.0, and if so, check for 1.0 support. otherwise check for 1.1 support
+		if (scalar(@bkeys) == 0 and $model->supports($delegate_key)) {
+			my $plan	= RDF::Query::Plan::Iterator->new( sub {
+				my $context	= shift;
+				my $model	= $context->model;
+				my $iter	= $model->get_sparql( $self->{query_string} );
+				return $iter;
+			} );
+			return $plan;
+		}
+	}
+	
 	my %constant_plan;
 	if (my $b = $self->{parsed}{bindings}) {
 		my $vars	= $b->{vars};
@@ -500,7 +566,7 @@ sub query_plan {
 	
 	my $algebra		= $self->pattern;
 	my $pclass		= $self->plan_class;
-	my @plans		= $pclass->generate_plans( $algebra, $context, %constant_plan );
+	my @plans		= $pclass->generate_plans( $algebra, $context, %args, %constant_plan );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan");
 	if (wantarray) {
@@ -564,7 +630,6 @@ sub describe {
 	foreach my $node (@nodes) {
 		push(@{ $self->{'describe_nodes'} }, $node);
 		push(@streams, $model->bounded_description( $node ));
-		push(@streams, $model->get_statements( undef, undef, $node ));
 	}
 	
 	my $ret	= sub {
@@ -644,6 +709,11 @@ sub as_sparql {
 	
 	my $context	= { namespaces => { %{ $parsed->{namespaces} || {} } } };
 	my $method	= $parsed->{method};
+	
+	if ($method =~ /^(DESCRIBE|ASK)$/i) {
+		$context->{force_ggp_braces}	= 1;
+	}
+	
 	my @vars	= map { $_->as_sparql( $context, '' ) } @{ $parsed->{ variables } };
 	my $vars	= join(' ', @vars);
 	my $ggp		= $self->pattern;
@@ -687,12 +757,21 @@ sub as_sparql {
 		}
 		
 		my $ns	= scalar(@ns) ? join("\n", @ns, '') : '';
-		my $sparql	= sprintf(
-			"$ns%s %s\n%s",
-			$methoddata,
-			$ggp->as_sparql( $context, '' ),
-			$mod,
-		);
+		my $sparql;
+		if ($methoddata or $ns) {
+			$sparql	= sprintf(
+				"$ns%s %s\n%s",
+				$methoddata,
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		} else {
+			$sparql	= sprintf(
+				"%s\n%s",
+				$ggp->as_sparql( $context, '' ),
+				$mod,
+			);
+		}
 		
 		chomp($sparql);
 		return $sparql;
@@ -724,12 +803,12 @@ sub sse {
 	my $ggp		= $self->pattern;
 	my $ns		= $parsed->{namespaces};
 	my $nscount	= scalar(@{ [ keys %$ns ] });
-	my $base	= $parsed->{base};
+	my $base_uri	= $parsed->{base};
 	
 	my $indent	= '  ';
 	my $context	= { namespaces => $ns, indent => $indent };
 	my $indentcount	= 0;
-	$indentcount++ if ($base);
+	$indentcount++ if ($base_uri);
 	$indentcount++ if ($nscount);
 	my $prefix	= $indent x $indentcount;
 	
@@ -739,8 +818,8 @@ sub sse {
 		$sse		= sprintf("(prefix (%s)\n${prefix}%s)", join("\n${indent}" . ' 'x9, map { "(${_}: <$ns->{$_}>)" } (sort keys %$ns)), $sse);
 	}
 	
-	if ($base) {
-		$sse	= sprintf("(base <%s>\n${indent}%s)", $base->uri_value, $sse);
+	if ($base_uri) {
+		$sse	= sprintf("(base <%s>\n${indent}%s)", $base_uri->uri_value, $sse);
 	}
 	
 	chomp($sse);
@@ -761,7 +840,7 @@ sub dateparser {
 
 =begin private
 
-=item C<supports ( $store, $feature )>
+=item C<< supports ( $model, $feature ) >>
 
 Returns a boolean value representing the support of $feature for the given model.
 
@@ -771,8 +850,8 @@ Returns a boolean value representing the support of $feature for the given model
 
 sub supports {
 	my $self	= shift;
-	my $store	= shift;
-	my $model	= $self->get_model( $store );
+	my $obj		= shift;
+	my $model	= $self->get_model( $obj );
 	return $model->supports( @_ );
 }
 
@@ -846,7 +925,7 @@ sub load_data {
 
 =begin private
 
-=item C<< var_or_expr_value ( \%bound, $value ) >>
+=item C<< var_or_expr_value ( \%bound, $value, $context ) >>
 
 Returns an (non-variable) RDF::Query::Node value based on C<< $value >>.
 If  C<< $value >> is  a node object, it is simply returned. If it is an
@@ -862,9 +941,10 @@ sub var_or_expr_value {
 	my $self	= shift;
 	my $bound	= shift;
 	my $v		= shift;
+	my $ctx		= shift;
 	Carp::confess 'not an object value in var_or_expr_value: ' . Dumper($v) unless (blessed($v));
 	if ($v->isa('RDF::Query::Expression')) {
-		return $v->evaluate( $self, $bound );
+		return $v->evaluate( $self, $bound, $ctx );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
 	} elsif ($v->isa('RDF::Query::Node')) {
@@ -1133,7 +1213,7 @@ sub run_hook {
 
 =begin private
 
-=item C<parse_url ( $url, $named )>
+=item C<< parse_url ( $url, $named ) >>
 
 Retrieve a remote file by URL, and parse RDF into the RDF store.
 If $named is TRUE, associate all parsed triples with a named graph.
@@ -1384,9 +1464,9 @@ L<http://www.perlrdf.org/>
 
  Gregory Todd Williams <gwilliams@cpan.org>
 
-=head1 COPYRIGHT
+=head1 LICENSE
 
-Copyright (c) 2005-2009 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2005-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

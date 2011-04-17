@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.124
+This document describes RDF::Trine::Graph version 0.134
 
 =head1 SYNOPSIS
 
@@ -30,10 +30,43 @@ no warnings 'redefine';
 
 use Math::Combinatorics qw(permute);
 
-our ($VERSION, $debug);
+our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
+}
+
+use overload
+	'=='	=> \&RDF::Trine::Graph::_eq,
+	'eq'	=> \&RDF::Trine::Graph::_eq,
+	'le'	=> \&RDF::Trine::Graph::_le,
+	'ge'	=> \&RDF::Trine::Graph::_ge,
+	'lt'	=> \&RDF::Trine::Graph::_lt,
+	'gt'	=> \&RDF::Trine::Graph::_gt,
+	;
+
+sub _eq {
+	my ($x, $y) = @_;
+	return $x->equals($y);
+}
+
+sub _le {
+	my ($x, $y) = @_;
+	return $x->is_subgraph_of($y);
+}
+
+sub _ge {
+	return _le(@_[1,0]);
+}
+
+sub _lt {
+	my ($x, $y) = @_;
+#	Test::More::diag(sprintf('%s // %s', ref($x), ref($y)));
+	return ($x->size < $y->size) && ($x->is_subgraph_of($y));
+}
+
+sub _gt {
+	return _lt(@_[1,0]);
 }
 
 use Data::Dumper;
@@ -81,10 +114,18 @@ there exists a bijection between the RDF statements of the invocant and $graph).
 =cut
 
 sub equals {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	return $self->_check_equality($graph) ? 1 : 0;
+}
+
+sub _check_equality {
 	my $self	= shift;
 	my $graph	= shift;
 	unless (blessed($graph) and $graph->isa('RDF::Trine::Graph')) {
-		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::equals must be called with a Graph argument";
+		$self->{error}	= "RDF::Trine::Graph::equals must be called with a Graph argument";
+		throw RDF::Trine::Error::MethodInvocationError -text => $self->{error};
 	}
 	
 	my @graphs	= ($self, $graph);
@@ -93,13 +134,13 @@ sub equals {
 	if (scalar(@$nba) != scalar(@$nbb)) {
 		my $nbac	= scalar(@$nba);
 		my $nbbc	= scalar(@$nbb);
-# 		warn "count of non-blank statements didn't match ($nbac != $nbbc)" if ($debug);
+		$self->{error}	= "count of non-blank statements didn't match ($nbac != $nbbc)";
 		return 0;
 	}
 	my $bac	= scalar(@$ba);
 	my $bbc	= scalar(@$bb);
 	if ($bac != $bbc) {
-# 		warn "count of blank statements didn't match ($bac != $bbc)" if ($debug);
+		$self->{error}	= "count of blank statements didn't match ($bac != $bbc)";
 		return 0;
 	}
 	
@@ -109,14 +150,81 @@ sub equals {
 	
 	foreach my $i (0 .. $#{ $nba }) {
 		unless ($nba->[$i] eq $nbb->[$i]) {
-# 			warn "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
+			$self->{error}	= "non-blank triples don't match: " . Dumper($nba->[$i], $nbb->[$i]);
 			return 0;
 		}
 	}
 	
-	if ($bac == 0) {
-# 		warn "no blank nodes -- models match\n" if ($debug);
-		return 1;
+	return _find_mapping($self, $ba, $bb);
+}
+
+=item C<< is_subgraph_of ( $graph ) >>
+
+Returns true if the invocant is a subgraph of $graph. (i.e. there exists an
+injection of RDF statements from the invocant to $graph.)
+
+=cut
+
+sub is_subgraph_of {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	return $self->_check_subgraph($graph) ? 1 : 0;
+}
+
+=item C<< injection_map ( $graph ) >>
+
+If the invocant is a subgraph of $graph, returns a mapping of blank node
+identifiers from the invocant graph to $graph as a hashref. Otherwise
+returns false. The solution is not always unique; where there exist multiple
+solutions, the solution returned is arbitrary.
+
+=cut
+
+sub injection_map {
+	my $self  = shift;
+	my $graph = shift;
+	undef($self->{error});
+	my $map   = $self->_check_subgraph($graph);
+	return $map if $map;
+	return;
+}
+
+sub _check_subgraph {
+	my $self	= shift;
+	my $graph	= shift;
+	unless (blessed($graph) and $graph->isa('RDF::Trine::Graph')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "RDF::Trine::Graph::equals must be called with a Graph argument";
+	}
+	
+	my @graphs	= ($self, $graph);
+	my ($ba, $nba)	= $self->split_blank_statements;
+	my ($bb, $nbb)	= $graph->split_blank_statements;
+	
+	if (scalar(@$nba) > scalar(@$nbb)) {
+		$self->{error}	= "invocant had too many blank node statements to be a subgraph of argument";
+		return 0;
+	} elsif (scalar(@$ba) > scalar(@$bb)) {
+		$self->{error}	= "invocant had too many non-blank node statements to be a subgraph of argument";
+		return 0;
+	}
+
+	my %NBB = map { $_->as_string => 1 } @$nbb;
+	
+	foreach my $st (@$nba) {
+		unless ($NBB{ $st->as_string }) {
+			return 0;
+		}
+	}
+	
+	return _find_mapping($self, $ba, $bb);
+}
+
+sub _find_mapping {
+	my ($self, $ba, $bb) = @_;
+
+	if (scalar(@$ba) == 0) {
+		return {};
 	}
 	
 	my %blank_ids_a;
@@ -139,7 +247,7 @@ sub equals {
 	MAPPING: foreach my $mapping (@kbp) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
-# 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
+		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
 		my %bb	= map { $_->as_string => 1 } @$bb;
 		foreach my $st (@$ba) {
@@ -148,7 +256,7 @@ sub equals {
 				my $n	= $st->$method();
 				if ($n->isa('RDF::Trine::Node::Blank')) {
 					my $id	= $mapping{ $n->blank_identifier };
-# 					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
+					warn "mapping " . $n->blank_identifier . " to $id\n" if ($debug);
 					push(@nodes, RDF::Trine::Node::Blank->new( $id ));
 				} else {
 					push(@nodes, $n);
@@ -156,18 +264,18 @@ sub equals {
 			}
 			my $class	= ref($st);
 			my $mapped_st	= $class->new( @nodes )->as_string;
-# 			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
+			warn "checking for '$mapped_st' in " . Dumper(\%bb) if ($debug);
 			if ($bb{ $mapped_st }) {
 				delete $bb{ $mapped_st };
 			} else {
 				next MAPPING;
 			}
 		}
-# 		warn "found mapping: " . Dumper(\%mapping) if ($debug);
-		return 1;
+		$self->{error}	=  "found mapping: " . Dumper(\%mapping) if ($debug);
+		return \%mapping;
 	}
 	
-# 	warn "didn't find mapping\n" if ($debug);
+	$self->{error}	=  "didn't find blank node mapping\n";
 	return 0;
 }
 
@@ -198,9 +306,50 @@ Returns a RDF::Trine::Iterator::Graph object for the statements in this graph.
 
 =cut
 
-sub get_statements {
+# The code below actually goes further now and makes RDF::Trine::Graph
+# into a subclass of RDF::Trine::Model via object delegation. This feature
+# is undocumented as it's not clear whether this is desirable or not.
+
+=begin private
+
+=item C<< isa >>
+
+=cut
+
+sub isa {
+	my ($proto, $queried) = @_;
+	$proto = ref($proto) if ref($proto);
+	return UNIVERSAL::isa($proto, $queried) || RDF::Trine::Model->isa($queried);
+}
+
+=item C<< can >>
+
+=cut
+
+sub can {
+	my ($proto, $queried) = @_;
+	$proto = ref($proto) if ref($proto);
+	return UNIVERSAL::can($proto, $queried) || RDF::Trine::Model->can($queried);
+}
+
+sub AUTOLOAD {
+	my $self = shift;
+	return if $AUTOLOAD =~ /::DESTROY$/;
+	$AUTOLOAD =~ s/^(.+)::([^:]+)$/$2/;
+	return $self->{model}->$AUTOLOAD(@_);
+}
+
+=end private
+
+=item C<< error >>
+
+Returns an error string explaining the last failed C<< equal >> call.
+
+=cut
+
+sub error {
 	my $self	= shift;
-	return $self->{model}->get_statements();
+	return $self->{error};
 }
 
 1;
@@ -215,7 +364,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

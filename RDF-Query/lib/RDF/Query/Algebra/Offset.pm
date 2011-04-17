@@ -7,7 +7,7 @@ RDF::Query::Algebra::Offset - Algebra class for offseting query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Offset version 2.902.
+This document describes RDF::Query::Algebra::Offset version 2.905.
 
 =cut
 
@@ -28,12 +28,15 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -93,7 +96,7 @@ sub offset {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -112,7 +115,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -166,16 +169,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq($self->pattern->referenced_variables);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq($self->pattern->binding_variables);
+	return $self->pattern->potentially_bound;
 }
 
 =item C<< definite_variables >>

@@ -11,6 +11,10 @@ use RDF::Query::Util;
 
 my $json	= new JSON;
 my $query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
+unless ($query) {
+	warn "Failed to construct query object: " . RDF::Query->error;
+	exit;
+}
 
 # my $pattern	= $query->pattern;
 my ($pattern)	= $query->pattern->subpatterns_of_type( 'RDF::Query::Algebra::GroupGraphPattern' );

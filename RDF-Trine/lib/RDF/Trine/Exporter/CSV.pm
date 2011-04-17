@@ -7,7 +7,7 @@ RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::CSV version 0.124
+This document describes RDF::Trine::Exporter::CSV version 0.134
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 =head1 METHODS
@@ -69,18 +69,27 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
+	
+	unless (blessed($iter) and ($iter->isa('RDF::Trine::Iterator::Bindings') or $iter->isa('RDF::Trine::Iterator::Graph'))) {
+		my $type	= ref($iter);
+		$type		=~ s/^RDF::Trine::Iterator:://;
+		throw RDF::Trine::Error::MethodInvocationError -text => "CSV Exporter must be called with a Graph or VariableBindings iterator, not a $type iterator";
+	}
+
+	my $type	= ($iter->isa('RDF::Trine::Iterator::Bindings')) ? 'bindings' : 'graph';
+	
 	my $csv		= $self->{csv};
 	my $quote	= $self->{quote};
 	my @keys;
 	while (my $row = $iter->next) {
 		unless (scalar(@keys)) {
-			@keys	= keys %$row;
+			@keys	= ($type eq 'bindings') ? (keys %$row) : qw(subject predicate object);
 			$csv->print( $file, \@keys );
 			print {$file} "\n";
 		}
 		my @data;
 		foreach my $k (@keys) {
-			my $v	= $row->{$k};
+			my $v	= ($type eq 'bindings') ? $row->{$k} : $row->$k();
 			if ($quote) {
 				push(@data, $v->as_string);
 			} elsif (blessed($v)) {
@@ -129,7 +138,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

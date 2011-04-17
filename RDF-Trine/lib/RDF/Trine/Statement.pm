@@ -7,7 +7,7 @@ RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.124
+This document describes RDF::Trine::Statement version 0.134
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 ######################################################################
@@ -80,10 +80,7 @@ Returns the subject, predicate and object of the triple pattern.
 
 sub nodes {
 	my $self	= shift;
-	my $s		= $self->subject;
-	my $p		= $self->predicate;
-	my $o		= $self->object;
-	return ($s, $p, $o);
+	return @$self;
 }
 
 =item C<< node_names >>
@@ -165,7 +162,7 @@ sub has_blanks {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -390,7 +387,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

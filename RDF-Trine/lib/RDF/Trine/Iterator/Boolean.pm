@@ -7,18 +7,22 @@ RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query result
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.124
+This document describes RDF::Trine::Iterator::Boolean version 0.134
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator::Boolean;
-    
-    my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
-    if ($iterator->get_boolean) {
-    	# ...
-    }
+ use RDF::Trine::Iterator::Boolean;
+ 
+ my $iterator = RDF::Trine::Iterator::Boolean->new( [1] );
+ my $bool = $iterator->get_boolean;
+ if ($bool) {
+ 	print "Yes.\n";
+ }
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Iterator> class.
 
 =over 4
 
@@ -34,7 +38,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 =item C<new ( \@results, %args )>
@@ -77,6 +81,18 @@ Returns true if the underlying result is a boolean value.
 sub is_boolean {
 	my $self			= shift;
 	return 1;
+}
+
+=item C<as_string ( $max_size [, \$count] )>
+
+Returns a string serialization of the stream data.
+
+=cut
+
+sub as_string {
+	my $self	= shift;
+	my $value	= $self->get_boolean ? 'true' : 'false';
+	return $value;
 }
 
 =item C<as_xml ( $max_size )>
@@ -161,7 +177,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

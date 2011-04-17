@@ -7,7 +7,7 @@ RDF::Query::Federate - A subclass of RDF::Query for efficient federated query ex
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate version 2.902.
+This document describes RDF::Query::Federate version 2.905.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.902';
+	$VERSION		= '2.905';
 }
 
 
@@ -57,7 +57,7 @@ BEGIN {
 
 =item C<< new ( $query, \%options ) >>
 
-=item C<< new ( $query, $baseuri, $languri, $lang ) >>
+=item C<< new ( $query, $base_uri, $languri, $lang ) >>
 
 Returns a new RDF::Query::Federate object for the specified C<$query>.
 The query language defaults to SPARQLP, but may be set specifically by
@@ -72,10 +72,10 @@ specifying either C<$languri> or C<$lang>, whose acceptable values are:
 sub new {
 	my $class	= shift;
 	my $query	= shift;
-	my $baseuri	= shift;
+	my $base_uri	= shift;
 	my $languri	= shift;
 	my $lang	= shift || 'sparql11';
-	return $class->SUPER::new( $query, $baseuri, $languri, $lang, @_ );
+	return $class->SUPER::new( $query, $base_uri, $languri, $lang, @_ );
 }
 
 
@@ -108,7 +108,7 @@ sub services {
 
 
 
-=item C<< algebra_fixup ( $algebra, $bridge, $base, $ns ) >>
+=item C<< algebra_fixup ( $algebra, $bridge, $base_uri, $ns ) >>
 
 Called in the fixup method of ::Algebra classes, returns either an optimized
 ::Algebra object ready for execution, or undef (in which case it will be
@@ -120,7 +120,7 @@ sub algebra_fixup {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $bridge	= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my $ns		= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.federate");
 	
@@ -136,9 +136,9 @@ sub algebra_fixup {
 	# algebra objects to use instead of the BGP.
 	if ($pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
 		if ($self->{ service_predicates }) {
-			my @patterns	= $self->_services_for_bgp_triples( $pattern, $bridge, $base, $ns );
+			my @patterns	= $self->_services_for_bgp_triples( $pattern, $bridge, $base_uri, $ns );
 			my $simple_ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @patterns );
-			my @optimized	= $self->_join_services_for_bgp_triples( $pattern, $bridge, $base, $ns, \@patterns );
+			my @optimized	= $self->_join_services_for_bgp_triples( $pattern, $bridge, $base_uri, $ns, \@patterns );
 			
 			if ($l->is_debug) {
 				foreach my $i (0 .. $#optimized) {
@@ -158,7 +158,7 @@ sub algebra_fixup {
 				# turn off optimizations, so we don't end up right back here, trying to optimize this replacement GGP.
 				local($self->{force_no_optimization})	= 1;
 				my $ggp		= $plan[0];
-				$ggp->fixup( $self, $bridge, $base, $ns );
+				$ggp->fixup( $self, $bridge, $base_uri, $ns );
 			};
 			
 			my $bgp	= "\n" . $pattern->as_sparql({}, '');
@@ -167,7 +167,7 @@ sub algebra_fixup {
 			return $fixed;
 		}
 	}
-	return $bridge->fixup( $pattern, $self, $base, $ns );
+	return $bridge->fixup( $pattern, $self, $base_uri, $ns );
 }
 
 
@@ -175,7 +175,7 @@ sub _join_services_for_bgp_triples {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $bridge	= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my $ns		= shift;
 	my $simplep	= shift;
 	my $l		= Log::Log4perl->get_logger("rdf.query.federate");
@@ -242,7 +242,7 @@ sub _services_for_bgp_triples {
 	my $self	= shift;
 	my $pattern	= shift;
 	my $bridge	= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my $ns		= shift;
 	
 	my $preds	= $self->{ service_predicates };

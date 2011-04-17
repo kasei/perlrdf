@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.902.
+This document describes RDF::Query::Parser::SPARQL version 2.905.
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Query::Parser::SPARQL version 2.902.
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Parser> class.
 
 =over 4
 
@@ -44,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################

@@ -7,9 +7,12 @@ RDF::Query::Plan::Sort - Executable query plan for Sorts.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Sort version 2.902.
+This document describes RDF::Query::Plan::Sort version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -25,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -114,8 +117,8 @@ sub _cmp_rows {
 	no warnings 'uninitialized';
 	foreach my $data (@$exprs) {
 		my ($expr, $rev)	= @$data;
-		my $a_val	= $query->var_or_expr_value( $a, $expr );
-		my $b_val	= $query->var_or_expr_value( $b, $expr );
+		my $a_val	= $query->var_or_expr_value( $a, $expr, $context );
+		my $b_val	= $query->var_or_expr_value( $b, $expr, $context );
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 		my $cmp		= $a_val <=> $b_val;
 		if ($cmp != 0) {
@@ -212,6 +215,30 @@ sub graph {
 	$g->add_node( "$self", label => "Sort ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	$string		.= "${indent}${s}sory by:\n";
+	my $exprs	= $self->[2];
+	foreach my $e (@$exprs) {
+		my $dir		= ($e->[1] == 0 ? 'asc  ' : 'desc ');
+		$string		.= "${indent}${s}${s}${dir}" . $e->[0] . "\n";
+	}
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
 }
 
 

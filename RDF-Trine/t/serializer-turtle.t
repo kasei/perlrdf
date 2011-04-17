@@ -1,4 +1,4 @@
-use Test::More tests => 35;
+use Test::More tests => 39;
 use Test::Exception;
 
 use strict;
@@ -277,20 +277,11 @@ my @tests	= (
 	[
 		{
 			'http://example.com/foo' => {
-				'http://example.com/bar' => [ {'type' => 'literal','value' => '123', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
-			},
-		},
-		qq[<http://example.com/foo> <http://example.com/bar> "123"^^<http://www.w3.org/2001/XMLSchema#double> .\n],
-		'xsd:double with bad lexical value 1'
-	],
-	[
-		{
-			'http://example.com/foo' => {
 				'http://example.com/bar' => [ {'type' => 'literal','value' => 'quux', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
 			},
 		},
 		qq[<http://example.com/foo> <http://example.com/bar> "quux"^^<http://www.w3.org/2001/XMLSchema#double> .\n],
-		'xsd:double with bad lexical value 2'
+		'xsd:double with bad lexical value'
 	],
 	### decimals
 	[
@@ -356,6 +347,80 @@ END
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new(base_uri => 'http://example.org/foo');
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]
+	}};
+	my $expect	= <<"END";
+\@base <http://example.org/foo> .
+
+[] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single base URI');
+}
+
+{
+  # Retained for backwards compatibility
+	my $serializer = RDF::Trine::Serializer::Turtle->new(base => 'http://example.org/foo');
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/homepage' => [{ 'type'=>'uri', 'value'=>'./bar' }]
+	}};
+	my $expect	= <<"END";
+\@base <http://example.org/foo> .
+
+[] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single base URI, old style');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ foaf => 'http://xmlns.com/foaf/0.1/', foo => 'foo://', bar => 'http://bar/' });
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+[] foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'single namespace Qnames (ignoring extra namespaces)');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ foaf => 'http://xmlns.com/foaf/0.1/', foo => 'foo://', bar => 'http://bar/' });
+	my $hash	= {
+		'_:a' => { 'http://xmlns.com/foaf/0.1/name' => ['Alice'] },
+		'_:b' => { 'http://xmlns.com/foaf/0.1/name' => ['Eve'] },
+	};
+	my $expect	= <<"END";
+\@prefix bar: <http://bar/> .
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+\@prefix foo: <foo://> .
+
+[] foaf:name "Alice" .
+[] foaf:name "Eve" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle	= '';
+	open( my $fh, '>', \$turtle );
+	$serializer->serialize_model_to_file($fh, $model);
+	close($fh);
+	is($turtle, $expect, 'single namespace Qnames (including extra namespaces)');
 }
 
 {
@@ -501,8 +566,8 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= {
 		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
 		xsd		=> 'http://www.w3.org/2001/XMLSchema#',
@@ -552,8 +617,8 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= {
 		rdf		=> 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
 		rdfs	=> 'http://www.w3.org/2000/01/rdf-schema#',
@@ -578,11 +643,43 @@ END
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
 	my $model	= RDF::Trine::Model->temporary_model;
-	my $base	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
-	$parser->parse_into_model( $base, $turtle, $model );
+	my $base_uri	= 'http://kasei.us/2009/09/sparql/sd-example.ttl';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
 	my $namespaces	= { xsd => 'http://www.w3.org/2001/XMLSchema#' };
 	my $serializer	= RDF::Trine::Serializer::Turtle->new( $namespaces );
 	my $got			= $serializer->serialize_model_to_string($model);
 	like( $got, qr/"\^\^xsd:dateTime/sm, 'qname literal datatype' );
 }
 
+{
+	# Date: Sun, 2 Jan 2011 22:17:55 +0000
+	# From: Toby Inkster <mail@tobyinkster.co.uk>
+	# To: dev@lists.perlrdf.org
+	# Subject: Turtle serialisation bug
+	# Message-ID: <20110102221755.78db000f@miranda.g5n.co.uk>
+	
+	my $turtle	= <<"END";
+_:a <q> [
+	<p> [
+		<r> _:b ];
+	<t> _:c ] .
+# _:a <x> _:b .
+_:c <e> _:a .
+END
+
+# _:a <q> [
+# 	<p> [
+# 		<r> _:b ];
+# 	<t> [ <e> _:a ] ] ;
+# 	<x> _:b .
+
+	my $parser	= RDF::Trine::Parser->new('turtle');
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $base_uri	= 'http://example.org/';
+	$parser->parse_into_model( $base_uri, $turtle, $model );
+	my $serializer	= RDF::Trine::Serializer::Turtle->new();
+	my $got			= $serializer->serialize_model_to_string($model);
+	my $gotmodel	= RDF::Trine::Model->temporary_model;
+	$parser->parse_into_model( $base_uri, $got, $gotmodel );
+	is( $gotmodel->size, $model->size, 'bnode concise syntax' );
+}

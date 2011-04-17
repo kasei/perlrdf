@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFJSON - RDF/JSON RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFJSON version 0.124
+This document describes RDF::Trine::Parser::RDFJSON version 0.134
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::RDFJSON version 0.124
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -49,8 +52,13 @@ use JSON;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.124';
+	$VERSION				= '0.134';
 	$RDF::Trine::Parser::parser_names{ 'rdfjson' }	= __PACKAGE__;
+	foreach my $ext (qw(json js)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/json';
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -166,7 +174,7 @@ sub parse {
 						if ($to->isa('RDF::Trine::Node::Literal') and $to->has_datatype) {
 							my $value	= $to->literal_value;
 							my $dt		= $to->literal_datatype;
-							my $canon	= $self->canonicalize_literal_value( $value, $dt );
+							my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 							$to	= literal( $canon, undef, $dt );
 						}
 					}
@@ -194,7 +202,7 @@ __END__
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

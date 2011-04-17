@@ -7,7 +7,7 @@ RDF::Query::Expression::Unary - Class for unary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Unary version 2.902.
+This document describes RDF::Query::Expression::Unary version 2.905.
 
 =cut
 
@@ -26,12 +26,15 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Expression> class.
 
 =over 4
 
@@ -39,7 +42,7 @@ BEGIN {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -56,7 +59,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -79,11 +82,12 @@ sub evaluate {
 	my $self	= shift;
 	my $query	= shift;
 	my $bound	= shift;
+	my $context	= shift;
 	my $op		= $self->op;
 	my ($data)	= $self->operands;
 	if ($op eq '+' or $op eq '-') {
 		my $l		= $data->isa('RDF::Query::Algebra')
-					? $data->evaluate( $query, $bound, @_ )
+					? $data->evaluate( $query, $bound, $context, @_ )
 					: ($data->isa('RDF::Query::Node::Variable'))
 						? $bound->{ $data->name }
 						: $data;
@@ -97,7 +101,7 @@ sub evaluate {
 		return RDF::Query::Node::Literal->new( $value, undef, $l->literal_datatype );
 	} elsif ($op eq '!') {
 		my $alg		= RDF::Query::Expression::Function->new( "sparql:ebv", $data );
-		my $bool	= $alg->evaluate( $query, $bound, @_ );
+		my $bool	= $alg->evaluate( $query, $bound, $context, @_ );
 		if ($bool->literal_value eq 'true') {
 			return RDF::Query::Node::Literal->new( 'false', undef, 'http://www.w3.org/2001/XMLSchema#boolean' );
 		} else {
@@ -105,7 +109,7 @@ sub evaluate {
 		}
 	} else {
 		warn "unknown unary op: $op";
-		die;
+		throw RDF::Query::Error::ExecutionError -text => "Unknown unary op '$op'";
 	}
 }
 

@@ -8,6 +8,7 @@ REQUIREMENTS
 
      * DateTime
      * DateTime::Format::W3CDTF
+     * Digest::SHA
      * Digest::SHA1
      * Error
      * I18N::LangTags
@@ -36,6 +37,156 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 2.905 (2011-02-18)
+
+     * BUG FIXES
+       Fixed mistaken case sensitivity of COALESCE, BNODE, CONCAT, and SUBSTR keywords in SPARQL 1.1 parser.
+       Fixed parsing ambiguity between MIN aggregate and MINUTES function.
+       Fixed Xpath fn:timezone-from-dateTime function return for UTC timezones.
+       Fixed RDF::Query::Algebra::Project->as_sparql handling of binary select expressions.
+       Fixed RDF::Query::Algebra::Construct->sse serialization to include construct triples.
+       Updated handling of BIND() to not close group scope (which was applying filters in the wrong place).
+       Fixed RDF::Query::Parser::SPARQL11 to handle whitespace between tokens in 'INSERT DATA' and 'DELETE DATA'.
+       Fixed RDF::Query::Parser::SPARQL11 to handle empty ModifyTemplates.
+       Fixed SPARQL 1.1 parser to properly set relevant datasets for update operations.
+       Fixed plan code for zero-length paths to return RDF::Query::Node-based results (not Trine-based).
+       Fixed bug in RDF::Query::Plan::Clear when attempting to clear the default graph.
+       Fixed exception throwing on numeric binary expression eval without numeric literal arguments.
+       Updated RDF::Query::Plan to handle update operations with different datasets for matching (USING clause).
+     * NEW FEATURES
+       Added SPARQL 1.1 numeric functions: ABS, CEIL, FLOOR, ROUND, RAND
+       Added SPARQL 1.1 string functions: CONCAT, SUBSTR, STRLEN, UCASE, LCASE, ENCODE_FOR_URI, CONTAINS, STRSTARTS, STRENDS
+       Added SPARQL 1.1 date functions: NOW, TIMEZONE, TZ, YEAR, MONTH, DAY, HOURS, MINUTES, SECONDS
+       Added SPARQL 1.1 hashing functions: MD5, SHA1, SHA224, SHA256, SHA384, and SHA512
+       Added RDF::Query::Functions->install_function method, and implementations for fn:compare, fn:concat, and fn:substring.
+       Updated RDF::Query->execute_with_named_graphs to accept optional arguments to be passed to C<< execute >>.
+       Added support for CONSTRUCT WHERE syntax shortcut.
+       Added support for SILENT modifier to SERVICE patterns.
+       Added SILENT flag in RDF::Query::Algebra::Service.
+       Added initial code to create SPIN serializations of queries.
+       Added RDF::Query::Node::Literal->type_list method.
+     * ENHANCEMENTS
+       Updated xt/dawg-syntax11.t to find more syntax queries in the dawg test data.
+       SPARQL 1.1 parser now throws errors for more classes of syntactically invalid queries (repeated expression aliases, wrong number of BINDINGS values, SELECT * with use of grouping).
+       Added support for non-strict comparisons of xsd:strings in RDF::Query::Node::Literal (based on $LAZY_COMPARISONS variable).
+     * OTHER
+       Major refactor of xt/dawg-eval11.t test harness.
+       Updated required version of Test::More to 0.88 (0.86 doesn't have done_testing() used in t/store-config.t).
+       Updated RDF::Query::Expression::Function->evaluate to throw an error if no function coderef is found.
+
+  Version 2.904 (2010-11-23)
+
+     * Added SPARQL 1.1 Update shortcut syntax support for COPY, MOVE, and ADD graph operations.
+     * Added 'set prefix' and 'time' commands to rqsh.
+     * Added string concatenation overloading of binary +.
+     * Added xpath function implementations.
+     * Fixed bug in property path evaluation on encountering blank path nodes.
+     * Fixed use of binary '*' in FILTER without numeric data in t/resultforms.t.
+     * Fixed bin/dawg11-status.pl to only load SPARQL 1.1 earl result files.
+     * Fixed RDF::Query::Plan::Update to ignore non-ground triples (unbound variables don't act as wildcards).
+     * Fixed handling of named graph data in insert/delete patterns of update operations.
+     * Updated RDF::Query::Util to use RDF::Trine::Model->temporary_model and guess an appropriate parser based on filenames.
+     * Fixed bug in RDF::Query::Plan::Construct that wasn't giving each result a new set of blank nodes (RT 63155).
+     * Updated SYNOPSIS and execute() and execute_plan() methods POD (RT 63153 comment from Ivan Shmakov).
+     * Updated documentation to explicitly discuss inherited methods due to subclassing.
+     * Fixed RDF::Query::Algebra::Sequence->sse to serialize operations in proper order.
+     * Added $silent argument to RDF::Query::Algebra::Clear constructor.
+     * Updated namespace URI in RDF::Query::Functions::Jena to <http://jena.hpl.hp.com/ARQ/function#>.
+     * Updated namespace URI in RDF::Query::Functions::Xpath to <http://www.w3.org/2005/xpath-functions#>.
+     * Updated xt/dawg-eval11.t to align with updated test case manifest schemas.
+     * Updated xt/dawg-eval11.t to prevent test cases with missing files from emitting failures (now skipped).
+
+  Version 2.903 (2010-11-03)
+
+     * SPARQL 1.1
+     	* New features
+     		* Added support for BIND(expr AS ?var) operator.
+     		* Added isNumeric built-in function, checking for proper datatype and valid lexical forms for numerics.
+     	* Updates
+     		* Updated SPARQL 1.1 parser to handle WITH clauses with PrefixedNames.
+     		* SPARQL 1.1 parser now sets error and returns if no query string is supplied.
+     		* Added more exception handling in RDF::Query::Parser::SPARQL11.
+     		* Updated CLEAR and DROP handling in SPARQL 1.1 parser and engine to handle 'NAMED' and 'ALL' variants.
+     		* Renamed 'binding_variables' methods to 'potentially_bound' to align with current SPARQL 1.1 terminology.
+     		* Results returned by property path plans are now RDF::Query::VariableBindings objects and are properly projected.
+     		* The query planner now interprets simple paths as basic graph patterns.
+     		* Removed Algebra and Plan classes for Not and Exists operations (now handled in other classes).
+     		* Updated RDF::Query::Plan::Extend to drop the extended variable binding if evaluating the extension yields an error.
+     		* Updated RDF::Query::Plan::Update to accept delete patterns with variables.
+     		* Updated subquery plan objects to use a sub-plan, not a full query object.
+     	* Bug fixes
+     		* Fixed SPARQL 1.1 parser bug that was returning partial data from a failed parse call.
+     		* Fixed SPARQL 1.1 parser bug for queries with multiple FILTERs in a GGP including an EXISTS filter.
+     		* Fixed SPARQL 1.1 parser bug for DROP/CLEAR queries.
+     		* Fixed SPARQL 1.1 parser typo of 'SEPARATOR' argument to GROUP_CONCAT aggregate.
+     		* Fixed SPARQL 1.1 parser to handle FITLERS to the left of MINUS/OPTIONAL and allow projecting '*' with other vars/epressions.
+     		* Fixed SPARQL 1.1 parser case sensitivity of project expression 'AS' token.
+     		* Fixed SPARQL 1.1 parser handling of of subqueries within GRAPH blocks.
+     		* Fixed miscellaneous bugs and improved performance of parsing SPARQL 1.1 queries.
+     		* Made parsing of very large triple blocks non-recursive in SPARQL 1.1 parser.
+     		* Fixed COALESCE function to handle errors properly.
+     		* Fixed RDF::Query::Plan::Aggregate to extend results using AliasExpressions from HAVING clauses.
+     		* Fixed bug that was ignoring GROUP BY clauses when no aggregate operations were present.
+     		* Fixed bad looping on start node of unbounded property paths.
+     		* Fixed bug in query planning of '^' property paths.
+     		* Fixed zero-length property path evaluation within GRAPH blocks.
+     		* Removed plan duplication of zero-length case in '*' property paths.
+     		* Fixed handling of named graphs within subqueries (changes to active graph handling in the query planner).
+     		* Fixed type-promotion and handling of numeric types in aggregate handling.
+     		* Fixed RDF::Query::Algebra::Update->as_sparql to handle INSERT/DELETE updates properly.
+     		* Fixed RDF::Query::Plan::Aggregate->sse to allow handling of (non-blessed, scalar) '*' columns.
+	
+     * Query Engine
+     	* Added ability to pass through arguments to the query planner in RDF::Query->prepare.
+     	* Updated RDF::Query::Node::Literal::_cmp to handle literals that fail to parse as DateTime objects.
+     	* Updated RDF::Query::Plan::Limit to use the limit accessor internally.
+     	* RDF::Query::Plan::NamedGraph now uses lazy iterator for graph names.
+     	* Updated RDF::Query::VariableBindings to subclass the new RDF::Trine::VariableBindings.
+     	* RDF::Query::Algebra::Project now implements bind_variables().
+     	* Updated RDF::Query->describe to use $model->bounded_description instead of simply outgoing arcs.
+     	* Fixed bug in evaluation of function expressions in which the execution context object was lost (causing EXISTS filters to fail).
+     	* Fixed optimization of COUNT(*) over 1-triple BGPs to keep the variable binding for the pseudo-variable ?COUNT(*).
+     	* Fixed sse serialization in RDF::Query::Algebra::Distinct.
+     	* Fixed RDF::Query::Plan::Join::PushDownNestedLoop to close sub-plans in close() method.
+	
+     * rqsh - RDF::Query Shell
+     	* Added ability to show the parsed algebra with 'parse' command.
+     	* Added abiility to show the query execution plan with the 'explain' command.
+     	* Added ability to change the RDF serializer with the 'serializer' command.
+     	* Added ability to initialize new stores with the 'init' command.
+     	* Added ability to change underlying store with the 'use' command.
+     	* Added 'help' command.
+     	* Updated packaging to install rqsh script (renamed from old bin/rqsh.pl).
+     	* Updated to catch errors thrown while trying to create new storage backends (e.g. DBI->connect failing).
+     	* rqsh now defaults to read-write models.
+     	* rqsh now sets a base URI for the current working directory.
+     	* Password input now doesn't echo to the terminal.
+     	* Filename input now autocompletes via Term::ReadLine.
+	
+     * Warning and Error Handling
+     	* Replaced calls to die with throwing exceptions.
+     	* RDF::Query->new now warns about unrecognized options.
+     	* DATATYPE() now throws an exception unless passed a valid node object.
+     	* RDF::Query::Expresion::Binary now throws exceptions on numeric comparisions with non-numeric operands.
+     	* Fixed error message in RDF::Query::Plan::NamedGraph.
+     	* Added trace debugging to RDF::Query::Plan::Union.
+     	* Added trace debugging to RDF::Query::Plan::Project.
+     	* Added trace debugging to RDF::Query::Plan::Path.
+	
+     * Tests and Miscellany
+     	* Added SPARQL 1.1 syntax and eval test harnesses.
+     	* Fixed bug in xt/dawg-eval11.t parsing of srx files containing literal values that evaluate to false in perl (e.g. '0').
+     	* Fixed turtle output for rdfs:comments in xt/dawg/earl.pl.
+     	* Moved developer tests from t/ to xt/.
+     	* Refactored RDF::Query::Functions into several auto-loaded sub-packages via Module::Pluggable (patch from tobyink).
+     	* Removed references to the now-deprecated mac.com in network-based tests.
+     	* Updated expected values in t/queryform-describe.t for results using bounded descriptions.
+     	* Updated RDF::Query::Util to look for .prefix-cmd cache of common namespace names.
+     	* Updated RDF::Query::Util::cli_parse_args to accept '-r' as a read-only flag.
+     	* Updated required version of RDF::Trine to 0.126.
+     	* Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds.
+     	* Made code updates to improve performance based on profiling.
 
   Version 2.902 (2010-07-02)
 
@@ -942,7 +1093,7 @@ VERSION HISTORY
 
 COPYRIGHT
 
-   Copyright (C) 2005-2009 Gregory Williams. All rights reserved.
+   Copyright (C) 2005-2010 Gregory Williams. All rights reserved.
    This program is free software; you can redistribute it and/or
    modify it under the same terms as Perl itself.
 

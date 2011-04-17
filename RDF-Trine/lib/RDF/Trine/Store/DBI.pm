@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.124
+This document describes RDF::Trine::Store::DBI version 0.134
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.124";
+	$VERSION	= "0.134";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -55,6 +55,9 @@ BEGIN {
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Store> class.
 
 =over 4
 
@@ -70,7 +73,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<store> key must be C<DBI> for this backend.
+The C<storetype> key must be C<DBI> for this backend.
 
 These keys should also be used:
 
@@ -98,11 +101,7 @@ The password of the database user.
 
 Initialize the store with a L<DBI::db> object.
 
-
 =cut
-
-
-
 
 sub new {
 	my $class	= shift;
@@ -120,6 +119,14 @@ sub new {
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		$l->trace("got a DBD handle");
 		$dbh		= shift;
+		my $name	= $dbh->get_info(17);
+		if ($name eq 'MySQL') {
+			$class	= 'RDF::Trine::Store::DBI::mysql';
+		} elsif ($name eq 'PostgreSQL') {
+			$class	= 'RDF::Trine::Store::DBI::Pg';
+		} elsif ($name eq 'SQLite') {
+			$class	= 'RDF::Trine::Store::DBI::SQLite';
+		}
 	} else {
 		my $dsn		= shift;
 		my $user	= shift;
@@ -130,6 +137,8 @@ sub new {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
 		} elsif ($dsn =~ /^DBI:SQLite:/) {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
+			$user	= '';
+			$pass	= '';
 		}
 		$l->trace("Connecting to $dsn ($user, $pass)");
 		$dbh		= DBI->connect( $dsn, $user, $pass );
@@ -144,7 +153,7 @@ sub new {
 		statements_table_prefix	=> 'Statements',
 		%args
 	}, $class );
-	
+	$self->init();
 	return $self;
 }
 
@@ -164,12 +173,43 @@ sub _new_with_config {
 			    $config->{password} );
 }
 
-
 sub _new_with_object {
 	my $class	= shift;
 	my $obj		= shift;
 	return unless (blessed($obj) and $obj->isa('DBI::db'));
 	return $class->new( $obj );
+}
+
+=item C<< nuke >>
+
+Permanently removes the store and its data. Note that because of this module's
+use of the Redland schema, removing a store with this method will only delete
+the Statements table and remove the model's entry in the Models table. The node
+entries in the Literals, Bnodes, and Resources tables will still exist.
+
+=cut
+
+sub nuke {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= _mysql_hash( $name );
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
+	$dbh->do( "DROP TABLE Statements${id};" ) || do { $l->trace( $dbh->errstr ); return undef };
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
 }
 
 =item C<< temporary_store >>
@@ -185,6 +225,22 @@ sub temporary_store {
 	return $self;
 }
 
+=item C<< clear_restrictions >>
+
+Clear's the restrictions put on the binding of node types to the different
+statement positions. By default, the subject position is restricted to resources
+and blank nodes, and the predicate position to only resources. Calling this
+method will allow any node type in any statement position.
+
+=cut
+
+sub clear_restrictions {
+	my $self	= shift;
+	foreach my $pos (qw(subject predicate object context)) {
+		$self->{restrictions}{$pos}   = [];
+	}
+	return;
+}
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
@@ -340,7 +396,7 @@ sub get_pattern {
 				$bindings{ $nodename }	= undef;
 			}
 		}
-		return \%bindings;
+		return RDF::Trine::VariableBindings->new( \%bindings );
 	};
 	
 	my @args;
@@ -378,7 +434,8 @@ sub get_contexts {
 			my $uri		= $self->_column_name( 'URI' );
 			my $name	= $self->_column_name( 'Name' );
 			my $value	= $self->_column_name( 'Value' );
-			if ($row->{ Context } == 0) {
+			my $ctx		= $self->_column_name( 'Context' );
+			if ($row->{ $ctx } == 0) {
 				next;
 # 				return RDF::Trine::Node::Nil->new();
 			} elsif ($row->{ $uri }) {
@@ -436,9 +493,9 @@ sub add_statement {
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( @values );
 	unless ($sth->fetch) {
-		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (%s,%s,%s,%s)", @values );
+		my $sql		= sprintf( "INSERT INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
 		my $sth		= $dbh->prepare( $sql );
-		$sth->execute();
+		$sth->execute(@values);
 	}
 }
 
@@ -519,7 +576,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-# 	Carp::confess unless (blessed($node));
+	return 1 if ($node->is_nil);
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -541,13 +598,14 @@ sub _add_node {
 		}
 	}
 	
-	my $sql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
-	my $sth	= $dbh->prepare( $sql );
-	$sth->execute( @values{ @cols } );
+	my $ssql	= "SELECT 1 FROM ${table} WHERE " . join(' AND ', map { join(' = ', $_, '?') } @cols);
+	my $sth	= $dbh->prepare( $ssql );
+	my @values	= map {"$_"} @values{ @cols };
+	$sth->execute( @values );
 	unless ($sth->fetch) {
 		my $sql	= "INSERT INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 		my $sth	= $dbh->prepare( $sql );
-		$sth->execute( map "$_", @values{ @cols } );
+		$sth->execute( @values );
 	}
 }
 
@@ -1009,7 +1067,7 @@ sub _sql_for_equality_expr {
 sub _sql_for_triple { &_sql_for_statement; }
 sub _sql_for_quad { &_sql_for_statement; }
 {
-	my %restrictions	= (
+	my %default_restrictions	= (
 		subject		=> ['literal'],
 		predicate	=> [qw(literal blank)],
 		object		=> [],
@@ -1022,6 +1080,10 @@ sub _sql_for_statement {
 	my $context	= shift;
 	my %args	= @_;
 	
+	my %restrictions = defined $self->{restrictions}
+		? %{ $self->{restrictions} }
+		: %default_restrictions;
+
 	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
 	no warnings 'uninitialized';
 	if ($args{semantics} eq 'triple') {
@@ -1173,7 +1235,10 @@ sub _mysql_node_hash {
 		my $value	= $node->blank_identifier;
 		$data	= 'B' . $value;
 	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
-		my $value	= $node->literal_value || '';
+		my $value	= $node->literal_value;
+		unless (defined($value)) {
+			$value	= '';
+		}
 		my $lang	= $node->literal_value_language || '';
 		my $dt		= $node->literal_datatype || '';
 		no warnings 'uninitialized';
@@ -1300,48 +1365,62 @@ sub init {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
-	$dbh->begin_work;
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Literals (
-            ID NUMERIC(20) PRIMARY KEY,
-            Value text NOT NULL,
-            Language text NOT NULL DEFAULT '',
-            Datatype text NOT NULL DEFAULT ''
-        );
+	unless ($self->_table_exists("Statements${id}")) {
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+			CREATE TABLE Statements${id} (
+				Subject NUMERIC(20) NOT NULL,
+				Predicate NUMERIC(20) NOT NULL,
+				Object NUMERIC(20) NOT NULL,
+				Context NUMERIC(20) NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Resources (
-            ID NUMERIC(20) PRIMARY KEY,
-            URI text NOT NULL
-        );
+	}
+	
+	unless ($self->_table_exists("Literals")) {
+		$dbh->begin_work;
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Literals (
+				ID NUMERIC(20) PRIMARY KEY,
+				Value text NOT NULL,
+				Language text NOT NULL DEFAULT '',
+				Datatype text NOT NULL DEFAULT ''
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Bnodes (
-            ID NUMERIC(20) PRIMARY KEY,
-            Name text NOT NULL
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Resources (
+				ID NUMERIC(20) PRIMARY KEY,
+				URI text NOT NULL
+			);
 END
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Models (
-            ID NUMERIC(20) PRIMARY KEY,
-            Name text NOT NULL
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Bnodes (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
 END
-    
-	$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-        CREATE TABLE Statements${id} (
-            Subject NUMERIC(20) NOT NULL,
-            Predicate NUMERIC(20) NOT NULL,
-            Object NUMERIC(20) NOT NULL,
-            Context NUMERIC(20) NOT NULL DEFAULT 0,
-            PRIMARY KEY (Subject, Predicate, Object, Context)
-        );
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE Models (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
 END
-
+		
+		$dbh->commit or warn $dbh->errstr;
+	}
+	
 	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
 	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-	
-	$dbh->commit or die $dbh->errstr;
+}
+
+sub _table_exists {
+	my $self	= shift;
+	my $name	= shift;
+	my $dbh		= $self->{dbh};
+	my $type	= 'TABLE';
+	my $sth		= $dbh->table_info(undef, undef, $name, 'TABLE');
+	my $row		= $sth->fetchrow_hashref;
+	return ref($row) ? 1 : 0;
 }
 
 sub _cleanup {
@@ -1355,6 +1434,21 @@ sub _cleanup {
 			$dbh->do( "DELETE FROM Models WHERE Name = ?", undef, $name );
 		}
 	}
+}
+
+sub _begin_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	$dbh->{AutoCommit}	= 0;
+}
+
+sub _end_bulk_ops {
+	my $self			= shift;
+	my $dbh				= $self->dbh;
+	unless ($dbh->{AutoCommit}) {
+		$dbh->commit;
+	}
+	$dbh->{AutoCommit}	= 1;
 }
 
 sub DESTROY {
@@ -1383,7 +1477,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

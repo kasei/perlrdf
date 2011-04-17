@@ -43,7 +43,7 @@ $model->add_statement( $st3 );
 	isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
 	
 	my (@rows)	= $iter->get_all;
-	is_deeply( \@rows, [ { x => $g } ], '1-triple get_pattern results' );
+	is_deeply( \@rows, [ RDF::Trine::VariableBindings->new({ x => $g }) ], '1-triple get_pattern results' );
 }
 
 {

@@ -4,7 +4,6 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Data::Dumper;
 use Test::More tests => 42;
 use Scalar::Util qw(reftype blessed);
 

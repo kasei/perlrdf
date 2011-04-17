@@ -1,7 +1,6 @@
 use Test::More tests => 53;
 use strict;
 use warnings;
-use Data::Dumper;
 
 # use lib qw(. t);
 # BEGIN { require "models.pl"; }
@@ -152,7 +151,7 @@ END
 		while (my $row = $iter->next) {
 			like( $row->{name}, qr/Bob|Alice/, 'expected property path value restricted to graph' );
 		}
-		is( $iter->count, 2, 'expected result count' );
+		is( $iter->seen_count, 2, 'expected result count' );
 	}
 	
 	{
@@ -181,7 +180,7 @@ END
 			my $pat	= $expect{ $g };
 			like( $row->{name}, $pat, 'expected property path value for graph ' . $g );
 		}
-		is( $iter->count, 3, 'expected result count' );
+		is( $iter->seen_count, 3, 'expected result count' );
 	}
 	
 }
@@ -240,10 +239,9 @@ END
 				isa_ok( $n, 'RDF::Query::Node::Resource' );
 			}
 			my @got	= map { $_->uri_value } @values;
-#			warn Dumper(\@got, \%expect);
 			is_deeply( \@got, $expect{$got[0]}, 'expected results from GRAPH ?g zero-length property path' );
 		}
-		is( $iter->count, 2, 'expected result count' );
+		is( $iter->seen_count, 2, 'expected result count' );
 	}
 
 	{
@@ -265,10 +263,9 @@ END
 			isa_ok( $value, 'RDF::Query::Node::Resource' );
 			my $got		= $value->uri_value;
 			my $expect	= $expect{ $row->{g}->uri_value };
-#			warn Dumper(\@got, \%expect);
 			is_deeply( $row, $expect, 'expected results from GRAPH ?g zero-length property path with bound term' );
 		}
-		is( $iter->count, 1, 'expected result count' );
+		is( $iter->seen_count, 1, 'expected result count' );
 	}
 
 	{

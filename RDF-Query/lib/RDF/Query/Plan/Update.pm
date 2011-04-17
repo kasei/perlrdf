@@ -7,9 +7,12 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.902.
+This document describes RDF::Query::Plan::Update version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -33,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -82,7 +85,7 @@ sub execute ($) {
 		}
 		
 		my @operations	= (
-			[$delete_template, 'remove_statement'],
+			[$delete_template, 'remove_statements'],
 			[$insert_template, 'add_statement'],
 		);
 		
@@ -90,42 +93,59 @@ sub execute ($) {
 			my ($template, $method)	= @$data;
 			$l->trace("UPDATE running $method");
 			foreach my $row (@rows) {
-				my (@triples);
-				if ($template) {
-					foreach my $p ($template->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
-						my @t	= $p->triples;
-						push(@triples, @t);
-					}
-				}
+				my @triples	= blessed($template) ? $template->quads : ();
 				
-				foreach my $t (@triples) {
+				TRIPLE: foreach my $t (@triples) {
 					my @nodes	= $t->nodes;
 					for my $i (0 .. $#nodes) {
 						if ($nodes[$i]->isa('RDF::Trine::Node::Variable')) {
 							my $name	= $nodes[$i]->name;
-							$nodes[$i]	= $row->{ $name };
+							if ($method eq 'remove_statements') {
+								if (exists($row->{ $name })) {
+									$nodes[$i]	= $row->{ $name };
+								} else {
+									next TRIPLE;
+								}
+							} else {
+								$nodes[$i]	= $row->{ $name };
+							}
 						} elsif ($nodes[$i]->isa('RDF::Trine::Node::Blank')) {
 							my $id	= $nodes[$i]->blank_identifier;
 							unless (exists($self->[0]{blank_map}{ $id })) {
-								$self->[0]{blank_map}{ $id }	= RDF::Trine::Node::Blank->new();
+								if ($method eq 'remove_statements') {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Variable->new();
+								} else {
+									$self->[0]{blank_map}{ $id }	= RDF::Query::Node::Blank->new();
+								}
 							}
 							$nodes[$i]	= $self->[0]{blank_map}{ $id };
 						}
 					}
-					my $ok	= 1;
-					foreach (@nodes) {
-						if (not blessed($_)) {
-							$ok	= 0;
-						} elsif ($_->isa('RDF::Trine::Node::Variable')) {
-							$ok	= 0;
+# 					my $ok	= 1;
+					foreach my $i (0 .. 3) {
+						my $n	= $nodes[ $i ];
+						if (not blessed($n)) {
+							if ($i == 3) {
+								$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
+							} else {
+								next TRIPLE;
+# 								$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+							}
+# 							$ok	= 0;
+# 						} elsif ($n->isa('RDF::Trine::Node::Variable')) {
+# 							$ok	= 0;
 						}
 					}
-					next unless ($ok);
+# 					next unless ($ok);
 					my $st	= (scalar(@nodes) == 4)
 							? RDF::Trine::Statement::Quad->new( @nodes )
 							: RDF::Trine::Statement->new( @nodes );
 					$l->trace( "$method: " . $st->as_string );
-					$context->model->$method( $st );
+					if ($method eq 'remove_statements') {
+						$context->model->$method( $st->nodes );
+					} else {
+						$context->model->$method( $st );
+					}
 				}
 			}
 		}
@@ -265,6 +285,43 @@ sub plan_node_data {
 	return ($self->delete_template, $self->insert_template, $self->pattern);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}$type\n";
+	
+	if (my $d = $self->delete_template) {
+		$string	.= "${indent}${s}delete:\n";
+		$string	.= $d->explain( $s, $count+2 );
+	}
+
+	if (my $i = $self->insert_template) {
+		$string	.= "${indent}${s}insert:\n";
+		$string	.= $i->explain( $s, $count+2 );
+	}
+
+	if (my $p = $self->pattern) {
+		if ($p->isa('RDF::Query::Plan::Constant') and $p->is_unit) {
+			
+		} else {
+			$string	.= "${indent}${s}where:\n";
+			$string	.= $p->explain( $s, $count+2 );
+		}
+	}
+	
+	return $string;
+}
+
 =item C<< graph ( $g ) >>
 
 =cut
@@ -274,7 +331,7 @@ sub graph {
 	my $g		= shift;
 	my $label	= $self->graph_labels;
 	my $url		= $self->url->uri_value;
-	die;
+	throw RDF::Query::Error::ExecutionError -text => "RDF::Query::Plan::Update->graph not implemented.";
 # 	$g->add_node( "$self", label => "delete" . $self->graph_labels );
 # 	$g->add_node( "${self}$url", label => $url );
 # 	$g->add_edge( "$self" => "${self}$url", label => 'url' );

@@ -7,7 +7,7 @@ RDF::Query::Algebra::BasicGraphPattern - Algebra class for BasicGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::BasicGraphPattern version 2.902.
+This document describes RDF::Query::Algebra::BasicGraphPattern version 2.905.
 
 =cut
 
@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use Scalar::Util qw(refaddr reftype);
+use Scalar::Util qw(blessed refaddr reftype);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -30,12 +30,15 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -81,9 +84,37 @@ sub triples {
 	return @$self;
 }
 
+=item C<< quads >>
+
+Returns a list of the (implicit) quads belonging to this BGP.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @triples	= $self->triples;
+	my @quads;
+	foreach my $t (@triples) {
+		my @nodes	= $t->nodes;
+		foreach my $i (0 .. 3) {
+			my $n	= $nodes[ $i ];
+			if (not blessed($n)) {
+				if ($i == 3) {
+					$nodes[ $i ]	= RDF::Trine::Node::Nil->new();
+				} else {
+					$nodes[ $i ]	= RDF::Query::Node::Variable->new();
+				}
+			}
+		}
+		my $st	= RDF::Trine::Statement::Quad->new( @nodes );
+		push(@quads, $st);
+	}
+	return @quads;
+}
+
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -100,9 +131,30 @@ sub sse {
 	);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}basic graph pattern\n";
+	
+	foreach my $t ($self->triples) {
+		$string	.= "${indent}${s}" . $t->as_sparql . "\n";
+	}
+	return $string;
+}
+
+
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -141,6 +193,21 @@ sub as_hash {
 	};
 }
 
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my @t		= $self->triples;
+	my @nodes	= map { $_->as_spin( $model ) } @t;
+	return @nodes;
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.
@@ -162,16 +229,16 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->triples);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	return RDF::Query::_uniq(map { $_->binding_variables } $self->triples);
+	return RDF::Query::_uniq(map { $_->potentially_bound } $self->triples);
 }
 
 =item C<< definite_variables >>
@@ -206,7 +273,7 @@ sub _check_duplicate_blanks {
 
 =item C<< connected >>
 
-Returns true if the pattern is connected through shared variables, fase otherwise.
+Returns true if the pattern is connected through shared variables, false otherwise.
 
 =cut
 

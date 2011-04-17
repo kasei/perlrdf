@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.01_03.
+This document describes RDF::Endpoint version 0.02.
 
 =head1 SYNOPSIS
 
@@ -18,7 +18,7 @@ See L<Plack::Handler> for more details.
 
 When this module is used to create a SPARQL endpoint, configuration variables
 are loaded using L<Config::JFDI>. An example configuration file rdf_endpoint.json
-is included with this package. Valid configuration keys include:
+is included with this package. Valid top-level configuration keys include:
 
 =over 4
 
@@ -27,6 +27,13 @@ is included with this package. Valid configuration keys include:
 A string used to define the underlying L<RDF::Trine::Store> for the endpoint.
 The string is used as the argument to the L<RDF::Trine::Store->new_with_string>
 constructor.
+
+=item endpoint
+
+A hash of endpoint-specific configuration variables. Valid keys for this hash
+include:
+
+=over 8
 
 =item update
 
@@ -46,6 +53,8 @@ to include in the service description provided by the endpoint if no query is
 included for execution. The boolean values 'default' and 'named_graphs' indicate
 that the respective SPARQL dataset graphs should be described by the service
 description.
+
+=back
 
 =back
 
@@ -74,17 +83,19 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.01';
+our $VERSION	= '0.02';
 
-use RDF::Query 2.900;
-use RDF::Trine 0.124 qw(statement iri blank literal);
+use RDF::Query 2.905;
+use RDF::Trine 0.134 qw(statement iri blank literal);
 
 use Encode;
 use File::Spec;
+use Data::Dumper;
+use Digest::MD5 qw(md5_hex);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
@@ -100,20 +111,44 @@ my $NAMESPACES	= {
 	scovo		=> 'http://purl.org/NET/scovo#',
 	sd			=> 'http://www.w3.org/ns/sparql-service-description#',
 	jena		=> 'java:com.hp.hpl.jena.query.function.library.',
+	arq			=> 'http://jena.hpl.hp.com/ARQ/function#',
 	ldodds		=> 'java:com.ldodds.sparql.',
+	fn			=> 'http://www.w3.org/2005/xpath-functions#',
+	sparql		=> 'http://www.w3.org/ns/sparql#',
 };
 
-=item C<< new ( $conf ) >>
+=item C<< new ( \%conf ) >>
 
-Returns a new Endpoint object. C<< $conf >> should be a HASH reference with
+=item C<< new ( $model, \%conf ) >>
+
+Returns a new Endpoint object. C<< \%conf >> should be a HASH reference with
 configuration settings.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $conf	= shift;
-	return bless( { conf => $conf }, $class );
+	my $arg		= shift;
+	my ($model, $config);
+	if (blessed($arg) and $arg->isa('RDF::Trine::Model')) {
+		$model	= $arg;
+		$config	= shift;
+		delete $config->{store};
+	} else {
+		$config		= $arg;
+		my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+		$model		= RDF::Trine::Model->new( $store );
+	}
+	unless ($config->{endpoint}) {
+		$config->{endpoint}	= { %$config };
+	}
+	my $self	= bless( {
+		conf		=> $config,
+		model		=> $model,
+		start_time	=> time,
+	}, $class );
+	$self->service_description();	# pre-generate the service description
+	return $self;
 }
 
 =item C<< run ( $req ) >>
@@ -128,10 +163,7 @@ sub run {
 	my $req		= shift;
 	my $config	= $self->{conf};
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
-	
-	
-	my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
-	my $model	= RDF::Trine::Model->new( $store );
+	my $model	= $self->{model};
 	
 	my $content;
 	my $response	= Plack::Response->new;
@@ -151,30 +183,60 @@ sub run {
 <h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>
 END
 		}
+		$response->body($content);
 		return $response;
 	}
 	
 	
 	my $headers	= $req->headers;
-	if (my $type = $req->param('media-type')) {
+	my $type	= $headers->header('Accept') || 'application/sparql-results+xml';
+	if (my $t = $req->param('media-type')) {
+		$type	= $t;
 		$headers->header('Accept' => $type);
 	}
 	
-	if (my $sparql = $req->param('query')) {
+	my $ae		= $req->headers->header('Accept-Encoding') || '';
+	
+	my $sparql;
+	my $ct	= $req->header('Content-type');
+	if (defined($ct) and $ct eq 'application/sparql-query') {
+		$sparql	= $req->content;
+	} elsif (defined($ct) and $ct eq 'application/sparql-update') {
+		if ($config->{endpoint}{update} and $req->method eq 'POST') {
+			$sparql	= $req->content;
+		}
+	} elsif ($req->param('query')) {
+		$sparql = $req->param('query');
+	} elsif ($req->param('update')) {
+		if ($config->{endpoint}{update} and $req->method eq 'POST') {
+			$sparql = $req->param('update');
+		}
+	}
+	
+	if ($sparql) {
 		my %args;
-		$args{ update }		= 1 if ($config->{update} and $req->method eq 'POST');
-		$args{ load_data }	= 1 if ($config->{load_data});
+		$args{ update }		= 1 if ($config->{endpoint}{update} and $req->method eq 'POST');
+		$args{ load_data }	= 1 if ($config->{endpoint}{load_data});
 		
 		my @default	= $req->param('default-graph-uri');
 		my @named	= $req->param('named-graph-uri');
 		if (scalar(@default) or scalar(@named)) {
 			delete $args{ load_data };
-			$model	= RDF::Trine::Model->temporary_model;
+			$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
 			foreach my $url (@named) {
 				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
 			}
 			foreach my $url (@default) {
 				RDF::Trine::Parser->parse_url_into_model( $url, $model );
+			}
+		}
+		
+		my $match	= $headers->header('if-none-match') || '';
+		my $etag	= md5_hex( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
+		if (length($match)) {
+			if (defined($etag) and ($etag eq $match)) {
+				$response->status(304);
+				return $response;
 			}
 		}
 		
@@ -186,6 +248,9 @@ END
 			my $iter	= $query->execute_plan( $plan, $ctx );
 			if ($iter) {
 				$response->status(200);
+				if (defined($etag)) {
+					$response->headers->header( ETag => $etag );
+				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 					my @variants	= (['text/html', 1.0, 'text/html']);
 					my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -206,19 +271,19 @@ END
 					}
 				} else {
 					my @variants	= (
-						['text/html', 1.0, 'text/html'],
-						['text/plain', 0.9, 'text/plain'],
+						['text/html', 0.99, 'text/html'],
+						['application/sparql-results+xml', 1.0, 'application/sparql-results+xml'],
 						['application/json', 0.95, 'application/json'],
 						['application/rdf+xml', 0.95, 'application/rdf+xml'],
 						['text/turtle', 0.95, 'text/turtle'],
-						['application/xml', 0.9, 'application/xml'],
-						['text/xml', 0.9, 'text/xml'],
-						['application/sparql-results+xml', 0.99, 'application/sparql-results+xml'],
+						['text/xml', 0.8, 'text/xml'],
+						['application/xml', 0.4, 'application/xml'],
+						['text/plain', 0.2, 'text/plain'],
 					);
-					my $stype	= choose( \@variants, $headers ) || 'text/html';
+					my $stype	= choose( \@variants, $headers ) || 'application/sparql-results+xml';
 					if ($stype =~ /html/) {
 						$response->headers->content_type( 'text/html' );
-						my $html	= $self->iter_as_html($iter, $model);
+						my $html	= $self->iter_as_html($iter, $model, $sparql);
 						$content	= encode_utf8($html);
 					} elsif ($stype =~ /xml/) {
 						$response->headers->content_type( $stype );
@@ -256,7 +321,7 @@ END
 		}
 		push(@variants, ['text/html', 1.0, 'text/html']);
 		my $stype	= choose( \@variants, $headers );
-		my $sdmodel	= $self->service_description( $req, $model );
+		my $sdmodel	= $self->service_description();
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
 			my $s	= $sclass->new( namespaces => $NAMESPACES );
 			$response->status(200);
@@ -267,7 +332,7 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => $NAMESPACES );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$NAMESPACES } );
 			$gen->inject_document($doc, $sdmodel);
 			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
@@ -278,7 +343,6 @@ END
 	}
 	
 	my $length	= 0;
-	my $ae		= $req->headers->header('Accept-Encoding') || '';
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
 		my ($rh, $wh);
@@ -305,6 +369,17 @@ END
 	return $response;
 }
 
+=item C<< run_tag >>
+
+Returns a unique key for each instantiation of this service.
+
+=cut
+
+sub run_tag {
+	my $self	= shift;
+	return md5_hex(refaddr($self) . $self->{start_time});
+}
+
 =item C<< service_description ( $request, $model ) >>
 
 Returns a new RDF::Trine::Model object containing a service description of this
@@ -313,14 +388,23 @@ endpoint, generating dataset statistics from C<< $model >>.
 =cut
 
 sub service_description {
-	my $self	= shift;
-	my $req		= shift;
-	my $model	= shift;
-	my $config	= $self->{conf};
+	my $self		= shift;
+	my $model		= $self->{model};
+	my $etag		= $model->etag || '';
+	
+	if (exists $self->{ sd_cache }) {
+		my ($cached_etag, $model) = @{ $self->{ sd_cache } };
+		if (defined($cached_etag) and $etag eq $cached_etag) {
+			return $model;
+		}
+	}
+	
+	my $config		= $self->{conf};
 	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
 	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
 	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
 	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
+	
 	my @extensions	= grep { !/kasei[.]us/ } RDF::Query->supported_extensions;
 	my @functions	= grep { !/kasei[.]us/ } RDF::Query->supported_functions;
 	my @formats		= keys %RDF::Trine::Serializer::format_uris;
@@ -330,10 +414,10 @@ sub service_description {
 	$sdmodel->add_statement( statement( $s, $rdf->type, $sd->Service ) );
 	
 	$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Query ) );
-	if ($config->{update}) {
+	if ($config->{endpoint}{update}) {
 		$sdmodel->add_statement( statement( $s, $sd->supportedLanguage, $sd->SPARQL11Update ) );
 	}
-	if ($config->{load_data}) {
+	if ($config->{endpoint}{load_data}) {
 		$sdmodel->add_statement( statement( $s, $sd->feature, $sd->DereferencesURIs ) );
 	}
 	
@@ -347,33 +431,33 @@ sub service_description {
 		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
 	
-	my $dsd	= blank('dataset');
-	my $def	= blank('defaultGraph');
-	my $si	= blank('size');
+	my $dataset		= blank('dataset');
+	my $def_graph	= blank('defaultGraph');
 	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
-	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dsd ) );
-	$sdmodel->add_statement( statement( $dsd, $rdf->type, $sd->Dataset ) );
-	if ($config->{service_description}{default}) {
-		$sdmodel->add_statement( statement( $dsd, $sd->defaultGraph, $def ) );
-		$sdmodel->add_statement( statement( $def, $void->statItem, $si ) );
-		$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-		$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
+	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
+	if ($config->{endpoint}{service_description}{default}) {
+		$sdmodel->add_statement( statement( $dataset, $sd->defaultGraph, $def_graph ) );
+		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $sd->Graph ) );
+		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $void->Dataset ) );
+		$sdmodel->add_statement( statement( $def_graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
 	}
-	if ($config->{service_description}{named_graphs}) {
-		my @graphs	= $model->get_contexts;
-		foreach my $g (@graphs) {
+	if ($config->{endpoint}{service_description}{named_graphs}) {
+		my $iter	= $model->get_contexts;
+		while (my $g = $iter->next) {
 			my $ng		= blank();
 			my $graph	= blank();
-			my $si		= blank();
 			my $count	= $model->count_statements( undef, undef, undef, $g );
-			$sdmodel->add_statement( statement( $dsd, $sd->namedGraph, $ng ) );
+			$sdmodel->add_statement( statement( $dataset, $sd->namedGraph, $ng ) );
 			$sdmodel->add_statement( statement( $ng, $sd->name, $g ) );
 			$sdmodel->add_statement( statement( $ng, $sd->graph, $graph ) );
-			$sdmodel->add_statement( statement( $graph, $void->statItem, $si ) );
-			$sdmodel->add_statement( statement( $si, $scovo->dimension, $void->numberOfTriples ) );
-			$sdmodel->add_statement( statement( $si, $rdf->value, literal( $count, undef, $xsd->integer->uri_value ) ) );
+			$sdmodel->add_statement( statement( $graph, $rdf->type, $sd->Graph ) );
+			$sdmodel->add_statement( statement( $graph, $rdf->type, $void->Dataset ) );
+			$sdmodel->add_statement( statement( $graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
 		}
 	}
+	
+	$self->{ sd_cache }	= [ $etag, $sdmodel ];
 	return $sdmodel;
 }
 
@@ -387,46 +471,29 @@ sub iter_as_html {
 	my $self	= shift;
 	my $stream	= shift;
 	my $model	= shift;
+	my $query	= shift;
 	my $html	= "<html><head><title>SPARQL Results</title>\n"
 				. <<"END";
-		<style type="text/css">
-			table {
-				border: 1px solid #000;
-				border-collapse: collapse;
-			}
-			
-			th { background-color: #ddd; }
-			td, th {
-				padding: 1px 5px 1px 5px;
-				border: 1px solid #000;
-			}
-		</style>
+	<link rel="stylesheet" type="text/css" href="/css/docs.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
+    <script src="/js/codemirror.js" type="text/javascript"></script>
+	<script type="text/javascript" src="/js/sparql_form.js"></script>
+	<style type="text/css">
+		table {
+			border: 1px solid #000;
+			border-collapse: collapse;
+		}
+		
+		th { background-color: #ddd; }
+		td, th {
+			padding: 1px 5px 1px 5px;
+			border: 1px solid #000;
+		}
+	</style>
+</head><body>
+	<h2>Results</h2>
 END
-		$html	.= "</head><body>\n";
-	if ($stream->isa('RDF::Trine::Iterator::Graph')) {
-		$html	.= "<table>\n<tr>\n";
-		
-		my @names	= qw(subject predicate object);
-		my $columns	= scalar(@names);
-		foreach my $name (@names) {
-			$html	.= "\t<th>" . $name . "</th>\n";
-		}
-		$html	.= "</tr>\n";
-		
-		my $count	= 0;
-		while (my $row = $stream->next) {
-			$count++;
-			$html	.= "<tr>\n";
-			foreach my $k (@names) {
-				my $node	= $row->$k();
-				my $value	= $self->node_as_html($node, $model);
-				$html	.= "\t<td>" . $value . "</td>\n";
-			}
-			$html	.= "</tr>\n";
-		}
-		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
-		$html	.= "</table>\n";
-	} elsif ($stream->isa('RDF::Trine::Iterator::Boolean')) {
+	if ($stream->isa('RDF::Trine::Iterator::Boolean')) {
 		$html	.= (($stream->get_boolean) ? "True" : "False");
 	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
 		$html	.= "<table>\n<tr>\n";
@@ -449,12 +516,44 @@ END
 			}
 			$html	.= "</tr>\n";
 		}
-		$html	.= qq[<tr><th colspan="$columns">Total: $count</th></tr>];
-		$html	.= "</table>\n";
+		$html	.= <<"END";
+		<tr><th colspan="$columns">Total: $count</th></tr>
+	</table>
+	<h2>Query</h2>
+	<form id="queryform" action="" method="get">
+	<p>
+		<textarea id="query" name="query" rows="10" cols="60">${query}</textarea><br/>
+		<select id="media-type" name="media-type">
+			<option value="">Result Format...</option>
+			<option label="HTML" value="text/html">HTML</option>
+			<option label="Turtle" value="text/turtle">Turtle</option>
+			<option label="XML" value="text/xml">XML</option>
+			<option label="JSON" value="application/json">JSON</option>
+		</select>
+		<input name="submit" id="submit" type="submit" value="Submit" />
+	</p>
+	</form>
+END
 	} else {
 		
 	}
-	$html	.= "</body></html>\n";
+	$html	.= <<"END";
+<style type="text/css">
+<!--
+tbody tr:nth-child(odd) {
+	background-color: #eeeefa;
+	border-bottom: 1px solid #dddde9;
+	border-top: 1px solid #dddde9;
+}
+
+th {
+	background-color: #ddf;
+	border-bottom: 2px solid #000;
+}
+// -->
+</style>
+</body></html>
+END
 	return $html;
 }
 
@@ -509,11 +608,11 @@ sub node_as_html {
 			s/&/&amp;/g;
 			s/</&lt;/g;
 		}
-		my $link	= $config->{html}{resource_links};
+		my $link	= $config->{endpoint}{html}{resource_links};
 		my $html;
-		if ($config->{html}{embed_images}) {
+		if ($config->{endpoint}{html}{embed_images}) {
 			if ($model->count_statements( $node, iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), iri('http://xmlns.com/foaf/0.1/Image') )) {
-				my $width	= $config->{html}{image_width} || 200;
+				my $width	= $config->{endpoint}{html}{image_width} || 200;
 				$html	= qq[<img src="${uri}" width="${width}" />];
 			} else {
 				$html	= $uri;
@@ -562,6 +661,8 @@ __END__
 
 =item * L<irc://irc.perl.org/#perlrdf>
 
+=item * L<http://codemirror.net/>
+
 =back
 
 =head1 AUTHOR
@@ -570,8 +671,32 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010 Gregory Todd Williams. All rights reserved. This
-program is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+Copyright (c) 2010 Gregory Todd Williams.
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+   not claim that you wrote the original software. If you use this
+   software in a product, an acknowledgment in the product
+   documentation would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and must
+   not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+   distribution.
+
+With the exception of the CodeMirror files, the files in this package may also
+be redistributed and/or modified under the same terms as Perl itself.
+
+The CodeMirror (Javascript and CSS) files contained in this package are
+copyright (c) 2007-2010 Marijn Haverbeke, and licensed under the terms of the
+same zlib license as this code.
 
 =cut

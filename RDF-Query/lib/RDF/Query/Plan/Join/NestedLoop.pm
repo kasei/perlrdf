@@ -7,9 +7,12 @@ RDF::Query::Plan::Join::NestedLoop - Executable query plan for nested loop joins
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::NestedLoop version 2.902.
+This document describes RDF::Query::Plan::Join::NestedLoop version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan::Join> class.
 
 =over 4
 
@@ -32,7 +35,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::NestedLoop' }++;
 }
 
@@ -126,14 +129,14 @@ sub next {
 	#		warn "using inner row: " . Dumper($inner_row);
 			if (my $joined = $inner_row->join( $self->[0]{outer_row} )) {
 				if ($l->is_trace) {
-					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("joined bindings: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				$self->[0]{count}++;
 				return $joined;
 			} else {
-				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
+				$l->trace("failed to join bindings: $inner_row ⋈ $self->[0]{outer_row}");
 			}
 		}
 		

@@ -7,9 +7,12 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.902.
+This document describes RDF::Query::Plan::Extend version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -27,7 +30,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -58,8 +61,10 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
+	$l->trace( "executing extend plan: " . $self->sse );
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "PROJECT plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "EXTEND plan can't be executed while already open";
 	}
 	my $plan	= $self->[1];
 	$plan->execute( $context );
@@ -79,6 +84,7 @@ sub execute ($) {
 
 sub next {
 	my $self	= shift;
+	my $ctx		= $self->[0]{context};
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
@@ -103,7 +109,7 @@ sub next {
 		my $query	= $self->[0]{context}->query;
 		
 		local($query->{_query_row_cache})	= {};
-		my $proj	= $row->project( @{ $keys } );
+#		my $proj	= $row->project( @{ $keys } );
 		my $ok	= 1;
 		try {
 			foreach my $e (@$exprs) {
@@ -112,16 +118,19 @@ sub next {
 				if ($l->is_trace) {
 					$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
 				}
-				my $value		= $query->var_or_expr_value( $row, $var_or_expr );
+				my $value		= $query->var_or_expr_value( $row, $var_or_expr, $ctx );
 				if ($l->is_trace) {
 					$l->trace( "- extend value $name -> $value" );
 				}
 				$row->{ $name }	= $value;
 			}
+		} catch RDF::Query::Error with {
+			$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
 		} otherwise {
 			$ok	= 0;
 		};
 		next unless ($ok);
+		$l->trace( "Extended result: $row" );
 		return $row;
 	}
 }

@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 0.124
+This document describes RDF::Trine::Parser::NQuads version 0.134
 
 =head1 SYNOPSIS
 
@@ -20,6 +20,9 @@ This document describes RDF::Trine::Parser::NQuads version 0.124
 ...
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Parser> class.
 
 =over 4
 
@@ -48,9 +51,14 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
+	foreach my $ext (qw(nq)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/x-nquads';
 	foreach my $type (qw(text/x-nquads)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
@@ -98,7 +106,7 @@ sub _emit_statement {
 		if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
 			my $value	= $nodes->[2]->literal_value;
 			my $dt		= $nodes->[2]->literal_datatype;
-			my $canon	= $self->canonicalize_literal_value( $value, $dt );
+			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
 			$nodes->[2]	= literal( $canon, undef, $dt );
 		}
 	}
@@ -109,7 +117,7 @@ sub _emit_statement {
 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {
 # 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => "Not valid N-Quads data at line $lineno";
+		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Quads data at line $lineno];
 	}
 	
 	$handler->( $st );
@@ -128,7 +136,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

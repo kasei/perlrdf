@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use Test::More;
-use Data::Dumper;
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }

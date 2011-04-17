@@ -7,7 +7,7 @@ RDF::Query::Algebra::Extend - Algebra class for extending the variable projectio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Extend version 2.902.
+This document describes RDF::Query::Algebra::Extend version 2.905.
 
 =cut
 
@@ -28,12 +28,15 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -97,7 +100,7 @@ sub vars {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -139,7 +142,6 @@ sub _from_sse {
 			
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;
-				warn "extend: " . Dumper(\@nodes);
 				return RDF::Query::Algebra::Extend->new( $pattern, \@nodes );
 			} else {
 				throw RDF::Trine::Error -text => "Cannot parse end-of-extend from SSE string: >>$_<<";
@@ -152,15 +154,21 @@ sub _from_sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
 	
+	if ($context->{ skip_extend }) {
+		$context->{ skip_extend }--;
+		return $self->pattern->as_sparql( $context, $indent );
+	}
+	
+	my $pattern	= $self->pattern;
 	my $vlist	= $self->vars;
 	my (@vars);
 	foreach my $k (@$vlist) {
@@ -172,10 +180,13 @@ sub as_sparql {
 			push(@vars, $k);
 		}
 	}
-	my $pvars	= join(' ', map { '?' . $_ } sort $self->pattern->referenced_variables);
-	my $svars	= join(' ', sort @vars);
-	my $vars	= ($pvars eq $svars) ? '*' : join(' ', @vars);
-	return join(' ', $vars, 'WHERE', $self->pattern->as_sparql( $context, $indent ));
+	
+	my $ggp		= $pattern->as_sparql( $context, $indent );
+	my $sparql	= $ggp;
+	foreach my $v (@vars) {
+		$sparql	.=	"\n${indent}BIND" . $v;
+	}
+	return $sparql;
 }
 
 =item C<< as_hash >>
@@ -223,21 +234,22 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
-	my @vars	= $self->pattern->binding_variables;
+	my @vars;
+	push(@vars, $self->pattern->potentially_bound);
 	foreach my $v (@{ $self->vars }) {
 		if ($v->isa('RDF::Query::Node::Variable')) {
 			push(@vars, $v->name);
 		} else {
-			push(@vars, $v->binding_variables);
+			push(@vars, $v->potentially_bound);
 		}
 	}
 	return RDF::Query::_uniq(@vars);

@@ -5,7 +5,10 @@ RDF::Trine - An RDF Framework for Perl.
    components:
 
    * RDF::Trine::Model - RDF model providing access to a triple store.
-   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, and RDF/JSON).
+   * RDF::Trine::Parser - Native RDF parsers (RDF/XML, RDFa, Turtle, RDF/JSON,
+     TriG, N-Triples, and N-Quads).
+   * RDF::Trine::Serializer, a set of native RDF serializers for RDF/XML, Turtle,
+     RDF/JSON, N-Triples, Canonical N-Triples, and N-Quads.
    * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the
      Redland schema.
    * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF
@@ -64,6 +67,168 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.134 (2011-03-29)
+
+     * API CHANGES
+         Deprecated RDF::Trine::Iterator->count.
+     * BUG FIXES
+         Fixed bug in RDF::Trine::Iterator::SAXHandler on data with empty results.
+         Fixed canonicalization bug in RDF::Trine::Node::Literal for xsd:decimals with no decimal point.
+     * NEW FEATURES
+         Added srx2csv and srx2table scripts.
+         Added API for stream parsing of srx results to RDF::Trine::Iterator::SAXHandler.
+         Added RDF::Trine::Model->get_sequence method for accessing rdf:Seq structures.
+         Added 'value' method to RDF::Trine::Node subclasses for accessing the primary scalar value of a node.
+         Added RDF::Trine::Graph->error method to explain failures in RDF::Trine::Graph->equal.
+         Updated RDF::Trine::Graph to support: subgraph testing, access to injection map, delegation to RDF::Trine::Model (patch from tobyink).
+     * ENHANCEMENTS
+         Fixed RDF::Trine::Node::Resource->qname handling of unicode IRIs.
+         Fixed RDF::Trine::Parser::NTriples->parse_file to accept filenames just like the superclass implementation.
+         Fixed RDF::Trine::Parser->parse_file to open files as utf8.
+         Fixed RDF::Trine::Parser->parse_url_into_model to pass through 'canonicalize' argument to actual parser method call.
+         Allow 'canonicalize' argument to RDF::Trine::Iterator->from_json method.
+     * OTHER
+         Made diagnostic messages less noisy in t/store-hexastore-storable.t.
+         Silenced an uninitialized warning in RDF::Trine::Parser::NTriples.
+         Removed use of XML::SAX in RDF::Trine::Serializer subclasses.
+         Added turtle parser test for file with BOM.
+         Updated RDF::Trine::Store::DBI and RDF::Trine::Store::DBI::mysql to use DBI placeholders.
+
+  Version 0.133 (2011-02-07)
+
+     * BUG FIXES
+       Fixed bug in Turtle parser that wouldn't allow a Unicode BOM in the input.
+       Fixed bug in turtle serialization of blank nodes used in graph cycles (reported by tobyink).
+       Fixed bug in RDF::Trine::Serializer::RDFXML that wasn't escaping XML entities in IRIs and bnode labels (github issue 3 from nichtich).
+       Updated RDF::Trine::Store::Hexastore to use equal() method instead of op<==> for testing node equality.
+       Updated t/parser-rdfjson.t to test bnode equality using identifier strings, not with op<==>.
+       Fixed RDF/XML xmlns serialization bug when used with RDF::Trine::NamespaceMap objects.
+     * NEW FEATURES
+       Added RDF::Trine::NamespaceMap class.
+       Added support to populate RDF::Trine::NamespaceMap objects during RDF parsing.
+       Added RDF::Trine::Model get_list and add_list methods for managing rdf:List structures.
+       Added support for parsing SPARQL JSON Results format in RDF::Trine::Iterator->from_json.
+       RDF::Trine::Parser subclasses now allow parse_file_into_model and parse_file being called as class methods.
+       Added 'restrict' and 'extend' options to RDF::Trine::Serializer->negotiate to allow more control over content negotiation.
+       Added the ability to restrict the nodes returned from the RDF::Trine::Model->objects method by node type or by literal language/datatype.
+     * ENHANCEMENTS
+       Updated RDF::Trine::Store::SPARQL to allow bulk-update operations.
+       Added string overloading to RDF::Trine::Node subclasses.
+       Added text/rdf+n3 as a media type for RDF::Trine::Serializer::Turtle.
+     * OTHER
+       Updated conneg code setting default q-values in RDF::Trine::Serializer.
+       Updated RDF::Trine::Iterator::Graph->print_xml to set utf8 binmode on the output filehandle.
+       Changed required version of Module::Load::Conditional to 0.38 (based on version in debian).
+
+  Version 0.132 (2010-12-23)
+
+     * Added conditional loading of Redland parsers and stores when available using Module::Load::Conditional.
+     * Added auto-initialization of DBI stores during object construction.
+     * Added RDF::Trine::Store->new method to delegate to existing constructors.
+     * Moved slow turtle parser tests into developer tests directory xt/.
+
+  Version 0.131 (2010-12-07)
+
+     * Fixed SPARQL XML Results serialization to omit unbound variables and properly declare literal languages and datatypes.
+     * Copied implementations of is_numeric_type() and numeric_value() from RDF::Query::Node::Literal to RDF::Trine::Node::Literal.
+     * Updated documentation to explicitly discuss inherited methods due to subclassing  (RT 63153 comment from Ivan Shmakov).
+     * Updated POD for RDF::Trine::Iterator subclasses (RT 63153 comment from Ivan Shmakov).
+     * Fixed RDF::Trine::Parser->guess_parser_by_filename to get RDF/XML parser class from parser_by_media_type() instead of being hardcoded.
+     * Fixed RDF::Trine::Serializer::Turtle::_node_concise_string to allow call as class method.
+     * Added RDF::Trine::Parser::Redland subclasses to allow calling new() with no 'name' argument.
+     * Added file extensions to parser registry for RDF::Trine::Parser::Redland.
+     * Added RDF::Trine::Model->as_graphviz method.
+     * Added checks to avoid undefined warnings in RDF::Trine::Serializer::NTriples::Canonical (suggestion from KjetilK).
+     * Set :utf8 mode on string-backed filehandles in RDF::Trine::Serializer::Turtle.
+     * Attempt at patching utf8 turtle/trig parsing bug submitted by KjetilK.
+     * Updated required version of Test::More to 0.88 (bugreport from @danbri).
+
+  Version 0.130 (2010-10-18)
+
+     * Fixed bug in RDF::Trine::Node::Literal->is_valid_lexical_form check for xsd:double.
+     * Updated RDF::Trine::Iterator::Bindings->as_string to use concise turtle syntax.
+     * Added RDF::Trine::Parser methods media_type(), media_types(), parser_by_media_type(), and guess_parser_by_filename().
+
+  Version 0.129 (2010-10-04)
+
+     * Updated Makefile.PL and RDF::Trine to require perl v5.8.3.
+     * Fixed bug in promotion of temporary models from memory-backed to a SQLite-backed store.
+     * Fixed RDF::Trine::Store::DBI->new to bless into backend-specific classes when passed a database handle (bug report from tobyink).
+     * Updated RDF::Trine::Node::Literal to produce more accurate canonical lexical forms for xsd types.
+     * Added RDF::Trine::Node::Literal->is_valid_lexical_form method.
+     * Added support for special union-graph 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL'.
+     * Added exportable constants for UNION_GRAPH and NIL_GRAPH in RDF::Trine.
+
+  Version 0.128 (2010-09-28)
+
+     * Added .owl as a recognized RDF/XML file extension for the fallback parser guessing code.
+     * Fixed bug in RDF::Trine::Store::SPARQL preventing access to the default graph.
+     * Added new_with_config method to allow interactive configuration via rqsh.pl.
+     * Updated RDF::Trine::Store::DBI->init to (partially) work if called for a new model (but the database has already been initialized).
+     * Fixed call to RDF::Trine::Parser->parse_into_model in bin/rdf_store_add_file.pl.
+     * Fixed call to RDF::Trine::Parser->parse_url_into_model in RDF::Trine::Store::Memory.
+     * Removed RDF::Redland dependency in bin/rdf_store_add_file.pl.
+     * Added introspective _config_meta method to RDF::Trine::Store subclasses to allow interactive configuration.
+     * Added RDF::Trine::Store->class_by_name class method.
+     * Added etag method to RDF::Trine::Model and RDF::Trine::Store::Memory to allow for HTTP caching.
+     * Updated RDF::Trine::Node::Literal->canonicalize_literal_value coercion of xsd:decimal values.
+     * Added optional flag to RDF::Trine::Node::Literal->new to attempt to canonicalize recognized XSD values.
+     * Updated RDF::Trine::Exporter::CSV to accept a graph iterator (for serializing s,p,o as CSV).
+     * Added RDF::Trine::Store::DBI->clear_restrictions method (suggestion and partial patch from tobyink).
+     * Updated RDF::Trine::Store::Redland to improve efficiency (based on suggestions from Dorian Taylor).
+     * Added native redland parser class and tests (patch from Dorian Taylor).
+     * Added RDF::Trine::Iterator->each method (requested by tobyink).
+     * Made code updates to improve performance based on profiling.
+     * Updated to use URI 1.52 to allow direct usage of IRIs without unicode workarounds.
+     * Added content-sniffing to fallback parser guessing code for RDF/XML and Turtle.
+     * Lowered required version of redland in RDF::Trine::Parser::Redland to 1.0.7.1.
+     * Added RDF::Trine::Serializer->serializer_names method for listing available serializers.
+     * Added as_string method to RDF::Trine::Iterator::Boolean and RDF::Trine::Iterator::Graph.
+
+  Version 0.127 (2010-08-30)
+
+     * Removed redundant prerequisite for XML::LibXML::SAX from Makefile.PL.
+     * RDF::Trine::Model->bounded_description now catches and ignores UnimplementedError exceptions.
+     * Added heuristics support for TriG, RDF/JSON, and N-Quads to RDF::Trine::Parser->parse_url_into_model.
+     * Added ability to specify the base URI for serializing RDF/XML and Turtle (patch from KjetilK).
+
+  Version 0.126 (2010-08-16)
+
+     * Fixed N-Triples serialization escaping bug for strings whose only escapable character is '\'.
+     * Fixed typo in handling of RDF::Trine::Node::Formula extension.
+     * RDF::Trine::Model->new will now return a temporary model when called with no arguments.
+     * Updated get_pattern methods in Model and Store classes to return VariableBindings objects.
+     * Updated DBI backend to allow no-op adding of the nil node.
+     * Updated SPARQL backend to use SPARQL 1.1 Update and Aggregate operations.
+     * Updated Memory and Hexastore backends to support 'graph' key in _new_with_config().
+     * Improved error messages in N-Triples and N-Quads parsers.
+     * Fixed column naming bug in RDF::Trine::Store::DBI->get_contexts.
+     * Added begin_bulk_ops() and end_bulk_ops() hint methods to RDF::Trine::Model.
+     * Updated RDF::Trine::Parser to call begin_bulk_ops() and end_bulk_ops() on model object.
+     * Updated DBI backend to use transactions when bulk_ops hints are used.
+     * Added '==' and 'eq' overloading to RDF::Trine::Graph class.
+     * Updated RDF::Trine::Model->bounded_description to traverse backwards links across blank nodes.
+
+  Version 0.125 (2010-07-29)
+
+     * Fixed hash collision bug in RDF::Trine::Store::DBI handling of literals with values '' and '0'.
+     * Added RDF::Trine::VariableBindings class (ported from RDF::Query).
+     * Iterators constructed from SPARQL XML Results format now return variable bindings objects.
+     * Turtle serialization to strings now only declares prefixes that are used in the data.
+     * Added media types and URIs for N-Quads parser and serializer.
+     * Added RDF::Trine::Statement->rdf_compatible method (patch from tobyink).
+     * Changed RDF::Trine::Model node methods (subjects, predicates, objects) to use quad semantics and accept a graph parameter.
+     * Add documentation for new_with_object.
+     * Add documentation for the hashref config.
+     * Improved efficiency of counting quad patterns in RDF::Trine::Store::DBI.
+     * Fixed bug in N-Triples serializer (was serializing quads).
+     * Added %format_uris registry for parsers and serializers.
+     * Added RDF::Trine::Model::as_string method.
+     * Require XML::LibXML 1.70.
+     * Removed unused variable in RDF::Trine::Parser::RDFXML.
+     * Added character encoding declaration to RDF::Trine::Iterator::Bindings->print_xml.
+     * Added character encoding declaration to RDF::Trine::Iterator::Boolean->print_xml.
 
   Version 0.124 (2010-06-21)
 
@@ -407,7 +572,7 @@ VERSION HISTORY
 
 COPYRIGHT
 
-   Copyright (C) 2008 Gregory Williams. All rights reserved.
+   Copyright (C) 2008-2010 Gregory Williams. All rights reserved.
    This program is free software; you can redistribute it and/or
    modify it under the same terms as Perl itself.
 

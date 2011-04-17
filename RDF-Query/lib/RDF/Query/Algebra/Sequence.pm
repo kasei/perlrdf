@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sequence - Algebra class for a sequence of algebra operatio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sequence version 2.902.
+This document describes RDF::Query::Algebra::Sequence version 2.905.
 
 =cut
 
@@ -30,12 +30,15 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -78,7 +81,7 @@ sub patterns {
 
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -88,7 +91,7 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent} || '  ';
 	
-	my @patterns	= sort map { $_->sse( $context ) } $self->patterns;
+	my @patterns	= map { $_->sse( $context ) } $self->patterns;
 	return sprintf(
 		"(sequence\n${prefix}${indent}%s\n${prefix})",
 		join("\n${prefix}${indent}", @patterns)
@@ -97,7 +100,7 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
@@ -157,17 +160,17 @@ sub referenced_variables {
 	return RDF::Query::_uniq(map { $_->referenced_variables } $self->patterns);
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	my @patterns	= $self->patterns;
-	return $patterns[ $#patterns ]->binding_variables;
+	return $patterns[ $#patterns ]->potentially_bound;
 }
 
 =item C<< definite_variables >>
@@ -179,7 +182,7 @@ Returns a list of the variable names that will be bound after evaluating this al
 sub definite_variables {
 	my $self	= shift;
 	my @patterns	= $self->patterns;
-	return $patterns[ $#patterns ]->binding_variables;
+	return $patterns[ $#patterns ]->potentially_bound;
 }
 
 =item C<< clone >>

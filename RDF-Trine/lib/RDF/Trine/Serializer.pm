@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.124
+This document describes RDF::Trine::Serializer version 0.134
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 }
 
 use LWP::UserAgent;
@@ -51,6 +51,16 @@ use RDF::Trine::Serializer::Turtle;
 
 =over 4
 
+=item C<< serializer_names >>
+
+Returns a list of valid serializer names for use as arguments to the serializer constructor.
+
+=cut
+
+sub serializer_names {
+	return keys %serializer_names;
+}
+
 =item C<< new ( $serializer_name, %options ) >>
 
 Returns a new RDF::Trine::Serializer object for the serializer with the
@@ -61,7 +71,8 @@ The valid key-values used in C<< %options >> are specific to a particular
 serializer implementation. For serializers that support namespace declarations
 (to allow more concise serialization), use C<< namespaces => \%namespaces >> in
 C<< %options >>, where the keys of C<< %namespaces >> are namespace names and
-the values are (partial) URIs.
+the values are (partial) URIs. For serializers that support base URI declarations, 
+use C<< base_uri => $base_uri >> .
 
 =cut
 
@@ -84,6 +95,8 @@ Returns a two-element list containing an appropriate media type and
 RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.
 If the C<< 'request_headers' >> key-value is supplied, the
 C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
+The option C<< 'restrict' >>, set to a list of serializer names, can be 
+used to limit the serializers to choose from. The rest of 
 C<< %options >> is passed through to the serializer constructor.
 
 =cut
@@ -92,15 +105,50 @@ sub negotiate {
 	my $class	= shift;
 	my %options	= @_;
 	my $headers	= delete $options{ 'request_headers' };
-	my @variants;
-	while (my($type, $sclass) = each(%media_types)) {
-		my $qv	= ($type eq 'text/turtle') ? 1.0 : 0.99;
-		$qv		-= 0.01 if ($type =~ m#/x-#);
-		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);
-		$qv		-= 0.01 if ($type eq 'text/plain');
-		push(@variants, [$type, $qv, $type]);
+	my $restrict	= delete $options{ 'restrict' };
+	my $extend	= delete $options{ 'extend' } || {};
+	my %sclasses;
+	if (ref($restrict) && ref($restrict) eq 'ARRAY') {
+		$sclasses{ $serializer_names{$_} } = 1 for @$restrict;
+	} else {
+		%sclasses = reverse %serializer_names;
 	}
+	my @default_variants;
+	while (my($type, $sclass) = each(%media_types)) {
+		next unless $sclasses{$sclass};
+		my $qv;
+		# slightly prefer turtle as a readable format to others
+		# try hard to avoid using ntriples as 'text/plain' isn't very useful for conneg
+		if ($type eq 'text/turtle') {
+			$qv	= 1.0;
+		} elsif ($type eq 'text/plain') {
+			$qv	= 0.2;
+		} else {
+			$qv	= 0.99;
+		}
+		$qv		-= 0.01 if ($type =~ m#/x-#);				# prefer non experimental media types
+		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
+		push(@default_variants, [$type, $qv, $type]);
+	}
+	
+	my %custom_thunks;
+	my @custom_variants;
+	while (my($type,$thunk) = each(%$extend)) {
+		push(@custom_variants, [$thunk, 1.0, $type]);
+		$custom_thunks{ $thunk }	= [$type, $thunk];
+	}
+	
+	# remove variants with media types that are in custom_variants from @variants
+	my @variants	= grep { not exists $extend->{ $_->[2] } } @default_variants;
+	push(@variants, @custom_variants);
+	
 	my $stype	= choose( \@variants, $headers );
+	if (defined($stype) and $custom_thunks{ $stype }) {
+		my $thunk	= $stype;
+		my $type	= $custom_thunks{ $stype }[0];
+		return ($type, $thunk);
+	}
+	
 	if (defined($stype) and my $sclass = $media_types{ $stype }) {
 		return ($stype, $sclass->new( %options ));
 	} else {
@@ -157,13 +205,6 @@ that can be serialized.
 
 =cut
 
-=item C<< serialize_iterator_to_file ( $file, $iter ) >>
-
-Serializes the iterator to Turtle, printing the results to the supplied
-filehandle C<<$fh>>.
-
-=cut
-
 sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $fh		= shift;
@@ -207,7 +248,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

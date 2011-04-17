@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.124
+This document describes RDF::Trine::Serializer::Turtle version 0.134
 
 =head1 SYNOPSIS
 
@@ -22,6 +22,9 @@ graphs to the Turtle syntax. XSD numeric types are serialized as bare literals,
 and where possible the more concise syntax is used for rdf:Lists.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Trine::Serializer> class.
 
 =over 4
 
@@ -49,17 +52,17 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.124';
+	$VERSION	= '0.134';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
-	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
+	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
 	}
 }
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces ) >>
+=item C<< new ( namespaces => \%namespaces, base_uri => $base_uri ) >>
 
 Returns a new Turtle serializer object.
 
@@ -68,18 +71,39 @@ Returns a new Turtle serializer object.
 sub new {
 	my $class	= shift;
 	my $ns	= {};
+	my $base_uri;
+
 	if (@_) {
 		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
 			$ns	= shift;
 		} else {
 			my %args	= @_;
+			if (exists $args{ base }) {
+				$base_uri   = $args{ base };
+			}
+			if (exists $args{ base_uri }) {
+				$base_uri   = $args{ base_uri };
+			}
 			if (exists $args{ namespaces }) {
 				$ns	= $args{ namespaces };
 			}
 		}
 	}
+	
+	my %rev;
+	while (my ($ns, $uri) = each(%{ $ns })) {
+		if (blessed($uri)) {
+			$uri	= $uri->uri_value;
+			if (blessed($uri)) {
+				$uri	= $uri->uri_value;
+			}
+		}
+		$rev{ $uri }	= $ns;
+	}
+	
 	my $self = bless( {
-		ns			=> { reverse %$ns },
+		ns		=> \%rev,
+		base_uri	=> $base_uri,
 	}, $class );
 	return $self;
 }
@@ -101,7 +125,7 @@ sub serialize_model_to_file {
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	
-	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t", model => $model );
+	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, model => $model );
 	return 1;
 }
 
@@ -115,8 +139,8 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
-	$self->serialize_model_to_file( $fh, $model, {}, 0, "\t", model => $model );
+	open( my $fh, '>:utf8', \$string );
+	$self->serialize_model_to_file( $fh, $model, seen => {}, levell => 0, tab => "\t", @_, model => $model, string => 1 );
 	close($fh);
 	return $string;
 }
@@ -132,20 +156,33 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $iter	= shift;
-	my $seen	= shift || {};
-	my $level	= scalar(@_) ? shift : 0;
-	my $tab		= scalar(@_) ? shift : "\t";
 	my %args	= @_;
+	my $seen	= $args{ seen } || {};
+	my $level	= $args{ level } || 0;
+	my $tab		= $args{ tab } || "\t";
 	my $indent	= $tab x $level;
 	
-	my %ns		= reverse %{ $self->{ns} };
+	my %ns		= reverse(%{ $self->{ns} });
 	my @nskeys	= sort keys %ns;
-	if (@nskeys) {
-		foreach my $ns (@nskeys) {
-			my $uri	= $ns{ $ns };
-			print {$fh} "\@prefix $ns: <$uri> .\n";
+	my $seekloc	= tell($fh);
+	
+	my ($tmp_buffer, $tmp_fh);
+	if ($args{ string }) {
+		$tmp_buffer	= '';
+		$tmp_fh	= $fh;
+		$fh		= undef;
+		open( $fh, '>:utf8', \$tmp_buffer );
+	} else {
+		if (@nskeys) {
+			foreach my $ns (@nskeys) {
+				my $uri	= $ns{ $ns };
+				print {$fh} "\@prefix $ns: <$uri> .\n";
+			}
+			print {$fh} "\n";
 		}
-		print {$fh} "\n";
+	}
+	if ($self->{base_uri}) {
+	        print {$fh} "\@base <$self->{base_uri}> .\n\n";
 	}
 	
 	my $last_subj;
@@ -159,11 +196,18 @@ sub serialize_iterator_to_file {
 		my $pred	= $st->predicate;
 		my $obj		= $st->object;
 		
-# 		my $valid_list_head	= 0;
-# 		my $valid_list		= 0;
+		# we're abusing the seen hash here as the key isn't really a node value,
+		# but since it isn't a valid node string being used it shouldn't collide
+		# with real data. we set this here so that later on when we check for
+		# single-owner bnodes (when attempting to use the [...] concise syntax),
+		# bnodes that have already been serialized as the 'head' of a statement
+		# aren't considered as single-owner. This is because the output string
+		# is acting as a second ownder of the node -- it's already been emitted
+		# as something like '_:foobar', so it can't also be output as '[...]'.
+		$seen->{ '  heads' }{ $subj->as_string }++;
+		
 		if (my $model = $args{model}) {
 			if (my $head = $self->_statement_describes_list($model, $st)) {
-# 				$valid_list	= 1;
 				warn "found a rdf:List head " . $head->as_string . " for the subject in statement " . $st->as_string if ($debug);
 				if ($model->count_statements(undef, undef, $head)) {
 					# the rdf:List appears as the object of a statement, and so
@@ -172,34 +216,12 @@ sub serialize_iterator_to_file {
 					warn "next" if ($debug);
 					next;
 				}
-# 				
-# 				if ($head->equal( $subj )) {
-# 					# the rdf:List doesn't appear as the object of any statement,
-# 					# so it needs to be serialized here.
-# 					warn $head->as_string . " is a valid rdf:List head" if ($debug);
-# 					$valid_list_head	= 1;
-# 				} else {
-# 					warn "next" if ($debug);
-# 					next;
-# 				}
 			}
 		}
 		
 		if ($seen->{ $subj->as_string }) {
-# 			if ($valid_list) {
-# 				if ($pred->equal($rdf->first) or $pred->equal($rdf->rest)) {
-# 					warn "next" if ($debug);
-# 					next;
-# 				} else {
-# 					# don't skip these statements, because while we've "seen" the list head already
-# 					# that only means we've serialized the expected list part of it (e.g. "(1 2)")
-# 					# not any other links hanging off of the list head (e.g. "(1 2) ex:p <object>").
-# 					warn "don't skip" if ($debug);
-# 				}
-# 			} else {
-				warn "next" if ($debug);
-				next;
-# 			}
+			warn "next on seen subject " . $st->as_string if ($debug);
+			next;
 		}
 		
 		if ($subj->equal( $last_subj )) {
@@ -210,11 +232,7 @@ sub serialize_iterator_to_file {
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
 			} else {
 				# start a new predicate
-# 				if ($valid_list_head) {
-# 					print {$fh} ' ';
-# 				} else {
-					print {$fh} qq[ ;\n${indent}$tab];
-# 				}
+				print {$fh} qq[ ;\n${indent}$tab];
 				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
 				print {$fh} ' ';
 				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
@@ -225,20 +243,13 @@ sub serialize_iterator_to_file {
 				print {$fh} qq[ .\n${indent}];
 			}
 			$open_triple	= 1;
-# 			if ($valid_list_head) {
-# 				$self->_turtle_rdf_list( $fh, $subj, $args{model}, $seen, $level, $tab, %args );
-# 				$seen->{ $subj->as_string }++;
-# 			} else {
-				$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
-# 			}
+			$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
 			
 			warn '-> ' . $pred->as_string if ($debug);
-# 			if (not($valid_list_head) or ($valid_list_head and not($pred->equal($rdf->first)) and not($pred->equal($rdf->rest)))) {
-				print {$fh} ' ';
-				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-				print {$fh} ' ';
-				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
-# 			}
+			print {$fh} ' ';
+			$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
+			print {$fh} ' ';
+			$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
 		}
 	} continue {
 		if (blessed($last_subj) and not($last_subj->equal($st->subject))) {
@@ -253,6 +264,20 @@ sub serialize_iterator_to_file {
 	if ($open_triple) {
 		print {$fh} qq[ .\n];
 	}
+	
+	if ($args{ string }) {
+#		close($fh);
+		$fh	= $tmp_fh;
+		my @used_nskeys	= keys %{ $self->{used_ns} };
+		if (@used_nskeys) {
+			foreach my $ns (@used_nskeys) {
+				my $uri	= $ns{ $ns };
+				print {$fh} "\@prefix $ns: <$uri> .\n";
+			}
+			print {$fh} "\n";
+		}
+		print {$fh} $tmp_buffer;
+	}
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
@@ -265,8 +290,8 @@ sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
-	$self->serialize_iterator_to_file( $fh, $iter, {}, 0, "\t" );
+	open( my $fh, '>:utf8', \$string );
+	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, string => 1 );
 	close($fh);
 	return $string;
 }
@@ -289,8 +314,9 @@ sub _serialize_object_to_file {
 			} else {
 				my $count	= $model->count_statements( undef, undef, $subj );
 				my $rec		= $model->count_statements( $subj, undef, $subj );
+				warn "count=$count, rec=$rec for node " . $subj->as_string if ($debug);
 				if ($count == 1 and $rec == 0) {
-					unless ($seen->{ $subj->as_string }++) {
+					unless ($seen->{ $subj->as_string }++ or $seen->{ '  heads' }{ $subj->as_string }) {
 						my $iter	= $model->get_statements( $subj, undef, undef );
 						my $last_pred;
 						my $triple_count	= 0;
@@ -480,6 +506,63 @@ sub _turtle_rdf_list {
 	print {$fh} ')';
 }
 
+sub _node_concise_string {
+	my $self	= shift;
+	my $obj		= shift;
+	if ($obj->is_literal and $obj->has_datatype) {
+		my $dt	= $obj->literal_datatype;
+		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$> and $obj->is_valid_lexical_form) {
+			my $value	= $obj->literal_value;
+			return $value;
+		} else {
+			my $dtr	= iri($dt);
+			my $literal	= $obj->literal_value;
+			my $qname;
+			try {
+				my ($ns,$local)	= $dtr->qname;
+				if (blessed($self) and exists $self->{ns}{$ns}) {
+					$qname	= join(':', $self->{ns}{$ns}, $local);
+					$self->{used_ns}{ $self->{ns}{$ns} }++;
+				}
+			} catch RDF::Trine::Error with {};
+			if ($qname) {
+				my $escaped	= $obj->_unicode_escape( $literal );
+				return qq["$escaped"^^$qname];
+			}
+		}
+	} elsif ($obj->isa('RDF::Trine::Node::Resource')) {
+		my $value;
+		try {
+			my ($ns,$local)	= $obj->qname;
+			if (blessed($self) and exists $self->{ns}{$ns}) {
+				$value	= join(':', $self->{ns}{$ns}, $local);
+				$self->{used_ns}{ $self->{ns}{$ns} }++;
+			}
+		} catch RDF::Trine::Error with {} otherwise {};
+		if ($value) {
+			return $value;
+		}
+	}
+	return;
+}
+
+=item C<< node_as_concise_string >>
+
+Returns a string representation using common Turtle syntax shortcuts (e.g. for numeric literals).
+
+=cut
+
+sub node_as_concise_string {
+	my $self	= shift;
+	my $obj		= shift;
+	my $str		= $self->_node_concise_string( $obj );
+	if (defined($str)) {
+		return $str;
+	} else {
+		return $obj->as_ntriples;
+	}
+}
+
 sub _turtle {
 	my $self	= shift;
 	my $fh		= shift;
@@ -503,49 +586,9 @@ sub _turtle {
 				return;
 			}
 		}
-	} elsif ($obj->is_literal and $obj->has_datatype) {
-		my $dt	= $obj->literal_datatype;
-		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$>) {
-			my $type	= $1;
-			my $value	= $obj->literal_value;
-			if ($type eq 'integer' and $value =~ m/^[-+]?[0-9]+$/) {
-				print {$fh} $value;
-				return;
-			} elsif ($type eq 'double' and $value =~ m/^[-+]?([0-9]+[.][0-9]*[eE][-+]?[0-9]+|[.][0-9]+[eE][-+]?[0-9]+|[0-9]+[eE][-+]?[0-9]+)$/) {
-				print {$fh} $value;
-				return;
-			} elsif ($type eq 'decimal' and $value =~ m/^[-+]?([0-9]+[.][0-9]*|[.][0-9]+|[0-9]+)$/) {
-				print {$fh} $value;
-				return;
-			}
-		} else {
-			my $dtr	= iri($dt);
-			my $literal	= $obj->literal_value;
-			my $qname;
-			try {
-				my ($ns,$local)	= $dtr->qname;
-				if (exists $self->{ns}{$ns}) {
-					$qname	= join(':', $self->{ns}{$ns}, $local);
-				}
-			} catch RDF::Trine::Error with {};
-			if ($qname) {
-				my $escaped	= $obj->_unicode_escape( $literal );
-				print {$fh} qq["$escaped"^^$qname];
-				return;
-			}
-		}
-	} elsif ($obj->isa('RDF::Trine::Node::Resource')) {
-		my $value;
-		try {
-			my ($ns,$local)	= $obj->qname;
-			if (exists $self->{ns}{$ns}) {
-				$value	= join(':', $self->{ns}{$ns}, $local);
-			}
-		} catch RDF::Trine::Error with {};
-		if ($value) {
-			print {$fh} $value;
-			return;
-		}
+	} elsif (defined(my $str = $self->_node_concise_string( $obj ))) {
+		print {$fh} $str;
+		return;
 	}
 	
 	print {$fh} $obj->as_ntriples;
@@ -568,7 +611,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -7,7 +7,7 @@ RDF::Query::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Literal version 2.902.
+This document describes RDF::Query::Node::Literal version 2.905.
 
 =cut
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -49,6 +49,9 @@ my %INSIDE_OUT_DATES;
 
 =head1 METHODS
 
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Node> and L<RDF::Trine::Node::Literal> classes.
+
 =over 4
 
 =cut
@@ -56,7 +59,7 @@ my %INSIDE_OUT_DATES;
 sub _cmp {
 	my $nodea	= shift;
 	my $nodeb	= shift;
-	my $op	= shift;
+	my $op		= shift;
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.node.literal");
 	$l->debug('literal comparison: ' . Dumper($nodea, $nodeb));
@@ -71,17 +74,24 @@ sub _cmp {
 	my $datetype	= '^http://www.w3.org/2001/XMLSchema#dateTime';
 	my $datecmp		= ($dta =~ $datetype and $dtb =~ $datetype);
 	my $numericcmp	= ($nodea->is_numeric_type and $nodeb->is_numeric_type);
-
+	
 	if ($datecmp) {
 		$l->trace('datecmp');
 		my $datea	= $nodea->datetime;
 		my $dateb	= $nodeb->datetime;
-		return DateTime->compare( $datea, $dateb );
-	} elsif ($numericcmp) {
+		if ($datea and $dateb) {
+			my $cmp		= eval { DateTime->compare_ignore_floating( $datea, $dateb ) };
+			return $cmp unless ($@);
+		}
+	}
+	
+	if ($numericcmp) {
 		$l->trace('both numeric cmp');
 		return 0 if ($nodea->equal( $nodeb ));	# if the nodes are identical, return true (even if the lexical values don't appear to be numeric). i.e., "xyz"^^xsd:integer should equal itself, even though it's not a valid integer.
 		return $nodea->numeric_value <=> $nodeb->numeric_value;
-	} else {
+	}
+	
+	{
 		$l->trace('other cmp');
 		
 		if ($nodea->has_language and $nodeb->has_language) {
@@ -115,6 +125,8 @@ sub _cmp {
 				$c	= -1;
 			} elsif (not($nb->has_datatype) or $nb->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string') {
 				$c	= $nodea->literal_value cmp $nodeb->literal_value;
+			} elsif ($LAZY_COMPARISONS) {
+				return $nodea->as_string cmp $nodeb->as_string;
 			} else {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare typed-literal with xsd:string.";
 			}
@@ -223,6 +235,17 @@ sub as_hash {
 	return $hash;
 }
 
+=item C<< is_simple_literal >>
+
+Returns true if the literal is "simple" -- is a literal without datatype or language.
+
+=cut
+
+sub is_simple_literal {
+	my $self	= shift;
+	return not($self->has_language or $self->has_datatype);
+}
+
 =item C<< is_numeric_type >>
 
 Returns true if the literal is a known (xsd) numeric type.
@@ -251,7 +274,8 @@ sub numeric_value {
 	if ($self->is_numeric_type) {
 		my $value	= $self->literal_value;
 		if (looks_like_number($value)) {
-			return 0 + $value;
+			my $v	= 0 + eval "$value";
+			return $v;
 		} else {
 			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
 		}
@@ -266,6 +290,19 @@ sub numeric_value {
 	} else {
 		return;
 	}
+}
+
+=item C<< type_list >>
+
+Returns a two-item list suitable for use as the second and third arguments to
+RDF::Query::Node::Literal constructor. The two returned values correspond to
+literal language tag and literal datatype URI, respectively.
+
+=cut
+
+sub type_list {
+	my $self	= shift;
+	return ($self->literal_value_language, $self->literal_datatype);
 }
 
 sub DESTROY {

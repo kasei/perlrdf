@@ -7,9 +7,12 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.902.
+This document describes RDF::Query::Plan::Path version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -32,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -86,19 +89,26 @@ sub execute ($) {
 	}
 	
 	$self->[0]{results}	= [];
+	my @vars		= grep { blessed($_) and $_->isa('RDF::Trine::Node::Variable') } ($self->start, $self->end);
+	my $model		= $context->model;
+	my @node_args	= ($graph) ? (undef, undef, $graph) : (undef, undef, RDF::Trine::Node::Nil->new());
+
+	if (not(@vars)) {
+		$l->trace( '- 0-length path is bb' );
+		# BOUND :p{0} BOUND
+		# -- are they the same term?
+		my $s	= $self->start;
+		my $e	= $self->end;
+		if ($s->equal($e)) {
+			my $vb		= RDF::Query::VariableBindings->new({});
+			push(@{ $self->[0]{results} }, $vb);
+		}
+		$self->[1]	= 'noop';	# update the op to noop
+	}
+	
 	if ($self->op eq '0') {
-		my $model		= $context->model;
-		my @vars		= grep { blessed($_) and $_->isa('RDF::Trine::Node::Variable') } ($self->start, $self->end);
-		if (not(@vars)) {
-			# BOUND :p{0} BOUND
-			# -- are they the same term?
-			my $s	= $self->start;
-			my $e	= $self->end;
-			if ($s->equal($e)) {
-				my $vb		= RDF::Query::VariableBindings->new({});
-				push(@{ $self->[0]{results} }, $vb);
-			}
-		} elsif (scalar(@vars) == 1) {
+		if (scalar(@vars) == 1) {
+			$l->trace( '- 0-length path is bf' );
 			# BOUND :p{0} VAR
 			# VAR :p{0} BOUND
 			# -- provide one result with VAR -> term
@@ -107,21 +117,84 @@ sub execute ($) {
 			my $vb		= RDF::Query::VariableBindings->new({ $name => $term });
 			push(@{ $self->[0]{results} }, $vb);
 		} else {
+			$l->trace( '- 0-length path is ff' );
 			# VAR :p{0} VAR
 			# VAR1 :p{0} VAR2
 			# -- bind VAR(s) to subjects and objects in the current active graph
 			my @names	= map { $_->name } @vars;
-			my @node_args	= ($graph) ? (undef, undef, $graph) : (undef, undef, RDF::Trine::Node::Nil->new());
 			my %nodes;
 			foreach my $n ($model->subjects(@node_args), $model->objects(@node_args)) {
 				$nodes{ $n->as_string }	= $n;
 			}
 			foreach my $n (values %nodes) {
-				my $vb		= RDF::Query::VariableBindings->new({});
-				foreach my $name (@names) {
-					$vb->{ $name }	= $n;
-				}
+				my %data;
+				@data{ @names }	= ($n) x scalar(@names);
+				my $vb		= RDF::Query::VariableBindings->new(\%data);
+# 				foreach my $name (@names) {
+# 					$vb->{ $name }	= $n;
+# 				}
 				push(@{ $self->[0]{results} }, $vb);
+			}
+		}
+	} elsif ($self->op eq '*') {
+		if (scalar(@vars) == 1) {
+			$l->trace( '- ZeroOrMore path is bf' );
+			my ($term)	= grep { blessed($_) and not($_->isa('RDF::Trine::Node::Variable')) } ($self->start, $self->end);
+			my $fwd		= (blessed($self->start) and not($self->start->isa('RDF::Trine::Node::Variable')));
+			my $partial_result	= RDF::Query::VariableBindings->new();
+			unless ($fwd) {
+				@{ $self }[3,4]	= @{ $self }[4,3];	# swap start and end nodes
+				$self->[2]		= [ '^', $self->[2] ];
+			}
+			
+			use Data::Dumper;
+			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
+			push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
+		} else {
+			$l->trace( '- ZeroOrMore path is ff' );
+			my $var	= $self->start->name;
+			my %nodes;
+			foreach my $n ($model->subjects(@node_args), $model->objects(@node_args)) {
+				$nodes{ $n->as_string }	= $n;
+			}
+			foreach my $term (values %nodes) {
+				my $partial_result	= RDF::Query::VariableBindings->new( { $var => $term } );
+				push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
+			}
+		}
+	} elsif ($self->op eq '+') {
+		if (scalar(@vars) == 1) {
+			$l->trace( '- OneOrMore path is bf' );
+			my ($term)	= grep { blessed($_) and not($_->isa('RDF::Trine::Node::Variable')) } ($self->start, $self->end);
+			my $fwd		= (blessed($self->start) and not($self->start->isa('RDF::Trine::Node::Variable')));
+			unless ($fwd) {
+				@{ $self }[3,4]	= @{ $self }[4,3];	# swap start and end nodes
+			}
+			
+			my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->graph, $context, %{ $self->[6] } );
+			$plan->execute( $context );
+			while (my $row = $plan->next) {
+				$l->trace("got ALP path row: $row");
+				my $term	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
+				my $partial_result	= RDF::Query::VariableBindings->new( {} );
+				push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
+			}
+		} else {
+			$l->trace( '- OneOrMore path is ff' );
+			my $var	= $self->start->name;
+			my %nodes;
+			foreach my $n ($model->subjects(@node_args), $model->objects(@node_args)) {
+				$nodes{ $n->as_string }	= $n;
+			}
+			foreach my $term (values %nodes) {
+				my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->graph, $context, %{ $self->[6] } );
+				$plan->execute( $context );
+				while (my $row = $plan->next) {
+					$l->trace("got ALP path row: $row");
+					my $partial_result	= RDF::Query::VariableBindings->new( { $var => $term } );
+					my $term2	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
+					push(@{ $self->[0]{alp_state} },  [ $term2, $self->path, {}, $partial_result, $self->end->name ]);
+				}
 			}
 		}
 	}
@@ -138,95 +211,103 @@ sub execute ($) {
 	$self;
 }
 
+
+# start this off by making sure $self->[0]{alp_state}[0]	= [ $term, $path, \%seen, $vb_result, $path_end_variable_name ]
+sub _alp {
+	my $self	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
+	my $data	= shift(@{ $self->[0]{alp_state} });
+	my ($term, $path, $seen, $vb, $var)	= @$data;
+	$l->trace('ALP executing with term ' . $term->as_string);
+	my %seen	= %$seen;
+# 	use Data::Dumper;
+# 	warn "ALP seen: " . Dumper(\%seen);
+	return if ($seen{ $term->as_string });
+	$seen{ $term->as_string }++;
+	my $result	= RDF::Query::VariableBindings->new( $vb );
+	$result->{ $var }	= $term;
+	push( @{ $self->[0]{alp_results} }, $result );
+	my $plan	= RDF::Query::Plan->__path_plan( $term, $path, $self->end, $self->graph, $self->[0]{context}, %{ $self->[6] } );
+	$plan->execute( $self->[0]{context} );
+	while (my $row = $plan->next) {
+		$l->trace("got ALP path row: $row");
+		my $s	= ($self->start->isa('RDF::Query::Node::Variable')) ? $row->{ $self->start->name } : $self->start;
+		my $e	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
+		push( @{ $self->[0]{alp_state} }, [ $e, $path, \%seen, $vb, $var ] );
+	}
+}
+
+sub _alp_result {
+	my $self	= shift;
+	return unless (scalar(@{ $self->[0]{alp_results} }));
+	my $vb		= shift @{ $self->[0]{alp_results} };
+# 	if ($vb) {
+# 		warn "Returning ALP result: " . Dumper($r);
+# 	}
+	return $vb;
+}
+
 =item C<< next >>
 
 =cut
 
 sub next {
 	my $self	= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
+	
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PATH";
 	}
+	
 	if (scalar(@{ $self->[0]{results} })) {
-		return shift(@{ $self->[0]{results} });
+		my $result	= shift(@{ $self->[0]{results} });
+		$l->trace( 'returning path result: ' . $result ) if (defined($result));
+		return $result;
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	my $op		= $self->op;
-	if ($op eq '0') {
-		return shift(@{ $self->[0]{results} }) if (scalar(@{ $self->[0]{results} }));
-	} else {
-		while (my $p = shift(@{ $self->[0]{paths} })) {
-			return shift(@{ $self->[0]{results} }) if (scalar(@{ $self->[0]{results} }));
-			my @nodes	= @$p;
-			if (@nodes) {
-				$l->trace( 'picking up from path: (' . join('/', map { $_->sse } @nodes) . ')' );
-				my $plan	= RDF::Query::Plan->__path_plan( $nodes[ $#nodes ], $self->path, $self->end, $self->graph, $self->[0]{context}, %{ $self->[6] } );
-				$plan->execute( $self->[0]{context} );
-				while (my $row = $plan->next) {
-					if ($self->start->isa('RDF::Query::Node::Variable')) {
-						$row->set( $self->start->name, $nodes[0] );
-					}
-					my $e	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
-					my $ok	= 1;
-					foreach my $n (@nodes) {
-						$ok	= 0 if ($n->equal( $e ));
-					}
-					if ($ok) {
-						# don't follow any loops
-						push(@{ $self->[0]{paths} }, [@nodes, $e]);
-					}
-					push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
-				}
-			} else {
-				if ($self->op eq '*') {
-					$l->trace( 'handling zero-length paths' );
-					if ($self->[0]{start}->isa('RDF::Query::Node::Variable')) {
-						$l->trace( '- start of zero-length path is a variable' );
-						if ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
-							$l->trace( '- end of zero-length path is a variable' );
-							my $plan	= RDF::Query::Plan->__zero_length_path_plan( @{ $self->[0] }{ qw(start end context) }, %{ $self->[6] }, bound => $self->[0]{bound} );
-							$plan->execute( $self->[0]{context} );
-							while (my $row = $plan->next) {
-								push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
-							}
-						} else {
-							$l->trace( '- end of zero-length path is NOT a variable' );
-							my $row	= RDF::Query::VariableBindings->new( { $self->[0]{start}->name => $self->[0]{end} } );
-							push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
-						}
-					} elsif ($self->[0]{end}->isa('RDF::Query::Node::Variable')) {
-						$l->trace( '- start of zero-length path is NOT a variable' );
-						$l->trace( '- end of zero-length path is a variable' );
-	# 					warn 'start: ' . $self->[0]{start};
-						my $row	= RDF::Query::VariableBindings->new( { $self->[0]{end}->name => $self->[0]{start} } );
-						push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
-					}
-				}
-				my $plan	= RDF::Query::Plan->__path_plan( $self->start, $self->path, $self->end, $self->graph, $self->[0]{context}, %{ $self->[6] } );
-				$l->trace( 'starting path with plan: ' . $plan->sse );
-				$plan->execute( $self->[0]{context} );
-				while (my $row = $plan->next) {
-					$l->trace("got path row: $row");
-					my $s	= ($self->start->isa('RDF::Query::Node::Variable')) ? $row->{ $self->start->name } : $self->start;
-					my $e	= ($self->end->isa('RDF::Query::Node::Variable')) ? $row->{ $self->end->name } : $self->end;
-					push(@{ $self->[0]{paths} }, [$s,$e]);
-					push(@{ $self->[0]{results} }, $self->_add_bindings( $row ));
-				}
-			}
-		} continue {
-			return shift(@{ $self->[0]{results} }) if (scalar(@{ $self->[0]{results} }));
+	if ($op eq 'noop') {
+		# noop
+	} elsif ($op eq '0') {
+		if (scalar(@{ $self->[0]{results} })) {
+			my $result	= shift(@{ $self->[0]{results} });
+			$l->trace( 'returning path result: ' . $result ) if (defined($result));
+			return $result;
 		}
+	} elsif ($op eq '*') {
+		while (scalar(@{ $self->[0]{alp_state} })) {
+			$self->_alp;
+			if (my $r = $self->_alp_result) {
+				$l->trace( 'returning path result: ' . $r );
+				return $r;
+			}
+		}
+		my $r	= $self->_alp_result;
+		$l->trace( 'returning path result: ' . $r ) if (defined($r));
+		return $r;
+	} elsif ($op eq '+') {
+		while (scalar(@{ $self->[0]{alp_state} })) {
+			$self->_alp;
+			if (my $r = $self->_alp_result) {
+				return $r;
+			}
+		}
+		my $r	= $self->_alp_result;
+		return $r;
 	}
-	return shift(@{ $self->[0]{results} });
+
+	my $result	= shift(@{ $self->[0]{results} });
+	$l->trace( 'returning path result: ' . $result ) if (defined($result));
+	return $result;
 }
 
 sub _add_bindings {
 	my $self		= shift;
 	my $bindings	= shift;
+	my %bindings	= map { $_ => $bindings->{ $_ } } @{ $self->[0]{referenced_variables} };
 	my $pre_bound	= $self->[0]{bound};
-	@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
-	return $bindings;
+	@bindings{ keys %$pre_bound }	= values %$pre_bound;
+	return RDF::Query::VariableBindings->new( \%bindings );
 }
 
 =item C<< close >>

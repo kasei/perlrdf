@@ -7,9 +7,12 @@ RDF::Query::Plan::NamedGraph - Executable query plan for named graphs.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::NamedGraph version 2.902.
+This document describes RDF::Query::Plan::NamedGraph version 2.905.
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Plan> class.
 
 =over 4
 
@@ -19,13 +22,14 @@ package RDF::Query::Plan::NamedGraph;
 
 use strict;
 use warnings;
+use Scalar::Util qw(blessed);
 use base qw(RDF::Query::Plan);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
@@ -61,15 +65,12 @@ sub execute ($) {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.namedgraph");
 	$l->trace('executing named graph plan');
 	my $model	= $context->model;
-	my @graphs	= $model->get_contexts;
-	$self->[0]{graphs}	= \@graphs;
+	my $graphs	= $model->get_contexts;
+	$self->[0]{graphs}	= $graphs;
 	$self->[0]{bound}	= $context->bound || {};
 	$self->[0]{context}	= $context;
 	
-	if (@graphs) {
-		$l->trace('available named graphs: ');
-		$l->trace('- ' . $_->as_string) for (@graphs);
-		my $g		= shift(@{ $self->[0]{graphs} });
+	if (my $g = $self->[0]{graphs}->next) {
 		my %bound	= %{ $self->[0]{bound} };
 		$bound{ $self->graph->name }	= $g;
 		my $ctx		= $context->copy( bound => \%bound );
@@ -90,7 +91,7 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SORT";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open NAMED GRAPH";
 	}
 	my $context	= $self->[0]{context};
 	
@@ -110,10 +111,10 @@ sub next {
 			$row->{ $self->graph->name }	= $g;
 			return $row;
 		} else {
-			unless (scalar(@{ $self->[0]{graphs} })) {
+			my $g		= $self->[0]{graphs}->next;
+			unless (blessed($g)) {
 				return;
 			}
-			my $g		= shift(@{ $self->[0]{graphs} });
 			my %bound	= %{ $self->[0]{bound} };
 			$bound{ $self->graph->name }	= $g;
 			my $ctx		= $self->[0]{context}->copy( bound => \%bound );

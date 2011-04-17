@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.902.
+This document describes RDF::Query::Algebra::NamedGraph version 2.905.
 
 =cut
 
@@ -29,12 +29,15 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.902';
+	$VERSION	= '2.905';
 }
 
 ######################################################################
 
 =head1 METHODS
+
+Beyond the methods documented below, this class inherits methods from the
+L<RDF::Query::Algebra> class.
 
 =over 4
 
@@ -92,9 +95,34 @@ sub pattern {
 	return $self->[2];
 }
 
+=item C<< quads >>
+
+Returns a list of the quads belonging to this NamedGraph.
+
+=cut
+
+sub quads {
+	my $self	= shift;
+	my @quads;
+	foreach my $p ($self->subpatterns_of_type('RDF::Query::Algebra::BasicGraphPattern')) {
+		push(@quads, $p->quads);
+	}
+	my @graphquads;
+	foreach my $q (@quads) {
+		my $st	= RDF::Trine::Statement::Quad->new(
+					$q->subject,
+					$q->predicate,
+					$q->object,
+					$self->graph,
+				);
+		push(@graphquads, $st);
+	}
+	return @graphquads;
+}
+
 =item C<< sse >>
 
-Returns the SSE string for this alegbra expression.
+Returns the SSE string for this algebra expression.
 
 =cut
 
@@ -113,18 +141,20 @@ sub sse {
 
 =item C<< as_sparql >>
 
-Returns the SPARQL string for this alegbra expression.
+Returns the SPARQL string for this algebra expression.
 
 =cut
 
 sub as_sparql {
 	my $self	= shift;
-	my $context	= shift;
+	my $context	= shift || {};
 	my $indent	= shift;
+	my $pcontext	= { %$context, force_ggp_braces => 1 };
+	
 	my $string	= sprintf(
 		"GRAPH %s %s",
 		$self->graph->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( $context, $indent ),
+		$self->pattern->as_sparql( $pcontext, $indent ),
 	);
 	return $string;
 }
@@ -143,6 +173,28 @@ sub as_hash {
 		graph		=> $self->graph,
 		pattern		=> $self->pattern->as_hash,
 	};
+}
+
+=item C<< as_spin ( $model ) >>
+
+Adds statements to the given model to represent this algebra object in the
+SPARQL Inferencing Notation (L<http://www.spinrdf.org/>).
+
+=cut
+
+sub as_spin {
+	my $self	= shift;
+	my $model	= shift;
+	my $spin	= RDF::Trine::Namespace->new('http://spinrdf.org/spin#');
+	my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my @t		= $self->pattern->as_spin( $model );
+	
+	my $ng		= RDF::Query::Node::Blank->new();
+	my $list	= $model->add_list( @t );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $rdf->type, $spin->NamedGraph) );
+	$model->add_statement( RDF::Trine::Statement->new($ng, $spin->elements, $list) );
+	
+	return $ng;
 }
 
 =item C<< type >>
@@ -170,17 +222,17 @@ sub referenced_variables {
 	return @list;
 }
 
-=item C<< binding_variables >>
+=item C<< potentially_bound >>
 
 Returns a list of the variable names used in this algebra expression that will
 bind values during execution.
 
 =cut
 
-sub binding_variables {
+sub potentially_bound {
 	my $self	= shift;
 	my @list	= RDF::Query::_uniq(
-		$self->pattern->binding_variables,
+		$self->pattern->potentially_bound,
 		(map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph)),
 	);
 	return @list;
@@ -201,7 +253,7 @@ sub definite_variables {
 }
 
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
+=item C<< qualify_uris ( \%namespaces, $base_uri ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
 QNames (ns:local) are qualified using the supplied %namespaces.
@@ -212,9 +264,9 @@ sub qualify_uris {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $ns		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	
-	my $pattern	= $self->pattern->qualify_uris( $ns, $base );
+	my $pattern	= $self->pattern->qualify_uris( $ns, $base_uri );
 	my $graph	= $self->graph;
 	if (blessed($graph) and $graph->isa('RDF::Query::Node::Resource')) {
 		my $uri	= $graph->uri;
@@ -224,7 +276,7 @@ sub qualify_uris {
 				throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 			}
 			my $resolved	= join('', $ns->{ $n }, $l);
-			$graph			= RDF::Query::Node::Resource->new( $resolved, $base );
+			$graph			= RDF::Query::Node::Resource->new( $resolved, $base_uri );
 		}
 	}
 	return $class->new( $graph, $pattern );
