@@ -42,6 +42,31 @@ L<RDF::Query::Algebra> class.
 
 =cut
 
+=item C<new ( $s, $p, $o, $g )>
+
+Returns a new Quad structure.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @nodes	= @_;
+	unless (scalar(@nodes) == 4) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
+	}
+	my @names	= qw(subject predicate object context);
+	foreach my $i (0 .. 3) {
+		unless (defined($nodes[ $i ]) and blessed($nodes[ $i ])) {
+			$nodes[ $i ]	= RDF::Query::Node::Variable->new($names[ $i ]);
+		}
+		unless ($nodes[ $i ]->isa('RDF::Query::Node')) {
+			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+		}
+	}
+	
+	return $class->SUPER::new( @nodes );
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this algebra expression.
