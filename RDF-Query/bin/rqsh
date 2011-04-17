@@ -13,6 +13,7 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Util;
 use Term::ReadLine;
 use Term::ReadKey;
+use LWP::MediaTypes qw(add_type);
 
 ################################################################################
 # Log::Log4perl::init( \q[
@@ -22,6 +23,13 @@ use Term::ReadKey;
 # 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
+
+add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
+add_type( 'text/turtle' => qw(ttl) );
+add_type( 'text/plain' => qw(nt) );
+add_type( 'text/x-nquads' => qw(nq) );
+add_type( 'text/json' => qw(json) );
+add_type( 'text/html' => qw(html xhtml htm) );
 
 $|			= 1;
 my $model;
