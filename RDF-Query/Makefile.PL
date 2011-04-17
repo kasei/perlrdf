@@ -21,6 +21,7 @@ build_requires		'Test::Exception'			=> 0;
 build_requires		'YAML'						=> 0;
 build_requires		'FindBin'					=> 0;
 
+requires			'Module::Pluggable'			=> 0;
 requires			'Data::UUID'				=> 0;
 requires			'Digest::SHA'				=> 0;
 requires			'Digest::SHA1'				=> 0;
