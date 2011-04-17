@@ -265,12 +265,12 @@ sub update_eval_test {
 			warn $expected_model->as_string;
 		}
 	};
-	if ($ok) {
-		earl_pass_test( $earl, $test );
-	} else {
+	if ($@ or not($ok)) {
 		fail($test->as_string);
 		earl_fail_test( $earl, $test, $@ );
 		print "# failed: " . $test->as_string . "\n";
+	} else {
+		earl_pass_test( $earl, $test );
 	}
 	
 	print STDERR "ok\n" if ($debug);
