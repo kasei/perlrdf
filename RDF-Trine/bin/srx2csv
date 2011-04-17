@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use RDF::Trine;
 use Text::CSV;
-use Scalar::Util qw(reftype);
+use Scalar::Util qw(reftype blessed);
 
 my $fh;
 if (scalar(@ARGV) and -r $ARGV[0]) {
@@ -29,6 +29,7 @@ my $handler	= RDF::Trine::Iterator::SAXHandler->new( sub {
 		variables => 1
 	}
 );
+
 my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 $p->parse_file( $fh );
 
@@ -38,5 +39,5 @@ sub print_vb {
 	our @keys;
 	my $csv	= shift;
 	my $vb	= shift;
-	$csv->print( \*STDOUT, [ map { $_->value } @{ $vb }{ @keys } ] );
+	$csv->print( \*STDOUT, [ map { blessed($_) ? $_->value : '' } @{ $vb }{ @keys } ] );
 }
