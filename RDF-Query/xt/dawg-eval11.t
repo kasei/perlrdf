@@ -12,6 +12,14 @@ use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
 use Math::Combinatorics qw(permute);
+use LWP::MediaTypes qw(add_type);
+
+add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
+add_type( 'text/turtle' => qw(ttl) );
+add_type( 'text/plain' => qw(nt) );
+add_type( 'text/x-nquads' => qw(nq) );
+add_type( 'text/json' => qw(json) );
+add_type( 'text/html' => qw(html xhtml htm) );
 
 use RDF::Query;
 use RDF::Query::Node qw(iri blank literal variable);
