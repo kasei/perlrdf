@@ -134,6 +134,7 @@ sub parse {
 	}
 	local($self->{baseURI})	= $uri;
 	
+	$input	= '' unless (defined($input));
 	$input	=~ s/^\x{FEFF}//;
 	
 	local($self->{tokens})	= $input;
