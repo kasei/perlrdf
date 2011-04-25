@@ -230,8 +230,8 @@ command line.
 
 sub explain {
 	my $self	= shift;
-	my $s		= shift;
-	my $count	= shift;
+	my $s		= shift || '  ';
+	my $count	= shift || 0;
 	my $indent	= $s x $count;
 	my $type	= $self->plan_node_name;
 	my $string	= "${indent}${type}\n";

@@ -154,19 +154,13 @@ sub _cmp {
 			}
 		} elsif ($nodea->has_language or $nodeb->has_language) {
 			$l->trace("one has language");
-			if ($LAZY_COMPARISONS) {
-				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but will make the sort stable
-				$l->trace("-> $c");
-				return $c;
-			} else {
-				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but stable sorting
-				$l->trace("-> $c");
-				return $c;
-			}
+			my $c	= ($nodea->has_language) ? 1 : -1;
+			$l->trace("-> $c");
+			return $c;
 		} elsif ($nodea->has_datatype or $nodeb->has_datatype) {
 			$l->trace("one has datatype");
 			if ($LAZY_COMPARISONS) {
-				my $c	= refaddr($nodea) <=> refaddr($nodeb);	# not equal, but will make the sort stable
+				my $c	= ($nodea->has_datatype) ? 1 : -1;
 				$l->trace("-> $c");
 				return $c;
 			} else {

@@ -154,6 +154,9 @@ sub parse {
 	my $handler = shift;
 	
 	my $null_base	= 'urn:uuid:1d1e755d-c622-4610-bae8-40261157687b';
+	if ($base and blessed($base) and $base->isa('URI')) {
+		$base	= $base->as_string;
+	}
 	$base		= RDF::Redland::URI->new(defined $base ? $base : $null_base);
 	my $stream	= eval {
 		$self->{parser}->parse_string_as_stream($string, $base)

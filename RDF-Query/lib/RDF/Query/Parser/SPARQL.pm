@@ -574,6 +574,7 @@ sub _ConstructQuery {
 	$self->_DatasetClause();
 	$self->__consume_ws_opt;
 	$self->_WhereClause;
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -608,6 +609,7 @@ sub _DescribeQuery {
 	$self->__consume_ws_opt;
 	if ($self->_WhereClause_test) {
 		$self->_WhereClause;
+		$self->__consume_ws_opt;
 	}
 	
 	$self->_SolutionModifier();

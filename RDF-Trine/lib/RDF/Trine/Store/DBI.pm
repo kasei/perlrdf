@@ -1365,18 +1365,6 @@ sub init {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
-	unless ($self->_table_exists("Statements${id}")) {
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
-			CREATE TABLE Statements${id} (
-				Subject NUMERIC(20) NOT NULL,
-				Predicate NUMERIC(20) NOT NULL,
-				Object NUMERIC(20) NOT NULL,
-				Context NUMERIC(20) NOT NULL DEFAULT 0,
-				PRIMARY KEY (Subject, Predicate, Object, Context)
-			);
-END
-	}
-	
 	unless ($self->_table_exists("Literals")) {
 		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
@@ -1409,8 +1397,20 @@ END
 		$dbh->commit or warn $dbh->errstr;
 	}
 	
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
-	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	unless ($self->_table_exists("Statements${id}")) {
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+			CREATE TABLE Statements${id} (
+				Subject NUMERIC(20) NOT NULL,
+				Predicate NUMERIC(20) NOT NULL,
+				Object NUMERIC(20) NOT NULL,
+				Context NUMERIC(20) NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
+END
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
+	}
+	
 }
 
 sub _table_exists {

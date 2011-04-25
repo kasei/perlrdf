@@ -41,6 +41,7 @@ use warnings;
 no warnings 'redefine';
 use Data::Dumper;
 use Encode qw(decode);
+use LWP::MediaTypes;
 
 our ($VERSION);
 our %file_extensions;
@@ -173,6 +174,11 @@ sub parse_url_into_model {
 	$ua->default_headers->push_header( 'Accept' => $accept );
 	
 	my $resp	= $ua->get( $url );
+	if ($url =~ /^file:/) {
+		my $type	= guess_media_type($url);
+		$resp->header('Content-Type', $type);
+	}
+	
 	unless ($resp->is_success) {
 		throw RDF::Trine::Error::ParserError -text => $resp->status_line;
 	}
@@ -187,12 +193,8 @@ sub parse_url_into_model {
 			$data	= decode( $e, $content );
 		}
 		my $parser	= $pclass->new();
-		my $ok		= 0;
-		try {
-			$parser->parse_into_model( $url, $data, $model, %args );
-			$ok	= 1;
-		} catch RDF::Trine::Error::ParserError with {} otherwise {};
-		return 1 if ($ok);
+		$parser->parse_into_model( $url, $data, $model, %args );
+		return 1;
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}

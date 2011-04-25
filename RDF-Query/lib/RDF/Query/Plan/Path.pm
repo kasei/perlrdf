@@ -434,9 +434,10 @@ sub plan_node_data {
 	if (blessed($path)) {
 		return ($self->op, $path->sse, $self->start, $self->end, $self->graph);
 	} else {
-		return ($self->op, '*PATH*', $self->start, $self->end, $self->graph);
+		return ($self->op, '(undefined path)', $self->start, $self->end, $self->graph);
 	}
 }
+
 
 1;
 
