@@ -24,7 +24,6 @@ REQUIREMENTS
      * DBI
      * DBD::SQLite
      * Digest::MD5
-     * Digest::SHA1
      * Error
      * HTTP::Negotiate
      * JSON
@@ -67,6 +66,35 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.135 (2011-XX-XX)
+
+     * API CHANGES
+         Globally changed 'base' to 'base_uri' in Trine code and API.
+         Changed name of redland rdfa parser to 'librdfa' and removed associated media type and file extensions (due to librdfa bugs).
+     * BUG FIXES
+         Fixed bug in RDF::Trine::Store::DBI::mysql that was causing init() to remove existing data.
+     * NEW FEATURES
+         Added RDF::Trine::Store::DBI->nuke method for removing store data.
+         Added RDF::Trine::Model->remove_list method (patch from tobyink).
+         Added RDF::Trine::Iterator->seen_count method.
+         Added RDF::Trine::Model->get_sparql delegation method.
+     * ENHANCEMENTS
+         Updated RDF::Trine::Parser->parse_url_into_model to be better at guessing media types for file: URIs.
+         Updated RDF::Trine::Parser::Redland to allow the $base argument to be a URI object.
+         Updated RDF::Trine::Parser->parse_url_into_model to not catch and hide exceptions thrown from calls to parse_into_model.
+         Updated bin/srx2csv to handle unbound variables in results.
+         Added support for 'storeclass' key in RDF::Trine::Store->new_with_config.
+         Added supports method to RDF::Trine::Model, RDF::Trine::Model::Dataset, and RDF::Trine::Store classes.
+         RDF::Trine::Store->new_with_string now attempts to load store classes before using them.
+         Renamed RDF::Trine::Store::SPARQL->_get_iterator to get_sparql.
+     * OTHER
+         Added SQL file for creating the mysql backend database.
+         Remove the meaningless "All rights reserved" copyright text.
+         Style changes to RDF::Trine::Iterator::Bindings->print_xml.
+         Updated required version of XML::SAX to 0.96.
+         Updated store tests (KjetilK).
+         Removed Digest::SHA1 from list of prereq modules.
 
   Version 0.134 (2011-03-29)
 
