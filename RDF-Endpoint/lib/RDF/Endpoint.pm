@@ -447,7 +447,7 @@ sub service_description {
 	
 	my $dataset		= blank('dataset');
 	my $def_graph	= blank('defaultGraph');
-	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
+	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
 	if ($config->{endpoint}{service_description}{default}) {
