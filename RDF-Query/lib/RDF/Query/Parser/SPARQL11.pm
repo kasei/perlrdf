@@ -1185,6 +1185,7 @@ sub _Binding {
 
 sub _BindingValue_test {
 	my $self	= shift;
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/UNDEF|[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
@@ -2461,6 +2462,7 @@ sub _GraphNode {
 sub _VarOrTerm_test {
 	my $self	= shift;
 	return 1 if ($self->_test(qr/[\$?]/));
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
