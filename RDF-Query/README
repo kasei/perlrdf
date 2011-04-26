@@ -44,6 +44,7 @@ VERSION HISTORY
      * BUG FIXES
          Fixed SPARQL serialization in RDF::Query::Plan generation of SERVICE blocks to always include braces around the query body.
          Fixed SPARQL 1.1 parsing bug in property paths using alternatives ('|').
+         Fixed SPARQL 1.1 bug in parsing prefixnames where a graph term is expected.
          Fixed bug in ZeroOrMore reverse path handling (patterns matching { var path* term }).
          Fixed bug in RDF::Query::Node::Literal::_cmp that was causing wrong node comparison results.
          Fixed bug in parsing solution modifiers in CONSTRUCT and DESCRIBE queries.
