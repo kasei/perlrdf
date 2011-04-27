@@ -24,7 +24,6 @@ build_requires		'FindBin'					=> 0;
 requires			'Module::Pluggable'			=> 0;
 requires			'Data::UUID'				=> 0;
 requires			'Digest::SHA'				=> 0;
-requires			'Digest::SHA1'				=> 0;
 requires			'DateTime::Format::W3CDTF'	=> 0;
 requires			'Error'						=> 0;
 requires			'File::Spec'				=> 0;

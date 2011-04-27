@@ -6,7 +6,7 @@ use lib "$Bin/lib";
 use Module::Load::Conditional qw[can_load];
 
 BEGIN {
- can_load(modules => {'RDF::Redland' => 0});
+ can_load(modules => {'RDF::Redland' => 0}) || plan skip_all => 'Test needs RDF::Redland';
 }
 
 use RDF::Redland;
