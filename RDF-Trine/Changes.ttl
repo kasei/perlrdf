@@ -10,6 +10,39 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.135.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.134.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.135" ;
+                        doap:created      "2011-04-30" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Store::DBI->nuke method for removing store data." ;
+                        asc:addition    "Added RDF::Trine::Model->remove_list method (patch from tobyink)." ;
+                        asc:addition    "Added RDF::Trine::Iterator->seen_count method." ;
+                        asc:addition    "Added RDF::Trine::Model->get_sparql delegation method." ;
+                        asc:update      "Globally changed 'base' to 'base_uri' in Trine code and API." ;
+                        asc:update      "Changed name of redland rdfa parser to 'librdfa' and removed associated media type and file extensions (due to librdfa bugs)." ;
+                        asc:update      "Fixed bug in RDF::Trine::Store::DBI::mysql that was causing init() to remove existing data." ;
+                        asc:update      "Updated RDF::Trine::Parser->parse_url_into_model to be better at guessing media types for file: URIs." ;
+                        asc:update      "Updated RDF::Trine::Parser::Redland to allow the $base argument to be a URI object." ;
+                        asc:update      "Updated RDF::Trine::Parser->parse_url_into_model to not catch and hide exceptions thrown from calls to parse_into_model." ;
+                        asc:update      "Updated bin/srx2csv to handle unbound variables in results." ;
+                        asc:update      "Added support for 'storeclass' key in RDF::Trine::Store->new_with_config." ;
+                        asc:update      "Added supports method to RDF::Trine::Model, RDF::Trine::Model::Dataset, and RDF::Trine::Store classes." ;
+                        asc:update      "RDF::Trine::Store->new_with_string now attempts to load store classes before using them." ;
+                        asc:update      "Renamed RDF::Trine::Store::SPARQL->_get_iterator to get_sparql." ;
+                        asc:update      "Added SQL file for creating the mysql backend database." ;
+                        asc:update      "Remove the meaningless \"All rights reserved\" copyright text." ;
+                        asc:update      "Style changes to RDF::Trine::Iterator::Bindings->print_xml." ;
+                        asc:update      "Updated required version of XML::SAX to 0.96." ;
+                        asc:update      "Updated store tests (KjetilK)." ;
+                        asc:update      "Removed Digest::SHA1 from list of prereq modules." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.134.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.133.tar.gz> ;
