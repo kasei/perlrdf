@@ -56,7 +56,7 @@ END
 		},
 	});
 	
-	my $serializer = RDF::Trine::Serializer::RDFXML->new( base => 'http://example.org/');
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( base_uri => 'http://example.org/');
 	my $expect	= <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xml:base="http://example.org/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -425,9 +425,9 @@ END
 {
 	my $serializer	= RDF::Trine::Serializer::RDFXML->new();
 	my $model		= RDF::Trine::Model->temporary_model;
-	my $base		= 'http://example.org/';
-	my $url_with_amp	= "$base?foo=bar&doz=baz";
-	$model->add_statement( statement( iri($base), iri("http://xmlns.com/foaf/0.1/page"), iri($url_with_amp) ) );
+	my $base_uri		= 'http://example.org/';
+	my $url_with_amp	= "$base_uri?foo=bar&doz=baz";
+	$model->add_statement( statement( iri($base_uri), iri("http://xmlns.com/foaf/0.1/page"), iri($url_with_amp) ) );
 	
 	my $xml = $serializer->serialize_model_to_string($model);
 	like( $xml, qr[&amp;]sm, 'XML entity escaping' );

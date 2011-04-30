@@ -63,14 +63,24 @@ sub execute ($) {
 	my $plan	= $self->[1];
 	$plan->execute( $context );
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.sort");
+	$l->trace("executing sort");
 	if ($plan->state == $self->OPEN) {
 		my $exprs	= $self->[2];
 		my @rows	= $plan->get_all;
+		if ($l->is_trace) {
+			$l->trace("sorting result list:");
+			$l->trace("- $_") foreach (@rows);
+		}
 		my $query	= $context->query;
 		
 		use sort 'stable';
-		@rows		= sort { _cmp_rows( $context, $exprs, $a, $b ) } @rows;
-		$self->[0]{rows}	= \@rows;
+		my @sorted	= sort { _cmp_rows( $context, $exprs, $a, $b ) } @rows;
+		if ($l->is_trace) {
+			$l->trace("sorted list:");
+			$l->trace("- $_") foreach (@sorted);
+		}
+		$self->[0]{rows}	= \@sorted;
 		$self->state( $self->OPEN );
 	} else {
 		warn "could not execute plan in distinct";
@@ -110,6 +120,7 @@ sub _cmp_rows {
 	my $a		= shift;
 	my $b		= shift;
 	
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.sort");
 	my $query	= $context->query || 'RDF::Query';
 	my $bridge	= $context->model;
 	
@@ -120,15 +131,18 @@ sub _cmp_rows {
 		my $a_val	= $query->var_or_expr_value( $a, $expr, $context );
 		my $b_val	= $query->var_or_expr_value( $b, $expr, $context );
 		local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
+		$l->trace("comparing $a_val <=> $b_val");
 		my $cmp		= $a_val <=> $b_val;
 		if ($cmp != 0) {
 			if ($rev) {
 				$cmp	*= -1;
 			}
+			$l->trace("==> $cmp");
 			return $cmp;
 		} else {
 		}
 	}
+	$l->trace("==> 0");
 	return 0;
 }
 
@@ -215,6 +229,30 @@ sub graph {
 	$g->add_node( "$self", label => "Sort ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	$string		.= "${indent}${s}sory by:\n";
+	my $exprs	= $self->[2];
+	foreach my $e (@$exprs) {
+		my $dir		= ($e->[1] == 0 ? 'asc  ' : 'desc ');
+		$string		.= "${indent}${s}${s}${dir}" . $e->[0] . "\n";
+	}
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
 }
 
 

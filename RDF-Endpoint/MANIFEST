@@ -44,3 +44,4 @@ share/www/js/util.js
 t/00-load.t
 t/pod.t
 t/pod_coverage.t
+t/psgi.t

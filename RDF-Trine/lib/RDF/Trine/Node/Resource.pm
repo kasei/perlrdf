@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.134
+This document describes RDF::Trine::Node::Resource version 0.135
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 }
 
 ######################################################################
@@ -45,7 +45,7 @@ L<RDF::Trine::Node> class.
 
 =cut
 
-=item C<new ( $iri, [ $base ] )>
+=item C<new ( $iri, [ $base_uri ] )>
 
 Returns a new Resource structure.
 
@@ -54,18 +54,18 @@ Returns a new Resource structure.
 sub new {
 	my $class	= shift;
 	my $uri		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	
-	if (defined($base)) {
-		$base	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
-		$uri	= URI->new_abs($uri, $base)->as_iri;
+	if (defined($base_uri)) {
+		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
+		$uri	= URI->new_abs($uri, $base_uri)->as_iri;
 	}
 # 	my @uni;
 # 	my $count	= 0;
 # 	
 # 	my $buri;
-# 	if (defined($base)) {
-# 		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+# 	if (defined($base_uri)) {
+# 		$buri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
 # 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
 # 			my $text	= $1;
 # 			push(@uni, $text);
@@ -81,7 +81,7 @@ sub new {
 # 		$count++;
 # 	}
 # 	
-# 	if (defined($base)) {
+# 	if (defined($base_uri)) {
 # 		### We have to work around the URI module not accepting IRIs. If there's
 # 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
 # 		### the URI into an absolute URI, and then replace the breadcrumbs with
@@ -292,7 +292,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

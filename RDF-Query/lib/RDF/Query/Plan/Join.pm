@@ -138,8 +138,17 @@ Returns the class names of all available join algorithms.
 
 sub join_classes {
 	my $class	= shift;
+	my $config	= shift || {};
 	our %JOIN_CLASSES;
-	return reverse sort keys %JOIN_CLASSES;
+	my @classes	= reverse sort keys %JOIN_CLASSES;
+	my @ok	= grep { 
+		my $name	= lc($_);
+		$name	=~ s/::/./g;
+		(exists $config->{ $name } and not($config->{ $name }))
+			? 0
+			: 1
+	} @classes;
+	return @ok;
 }
 
 =item C<< distinct >>

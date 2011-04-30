@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.134
+This document describes RDF::Trine::Store::SPARQL version 0.135
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.134";
+	$VERSION	= "0.135";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -166,7 +166,7 @@ sub get_statements {
 		my $names	= join(' ', map { '?' . $_->name } @vars);
 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
 		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
-		$iter	= $self->_get_iterator( <<"END" );
+		$iter	= $self->get_sparql( <<"END" );
 SELECT $names WHERE {
 	GRAPH $g {
 		$nodes
@@ -177,7 +177,7 @@ END
 		my @vars	= grep { $_->is_variable } @triple;
 		my $names	= join(' ', map { '?' . $_->name } @vars);
 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		$iter	= $self->_get_iterator( <<"END" );
+		$iter	= $self->get_sparql( <<"END" );
 SELECT $names WHERE { $nodes }
 END
 	}
@@ -200,7 +200,7 @@ END
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
-Returns a stream object of all bindings matching the specified graph pattern.
+Returns an iterator object of all bindings matching the specified graph pattern.
 
 =cut
 
@@ -252,7 +252,7 @@ END
 		}
 	}
 	
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	return $iter;
 }
 
@@ -266,7 +266,7 @@ the set of contexts of the stored quads.
 sub get_contexts {
 	my $self	= shift;
 	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g {} }';
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	my $sub	= sub {
 		my $row	= $iter->next;
 		return unless $row;
@@ -442,7 +442,7 @@ sub count_statements {
 	} else {
 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }";
 	}
-	my $iter	= $self->_get_iterator( $sparql );
+	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
 	my $count	= $row->{count};
 	return unless ($count);
@@ -473,7 +473,36 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
-sub _get_iterator {
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	my $self	= shift;
+	my %features	= map { $_ => 1 } (
+		'http://www.w3.org/ns/sparql-service-description#SPARQL10Query',
+		'http://www.w3.org/ns/sparql-service-description#SPARQL11Query',
+		'http://www.w3.org/ns/sparql-service-description#SPARQL11Update',
+	);
+	if (@_) {
+		my $f	= shift;
+		return $features{ $f };
+	} else {
+		return keys %features;
+	}
+}
+
+=item C<< get_sparql ( $sparql ) >>
+
+Returns an iterator object of all bindings matching the specified SPARQL query.
+
+=cut
+
+sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
@@ -585,7 +614,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

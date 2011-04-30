@@ -61,6 +61,32 @@ sub execute ($) {
 	$self;
 }
 
+=item C<< bindings >>
+
+Returns a list of the variable bindings for this constant result set.
+
+=cut
+
+sub bindings {
+	my $self	= shift;
+	my $binds	= $self->[1] || [];
+	return @$binds;
+}
+
+=item C<< is_unit >>
+
+Returns true if this constant result set is comprised of a single, empty variable binding.
+
+=cut
+
+sub is_unit {
+	my $self	= shift;
+	my @binds	= $self->bindings;
+	return 0 unless scalar(@binds) == 1;
+	my @keys	= keys %{ $binds[0] };
+	return not(scalar(@keys));
+}
+
 =item C<< next >>
 
 =cut

@@ -212,6 +212,13 @@ sub graph {
 	return "$self";
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
 sub explain {
 	my $self	= shift;
 	my $s		= shift;

@@ -131,6 +131,27 @@ sub sse {
 	);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}basic graph pattern\n";
+	
+	foreach my $t ($self->triples) {
+		$string	.= "${indent}${s}" . $t->as_sparql . "\n";
+	}
+	return $string;
+}
+
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this algebra expression.

@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.134.
+This document describes RDF::Trine::Iterator version 0.135.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -338,6 +338,18 @@ RDF::Trine::Iterator::Graph::Materialized should be used instead.
 sub count {
 	my $self	= shift;
 	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
+	return $self->{_count};
+}
+
+=item C<< seen_count >>
+
+Returns the count of elements that have been returned by this iterator at the
+point of invocation.
+
+=cut
+
+sub seen_count {
+	my $self	= shift;
 	return $self->{_count};
 }
 
@@ -655,7 +667,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

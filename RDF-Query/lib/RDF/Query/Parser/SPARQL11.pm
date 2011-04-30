@@ -326,6 +326,13 @@ sub _RW_Query {
 			$self->_MoveUpdate();
 		} elsif ($self->_test(qr/ADD/i)) {
 			$self->_AddUpdate();
+		} elsif ($self->_test(qr/;/)) {
+			$self->_eat(qr/;/) ;
+			$self->__consume_ws_opt;
+			next if ($self->_Query_test);
+			last;
+		} elsif ($self->{tokens} eq '') {
+			last;
 		} else {
 			my $l		= Log::Log4perl->get_logger("rdf.query");
 			if ($l->is_debug) {
@@ -333,6 +340,7 @@ sub _RW_Query {
 			}
 			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 		}
+		
 		last if ($read_query);
 		$self->__consume_ws_opt;
 		if ($self->_test(qr/;/)) {
@@ -353,7 +361,7 @@ sub _RW_Query {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
 	
-	if ($count > 1) {
+	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
 		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
 	}
@@ -1006,6 +1014,7 @@ sub _ConstructQuery {
 		$self->_WhereClause;
 	}
 	
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -1043,6 +1052,7 @@ sub _DescribeQuery {
 		$self->_WhereClause;
 	}
 	
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	$self->{build}{method}		= 'DESCRIBE';
 }
@@ -1175,6 +1185,7 @@ sub _Binding {
 
 sub _BindingValue_test {
 	my $self	= shift;
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/UNDEF|[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
@@ -2129,7 +2140,8 @@ sub _VerbSimple {
 sub _VerbPath_test {
 	my $self	= shift;
 	return 1 if ($self->_IRIref_test);
-	return 1 if ($self->_test(qr/\^|[(a!]/));
+	return 1 if ($self->_test(qr/\^|[|(a!]/));
+	return 0;
 }
 
 sub _VerbPath {
@@ -2154,7 +2166,8 @@ sub _PathAlternative {
 		my ($lhs)	= splice(@{ $self->{stack} });
 		$self->_eat(qr/[|]/);
 		$self->__consume_ws_opt;
-		$self->_PathOneInPropertyClass;
+#		$self->_PathOneInPropertyClass;
+		$self->_PathSequence;
 		$self->__consume_ws_opt;
 		my ($rhs)	= splice(@{ $self->{stack} });
 		$self->_add_stack( ['PATH', '|', $lhs, $rhs] );
@@ -2449,6 +2462,7 @@ sub _GraphNode {
 sub _VarOrTerm_test {
 	my $self	= shift;
 	return 1 if ($self->_test(qr/[\$?]/));
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
@@ -3275,6 +3289,7 @@ sub _syntax_error {
 	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
 	$near		=~ s/[\r\n ]+/ /g;
 	if ($thing) {
+# 		Carp::cluck Dumper($self->{tokens});	# XXX
 		throw RDF::Query::Error::ParseError -text => "Syntax error: $thing in $expect near $near";
 	} else {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected $expect near $near";

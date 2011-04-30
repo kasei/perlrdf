@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 0.134
+This document describes RDF::Trine::Parser::NQuads version 0.135
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $ext (qw(nq)) {
@@ -136,7 +136,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

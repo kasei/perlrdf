@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDF/JSON version 0.134
+This document describes RDF::Trine::Serializer::RDF/JSON version 0.135
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfjson' }	= __PACKAGE__;
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -121,7 +121,7 @@ L<http://n2.talis.com/wiki/RDF_JSON_Specification>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2010 Toby Inkster. All rights reserved. This program is free
+Copyright (c) 2010 Toby Inkster. This program is free
 software; you can redistribute it and/or modify it under the same terms as Perl
 itself.
 

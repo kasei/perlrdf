@@ -147,6 +147,31 @@ sub sse {
 	}
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}group graph pattern\n";
+
+	my @patterns	= $self->patterns;
+	if (scalar(@patterns) == 1) {
+		$string	.= $patterns[0]->explain( $s, $count+1 );
+	} else {
+		foreach my $p (@patterns) {
+			$string	.= $p->explain( $s, $count+1 );
+		}
+	}
+	return $string;
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this algebra expression.

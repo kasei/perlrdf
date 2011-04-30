@@ -101,6 +101,14 @@ sub sse {
 	);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the expression appropriate for display on the
+command line. This method is primarily used by the C<< explain >> method of
+the subclasses of RDF::Query::Plan.
+
+=cut
+
 sub explain {
 	my $self	= shift;
 	my $s		= shift;

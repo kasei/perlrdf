@@ -139,6 +139,24 @@ sub sse {
 	);
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}named graph pattern\n"
+				. "${indent}${s}graph: " . $self->graph->as_string . "\n"
+				. $self->pattern->explain( $s, $count+1 );
+	return $string;
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this algebra expression.
@@ -253,7 +271,7 @@ sub definite_variables {
 }
 
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
+=item C<< qualify_uris ( \%namespaces, $base_uri ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
 QNames (ns:local) are qualified using the supplied %namespaces.
@@ -264,9 +282,9 @@ sub qualify_uris {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $ns		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	
-	my $pattern	= $self->pattern->qualify_uris( $ns, $base );
+	my $pattern	= $self->pattern->qualify_uris( $ns, $base_uri );
 	my $graph	= $self->graph;
 	if (blessed($graph) and $graph->isa('RDF::Query::Node::Resource')) {
 		my $uri	= $graph->uri;
@@ -276,7 +294,7 @@ sub qualify_uris {
 				throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 			}
 			my $resolved	= join('', $ns->{ $n }, $l);
-			$graph			= RDF::Query::Node::Resource->new( $resolved, $base );
+			$graph			= RDF::Query::Node::Resource->new( $resolved, $base_uri );
 		}
 	}
 	return $class->new( $graph, $pattern );

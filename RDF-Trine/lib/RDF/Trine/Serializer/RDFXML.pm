@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.134
+This document describes RDF::Trine::Serializer::RDFXML version 0.135
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -58,7 +58,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces, base => $baseuri ) >>
+=item C<< new ( namespaces => \%namespaces, base_uri => $baseuri ) >>
 
 Returns a new RDF/XML serializer object.
 
@@ -80,7 +80,10 @@ sub new {
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
- 	        $self->{base} = $args{base};
+ 	        $self->{base_uri} = $args{base};
+        }
+	if ($args{base_uri}) {
+ 	        $self->{base_uri} = $args{base_uri};
         }
 	return $self;
 }
@@ -121,11 +124,11 @@ sub serialize_iterator_to_file {
 	my $iter	= shift;
 	
 	my $ns		= $self->_top_xmlns();
-	my $base        = '';
-	if ($self->{base}) {
-	  $base = "xml:base=\"$self->{base}\" ";
+	my $base_uri        = '';
+	if ($self->{base_uri}) {
+	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
+	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
 	
 	my $st			= $iter->next;
 	my @statements;
@@ -247,11 +250,11 @@ sub _serialize_bounded_description {
 	my $seen	= {};
 	
 	my $ns		= $self->_top_xmlns();
-	my $base        = '';
-	if ($self->{base}) {
-	  $base = "xml:base=\"$self->{base}\" ";
+	my $base_uri        = '';
+	if ($self->{base_uri}) {
+	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
-	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base$ns>\n];
+	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
 	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
 	$string	.= qq[</rdf:RDF>\n];
 	return $string;
@@ -315,7 +318,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

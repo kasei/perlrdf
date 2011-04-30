@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.134
+This document describes RDF::Trine::Serializer::Turtle version 0.135
 
 =head1 SYNOPSIS
 
@@ -52,7 +52,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
@@ -62,7 +62,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( namespaces => \%namespaces, base => $base_uri ) >>
+=item C<< new ( namespaces => \%namespaces, base_uri => $base_uri ) >>
 
 Returns a new Turtle serializer object.
 
@@ -71,7 +71,7 @@ Returns a new Turtle serializer object.
 sub new {
 	my $class	= shift;
 	my $ns	= {};
-	my $base;
+	my $base_uri;
 
 	if (@_) {
 		if (scalar(@_) == 1 and reftype($_[0]) eq 'HASH') {
@@ -79,7 +79,10 @@ sub new {
 		} else {
 			my %args	= @_;
 			if (exists $args{ base }) {
-				$base   = $args{ base };
+				$base_uri   = $args{ base };
+			}
+			if (exists $args{ base_uri }) {
+				$base_uri   = $args{ base_uri };
 			}
 			if (exists $args{ namespaces }) {
 				$ns	= $args{ namespaces };
@@ -100,7 +103,7 @@ sub new {
 	
 	my $self = bless( {
 		ns		=> \%rev,
-		base	=> $base,
+		base_uri	=> $base_uri,
 	}, $class );
 	return $self;
 }
@@ -178,8 +181,8 @@ sub serialize_iterator_to_file {
 			print {$fh} "\n";
 		}
 	}
-	if ($self->{base}) {
-	        print {$fh} "\@base <$self->{base}> .\n\n";
+	if ($self->{base_uri}) {
+	        print {$fh} "\@base <$self->{base_uri}> .\n\n";
 	}
 	
 	my $last_subj;
@@ -608,7 +611,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -42,6 +42,31 @@ L<RDF::Query::Algebra> class.
 
 =cut
 
+=item C<new ( $s, $p, $o, $g )>
+
+Returns a new Quad structure.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @nodes	= @_;
+	unless (scalar(@nodes) == 4) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
+	}
+	my @names	= qw(subject predicate object context);
+	foreach my $i (0 .. 3) {
+		unless (defined($nodes[ $i ]) and blessed($nodes[ $i ])) {
+			$nodes[ $i ]	= RDF::Query::Node::Variable->new($names[ $i ]);
+		}
+		unless ($nodes[ $i ]->isa('RDF::Query::Node')) {
+			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+		}
+	}
+	
+	return $class->SUPER::new( @nodes );
+}
+
 =item C<< as_sparql >>
 
 Returns the SPARQL string for this algebra expression.
@@ -97,7 +122,7 @@ sub referenced_blanks {
 	return map { $_->blank_identifier } @blanks;
 }
 
-=item C<< qualify_uris ( \%namespaces, $base ) >>
+=item C<< qualify_uris ( \%namespaces, $base_uri ) >>
 
 Returns a new algebra pattern where all referenced Resource nodes representing
 QNames (ns:local) are qualified using the supplied %namespaces.
@@ -108,7 +133,7 @@ sub qualify_uris {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $ns		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	my @nodes;
 	foreach my $n ($self->nodes) {
 		my $blessed	= blessed($n);
@@ -119,7 +144,7 @@ sub qualify_uris {
 				unless (exists($ns->{ $n })) {
 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base_uri );
 				push(@nodes, $resolved);
 			} else {
 				push(@nodes, $n);
@@ -132,7 +157,7 @@ sub qualify_uris {
 				unless (exists($ns->{ $n })) {
 					throw RDF::Query::Error::QuerySyntaxError -text => "Namespace $n is not defined";
 				}
-				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base );
+				my $resolved	= RDF::Query::Node::Resource->new( join('', $ns->{ $n }, $l), $base_uri );
 				my $lit			= RDF::Query::Node::Literal->new( $node->literal_value, undef, $resolved->uri_value );
 				push(@nodes, $lit);
 			} else {

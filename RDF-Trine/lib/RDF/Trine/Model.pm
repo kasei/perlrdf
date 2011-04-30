@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.134
+This document describes RDF::Trine::Model version 0.135
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 }
 
 use Scalar::Util qw(blessed);
@@ -260,6 +260,54 @@ sub get_list {
 	return @elements;
 }
 
+=item C<< remove_list ( $head [, orphan_check => 1] ) >>
+
+Removes the nodes of type rdf:List that make up the list. Optionally checks each node
+before removal to make sure that it is not used in any other statements. Returns false
+if the list was removed completely; returns the first remaining node if the removal
+was abandoned because of an orphan check.
+
+=cut
+
+sub remove_list {
+	my $self = shift;
+	my $head = shift;
+	my $rdf  = RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
+	my %args = @_;
+	my %seen;
+	
+	while (blessed($head) and not($head->isa('RDF::Trine::Node::Resource') and $head->uri_value eq $rdf->nil->uri_value)) {
+		if ($seen{ $head->as_string }++) {
+			throw RDF::Trine::Error -text => "Loop found during rdf:List traversal";
+		}
+		my $stream = $self->get_statements($head, undef, undef);
+		my %statements;
+		while (my $st = $stream->next) {
+			my $statement_type = {
+				$rdf->first->uri  => 'rdf:first',
+				$rdf->rest->uri   => 'rdf:rest',
+				$rdf->type->uri   => 'rdf:type',
+				}->{$st->predicate->uri} || 'other';
+			$statement_type = 'other'
+				if $statement_type eq 'rdf:type' && !$st->object->equal($rdf->List);
+			push @{$statements{$statement_type}}, $st;
+		}
+		if ($args{orphan_check}) {
+			return $head if defined $statements{other} && scalar(@{ $statements{other} }) > 0;
+			return $head if $self->count_statements(undef, undef, $head) > 0;
+		}
+		unless (defined $statements{'rdf:first'} and defined $statements{'rdf:rest'} and scalar(@{$statements{'rdf:first'} })==1 and scalar(@{ $statements{'rdf:rest'} })==1) {
+			throw RDF::Trine::Error -text => "Invalid structure found during rdf:List traversal";
+		}
+		$self->remove_statement($_)
+			foreach (@{$statements{'rdf:first'}}, @{$statements{'rdf:rest'}}, @{$statements{'rdf:type'}});
+		
+		$head = $statements{'rdf:rest'}->[0]->object;
+	}
+	
+	return;
+}
+
 =item C<< get_sequence ( $seq ) >>
 
 Returns a list of nodes that are elements of the rdf:Seq sequence.
@@ -338,6 +386,23 @@ sub etag {
 	my $store	= $self->_store;
 	if ($store) {
 		return $store->etag;
+	}
+	return;
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+underlying store, false otherwise. If C<< $feature >> is not specified, returns
+a list of supported features.
+
+=cut
+
+sub supports {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->supports( @_ );
 	}
 	return;
 }
@@ -429,6 +494,17 @@ sub get_pattern {
 	} else {
 		return $self->_get_pattern( $bgp, $context, @args );
 	}
+}
+
+=item C<< get_sparql ( $sparql ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_sparql {
+	my $self	= shift;
+	return $self->_store->get_sparql( @_ );
 }
 
 sub _get_pattern {
@@ -909,7 +985,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

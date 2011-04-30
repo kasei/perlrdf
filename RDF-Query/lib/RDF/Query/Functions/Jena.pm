@@ -35,7 +35,7 @@ BEGIN {
 	$VERSION	= '2.905';
 }
 
-use Digest::SHA1 qw(sha1_hex);
+use Digest::SHA qw(sha1_hex);
 use I18N::LangTags;
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 
@@ -55,7 +55,6 @@ sub install {
 		sub {
 			my $query	= shift;
 			my $node	= shift;
-			require Digest::SHA1;
 			
 			my $value;
 			if ($node->isa('RDF::Query::Node::Literal')) {
@@ -65,7 +64,7 @@ sub install {
 			} else {
 				throw RDF::Query::Error::TypeError -text => "jena:sha1sum called without a literal or resource";
 			}
-			my $hash	= Digest::SHA1::sha1_hex( $value );
+			my $hash	= sha1_hex( $value );
 			return RDF::Query::Node::Literal->new( $hash );
 		}
 	);

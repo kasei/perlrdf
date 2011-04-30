@@ -7,7 +7,7 @@ RDF::Trine::Model::Dataset - Model for SPARQL datasets
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Dataset version 0.134
+This document describes RDF::Trine::Model::Dataset version 0.135
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use RDF::Trine::Model;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 }
 
 ################################################################################
@@ -119,6 +119,23 @@ Returns the number of statements in the model.
 sub size {
 	my $self	= shift;
 	return $self->count_statements( undef, undef, undef, undef );
+}
+
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+underlying store, false otherwise. If C<< $feature >> is not specified, returns
+a list of supported features.
+
+=cut
+
+sub supports {
+	my $self	= shift;
+	my $store	= $self->_store;
+	if ($store) {
+		return $store->supports( @_ );
+	}
+	return;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object ) >>
@@ -321,6 +338,18 @@ sub get_pattern {
 	}
 }
 
+=item C<< get_sparql ( $sparql ) >>
+
+Returns a stream object of all bindings matching the specified graph pattern.
+
+=cut
+
+sub get_sparql {
+	my $self	= shift;
+	return $self->model->get_sparql( @_ ) unless (scalar(@{ $self->{stack} }));
+	throw RDF::Trine::Error::UnimplementedError -text => "Cannot execute SPARQL queries against a complex dataset model";
+}
+
 =item C<< get_contexts >>
 
 Returns an iterator containing the nodes representing the named graphs in the
@@ -352,7 +381,7 @@ sub model {
 
 sub _store {
 	my $self	= shift;
-	return;
+	return $self->model->_store;
 }
 
 1;
@@ -367,7 +396,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

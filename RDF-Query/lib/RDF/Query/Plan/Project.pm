@@ -221,16 +221,23 @@ sub graph {
 	return "$self";
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
 sub explain {
 	my $self	= shift;
-	my $s		= shift;
-	my $count	= shift;
+	my $s		= shift || '  ';
+	my $count	= shift || 0;
 	my $indent	= $s x $count;
 	my $type	= $self->plan_node_name;
 	my $string	= "${indent}${type}\n";
 	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
 	my @exprs	= @{$self->[3]};
-	$string		.= join(' ', @vars, @exprs);
+	$string		.= "${indent}${s}" . join(' ', @vars, @exprs) . "\n";
 	$string		.= $self->pattern->explain( $s, $count+1 );
 	return $string;
 }
