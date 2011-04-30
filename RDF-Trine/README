@@ -67,7 +67,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.135 (2011-XX-XX)
+  Version 0.135 (2011-04-30)
 
      * API CHANGES
          Globally changed 'base' to 'base_uri' in Trine code and API.

@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.134_02
+This document describes RDF::Trine::Graph version 0.135
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.134_02';
+	$VERSION	= '0.135';
 }
 
 use overload

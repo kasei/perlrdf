@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.134_02
+This document describes RDF::Trine version 0.135
 
 =head1 SYNOPSIS
 
