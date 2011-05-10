@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.134
+This document describes RDF::Trine::Store::DBI::mysql version 0.135
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.134";
+	$VERSION	= "0.135";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -204,9 +204,9 @@ END
 
 
 #		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
 
 # 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
