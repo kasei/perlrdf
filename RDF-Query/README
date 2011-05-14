@@ -37,7 +37,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.906 (2011-XX-XX)
+  Version 2.906 (2011-05-14)
 
      * API CHANGES
          Globally changed 'base' to 'base_uri' in code and API.
