@@ -416,6 +416,65 @@ sub canonicalize_literal_value {
 	return $value;
 }
 
+=item C<< is_canonical_lexical_form >>
+
+=cut
+
+sub is_canonical_lexical_form {
+	my $self	= shift;
+	my $value	= $self->literal_value;
+	my $dt		= $self->literal_datatype;
+	
+	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
+	}
+	
+	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+		if ($value =~ m/^([-+])?(\d+)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
+		if ($value =~ m/^([-+])?((\d+)[.]\d+)$/) {
+			return 1;
+		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
+		if ($value =~ m/^[-+]?(\d+\.\d*|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+			return 1;
+		} elsif ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
+		if ($value =~ m/^[-+]?((\d+(\.\d*))|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+			return 1;
+		} elsif ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		if ($value =~ m/^(true|false)$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
+		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+	return 0;
+}
+
 =item C<< is_valid_lexical_form >>
 
 Returns true if the node is of a recognized datatype and has a valid lexical form
