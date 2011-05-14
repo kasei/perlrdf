@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.133
+This document describes RDF::Trine::Parser::RDFa version 0.135
 
 =head1 SYNOPSIS
 
@@ -77,15 +77,15 @@ BEGIN {
 					[],
 					[qw(trig)]
 				],
-	rdfa	 => [
+	librdfa	 => [
 					'RDF::Trine::Parser::Redland::RDFa',
 					'http://www.w3.org/ns/formats/data/RDFa',
-					[qw(application/xhtml+xml)],
-					[qw(html xhtml)]
+					[], #[qw(application/xhtml+xml)],
+					[], #[qw(html xhtml)]
 				],
 	);
 	
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
@@ -154,6 +154,9 @@ sub parse {
 	my $handler = shift;
 	
 	my $null_base	= 'urn:uuid:1d1e755d-c622-4610-bae8-40261157687b';
+	if ($base and blessed($base) and $base->isa('URI')) {
+		$base	= $base->as_string;
+	}
 	$base		= RDF::Redland::URI->new(defined $base ? $base : $null_base);
 	my $stream	= eval {
 		$self->{parser}->parse_string_as_stream($string, $base)
@@ -222,7 +225,7 @@ package RDF::Trine::Parser::Redland::RDFa;
 use strict;
 use warnings;
 use base qw(RDF::Trine::Parser::Redland);
-sub new { shift->SUPER::new( @_, name => 'rdfa' ) }
+sub new { shift->SUPER::new( @_, name => 'librdfa' ) }
 
 
 1;
@@ -237,7 +240,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

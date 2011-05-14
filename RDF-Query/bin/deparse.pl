@@ -21,15 +21,22 @@ use RDF::Query::Util;
 my $sparql	= 0;
 my $algebra	= 0;
 my $plan	= 0;
+my $explain	= 0;
 my $spin	= 0;
-while ($ARGV[0] =~ /^-([apsS])$/) {
+my $endpoint;
+while ($ARGV[0] =~ /^-([EapPsS])$/) {
 	$algebra	= 1 if ($1 eq 'a');
 	$plan		= 1 if ($1 eq 'p');
+	$explain	= 1 if ($1 eq 'P');
 	$sparql		= 1 if ($1 eq 's');
 	$spin		= 1 if ($1 eq 'S');
 	shift(@ARGV);
+	
+	if ($1 eq 'E') {
+		$endpoint	= shift(@ARGV);
+	}
 }
-$sparql	= 1 unless ($algebra || $plan || $sparql || $spin);
+$sparql	= 1 unless ($algebra || $plan || $sparql || $spin || $explain);
 
 unshift(@ARGV, '-w');
 my $query;
@@ -63,9 +70,22 @@ if ($query) {
 		$s->serialize_model_to_file( \*STDOUT, $model );
 	}
 	
+	my $model;
+	if ($endpoint) {
+		my $store	= RDF::Trine::Store::SPARQL->new( $endpoint );
+		$model	= RDF::Trine::Model->new( $store );
+	} else {
+		$model	= RDF::Trine::Model->temporary_model;
+	}
+	
+	if ($explain) {
+		print "\n# Plan:\n";
+		my ($plan, $ctx)	= $query->prepare( $model );
+		print $plan->explain("  ", 0);
+	}
+	
 	if ($plan) {
 		print "\n# Plan:\n";
-		my $model	= RDF::Trine::Model->temporary_model;
 		my ($plan, $ctx)	= $query->prepare( $model );
 		print $plan->sse . "\n";
 	}

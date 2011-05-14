@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.905.
+This document describes RDF::Query::Util version 2.906.
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use JSON;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -241,6 +241,10 @@ sub cli_parse_args {
 			$args{ optimize }	= 1;
 		} elsif ($opt eq '-o') {
 			$args{ force_no_optimization }	= 1;
+		} elsif ($opt eq '-C') {
+			my $k	= shift(@ARGV);
+			my $v	= shift(@ARGV);
+			$args{ $k }	= $v;
 		} elsif ($opt eq '-c') {
 			my $class		= shift(@ARGV);
 			eval "require $class";

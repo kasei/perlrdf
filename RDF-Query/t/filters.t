@@ -231,9 +231,9 @@ END
 	}
 
 	SKIP: {
-		eval "require Digest::SHA1";
+		eval "require Digest::SHA";
 		if ($@) {
-			skip "Digest::SHA1 required for jena:sha1sum tests", 2;
+			skip "Digest::SHA required for jena:sha1sum tests", 2;
 		}
 		
 		my $sparql	= <<"END";

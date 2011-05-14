@@ -7,7 +7,7 @@ RDF::Trine::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Variable version 0.133
+This document describes RDF::Trine::Node::Variable version 0.135
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 }
 
 ######################################################################
@@ -89,6 +89,17 @@ sub as_string {
 	return '?' . $self->name;
 }
 
+=item C<< value >>
+
+Returns the variable name.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->name;
+}
+
 =item C<< as_ntriples >>
 
 Returns the node in a string form suitable for NTriples serialization.
@@ -143,7 +154,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

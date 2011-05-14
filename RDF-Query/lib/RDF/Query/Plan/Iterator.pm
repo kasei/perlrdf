@@ -7,7 +7,7 @@ RDF::Query::Plan::Iterator - Executable query plan for result-generating iterato
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Iterator version 2.905.
+This document describes RDF::Query::Plan::Iterator version 2.906.
 
 =head1 METHODS
 
@@ -24,16 +24,20 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
+use Scalar::Util qw(blessed reftype);
+
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
 
 =item C<< new ( $iter, \&execute_cb ) >>
+
+=item C<< new ( \&create_iterator_cb ) >>
 
 =cut
 
@@ -59,6 +63,11 @@ sub execute ($) {
 	
 	if (ref($self->[2])) {
 		$self->[2]->( $context );
+	}
+	
+	# if we don't have an actual iterator, but only a promise of one, construct it now
+	if (reftype($self->[1]) eq 'CODE' and not(blessed($self->[1]) and $self->[1]->isa('RDF::Trine::Iterator'))) {
+		$self->[1]	= $self->[1]->( $context );
 	}
 	
 	$self->state( $self->OPEN );

@@ -12,6 +12,14 @@ use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
 use Math::Combinatorics qw(permute);
+use LWP::MediaTypes qw(add_type);
+
+add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
+add_type( 'text/turtle' => qw(ttl) );
+add_type( 'text/plain' => qw(nt) );
+add_type( 'text/x-nquads' => qw(nq) );
+add_type( 'text/json' => qw(json) );
+add_type( 'text/html' => qw(html xhtml htm) );
 
 use RDF::Query;
 use RDF::Query::Node qw(iri blank literal variable);
@@ -20,11 +28,11 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-use RDF::Redland;
+# use RDF::Redland;
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.update		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -45,13 +53,24 @@ require XML::Simple;
 plan qw(no_plan);
 require "xt/dawg/earl.pl";
 	
-my $PATTERN		= shift(@ARGV) || '';
-my $BNODE_RE	= qr/^(r|genid)[0-9A-F]+[r0-9]*$/;
+my $PATTERN	= '';
+my %args;
+
+while (defined(my $opt = shift)) {
+	if ($opt =~ /^-(.*)$/) {
+		$args{ $1 }	= 1;
+	} elsif ($opt eq '-v') {
+		$debug++;
+	} else {
+		$PATTERN	= $opt;
+	}
+}
+
 
 no warnings 'once';
 
 if ($PATTERN) {
-	$debug			= 0;
+# 	$debug			= 1;
 }
 
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
@@ -62,10 +81,12 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		aggregates
 		basic-update
 		bind
+		bindings
 		clear
 		construct
 		delete
 		delete-data
+		delete-insert
 		delete-where
 		drop
 		functions
@@ -89,7 +110,7 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 {
 	my @manifests	= $model->subjects( $rdf->type, $mf->Manifest );
 	foreach my $m (@manifests) {
-		warn "Manifest: " . $m->as_string . "\n" if ($debug);
+		warn "Manifest: " . $m->as_string . "\n" if ($debug > 1);
 		my ($list)	= $model->objects( $m, $mf->entries );
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
@@ -174,6 +195,11 @@ sub update_eval_test {
 		earl_fail_test( $earl, $test, $e->text );
 		print "# died: " . $test->as_string . ": $e\n";
 		return;
+	} except {
+		my $e	= shift;
+		die $e->text;
+	} otherwise {
+		warn '*** failed to construct model';
 	};
 	
 	foreach my $gdata (@gdata) {
@@ -242,12 +268,18 @@ sub update_eval_test {
 		
 		my $eq	= $test_graph->equals( $expected_graph );
 		$ok	= is( $eq, 1, $test->as_string );
+		unless ($ok) {
+			warn $test_graph->error;
+			warn $test_model->as_string;
+			warn $expected_model->as_string;
+		}
 	};
-	if ($ok) {
-		earl_pass_test( $earl, $test );
-	} else {
+	if ($@ or not($ok)) {
+		fail($test->as_string);
 		earl_fail_test( $earl, $test, $@ );
 		print "# failed: " . $test->as_string . "\n";
+	} else {
+		earl_pass_test( $earl, $test );
 	}
 	
 	print STDERR "ok\n" if ($debug);
@@ -307,6 +339,11 @@ sub query_eval_test {
 		earl_fail_test( $earl, $test, $e->text );
 		print "# died: " . $test->as_string . ": $e\n";
 		return;
+	} except {
+		my $e	= shift;
+		die $e->text;
+	} otherwise {
+		warn '*** failed to construct model';
 	};
 	print STDERR "ok\n" if ($debug);
 	
@@ -331,7 +368,7 @@ sub query_eval_test {
 			print STDERR "ok\n" if ($debug);
 			
 		#	warn "comparing results...";
-			my $ok			= compare_results( $expected, $actual, $earl, $test->as_string, \$comment );
+			compare_results( $expected, $actual, $earl, $test->as_string, \$comment );
 		};
 		warn $@ if ($@);
 		if ($ok) {
@@ -378,6 +415,11 @@ sub get_actual_results {
 	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
 	my $rmodel	= RDF::Trine::Model->temporary_model;
 	my $results	= $query->execute_with_named_graphs( $model, \@gdata );	# strict_errors => 1
+	if ($args{ results }) {
+		$results	= $results->materialize;
+		warn "Got actual results:\n";
+		warn $results->as_string;
+	}
 	if ($results->is_bindings) {
 		return (binding_results_data( $results ), 'bindings');
 	} elsif ($results->is_boolean) {
@@ -403,22 +445,32 @@ sub get_expected_results {
 	} elsif ($file =~ /[.](srj|json)/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
-		my $iter	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
-		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($iter->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+		my $results	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
+		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
 			return $model->get_statements;
 		} else {
-			return binding_results_data( $iter );
+			if ($args{ results }) {
+				$results	= $results->materialize;
+				warn "Got expected results:\n";
+				warn $results->as_string;
+			}
+			return binding_results_data( $results );
 		}
 	} elsif ($file =~ /[.]srx/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
-		my $iter	= RDF::Trine::Iterator->from_string( $data, { canonicalize => 1 } );
-		if ($iter->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($iter->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+		my $results	= RDF::Trine::Iterator->from_string( $data, { canonicalize => 1 } );
+		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
 			return $model->get_statements;
 		} else {
-			return binding_results_data( $iter );
+			if ($args{ results }) {
+				$results	= $results->materialize;
+				warn "Got expected results:\n";
+				warn $results->as_string;
+			}
+			return binding_results_data( $results );
 		}
 	} else {
 		die;
@@ -441,7 +493,7 @@ sub compare_results {
 		my $act_graph	= RDF::Trine::Graph->new( $actual );
 		my $exp_graph	= RDF::Trine::Graph->new( $expected );
 		
- 		local($debug)	= 1 if ($PATTERN);
+#  		local($debug)	= 1 if ($PATTERN);
 		if ($debug) {
 			warn ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
 			my $actualxml		= $act_graph->get_statements->as_string;
@@ -465,6 +517,8 @@ sub compare_results {
 			warn "Result count ($acount) didn't match expected ($ecount)" if ($debug);
 			return fail($test);
 		}
+		
+# 		warn Data::Dumper->Dump([\@aresults, \@eresults], [qw(actual expected)]);
 		
 		my ($awith, $awithout)	= split_results_with_blank_nodes( @aresults );
 		my ($ewith, $ewithout)	= split_results_with_blank_nodes( @eresults );

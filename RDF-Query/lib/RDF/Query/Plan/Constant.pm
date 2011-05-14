@@ -7,7 +7,7 @@ RDF::Query::Plan::Constant - Executable query plan for Constants.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Constant version 2.905.
+This document describes RDF::Query::Plan::Constant version 2.906.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -59,6 +59,32 @@ sub execute ($) {
 	$self->[0]{'index'}	= 0;
 	$self->state( $self->OPEN );
 	$self;
+}
+
+=item C<< bindings >>
+
+Returns a list of the variable bindings for this constant result set.
+
+=cut
+
+sub bindings {
+	my $self	= shift;
+	my $binds	= $self->[1] || [];
+	return @$binds;
+}
+
+=item C<< is_unit >>
+
+Returns true if this constant result set is comprised of a single, empty variable binding.
+
+=cut
+
+sub is_unit {
+	my $self	= shift;
+	my @binds	= $self->bindings;
+	return 0 unless scalar(@binds) == 1;
+	my @keys	= keys %{ $binds[0] };
+	return not(scalar(@keys));
 }
 
 =item C<< next >>

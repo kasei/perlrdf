@@ -7,7 +7,7 @@ RDF::Query::Algebra::GroupGraphPattern - Algebra class for GroupGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::GroupGraphPattern version 2.905.
+This document describes RDF::Query::Algebra::GroupGraphPattern version 2.906.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 	our %SERVICE_BLOOM_IGNORE	= ('http://dbpedia.org/sparql' => 1);	# by default, assume dbpedia doesn't implement k:bloom().
 }
 
@@ -145,6 +145,31 @@ sub sse {
 			join("\n${prefix}${indent}", map { $_->sse( $context, "${prefix}${indent}" ) } @patterns)
 		);
 	}
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}group graph pattern\n";
+
+	my @patterns	= $self->patterns;
+	if (scalar(@patterns) == 1) {
+		$string	.= $patterns[0]->explain( $s, $count+1 );
+	} else {
+		foreach my $p (@patterns) {
+			$string	.= $p->explain( $s, $count+1 );
+		}
+	}
+	return $string;
 }
 
 =item C<< as_sparql >>

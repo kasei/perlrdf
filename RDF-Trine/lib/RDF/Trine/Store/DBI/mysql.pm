@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.133
+This document describes RDF::Trine::Store::DBI::mysql version 0.135
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.133";
+	$VERSION	= "0.135";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -89,6 +89,9 @@ sub add_statement {
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+		if (blessed($context)) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
+		}
 		$context	= $stmt->context;
 	} else {
 		my $cid		= do {
@@ -102,7 +105,7 @@ sub add_statement {
 		push(@values, $cid);
 	}
 	my $sql		= sprintf( "INSERT IGNORE INTO ${stable} (Subject, Predicate, Object, Context) VALUES (?,?,?,?)" );
-	my $sth		= $dbh->prepare_cached( $sql );
+	my $sth		= $dbh->prepare( $sql );
 	$sth->execute(@values);
 }
 
@@ -154,54 +157,62 @@ sub init {
 	my $name	= $self->model_name;
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	
-	$dbh->begin_work;
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Literals (
-            ID bigint unsigned PRIMARY KEY,
-            Value longtext NOT NULL,
-            Language text NOT NULL DEFAULT "",
-            Datatype text NOT NULL DEFAULT ""
-        ) CHARACTER SET utf8 COLLATE utf8_bin;
-END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Resources (
-            ID bigint unsigned PRIMARY KEY,
-            URI text NOT NULL
-        );
-END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Bnodes (
-            ID bigint unsigned PRIMARY KEY,
-            Name text NOT NULL
-        );
-END
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE IF NOT EXISTS Models (
-            ID bigint unsigned PRIMARY KEY,
-            Name text NOT NULL
-        );
-END
-    
-    $dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
-	$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
-        CREATE TABLE Statements${id} (
-            Subject bigint unsigned NOT NULL,
-            Predicate bigint unsigned NOT NULL,
-            Object bigint unsigned NOT NULL,
-            Context bigint unsigned NOT NULL DEFAULT 0,
-            PRIMARY KEY (Subject, Predicate, Object, Context)
-        );
+	unless ($self->_table_exists("Literals")) {
+		$dbh->begin_work;
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+			CREATE TABLE IF NOT EXISTS Literals (
+				ID bigint unsigned PRIMARY KEY,
+				Value longtext NOT NULL,
+				Language text NOT NULL DEFAULT "",
+				Datatype text NOT NULL DEFAULT ""
+			) CHARACTER SET utf8 COLLATE utf8_bin;
 END
 
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
-	$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+			CREATE TABLE IF NOT EXISTS Resources (
+				ID bigint unsigned PRIMARY KEY,
+				URI text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+			CREATE TABLE IF NOT EXISTS Bnodes (
+				ID bigint unsigned PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+			CREATE TABLE IF NOT EXISTS Models (
+				ID bigint unsigned PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		$dbh->commit or warn $dbh->errstr;
+	}
+
+	unless ($self->_table_exists("statements${id}")) {
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+			CREATE TABLE IF NOT EXISTS Statements${id} (
+				Subject bigint unsigned NOT NULL,
+				Predicate bigint unsigned NOT NULL,
+				Object bigint unsigned NOT NULL,
+				Context bigint unsigned NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
+END
+
+# 		$dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
+
+
+#		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
+		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	
-#	$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
-	$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ) || do { $dbh->rollback; return undef };
-	
-	$dbh->commit;
+		$dbh->commit;
+	}
 }
 
 
@@ -222,7 +233,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

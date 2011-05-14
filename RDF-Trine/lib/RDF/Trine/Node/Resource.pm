@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.133
+This document describes RDF::Trine::Node::Resource version 0.135
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 }
 
 ######################################################################
@@ -45,7 +45,7 @@ L<RDF::Trine::Node> class.
 
 =cut
 
-=item C<new ( $iri, [ $base ] )>
+=item C<new ( $iri, [ $base_uri ] )>
 
 Returns a new Resource structure.
 
@@ -54,18 +54,18 @@ Returns a new Resource structure.
 sub new {
 	my $class	= shift;
 	my $uri		= shift;
-	my $base	= shift;
+	my $base_uri	= shift;
 	
-	if (defined($base)) {
-		$base	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
-		$uri	= URI->new_abs($uri, $base)->as_iri;
+	if (defined($base_uri)) {
+		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
+		$uri	= URI->new_abs($uri, $base_uri)->as_iri;
 	}
 # 	my @uni;
 # 	my $count	= 0;
 # 	
 # 	my $buri;
-# 	if (defined($base)) {
-# 		$buri	= (blessed($base) and $base->isa('RDF::Trine::Node::Resource')) ? $base->uri_value : "$base";
+# 	if (defined($base_uri)) {
+# 		$buri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
 # 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
 # 			my $text	= $1;
 # 			push(@uni, $text);
@@ -81,7 +81,7 @@ sub new {
 # 		$count++;
 # 	}
 # 	
-# 	if (defined($base)) {
+# 	if (defined($base_uri)) {
 # 		### We have to work around the URI module not accepting IRIs. If there's
 # 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
 # 		### the URI into an absolute URI, and then replace the breadcrumbs with
@@ -110,6 +110,17 @@ Returns the URI/IRI value of this resource.
 sub uri_value {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< value >>
+
+Returns the URI/IRI value.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->uri_value;
 }
 
 =item C<< uri ( $uri ) >>
@@ -249,11 +260,12 @@ QName, returns a list containing these two parts. Otherwise throws an exception.
 sub qname {
 	my $p		= shift;
 	my $uri		= $p->uri_value;
-	
-	my $nameStartChar	= qr<([A-Za-z_]|[\x{C0}-\x{D6}]|[\x{D8}-\x{D8}]|[\x{F8}-\x{F8}]|[\x{200C}-\x{200C}]|[\x{37F}-\x{1FFF}][\x{200C}-\x{200C}]|[\x{2070}-\x{2070}]|[\x{2C00}-\x{2C00}]|[\x{3001}-\x{3001}]|[\x{F900}-\x{F900}]|[\x{FDF0}-\x{FDF0}]|[\x{10000}-\x{10000}])>;
-	my $nameChar		= qr<$nameStartChar|-|[.]|[0-9]|\x{B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]>;
-	my $lnre			= qr<((${nameStartChar})($nameChar)*)>;
-	if ($uri =~ m/${lnre}$/) {
+
+	our $r_PN_CHARS_BASE	||= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
+	our $r_PN_CHARS_U		||= qr/(_|${r_PN_CHARS_BASE})/;
+	our $r_PN_CHARS			||= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
+	our $r_PN_LOCAL			||= qr/((${r_PN_CHARS_U})((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
+	if ($uri =~ m/${r_PN_LOCAL}$/) {
 		my $ln	= $1;
 		my $ns	= substr($uri, 0, length($uri)-length($ln));
 		return ($ns, $ln);
@@ -280,7 +292,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

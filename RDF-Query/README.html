@@ -21,7 +21,6 @@
 		<ul>
 			<li>Data::UUID</li>
 			<li>Digest::SHA</li>
-			<li>Digest::SHA1</li>
 			<li>DateTime</li>
 			<li>DateTime::Format::W3CDTF</li>
 			<li>Error</li>
@@ -52,7 +51,63 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_904">Version 2.905 (2011-02-18)</h3>
+		<h3 id="v2_905">Version 2.906 (2011-05-14)</h3>
+			<ul>
+				<li>API Changes
+					<ul>
+						<li>Globally changed 'base' to 'base_uri' in code and API.</li>
+					</ul></li>
+				<li>Bug Fixes
+					<ul>
+						<li>Fixed SPARQL serialization in RDF::Query::Plan generation of SERVICE blocks to always include braces around the query body.</li>
+						<li>Fixed SPARQL 1.1 parsing bug in property paths using alternatives ('|').</li>
+						<li>Fixed SPARQL 1.1 bug in parsing prefixnames where a graph term is expected.</li>
+						<li>Fixed bug in ZeroOrMore reverse path handling (patterns matching { var path* term }).</li>
+						<li>Fixed bug in RDF::Query::Node::Literal::_cmp that was causing wrong node comparison results.</li>
+						<li>Fixed bug in parsing solution modifiers in CONSTRUCT and DESCRIBE queries.</li>
+						<li>Fixed bug in handling of unbound variables in delete templates in RDF::Query::Plan::Update.</li>
+						<li>Fixed bug in calls to RDF::Query->var_or_expr_value that was preventing use of EXISTS filters in project expressions.</li>
+					</ul></li>
+				<li>New Features
+					<ul>
+						<li>Updated RDF::Query::Plan::Iterator->new to allow passing in a callback that will return an iterator, instead of an iterator directly.</li>
+						<li>Updated RDF::Query->query_plan to delegate entire queries to the RDF::Trine::Model when possible.</li>
+						<li>Updated bin/deparse.pl to allow specifying an endpoint url for SPARQL-backed models (which can affect the query plan).</li>
+						<li>Added support for empty SPARQL 1.1 Update sequence operations (allowing no-op updates).</li>
+						<li>Added options to RDF::Query->new to allow forcing RDF::Query to disable query delegation to the underlying store.</li>
+						<li>Added option to RDF::Query::Util::cli_parse_args to specify arbitrary options to be supplied to the RDF::Query->new constructor.</li>
+						<li>Added new, cleaner line-based "explain" format for serializing query Plan and Algebra objects.</li>
+						<li>Added bindings accessor and is_unit method to RDF::Query::Plan::Constant.</li>
+						<li>Added ability to forcibly remove a particular join algorithm from consideration in plan generation.</li>
+						<li>Added 'execute' command in rqsh to allow loading a query from a file or URL.</li>
+					</ul></li>
+				<li>Enhancements
+					<ul>
+						<li>Updated SPARQL 1.1 parser to prevent bnode use in DELETE blocks.</li>
+						<li>Updated rqsh to associate common filename extensions with media types (helps in loading local files).</li>
+						<li>Updated RDF::Query::Plan::Path to align with new ALP algorithm from the spec text.</li>
+						<li>Added some simple statistics generation code in RDF::Query::Plan::Join subclasses.</li>
+						<li>Added missing implementation for property paths using {n,} modifier syntax.</li>
+						<li>Added code to guard against mishandling unbound/blank/variable nodes in DELETE templates in RDF::Query::Plan::Update.</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Updated tests to use new RDF::Trine::Iterator->seen_count method instead of deprecated count method.</li>
+						<li>Updated serialization text for zero-length paths in RDF::Query::Plan::Path->plan_node_data.</li>
+						<li>Removed warning of unknown options passed to RDF::Query->new.</li>
+						<li>Removed unused projection code in RDF::Query->execute_plan.</li>
+						<li>Removed Digest::SHA1 from prereq modules, and updated code to use Digest::SHA instead.</li>
+						<li>Remove the meaningless "All rights reserved" copyright text.</li>
+						<li>Fixed test count in t/sparql11-propery_paths.t.</li>
+						<li>Commented out noisy debugging output in RDF::Query::Plan::Path.</li>
+						<li>Added trace debugging in RDF::Query::Plan::Sort.</li>
+						<li>Added options instance variable to RDF::Query::ExecutionContext.</li>
+						<li>Added Module::Pluggable to list of required modules in Makefile.PL.</li>
+						<li>Added mappings from file extensions to media types in dawg test scripts.</li>
+						<li>Various updates to SPARQL 1.1 dawg test harness scripts.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_905">Version 2.905 (2011-02-18)</h3>
 			<ul>
 				<li>Bug Fixes
 					<ul>
@@ -1176,5 +1231,5 @@
 				<li>Moving over to redland's query API (pass in the model when query is executed)</li>
 			</ul>
 	<h2>Copyright</h2>
-		<p>Copyright &copy; 2005&#8211;2010 Gregory Williams. All rights reserved. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
+		<p>Copyright &copy; 2005&#8211;2010 Gregory Williams. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
 </body></html>

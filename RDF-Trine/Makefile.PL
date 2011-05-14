@@ -19,7 +19,6 @@ requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
 requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
-requires			'Digest::SHA1'				=> 0;
 requires			'Error'						=> 0;
 requires			'HTTP::Negotiate'			=> 0;
 requires			'JSON'						=> 2;
@@ -40,7 +39,7 @@ requires			'Unicode::String'			=> 2.09;
 requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
-requires			'XML::SAX'					=> 0;
+requires			'XML::SAX'					=> 0.96;
 requires			'XML::LibXML'				=> 1.70;
 
 resources(
@@ -49,6 +48,9 @@ resources(
 );
 
 author_tests('xt');
+
+install_script glob('bin/srx2csv');
+install_script glob('bin/srx2table');
 
 sign;
 

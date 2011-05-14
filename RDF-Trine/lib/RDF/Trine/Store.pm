@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.133
+This document describes RDF::Trine::Store version 0.135
 
 =cut
 
@@ -21,6 +21,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
@@ -31,7 +32,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -91,7 +92,7 @@ sub new_with_string {
 	if (defined($string)) {
 		my ($subclass, $config)	= split(/;/, $string, 2);
 		my $class	= join('::', 'RDF::Trine::Store', $subclass);
-		if ($class->can('_new_with_string')) {
+		if (can_load(modules => { $class => 0 }) and $class->can('_new_with_string')) {
 			return $class->_new_with_string( $config );
 		} else {
 			throw RDF::Trine::Error::UnimplementedError -text => "The class $class doesn't support the use of new_with_string";
@@ -127,7 +128,7 @@ sub new_with_config {
 	my $proto		= shift;
 	my $config	= shift;
 	if (defined($config)) {
-		my $class	= join('::', 'RDF::Trine::Store', $config->{storetype});
+		my $class	= $config->{storeclass} || join('::', 'RDF::Trine::Store', $config->{storetype});
 		if ($class->can('_new_with_config')) {
 			return $class->_new_with_config( $config );
 		} else {
@@ -161,6 +162,14 @@ sub new_with_object {
 	}
 	return;
 }
+
+=item C<< nuke >>
+
+Permanently removes the store and its data.
+
+=cut
+
+sub nuke {}
 
 =item C<< class_by_name ( $name ) >>
 
@@ -336,27 +345,51 @@ sub _map_sort_data {
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
+=cut
+
+sub get_statements;
+
 =item C<< get_contexts >>
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
+=cut
+
+sub get_contexts;
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
+
+=cut
+
+sub add_statement;
 
 =item C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
 
+=cut
+
+sub remove_statement;
+
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=cut
+
+sub remove_statements;
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_statements;
 
 =item C<< size >>
 
@@ -381,6 +414,18 @@ sub etag {
 	return;
 }
 
+=item C<< supports ( [ $feature ] ) >>
+
+If C<< $feature >> is specified, returns true if the feature is supported by the
+store, false otherwise. If C<< $feature >> is not specified, returns a list of
+supported features.
+
+=cut
+
+sub supports {
+	return;
+}
+
 sub _begin_bulk_ops {}
 sub _end_bulk_ops {}
 
@@ -396,7 +441,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

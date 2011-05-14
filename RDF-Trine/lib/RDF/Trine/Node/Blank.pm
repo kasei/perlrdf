@@ -7,7 +7,7 @@ RDF::Trine::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Blank version 0.133
+This document describes RDF::Trine::Node::Blank version 0.135
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 }
 
 ######################################################################
@@ -77,6 +77,17 @@ Returns the identifier of the blank node.
 sub blank_identifier {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< value >>
+
+Returns the blank identifier.
+
+=cut
+
+sub value {
+	my $self	= shift;
+	return $self->blank_identifier;
 }
 
 =item C<< sse >>
@@ -156,7 +167,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

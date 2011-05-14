@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.905.
+This document describes RDF::Query::Parser::SPARQL version 2.906.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -574,6 +574,7 @@ sub _ConstructQuery {
 	$self->_DatasetClause();
 	$self->__consume_ws_opt;
 	$self->_WhereClause;
+	$self->__consume_ws_opt;
 	$self->_SolutionModifier();
 	
 	my $pattern		= $self->{build}{triples}[0];
@@ -608,6 +609,7 @@ sub _DescribeQuery {
 	$self->__consume_ws_opt;
 	if ($self->_WhereClause_test) {
 		$self->_WhereClause;
+		$self->__consume_ws_opt;
 	}
 	
 	$self->_SolutionModifier();

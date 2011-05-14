@@ -1,4 +1,5 @@
 use utf8;
+use strict;
 use Test::More;
 use Test::Exception;
 use FindBin qw($Bin);
@@ -28,7 +29,7 @@ my @bad		= bsd_glob("${path}/bad*.ttl");
 	my $file	= File::Spec->catfile( $Bin, 'data', 'bugs', 'ttl-with-bom.ttl' );
 	my $model	= RDF::Trine::Model->temporary_model;
 	my $p		= RDF::Trine::Parser::Turtle->new();
-	$p->parse_file_into_model( $base, $file, $model );
+	$p->parse_file_into_model( undef, $file, $model );
 	is( $model->size, 1, 'expected model size from turtle file with BOM' );
 }
 

@@ -4,7 +4,7 @@ RDF::Query::Functions::SPARQL - SPARQL built-in functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::SPARQL version 2.905.
+This document describes RDF::Query::Functions::SPARQL version 2.906.
 
 =head1 DESCRIPTION
 
@@ -98,7 +98,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.sparql");
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 use POSIX;
@@ -830,7 +830,7 @@ sub install {
 			my $ggp		= shift;
 			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
 			
-			Carp::confess unless (blessed($context));
+			Carp::confess "No execution contexted passed to sparql:exists" unless (blessed($context));
 			
 			my $l		= Log::Log4perl->get_logger("rdf.query.functions.exists");
 			my $copy		= $context->copy( bound => $bound );

@@ -15,6 +15,29 @@
 	.
 
 
+<http://kasei.us/code/files/RDF-Endpoint-0.02.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.02" ;
+		doap:created      "2011-04-16" ;
+	] ;
+	asc:changes [
+		asc:addition	"Added ETag support for query results, varying based on Accept and Accept-Encoding headers, and query string." ;
+		asc:addition	"Added support for POSTing queries and updates directly using the appropriate media types." ;
+		asc:addition	"Added CodeMirror files for syntax highlighting SPARQL query form markup." ;
+		asc:update      "Changes to align with SPARQL Protocol 1.1." ;
+		asc:update      "Updated tests to test functionality directly via PSGI." ;
+		asc:update      "Updated content negotiation quality values." ;
+		asc:update      "Moved endpoint-specific configuration variables into top-level 'endpoint' hash." ;
+		asc:update      "Fixed caching bug in which browsers would use cached results across endpoint instantiations." ;
+		asc:update      "Service description is now cached in the RDF::Endpoint object." ;
+		asc:update      "Updated endpoint.psgi to move config parsing and endpoint object construction outside of the request handler." ;
+		asc:update      "Updated RDF::Endpoint to use a persistent model object across run() calls." ;
+	] ;
+	.
+
+
 <http://kasei.us/code/files/RDF-Endpoint-0.01.tar.gz>
 	dcterms:isVersionOf my:project ;
 	

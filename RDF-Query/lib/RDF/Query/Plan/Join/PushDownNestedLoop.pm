@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested lo
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.905.
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.906.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
 
@@ -81,6 +81,7 @@ sub execute ($) {
 	
 	$self->lhs->execute( $context );
 	if ($self->lhs->state == $self->OPEN) {
+		delete $self->[0]{stats};
 		$self->[0]{context}			= $context;
 		$self->[0]{outer}			= $self->lhs;
 		$self->[0]{needs_new_outer}	= 1;
@@ -112,6 +113,7 @@ sub next {
 			$self->[0]{outer_row}	= $outer->next;
 			my $outer	= $self->[0]{outer_row};
 			if (ref($outer)) {
+				$self->[0]{stats}{outer_rows}++;
 				my $context	= $self->[0]{context};
 				$self->[0]{needs_new_outer}	= 0;
 				$self->[0]{inner_count}		= 0;
@@ -134,10 +136,12 @@ sub next {
 		}
 		
 		while (defined(my $inner_row = $self->[0]{inner}->next)) {
+			$self->[0]{stats}{inner_rows}++;
 			$l->trace( "using inner row: " . $inner_row->as_string );
 			if (defined(my $joined = $inner_row->join( $self->[0]{outer_row} ))) {
+				$self->[0]{stats}{results}++;
 				if ($l->is_trace) {
-					$l->trace("joined bindings: $inner_row |><| $self->[0]{outer_row}");
+					$l->trace("joined bindings: $inner_row ⋈ $self->[0]{outer_row}");
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
@@ -206,6 +210,30 @@ sub graph {
 	$g->add_edge( "$self", $l );
 	$g->add_edge( "$self", $r );
 	return "$self";
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $stats	= '';
+	if ($self->[0]{stats}) {
+		$stats	= sprintf(' [%d/%d/%d]', @{ $self->[0]{stats} }{qw(outer_rows inner_rows results)});
+	}
+	my $string	= "${indent}${type}${stats}\n";
+	foreach my $p ($self->plan_node_data) {
+		$string	.= $p->explain( $s, $count+1 );
+	}
+	return $string;
 }
 
 

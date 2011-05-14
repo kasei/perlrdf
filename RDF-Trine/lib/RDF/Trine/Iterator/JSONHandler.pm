@@ -7,13 +7,13 @@ RDF::Trine::Iterator::JSONHandler - JSON Handler for parsing SPARQL JSON Results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::JSONHandler version 0.133
+This document describes RDF::Trine::Iterator::JSONHandler version 0.135
 
 =head1 SYNOPSIS
 
-    use RDF::Trine::Iterator::JSONHandler;
-    my $handler = RDF::Trine::Iterator::SAXHandler->new();
-    my $iter = $handler->parse( $json );
+ use RDF::Trine::Iterator::JSONHandler;
+ my $handler = RDF::Trine::Iterator::JSONHandler->new();
+ my $iter = $handler->parse( $json );
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.133';
+	$VERSION	= '0.135';
 }
 
 =item C<< new >>
@@ -117,7 +117,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. All rights reserved. This
+Copyright (c) 2006-2010 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

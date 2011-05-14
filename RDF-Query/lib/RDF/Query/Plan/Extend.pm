@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.905.
+This document describes RDF::Query::Plan::Extend version 2.906.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -84,6 +84,7 @@ sub execute ($) {
 
 sub next {
 	my $self	= shift;
+	my $ctx		= $self->[0]{context};
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open PROJECT";
 	}
@@ -117,7 +118,7 @@ sub next {
 				if ($l->is_trace) {
 					$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
 				}
-				my $value		= $query->var_or_expr_value( $row, $var_or_expr );
+				my $value		= $query->var_or_expr_value( $row, $var_or_expr, $ctx );
 				if ($l->is_trace) {
 					$l->trace( "- extend value $name -> $value" );
 				}

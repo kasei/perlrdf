@@ -7,7 +7,7 @@ RDF::Query::Algebra::BasicGraphPattern - Algebra class for BasicGraphPattern pat
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::BasicGraphPattern version 2.905.
+This document describes RDF::Query::Algebra::BasicGraphPattern version 2.906.
 
 =cut
 
@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -130,6 +130,27 @@ sub sse {
 		join("\n${prefix}${indent}", @triples)
 	);
 }
+
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}basic graph pattern\n";
+	
+	foreach my $t ($self->triples) {
+		$string	.= "${indent}${s}" . $t->as_sparql . "\n";
+	}
+	return $string;
+}
+
 
 =item C<< as_sparql >>
 

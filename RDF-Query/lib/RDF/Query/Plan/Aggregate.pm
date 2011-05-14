@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.905.
+This document describes RDF::Query::Plan::Aggregate version 2.906.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -91,7 +91,7 @@ sub execute ($) {
 			$l->debug("aggregate on $row");
 			my @group;
 			foreach my $g (@groupby) {
-				my $v	= $query->var_or_expr_value( $row, $g );
+				my $v	= $query->var_or_expr_value( $row, $g, $context );
 				if ($g->isa('RDF::Query::Expression::Alias')) {
 					$row->{ $g->name }	= $v;
 				}
@@ -99,7 +99,7 @@ sub execute ($) {
 			}
 			
 # 			my @group	= map { $query->var_or_expr_value( $row, $_ ) } @groupby;
-			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } map { blessed($_) ? $query->var_or_expr_value( $row, $_ ) : '' } @group);
+			my $group	= join('<<<', map { blessed($_) ? $_->as_string : '' } map { blessed($_) ? $query->var_or_expr_value( $row, $_, $context ) : '' } @group);
 			
 			push( @{ $group_data{ 'rows' }{ $group } }, $row );
 			$group_data{ 'groups' }{ $group }	= \@group;
@@ -143,7 +143,7 @@ sub execute ($) {
 				my $col	= $cols[0];
 				my %agg_group_seen;
 				foreach my $row (@{ $group_data{ 'rows' }{ $group } }) {
-					my @proj_rows	= map { (blessed($col)) ? $query->var_or_expr_value( $row, $col ) : '*' } @cols;
+					my @proj_rows	= map { (blessed($col)) ? $query->var_or_expr_value( $row, $col, $context ) : '*' } @cols;
 					if ($distinct) {
 						next if ($agg_group_seen{ join('<<<', @proj_rows) }++);
 					}
@@ -156,7 +156,7 @@ sub execute ($) {
 						if (not(blessed($col)) and $col eq '*') {
 							$should_inc	= 1;
 						} else {
-							my $value	= $query->var_or_expr_value( $row, $col );
+							my $value	= $query->var_or_expr_value( $row, $col, $context );
 							$should_inc	= (defined $value) ? 1 : 0;
 						}
 						
@@ -164,11 +164,12 @@ sub execute ($) {
 						$aggregate_data->{ $alias }{ $group }[1]	+= $should_inc;
 					} elsif ($op eq 'SUM') {
 						$l->debug("- aggregate op: SUM");
-						my $value	= $query->var_or_expr_value( $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col, $context );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
 						my $strict	= 1;
+#						if ($value->isa('RDF::Query::Node::Literal')) {
 						my $v	= $value->numeric_value;
 						if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
 							if ($type ne $aggregate_data->{ $alias }{ $group }[2] and not($value->is_numeric_type and blessed($aggregate_data->{ $alias }{ $group }[1]) and $aggregate_data->{ $alias }{ $group }[1]->isa('RDF::Query::Node::Literal') and $aggregate_data->{ $alias }{ $group }[1]->is_numeric_type)) {
@@ -185,9 +186,10 @@ sub execute ($) {
 							$aggregate_data->{ $alias }{ $group }[1]	= $v;
 							$aggregate_data->{ $alias }{ $group }[2]	= $type;
 						}
+#						}
 					} elsif ($op eq 'MAX') {
 						$l->debug("- aggregate op: MAX");
-						my $value	= $query->var_or_expr_value( $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col, $context );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -218,7 +220,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'MIN') {
 						$l->debug("- aggregate op: MIN");
-						my $value	= $query->var_or_expr_value( $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col, $context );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -250,7 +252,7 @@ sub execute ($) {
 					} elsif ($op eq 'SAMPLE') {
 						### this is just the MIN code from above, without the strict comparison checking
 						$l->debug("- aggregate op: SAMPLE");
-						my $value	= $query->var_or_expr_value( $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col, $context );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -265,7 +267,7 @@ sub execute ($) {
 						}
 					} elsif ($op eq 'AVG') {
 						$l->debug("- aggregate op: AVG");
-						my $value	= $query->var_or_expr_value( $row, $col );
+						my $value	= $query->var_or_expr_value( $row, $col, $context );
 						my $type	= _node_type( $value );
 						$aggregate_data->{ $alias }{ $group }[0]	= $op;
 						
@@ -291,7 +293,7 @@ sub execute ($) {
 						my $str		= RDF::Query::Node::Resource->new('sparql:str');
 
 						my @values	= map {
-							my $expr	= RDF::Query::Expression::Function->new( $str, $query->var_or_expr_value( $row, $_ ) );
+							my $expr	= RDF::Query::Expression::Function->new( $str, $query->var_or_expr_value( $row, $_, $context ) );
 							my $val		= $expr->evaluate( $context->query, $row );
 							blessed($val) ? $val->literal_value : '';
 						} @cols;
