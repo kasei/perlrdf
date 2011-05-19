@@ -511,7 +511,8 @@ sub get_sparql {
 	
 # 	warn $sparql;
 	
-	my $url			= $self->{url} . '?query=' . uri_escape($sparql);
+	my $url		= ($self->{url} =~ /\?/ ? '&' : '?');
+	my $url		= $self->{url} . $url . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
