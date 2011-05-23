@@ -174,7 +174,7 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
-	my $endpoint_path = $config->{endpoint_path} || '/sparql';
+	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
