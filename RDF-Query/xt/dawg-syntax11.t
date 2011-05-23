@@ -11,6 +11,14 @@ use Scalar::Util qw(blessed);
 use RDF::Trine::Iterator qw(smap);
 use RDF::Query::Node qw(iri);
 use LWP::Simple;
+use LWP::MediaTypes qw(add_type);
+
+add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
+add_type( 'text/turtle' => qw(ttl) );
+add_type( 'text/plain' => qw(nt) );
+add_type( 'text/x-nquads' => qw(nq) );
+add_type( 'text/json' => qw(json) );
+add_type( 'text/html' => qw(html xhtml htm) );
 
 our $debug	= 0;
 if ($] < 5.007003) {

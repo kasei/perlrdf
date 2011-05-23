@@ -13,6 +13,8 @@ use RDF::Query::Error qw(:try);
 use RDF::Query::Util;
 use Term::ReadLine;
 use Term::ReadKey;
+use LWP::Simple;
+use LWP::MediaTypes qw(add_type);
 
 ################################################################################
 # Log::Log4perl::init( \q[
@@ -22,6 +24,13 @@ use Term::ReadKey;
 # 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
+
+add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
+add_type( 'text/turtle' => qw(ttl) );
+add_type( 'text/plain' => qw(nt) );
+add_type( 'text/x-nquads' => qw(nq) );
+add_type( 'text/json' => qw(json) );
+add_type( 'text/html' => qw(html xhtml htm) );
 
 $|			= 1;
 my $model;
@@ -105,6 +114,10 @@ sub handle_cmd {
 		}
 	} elsif ($line =~ /debug/i) {
 		debug( $model, $term, $line );
+	} elsif ($line =~ /^execute <([^>]+)>$/) {
+		my $url		= URI->new_abs( $1, $args{ base } );
+		my $query	= get( $url );
+		query( $model, $term, $query );
 	} else {
 		query( $model, $term, $line );
 	}
@@ -123,6 +136,7 @@ Commands:
     parse [sparql]         Print the parsed algebra for the SPARQL 1.1 query/update.
     explain [sparql]       Explain the execution plan for the SPARQL 1.1 query/update.
     time [command]         Time the execution of the command.
+    execute <URI>          Execute the SPARQL update/query obtained by dereferencing URI.
     SELECT ...             Execute the SPARQL 1.1 query.
     ASK ...                Execute the SPARQL 1.1 query.
     CONSTRUCT ...          Execute the SPARQL 1.1 query.

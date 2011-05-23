@@ -7,7 +7,7 @@ RDF::Query::Algebra::Quad - Algebra class for Quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Quad version 2.905.
+This document describes RDF::Query::Algebra::Quad version 2.906.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 my %QUAD_LABELS;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -41,6 +41,31 @@ L<RDF::Query::Algebra> class.
 =over 4
 
 =cut
+
+=item C<new ( $s, $p, $o, $g )>
+
+Returns a new Quad structure.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my @nodes	= @_;
+	unless (scalar(@nodes) == 4) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Quad constructor must have four node arguments";
+	}
+	my @names	= qw(subject predicate object context);
+	foreach my $i (0 .. 3) {
+		unless (defined($nodes[ $i ]) and blessed($nodes[ $i ])) {
+			$nodes[ $i ]	= RDF::Query::Node::Variable->new($names[ $i ]);
+		}
+		unless ($nodes[ $i ]->isa('RDF::Query::Node')) {
+			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+		}
+	}
+	
+	return $class->SUPER::new( @nodes );
+}
 
 =item C<< as_sparql >>
 

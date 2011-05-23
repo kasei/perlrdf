@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.905.
+This document describes RDF::Query::Parser::SPARQL11 version 2.906.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -1185,6 +1185,7 @@ sub _Binding {
 
 sub _BindingValue_test {
 	my $self	= shift;
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/UNDEF|[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }
@@ -2461,6 +2462,7 @@ sub _GraphNode {
 sub _VarOrTerm_test {
 	my $self	= shift;
 	return 1 if ($self->_test(qr/[\$?]/));
+	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/[<'".0-9]|(true|false)\b|_:|\([\n\r\t ]*\)/));
 	return 0;
 }

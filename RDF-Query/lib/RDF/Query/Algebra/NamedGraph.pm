@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.905.
+This document describes RDF::Query::Algebra::NamedGraph version 2.906.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.906';
 }
 
 ######################################################################
@@ -137,6 +137,24 @@ sub sse {
 		$self->graph->sse( $context, "${prefix}${indent}" ),
 		$self->pattern->sse( $context, "${prefix}${indent}" )
 	);
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the algebra appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $string	= "${indent}named graph pattern\n"
+				. "${indent}${s}graph: " . $self->graph->as_string . "\n"
+				. $self->pattern->explain( $s, $count+1 );
+	return $string;
 }
 
 =item C<< as_sparql >>

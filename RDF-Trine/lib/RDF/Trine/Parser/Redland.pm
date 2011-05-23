@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.134
+This document describes RDF::Trine::Parser::RDFa version 0.135
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ BEGIN {
 				],
 	);
 	
-	$VERSION	= '0.134';
+	$VERSION	= '0.135';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
@@ -154,6 +154,9 @@ sub parse {
 	my $handler = shift;
 	
 	my $null_base	= 'urn:uuid:1d1e755d-c622-4610-bae8-40261157687b';
+	if ($base and blessed($base) and $base->isa('URI')) {
+		$base	= $base->as_string;
+	}
 	$base		= RDF::Redland::URI->new(defined $base ? $base : $null_base);
 	my $stream	= eval {
 		$self->{parser}->parse_string_as_stream($string, $base)
