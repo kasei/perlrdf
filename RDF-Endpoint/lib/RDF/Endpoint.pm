@@ -174,12 +174,13 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
+	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
 	my $content;
 	my $response	= Plack::Response->new;
-	unless ($req->path eq '/') {
+	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
 		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
