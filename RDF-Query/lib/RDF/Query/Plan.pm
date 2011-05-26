@@ -455,7 +455,7 @@ sub generate_plans {
 	############################################################################
 	
 	my ($project);
-	my $constant	= $args{ constants };
+	my $constant	= delete $args{ constants };
 	
 	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
 		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away

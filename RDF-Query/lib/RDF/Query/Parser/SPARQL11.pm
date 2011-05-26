@@ -1050,6 +1050,9 @@ sub _DescribeQuery {
 	$self->__consume_ws_opt;
 	if ($self->_WhereClause_test) {
 		$self->_WhereClause;
+	} else {
+		my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new();
+		$self->_add_patterns( $pattern );
 	}
 	
 	$self->__consume_ws_opt;

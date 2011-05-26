@@ -723,7 +723,7 @@ sub as_sparql {
 	} else {
 		{
 			my $pvars	= join(' ', sort $ggp->referenced_variables);
-			my $svars	= join(' ', sort map { $_->name } @{ $parsed->{ variables } });
+			my $svars	= join(' ', sort map { $_->isa('RDF::Query::Node::Resource') ? $_->as_string : $_->name } @{ $parsed->{ variables } });
 			if ($pvars eq $svars) {
 				$vars	= '*';
 			}
