@@ -51,7 +51,21 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_905">Version 2.906 (2011-05-14)</h3>
+		<h3 id="v2_907">Version 2.907 (2011-06-XX)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
+						<li>Fixed bug in SPARQL 1.1 parser for DESCRIBE queries without a WHERE clause.</li>
+						<li>Fixed join ordering bug for queries with a BINDINGS clause and several joins.</li>
+						<li>Fixed RDF::Query->as_sparql for DESCRIBE queries which project URI terms, not variables.</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Fixed expected test results for DESCRIBE queries without a WHERE clause.</li>
+						<li>examples/query.pl now emits a warning if the query object cannot be constructed.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_906">Version 2.906 (2011-05-14)</h3>
 			<ul>
 				<li>API Changes
 					<ul>

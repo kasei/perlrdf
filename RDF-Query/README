@@ -37,6 +37,16 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.907 (2011-06-XX)
+
+     * BUG FIXES
+         Fixed bug in SPARQL 1.1 parser for DESCRIBE queries without a WHERE clause.
+         Fixed join ordering bug for queries with a BINDINGS clause and several joins.
+         Fixed RDF::Query->as_sparql for DESCRIBE queries which project URI terms, not variables.
+     * OTHER
+         Fixed expected test results for DESCRIBE queries without a WHERE clause.
+         examples/query.pl now emits a warning if the query object cannot be constructed.
+
   Version 2.906 (2011-05-14)
 
      * API CHANGES
