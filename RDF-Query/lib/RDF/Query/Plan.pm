@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.906_01.
+This document describes RDF::Query::Plan version 2.907.
 
 =head1 METHODS
 
@@ -64,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906_01';
+	$VERSION	= '2.907';
 }
 
 ######################################################################

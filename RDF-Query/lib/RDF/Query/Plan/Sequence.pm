@@ -7,7 +7,7 @@ RDF::Query::Plan::Sequence - Executable query plan for a sequence of operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Sequence version 2.906_01.
+This document describes RDF::Query::Plan::Sequence version 2.907.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906_01';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
