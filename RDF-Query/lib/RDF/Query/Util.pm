@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.906.
+This document describes RDF::Query::Util version 2.907.
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use JSON;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906';
+	$VERSION	= '2.907';
 }
 
 ######################################################################

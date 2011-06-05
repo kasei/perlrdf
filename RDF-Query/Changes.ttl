@@ -9,6 +9,23 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.907.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.906.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.907" ;
+                        doap:created      "2011-06-04" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Fixed bug in SPARQL 1.1 parser for DESCRIBE queries without a WHERE clause." ;
+                        asc:addition      "Fixed join ordering bug for queries with a BINDINGS clause and several joins." ;
+                        asc:addition      "Fixed RDF::Query->as_sparql for DESCRIBE queries which project URI terms, not variables." ;
+                        asc:addition      "Fixed expected test results for DESCRIBE queries without a WHERE clause." ;
+                        asc:addition      "examples/query.pl now emits a warning if the query object cannot be constructed." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.906.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.905.tar.gz> ;

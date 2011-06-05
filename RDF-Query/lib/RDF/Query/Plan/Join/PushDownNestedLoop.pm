@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested lo
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.906.
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.907.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906';
+	$VERSION	= '2.907';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
 
