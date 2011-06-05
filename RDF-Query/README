@@ -37,7 +37,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.907 (2011-06-XX)
+  Version 2.907 (2011-06-04)
 
      * BUG FIXES
          Fixed bug in SPARQL 1.1 parser for DESCRIBE queries without a WHERE clause.
