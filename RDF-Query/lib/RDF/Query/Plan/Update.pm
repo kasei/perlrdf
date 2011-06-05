@@ -7,7 +7,7 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.906.
+This document describes RDF::Query::Plan::Update version 2.907.
 
 =head1 METHODS
 
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906';
+	$VERSION	= '2.907';
 }
 
 ######################################################################

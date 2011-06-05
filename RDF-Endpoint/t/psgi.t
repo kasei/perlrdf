@@ -18,6 +18,7 @@ my $sd	= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-descrip
 
 my $config	= {
 	endpoint	=> {
+		endpoint_path   => '/',
 		update		=> 1,
 		load_data	=> 1,
 		html		=> {

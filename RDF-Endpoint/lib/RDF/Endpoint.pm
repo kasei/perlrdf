@@ -174,12 +174,13 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
+	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
 	my $content;
 	my $response	= Plack::Response->new;
-	unless ($req->path eq '/') {
+	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
 		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
@@ -486,88 +487,68 @@ sub iter_as_html {
 	my $stream	= shift;
 	my $model	= shift;
 	my $query	= shift;
-	my $html	= "<html><head><title>SPARQL Results</title>\n"
-				. <<"END";
-	<link rel="stylesheet" type="text/css" href="/css/docs.css"/>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
-    <script src="/js/codemirror.js" type="text/javascript"></script>
-	<script type="text/javascript" src="/js/sparql_form.js"></script>
-	<style type="text/css">
-		table {
-			border: 1px solid #000;
-			border-collapse: collapse;
-		}
-		
-		th { background-color: #ddd; }
-		td, th {
-			padding: 1px 5px 1px 5px;
-			border: 1px solid #000;
-		}
-	</style>
-</head><body>
-	<h2>Results</h2>
-END
+
+	my $dir  = $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
+	my $file = File::Spec->catfile($dir, 'index.html');
+	my $html;
+
+	if (-r $file) {
+		open( my $fh, '<', $file ) or die $!;
+		$html = do { local $/; <$fh>; };
+		close $fh;
+	} else {
+		$html = <<HTML
+<html><head><title>SPARQL Results</title></head><body>
+<div id="result" />
+<h2>Query</h2> 
+<form id="queryform" action="" method="get"> 
+<p><textarea id="query" name="query" rows="10" cols="60"></textarea>
+<br/>
+<select id="media-type" name="media-type"> 
+    <option value="">Result Format...</option> 
+    <option label="HTML" value="text/html">HTML</option> 
+    <option label="Turtle" value="text/turtle">Turtle</option> 
+    <option label="XML" value="text/xml">XML</option> 
+    <option label="JSON" value="application/json">JSON</option> 
+</select> 
+<input name="submit" id="submit" type="submit" value="Submit" /> 
+</p>
+</form>
+</body></html>
+HTML
+	}
+
+	my $result = "<h2>Result</h2>\n";
+
 	if ($stream->isa('RDF::Trine::Iterator::Boolean')) {
-		$html	.= (($stream->get_boolean) ? "True" : "False");
+		$result	= (($stream->get_boolean) ? "True" : "False");
 	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
-		$html	.= "<table>\n<tr>\n";
+		$result = "<table class='tablesorter'>\n<thead><tr>\n";
 		
 		my @names	= $stream->binding_names;
 		my $columns	= scalar(@names);
 		foreach my $name (@names) {
-			$html	.= "\t<th>" . $name . "</th>\n";
+			$result	.= "\t<th>" . $name . "</th>\n";
 		}
-		$html	.= "</tr>\n";
+		$result	.= "</tr></thead>\n";
 		
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			$count++;
-			$html	.= "<tr>\n";
+			$result	.= "<tr>\n";
 			foreach my $k (@names) {
 				my $node	= $row->{ $k };
 				my $value	= $self->node_as_html($node, $model);
-				$html	.= "\t<td>" . $value . "</td>\n";
+				$result	.= "\t<td>" . $value . "</td>\n";
 			}
-			$html	.= "</tr>\n";
+			$result	.= "</tr>\n";
 		}
-		$html	.= <<"END";
-		<tr><th colspan="$columns">Total: $count</th></tr>
-	</table>
-	<h2>Query</h2>
-	<form id="queryform" action="" method="get">
-	<p>
-		<textarea id="query" name="query" rows="10" cols="60">${query}</textarea><br/>
-		<select id="media-type" name="media-type">
-			<option value="">Result Format...</option>
-			<option label="HTML" value="text/html">HTML</option>
-			<option label="Turtle" value="text/turtle">Turtle</option>
-			<option label="XML" value="text/xml">XML</option>
-			<option label="JSON" value="application/json">JSON</option>
-		</select>
-		<input name="submit" id="submit" type="submit" value="Submit" />
-	</p>
-	</form>
-END
-	} else {
-		
+		$result   .= "<tfoot><tr><th colspan=\"$columns\">Total: $count</th></tr></tfoot>\n</table>\n";	
 	}
-	$html	.= <<"END";
-<style type="text/css">
-<!--
-tbody tr:nth-child(odd) {
-	background-color: #eeeefa;
-	border-bottom: 1px solid #dddde9;
-	border-top: 1px solid #dddde9;
-}
 
-th {
-	background-color: #ddf;
-	border-bottom: 2px solid #000;
-}
-// -->
-</style>
-</body></html>
-END
+	$html =~ s/<div\s+id\s*=\s*["']result["']\s*\/>/<div id="result">$result<\/div>/;
+	$html =~ s/(<textarea[^>]*>)(.|\n)*(<\/textarea>)/$1$query$3/sm;
+
 	return $html;
 }
 

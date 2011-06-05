@@ -7,7 +7,7 @@ RDF::Query::Plan::Offset - Executable query plan for Offsets.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Offset version 2.906.
+This document describes RDF::Query::Plan::Offset version 2.907.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906';
+	$VERSION	= '2.907';
 }
 
 ######################################################################

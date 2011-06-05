@@ -7,7 +7,7 @@ RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.906.
+This document describes RDF::Query version 2.907.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.906';
+	$VERSION		= '2.907';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -723,7 +723,7 @@ sub as_sparql {
 	} else {
 		{
 			my $pvars	= join(' ', sort $ggp->referenced_variables);
-			my $svars	= join(' ', sort map { $_->name } @{ $parsed->{ variables } });
+			my $svars	= join(' ', sort map { $_->isa('RDF::Query::Node::Resource') ? $_->as_string : $_->name } @{ $parsed->{ variables } });
 			if ($pvars eq $svars) {
 				$vars	= '*';
 			}

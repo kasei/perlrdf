@@ -511,7 +511,7 @@ sub _node_concise_string {
 	my $obj		= shift;
 	if ($obj->is_literal and $obj->has_datatype) {
 		my $dt	= $obj->literal_datatype;
-		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$> and $obj->is_valid_lexical_form) {
+		if ($dt =~ m<^http://www.w3.org/2001/XMLSchema#(integer|double|decimal)$> and $obj->is_canonical_lexical_form) {
 			my $value	= $obj->literal_value;
 			return $value;
 		} else {
