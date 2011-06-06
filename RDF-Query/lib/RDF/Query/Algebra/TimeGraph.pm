@@ -7,7 +7,7 @@ RDF::Query::Algebra::TimeGraph - Algebra class for temporal patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::TimeGraph version 2.906.
+This document describes RDF::Query::Algebra::TimeGraph version 2.907.
 
 =cut
 
@@ -25,7 +25,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.906';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
