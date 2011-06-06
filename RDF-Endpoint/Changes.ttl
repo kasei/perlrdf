@@ -15,6 +15,25 @@
 	.
 
 
+<http://kasei.us/code/files/RDF-Endpoint-0.03.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.03" ;
+		doap:created      "2011-06-XX" ;
+	] ;
+	asc:changes [
+		asc:update      "Removed duplicated, hard-coded HTML to allow better customization of HTML (from nichtich)." ;
+		asc:update      "Actually dereference correctly endpoint_path, and make the test use root (from kjetilk)." ;
+		asc:update      "Make endpoint path configurable (from kjetilk)." ;
+		asc:update      "style element must go in head (from kjetilk)." ;
+		asc:update      "Updated service description RDF to use sd:endpoint instead of sd:url (tracking updates in the SD spec)." ;
+		asc:update      "Add merging of namespace hashes (from kjetilk)." ;
+		asc:update      "Replace new_with_string with new and change docs (from kjetilk)." ;
+	] ;
+	.
+
+
 <http://kasei.us/code/files/RDF-Endpoint-0.02.tar.gz>
 	dcterms:isVersionOf my:project ;
 	
