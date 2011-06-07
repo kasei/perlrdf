@@ -20,7 +20,7 @@
 	
 	doap:Version [
 		doap:revision     "0.03" ;
-		doap:created      "2011-06-XX" ;
+		doap:created      "2011-06-07" ;
 	] ;
 	asc:changes [
 		asc:update      "Removed duplicated, hard-coded HTML to allow better customization of HTML (from nichtich)." ;
