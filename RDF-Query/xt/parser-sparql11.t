@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 112;
+use Test::More tests => 113;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -3885,7 +3885,8 @@ __END__
 - method: DESCRIBE
   namespaces: {}
   sources: []
-  triples: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
   variables:
     - !!perl/array:RDF::Query::Node::Resource
       - URI
@@ -5220,3 +5221,38 @@ __END__
         - !!perl/array:RDF::Query::Node::Variable
           - xxx
   variables: *1
+---
+- CONSTRUCT with LIMIT (github pull request 17, from kjetilk)
+- |
+  PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+  PREFIX  foaf:       <http://xmlns.com/foaf/0.1/>
+  CONSTRUCT { ?s ?p ?o . }
+  WHERE {
+    ?s ?p ?o .
+  } LIMIT 5
+- method: CONSTRUCT
+  namespaces:
+    foaf: http://xmlns.com/foaf/0.1/
+    rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+  sources: []
+  options:
+    limit: 5
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Construct
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - s
+            - !!perl/array:RDF::Query::Node::Variable
+              - p
+            - !!perl/array:RDF::Query::Node::Variable
+              - o
+      -
+        - !!perl/array:RDF::Query::Algebra::Triple
+          - !!perl/array:RDF::Query::Node::Variable
+            - s
+          - !!perl/array:RDF::Query::Node::Variable
+            - p
+          - !!perl/array:RDF::Query::Node::Variable
+            - o

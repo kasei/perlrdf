@@ -20,7 +20,7 @@ END
 	exit;
 }
 
-#get the query file from the arguments array
+# get the query file from the arguments array
 my $query_file	= shift(@ARGV);
 
 #open the query file and read in the query
@@ -28,6 +28,12 @@ my $sparql	= do { local($/) = undef; open(my $fh, '<:utf8', $query_file); <$fh> 
 
 # construct the query object
 my $query	= RDF::Query->new( $sparql );
+
+unless ($query) {
+	# the query couldn't be constructed. print out the reason why.
+	warn RDF::Query->error;
+	exit;
+}
 
 # read in the list of files with RDF/XML content for querying
 my @files	= map { File::Spec->rel2abs( $_ ) } @ARGV;

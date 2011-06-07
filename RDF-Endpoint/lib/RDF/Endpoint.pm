@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.02.
+This document describes RDF::Endpoint version 0.03.
 
 =head1 SYNOPSIS
 
@@ -24,9 +24,10 @@ is included with this package. Valid top-level configuration keys include:
 
 =item store
 
-A string used to define the underlying L<RDF::Trine::Store> for the endpoint.
-The string is used as the argument to the L<RDF::Trine::Store->new_with_string>
-constructor.
+This is used to define the underlying L<RDF::Trine::Store> for the
+endpoint.  It can be a hashref of the type that can be passed to
+L<RDF::Trine::Store>->new_with_config, but a simple string can also be
+used.
 
 =item endpoint
 
@@ -72,6 +73,15 @@ endpoint using the following configuration:
     PerlSetEnv RDF_ENDPOINT_CONFIG /path/to/rdf_endpoint.json
   </Location>
 
+To get syntax highlighting and other pretty features, in the
+VirtualHost section of your server, add three aliases:
+
+  Alias /js/ /path/to/share/www/js/
+  Alias /favicon.ico /path/to/share/www/favicon.ico
+  Alias /css/ /path/to/share/www/css/
+
+The exact location can be determined by finding where the file C<sparql_form.js>.
+
 =head1 METHODS
 
 =over 4
@@ -83,7 +93,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.02';
+our $VERSION	= '0.03';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -103,6 +113,8 @@ use RDF::RDFa::Generator;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
+use Hash::Merge::Simple qw/ merge /;
+
 
 my $NAMESPACES	= {
 	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
@@ -136,7 +148,7 @@ sub new {
 		delete $config->{store};
 	} else {
 		$config		= $arg;
-		my $store	= RDF::Trine::Store->new_with_string( $config->{store} );
+		my $store	= RDF::Trine::Store->new( $config->{store} );
 		$model		= RDF::Trine::Model->new( $store );
 	}
 	unless ($config->{endpoint}) {
@@ -162,12 +174,13 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
+	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
 	my $content;
 	my $response	= Plack::Response->new;
-	unless ($req->path eq '/') {
+	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
 		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
@@ -212,7 +225,9 @@ END
 			$sparql = $req->param('update');
 		}
 	}
-	
+
+	my $ns = merge $config->{namespaces}, $NAMESPACES;
+
 	if ($sparql) {
 		my %args;
 		$args{ update }		= 1 if ($config->{endpoint}{update} and $req->method eq 'POST');
@@ -260,7 +275,7 @@ END
 					}
 					my $stype	= choose( \@variants, $headers );
 					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-						my $s	= $sclass->new( namespaces => $NAMESPACES );
+						my $s	= $sclass->new( namespaces => $ns );
 						$response->status(200);
 						$response->headers->content_type($stype);
 						$content	= encode_utf8($s->serialize_iterator_to_string($iter));
@@ -323,7 +338,7 @@ END
 		my $stype	= choose( \@variants, $headers );
 		my $sdmodel	= $self->service_description();
 		if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
-			my $s	= $sclass->new( namespaces => $NAMESPACES );
+			my $s	= $sclass->new( namespaces => $ns );
 			$response->status(200);
 			$response->headers->content_type($stype);
 			$content	= encode_utf8($s->serialize_model_to_string($sdmodel));
@@ -332,7 +347,7 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$NAMESPACES } );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$ns } );
 			$gen->inject_document($doc, $sdmodel);
 			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
@@ -433,7 +448,7 @@ sub service_description {
 	
 	my $dataset		= blank('dataset');
 	my $def_graph	= blank('defaultGraph');
-	$sdmodel->add_statement( statement( $s, $sd->url, iri('') ) );
+	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
 	if ($config->{endpoint}{service_description}{default}) {
@@ -472,88 +487,68 @@ sub iter_as_html {
 	my $stream	= shift;
 	my $model	= shift;
 	my $query	= shift;
-	my $html	= "<html><head><title>SPARQL Results</title>\n"
-				. <<"END";
-	<link rel="stylesheet" type="text/css" href="/css/docs.css"/>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js" type="text/javascript"></script>
-    <script src="/js/codemirror.js" type="text/javascript"></script>
-	<script type="text/javascript" src="/js/sparql_form.js"></script>
-	<style type="text/css">
-		table {
-			border: 1px solid #000;
-			border-collapse: collapse;
-		}
-		
-		th { background-color: #ddd; }
-		td, th {
-			padding: 1px 5px 1px 5px;
-			border: 1px solid #000;
-		}
-	</style>
-</head><body>
-	<h2>Results</h2>
-END
+
+	my $dir  = $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
+	my $file = File::Spec->catfile($dir, 'index.html');
+	my $html;
+
+	if (-r $file) {
+		open( my $fh, '<', $file ) or die $!;
+		$html = do { local $/; <$fh>; };
+		close $fh;
+	} else {
+		$html = <<HTML
+<html><head><title>SPARQL Results</title></head><body>
+<div id="result" />
+<h2>Query</h2> 
+<form id="queryform" action="" method="get"> 
+<p><textarea id="query" name="query" rows="10" cols="60"></textarea>
+<br/>
+<select id="media-type" name="media-type"> 
+    <option value="">Result Format...</option> 
+    <option label="HTML" value="text/html">HTML</option> 
+    <option label="Turtle" value="text/turtle">Turtle</option> 
+    <option label="XML" value="text/xml">XML</option> 
+    <option label="JSON" value="application/json">JSON</option> 
+</select> 
+<input name="submit" id="submit" type="submit" value="Submit" /> 
+</p>
+</form>
+</body></html>
+HTML
+	}
+
+	my $result = "<h2>Result</h2>\n";
+
 	if ($stream->isa('RDF::Trine::Iterator::Boolean')) {
-		$html	.= (($stream->get_boolean) ? "True" : "False");
+		$result	= (($stream->get_boolean) ? "True" : "False");
 	} elsif ($stream->isa('RDF::Trine::Iterator::Bindings')) {
-		$html	.= "<table>\n<tr>\n";
+		$result = "<table class='tablesorter'>\n<thead><tr>\n";
 		
 		my @names	= $stream->binding_names;
 		my $columns	= scalar(@names);
 		foreach my $name (@names) {
-			$html	.= "\t<th>" . $name . "</th>\n";
+			$result	.= "\t<th>" . $name . "</th>\n";
 		}
-		$html	.= "</tr>\n";
+		$result	.= "</tr></thead>\n";
 		
 		my $count	= 0;
 		while (my $row = $stream->next) {
 			$count++;
-			$html	.= "<tr>\n";
+			$result	.= "<tr>\n";
 			foreach my $k (@names) {
 				my $node	= $row->{ $k };
 				my $value	= $self->node_as_html($node, $model);
-				$html	.= "\t<td>" . $value . "</td>\n";
+				$result	.= "\t<td>" . $value . "</td>\n";
 			}
-			$html	.= "</tr>\n";
+			$result	.= "</tr>\n";
 		}
-		$html	.= <<"END";
-		<tr><th colspan="$columns">Total: $count</th></tr>
-	</table>
-	<h2>Query</h2>
-	<form id="queryform" action="" method="get">
-	<p>
-		<textarea id="query" name="query" rows="10" cols="60">${query}</textarea><br/>
-		<select id="media-type" name="media-type">
-			<option value="">Result Format...</option>
-			<option label="HTML" value="text/html">HTML</option>
-			<option label="Turtle" value="text/turtle">Turtle</option>
-			<option label="XML" value="text/xml">XML</option>
-			<option label="JSON" value="application/json">JSON</option>
-		</select>
-		<input name="submit" id="submit" type="submit" value="Submit" />
-	</p>
-	</form>
-END
-	} else {
-		
+		$result   .= "<tfoot><tr><th colspan=\"$columns\">Total: $count</th></tr></tfoot>\n</table>\n";	
 	}
-	$html	.= <<"END";
-<style type="text/css">
-<!--
-tbody tr:nth-child(odd) {
-	background-color: #eeeefa;
-	border-bottom: 1px solid #dddde9;
-	border-top: 1px solid #dddde9;
-}
 
-th {
-	background-color: #ddf;
-	border-bottom: 2px solid #000;
-}
-// -->
-</style>
-</body></html>
-END
+	$html =~ s/<div\s+id\s*=\s*["']result["']\s*\/>/<div id="result">$result<\/div>/;
+	$html =~ s/(<textarea[^>]*>)(.|\n)*(<\/textarea>)/$1$query$3/sm;
+
 	return $html;
 }
 

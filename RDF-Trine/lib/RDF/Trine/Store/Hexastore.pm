@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.134
+This document describes RDF::Trine::Store::Hexastore version 0.135
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
 use Data::Dumper;
+use RDF::Trine qw(iri);
 use RDF::Trine::Error;
 use List::Util qw(first);
 use List::MoreUtils qw(any mesh);
@@ -43,7 +44,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.134";
+	$VERSION	= "0.135";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -67,7 +68,7 @@ object for the underlying database.
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
 
-The C<storetype> key must be C<Memory> for this backend.
+The C<storetype> key must be C<Hexastore> for this backend.
 
 This module also supports initializing the store from a file or URL,
 in which case, a C<sources> key may be used. This holds an arrayref of

@@ -7,7 +7,7 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.905.
+This document describes RDF::Query::Plan::Path version 2.907.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -148,7 +148,7 @@ sub execute ($) {
 			}
 			
 			use Data::Dumper;
-			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
+# 			warn "ALP begin state: " . Dumper([ $term, $self->path, {}, $partial_result, $self->end->name ]);
 			push(@{ $self->[0]{alp_state} },  [ $term, $self->path, {}, $partial_result, $self->end->name ]);
 		} else {
 			$l->trace( '- ZeroOrMore path is ff' );
@@ -434,9 +434,10 @@ sub plan_node_data {
 	if (blessed($path)) {
 		return ($self->op, $path->sse, $self->start, $self->end, $self->graph);
 	} else {
-		return ($self->op, '*PATH*', $self->start, $self->end, $self->graph);
+		return ($self->op, '(undefined path)', $self->start, $self->end, $self->graph);
 	}
 }
+
 
 1;
 

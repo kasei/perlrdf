@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.905.
+This document describes RDF::Query::Plan version 2.907.
 
 =head1 METHODS
 
@@ -64,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -156,7 +156,7 @@ sub explain {
 		$s		= shift;
 		$count	= shift;
 	}
-	my $indent	= $s x $count;
+	my $indent	= '' . ($s x $count);
 	my $type	= $self->plan_node_name;
 	my $string	= "${indent}${type}\n";
 	foreach my $p ($self->plan_node_data) {
@@ -171,6 +171,7 @@ sub explain {
 		} elsif (ref($p)) {
 			warn 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
 		} else {
+			no warnings 'uninitialized';
 			$string	.= "${indent}${s}$p\n";
 		}
 	}
@@ -454,7 +455,7 @@ sub generate_plans {
 	############################################################################
 	
 	my ($project);
-	my $constant	= $args{ constants };
+	my $constant	= delete $args{ constants };
 	
 	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
 		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away
@@ -1003,7 +1004,7 @@ sub __path_plan {
 	} elsif ($op eq '?' or $op eq '0-1') {
 		my $node	= shift(@nodes);
 		my $plan	= $self->__path_plan( $start, $node, $end, $graph, $context, %args );
-		my $zero	= RDF::Query::Plan::Path->new( '0', undef, $start, $end, $graph, %args );
+		my $zero	= RDF::Query::Plan::Path->new( '0', $node, $start, $end, $graph, %args );
 		my $union	= RDF::Query::Plan::Union->new( $zero, $plan );
 		return $union;
 	} elsif ($op eq '^') {
