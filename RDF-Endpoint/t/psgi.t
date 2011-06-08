@@ -115,7 +115,7 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
 				 },
 			       }, 'Submitting SELECT query.'
 			     );
-	$mech->title_is('SPARQL', 'Title contains SPARQL');
+	$mech->title_like(qr/SPARQL/, "Title contains the word SPARQL");
 	$mech->has_tag('textarea', $query, 'Query is in a textarea in the response');
       TODO: {
 	  local $TODO = "Currently not working";
