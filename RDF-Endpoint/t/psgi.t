@@ -78,7 +78,7 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 my $before	= $model->size;
 
 {
-	my $update	= 'PREFIX : <http://example.org/> INSERT DATA { :rdf_endpoint_test :p "o", 1, _:a }';
+	my $update	= 'PREFIX : <http://example.org/> INSERT DATA { :rdf_endpoint_test :p "FoooooBAR", 1, _:a }';
 	my $resp	= $mech->post_ok('/', { update => $update }, 'got success from insert POST' );
 }
 
@@ -100,7 +100,7 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
 			push(@values, $o->value);
 		}
 	}
-	is_deeply( [sort @values], [qw(1 _ o)], 'expected values after INSERT' );
+	is_deeply( [sort @values], [qw(1 FoooooBAR _)], 'expected values after INSERT' );
 }
 
 {
