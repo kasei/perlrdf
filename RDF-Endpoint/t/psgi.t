@@ -104,6 +104,23 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
 }
 
 {
+	my $query	= 'PREFIX : <http://example.org/> SELECT * WHERE { ?s ?p ?o }';
+	$mech->get_ok("/", "Returns 200");
+	$mech->title_like(qr/SPARQL/, "Title contains the word SPARQL");
+	$mech->submit_form_ok( {
+   		  form_id => 'queryform',
+		  fields      => {
+		   		   query => $query,
+				   'media-type' => 'text/html'
+				 },
+			       }, 'Submitting SELECT query.'
+			     );
+	$mech->title_is('SPARQL', 'Title contains SPARQL');
+	$mech->content_contains($query, 'Query is in the response');
+}
+
+
+{
 	my $update	= 'PREFIX : <http://example.org/> DELETE { :rdf_endpoint_test :p ?o } WHERE { :rdf_endpoint_test ?p ?o }';
 	my $resp	= $mech->post_ok('/', { update => $update }, 'got success from delete POST' );
 }
