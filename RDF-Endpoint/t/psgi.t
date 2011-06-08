@@ -120,6 +120,8 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
       TODO: {
 	  local $TODO = "Currently not working";
 	  $mech->has_tag('td', 'FoooooBAR', 'Literal string is in the response');
+	  $mech->content_lacks('xmlns:http://www.w3.org/1999/02/22-rdf-syntax-ns#="rdf"', 'No broken NS declaration');
+	  $mech->content_contains('xmlns:sd="http://www.w3.org/ns/sparql-service-description#"', 'Correct service description NS declaration');
 	}
 
 }
