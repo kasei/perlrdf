@@ -489,7 +489,7 @@ sub iter_as_html {
 	my $query	= shift;
 
 	my $dir  = $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
-	my $file = File::Spec->catfile($dir, 'index.html');
+	my $file = File::Spec->catfile($dir, 'results.html');
 	my $html;
 
 	if (-r $file) {
