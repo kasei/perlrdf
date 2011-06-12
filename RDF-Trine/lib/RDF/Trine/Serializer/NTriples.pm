@@ -86,7 +86,7 @@ sub serialize_model_to_file {
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
@@ -107,7 +107,7 @@ sub serialize_model_to_string {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
@@ -124,7 +124,7 @@ sub serialize_iterator_to_file {
 	my $file	= shift;
 	my $iter	= shift;
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
@@ -140,7 +140,7 @@ sub serialize_iterator_to_string {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
@@ -155,7 +155,7 @@ sub _serialize_bounded_description {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 		if ($nodes[2]->isa('RDF::Trine::Node::Blank')) {
 			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
 		}
@@ -163,7 +163,7 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
-sub _statement_as_string {
+sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
 	my @nodes	= $st->nodes;
