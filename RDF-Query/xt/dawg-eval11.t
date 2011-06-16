@@ -81,6 +81,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		aggregates
 		basic-update
 		bind
+		bindings
 		clear
 		construct
 		delete

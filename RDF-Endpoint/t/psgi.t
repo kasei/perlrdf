@@ -18,6 +18,7 @@ my $sd	= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-descrip
 
 my $config	= {
 	endpoint	=> {
+		endpoint_path   => '/',
 		update		=> 1,
 		load_data	=> 1,
 		html		=> {
@@ -77,7 +78,7 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 my $before	= $model->size;
 
 {
-	my $update	= 'PREFIX : <http://example.org/> INSERT DATA { :rdf_endpoint_test :p "o", 1, _:a }';
+	my $update	= 'PREFIX : <http://example.org/> INSERT DATA { :rdf_endpoint_test :p "FoooooBAR", 1, _:a }';
 	my $resp	= $mech->post_ok('/', { update => $update }, 'got success from insert POST' );
 }
 
@@ -99,8 +100,32 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
 			push(@values, $o->value);
 		}
 	}
-	is_deeply( [sort @values], [qw(1 _ o)], 'expected values after INSERT' );
+	is_deeply( [sort @values], [qw(1 FoooooBAR _)], 'expected values after INSERT' );
 }
+
+{
+	my $query	= 'PREFIX : <http://example.org/> SELECT * WHERE { ?s ?p ?o }';
+	$mech->get_ok("/", "Returns 200");
+	$mech->title_like(qr/SPARQL/, "Title contains the word SPARQL");
+	$mech->submit_form_ok( {
+   		  form_id => 'queryform',
+		  fields      => {
+		   		   query => $query,
+				   'media-type' => 'text/html'
+				 },
+			       }, 'Submitting SELECT query.'
+			     );
+	$mech->title_like(qr/SPARQL/, "Title contains the word SPARQL");
+	$mech->has_tag('textarea', $query, 'Query is in a textarea in the response');
+      TODO: {
+	  local $TODO = "Currently not working";
+	  $mech->has_tag('td', 'FoooooBAR', 'Literal string is in the response');
+	  $mech->content_lacks('xmlns:http://www.w3.org/1999/02/22-rdf-syntax-ns#="rdf"', 'No broken NS declaration');
+	  $mech->content_contains('xmlns:sd="http://www.w3.org/ns/sparql-service-description#"', 'Correct service description NS declaration');
+	}
+
+}
+
 
 {
 	my $update	= 'PREFIX : <http://example.org/> DELETE { :rdf_endpoint_test :p ?o } WHERE { :rdf_endpoint_test ?p ?o }';

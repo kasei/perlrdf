@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.905.
+This document describes RDF::Query::Plan version 2.907.
 
 =head1 METHODS
 
@@ -64,7 +64,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -455,7 +455,7 @@ sub generate_plans {
 	############################################################################
 	
 	my ($project);
-	my $constant	= $args{ constants };
+	my $constant	= delete $args{ constants };
 	
 	if ($algebra->isa('RDF::Query::Algebra::Sort') or not($algebra->is_solution_modifier)) {
 		# projection has to happen *after* sorting, since a sort expr might reference a variable that we project away
