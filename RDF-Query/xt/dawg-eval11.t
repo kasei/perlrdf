@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(smap);
 
 ################################################################################
 # Log::Log4perl::init( \q[
-# 	log4perl.category.rdf.query.plan.update		= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.service		= TRACE, Screen
 # #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
@@ -52,15 +52,15 @@ require XML::Simple;
 
 plan qw(no_plan);
 require "xt/dawg/earl.pl";
-	
+
 my $PATTERN	= '';
 my %args;
 
 while (defined(my $opt = shift)) {
-	if ($opt =~ /^-(.*)$/) {
-		$args{ $1 }	= 1;
-	} elsif ($opt eq '-v') {
+	if ($opt eq '-v') {
 		$debug++;
+	} elsif ($opt =~ /^-(.*)$/) {
+		$args{ $1 }	= 1;
 	} else {
 		$PATTERN	= $opt;
 	}
@@ -98,8 +98,10 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		subquery
 	);
 foreach my $file (@manifests) {
+	warn "Parsing manifest $file" if $debug;
 	RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 }
+warn "done parsing manifests" if $debug;
 
 my $earl	= init_earl( $model );
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
@@ -110,7 +112,7 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 {
 	my @manifests	= $model->subjects( $rdf->type, $mf->Manifest );
 	foreach my $m (@manifests) {
-		warn "Manifest: " . $m->as_string . "\n" if ($debug > 1);
+		warn "Manifest: " . $m->as_string . "\n" if ($debug);
 		my ($list)	= $model->objects( $m, $mf->entries );
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
@@ -123,7 +125,7 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 				query_eval_test( $model, $test, $earl );
 			}
 			
-			if ($model->count_statements($test, $rdf->type, $ut->UpdateEvaluationTest)) {
+			if ($model->count_statements($test, $rdf->type, $ut->UpdateEvaluationTest) or $model->count_statements($test, $rdf->type, $mf->UpdateEvaluationTest)) {
 				my ($name)	= $model->objects( $test, $mf->name );
 				unless ($test->uri_value =~ /$PATTERN/) {
 					next;
@@ -260,7 +262,10 @@ sub update_eval_test {
 			warn 'Query error: ' . RDF::Query->error;
 			return;
 		}
-		$query->execute( $test_model );
+		
+		my ($plan, $ctx)	= $query->prepare( $test_model );
+		$plan				= fixup_plan( $query, $plan, $ctx );
+		$query->execute_plan( $plan, $ctx );
 		
 		my $test_graph		= RDF::Trine::Graph->new( $test_model );
 		my $expected_graph	= RDF::Trine::Graph->new( $expected_model );
@@ -414,7 +419,10 @@ sub get_actual_results {
 	
 	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
 	my $rmodel	= RDF::Trine::Model->temporary_model;
-	my $results	= $query->execute_with_named_graphs( $model, \@gdata );	# strict_errors => 1
+	
+	my ($plan, $ctx)	= $query->prepare_with_named_graphs( $model, @gdata );
+	$plan				= fixup_plan( $query, $plan, $ctx );
+	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
 		warn "Got actual results:\n";
@@ -621,4 +629,17 @@ sub result_to_string {
 		push(@results, join('=', $k, $node->as_string));
 	}
 	return join(',', sort(@results));
+}
+
+sub fixup_plan {
+	my $query	= shift;
+	my $plan	= shift;
+	my $ctx		= shift;
+	
+	my @services	= $plan->subplans_of_type('RDF::Query::Plan::Service');
+	foreach my $p (@services) {
+		$p->endpoint('http://myrdf.us/sparql11');
+	}
+	
+	return $plan;
 }
