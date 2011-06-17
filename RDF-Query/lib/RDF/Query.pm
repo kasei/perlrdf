@@ -467,6 +467,32 @@ sub execute_plan {
 	}
 }
 
+=item C<< prepare_with_named_graphs ( $model, @uris ) >>
+
+=cut
+
+sub prepare_with_named_graphs {
+	my $self		= shift;
+	my $_model		= shift;
+	my @graphs		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+#	$self->{model}	= $model;
+	my $model		= $self->get_model( $_model );
+	if ($model) {
+		$self->model( $model );
+	} else {
+		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
+	}
+	
+	foreach my $gdata (@graphs) {
+		my $url	= (blessed($gdata)) ? $gdata->uri_value : $gdata;
+		$l->debug("-> adding graph data $url");
+		$self->parse_url( $url, 1 );
+	}
+	
+	return $self->prepare( $model );
+}
+
 =item C<< execute_with_named_graphs ( $model, @uris ) >>
 
 Executes the query using the specified RDF C<< $model >>, loading the contents
@@ -489,21 +515,8 @@ sub execute_with_named_graphs {
 		}
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query");
-#	$self->{model}	= $model;
-	my $model		= $self->get_model( $_model );
-	if ($model) {
-		$self->model( $model );
-	} else {
-		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
-	}
-	
-	foreach my $gdata (@graphs) {
-		$l->debug("-> adding graph data " . $gdata->uri_value);
-		$self->parse_url( $gdata->uri_value, 1 );
-	}
-	
-	return $self->execute( $model, @options );
+	my ($plan, $ctx)	= $self->prepare_with_named_graphs( $_model, @graphs );
+	return $self->execute_plan( $plan, $ctx );
 }
 
 =begin private
@@ -729,7 +742,7 @@ sub as_sparql {
 			}
 		}
 		
-		my @ns		= map { "PREFIX $_: <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
+		my @ns		= map { "PREFIX " . ($_ eq '__DEFAULT__' ? '' : $_) . ": <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
 		my @mod;
 		if (my $ob = $parsed->{options}{orderby}) {
 			push(@mod, 'ORDER BY ' . join(' ', map {
