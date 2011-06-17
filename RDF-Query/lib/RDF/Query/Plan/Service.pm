@@ -96,7 +96,7 @@ sub new_from_plan {
 	}
 	my $ns		= $context->ns;
 	my $sparql	= join("\n",
-						(map { sprintf("PREFIX %s: <%s>", $_, $ns->{$_}) } (keys %$ns)),
+						(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
 						sprintf("SELECT * WHERE %s", $pattern->as_sparql({namespaces => $ns}, ''))
 					);
 	my $service	= $class->new( $url, $plan, $sparql, @_ );
@@ -333,7 +333,11 @@ sub _get_iterator {
 
 sub endpoint {
 	my $self	= shift;
-	return $self->[1];
+	if (@_) {
+		$self->[1]	= shift;
+	}
+	my $e		= $self->[1];
+	return $e;
 }
 
 =item C<< sparql >>
