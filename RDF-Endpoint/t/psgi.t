@@ -48,6 +48,8 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 {
 	$mech->get_ok('/');
 	is( $mech->ct, 'text/html', 'main page text/html' );
+	$mech->content_lacks('xmlns:http://www.w3.org/1999/02/22-rdf-syntax-ns#="rdf"', 'No broken NS declaration');
+	$mech->content_contains('xmlns:sd="http://www.w3.org/ns/sparql-service-description#"', 'Correct service description NS declaration');
 }
 
 {
@@ -117,13 +119,7 @@ is( ($after - $before), 3, 'expected model size after INSERT' );
 			     );
 	$mech->title_like(qr/SPARQL/, "Title contains the word SPARQL");
 	$mech->has_tag('textarea', $query, 'Query is in a textarea in the response');
-      TODO: {
-	  local $TODO = "Currently not working";
-	  $mech->has_tag('td', 'FoooooBAR', 'Literal string is in the response');
-	  $mech->content_lacks('xmlns:http://www.w3.org/1999/02/22-rdf-syntax-ns#="rdf"', 'No broken NS declaration');
-	  $mech->content_contains('xmlns:sd="http://www.w3.org/ns/sparql-service-description#"', 'Correct service description NS declaration');
-	}
-
+	$mech->has_tag('td', 'FoooooBAR', 'Literal string is in the response');
 }
 
 

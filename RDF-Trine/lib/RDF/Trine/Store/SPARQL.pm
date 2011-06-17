@@ -425,22 +425,29 @@ sub count_statements {
 		}
 	}
 	
+	foreach my $i (0 .. $#nodes) {
+		my $node	= $nodes[$i];
+		unless (defined($node)) {
+			$nodes[$i]	= RDF::Trine::Node::Variable->new( "rt__" . $pos_names[$i] );
+		}
+	}
+	
+	
 	my $sparql;
+	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 	if ($use_quad) {
 		my $nodes;
 		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
-			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
-			$nodes		= "GRAPH ?__rt_graph { $triple }";
+			$nodes		= "GRAPH ?rt__graph { $triple }";
 		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
 			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 		} else {
-			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
 			$nodes		= "GRAPH $graph { $triple }";
 		}
 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
 	} else {
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }";
+		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
 	}
 	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
@@ -522,6 +529,7 @@ sub get_sparql {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
+		warn Dumper($response);
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }
@@ -545,6 +553,7 @@ sub _get_post_iterator {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
+		warn Dumper($response);
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }
