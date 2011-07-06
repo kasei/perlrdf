@@ -45,7 +45,7 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 );
 
 
-TODO: {
+{
 	local($TODO)	= 'Broken RDFa namespaces in RDF::RDFa::Generator 0.101';
 	$mech->get_ok('/');
 	is( $mech->ct, 'text/html', 'main page text/html' );
