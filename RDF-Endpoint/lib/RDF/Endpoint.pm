@@ -450,11 +450,11 @@ sub service_description {
 	}
 	
 	my $dataset		= blank('dataset');
-	my $def_graph	= blank('defaultGraph');
 	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
-	if ($config->{endpoint}{service_description}{default}) {
+	if (my $d = $config->{endpoint}{service_description}{default}) {
+		my $def_graph	= ($d =~ /^\w+:/) ? iri($d) : blank('defaultGraph');
 		$sdmodel->add_statement( statement( $dataset, $sd->defaultGraph, $def_graph ) );
 		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $sd->Graph ) );
 		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $void->Dataset ) );
