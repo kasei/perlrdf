@@ -1385,10 +1385,13 @@ Sets the object's error variable.
 sub set_error {
 	my $self	= shift;
 	my $error	= shift;
+	my $e		= shift;
 	if (blessed($self)) {
-		$self->{error}	= $error;
+		$self->{error}		= $error;
+		$self->{exception}	= $e;
 	}
-	our $_ERROR	= $error;
+	our $_ERROR		= $error;
+	our $_EXCEPTION	= $e;
 }
 
 =begin private
@@ -1404,10 +1407,12 @@ Clears the object's error variable.
 sub clear_error {
 	my $self	= shift;
 	if (blessed($self)) {
-		$self->{error}	= undef;
+		$self->{error}		= undef;
+		$self->{exception}	= undef;
 	}
-	our $_ERROR;
+	our($_ERROR, $_EXCEPTION);
 	undef $_ERROR;
+	undef $_EXCEPTION;
 }
 
 
