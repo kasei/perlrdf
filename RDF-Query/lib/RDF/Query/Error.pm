@@ -102,6 +102,10 @@ package RDF::Query::Error::PermissionError;
 
 use base qw(RDF::Query::Error);
 
+package RDF::Query::Error::UnimplementedError;
+
+use base qw(RDF::Query::Error);
+
 
 
 1;
