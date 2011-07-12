@@ -42,7 +42,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $endpoint, $plan, $sparql, [ \%logging_keys ] ) >>
+=item C<< new ( $endpoint, $plan, $silent, $sparql, [ \%logging_keys ] ) >>
 
 Returns a new SERVICE (remote endpoint call) query plan object. C<<$endpoint>>
 is the URL of the endpoint (as a string). C<<$plan>> is the query plan
@@ -59,12 +59,13 @@ sub new {
 	my $class	= shift;
 	my $url		= shift;
 	my $plan	= shift;
+	my $silent	= shift;
 	my $sparql	= shift;
 	unless ($sparql) {
 		throw RDF::Query::Error::MethodInvocationError -text => "SERVICE plan constructor requires a serialized SPARQL query argument";
 	}
 	my $keys	= shift || {};
-	my $self	= $class->SUPER::new( $url, $plan, $sparql );
+	my $self	= $class->SUPER::new( $url, $plan, $silent, $sparql );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	$self->[0]{logging_keys}	= $keys;
 # 	if (@_) {
@@ -115,17 +116,12 @@ sub execute ($) {
 	}
 	my $l			= Log::Log4perl->get_logger("rdf.query.plan.service");
 	my $endpoint	= $self->endpoint;
-	my $sparql		= $self->sparql;
+	
+	my $bound	= $context->bound || {};
+	my $sparql		= $self->sparql( $bound );
+	
 	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query		= $context->query;
-	
-	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
-		my $l	= Log::Log4perl->get_logger("rdf.query.plan.service");
-		$l->warn("SERVICE REQUEST $endpoint:{{{\n$sparql\n}}}\n");
-		$l->warn("QUERY LENGTH: " . length($sparql) . "\n");
-		$l->warn("QUERY URL: $url\n");
-		throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
-	}
 	
 	{
 		$l->debug('SERVICE execute');
@@ -197,7 +193,7 @@ sub next {
 # 	warn 'got result: ' . Dumper($result);
 # 	if (not($result) or ref($result) ne 'HASH') {
 # 		if (my $log = $self->[0]{logger}) {
-# 			$log->push_key_value( 'cardinality-service', $self->[3], $self->[0]{'count'} );
+# 			$log->push_key_value( 'cardinality-service', $self->[4], $self->[0]{'count'} );
 # 			if (my $bf = $self->[0]{ 'log-service-pattern' }) {
 # 				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[0]{'count'} );
 # 			}
@@ -259,10 +255,15 @@ sub _get_iterator {
 						$u;
 					};
 	
-	my $response	= $ua->get( $url );
-	if ($response->is_success) {
+	my $req			= HTTP::Request->new('GET', $url );
+	my $response	= $self->_request( $ua, $req );
+	if (blessed($response) and $response->is_success) {
 		$p->parse_string( $response->content );
 		return $handler->iterator;
+	} elsif ($self->silent) {
+		my $v		= RDF::Query::VariableBindings->new( {} );
+		my $iter	= RDF::Trine::Iterator::Bindings->new( [ $v ] );
+		return $iter;
 	} else {
 		my $status		= $response->status_line;
 		my $sparql		= $self->sparql;
@@ -270,6 +271,24 @@ sub _get_iterator {
 		warn "url: $url\n";
 		throw RDF::Query::Error::ExecutionError -text => "*** error making remote SPARQL call to endpoint $endpoint ($status) while making service call for query: $sparql";
 	}
+}
+
+sub _request {
+	my $self	= shift;
+	my $ua		= shift;
+	my $req		= shift;
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.service");
+	
+	if ($ENV{RDFQUERY_THROW_ON_SERVICE}) {
+		if ($self->silent) {
+			return;
+		} else {
+			throw RDF::Query::Error::RequestedInterruptError -text => "Won't execute SERVICE block. Unset RDFQUERY_THROW_ON_SERVICE to continue.";
+		}
+	}
+	
+	my $response	= $ua->request( $req );
+	return $response;
 }
 
 # sub _get_and_parse_url {
@@ -347,6 +366,21 @@ Returns the SPARQL query (as a string) that will be sent to the remote endpoint.
 =cut
 
 sub sparql {
+	my $self	= shift;
+	my $sparql	= $self->[4];
+	if (ref($sparql)) {
+		$sparql	= $sparql->( @_ );
+	}
+	return $sparql;
+}
+
+=item C<< silent >>
+
+Returns a boolean value indicating whether the service plan will ignore errors.
+
+=cut
+
+sub silent {
 	my $self	= shift;
 	return $self->[3];
 }
@@ -437,6 +471,29 @@ sub graph {
 	return "$self";
 }
 
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= '' . ($s x $count);
+	my $type	= $self->plan_node_name;
+	my $sparql	= $self->sparql;
+	$sparql		=~ s/\n/\n${indent}${s}${s}/g;
+	my $string	= "${indent}${type}\n"
+				. "${indent}${s}" . $self->endpoint . "\n"
+				. "${indent}${s}${sparql}\n";
+	return $string;
+}
 
 1;
 

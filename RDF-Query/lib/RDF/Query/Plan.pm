@@ -62,9 +62,12 @@ use constant CLOSED		=> 0x04;
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, %PLAN_CLASSES);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION		= '2.907';
+	%PLAN_CLASSES	= (
+		service	=> 'RDF::Query::Plan::Service',
+	);
 }
 
 ######################################################################
@@ -595,7 +598,8 @@ sub generate_plans {
 						my $plan	= $join_type->new( $a, $b, 1, {} );
 						push( @plans, $plan );
 					} catch RDF::Query::Error::MethodInvocationError with {
-#						warn "caught MethodInvocationError.";
+# 						my $e	= shift;
+# 						warn "caught MethodInvocationError: " . Dumper($e);
 					};
 				}
 			}
@@ -648,16 +652,29 @@ sub generate_plans {
 		my @base	= $self->generate_plans( $pattern, $context, %args );
 		my @plans;
 		foreach my $plan (@base) {
-			my $ns			= $context->ns;
-			my $pstr		= $pattern->as_sparql({namespaces => $ns}, '');
-			unless (substr($pstr, 0, 1) eq '{') {
-				$pstr	= "{ $pstr }";
+			my $sparqlcb	= sub {
+				my $row		= shift;
+				my $p		= $pattern;
+				if ($row) {
+					$p		= $p->bind_variables( $row );
+				}
+				my $ns			= $context->ns;
+				my $pstr		= $p->as_sparql({namespaces => $ns}, '');
+				unless (substr($pstr, 0, 1) eq '{') {
+					$pstr	= "{ $pstr }";
+				}
+				my $sparql		= join("\n",
+									(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
+									sprintf("SELECT * WHERE %s", $pstr)
+								);
+				return $sparql;
+			};
+			
+			unless ($algebra->endpoint->can('uri_value')) {
+				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
 			}
-			my $sparql		= join("\n",
-								(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
-								sprintf("SELECT * WHERE %s", $pstr)
-							);
-			push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
+			
+			push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint->uri_value, $plan, $algebra->silent, $sparqlcb ));
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'SubSelect') {

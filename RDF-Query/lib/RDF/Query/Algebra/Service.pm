@@ -69,7 +69,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->endpoint, $self->pattern);
+	return ($self->endpoint, $self->pattern, $self->silent);
 }
 
 =item C<< endpoint >>

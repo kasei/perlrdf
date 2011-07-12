@@ -1716,16 +1716,20 @@ sub _ServiceGraphPattern {
 	my $op		= $self->_eat( qr/SERVICE(\s+SILENT)?/i );
 	my $silent	= ($op =~ /SILENT/i);
 	$self->__consume_ws_opt;
-	$self->_IRIref;
-	my ($iri)	= splice( @{ $self->{stack} } );
+	if ($self->_test(qr/[\$?]/)) {
+		$self->_Var;
+	} else {
+		$self->_IRIref;
+	}
+	my ($endpoint)	= splice( @{ $self->{stack} } );
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
 	
-	my $pattern	= RDF::Query::Algebra::Service->new( $iri, $ggp, $silent );
+	my $pattern	= RDF::Query::Algebra::Service->new( $endpoint, $ggp, $silent );
 	$self->_add_patterns( $pattern );
 	
-	my $opt		= ['RDF::Query::Algebra::Service', $iri, $ggp];
+	my $opt		= ['RDF::Query::Algebra::Service', $endpoint, $ggp];
 	$self->_add_stack( $opt );
 }
 
