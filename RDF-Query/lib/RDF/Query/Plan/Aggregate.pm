@@ -395,6 +395,18 @@ sub plan_node_name {
 	return 'aggregate';
 }
 
+=item C<< plan_node_data >>
+
+Returns the data for this plan node that corresponds to the values described by
+the signature returned by C<< plan_prototype >>.
+
+=cut
+
+sub plan_node_data {
+	my $self	= shift;
+	return ($self->pattern, $self->groupby);
+}
+
 =item C<< sse ( $context, $indent ) >>
 
 =cut
