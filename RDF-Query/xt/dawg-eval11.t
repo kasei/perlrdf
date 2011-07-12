@@ -28,12 +28,18 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-# use RDF::Redland;
+use RDF::Endpoint;
+use Carp;
+use HTTP::Request;
+use HTTP::Response;
+use HTTP::Message::PSGI;
+
+$RDF::Query::Plan::PLAN_CLASSES{'service'}	= 'Test::RDF::Query::Plan::Service';
 
 ################################################################################
 # Log::Log4perl::init( \q[
 # 	log4perl.category.rdf.query.plan.service		= TRACE, Screen
-# #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
+# # 	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
 # 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
@@ -66,6 +72,7 @@ while (defined(my $opt = shift)) {
 	}
 }
 
+$ENV{RDFQUERY_THROW_ON_SERVICE}	= 1;
 
 no warnings 'once';
 
@@ -96,6 +103,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		project-expression
 		property-path
 		subquery
+		service
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
@@ -264,7 +272,6 @@ sub update_eval_test {
 		}
 		
 		my ($plan, $ctx)	= $query->prepare( $test_model );
-		$plan				= fixup_plan( $query, $plan, $ctx );
 		$query->execute_plan( $plan, $ctx );
 		
 		my $test_graph		= RDF::Trine::Graph->new( $test_model );
@@ -302,6 +309,7 @@ sub query_eval_test {
 	my ($queryd)	= $model->objects( $action, $rq->query );
 	my ($data)		= $model->objects( $action, $rq->data );
 	my @gdata		= $model->objects( $action, $rq->graphData );
+	my @sdata		= $model->objects( $action, $rq->serviceData );
 	
 	if ($STRICT_APPROVAL) {
 		unless ($approved) {
@@ -331,6 +339,29 @@ sub query_eval_test {
 		warn "# result     : " . $result->as_string;
 		warn "# requires   : " . $req->as_string if (blessed($req));
 	}
+	
+	
+# 	warn 'service data: ' . Dumper(\@sdata);
+	foreach my $sd (@sdata) {
+		my ($url)	= $model->objects( $sd, $rq->endpoint );
+		print STDERR "setting up remote endpoint $url...\n" if ($debug);
+		my ($data)		= $model->objects( $sd, $rq->data );
+		my @gdata		= $model->objects( $sd, $rq->graphData );
+		if ($debug) {
+			warn "- data       : " . $data->as_string if (blessed($data));
+			warn "- graph data : " . $_->as_string for (@gdata);
+		}
+		my $model		= RDF::Trine::Model->new();
+		if ($data) {
+			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $model );
+		}
+		$Test::RDF::Query::Plan::Service::service_ctx{ $url->uri_value }	= $model;
+	}
+	
+	
+	
+	
+	
 	
 	print STDERR "constructing model... " if ($debug);
 	my ($test_model)	= RDF::Trine::Model->temporary_model;
@@ -406,11 +437,11 @@ sub add_to_model {
 }
 
 sub get_actual_results {
-	my $model	= shift;
-	my $sparql	= shift;
-	my $base	= shift;
-	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, { base => $base, lang => 'sparql11', load_data => 1 } );
+	my $model		= shift;
+	my $sparql		= shift;
+	my $base		= shift;
+	my @gdata		= @_;
+	my $query		= RDF::Query->new( $sparql, { base => $base, lang => 'sparql11', load_data => 1 } );
 	
 	unless ($query) {
 		warn RDF::Query->error if ($debug or $PATTERN);
@@ -421,7 +452,9 @@ sub get_actual_results {
 	my $rmodel	= RDF::Trine::Model->temporary_model;
 	
 	my ($plan, $ctx)	= $query->prepare_with_named_graphs( $model, @gdata );
-	$plan				= fixup_plan( $query, $plan, $ctx );
+	if ($args{plan}) {
+		warn $plan->explain('  ', 0);
+	}
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
@@ -631,15 +664,76 @@ sub result_to_string {
 	return join(',', sort(@results));
 }
 
-sub fixup_plan {
-	my $query	= shift;
+package Test::RDF::Query::Plan::Service;
+
+use strict;
+use warnings;
+use Data::Dumper;
+use Scalar::Util qw(refaddr);
+use base qw(RDF::Query::Plan::Service);
+
+our %ENDPOINTS;
+our %service_ctx;
+
+sub new {
+	my $class	= shift;
+	my $uri		= shift;
 	my $plan	= shift;
-	my $ctx		= shift;
+	my $silent	= shift;
+	my $sparql	= shift;
+	my $e			= URI->new($uri);
 	
-	my @services	= $plan->subplans_of_type('RDF::Query::Plan::Service');
-	foreach my $p (@services) {
-		$p->endpoint('http://myrdf.us/sparql11');
+	warn "setting up mock endpoint for $uri" if ($debug);
+	my $self	= $class->SUPER::new( $uri, $plan, $silent, $sparql );
+
+	my $model = $service_ctx{ $uri };
+	if ($model) {
+		my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
+		$ENDPOINTS{ refaddr($self) }	= $end;
 	}
 	
-	return $plan;
+	return $self;
+}
+
+# sub mock {
+# 	my $self		= shift;
+# 	return;
+# 	my $endpoint	= shift;
+# 	my $data		= shift;
+# 	my $e			= URI->new($endpoint);
+# 	
+# 	my $model		= RDF::Trine::Model->new();
+# 	my ($default, $named)	= @$data;
+# 	if ($default) {
+# 		RDF::Trine::Parser->parse_url_into_model( $default->uri_value, $model );
+# 		my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
+# 		$ENDPOINTS{ refaddr($self) }	= $end;
+# 	}
+# }
+
+sub _request {
+	my $self	= shift;
+	my $ua		= shift;
+	my $req		= shift;
+	my $env		= $req->to_psgi;
+	my $end		= $ENDPOINTS{ refaddr($self) };
+	if ($end) {
+		my $app			= sub {
+			my $env 	= shift;
+			my $req 	= Plack::Request->new($env);
+			my $resp	= $end->run( $req );
+			return $resp->finalize;
+		};
+		my $data	= $app->( $env );
+		my $resp	= HTTP::Response->from_psgi( $data );
+		return $resp;
+	} else {
+		return HTTP::Response->new(403);
+	}
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $ENDPOINTS{ refaddr($self) };
+	$self->SUPER::DESTROY();
 }
