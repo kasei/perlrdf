@@ -401,7 +401,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		return;
+		return '';
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;
