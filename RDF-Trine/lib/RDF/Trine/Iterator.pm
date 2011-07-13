@@ -337,7 +337,7 @@ RDF::Trine::Iterator::Graph::Materialized should be used instead.
 
 sub count {
 	my $self	= shift;
-	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
+	Carp::carp "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
 	return $self->{_count};
 }
 
