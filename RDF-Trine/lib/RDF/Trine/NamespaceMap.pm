@@ -130,7 +130,7 @@ sub uri {
 	my $abbr	= shift;
 	my $ns;
 	my $local	= "";
-	if ($abbr =~ m/^([^:]+):(.*)$/) {
+	if ($abbr =~ m/^([^:]*):(.*)$/) {
 		$ns	= $self->{ $1 };
 		$local	= $2;
 	} else {
