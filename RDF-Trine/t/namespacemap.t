@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 16;
 
 use strict;
 use RDF::Trine;
@@ -24,8 +24,9 @@ isa_ok( $ns, 'RDF::Trine::Namespace' );
 $map->remove_mapping( 'xsd' );
 is( $map->xsd, undef, 'removed namespace' );
 
-$map = RDF::Trine::NamespaceMap->new( { foaf => 'http://xmlns.com/foaf/0.1/' } );
+$map = RDF::Trine::NamespaceMap->new( { foaf => 'http://xmlns.com/foaf/0.1/', '' => 'http://example.org/' } );
 isa_ok( $map, 'RDF::Trine::NamespaceMap' );
+is ( $map->uri(':foo')->uri_value, 'http://example.org/foo', 'empty prefix' );
 
 $map->add_mapping( rdf => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' );
 
