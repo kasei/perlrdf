@@ -15,6 +15,22 @@
 	.
 
 
+<http://kasei.us/code/files/RDF-Endpoint-0.04.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.04" ;
+		doap:created      "2011-07-19" ;
+	] ;
+	asc:changes [
+		asc:addition	"Added RDFa serialization tests (from KjetilK)." ;
+		asc:update      "Allow the service description default graph to be a URI or a blank node (based on config value)." ;
+		asc:update      "Require RDF::RDFa::Generator 0.102 (fixes RDFa service description serialization bug)." ;
+		asc:update      "Fixed bug introduced by commit 3fb5e48 causing query results to disappear from HTML results page." ;
+	] ;
+	.
+
+
 <http://kasei.us/code/files/RDF-Endpoint-0.03.tar.gz>
 	dcterms:isVersionOf my:project ;
 	

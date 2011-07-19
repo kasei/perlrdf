@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.03_01.
+This document describes RDF::Endpoint version 0.04.
 
 =head1 SYNOPSIS
 
@@ -93,7 +93,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.03_01';
+our $VERSION	= '0.04';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
