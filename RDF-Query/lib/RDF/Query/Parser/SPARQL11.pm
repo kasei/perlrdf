@@ -2955,7 +2955,7 @@ sub _RDFLiteral {
 	if ($self->_test('@')) {
 		my $lang	= $self->_eat( $r_LANGTAG );
 		substr($lang,0,1)	= '';	# remove '@'
-		push(@args, $lang);
+		push(@args, lc($lang));
 	} elsif ($self->_test('^^')) {
 		$self->_eat('^^');
 		push(@args, undef);
