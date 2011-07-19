@@ -654,7 +654,7 @@ sub generate_plans {
 				$pstr	= "{ $pstr }";
 			}
 			my $sparql		= join("\n",
-								(map { sprintf("PREFIX %s: <%s>", $_, $ns->{$_}) } (keys %$ns)),
+								(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
 								sprintf("SELECT * WHERE %s", $pstr)
 							);
 			push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
@@ -1181,6 +1181,38 @@ the signature returned by C<< plan_prototype >>.
 =cut
 
 sub plan_node_data;
+
+
+=item C<< subplans_of_type ( $type [, $block] ) >>
+
+Returns a list of Plan objects matching C<< $type >> (tested with C<< isa >>).
+If C<< $block >> is given, then matching stops descending a subtree if the current
+node is of type C<< $block >>, continuing matching on other subtrees.
+This list includes the current plan object if it matches C<< $type >>, and is
+generated in infix order.
+
+=cut
+
+sub subplans_of_type {
+	my $self	= shift;
+	my $type	= shift;
+	my $block	= shift;
+	
+	return if ($block and $self->isa($block));
+	
+	my @patterns;
+	push(@patterns, $self) if ($self->isa($type));
+	
+	
+	foreach my $p ($self->plan_node_data) {
+		if (blessed($p) and $p->isa('RDF::Query::Plan')) {
+			push(@patterns, $p->subplans_of_type($type, $block));
+		}
+	}
+	return @patterns;
+}
+
+
 
 1;
 

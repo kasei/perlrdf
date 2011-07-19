@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.03.
+This document describes RDF::Endpoint version 0.04.
 
 =head1 SYNOPSIS
 
@@ -93,7 +93,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.03';
+our $VERSION	= '0.04';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -109,7 +109,7 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator;
+use RDF::RDFa::Generator 0.101;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
@@ -190,10 +190,11 @@ sub run {
 			$response->status(200);
 			$content	= $fh;
 		} else {
+			my $path	= $req->path;
 			$response->status(404);
 			$content	= <<"END";
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\n<html><head>\n<title>404 Not Found</title>\n</head><body>\n
-<h1>Not Found</h1>\n<p>The requested URL was not found on this server.</p>\n</body></html>
+<h1>Not Found</h1>\n<p>The requested URL $path was not found on this server.</p>\n</body></html>
 END
 		}
 		$response->body($content);
@@ -316,12 +317,14 @@ END
 				}
 			} else {
 				$response->status(500);
+				$response->body($query->error);
 				$content	= RDF::Query->error;
 			}
 		} else {
 			$content	= RDF::Query->error;
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
 			$response->status($code);
+			$response->body($content);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
 			}
@@ -347,7 +350,7 @@ END
 			my $template	= File::Spec->catfile($dir, 'index.html');
 			my $parser		= HTML::HTML5::Parser->new;
 			my $doc			= $parser->parse_file( $template );
-			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', ns => { reverse %$ns } );
+			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', namespaces => { %$ns } );
 			$gen->inject_document($doc, $sdmodel);
 			
 			my $writer	= HTML::HTML5::Writer->new( markup => 'xhtml', doctype => DOCTYPE_XHTML_RDFA );
@@ -447,11 +450,11 @@ sub service_description {
 	}
 	
 	my $dataset		= blank('dataset');
-	my $def_graph	= blank('defaultGraph');
 	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
 	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
-	if ($config->{endpoint}{service_description}{default}) {
+	if (my $d = $config->{endpoint}{service_description}{default}) {
+		my $def_graph	= ($d =~ /^\w+:/) ? iri($d) : blank('defaultGraph');
 		$sdmodel->add_statement( statement( $dataset, $sd->defaultGraph, $def_graph ) );
 		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $sd->Graph ) );
 		$sdmodel->add_statement( statement( $def_graph, $rdf->type, $void->Dataset ) );
@@ -489,7 +492,7 @@ sub iter_as_html {
 	my $query	= shift;
 
 	my $dir  = $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
-	my $file = File::Spec->catfile($dir, 'index.html');
+	my $file = File::Spec->catfile($dir, 'results.html');
 	my $html;
 
 	if (-r $file) {
