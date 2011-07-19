@@ -240,6 +240,9 @@ sub add_statement {
 		$req->authorization_basic($self->{token}) if (defined $self->{token});
 		$req->content_type('text/plain');
 		$req->content($s->statement_as_string($st));
+		
+		warn "add_statement request: " . Dumper($req);
+		
 		my $resp	= $ua->request( $req );
 		if ($resp->is_success) {
 			return;
@@ -290,7 +293,7 @@ sub remove_statement {
 		} else {
 			my $status	= $resp->status_line;
 			warn Dumper($resp);
-			throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)";
+			throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)" . Dumper($st);
 		}
 	}
 	return;
@@ -391,12 +394,14 @@ sub size {
 	my $url		= "${base}/${user}/${repo}/size";
 	my $req		= HTTP::Request->new(GET => $url);
 	$req->authorization_basic($self->{token}) if (defined $self->{token});
+	$req->header(Accept => 'text/plain');
 	my $resp	= $ua->request( $req );
 	if ($resp->is_success) {
+		warn Dumper($resp);
 		return 0+$resp->content;
 	} else {
 		my $status	= $resp->status_line;
-		warn Dumper($resp);
+		warn 'size() failed: ' . Dumper($resp);
 		throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in size ($status)";
 	}
 }
@@ -407,7 +412,7 @@ sub _end_bulk_ops {
 		my @ops	= splice(@{ $self->{ ops } });
 		my @aggops	= $self->_group_bulk_ops( @ops );
 		my @sparql;
-		warn Dumper(\@aggops);
+		warn '_end_bulk_ops: ' . Dumper(\@aggops);
 		throw RDF::Trine::Error::UnimplementedError -text => "bulk operations not implemented for Dydra stores yet";
 	}
 	$self->{BulkOps}	= 0;
@@ -433,7 +438,7 @@ sub nuke {
 		return;
 	} else {
 		my $status	= $resp->status_line;
-		warn Dumper($resp);
+		warn 'nuke failed: ' . Dumper($resp);
 		throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)";
 	}
 }
