@@ -164,6 +164,11 @@ sub _statements_same_subject_as_string {
 		$id	= qq[rdf:nodeID="$b"];
 	} else {
 		my $i	= $s->uri_value;
+		for ($i) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+			s/"/&quot;/g;
+		}
 		$id	= qq[rdf:about="$i"];
 	}
 	
