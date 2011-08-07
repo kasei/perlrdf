@@ -13,6 +13,8 @@ use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
 use Math::Combinatorics qw(permute);
 use LWP::MediaTypes qw(add_type);
+use Text::CSV;
+use Regexp::Common qw /URI/;
 
 add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
 add_type( 'text/turtle' => qw(ttl) );
@@ -91,6 +93,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		bindings
 		clear
 		construct
+		csv-tsv-res
 		delete
 		delete-data
 		delete-insert
@@ -102,8 +105,8 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		negation
 		project-expression
 		property-path
-		subquery
 		service
+		subquery
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
@@ -513,8 +516,57 @@ sub get_expected_results {
 			}
 			return binding_results_data( $results );
 		}
+	} elsif ($file =~ /[.]csv/) {
+		my $csv	= Text::CSV->new({binary => 1});
+		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
+		my $header	= $csv->getline($fh);
+		my @vars	= @$header;
+		my @data;
+		while (my $row = $csv->getline($fh)) {
+			my %result;
+			foreach my $i (0 .. $#vars) {
+				my $var		= $vars[$i];
+				my $value	= $row->[ $i ];
+				# XXX @@ heuristics that won't always work.
+				# XXX @@ expected to work on the test suite, though
+				if ($value =~ /^_:(\w+)$/) {
+					$value	= blank($1);
+				} elsif ($value =~ /$RE{URI}/) {
+					$value	= iri($value);
+				} elsif (defined($value) and length($value)) {
+					$value	= literal($value);
+				}
+				$result{ $var }	= $value;
+			}
+			push(@data, \%result);
+		}
+		return \@data;
+	} elsif ($file =~ /[.]tsv/) {
+		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
+		my $header	= <$fh>;
+		chomp($header);
+		my @vars	= split("\t", $header);
+		foreach (@vars) { s/[?]// }
+		
+		my @data;
+		my $parser	= RDF::Trine::Parser::Turtle->new();
+		while (defined(my $line = <$fh>)) {
+			chomp($line);
+			my $row	= [ split("\t", $line) ];
+			my %result;
+			foreach my $i (0 .. $#vars) {
+				my $var		= $vars[$i];
+				my $value	= $row->[ $i ];
+				my $node	= length($value) ? $parser->parse_node( $value ) : undef;
+				$result{ $var }	= $node;
+			}
+			
+			push(@data, RDF::Query::VariableBindings->new( \%result ));
+		}
+		my $iter	= RDF::Trine::Iterator::Bindings->new(\@data);
+		return binding_results_data($iter);
 	} else {
-		die;
+		die "Unrecognized type of expected results: $file";
 	}
 }
 
@@ -525,6 +577,27 @@ sub compare_results {
 	my $test		= shift;
 	my $comment		= shift || do { my $foo; \$foo };
 	my $TODO		= shift;
+	
+	
+	
+	my $lossy_cmp	= 0;
+	if (reftype($expected) eq 'ARRAY') {
+		# comparison with expected results coming from a lossy format like csv/tsv
+		$lossy_cmp	= 1;
+		my %data	= (results => [], blank_identifiers => {});
+		foreach my $row (@$expected) {
+			push(@{ $data{ results } }, $row );
+			foreach my $key (keys %$row) {
+				my $node	= $row->{$key};
+				if (blessed($node) and $node->isa('RDF::Trine::Node::Blank')) {
+					$data{ blank_identifiers }{ $node->blank_identifier }++;
+				}
+			}
+		}
+		$data{ blanks }	= scalar(@{ [ keys %{ $data{ blank_identifiers } } ] });
+		$expected	= \%data;
+	}
+	
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
 		return $ok;
@@ -549,7 +622,7 @@ sub compare_results {
 			warn $act_graph->error;
 		}
 		return is( $eq, 1, $test );
-	} elsif (reftype($actual) eq 'HASH') {
+	} elsif (reftype($actual) eq 'HASH' and reftype($expected) eq 'HASH') {
 		my @aresults	= @{ $actual->{ results } };
 		my @eresults	= @{ $expected->{ results } };
 		my $acount		= scalar(@aresults);
@@ -565,14 +638,14 @@ sub compare_results {
 		my ($ewith, $ewithout)	= split_results_with_blank_nodes( @eresults );
 
 		# for the results without blanks, just serialize, sort, and compare
-		my @astrings	= sort map { result_to_string($_) } @$awithout;
-		my @estrings	= sort map { result_to_string($_) } @$ewithout;
+		my @astrings	= sort map { result_to_string($_, $lossy_cmp) } @$awithout;
+		my @estrings	= sort map { result_to_string($_, $lossy_cmp) } @$ewithout;
 		
 		if ($actual->{ blanks } == 0 and $expected->{ blanks } == 0) {
 			return is_deeply( \@astrings, \@estrings, $test );
 		} elsif (join("\xFF", @astrings) ne join("\xFF", @estrings)) {
 			warn "triples don't match: " . Dumper(\@astrings, \@estrings);
-			fail($test);
+			return fail($test);
 		}
 		
 		# compare the results with bnodes
@@ -584,7 +657,7 @@ sub compare_results {
 			@mapping{ @ka }	= @$mapping;
 			warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 			
-			my %ewith	= map { result_to_string($_) => 1 } @$ewith;
+			my %ewith	= map { result_to_string($_, $lossy_cmp) => 1 } @$ewith;
 			foreach my $row (@$awith) {
 				my %row;
 				foreach my $k (keys %$row) {
@@ -598,7 +671,7 @@ sub compare_results {
 						$row{ $k }	= $n;
 					}
 				}
-				my $mapped_row	= result_to_string( RDF::Query::VariableBindings->new( \%row ) );
+				my $mapped_row	= result_to_string( RDF::Query::VariableBindings->new( \%row ), $lossy_cmp );
 				warn "checking for '$mapped_row' in " . Dumper(\%ewith) if ($debug);
 				if ($ewith{ $mapped_row }) {
 					delete $ewith{ $mapped_row };
@@ -613,7 +686,7 @@ sub compare_results {
 		warn "failed to find bnode mapping: " . Dumper($awith, $ewith);
 		return fail($test);
 	} else {
-		die Dumper($actual, $expected);
+		die "Failed to compare actual and expected results: " . Dumper($actual, $expected);
 	}
 }
 
@@ -650,14 +723,23 @@ sub split_results_with_blank_nodes {
 }
 
 sub result_to_string {
-	my $row		= shift;
-	my @keys	= grep { ref($row->{ $_ }) } keys %$row;
+	my $row			= shift;
+	my $lossy_cmp	= shift;
+	my @keys		= grep { ref($row->{ $_ }) } keys %$row;
 	my @results;
+	
 	foreach my $k (@keys) {
 		my $node	= $row->{ $k };
 		if ($node->isa('RDF::Trine::Node::Literal') and $node->has_datatype) {
-			my $value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
-			$node		= RDF::Query::Node::Literal->new( $value, undef, $node->literal_datatype );
+			my ($value, $dt);
+			if ($lossy_cmp) {
+				$value	= $node->literal_value;
+				$dt		= undef;
+			} else {
+				$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
+				$dt		= $node->literal_datatype;
+			}
+			$node		= RDF::Query::Node::Literal->new( $value, undef, $dt );
 		}
 		push(@results, join('=', $k, $node->as_string));
 	}
