@@ -142,6 +142,24 @@ sub parse {
 	return;
 }
 
+=item C<< parse_node ( $string [, $base_uri] ) >>
+
+Parses and returns a L<RDF::Trine::Node> object that is serialized in
+C<< $string >> in Turtle syntax.
+
+=cut
+
+sub parse_node {
+	my $self	= shift;
+	my $input	= shift;
+	my $uri		= shift;
+	local($self->{handle_triple});
+	local($self->{baseURI})	= $uri;
+	$input	=~ s/^\x{FEFF}//;
+	local($self->{tokens})	= $input;
+	return $self->_object();
+}
+
 sub _eat_re {
 	my $self	= shift;
 	my $thing	= shift;
