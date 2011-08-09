@@ -131,7 +131,9 @@ sub next {
 			}
 			next unless ($ok);
 			my $st	= RDF::Trine::Statement->new( @triple );
-			push(@{ $self->[0]{triples} }, $st);
+			unless ($self->[0]{seen}{ $st->as_string }++) {
+				push(@{ $self->[0]{triples} }, $st);
+			}
 		}
 	}
 }
@@ -230,6 +232,31 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	return ($self->pattern, [ @{ $self->triples } ]);
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= '' . ($s x $count);
+	my $type	= $self->plan_node_name;
+	my $string	= "${indent}${type}\n";
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	$string		.= "${indent}${s}pattern\n";
+	foreach my $t (@{ $self->triples }) {
+		$string		.= "${indent}${s}${s}" . $t->as_sparql . "\n";
+	}
+	return $string;
 }
 
 =item C<< graph ( $g ) >>
