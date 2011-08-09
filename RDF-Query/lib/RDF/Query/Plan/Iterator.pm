@@ -57,6 +57,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "ITERATOR plan can't be executed while already open";
 	}
@@ -84,7 +85,11 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open ITERATOR";
 	}
 	my $iter	= $self->[1];
-	return $iter->next;
+	my $bindings	= $iter->next;
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $bindings );
+	}
+	return $bindings;
 }
 
 =item C<< close >>

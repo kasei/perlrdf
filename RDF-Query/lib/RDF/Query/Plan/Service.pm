@@ -25,7 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Storable qw(store_fd fd_retrieve);
 use URI::Escape;
 
@@ -111,6 +111,7 @@ sub new_from_plan {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SERVICE plan can't be executed while already open";
 	}
@@ -207,6 +208,9 @@ sub next {
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
 	$row->label( origin => [ $self->endpoint ] );
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
+	}
 	return $row;
 };
 
@@ -489,7 +493,7 @@ sub explain {
 	my $type	= $self->plan_node_name;
 	my $sparql	= $self->sparql;
 	$sparql		=~ s/\n/\n${indent}${s}${s}/g;
-	my $string	= "${indent}${type}\n"
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self))
 				. "${indent}${s}" . $self->endpoint . "\n"
 				. "${indent}${s}${sparql}\n";
 	return $string;

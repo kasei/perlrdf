@@ -198,6 +198,15 @@ sub optimistic_threshold_time {
 	return $self->_get_value( 'optimistic_threshold_time', @_ );
 }
 
+=item C<< delegate >>
+
+=cut
+
+sub delegate {
+	my $self	= shift;
+	return $self->_get_value( 'delegate', @_ );
+}
+
 sub _get_value {
 	my $self	= shift;
 	my $key		= shift;

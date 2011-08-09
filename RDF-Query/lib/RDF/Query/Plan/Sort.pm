@@ -22,6 +22,7 @@ package RDF::Query::Plan::Sort;
 
 use strict;
 use warnings;
+use Scalar::Util qw(refaddr);
 use base qw(RDF::Query::Plan);
 
 ######################################################################
@@ -57,6 +58,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SORT plan can't be executed while already open";
 	}
@@ -97,7 +99,11 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SORT";
 	}
-	return shift(@{ $self->[0]{rows} });
+	my $bindings	= shift(@{ $self->[0]{rows} });
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $bindings );
+	}
+	return $bindings;
 }
 
 =item C<< close >>
@@ -244,7 +250,7 @@ sub explain {
 	my $count	= shift;
 	my $indent	= $s x $count;
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	$string		.= "${indent}${s}sory by:\n";
 	my $exprs	= $self->[2];
 	foreach my $e (@$exprs) {

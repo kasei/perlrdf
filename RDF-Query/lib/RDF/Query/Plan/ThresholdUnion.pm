@@ -64,6 +64,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "ThresholdUnion plan can't be executed while already open";
 	}
@@ -100,6 +101,9 @@ sub next {
 	my $row		= $iter->next;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.thresholdunion");
 	if ($row) {
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $row );
+		}
 		return $row;
 	} else {
 		$l->trace("thresholdunion sub-plan finished");
@@ -128,7 +132,11 @@ sub next {
 		$iter->execute( $self->[0]{context} );
 		if ($iter->state == $self->OPEN) {
 			$self->[0]{iter}	= $iter;
-			return $self->next;
+			my $bindings	= $self->next;
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $bindings );
+			}
+			return $bindings;
 		} else {
 			throw RDF::Query::Error::ExecutionError -text => "execute() on child [${index}] of UNION failed during next()";
 		}

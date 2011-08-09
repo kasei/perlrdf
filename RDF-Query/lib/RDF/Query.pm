@@ -330,6 +330,14 @@ sub prepare {
 	if ($args{ 'bind' }) {
 		%bound	= %{ $args{ 'bind' } };
 	}
+	
+	my $delegate;
+	if (defined $args{ 'delegate' }) {
+		$delegate	= delete $args{ 'delegate' };
+		if ($delegate and not blessed($delegate)) {
+			$delegate	= $delegate->new();
+		}
+	}
 	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
@@ -365,8 +373,8 @@ sub prepare {
 					requested_variables			=> \@vars,
 					strict_errors				=> $errors,
 					options						=> $self->{options},
+					delegate					=> $delegate,
 				);
-	
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");

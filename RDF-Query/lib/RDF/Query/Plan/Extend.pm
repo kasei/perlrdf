@@ -61,6 +61,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
 	$l->trace( "executing extend plan: " . $self->sse );
 	if ($self->state == $self->OPEN) {
@@ -131,6 +132,9 @@ sub next {
 		};
 		next unless ($ok);
 		$l->trace( "Extended result: $row" );
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $row );
+		}
 		return $row;
 	}
 }

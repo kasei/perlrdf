@@ -25,7 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 ######################################################################
 
@@ -61,6 +61,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "CONSTRUCT plan can't be executed while already open";
 	}
@@ -95,7 +96,11 @@ sub next {
 	my $plan	= $self->[1];
 	while (1) {
 		while (scalar(@{ $self->[0]{triples} })) {
-			return shift(@{ $self->[0]{triples} });
+			my $t	= shift(@{ $self->[0]{triples} });
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $t );
+			}
+			return $t;
 		}
 		my $row	= $plan->next;
 		return undef unless ($row);
@@ -250,7 +255,7 @@ sub explain {
 	}
 	my $indent	= '' . ($s x $count);
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	$string		.= $self->pattern->explain( $s, $count+1 );
 	$string		.= "${indent}${s}pattern\n";
 	foreach my $t (@{ $self->triples }) {

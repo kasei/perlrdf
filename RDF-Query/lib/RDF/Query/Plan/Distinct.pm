@@ -52,6 +52,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "DISTINCT plan can't be executed while already open";
 	}
@@ -81,6 +82,9 @@ sub next {
 		my $row	= $plan->next;
 		return undef unless ($row);
 		if (not $self->[0]{seen}{ $row->as_string }++) {
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $row );
+			}
 			return $row;
 		}
 	}

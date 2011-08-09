@@ -21,7 +21,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use List::Util qw(reduce);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use RDF::Query::Error qw(:try);
 use RDF::Query::BGPOptimizer;
 
@@ -161,7 +161,7 @@ sub explain {
 	}
 	my $indent	= '' . ($s x $count);
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	foreach my $p ($self->plan_node_data) {
 		if (blessed($p)) {
 			if ($p->isa('RDF::Trine::Statement::Quad')) {
@@ -172,7 +172,8 @@ sub explain {
 				$string	.= $p->explain( $s, $count+1 );
 			}
 		} elsif (ref($p)) {
-			warn 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
+			$string	.= "${indent}${s}" . Dumper($p);
+			Carp::cluck 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
 		} else {
 			no warnings 'uninitialized';
 			$string	.= "${indent}${s}$p\n";
@@ -308,6 +309,17 @@ Return a serialization of the query plan.
 sub serialize {
 	my $self	= shift;
 	
+}
+
+=item C<< delegate >>
+
+Returns the delegate object if available.
+
+=cut
+
+sub delegate {
+	my $self	= shift;
+	return $self->[0]{delegate};
 }
 
 =item C<< referenced_variables >>
