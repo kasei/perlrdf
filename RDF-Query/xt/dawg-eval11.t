@@ -484,14 +484,24 @@ sub get_expected_results {
 	if ($type eq 'graph') {
 		my $model	= RDF::Trine::Model->temporary_model;
 		RDF::Trine::Parser->parse_url_into_model( "file://$file", $model, canonicalize => 1 );
-		my $stream	= $model->get_statements();
-		return $stream;
+		my $results	= $model->get_statements();
+		if ($args{ results }) {
+			$results	= $results->materialize;
+			warn "Got expected results:\n";
+			warn $results->as_string;
+		}
+		return $results;
 	} elsif ($file =~ /[.](srj|json)/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
 		my $results	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
 		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+			my $value	= $results->next;
+			my $bool	= ($value ? 'true' : 'false');
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
+			if ($args{ results }) {
+				warn "Got expected result: $bool\n";
+			}
 			return $model->get_statements;
 		} else {
 			if ($args{ results }) {
@@ -539,6 +549,10 @@ sub get_expected_results {
 				$result{ $var }	= $value;
 			}
 			push(@data, \%result);
+		}
+		if ($args{ results }) {
+			warn "Got expected results:\n";
+			warn Dumper(\@data);
 		}
 		return \@data;
 	} elsif ($file =~ /[.]tsv/) {
