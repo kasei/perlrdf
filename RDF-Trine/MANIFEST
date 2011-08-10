@@ -68,6 +68,7 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/Dydra.pm
 lib/RDF/Trine/Store/Hexastore.pm
 lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Redland.pm
@@ -542,6 +543,7 @@ t/pod.t
 t/remove-list.t
 t/store-dbi.t
 t/store-dbi-mysql.t
+t/store-dydra.t
 t/store-memory.t
 t/store-redland.t
 t/serializer-nquads.t
