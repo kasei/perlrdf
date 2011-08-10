@@ -39,6 +39,7 @@ use Carp;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
@@ -56,13 +57,12 @@ BEGIN {
 	}
 	my $class										= __PACKAGE__;
 	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/xhtml+xml';
-	foreach my $type (qw(application/xhtml+xml)) {
+	foreach my $type (qw(application/xhtml+xml text/html)) {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDFa' }	= __PACKAGE__;
 	
-	eval "use RDF::RDFa::Parser 0.30;";
-	unless ($@) {
+	if (can_load( modules => { 'RDF::RDFa::Parser' => 0.30 })) {
 		$HAVE_RDFA_PARSER	= 1;
 	}
 }
