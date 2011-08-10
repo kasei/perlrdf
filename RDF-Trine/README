@@ -67,6 +67,27 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.136 (2011-08-XX)
+
+     * BUG FIXES
+         Fixed escaping of URIs in rdf:about attributes (patch from SADI Framework).
+         Return an empty string instead of undef in RDF::Trine::Iterator->format_node_xml.
+         Fixed RDF::Trine::Store::SPARQL->count_statements handling of variables.
+         Fixed turtle serializer to check if numerics are in canonical form.
+         Fixed mysql schema to quote index names that might contain reserved characters.
+     * NEW FEATURES
+         Initial support for using Dydra as a store.
+         Added RDF::Trine::Parser::Turtle->parse_node method.
+         Added RDF::Trine::Node::Literal->is_canonical_lexical_form.
+         Made RDF::Trine::Serializer::NTriples->statement_as_string a public method.
+     * ENHANCEMENTS
+         Allow empty namespace prefix in RDF::Trine::NamespaceMap (patch from Jakob Voss).
+         Added text/html media type, and added use of Module::Load::Conditional in RDF::Trine::Parser::RDFa.
+         Added support of SPARQL endpoints with URL parameters like Virtuoso's 'http://example.org:8890/sparql?default-graph-uri=...' (patch from Jakob Voss).
+     * OTHER
+         Added option to sleep after each store update in Test::RDF::Trine::Store.
+         Fixed code in RDF::Trine::Store::SPARQL that was causing a warning when a variable name was redefined.
+
   Version 0.135 (2011-04-30)
 
      * API CHANGES

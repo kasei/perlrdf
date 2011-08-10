@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.135
+This document describes RDF::Trine version 0.135_01
 
 =head1 SYNOPSIS
 
@@ -53,6 +53,11 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
+
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.135_01';
+}
 
 use Log::Log4perl;
 
@@ -723,6 +728,14 @@ sub remove_statement_tests {
 	is( $store->count_statements( undef, undef, undef, undef ), 0, 'quad count after triple removal' );
 }
 
+
+=item C<< update_sleep ( \%args ) >>
+
+If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
+This function is called after update operations to aid in testing stores that
+perform updates asynchronously.
+
+=cut
 
 sub update_sleep {
 	my $args	= shift;

@@ -15,6 +15,32 @@
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.134.tar.gz> ;
 
         doap:Version    [
+                        doap:revision     "0.136" ;
+                        doap:created      "2011-08-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added text/html media type, and added use of Module::Load::Conditional in RDF::Trine::Parser::RDFa." ;
+                        asc:addition    "Added RDF::Trine::Parser::Turtle->parse_node method." ;
+                        asc:addition    "Made RDF::Trine::Serializer::NTriples->statement_as_string a public method." ;
+                        asc:addition    "Initial support for using Dydra as a store." ;
+                        asc:addition    "Added RDF::Trine::Node::Literal->is_canonical_lexical_form." ;
+                        asc:update      "Fixed escaping of URIs in rdf:about attributes (patch from SADI Framework)." ;
+                        asc:update      "Allow empty namespace prefix in RDF::Trine::NamespaceMap (patch from Jakob Voss)." ;
+                        asc:update      "Added option to sleep after each store update in Test::RDF::Trine::Store." ;
+                        asc:update      "Return an empty string instead of undef in RDF::Trine::Iterator->format_node_xml." ;
+                        asc:update      "Fixed RDF::Trine::Store::SPARQL->count_statements handling of variables." ;
+                        asc:update      "Fixed code in RDF::Trine::Store::SPARQL that was causing a warning when a variable name was redefined." ;
+                        asc:update      "Added support of SPARQL endpoints with URL parameters like Virtuoso's 'http://example.org:8890/sparql?default-graph-uri=...' (patch from Jakob Voss)." ;
+                        asc:update      "Fixed turtle serializer to check if numerics are in canonical form." ;
+                        asc:update      "Fixed mysql schema to quote index names that might contain reserved characters." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.135.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.134.tar.gz> ;
+
+        doap:Version    [
                         doap:revision     "0.135" ;
                         doap:created      "2011-04-30" ;
                         ];

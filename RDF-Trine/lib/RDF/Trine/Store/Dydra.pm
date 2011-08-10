@@ -4,7 +4,7 @@ RDF::Trine::Store::Dydra - RDF Store proxy for a Dydra endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Dydra version 0.135
+This document describes RDF::Trine::Store::Dydra version 0.135_01
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.135_01";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -121,6 +121,12 @@ sub new {
 	
 	return $self;
 }
+
+=item C<< base >>
+
+Returns the service base URI ("http://dydra.com:80" by default).
+
+=cut
 
 sub base {
 	my $self	= shift;
