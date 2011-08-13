@@ -543,7 +543,6 @@ t/pod.t
 t/remove-list.t
 t/store-dbi.t
 t/store-dbi-mysql.t
-t/store-dydra.t
 t/store-memory.t
 t/store-redland.t
 t/serializer-nquads.t
@@ -570,5 +569,6 @@ xt/data/turtle/test-15.ttl
 xt/data/turtle/test-16.out
 xt/data/turtle/test-16.ttl
 xt/parser-turtle.t
+xt/store-dydra.t
 xt/store-sparql.t
 extra/mysql.sql
