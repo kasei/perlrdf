@@ -165,7 +165,7 @@ sub explain {
 	foreach my $p ($self->plan_node_data) {
 		if (blessed($p)) {
 			if ($p->isa('RDF::Trine::Statement::Quad')) {
-				$string	.= "${indent}${s}" . $p->as_string . "\n";
+				$string	.= "${indent}${s}" . join(' ', map { ($_->isa('RDF::Trine::Node::Nil')) ? "(nil)" : $_->as_sparql } $p->nodes) . "\n";
 			} elsif ($p->isa('RDF::Trine::Node::Nil')) {
 				$string	.= "${indent}${s}(nil)\n";
 			} else {

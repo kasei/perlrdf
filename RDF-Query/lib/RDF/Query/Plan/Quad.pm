@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
@@ -301,6 +301,28 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	return ($self->nodes);
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= '' . ($s x $count);
+	my $type	= $self->plan_node_name;
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self))
+				. "${indent}${s}"
+				. join(' ', map { ($_->isa('RDF::Trine::Node::Nil')) ? "(nil)" : $_->as_sparql } $self->plan_node_data) . "\n";
+	return $string;
 }
 
 =item C<< graph ( $g ) >>
