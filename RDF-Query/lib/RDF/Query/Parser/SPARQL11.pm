@@ -276,7 +276,7 @@ sub _RW_Query {
 			throw RDF::Query::Error::PermissionError -text => "DROP GRAPH update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_DropGraph();
-		} elsif ($self->_test(qr/LOAD/i)) {
+		} elsif ($self->_test(qr/LOAD\s+(SILENT\s+)?/i)) {
 			throw RDF::Query::Error::PermissionError -text => "LOAD update forbidden in read-only queries"
 				unless ($self->{update});
 			$self->_LoadUpdate();
@@ -664,8 +664,9 @@ sub __ModifyTemplate {
 
 sub _LoadUpdate {
 	my $self	= shift;
-	$self->_eat(qr/LOAD/i);
-	$self->_ws;
+	my $op		= $self->_eat(qr/LOAD\s+(SILENT\s+)?/i);
+	my $silent	= ($op =~ /SILENT/);
+	$self->__consume_ws_opt;
 	$self->_IRIref;
 	my ($iri)	= splice( @{ $self->{stack} } );
 	$self->__consume_ws_opt;
@@ -674,10 +675,10 @@ sub _LoadUpdate {
 		$self->_ws;
 		$self->_IRIref;
 		my ($graph)	= splice( @{ $self->{stack} } );
-		my $pat	= RDF::Query::Algebra::Load->new( $iri, $graph );
+		my $pat	= RDF::Query::Algebra::Load->new( $iri, $graph, $silent );
 		$self->_add_patterns( $pat );
 	} else {
-		my $pat	= RDF::Query::Algebra::Load->new( $iri );
+		my $pat	= RDF::Query::Algebra::Load->new( $iri, undef, $silent );
 		$self->_add_patterns( $pat );
 	}
 	$self->{build}{method}		= 'LOAD';
@@ -783,6 +784,10 @@ sub __UpdateShortcuts {
 	if ($self->_test(qr/DEFAULT/i)) {
 		$self->_eat(qr/DEFAULT/i);
 	} else {
+		if ($self->_test(qr/GRAPH/)) {
+			$self->_eat(qr/GRAPH/i);
+			$self->__consume_ws_opt;
+		}
 		$self->_IRIref;
 		($from)	= splice( @{ $self->{stack} } );
 	}
@@ -792,6 +797,10 @@ sub __UpdateShortcuts {
 	if ($self->_test(qr/DEFAULT/i)) {
 		$self->_eat(qr/DEFAULT/i);
 	} else {
+		if ($self->_test(qr/GRAPH/)) {
+			$self->_eat(qr/GRAPH/i);
+			$self->__consume_ws_opt;
+		}
 		$self->_IRIref;
 		($to)	= splice( @{ $self->{stack} } );
 	}
