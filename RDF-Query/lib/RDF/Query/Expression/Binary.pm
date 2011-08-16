@@ -141,6 +141,9 @@ sub evaluate {
 				my $lhsv	= $lhs->numeric_value;
 				my $rhsv	= $rhs->numeric_value;
 				if (defined($lhsv) and defined($rhsv)) {
+					if ($rhsv == 0) {
+						throw RDF::Query::Error::FilterEvaluationError -text => "Illegal division by zero";
+					}
 					$value		= $lhsv / $rhsv;
 				} else {
 					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
