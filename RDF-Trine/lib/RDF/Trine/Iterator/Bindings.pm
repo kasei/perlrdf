@@ -540,6 +540,8 @@ sub as_string {
 
 =item C<< as_statements ( @names ) >>
 
+Returns a L<RDF::Trine::Iterator::Graph> with the statements of the stream.
+
 =cut
 
 sub as_statements {

@@ -652,33 +652,7 @@ library for PHP.
 sub as_hashref {
 	my $self	= shift;
 	$self->end_bulk_ops();
-	my $stream	= $self->as_stream;
-	my $index = {};
-	while (my $statement = $stream->next) {
-		
-		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
-			('_:'.$statement->subject->blank_identifier) :
-			$statement->subject->uri ;
-		my $p = $statement->predicate->uri ;
-		
-		my $o = {};
-		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}		= 'literal';
-			$o->{'value'}		= $statement->object->literal_value;
-			$o->{'lang'}		= $statement->object->literal_value_language
-				if $statement->object->has_language;
-			$o->{'datatype'}	= $statement->object->literal_datatype
-				if $statement->object->has_datatype;
-		} else {
-			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
-				('_:'.$statement->object->blank_identifier) :
-				$statement->object->uri ;
-		}
-
-		push @{ $index->{$s}->{$p} }, $o;
-	}
-	return $index;
+	return $self->as_stream->as_hashref;
 }
 
 =item C<< as_graphviz >>
