@@ -38,10 +38,10 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Carp;
 use XML::SAX;
-use XML::LibXML 1.70;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
@@ -50,7 +50,7 @@ use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
 	$VERSION	= '0.135';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
@@ -63,6 +63,11 @@ BEGIN {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
+	
+	$HAS_XML_LIBXML	= can_load( modules => {
+		'XML::LibXML'	=> 1.70,
+	} );
+
 }
 
 ######################################################################
@@ -786,15 +791,17 @@ sub new_literal {
 	if (my $dt = $self->{datatype}) {	# datatype
 		$args[1]	= $dt;
 		if ($dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-			eval {
-				if ($string =~ m/^</) {
-					my $doc 	= XML::LibXML->load_xml(string => $string);
-					my $canon	= $doc->toStringEC14N(1);
-					$string	= $canon;
+			if ($HAS_XML_LIBXML) {
+				eval {
+					if ($string =~ m/^</) {
+						my $doc 	= XML::LibXML->load_xml(string => $string);
+						my $canon	= $doc->toStringEC14N(1);
+						$string	= $canon;
+					}
+				};
+				if ($@) {
+					warn "Cannot canonicalize XMLLiteral: $@" . Dumper($string);
 				}
-			};
-			if ($@) {
-				warn "Cannot canonicalize XMLLiteral: $@" . Dumper($string);
 			}
 		}
 	} elsif (my $lang = $self->get_language) {
