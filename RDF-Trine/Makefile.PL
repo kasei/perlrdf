@@ -33,7 +33,6 @@ requires			'Set::Scalar'				=> 0;
 requires			'Storable'					=> 0;
 requires			'Text::CSV'					=> 0;
 requires			'Text::Table'				=> 0;
-requires			'Time::HiRes'				=> 0;
 requires			'Unicode::Escape'			=> 0;
 requires			'Unicode::String'			=> 2.09;
 requires			'URI'						=> 1.52;
