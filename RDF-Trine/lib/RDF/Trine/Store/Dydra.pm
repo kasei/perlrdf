@@ -24,11 +24,9 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store::SPARQL);
 
-use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -121,6 +119,12 @@ sub new {
 	
 	return $self;
 }
+
+=item C<< base >>
+
+Returns the service base URI ("http://dydra.com:80" by default).
+
+=cut
 
 sub base {
 	my $self	= shift;

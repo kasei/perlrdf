@@ -24,11 +24,9 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 
 use RDF::Trine::Error qw(:try);

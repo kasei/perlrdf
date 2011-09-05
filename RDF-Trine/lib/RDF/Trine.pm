@@ -76,7 +76,6 @@ use RDF::Trine::Namespace;
 use RDF::Trine::NamespaceMap;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
