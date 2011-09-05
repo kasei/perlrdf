@@ -27,7 +27,6 @@ BEGIN {
 }
 
 use Scalar::Util qw(blessed refaddr);
-use Unicode::String;
 
 use RDF::Trine::Node::Nil;
 use RDF::Trine::Node::Blank;
