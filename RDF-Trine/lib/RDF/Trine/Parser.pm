@@ -42,6 +42,7 @@ no warnings 'redefine';
 use Data::Dumper;
 use Encode qw(decode);
 use LWP::MediaTypes;
+use Module::Load::Conditional qw[can_load];
 
 our ($VERSION);
 our %file_extensions;
@@ -50,8 +51,13 @@ our %canonical_media_types;
 our %media_types;
 our %format_uris;
 our %encodings;
+
 BEGIN {
 	$VERSION	= '0.135';
+	can_load( modules => {
+#		'Data::UUID'	=> undef,
+		'UUID::Tiny'	=> undef,
+	} );
 }
 
 use Scalar::Util qw(blessed);
@@ -362,6 +368,31 @@ sub parse_file {
 =item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =cut
+
+
+=item C<< new_bnode_prefix () >>
+
+Returns a new prefix to be used in the construction of blank node identifiers.
+If either Data::UUID or UUID::Tiny are available, they are used to construct
+a globally unique bnode prefix. Otherwise, an empty string is returned.
+
+=cut
+
+sub new_bnode_prefix {
+	my $class	= shift;
+	if (defined($UUID::Tiny::VERSION)) {
+		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} elsif (defined($Data::UUID::VERSION)) {
+		my $ug		= new Data::UUID;
+		my $uuid	= $ug->to_string( $ug->create() );
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} else {
+		return '';
+	}
+}
 
 
 1;

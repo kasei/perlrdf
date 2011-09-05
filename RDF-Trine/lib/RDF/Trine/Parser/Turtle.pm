@@ -37,7 +37,6 @@ no warnings 'once';
 use base qw(RDF::Trine::Parser);
 
 use URI;
-use Data::UUID;
 use Log::Log4perl;
 use Encode qw(decode);
 use Scalar::Util qw(blessed looks_like_number);
@@ -96,13 +95,17 @@ Returns a new Turtle parser.
 
 sub new {
 	my $class	= shift;
-	my $ug		= new Data::UUID;
-	my $uuid	= $ug->to_string( $ug->create() );
-	$uuid		=~ s/-//g;
+	my %args	= @_;
+	my $prefix	= '';
+	if (defined($args{ bnode_prefix })) {
+		$prefix	= $args{ bnode_prefix };
+	} else {
+		$prefix	= $class->new_bnode_prefix();
+	}
 	my $self	= bless({
 					bindings		=> {},
 					bnode_id		=> 0,
-					bnode_prefix	=> $uuid,
+					bnode_prefix	=> $prefix,
 					@_
 				}, $class);
 	return $self;

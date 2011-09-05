@@ -75,7 +75,17 @@ sub new {
 	my $class	= shift;
 	my %args	= @_;
 	$class = ref($class) || $class;
-	my $saxhandler	= RDF::Trine::Parser::RDFXML::SAXHandler->new( %args );
+
+	my $prefix	= '';
+	if (defined($args{ BNodePrefix })) {
+		$prefix	= delete $args{ BNodePrefix };
+	} elsif (defined($args{ bnode_prefix })) {
+		$prefix	= delete $args{ bnode_prefix };
+	} else {
+		$prefix	= $class->new_bnode_prefix();
+	}
+	
+	my $saxhandler	= RDF::Trine::Parser::RDFXML::SAXHandler->new( %args, bnode_prefix => $prefix );
 	my $p		= XML::SAX::ParserFactory->parser(Handler => $saxhandler);
 	
 	my $self = bless( {
@@ -176,7 +186,12 @@ use constant	COLLECTION	=> 0x16;
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	my $prefix	= $args{ BNodePrefix } || '';
+	my $prefix	= '';
+	if (defined($args{ BNodePrefix })) {
+		$prefix	= $args{ BNodePrefix };
+	} elsif (defined($args{ bnode_prefix })) {
+		$prefix	= $args{ bnode_prefix };
+	}
 	my $self	= bless( {
 					expect			=> [ SUBJECT, NIL ],
 					base			=> [],
