@@ -28,6 +28,7 @@ use Data::Dumper;
 use Digest::SHA;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
+use RDF::Trine::Statement::Quad;
 
 use RDF::Trine qw(iri);
 use RDF::Trine::Error;
