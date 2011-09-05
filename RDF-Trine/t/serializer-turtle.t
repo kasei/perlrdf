@@ -315,7 +315,7 @@ my @tests	= (
 
 foreach my $d (@tests) {
 	my ($hash, $expect, $test)	= @$d;
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $serializer = RDF::Trine::Serializer::Turtle->new();
 	my $turtle = $serializer->serialize_model_to_string($model);
@@ -343,7 +343,7 @@ foreach my $d (@tests) {
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames');
@@ -359,7 +359,7 @@ END
 
 [] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single base URI');
@@ -376,7 +376,7 @@ END
 
 [] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single base URI, old style');
@@ -394,7 +394,7 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames (ignoring extra namespaces)');
@@ -414,7 +414,7 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle	= '';
 	open( my $fh, '>', \$turtle );
@@ -437,7 +437,7 @@ END
 	foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'multiple namespace Qnames (old namespace API)');
@@ -457,7 +457,7 @@ END
 	foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'multiple namespace Qnames (new namespace API)');
@@ -476,14 +476,14 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'RDF::Trine::Namespace Qnames');
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/predicate' => [

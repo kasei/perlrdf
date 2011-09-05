@@ -7,7 +7,6 @@ no warnings 'redefine';
 use RDF::Trine;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -80,7 +79,6 @@ foreach my $store (@stores) {
 
 sub test_stores {
 	my @stores;
-	push(@stores, RDF::Trine::Store::DBI->temporary_store());
 	push(@stores, RDF::Trine::Store::Memory->temporary_store());
 	return @stores;
 }
