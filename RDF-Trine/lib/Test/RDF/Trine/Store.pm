@@ -246,29 +246,29 @@ sub add_statement_tests_simple {
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
 	
-	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
 	$store->add_statement( $quad );
 	update_sleep($args);
-	
-	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	
 	$store->remove_statement( $triple, $ex->d );
-	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' ) or die;
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
 	$store->add_statement( $quad2 );
 	update_sleep($args);
 	
-	is( $store->size, 1, 'store has 1 statement after (quad) add' ) or die;
+	is( $store->size, 1, 'store has 1 statement after (quad) add' );
 	
 	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
-	is( $count, 1, 'expected count of specific-context statements' ) or die;
+	is( $count, 1, 'expected count of specific-context statements' );
 	
 	$store->remove_statement( $quad2 );
 	update_sleep($args);
 	
-	is( $store->size, 0, 'expected zero size after remove statement' ) or die;
+	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
 
