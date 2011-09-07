@@ -189,7 +189,7 @@ END
 		$dbh->commit or warn $dbh->errstr;
 	}
 
-	unless ($self->_table_exists("statements${id}")) {
+	unless ($self->_table_exists("Statements${id}")) {
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
 			CREATE TABLE IF NOT EXISTS Statements${id} (
 				Subject bigint unsigned NOT NULL,
