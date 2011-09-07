@@ -73,7 +73,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-  return 203; # Remember to update whenever adding tests
+  return 209; # Remember to update whenever adding tests
 }
 
 
@@ -146,6 +146,9 @@ sub all_store_tests {
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
 	add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	bulk_add_statement_tests_simple( $store, $args, $ex );
 	update_sleep($args);
 	
 	literals_tests_simple( $store, $args, $ex );
@@ -253,6 +256,54 @@ sub add_statement_tests_simple {
 	
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
 	$store->add_statement( $quad2 );
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (quad) add' ) or die;
+	
+	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
+	is( $count, 1, 'expected count of specific-context statements' ) or die;
+	
+	$store->remove_statement( $quad2 );
+	update_sleep($args);
+	
+	is( $store->size, 0, 'expected zero size after remove statement' ) or die;
+}
+
+
+=item C<< bulk_add_statement_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check add_statement.
+
+=cut
+
+
+sub bulk_add_statement_tests_simple {
+	note "bulk add_statement tests";
+	my ($store, $args, $ex) = @_;
+
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	$store->add_statement( $triple, $ex->d );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->add_statement( $quad );
+	update_sleep($args);
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' ) or die;
+	
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
+	$store->add_statement( $quad2 );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
 	update_sleep($args);
 	
 	is( $store->size, 1, 'store has 1 statement after (quad) add' ) or die;
