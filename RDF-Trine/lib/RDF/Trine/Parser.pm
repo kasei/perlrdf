@@ -381,6 +381,7 @@ a globally unique bnode prefix. Otherwise, an empty string is returned.
 sub new_bnode_prefix {
 	my $class	= shift;
 	if (defined($UUID::Tiny::VERSION)) {
+		no strict 'subs';
 		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;
