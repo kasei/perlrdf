@@ -1,4 +1,4 @@
-use Test::More tests => 39;
+use Test::More tests => 45;
 use Test::Exception;
 
 use strict;
@@ -94,19 +94,6 @@ my @tests	= (
 	[
 		{
 			'_:a' => {
-				'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
-			},
-			'_:b' => {
-				'http://example.com/ns#foo' => [{type=>'literal', value=>'foo'}, 'FOO'],
-				'http://example.com/ns#bar' => [{type=>'literal', value=>'bar'}],
-			},
-		},
-		qq{[] <http://example.com/ns#description> [\n\t\t<http://example.com/ns#bar> "bar" ;\n\t\t<http://example.com/ns#foo> "FOO", "foo"\n\t] .\n},
-		'blank object with multiple predicates and objects'
-	],
-	[
-		{
-			'_:a' => {
 				'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}, {type=>'uri', value=>'_:c'}],
 			},
 			'_:b' => {
@@ -163,21 +150,6 @@ my @tests	= (
 		},
 		qq{[] <http://example.com/predicate> (1 2) .\n},
 		'concise rdf:List syntax 2'
-	],
-	[
-		{
-			'_:abc'	=> { 'http://example.com/predicate' => [{type => 'blank', value => '_:head'}] },
-			'_:head'	=> {
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}, {type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:middle'}],
-					},
-			'_:middle'	=> {
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '3', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
-					},
-		},
-		qq{[] <http://example.com/predicate> [\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 2, 1 ;\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> [\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 3 ;\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>\n\t\t]\n\t] .\n},
-		'full rdf:List syntax on invalid list'
 	],
 	[
 		{
@@ -683,3 +655,57 @@ END
 	$parser->parse_into_model( $base_uri, $got, $gotmodel );
 	is( $gotmodel->size, $model->size, 'bnode concise syntax' );
 }
+
+{
+	my $hash	= {
+		'_:a' => {
+			'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
+		},
+		'_:b' => {
+			'http://example.com/ns#foo' => [{type=>'literal', value=>'foo'}, 'FOO'],
+			'http://example.com/ns#bar' => [{type=>'literal', value=>'bar'}],
+		},
+	};
+	
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_hashref($hash);
+	my $serializer = RDF::Trine::Serializer::Turtle->new();
+	my $turtle = $serializer->serialize_model_to_string($model);
+	
+	
+	my $test	= 'blank object with multiple predicates and objects';
+	like( $turtle, qr{<http://example.com/ns#description>\s*\[}, "$test 1/3" );
+	like( $turtle, qr{<http://example.com/ns#bar> "bar"}, "$test 2/3" );
+	like( $turtle, qr{<http://example.com/ns#foo> ("FOO", "foo"|"foo", "FOO")}, , "$test 3/3" );
+}
+
+{
+	my $hash	= {
+		'_:abc'	=> { 'http://example.com/predicate' => [{type => 'blank', value => '_:head'}] },
+		'_:head'	=> {
+					'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '1', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}, {type => 'literal', value => '2', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+					'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'blank', value => '_:middle'}],
+				},
+		'_:middle'	=> {
+					'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'literal', value => '3', datatype => 'http://www.w3.org/2001/XMLSchema#integer'}],
+					'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
+				},
+	};
+	
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_hashref($hash);
+	my $serializer = RDF::Trine::Serializer::Turtle->new();
+	my $turtle = $serializer->serialize_model_to_string($model);
+	
+	my $test	= 'full rdf:List syntax on invalid list';
+	like( $turtle, qr{<http://example.com/predicate> \[}, "$test 1/5" );
+	like( $turtle, qr{<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> [12]}, "$test 2/5" );
+	like( $turtle, qr{<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> \[}, "$test 3/5" );
+	like( $turtle, qr{<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 3}, "$test 4/5" );
+	like( $turtle, qr{<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>}, "$test 5/5" );
+}
+
+
+__END__
+
+
