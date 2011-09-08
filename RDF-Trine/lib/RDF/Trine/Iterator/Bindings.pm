@@ -37,12 +37,13 @@ use warnings;
 no warnings 'redefine';
 use Data::Dumper;
 
-use JSON 2.0;
 use Text::Table;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator::Bindings::Materialized;
 use RDF::Trine::Serializer::Turtle;
+use RDF::Trine::Serializer::SPARQLJSON;
+use RDF::Trine::Serializer::SPARQLXML;
 
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
@@ -434,42 +435,8 @@ Returns a JSON serialization of the stream data.
 sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	my $width			= $self->bindings_count;
-# 	my $bridge			= $self->bridge;
-	
-	my @variables;
-	for (my $i=0; $i < $width; $i++) {
-		my $name	= $self->binding_name($i);
-		push(@variables, $name) if $name;
-	}
-	
-	my $count	= 0;
-	my @sorted	= $self->sorted_by;
-	my $order	= scalar(@sorted) ? JSON::true : JSON::false;
-	my $dist	= $self->_args->{distinct} ? JSON::true : JSON::false;
-	
-	my $data	= {
-					head	=> { vars => \@variables },
-					results	=> { ordered => $order, distinct => $dist },
-				};
-	my @bindings;
-	while (!$self->finished) {
-		my %row;
-		for (my $i = 0; $i < $width; $i++) {
-			my $name		= $self->binding_name($i);
-			my $value		= $self->binding_value($i);
-			if (blessed($value)) {
-				if (my ($k, $v) = format_node_json($value, $name)) {
-					$row{ $k }		= $v;
-				}
-			}
-		}
-		
-		push(@{ $data->{results}{bindings} }, \%row);
-		last if ($max_result_size and ++$count >= $max_result_size);
-	} continue { $self->next_result }
-	
-	return to_json( $data );
+	my $s				= RDF::Trine::Serializer::SPARQLJSON->new;
+	return $s->serialize_iterator_to_string( $self, $max_result_size );
 }
 
 =item C<as_xml ( $max_size )>
@@ -481,11 +448,8 @@ Returns an XML serialization of the stream data.
 sub as_xml {
 	my $self			= shift;
 	my $max_result_size	= shift || 0;
-	my $string	= '';
-	open( my $fh, '>', \$string );
-	$self->print_xml( $fh, $max_result_size );
-	close($fh);
-	return $string;
+	my $s				= RDF::Trine::Serializer::SPARQLXML->new;
+	return $s->serialize_iterator_to_string( $self, $max_result_size );
 }
 
 =item C<as_string ( $max_size [, \$count] )>
@@ -569,126 +533,8 @@ sub print_xml {
 	my $self			= shift;
 	my $fh				= shift;
 	my $max_result_size	= shift || 0;
-	my $width			= $self->bindings_count;
-	
-	my @variables;
-	for (my $i=0; $i < $width; $i++) {
-		my $name	= $self->binding_name($i);
-		push(@variables, $name) if $name;
-	}
-	
-	no strict 'refs';
-	print {$fh} <<"END";
-<?xml version="1.0" encoding="utf-8"?>
-<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-<head>
-END
-	
-	my $t	= join("\n", map { qq(\t<variable name="$_"/>) } @variables);
-	
-	my $delay_output	= 0;
-	my $delayed			= '';
-	
-	if ($self->extra_result_data) {
-		$delay_output	= $fh;
-		undef $fh;
-		open( $fh, '>', \$delayed ) or die $!;
-	} else {
-		if ($t) {
-			print {$fh} "${t}\n";
-		}
-	}
-	
-	print {$fh} <<"END";
-</head>
-<results>
-END
-	
-	my $count	= 0;
-	while (my $row = $self->next) {
-		my @row;
-		print {$fh} "\t\t<result>\n";
-		for (my $i = 0; $i < $width; $i++) {
-			my $name	= $self->binding_name($i);
-			my $value	= $row->{ $name };
-			print {$fh} "\t\t\t" . $self->format_node_xml($value, $name) . "\n";
-		}
-		print {$fh} "\t\t</result>\n";
-		
-		last if ($max_result_size and ++$count >= $max_result_size);
-	}
-	
-	if ($delay_output) {
-		my $extra = $self->extra_result_data;
-		my $extraxml	= '';
-		foreach my $tag (keys %$extra) {
-			$extraxml	.= qq[<extra name="${tag}">\n];
-			my $value	= $extra->{ $tag };
-			foreach my $e (@$value) {
-				foreach my $k (keys %$e) {
-					my $v		= $e->{ $k };
-					my @values	= @$v;
-					foreach ($k, @values) {
-						s/&/&amp;/g;
-						s/</&lt;/g;
-						s/"/&quot;/g;
-					}
-					$extraxml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
-				}
-			}
-			$extraxml	.= "</extra>\n";
-		}
-		my $u	= URI->new('data:');
-		$u->media_type('text/xml');
-		$u->data($extraxml);
-		my $uri	= "$u";
-		$uri	=~ s/&/&amp;/g;
-		$uri	=~ s/</&lt;/g;
-		$uri	=~ s/'/&apos;/g;
-		$uri	=~ s/"/&quot;/g;
-		
-		$fh		= $delay_output;
-		print {$fh} "${t}\n";
-		print {$fh} qq[\t<link href="$uri" />\n];
-		print {$fh} $delayed;
-	}
-	
-	print {$fh} "</results>\n";
-	print {$fh} "</sparql>\n";
-}
-
-=begin private
-
-=item C<format_node_json ( $node, $name )>
-
-Returns a string representation of C<$node> for use in a JSON serialization.
-
-=end private
-
-=cut
-
-sub format_node_json ($$$) {
-# 	my $bridge	= shift;
-# 	return undef unless ($bridge);
-	
-	my $node	= shift;
-	my $name	= shift;
-	my $node_label;
-	
-	if(!defined $node) {
-		return;
-	} elsif ($node->isa('RDF::Trine::Node::Resource')) {
-		$node_label	= $node->uri_value;
-		return $name => { type => 'uri', value => $node_label };
-	} elsif ($node->isa('RDF::Trine::Node::Literal')) {
-		$node_label	= $node->literal_value;
-		return $name => { type => 'literal', value => $node_label };
-	} elsif ($node->isa('RDF::Trine::Node::Blank')) {
-		$node_label	= $node->blank_identifier;
-		return $name => { type => 'bnode', value => $node_label };
-	} else {
-		return;
-	}
+	my $s				= RDF::Trine::Serializer::SPARQLXML->new;
+	return $s->serialize_iterator_to_file( $fh, $self, $max_result_size );
 }
 
 =item C<< construct_args >>
