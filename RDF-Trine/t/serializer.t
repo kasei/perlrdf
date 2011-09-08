@@ -1,4 +1,4 @@
-use Test::More tests => 39;
+use Test::More tests => 47;
 use Test::Exception;
 
 use strict;
@@ -20,6 +20,8 @@ my %name_expect	= (
 	'rdfjson'	=> 'RDF::Trine::Serializer::RDFJSON',
 	'rdfxml'	=> 'RDF::Trine::Serializer::RDFXML',
 	'turtle'	=> 'RDF::Trine::Serializer::Turtle',
+	'sparqlxml'	=> 'RDF::Trine::Serializer::SPARQLXML',
+	'sparqljson'	=> 'RDF::Trine::Serializer::SPARQLJSON',
 );
 
 my %type_expect	= (
@@ -29,6 +31,8 @@ my %type_expect	= (
 	'rdfjson'	=> [qw(application/json application/x-rdf+json)],
 	'rdfxml'	=> [qw(application/rdf+xml)],
 	'turtle'	=> [qw(application/turtle application/x-turtle text/rdf+n3 text/turtle)],
+	'sparqlxml'	=> [qw(application/sparql-results+xml)],
+	'sparqljson'	=> [qw(application/sparql-results+json)],
 );
 
 while (my($k,$v) = each(%name_expect)) {
@@ -37,7 +41,6 @@ while (my($k,$v) = each(%name_expect)) {
 	my @types	= $p->media_types;
 	is_deeply( \@types, $type_expect{ $k }, "expected media types for $k" );
 }
-
 
 {
 	my %negotiate_expect	= (
@@ -48,6 +51,8 @@ while (my($k,$v) = each(%name_expect)) {
 		"application/rdf+xml;q=0,text/plain;q=1"	=> ['NTriples', 'text/plain'],
 		"application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml"	=> ['Turtle', 'text/turtle'],
 		"application/x-turtle;q=1,text/turtle;q=0.7"	=> ['Turtle', 'application/x-turtle'],
+		"application/sparql-results+xml;q=0.5,text/foobar;q=1.0"	=> ['SPARQLXML', 'application/sparql-results+xml'],
+		"application/sparql-results+xml;q=0.5,application/sparql-results+json;q=1.0"	=> ['SPARQLJSON', 'application/sparql-results+json'],
 	);
 	
 	while (my ($accept,$data) = each(%negotiate_expect)) {
@@ -126,7 +131,6 @@ while (my ($accept,$restrict) = each(%negotiate_fail)) {
 	like( $type, qr'^(text|application)/turtle$', "expected media type with empty accept header" );
 	isa_ok( $s, "RDF::Trine::Serializer::Turtle", "HTTP negotiated empty accept header to proper serializer" );
 }
-
 
 {
 	my $rdf	= <<'END';
