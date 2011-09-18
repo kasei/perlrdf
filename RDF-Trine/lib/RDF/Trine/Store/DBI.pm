@@ -468,26 +468,15 @@ sub add_statement {
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
-	foreach my $n (@nodes) {
-		$self->_add_node( $n );
-	}
+	my @values = map { $self->_add_node( $_ ) } @nodes;
 	
-	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
 		$context	= $stmt->context;
 	} else {
-		my $cid		= do {
-			if ($context) {
-				$self->_add_node( $context );
-				$self->_mysql_node_hash( $context );
-			} else {
-				0
-			}
-		};
-		push(@values, $cid);
+		push @values, ($context ? $self->_add_node($context) : 0);
 	}
 	my $sql	= "SELECT 1 FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?";
 	my $sth	= $dbh->prepare( $sql );
@@ -576,7 +565,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-	return 1 if ($node->is_nil);
+	return $hash if ($node->is_nil);
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -607,6 +596,7 @@ sub _add_node {
 		my $sth	= $dbh->prepare( $sql );
 		$sth->execute( @values );
 	}
+	return $hash;
 }
 
 =item C<< count_statements ($subject, $predicate, $object) >>
