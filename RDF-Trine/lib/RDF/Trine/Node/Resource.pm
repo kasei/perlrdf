@@ -98,6 +98,11 @@ sub new {
 # 		substr($uri, $i, $len)	= shift(@uni);
 # 	}
 # 	
+
+
+	if ($uri eq &RDF::Trine::NIL_GRAPH) {
+		return RDF::Trine::Node::Nil->new();
+	}
 	return bless( [ 'URI', $uri ], $class );
 }
 

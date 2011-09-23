@@ -82,6 +82,11 @@ sub sse {
 	return '(nil)';
 }
 
+sub as_ntriples {
+	my $self	= shift;
+	return sprintf('<%s>', &RDF::Trine::NIL_GRAPH());
+}
+
 =item C<< type >>
 
 Returns the type string of this node.
