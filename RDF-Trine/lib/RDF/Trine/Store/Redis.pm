@@ -54,7 +54,7 @@ L<RDF::Trine::Store> class.
 
 =over 4
 
-=item C<< new (  ) >>
+=item C<< new ( $server ) >>
 
 Returns a new storage object.
 
@@ -79,7 +79,7 @@ description
 
 sub new {
 	my $class	= shift;
-	my $r		= Redis->new();
+	my $r		= Redis->new( @_ );
 	my $self	= bless({ conn => $r }, $class);
 	return $self;
 }
@@ -111,14 +111,14 @@ sub new_with_config {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	return $class->new();
+	return $class->new( $config->{server} );
 }
 
 sub _config_meta {
 	return {
 		required_keys	=> [],
 		fields			=> {
-# 			user	=> { description => 'username', type => 'string' },
+			server	=> { description => 'server', type => 'string' },
 		}
 	}
 }
@@ -126,10 +126,9 @@ sub _config_meta {
 sub _id_node {
 	my $self	= shift;
 	my $id		= shift;
-	Carp::confess unless defined($id);
 	my $r		= $self->conn;
 	my $p		= RDF::Trine::Parser::NTriples->new();
-	my $valkey	= "node.value.$id";
+	my $valkey	= "RT:node.value.$id";
 	my $str		= $r->get( $valkey );
 	return unless ($str);
 	my $node	= $p->parse_node( $str );
@@ -142,12 +141,12 @@ sub _node_id {
 	my $r		= $self->conn;
 	my $s		= RDF::Trine::Serializer::NTriples->new();
 	my $str		= $s->serialize_node( $node );
-	my $idkey	= "node.id.$str";
+	my $idkey	= "RT:node.id.$str";
 	my $id		= $r->get( $idkey );
 	return $id if (defined($id));
 	
 	$id			= $r->incr( 'node.next' );
-	my $valkey	= "node.value.$id";
+	my $valkey	= "RT:node.value.$id";
 	$r->set( $idkey, $id );
 	$r->set( $valkey, $str );
 	return $id;
@@ -180,7 +179,11 @@ sub add_statement {
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
 		my @ids		= map { $self->_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
-		$r->set( "spog:$key", 1 );
+		$r->set( "RT:spog:$key", 1 );
+		$r->sadd( "RT:sset:$ids[0]", $key );
+		$r->sadd( "RT:pset:$ids[1]", $key );
+		$r->sadd( "RT:oset:$ids[2]", $key );
+		$r->sadd( "RT:gset:$ids[3]", $key );
 	}
 	return;
 }
@@ -213,7 +216,11 @@ sub remove_statement {
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
 		my @ids		= map { $self->_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
-		$r->del( "spog:$key" );
+		$r->del( "RT:spog:$key" );
+		$r->srem( "RT:sset:$ids[0]", $key );
+		$r->srem( "RT:pset:$ids[1]", $key );
+		$r->srem( "RT:oset:$ids[2]", $key );
+		$r->srem( "RT:gset:$ids[3]", $key );
 	}
 	return;
 }
@@ -235,9 +242,14 @@ sub remove_statements {
 	} else {
 		$nodes[3]	= 
 		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes;
-		my $key		= 'spog:' . join(':', @strs);
+		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		foreach my $k ($r->keys($key)) {
+			my ($sid, $pid, $oid, $gid)	= $k =~ m/RT:spog:(\d+):(\d+):(\d+):(\d+)/;
+			$r->srem( "RT:sset:$sid", $_ ) for ($r->smembers("RT:sset:$sid"));
+			$r->srem( "RT:pset:$pid", $_ ) for ($r->smembers("RT:pset:$pid"));
+			$r->srem( "RT:oset:$oid", $_ ) for ($r->smembers("RT:oset:$oid"));
+			$r->srem( "RT:gset:$gid", $_ ) for ($r->smembers("RT:gset:$gid"));
 			$r->del( $k );
 		}
 	}
@@ -265,37 +277,89 @@ sub get_statements {
 	my $sub;
 	if ($use_quad) {
 		my $r	= $self->conn;
-		my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes;
-		my $key		= 'spog:' . join(':', @strs);
-		my @keys	= $r->keys($key);
-		$sub		= sub {
-			return unless (scalar(@keys));
-			my $key		= shift(@keys);
-			my @data	= split(':', $key);
-			shift(@data);
-			my @nodes	= map { $self->_id_node( $_ ) } @data;
-			my $st		= RDF::Trine::Statement::Quad->new( @nodes );
-			return $st;
-		};
+		my @skeys;
+		my @indexes	= qw(s p o g);
+		foreach my $i (0 .. $#indexes) {
+			my $index	= $indexes[$i];
+			my $n		= $nodes[$i];
+			unless ($n->is_variable) {
+				my $id	= $self->_node_id($n);
+				my $key	= "RT:${index}set:$id";
+				push(@skeys, $key);
+			}
+		}
+		if (@skeys) {
+			my @keys	= $r->sinter(@skeys);
+			$sub		= sub {
+				return unless (scalar(@keys));
+				my $key		= shift(@keys);
+				my @data	= split(':', $key);
+				my @nodes	= map { $self->_id_node( $_ ) } @data[0..3];
+				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
+				return $st;
+			};
+		} else {
+			my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes;
+			my $key		= 'RT:spog:' . join(':', @strs);
+			my @keys	= $r->keys($key);
+			$sub		= sub {
+				return unless (scalar(@keys));
+				my $key		= shift(@keys);
+				my @data	= split(':', $key);
+				shift(@data);
+				my @nodes	= map { $self->_id_node( $_ ) } @data;
+				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
+				return $st;
+			};
+		}
 	} else {
 		my $r	= $self->conn;
-		my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..2];
-		my $key		= 'spog:' . join(':', @strs, '*');
-		my %triples;
-		foreach ($r->keys($key)) {
-			s/:[^:]+$//;
-			$triples{ $_ }++;
+		my @skeys;
+		my @indexes	= qw(s p o);
+		foreach my $i (0 .. $#indexes) {
+			my $index	= $indexes[$i];
+			my $n		= $nodes[$i];
+			unless ($n->is_variable) {
+				my $id	= $self->_node_id($n);
+				my $key	= "RT:${index}set:$id";
+				push(@skeys, $key);
+			}
 		}
-		my @keys	= keys %triples;
-		$sub		= sub {
-			return unless (scalar(@keys));
-			my $key		= shift(@keys);
-			my @data	= split(':', $key);
-			shift(@data);
-			my @nodes	= map { $self->_id_node( $_ ) } @data;
-			my $st		= RDF::Trine::Statement->new( @nodes );
-			return $st;
-		};
+		if (@skeys) {
+			my @keys	= $r->sinter(@skeys);
+			my %keys;
+			foreach (@keys) {
+				s/:[^:]+$//;
+				$keys{ $_ }++;
+			}
+			@keys	= keys %keys;
+			$sub		= sub {
+				return unless (scalar(@keys));
+				my $key		= shift(@keys);
+				my @data	= split(':', $key);
+				my @nodes	= map { $self->_id_node( $_ ) } @data[0..2];
+				my $st		= RDF::Trine::Statement->new( @nodes );
+				return $st;
+			};
+		} else {
+			my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..2];
+			my $key		= 'RT:spog:' . join(':', @strs, '*');
+			my %triples;
+			foreach ($r->keys($key)) {
+				s/:[^:]+$//;
+				$triples{ $_ }++;
+			}
+			my @keys	= keys %triples;
+			$sub		= sub {
+				return unless (scalar(@keys));
+				my $key		= shift(@keys);
+				my @data	= split(':', $key);
+				shift(@data);
+				my @nodes	= map { $self->_id_node( $_ ) } @data;
+				my $st		= RDF::Trine::Statement->new( @nodes );
+				return $st;
+			};
+		}
 	}
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
@@ -318,13 +382,13 @@ sub count_statements {
 	my @nodes	= @_;
 	if ($use_quad) {
 		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..3];
-		my $key		= 'spog:' . join(':', @strs);
+		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		my @keys	= $r->keys($key);
 		return scalar(@keys);
 	} else {
 		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..3];
-		my $key		= 'spog:' . join(':', @strs);
+		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		my @keys	= $r->keys($key);
 		my %keys;
@@ -347,7 +411,7 @@ the set of contexts of the stored quads.
 sub get_contexts {
 	my $self	= shift;
 	my $r		= $self->conn;
-	my @keys	= $r->keys('spog:*');
+	my @keys	= $r->keys('RT:spog:*');
 	my %graphs;
 	foreach (@keys) {
 		s/^.*://;
@@ -427,22 +491,26 @@ sub nuke {
 	my $self	= shift;
 	my $r		= $self->conn;
 	$r->del('node.next');
-	foreach my $k ($r->keys('node.id.*')) {
+	foreach my $k ($r->keys('RT:node.id.*')) {
 		$r->del($k);
 	}
-	foreach my $k ($r->keys('node.value.*')) {
+	foreach my $k ($r->keys('RT:node.value.*')) {
 		$r->del($k);
 	}
-	foreach my $k ($r->keys('spog:*')) {
+	foreach my $k ($r->keys('RT:spog:*')) {
 		$r->del($k);
 	}
+	$r->del($_) foreach ($r->keys('RT:sset:*'));
+	$r->del($_) foreach ($r->keys('RT:pset:*'));
+	$r->del($_) foreach ($r->keys('RT:oset:*'));
+	$r->del($_) foreach ($r->keys('RT:gset:*'));
 }
 
 
 sub _dump {
 	my $self	= shift;
 	my $r		= $self->conn;
-	my @keys	= $r->keys('spog:*');
+	my @keys	= $r->keys('RT:spog:*');
 	warn "--------------------------------------\n";
 	warn '*** DUMP Redis statements:';
 	warn "$_\n" foreach (@keys);
