@@ -198,9 +198,14 @@ sub parse_url_into_model {
 		if (my $e = $encodings{ $pclass }) {
 			$data	= decode( $e, $content );
 		}
+		
 		my $parser	= $pclass->new();
-		$parser->parse_into_model( $url, $data, $model, %args );
-		return 1;
+		my $ok	= 0;
+		try {
+			$parser->parse_into_model( $url, $data, $model, %args );
+			$ok	= 1;
+		}
+		return 1 if ($ok);
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
