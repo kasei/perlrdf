@@ -407,7 +407,7 @@ sub literals_tests_simple {
 
 
 	$store->remove_statement($triple2);
-	is( $store->size, 3, 'store has 2 statements after string literal remove' );
+	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
