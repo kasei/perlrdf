@@ -1318,7 +1318,7 @@ sub _GroupClause {
 				# RDF::Query::Node::Variable::ExpressionProxy is used for aggregate operations.
 				# we can ignore these because any variable used in an aggreate is valid, even if it's not mentioned in the grouping keys
 			} elsif ($expr->isa('RDF::Query::Expression')) {
-				my @vars	= $expr->referenced_variables;
+				my @vars	= $expr->nonaggregated_referenced_variables;
 				foreach my $name (@vars) {
 					unless ($seen{ $name }) {
 						throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
@@ -1751,7 +1751,6 @@ sub _OptionalGraphPattern_test {
 sub __close_bgp_with_filters {
 	my $self	= shift;
 	my @filters		= splice(@{ $self->{filters} });
-	use Data::Dumper;
 	if (@filters) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );

@@ -152,6 +152,21 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
+sub nonaggregated_referenced_variables {
+	my $self	= shift;
+	my @ops		= $self->operands;
+	my @vars;
+	foreach my $o (@ops) {
+		if ($o->isa('RDF::Query::Node::Variable::ExpressionProxy')) {
+		} elsif ($o->isa('RDF::Query::Node::Variable')) {
+			push(@vars, $o->name);
+		} elsif ($o->isa('RDF::Query::Expression')) {
+			push(@vars, $o->nonaggregated_referenced_variables);
+		}
+	}
+	return RDF::Query::_uniq(@vars);
+}
+
 1;
 
 __END__

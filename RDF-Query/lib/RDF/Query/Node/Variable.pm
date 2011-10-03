@@ -130,6 +130,10 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
+sub nonaggregated_referenced_variables {
+	return;
+}
+
 sub DESTROY {
 	my $self	= shift;
 	delete $vars{ refaddr($self) };
