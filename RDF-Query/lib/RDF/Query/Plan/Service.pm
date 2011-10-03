@@ -272,7 +272,7 @@ sub _get_iterator {
 		my $status		= $response->status_line;
 		my $sparql		= $self->sparql;
 		my $endpoint	= $self->endpoint;
-		warn "url: $url\n";
+# 		warn "url: $url\n";
 		throw RDF::Query::Error::ExecutionError -text => "*** error making remote SPARQL call to endpoint $endpoint ($status) while making service call for query: $sparql";
 	}
 }
