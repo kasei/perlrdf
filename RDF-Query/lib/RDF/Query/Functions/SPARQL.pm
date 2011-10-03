@@ -248,7 +248,9 @@ sub install {
 					throw RDF::Query::Error::TypeError ( -text => "cannot cast unrecognized value '$value' to xsd:double" );
 				}
 			} elsif ($node->is_resource) {
-				throw RDF::Query::Error::TypeError ( -text => "cannot cast an IRI to xsd:integer" );
+				throw RDF::Query::Error::TypeError ( -text => "cannot cast an IRI to xsd:double" );
+			} elsif ($node->is_blank) {
+				throw RDF::Query::Error::TypeError -text => "cannot cast bnode to xsd:double";
 			}
 			
 			my $num	= sprintf("%e", $value);
