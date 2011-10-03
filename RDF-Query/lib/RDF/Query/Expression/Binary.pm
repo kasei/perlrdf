@@ -140,6 +140,12 @@ sub evaluate {
 			} elsif ($op eq '/') {
 				my $lhsv	= $lhs->numeric_value;
 				my $rhsv	= $rhs->numeric_value;
+				
+				my ($lt, $rt)	= ($lhs->literal_datatype, $rhs->literal_datatype);
+				if ($lt eq $rt and $lt eq 'http://www.w3.org/2001/XMLSchema#integer') {
+					$type	= 'http://www.w3.org/2001/XMLSchema#decimal';
+				}
+				
 				if (defined($lhsv) and defined($rhsv)) {
 					if ($rhsv == 0) {
 						throw RDF::Query::Error::FilterEvaluationError -text => "Illegal division by zero";
