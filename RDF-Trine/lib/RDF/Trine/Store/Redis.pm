@@ -25,6 +25,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
 use Redis;
+use Cache::LRU;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
@@ -35,6 +36,8 @@ use JSON;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
+
+our $CACHING	= 1;
 
 my @pos_names;
 our $VERSION;
@@ -79,14 +82,23 @@ description
 
 sub new {
 	my $class	= shift;
-	my $r		= Redis->new( @_ );
-	my $self	= bless({ conn => $r }, $class);
+	my %args	= @_;
+	my $size	= delete $args{cache_size};
+	$size		= 128 unless ($size > 0);
+	my $r		= Redis->new( %args );
+	my $cache	= Cache::LRU->new( size => $size );
+	my $self	= bless({ conn => $r, cache => $cache, cache_size => $size }, $class);
 	return $self;
 }
 
 sub conn {
 	my $self	= shift;
 	return $self->{conn};
+}
+
+sub cache {
+	my $self	= shift;
+	return $self->{cache};
 }
 
 sub _new_with_string {
@@ -111,14 +123,15 @@ sub new_with_config {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	return $class->new( $config->{server} );
+	return $class->new( server => $config->{server}, cache_size => $config->{cache_size} );
 }
 
 sub _config_meta {
 	return {
 		required_keys	=> [],
 		fields			=> {
-			server	=> { description => 'server', type => 'string' },
+			server		=> { description => 'server', type => 'string' },
+			cache_size	=> { description => 'cache size', type => 'int' },
 		}
 	}
 }
@@ -129,7 +142,16 @@ sub _id_node {
 	my $r		= $self->conn;
 	my $p		= RDF::Trine::Parser::NTriples->new();
 	my $valkey	= "RT:node.value.$id";
-	my $str		= $r->get( $valkey );
+	my $str;
+if ($CACHING) {
+	$str		= $self->cache->get($valkey);
+}
+	unless (defined($str)) {
+		$str		= $r->get( $valkey );
+if ($CACHING) {
+		$self->cache->set( $valkey, $str );
+}
+	}
 	return unless ($str);
 	my $node	= $p->parse_node( $str );
 	return $node;
@@ -142,7 +164,16 @@ sub _node_id {
 	my $s		= RDF::Trine::Serializer::NTriples->new();
 	my $str		= $s->serialize_node( $node );
 	my $idkey	= "RT:node.id.$str";
-	my $id		= $r->get( $idkey );
+	my $id;
+if ($CACHING) {
+	$id			= $self->cache->get($idkey);
+}
+	unless (defined($id)) {
+		$id		= $r->get( $idkey );
+if ($CACHING) {
+		$self->cache->set( $idkey, $id );
+}
+	}
 	return $id if (defined($id));
 	
 	$id			= $r->incr( 'node.next' );
@@ -504,6 +535,8 @@ sub nuke {
 	$r->del($_) foreach ($r->keys('RT:pset:*'));
 	$r->del($_) foreach ($r->keys('RT:oset:*'));
 	$r->del($_) foreach ($r->keys('RT:gset:*'));
+	
+	$self->{cache}	= Cache::LRU->new( size => $self->{cache_size} );
 }
 
 
