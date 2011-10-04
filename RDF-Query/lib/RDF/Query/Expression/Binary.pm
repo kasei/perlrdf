@@ -157,7 +157,7 @@ sub evaluate {
 			} else {
 				throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 			}
-			return RDF::Query::Node::Literal->new( $value, undef, $type );
+			return RDF::Query::Node::Literal->new( $value, undef, $type, 1 );
 		} else {
 			throw RDF::Query::Error::ExecutionError -text => "Numeric binary operator '$op' with non-numeric data";
 		}
