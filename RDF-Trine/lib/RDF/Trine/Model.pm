@@ -445,6 +445,17 @@ sub get_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
 	
+	my @pos	= qw(subject predicate object graph);
+	foreach my $i (0 .. $#_) {
+		my $n	= $_[$i];
+		next unless defined($n);	# undef is OK
+		next if (blessed($n) and $n->isa('RDF::Trine::Node'));	# node objects are OK
+		my $pos	= $pos[$i];
+		local($Data::Dumper::Indent)	= 0;
+		my $ser	= Data::Dumper->Dump([$n], [$pos]);
+		throw RDF::Trine::Error::MethodInvocationError -text => "get_statements called with a value that isn't undef or a node object: $ser";
+	}
+	
 	if (scalar(@_) >= 4) {
 		my $graph	= $_[3];
 		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
