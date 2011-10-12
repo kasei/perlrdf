@@ -165,7 +165,7 @@ sub explain {
 	foreach my $p ($self->plan_node_data) {
 		if (blessed($p)) {
 			if ($p->isa('RDF::Trine::Statement::Quad')) {
-				$string	.= "${indent}${s}" . $p->as_string . "\n";
+				$string	.= "${indent}${s}" . join(' ', map { ($_->isa('RDF::Trine::Node::Nil')) ? "(nil)" : $_->as_sparql } $p->nodes) . "\n";
 			} elsif ($p->isa('RDF::Trine::Node::Nil')) {
 				$string	.= "${indent}${s}(nil)\n";
 			} else {
@@ -682,11 +682,19 @@ sub generate_plans {
 				return $sparql;
 			};
 			
-			unless ($algebra->endpoint->can('uri_value')) {
-				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
-			}
+# 			unless ($algebra->endpoint->can('uri_value')) {
+# 				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
+# 			}
 			
-			push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint->uri_value, $plan, $algebra->silent, $sparqlcb ));
+			if (my $ggp = $algebra->lhs) {
+				my @lhs_base	= $self->generate_plans( $ggp, $context, %args );
+				foreach my $lhs_plan (@lhs_base) {
+					my $splan	= RDF::Query::Plan::Service->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb, $lhs_plan );
+					push(@plans, $splan);
+				}
+			} else {
+				push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb ));
+			}
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'SubSelect') {

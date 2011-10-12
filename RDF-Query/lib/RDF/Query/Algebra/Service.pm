@@ -57,7 +57,8 @@ sub new {
 	my $endpoint	= shift;
 	my $pattern		= shift;
 	my $silent		= shift || 0;
-	return bless( [ 'SERVICE', $endpoint, $pattern, $silent ], $class );
+	my $ggp			= shift;
+	return bless( [ 'SERVICE', $endpoint, $pattern, $silent, $ggp ], $class );
 }
 
 =item C<< construct_args >>
@@ -69,7 +70,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->endpoint, $self->pattern, $self->silent);
+	return ($self->endpoint, $self->pattern, $self->silent, $self->lhs);
 }
 
 =item C<< endpoint >>
@@ -112,6 +113,19 @@ Returns true if the service operation is to ignore errors during execution.
 sub silent {
 	my $self	= shift;
 	return $self->[3];
+}
+
+=item C<< lhs >>
+
+If the SERVCE operation uses a variable endpoint, then it is considered a binary
+operator, executing the left-hand-side pattern first, and using results from it
+to bind endpoint URL values to use in SERVICE evaluation.
+
+=cut
+
+sub lhs {
+	my $self	= shift;
+	return $self->[4];
 }
 
 =item C<< add_bloom ( $variable, $filter ) >>
@@ -173,13 +187,24 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	my $op		= ($self->silent) ? 'SERVICE SILENT' : 'SERVICE';
-	my $string	= sprintf(
-		"%s %s %s",
-		$op,
-		$self->endpoint->as_sparql( $context, $indent ),
-		$self->pattern->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
-	);
-	return $string;
+	if (my $ggp = $self->lhs) {
+		my $string	= sprintf(
+			"%s\n${indent}%s %s %s",
+			$ggp->as_sparql( $context, $indent ),
+			$op,
+			$self->endpoint->as_sparql( $context, $indent ),
+			$self->pattern->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
+		);
+		return $string;
+	} else {
+		my $string	= sprintf(
+			"%s %s %s",
+			$op,
+			$self->endpoint->as_sparql( $context, $indent ),
+			$self->pattern->as_sparql( { %$context, force_ggp_braces => 1 }, $indent ),
+		);
+		return $string;
+	}
 }
 
 =item C<< as_hash >>
@@ -195,6 +220,7 @@ sub as_hash {
 		type 		=> lc($self->type),
 		endpoint	=> $self->endpoint,
 		pattern		=> $self->pattern->as_hash,
+		lhs			=> $self->lhs->as_hash,
 	};
 }
 
@@ -216,7 +242,7 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	my @list	= $self->pattern->referenced_variables;
+	my @list	= RDF::Query::_uniq($self->pattern->referenced_variables, $self->lhs->referenced_variables);
 	return @list;
 }
 
@@ -229,7 +255,11 @@ bind values during execution.
 
 sub potentially_bound {
 	my $self	= shift;
-	return $self->pattern->potentially_bound;
+	my @list	= RDF::Query::_uniq($self->pattern->potentially_bound);
+	if ($self->lhs) {
+		push(@list, $self->lhs->potentially_bound);
+	}
+	return @list;
 }
 
 =item C<< definite_variables >>
@@ -243,6 +273,7 @@ sub definite_variables {
 	return RDF::Query::_uniq(
 		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->definite_variables,
+		($self->lhs ? $self->lhs->definite_variables : ()),
 	);
 }
 
@@ -260,10 +291,15 @@ sub qualify_uris {
 	my $ns		= shift;
 	my $base_uri	= shift;
 	
-	my $pattern	= $self->pattern->qualify_uris( $ns, $base_uri );
+	my $pattern		= $self->pattern->qualify_uris( $ns, $base_uri );
 	my $endpoint	= $self->endpoint;
+	my $silent		= $self->silent;
 	my $uri	= $endpoint->uri;
-	return $class->new( $endpoint, $pattern );
+	if (my $ggp = $self->lhs) {
+		return $class->new( $endpoint, $pattern, $silent, $ggp->qualify_uris($ns, $base_uri) );
+	} else {
+		return $class->new( $endpoint, $pattern, $silent );
+	}
 }
 
 1;

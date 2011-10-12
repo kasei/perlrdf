@@ -24,11 +24,9 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store::SPARQL);
 
-use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -240,7 +238,7 @@ sub add_statement {
 		my $url		= "${base}/${user}/${repo}/statements";
 		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
 			my $g	= $context || $st->context;
-			$url	.= '?context=' . uri_escape($g->as_ntriples);
+			$url	.= '?context=' . uri_escape($g->uri_value);
 		}
 		my $req		= HTTP::Request->new(POST => $url);
 		$req->authorization_basic($self->{token}) if (defined $self->{token});
@@ -288,12 +286,19 @@ sub remove_statement {
 		my $user	= $self->{user};
 		my $repo	= $self->{repo};
 		my $base	= $self->base;
-		my $url		= "${base}/${user}/${repo}/statements";
-		my $req		= HTTP::Request->new(DELETE => $url);
+		my $data	= $s->statement_as_string($st);
+		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
+			my $g	= $context || $st->context;
+			my $uri	= $g->uri_value;
+			$data	= "GRAPH <$uri> { $data }";
+		}
+		my $sparql	= "DELETE DATA { $data }";
+		my $url		= "${base}/${user}/${repo}/sparql";
+		my $req		= HTTP::Request::Common::POST( $url, [ query => $sparql ] );
 		$req->authorization_basic($self->{token}) if (defined $self->{token});
-		$req->content_type('text/plain');
-		$req->content($s->statement_as_string($st));
 		my $resp	= $ua->request( $req );
+		warn 'remove_statement: ' . Dumper($req, $resp);
+		
 		if ($resp->is_success) {
 			return;
 		} else {
@@ -403,7 +408,7 @@ sub size {
 	$req->header(Accept => 'text/plain');
 	my $resp	= $ua->request( $req );
 	if ($resp->is_success) {
-		warn Dumper($resp);
+		warn 'size(): ' . Dumper($req, $resp);
 		return 0+$resp->content;
 	} else {
 		my $status	= $resp->status_line;

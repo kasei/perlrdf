@@ -22,6 +22,7 @@ REQUIREMENTS
 
      * Data::UUID
      * DBI
+     * DBIx::Connector
      * DBD::SQLite
      * Digest::MD5
      * Error

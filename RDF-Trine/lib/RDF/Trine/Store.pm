@@ -23,7 +23,6 @@ use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
 
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::SPARQL;
@@ -36,6 +35,9 @@ BEGIN {
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
+	can_load( modules => {
+		'RDF::Trine::Store::DBI'	=> undef,
+	} );
 }
 
 ######################################################################
@@ -196,7 +198,7 @@ Returns a new temporary triplestore (using appropriate default values).
 =cut
 
 sub temporary_store {
-	return RDF::Trine::Store::DBI->temporary_store();
+	return RDF::Trine::Store::Memory->new();
 }
 
 =item C<< get_pattern ( $bgp [, $context] ) >>

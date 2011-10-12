@@ -30,7 +30,7 @@ my $store	= RDF::Trine::Store::Dydra->new($user, $repo, $token);
 isa_ok( $store, 'RDF::Trine::Store::Dydra' );
 
 my %args;
-# $args{ update_sleep }	= 5;
+$args{ update_sleep }	= 5;
 Test::RDF::Trine::Store::all_store_tests($store, $data, 0, \%args);
 
 done_testing;

@@ -17,6 +17,7 @@ perl_version		'5.008003';
 requires			'Module::Load::Conditional'	=> 0.38;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
+requires			'DBIx::Connector'			=> 0;
 requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
 requires			'Error'						=> 0;
@@ -24,7 +25,6 @@ requires			'HTTP::Negotiate'			=> 0;
 requires			'JSON'						=> 2;
 requires			'LWP::UserAgent'			=> 0;
 requires			'List::Util'				=> 0;
-requires			'List::MoreUtils'			=> 0;
 requires			'Log::Log4perl'				=> 0;
 requires			'Math::BigInt'				=> 0;
 requires			'Math::Combinatorics'		=> 0.09;
@@ -33,14 +33,12 @@ requires			'Set::Scalar'				=> 0;
 requires			'Storable'					=> 0;
 requires			'Text::CSV'					=> 0;
 requires			'Text::Table'				=> 0;
-requires			'Time::HiRes'				=> 0;
-requires			'Unicode::Escape'			=> 0;
-requires			'Unicode::String'			=> 2.09;
 requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0.96;
-requires			'XML::LibXML'				=> 1.70;
+
+recommends			'XML::LibXML'				=> 1.70;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",

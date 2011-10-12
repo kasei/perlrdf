@@ -29,7 +29,6 @@ use Scalar::Util qw(blessed reftype);
 
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);

@@ -37,9 +37,7 @@ no warnings 'once';
 use base qw(RDF::Trine::Parser);
 
 use URI;
-use Data::UUID;
 use Log::Log4perl;
-use Encode qw(decode);
 use Scalar::Util qw(blessed looks_like_number);
 
 use RDF::Trine qw(literal);
@@ -96,13 +94,17 @@ Returns a new Turtle parser.
 
 sub new {
 	my $class	= shift;
-	my $ug		= new Data::UUID;
-	my $uuid	= $ug->to_string( $ug->create() );
-	$uuid		=~ s/-//g;
+	my %args	= @_;
+	my $prefix	= '';
+	if (defined($args{ bnode_prefix })) {
+		$prefix	= $args{ bnode_prefix };
+	} else {
+		$prefix	= $class->new_bnode_prefix();
+	}
 	my $self	= bless({
 					bindings		=> {},
 					bnode_id		=> 0,
-					bnode_prefix	=> $uuid,
+					bnode_prefix	=> $prefix,
 					@_
 				}, $class);
 	return $self;
@@ -886,7 +888,7 @@ sub _string {
 	my $value	= $self->_eat_re_save( $r_scharacters );
 	$self->_eat('"');
 	my $string	= $self->_parse_short( $value );
-	return decode('utf8', $string);
+	return $string;
 }
 
 sub _longString_test {
@@ -905,12 +907,11 @@ sub _longString {
 	my $value	= $self->_eat_re_save( $r_lcharacters );
 	$self->_eat('"""');
 	my $string	= $self->_parse_long( $value );
-	return decode('utf8', $string);
+	return $string;
 }
 
 ################################################################################
 
-use Unicode::Escape;
 sub _parse_short {
 	my $self	= shift;
 	my $s		= shift;
@@ -921,7 +922,7 @@ sub _parse_short {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s, 'utf8' );
+	return _unescape($s);
 }
 
 sub _parse_long {
@@ -934,7 +935,7 @@ sub _parse_long {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s, 'utf8' );
+	return _unescape($s);
 }
 
 sub _join_uri {
@@ -1018,6 +1019,40 @@ sub __startswith {
 	} else {
 		return 0;
 	}
+}
+
+sub _unescape {
+	my $str = shift;
+	my @chars = split(//, $str);
+	my $us	= '';
+	while(defined(my $char = shift(@chars))) {
+		if($char eq '\\') {
+			if(($char = shift(@chars)) eq 'u') {
+				my $i = 0;
+				for(; $i < 4; $i++) {
+					unless($chars[$i] =~ /[0-9a-fA-F]/){
+						last;
+					}				
+				}
+				if($i == 4) {
+					my $hex = join('', splice(@chars, 0, 4));
+					my $cp = hex($hex);
+					my $char	= chr($cp);
+					$us .= $char;
+				}
+				else {
+					$us .= 'u';
+				}
+			}
+			else {
+				$us .= '\\' . $char;
+			}
+		}
+		else {
+			$us .= $char;
+		}
+	}
+	return $us;
 }
 
 1;

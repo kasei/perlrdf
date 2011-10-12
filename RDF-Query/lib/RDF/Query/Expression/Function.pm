@@ -249,6 +249,7 @@ sub evaluate {
 		my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 		my $expr	= shift(@args);
 		my $index	= 1;
+		my $ok		= 1;
 		try {
 			my $exprval	= $query->var_or_expr_value( $bound, $expr, $context );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
@@ -257,9 +258,15 @@ sub evaluate {
 			if ($bool) {
 				$index	= 0;
 			}
-		} catch RDF::Query::Error::TypeError with {};
-		my $expr2	= $args[$index];
-		return $query->var_or_expr_value( $bound, $expr2, $context );
+		} catch RDF::Query::Error::TypeError with {
+			$ok	= 0;
+		};
+		if ($ok) {
+			my $expr2	= $args[$index];
+			return $query->var_or_expr_value( $bound, $expr2, $context );
+		} else {
+			return;
+		}
 	} elsif ($uriv eq 'sparql:exists') {
 		my $func	= $query->get_function($uri);
 		my ($ggp)	= $self->arguments;

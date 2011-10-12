@@ -107,6 +107,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		property-path
 		service
 		subquery
+		update-silent
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
@@ -772,20 +773,28 @@ our %ENDPOINTS;
 our %service_ctx;
 
 sub new {
-	my $class	= shift;
-	my $uri		= shift;
-	my $plan	= shift;
-	my $silent	= shift;
-	my $sparql	= shift;
-	my $e			= URI->new($uri);
+	my $class		= shift;
+	my $endpoint	= shift;
+	my $plan		= shift;
+	my $silent		= shift;
+	my $sparql		= shift;
 	
-	warn "setting up mock endpoint for $uri" if ($debug);
-	my $self	= $class->SUPER::new( $uri, $plan, $silent, $sparql );
-
-	my $model = $service_ctx{ $uri };
-	if ($model) {
-		my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
-		$ENDPOINTS{ refaddr($self) }	= $end;
+	if ($endpoint->isa('RDF::Query::Node::Resource')) {
+		my $uri			= $endpoint->uri_value;
+		warn "setting up mock endpoint for $uri" if ($debug);
+	}
+	
+	my $self	= $class->SUPER::new( $endpoint, $plan, $silent, $sparql, @_ );
+	
+	if ($endpoint->isa('RDF::Query::Node::Resource')) {
+		my $uri			= $endpoint->uri_value;
+		my $e			= URI->new($uri);
+		my $model 		= $service_ctx{ $uri };
+# 		warn "model for $uri: $model";
+		if ($model) {
+			my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
+			$ENDPOINTS{ refaddr($self) }	= $end;
+		}
 	}
 	
 	return $self;
@@ -814,6 +823,7 @@ sub _request {
 	my $env		= $req->to_psgi;
 	my $end		= $ENDPOINTS{ refaddr($self) };
 	if ($end) {
+# 		warn "got mocked endpoint";
 		my $app			= sub {
 			my $env 	= shift;
 			my $req 	= Plack::Request->new($env);
@@ -824,6 +834,7 @@ sub _request {
 		my $resp	= HTTP::Response->from_psgi( $data );
 		return $resp;
 	} else {
+# 		warn "no mocked endpoint available";
 		return HTTP::Response->new(403);
 	}
 }

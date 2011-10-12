@@ -37,8 +37,6 @@ BEGIN {
 	$VERSION	= '0.135_01';
 }
 
-use LWP::UserAgent;
-
 use RDF::Trine::Serializer::NQuads;
 use RDF::Trine::Serializer::NTriples;
 use RDF::Trine::Serializer::NTriples::Canonical;

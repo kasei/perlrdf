@@ -78,7 +78,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-  return 203; # Remember to update whenever adding tests
+  return 209; # Remember to update whenever adding tests
 }
 
 
@@ -151,6 +151,9 @@ sub all_store_tests {
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
 	add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	bulk_add_statement_tests_simple( $store, $args, $ex );
 	update_sleep($args);
 	
 	literals_tests_simple( $store, $args, $ex );
@@ -272,6 +275,54 @@ sub add_statement_tests_simple {
 }
 
 
+=item C<< bulk_add_statement_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check add_statement.
+
+=cut
+
+
+sub bulk_add_statement_tests_simple {
+	note "bulk add_statement tests";
+	my ($store, $args, $ex) = @_;
+
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	$store->add_statement( $triple, $ex->d );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->add_statement( $quad );
+	update_sleep($args);
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
+	
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
+	$store->add_statement( $quad2 );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (quad) add' );
+	
+	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
+	is( $count, 1, 'expected count of specific-context statements' );
+	
+	$store->remove_statement( $quad2 );
+	update_sleep($args);
+	
+	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
+
 =item C<< literals_tests_simple( $store, $data->{ex} )  >>
 
 Tests to check literals support.
@@ -361,7 +412,7 @@ sub literals_tests_simple {
 
 
 	$store->remove_statement($triple2);
-	is( $store->size, 3, 'store has 2 statements after string literal remove' );
+	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
@@ -728,6 +779,13 @@ sub remove_statement_tests {
 	is( $store->count_statements( undef, undef, undef, undef ), 0, 'quad count after triple removal' );
 }
 
+=item C<< update_sleep ( \%args ) >>
+
+If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
+This function is called after update operations to aid in testing stores that
+perform updates asynchronously.
+
+=cut
 
 =item C<< update_sleep ( \%args ) >>
 
