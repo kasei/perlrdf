@@ -296,6 +296,12 @@ sub serialize_iterator_to_string {
 	return $string;
 }
 
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $self->node_as_concise_string( $node );
+}
+
 sub _serialize_object_to_file {
 	my $self	= shift;
 	my $fh		= shift;

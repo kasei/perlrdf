@@ -177,6 +177,12 @@ sub statement_as_string {
 	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
 }
 
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $node->as_ntriples;
+}
+
 1;
 
 __END__

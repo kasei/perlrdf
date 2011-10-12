@@ -102,6 +102,14 @@ sub parse {
 	return $self->parse_file( $base, $fh, $handler );
 }
 
+sub parse_node {
+	my $self	= shift;
+	my $string	= shift;
+	my $uri		= shift;
+	my $n		= $self->_eat_node( $uri, 0, $string );
+	return $n;
+}
+
 =item C<< parse_file ( $base, $fh, \&handler ) >>
 
 =cut
