@@ -296,6 +296,12 @@ sub serialize_iterator_to_string {
 	return $string;
 }
 
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the Turtle serialization of C<< $node >>.
+
+=cut
+
 sub serialize_node {
 	my $self	= shift;
 	my $node	= shift;

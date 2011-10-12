@@ -177,6 +177,12 @@ sub statement_as_string {
 	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
 }
 
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the N-Triples serialization of C<< $node >>.
+
+=cut
+
 sub serialize_node {
 	my $self	= shift;
 	my $node	= shift;
