@@ -1318,7 +1318,7 @@ sub _GroupClause {
 				# RDF::Query::Node::Variable::ExpressionProxy is used for aggregate operations.
 				# we can ignore these because any variable used in an aggreate is valid, even if it's not mentioned in the grouping keys
 			} elsif ($expr->isa('RDF::Query::Expression')) {
-				my @vars	= $expr->referenced_variables;
+				my @vars	= $expr->nonaggregated_referenced_variables;
 				foreach my $name (@vars) {
 					unless ($seen{ $name }) {
 						throw RDF::Query::Error::ParseError -text => "Syntax error: Variable used in projection but not present in aggregate grouping ($name)";
@@ -1558,6 +1558,26 @@ sub __handle_GraphPatternNotTriples {
  		my ($bind)	= @args;
 		$self->_push_pattern_container;
 		$self->_add_patterns( $bind );
+	} elsif ($class eq 'RDF::Query::Algebra::Service') {
+		my ($endpoint, $pattern, $silent)	= @args;
+		if ($endpoint->isa('RDF::Query::Node::Variable')) {
+			# SERVICE ?var
+			my $cont	= $self->_pop_pattern_container;
+			my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+			$self->_push_pattern_container;
+			# my $ggp	= $self->_remove_pattern();
+			unless ($ggp) {
+				$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+			}
+			
+			my $service	= $class->new( $endpoint, $pattern, $silent, $ggp );
+			$self->_add_patterns( $service );
+		} else {
+			# SERVICE <endpoint>
+			# no-op
+			my $service	= $class->new( $endpoint, $pattern, $silent );
+			$self->_add_patterns( $service );
+		}
 	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
 		# no-op
 	} else {
@@ -1726,6 +1746,7 @@ sub _ServiceGraphPattern {
 	my $silent	= ($op =~ /SILENT/i);
 	$self->__consume_ws_opt;
 	if ($self->_test(qr/[\$?]/)) {
+		$self->__close_bgp_with_filters;
 		$self->_Var;
 	} else {
 		$self->_IRIref;
@@ -1735,10 +1756,10 @@ sub _ServiceGraphPattern {
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
 	
-	my $pattern	= RDF::Query::Algebra::Service->new( $endpoint, $ggp, $silent );
-	$self->_add_patterns( $pattern );
+# 	my $pattern	= RDF::Query::Algebra::Service->new( $endpoint, $ggp, $silent );
+# 	$self->_add_patterns( $pattern );
 	
-	my $opt		= ['RDF::Query::Algebra::Service', $endpoint, $ggp];
+	my $opt		= ['RDF::Query::Algebra::Service', $endpoint, $ggp, ($silent ? 1 : 0)];
 	$self->_add_stack( $opt );
 }
 
@@ -1751,7 +1772,6 @@ sub _OptionalGraphPattern_test {
 sub __close_bgp_with_filters {
 	my $self	= shift;
 	my @filters		= splice(@{ $self->{filters} });
-	use Data::Dumper;
 	if (@filters) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
@@ -2824,7 +2844,7 @@ sub _BuiltInCall_test {
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
 	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ|NOW/i);
-	return $self->_test(qr/STR|STRDT|STRLANG|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
+	return $self->_test(qr/STR|STRDT|STRLANG|STRBEFORE|STRAFTER|REPLACE|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
 sub _BuiltInCall {
@@ -2866,7 +2886,7 @@ sub _BuiltInCall {
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });
 			$self->_add_stack( $self->new_function_expression($iri, $expr) );
-		} elsif ($op =~ /^(STRDT|STRLANG|LANGMATCHES|sameTerm|CONTAINS|STRSTARTS|STRENDS)$/i) {
+		} elsif ($op =~ /^(STRDT|STRLANG|LANGMATCHES|sameTerm|CONTAINS|STRSTARTS|STRENDS|STRBEFORE|STRAFTER)$/i) {
 			### two-arg functions that take expressions
 			$self->_Expression;
 			my ($arg1)	= splice(@{ $self->{stack} });
@@ -2876,7 +2896,7 @@ sub _BuiltInCall {
 			$self->_Expression;
 			my ($arg2)	= splice(@{ $self->{stack} });
 			$self->_add_stack( $self->new_function_expression($iri, $arg1, $arg2) );
-		} elsif ($op =~ /^IF$/i) {
+		} elsif ($op =~ /^(IF|REPLACE)$/i) {
 			### three-arg functions that take expressions
 			$self->_Expression;
 			my ($arg1)	= splice(@{ $self->{stack} });

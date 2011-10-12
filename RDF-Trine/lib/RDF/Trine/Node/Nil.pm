@@ -82,6 +82,18 @@ sub sse {
 	return '(nil)';
 }
 
+=item C<< as_ntriples >>
+
+Returns the N-Triples serialization of the nil node's IRI
+<tag:gwilliams@cpan.org,2010-01-01:RT:NIL>.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	return sprintf('<%s>', &RDF::Trine::NIL_GRAPH());
+}
+
 =item C<< type >>
 
 Returns the type string of this node.

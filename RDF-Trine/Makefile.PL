@@ -17,6 +17,7 @@ perl_version		'5.008003';
 requires			'Module::Load::Conditional'	=> 0.38;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
+requires			'DBIx::Connector'			=> 0;
 requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
 requires			'Error'						=> 0;

@@ -45,7 +45,7 @@ BEGIN {
 =item C<< new ( $endpoint, $plan, $silent, $sparql, [ \%logging_keys ] ) >>
 
 Returns a new SERVICE (remote endpoint call) query plan object. C<<$endpoint>>
-is the URL of the endpoint (as a string). C<<$plan>> is the query plan
+is the URL of the endpoint (as a node object). C<<$plan>> is the query plan
 representing the query to be sent to the remote endpoint (needed for cost
 estimates). C<<$sparql>> is the serialized SPARQL query to be sent to the remote
 endpoint. Finally, if present, C<<%logging_keys>> is a HASH containing the keys
@@ -56,16 +56,23 @@ to use in logging the execution of this plan. Valid HASH keys are:
 =cut
 
 sub new {
-	my $class	= shift;
-	my $url		= shift;
-	my $plan	= shift;
-	my $silent	= shift;
-	my $sparql	= shift;
+	my $class		= shift;
+	my $endpoint	= shift;
+	my $plan		= shift;
+	my $silent		= shift;
+	my $sparql		= shift;
 	unless ($sparql) {
 		throw RDF::Query::Error::MethodInvocationError -text => "SERVICE plan constructor requires a serialized SPARQL query argument";
 	}
-	my $keys	= shift || {};
-	my $self	= $class->SUPER::new( $url, $plan, $silent, $sparql );
+	my $keys	= {};
+	my $self;
+	if ($endpoint->isa('RDF::Query::Node::Variable')) {
+		my $lhs		= shift;
+		Carp::confess "no lhs to binary SERVICE plan" unless ($lhs);
+		$self	= $class->SUPER::new( $endpoint, $plan, $silent, $sparql, $lhs );
+	} else {
+		$self	= $class->SUPER::new( $endpoint, $plan, $silent, $sparql );
+	}
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	$self->[0]{logging_keys}	= $keys;
 # 	if (@_) {
@@ -118,62 +125,39 @@ sub execute ($) {
 	my $l			= Log::Log4perl->get_logger("rdf.query.plan.service");
 	my $endpoint	= $self->endpoint;
 	
-	my $bound	= $context->bound || {};
+	my $bound		= $context->bound || {};
 	my $sparql		= $self->sparql( $bound );
-	
-	my $url			= $endpoint . '?query=' . uri_escape($sparql);
 	my $query		= $context->query;
 	
-	{
-		$l->debug('SERVICE execute');
-		my $printable	= $sparql;
-		$l->debug("SERVICE <$endpoint> pattern: $printable");
-		$l->trace( 'SERVICE URL: ' . $url );
-	}
-	
-# 	my $serial	= 0;
-# 	my ($fh, $write);
-# 	if ($serial) {
-# 		pipe($fh, $write);
-# 		my $stdout	= select();
-# 		select($write);
-# 		$self->_get_and_parse_url( $context, $url, $write, $$ );
-# 		warn '*********';
-# 		select($stdout);
-# 		warn '*********';
-# 	} else {
-# 		my $pid = open $fh, "-|";
-# 		die unless defined $pid;
-# 		unless ($pid) {
-# 			$RDF::Trine::Store::DBI::IGNORE_CLEANUP	= 1;
-# 			$self->_get_and_parse_url( $context, $url, $fh, $pid );
-# 			exit 0;
-# 		}
-# 	}
-# 		warn '*********';
-# 	
-# 	my $count	= 0;
-# 	my $open	= 1;
-# 	warn '<<<<';
-# 	my $args	= fd_retrieve $fh or die "I can't read args from file descriptor\n";
-# 	warn '>>>>';
-# 	if (ref($args)) {
-	
-	my $iter	= $self->_get_iterator( $context, $url );
-	if ($iter) {
-# 		$self->[0]{args}	= $args;
-# 		$self->[0]{fh}		= $fh;
-# 		$self->[0]{'write'}	= $write;
-		$self->[0]{iter}	= $iter;
+	if ($self->lhs) {
+		$self->lhs->execute( $context );
+		$self->[0]{context}	= $context;
 		$self->[0]{'open'}	= 1;
 		$self->[0]{'count'}	= 0;
 		$self->[0]{logger}	= $context->logger;
-		if (my $log = $self->[0]{logger}) {
-			$log->push_value( service_endpoints => $endpoint );
-		}
 		$self->state( $self->OPEN );
 	} else {
-		warn "no iterator in execute()";
+		{
+			$l->debug('SERVICE execute');
+			my $printable	= $sparql;
+			$l->debug("SERVICE <$endpoint> pattern: $printable");
+		}
+		my $iter	= $self->_get_iterator( $context, $endpoint->uri_value, $sparql );
+		if ($iter) {
+	# 		$self->[0]{args}	= $args;
+	# 		$self->[0]{fh}		= $fh;
+	# 		$self->[0]{'write'}	= $write;
+			$self->[0]{iter}	= $iter;
+			$self->[0]{'open'}	= 1;
+			$self->[0]{'count'}	= 0;
+			$self->[0]{logger}	= $context->logger;
+			if (my $log = $self->[0]{logger}) {
+				$log->push_value( service_endpoints => $endpoint );
+			}
+			$self->state( $self->OPEN );
+		} else {
+			warn "no iterator in execute()";
+		}
 	}
 	$self;
 }
@@ -188,31 +172,53 @@ sub next {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open SERVICE";
 	}
 	return undef unless ($self->[0]{'open'});
-# 	my $fh	= $self->[0]{fh};
-# 	warn 'calling fd_retrieve';
-# 	my $result = fd_retrieve $fh or die "I can't read from file descriptor\n";
-# 	warn 'got result: ' . Dumper($result);
-# 	if (not($result) or ref($result) ne 'HASH') {
-# 		if (my $log = $self->[0]{logger}) {
-# 			$log->push_key_value( 'cardinality-service', $self->[4], $self->[0]{'count'} );
-# 			if (my $bf = $self->[0]{ 'log-service-pattern' }) {
-# 				$log->push_key_value( 'cardinality-bf-service-' . $self->[1], $bf, $self->[0]{'count'} );
-# 			}
-# 		}
-# 		$self->[0]{'open'}	= 0;
-# 		return undef;
-# 	}
-	my $iter	= $self->[0]{iter};
-	my $result	= $iter->next;
-	return undef unless $result;
-	$self->[0]{'count'}++;
-	my $row	= RDF::Query::VariableBindings->new( $result );
-	$row->label( origin => [ $self->endpoint ] );
-	if (my $d = $self->delegate) {
-		$d->log_result( $self, $row );
+	if ($self->lhs) {
+		while (1) {
+			if ($self->[0]{iter_stash}) {
+				while (my $row = $self->[0]{iter_stash}->next) {
+					warn "got service RHS row: $row\n";
+					my $lhs		= $self->[0]{lhs_row};
+					warn "joining:\n\t$row\n\t$lhs\n";
+					if (my $j = $row->join( $lhs )) {
+						return $j;
+					}
+				}
+				delete $self->[0]{iter_stash};
+			}
+			my $lrow	= $self->lhs->next;
+			unless ($lrow) {
+				warn "reached end of service LHS iterator\n";
+				delete $self->[0]{lhs_row};
+				return undef;
+			}
+			warn "got service LHS row: $lrow\n";
+			$self->[0]{lhs_row}	= $lrow;
+			my $endpoint	= $lrow->{ $self->endpoint->name };
+			unless (blessed($endpoint) and $endpoint->isa('RDF::Query::Node::Resource')) {
+				throw RDF::Query::Error::ExecutionError -text => "Endpoint variable bound to non-IRI";
+			}
+			my $context	= $self->[0]{context};
+			my $bound	= $context->bound || {};
+			my $sparql	= $self->sparql( $bound );
+			my $plan	= $RDF::Query::Plan::PLAN_CLASSES{'service'}->new( $endpoint, $self->pattern, $self->silent, $sparql );
+			warn $plan;
+			my $iter	= $plan->execute( $context );
+			return undef unless ($iter);
+			$self->[0]{iter_stash}	= $iter;
+		}
+	} else {
+		my $iter	= $self->[0]{iter};
+		my $result	= $iter->next;
+		return undef unless $result;
+		$self->[0]{'count'}++;
+		my $row	= RDF::Query::VariableBindings->new( $result );
+		$row->label( origin => [ $self->endpoint ] );
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $row );
+		}
+		return $row;
 	}
-	return $row;
-};
+}
 
 =item C<< close >>
 
@@ -242,10 +248,14 @@ sub close {
 }
 
 sub _get_iterator {
-	my $self	= shift;
-	my $context	= shift;
-	my $url		= shift;
-	my $query	= $context->query;
+	my $self		= shift;
+	my $context		= shift;
+	my $endpoint	= shift;
+	my $sparql		= shift;
+	my $url			= $endpoint . '?query=' . uri_escape($sparql);
+	my $l			= Log::Log4perl->get_logger("rdf.query.plan.service");
+	$l->trace( 'SERVICE URL: ' . $url );
+	my $query		= $context->query;
 	
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
 	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
@@ -271,9 +281,10 @@ sub _get_iterator {
 	} else {
 		my $status		= $response->status_line;
 		my $sparql		= $self->sparql;
-		my $endpoint	= $self->endpoint;
-		warn "url: $url\n";
-		throw RDF::Query::Error::ExecutionError -text => "*** error making remote SPARQL call to endpoint $endpoint ($status) while making service call for query: $sparql";
+# 		warn "url: $url\n";
+		unless ($self->silent) {
+			throw RDF::Query::Error::ExecutionError -text => "*** error making remote SPARQL call to endpoint $endpoint ($status) while making service call for query: $sparql";
+		}
 	}
 }
 
@@ -378,6 +389,16 @@ sub sparql {
 	return $sparql;
 }
 
+=item C<< lhs >>
+
+=cut
+
+sub lhs {
+	my $self	= shift;
+	my $lhs		= $self->[5];
+	return $lhs;
+}
+
 =item C<< silent >>
 
 Returns a boolean value indicating whether the service plan will ignore errors.
@@ -469,7 +490,7 @@ sub plan_node_data {
 sub graph {
 	my $self	= shift;
 	my $g		= shift;
-	$g->add_node( "$self", label => "Service (" . $self->endpoint . ")" . $self->graph_labels );
+	$g->add_node( "$self", label => "Service (" . $self->endpoint->value . ")" . $self->graph_labels );
 	$g->add_node( "${self}-sparql", label => $self->sparql );
 	$g->add_edge( "$self" => "${self}-sparql" );
 	return "$self";
@@ -494,7 +515,7 @@ sub explain {
 	my $sparql	= $self->sparql;
 	$sparql		=~ s/\n/\n${indent}${s}${s}/g;
 	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self))
-				. "${indent}${s}" . $self->endpoint . "\n"
+				. "${indent}${s}" . $self->endpoint->as_string . "\n"
 				. "${indent}${s}${sparql}\n";
 	return $string;
 }

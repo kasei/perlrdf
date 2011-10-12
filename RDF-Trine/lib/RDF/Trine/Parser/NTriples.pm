@@ -102,6 +102,21 @@ sub parse {
 	return $self->parse_file( $base, $fh, $handler );
 }
 
+=item C<< parse_node ( $string, $base ) >>
+
+Returns the RDF::Trine::Node object corresponding to the node whose N-Triples
+serialization is found at the beginning of C<< $string >>.
+
+=cut
+
+sub parse_node {
+	my $self	= shift;
+	my $string	= shift;
+	my $uri		= shift;
+	my $n		= $self->_eat_node( $uri, 0, $string );
+	return $n;
+}
+
 =item C<< parse_file ( $base, $fh, \&handler ) >>
 
 =cut

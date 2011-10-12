@@ -682,11 +682,19 @@ sub generate_plans {
 				return $sparql;
 			};
 			
-			unless ($algebra->endpoint->can('uri_value')) {
-				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
-			}
+# 			unless ($algebra->endpoint->can('uri_value')) {
+# 				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
+# 			}
 			
-			push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint->uri_value, $plan, $algebra->silent, $sparqlcb ));
+			if (my $ggp = $algebra->lhs) {
+				my @lhs_base	= $self->generate_plans( $ggp, $context, %args );
+				foreach my $lhs_plan (@lhs_base) {
+					my $splan	= RDF::Query::Plan::Service->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb, $lhs_plan );
+					push(@plans, $splan);
+				}
+			} else {
+				push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb ));
+			}
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'SubSelect') {

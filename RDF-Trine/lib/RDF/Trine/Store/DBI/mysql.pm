@@ -143,6 +143,7 @@ sub _add_node {
 	my $sql	= "INSERT IGNORE INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( map "$_", @values{ @cols } );
+	return $hash;
 }
 
 =item C<< init >>
