@@ -13,7 +13,9 @@ my $user	= $ENV{DYDRA_USER};
 my $repo	= $ENV{DYDRA_REPO};
 my $token	= $ENV{DYDRA_TOKEN};
 
-if (defined($user) and defined($repo) and defined($token)) {
+if (not($ENV{RDFTRINE_NETWORK_TESTS})) {
+  plan skip_all => "No network. Set RDFTRINE_NETWORK_TESTS to run these tests.";
+} elsif (defined($user) and defined($repo) and defined($token)) {
   plan tests => 3 + Test::RDF::Trine::Store::number_of_tests;
 } else {
   plan skip_all => 'Dydra ENV variables were not found';
@@ -22,7 +24,6 @@ if (defined($user) and defined($repo) and defined($token)) {
 use strict;
 use warnings;
 no warnings 'redefine';
-
 
 
 my $data = Test::RDF::Trine::Store::create_data;
