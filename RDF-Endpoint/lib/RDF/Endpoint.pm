@@ -109,7 +109,7 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator 0.101;
+use RDF::RDFa::Generator 0.102;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
@@ -445,6 +445,9 @@ sub service_description {
 	foreach my $func (@functions) {
 		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
 	}
+	
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_XML') ) );
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_JSON') ) );
 	foreach my $format (@formats) {
 		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
