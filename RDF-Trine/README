@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.136 (2011-08-XX)
+  Version 0.136 (2011-10-19)
 
      * API CHANGES
          Removed RDF::Trine::Iterator::SAXHandler->rate method and dropped dependency on Time::HiRes.

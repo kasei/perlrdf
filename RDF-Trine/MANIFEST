@@ -61,6 +61,7 @@ lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
 lib/RDF/Trine/Serializer/RDFXML.pm
 lib/RDF/Trine/Serializer/Turtle.pm
+lib/RDF/Trine/Serializer/TSV.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store.pm
@@ -550,6 +551,7 @@ t/serializer-ntriples.t
 t/serializer-rdfjson.t
 t/serializer-rdfxml.t
 t/serializer-turtle.t
+t/serializer-tsv.t
 t/serializer.t
 t/statement-serialization.t
 t/statement.t
