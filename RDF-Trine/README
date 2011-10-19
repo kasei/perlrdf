@@ -68,6 +68,56 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.136 (2011-10-19)
+
+     * API CHANGES
+         Removed RDF::Trine::Iterator::SAXHandler->rate method and dropped dependency on Time::HiRes.
+         Consolidated bnode prefix handling in parser classes, adding support for UUID::Tiny.
+     * BUG FIXES
+         Fixed escaping of URIs in rdf:about attributes (patch from SADI Framework).
+         Return an empty string instead of undef in RDF::Trine::Iterator->format_node_xml.
+         Fixed RDF::Trine::Store::SPARQL->count_statements handling of variables.
+         Fixed turtle serializer to check if numerics are in canonical form.
+         Fixed mysql schema to quote index names that might contain reserved characters.
+         Fix RDF::Trine::Model->get_statements to throw an error when called with arguments that aren't either undef or node objects.
+         Fixed titlecase of table reference in RDF::Trine::Store::DBI::mysql->init.
+         Fixed bug in use of UUID::Tiny::UUID_V1 bareword in RDF::Trine::Parser->new_bnode_prefix.
+     * NEW FEATURES
+         Initial support for using Dydra as a store.
+         Added RDF::Trine::Parser::Turtle->parse_node method.
+         Added RDF::Trine::Node::Literal->is_canonical_lexical_form.
+         Made RDF::Trine::Serializer::NTriples->statement_as_string a public method.
+         RDF::Trine::Parser->parse_url_into_model now fill properly fall back on guesswork when media-type parsing fails.
+         Moved as_hashref functionality from RDF::Trine::Model to RDF::Trine::Iterator::Graph.
+         Added TSV serializer.
+     * ENHANCEMENTS
+         Allow empty namespace prefix in RDF::Trine::NamespaceMap (patch from Jakob Voss).
+         Added text/html media type, and added use of Module::Load::Conditional in RDF::Trine::Parser::RDFa.
+         Added support of SPARQL endpoints with URL parameters like Virtuoso's 'http://example.org:8890/sparql?default-graph-uri=...' (patch from Jakob Voss).
+         Updated RDF::Trine::Store::DBI to use DBIx::Connector.
+     * OTHER
+         Added option to sleep after each store update in Test::RDF::Trine::Store.
+         Fixed code in RDF::Trine::Store::SPARQL that was causing a warning when a variable name was redefined.
+         Updated RDF::Trine::Store::DBI::mysql->_add_node to return the node hash value.
+         Stop RDF::Trine::Store::DBI->add_statement from unnecessarily hashing nodes multiple times (patch from tobyink).
+         Moved redland store tests to developer xt directory.
+         Updated t/serializer-turtle.t to be more accepting of stores returning data in varying orders.
+         Removed 'or die' conditional from store tests.
+         Changed test endpoint from kasei.us to myrdf.us.
+         Added simple store tests for bulk_ops in Test::RDF::Trine::Store.
+         Removed heavy dependency on DBI store in test cases.
+         Require RDF::Redland 1.0.7.1 in xt/store-redland.t.
+         Add missing use of RDF::Trine::Statement::Quad.
+         Conditionally load DBI store, and return Memory store from temporary_store().
+         Removed dependency on Unicode::Escape.
+         Made XML::LibXML an optional dependency (RDF/XML parser will not perform c14n if it is not installed)
+         Updated RDF::Trine::Store::Memory to use Digest::SHA instead of Digest::MD5.
+         Removed depedency on List::MoreUtils.
+         Added POD for Test::RDF::Trine::Store->update_sleep.
+         Added POD for RDF::Trine::Serializer::NTriples->statement_as_string.
+         Removed depedency on Unicode::String and List::MoreUtils.
+         Removed unnecessary use statements.
+
   Version 0.135 (2011-04-30)
 
      * API CHANGES
