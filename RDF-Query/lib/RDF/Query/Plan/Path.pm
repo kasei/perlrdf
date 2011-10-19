@@ -7,7 +7,7 @@ RDF::Query::Plan::Path - Executable query plan for Paths.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Path version 2.905.
+This document describes RDF::Query::Plan::Path version 2.907.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -68,6 +68,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "PATH plan can't be executed while already open";
 	}
@@ -262,6 +263,9 @@ sub next {
 	if (scalar(@{ $self->[0]{results} })) {
 		my $result	= shift(@{ $self->[0]{results} });
 		$l->trace( 'returning path result: ' . $result ) if (defined($result));
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $result );
+		}
 		return $result;
 	}
 	
@@ -272,6 +276,9 @@ sub next {
 		if (scalar(@{ $self->[0]{results} })) {
 			my $result	= shift(@{ $self->[0]{results} });
 			$l->trace( 'returning path result: ' . $result ) if (defined($result));
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $result );
+			}
 			return $result;
 		}
 	} elsif ($op eq '*') {
@@ -279,25 +286,40 @@ sub next {
 			$self->_alp;
 			if (my $r = $self->_alp_result) {
 				$l->trace( 'returning path result: ' . $r );
+				if (my $d = $self->delegate) {
+					$d->log_result( $self, $r );
+				}
 				return $r;
 			}
 		}
 		my $r	= $self->_alp_result;
 		$l->trace( 'returning path result: ' . $r ) if (defined($r));
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $r );
+		}
 		return $r;
 	} elsif ($op eq '+') {
 		while (scalar(@{ $self->[0]{alp_state} })) {
 			$self->_alp;
 			if (my $r = $self->_alp_result) {
+				if (my $d = $self->delegate) {
+					$d->log_result( $self, $r );
+				}
 				return $r;
 			}
 		}
 		my $r	= $self->_alp_result;
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $r );
+		}
 		return $r;
 	}
 
 	my $result	= shift(@{ $self->[0]{results} });
 	$l->trace( 'returning path result: ' . $result ) if (defined($result));
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $result );
+	}
 	return $result;
 }
 

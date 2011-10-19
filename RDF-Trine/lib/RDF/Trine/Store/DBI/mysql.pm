@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.135
+This document describes RDF::Trine::Store::DBI::mysql version 0.136
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.136";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -143,6 +143,7 @@ sub _add_node {
 	my $sql	= "INSERT IGNORE INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( map "$_", @values{ @cols } );
+	return $hash;
 }
 
 =item C<< init >>
@@ -189,7 +190,7 @@ END
 		$dbh->commit or warn $dbh->errstr;
 	}
 
-	unless ($self->_table_exists("statements${id}")) {
+	unless ($self->_table_exists("Statements${id}")) {
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
 			CREATE TABLE IF NOT EXISTS Statements${id} (
 				Subject bigint unsigned NOT NULL,
@@ -204,9 +205,9 @@ END
 
 
 #		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
 
 # 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );

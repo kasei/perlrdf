@@ -7,7 +7,7 @@ RDF::Query::Plan::SubSelect - Executable query plan for sub-select queries.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::SubSelect version 2.905.
+This document describes RDF::Query::Plan::SubSelect version 2.907.
 
 =head1 METHODS
 
@@ -37,7 +37,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.905';
+	$VERSION		= '2.907';
 }
 
 ######################################################################
@@ -70,6 +70,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SUBSELECT plan can't be executed while already open";
 	}
@@ -108,6 +109,9 @@ sub next {
 	$l->trace("- got subselect result $result");
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
+	}
 	return $row;
 };
 

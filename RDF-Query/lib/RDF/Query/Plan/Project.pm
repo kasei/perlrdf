@@ -7,7 +7,7 @@ RDF::Query::Plan::Project - Executable query plan for Projects.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Project version 2.905.
+This document describes RDF::Query::Plan::Project version 2.907.
 
 =head1 METHODS
 
@@ -22,15 +22,14 @@ package RDF::Query::Plan::Project;
 
 use strict;
 use warnings;
+use Scalar::Util qw(blessed refaddr);
 use base qw(RDF::Query::Plan);
-
-use Scalar::Util qw(blessed);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -61,6 +60,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "PROJECT plan can't be executed while already open";
 	}
@@ -118,6 +118,9 @@ sub next {
 	}
 	
 	$l->trace( "- projected row: $proj" );
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $proj );
+	}
 	return $proj;
 }
 
@@ -234,7 +237,7 @@ sub explain {
 	my $count	= shift || 0;
 	my $indent	= $s x $count;
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
 	my @exprs	= @{$self->[3]};
 	$string		.= "${indent}${s}" . join(' ', @vars, @exprs) . "\n";

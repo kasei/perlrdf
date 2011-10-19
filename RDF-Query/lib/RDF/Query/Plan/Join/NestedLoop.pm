@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::NestedLoop - Executable query plan for nested loop joins
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::NestedLoop version 2.905.
+This document describes RDF::Query::Plan::Join::NestedLoop version 2.907.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::NestedLoop' }++;
 }
 
@@ -67,31 +67,67 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "NestedLoop join plan can't be executed while already open";
 	}
 	
-	$self->[0]{start_time}	= [gettimeofday];
-	my @inner;
-	$self->rhs->execute( $context );
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.join.nestedloop");
-	while (my $row = $self->rhs->next) {
-		$l->trace("loading inner row cache with: " . $row);
-		push(@inner, $row);
-	}
-	$self->lhs->execute( $context );
-	if ($self->lhs->state == $self->OPEN) {
-		$self->[0]{inner}			= \@inner;
-		$self->[0]{outer}			= $self->lhs;
-		$self->[0]{inner_index}		= 0;
-		$self->[0]{needs_new_outer}	= 1;
-		$self->[0]{inner_count}		= 0;
-		$self->[0]{count}			= 0;
-		$self->[0]{logger}			= $context->logger;
-		$self->state( $self->OPEN );
-	} else {
-		warn "no iterator in execute()";
-	}
+	$self->[0]{start_time}	= [gettimeofday];
+# 	if ($self->optional) {
+# 		my (@inner, @outer);
+# 		$self->rhs->execute( $context );
+# 		while (my $row = $self->rhs->next) {
+# 			$l->trace("loading inner row: " . $row);
+# 			push(@inner, $row);
+# 		}
+# 		
+# 		my @results;
+# 		$self->lhs->execute( $context );
+# 		while (my $outer = $self->lhs->next) {
+# 			$l->trace("loading outer row: " . $outer);
+# 			my $count	= 0;
+# 			foreach my $inner (@inner) {
+# 				if (my $joined = $inner->join( $outer )) {
+# 					$count++;
+# 					if ($l->is_trace) {
+# 						$l->trace("joined bindings: $outer ⋈ $inner");
+# 					}
+# 	#				warn "-> joined\n";
+# 					$self->[0]{count}++;
+# 					push(@results, $joined);
+# 				}
+# 			}
+# 			if ($count == 0) {
+# 				# left-join branch
+# 				push(@results, $outer);
+# 			}
+# 		}
+# 		
+# 		warn Dumper(\@results);
+# 		
+# 		$self->[0]{results}	= \@results;
+# 	} else {
+		my @inner;
+		$self->rhs->execute( $context );
+		while (my $row = $self->rhs->next) {
+			$l->trace("loading inner row cache with: " . $row);
+			push(@inner, $row);
+		}
+		$self->lhs->execute( $context );
+		if ($self->lhs->state == $self->OPEN) {
+			$self->[0]{inner}			= \@inner;
+			$self->[0]{outer}			= $self->lhs;
+			$self->[0]{inner_index}		= 0;
+			$self->[0]{needs_new_outer}	= 1;
+			$self->[0]{inner_count}		= 0;
+			$self->[0]{count}			= 0;
+			$self->[0]{logger}			= $context->logger;
+			$self->state( $self->OPEN );
+		} else {
+			warn "no iterator in execute()";
+		}
+# 	}
 #	warn '########################################';
 	$self;
 }
@@ -105,6 +141,15 @@ sub next {
 	unless ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open NestedLoop join";
 	}
+	
+# 	if ($self->optional) {
+# 		my $result	= shift(@{ $self->[0]{results} });
+# 		if (my $d = $self->delegate) {
+# 			$d->log_result( $self, $result );
+# 		}
+# 		return $result;
+# 	}
+	
 	my $outer	= $self->[0]{outer};
 	my $inner	= $self->[0]{inner};
 	
@@ -134,6 +179,9 @@ sub next {
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
 				$self->[0]{count}++;
+				if (my $d = $self->delegate) {
+					$d->log_result( $self, $joined );
+				}
 				return $joined;
 			} else {
 				$l->trace("failed to join bindings: $inner_row ⋈ $self->[0]{outer_row}");

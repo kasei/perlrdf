@@ -61,6 +61,7 @@ lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
 lib/RDF/Trine/Serializer/RDFXML.pm
 lib/RDF/Trine/Serializer/Turtle.pm
+lib/RDF/Trine/Serializer/TSV.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store.pm
@@ -68,6 +69,7 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/Dydra.pm
 lib/RDF/Trine/Store/Hexastore.pm
 lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Redland.pm
@@ -543,13 +545,13 @@ t/remove-list.t
 t/store-dbi.t
 t/store-dbi-mysql.t
 t/store-memory.t
-t/store-redland.t
 t/serializer-nquads.t
 t/serializer-ntriples-canonical.t
 t/serializer-ntriples.t
 t/serializer-rdfjson.t
 t/serializer-rdfxml.t
 t/serializer-turtle.t
+t/serializer-tsv.t
 t/serializer.t
 t/statement-serialization.t
 t/statement.t
@@ -568,5 +570,7 @@ xt/data/turtle/test-15.ttl
 xt/data/turtle/test-16.out
 xt/data/turtle/test-16.ttl
 xt/parser-turtle.t
+xt/store-dydra.t
+xt/store-redland.t
 xt/store-sparql.t
 extra/mysql.sql

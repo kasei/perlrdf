@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.905.
+This document describes RDF::Query::Node::Resource version 2.907.
 
 =cut
 
@@ -19,6 +19,7 @@ no warnings 'redefine';
 use base qw(RDF::Query::Node RDF::Trine::Node::Resource);
 
 use URI;
+use Encode;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
@@ -27,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -72,9 +73,29 @@ Returns the SPARQL string for this node.
 sub as_sparql {
 	my $self	= shift;
 	my $context	= shift || {};
-	my $ns		= $context->{ namespaces } || {};
-	my %ns		= %$ns;
-	return $self->sse( { namespaces => \%ns } );
+	if ($context) {
+		my $uri		= $self->uri_value;
+		my $ns		= $context->{namespaces} || {};
+		my %ns		= %$ns;
+		foreach my $k (keys %ns) {
+			no warnings 'uninitialized';
+			if ($k eq '__DEFAULT__') {
+				$k	= '';
+			}
+			my $v	= $ns{ $k };
+			if (index($uri, $v) == 0) {
+				my $local	= substr($uri, length($v));
+				if ($local =~ /^[A-Za-z_]+$/) {
+					my $qname	= join(':', $k, $local);
+					return $qname;
+				}
+			}
+		}
+	}
+	
+	my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+	my $sparql		= '<' . $string . '>';
+	return $sparql;
 }
 
 =item C<< as_hash >>

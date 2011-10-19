@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.135
+This document describes RDF::Trine::Model version 0.136
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 }
 
 use Scalar::Util qw(blessed);
@@ -33,7 +33,7 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 use RDF::Trine::Model::Dataset;
 
 =item C<< new ( $store ) >>
@@ -445,6 +445,17 @@ sub get_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
 	
+	my @pos	= qw(subject predicate object graph);
+	foreach my $i (0 .. $#_) {
+		my $n	= $_[$i];
+		next unless defined($n);	# undef is OK
+		next if (blessed($n) and $n->isa('RDF::Trine::Node'));	# node objects are OK
+		my $pos	= $pos[$i];
+		local($Data::Dumper::Indent)	= 0;
+		my $ser	= Data::Dumper->Dump([$n], [$pos]);
+		throw RDF::Trine::Error::MethodInvocationError -text => "get_statements called with a value that isn't undef or a node object: $ser";
+	}
+	
 	if (scalar(@_) >= 4) {
 		my $graph	= $_[3];
 		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
@@ -652,33 +663,7 @@ library for PHP.
 sub as_hashref {
 	my $self	= shift;
 	$self->end_bulk_ops();
-	my $stream	= $self->as_stream;
-	my $index = {};
-	while (my $statement = $stream->next) {
-		
-		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
-			('_:'.$statement->subject->blank_identifier) :
-			$statement->subject->uri ;
-		my $p = $statement->predicate->uri ;
-		
-		my $o = {};
-		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}		= 'literal';
-			$o->{'value'}		= $statement->object->literal_value;
-			$o->{'lang'}		= $statement->object->literal_value_language
-				if $statement->object->has_language;
-			$o->{'datatype'}	= $statement->object->literal_datatype
-				if $statement->object->has_datatype;
-		} else {
-			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
-				('_:'.$statement->object->blank_identifier) :
-				$statement->object->uri ;
-		}
-
-		push @{ $index->{$s}->{$p} }, $o;
-	}
-	return $index;
+	return $self->as_stream->as_hashref;
 }
 
 =item C<< as_graphviz >>

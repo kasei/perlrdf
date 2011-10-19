@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 0.135
+This document describes RDF::Trine::Serializer::RDFXML version 0.136
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -164,6 +164,11 @@ sub _statements_same_subject_as_string {
 		$id	= qq[rdf:nodeID="$b"];
 	} else {
 		my $i	= $s->uri_value;
+		for ($i) {
+			s/&/&amp;/g;
+			s/</&lt;/g;
+			s/"/&quot;/g;
+		}
 		$id	= qq[rdf:about="$i"];
 	}
 	

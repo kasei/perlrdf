@@ -1,23 +1,23 @@
-# RDF::Trine::Serializer::NQuads
+# RDF::Trine::Serializer::TSV
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Trine::Serializer::NQuads - N-Quads Serializer
+RDF::Trine::Serializer::TSV - TSV Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NQuads version 0.136
+This document describes RDF::Trine::Store version 0.136
 
 =head1 SYNOPSIS
 
- use RDF::Trine::Serializer::NQuads;
- my $serializer	= RDF::Trine::Serializer::NQuads->new();
+ use RDF::Trine::Serializer::TSV;
+ my $serializer	= RDF::Trine::Serializer::TSV->new();
 
 =head1 DESCRIPTION
 
-The RDF::Trine::Serializer::NQuads class provides an API for serializing RDF
-graphs to the N-Quads syntax.
+The RDF::Trine::Serializer::TSV class provides an API for serializing RDF
+graphs to the TSV syntax.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ L<RDF::Trine::Serializer> class.
 
 =cut
 
-package RDF::Trine::Serializer::NQuads;
+package RDF::Trine::Serializer::TSV;
 
 use strict;
 use warnings;
@@ -48,9 +48,9 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
-	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
-	foreach my $type (qw(text/x-nquads)) {
+	$RDF::Trine::Serializer::serializer_names{ 'tsv' }	= __PACKAGE__;
+	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/TSV' }	= __PACKAGE__;
+	foreach my $type (qw(text/tsv)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
 	}
 }
@@ -59,7 +59,7 @@ BEGIN {
 
 =item C<< new >>
 
-Returns a new N-Quads serializer object.
+Returns a new TSV serializer object.
 
 =cut
 
@@ -72,7 +72,7 @@ sub new {
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
 
-Serializes the C<$model> to N-Quads, printing the results to the supplied
+Serializes the C<$model> to TSV, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -81,33 +81,41 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	print {$file} join("\t", qw(s p o));
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
 =item C<< serialize_model_to_string ( $model ) >>
 
-Serializes the C<$model> to N-Quads, returning the result as a string.
+Serializes the C<$model> to TSV, returning the result as a string.
 
 =cut
 
 sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
-	my $string	= '';
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	
+	my $string	= join("\t", qw(s p o)) . "\n";
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
-Serializes the iterator to N-Quads, printing the results to the supplied
+Serializes the iterator to TSV, printing the results to the supplied
 filehandle C<<$fh>>.
 
 =cut
@@ -116,24 +124,26 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
+	# TODO: must print the header line corresponding to the bindings in the entire iterator...
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
 
-Serializes the iterator to N-Quads, returning the result as a string.
+Serializes the iterator to TSV, returning the result as a string.
 
 =cut
 
 sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
+	# TODO: must print the header line corresponding to the bindings in the entire iterator...
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
@@ -143,12 +153,13 @@ sub _serialize_bounded_description {
 	my $model	= shift;
 	my $node	= shift;
 	my $seen	= shift || {};
+	# TODO: must print the header line, but only on the first (non-recursive) call to _serialize_bounded_description
 	return '' if ($seen->{ $node->sse }++);
 	my $iter	= $model->get_statements( $node, undef, undef );
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 		if ($nodes[2]->isa('RDF::Trine::Node::Blank')) {
 			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
 		}
@@ -156,23 +167,18 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
-sub _statement_as_string {
+=item C<< statement_as_string ( $st ) >>
+
+Returns a string with the nodes of the given RDF::Trine::Statement serialized in N-Triples format, separated by tab characters.
+
+=cut
+
+sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
-	my @nodes;
-	if ($st->type eq 'TRIPLE') {
-		@nodes	= $st->nodes;
-	} else {
-		my $g	= $st->context;
-		if ($g->is_nil) {
-			@nodes	= ($st->nodes)[0..2];
-		} else {
-			@nodes	= $st->nodes;
-		}
-	}
-	return join(' ', map { $_->as_ntriples } @nodes) . " .\n";
+	my @nodes	= $st->nodes;
+	return join("\t", map { $_->as_ntriples } @nodes[0..2]) . "\n";
 }
-
 
 1;
 
@@ -182,7 +188,7 @@ __END__
 
 =head1 SEE ALSO
 
-L<http://sw.deri.org/2008/07/n-quads/>
+L<http://www.w3.org/TR/rdf-testcases/#ntriples>
 
 =head1 AUTHOR
 

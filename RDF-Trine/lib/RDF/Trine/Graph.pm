@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.135
+This document describes RDF::Trine::Graph version 0.136
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use Math::Combinatorics qw(permute);
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 }
 
 use overload
@@ -73,7 +73,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use RDF::Trine::Node;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 
 =item C<< new ( $model ) >>
 
@@ -92,7 +92,7 @@ sub new {
 	my %data;
 	if ($_[0]->isa('RDF::Trine::Iterator::Graph')) {
 		my $iter	= shift;
-		my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+		my $model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store() );
 		while (my $st = $iter->next) {
 			$model->add_statement( $st );
 		}

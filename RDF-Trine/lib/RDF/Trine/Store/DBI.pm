@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.135
+This document describes RDF::Trine::Store::DBI version 0.136
 
 =head1 SYNOPSIS
 
@@ -25,6 +25,8 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
 use DBI;
+use DBIx::Connector;
+
 use Carp;
 use DBI;
 use Scalar::Util qw(blessed reftype refaddr);
@@ -47,7 +49,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.136";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -105,7 +107,7 @@ Initialize the store with a L<DBI::db> object.
 
 sub new {
 	my $class	= shift;
-	my $dbh;
+	my ($dbh, $conn);
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
@@ -114,7 +116,7 @@ sub new {
 	if (scalar(@_) == 0) {
 		$l->trace("trying to construct a temporary model");
 		my $dsn		= "dbi:SQLite:dbname=:memory:";
-		$dbh		= DBI->connect( $dsn, '', '' );
+		$conn		= DBIx::Connector->new( $dsn, '', '' );
 		$class		= 'RDF::Trine::Store::DBI::SQLite';
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		$l->trace("got a DBD handle");
@@ -127,6 +129,8 @@ sub new {
 		} elsif ($name eq 'SQLite') {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
 		}
+	} elsif (blessed($_[0]) and $_[0]->isa('DBIx::Connector')) {
+		$conn	= shift;
 	} else {
 		my $dsn		= shift;
 		my $user	= shift;
@@ -141,8 +145,8 @@ sub new {
 			$pass	= '';
 		}
 		$l->trace("Connecting to $dsn ($user, $pass)");
-		$dbh		= DBI->connect( $dsn, $user, $pass );
-		unless ($dbh) {
+		$conn		= DBIx::Connector->new( $dsn, $user, $pass );
+		unless ($conn) {
 			throw RDF::Trine::Error::DatabaseError -text => "Couldn't connect to database: " . DBI->errstr;
 		}
 	}
@@ -150,6 +154,7 @@ sub new {
 	my $self	= bless( {
 		model_name				=> $name,
 		dbh						=> $dbh,
+		conn					=> $conn,
 		statements_table_prefix	=> 'Statements',
 		%args
 	}, $class );
@@ -468,26 +473,15 @@ sub add_statement {
 # 	Carp::confess unless (blessed($stmt));
 	my $stable	= $self->statements_table;
 	my @nodes	= $stmt->nodes;
-	foreach my $n (@nodes) {
-		$self->_add_node( $n );
-	}
+	my @values = map { $self->_add_node( $_ ) } @nodes;
 	
-	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
 	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
 		$context	= $stmt->context;
 	} else {
-		my $cid		= do {
-			if ($context) {
-				$self->_add_node( $context );
-				$self->_mysql_node_hash( $context );
-			} else {
-				0
-			}
-		};
-		push(@values, $cid);
+		push @values, ($context ? $self->_add_node($context) : 0);
 	}
 	my $sql	= "SELECT 1 FROM ${stable} WHERE Subject = ? AND Predicate = ? AND Object = ? AND Context = ?";
 	my $sth	= $dbh->prepare( $sql );
@@ -576,7 +570,7 @@ sub _add_node {
 	my @cols;
 	my $table;
 	my %values;
-	return 1 if ($node->is_nil);
+	return $hash if ($node->is_nil);
 	if ($node->is_blank) {
 		$table	= "Bnodes";
 		@cols	= qw(ID Name);
@@ -607,6 +601,7 @@ sub _add_node {
 		my $sth	= $dbh->prepare( $sql );
 		$sth->execute( @values );
 	}
+	return $hash;
 }
 
 =item C<< count_statements ($subject, $predicate, $object) >>
@@ -1333,8 +1328,12 @@ Returns the underlying DBI database handle.
 
 sub dbh {
 	my $self	= shift;
-	my $dbh		= $self->{dbh};
-	return $dbh;
+	if (my $conn = $self->{conn}) {
+		return $conn->dbh;
+	} else {
+		my $dbh		= $self->{dbh};
+		return $dbh;
+	}
 }
 
 sub _debug {
@@ -1416,7 +1415,7 @@ END
 sub _table_exists {
 	my $self	= shift;
 	my $name	= shift;
-	my $dbh		= $self->{dbh};
+	my $dbh		= $self->dbh;
 	my $type	= 'TABLE';
 	my $sth		= $dbh->table_info(undef, undef, $name, 'TABLE');
 	my $row		= $sth->fetchrow_hashref;
@@ -1425,8 +1424,7 @@ sub _table_exists {
 
 sub _cleanup {
 	my $self	= shift;
-	if ($self->{dbh}) {
-		my $dbh		= $self->{dbh};
+	if (my $dbh = $self->dbh) {
 		my $name	= $self->{model_name};
 		my $id		= _mysql_hash( $name );
 		if ($self->{ remove_store }) {
@@ -1455,7 +1453,7 @@ sub DESTROY {
 	my $self	= shift;
 	our $IGNORE_CLEANUP;
 	if ($IGNORE_CLEANUP) {
-		$self->{dbh}->{InactiveDestroy}	= 1;
+		$self->dbh->{InactiveDestroy}	= 1;
 	} else {
 		$self->_cleanup;
 	}

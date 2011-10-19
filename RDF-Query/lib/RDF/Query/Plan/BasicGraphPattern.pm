@@ -7,7 +7,7 @@ RDF::Query::Plan::BasicGraphPattern - Executable query plan for BasicGraphPatter
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::BasicGraphPattern version 2.905.
+This document describes RDF::Query::Plan::BasicGraphPattern version 2.907.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -63,6 +63,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "BGP plan can't be executed twice";
 	}
@@ -139,6 +140,9 @@ sub next {
 			}
 		}
 		my $result	= RDF::Query::VariableBindings->new( $row );
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $result );
+		}
 		return $result;
 	}
 	return;

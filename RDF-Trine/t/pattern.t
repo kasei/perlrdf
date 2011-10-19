@@ -10,11 +10,10 @@ use Scalar::Util qw(blessed refaddr);
 use RDF::Trine;
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace;
 use RDF::Trine::Pattern;
 
-my $store	= RDF::Trine::Store::DBI->temporary_store();
+my $store	= RDF::Trine::Store->temporary_store();
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');

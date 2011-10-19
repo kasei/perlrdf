@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.905.
+This document describes RDF::Query::Expression version 2.907.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -147,6 +147,21 @@ sub referenced_variables {
 			push(@vars, $o->name);
 		} elsif ($o->isa('RDF::Query::Expression')) {
 			push(@vars, $o->referenced_variables);
+		}
+	}
+	return RDF::Query::_uniq(@vars);
+}
+
+sub nonaggregated_referenced_variables {
+	my $self	= shift;
+	my @ops		= $self->operands;
+	my @vars;
+	foreach my $o (@ops) {
+		if ($o->isa('RDF::Query::Node::Variable::ExpressionProxy')) {
+		} elsif ($o->isa('RDF::Query::Node::Variable')) {
+			push(@vars, $o->name);
+		} elsif ($o->isa('RDF::Query::Expression')) {
+			push(@vars, $o->nonaggregated_referenced_variables);
 		}
 	}
 	return RDF::Query::_uniq(@vars);

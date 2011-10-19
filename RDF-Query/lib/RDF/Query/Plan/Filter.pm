@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.905.
+This document describes RDF::Query::Plan::Filter version 2.907.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -54,6 +54,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "FILTER plan can't be executed while already open";
 	}
@@ -123,6 +124,9 @@ sub next {
 		}
 		if ($filter->( $row )) {
 			$l->trace( "- filter returned true on row" );
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $row );
+			}
 			return $row;
 		} else {
 			$l->trace( "- filter returned false on row" );

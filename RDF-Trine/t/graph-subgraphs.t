@@ -110,7 +110,7 @@ END
 	<x> <y> <z> .
 END
 	my $parser	= RDF::Trine::Parser->new('turtle');
-	my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+	my $model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store() );
 	$parser->parse_into_model( 'http://base/', $foaf_a, $model );
 	my $iter	= $model->get_statements( undef, iri('http://xmlns.com/foaf/0.1/name'), undef );
 	my $graph	= RDF::Trine::Graph->new( $iter );

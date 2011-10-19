@@ -7,7 +7,7 @@ RDF::Query::Error - Error classes for RDF::Query.
 
 =head1 VERSION
 
-This document describes RDF::Query::Error version 2.905.
+This document describes RDF::Query::Error version 2.907.
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use base qw(Error);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -99,6 +99,10 @@ package RDF::Query::Error::RequestedInterruptError;
 use base qw(RDF::Query::Error);
 
 package RDF::Query::Error::PermissionError;
+
+use base qw(RDF::Query::Error);
+
+package RDF::Query::Error::UnimplementedError;
 
 use base qw(RDF::Query::Error);
 

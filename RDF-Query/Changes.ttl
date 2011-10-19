@@ -9,6 +9,73 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.907.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.906.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.907" ;
+                        doap:created      "2011-06-04" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Fixed bug in SPARQL 1.1 parser for DESCRIBE queries without a WHERE clause." ;
+                        asc:addition      "Fixed join ordering bug for queries with a BINDINGS clause and several joins." ;
+                        asc:addition      "Fixed RDF::Query->as_sparql for DESCRIBE queries which project URI terms, not variables." ;
+                        asc:addition      "Fixed expected test results for DESCRIBE queries without a WHERE clause." ;
+                        asc:addition      "examples/query.pl now emits a warning if the query object cannot be constructed." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.906.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.905.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.906" ;
+                        doap:created      "2011-05-14" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for empty SPARQL 1.1 Update sequence operations (allowing no-op updates)." ;
+                        asc:addition      "Added options to RDF::Query->new to allow forcing RDF::Query to disable query delegation to the underlying store." ;
+                        asc:addition      "Added option to RDF::Query::Util::cli_parse_args to specify arbitrary options to be supplied to the RDF::Query->new constructor." ;
+                        asc:addition      "Added new, cleaner line-based 'explain' format for serializing query Plan and Algebra objects." ;
+                        asc:addition      "Added bindings accessor and is_unit method to RDF::Query::Plan::Constant." ;
+                        asc:addition      "Added ability to forcibly remove a particular join algorithm from consideration in plan generation." ;
+                        asc:addition      "Added 'execute' command in rqsh to allow loading a query from a file or URL." ;
+                        asc:update        "Globally changed 'base' to 'base_uri' in code and API." ;
+                        asc:update        "Fixed SPARQL serialization in RDF::Query::Plan generation of SERVICE blocks to always include braces around the query body." ;
+                        asc:update        "Fixed SPARQL 1.1 parsing bug in property paths using alternatives ('|')." ;
+                        asc:update        "Fixed SPARQL 1.1 bug in parsing prefixnames where a graph term is expected." ;
+                        asc:update        "Fixed bug in ZeroOrMore reverse path handling (patterns matching { var path* term })." ;
+                        asc:update        "Fixed bug in RDF::Query::Node::Literal::_cmp that was causing wrong node comparison results." ;
+                        asc:update        "Fixed bug in parsing solution modifiers in CONSTRUCT and DESCRIBE queries." ;
+                        asc:update        "Fixed bug in handling of unbound variables in delete templates in RDF::Query::Plan::Update." ;
+                        asc:update        "Fixed bug in calls to RDF::Query->var_or_expr_value that was preventing use of EXISTS filters in project expressions." ;
+                        asc:update        "Updated RDF::Query::Plan::Iterator->new to allow passing in a callback that will return an iterator, instead of an iterator directly." ;
+                        asc:update        "Updated RDF::Query->query_plan to delegate entire queries to the RDF::Trine::Model when possible." ;
+                        asc:update        "Updated bin/deparse.pl to allow specifying an endpoint url for SPARQL-backed models (which can affect the query plan)." ;
+                        asc:update        "Updated SPARQL 1.1 parser to prevent bnode use in DELETE blocks." ;
+                        asc:update        "Updated rqsh to associate common filename extensions with media types (helps in loading local files)." ;
+                        asc:update        "Updated RDF::Query::Plan::Path to align with new ALP algorithm from the spec text." ;
+                        asc:update        "Added some simple statistics generation code in RDF::Query::Plan::Join subclasses." ;
+                        asc:update        "Added missing implementation for property paths using {n,} modifier syntax." ;
+                        asc:update        "Added code to guard against mishandling unbound/blank/variable nodes in DELETE templates in RDF::Query::Plan::Update." ;
+                        asc:update        "Updated tests to use new RDF::Trine::Iterator->seen_count method instead of deprecated count method." ;
+                        asc:update        "Updated serialization text for zero-length paths in RDF::Query::Plan::Path->plan_node_data." ;
+                        asc:update        "Removed warning of unknown options passed to RDF::Query->new." ;
+                        asc:update        "Removed unused projection code in RDF::Query->execute_plan." ;
+                        asc:update        "Removed Digest::SHA1 from prereq modules, and updated code to use Digest::SHA instead." ;
+                        asc:update        "Remove the meaningless 'All rights reserved' copyright text." ;
+                        asc:update        "Fixed test count in t/sparql11-propery_paths.t." ;
+                        asc:update        "Commented out noisy debugging output in RDF::Query::Plan::Path." ;
+                        asc:update        "Added trace debugging in RDF::Query::Plan::Sort." ;
+                        asc:update        "Added options instance variable to RDF::Query::ExecutionContext." ;
+                        asc:update        "Added Module::Pluggable to list of required modules in Makefile.PL." ;
+                        asc:update        "Added mappings from file extensions to media types in dawg test scripts." ;
+                        asc:update        "Various updates to SPARQL 1.1 dawg test harness scripts." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.905.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.904.tar.gz> ;

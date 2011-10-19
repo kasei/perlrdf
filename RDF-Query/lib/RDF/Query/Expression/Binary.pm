@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.905.
+This document describes RDF::Query::Expression::Binary version 2.907.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -140,7 +140,16 @@ sub evaluate {
 			} elsif ($op eq '/') {
 				my $lhsv	= $lhs->numeric_value;
 				my $rhsv	= $rhs->numeric_value;
+				
+				my ($lt, $rt)	= ($lhs->literal_datatype, $rhs->literal_datatype);
+				if ($lt eq $rt and $lt eq 'http://www.w3.org/2001/XMLSchema#integer') {
+					$type	= 'http://www.w3.org/2001/XMLSchema#decimal';
+				}
+				
 				if (defined($lhsv) and defined($rhsv)) {
+					if ($rhsv == 0) {
+						throw RDF::Query::Error::FilterEvaluationError -text => "Illegal division by zero";
+					}
 					$value		= $lhsv / $rhsv;
 				} else {
 					throw RDF::Query::Error::ComparisonError -text => "Cannot evaluate infix:</> on non-numeric types";
@@ -148,7 +157,7 @@ sub evaluate {
 			} else {
 				throw RDF::Query::Error::ExecutionError -text => "Unrecognized binary operator '$op'";
 			}
-			return RDF::Query::Node::Literal->new( $value, undef, $type );
+			return RDF::Query::Node::Literal->new( $value, undef, $type, 1 );
 		} else {
 			throw RDF::Query::Error::ExecutionError -text => "Numeric binary operator '$op' with non-numeric data";
 		}

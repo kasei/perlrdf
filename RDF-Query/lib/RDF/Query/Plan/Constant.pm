@@ -7,7 +7,7 @@ RDF::Query::Plan::Constant - Executable query plan for Constants.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Constant version 2.905.
+This document describes RDF::Query::Plan::Constant version 2.907.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -52,6 +52,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "CONSTANT plan can't be executed while already open";
 	}
@@ -102,7 +103,11 @@ sub next {
 	}
 	my $row	= $binds->[ $self->[0]{'index'}++ ];
 	if ($row) {
-		return RDF::Query::VariableBindings->new( $row );
+		my $bindings	= RDF::Query::VariableBindings->new( $row );
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $bindings );
+		}
+		return $bindings;
 	} else {
 		return;
 	}

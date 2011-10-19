@@ -7,7 +7,7 @@ RDF::Query::Plan::Quad - Executable query plan for Quads.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Quad version 2.905.
+This document describes RDF::Query::Plan::Quad version 2.907.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 use RDF::Query::ExecutionContext;
 use RDF::Query::VariableBindings;
@@ -33,7 +33,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -105,6 +105,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "QUAD plan can't be executed while already open";
 	}
@@ -188,6 +189,9 @@ sub next {
 			}
 		}
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $bindings );
+		}
 		return $bindings;
 	}
 	$l->trace("No more quads");
@@ -297,6 +301,28 @@ the signature returned by C<< plan_prototype >>.
 sub plan_node_data {
 	my $self	= shift;
 	return ($self->nodes);
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the query plan appropriate for display
+on the command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my ($s, $count)	= ('  ', 0);
+	if (@_) {
+		$s		= shift;
+		$count	= shift;
+	}
+	my $indent	= '' . ($s x $count);
+	my $type	= $self->plan_node_name;
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self))
+				. "${indent}${s}"
+				. join(' ', map { ($_->isa('RDF::Trine::Node::Nil')) ? "(nil)" : $_->as_sparql } $self->plan_node_data) . "\n";
+	return $string;
 }
 
 =item C<< graph ( $g ) >>

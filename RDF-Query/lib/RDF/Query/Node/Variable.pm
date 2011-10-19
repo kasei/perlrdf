@@ -7,7 +7,7 @@ RDF::Query::Node::Variable - RDF Node class for variables
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Variable version 2.905.
+This document describes RDF::Query::Node::Variable version 2.907.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -128,6 +128,10 @@ sub referenced_variables {
 	my $self	= shift;
 	my @vars	= map { blessed($_) ? $_->name : $_ } @{ $vars{ refaddr($self) } || [] };
 	return RDF::Query::_uniq(@vars);
+}
+
+sub nonaggregated_referenced_variables {
+	return;
 }
 
 sub DESTROY {

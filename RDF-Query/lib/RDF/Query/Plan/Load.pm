@@ -7,7 +7,7 @@ RDF::Query::Plan::Load - Executable query plan for LOAD operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Load version 2.905.
+This document describes RDF::Query::Plan::Load version 2.907.
 
 =head1 METHODS
 
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -60,6 +60,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "LOAD plan can't be executed while already open";
 	}
@@ -90,6 +91,9 @@ sub next {
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.load");
 	$self->close();
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $self->[0]{ok} );
+	}
 	return $self->[0]{ok};
 }
 

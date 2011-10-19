@@ -3886,7 +3886,7 @@ __END__
   namespaces: {}
   sources: []
   triples:
-    - !!perl/array:RDF::Query::Algebra::Sequence []
+    - !!perl/array:RDF::Query::Algebra::GroupGraphPattern []
   variables:
     - !!perl/array:RDF::Query::Node::Resource
       - URI

@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.135
+This document describes RDF::Trine::Store::SPARQL version 0.136
 
 =head1 SYNOPSIS
 
@@ -24,11 +24,9 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
-use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 
 use RDF::Trine::Error qw(:try);
@@ -38,7 +36,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.136";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -425,22 +423,29 @@ sub count_statements {
 		}
 	}
 	
+	foreach my $i (0 .. $#nodes) {
+		my $node	= $nodes[$i];
+		unless (defined($node)) {
+			$nodes[$i]	= RDF::Trine::Node::Variable->new( "rt__" . $pos_names[$i] );
+		}
+	}
+	
+	
 	my $sparql;
+	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 	if ($use_quad) {
 		my $nodes;
 		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
-			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
-			$nodes		= "GRAPH ?__rt_graph { $triple }";
+			$nodes		= "GRAPH ?rt__graph { $triple }";
 		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
 			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 		} else {
-			my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
 			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
 			$nodes		= "GRAPH $graph { $triple }";
 		}
 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
 	} else {
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { ?s ?p ?o }";
+		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
 	}
 	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
@@ -511,7 +516,8 @@ sub get_sparql {
 	
 # 	warn $sparql;
 	
-	my $url			= $self->{url} . '?query=' . uri_escape($sparql);
+	my $urlchar	= ($self->{url} =~ /\?/ ? '&' : '?');
+	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
@@ -521,6 +527,7 @@ sub get_sparql {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
+		warn Dumper($response);
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }
@@ -544,6 +551,7 @@ sub _get_post_iterator {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
+		warn Dumper($response);
 		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
 	}
 }

@@ -7,7 +7,7 @@ RDF::Query::ExecutionContext - Query execution context
 
 =head1 VERSION
 
-This document describes RDF::Query::ExecutionContext version 2.905.
+This document describes RDF::Query::ExecutionContext version 2.907.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use warnings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -196,6 +196,15 @@ sub strict_errors {
 sub optimistic_threshold_time {
 	my $self	= shift;
 	return $self->_get_value( 'optimistic_threshold_time', @_ );
+}
+
+=item C<< delegate >>
+
+=cut
+
+sub delegate {
+	my $self	= shift;
+	return $self->_get_value( 'delegate', @_ );
 }
 
 sub _get_value {

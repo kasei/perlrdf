@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.905.
+This document describes RDF::Query::Plan::Extend version 2.907.
 
 =head1 METHODS
 
@@ -24,13 +24,13 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 use RDF::Query::Error qw(:try);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.905';
+	$VERSION	= '2.907';
 }
 
 ######################################################################
@@ -61,6 +61,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
 	$l->trace( "executing extend plan: " . $self->sse );
 	if ($self->state == $self->OPEN) {
@@ -92,14 +93,15 @@ sub next {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.extend");
 	my $plan	= $self->[1];
 	while (1) {
-		my $row		= $plan->next;
-		unless (defined($row)) {
+		my $result		= $plan->next;
+		unless (defined($result)) {
 			$l->trace("no remaining rows in extend");
 			if ($self->[1]->state == $self->[1]->OPEN) {
 				$self->[1]->close();
 			}
 			return;
 		}
+		my $row			= RDF::Query::VariableBindings->new( { %$result } );
 		if ($l->is_trace) {
 			$l->trace( "extend on row $row" );
 		}
@@ -111,26 +113,30 @@ sub next {
 		local($query->{_query_row_cache})	= {};
 #		my $proj	= $row->project( @{ $keys } );
 		my $ok	= 1;
-		try {
-			foreach my $e (@$exprs) {
-				my $name			= $e->name;
-				my $var_or_expr	= $e->expression;
-				if ($l->is_trace) {
-					$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
-				}
+		foreach my $e (@$exprs) {
+			my $name			= $e->name;
+			my $var_or_expr	= $e->expression;
+			if ($l->is_trace) {
+				$l->trace( "- extend alias " . $var_or_expr->sse . " -> $name" );
+			}
+			try {
 				my $value		= $query->var_or_expr_value( $row, $var_or_expr, $ctx );
 				if ($l->is_trace) {
 					$l->trace( "- extend value $name -> $value" );
 				}
 				$row->{ $name }	= $value;
-			}
-		} catch RDF::Query::Error with {
-			$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
-		} otherwise {
-			$ok	= 0;
-		};
+			} catch RDF::Query::Error with {
+				$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
+			} otherwise {
+				my $e	= shift;
+				warn Dumper($e);
+			};
+		}
 		next unless ($ok);
 		$l->trace( "Extended result: $row" );
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $row );
+		}
 		return $row;
 	}
 }
@@ -233,6 +239,33 @@ sub graph {
 	$g->add_node( "$self", label => "Extend ($expr)" . $self->graph_labels );
 	$g->add_edge( "$self", $c );
 	return "$self";
+}
+
+=item C<< explain >>
+
+Returns a string serialization of the plan appropriate for display on the
+command line.
+
+=cut
+
+sub explain {
+	my $self	= shift;
+	my $s		= shift;
+	my $count	= shift;
+	my $indent	= $s x $count;
+	my $type	= $self->plan_node_name;
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
+	$string		.= "${indent}${s}vars:\n";
+	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
+	my @exprs	= @{$self->[3]};
+	use Data::Dumper;
+	warn Dumper(\@vars, \@exprs);
+	foreach my $e (@vars, @exprs) {
+		warn $e;
+		$string		.= $e->explain($s, $count+2);
+	}
+	$string		.= $self->pattern->explain( $s, $count+1 );
+	return $string;
 }
 
 
