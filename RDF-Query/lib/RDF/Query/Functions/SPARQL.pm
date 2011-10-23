@@ -1574,8 +1574,9 @@ sub _replace {
  	$replace	=~ s/\$(\d+)/\$$1/g;
  	$replace	=~ s/"/\\"/g;
  	$replace	= qq["$replace"];
+ 	no warnings 'uninitialized';
 	$value	=~ s/$pattern/"$replace"/eeg;
-	warn "==> " . Dumper($value);
+# 	warn "==> " . Dumper($value);
 	return RDF::Query::Node::Literal->new($value, $node->type_list);
 }
 

@@ -176,9 +176,9 @@ sub next {
 		while (1) {
 			if ($self->[0]{iter_stash}) {
 				while (my $row = $self->[0]{iter_stash}->next) {
-					warn "got service RHS row: $row\n";
+# 					warn "got service RHS row: $row\n";
 					my $lhs		= $self->[0]{lhs_row};
-					warn "joining:\n\t$row\n\t$lhs\n";
+# 					warn "joining:\n\t$row\n\t$lhs\n";
 					if (my $j = $row->join( $lhs )) {
 						return $j;
 					}
@@ -187,11 +187,11 @@ sub next {
 			}
 			my $lrow	= $self->lhs->next;
 			unless ($lrow) {
-				warn "reached end of service LHS iterator\n";
+# 				warn "reached end of service LHS iterator\n";
 				delete $self->[0]{lhs_row};
 				return undef;
 			}
-			warn "got service LHS row: $lrow\n";
+# 			warn "got service LHS row: $lrow\n";
 			$self->[0]{lhs_row}	= $lrow;
 			my $endpoint	= $lrow->{ $self->endpoint->name };
 			unless (blessed($endpoint) and $endpoint->isa('RDF::Query::Node::Resource')) {
@@ -201,7 +201,7 @@ sub next {
 			my $bound	= $context->bound || {};
 			my $sparql	= $self->sparql( $bound );
 			my $plan	= $RDF::Query::Plan::PLAN_CLASSES{'service'}->new( $endpoint, $self->pattern, $self->silent, $sparql );
-			warn $plan;
+# 			warn $plan;
 			my $iter	= $plan->execute( $context );
 			return undef unless ($iter);
 			$self->[0]{iter_stash}	= $iter;
