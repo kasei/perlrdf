@@ -122,7 +122,7 @@ sub serialize_model_to_string {
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	
-	my $string	= join("\t", qw(s p o)) . "\n";
+	my $string	= join("\t", qw(?s ?p ?o)) . "\n";
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
 		$string		.= $self->statement_as_string( $st );
@@ -144,7 +144,7 @@ sub serialize_iterator_to_file {
 	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
 		print {$file} $self->serialize_iterator_to_string($iter);
 	} else {
-		print join("\t", qw(subject predicate object)) . "\n";
+		print join("\t", qw(?subject ?predicate ?object)) . "\n";
 		while (my $st = $iter->next) {
 			print {$file} $self->statement_as_string( $st );
 		}
@@ -161,10 +161,24 @@ sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
 	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
-		
+		my $i	= $iter->materialize;
+		my %keys;
+		while (my $r = $i->next) {
+			foreach my $k (keys %{ $r }) {
+				$keys{ $k }++;
+			}
+		}
+		$i->reset;
+		my @keys	= sort keys %keys;
+		my $string	= join("\t", map { '?' . $_ } @keys) . "\n";
+		while (my $r = $i->next) {
+			my @nodes	= @{ $r }{ @keys };
+			my @strings	= map { blessed($_) ? $_->as_ntriples : '' } @nodes;
+			$string	.= join("\t", @strings) . "\n";
+		}
 	} else {
 		# TODO: must print the header line corresponding to the bindings in the entire iterator...
-		my $string	= join("\t", qw(subject predicate object)) . "\n";
+		my $string	= join("\t", qw(?subject ?predicate ?object)) . "\n";
 		while (my $st = $iter->next) {
 			my @nodes	= $st->nodes;
 			$string		.= $self->statement_as_string( $st );
