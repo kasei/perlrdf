@@ -57,6 +57,23 @@ BEGIN {
 
 ######################################################################
 
+=item C<< can_serialize ( $content_class ) >>
+
+Returns true if the serializer object/class can serialize data of the specified
+content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
+and the class can serialize RDF content).
+
+=cut
+
+sub can_serialize {
+	my $self	= shift;
+	my $tclass	= shift;
+	return 1 if ($tclass->isa('RDF::Trine::Model'));
+	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
+	return 1 if ($tclass->isa('RDF::Trine::Iterator::Bindings'));
+	return 0;
+}
+
 =item C<< new >>
 
 Returns a new TSV serializer object.
@@ -124,9 +141,13 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
-	# TODO: must print the header line corresponding to the bindings in the entire iterator...
-	while (my $st = $iter->next) {
-		print {$file} $self->statement_as_string( $st );
+	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
+		print {$file} $self->serialize_iterator_to_string($iter);
+	} else {
+		print join("\t", qw(subject predicate object)) . "\n";
+		while (my $st = $iter->next) {
+			print {$file} $self->statement_as_string( $st );
+		}
 	}
 }
 
@@ -139,13 +160,17 @@ Serializes the iterator to TSV, returning the result as a string.
 sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
-	# TODO: must print the header line corresponding to the bindings in the entire iterator...
-	my $string	= '';
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->statement_as_string( $st );
+	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
+		
+	} else {
+		# TODO: must print the header line corresponding to the bindings in the entire iterator...
+		my $string	= join("\t", qw(subject predicate object)) . "\n";
+		while (my $st = $iter->next) {
+			my @nodes	= $st->nodes;
+			$string		.= $self->statement_as_string( $st );
+		}
+		return $string;
 	}
-	return $string;
 }
 
 sub _serialize_bounded_description {

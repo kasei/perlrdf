@@ -1,4 +1,4 @@
-use Test::More tests => 47;
+use Test::More tests => 49;
 use Test::Exception;
 
 use strict;
@@ -149,3 +149,13 @@ END
 	like( $xml, qr[xmlns="http://example.com/"]sm, 'good XML namespaces using namespacemap from parser' );
 	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/"]sm, 'good XML namespaces using namespacemap from parser' );
 }
+
+{
+	my $h = new HTTP::Headers;
+	$h->header(Accept=>"application/rdf+xml,application/sparql-results+xml");
+	my ($gtype)	= RDF::Trine::Serializer->negotiate( request_headers => $h, type => 'RDF::Trine::Iterator::Graph' );
+	my ($btype)	= RDF::Trine::Serializer->negotiate( request_headers => $h, type => 'RDF::Trine::Iterator::Bindings' );
+	is ( $gtype, 'application/rdf+xml', 'choose serializer for graph iterator' );
+	is ( $btype, 'application/sparql-results+xml', 'choose serializer for bindings iterator' );
+}
+

@@ -62,6 +62,22 @@ BEGIN {
 
 ######################################################################
 
+=item C<< can_serialize ( $content_class ) >>
+
+Returns true if the serializer object/class can serialize data of the specified
+content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
+and the class can serialize RDF content).
+
+=cut
+
+sub can_serialize {
+	my $self	= shift;
+	my $tclass	= shift;
+	return 1 if ($tclass->isa('RDF::Trine::Model'));
+	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
+	return 0;
+}
+
 =item C<< new ( namespaces => \%namespaces, base_uri => $base_uri ) >>
 
 Returns a new Turtle serializer object.

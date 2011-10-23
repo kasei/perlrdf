@@ -102,9 +102,10 @@ C<< %options >> is passed through to the serializer constructor.
 sub negotiate {
 	my $class	= shift;
 	my %options	= @_;
-	my $headers	= delete $options{ 'request_headers' };
+	my $headers		= delete $options{ 'request_headers' };
 	my $restrict	= delete $options{ 'restrict' };
-	my $extend	= delete $options{ 'extend' } || {};
+	my $type		= delete $options{ 'type' };
+	my $extend		= delete $options{ 'extend' } || {};
 	my %sclasses;
 	if (ref($restrict) && ref($restrict) eq 'ARRAY') {
 		$sclasses{ $serializer_names{$_} } = 1 for @$restrict;
@@ -139,6 +140,11 @@ sub negotiate {
 	# remove variants with media types that are in custom_variants from @variants
 	my @variants	= grep { not exists $extend->{ $_->[2] } } @default_variants;
 	push(@variants, @custom_variants);
+	
+	if ($type) {
+		my %data	= map { $_->[2] => ($custom_thunks{ $_->[2] } || $media_types{ $_->[2] }) } @variants;
+		@variants	= grep { $data{$_->[2]}->can_serialize($type) } @variants;
+	}
 	
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and $custom_thunks{ $stype }) {
@@ -232,6 +238,20 @@ sub serialize_iterator_to_string {
 	$self->serialize_iterator_to_file( $fh, $iter );
 	close($fh);
 	return $string;
+}
+
+=item C<< can_serialize ( $content_class ) >>
+
+Returns true if the serializer object/class can serialize data of the specified
+content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
+and the class can serialize RDF content).
+
+=cut
+
+sub can_serialize {
+	my $self	= shift;
+	my $tclass	= shift;
+	return 0;
 }
 
 1;
