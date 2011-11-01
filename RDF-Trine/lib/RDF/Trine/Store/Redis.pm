@@ -91,10 +91,22 @@ sub new {
 	return $self;
 }
 
+=item C<< conn >>
+
+Returns the Redis connection object.
+
+=cut
+
 sub conn {
 	my $self	= shift;
 	return $self->{conn};
 }
+
+=item C<< cache >>
+
+Returns the Cache::LRU object used to cache frequently used redis data.
+
+=cut
 
 sub cache {
 	my $self	= shift;
@@ -286,6 +298,13 @@ sub remove_statements {
 	}
 	return;
 }
+
+=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
 
 sub get_statements {
 	my $self	= shift;
