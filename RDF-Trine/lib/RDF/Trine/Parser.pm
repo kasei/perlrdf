@@ -71,6 +71,8 @@ use RDF::Trine::Parser::TriG;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
+use RDF::Trine::Parser::SPARQLXML;
+use RDF::Trine::Parser::SPARQLJSON;
 
 =item C<< media_type >>
 

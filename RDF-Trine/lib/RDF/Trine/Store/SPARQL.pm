@@ -510,8 +510,7 @@ Returns an iterator object of all bindings matching the specified SPARQL query.
 sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	my $parser	= RDF::Trine::Parser->new('SPARQL/XML');
 	my $ua		= $self->{ua};
 	
 # 	warn $sparql;
@@ -520,8 +519,7 @@ sub get_sparql {
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		return $parser->parse_bindings_string( $response->content );
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
@@ -535,8 +533,7 @@ sub get_sparql {
 sub _get_post_iterator {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	my $parser	= RDF::Trine::Parser->new('SPARQL/XML');
 	my $ua		= $self->{ua};
 	
 # 	warn $sparql;
@@ -544,8 +541,7 @@ sub _get_post_iterator {
 	my $url			= $self->{url};
 	my $response	= $ua->post( $url, query => $sparql );
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		return $parser->parse_bindings_string( $response->content );
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};

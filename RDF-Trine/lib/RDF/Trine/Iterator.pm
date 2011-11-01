@@ -37,8 +37,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 use XML::SAX;
 use RDF::Trine::Node;
-use RDF::Trine::Iterator::SAXHandler;
-use RDF::Trine::Iterator::JSONHandler;
+use RDF::Trine::Parser;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
@@ -173,16 +172,15 @@ Returns a new iterator using the supplied XML in the SPARQL XML Results format.
 sub from_string {
 	my $class	= shift;
 	my $string	= shift;
-	unless (ref($string)) {
-		my $data	= $string;
-		open( my $fh, '<', \$data );
-		$string	= $fh;
+	my $parser	= RDF::Trine::Parser->new('SPARQL/XML');
+	if (ref($string)) {
+		my $fh		= $string;
+		my $iter	= $parser->parse_bindings_file( $fh );
+		return $iter;
+	} else {
+		my $iter	= $parser->parse_bindings_string( $string );
+		return $iter;
 	}
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
-	$p->parse_file( $string );
-	my $iter	= $handler->iterator;
-	return $iter;
 }
 
 =item C<< from_json ( $json ) >>
@@ -192,8 +190,9 @@ sub from_string {
 sub from_json {
 	my $class	= shift;
 	my $json	= shift;
-	my $p		= RDF::Trine::Iterator::JSONHandler->new( @_ );
-	return $p->parse( $json );
+	my $parser	= RDF::Trine::Parser->new('SPARQL/JSON');
+	my $iter	= $parser->parse_bindings_string( $json );
+	return $iter;
 }
 
 

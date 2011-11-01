@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 8;
 use Test::Exception;
 
 use strict;
@@ -13,6 +13,10 @@ use RDF::Trine::Parser;
 throws_ok { RDF::Trine::Parser->new('guess') } 'RDF::Trine::Error::UnimplementedError', "Guess parser isn't implemented yet";
 throws_ok { RDF::Trine::Parser->new('foobar') } 'RDF::Trine::Error::ParserError', "RDF::Trine::Parser constructor throws on unrecognized parser name";
 
+throws_ok {
+	my $p	= RDF::Trine::Parser->new('sparqljson');
+	$p->parse_bindings_string('foo');
+} 'RDF::Trine::Error::ParserError', 'SPARQL/JSON parser throws on bad JSON';
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {
