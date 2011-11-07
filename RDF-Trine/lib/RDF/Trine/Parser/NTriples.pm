@@ -33,7 +33,6 @@ package RDF::Trine::Parser::NTriples;
 use strict;
 use warnings;
 use utf8;
-
 use base qw(RDF::Trine::Parser);
 
 use Carp;

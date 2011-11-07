@@ -206,7 +206,7 @@ sub parse_url_into_model {
 		try {
 			$parser->parse_into_model( $url, $data, $model, %args );
 			$ok	= 1;
-		}
+		};
 		return 1 if ($ok);
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
@@ -243,7 +243,7 @@ sub parse_url_into_model {
 		my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
-	} elsif ($url =~ /[.]x?html?$/) {
+	} elsif ($url =~ /[.]x?html?$/ and $RDF::Trine::Parser::RDFa::HAVE_RDFA_PARSER) {
 		my $parser	= RDF::Trine::Parser::RDFa->new(%options);
 		$parser->parse_into_model( $url, $content, $model, %args );
 		return 1;
@@ -264,6 +264,31 @@ sub parse_url_into_model {
 		}
 	}
 	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+}
+
+=item C<< new_bnode_prefix () >>
+
+Returns a new prefix to be used in the construction of blank node identifiers.
+If either Data::UUID or UUID::Tiny are available, they are used to construct
+a globally unique bnode prefix. Otherwise, an empty string is returned.
+
+=cut
+
+sub new_bnode_prefix {
+	my $class	= shift;
+	if (defined($UUID::Tiny::VERSION)) {
+		no strict 'subs';
+		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} elsif (defined($Data::UUID::VERSION)) {
+		my $ug		= new Data::UUID;
+		my $uuid	= $ug->to_string( $ug->create() );
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} else {
+		return '';
+	}
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
@@ -376,31 +401,6 @@ sub parse_file {
 
 =cut
 
-
-=item C<< new_bnode_prefix () >>
-
-Returns a new prefix to be used in the construction of blank node identifiers.
-If either Data::UUID or UUID::Tiny are available, they are used to construct
-a globally unique bnode prefix. Otherwise, an empty string is returned.
-
-=cut
-
-sub new_bnode_prefix {
-	my $class	= shift;
-	if (defined($UUID::Tiny::VERSION)) {
-		no strict 'subs';
-		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
-		$uuid		=~ s/-//g;
-		return 'b' . $uuid;
-	} elsif (defined($Data::UUID::VERSION)) {
-		my $ug		= new Data::UUID;
-		my $uuid	= $ug->to_string( $ug->create() );
-		$uuid		=~ s/-//g;
-		return 'b' . $uuid;
-	} else {
-		return '';
-	}
-}
 
 
 1;

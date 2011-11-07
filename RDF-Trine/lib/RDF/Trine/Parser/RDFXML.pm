@@ -32,7 +32,6 @@ package RDF::Trine::Parser::RDFXML;
 
 use strict;
 use warnings;
-
 use base qw(RDF::Trine::Parser);
 
 use URI;

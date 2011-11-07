@@ -35,7 +35,6 @@ package RDF::Trine::Parser::Redland;
 
 use strict;
 use warnings;
-
 use base qw(RDF::Trine::Parser);
 
 use Carp;
