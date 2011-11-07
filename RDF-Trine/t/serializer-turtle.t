@@ -470,6 +470,22 @@ END
 }
 
 {
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ ex => 'http://example.org/' });
+	my $hash	= {
+		'_:a' => { "http://example.org/\xC4" => ["\xC4"] }, # A umlaut at two places
+	};
+	my $expect	= <<"END";
+\@prefix ex: <http://example.org/> .
+
+[] ex:\xC3\x84 "\\u00C4" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_hashref($hash);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'IRI with prefixes');
+}
+
+{
 	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref({
 		'http://example.com/doc' => {
