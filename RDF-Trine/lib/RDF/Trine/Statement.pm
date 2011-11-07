@@ -22,6 +22,8 @@ use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
+use URI::Escape qw(uri_unescape);
+use Encode;
 
 ######################################################################
 
@@ -323,7 +325,12 @@ sub from_redland {
 		my $node	= shift;
 		my $type	= $node->type;
 		if ($type == $RDF::Redland::Node::Type_Resource) {
-			return RDF::Trine::Node::Resource->new( $node->uri->as_string );
+			my $uri	= $node->uri->as_string;
+			if ($uri =~ /%/) {
+				# Redland's parser doesn't properly unescape percent-encoded RDF URI References
+				$uri	= decode_utf8(uri_unescape(encode_utf8($uri)));
+			}
+			return RDF::Trine::Node::Resource->new( $uri );
 		} elsif ($type == $RDF::Redland::Node::Type_Blank) {
 			return RDF::Trine::Node::Blank->new( $node->blank_identifier );
 		} elsif ($type == $RDF::Redland::Node::Type_Literal) {
