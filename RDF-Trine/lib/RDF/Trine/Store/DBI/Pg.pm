@@ -75,6 +75,12 @@ sub _column_name {
 	return $col;
 }
 
+=item C<< init >>
+
+Creates the necessary tables in the underlying database.
+
+=cut
+
 sub init {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
