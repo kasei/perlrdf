@@ -49,30 +49,15 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.135';
-	$RDF::Trine::Serializer::serializer_names{ 'sparqljson' }	= __PACKAGE__;
-	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/SPARQL_Results_JSON' }	= __PACKAGE__;
-	foreach my $type (qw(application/sparql-results+json)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Serializer -base => {
+	serializer_names	=> [qw{sparqljson}],
+	format_uris			=> ['http://www.w3.org/ns/formats/SPARQL_Results_JSON'],
+	media_types			=> [qw{application/sparql-results+json}],
+	content_classes		=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Bindings)],
+};
 
 ######################################################################
-
-=item C<< can_serialize ( $content_class ) >>
-
-Returns true if the serializer object/class can serialize data of the specified
-content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
-
-=cut
-
-sub can_serialize {
-	my $self	= shift;
-	my $tclass	= shift;
-	return 1 if ($tclass->isa('RDF::Trine::Model'));
-	return 1 if ($tclass->isa('RDF::Trine::Iterator::Bindings'));
-	return 0;
-}
 
 =item C<< new >>
 

@@ -53,30 +53,15 @@ our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
 	$VERSION	= '0.136';
-	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
-	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
-	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Serializer -base => {
+	serializer_names	=> [qw{turtle}],
+	format_uris			=> ['http://www.w3.org/ns/formats/Turtle'],
+	media_types			=> [qw{application/x-turtle application/turtle text/turtle text/rdf+n3}],
+	content_classes		=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 ######################################################################
-
-=item C<< can_serialize ( $content_class ) >>
-
-Returns true if the serializer object/class can serialize data of the specified
-content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
-
-=cut
-
-sub can_serialize {
-	my $self	= shift;
-	my $tclass	= shift;
-	return 1 if ($tclass->isa('RDF::Trine::Model'));
-	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
-	return 0;
-}
 
 =item C<< new ( namespaces => \%namespaces, base_uri => $base_uri ) >>
 

@@ -49,29 +49,14 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Serializer::serializer_names{ 'rdfjson' }	= __PACKAGE__;
-	foreach my $type (qw(application/json application/x-rdf+json)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Serializer -base => {
+	serializer_names	=> [qw{rdfjson}],
+	media_types			=> [qw{application/json application/x-rdf+json}],
+	content_classes		=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 ######################################################################
-
-=item C<< can_serialize ( $content_class ) >>
-
-Returns true if the serializer object/class can serialize data of the specified
-content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
-
-=cut
-
-sub can_serialize {
-	my $self	= shift;
-	my $tclass	= shift;
-	return 1 if ($tclass->isa('RDF::Trine::Model'));
-	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
-	return 0;
-}
 
 =item C<< new >>
 

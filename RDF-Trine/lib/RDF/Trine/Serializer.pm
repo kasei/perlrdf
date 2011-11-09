@@ -18,6 +18,10 @@ This document describes RDF::Trine::Serializer version 0.136
 The RDF::Trine::Serializer class provides an API for serializing RDF graphs
 (via both model objects and graph iterators) to strings and files.
 
+=head1 METHODS
+
+=over 4
+
 =cut
 
 package RDF::Trine::Serializer;
@@ -33,8 +37,33 @@ our ($VERSION);
 our %serializer_names;
 our %format_uris;
 our %media_types;
+our %content_classes;
 BEGIN {
 	$VERSION	= '0.136';
+}
+
+sub import {
+	my ($invocant, $base, $data) = @_;
+	$base = '' unless defined $base;
+	return unless $base eq '-base';
+	my ($class) = $data->{class} ? ($data->{class}) : caller();
+	
+	{
+		no strict 'refs';
+		push @{"$class\::ISA"}, @{ $data->{isa} || [__PACKAGE__] };
+	}
+	
+	$serializer_names{lc $_} = $class
+		foreach @{ $data->{serializer_names} || [] };
+	
+	$format_uris{lc $_} = $class
+		foreach @{ $data->{format_uris} || [] };
+	
+	$media_types{lc $_} = $class
+		foreach @{ $data->{media_types} || [] };
+	
+	push(@{$content_classes{$class}}, $_)
+		foreach @{ $data->{content_classes} || []};
 }
 
 use RDF::Trine::Serializer::NQuads;
@@ -44,10 +73,6 @@ use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
 
-
-=head1 METHODS
-
-=over 4
 
 =item C<< serializer_names >>
 
@@ -254,7 +279,12 @@ and the class can serialize RDF content). The valid content class arguments are:
 
 sub can_serialize {
 	my $self	= shift;
+	my $class	= ref($self) || $self;
 	my $tclass	= shift;
+	my @list	= @{ $content_classes{$class} || [] };
+	foreach my $c (@list) {
+		return 1 if ($tclass->isa($c));
+	}
 	return 0;
 }
 

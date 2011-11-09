@@ -48,30 +48,16 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
-	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
-	foreach my $type (qw(text/x-nquads)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Serializer -base => {
+	isa             	=> [qw{RDF::Trine::Serializer::NTriples}],
+	serializer_names	=> [qw{nquads}],
+	format_uris			=> ['http://sw.deri.org/2008/07/n-quads/#n-quads'],
+	media_types			=> [qw{text/x-nquads}],
+	content_classes		=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 ######################################################################
-
-=item C<< can_serialize ( $content_class ) >>
-
-Returns true if the serializer object/class can serialize data of the specified
-content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
-
-=cut
-
-sub can_serialize {
-	my $self	= shift;
-	my $tclass	= shift;
-	return 1 if ($tclass->isa('RDF::Trine::Model'));
-	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
-	return 0;
-}
 
 =item C<< new >>
 

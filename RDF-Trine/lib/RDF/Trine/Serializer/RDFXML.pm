@@ -33,7 +33,6 @@ package RDF::Trine::Serializer::RDFXML;
 
 use strict;
 use warnings;
-use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
@@ -49,30 +48,15 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
-	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
-	foreach my $type (qw(application/rdf+xml)) {
-		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Serializer -base => {
+	serializer_names	=> [qw{rdfxml}],
+	format_uris			=> ['http://www.w3.org/ns/formats/RDF_XML'],
+	media_types			=> [qw{application/rdf+xml}],
+	content_classes		=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 ######################################################################
-
-=item C<< can_serialize ( $content_class ) >>
-
-Returns true if the serializer object/class can serialize data of the specified
-content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
-
-=cut
-
-sub can_serialize {
-	my $self	= shift;
-	my $tclass	= shift;
-	return 1 if ($tclass->isa('RDF::Trine::Model'));
-	return 1 if ($tclass->isa('RDF::Trine::Iterator::Graph'));
-	return 0;
-}
 
 =item C<< new ( namespaces => \%namespaces, base_uri => $baseuri ) >>
 
