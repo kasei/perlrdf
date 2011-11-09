@@ -44,6 +44,9 @@ use Data::Dumper;
 use Encode qw(decode);
 use LWP::MediaTypes;
 use Module::Load::Conditional qw[can_load];
+use Scalar::Util qw(blessed);
+use LWP::UserAgent;
+use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 our %file_extensions;
@@ -53,7 +56,6 @@ our %media_types;
 our %format_uris;
 our %encodings;
 our %content_classes;
-
 BEGIN {
 	$VERSION	= '0.136';
 	can_load( modules => {
@@ -61,11 +63,6 @@ BEGIN {
 		'UUID::Tiny'	=> undef,
 	} );
 }
-
-use Scalar::Util qw(blessed);
-use LWP::UserAgent;
-
-use RDF::Trine::Error qw(:try);
 
 sub import {
 	my ($invocant, $base, $data) = @_;
