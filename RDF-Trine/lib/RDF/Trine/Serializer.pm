@@ -244,7 +244,11 @@ sub serialize_iterator_to_string {
 
 Returns true if the serializer object/class can serialize data of the specified
 content class (e.g. returns true if $content_class is 'RDF::Trine::Iterator::Graph'
-and the class can serialize RDF content).
+and the class can serialize RDF content). The valid content class arguments are:
+
+ RDF::Trine::Iterator::Bindings
+ RDF::Trine::Iterator::Graph
+ RDF::Trine::Model
 
 =cut
 
