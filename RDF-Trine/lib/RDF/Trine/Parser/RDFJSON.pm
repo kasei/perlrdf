@@ -56,7 +56,8 @@ use RDF::Trine::Parser -base => {
 	format_uris     => [],
 	file_extensions => [qw{json js}],
 	media_types     => [qw{application/json application/x-rdf+json}],
-	};
+	content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 =item C<< new >>
 

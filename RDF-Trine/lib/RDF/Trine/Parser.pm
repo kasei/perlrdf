@@ -52,6 +52,7 @@ our %canonical_media_types;
 our %media_types;
 our %format_uris;
 our %encodings;
+our %content_classes;
 
 BEGIN {
 	$VERSION	= '0.136';
@@ -92,6 +93,9 @@ sub import {
 		foreach @{ $data->{format_uris} || [] };
 	
 	$encodings{$class} = $data->{encoding} || undef;
+	
+	push(@{$content_classes{$class}}, $_)
+		foreach @{ $data->{content_classes} || []};
 }
 
 use RDF::Trine::Parser::NTriples;
@@ -159,6 +163,29 @@ sub guess_parser_by_filename {
 		return $file_extensions{ $ext } if exists $file_extensions{ $ext };
 	}
 	return $class->parser_by_media_type( 'application/rdf+xml' ) || 'RDF::Trine::Parser::RDFXML';
+}
+
+=item C<< can_parse ( $content_class ) >>
+
+Returns true if the parser object/class can parse content resulting in data of
+the specified content class (e.g. returns true if $content_class is
+'RDF::Trine::Iterator::Graph' and the class can parse RDF content).
+The valid content class arguments are:
+
+ RDF::Trine::Iterator::Bindings
+ RDF::Trine::Iterator::Graph
+
+=cut
+
+sub can_parse {
+	my $self	= shift;
+	my $class	= ref($self) || $self;
+	my $tclass	= shift;
+	my @list	= @{ $content_classes{$class} || [] };
+	foreach my $c (@list) {
+		return 1 if ($tclass->isa($c));
+	}
+	return 0;
 }
 
 =item C<< new ( $parser_name, @args ) >>

@@ -48,20 +48,17 @@ use Scalar::Util qw(blessed looks_like_number);
 
 ######################################################################
 
-our ($VERSION, @ISA);
+our ($VERSION);
 BEGIN {
 	$VERSION				= '0.136';
-	@ISA					= qw(RDF::Trine::Parser);
-	$RDF::Trine::Parser::parser_names{ 'sparqlxml' }	= __PACKAGE__;
-	foreach my $ext (qw(srx)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/sparql-results+xml';
-	foreach my $type (qw(application/sparql-results+xml)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Parser -base => {
+	parser_names    => [qw{sparqlxml}],
+	format_uris     => ['http://www.w3.org/ns/formats/SPARQL_Results_XML'],
+	file_extensions => [qw{srx}],
+	media_types     => [qw{application/sparql-results+xml}],
+	content_classes	=> [qw(RDF::Trine::Iterator::Bindings)],
+};
 
 ######################################################################
 

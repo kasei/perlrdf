@@ -59,6 +59,7 @@ use RDF::Trine::Parser -base => {
 	format_uris     => ['http://www.w3.org/ns/formats/RDF_XML'],
 	file_extensions => [qw{rdf xrdf rdfx}],
 	media_types     => [qw{application/rdf+xml application/octet-stream}],
+	content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
 };
 
 ######################################################################

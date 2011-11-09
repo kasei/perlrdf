@@ -56,6 +56,7 @@ BEGIN {
 			format_uris     => ['http://www.w3.org/ns/formats/RDFa'],
 			file_extensions => [qw{html xhtml htm}],
 			media_types     => [qw{application/xhtml+xml text/html}],
+			content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
 		});
 	}
 }

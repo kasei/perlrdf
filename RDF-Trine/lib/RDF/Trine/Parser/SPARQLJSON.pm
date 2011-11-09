@@ -49,20 +49,17 @@ use JSON;
 
 ######################################################################
 
-our ($VERSION, @ISA);
+our ($VERSION);
 BEGIN {
 	$VERSION				= '0.136';
-	@ISA					= qw(RDF::Trine::Parser);
-	$RDF::Trine::Parser::parser_names{ 'sparqljson' }	= __PACKAGE__;
-	foreach my $ext (qw(srj)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/sparql-results+json';
-	foreach my $type (qw(application/sparql-results+json)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Parser -base => {
+	parser_names    => [qw{sparqljson}],
+	format_uris     => ['http://www.w3.org/ns/formats/SPARQL_Results_JSON'],
+	file_extensions => [qw{srj}],
+	media_types     => [qw{application/sparql-results+json}],
+	content_classes	=> [qw(RDF::Trine::Iterator::Bindings)],
+};
 
 ######################################################################
 

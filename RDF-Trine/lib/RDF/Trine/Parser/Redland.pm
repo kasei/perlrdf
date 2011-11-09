@@ -95,6 +95,7 @@ BEGIN {
 				format_uris     => [ $FORMATS{$format}[1] ? ($FORMATS{$format}[1]) : () ],
 				file_extensions => $FORMATS{$format}[3],
 				media_types     => $FORMATS{$format}[2],
+				content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
 			});
 		}	
 	}

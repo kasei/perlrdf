@@ -56,7 +56,8 @@ use RDF::Trine::Parser -base => {
 	file_extensions => [qw{ttl}],
 	media_types     => [qw{text/turtle application/x-turtle application/turtle}],
 	encoding        => 'utf8',
-	};
+	content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
+};
 
 our ($rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);

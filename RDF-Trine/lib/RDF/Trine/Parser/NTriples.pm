@@ -56,6 +56,7 @@ use RDF::Trine::Parser -base => {
 	format_uris     => ['http://www.w3.org/ns/formats/N-Triples'],
 	file_extensions => [qw{nt}],
 	media_types     => [qw{text/plain}],
+	content_classes	=> [qw(RDF::Trine::Model RDF::Trine::Iterator::Graph)],
 };
 
 ######################################################################
