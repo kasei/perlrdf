@@ -34,8 +34,6 @@ use strict;
 use warnings;
 use utf8;
 
-use base qw(RDF::Trine::Parser::NTriples);
-
 use Carp;
 use Encode qw(decode);
 use Data::Dumper;
@@ -52,17 +50,14 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
-	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
-	foreach my $ext (qw(nq)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/x-nquads';
-	foreach my $type (qw(text/x-nquads)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
 }
+use RDF::Trine::Parser -base => {
+	isa             => [qw{RDF::Trine::Parser::NTriples}],
+	parser_names    => [qw{nquads}],
+	format_uris     => ['http://sw.deri.org/2008/07/n-quads/#n-quads'],
+	file_extensions => [qw{nq}],
+	media_types     => [qw{text/x-nquads}],
+	};
 
 ######################################################################
 

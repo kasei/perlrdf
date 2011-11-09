@@ -34,22 +34,22 @@ use strict;
 use warnings;
 no warnings 'redefine';
 no warnings 'once';
-use base qw(RDF::Trine::Parser::Turtle);
 
 use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '0.136';
-	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
-	foreach my $ext (qw(trig)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-# 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
-# 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-# 	}
+	$VERSION	= '0.136';
 }
-
+use RDF::Trine::Parser -base => {
+	isa             => [qw{RDF::Trine::Parser::Turtle}],
+	parser_names    => [qw{trig}],
+	format_uris     => [],
+	file_extensions => [qw{trig}],
+	media_types     => [qw{text/x-trig}],
+	encoding        => 'utf8',
+	};
+	
 sub _triple {
 	my $self	= shift;
 	my $s		= shift;

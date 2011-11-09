@@ -35,7 +35,7 @@ package RDF::Trine::Parser::Redland;
 
 use strict;
 use warnings;
-use base qw(RDF::Trine::Parser);
+use RDF::Trine::Parser -base => {};
 
 use Carp;
 use Data::Dumper;
@@ -67,7 +67,7 @@ BEGIN {
 	turtle	 => [
 					'RDF::Trine::Parser::Redland::Turtle',
 					'http://www.w3.org/ns/formats/Turtle',
-					[qw(application/x-turtle application/turtle text/turtle)],
+					[qw(text/turtle application/x-turtle application/turtle)],
 					[qw(ttl)]
 				],
 	trig	 => [
@@ -83,22 +83,23 @@ BEGIN {
 					[], #[qw(html xhtml)]
 				],
 	);
-	
-	$VERSION	= '0.136';
-	for my $format (keys %FORMATS) {
-		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
-		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
-			if defined $FORMATS{$format}[1];
-		map { $RDF::Trine::Parser::media_types{$_} = $FORMATS{$format}[0] }
-			(@{$FORMATS{$format}[2]});
-		map { $RDF::Trine::Parser::file_extensions{$_} = $FORMATS{$format}[0] }
-			(@{$FORMATS{$format}[3]});
-	}
-	
+
 	eval "use RDF::Redland 1.000701;";
 	unless ($@) {
 		$HAVE_REDLAND_PARSER	= 1;
+		for my $format (keys %FORMATS) {
+			RDF::Trine::Parser->import(-base => {
+				class           => $FORMATS{$format}[0],
+				isa             => [qw{RDF::Trine::Parser::Redland}],
+				parser_names    => [ $format ],
+				format_uris     => [ $FORMATS{$format}[1] ? ($FORMATS{$format}[1]) : () ],
+				file_extensions => $FORMATS{$format}[3],
+				media_types     => $FORMATS{$format}[2],
+			});
+		}	
 	}
+
+	$VERSION	= '0.136';
 }
 
 ######################################################################

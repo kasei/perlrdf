@@ -34,7 +34,6 @@ use strict;
 use warnings;
 no warnings 'redefine';
 no warnings 'once';
-use base qw(RDF::Trine::Parser);
 
 use URI;
 use Log::Log4perl;
@@ -46,22 +45,22 @@ use RDF::Trine::Namespace;
 use RDF::Trine::Node;
 use RDF::Trine::Error;
 
-our ($VERSION, $rdf, $xsd);
-our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
+
+our ($VERSION);
 BEGIN {
-	$VERSION				= '0.136';
-	foreach my $ext (qw(ttl)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/turtle';
-	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
-	
+	$VERSION	= '0.136';
+}
+use RDF::Trine::Parser -base => {
+	parser_names    => [qw{turtle}],
+	format_uris     => ['http://www.w3.org/ns/formats/Turtle'],
+	file_extensions => [qw{ttl}],
+	media_types     => [qw{text/turtle application/x-turtle application/turtle}],
+	encoding        => 'utf8',
+	};
+
+our ($rdf, $xsd);
+our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
+BEGIN {	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 	

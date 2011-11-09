@@ -32,7 +32,6 @@ package RDF::Trine::Parser::RDFXML;
 
 use strict;
 use warnings;
-use base qw(RDF::Trine::Parser);
 
 use URI;
 use Carp;
@@ -51,23 +50,16 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '0.136';
-	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
-	foreach my $ext (qw(rdf xrdf rdfx)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/rdf+xml';
-	foreach my $type (qw(application/rdf+xml application/octet-stream)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
-	
-	$HAS_XML_LIBXML	= can_load( modules => {
-		'XML::LibXML'	=> 1.70,
-	} );
-
+	$VERSION	= '0.136';	
+	$HAS_XML_LIBXML = can_load(modules => {'XML::LibXML' => 1.70});
 }
+
+use RDF::Trine::Parser -base => {
+	parser_names    => [qw{rdfxml}],
+	format_uris     => ['http://www.w3.org/ns/formats/RDF_XML'],
+	file_extensions => [qw{rdf xrdf rdfx}],
+	media_types     => [qw{application/rdf+xml application/octet-stream}],
+};
 
 ######################################################################
 

@@ -39,6 +39,7 @@ package RDF::Trine::Parser;
 use strict;
 use warnings;
 no warnings 'redefine';
+use Carp qw();
 use Data::Dumper;
 use Encode qw(decode);
 use LWP::MediaTypes;
@@ -64,6 +65,35 @@ use Scalar::Util qw(blessed);
 use LWP::UserAgent;
 
 use RDF::Trine::Error qw(:try);
+
+sub import {
+	my ($invocant, $base, $data) = @_;
+	$base = '' unless defined $base;
+	return unless $base eq '-base';
+	my ($class) = $data->{class} ? ($data->{class}) : caller();
+	
+	{
+		no strict 'refs';
+		push @{"$class\::ISA"}, @{ $data->{isa} || [__PACKAGE__] };
+	}
+	
+	$parser_names{lc $_} = $class
+		foreach @{ $data->{parser_names} || [] };
+	
+	$file_extensions{lc $_} = $class
+		foreach @{ $data->{file_extensions} || [] };
+	
+	$media_types{lc $_} = $class
+		foreach @{ $data->{media_types} || [] };
+	$canonical_media_types{$class} = lc $data->{media_types}[0]
+		if @{ $data->{media_types} || [] };
+	
+	$format_uris{$_} = $class
+		foreach @{ $data->{format_uris} || [] };
+	
+	$encodings{$class} = $data->{encoding} || undef;
+}
+
 use RDF::Trine::Parser::NTriples;
 use RDF::Trine::Parser::NQuads;
 use RDF::Trine::Parser::Turtle;
@@ -400,7 +430,6 @@ sub parse_file {
 =item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =cut
-
 
 
 1;

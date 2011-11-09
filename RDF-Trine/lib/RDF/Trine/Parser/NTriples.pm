@@ -33,7 +33,6 @@ package RDF::Trine::Parser::NTriples;
 use strict;
 use warnings;
 use utf8;
-use base qw(RDF::Trine::Parser);
 
 use Carp;
 use Encode qw(decode);
@@ -51,17 +50,13 @@ use RDF::Trine::Error qw(:try);
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
-	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
-	foreach my $ext (qw(nt)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/plain';
-	foreach my $type (qw(text/plain)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 }
+use RDF::Trine::Parser -base => {
+	parser_names    => [qw{ntriples n-triples}],
+	format_uris     => ['http://www.w3.org/ns/formats/N-Triples'],
+	file_extensions => [qw{nt}],
+	media_types     => [qw{text/plain}],
+};
 
 ######################################################################
 
