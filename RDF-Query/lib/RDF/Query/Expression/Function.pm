@@ -52,6 +52,8 @@ our %FUNCTION_MAP	= (
 	in			=> "IN",
 	notin		=> "NOT IN",
 	if			=> "IF",
+	'logical-or'	=> "||",
+	'logical-and'	=> "&&",
 );
 
 =head1 METHODS
@@ -140,7 +142,7 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(logical-and|logical-or|in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
 	if ($func eq 'IN' or $func eq 'NOT IN') {
@@ -150,6 +152,12 @@ sub as_sparql {
 			$term->as_sparql( $context, $indent ),
 			$func,
 			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	} elsif ($func eq '||' or $func eq '&&') {
+		my $string	= sprintf(
+			"(%s) $func (%s)",
+			(map { $_->as_sparql( $context, $indent ) } @args),
 		);
 		return $string;
 	} else {

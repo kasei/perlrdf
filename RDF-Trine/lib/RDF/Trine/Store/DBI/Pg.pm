@@ -75,6 +75,66 @@ sub _column_name {
 	return $col;
 }
 
+=item C<< init >>
+
+Creates the necessary tables in the underlying database.
+
+=cut
+
+sub init {
+	my $self	= shift;
+	my $dbh		= $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
+	unless ($self->_table_exists("literals")) {
+		$dbh->begin_work;
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE literals (
+				ID NUMERIC(20) PRIMARY KEY,
+				Value text NOT NULL,
+				Language text NOT NULL DEFAULT '',
+				Datatype text NOT NULL DEFAULT ''
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE resources (
+				ID NUMERIC(20) PRIMARY KEY,
+				URI text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE bnodes (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+			CREATE TABLE models (
+				ID NUMERIC(20) PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		
+		$dbh->commit or warn $dbh->errstr;
+	}
+	
+	unless ($self->_table_exists("statements${id}")) {
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+			CREATE TABLE statements${id} (
+				Subject NUMERIC(20) NOT NULL,
+				Predicate NUMERIC(20) NOT NULL,
+				Object NUMERIC(20) NOT NULL,
+				Context NUMERIC(20) NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
+END
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
+	}
+	
+}
 
 
 1; # Magic true value required at end of module

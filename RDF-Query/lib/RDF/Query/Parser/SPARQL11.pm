@@ -1820,8 +1820,8 @@ sub _GraphGraphPattern {
 		}
 	}
 	
-	$self->_eat( qr/GRAPH/i );
-	$self->__consume_ws;
+	$self->_eat( qr/GRAPH\b/i );
+	$self->__consume_ws_opt;
 	$self->_VarOrIRIref;
 	my ($graph)	= splice(@{ $self->{stack} });
 	$self->__consume_ws_opt;
