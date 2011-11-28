@@ -63,7 +63,7 @@ use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(number_of_tests create_data all_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
+our @EXPORT = qw(number_of_tests number_of_triple_tests create_data all_store_tests all_triple_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
 
 
 
@@ -79,6 +79,16 @@ Returns the number of tests run with C<all_store_tests>.
 
 sub number_of_tests {
   return 209; # Remember to update whenever adding tests
+}
+
+=item C<< number_of_triple_tests >>
+
+Returns the number of tests run with C<all_triple_store_tests>.
+
+=cut
+
+sub number_of_triple_tests {
+  return 87; # Remember to update whenever adding tests
 }
 
 
@@ -203,17 +213,6 @@ sub all_triple_store_tests {
 	TODO: {
 	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 	  
-	# throws_ok {
-	#   my $st	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
-	#   $store->add_statement( $st );
-	# } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws when called with quad';
-      
-	
-	# throws_ok {
-	# 	my $st	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
-	# 	$store->remove_statement( $st, $ex->e );
-	# } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with context';
-
 	dies_ok {
 		$store->get_contexts;
 	} 'get_context dies';

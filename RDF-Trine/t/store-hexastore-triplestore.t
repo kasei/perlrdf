@@ -3,7 +3,7 @@ use lib "$Bin/lib";
 
 use Test::RDF::Trine::Store qw(all_triple_store_tests number_of_triple_tests);
 
-use Test::More;# tests => 1 + Test::RDF::Trine::Store::number_of_triple_tests;
+use Test::More tests => -4 + Test::RDF::Trine::Store::number_of_triple_tests;
 
 use strict;
 use warnings;
