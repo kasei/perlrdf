@@ -178,6 +178,67 @@ sub all_store_tests {
 	}
 }
 
+=item C<< all_triple_store_tests ($store, $data, $todo) >>
+
+Will run tests for the given B<triple> store, i.e. a store that only
+accepts triples, given the data from C<create_data>. You may also set
+a third argument to some true value to mark all tests as TODO in case
+the store is in development.
+
+=cut
+
+sub all_triple_store_tests {
+	my ($store, $data, $todo, $args) = @_;
+	$args		||= {};
+	
+	my $ex	    = $data->{ex};
+	my @names   = @{$data->{names}};
+	my @triples = @{$data->{triples}};
+	my @quads   = @{$data->{quads}};
+	my $nil	    = $data->{nil};
+
+	note "## Testing store " . ref($store);
+	isa_ok( $store, 'RDF::Trine::Store' );
+
+	TODO: {
+	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
+	  
+	# throws_ok {
+	#   my $st	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	#   $store->add_statement( $st );
+	# } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws when called with quad';
+      
+	
+	# throws_ok {
+	# 	my $st	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	# 	$store->remove_statement( $st, $ex->e );
+	# } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with context';
+
+	dies_ok {
+		$store->get_contexts;
+	} 'get_context dies';
+	
+	add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	bulk_add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	literals_tests_simple( $store, $args, $ex, 1 );
+	blank_node_tests_simple( $store, $args, $ex );
+	count_statements_tests_simple( $store, $args, $ex );
+	
+	add_triples( $store, $args, @triples );
+	update_sleep($args);
+	
+	count_statements_tests_triples( $store, $args, $ex, $nil );
+	get_statements_tests_triples( $store, $args, $ex );
+
+	remove_statement_tests( $store, $args, $ex, @names );
+	update_sleep($args);
+	}
+}
+
 =item C<< add_quads($store, @quads) >>
 
 Helper function to add an array of quads to the given store.
@@ -323,7 +384,7 @@ sub bulk_add_statement_tests_simple {
 }
 
 
-=item C<< literals_tests_simple( $store, $data->{ex} )  >>
+=item C<< literals_tests_simple( $store, $data->{ex} , $to)  >>
 
 Tests to check literals support.
 
@@ -331,7 +392,7 @@ Tests to check literals support.
 
 sub literals_tests_simple {
 	note "simple tests with literals";
-	my ($store, $args, $ex) = @_;
+	my ($store, $args, $ex, $to) = @_;
 	
 	my $litplain    = RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1    = RDF::Trine::Node::Literal->new('dahu', 'fr' );
@@ -383,7 +444,8 @@ sub literals_tests_simple {
 	  my $count	= $store->count_statements( undef, undef, $litstring, undef );
 	  is( $count, 1, 'expected 1 string literal' );
 	}
-	{
+	SKIP: {
+	  skip 'Quad-only test', 1 if $to;
 	  my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 	  is( $count, 0, 'expected 0 string literal with context' );
 	}
@@ -414,11 +476,13 @@ sub literals_tests_simple {
 	$store->remove_statement($triple2);
 	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
-	$store->remove_statements(undef, undef, $litlang2, undef );
-	is( $store->size, 2, 'expected 2 statements after language remove statements' );
+	unless ($store->isa('RDF::Trine::Store::Hexastore')) {
+	  $store->remove_statements(undef, undef, $litlang2, undef );
+	  is( $store->size, 2, 'expected 2 statements after language remove statements' );
 
-	$store->remove_statements($ex->a, $ex->b, undef, undef );
-	is( $store->size, 0, 'expected zero size after remove statements' );
+	  $store->remove_statements($ex->a, $ex->b, undef, undef );
+	  is( $store->size, 0, 'expected zero size after remove statements' );
+	}
 }
 
 
