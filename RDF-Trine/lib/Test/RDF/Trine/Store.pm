@@ -476,7 +476,9 @@ sub literals_tests_simple {
 	$store->remove_statement($triple2);
 	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
-	unless ($store->isa('RDF::Trine::Store::Hexastore')) {
+	if ($store->isa('RDF::Trine::Store::Hexastore')) {
+	  $store->nuke;
+	} else {
 	  $store->remove_statements(undef, undef, $litlang2, undef );
 	  is( $store->size, 2, 'expected 2 statements after language remove statements' );
 
@@ -560,6 +562,75 @@ sub blank_node_tests_quads {
 	is( $store->size, 1, 'expected single triples after remove statement' );
 	$store->remove_statement( $quad );
 	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
+=item C<< blank_node_tests_triples( $store, $data->{ex} )  >>
+
+Tests to check blank node support for triples.
+
+=cut
+
+
+sub blank_node_tests_triples {
+	note "triple tests with blank nodes";
+	my ($store, $args, $ex) = @_;
+	
+	my $blankfoo    = RDF::Trine::Node::Blank->new('foo');
+	my $blankbar    = RDF::Trine::Node::Blank->new('bar');
+	my $triple	= RDF::Trine::Statement->new($blankfoo, $ex->b, $ex->c);
+	my $triple2	= RDF::Trine::Statement->new($ex->c, $ex->d, $blankbar);
+	$store->add_statement( $triple );
+	is( $store->size, 1, 'store has 1 statement after (triple) add' );
+	$store->add_statement( $triple );
+	is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
+	$store->remove_statement( $triple );
+	is( $store->size, 0, 'store has 0 statements after (triple) remove' );
+	
+	$store->add_statement( $triple2 );
+	is( $store->size, 1, 'store has 1 statement after (triple) add' );
+	$store->add_statement( $triple );
+	is( $store->size, 2, 'store has 2 statements after (triple) add' );
+
+	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $blankfoo);
+	$store->add_statement( $triple3 );
+	is( $store->size, 3, 'store has 3 statements after (triple) add' );
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $blankfoo );
+	  is( $count, 0, 'expected zero of blank object statements' );
+	}
+
+	{
+	  my $count	= $store->count_statements( undef, undef, $blankfoo, undef );
+	  is( $count, 1, 'expected one object blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankbar, undef, $blankfoo, undef );
+	  is( $count, 0, 'expected zero subject-object blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankfoo, undef, undef, $ex->d );
+	  is( $count, 1, 'expected one subject-context blank node' );
+	}
+
+	{
+	  my $count	= $store->count_statements( $blankfoo, $ex->b, undef, undef );
+	  is( $count, 1, 'expected one subject-predicate blank node' );
+	}
+
+	if ($store->isa('RDF::Trine::Store::Hexastore')) {
+	  $store->nuke;
+	} else {
+	  $store->remove_statements( undef, undef, $blankfoo, undef );
+	  is( $store->size, 2, 'expected two triples after remove statements' );
+	  
+	  $store->remove_statement( $triple2 );
+	  is( $store->size, 1, 'expected single triples after remove statement' );
+	  $store->remove_statement( $triple );
+	  is( $store->size, 0, 'expected zero size after remove statement' );
+	}
 }
 
 
