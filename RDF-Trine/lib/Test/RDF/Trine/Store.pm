@@ -234,8 +234,6 @@ sub all_triple_store_tests {
 	count_statements_tests_triples( $store, $args, $ex, $nil, 1 );
 	get_statements_tests_triples( $store, $args, $ex );
 
-	remove_statement_tests( $store, $args, $ex, @names );
-	update_sleep($args);
 	}
 }
 
