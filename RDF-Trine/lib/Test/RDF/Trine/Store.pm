@@ -53,7 +53,7 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
-
+ 
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
@@ -157,7 +157,7 @@ sub all_store_tests {
 	update_sleep($args);
 	
 	literals_tests_simple( $store, $args, $ex );
-	blank_node_tests_simple( $store, $args, $ex );
+	blank_node_tests_quads( $store, $args, $ex );
 	count_statements_tests_simple( $store, $args, $ex );
 	
 	add_quads( $store, $args, @quads );
@@ -225,7 +225,7 @@ sub all_triple_store_tests {
 	update_sleep($args);
 	
 	literals_tests_simple( $store, $args, $ex, 1 );
-	blank_node_tests_simple( $store, $args, $ex );
+	blank_node_tests_triples( $store, $args, $ex );
 	count_statements_tests_simple( $store, $args, $ex );
 	
 	add_triples( $store, $args, @triples );
@@ -486,15 +486,15 @@ sub literals_tests_simple {
 }
 
 
-=item C<< blank_node_tests_simple( $store, $data->{ex} )  >>
+=item C<< blank_node_tests_quads( $store, $data->{ex} )  >>
 
-Tests to check blank node support.
+Tests to check blank node support for quads.
 
 =cut
 
 
-sub blank_node_tests_simple {
-	note "simple tests with blank nodes";
+sub blank_node_tests_quads {
+	note "quad tests with blank nodes";
 	my ($store, $args, $ex) = @_;
 	
 	my $blankfoo    = RDF::Trine::Node::Blank->new('foo');
