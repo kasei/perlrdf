@@ -226,12 +226,12 @@ sub all_triple_store_tests {
 	
 	literals_tests_simple( $store, $args, $ex, 1 );
 	blank_node_tests_triples( $store, $args, $ex );
-	count_statements_tests_simple( $store, $args, $ex );
+	count_statements_tests_simple( $store, $args, $ex, 1 );
 	
 	add_triples( $store, $args, @triples );
 	update_sleep($args);
 	
-	count_statements_tests_triples( $store, $args, $ex, $nil );
+	count_statements_tests_triples( $store, $args, $ex, $nil, 1 );
 	get_statements_tests_triples( $store, $args, $ex );
 
 	remove_statement_tests( $store, $args, $ex, @names );
@@ -596,11 +596,6 @@ sub blank_node_tests_triples {
 	is( $store->size, 3, 'store has 3 statements after (triple) add' );
 
 	{
-	  my $count	= $store->count_statements( undef, undef, $blankfoo );
-	  is( $count, 0, 'expected zero of blank object statements' );
-	}
-
-	{
 	  my $count	= $store->count_statements( undef, undef, $blankfoo, undef );
 	  is( $count, 1, 'expected one object blank node' );
 	}
@@ -634,7 +629,7 @@ sub blank_node_tests_triples {
 }
 
 
-=item C<< count_statements_tests_simple( $store, $data->{ex} )  >>
+=item C<< count_statements_tests_simple( $store, $data->{ex}, $to )  >>
 
 Tests to check that counts are correct.
 
@@ -642,7 +637,7 @@ Tests to check that counts are correct.
 
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
-	my ($store, $args, $ex) = @_;
+	my ($store, $args, $ex, $to) = @_;
 	
 	{
 		is( $store->size, 0, 'expected zero size before add statement' );
@@ -652,10 +647,12 @@ sub count_statements_tests_simple {
 		is( $store->size, 1, 'size' );
 		is( $store->count_statements(), 1, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 1, 'count_statements(fff) with undefs' );
-		is( $store->count_statements(map {variable($_)} qw(s p o)), 1, 'count_statements(fff) with variables' );
 		is( $store->count_statements(undef, undef, undef, undef), 1, 'count_statements(ffff) with undefs' );
-		is( $store->count_statements(map {variable($_)} qw(s p o g)), 1, 'count_statements(ffff) with variables' );
-		
+	        SKIP: {
+		  skip 'Quad-only test', 2 if $to;
+		  is( $store->count_statements(map {variable($_)} qw(s p o)), 1, 'count_statements(fff) with variables' );
+		  is( $store->count_statements(map {variable($_)} qw(s p o g)), 1, 'count_statements(ffff) with variables' );
+		}
 		# 1-bound
 		is( $store->count_statements($ex->a, undef, undef, undef), 1, 'count_statements(bfff)' );
 		is( $store->count_statements(undef, $ex->b, undef, undef), 1, 'count_statements(fbff)' );
@@ -702,7 +699,7 @@ sub count_statements_tests_quads {
 }
 
 
-=item C<<  count_statements_tests_triples( $store, $data->{ex}, $data->{nil} ) >>
+=item C<<  count_statements_tests_triples( $store, $data->{ex}, $data->{nil}, $to ) >>
 
 More tests for counts, with triples.
 
@@ -712,16 +709,19 @@ More tests for counts, with triples.
 
 sub count_statements_tests_triples {
 	note " triple count_statements tests";
-	my ($store, $args, $ex, $nil) = @_;
+	my ($store, $args, $ex, $nil, $to) = @_;
 	
 	{
 		is( $store->count_statements, 27, 'count_statements() after triples added' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff ) after triples added' );
-		is( $store->count_statements(undef, undef, undef, undef), 108, 'count_statements( ffff ) after triples added' );
-		
 		is( $store->count_statements( $ex->a, undef, undef ), 9, 'count_statements( bff )' );
-		is( $store->count_statements( $ex->a, undef, undef, undef ), 27+9, 'count_statements( bfff )' );
 		is( $store->count_statements( $ex->a, undef, undef, $nil ), 9, 'count_statements( bffb )' );
+	        SKIP: {
+		  skip 'Quad-only test', 2 if $to;
+		  is( $store->count_statements(undef, undef, undef, undef), 108, 'count_statements( ffff ) after triples added' );
+		  is( $store->count_statements( $ex->a, undef, undef, undef ), 27+9, 'count_statements( bfff )' );
+		}
+
 	}
 }
 
