@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 11;
 BEGIN { use_ok('RDF::Trine::Serializer::SparqlUpdate') };
 
 use strict;
@@ -30,13 +30,12 @@ $model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
 	$serializer->serialize_model_to_file($wh, $model);
 	close($wh);
     my @expect = split "\n", <<'EOEXP';
-MODIFY 
-DELETE {}
 INSERT {_:greg <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 _:greg <http://xmlns.com/foaf/0.1/homepage> <http://kasei.us/> .
 _:greg <http://xmlns.com/foaf/0.1/name> "Greg" .
 <http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
 }
+WHERE {}
 EOEXP
     my @got = grep {$_} map {chomp; $_} (<$rh>);
     # warn Dumper \@got;
@@ -53,11 +52,10 @@ EOEXP
 	close($wh);
 
     my @expect = split "\n", <<'EOEXP';
-MODIFY 
-DELETE {}
 INSERT {_:greg <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
 }
+WHERE {}
 EOEXP
     my @got = grep {$_} map {chomp; $_} (<$rh>);
 	
@@ -71,13 +69,12 @@ EOEXP
 	my $iter		= $model->get_statements( undef, $rdf->type, undef );
 	my $string		= $serializer->serialize_iterator_to_string( $iter );
     my @expect = split "\n", <<'EOEXP';
-MODIFY 
-DELETE {}
 INSERT {_:greg <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
 <http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
 }
+WHERE {}
 EOEXP
-    my @got = map { $_} (split "\n", $string);
+    my @got = grep { $_ } (split "\n", $string);
 	
     # warn Dumper \@got;
 	
@@ -101,15 +98,59 @@ EOEXP
         is( $serializer->{delete_model}, undef, '$self->{delete_model} is not set anymore');
     }
     my @expect = split "\n", <<'EOEXP';
-MODIFY 
 DELETE {<http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .
 }
 INSERT {<http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/NotDocument> .
 }
+WHERE {}
 EOEXP
-    my @got = map { $_} (split "\n", $string);
+    my @got = grep { $_} (split "\n", $string);
 	
     # warn Dumper \@got;
 	
     is_deeply( [@expect], [@got], 'serialize_iterator_to_string with delete clause');
+}
+
+{
+    require_ok('RDF::Endpoint');
+    require_ok('LWP::Protocol::PSGI');
+    my $end_config  = {
+        store => 'Memory',
+        endpoint    => {
+            endpoint_path   => '/',
+            update      => 1,
+            load_data   => 1,
+            html        => {
+                resource_links  => 1,    # turn resources into links in HTML query result pages
+                embed_images    => 0,    # display foaf:Images as images in HTML query result pages
+                image_width     => 200,  # with 'embed_images', scale images to this width
+            },
+            service_description => {
+                default         => 1,    # generate dataset description of the default graph
+                named_graphs    => 1,    # generate dataset description of the available named graphs
+            },
+        },
+    };
+    my $sparql_model = RDF::Trine::Model->temporary_model;
+    my $end     = RDF::Endpoint->new( $sparql_model, $end_config );
+    my $end_app = sub {
+        my $env 	= shift;
+        my $req 	= Plack::Request->new($env);
+        my $resp	= $end->run( $req );
+        return $resp->finalize;
+    };
+    LWP::Protocol::PSGI->register($end_app);
+    my $ua = LWP::UserAgent->new;
+
+    my $serializer	= RDF::Trine::Serializer::SparqlUpdate->new;
+    my $string = $serializer->serialize_model_to_string( $model );
+    my ($type) = $serializer->media_types;
+
+    my $req = HTTP::Request->new(POST => 'http://localhost/?sparql');
+    $req->header(Content_Type => $type);
+    $req->content( $string );
+    # warn Dumper $sparql_model->size;
+    is( $sparql_model->size, 0, 'Model empty before request');
+    my $resp = $ua->request( $req );
+    is( $sparql_model->size, 4, 'request addded 4 statements.');
 }

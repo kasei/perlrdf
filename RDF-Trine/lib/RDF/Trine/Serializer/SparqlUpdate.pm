@@ -68,6 +68,8 @@ sub new {
     $args{delete_clause} //= '';
     $args{delete_start} //= 'DELETE {';
     $args{delete_end} //= '}';
+
+    $args{where_clause} //= '';
 	my $self = bless( {%args}, $class);
 	return $self;
 }
@@ -178,14 +180,13 @@ sub _serialize_model_to_modify_clause {
     my $insert_model = shift;
     # my $insert_clause = shift;
     my $string = '';
-    $string .= 'MODIFY ';
 
     if ($self->{graph}) {
+        $string .= 'WITH ';
         $string .= sprintf '<%s>', $self->{graph};
     }
     $string .= "\n";
 
-    $string .= $self->{delete_start};
     if ($self->{delete_model}) {
         $self->{delete_clause} = RDF::Trine::Serializer::NTriples->new->serialize_model_to_string( $self->{delete_model} );
     }
@@ -193,25 +194,32 @@ sub _serialize_model_to_modify_clause {
         $self->{delete_clause} = RDF::Trine::Serializer::NTriples->new->serialize_iterator_to_string( $self->{delete_iter} );
     }
     # warn Dumper $self->{delete_clause};
-    $string .= $self->{delete_clause};
-    $string .= $self->{delete_end};
-    $string .= "\n";
+    if ($self->{delete_clause}) {
+        $string .= $self->{delete_start};
+        $string .= $self->{delete_clause};
+        $string .= $self->{delete_end};
+        $string .= "\n";
+    }
 
-    $string .= $self->{insert_start};
     if ($self->{insert_model}) {
         $self->{insert_clause} = RDF::Trine::Serializer::NTriples->new->serialize_model_to_string( $self->{insert_model} );
     }
     elsif ($self->{insert_iter}) {
         $self->{insert_clause} = RDF::Trine::Serializer::NTriples->new->serialize_iterator_to_string( $self->{insert_iter} );
     }
-    $string .= $self->{insert_clause};
-    $string .= $self->{insert_end};
-    $string .= "\n";
-
-
-    if ($self->{where_clause}) {
-        $string .= $self->{where_clause};
+    if ($self->{insert_clause}) {
+        $string .= $self->{insert_start};
+        $string .= $self->{insert_clause};
+        $string .= $self->{insert_end};
+        $string .= "\n";
     }
+
+
+    # if ($self->{where_clause}) {
+    $string .= 'WHERE {';
+    $string .= $self->{where_clause};
+    $string .= '}';
+    # }
     $string .= "\n";
 
     # TODO reset options to default so changes become atomic
