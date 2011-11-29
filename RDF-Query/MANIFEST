@@ -46,6 +46,7 @@ examples/queries/sparql-bgp-people.rq
 examples/queries/sparql-ggp-person-opt-knows.rq
 examples/queries/sparqlp-service-people-names.rq
 examples/query.pl
+examples/query_url.pl
 examples/service_descriptions/dbpedia_org.ttl
 examples/service_descriptions/kasei_us.ttl
 inc/Module/Install.pm
@@ -176,8 +177,6 @@ t/models.pl
 t/named-graphs.t
 t/optional.t
 t/plan.t
-t/pod_coverage.t
-t/pod.t
 t/protocol-serialization.t
 t/queryform-ask.t
 t/queryform-construct.t
@@ -196,6 +195,7 @@ t/sparql11-update.t
 t/streams.t.deprecated
 t/syntactic_forms.t
 t/union.t
+xt/dawg-eval10.t
 xt/dawg-eval11.t
 xt/dawg-syntax11.t
 xt/dev-service-description.t
@@ -207,3 +207,6 @@ xt/federate.t
 xt/parser-rdql.t
 xt/parser-sparql.t
 xt/parser-sparql11.t
+xt/pod.t
+xt/pod_coverage.t
+xt/sparql11-federation.t
