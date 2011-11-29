@@ -11,6 +11,7 @@ use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
+use Algorithm::Combinatorics qw(permutations);
 use Math::Combinatorics qw(permute);
 use LWP::MediaTypes qw(add_type);
 use Text::CSV;
@@ -85,29 +86,31 @@ if ($PATTERN) {
 warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 
 my $model		= RDF::Trine::Model->temporary_model;
-my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glob( "xt/dawg11/$_/manifest.ttl" ) }
+my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glob( "xt/dawg/data-r2/$_/manifest.ttl" ) }
 	qw(
-		aggregates
-		basic-update
-		bind
-		bindings
-		clear
+		algebra
+		ask
+		basic
+		bnode-coreference
+		bound
+		cast
 		construct
-		csv-tsv-res
-		delete
-		delete-data
-		delete-insert
-		delete-where
-		drop
-		functions
-		grouping
-		json-res
-		negation
-		project-expression
-		property-path
-		service
-		subquery
-		update-silent
+		dataset
+		distinct
+		expr-builtin
+		expr-equals
+		expr-ops
+		graph
+		i18n
+		open-world
+		optional
+		optional-filter
+		reduced
+		regex
+		solution-seq
+		sort
+		triple-match
+		type-promotion
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
@@ -150,7 +153,7 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 	}
 }
 
-open( my $fh, '>', 'earl-eval-11.ttl' ) or die $!;
+open( my $fh, '>', 'earl-eval-10.ttl' ) or die $!;
 print {$fh} earl_output( $earl );
 close($fh);
 
@@ -446,7 +449,7 @@ sub get_actual_results {
 	my $sparql		= shift;
 	my $base		= shift;
 	my @gdata		= @_;
-	my $query		= RDF::Query->new( $sparql, { base => $base, lang => 'sparql11', load_data => 1 } );
+	my $query		= RDF::Query->new( $sparql, { base => $base, lang => 'sparql10', load_data => 1 } );
 	
 	unless ($query) {
 		warn RDF::Query->error if ($debug or $PATTERN);
@@ -460,6 +463,7 @@ sub get_actual_results {
 	if ($args{plan}) {
 		warn $plan->explain('  ', 0);
 	}
+	warn 'Query plan: ' . $plan->explain;
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
@@ -612,6 +616,11 @@ sub get_expected_results {
 				push(@bindings, RDF::Trine::VariableBindings->new( \%data ));
 			}
 			my $iter	= RDF::Trine::Iterator::Bindings->new( \@bindings, \@names );
+			if ($args{ results }) {
+				$iter	= $iter->materialize;
+				warn "Got expected results:\n";
+				warn $iter->as_string;
+			}
 			return binding_results_data($iter);
 		}
 	} else {
@@ -700,8 +709,8 @@ sub compare_results {
 		# compare the results with bnodes
 		my @ka	= keys %{ $actual->{blank_identifiers} };
 		my @kb	= keys %{ $expected->{blank_identifiers} };
-		my @kbp	= permute( @kb );
-		MAPPING: foreach my $mapping (@kbp) {
+		my $kbp	= permutations( \@kb );
+		MAPPING: while (my $mapping = $kbp->next) {
 			my %mapping;
 			@mapping{ @ka }	= @$mapping;
 			warn "trying mapping: " . Dumper(\%mapping) if ($debug);
@@ -784,13 +793,10 @@ sub result_to_string {
 			if ($lossy_cmp) {
 				$value	= $node->literal_value;
 				$dt		= undef;
-			} else {
-				$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
-				$dt		= $node->literal_datatype;
+				$node		= RDF::Query::Node::Literal->new( $value, undef, $dt );
 			}
-			$node		= RDF::Query::Node::Literal->new( $value, undef, $dt );
 		}
-		push(@results, join('=', $k, $node->as_string));
+		push(@results, join('=', $k, $node->as_ntriples));
 	}
 	return join(',', sort(@results));
 }
