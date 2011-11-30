@@ -603,14 +603,7 @@ Permanently removes all the data in the store.
 =cut
 
 sub nuke {
-    my $self = shift;
-    $self->{data} = $self->_new_index_page;
-    $self->{node2id} = {};
-    $self->{id2node} = {};
-    $self->{next_id} = 1;
-    $self->{size} = 0;
-
-    return $self;
+    return $_[0]->new();
 }
 
 
