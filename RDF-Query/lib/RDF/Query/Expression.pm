@@ -152,6 +152,13 @@ sub referenced_variables {
 	return RDF::Query::_uniq(@vars);
 }
 
+=item C<< nonaggregated_referenced_variables >>
+
+Returns a list of the variable names used in this algebra expression except
+those used as aliases for aggregate operations.
+
+=cut
+
 sub nonaggregated_referenced_variables {
 	my $self	= shift;
 	my @ops		= $self->operands;
