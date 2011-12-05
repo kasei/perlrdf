@@ -106,13 +106,8 @@ The following example initializes a Hexastore store based on a local file and a 
 
 sub new {
 	my $class	= shift;
-	my $self	= bless({
-		data		=> $class->_new_index_page,
-		node2id		=> {},
-		id2node		=> {},
-		next_id		=> 1,
-		size		=> 0,
-	}, $class);
+	my $self        = bless({}, $class);
+	$self->nuke; # nuke resets the store, thus doing the same thing as init should do
 	return $self;
 }
 
@@ -595,6 +590,24 @@ Removes the specified C<$statement> from the underlying model.
 sub remove_statements {
 	die;
 }
+
+=item C<< nuke >>
+
+Permanently removes all the data in the store.
+
+=cut
+
+sub nuke {
+    my $self = shift;
+    $self->{data} = $self->_new_index_page;
+    $self->{node2id} = {};
+    $self->{id2node} = {};
+    $self->{next_id} = 1;
+    $self->{size} = 0;
+    return $self;
+}
+
+
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
