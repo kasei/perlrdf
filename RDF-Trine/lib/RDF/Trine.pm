@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.135
+This document describes RDF::Trine version 0.136
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use Module::Load::Conditional qw[can_load];
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -76,7 +76,6 @@ use RDF::Trine::Namespace;
 use RDF::Trine::NamespaceMap;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 

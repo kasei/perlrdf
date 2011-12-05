@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.135
+This document describes RDF::Trine::Store::Memory version 0.136
 
 =head1 SYNOPSIS
 
@@ -25,10 +25,10 @@ use base qw(RDF::Trine::Store);
 
 use Set::Scalar;
 use Data::Dumper;
-use Digest::MD5 ('md5_hex');
+use Digest::SHA;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
+use RDF::Trine::Statement::Quad;
 
 use RDF::Trine qw(iri);
 use RDF::Trine::Error;
@@ -38,7 +38,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.136";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -116,7 +116,7 @@ sub new {
 		object		=> {},
 		context		=> {},
 		ctx_nodes	=> {},
-		md5			=> Digest::MD5->new,
+		hash		=> Digest::SHA->new,
 	}, $class);
 
 	return $self;
@@ -432,7 +432,7 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
-			$self->{md5}->add('+' . $st->as_string);
+			$self->{hash}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -473,7 +473,7 @@ sub remove_statement {
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
 		$self->{statements}[ $id ]	= undef;
-		$self->{md5}->add('-' . $st->as_string);
+		$self->{hash}->add('-' . $st->as_string);
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
@@ -613,7 +613,7 @@ change. This token is acceptable for use as an HTTP ETag.
 
 sub etag {
 	my $self	= shift;
-	return $self->{md5}->hexdigest;
+	return $self->{hash}->hexdigest;
 }
 
 =item C<< size >>

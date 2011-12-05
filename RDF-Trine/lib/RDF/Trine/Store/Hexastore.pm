@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.135
+This document describes RDF::Trine::Store::Hexastore version 0.136
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,6 @@ use Data::Dumper;
 use RDF::Trine qw(iri);
 use RDF::Trine::Error;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
 
@@ -44,7 +43,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.136";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -60,8 +59,7 @@ L<RDF::Trine::Store> class.
 
 =item C<< new () >>
 
-Returns a new storage object using the supplied arguments to construct a DBI
-object for the underlying database.
+Returns a new storage object.
 
 =item C<new_with_config ( $hashref )>
 
@@ -218,11 +216,10 @@ sub get_statements {
 	
 	my @ids		= map { $self->_node2id( $_ ) } @nodes;
 	my @names	= NODES;
-	my @keys	= mesh @names, @ids;
+	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	if ($defined == 3) {
 		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
 		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
-# 		if (any { $_ == $ids[2] } @$list) {
 		if ($self->_page_contains_node( $list, $ids[2] )) {
 			return RDF::Trine::Iterator::Graph->new( [ RDF::Trine::Statement->new( @nodes ) ] );
 		} else {
@@ -611,7 +608,7 @@ sub count_statements {
 	my @nodes	= @_;
 	my @ids		= map { $self->_node2id( $_ ) } @nodes;
 	my @names	= NODES;
-	my @keys	= mesh @names, @ids;
+	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	my @dkeys;
 	my @ukeys;
 	foreach my $i (0 .. 2) {
@@ -634,7 +631,7 @@ sub count_statements {
 	} else {
 		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
 		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
-		return ($self->_page_contains_node( $list, $keys[5] ))	# any { $_ == $keys[5] } @$list)
+		return ($self->_page_contains_node( $list, $keys[5] ))
 			? 1
 			: 0;
 	}
@@ -805,7 +802,10 @@ sub _page_contains_node {
 	my $self	= shift;
 	my $list	= shift;
 	my $id		= shift;
-	return (any { $_ == $id } @$list) ? 1 : 0;
+	foreach (@$list) {
+		return 1 if ($_ == $id);
+	}
+	return 0;
 }
 
 sub _add_node_to_page {

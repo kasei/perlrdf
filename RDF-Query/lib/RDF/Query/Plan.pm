@@ -21,7 +21,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use List::Util qw(reduce);
-use Scalar::Util qw(blessed reftype);
+use Scalar::Util qw(blessed reftype refaddr);
 use RDF::Query::Error qw(:try);
 use RDF::Query::BGPOptimizer;
 
@@ -62,9 +62,12 @@ use constant CLOSED		=> 0x04;
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, %PLAN_CLASSES);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION		= '2.907';
+	%PLAN_CLASSES	= (
+		service	=> 'RDF::Query::Plan::Service',
+	);
 }
 
 ######################################################################
@@ -158,18 +161,19 @@ sub explain {
 	}
 	my $indent	= '' . ($s x $count);
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}${type}\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	foreach my $p ($self->plan_node_data) {
 		if (blessed($p)) {
 			if ($p->isa('RDF::Trine::Statement::Quad')) {
-				$string	.= "${indent}${s}" . $p->as_string . "\n";
+				$string	.= "${indent}${s}" . join(' ', map { ($_->isa('RDF::Trine::Node::Nil')) ? "(nil)" : $_->as_sparql } $p->nodes) . "\n";
 			} elsif ($p->isa('RDF::Trine::Node::Nil')) {
 				$string	.= "${indent}${s}(nil)\n";
 			} else {
 				$string	.= $p->explain( $s, $count+1 );
 			}
 		} elsif (ref($p)) {
-			warn 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
+			$string	.= "${indent}${s}" . Dumper($p);
+			Carp::cluck 'unexpected non-blessed ref in RDF::Query::Plan->explain: ' . Dumper($p);
 		} else {
 			no warnings 'uninitialized';
 			$string	.= "${indent}${s}$p\n";
@@ -305,6 +309,17 @@ Return a serialization of the query plan.
 sub serialize {
 	my $self	= shift;
 	
+}
+
+=item C<< delegate >>
+
+Returns the delegate object if available.
+
+=cut
+
+sub delegate {
+	my $self	= shift;
+	return $self->[0]{delegate};
 }
 
 =item C<< referenced_variables >>
@@ -595,7 +610,8 @@ sub generate_plans {
 						my $plan	= $join_type->new( $a, $b, 1, {} );
 						push( @plans, $plan );
 					} catch RDF::Query::Error::MethodInvocationError with {
-#						warn "caught MethodInvocationError.";
+# 						my $e	= shift;
+# 						warn "caught MethodInvocationError: " . Dumper($e);
 					};
 				}
 			}
@@ -648,16 +664,37 @@ sub generate_plans {
 		my @base	= $self->generate_plans( $pattern, $context, %args );
 		my @plans;
 		foreach my $plan (@base) {
-			my $ns			= $context->ns;
-			my $pstr		= $pattern->as_sparql({namespaces => $ns}, '');
-			unless (substr($pstr, 0, 1) eq '{') {
-				$pstr	= "{ $pstr }";
+			my $sparqlcb	= sub {
+				my $row		= shift;
+				my $p		= $pattern;
+				if ($row) {
+					$p		= $p->bind_variables( $row );
+				}
+				my $ns			= $context->ns;
+				my $pstr		= $p->as_sparql({namespaces => $ns}, '');
+				unless (substr($pstr, 0, 1) eq '{') {
+					$pstr	= "{ $pstr }";
+				}
+				my $sparql		= join("\n",
+									(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
+									sprintf("SELECT * WHERE %s", $pstr)
+								);
+				return $sparql;
+			};
+			
+# 			unless ($algebra->endpoint->can('uri_value')) {
+# 				throw RDF::Query::Error::UnimplementedError (-text => "Support for variable-endpoint SERVICE blocks is not implemented");
+# 			}
+			
+			if (my $ggp = $algebra->lhs) {
+				my @lhs_base	= $self->generate_plans( $ggp, $context, %args );
+				foreach my $lhs_plan (@lhs_base) {
+					my $splan	= RDF::Query::Plan::Service->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb, $lhs_plan );
+					push(@plans, $splan);
+				}
+			} else {
+				push(@plans, $PLAN_CLASSES{'service'}->new( $algebra->endpoint, $plan, $algebra->silent, $sparqlcb ));
 			}
-			my $sparql		= join("\n",
-								(map { sprintf("PREFIX %s: <%s>", ($_ eq '__DEFAULT__' ? '' : $_), $ns->{$_}) } (keys %$ns)),
-								sprintf("SELECT * WHERE %s", $pstr)
-							);
-			push(@plans, RDF::Query::Plan::Service->new( $algebra->endpoint->uri_value, $plan, $sparql ));
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'SubSelect') {

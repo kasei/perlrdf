@@ -8,7 +8,7 @@ RDF::Trine::NamespaceMap - Collection of Namespaces
 
 =head1 VERSION
 
-This document describes RDF::Trine::NamespaceMap version 0.135
+This document describes RDF::Trine::NamespaceMap version 0.136
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 }
 
 ######################################################################
@@ -130,7 +130,7 @@ sub uri {
 	my $abbr	= shift;
 	my $ns;
 	my $local	= "";
-	if ($abbr =~ m/^([^:]+):(.*)$/) {
+	if ($abbr =~ m/^([^:]*):(.*)$/) {
 		$ns	= $self->{ $1 };
 		$local	= $2;
 	} else {

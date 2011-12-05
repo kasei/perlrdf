@@ -70,7 +70,7 @@ my $nil	= RDF::Trine::Node::Nil->new();
 		my $plan_a	= RDF::Query::Plan::Quad->new( $var, $rdf->type, $foaf->Person, $nil );
 		my $plan_b	= RDF::Query::Plan::Quad->new( $var, $foaf->homepage, RDF::Trine::Node::Variable->new('page'), $nil );
 		my $subplan	= RDF::Query::Plan::Join::NestedLoop->new( $plan_a, $plan_b );
-		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
+		my $plan	= RDF::Query::Plan::Service->new( 'http://kasei.us/sparql', $subplan, 0, 'PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }' );
 		is( _CLEAN_WS($plan->sse), '(service <http://kasei.us/sparql> "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT DISTINCT * WHERE { ?p a foaf:Person ; foaf:homepage ?page }")', 'sse: service' ) or die;
 	}
 }

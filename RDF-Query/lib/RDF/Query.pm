@@ -330,6 +330,14 @@ sub prepare {
 	if ($args{ 'bind' }) {
 		%bound	= %{ $args{ 'bind' } };
 	}
+	
+	my $delegate;
+	if (defined $args{ 'delegate' }) {
+		$delegate	= delete $args{ 'delegate' };
+		if ($delegate and not blessed($delegate)) {
+			$delegate	= $delegate->new();
+		}
+	}
 	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
@@ -365,8 +373,8 @@ sub prepare {
 					requested_variables			=> \@vars,
 					strict_errors				=> $errors,
 					options						=> $self->{options},
+					delegate					=> $delegate,
 				);
-	
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
@@ -1385,10 +1393,13 @@ Sets the object's error variable.
 sub set_error {
 	my $self	= shift;
 	my $error	= shift;
+	my $e		= shift;
 	if (blessed($self)) {
-		$self->{error}	= $error;
+		$self->{error}		= $error;
+		$self->{exception}	= $e;
 	}
-	our $_ERROR	= $error;
+	our $_ERROR		= $error;
+	our $_EXCEPTION	= $e;
 }
 
 =begin private
@@ -1404,10 +1415,12 @@ Clears the object's error variable.
 sub clear_error {
 	my $self	= shift;
 	if (blessed($self)) {
-		$self->{error}	= undef;
+		$self->{error}		= undef;
+		$self->{exception}	= undef;
 	}
-	our $_ERROR;
+	our($_ERROR, $_EXCEPTION);
 	undef $_ERROR;
+	undef $_EXCEPTION;
 }
 
 

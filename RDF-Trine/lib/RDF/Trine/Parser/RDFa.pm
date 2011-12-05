@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.135
+This document describes RDF::Trine::Parser::RDFa version 0.136
 
 =head1 SYNOPSIS
 
@@ -39,6 +39,7 @@ use Carp;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
@@ -49,21 +50,19 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.135';
-	$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
-	foreach my $ext (qw(html xhtml htm)) {
-		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
-	}
-	my $class										= __PACKAGE__;
-	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/xhtml+xml';
-	foreach my $type (qw(application/xhtml+xml)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
-	}
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDFa' }	= __PACKAGE__;
-	
-	eval "use RDF::RDFa::Parser 0.30;";
-	unless ($@) {
+	$VERSION	= '0.136';
+	if (can_load( modules => { 'RDF::RDFa::Parser' => 0.30 })) {
 		$HAVE_RDFA_PARSER	= 1;
+		$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
+		foreach my $ext (qw(html xhtml htm)) {
+			$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+		}
+		my $class										= __PACKAGE__;
+		$RDF::Trine::Parser::canonical_media_types{ $class }	= 'application/xhtml+xml';
+		foreach my $type (qw(application/xhtml+xml text/html)) {
+			$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
+		}
+		$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDFa' }	= __PACKAGE__;
 	}
 }
 

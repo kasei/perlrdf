@@ -248,7 +248,9 @@ sub install {
 					throw RDF::Query::Error::TypeError ( -text => "cannot cast unrecognized value '$value' to xsd:double" );
 				}
 			} elsif ($node->is_resource) {
-				throw RDF::Query::Error::TypeError ( -text => "cannot cast an IRI to xsd:integer" );
+				throw RDF::Query::Error::TypeError ( -text => "cannot cast an IRI to xsd:double" );
+			} elsif ($node->is_blank) {
+				throw RDF::Query::Error::TypeError -text => "cannot cast bnode to xsd:double";
 			}
 			
 			my $num	= sprintf("%e", $value);
@@ -1084,6 +1086,10 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:timezone", \&_timezone);
 	RDF::Query::Functions->install_function("sparql:tz", \&_tz);
 	RDF::Query::Functions->install_function("sparql:now", \&_now);
+
+	RDF::Query::Functions->install_function("sparql:strbefore", \&_strbefore);
+	RDF::Query::Functions->install_function("sparql:strafter", \&_strafter);
+	RDF::Query::Functions->install_function("sparql:replace", \&_replace);
 }
 
 =item * sparql:encode_for_uri
@@ -1162,6 +1168,7 @@ sub _strstarts {
 		return RDF::Query::Node::Literal->new('false', undef, $xsd->boolean);
 	}
 }
+
 =item * sparql:strends
 
 =cut
@@ -1475,6 +1482,102 @@ sub _now {
 	my $dt		= DateTime->now;
 	my $value	= DateTime::Format::W3CDTF->new->format_datetime( $dt );
 	return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#dateTime' );
+}
+
+=item * sparql:strbefore
+
+=cut
+
+sub _strbefore {
+	my $query	= shift;
+	my $node	= shift;
+	my $substr	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called without a literal arg1 term";
+	}
+	unless (blessed($substr) and $substr->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called without a literal arg2 term";
+	}
+	if ($node->has_datatype and $node->literal_datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
+		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called with a datatyped (non-xsd:string) literal";
+	}
+	
+	my $value	= $node->literal_value;
+	my $match	= $substr->literal_value;
+	my $i		= index($value, $match, 0);
+	if ($i < 0) {
+		return RDF::Query::Node::Literal->new('', $node->type_list);
+	} else {
+		return RDF::Query::Node::Literal->new(substr($value, 0, $i), $node->type_list);
+	}
+}
+
+=item * sparql:strafter
+
+=cut
+
+sub _strafter {
+	my $query	= shift;
+	my $node	= shift;
+	my $substr	= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strafter called without a literal arg1 term";
+	}
+	unless (blessed($substr) and $substr->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:strafter called without a literal arg2 term";
+	}
+	if ($node->has_datatype and $node->literal_datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
+		throw RDF::Query::Error::TypeError -text => "sparql:strafter called with a datatyped (non-xsd:string) literal";
+	}
+	my $value	= $node->literal_value;
+	my $match	= $substr->literal_value;
+	my $i		= index($value, $match, 0);
+	if ($i < 0) {
+		return RDF::Query::Node::Literal->new('', $node->type_list);
+	} else {
+		return RDF::Query::Node::Literal->new(substr($value, $i+length($match)), $node->type_list);
+	}
+}
+
+=item * sparql:replace
+
+=cut
+
+sub _replace {
+	my $query	= shift;
+	my $node	= shift;
+	my $pat		= shift;
+	my $rep		= shift;
+	unless (blessed($node) and $node->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:replace called without a literal arg1 term";
+	}
+	unless (blessed($pat) and $pat->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:replace called without a literal arg2 term";
+	}
+	unless (blessed($rep) and $rep->isa('RDF::Query::Node::Literal')) {
+		throw RDF::Query::Error::TypeError -text => "sparql:replace called without a literal arg3 term";
+	}
+	if ($node->has_datatype and $node->literal_datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
+		throw RDF::Query::Error::TypeError -text => "sparql:replace called with a datatyped (non-xsd:string) literal";
+	}
+	my $value	= $node->literal_value;
+	my $pattern	= $pat->literal_value;
+	my $replace	= $rep->literal_value;
+	if (index($pattern, '(?{') != -1 or index($pattern, '(??{') != -1) {
+		throw RDF::Query::Error::FilterEvaluationError ( -text => 'REPLACE() called with unsafe ?{} match pattern' );
+	}
+	if (index($replace, '(?{') != -1 or index($replace, '(??{') != -1) {
+		throw RDF::Query::Error::FilterEvaluationError ( -text => 'REPLACE() called with unsafe ?{} replace pattern' );
+	}
+	
+	$replace	=~ s/\\/\\\\/g;
+ 	$replace	=~ s/\$(\d+)/\$$1/g;
+ 	$replace	=~ s/"/\\"/g;
+ 	$replace	= qq["$replace"];
+ 	no warnings 'uninitialized';
+	$value	=~ s/$pattern/"$replace"/eeg;
+# 	warn "==> " . Dumper($value);
+	return RDF::Query::Node::Literal->new($value, $node->type_list);
 }
 
 

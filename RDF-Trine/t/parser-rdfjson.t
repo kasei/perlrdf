@@ -20,7 +20,7 @@ use_ok('RDF::Trine::Parser::RDFJSON');
 }
 END
 	my $parser	= RDF::Trine::Parser->new( 'RDF/JSON' );
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$parser->parse_into_model(undef, $json, $model);
 	
 	ok($model->count_statements(

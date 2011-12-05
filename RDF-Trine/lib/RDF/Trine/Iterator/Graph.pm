@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 0.135
+This document describes RDF::Trine::Iterator::Graph version 0.136
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 }
 
 ######################################################################
@@ -313,6 +313,45 @@ sub as_json {
 	my $self			= shift;
 	my $max_result_size	= shift;
 	throw RDF::Trine::Error::SerializationError ( -text => 'There is no JSON serialization specified for graph query results' );
+}
+
+=item C<< as_hashref >>
+
+Returns a hashref representing the model in an RDF/JSON-like manner.
+
+See C<< as_hashref >> at L<RDF::Trine::Model> for full documentation of the
+hashref format.
+
+=cut
+
+sub as_hashref {
+	my $self = shift;
+	my $index = {};
+	while (my $statement = $self->next) {
+		
+		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
+			('_:'.$statement->subject->blank_identifier) :
+			$statement->subject->uri ;
+		my $p = $statement->predicate->uri ;
+		
+		my $o = {};
+		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
+			$o->{'type'}		= 'literal';
+			$o->{'value'}		= $statement->object->literal_value;
+			$o->{'lang'}		= $statement->object->literal_value_language
+				if $statement->object->has_language;
+			$o->{'datatype'}	= $statement->object->literal_datatype
+				if $statement->object->has_datatype;
+		} else {
+			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
+				('_:'.$statement->object->blank_identifier) :
+				$statement->object->uri ;
+		}
+
+		push @{ $index->{$s}->{$p} }, $o;
+	}
+	return $index;
 }
 
 =item C<< construct_args >>

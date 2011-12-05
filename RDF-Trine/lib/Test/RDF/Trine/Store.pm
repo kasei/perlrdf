@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.135
+This document describes RDF::Trine version 0.136
 
 =head1 SYNOPSIS
 
@@ -54,6 +54,11 @@ use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
 
+our ($VERSION);
+BEGIN {
+	$VERSION	= '0.136';
+}
+
 use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
@@ -73,7 +78,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-  return 203; # Remember to update whenever adding tests
+  return 209; # Remember to update whenever adding tests
 }
 
 
@@ -119,8 +124,9 @@ to mark all tests as TODO in case the store is in development.
 =cut
 
 sub all_store_tests {
-        my ($store, $data, $todo) = @_;
-
+	my ($store, $data, $todo, $args) = @_;
+	$args		||= {};
+	
 	my $ex	    = $data->{ex};
 	my @names   = @{$data->{names}};
 	my @triples = @{$data->{triples}};
@@ -130,7 +136,7 @@ sub all_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
-      TODO: {
+	TODO: {
 	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 	  
 	throws_ok {
@@ -144,19 +150,32 @@ sub all_store_tests {
 		$store->remove_statement( $st, $ex->e );
 	} 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws when called with quad and context';
 	
-	add_statement_tests_simple( $store, $ex );
-	literals_tests_simple( $store, $ex );
-	blank_node_tests_simple( $store, $ex );
-	count_statements_tests_simple( $store, $ex );
-	add_quads( $store, @quads );
-	count_statements_tests_quads( $store, $ex );
-	add_triples( $store, @triples );
-	count_statements_tests_triples( $store, $ex, $nil );
-	contexts_tests( $store );
-	get_statements_tests_triples( $store, $ex );
-	get_statements_tests_quads( $store, $ex, $nil  );
-	remove_statement_tests( $store, $ex, @names );
-      }
+	add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	bulk_add_statement_tests_simple( $store, $args, $ex );
+	update_sleep($args);
+	
+	literals_tests_simple( $store, $args, $ex );
+	blank_node_tests_simple( $store, $args, $ex );
+	count_statements_tests_simple( $store, $args, $ex );
+	
+	add_quads( $store, $args, @quads );
+	update_sleep($args);
+	
+	count_statements_tests_quads( $store, $args, $ex );
+	
+	add_triples( $store, $args, @triples );
+	update_sleep($args);
+	
+	count_statements_tests_triples( $store, $args, $ex, $nil );
+	contexts_tests( $store, $args );
+	get_statements_tests_triples( $store, $args, $ex );
+	get_statements_tests_quads( $store, $args, $ex, $nil  );
+	
+	remove_statement_tests( $store, $args, $ex, @names );
+	update_sleep($args);
+	}
 }
 
 =item C<< add_quads($store, @quads) >>
@@ -167,7 +186,7 @@ Helper function to add an array of quads to the given store.
 
 
 sub add_quads {
-	my ($store, @quads) = @_;
+	my ($store, $args, @quads) = @_;
 	foreach my $q (@quads) {
 		$store->add_statement( $q );
 	}
@@ -181,7 +200,7 @@ Helper function to add an array of triples to the given store.
 =cut
 
 sub add_triples {
-	my ($store, @triples) = @_;
+	my ($store, $args, @triples) = @_;
 	foreach my $t (@triples) {
 		$store->add_statement( $t );
 	}
@@ -197,6 +216,7 @@ Testing contexts (aka. "graphs")
 sub contexts_tests {
 	note "contexts tests";
 	my $store	= shift;
+	my $args	= shift;
 	my $iter	= $store->get_contexts();
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my %seen;
@@ -222,25 +242,83 @@ Tests to check add_statement.
 
 sub add_statement_tests_simple {
 	note "simple add_statement tests";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
+	update_sleep($args);
+	
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
+	
 	$store->add_statement( $quad );
+	update_sleep($args);
+
 	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	
 	$store->remove_statement( $triple, $ex->d );
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
 	$store->add_statement( $quad2 );
+	update_sleep($args);
+	
 	is( $store->size, 1, 'store has 1 statement after (quad) add' );
 	
 	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
 	is( $count, 1, 'expected count of specific-context statements' );
 	
 	$store->remove_statement( $quad2 );
+	update_sleep($args);
+	
+	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
+
+=item C<< bulk_add_statement_tests_simple( $store, $data->{ex} )  >>
+
+Tests to check add_statement.
+
+=cut
+
+
+sub bulk_add_statement_tests_simple {
+	note "bulk add_statement tests";
+	my ($store, $args, $ex) = @_;
+
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	$store->add_statement( $triple, $ex->d );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->add_statement( $quad );
+	update_sleep($args);
+	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	
+	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
+	$store->remove_statement( $triple, $ex->d );
+	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
+	
+	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
+	$store->add_statement( $quad2 );
+	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (quad) add' );
+	
+	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
+	is( $count, 1, 'expected count of specific-context statements' );
+	
+	$store->remove_statement( $quad2 );
+	update_sleep($args);
+	
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
@@ -253,7 +331,7 @@ Tests to check literals support.
 
 sub literals_tests_simple {
 	note "simple tests with literals";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	my $litplain    = RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1    = RDF::Trine::Node::Literal->new('dahu', 'fr' );
@@ -334,7 +412,7 @@ sub literals_tests_simple {
 
 
 	$store->remove_statement($triple2);
-	is( $store->size, 3, 'store has 2 statements after string literal remove' );
+	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
@@ -353,7 +431,7 @@ Tests to check blank node support.
 
 sub blank_node_tests_simple {
 	note "simple tests with blank nodes";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	my $blankfoo    = RDF::Trine::Node::Blank->new('foo');
 	my $blankbar    = RDF::Trine::Node::Blank->new('bar');
@@ -429,7 +507,7 @@ Tests to check that counts are correct.
 
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	{
 		is( $store->size, 0, 'expected zero size before add statement' );
@@ -476,7 +554,7 @@ Count statement tests for quads.
 
 sub count_statements_tests_quads {
 	note " quad count_statements tests";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	{
 		is( $store->count_statements, 27, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff )' );
@@ -499,7 +577,7 @@ More tests for counts, with triples.
 
 sub count_statements_tests_triples {
 	note " triple count_statements tests";
-	my ($store, $ex, $nil) = @_;
+	my ($store, $args, $ex, $nil) = @_;
 	
 	{
 		is( $store->count_statements, 27, 'count_statements() after triples added' );
@@ -522,7 +600,7 @@ Tests for getting statements using triples.
 
 sub get_statements_tests_triples {
 	note " triple get_statements tests";
-	my ($store, $ex) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	{
 		my $iter	= $store->get_statements( undef, undef, undef );
@@ -568,7 +646,7 @@ Tests for getting statements using quads.
 
 sub get_statements_tests_quads {
 	note " quad get_statements tests";
-	my ($store, $ex, $nil) = @_;
+	my ($store, $args, $ex, $nil) = @_;
 	
 	{
 		my $iter	= $store->get_statements( undef, undef, undef, undef );
@@ -659,7 +737,7 @@ Tests for removing statements.
 
 sub remove_statement_tests {
 	note " remove_statement tests";
-	my ($store, $ex, @names) = @_;
+	my ($store, $args, $ex, @names) = @_;
 	is( $store->count_statements( undef, undef, undef, undef ), 108, 'store size before quad removal' );
 	foreach my $i (@names[0..2]) {
 		my $w	= $ex->$i();
@@ -675,10 +753,14 @@ sub remove_statement_tests {
 			}
 		}
 	}
+	update_sleep($args);
+	
 	is( $store->count_statements( undef, undef, undef, undef ), 27, 'quad count after quad removal' );
 	is( $store->count_statements( undef, undef, undef ), 27, 'triple count after quad removal' );
 	
 	$store->remove_statements( $ex->a, undef, undef, undef );
+	update_sleep($args);
+	
 	is( $store->count_statements( undef, undef, undef ), 18, 'triple count after remove_statements( bfff )' );
 	
 	foreach my $i (@names[0..2]) {
@@ -692,9 +774,34 @@ sub remove_statement_tests {
 			}
 		}
 	}
+	update_sleep($args);
+	
 	is( $store->count_statements( undef, undef, undef, undef ), 0, 'quad count after triple removal' );
 }
 
+=item C<< update_sleep ( \%args ) >>
+
+If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
+This function is called after update operations to aid in testing stores that
+perform updates asynchronously.
+
+=cut
+
+=item C<< update_sleep ( \%args ) >>
+
+If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
+This function is called after update operations to aid in testing stores that
+perform updates asynchronously.
+
+=cut
+
+sub update_sleep {
+	my $args	= shift;
+	if (defined($args->{ update_sleep })) {
+		note " sleeping after store update";
+		sleep($args->{ update_sleep });
+	}
+}
 
 1;
 __END__

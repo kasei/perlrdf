@@ -70,6 +70,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SUBSELECT plan can't be executed while already open";
 	}
@@ -108,6 +109,9 @@ sub next {
 	$l->trace("- got subselect result $result");
 	$self->[0]{'count'}++;
 	my $row	= RDF::Query::VariableBindings->new( $result );
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
+	}
 	return $row;
 };
 

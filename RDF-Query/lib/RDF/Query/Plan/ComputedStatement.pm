@@ -98,6 +98,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "COMPUTEDSTATEMENT plan can't be executed while already open";
 	}
@@ -181,6 +182,9 @@ sub next {
 		}
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		$self->[0]{count}++;
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $bindings );
+		}
 		return $bindings;
 	}
 	return;

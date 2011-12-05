@@ -7,7 +7,7 @@ RDF::Trine::Model::Union - Union models for joining multiple stores together
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Union version 0.135
+This document describes RDF::Trine::Model::Union version 0.136
 
 =head1 METHODS
 
@@ -27,11 +27,11 @@ use base qw(RDF::Trine::Model);
 use Scalar::Util qw(blessed);
 
 use RDF::Trine::Node;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 }
 
 ################################################################################

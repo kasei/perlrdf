@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 0.135
+This document describes RDF::Trine::Serializer::Turtle version 0.136
 
 =head1 SYNOPSIS
 
@@ -38,6 +38,7 @@ use base qw(RDF::Trine::Serializer);
 
 use URI;
 use Carp;
+use Encode;
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr reftype);
 
@@ -52,7 +53,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.136';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
@@ -119,13 +120,14 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $model	= shift;
+	my $sink	= RDF::Trine::Serializer::FileSink->new($fh);
 	
 	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	
-	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, model => $model );
+	$self->serialize_iterator( $sink, $iter, seen => {}, level => 0, tab => "\t", @_, model => $model );
 	return 1;
 }
 
@@ -138,11 +140,15 @@ Serializes the C<$model> to Turtle, returning the result as a string.
 sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
-	my $string	= '';
-	open( my $fh, '>:utf8', \$string );
-	$self->serialize_model_to_file( $fh, $model, seen => {}, levell => 0, tab => "\t", @_, model => $model, string => 1 );
-	close($fh);
-	return $string;
+	my $sink	= RDF::Trine::Serializer::StringSink->new();
+
+	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	
+	$self->serialize_iterator( $sink, $iter, seen => {}, level => 0, tab => "\t", @_, model => $model, string => 1 );
+	return $sink->string;
 }
 
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
@@ -157,6 +163,25 @@ sub serialize_iterator_to_file {
 	my $fh		= shift;
 	my $iter	= shift;
 	my %args	= @_;
+
+	my $sink	= RDF::Trine::Serializer::FileSink->new($fh);
+	$self->serialize_iterator( $sink, $iter, %args );
+	return 1;
+}
+
+=item C<< serialize_iterator ( $sink, $iter ) >>
+
+Serializes the iterator to Turtle, printing the results to the supplied
+sink object.
+
+=cut
+
+sub serialize_iterator {
+	my $self	= shift;
+	my $sink	= shift;
+	my $iter	= shift;
+	my %args	= @_;
+	
 	my $seen	= $args{ seen } || {};
 	my $level	= $args{ level } || 0;
 	my $tab		= $args{ tab } || "\t";
@@ -164,25 +189,18 @@ sub serialize_iterator_to_file {
 	
 	my %ns		= reverse(%{ $self->{ns} });
 	my @nskeys	= sort keys %ns;
-	my $seekloc	= tell($fh);
 	
-	my ($tmp_buffer, $tmp_fh);
-	if ($args{ string }) {
-		$tmp_buffer	= '';
-		$tmp_fh	= $fh;
-		$fh		= undef;
-		open( $fh, '>:utf8', \$tmp_buffer );
-	} else {
+	unless ($sink->can('prepend')) {
 		if (@nskeys) {
 			foreach my $ns (@nskeys) {
 				my $uri	= $ns{ $ns };
-				print {$fh} "\@prefix $ns: <$uri> .\n";
+				$sink->emit("\@prefix $ns: <$uri> .\n");
 			}
-			print {$fh} "\n";
+			$sink->emit("\n");
 		}
 	}
 	if ($self->{base_uri}) {
-	        print {$fh} "\@base <$self->{base_uri}> .\n\n";
+		$sink->emit("\@base <$self->{base_uri}> .\n\n");
 	}
 	
 	my $last_subj;
@@ -228,28 +246,28 @@ sub serialize_iterator_to_file {
 			# continue an existing subject
 			if ($pred->equal( $last_pred )) {
 				# continue an existing predicate
-				print {$fh} qq[, ];
-				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+				$sink->emit(qq[, ]);
+				$self->_serialize_object_to_file( $sink, $obj, $seen, $level, $tab, %args );
 			} else {
 				# start a new predicate
-				print {$fh} qq[ ;\n${indent}$tab];
-				$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-				print {$fh} ' ';
-				$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+				$sink->emit(qq[ ;\n${indent}$tab]);
+				$self->_turtle( $sink, $pred, 1, $seen, $level, $tab, %args );
+				$sink->emit(' ');
+				$self->_serialize_object_to_file( $sink, $obj, $seen, $level, $tab, %args );
 			}
 		} else {
 			# start a new subject
 			if ($open_triple) {
-				print {$fh} qq[ .\n${indent}];
+				$sink->emit(qq[ .\n${indent}]);
 			}
 			$open_triple	= 1;
-			$self->_turtle( $fh, $subj, 0, $seen, $level, $tab, %args );
+			$self->_turtle( $sink, $subj, 0, $seen, $level, $tab, %args );
 			
 			warn '-> ' . $pred->as_string if ($debug);
-			print {$fh} ' ';
-			$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-			print {$fh} ' ';
-			$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+			$sink->emit(' ');
+			$self->_turtle( $sink, $pred, 1, $seen, $level, $tab, %args );
+			$sink->emit(' ');
+			$self->_serialize_object_to_file( $sink, $obj, $seen, $level, $tab, %args );
 		}
 	} continue {
 		if (blessed($last_subj) and not($last_subj->equal($st->subject))) {
@@ -262,21 +280,20 @@ sub serialize_iterator_to_file {
 	}
 	
 	if ($open_triple) {
-		print {$fh} qq[ .\n];
+		$sink->emit(qq[ .\n]);
 	}
 	
-	if ($args{ string }) {
-#		close($fh);
-		$fh	= $tmp_fh;
+	if ($sink->can('prepend')) {
 		my @used_nskeys	= keys %{ $self->{used_ns} };
 		if (@used_nskeys) {
+			my $string	= '';
 			foreach my $ns (@used_nskeys) {
 				my $uri	= $ns{ $ns };
-				print {$fh} "\@prefix $ns: <$uri> .\n";
+				$string	.= "\@prefix $ns: <$uri> .\n";
 			}
-			print {$fh} "\n";
+			$string	.= "\n";
+			$sink->prepend($string);
 		}
-		print {$fh} $tmp_buffer;
 	}
 }
 
@@ -289,16 +306,26 @@ Serializes the iterator to Turtle, returning the result as a string.
 sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
-	my $string	= '';
-	open( my $fh, '>:utf8', \$string );
-	$self->serialize_iterator_to_file( $fh, $iter, seen => {}, level => 0, tab => "\t", @_, string => 1 );
-	close($fh);
-	return $string;
+	my $sink	= RDF::Trine::Serializer::StringSink->new();
+	$self->serialize_iterator( $sink, $iter, seen => {}, level => 0, tab => "\t", @_, string => 1 );
+	return $sink->string;
+}
+
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the Turtle serialization of C<< $node >>.
+
+=cut
+
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $self->node_as_concise_string( $node );
 }
 
 sub _serialize_object_to_file {
 	my $self	= shift;
-	my $fh		= shift;
+	my $sink	= shift;
 	my $subj	= shift;
 	my $seen	= shift;
 	my $level	= shift;
@@ -310,7 +337,7 @@ sub _serialize_object_to_file {
 		if ($subj->isa('RDF::Trine::Node::Blank')) {
 			if ($self->_check_valid_rdf_list( $subj, $model )) {
 # 				warn "node is a valid rdf:List: " . $subj->as_string . "\n";
-				return $self->_turtle_rdf_list( $fh, $subj, $model, $seen, $level, $tab, %args );
+				return $self->_turtle_rdf_list( $sink, $subj, $model, $seen, $level, $tab, %args );
 			} else {
 				my $count	= $model->count_statements( undef, undef, $subj );
 				my $rec		= $model->count_statements( $subj, undef, $subj );
@@ -320,7 +347,7 @@ sub _serialize_object_to_file {
 						my $iter	= $model->get_statements( $subj, undef, undef );
 						my $last_pred;
 						my $triple_count	= 0;
-						print {$fh} "[";
+						$sink->emit("[");
 						while (my $st = $iter->next) {
 							my $pred	= $st->predicate;
 							my $obj		= $st->object;
@@ -328,28 +355,28 @@ sub _serialize_object_to_file {
 							# continue an existing subject
 							if ($pred->equal( $last_pred )) {
 								# continue an existing predicate
-								print {$fh} qq[, ];
-								$self->_serialize_object_to_file( $fh, $obj, $seen, $level, $tab, %args );
+								$sink->emit(qq[, ]);
+								$self->_serialize_object_to_file( $sink, $obj, $seen, $level, $tab, %args );
 #								$self->_turtle( $fh, $obj, 2, $seen, $level, $tab, %args );
 							} else {
 								# start a new predicate
 								if ($triple_count == 0) {
-									print {$fh} qq[\n${indent}${tab}${tab}];
+									$sink->emit(qq[\n${indent}${tab}${tab}]);
 								} else {
-									print {$fh} qq[ ;\n${indent}$tab${tab}];
+									$sink->emit(qq[ ;\n${indent}$tab${tab}]);
 								}
-								$self->_turtle( $fh, $pred, 1, $seen, $level, $tab, %args );
-								print {$fh} ' ';
-								$self->_serialize_object_to_file( $fh, $obj, $seen, $level+1, $tab, %args );
+								$self->_turtle( $sink, $pred, 1, $seen, $level, $tab, %args );
+								$sink->emit(' ');
+								$self->_serialize_object_to_file( $sink, $obj, $seen, $level+1, $tab, %args );
 							}
 							
 							$last_pred	= $pred;
 							$triple_count++;
 						}
 						if ($triple_count) {
-							print {$fh} "\n${indent}${tab}";
+							$sink->emit("\n${indent}${tab}");
 						}
-						print {$fh} "]";
+						$sink->emit("]");
 						return;
 					}
 				}
@@ -357,7 +384,7 @@ sub _serialize_object_to_file {
 		}
 	}
 	
-	$self->_turtle( $fh, $subj, 2, $seen, $level, $tab, %args );
+	$self->_turtle( $sink, $subj, 2, $seen, $level, $tab, %args );
 }
 
 sub _statement_describes_list {
@@ -483,7 +510,7 @@ sub _check_valid_rdf_list {
 
 sub _turtle_rdf_list {
 	my $self	= shift;
-	my $fh		= shift;
+	my $sink	= shift;
 	my $head	= shift;
 	my $model	= shift;
 	my $seen	= shift;
@@ -492,18 +519,18 @@ sub _turtle_rdf_list {
 	my %args	= @_;
 	my $node	= $head;
 	my $count	= 0;
-	print {$fh} '(';
+	$sink->emit('(');
 	until ($node->equal( $rdf->nil )) {
 		if ($count) {
-			print {$fh} ' ';
+			$sink->emit(' ');
 		}
 		my ($value)	= $model->objects_for_predicate_list( $node, $rdf->first );
-		$self->_serialize_object_to_file( $fh, $value, $seen, $level, $tab, %args );
+		$self->_serialize_object_to_file( $sink, $value, $seen, $level, $tab, %args );
 		$seen->{ $node->as_string }++;
 		($node)		= $model->objects_for_predicate_list( $node, $rdf->rest );
 		$count++;
 	}
-	print {$fh} ')';
+	$sink->emit(')');
 }
 
 sub _node_concise_string {
@@ -565,7 +592,7 @@ sub node_as_concise_string {
 
 sub _turtle {
 	my $self	= shift;
-	my $fh		= shift;
+	my $sink	= shift;
 	my $obj		= shift;
 	my $pos		= shift;
 	my $seen	= shift;
@@ -574,7 +601,7 @@ sub _turtle {
 	my %args	= @_;
 	
 	if ($obj->isa('RDF::Trine::Node::Resource') and $pos == 1 and $obj->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
-		print {$fh} 'a';
+		$sink->emit('a');
 		return;
 	} elsif ($obj->isa('RDF::Trine::Node::Blank') and $pos == 0) {
 		if (my $model = $args{ model }) {
@@ -582,16 +609,16 @@ sub _turtle {
 			my $rec		= $model->count_statements( $obj, undef, $obj );
 			# XXX if $count == 1, then it would be better to ignore this triple for now, since it's a 'single-owner' bnode, and better serialized as a '[ ... ]' bnode in the object position as part of the 'owning' triple
 			if ($count < 1 and $rec == 0) {
-				print {$fh} '[]';
+				$sink->emit('[]');
 				return;
 			}
 		}
 	} elsif (defined(my $str = $self->_node_concise_string( $obj ))) {
-		print {$fh} $str;
+		$sink->emit($str);
 		return;
 	}
 	
-	print {$fh} $obj->as_ntriples;
+	$sink->emit($obj->as_ntriples);
 	return;
 }
 

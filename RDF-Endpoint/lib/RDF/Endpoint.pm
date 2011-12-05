@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.03.
+This document describes RDF::Endpoint version 0.04.
 
 =head1 SYNOPSIS
 
@@ -93,7 +93,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.03';
+our $VERSION	= '0.04';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -109,7 +109,7 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator 0.101;
+use RDF::RDFa::Generator 0.102;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
@@ -445,13 +445,16 @@ sub service_description {
 	foreach my $func (@functions) {
 		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
 	}
+	
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_XML') ) );
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_JSON') ) );
 	foreach my $format (@formats) {
 		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
 	
 	my $dataset		= blank('dataset');
 	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
-	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
+	$sdmodel->add_statement( statement( $s, $sd->defaultDataset, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
 	if (my $d = $config->{endpoint}{service_description}{default}) {
 		my $def_graph	= ($d =~ /^\w+:/) ? iri($d) : blank('defaultGraph');
