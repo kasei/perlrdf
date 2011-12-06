@@ -127,11 +127,16 @@ sub create_data {
   return { ex => $ex, names => \@names, triples => \@triples, quads => \@quads, nil => $nil };
 }
 
-=item C<< all_store_tests ($store, $data, $todo) >>
+=item C<< all_store_tests ($store, $data, $todo, $args) >>
 
 Will run all available tests for the given store, given the data from
 C<create_data>. You may also set a third argument to some true value
 to mark all tests as TODO in case the store is in development.
+
+Finally, an C<$args> hashref can be passed. Valid keys are
+C<update_sleep> (see the function with the same name below) and
+C<dupes_unsupported> if the store should skip duplicate detection,
+C<quads_unsupported> if the store is a triple store.
 
 =cut
 
@@ -190,19 +195,21 @@ sub all_store_tests {
 	}
 }
 
-=item C<< all_triple_store_tests ($store, $data, $todo) >>
+=item C<< all_triple_store_tests ($store, $data, $todo, $args) >>
 
 Will run tests for the given B<triple> store, i.e. a store that only
 accepts triples, given the data from C<create_data>. You may also set
 a third argument to some true value to mark all tests as TODO in case
 the store is in development.
 
+For C<$args>, see above.
+
 =cut
 
 sub all_triple_store_tests {
 	my ($store, $data, $todo, $args) = @_;
 	$args		||= {};
-	
+	$args->{quads_unsupported} = 1;
 	my $ex	    = $data->{ex};
 	my @names   = @{$data->{names}};
 	my @triples = @{$data->{triples}};
@@ -212,7 +219,7 @@ sub all_triple_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
-	TODO: {
+      TODO: {
 	local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 	  
 	dies_ok {
@@ -235,7 +242,7 @@ sub all_triple_store_tests {
 	count_statements_tests_triples( $store, $args, $ex, $nil, 1 );
 	get_statements_tests_triples( $store, $args, $ex );
 
-	}
+      }
 }
 
 =item C<< add_quads($store, @quads) >>
@@ -443,6 +450,7 @@ sub literals_tests_simple {
 	  my $count	= $store->count_statements( undef, undef, $litstring, undef );
 	  is( $count, 1, 'expected 1 string literal' );
 	}
+
 	SKIP: {
 	  skip 'Quad-only test', 1 if $to;
 	  my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
@@ -904,17 +912,10 @@ sub remove_statement_tests {
 	is( $store->count_statements( undef, undef, undef, undef ), 0, 'quad count after triple removal' );
 }
 
-=item C<< update_sleep ( \%args ) >>
-
-If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
-This function is called after update operations to aid in testing stores that
-perform updates asynchronously.
-
-=cut
 
 =item C<< update_sleep ( \%args ) >>
 
-If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
+If C<< $args->{ update_sleep } >> is defined, sleeps for that many seconds.
 This function is called after update operations to aid in testing stores that
 perform updates asynchronously.
 
