@@ -382,7 +382,13 @@ Removes the specified C<$statement> from the underlying model.
 
 =cut
 
-sub remove_statements;
+sub remove_statements { # Fallback implementation
+  my $self = shift;
+  my $iterator = $self->get_statements(@_);
+  while (my $st = $iterator->next) {
+    $self->remove_statement($st);
+  }
+}
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
