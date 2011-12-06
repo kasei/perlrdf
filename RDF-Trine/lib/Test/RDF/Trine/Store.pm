@@ -363,7 +363,7 @@ sub bulk_add_statement_tests_simple {
 	
 	update_sleep($args);
 	
-	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) ;
 	
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
  
@@ -371,7 +371,7 @@ sub bulk_add_statement_tests_simple {
 	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
 	  $store->add_statement( $quad );
 	  update_sleep($args);
-	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) ;
 	}
 
 	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
