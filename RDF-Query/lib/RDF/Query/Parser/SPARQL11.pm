@@ -1379,6 +1379,8 @@ sub _OrderClause {
 	$self->_eat( qr/BY/i );
 	$self->__consume_ws_opt;
 	my @order;
+	$self->{build}{__aggregate}	||= {};
+	local($self->{__aggregate_call_ok})	= 1;
 	$self->_OrderCondition;
 	$self->__consume_ws_opt;
 	push(@order, splice(@{ $self->{stack} }));
