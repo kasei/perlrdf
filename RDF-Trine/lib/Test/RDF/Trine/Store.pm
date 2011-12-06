@@ -135,7 +135,7 @@ to mark all tests as TODO in case the store is in development.
 
 Finally, an C<$args> hashref can be passed. Valid keys are
 C<update_sleep> (see the function with the same name below) and
-C<dupes_unsupported> if the store should skip duplicate detection,
+C<suppress_dupe_tests> if the store should skip duplicate detection,
 C<quads_unsupported> if the store is a triple store.
 
 =cut
@@ -319,7 +319,7 @@ sub add_statement_tests_simple {
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
  TODO: {
-		local $TODO =  'Duplicate detection is unsupported' if $args->{dupes_unsupported};
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
@@ -368,7 +368,7 @@ sub bulk_add_statement_tests_simple {
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
  
  TODO: {
-		local $TODO =  'Duplicate detection is unsupported' if $args->{dupes_unsupported};
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) ;
@@ -417,7 +417,7 @@ sub literals_tests_simple {
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );		
  TODO: {
-		local $TODO =  'Duplicate detection is unsupported' if $args->{dupes_unsupported};
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
@@ -519,7 +519,7 @@ sub blank_node_tests_quads {
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
  TODO: {
-		local $TODO =  'Duplicate detection is unsupported' if $args->{dupes_unsupported};
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
@@ -598,7 +598,7 @@ sub blank_node_tests_triples {
 	$store->add_statement( $triple );
 	is( $store->size, 1, 'store has 1 statement after (triple) add' );
  TODO: {
-		local $TODO =  'Duplicate detection is unsupported' if $args->{dupes_unsupported};
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $triple );
 		is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
 	}
