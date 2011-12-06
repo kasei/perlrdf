@@ -318,11 +318,13 @@ sub add_statement_tests_simple {
 	
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
-	$store->add_statement( $quad );
-	update_sleep($args);
+      SKIP: {
+	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
+	  $store->add_statement( $quad );
+	  update_sleep($args);
+	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	}
 
-	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
-	
 	$store->remove_statement( $triple, $ex->d );
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
@@ -364,9 +366,14 @@ sub bulk_add_statement_tests_simple {
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) or die;
 	
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
-	$store->add_statement( $quad );
-	update_sleep($args);
-	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+ 
+      SKIP: {
+	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
+	  $store->add_statement( $quad );
+	  update_sleep($args);
+	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' ) or die;
+	}
+
 	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
 	
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
@@ -408,9 +415,12 @@ sub literals_tests_simple {
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
 	$store->add_statement( $triple, $ex->d );
-	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
-	$store->add_statement( $quad );
-	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );    
+      SKIP: {
+	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
+	  $store->add_statement( $quad );
+	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	}
 	$store->remove_statement( $triple, $ex->d );
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 
@@ -508,8 +518,11 @@ sub blank_node_tests_quads {
 	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
-	$store->add_statement( $quad );
-	is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+      SKIP: {
+	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
+	  $store->add_statement( $quad );
+	  is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+	}
 	$store->remove_statement( $triple, $ex->d );
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
@@ -584,8 +597,11 @@ sub blank_node_tests_triples {
 	my $triple2	= RDF::Trine::Statement->new($ex->c, $ex->d, $blankbar);
 	$store->add_statement( $triple );
 	is( $store->size, 1, 'store has 1 statement after (triple) add' );
-	$store->add_statement( $triple );
-	is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
+      SKIP: {
+	  skip 'Duplicate detection is unsupported', 1 if $args->{dupes_unsupported};
+	  $store->add_statement( $triple );
+	  is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
+	}
 	$store->remove_statement( $triple );
 	is( $store->size, 0, 'store has 0 statements after (triple) remove' );
 	
