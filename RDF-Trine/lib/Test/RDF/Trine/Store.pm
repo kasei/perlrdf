@@ -473,15 +473,11 @@ sub literals_tests_simple {
 	$store->remove_statement($triple2);
 	is( $store->size, 3, 'store has 3 statements after string literal remove' );
 
-	if ($store->isa('RDF::Trine::Store::Hexastore')) {
-	  $store->nuke;
-	} else {
-	  $store->remove_statements(undef, undef, $litlang2, undef );
-	  is( $store->size, 2, 'expected 2 statements after language remove statements' );
+	$store->remove_statements(undef, undef, $litlang2, undef );
+	is( $store->size, 2, 'expected 2 statements after language remove statements' );
 
-	  $store->remove_statements($ex->a, $ex->b, undef, undef );
-	  is( $store->size, 0, 'expected zero size after remove statements' );
-	}
+	$store->remove_statements($ex->a, $ex->b, undef, undef );
+	is( $store->size, 0, 'expected zero size after remove statements' );
 }
 
 
@@ -612,17 +608,12 @@ sub blank_node_tests_triples {
 	  is( $count, 1, 'expected one subject-predicate blank node' );
 	}
 
-	if ($store->isa('RDF::Trine::Store::Hexastore')) {
-	  $store->nuke;
-	} else {
-	  $store->remove_statements( undef, undef, $blankfoo, undef );
-	  is( $store->size, 2, 'expected two triples after remove statements' );
-	  
-	  $store->remove_statement( $triple2 );
-	  is( $store->size, 1, 'expected single triples after remove statement' );
-	  $store->remove_statement( $triple );
-	  is( $store->size, 0, 'expected zero size after remove statement' );
-	}
+	$store->remove_statements( undef, undef, $blankfoo, undef );
+	is( $store->size, 2, 'expected two triples after remove statements' );
+	$store->remove_statement( $triple2 );
+	is( $store->size, 1, 'expected single triples after remove statement' );
+	$store->remove_statement( $triple );
+	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
 
