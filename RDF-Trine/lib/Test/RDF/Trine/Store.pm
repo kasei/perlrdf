@@ -932,7 +932,7 @@ sub remove_statement_tests {
 
 =item C<< update_sleep ( \%args ) >>
 
-If C<< $args->{ update_sleep } >> is defined, sleeps for that many seconds.
+If C<< $args{ update_sleep } >> is defined, sleeps for that many seconds.
 This function is called after update operations to aid in testing stores that
 perform updates asynchronously.
 
