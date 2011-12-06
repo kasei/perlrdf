@@ -32,7 +32,9 @@ distribution.
 
 There are different functions that will test different parts of the
 functionality, but you should run them all at some point, thus for the
-most part, you would just like to run the C<all_store_tests> function.
+most part, you would just like to run the C<all_store_tests> function
+for quad stores and C<all_triple_store_tests> for triple stores
+(i.e. stores that doesn't support named graphs).
 
 All the below functions are exported.
 
