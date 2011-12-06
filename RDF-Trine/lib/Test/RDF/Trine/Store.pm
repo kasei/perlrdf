@@ -232,14 +232,14 @@ sub all_triple_store_tests {
 	bulk_add_statement_tests_simple( $store, $args, $ex );
 	update_sleep($args);
 	
-	literals_tests_simple( $store, $args, $ex, 1 );
+	literals_tests_simple( $store, $args, $ex );
 	blank_node_tests_triples( $store, $args, $ex );
-	count_statements_tests_simple( $store, $args, $ex, 1 );
+	count_statements_tests_simple( $store, $args, $ex );
 	
 	add_triples( $store, $args, @triples );
 	update_sleep($args);
 	
-	count_statements_tests_triples( $store, $args, $ex, $nil, 1 );
+	count_statements_tests_triples( $store, $args, $ex, $nil );
 	get_statements_tests_triples( $store, $args, $ex );
 
       }
@@ -390,7 +390,7 @@ sub bulk_add_statement_tests_simple {
 }
 
 
-=item C<< literals_tests_simple( $store, $data->{ex} , $to)  >>
+=item C<< literals_tests_simple( $store, $data->{ex} , $args)  >>
 
 Tests to check literals support.
 
@@ -398,7 +398,7 @@ Tests to check literals support.
 
 sub literals_tests_simple {
 	note "simple tests with literals";
-	my ($store, $args, $ex, $to) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	my $litplain    = RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1    = RDF::Trine::Node::Literal->new('dahu', 'fr' );
@@ -452,7 +452,7 @@ sub literals_tests_simple {
 	}
 
 	SKIP: {
-	  skip 'Quad-only test', 1 if $to;
+	  skip 'Quad-only test', 1 if $args->{quads_unsupported};
 	  my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 	  is( $count, 0, 'expected 0 string literal with context' );
 	}
@@ -627,7 +627,7 @@ sub blank_node_tests_triples {
 }
 
 
-=item C<< count_statements_tests_simple( $store, $data->{ex}, $to )  >>
+=item C<< count_statements_tests_simple( $store, $args,  $data->{ex} )  >>
 
 Tests to check that counts are correct.
 
@@ -635,7 +635,7 @@ Tests to check that counts are correct.
 
 sub count_statements_tests_simple {
 	note " simple count_statements tests";
-	my ($store, $args, $ex, $to) = @_;
+	my ($store, $args, $ex) = @_;
 	
 	{
 		is( $store->size, 0, 'expected zero size before add statement' );
@@ -646,11 +646,12 @@ sub count_statements_tests_simple {
 		is( $store->count_statements(), 1, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 1, 'count_statements(fff) with undefs' );
 		is( $store->count_statements(undef, undef, undef, undef), 1, 'count_statements(ffff) with undefs' );
-	        SKIP: {
-		  skip 'Quad-only test', 2 if $to;
+	      SKIP: {
+		  skip 'Quad-only test', 2 if $args->{quads_unsupported};
 		  is( $store->count_statements(map {variable($_)} qw(s p o)), 1, 'count_statements(fff) with variables' );
 		  is( $store->count_statements(map {variable($_)} qw(s p o g)), 1, 'count_statements(ffff) with variables' );
 		}
+
 		# 1-bound
 		is( $store->count_statements($ex->a, undef, undef, undef), 1, 'count_statements(bfff)' );
 		is( $store->count_statements(undef, $ex->b, undef, undef), 1, 'count_statements(fbff)' );
@@ -674,7 +675,7 @@ sub count_statements_tests_simple {
 }
 
 
-=item C<< count_statements_tests_quads( $store, $data->{ex} )  >>
+=item C<< count_statements_tests_quads( $store, $args, $data->{ex} )  >>
 
 Count statement tests for quads.
 
@@ -697,7 +698,7 @@ sub count_statements_tests_quads {
 }
 
 
-=item C<<  count_statements_tests_triples( $store, $data->{ex}, $data->{nil}, $to ) >>
+=item C<<  count_statements_tests_triples( $store, $args, $data->{ex}, $data->{nil} ) >>
 
 More tests for counts, with triples.
 
@@ -707,7 +708,7 @@ More tests for counts, with triples.
 
 sub count_statements_tests_triples {
 	note " triple count_statements tests";
-	my ($store, $args, $ex, $nil, $to) = @_;
+	my ($store, $args, $ex, $nil) = @_;
 	
 	{
 		is( $store->count_statements, 27, 'count_statements() after triples added' );
@@ -715,7 +716,7 @@ sub count_statements_tests_triples {
 		is( $store->count_statements( $ex->a, undef, undef ), 9, 'count_statements( bff )' );
 		is( $store->count_statements( $ex->a, undef, undef, $nil ), 9, 'count_statements( bffb )' );
 	        SKIP: {
-		  skip 'Quad-only test', 2 if $to;
+		  skip 'Quad-only test', 2 if $args->{quads_unsupported};
 		  is( $store->count_statements(undef, undef, undef, undef), 108, 'count_statements( ffff ) after triples added' );
 		  is( $store->count_statements( $ex->a, undef, undef, undef ), 27+9, 'count_statements( bfff )' );
 		}
