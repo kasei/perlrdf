@@ -245,7 +245,7 @@ sub all_triple_store_tests {
       }
 }
 
-=item C<< add_quads($store, @quads) >>
+=item C<< add_quads($store, $args, @quads) >>
 
 Helper function to add an array of quads to the given store.
 
@@ -260,7 +260,7 @@ sub add_quads {
 }
 
 
-=item C<< add_triples($store, @triples) >>
+=item C<< add_triples($store, $args, @triples) >>
 
 Helper function to add an array of triples to the given store.
 
@@ -273,7 +273,7 @@ sub add_triples {
 	}
 }
 
-=item C<< contexts_tests( $store ) >>
+=item C<< contexts_tests( $store, $args ) >>
 
 Testing contexts (aka. "graphs")
 
@@ -300,7 +300,7 @@ sub contexts_tests {
 }
 
 
-=item C<< add_statement_tests_simple( $store, $data->{ex} )  >>
+=item C<< add_statement_tests_simple( $store, $args, $data->{ex} )  >>
 
 Tests to check add_statement.
 
@@ -344,7 +344,7 @@ sub add_statement_tests_simple {
 }
 
 
-=item C<< bulk_add_statement_tests_simple( $store, $data->{ex} )  >>
+=item C<< bulk_add_statement_tests_simple( $store, $args, $data->{ex} )  >>
 
 Tests to check add_statement.
 
@@ -397,7 +397,7 @@ sub bulk_add_statement_tests_simple {
 }
 
 
-=item C<< literals_tests_simple( $store, $data->{ex} , $args)  >>
+=item C<< literals_tests_simple( $store, $args, $data->{ex})  >>
 
 Tests to check literals support.
 
@@ -501,7 +501,7 @@ sub literals_tests_simple {
 }
 
 
-=item C<< blank_node_tests_quads( $store, $data->{ex} )  >>
+=item C<< blank_node_tests_quads( $store, $args, $data->{ex} )  >>
 
 Tests to check blank node support for quads.
 
@@ -580,7 +580,7 @@ sub blank_node_tests_quads {
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
-=item C<< blank_node_tests_triples( $store, $data->{ex} )  >>
+=item C<< blank_node_tests_triples( $store, $args, $data->{ex} )  >>
 
 Tests to check blank node support for triples.
 
@@ -741,7 +741,7 @@ sub count_statements_tests_triples {
 }
 
 
-=item C<< get_statements_tests_triples( $store, $data->{ex} )  >>
+=item C<< get_statements_tests_triples( $store, $args, $data->{ex} )  >>
 
 Tests for getting statements using triples.
 
@@ -786,7 +786,7 @@ sub get_statements_tests_triples {
 }
 
 
-=item C<< get_statements_tests_quads( $store, $data->{ex}, $data->{nil}  )  >>
+=item C<< get_statements_tests_quads( $store, $args, $data->{ex}, $data->{nil}  )  >>
 
 Tests for getting statements using quads.
 
@@ -877,7 +877,7 @@ sub get_statements_tests_quads {
 
 
 
-=item C<< remove_statement_tests( $store, $data->{ex}, @{$data->{names}} );  >>
+=item C<< remove_statement_tests( $store, $args, $data->{ex}, @{$data->{names}} );  >>
 
 Tests for removing statements.
 
