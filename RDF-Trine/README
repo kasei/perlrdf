@@ -68,6 +68,30 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.137 (2011-XX-XX)
+
+     * API CHANGES
+         Trying to instantiate a resource node with the Nil IRI results in the Nil node object.
+     * BUG FIXES
+         Fixed unicode escaping issues in RDF::Trine::Serializer::Turtle (bugreport from nichtich <4EB7B9BE.8000205@gbv.de>).
+         Fixed RDF::Trine::Parser::Turtle to properly unescape percent-encoded URIs.
+         Fixed RDF::Trine::Statement->from_redland to properly unescape percent-encoded URIs.
+         Only set parser metadata if RDF::RDFa::Parser is available (github issue 32 from nichtich).
+         Added PostgreSQL-specific init method to handle case sensitivity of table names (RT#71890 from John Nicholas Whitley).
+     * NEW FEATURES
+         Implement RDF::Trine::Store::Hexastore->nuke (KjetilK).
+         Added initial code for a Redis-based store.
+         Added serialize_node method to RDF::Trine::Serializer::NTriples and RDF::Trine::Serializer::Turtle.
+         Added parse_node method to RDF::Trine::Parser::NTriples.
+     * ENHANCEMENTS
+         Create a fallback-implementation of remove_statements in Store.pm  (KjetilK).
+         Updated RDF::Trine::Graph to use Algorithm::Combinatorics for memory/speed improvements (instead of Math::Combinatorics).
+     * OTHER
+         Support triple-only stores in the test suite (patches from KjetilK).
+         Added missing POD to RDF::Trine::Store::DBI::Pg and RDF::Trine::Store::Redis.
+         Check the Perl version when running Tiny::UUID (KjetilK).
+         RDF::Trine::Parser now attempts to use Data::UUID before UUID::Tiny in bnode ID generation (based on test failures).
+
   Version 0.136 (2011-10-19)
 
      * API CHANGES
