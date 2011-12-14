@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 213;								# Remember to update whenever adding tests
+	return 219;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 91;								# Remember to update whenever adding tests
+	return 97;								# Remember to update whenever adding tests
 }
 
 
@@ -441,7 +441,7 @@ sub literals_tests_simple {
 		isa_ok( $st, 'RDF::Trine::Statement' );
 		my $obj = $st->object;
 		isa_ok($obj, 'RDF::Trine::Node::Literal');
-	        is($obj->literal_value, 'dahut', 'expected triple get_statements bound object' );
+	        is($obj->literal_value, 'dahut', 'expected triple get_statements bound object value' );
 	}
 
 	{
@@ -458,6 +458,15 @@ sub literals_tests_simple {
 	$store->add_statement( $quad3 );
 	is( $store->size, 3, 'store has 3 statements after integer literal add' );
 
+	{
+	  my $iter        = $store->get_statements( undef, undef, $litlang1, undef );
+	  my $st = $iter->next;
+	  is($st->object->literal_value, 'dahu', 'expected triple get_statements bound object value' );
+	  is($st->object->literal_value_language, 'fr', 'expected triple get_statements bound object language' );
+	  is($st->object->literal_datatype, undef, 'expected triple get_statements bound object datatype is undef' );
+	}
+
+
 	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $litstring);
 	$store->add_statement( $triple2 );
 	is( $store->size, 4, 'store has 4 statements after (triple) add' );
@@ -471,7 +480,15 @@ sub literals_tests_simple {
 		is( $count, 1, 'expected 1 string literal' );
 	}
 
- SKIP: {
+	{
+		my $iter	= $store->get_statements( undef, undef, $litstring, undef );
+		my $st = $iter->next;
+	        is($st->object->literal_value, 'dahut', 'expected triple get_statements bound object value' );
+	        is($st->object->literal_value_language, undef, 'expected triple get_statements bound object language is undef' );
+	        is($st->object->literal_datatype, $xsd->string->value, 'expected triple get_statements bound object datatype is string' );
+	}
+
+      SKIP: {
 		skip 'Quad-only test', 1 if $args->{quads_unsupported};
 		my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 		is( $count, 0, 'expected 0 string literal with context' );
