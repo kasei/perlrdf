@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 219;								# Remember to update whenever adding tests
+	return 222;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 97;								# Remember to update whenever adding tests
+	return 100;								# Remember to update whenever adding tests
 }
 
 
@@ -410,6 +410,7 @@ sub literals_tests_simple {
 	my $litplain		= RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1		= RDF::Trine::Node::Literal->new('dahu', 'fr' );
 	my $litlang2		= RDF::Trine::Node::Literal->new('dahut', 'en' );
+	my $litutf8		= RDF::Trine::Node::Literal->new('blåbærsyltetøy', 'nb' );
 	my $litstring		= RDF::Trine::Node::Literal->new('dahut', undef, $xsd->string);
 	my $litint			= RDF::Trine::Node::Literal->new(42, undef, $xsd->integer);
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
@@ -522,6 +523,18 @@ sub literals_tests_simple {
 
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
+
+	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $litutf8);
+	$store->add_statement( $triple3 );
+	is( $store->size, 3, 'store has 3 statements after addition of literal with utf8 chars' );
+
+	{
+		my $iter	= $store->get_statements( undef, undef, $litutf8, undef );
+		my $st = $iter->next;
+		isa_ok( $st, 'RDF::Trine::Statement' );
+	        is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
+	}
+
 
 	$store->remove_statements($ex->a, $ex->b, undef, undef );
 	is( $store->size, 0, 'expected zero size after remove statements' );
