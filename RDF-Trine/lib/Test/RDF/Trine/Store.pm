@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 209;								# Remember to update whenever adding tests
+	return 213;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 87;								# Remember to update whenever adding tests
+	return 91;								# Remember to update whenever adding tests
 }
 
 
@@ -432,6 +432,16 @@ sub literals_tests_simple {
 	{
 		my $count	= $store->count_statements( undef, undef, $litplain, undef );
 		is( $count, 1, 'expected 1 plain literal' );
+	}
+
+	{
+		my $iter	= $store->get_statements( undef, undef, $litplain, undef );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my $st = $iter->next;
+		isa_ok( $st, 'RDF::Trine::Statement' );
+		my $obj = $st->object;
+		isa_ok($obj, 'RDF::Trine::Node::Literal');
+	        is($obj->literal_value, 'dahut', 'expected triple get_statements bound object' );
 	}
 
 	{
