@@ -532,10 +532,9 @@ sub literals_tests_simple {
 		my $iter	= $store->get_statements( undef, undef, $litutf8, undef );
 		my $st = $iter->next;
 		isa_ok( $st, 'RDF::Trine::Statement' );
-	        is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
+		is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
 		$store->remove_statement($st);
 		is( $store->size, 2, 'store has 2 statements after removal of literal with utf8 chars' );
-
 	}
 
 
