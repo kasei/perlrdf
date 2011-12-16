@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.
+RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
 
 =head1 VERSION
 

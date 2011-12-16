@@ -36,8 +36,10 @@ no warnings 'redefine';
 no warnings 'once';
 
 use URI;
+use Encode;
 use Log::Log4perl;
 use Scalar::Util qw(blessed looks_like_number);
+use URI::Escape qw(uri_unescape);
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
@@ -716,7 +718,8 @@ sub _resource {
 	my $self	= shift;
 	### uriref | qname
 	if ($self->_uriref_test()) {
-		return $self->__URI($self->_uriref(), $self->{baseURI});
+		my $uri	= $self->_uriref();
+		return $self->__URI($uri, $self->{baseURI});
 	} else {
 		my $qname	= $self->_qname();
 		my $base	= $self->{baseURI};
@@ -770,7 +773,9 @@ sub _uriref {
 	$self->_eat('<');
 	my $value	= $self->_relativeURI();
 	$self->_eat('>');
-	return $value;
+	my $uri	= uri_unescape(encode_utf8($value));
+	my $uni	= decode_utf8($uri);
+	return $uni;
 }
 
 sub _language {

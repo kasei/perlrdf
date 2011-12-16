@@ -1,13 +1,13 @@
-use Test::More tests => 45;
+use Test::More tests => 46;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
+use utf8;
 
 use RDF::Trine;
 use_ok('RDF::Trine::Serializer::Turtle');
-
 
 ################################################################################
 
@@ -452,6 +452,23 @@ END
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'RDF::Trine::Namespace Qnames');
+}
+
+{
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ ex => 'http://example.org/' });
+	my $s		= RDF::Trine::Node::Blank->new('a');
+	my $p		= RDF::Trine::Node::Resource->new("http://example.org/Ä");
+	my $o		= RDF::Trine::Node::Literal->new("Ä");
+	my $st		= RDF::Trine::Statement->new($s, $p, $o);
+	my $expect	= <<"END";
+\@prefix ex: <http://example.org/> .
+
+[] ex:Ä "\\u00C4" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_statement($st);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'IRI with prefixes');
 }
 
 {

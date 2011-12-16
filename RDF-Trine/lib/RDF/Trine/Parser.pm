@@ -456,6 +456,31 @@ sub parse_file {
 =cut
 
 
+=item C<< new_bnode_prefix () >>
+
+Returns a new prefix to be used in the construction of blank node identifiers.
+If either Data::UUID or UUID::Tiny are available, they are used to construct
+a globally unique bnode prefix. Otherwise, an empty string is returned.
+
+=cut
+
+sub new_bnode_prefix {
+	my $class	= shift;
+	if (defined($UUID::Tiny::VERSION) && ($] < 5.014000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
+		no strict 'subs';
+		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} elsif (defined($Data::UUID::VERSION)) {
+		my $ug		= new Data::UUID;
+		my $uuid	= $ug->to_string( $ug->create() );
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} else {
+		return '';
+	}
+}
+
 1;
 
 __END__
