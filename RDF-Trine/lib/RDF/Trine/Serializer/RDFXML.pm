@@ -38,6 +38,7 @@ use URI;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
+use IO::Handle::Iterator;
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -105,6 +106,20 @@ sub serialize_model_to_file {
 	return 1;
 }
 
+=item C<< serialize_model_to_io ( $model ) >>
+
+Returns an IO::Handle with the C<$model> serialized to RDF/XML.
+
+=cut
+
+sub serialize_model_to_io {
+	my $self	= shift;
+	my $model	= shift;
+	my $iter	= $model->as_stream;
+	
+	return $self->serialize_iterator_to_io( $iter );
+}
+
 =item C<< serialize_model_to_string ( $model ) >>
 
 Serializes the C<$model> to RDF/XML, returning the result as a string.
@@ -151,6 +166,59 @@ sub serialize_iterator_to_file {
 	}
 	
 	print {$fh} qq[</rdf:RDF>\n];
+}
+
+=item C<< serialize_iterator_to_io ( $iter ) >>
+
+Returns an IO::Handle with the C<$iter> serialized to RDF/XML.
+
+=cut
+
+sub serialize_iterator_to_io {
+	my $self	= shift;
+	my $iter	= shift;
+	
+	my $foot	= 0;
+	
+	my $ns		= $self->_top_xmlns();
+	my $base_uri        = '';
+	if ($self->{base_uri}) {
+		$base_uri = "xml:base=\"$self->{base_uri}\" ";
+	}
+	
+	my @lines	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
+	my @statements;
+	my $st		= $iter->next;
+	push(@statements, $st) if blessed($st);
+	my $sub	= sub {
+		while (1) {
+			return if ($foot);
+			if (@lines) {
+				my $line	= shift(@lines);
+				return $line;
+			}
+			unless (@statements) {
+				$foot++;
+				return qq[</rdf:RDF>\n];
+			}
+			my $st	= shift(@statements);
+			my @samesubj;
+			push(@samesubj, $st);
+			my $subj	= $st->subject;
+			while (my $row = $iter->next) {
+				if ($row->subject->equal( $subj )) {
+					push(@samesubj, $row);
+				} else {
+					push(@statements, $row);
+					last;
+				}
+			}
+			
+			my $lines	= $self->_statements_same_subject_as_string( @samesubj );
+			push(@lines, map {"$_\n"} split(/\r?\n/, $lines));
+		}
+	};
+	return IO::Handle::Iterator->new( $sub );
 }
 
 sub _statements_same_subject_as_string {

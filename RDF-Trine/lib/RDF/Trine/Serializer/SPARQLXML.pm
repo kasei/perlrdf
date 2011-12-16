@@ -103,6 +103,21 @@ sub serialize_model_to_string {
 	return $self->serialize_iterator_to_string( $iter );
 }
 
+=item C<< serialize_model_to_io ( $model ) >>
+
+Returns an IO::Handle with the C<$model> serialized to SPARQL/XML.
+
+=cut
+
+sub serialize_model_to_io {
+	my $self	= shift;
+	my $model	= shift;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $iter	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	return $self->serialize_iterator_to_io( $iter );
+}
+
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
 Serializes the iterator to N-Triples, printing the results to the supplied
@@ -216,6 +231,61 @@ sub serialize_iterator_to_string {
 	$self->serialize_iterator_to_file( $fh, $iter );
 	close($fh);
 	return $string;
+}
+
+=item C<< serialize_iterator_to_io ( $iter ) >>
+
+Returns an IO::Handle with the C<$iter> serialized to SPARQL/XML.
+
+=cut
+
+sub serialize_iterator_to_io {
+	my $self			= shift;
+	my $fh				= shift;
+	my $iter			= shift;
+	my $width			= $iter->bindings_count;
+	my @lines;
+	
+	my @variables;
+	for (my $i=0; $i < $width; $i++) {
+		my $name	= $iter->binding_name($i);
+		push(@variables, $name) if $name;
+	}
+	
+	my @lines	= (
+		qq[<?xml version="1.0" encoding="utf-8"?>\n],
+		qq[<sparql xmlns="http://www.w3.org/2005/sparql-results#">\n],
+		qq[<head>\n],
+		(map { qq(\t<variable name="$_"/>\n) } @variables),
+		qq[</head>\n],
+		qq[<results>\n],
+	);
+	
+	my $foot	= 0;
+	my $sub		= sub {
+		while (1) {
+			if (@lines) {
+				return shift(@lines);
+			}
+			return if ($foot);
+			my $row = $iter->next;
+			unless (blessed($row)) {
+				$foot++;
+				push(@lines, "</results>\n");
+				push(@lines, "</sparql>\n");
+				next;
+			}
+			my @row;
+			push(@lines, "\t\t<result>\n");
+			for (my $i = 0; $i < $width; $i++) {
+				my $name	= $iter->binding_name($i);
+				my $value	= $row->{ $name };
+				push(@lines, "\t\t\t" . $iter->format_node_xml($value, $name) . "\n");
+			}
+			push(@lines, "\t\t</result>\n");
+		}
+	};
+	return IO::Handle::Iterator->new( $sub );
 }
 
 1;

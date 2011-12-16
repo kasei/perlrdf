@@ -27,6 +27,7 @@ REQUIREMENTS
      * Digest::MD5
      * Error
      * HTTP::Negotiate
+     * IO::Handle::Iterator
      * JSON
      * LWP::UserAgent
      * List::Util

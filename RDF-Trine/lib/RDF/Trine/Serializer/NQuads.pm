@@ -38,6 +38,7 @@ use URI;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
+use IO::Handle::Iterator;
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -107,6 +108,24 @@ sub serialize_model_to_string {
 	return $string;
 }
 
+=item C<< serialize_model_to_io ( $model ) >>
+
+Returns an IO::Handle with the C<$model> serialized to N-Quads.
+
+=cut
+
+sub serialize_model_to_io {
+	my $self	= shift;
+	my $model	= shift;
+	my $iter	= $model->as_stream;
+	my $sub		= sub {
+		my $st = $iter->next;
+		return unless (blessed($st));
+		return $self->_statement_as_string( $st );
+	};
+	return IO::Handle::Iterator->new($sub);
+}
+
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
 Serializes the iterator to N-Quads, printing the results to the supplied
@@ -138,6 +157,23 @@ sub serialize_iterator_to_string {
 		$string		.= $self->_statement_as_string( $st );
 	}
 	return $string;
+}
+
+=item C<< serialize_iterator_to_io ( $iter ) >>
+
+Returns an IO::Handle with the C<$iter> serialized to N-Quads.
+
+=cut
+
+sub serialize_iterator_to_io {
+	my $self	= shift;
+	my $iter	= shift;
+	my $sub		= sub {
+		my $st		= $iter->next;
+		return unless (blessed($st));
+		return $self->_statement_as_string( $st );
+	};
+	return IO::Handle::Iterator->new( $sub );
 }
 
 sub _serialize_bounded_description {

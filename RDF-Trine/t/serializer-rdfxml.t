@@ -1,4 +1,4 @@
-use Test::More tests => 21;
+use Test::More tests => 23;
 use Test::Exception;
 
 use strict;
@@ -431,5 +431,42 @@ END
 	
 	my $xml = $serializer->serialize_model_to_string($model);
 	like( $xml, qr[&amp;]sm, 'XML entity escaping' );
+}
+
+{
+	my $model = RDF::Trine::Model->temporary_model;
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/predicate' => [
+				{'type' => 'literal','value' => 'Foo'},
+				{'type' => 'uri','value' => 'http://example.com/bar'},
+				'baz@en'
+			],
+		},
+	});
+	
+	my $serializer = RDF::Trine::Serializer::RDFXML->new();
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
+	<ns1:predicate rdf:resource="http://example.com/bar"/>
+	<ns1:predicate>Foo</ns1:predicate>
+	<ns1:predicate xml:lang="en">baz</ns1:predicate>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	{
+		my $io	= $serializer->serialize_model_to_io($model);
+		my $xml	= join('', <$io>);
+		is($xml, $expect, 'serialize_model_to_io 1');
+	}
+	{
+		my $iter	= $model->as_stream;
+		my $io		= $serializer->serialize_iterator_to_io($iter);
+		my $xml	= join('', <$io>);
+		is($xml, $expect, 'serialize_iterator_to_io 1');
+	}
 }
 

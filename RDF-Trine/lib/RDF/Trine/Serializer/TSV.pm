@@ -38,6 +38,7 @@ use URI;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
+use IO::Handle::Iterator;
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -114,6 +115,33 @@ sub serialize_model_to_string {
 	return $string;
 }
 
+=item C<< serialize_model_to_io ( $model ) >>
+
+Returns an IO::Handle with the C<$model> serialized to TSV.
+
+=cut
+
+sub serialize_model_to_io {
+	my $self	= shift;
+	my $model	= shift;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	
+	my $head	= 0;
+	my $sub		= sub {
+		unless ($head) {
+			$head++;
+			return join("\t", qw(?s ?p ?o)) . "\n";
+		}
+		my $st = $iter->next;
+		return unless (blessed($st));
+		return $self->statement_as_string( $st );
+	};
+	return IO::Handle::Iterator->new($sub);
+}
+
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
 Serializes the iterator to TSV, printing the results to the supplied
@@ -162,12 +190,62 @@ sub serialize_iterator_to_string {
 		}
 	} else {
 		# TODO: must print the header line corresponding to the bindings in the entire iterator...
-		my $string	= join("\t", qw(?subject ?predicate ?object)) . "\n";
+		my $string	= '';
+# 		$string	= join("\t", qw(?subject ?predicate ?object)) . "\n";
 		while (my $st = $iter->next) {
 			my @nodes	= $st->nodes;
 			$string		.= $self->statement_as_string( $st );
 		}
 		return $string;
+	}
+}
+
+=item C<< serialize_iterator_to_io ( $iter ) >>
+
+Returns an IO::Handle with the C<$iter> serialized to TSV.
+
+=cut
+
+sub serialize_iterator_to_io {
+	my $self	= shift;
+	my $iter	= shift;
+	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
+		my $i	= $iter->materialize;
+		my %keys;
+		while (my $r = $i->next) {
+			foreach my $k (keys %{ $r }) {
+				$keys{ $k }++;
+			}
+		}
+		$i->reset;
+		my @keys	= sort keys %keys;
+		
+		my $head	= 0;
+		my $sub		= sub {
+			unless ($head) {
+				$head++;
+				return join("\t", map { '?' . $_ } @keys) . "\n";
+			}
+			my $r = $i->next;
+			return unless (blessed($r));
+			my @nodes	= @{ $r }{ @keys };
+			my @strings	= map { blessed($_) ? $_->as_ntriples : '' } @nodes;
+			return join("\t", @strings) . "\n";
+		};
+		return IO::Handle::Iterator->new( $sub );
+	} else {
+		# TODO: must print the header line corresponding to the bindings in the entire iterator...
+# 		my $head	= 0;
+		my $sub		= sub {
+# 			unless ($head) {
+# 				$head++;
+# 				return join("\t", qw(?subject ?predicate ?object)) . "\n";
+# 			}
+			my $st = $iter->next;
+			return unless (blessed($st));
+			return $self->statement_as_string( $st );
+		};
+		return IO::Handle::Iterator->new( $sub );
 	}
 }
 

@@ -38,6 +38,7 @@ use URI;
 use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
+use IO::Handle::Iterator;
 
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -113,6 +114,27 @@ sub serialize_model_to_string {
 	return $string;
 }
 
+=item C<< serialize_model_to_io ( $model ) >>
+
+Returns an IO::Handle with the C<$model> serialized to N-Triples.
+
+=cut
+
+sub serialize_model_to_io {
+	my $self	= shift;
+	my $model	= shift;
+	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+	my $sub		= sub {
+		my $st = $iter->next;
+		return unless (blessed($st));
+		return $self->statement_as_string( $st );
+	};
+	return IO::Handle::Iterator->new($sub);
+}
+
 =item C<< serialize_iterator_to_file ( $file, $iter ) >>
 
 Serializes the iterator to N-Triples, printing the results to the supplied
@@ -144,6 +166,23 @@ sub serialize_iterator_to_string {
 		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
+}
+
+=item C<< serialize_iterator_to_io ( $iter ) >>
+
+Returns an IO::Handle with the C<$iter> serialized to N-Triples.
+
+=cut
+
+sub serialize_iterator_to_io {
+	my $self	= shift;
+	my $iter	= shift;
+	my $sub		= sub {
+		my $st		= $iter->next;
+		return unless (blessed($st));
+		return $self->statement_as_string( $st );
+	};
+	return IO::Handle::Iterator->new( $sub );
 }
 
 sub _serialize_bounded_description {

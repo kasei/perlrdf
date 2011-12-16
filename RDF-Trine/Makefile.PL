@@ -22,6 +22,7 @@ requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
 requires			'Error'						=> 0;
 requires			'HTTP::Negotiate'			=> 0;
+requires			'IO::Handle::Iterator'		=> 0;
 requires			'JSON'						=> 2;
 requires			'LWP::UserAgent'			=> 0;
 requires			'List::Util'				=> 0;

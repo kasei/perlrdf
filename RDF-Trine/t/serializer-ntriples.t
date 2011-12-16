@@ -1,4 +1,4 @@
-use Test::More tests => 4;
+use Test::More tests => 6;
 BEGIN { use_ok('RDF::Trine::Serializer::NTriples') };
 
 use strict;
@@ -79,3 +79,40 @@ $model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
 	};
 	is_deeply( \%got, $expect, 'serialize_iterator_to_string' );
 }
+
+{
+	my $serializer	= RDF::Trine::Serializer::NTriples->new();
+	my $iter		= $model->get_statements( undef, $rdf->type, undef );
+	my $io			= $serializer->serialize_iterator_to_io( $iter );
+	my %got;
+	while (my $line = $io->getline) {
+		chomp($line);
+		$got{ $line }	= 1;
+	}
+	my $expect	= { map { $_ => 1 }
+		'_:greg <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .',
+		'<http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .',
+	};
+	is_deeply( \%got, $expect, 'serialize_iterator_to_io' );
+}
+
+{
+	my $serializer	= RDF::Trine::Serializer::NTriples->new();
+	my $io			= $serializer->serialize_model_to_io($model);
+	
+	my %got;
+	while (defined(my $line = <$io>)) {
+		chomp($line);
+		$got{$line}++;
+	}
+	
+	my $expect	= { map { $_ => 1 }
+		'_:greg <http://xmlns.com/foaf/0.1/homepage> <http://kasei.us/> .',
+		'_:greg <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .',
+		'_:greg <http://xmlns.com/foaf/0.1/name> "Greg" .',
+		'<http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document> .',
+	};
+	
+	is_deeply( \%got, $expect, 'serialize_model_to_io' );
+}
+
