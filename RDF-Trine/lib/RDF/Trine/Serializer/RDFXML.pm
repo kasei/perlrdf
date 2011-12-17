@@ -98,11 +98,10 @@ filehandle C<<$fh>>.
 
 sub serialize_model_to_file {
 	my $self	= shift;
-	my $fh		= shift;
+	my $file	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
-	
-	$self->serialize_iterator_to_file( $fh, $iter );
+	my $io		= $self->serialize_model_to_io( $model );
+	print {$file} $_ while (defined($_ = <$io>));
 	return 1;
 }
 
@@ -135,37 +134,10 @@ filehandle C<<$fh>>.
 
 sub serialize_iterator_to_file {
 	my $self	= shift;
-	my $fh		= shift;
+	my $file	= shift;
 	my $iter	= shift;
-	
-	my $ns		= $self->_top_xmlns();
-	my $base_uri        = '';
-	if ($self->{base_uri}) {
-	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
-	}
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
-	
-	my $st			= $iter->next;
-	my @statements;
-	push(@statements, $st) if blessed($st);
-	while (@statements) {
-		my $st	= shift(@statements);
-		my @samesubj;
-		push(@samesubj, $st);
-		my $subj	= $st->subject;
-		while (my $row = $iter->next) {
-			if ($row->subject->equal( $subj )) {
-				push(@samesubj, $row);
-			} else {
-				push(@statements, $row);
-				last;
-			}
-		}
-		
-		print {$fh} $self->_statements_same_subject_as_string( @samesubj );
-	}
-	
-	print {$fh} qq[</rdf:RDF>\n];
+	my $io		= $self->serialize_iterator_to_io( $iter );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_iterator_to_io ( $iter ) >>
@@ -186,20 +158,21 @@ sub serialize_iterator_to_io {
 		$base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
 	
-	my @lines	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
+	my @lines	= (qq[<?xml version="1.0" encoding="utf-8"?>\n], qq[<rdf:RDF $base_uri$ns>\n]);
 	my @statements;
 	my $st		= $iter->next;
 	push(@statements, $st) if blessed($st);
 	my $sub	= sub {
 		while (1) {
-			return if ($foot);
 			if (@lines) {
 				my $line	= shift(@lines);
 				return $line;
 			}
+			return if ($foot);
 			unless (@statements) {
 				$foot++;
-				return qq[</rdf:RDF>\n];
+				push(@lines, qq[</rdf:RDF>\n]);
+				next;
 			}
 			my $st	= shift(@statements);
 			my @samesubj;

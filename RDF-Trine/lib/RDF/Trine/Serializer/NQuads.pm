@@ -84,10 +84,8 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
-	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
-	}
+	my $io		= $self->serialize_model_to_io( $model );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_model_to_string ( $model ) >>
@@ -137,9 +135,8 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
-	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
-	}
+	my $io		= $self->serialize_iterator_to_io( $iter );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>

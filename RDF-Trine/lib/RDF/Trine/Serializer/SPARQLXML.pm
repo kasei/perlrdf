@@ -82,10 +82,8 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
-	my $pat		= RDF::Trine::Pattern->new( $st );
-	my $iter	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
-	return $self->serialize_iterator_to_file( $file, $iter );
+	my $io		= $self->serialize_model_to_io( $model );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_model_to_string ( $model ) >>
@@ -126,95 +124,11 @@ filehandle C<<$fh>>.
 =cut
 
 sub serialize_iterator_to_file {
-	my $self			= shift;
-	my $fh				= shift;
-	my $iter			= shift;
-	my $max_result_size	= shift || 0;
-	my $width			= $iter->bindings_count;
-	
-	my @variables;
-	for (my $i=0; $i < $width; $i++) {
-		my $name	= $iter->binding_name($i);
-		push(@variables, $name) if $name;
-	}
-	
-	no strict 'refs';
-	print {$fh} <<"END";
-<?xml version="1.0" encoding="utf-8"?>
-<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-<head>
-END
-	
-	my $t	= join("\n", map { qq(\t<variable name="$_"/>) } @variables);
-	
-	my $delay_output	= 0;
-	my $delayed			= '';
-	
-	if ($iter->extra_result_data) {
-		$delay_output	= $fh;
-		undef $fh;
-		open( $fh, '>', \$delayed ) or die $!;
-	} else {
-		if ($t) {
-			print {$fh} "${t}\n";
-		}
-	}
-	
-	print {$fh} <<"END";
-</head>
-<results>
-END
-	
-	my $count	= 0;
-	while (my $row = $iter->next) {
-		my @row;
-		print {$fh} "\t\t<result>\n";
-		for (my $i = 0; $i < $width; $i++) {
-			my $name	= $iter->binding_name($i);
-			my $value	= $row->{ $name };
-			print {$fh} "\t\t\t" . $iter->format_node_xml($value, $name) . "\n";
-		}
-		print {$fh} "\t\t</result>\n";
-		
-		last if ($max_result_size and ++$count >= $max_result_size);
-	}
-	
-	if ($delay_output) {
-		my $extra = $iter->extra_result_data;
-		my $extraxml	= '';
-		foreach my $tag (keys %$extra) {
-			$extraxml	.= qq[<extra name="${tag}">\n];
-			my $value	= $extra->{ $tag };
-			foreach my $e (@$value) {
-				foreach my $k (keys %$e) {
-					my $v		= $e->{ $k };
-					my @values	= @$v;
-					foreach ($k, @values) {
-						s/&/&amp;/g;
-						s/</&lt;/g;
-						s/"/&quot;/g;
-					}
-					$extraxml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
-				}
-			}
-			$extraxml	.= "</extra>\n";
-		}
-		my $u	= URI->new('data:');
-		$u->media_type('text/xml');
-		$u->data($extraxml);
-		my $uri	= "$u";
-		$uri	=~ s/&/&amp;/g;
-		$uri	=~ s/</&lt;/g;
-		$uri	=~ s/'/&apos;/g;
-		$uri	=~ s/"/&quot;/g;
-		
-		$fh		= $delay_output;
-		print {$fh} "${t}\n";
-		print {$fh} qq[\t<link href="$uri" />\n];
-		print {$fh} $delayed;
-	}
-	
-	print {$fh} "</results>\n</sparql>\n";
+	my $self	= shift;
+	my $file	= shift;
+	my $iter	= shift;
+	my $io		= $self->serialize_iterator_to_io( $iter );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>
@@ -241,10 +155,8 @@ Returns an IO::Handle with the C<$iter> serialized to SPARQL/XML.
 
 sub serialize_iterator_to_io {
 	my $self			= shift;
-	my $fh				= shift;
 	my $iter			= shift;
 	my $width			= $iter->bindings_count;
-	my @lines;
 	
 	my @variables;
 	for (my $i=0; $i < $width; $i++) {

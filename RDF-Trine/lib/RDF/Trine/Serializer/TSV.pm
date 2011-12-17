@@ -83,14 +83,8 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
-	my $pat		= RDF::Trine::Pattern->new( $st );
-	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
-	my $iter	= $stream->as_statements( qw(s p o) );
-	print {$file} join("\t", qw(s p o));
-	while (my $st = $iter->next) {
-		print {$file} $self->statement_as_string( $st );
-	}
+	my $io		= $self->serialize_model_to_io( $model );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_model_to_string ( $model ) >>
@@ -153,14 +147,8 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
-	if ($iter->isa('RDF::Trine::Iterator::Bindings')) {
-		print {$file} $self->serialize_iterator_to_string($iter);
-	} else {
-		print join("\t", qw(?subject ?predicate ?object)) . "\n";
-		while (my $st = $iter->next) {
-			print {$file} $self->statement_as_string( $st );
-		}
-	}
+	my $io		= $self->serialize_iterator_to_io( $iter );
+	print {$file} $_ while (defined($_ = <$io>));
 }
 
 =item C<< serialize_iterator_to_string ( $iter ) >>

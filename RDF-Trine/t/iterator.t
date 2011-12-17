@@ -152,8 +152,8 @@ use RDF::Trine::Iterator::Boolean;
 
 {
 	my @data	= (
-					{ name => literal('alice'), url => iri('http://example.com/alice'), number => literal(1) },
-					{ name => literal('eve'), url => iri('http://example.com/eve'), number => literal(2) }
+					RDF::Trine::VariableBindings->new({ name => literal('alice'), url => iri('http://example.com/alice'), number => literal(1) }),
+					RDF::Trine::VariableBindings->new({ name => literal('eve'), url => iri('http://example.com/eve'), number => literal(2) }),
 				);
 	my $stream	= RDF::Trine::Iterator::Bindings->new( \@data, [qw(name url number)] );
 	my $string	= $stream->to_string();
