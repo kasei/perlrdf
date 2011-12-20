@@ -20,6 +20,7 @@ REQUIREMENTS
 
 	To install RDF::Trine you'll need the following perl modules installed:
 
+     * Algorithm::Combinatorics
      * Data::UUID
      * DBI
      * DBIx::Connector
@@ -33,7 +34,6 @@ REQUIREMENTS
      * List::MoreUtils
      * Log::Log4perl
      * Math::BigInt
-     * Math::Combinatorics
      * Scalar::Util
      * Set::Scalar
      * Text::CSV
@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.137 (2011-XX-XX)
+  Version 0.137 (2011-12-20)
 
      * API CHANGES
          Trying to instantiate a resource node with the Nil IRI results in the Nil node object.

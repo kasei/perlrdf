@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.137" ;
-                        doap:created      "2011-XX-XX" ;
+                        doap:created      "2011-12-20" ;
                         ];
         asc:changes     [
                         asc:addition    "Implement RDF::Trine::Store::Hexastore->nuke (KjetilK)." ;
