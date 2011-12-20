@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.136
+This document describes RDF::Trine::Parser::Turtle version 0.137
 
 =head1 SYNOPSIS
 
@@ -37,8 +37,10 @@ no warnings 'once';
 use base qw(RDF::Trine::Parser);
 
 use URI;
+use Encode;
 use Log::Log4perl;
 use Scalar::Util qw(blessed looks_like_number);
+use URI::Escape qw(uri_unescape);
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
@@ -49,7 +51,7 @@ use RDF::Trine::Error;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.136';
+	$VERSION				= '0.137';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -716,7 +718,8 @@ sub _resource {
 	my $self	= shift;
 	### uriref | qname
 	if ($self->_uriref_test()) {
-		return $self->__URI($self->_uriref(), $self->{baseURI});
+		my $uri	= $self->_uriref();
+		return $self->__URI($uri, $self->{baseURI});
 	} else {
 		my $qname	= $self->_qname();
 		my $base	= $self->{baseURI};
@@ -770,7 +773,9 @@ sub _uriref {
 	$self->_eat('<');
 	my $value	= $self->_relativeURI();
 	$self->_eat('>');
-	return $value;
+	my $uri	= uri_unescape(encode_utf8($value));
+	my $uni	= decode_utf8($uri);
+	return $uni;
 }
 
 sub _language {

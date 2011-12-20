@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.136
+This document describes RDF::Trine::Parser::NTriples version 0.137
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -100,6 +100,21 @@ sub parse {
 	my $handler	= shift;
 	open( my $fh, '<:utf8', \$string );
 	return $self->parse_file( $base, $fh, $handler );
+}
+
+=item C<< parse_node ( $string, $base ) >>
+
+Returns the RDF::Trine::Node object corresponding to the node whose N-Triples
+serialization is found at the beginning of C<< $string >>.
+
+=cut
+
+sub parse_node {
+	my $self	= shift;
+	my $string	= shift;
+	my $uri		= shift;
+	my $n		= $self->_eat_node( $uri, 0, $string );
+	return $n;
 }
 
 =item C<< parse_file ( $base, $fh, \&handler ) >>

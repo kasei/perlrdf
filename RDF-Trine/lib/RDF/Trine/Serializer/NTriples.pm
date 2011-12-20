@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.136
+This document describes RDF::Trine::Serializer::NTriples version 0.137
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
@@ -175,6 +175,18 @@ sub statement_as_string {
 	my $st		= shift;
 	my @nodes	= $st->nodes;
 	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
+}
+
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the N-Triples serialization of C<< $node >>.
+
+=cut
+
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $node->as_ntriples;
 }
 
 1;

@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.136
+This document describes RDF::Trine::Graph version 0.137
 
 =head1 SYNOPSIS
 
@@ -28,12 +28,12 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use Math::Combinatorics qw(permute);
+use Algorithm::Combinatorics qw(permutations);
 
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 }
 
 use overload
@@ -241,15 +241,18 @@ sub _find_mapping {
 		}
 	}
 	
+	my %bb_master	= map { $_->as_string => 1 } @$bb;
+	
 	my @ka	= keys %blank_ids_a;
 	my @kb	= keys %blank_ids_b;
-	my @kbp	= permute( @kb );
-	MAPPING: foreach my $mapping (@kbp) {
+	my $kbp	= permutations( \@kb );
+	my $count	= 0;
+	MAPPING: while (my $mapping = $kbp->next) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
-		my %bb	= map { $_->as_string => 1 } @$bb;
+		my %bb	= %bb_master;
 		foreach my $st (@$ba) {
 			my @nodes;
 			foreach my $method ($st->node_names) {

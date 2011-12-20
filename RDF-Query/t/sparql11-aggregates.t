@@ -23,7 +23,7 @@ use RDF::Query;
 
 my @files	= map { "data/$_" } qw(t-sparql11-aggregates-1.rdf foaf.xrdf about.xrdf);
 my @models	= test_models( @files );
-my $tests	= (scalar(@models) * 92);
+my $tests	= (scalar(@models) * 91);
 plan tests => $tests;
 
 foreach my $model (@models) {
@@ -390,9 +390,6 @@ END
 			}
 END
 		isa_ok( $query, 'RDF::Query' );
-		throws_ok {
-			$query->execute( $model, strict_errors => 1 );
-		} 'RDF::Query::Error::ComparisonError', 'expected comparision error on multi-typed values';
 		
 		# without strict errors, non-datatyped dates (in human readable form) will
 		# be string-compared with dateTime-datatyped W3CDTF literals

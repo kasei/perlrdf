@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.136
+This document describes RDF::Trine::Store version 0.137
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -382,7 +382,13 @@ Removes the specified C<$statement> from the underlying model.
 
 =cut
 
-sub remove_statements;
+sub remove_statements { # Fallback implementation
+  my $self = shift;
+  my $iterator = $self->get_statements(@_);
+  while (my $st = $iterator->next) {
+    $self->remove_statement($st);
+  }
+}
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
