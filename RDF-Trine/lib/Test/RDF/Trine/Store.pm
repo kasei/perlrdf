@@ -55,7 +55,7 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
- 
+
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.136';
@@ -153,7 +153,7 @@ sub all_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
- TODO: {
+	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
 		throws_ok {
@@ -219,7 +219,7 @@ sub all_triple_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
- TODO: {
+	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
 		dies_ok {
@@ -292,10 +292,10 @@ sub contexts_tests {
 		$seen{ $c->as_string }++;
 	}
 	my $expect	= {
-								 '<http://example.com/a>'	=> 1,
-								 '<http://example.com/b>'	=> 1,
-								 '<http://example.com/c>'	=> 1,
-								};
+		'<http://example.com/a>'	=> 1,
+		'<http://example.com/b>'	=> 1,
+		'<http://example.com/c>'	=> 1,
+	};
 	is_deeply( \%seen, $expect, 'expected contexts' );
 }
 
@@ -318,7 +318,7 @@ sub add_statement_tests_simple {
 	
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
@@ -366,8 +366,8 @@ sub bulk_add_statement_tests_simple {
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) ;
 	
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
- 
- TODO: {
+
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
@@ -417,7 +417,7 @@ sub literals_tests_simple {
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );		
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
@@ -442,7 +442,7 @@ sub literals_tests_simple {
 		isa_ok( $st, 'RDF::Trine::Statement' );
 		my $obj = $st->object;
 		isa_ok($obj, 'RDF::Trine::Node::Literal');
-	        is($obj->literal_value, 'dahut', 'expected triple get_statements bound object value' );
+		is($obj->literal_value, 'dahut', 'expected triple get_statements bound object value' );
 	}
 
 	{
@@ -460,11 +460,11 @@ sub literals_tests_simple {
 	is( $store->size, 3, 'store has 3 statements after integer literal add' );
 
 	{
-	  my $iter        = $store->get_statements( undef, undef, $litlang1, undef );
-	  my $st = $iter->next;
-	  is($st->object->literal_value, 'dahu', 'expected triple get_statements bound object value' );
-	  is($st->object->literal_value_language, 'fr', 'expected triple get_statements bound object language' );
-	  is($st->object->literal_datatype, undef, 'expected triple get_statements bound object datatype is undef' );
+		my $iter        = $store->get_statements( undef, undef, $litlang1, undef );
+		my $st = $iter->next;
+		is($st->object->literal_value, 'dahu', 'expected triple get_statements bound object value' );
+		is($st->object->literal_value_language, 'fr', 'expected triple get_statements bound object language' );
+		is($st->object->literal_datatype, undef, 'expected triple get_statements bound object datatype is undef' );
 	}
 
 
@@ -484,12 +484,12 @@ sub literals_tests_simple {
 	{
 		my $iter	= $store->get_statements( undef, undef, $litstring, undef );
 		my $st = $iter->next;
-	        is($st->object->literal_value, 'dahut', 'expected triple get_statements bound object value' );
-	        is($st->object->literal_value_language, undef, 'expected triple get_statements bound object language is undef' );
-	        is($st->object->literal_datatype, $xsd->string->value, 'expected triple get_statements bound object datatype is string' );
+		is($st->object->literal_value, 'dahut', 'expected triple get_statements bound object value' );
+		is($st->object->literal_value_language, undef, 'expected triple get_statements bound object language is undef' );
+		is($st->object->literal_datatype, $xsd->string->value, 'expected triple get_statements bound object datatype is string' );
 	}
 
-      SKIP: {
+	SKIP: {
 		skip 'Quad-only test', 1 if $args->{quads_unsupported};
 		my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 		is( $count, 0, 'expected 0 string literal with context' );
@@ -532,7 +532,7 @@ sub literals_tests_simple {
 		my $iter	= $store->get_statements( undef, undef, $litutf8, undef );
 		my $st = $iter->next;
 		isa_ok( $st, 'RDF::Trine::Statement' );
-	        is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
+		is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
 	}
 
 
@@ -558,7 +558,7 @@ sub blank_node_tests_quads {
 	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
@@ -637,7 +637,7 @@ sub blank_node_tests_triples {
 	my $triple2	= RDF::Trine::Statement->new($ex->c, $ex->d, $blankbar);
 	$store->add_statement( $triple );
 	is( $store->size, 1, 'store has 1 statement after (triple) add' );
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $triple );
 		is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
@@ -832,8 +832,6 @@ Tests for getting statements using quads.
 
 =cut
 
-
-
 sub get_statements_tests_quads {
 	note " quad get_statements tests";
 	my ($store, $args, $ex, $nil) = @_;
@@ -995,4 +993,4 @@ __END__
 
  Gregory Todd Williams <gwilliams@cpan.org> and Kjetil Kjernsmo <kjetilk@cpan.org>
 
-	=cut
+=cut

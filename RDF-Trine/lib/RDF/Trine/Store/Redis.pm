@@ -84,7 +84,7 @@ sub new {
 	my $class	= shift;
 	my %args	= @_;
 	my $size	= delete $args{cache_size};
-	$size		= 128 unless ($size > 0);
+	$size		= 128 unless (defined($size) and $size > 0);
 	my $r		= Redis->new( %args );
 	my $cache	= Cache::LRU->new( size => $size );
 	my $self	= bless({ conn => $r, cache => $cache, cache_size => $size }, $class);
@@ -150,26 +150,57 @@ sub _config_meta {
 
 sub _id_node {
 	my $self	= shift;
-	my $id		= shift;
+	my @id		= @_;
 	my $r		= $self->conn;
 	my $p		= RDF::Trine::Parser::NTriples->new();
-	my $valkey	= "RT:node.value.$id";
-	my $str;
-if ($CACHING) {
-	$str		= $self->cache->get($valkey);
-}
-	unless (defined($str)) {
-		$str		= $r->get( $valkey );
-if ($CACHING) {
-		$self->cache->set( $valkey, $str );
-}
+	my @valkey	= map {"RT:node.value.$_"} @id;
+	my @str;
+	if ($CACHING) {
+		@str		= map { $self->cache->get($_) } @valkey;
 	}
-	return unless ($str);
-	my $node	= $p->parse_node( $str );
-	return $node;
+	
+	my @not_set_indexes	= map { defined($str[$_]) ? () : $_ } (0 .. $#id);
+	if (@not_set_indexes) {
+		my @keys	= @valkey[ @not_set_indexes ];
+		my @values	= $r->mget( @keys );
+		@str[ @not_set_indexes ]	= @values;
+		if ($CACHING) {
+			foreach my $i (@not_set_indexes) {
+				$self->cache->set( $valkey[$i], $str[$i] );
+			}
+		}
+	}
+	my @node	= map { defined($_) ? $p->parse_node( $_ ) : do { Carp::cluck; undef } } @str;	# @@
+	return @node;
 }
 
-sub _node_id {
+sub _get_node_id {
+	my $self	= shift;
+	my @node	= @_;
+	my $r		= $self->conn;
+	my $s		= RDF::Trine::Serializer::NTriples->new();
+	my @str		= map { $s->serialize_node( $_ ) } @node;
+	my @idkey	= map { "RT:node.id.$_" } @str;
+	my @id;
+	if ($CACHING) {
+		@id			= map { $self->cache->get($_) } @idkey;
+	}
+	
+	my @not_set_indexes	= map { defined($id[$_]) ? () : $_ } (0 .. $#node);
+	if (@not_set_indexes) {
+		my @keys	= @idkey[ @not_set_indexes ];
+		my @values	= $r->mget( @keys );
+		@id[ @not_set_indexes ]	= @values;
+		if ($CACHING) {
+			foreach my $i (@not_set_indexes) {
+				$self->cache->set( $idkey[$i], $id[$i] );
+			}
+		}
+	}
+	return wantarray ? @id : $id[0];
+}
+
+sub _get_or_set_node_id {
 	my $self	= shift;
 	my $node	= shift;
 	my $r		= $self->conn;
@@ -177,14 +208,14 @@ sub _node_id {
 	my $str		= $s->serialize_node( $node );
 	my $idkey	= "RT:node.id.$str";
 	my $id;
-if ($CACHING) {
-	$id			= $self->cache->get($idkey);
-}
+	if ($CACHING) {
+		$id			= $self->cache->get($idkey);
+	}
 	unless (defined($id)) {
 		$id		= $r->get( $idkey );
-if ($CACHING) {
-		$self->cache->set( $idkey, $id );
-}
+		if ($CACHING) {
+			$self->cache->set( $idkey, $id );
+		}
 	}
 	return $id if (defined($id));
 	
@@ -220,7 +251,7 @@ sub add_statement {
 		my @nodes	= $st->nodes;
 		$nodes[3]	= $context if ($context);
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
-		my @ids		= map { $self->_node_id($_) } @nodes;
+		my @ids		= map { $self->_get_or_set_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
 		$r->set( "RT:spog:$key", 1 );
 		$r->sadd( "RT:sset:$ids[0]", $key );
@@ -257,7 +288,10 @@ sub remove_statement {
 		my @nodes	= $st->nodes;
 		$nodes[3]	= $context if ($context);
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
-		my @ids		= map { $self->_node_id($_) } @nodes;
+		my @ids		= $self->_get_node_id(@nodes);
+		foreach my $i (@ids) {
+			return unless defined($i);
+		}
 		my $key		= join(':', @ids);
 		$r->del( "RT:spog:$key" );
 		$r->srem( "RT:sset:$ids[0]", $key );
@@ -283,8 +317,7 @@ sub remove_statements {
 	if ($self->_bulk_ops) {
 		push(@{ $self->{ ops } }, ['_remove_statement_patterns', $st, $context]);
 	} else {
-		$nodes[3]	= 
-		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes;
+		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_get_or_set_node_id($_) } @nodes;
 		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		foreach my $k ($r->keys($key)) {
@@ -313,6 +346,9 @@ sub get_statements {
 	my $use_quad	= 0;
 	if (scalar(@_) >= 4) {
 		$use_quad	= 1;
+	} elsif (scalar(@nodes) != 3) {
+		$#nodes		= 3;
+		$use_quad	= 1;
 	}
 	
 	my @var_map	= qw(s p o g);
@@ -333,7 +369,10 @@ sub get_statements {
 			my $index	= $indexes[$i];
 			my $n		= $nodes[$i];
 			unless ($n->is_variable) {
-				my $id	= $self->_node_id($n);
+				my $id	= $self->_get_node_id($n);
+				unless (defined($id)) {
+					return RDF::Trine::Iterator::Graph->new( [] );
+				}
 				my $key	= "RT:${index}set:$id";
 				push(@skeys, $key);
 			}
@@ -344,20 +383,19 @@ sub get_statements {
 				return unless (scalar(@keys));
 				my $key		= shift(@keys);
 				my @data	= split(':', $key);
-				my @nodes	= map { $self->_id_node( $_ ) } @data[0..3];
+				my @nodes	= $self->_id_node( @data[0..3] );
 				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
 				return $st;
 			};
 		} else {
-			my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes;
+			my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes;
 			my $key		= 'RT:spog:' . join(':', @strs);
 			my @keys	= $r->keys($key);
 			$sub		= sub {
 				return unless (scalar(@keys));
 				my $key		= shift(@keys);
-				my @data	= split(':', $key);
-				shift(@data);
-				my @nodes	= map { $self->_id_node( $_ ) } @data;
+				(undef, undef, my @data)	= split(':', $key);
+				my @nodes	= $self->_id_node( @data );
 				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
 				return $st;
 			};
@@ -370,7 +408,10 @@ sub get_statements {
 			my $index	= $indexes[$i];
 			my $n		= $nodes[$i];
 			unless ($n->is_variable) {
-				my $id	= $self->_node_id($n);
+				my $id	= $self->_get_node_id($n);
+				unless (defined($id)) {
+					return RDF::Trine::Iterator::Graph->new( [] );
+				}
 				my $key	= "RT:${index}set:$id";
 				push(@skeys, $key);
 			}
@@ -387,12 +428,12 @@ sub get_statements {
 				return unless (scalar(@keys));
 				my $key		= shift(@keys);
 				my @data	= split(':', $key);
-				my @nodes	= map { $self->_id_node( $_ ) } @data[0..2];
+				my @nodes	= $self->_id_node( @data[0..2] );
 				my $st		= RDF::Trine::Statement->new( @nodes );
 				return $st;
 			};
 		} else {
-			my @strs	= map { ($_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..2];
+			my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes[0..2];
 			my $key		= 'RT:spog:' . join(':', @strs, '*');
 			my %triples;
 			foreach ($r->keys($key)) {
@@ -403,9 +444,9 @@ sub get_statements {
 			$sub		= sub {
 				return unless (scalar(@keys));
 				my $key		= shift(@keys);
-				my @data	= split(':', $key);
-				shift(@data);
-				my @nodes	= map { $self->_id_node( $_ ) } @data;
+				my ($ids)	= $key =~ m/^RT:spog:(.*)$/;
+				my @data	= split(':', $ids);
+				my @nodes	= $self->_id_node( @data );
 				my $st		= RDF::Trine::Statement->new( @nodes );
 				return $st;
 			};
@@ -430,14 +471,25 @@ sub count_statements {
 # 		warn "count statements with quad" if ($::debug);
 	}
 	my @nodes	= @_;
+	my @strs;
+	foreach my $n (@nodes[0..3]) {
+		if (not(blessed($n)) or $n->is_variable) {
+			push(@strs, '*');
+		} else {
+			my $id	= $self->_get_node_id($n);
+			unless (defined($id)) {
+				return 0;
+			}
+			push(@strs, $id);
+		}
+	}
+
 	if ($use_quad) {
-		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..3];
 		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		my @keys	= $r->keys($key);
 		return scalar(@keys);
 	} else {
-		my @strs	= map { (not(blessed($_)) or $_->is_variable) ? '*' : $self->_node_id($_) } @nodes[0..3];
 		my $key		= 'RT:spog:' . join(':', @strs);
 		my $r		= $self->conn;
 		my @keys	= $r->keys($key);
@@ -467,12 +519,7 @@ sub get_contexts {
 		s/^.*://;
 		$graphs{ $_ }++;
 	}
-	my @nodes;
-	foreach my $id (keys %graphs) {
-		my $node	= $self->_id_node($id);
-		next if ($node->isa('RDF::Trine::Node::Nil'));
-		push(@nodes, $node);
-	}
+	my @nodes	= grep { not($_->isa('RDF::Trine::Node::Nil')) } $self->_id_node(keys %graphs);
 	return RDF::Trine::Iterator->new( \@nodes );
 }
 
