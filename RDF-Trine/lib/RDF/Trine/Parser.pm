@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.136
+This document describes RDF::Trine::Parser version 0.137
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -385,14 +385,14 @@ a globally unique bnode prefix. Otherwise, an empty string is returned.
 
 sub new_bnode_prefix {
 	my $class	= shift;
-	if (defined($UUID::Tiny::VERSION) && ($] < 5.014000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
-		no strict 'subs';
-		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
-		$uuid		=~ s/-//g;
-		return 'b' . $uuid;
-	} elsif (defined($Data::UUID::VERSION)) {
+	if (defined($Data::UUID::VERSION)) {
 		my $ug		= new Data::UUID;
 		my $uuid	= $ug->to_string( $ug->create() );
+		$uuid		=~ s/-//g;
+		return 'b' . $uuid;
+	} elsif (defined($UUID::Tiny::VERSION) && ($] < 5.014000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
+		no strict 'subs';
+		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;
 	} else {
