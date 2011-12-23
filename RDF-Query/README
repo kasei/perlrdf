@@ -1,6 +1,6 @@
-RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.
+RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
 
-   RDF::Query allows RDQL and SPARQL queries to be run against an RDF model, returning rows of matching results.
+   RDF::Query allows SPARQL 1.1 and RDQL queries to be run against an RDF model, returning rows of matching results.
 
 REQUIREMENTS
 
@@ -23,7 +23,6 @@ REQUIREMENTS
 
 	The following additional modules are recommended for some functionality:
 
-     * RDF::Redland
      * Geo::Distance
 
 INSTALLATION

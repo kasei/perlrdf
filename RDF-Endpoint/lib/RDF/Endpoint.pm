@@ -114,7 +114,7 @@ use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
-
+use Fcntl qw(:flock SEEK_END);
 
 my $NAMESPACES	= {
 	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
@@ -151,6 +151,12 @@ sub new {
 		my $store	= RDF::Trine::Store->new( $config->{store} );
 		$model		= RDF::Trine::Model->new( $store );
 	}
+	my $logfh;
+	if (my $logfile = $config->{endpoint}{log}) {
+		warn "opening log file $logfile\n";
+		open($logfh, '>>', $logfile) or warn $!;
+	}
+	
 	unless ($config->{endpoint}) {
 		$config->{endpoint}	= { %$config };
 	}
@@ -158,6 +164,7 @@ sub new {
 		conf		=> $config,
 		model		=> $model,
 		start_time	=> time,
+		logfh		=> $logfh,
 	}, $class );
 	$self->service_description();	# pre-generate the service description
 	return $self;
@@ -174,7 +181,7 @@ sub run {
 	my $self	= shift;
 	my $req		= shift;
 	my $config	= $self->{conf};
-	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
+	my $endpoint_path = $config->{endpoint}{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
@@ -200,7 +207,6 @@ END
 		$response->body($content);
 		return $response;
 	}
-	
 	
 	my $headers	= $req->headers;
 	my $type	= $headers->header('Accept') || 'application/sparql-results+xml';
@@ -258,6 +264,7 @@ END
 		
 		my $base	= $req->base;
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
+		$self->log_query( $req, $sparql );
 		if ($query) {
 			my ($plan, $ctx)	= $query->prepare( $model );
 # 			warn $plan->sse;
@@ -316,12 +323,14 @@ END
 					}
 				}
 			} else {
+				$self->log_error( $req, $query->error, $sparql );
 				$response->status(500);
 				$response->body($query->error);
 				$content	= RDF::Query->error;
 			}
 		} else {
 			$content	= RDF::Query->error;
+			$self->log_error( $req, $content );
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
 			$response->status($code);
 			$response->body($content);
@@ -640,6 +649,60 @@ sub node_as_html {
 		}
 		return $html;
 	}
+}
+
+
+
+=item C<< log_query ( $message ) >>
+
+=cut
+
+sub log_query {
+	my $self	= shift;
+	my $req		= shift;
+	my @msg		= (
+		'REQ',
+		scalar(time),
+		$req->address,
+		$req->headers->referer,
+		$req->method,
+		@_
+	);
+	$self->_log( @msg );
+}
+
+=item C<< log_error ( $message ) >>
+
+=cut
+
+sub log_error {
+	my $self	= shift;
+	my $req		= shift;
+	my @msg		= (
+		'ERR',
+		scalar(time),
+		$req->address,
+		@_
+	);
+	$self->_log( @msg );
+}
+
+
+sub _log {
+	my $self	= shift;
+	my @msg		= @_;
+	my $fh		= $self->{logfh} or return;
+	foreach (@msg) {
+		s/\\/\\\\/g;
+		s/\n/\\n/g;
+		s/\t/\\t/g;
+		s/\r/\\r/g;
+		s/"/\\"/g;
+	}
+	flock($fh, LOCK_EX) or die "Cannot lock logfile − $!\n";		#lock
+	seek($fh, 0, SEEK_END) or die "Cannot seek − $!\n";
+	print $fh join("\t", @msg),"\n";
+	flock($fh, LOCK_UN) or die "Cannot unlock logfile − $!\n";	#unlock
 }
 
 =end private

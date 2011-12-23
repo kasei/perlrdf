@@ -9,7 +9,7 @@ BEGIN { require "models.pl"; }
 my @files	= map { "data/$_" } qw(foaf.xrdf);
 my @models	= test_models( @files );
 
-my $tests	= scalar(@models) * 11;
+my $tests	= scalar(@models) * 10;
 plan tests => $tests;
 
 use RDF::Query;
@@ -93,30 +93,5 @@ END
 			$count++;
 		}
 		is( $count, 4, 'expected result count' );
-	}
-	
-	
-	SKIP: {
-		print "# Remote SERVICE invocations\n";
-		my $why	= "No network. Set RDFQUERY_NETWORK_TESTS to run these tests.";
-		skip $why, 1 unless ($ENV{RDFQUERY_NETWORK_TESTS});
-		
-		{
-			my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } ) or warn RDF::Query->error;
-				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-				SELECT DISTINCT *
-				WHERE {
-					SERVICE <http://kasei.us/sparql> {
-						?p a foaf:Person ; foaf:name "Gregory Todd Williams" .
-						FILTER(ISIRI(?p))
-					}
-				}
-				LIMIT 1
-END
-			my $iter	= $query->execute( $model );
-			while (my $row = $iter->next) {
-				is( $row->{p}->uri_value, 'http://kasei.us/about/foaf.xrdf#greg', 'expected URI value from remote SERVICE' );
-			}
-		}
 	}
 }
