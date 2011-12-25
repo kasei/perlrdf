@@ -115,6 +115,8 @@ use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
 use Fcntl qw(:flock SEEK_END);
+use Carp qw(croak);
+
 
 my $NAMESPACES	= {
 	xsd			=> 'http://www.w3.org/2001/XMLSchema#',
@@ -193,7 +195,7 @@ sub run {
 		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 		my $file	= File::Spec->catfile($dir, 'www', $path);
 		if (-r $file) {
-			open( my $fh, '<', $file ) or die $!;
+			open( my $fh, '<', $file ) or croak $!;
 			$response->status(200);
 			$content	= $fh;
 		} else {
@@ -508,7 +510,7 @@ sub iter_as_html {
 	my $html;
 
 	if (-r $file) {
-		open( my $fh, '<', $file ) or die $!;
+		open( my $fh, '<', $file ) or croak $!;
 		$html = do { local $/; <$fh>; };
 		close $fh;
 	} else {
@@ -699,10 +701,10 @@ sub _log {
 		s/\r/\\r/g;
 		s/"/\\"/g;
 	}
-	flock($fh, LOCK_EX) or die "Cannot lock logfile − $!\n";		#lock
-	seek($fh, 0, SEEK_END) or die "Cannot seek − $!\n";
+	flock($fh, LOCK_EX) or croak "Cannot lock logfile − $!\n";		#lock
+	seek($fh, 0, SEEK_END) or croak "Cannot seek − $!\n";
 	print $fh join("\t", @msg),"\n";
-	flock($fh, LOCK_UN) or die "Cannot unlock logfile − $!\n";	#unlock
+	flock($fh, LOCK_UN) or croak "Cannot unlock logfile − $!\n";	#unlock
 }
 
 =end private
