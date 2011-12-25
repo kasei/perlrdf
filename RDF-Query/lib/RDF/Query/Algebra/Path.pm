@@ -236,7 +236,7 @@ sub _expand_path {
 		} elsif ($op =~ /^(\d+)-$/) {
 			$psse	= join('/', @nodessse) . "{$1,}";
 		} else {
-			die "Serialization of unknown path type $op";
+			confess "Serialization of unknown path type $op";
 		}
 		return $psse;
 	}
