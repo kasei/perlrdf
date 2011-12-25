@@ -30,6 +30,7 @@ use RDF::Trine::Error;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
+use Carp qw(croak);
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -514,7 +515,7 @@ sub _join {
 =cut
 
 sub get_contexts {
-	die;
+  croak "Contexts not supported for the Hexastore store";
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
