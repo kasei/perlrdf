@@ -319,7 +319,7 @@ sub cli_parse_args {
 			my $file	= shift(@ARGV);
 			my $sparql	= ($file eq '-')
 						? do { local($/) = undef; <> }
-						: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
+						: do { local($/) = undef; open(my $fh, '<', $file) || croak $!; binmode($fh, ':utf8'); <$fh> };
 			$args{ query }	= $sparql;
 		}
 	}

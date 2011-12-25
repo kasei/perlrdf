@@ -341,7 +341,7 @@ sub from_redland {
 						: undef;
 			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
 		} else {
-			die;
+			croak 'Unknown node type in statement conversion';
 		}
 	};
 	
