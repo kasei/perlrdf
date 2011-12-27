@@ -47,6 +47,8 @@ use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
+use Carp qw(croak);
+
 our ($VERSION);
 BEGIN {
 	$VERSION	= '0.137';
@@ -592,7 +594,7 @@ END
 	if ($self->extra_result_data) {
 		$delay_output	= $fh;
 		undef $fh;
-		open( $fh, '>', \$delayed ) or die $!;
+		open( $fh, '>', \$delayed ) or croak $!;
 	} else {
 		if ($t) {
 			print {$fh} "${t}\n";

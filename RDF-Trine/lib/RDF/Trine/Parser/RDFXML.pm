@@ -317,8 +317,7 @@ sub start_element {
 			unshift(@{ $self->{seqs} }, 0);
 			$l->trace('unshifting seq counter: ' . Dumper($self->{seqs}));
 		} elsif ($self->expect == COLLECTION) {
-			$l->trace("-> expect COLLECTION");
-			die;
+			$l->logdie("-> expect COLLECTION");
 		} elsif ($self->expect == PREDICATE) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};
