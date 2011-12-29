@@ -146,7 +146,7 @@ serialization methods assume the results are unique, and so use this method
 before serialization.
 
 Uniqueness is opt-in for efficiency concerns -- this method requires O(n) memory,
-and so may have noticable effects on large graphs.
+and so may have noticeable effects on large graphs.
 
 =cut
 
