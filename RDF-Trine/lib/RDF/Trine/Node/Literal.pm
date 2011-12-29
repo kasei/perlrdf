@@ -290,7 +290,7 @@ If C<< $datatype >> is a recognized datatype, returns the canonical lexical
 representation of the value C<< $string >>. Otherwise returns C<< $string >>.
 
 Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
-Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
+Additionally, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
 will trigger a warning.
 
 =cut

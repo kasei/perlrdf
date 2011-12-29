@@ -43,7 +43,7 @@ BEGIN {
 =item C<< new ( sep_char => $sep_char, quote => $bool ) >>
 
 Returns a new RDF::Trine::Exporter::CSV object. If C<< $sep_char >> is provided,
-it is used as the seperator character in CSV serialization, otherwise a comma
+it is used as the separator character in CSV serialization, otherwise a comma
 (",") is used.
 
 =cut
