@@ -22,6 +22,7 @@ use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
+use Time::HiRes qw ( time );
 
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
@@ -419,8 +420,23 @@ change. This token is acceptable for use as an HTTP ETag.
 =cut
 
 sub etag {
-	return;
+	my $self = shift;
+	return ($self->{etag}) ? $self->{etag} : '';
 }
+
+=item C<< touch >>
+
+If the store tracks last modification of the model, call this method to update.
+
+=cut
+
+sub touch {
+	my $self = shift;
+	if (defined($self->{etag})) {
+		$self->{etag} = time;
+	}
+}
+
 
 =item C<< supports ( [ $feature ] ) >>
 

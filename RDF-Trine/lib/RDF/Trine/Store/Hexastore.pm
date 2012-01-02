@@ -544,6 +544,7 @@ sub add_statement {
 	}
 	if ($added) {
 		$self->{ size }++;
+		$self->touch;
 	}
 }
 
@@ -599,6 +600,7 @@ sub nuke {
     $self->{id2node} = {};
     $self->{next_id} = 1;
     $self->{size} = 0;
+		$self->{etag} = rand(1000000000); # Start time lower than typical epoch
     return $self;
 }
 
