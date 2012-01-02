@@ -30,6 +30,7 @@ use RDF::Trine::Error;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
+use Time::HiRes qw ( time );
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -579,6 +580,7 @@ sub remove_statement {
 	
 	if ($removed) {
 		$self->{ size }--;
+		$self->touch;
 	}
 }
 
@@ -599,7 +601,7 @@ sub nuke {
     $self->{id2node} = {};
     $self->{next_id} = 1;
     $self->{size} = 0;
-		$self->{etag} = rand(1000000000); # Start time lower than typical epoch
+		$self->{etag} = time;
     return $self;
 }
 
