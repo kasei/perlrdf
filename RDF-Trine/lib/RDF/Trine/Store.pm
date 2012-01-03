@@ -421,7 +421,7 @@ change. This token is acceptable for use as an HTTP ETag.
 
 sub etag {
 	my $self = shift;
-	return ($self->{etag}) ? $self->{etag} : '';
+	return ($self->{etag}) ? $self->{etag} : undef;
 }
 
 =item C<< touch >>
