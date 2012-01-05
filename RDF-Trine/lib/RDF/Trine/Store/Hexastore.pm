@@ -544,7 +544,7 @@ sub add_statement {
 	}
 	if ($added) {
 		$self->{ size }++;
-		$self->touch;
+		$self->{etag} = time;
 	}
 }
 
@@ -580,13 +580,24 @@ sub remove_statement {
 	
 	if ($removed) {
 		$self->{ size }--;
-		$self->touch;
+		$self->{etag} = time;
 	}
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=item C<< etag >>
+
+Returns an Etag suitable for use in an HTTP Header.
+
+=cut
+
+sub etag {
+	return $_[0]->{etag};
+}
+
 
 =item C<< nuke >>
 
