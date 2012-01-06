@@ -273,10 +273,10 @@ sub get_statements {
 		my $rev	= 0;
 		if (@orderby) {
 			$rev	= 1 if ($orderby[1] eq 'DESC');
- 			my $sortkey	= $variable_map{ $orderby[0] };
- 			if ($sortkey ne $ukeys[0]) {
- 				@ukeys	= reverse(@ukeys);
- 			}
+			my $sortkey	= $variable_map{ $orderby[0] };
+			if ($sortkey ne $ukeys[0]) {
+				@ukeys	= reverse(@ukeys);
+			}
 		}
 		
 		my $index	= $self->_index_from_pair( $self->_index_root, @keys );
@@ -287,7 +287,7 @@ sub get_statements {
 		my $ukey1;
 		my $sub		= sub {
 			while (0 == scalar(@local_list)) {
- 				return undef unless (scalar(@ukeys1));
+				return undef unless (scalar(@ukeys1));
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
 				my $list	= $self->_index_from_pair( $index, $ukeys[0], $ukey1 );
@@ -324,12 +324,12 @@ sub get_statements {
 		
 		my $rev	= 0;
 		my (@order_keys, $final_key);
- 		if (@orderby) {
+		if (@orderby) {
 			$rev	= 1 if ($orderby[1] eq 'DESC');
- 			my $sortkey	= $variable_map{ $orderby[0] };
- 			my @nodes	= ($sortkey, grep { $_ ne $sortkey } NODES);
- 			@order_keys	= @nodes[0,1];
- 			$final_key	= $nodes[2];
+			my $sortkey	= $variable_map{ $orderby[0] };
+			my @nodes	= ($sortkey, grep { $_ ne $sortkey } NODES);
+			@order_keys	= @nodes[0,1];
+			$final_key	= $nodes[2];
 		} else {
 			$final_key	= 'object';
 			@order_keys	= qw(subject predicate);
