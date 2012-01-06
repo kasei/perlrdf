@@ -31,6 +31,7 @@ use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
 use Carp qw(croak);
+use Time::HiRes qw ( time );
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -544,6 +545,7 @@ sub add_statement {
 	}
 	if ($added) {
 		$self->{ size }++;
+		$self->{etag} = time;
 	}
 }
 
@@ -579,12 +581,24 @@ sub remove_statement {
 	
 	if ($removed) {
 		$self->{ size }--;
+		$self->{etag} = time;
 	}
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=item C<< etag >>
+
+Returns an Etag suitable for use in an HTTP Header.
+
+=cut
+
+sub etag {
+	return $_[0]->{etag};
+}
+
 
 =item C<< nuke >>
 
@@ -599,6 +613,7 @@ sub nuke {
 	$self->{id2node} = {};
 	$self->{next_id} = 1;
 	$self->{size} = 0;
+	$self->{etag} = time;
 	return $self;
 }
 
