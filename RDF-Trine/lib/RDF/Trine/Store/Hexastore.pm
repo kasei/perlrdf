@@ -113,9 +113,9 @@ sub new {
 }
 
 sub _new_with_string {
-    my ($self, $config) = @_;
-    my ($filename) = $config =~ m/file=(.+)$/; # TODO: It has a Storable part too, for later use.
-    return $self->load($filename);
+	my ($self, $config) = @_;
+	my ($filename) = $config =~ m/file=(.+)$/; # TODO: It has a Storable part too, for later use.
+	return $self->load($filename);
 }
 
 # TODO: Refactor, almost identical to Memory
@@ -515,7 +515,7 @@ sub _join {
 =cut
 
 sub get_contexts {
-  croak "Contexts not supported for the Hexastore store";
+	croak "Contexts not supported for the Hexastore store";
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -593,13 +593,13 @@ Permanently removes all the data in the store.
 =cut
 
 sub nuke {
-    my $self = shift;
-    $self->{data} = $self->_new_index_page;
-    $self->{node2id} = {};
-    $self->{id2node} = {};
-    $self->{next_id} = 1;
-    $self->{size} = 0;
-    return $self;
+	my $self = shift;
+	$self->{data} = $self->_new_index_page;
+	$self->{node2id} = {};
+	$self->{id2node} = {};
+	$self->{next_id} = 1;
+	$self->{size} = 0;
+	return $self;
 }
 
 
