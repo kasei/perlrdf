@@ -69,14 +69,16 @@ our $r_VAR1					= qr/[?]${r_VARNAME}/;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/;
 our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
 our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
-our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
+our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=:/?#@%_\$]))|%[0-9A-Fa-f]{2}};
+our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[.])*${r_PN_CHARS})?)/;
+our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
 our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/;
 our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/;
 our $r_EXPONENT				= qr/[eE][-+]?\d+/;
 our $r_DOUBLE				= qr/\d+[.]\d*${r_EXPONENT}|[.]\d+${r_EXPONENT}|\d+${r_EXPONENT}/;
 our $r_DECIMAL				= qr/(\d+[.]\d*)|([.]\d+)/;
 our $r_INTEGER				= qr/\d+/;
-our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL}/;
+our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL_BNODE}/;
 our $r_ANON					= qr/\[[\t\r\n ]*\]/;
 our $r_NIL					= qr/\([\n\r\t ]*\)/;
 our $r_AGGREGATE_CALL		= qr/(MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT)\b/i;
@@ -1379,6 +1381,8 @@ sub _OrderClause {
 	$self->_eat( qr/BY/i );
 	$self->__consume_ws_opt;
 	my @order;
+	$self->{build}{__aggregate}	||= {};
+	local($self->{__aggregate_call_ok})	= 1;
 	$self->_OrderCondition;
 	$self->__consume_ws_opt;
 	push(@order, splice(@{ $self->{stack} }));
@@ -3089,10 +3093,12 @@ sub _PrefixedName {
 	my $self	= shift;
 	if ($self->_test( $r_PNAME_LN )) {
 		my $ln	= $self->_eat( $r_PNAME_LN );
-		my ($ns,$local)	= split(/:/, $ln);
+		my ($ns,$local)	= split(/:/, $ln, 2);
 		if ($ns eq '') {
 			$ns	= '__DEFAULT__';
 		}
+		
+		$local	=~ s{\\([-~.!&'()*+,;=:/?#@%_\$])}{$1}g;
 		
 		unless (exists $self->{namespaces}{$ns}) {
 			throw RDF::Query::Error::ParseError -text => "Syntax error: Use of undefined namespace '$ns'";

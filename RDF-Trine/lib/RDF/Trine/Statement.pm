@@ -7,7 +7,7 @@ RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.136
+This document describes RDF::Trine::Statement version 0.137
 
 =cut
 
@@ -29,7 +29,7 @@ use Encode;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.136';
+	$VERSION	= '0.137';
 }
 
 ######################################################################
@@ -341,7 +341,7 @@ sub from_redland {
 						: undef;
 			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
 		} else {
-			die;
+			croak 'Unknown node type in statement conversion';
 		}
 	};
 	

@@ -27,7 +27,7 @@ requires			'LWP::UserAgent'			=> 0;
 requires			'List::Util'				=> 0;
 requires			'Log::Log4perl'				=> 0;
 requires			'Math::BigInt'				=> 0;
-requires			'Math::Combinatorics'		=> 0.09;
+requires			'Algorithm::Combinatorics'	=> 0;
 requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
 requires			'Storable'					=> 0;
@@ -37,6 +37,7 @@ requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0.96;
+requires			'Time::HiRes'				=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
 
