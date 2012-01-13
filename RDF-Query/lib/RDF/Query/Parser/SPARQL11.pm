@@ -3152,7 +3152,8 @@ sub __solution_modifiers {
 	
 	my $having_expr;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
-	if ($aggdata) {
+	my @aggkeys	= keys %{ $aggdata || {} };
+	if (scalar(@aggkeys)) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
