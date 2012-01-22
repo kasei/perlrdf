@@ -7,7 +7,7 @@ RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.137
+This document describes RDF::Trine::Statement version 0.137_01
 
 =cut
 
@@ -29,7 +29,7 @@ use Encode;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.137_01';
 }
 
 ######################################################################
