@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.138.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.137.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.138" ;
+                        doap:created      "2012-01-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Make Hexastore support touch and etag." ;
+                        asc:update      "Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Fix documentation typos from fschlich@zedat.fu-berlin.de." ;
+                        asc:update      "Improved performance of Redis store with use of variadic functions." ;
+                        asc:update      "Croak rather than die in some places and use logdie in one place." ;
+                        asc:update      "Added store tests for literals including utf-8 handling and languages." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.137.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.136.tar.gz> ;

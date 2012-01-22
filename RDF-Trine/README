@@ -68,6 +68,19 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.138 (2012-01-XX)
+
+     * BUG FIXES
+         Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model.
+     * NEW FEATURES
+         Make Hexastore support touch and etag.
+     * ENHANCEMENTS
+         Croak rather than die in some places and use logdie in one place.
+     * OTHER
+         Fix documentation typos from fschlich@zedat.fu-berlin.de.
+         Improved performance of Redis store with use of variadic functions.
+         Added store tests for literals including utf-8 handling and languages.
+
   Version 0.137 (2011-12-20)
 
      * API CHANGES
