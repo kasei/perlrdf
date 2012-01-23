@@ -73,7 +73,7 @@ VERSION HISTORY
      * BUG FIXES
          Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model.
      * NEW FEATURES
-         Make Hexastore support touch and etag.
+         Make Hexastore support etag.
      * ENHANCEMENTS
          Croak rather than die in some places and use logdie in one place.
      * OTHER

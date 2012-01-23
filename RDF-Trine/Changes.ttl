@@ -19,7 +19,7 @@
                         doap:created      "2012-01-XX" ;
                         ];
         asc:changes     [
-                        asc:addition    "Make Hexastore support touch and etag." ;
+                        asc:addition    "Make Hexastore support etag." ;
                         asc:update      "Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model." ;
                         asc:update      "Fix documentation typos from fschlich@zedat.fu-berlin.de." ;
                         asc:update      "Improved performance of Redis store with use of variadic functions." ;
