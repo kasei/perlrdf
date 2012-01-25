@@ -169,6 +169,7 @@ sub new {
 		logfh		=> $logfh,
 	}, $class );
 	$self->service_description();	# pre-generate the service description
+	$self->_log("Starting RDF::Endpoint (v$RDF::Endpoint::VERSION) with RDF::Query (v$RDF::Query::VERSION)");
 	return $self;
 }
 
