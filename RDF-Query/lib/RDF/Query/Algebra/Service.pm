@@ -169,11 +169,20 @@ sub sse {
 	my $prefix	= shift || '';
 	my $indent	= $context->{indent};
 	
-	return sprintf(
-		"(service\n${prefix}${indent}%s\n${prefix}${indent}%s)",
-		$self->endpoint->sse( $context, "${prefix}${indent}" ),
-		$self->pattern->sse( $context, "${prefix}${indent}" )
-	);
+	if (my $ggp = $self->lhs) {
+		return sprintf(
+			"(service\n${prefix}${indent}%s\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+			$self->lhs->sse( $context, "${prefix}${indent}" ),
+			$self->endpoint->sse( $context, "${prefix}${indent}" ),
+			$self->pattern->sse( $context, "${prefix}${indent}" )
+		);
+	} else {
+		return sprintf(
+			"(service\n${prefix}${indent}%s\n${prefix}${indent}%s)",
+			$self->endpoint->sse( $context, "${prefix}${indent}" ),
+			$self->pattern->sse( $context, "${prefix}${indent}" )
+		);
+	}
 }
 
 =item C<< as_sparql >>
@@ -188,6 +197,7 @@ sub as_sparql {
 	my $indent	= shift;
 	my $op		= ($self->silent) ? 'SERVICE SILENT' : 'SERVICE';
 	if (my $ggp = $self->lhs) {
+		local($context->{skip_filter})	= 0;
 		my $string	= sprintf(
 			"%s\n${indent}%s %s %s",
 			$ggp->as_sparql( $context, $indent ),
