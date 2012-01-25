@@ -4,7 +4,7 @@ RDF::Trine::Store::Redis - RDF Store for Redis
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redis version 0.137
+This document describes RDF::Trine::Store::Redis version 0.138
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ our $CACHING	= 1;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.137";
+	$VERSION	= "0.138";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
