@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.138" ;
-                        doap:created      "2012-01-XX" ;
+                        doap:created      "2012-01-25" ;
                         ];
         asc:changes     [
                         asc:addition    "Make Hexastore support etag." ;

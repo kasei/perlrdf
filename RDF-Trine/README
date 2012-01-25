@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.138 (2012-01-XX)
+  Version 0.138 (2012-01-25)
 
      * BUG FIXES
          Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model.
