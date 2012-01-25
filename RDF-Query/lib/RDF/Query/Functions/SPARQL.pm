@@ -110,7 +110,7 @@ use I18N::LangTags;
 use List::Util qw(sum);
 use Scalar::Util qw(blessed reftype refaddr looks_like_number);
 use DateTime::Format::W3CDTF;
-use RDF::Trine::Namespace qw(xsd);
+use RDF::Trine::Namespace qw(rdf xsd);
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA  qw(sha1_hex sha224_hex sha256_hex sha384_hex sha512_hex);
 
@@ -777,7 +777,7 @@ sub install {
 			}
 			if ($node->is_literal) {
 				if ($node->has_language) {
-					throw RDF::Query::Error::TypeError ( -text => "cannot call datatype() on a language-tagged literal" );
+					return $rdf->langString;
 				} elsif ($node->has_datatype) {
 					my $type	= $node->literal_datatype;
 					$l->debug("datatype => $type");
