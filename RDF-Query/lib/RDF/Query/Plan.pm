@@ -874,6 +874,7 @@ sub _join_plans {
 						}
 					}
 					foreach my $join_type (@join_types) {
+						next if ($join_type eq 'RDF::Query::Plan::Join::PushDownNestedLoop' and $b->subplans_of_type('RDF::Query::Plan::Service'));
 						try {
 							my @algebras;
 							foreach ($algebra_a, $algebra_b) {
