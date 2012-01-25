@@ -145,7 +145,11 @@ sub as_sparql {
 	my $expr	= $self->expr;
 	my $filter_sparql	= $expr->as_sparql( $context, $indent );
 	my $pattern_sparql	= $self->pattern->as_sparql( $context, $indent );
-	$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER( ${filter_sparql} ) .\n${indent}}#;
+	if ($pattern_sparql =~ m#}\s*$#) {
+		$pattern_sparql		=~ s#}\s*$#${indent}\tFILTER( ${filter_sparql} ) .\n${indent}}#;
+	} else {
+		$pattern_sparql		= "${pattern_sparql}\n${indent}FILTER( ${filter_sparql} )";
+	}
 	return $pattern_sparql;
 }
 
