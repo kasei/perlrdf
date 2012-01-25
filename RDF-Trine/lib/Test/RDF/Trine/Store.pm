@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.137
+This document describes RDF::Trine version 0.138
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ For example, to test a Memory store, do something like:
 
 =head1 DESCRIPTION
 
-This packages a few functions that you can call to test a
+This module packages a few functions that you can call to test a
 L<RDF::Trine::Store>, also if it is outside of the main RDF-Trine
 distribution.
 
@@ -55,10 +55,10 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
- 
+
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 }
 
 use Log::Log4perl;
@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 209;								# Remember to update whenever adding tests
+	return 223;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 87;								# Remember to update whenever adding tests
+	return 101;								# Remember to update whenever adding tests
 }
 
 
@@ -153,7 +153,7 @@ sub all_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
- TODO: {
+	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
 		throws_ok {
@@ -219,7 +219,7 @@ sub all_triple_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
- TODO: {
+	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
 		dies_ok {
@@ -292,10 +292,10 @@ sub contexts_tests {
 		$seen{ $c->as_string }++;
 	}
 	my $expect	= {
-								 '<http://example.com/a>'	=> 1,
-								 '<http://example.com/b>'	=> 1,
-								 '<http://example.com/c>'	=> 1,
-								};
+		'<http://example.com/a>'	=> 1,
+		'<http://example.com/b>'	=> 1,
+		'<http://example.com/c>'	=> 1,
+	};
 	is_deeply( \%seen, $expect, 'expected contexts' );
 }
 
@@ -318,7 +318,7 @@ sub add_statement_tests_simple {
 	
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
@@ -366,8 +366,8 @@ sub bulk_add_statement_tests_simple {
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' ) ;
 	
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
- 
- TODO: {
+
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
@@ -410,13 +410,14 @@ sub literals_tests_simple {
 	my $litplain		= RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1		= RDF::Trine::Node::Literal->new('dahu', 'fr' );
 	my $litlang2		= RDF::Trine::Node::Literal->new('dahut', 'en' );
+	my $litutf8		= RDF::Trine::Node::Literal->new('blåbærsyltetøy', 'nb' );
 	my $litstring		= RDF::Trine::Node::Literal->new('dahut', undef, $xsd->string);
 	my $litint			= RDF::Trine::Node::Literal->new(42, undef, $xsd->integer);
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );		
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
@@ -435,6 +436,16 @@ sub literals_tests_simple {
 	}
 
 	{
+		my $iter	= $store->get_statements( undef, undef, $litplain, undef );
+		isa_ok( $iter, 'RDF::Trine::Iterator' );
+		my $st = $iter->next;
+		isa_ok( $st, 'RDF::Trine::Statement' );
+		my $obj = $st->object;
+		isa_ok($obj, 'RDF::Trine::Node::Literal');
+		is($obj->literal_value, 'dahut', 'expected triple get_statements bound object value' );
+	}
+
+	{
 		my $count	= $store->count_statements( undef, undef, $litlang2, undef );
 		is( $count, 1, 'expected 1 language literal' );
 	}
@@ -447,6 +458,15 @@ sub literals_tests_simple {
 	my $quad3	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litlang1, $ex->d);
 	$store->add_statement( $quad3 );
 	is( $store->size, 3, 'store has 3 statements after integer literal add' );
+
+	{
+		my $iter        = $store->get_statements( undef, undef, $litlang1, undef );
+		my $st = $iter->next;
+		is($st->object->literal_value, 'dahu', 'expected triple get_statements bound object value' );
+		is($st->object->literal_value_language, 'fr', 'expected triple get_statements bound object language' );
+		is($st->object->literal_datatype, undef, 'expected triple get_statements bound object datatype is undef' );
+	}
+
 
 	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $litstring);
 	$store->add_statement( $triple2 );
@@ -461,7 +481,15 @@ sub literals_tests_simple {
 		is( $count, 1, 'expected 1 string literal' );
 	}
 
- SKIP: {
+	{
+		my $iter	= $store->get_statements( undef, undef, $litstring, undef );
+		my $st = $iter->next;
+		is($st->object->literal_value, 'dahut', 'expected triple get_statements bound object value' );
+		is($st->object->literal_value_language, undef, 'expected triple get_statements bound object language is undef' );
+		is($st->object->literal_datatype, $xsd->string->value, 'expected triple get_statements bound object datatype is string' );
+	}
+
+	SKIP: {
 		skip 'Quad-only test', 1 if $args->{quads_unsupported};
 		my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 		is( $count, 0, 'expected 0 string literal with context' );
@@ -496,6 +524,20 @@ sub literals_tests_simple {
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
 
+	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $litutf8);
+	$store->add_statement( $triple3 );
+	is( $store->size, 3, 'store has 3 statements after addition of literal with utf8 chars' );
+
+	{
+		my $iter	= $store->get_statements( undef, undef, $litutf8, undef );
+		my $st = $iter->next;
+		isa_ok( $st, 'RDF::Trine::Statement' );
+		is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
+		$store->remove_statement($st);
+		is( $store->size, 2, 'store has 2 statements after removal of literal with utf8 chars' );
+	}
+
+
 	$store->remove_statements($ex->a, $ex->b, undef, undef );
 	is( $store->size, 0, 'expected zero size after remove statements' );
 }
@@ -518,7 +560,7 @@ sub blank_node_tests_quads {
 	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
@@ -597,7 +639,7 @@ sub blank_node_tests_triples {
 	my $triple2	= RDF::Trine::Statement->new($ex->c, $ex->d, $blankbar);
 	$store->add_statement( $triple );
 	is( $store->size, 1, 'store has 1 statement after (triple) add' );
- TODO: {
+	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $triple );
 		is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
@@ -792,8 +834,6 @@ Tests for getting statements using quads.
 
 =cut
 
-
-
 sub get_statements_tests_quads {
 	note " quad get_statements tests";
 	my ($store, $args, $ex, $nil) = @_;
@@ -955,4 +995,4 @@ __END__
 
  Gregory Todd Williams <gwilliams@cpan.org> and Kjetil Kjernsmo <kjetilk@cpan.org>
 
-	=cut
+=cut
