@@ -52,6 +52,8 @@ use RDF::Query::Plan::Minus;
 use RDF::Query::Plan::Sequence;
 use RDF::Query::Plan::Path;
 use RDF::Query::Plan::NamedGraph;
+use RDF::Query::Plan::Copy;
+use RDF::Query::Plan::Move;
 
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
@@ -802,6 +804,12 @@ sub generate_plans {
 		push(@return_plans, RDF::Query::Plan::Clear->new( $algebra->graph ));
 	} elsif ($type eq 'Create') {
 		my $plan	= RDF::Query::Plan::Constant->new();
+		push(@return_plans, $plan);
+ 	} elsif ($type eq 'Copy') {
+ 		my $plan	= RDF::Query::Plan::Copy->new( $algebra->from, $algebra->to, $algebra->silent );
+		push(@return_plans, $plan);
+ 	} elsif ($type eq 'Move') {
+ 		my $plan	= RDF::Query::Plan::Move->new( $algebra->from, $algebra->to, $algebra->silent );
 		push(@return_plans, $plan);
 	} else {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
