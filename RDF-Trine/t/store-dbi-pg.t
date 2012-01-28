@@ -11,11 +11,8 @@ use Test::More;
 
 unless (
 		exists $ENV{RDFTRINE_STORE_PG_DATABASE} and
-		exists $ENV{RDFTRINE_STORE_PG_HOST} and
-		exists $ENV{RDFTRINE_STORE_PG_USER} and
-		exists $ENV{RDFTRINE_STORE_PG_PASSWORD} and
 		exists $ENV{RDFTRINE_STORE_PG_MODEL}) {
-	plan skip_all => "Set the Pg environment variables to run these tests (RDFTRINE_STORE_PG_DATABASE, RDFTRINE_STORE_PG_HOST, RDFTRINE_STORE_PG_PORT, RDFTRINE_STORE_PG_USER, RDFTRINE_STORE_PG_PASSWORD, RDFTRINE_STORE_PG_MODEL)";
+	plan skip_all => "Set the Pg environment variables to run these tests at least RDFTRINE_STORE_PG_DATABASE and RDFTRINE_STORE_PG_MODEL)";
 }
 
 my $db		= $ENV{RDFTRINE_STORE_PG_DATABASE};
@@ -34,7 +31,8 @@ no warnings 'redefine';
 use RDF::Trine qw(iri variable store literal);
 use RDF::Trine::Store;
 
-my $dsn	= "DBI:Pg:database=$db;host=$host";
+my $dsn	= "DBI:Pg:database=$db";
+$dsn	.= ";host=$host" if (defined($host));
 $dsn	.= ";port=$port" if (defined($port));
 
 persist_test($dsn, $user, $pass, $model);
