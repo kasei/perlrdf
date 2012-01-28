@@ -20,6 +20,7 @@ requires			'DBI'						=> 0;
 requires			'DBIx::Connector'			=> 0;
 requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
+requires			'Digest::SHA'				=> 0;
 requires			'Error'						=> 0;
 requires			'HTTP::Negotiate'			=> 0;
 requires			'JSON'						=> 2;
@@ -37,6 +38,7 @@ requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0.96;
+requires			'Time::HiRes'				=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
 

@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.137
+This document describes RDF::Trine::Store::Hexastore version 0.138
 
 =head1 SYNOPSIS
 
@@ -30,6 +30,8 @@ use RDF::Trine::Error;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
+use Carp qw(croak);
+use Time::HiRes qw ( time );
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -43,7 +45,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.137";
+	$VERSION	= "0.138";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -112,9 +114,9 @@ sub new {
 }
 
 sub _new_with_string {
-    my ($self, $config) = @_;
-    my ($filename) = $config =~ m/file=(.+)$/; # TODO: It has a Storable part too, for later use.
-    return $self->load($filename);
+	my ($self, $config) = @_;
+	my ($filename) = $config =~ m/file=(.+)$/; # TODO: It has a Storable part too, for later use.
+	return $self->load($filename);
 }
 
 # TODO: Refactor, almost identical to Memory
@@ -271,10 +273,10 @@ sub get_statements {
 		my $rev	= 0;
 		if (@orderby) {
 			$rev	= 1 if ($orderby[1] eq 'DESC');
- 			my $sortkey	= $variable_map{ $orderby[0] };
- 			if ($sortkey ne $ukeys[0]) {
- 				@ukeys	= reverse(@ukeys);
- 			}
+			my $sortkey	= $variable_map{ $orderby[0] };
+			if ($sortkey ne $ukeys[0]) {
+				@ukeys	= reverse(@ukeys);
+			}
 		}
 		
 		my $index	= $self->_index_from_pair( $self->_index_root, @keys );
@@ -285,7 +287,7 @@ sub get_statements {
 		my $ukey1;
 		my $sub		= sub {
 			while (0 == scalar(@local_list)) {
- 				return undef unless (scalar(@ukeys1));
+				return undef unless (scalar(@ukeys1));
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
 				my $list	= $self->_index_from_pair( $index, $ukeys[0], $ukey1 );
@@ -322,12 +324,12 @@ sub get_statements {
 		
 		my $rev	= 0;
 		my (@order_keys, $final_key);
- 		if (@orderby) {
+		if (@orderby) {
 			$rev	= 1 if ($orderby[1] eq 'DESC');
- 			my $sortkey	= $variable_map{ $orderby[0] };
- 			my @nodes	= ($sortkey, grep { $_ ne $sortkey } NODES);
- 			@order_keys	= @nodes[0,1];
- 			$final_key	= $nodes[2];
+			my $sortkey	= $variable_map{ $orderby[0] };
+			my @nodes	= ($sortkey, grep { $_ ne $sortkey } NODES);
+			@order_keys	= @nodes[0,1];
+			$final_key	= $nodes[2];
 		} else {
 			$final_key	= 'object';
 			@order_keys	= qw(subject predicate);
@@ -514,7 +516,7 @@ sub _join {
 =cut
 
 sub get_contexts {
-	die;
+	croak "Contexts not supported for the Hexastore store";
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -543,6 +545,7 @@ sub add_statement {
 	}
 	if ($added) {
 		$self->{ size }++;
+		$self->{etag} = time;
 	}
 }
 
@@ -578,12 +581,24 @@ sub remove_statement {
 	
 	if ($removed) {
 		$self->{ size }--;
+		$self->{etag} = time;
 	}
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
+
+=item C<< etag >>
+
+Returns an Etag suitable for use in an HTTP Header.
+
+=cut
+
+sub etag {
+	return $_[0]->{etag};
+}
+
 
 =item C<< nuke >>
 
@@ -592,13 +607,14 @@ Permanently removes all the data in the store.
 =cut
 
 sub nuke {
-    my $self = shift;
-    $self->{data} = $self->_new_index_page;
-    $self->{node2id} = {};
-    $self->{id2node} = {};
-    $self->{next_id} = 1;
-    $self->{size} = 0;
-    return $self;
+	my $self = shift;
+	$self->{data} = $self->_new_index_page;
+	$self->{node2id} = {};
+	$self->{id2node} = {};
+	$self->{next_id} = 1;
+	$self->{size} = 0;
+	$self->{etag} = time;
+	return $self;
 }
 
 

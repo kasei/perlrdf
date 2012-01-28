@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.137
+This document describes RDF::Trine::Iterator::Bindings version 0.138
 
 =head1 SYNOPSIS
 
@@ -47,9 +47,11 @@ use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Iterator qw(smap);
 use base qw(RDF::Trine::Iterator);
 
+use Carp qw(croak);
+
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -592,7 +594,7 @@ END
 	if ($self->extra_result_data) {
 		$delay_output	= $fh;
 		undef $fh;
-		open( $fh, '>', \$delayed ) or die $!;
+		open( $fh, '>', \$delayed ) or croak $!;
 	} else {
 		if ($t) {
 			print {$fh} "${t}\n";

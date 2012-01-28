@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 0.137
+This document describes RDF::Trine::Statement::Quad version 0.138
 
 =cut
 
@@ -19,12 +19,13 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Statement);
 
 use Scalar::Util qw(blessed);
+use Carp qw(croak);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 }
 
 ######################################################################
@@ -161,7 +162,7 @@ sub from_redland {
 						: undef;
 			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
 		} else {
-			die;
+			croak 'Unknown node type in statement conversion';
 		}
 	};
 	

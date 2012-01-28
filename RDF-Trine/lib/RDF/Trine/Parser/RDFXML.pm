@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.137
+This document describes RDF::Trine::Parser::RDFXML version 0.138
 
 =head1 SYNOPSIS
 
@@ -52,7 +52,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -317,8 +317,7 @@ sub start_element {
 			unshift(@{ $self->{seqs} }, 0);
 			$l->trace('unshifting seq counter: ' . Dumper($self->{seqs}));
 		} elsif ($self->expect == COLLECTION) {
-			$l->trace("-> expect COLLECTION");
-			die;
+			$l->logdie("-> expect COLLECTION");
 		} elsif ($self->expect == PREDICATE) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};

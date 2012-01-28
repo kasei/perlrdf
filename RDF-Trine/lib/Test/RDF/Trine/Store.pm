@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.137
+This document describes RDF::Trine version 0.138
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ For example, to test a Memory store, do something like:
 
 =head1 DESCRIPTION
 
-This packages a few functions that you can call to test a
+This module packages a few functions that you can call to test a
 L<RDF::Trine::Store>, also if it is outside of the main RDF-Trine
 distribution.
 
@@ -58,7 +58,7 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 }
 
 use Log::Log4perl;
