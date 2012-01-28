@@ -52,6 +52,10 @@ sub new_store {
 	my $pass	= shift;
 	my $model	= shift;
 	my $dbh	= DBI->connect( $dsn, $user, $pass );
+	if ((! $dbh) || ($dbh->err)) {
+		diag 'Connection to database failed';
+		diag 'You may have to set one or more of RDFTRINE_STORE_PG_HOST, RDFTRINE_STORE_PG_PORT, RDFTRINE_STORE_PG_USER, RDFTRINE_STORE_PG_PASSWORD';
+	}
 	my $store	= RDF::Trine::Store::DBI::Pg->new( $model, $dbh );
 	return $store;
 }
