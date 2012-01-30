@@ -7,7 +7,7 @@ RDF::Query::Algebra::Load - Algebra class for LOAD operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Load version 2.907.
+This document describes RDF::Query::Algebra::Load version 2.907_01.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.907_01';
 }
 
 ######################################################################

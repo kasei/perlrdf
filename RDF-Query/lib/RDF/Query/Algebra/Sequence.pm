@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sequence - Algebra class for a sequence of algebra operatio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sequence version 2.907.
+This document describes RDF::Query::Algebra::Sequence version 2.907_01.
 
 =cut
 
@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.907_01';
 }
 
 ######################################################################
