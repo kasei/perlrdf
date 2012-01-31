@@ -7,7 +7,7 @@ RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.907.
+This document describes RDF::Query version 2.908.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.907';
+	$VERSION		= '2.908';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 

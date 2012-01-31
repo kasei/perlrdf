@@ -34,7 +34,7 @@ foreach my $model (@models) {
 END
 		
 		my @results	= $query->execute( $model );
-		is( scalar(@results), 1, 'Got one result' );
+		is( scalar(@results), 1, 'result for RDQL query with FROM clause' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
 		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
@@ -51,7 +51,7 @@ END
 		warn RDF::Query->error unless ($query);
 		
 		my @results	= $query->execute( $model );
-		is( scalar(@results), 1, 'Got one result' );
+		is( scalar(@results), 1, 'result for SPARQL query with FROM clause' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 1, 'got one field' );
 		ok( $results[0]{page}->isa('RDF::Trine::Node::Resource'), 'Resource' );
@@ -76,7 +76,7 @@ END
 		warn RDF::Query->error unless ($query);
 		
 		my @results	= $query->execute( $model );
-		is( scalar(@results), 1, 'Got one result' );
+		is( scalar(@results), 1, 'result for SPARQL query with FROM clause for RDFa content' );
 		isa_ok( $results[0], 'HASH' );
 		is( scalar(@{ [ keys %{ $results[0] } ] }), 2, 'got two field' );
 		
