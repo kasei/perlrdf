@@ -99,6 +99,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		delete-insert
 		delete-where
 		drop
+		exists
 		functions
 		grouping
 		json-res
