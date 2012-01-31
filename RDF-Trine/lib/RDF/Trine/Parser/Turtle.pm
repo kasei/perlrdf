@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.135
+This document describes RDF::Trine::Parser::Turtle version 0.138
 
 =head1 SYNOPSIS
 
@@ -37,10 +37,10 @@ no warnings 'once';
 use base qw(RDF::Trine::Parser);
 
 use URI;
-use Data::UUID;
+use Encode;
 use Log::Log4perl;
-use Encode qw(decode);
 use Scalar::Util qw(blessed looks_like_number);
+use URI::Escape qw(uri_unescape);
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
@@ -51,7 +51,7 @@ use RDF::Trine::Error;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.135';
+	$VERSION				= '0.138';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -96,13 +96,17 @@ Returns a new Turtle parser.
 
 sub new {
 	my $class	= shift;
-	my $ug		= new Data::UUID;
-	my $uuid	= $ug->to_string( $ug->create() );
-	$uuid		=~ s/-//g;
+	my %args	= @_;
+	my $prefix	= '';
+	if (defined($args{ bnode_prefix })) {
+		$prefix	= $args{ bnode_prefix };
+	} else {
+		$prefix	= $class->new_bnode_prefix();
+	}
 	my $self	= bless({
 					bindings		=> {},
 					bnode_id		=> 0,
-					bnode_prefix	=> $uuid,
+					bnode_prefix	=> $prefix,
 					@_
 				}, $class);
 	return $self;
@@ -140,6 +144,24 @@ sub parse {
 	local($self->{tokens})	= $input;
 	$self->_Document();
 	return;
+}
+
+=item C<< parse_node ( $string [, $base_uri] ) >>
+
+Parses and returns a L<RDF::Trine::Node> object that is serialized in
+C<< $string >> in Turtle syntax.
+
+=cut
+
+sub parse_node {
+	my $self	= shift;
+	my $input	= shift;
+	my $uri		= shift;
+	local($self->{handle_triple});
+	local($self->{baseURI})	= $uri;
+	$input	=~ s/^\x{FEFF}//;
+	local($self->{tokens})	= $input;
+	return $self->_object();
 }
 
 sub _eat_re {
@@ -696,7 +718,8 @@ sub _resource {
 	my $self	= shift;
 	### uriref | qname
 	if ($self->_uriref_test()) {
-		return $self->__URI($self->_uriref(), $self->{baseURI});
+		my $uri	= $self->_uriref();
+		return $self->__URI($uri, $self->{baseURI});
 	} else {
 		my $qname	= $self->_qname();
 		my $base	= $self->{baseURI};
@@ -750,7 +773,9 @@ sub _uriref {
 	$self->_eat('<');
 	my $value	= $self->_relativeURI();
 	$self->_eat('>');
-	return $value;
+	my $uri	= uri_unescape(encode_utf8($value));
+	my $uni	= decode_utf8($uri);
+	return $uni;
 }
 
 sub _language {
@@ -868,7 +893,7 @@ sub _string {
 	my $value	= $self->_eat_re_save( $r_scharacters );
 	$self->_eat('"');
 	my $string	= $self->_parse_short( $value );
-	return decode('utf8', $string);
+	return $string;
 }
 
 sub _longString_test {
@@ -887,12 +912,11 @@ sub _longString {
 	my $value	= $self->_eat_re_save( $r_lcharacters );
 	$self->_eat('"""');
 	my $string	= $self->_parse_long( $value );
-	return decode('utf8', $string);
+	return $string;
 }
 
 ################################################################################
 
-use Unicode::Escape;
 sub _parse_short {
 	my $self	= shift;
 	my $s		= shift;
@@ -903,7 +927,7 @@ sub _parse_short {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s, 'utf8' );
+	return _unescape($s);
 }
 
 sub _parse_long {
@@ -916,7 +940,7 @@ sub _parse_long {
 		s/\\n/\n/g;
 	}
 	return '' unless length($s);
-	return Unicode::Escape::unescape( $s, 'utf8' );
+	return _unescape($s);
 }
 
 sub _join_uri {
@@ -1000,6 +1024,40 @@ sub __startswith {
 	} else {
 		return 0;
 	}
+}
+
+sub _unescape {
+	my $str = shift;
+	my @chars = split(//, $str);
+	my $us	= '';
+	while(defined(my $char = shift(@chars))) {
+		if($char eq '\\') {
+			if(($char = shift(@chars)) eq 'u') {
+				my $i = 0;
+				for(; $i < 4; $i++) {
+					unless($chars[$i] =~ /[0-9a-fA-F]/){
+						last;
+					}				
+				}
+				if($i == 4) {
+					my $hex = join('', splice(@chars, 0, 4));
+					my $cp = hex($hex);
+					my $char	= chr($cp);
+					$us .= $char;
+				}
+				else {
+					$us .= 'u';
+				}
+			}
+			else {
+				$us .= '\\' . $char;
+			}
+		}
+		else {
+			$us .= $char;
+		}
+	}
+	return $us;
 }
 
 1;

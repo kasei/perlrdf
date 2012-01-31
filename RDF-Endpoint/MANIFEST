@@ -20,6 +20,7 @@ META.yml
 rdf_endpoint.json
 scripts/endpoint.psgi
 share/index.html
+share/results.html
 share/www/favicon.ico
 share/www/css/docs.css
 share/www/css/sparqlcolors.css

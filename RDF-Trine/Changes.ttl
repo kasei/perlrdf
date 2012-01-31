@@ -10,6 +10,106 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.138.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.137.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.138" ;
+                        doap:created      "2012-01-25" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Make Hexastore support etag." ;
+                        asc:update      "Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Fix documentation typos from fschlich@zedat.fu-berlin.de." ;
+                        asc:update      "Improved performance of Redis store with use of variadic functions." ;
+                        asc:update      "Croak rather than die in some places and use logdie in one place." ;
+                        asc:update      "Added store tests for literals including utf-8 handling and languages." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.137.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.136.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.137" ;
+                        doap:created      "2011-12-20" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Implement RDF::Trine::Store::Hexastore->nuke (KjetilK)." ;
+                        asc:addition    "Added initial code for a Redis-based store." ;
+                        asc:addition    "Added serialize_node method to RDF::Trine::Serializer::NTriples and RDF::Trine::Serializer::Turtle." ;
+                        asc:addition    "Added parse_node method to RDF::Trine::Parser::NTriples." ;
+                        asc:update      "Trying to instantiate a resource node with the Nil IRI results in the Nil node object." ;
+                        asc:update      "Fixed unicode escaping issues in RDF::Trine::Serializer::Turtle (bugreport from nichtich <4EB7B9BE.8000205@gbv.de>)." ;
+                        asc:update      "Fixed RDF::Trine::Parser::Turtle to properly unescape percent-encoded URIs." ;
+                        asc:update      "Fixed RDF::Trine::Statement->from_redland to properly unescape percent-encoded URIs." ;
+                        asc:update      "Only set parser metadata if RDF::RDFa::Parser is available (github issue 32 from nichtich)." ;
+                        asc:update      "Added PostgreSQL-specific init method to handle case sensitivity of table names (RT#71890 from John Nicholas Whitley)." ;
+                        asc:update      "Create a fallback-implementation of remove_statements in Store.pm  (KjetilK)." ;
+                        asc:update      "Updated RDF::Trine::Graph to use Algorithm::Combinatorics for memory/speed improvements (instead of Math::Combinatorics)." ;
+                        asc:update      "Support triple-only stores in the test suite (patches from KjetilK)." ;
+                        asc:update      "Added missing POD to RDF::Trine::Store::DBI::Pg and RDF::Trine::Store::Redis." ;
+                        asc:update      "Check the Perl version when running Tiny::UUID (KjetilK)." ;
+                        asc:update      "RDF::Trine::Parser now attempts to use Data::UUID before UUID::Tiny in bnode ID generation (based on test failures)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.136.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.135.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.136" ;
+                        doap:created      "2011-10-19" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added text/html media type, and added use of Module::Load::Conditional in RDF::Trine::Parser::RDFa." ;
+                        asc:addition    "Added RDF::Trine::Parser::Turtle->parse_node method." ;
+                        asc:addition    "Made RDF::Trine::Serializer::NTriples->statement_as_string a public method." ;
+                        asc:addition    "Initial support for using Dydra as a store." ;
+                        asc:addition    "Added RDF::Trine::Node::Literal->is_canonical_lexical_form." ;
+                        asc:addition    "Added TSV serializer." ;
+                        asc:addition    "RDF::Trine::Parser->parse_url_into_model now fill properly fall back on guesswork when media-type parsing fails." ;
+                        asc:addition    "Moved as_hashref functionality from RDF::Trine::Model to RDF::Trine::Iterator::Graph." ;
+                        asc:addition    "Added simple store tests for bulk_ops in Test::RDF::Trine::Store." ;
+                        asc:update      "Fixed escaping of URIs in rdf:about attributes (patch from SADI Framework)." ;
+                        asc:update      "Allow empty namespace prefix in RDF::Trine::NamespaceMap (patch from Jakob Voss)." ;
+                        asc:update      "Added option to sleep after each store update in Test::RDF::Trine::Store." ;
+                        asc:update      "Return an empty string instead of undef in RDF::Trine::Iterator->format_node_xml." ;
+                        asc:update      "Fixed RDF::Trine::Store::SPARQL->count_statements handling of variables." ;
+                        asc:update      "Fixed code in RDF::Trine::Store::SPARQL that was causing a warning when a variable name was redefined." ;
+                        asc:update      "Added support of SPARQL endpoints with URL parameters like Virtuoso's 'http://example.org:8890/sparql?default-graph-uri=...' (patch from Jakob Voss)." ;
+                        asc:update      "Fixed turtle serializer to check if numerics are in canonical form." ;
+                        asc:update      "Fixed mysql schema to quote index names that might contain reserved characters." ;
+                        asc:update      "Removed RDF::Trine::Iterator::SAXHandler->rate method and dropped dependency on Time::HiRes." ;
+                        asc:update      "Consolidated bnode prefix handling in parser classes, adding support for UUID::Tiny." ;
+                        asc:update      "Fix RDF::Trine::Model->get_statements to throw an error when called with arguments that aren't either undef or node objects." ;
+                        asc:update      "Fixed titlecase of table reference in RDF::Trine::Store::DBI::mysql->init." ;
+                        asc:update      "Fixed bug in use of UUID::Tiny::UUID_V1 bareword in RDF::Trine::Parser->new_bnode_prefix." ;
+                        asc:update      "Updated RDF::Trine::Store::DBI to use DBIx::Connector." ;
+                        asc:update      "Updated RDF::Trine::Store::DBI::mysql->_add_node to return the node hash value." ;
+                        asc:update      "Stop RDF::Trine::Store::DBI->add_statement from unnecessarily hashing nodes multiple times (patch from tobyink)." ;
+                        asc:update      "Moved redland store tests to developer xt directory." ;
+                        asc:update      "Updated t/serializer-turtle.t to be more accepting of stores returning data in varying orders." ;
+                        asc:update      "Removed 'or die' conditional from store tests." ;
+                        asc:update      "Changed test endpoint from kasei.us to myrdf.us." ;
+                        asc:update      "Removed heavy dependency on DBI store in test cases." ;
+                        asc:update      "Require RDF::Redland 1.0.7.1 in xt/store-redland.t." ;
+                        asc:update      "Add missing use of RDF::Trine::Statement::Quad." ;
+                        asc:update      "Conditionally load DBI store, and return Memory store from temporary_store()." ;
+                        asc:update      "Removed dependency on Unicode::Escape." ;
+                        asc:update      "Made XML::LibXML an optional dependency (RDF/XML parser will not perform c14n if it is not installed)" ;
+                        asc:update      "Updated RDF::Trine::Store::Memory to use Digest::SHA instead of Digest::MD5." ;
+                        asc:update      "Removed depedency on List::MoreUtils." ;
+                        asc:update      "Added POD for Test::RDF::Trine::Store->update_sleep." ;
+                        asc:update      "Added POD for RDF::Trine::Serializer::NTriples->statement_as_string." ;
+                        asc:update      "Removed depedency on Unicode::String and List::MoreUtils." ;
+                        asc:update      "Removed unnecessary use statements." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.135.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.134.tar.gz> ;

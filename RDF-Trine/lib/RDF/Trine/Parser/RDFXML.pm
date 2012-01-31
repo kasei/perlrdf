@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 0.135
+This document describes RDF::Trine::Parser::RDFXML version 0.138
 
 =head1 SYNOPSIS
 
@@ -38,10 +38,10 @@ use base qw(RDF::Trine::Parser);
 use URI;
 use Carp;
 use XML::SAX;
-use XML::LibXML 1.70;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
+use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
@@ -50,9 +50,9 @@ use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
-our ($VERSION);
+our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -63,6 +63,11 @@ BEGIN {
 		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
 	}
 	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
+	
+	$HAS_XML_LIBXML	= can_load( modules => {
+		'XML::LibXML'	=> 1.70,
+	} );
+
 }
 
 ######################################################################
@@ -75,7 +80,17 @@ sub new {
 	my $class	= shift;
 	my %args	= @_;
 	$class = ref($class) || $class;
-	my $saxhandler	= RDF::Trine::Parser::RDFXML::SAXHandler->new( %args );
+
+	my $prefix	= '';
+	if (defined($args{ BNodePrefix })) {
+		$prefix	= delete $args{ BNodePrefix };
+	} elsif (defined($args{ bnode_prefix })) {
+		$prefix	= delete $args{ bnode_prefix };
+	} else {
+		$prefix	= $class->new_bnode_prefix();
+	}
+	
+	my $saxhandler	= RDF::Trine::Parser::RDFXML::SAXHandler->new( %args, bnode_prefix => $prefix );
 	my $p		= XML::SAX::ParserFactory->parser(Handler => $saxhandler);
 	
 	my $self = bless( {
@@ -176,7 +191,12 @@ use constant	COLLECTION	=> 0x16;
 sub new {
 	my $class	= shift;
 	my %args	= @_;
-	my $prefix	= $args{ BNodePrefix } || '';
+	my $prefix	= '';
+	if (defined($args{ BNodePrefix })) {
+		$prefix	= $args{ BNodePrefix };
+	} elsif (defined($args{ bnode_prefix })) {
+		$prefix	= $args{ bnode_prefix };
+	}
 	my $self	= bless( {
 					expect			=> [ SUBJECT, NIL ],
 					base			=> [],
@@ -297,8 +317,7 @@ sub start_element {
 			unshift(@{ $self->{seqs} }, 0);
 			$l->trace('unshifting seq counter: ' . Dumper($self->{seqs}));
 		} elsif ($self->expect == COLLECTION) {
-			$l->trace("-> expect COLLECTION");
-			die;
+			$l->logdie("-> expect COLLECTION");
 		} elsif ($self->expect == PREDICATE) {
 			my $ns		= $self->get_namespace( $prefix );
 			my $local	= $el->{LocalName};
@@ -771,15 +790,17 @@ sub new_literal {
 	if (my $dt = $self->{datatype}) {	# datatype
 		$args[1]	= $dt;
 		if ($dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-			eval {
-				if ($string =~ m/^</) {
-					my $doc 	= XML::LibXML->load_xml(string => $string);
-					my $canon	= $doc->toStringEC14N(1);
-					$string	= $canon;
+			if ($HAS_XML_LIBXML) {
+				eval {
+					if ($string =~ m/^</) {
+						my $doc 	= XML::LibXML->load_xml(string => $string);
+						my $canon	= $doc->toStringEC14N(1);
+						$string	= $canon;
+					}
+				};
+				if ($@) {
+					warn "Cannot canonicalize XMLLiteral: $@" . Dumper($string);
 				}
-			};
-			if ($@) {
-				warn "Cannot canonicalize XMLLiteral: $@" . Dumper($string);
 			}
 		}
 	} elsif (my $lang = $self->get_language) {

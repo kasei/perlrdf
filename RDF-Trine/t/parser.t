@@ -21,7 +21,7 @@ SKIP: {
 	
 	{
 		my $url		= 'http://kasei.us/about/foaf.xrdf';
-		my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+		my $model	= RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 		
 		try {
 			RDF::Trine::Parser->parse_url_into_model( $url, $model );
@@ -37,7 +37,7 @@ SKIP: {
 	
 	{
 		my $url		= 'http://kasei.us/bad_file.ttl';
-		my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+		my $model	= RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 		throws_ok {
 			RDF::Trine::Parser->parse_url_into_model( $url, $model );
 		} 'RDF::Trine::Error::ParserError', 'parse_url_into_model throws on bad URL';
@@ -45,7 +45,7 @@ SKIP: {
 	
 	{
 		my $url		= 'http://bad.hostname/bad_file.ttl';
-		my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+		my $model	= RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 		throws_ok {
 			RDF::Trine::Parser->parse_url_into_model( $url, $model );
 		} 'RDF::Trine::Error::ParserError', 'parse_url_into_model throws on bad URL hostname';

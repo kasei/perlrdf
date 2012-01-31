@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.135
+This document describes RDF::Trine::Node::Resource version 0.138
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 }
 
 ######################################################################
@@ -98,6 +98,11 @@ sub new {
 # 		substr($uri, $i, $len)	= shift(@uni);
 # 	}
 # 	
+
+
+	if ($uri eq &RDF::Trine::NIL_GRAPH) {
+		return RDF::Trine::Node::Nil->new();
+	}
 	return bless( [ 'URI', $uri ], $class );
 }
 

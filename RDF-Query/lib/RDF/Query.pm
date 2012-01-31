@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Query - An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.
+RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.907.
+This document describes RDF::Query version 2.908.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.907';
+	$VERSION		= '2.908';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -330,6 +330,14 @@ sub prepare {
 	if ($args{ 'bind' }) {
 		%bound	= %{ $args{ 'bind' } };
 	}
+	
+	my $delegate;
+	if (defined $args{ 'delegate' }) {
+		$delegate	= delete $args{ 'delegate' };
+		if ($delegate and not blessed($delegate)) {
+			$delegate	= $delegate->new();
+		}
+	}
 	my $errors	= ($args{ 'strict_errors' }) ? 1 : 0;
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
@@ -365,8 +373,8 @@ sub prepare {
 					requested_variables			=> \@vars,
 					strict_errors				=> $errors,
 					options						=> $self->{options},
+					delegate					=> $delegate,
 				);
-	
 	$self->{model}		= $model;
 	
 	$l->trace("getting QEP...");
@@ -467,6 +475,32 @@ sub execute_plan {
 	}
 }
 
+=item C<< prepare_with_named_graphs ( $model, @uris ) >>
+
+=cut
+
+sub prepare_with_named_graphs {
+	my $self		= shift;
+	my $_model		= shift;
+	my @graphs		= @_;
+	my $l		= Log::Log4perl->get_logger("rdf.query");
+#	$self->{model}	= $model;
+	my $model		= $self->get_model( $_model );
+	if ($model) {
+		$self->model( $model );
+	} else {
+		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
+	}
+	
+	foreach my $gdata (@graphs) {
+		my $url	= (blessed($gdata)) ? $gdata->uri_value : $gdata;
+		$l->debug("-> adding graph data $url");
+		$self->parse_url( $url, 1 );
+	}
+	
+	return $self->prepare( $model );
+}
+
 =item C<< execute_with_named_graphs ( $model, @uris ) >>
 
 Executes the query using the specified RDF C<< $model >>, loading the contents
@@ -489,21 +523,8 @@ sub execute_with_named_graphs {
 		}
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query");
-#	$self->{model}	= $model;
-	my $model		= $self->get_model( $_model );
-	if ($model) {
-		$self->model( $model );
-	} else {
-		throw RDF::Query::Error::ModelError ( -text => "Could not create a model object." );
-	}
-	
-	foreach my $gdata (@graphs) {
-		$l->debug("-> adding graph data " . $gdata->uri_value);
-		$self->parse_url( $gdata->uri_value, 1 );
-	}
-	
-	return $self->execute( $model, @options );
+	my ($plan, $ctx)	= $self->prepare_with_named_graphs( $_model, @graphs );
+	return $self->execute_plan( $plan, $ctx );
 }
 
 =begin private
@@ -729,7 +750,7 @@ sub as_sparql {
 			}
 		}
 		
-		my @ns		= map { "PREFIX $_: <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
+		my @ns		= map { "PREFIX " . ($_ eq '__DEFAULT__' ? '' : $_) . ": <$parsed->{namespaces}{$_}>" } (sort keys %{ $parsed->{namespaces} });
 		my @mod;
 		if (my $ob = $parsed->{options}{orderby}) {
 			push(@mod, 'ORDER BY ' . join(' ', map {
@@ -886,7 +907,7 @@ sub get_model {
 			return;
 		}
 	} elsif ($store->isa('RDF::Core::Model')) {
-		die "RDF::Core is no longer supported";
+		Carp::croak "RDF::Core is no longer supported";
 	} else {
 		Carp::confess "unknown store type: $store";
 	}
@@ -1372,10 +1393,13 @@ Sets the object's error variable.
 sub set_error {
 	my $self	= shift;
 	my $error	= shift;
+	my $e		= shift;
 	if (blessed($self)) {
-		$self->{error}	= $error;
+		$self->{error}		= $error;
+		$self->{exception}	= $e;
 	}
-	our $_ERROR	= $error;
+	our $_ERROR		= $error;
+	our $_EXCEPTION	= $e;
 }
 
 =begin private
@@ -1391,10 +1415,12 @@ Clears the object's error variable.
 sub clear_error {
 	my $self	= shift;
 	if (blessed($self)) {
-		$self->{error}	= undef;
+		$self->{error}		= undef;
+		$self->{exception}	= undef;
 	}
-	our $_ERROR;
+	our($_ERROR, $_EXCEPTION);
 	undef $_ERROR;
+	undef $_EXCEPTION;
 }
 
 

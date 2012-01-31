@@ -206,6 +206,20 @@ $store->remove_statement( RDF::Trine::Statement->new( RDF::Trine::Node::Resource
 	is( $count, 2, 'iterator had 2 expected element' );
 }
 
+
+{
+	is($store->size, 2, 'pre-nuke size test shows 2 statements in store');
+	$store->nuke;
+	is($store->size, 0, 'post-nuke size test shows 0 statements in store');
+	my $count	= $store->count_statements( undef, undef, undef, undef );
+	is($count, 0, 'post-nuke count test shows 0 statements in store');
+	my $iter	= $store->get_statements( undef, undef, undef, undef );
+	my $next	= $iter->next;
+	ok(! defined($next), 'Iterator gave no result' );
+}
+
+
+
 ################
 
 sub _add_rdf {

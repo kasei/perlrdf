@@ -7,7 +7,7 @@ RDF::Query::Algebra::Project - Algebra class for projection
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Project version 2.907.
+This document describes RDF::Query::Algebra::Project version 2.908.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################

@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL - SPARQL Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL version 2.907.
+This document describes RDF::Query::Parser::SPARQL version 2.908.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -1707,7 +1707,7 @@ sub _RDFLiteral {
 	if ($self->_test('@')) {
 		my $lang	= $self->_eat( $r_LANGTAG );
 		substr($lang,0,1)	= '';	# remove '@'
-		push(@args, $lang);
+		push(@args, lc($lang));
 	} elsif ($self->_test('^^')) {
 		$self->_eat('^^');
 		push(@args, undef);

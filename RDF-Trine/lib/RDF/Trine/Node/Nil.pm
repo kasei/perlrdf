@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 0.135
+This document describes RDF::Trine::Node::Nil version 0.138
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 }
 
 ######################################################################
@@ -80,6 +80,18 @@ Returns the SSE string for this nil node.
 sub sse {
 	my $self	= shift;
 	return '(nil)';
+}
+
+=item C<< as_ntriples >>
+
+Returns the N-Triples serialization of the nil node's IRI
+<tag:gwilliams@cpan.org,2010-01-01:RT:NIL>.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	return sprintf('<%s>', &RDF::Trine::NIL_GRAPH());
 }
 
 =item C<< type >>

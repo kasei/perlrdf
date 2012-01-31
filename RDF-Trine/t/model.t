@@ -34,7 +34,7 @@ my $st6		= RDF::Trine::Statement->new( $p, $foaf->age, $intval);
 
 my ($stores, $remove)	= stores();
 
-plan tests => 7 + 81 * scalar(@$stores);
+plan tests => 7 + 82 * scalar(@$stores);
 
 print "### Testing auto-creation of store\n";
 isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
@@ -58,6 +58,13 @@ foreach my $store (@$stores) {
 		my $st		= $stream->next;
 		is_deeply( $st, $st1, 'foaf:name statement' );
 		is( $stream->next, undef, 'end-of-stream' );
+	}
+	
+	{
+		throws_ok {
+			my $iter	= $model->get_statements('<foo>');
+		} 'RDF::Trine::Error::MethodInvocationError', 'get_statements called with non-object argument';
+		
 	}
 	
 	{

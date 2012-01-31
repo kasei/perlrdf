@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.135
+This document describes RDF::Trine::Graph version 0.138
 
 =head1 SYNOPSIS
 
@@ -28,12 +28,12 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use Math::Combinatorics qw(permute);
+use Algorithm::Combinatorics qw(permutations);
 
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 }
 
 use overload
@@ -73,7 +73,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use RDF::Trine::Node;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 
 =item C<< new ( $model ) >>
 
@@ -92,7 +92,7 @@ sub new {
 	my %data;
 	if ($_[0]->isa('RDF::Trine::Iterator::Graph')) {
 		my $iter	= shift;
-		my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+		my $model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store() );
 		while (my $st = $iter->next) {
 			$model->add_statement( $st );
 		}
@@ -241,15 +241,18 @@ sub _find_mapping {
 		}
 	}
 	
+	my %bb_master	= map { $_->as_string => 1 } @$bb;
+	
 	my @ka	= keys %blank_ids_a;
 	my @kb	= keys %blank_ids_b;
-	my @kbp	= permute( @kb );
-	MAPPING: foreach my $mapping (@kbp) {
+	my $kbp	= permutations( \@kb );
+	my $count	= 0;
+	MAPPING: while (my $mapping = $kbp->next) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
-		my %bb	= map { $_->as_string => 1 } @$bb;
+		my %bb	= %bb_master;
 		foreach my $st (@$ba) {
 			my @nodes;
 			foreach my $method ($st->node_names) {

@@ -7,7 +7,7 @@ RDF::Query::Plan::Offset - Executable query plan for Offsets.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Offset version 2.907.
+This document describes RDF::Query::Plan::Offset version 2.908.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -53,6 +53,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "OFFSET plan can't be executed while already open";
 	}
@@ -92,6 +93,9 @@ sub next {
 	unless ($row) {
 		$self->[0]{exhausted}	= 1;
 		return undef;
+	}
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
 	}
 	return $row;
 }

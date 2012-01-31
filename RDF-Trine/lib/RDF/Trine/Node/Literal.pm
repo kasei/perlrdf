@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.135
+This document describes RDF::Trine::Node::Literal version 0.138
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -290,7 +290,7 @@ If C<< $datatype >> is a recognized datatype, returns the canonical lexical
 representation of the value C<< $string >>. Otherwise returns C<< $string >>.
 
 Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
-Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
+Additionally, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
 will trigger a warning.
 
 =cut

@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.907.
+This document describes RDF::Query::Expression::Function version 2.908.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -52,6 +52,8 @@ our %FUNCTION_MAP	= (
 	in			=> "IN",
 	notin		=> "NOT IN",
 	if			=> "IF",
+	'logical-or'	=> "||",
+	'logical-and'	=> "&&",
 );
 
 =head1 METHODS
@@ -140,7 +142,7 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(logical-and|logical-or|in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
 	if ($func eq 'IN' or $func eq 'NOT IN') {
@@ -150,6 +152,12 @@ sub as_sparql {
 			$term->as_sparql( $context, $indent ),
 			$func,
 			join(', ', map { $_->as_sparql( $context, $indent ) } @args),
+		);
+		return $string;
+	} elsif ($func eq '||' or $func eq '&&') {
+		my $string	= sprintf(
+			"(%s) $func (%s)",
+			(map { $_->as_sparql( $context, $indent ) } @args),
 		);
 		return $string;
 	} else {
@@ -249,6 +257,7 @@ sub evaluate {
 		my $ebv		= RDF::Query::Node::Resource->new( "sparql:ebv" );
 		my $expr	= shift(@args);
 		my $index	= 1;
+		my $ok		= 1;
 		try {
 			my $exprval	= $query->var_or_expr_value( $bound, $expr, $context );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
@@ -257,9 +266,15 @@ sub evaluate {
 			if ($bool) {
 				$index	= 0;
 			}
-		} catch RDF::Query::Error::TypeError with {};
-		my $expr2	= $args[$index];
-		return $query->var_or_expr_value( $bound, $expr2, $context );
+		} catch RDF::Query::Error::TypeError with {
+			$ok	= 0;
+		};
+		if ($ok) {
+			my $expr2	= $args[$index];
+			return $query->var_or_expr_value( $bound, $expr2, $context );
+		} else {
+			return;
+		}
 	} elsif ($uriv eq 'sparql:exists') {
 		my $func	= $query->get_function($uri);
 		my ($ggp)	= $self->arguments;

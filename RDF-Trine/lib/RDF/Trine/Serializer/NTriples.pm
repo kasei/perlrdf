@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.135
+This document describes RDF::Trine::Serializer::NTriples version 0.138
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
@@ -86,7 +86,7 @@ sub serialize_model_to_file {
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
@@ -107,7 +107,7 @@ sub serialize_model_to_string {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
@@ -124,7 +124,7 @@ sub serialize_iterator_to_file {
 	my $file	= shift;
 	my $iter	= shift;
 	while (my $st = $iter->next) {
-		print {$file} $self->_statement_as_string( $st );
+		print {$file} $self->statement_as_string( $st );
 	}
 }
 
@@ -140,7 +140,7 @@ sub serialize_iterator_to_string {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 	}
 	return $string;
 }
@@ -155,7 +155,7 @@ sub _serialize_bounded_description {
 	my $string	= '';
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
-		$string		.= $self->_statement_as_string( $st );
+		$string		.= $self->statement_as_string( $st );
 		if ($nodes[2]->isa('RDF::Trine::Node::Blank')) {
 			$string	.= $self->_serialize_bounded_description( $model, $nodes[2], $seen );
 		}
@@ -163,11 +163,30 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
-sub _statement_as_string {
+=item C<< statement_as_string ( $st ) >>
+
+Returns a string with the supplied RDF::Trine::Statement object serialized as
+N-Triples, ending in a DOT and newline.
+
+=cut
+
+sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
 	my @nodes	= $st->nodes;
 	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
+}
+
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the N-Triples serialization of C<< $node >>.
+
+=cut
+
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $node->as_ntriples;
 }
 
 1;

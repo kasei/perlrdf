@@ -18,3 +18,7 @@ lib/RDF/Query/Model/SQL/Statement.pm
 t/24-optimizer-multiget.t.disabled
 t/disabled/
 inc/Module/Install/AuthorTests.pm
+earl-eval-11.ttl
+earl-eval.ttl
+earl-syntax-11.ttl
+earl-syntax.ttl
