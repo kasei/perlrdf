@@ -197,7 +197,7 @@ sub evaluate {
 		$l->debug("-> $value");
 		return RDF::Query::Node::Literal->new( $value, undef, 'http://www.w3.org/2001/XMLSchema#boolean' );
 	} else {
-		die
+		$l->logdie("Unknown operator: $op");
 	}
 }
 

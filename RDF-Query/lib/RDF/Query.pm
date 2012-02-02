@@ -907,7 +907,7 @@ sub get_model {
 			return;
 		}
 	} elsif ($store->isa('RDF::Core::Model')) {
-		die "RDF::Core is no longer supported";
+		Carp::croak "RDF::Core is no longer supported";
 	} else {
 		Carp::confess "unknown store type: $store";
 	}

@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.137
+This document describes RDF::Trine version 0.138
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ For example, to test a Memory store, do something like:
 
 =head1 DESCRIPTION
 
-This packages a few functions that you can call to test a
+This module packages a few functions that you can call to test a
 L<RDF::Trine::Store>, also if it is outside of the main RDF-Trine
 distribution.
 
@@ -58,7 +58,7 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.137';
+	$VERSION	= '0.138';
 }
 
 use Log::Log4perl;
@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 222;								# Remember to update whenever adding tests
+	return 223;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 100;								# Remember to update whenever adding tests
+	return 101;								# Remember to update whenever adding tests
 }
 
 
@@ -533,6 +533,8 @@ sub literals_tests_simple {
 		my $st = $iter->next;
 		isa_ok( $st, 'RDF::Trine::Statement' );
 		is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple get_statements bound object value with utf8 chars' );
+		$store->remove_statement($st);
+		is( $store->size, 2, 'store has 2 statements after removal of literal with utf8 chars' );
 	}
 
 
