@@ -1,4 +1,4 @@
-use Test::More tests => 54;
+use Test::More tests => 55;
 use strict;
 use warnings;
 
@@ -27,6 +27,7 @@ use RDF::Trine;
 END
 	isa_ok( $insert, 'RDF::Query' );
 	warn RDF::Query->error unless ($insert);
+	ok( $insert->is_update, 'query is_update' );
 	$insert->execute( $model );
 	is( $model->size, 2, 'expected model size' );
 	

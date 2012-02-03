@@ -718,6 +718,21 @@ sub pattern {
 	}
 }
 
+=item C<< is_update >>
+
+=cut
+
+sub is_update {
+	my $self	= shift;
+	my $pat		= $self->pattern;
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Clear'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Copy'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Create'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Move'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Update'));
+	return 0;
+}
+
 =item C<< as_sparql >>
 
 Returns the query as a string in the SPARQL syntax.
