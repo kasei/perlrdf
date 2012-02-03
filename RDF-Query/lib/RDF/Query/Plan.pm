@@ -502,9 +502,9 @@ sub generate_plans {
 		my @plans	= map { RDF::Query::Plan::Distinct->new( $_ ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Filter') {
-		my @base	= $self->generate_plans( $algebra->pattern, $context, %args );
+		my @base	= $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $active_graph );
 		my $expr	= $algebra->expr;
-		my @plans	= map { RDF::Query::Plan::Filter->new( $expr, $_ ) } @base;
+		my @plans	= map { RDF::Query::Plan::Filter->new( $expr, $_, $active_graph ) } @base;
 		push(@return_plans, @plans);
 	} elsif ($type eq 'BasicGraphPattern') {
 		my @triples	= map {

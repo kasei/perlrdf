@@ -830,7 +830,8 @@ sub install {
 			my $context	= shift;
 			my $bound	= shift;
 			my $ggp		= shift;
-			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
+			my $graph	= shift;
+			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context, active_graph => $graph );
 			
 			Carp::confess "No execution contexted passed to sparql:exists" unless (blessed($context));
 			

@@ -34,7 +34,7 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $plan, $expr ) >>
+=item C<< new ( $plan, $expr, $active_graph ) >>
 
 =cut
 
@@ -42,7 +42,8 @@ sub new {
 	my $class	= shift;
 	my $expr	= shift;
 	my $plan	= shift;
-	my $self	= $class->SUPER::new( $expr, $plan );
+	my $graph	= shift;
+	my $self	= $class->SUPER::new( $expr, $plan, $graph );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
@@ -84,7 +85,7 @@ sub execute ($) {
 					# undef it if it wasn't defined before the local() call.
 					$query	= undef;
 				}
-				my $value	= $filter->evaluate( $query, $row, $context );
+				my $value	= $filter->evaluate( $query, $row, $context, $self->active_graph );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			} catch RDF::Query::Error with {
 				my $e	= shift;
@@ -157,6 +158,17 @@ Returns the query plan that will be used to produce the data to be filtered.
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< active_graph >>
+
+Returns the active graph.
+
+=cut
+
+sub active_graph {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinct >>
