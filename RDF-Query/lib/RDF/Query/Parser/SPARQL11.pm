@@ -2844,7 +2844,7 @@ sub _Aggregate {
 			if ($self->_test(qr/;/)) {
 				$self->_eat(qr/;/);
 				$self->__consume_ws_opt;
-				$self->_eat(qr/SEPARATOR/i);
+				$self->_eat(qr/SEPARATOR|SEPERATOR/i);	# accept common typo
 				$self->__consume_ws_opt;
 				$self->_eat(qr/=/);
 				$self->__consume_ws_opt;
