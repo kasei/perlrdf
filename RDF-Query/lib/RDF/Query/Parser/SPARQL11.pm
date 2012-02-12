@@ -85,13 +85,15 @@ our $r_AGGREGATE_CALL		= qr/(MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT)\b/i;
 
 =item C<< new >>
 
-Returns a new Turtle parser.
+Returns a new SPARQL 1.1 parser object.
 
 =cut
 
 sub new {
 	my $class	= shift;
+	my %args	= @_;
 	my $self	= bless({
+					args		=> \%args,
 					bindings	=> {},
 					bnode_id	=> 0,
 				}, $class);
@@ -2844,7 +2846,11 @@ sub _Aggregate {
 			if ($self->_test(qr/;/)) {
 				$self->_eat(qr/;/);
 				$self->__consume_ws_opt;
-				$self->_eat(qr/SEPARATOR|SEPERATOR/i);	# accept common typo
+				if ($self->{args}{allow_typos}) {
+					$self->_eat(qr/SEP[AE]RATOR/i);	# accept common typo
+				} else {
+					$self->_eat(qr/SEPARATOR/i);
+				}
 				$self->__consume_ws_opt;
 				$self->_eat(qr/=/);
 				$self->__consume_ws_opt;
