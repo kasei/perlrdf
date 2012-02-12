@@ -230,7 +230,6 @@ sub cli_parse_args {
 	$args{ class }	= 'RDF::Query';
 	my @service_descriptions;
 	
-	return unless (@ARGV);
 	while (scalar(@ARGV) and $ARGV[0] =~ /^-(\w+)/) {
 		my $opt	= shift(@ARGV);
 		if ($opt eq '-e') {
