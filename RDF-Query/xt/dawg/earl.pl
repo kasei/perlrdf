@@ -2,21 +2,31 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+use DateTime::Format::W3CDTF;
+
 sub init_earl {
 	my $bridge	= shift;
 	my $out		= '';
 	open( my $fh, '>', \$out );
 	my $earl	= {out => \$out, fh => $fh, bridge => $bridge};
+	my $w3c	= DateTime::Format::W3CDTF->new;
+	my $dt	= $w3c->format_datetime(DateTime->now);
 	
-	print {$fh} <<'END';
-@prefix doap: <http://usefulinc.com/ns/doap#>.
-@prefix earl: <http://www.w3.org/ns/earl#>.
-@prefix foaf: <http://xmlns.com/foaf/0.1/>.
-@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix rdfquery: <http://kasei.us/code/rdf-query/#>.
-@prefix dct: <http://purl.org/dc/terms/>.
+	print {$fh} <<"END";
+\@prefix doap: <http://usefulinc.com/ns/doap#>.
+\@prefix earl: <http://www.w3.org/ns/earl#>.
+\@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+\@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+\@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+\@prefix xml: <http://www.w3.org/XML/1998/namespace>.
+\@prefix rdfquery: <http://kasei.us/code/rdf-query/#>.
+\@prefix dct: <http://purl.org/dc/terms/>.
+\@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+
+<> foaf:primaryTopic rdfquery:project ;
+	dct:issued "${dt}"^^xsd:dateTime ;
+	foaf:maker <http://kasei.us/about/foaf.xrdf#greg> ;
+	.
 
 rdfquery:project
 	a doap:Project ;
@@ -25,7 +35,7 @@ rdfquery:project
 
 <http://kasei.us/about/foaf.xrdf#greg> a foaf:Person ;
 	foaf:name "Gregory Todd Williams" ;
-	foaf:mbox <mailto:gwilliams@cpan.org> ;
+	foaf:mbox <mailto:gwilliams\@cpan.org> ;
 	foaf:mbox_sha1sum "f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8" ;
 	foaf:homepage <http://kasei.us/> .
 
@@ -52,7 +62,7 @@ sub earl_pass_test {
 	earl:assertedBy rdfquery:dawg-harness ;
 	earl:result [
 		a earl:TestResult ;
-		earl:outcome earl:pass
+		earl:outcome earl:passed
 	] ;
 	earl:subject rdfquery:project ;
 	earl:test <$test> .
@@ -81,7 +91,7 @@ sub earl_fail_test {
 	earl:assertedBy rdfquery:dawg-harness ;
 	earl:result [
 		a earl:TestResult ;
-		earl:outcome earl:fail ;
+		earl:outcome earl:failed ;
 END
 	print {$earl->{fh}} qq[\t\trdfs:comment "$msg" ;\n] if (defined $msg);
 	print {$earl->{fh}} <<"END";
