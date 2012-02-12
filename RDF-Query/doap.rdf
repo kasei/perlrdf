@@ -20,8 +20,11 @@
 	<homepage rdf:resource="http://kasei.us/code/rdf-query/"/>
 	<created>2004-07-05</created>
 	<description xml:lang="en">An RDF query implementation of SPARQL/RDQL in Perl for use with RDF::Trine.</description>
+	<implements rdf:resource="http://www.w3.org/TR/rdf-sparql-query/"/>
+	<implements rdf:resource="http://www.w3.org/TR/sparql11-query/"/>
+	<implements rdf:resource="http://www.w3.org/TR/sparql11-update/"/>
 	<rdfs:seeAlso rdf:resource="Changes.ttl"/>
-
+	
 	<maintainer>
 		<foaf:Person>
 			<foaf:name>Gregory Todd Williams</foaf:name>
@@ -34,23 +37,23 @@
 	<release>
 		<Version>
 			<name>stable</name>
-			<created>2010-07-02</created>
-			<revision>2.902</revision>
+			<created>2012-01-31</created>
+			<revision>2.908</revision>
 		</Version>
 	</release>
-
-	<download-page rdf:resource="http://kasei.us/code/rdf-query/" />
-	<download-mirror rdf:resource="http://search.cpan.org/dist/RDF-Query/" />
-
+	
+	<download-page rdf:resource="http://search.cpan.org/dist/RDF-Query/" />
+	<download-mirror rdf:resource="http://kasei.us/code/rdf-query/" />
+	
 	<!-- Freshmeat category: Database Engines/Servers -->
 	<category rdf:resource="http://software.freshmeat.net/browse/67/" />
 	<!--  Software Development :: Libraries -->
 	<category rdf:resource="http://software.freshmeat.net/browse/809/" />
-
+	
 	<!-- Licensing details -->
 	<license rdf:resource="http://usefulinc.com/doap/licenses/gpl" />
 	<license rdf:resource="http://usefulinc.com/doap/licenses/artistic" />
-
+	
 	<programming-language xml:lang="en-US" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Perl</programming-language>
   <!--
 	   optional administravia:
