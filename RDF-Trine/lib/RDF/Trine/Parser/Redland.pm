@@ -96,9 +96,11 @@ BEGIN {
 			(@{$FORMATS{$format}[3]});
 	}
 	
-	eval "use RDF::Redland 1.000701;";
-	unless ($@) {
-		$HAVE_REDLAND_PARSER	= 1;
+	unless ($ENV{RDFQUERY_NO_REDLAND}) {
+		eval "use RDF::Redland 1.000701;";
+		unless ($@) {
+			$HAVE_REDLAND_PARSER	= 1;
+		}
 	}
 }
 
