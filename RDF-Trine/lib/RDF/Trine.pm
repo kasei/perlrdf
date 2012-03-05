@@ -54,7 +54,7 @@ BEGIN {
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
 	
-	unless ($ENV{RDFQUERY_NO_REDLAND}) {
+	unless ($ENV{RDFTRINE_NO_REDLAND}) {
 		can_load( modules => {
 			'RDF::Redland'					=> undef,
 			'RDF::Trine::Store::Redland'	=> undef,
