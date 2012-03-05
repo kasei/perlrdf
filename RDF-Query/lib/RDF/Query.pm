@@ -411,13 +411,30 @@ sub execute {
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	$l->debug("executing query with model " . ($model or ''));
 	
-	my ($plan, $context)	= $self->prepare( $model, %args );
-	if ($l->is_trace) {
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		$l->trace($self->as_sparql);
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+	my $lang_iri	= '';
+	my $parser	= $self->{parser};
+	if ($parser->isa('RDF::Query::Parser::SPARQL11')) {
+		if ($self->is_update) {
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update';
+		} else {
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
+		}
+	} elsif ($parser->isa('RDF::Query::Parser::SPARQL')) {
+		$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
 	}
-	return $self->execute_plan( $plan, $context );
+	
+# 	warn "passthrough checking if model supports $lang_iri\n";
+	if ($self->{options}{allow_passthrough} and $model->supports($lang_iri)) {
+		return $model->get_sparql( $self->{query_string} );
+	} else {
+		my ($plan, $context)	= $self->prepare( $model, %args );
+		if ($l->is_trace) {
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			$l->trace($self->as_sparql);
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		}
+		return $self->execute_plan( $plan, $context );
+	}
 }
 
 =item C<< execute_plan ( $plan, $context ) >>
