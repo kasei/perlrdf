@@ -242,6 +242,7 @@ sub get_pattern {
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+		return $iter unless $sub; # This BGP will have no results, thus jump out
 	} else {
 		my $t		= shift(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
