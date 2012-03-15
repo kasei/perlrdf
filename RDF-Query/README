@@ -36,6 +36,52 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.908 (2012-01-31)
+
+     * BUG FIXES
+         Fixed SPARQL serialization of expressions using && and ||.
+         Fixed SPARQL 1.1 parser to support "GRAPH<iri>" without whitespace.
+         Fixed bug resulting in false positive error when projecting expressions with aggregates.
+         Fixed aggregate evaluation to result in unbound variables on error (instead of dropping the result).
+         Fixed numeric divide operation to return xsd:decimal when operands are xsd:integers.
+         Fixed RDF::Query::Expression::Binary->evaluate to properly throw on div-by-zero.
+         Fixed RDF::Query::Expression::Function->evaluate to propogate type errors in IF().
+         Fixed bin/rqsh to handle queries that use BASE.
+         Fixed bug in RDF::Query::Plan::Join::PushDownNestedLoop that produced invalid results when the RHS was a subselect.
+         Fixed RDF::Query::Algebra::Filter->as_sparql to handle variation of serialization of the child pattern.
+         Fixed bug in SPARQL 1.1 parser that mistakenly introduced aggregate operations in non-aggregate queries.
+     * NEW FEATURES
+         Added support for Service as a binary op (allowing variable-endpoint SERVICE blocks).
+         Added implementations for functions STRBEFORE, STRAFTER, and REPLACE.
+         Added RDF::Query->prepare_with_named_graphs method.
+         Added support for COPY and MOVE operations.
+         Allow percent encoding and backslash escaping in prefix names.
+     * ENHANCEMENTS
+         Fixed RDF::Query::Expression::Binary to canonicalize numeric literal results.
+         Added syntax support for SILENT form of LOAD.
+         Added support for SILENT and variable endpoint handling for SERVICE patterns.
+         Added syntax support for optional GRAPH keyword on SPARQL 1.1 update shortcuts.
+         Updated RDF::Query::Plan::Extend to copy variable bindings instead of using the existing reference.
+         Added RDF::Query::Plan::Extend->explain.
+         Changed explain() syntax of plan quads.
+         Updated plan classes to optionally register intermediate results with a execution delegate object.
+         Made RDF::Query::Plan::Construct uniq the returned triples.
+         Added custom RDF::Query::Plan::Construct->explain method.
+         Normalize language tags used in SPARQL query syntax to lowercase.
+         Modularize RDF::Query::Plan::Service to allow mock testing.
+         Added exception handling in RDF::Query->set_error.
+         Added subplans_of_type method to Plan classes.
+         Fixed use of '__DEFAULT__' sentinel value in RDF::Query::Plan, RDF::Query::Plan::Service, RDF::Query::Node::Resource->as_sparql, and RDF::Query->as_sparql.
+         Force the planner to avoid using a bind-join when the RHS contains a Service subplan (to avoid a DOS attack on the remote endpoint).
+         Updated DATATYPE() to return rdf:langString on language-tagged literals (per RDF 1.1 change).
+         Fixed sse serialization in RDF::Query::Algebra::Service to handle binary op (variable endpoint) form.
+         Croak rather than die in some places, confess and use logdie in one place
+         Allow aggregates in ORDER BY clause.
+     * OTHER
+         Added examples/query_url.pl.
+         Added RDF::Trine::Error::UnimplementedError exception class.
+         Updated required version of RDF::Trine to 0.138.
+
   Version 2.907 (2011-06-04)
 
      * BUG FIXES

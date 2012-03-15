@@ -1,13 +1,13 @@
-# RDF::Query::Plan::Clear
+# RDF::Query::Plan::Move
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Plan::Clear - Executable query plan for CLEAR operations.
+RDF::Query::Plan::Move - Executable query plan for MOVE operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Clear version 2.908.
+This document describes RDF::Query::Plan::Move version 2.908.
 
 =head1 METHODS
 
@@ -18,7 +18,7 @@ L<RDF::Query::Plan> class.
 
 =cut
 
-package RDF::Query::Plan::Clear;
+package RDF::Query::Plan::Move;
 
 use strict;
 use warnings;
@@ -41,14 +41,16 @@ BEGIN {
 
 ######################################################################
 
-=item C<< new ( $graph ) >>
+=item C<< new ( $from, $to, $silent ) >>
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $graph	= shift;
-	my $self	= $class->SUPER::new( $graph );
+	my $from	= shift;
+	my $to		= shift;
+	my $silent	= shift;
+	my $self	= $class->SUPER::new( $from, $to, $silent );
 	return $self;
 }
 
@@ -61,34 +63,29 @@ sub execute ($) {
 	my $context	= shift;
 	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "CLEAR plan can't be executed while already open";
+		throw RDF::Query::Error::ExecutionError -text => "MOVE plan can't be executed while already open";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.clear");
-	$l->trace( "executing RDF::Query::Plan::Clear" );
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.move");
+	$l->trace( "executing RDF::Query::Plan::Move" );
 	
-	my %args	= ($self->namedgraph) ? (context => $self->namedgraph) : ();
-	my $graph	= $self->namedgraph;
-	unless ($graph) {
-		$graph	= RDF::Trine::Node::Nil->new;
-	}
-# 	warn "clearing graph " . $graph->as_string;
+	my $from	= $self->from;
+	my $to		= $self->to;
+# 	warn "Moving graph " . $from->as_string;
 	my $ok	= 0;
 	try {
-		if ($graph->is_nil) {
-			$context->model->remove_statements( undef, undef, undef, $graph );
+		if ($from->equal( $to )) {
+			# no-op
 		} else {
-			my $uri	= $graph->uri_value;
-			if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
-				$context->model->remove_statements( undef, undef, undef, undef );
-			} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
-				my $citer	= $context->model->get_contexts;
-				while (my $graph = $citer->next) {
-					$context->model->remove_statements( undef, undef, undef, $graph );
-				}
-			} else {
-				$context->model->remove_statements( undef, undef, undef, $graph );
+			my $model	= $context->model;
+			$model->begin_bulk_ops();
+			$model->remove_statements( undef, undef, undef, $to );
+			my $iter	= $model->get_statements( undef, undef, undef, $from );
+			while (my $st = $iter->next) {
+				$model->add_statement( $st, $to );
 			}
+			$context->model->remove_statements( undef, undef, undef, $from );
+			$model->end_bulk_ops();
 		}
 		$ok		= 1;
 	} catch RDF::Trine::Error with {};
@@ -104,10 +101,10 @@ sub execute ($) {
 sub next {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open CLEAR";
+		throw RDF::Query::Error::ExecutionError -text => "next() cannot be called on an un-open MOVE";
 	}
 	
-	my $l		= Log::Log4perl->get_logger("rdf.query.plan.clear");
+	my $l		= Log::Log4perl->get_logger("rdf.query.plan.move");
 	$self->close();
 	if (my $d = $self->delegate) {
 		$d->log_result( $self, $self->[0]{ok} );
@@ -122,22 +119,44 @@ sub next {
 sub close {
 	my $self	= shift;
 	unless ($self->state == $self->OPEN) {
-		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open CLEAR";
+		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open MOVE";
 	}
 	
 	delete $self->[0]{ok};
 	$self->SUPER::close();
 }
 
-=item C<< namedgraph >>
+=item C<< from >>
 
-Returns the graph node which is to be cleared.
+Returns the graph node which is to be copied.
 
 =cut
 
-sub namedgraph {
+sub from {
 	my $self	= shift;
 	return $self->[1];
+}
+
+=item C<< to >>
+
+Returns the graph node to which data is copied.
+
+=cut
+
+sub to {
+	my $self	= shift;
+	return $self->[2];
+}
+
+=item C<< silent >>
+
+Returns the silent flag.
+
+=cut
+
+sub silent {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinct >>
@@ -167,7 +186,7 @@ Returns the string name of this plan node, suitable for use in serialization.
 =cut
 
 sub plan_node_name {
-	return 'clear';
+	return 'move';
 }
 
 =item C<< plan_prototype >>
@@ -180,12 +199,7 @@ identifiers.
 
 sub plan_prototype {
 	my $self	= shift;
-	my $g	= $self->namedgraph;
-	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
-		return qw(w);
-	} else {
-		return qw(N);
-	}
+	return qw(N N);
 }
 
 =item C<< plan_node_data >>
@@ -197,12 +211,7 @@ the signature returned by C<< plan_prototype >>.
 
 sub plan_node_data {
 	my $self	= shift;
-	my $g	= $self->namedgraph;
-	if ($g->isa('RDF::Query::Node::Resource') and $g->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
-		return $1;
-	} else {
-		return ($self->namedgraph);
-	}
+	return ($self->from, $self->to);
 }
 
 =item C<< graph ( $g ) >>
@@ -213,10 +222,13 @@ sub graph {
 	my $self	= shift;
 	my $g		= shift;
 	my $label	= $self->graph_labels;
-	my $url		= $self->namedgraph->uri_value;
-	$g->add_node( "$self", label => "Clear" . $self->graph_labels );
-	$g->add_node( "${self}$url", label => $url );
-	$g->add_edge( "$self" => "${self}$url", label => 'url' );
+	my $furl	= $self->from->uri_value;
+	my $turl	= $self->to->uri_value;
+	$g->add_node( "$self", label => "Move" . $self->graph_labels );
+	$g->add_node( "${self}$furl", label => $furl );
+	$g->add_node( "${self}$turl", label => $turl );
+	$g->add_edge( "$self" => "${self}$furl", label => 'from' );
+	$g->add_edge( "$self" => "${self}$turl", label => 'to' );
 	return "$self";
 }
 

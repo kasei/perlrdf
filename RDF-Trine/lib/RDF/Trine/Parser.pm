@@ -204,7 +204,7 @@ sub parse_url_into_model {
 		try {
 			$parser->parse_into_model( $url, $data, $model, %args );
 			$ok	= 1;
-		};
+		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";

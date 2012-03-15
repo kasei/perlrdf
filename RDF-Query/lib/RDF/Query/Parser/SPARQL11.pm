@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.907.
+This document describes RDF::Query::Parser::SPARQL11 version 2.908.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -754,12 +754,35 @@ sub _DropGraph {
 	$self->{build}{method}		= 'CLEAR';
 }
 
+sub __graph {
+	my $self	= shift;
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
+		return RDF::Trine::Node::Nil->new();
+	} else {
+		if ($self->_test(qr/GRAPH/)) {
+			$self->_eat(qr/GRAPH/i);
+			$self->__consume_ws_opt;
+		}
+		$self->_IRIref;
+		my ($g)	= splice( @{ $self->{stack} } );
+		return $g;
+	}
+}
+
 sub _CopyUpdate {
 	my $self	= shift;
 	my $op		= $self->_eat(qr/COPY(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
-	return $self->__UpdateShortcuts( 'COPY', $silent );
+	my $from	= $self->__graph();
+	$self->_ws;
+	$self->_eat(qr/TO/i);
+	$self->_ws;
+	my $to	= $self->__graph();
+	my $pattern	= RDF::Query::Algebra::Copy->new( $from, $to, $silent );
+	$self->_add_patterns( $pattern );
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _MoveUpdate {
@@ -767,7 +790,14 @@ sub _MoveUpdate {
 	my $op		= $self->_eat(qr/MOVE(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
-	return $self->__UpdateShortcuts( 'MOVE', $silent );
+	my $from	= $self->__graph();
+	$self->_ws;
+	$self->_eat(qr/TO/i);
+	$self->_ws;
+	my $to	= $self->__graph();
+	my $pattern	= RDF::Query::Algebra::Move->new( $from, $to, $silent );
+	$self->_add_patterns( $pattern );
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _AddUpdate {
@@ -3152,7 +3182,8 @@ sub __solution_modifiers {
 	
 	my $having_expr;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
-	if ($aggdata) {
+	my @aggkeys	= keys %{ $aggdata || {} };
+	if (scalar(@aggkeys)) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);

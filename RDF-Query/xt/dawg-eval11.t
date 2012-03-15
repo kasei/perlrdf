@@ -87,21 +87,25 @@ warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 my $model		= RDF::Trine::Model->temporary_model;
 my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
+		add
 		aggregates
 		basic-update
 		bind
 		bindings
 		clear
 		construct
+		copy
 		csv-tsv-res
 		delete
 		delete-data
 		delete-insert
 		delete-where
 		drop
+		exists
 		functions
 		grouping
 		json-res
+		move
 		negation
 		project-expression
 		property-path
@@ -268,6 +272,10 @@ sub update_eval_test {
 		}
 	}
 	
+	if ($debug) {
+		warn "Dataset before update operation:\n";
+		warn $test_model->as_string;
+	}
 	my $ok	= 0;
 	eval {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
@@ -292,7 +300,9 @@ sub update_eval_test {
 		}
 	};
 	if ($@ or not($ok)) {
-		fail($test->as_string);
+		if ($@) {
+			fail($test->as_string);
+		}
 		earl_fail_test( $earl, $test, $@ );
 		print "# failed: " . $test->as_string . "\n";
 	} else {
