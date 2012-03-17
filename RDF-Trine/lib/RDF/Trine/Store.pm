@@ -234,6 +234,9 @@ sub get_pattern {
 			}
 		}
 		my $_iter	= $self->get_statements( @nodes );
+		if ($_iter->finished) {
+			return RDF::Trine::Iterator::Bindings->new( [], [] );
+		}
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $_iter->next;
@@ -242,7 +245,6 @@ sub get_pattern {
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
-		return $iter unless $sub; # This BGP will have no results, thus jump out
 	} else {
 		my $t		= shift(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
