@@ -69,6 +69,7 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	my $op		= $self->op;
+ 	$op			= '=' if ($op eq '==');
 	return sprintf("(%s $op %s)", map { $_->as_sparql( $context, $indent ) } $self->operands);
 }
 
