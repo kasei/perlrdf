@@ -252,8 +252,9 @@ Returns a list of the variable names used in this algebra expression.
 
 sub referenced_variables {
 	my $self	= shift;
-	my @list	= RDF::Query::_uniq($self->pattern->referenced_variables, $self->lhs->referenced_variables);
-	return @list;
+	my @list	= $self->pattern->referenced_variables;
+	push(@list, $self->lhs->referenced_variables) if ($self->lhs);
+	return RDF::Query::_uniq(@list);
 }
 
 =item C<< potentially_bound >>
