@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 73;
+use Test::More tests => 69;
 use Scalar::Util qw(reftype);
 
 use Data::Dumper;
@@ -80,14 +80,12 @@ use RDF::Trine::Iterator::Boolean;
 		my @values	= $stream->binding_values;
 		is_deeply( \@values, [2], 'binding_values' );
 		
-		is( $stream->bindings_count, 1 );
+		is( $stream->bindings_count, 1, 'bindings_count' );
 		
-		is( $stream->finished, 0, 'not finished' );
+		is( $stream->finished, 1, 'finished' );
 		is( $stream->open, 1, 'open' );
 		my $row		= $stream->next;
 		is( $row, undef );
-		is( $stream->finished, 1, 'finished' );
-		is( $stream->open, 1, 'not open' );
 	}
 }
 

@@ -267,7 +267,8 @@ Returns true if the end of the stream has been reached, false otherwise.
 sub end { $_[0]->finished }
 sub finished {
 	my $self	= shift;
-	$self->peek;
+	my $v		= $self->peek;
+	return 0 if (defined($v));
 	return $self->{_finished};
 }
 
