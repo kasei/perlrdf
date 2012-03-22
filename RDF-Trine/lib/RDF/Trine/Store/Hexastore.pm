@@ -411,45 +411,43 @@ sub get_pattern {
 			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			
-			
-			$i1->next;
-			$i2->next;
-			
+			my $i1current	= $i1->next;
+			my $i2current	= $i2->next;
 			my @results;
-			while (not($i1->finished) and not($i2->finished)) {
-				my $i1cur	= $i1->current->{ $shrkey };
-				my $i2cur	= $i2->current->{ $shrkey };
-				if ($i1->current->{ $shrkey }->equal( $i2->current->{ $shrkey } )) {
+			while (defined($i1current) and defined($i2current)) {
+				my $i1cur	= $i1current->{ $shrkey };
+				my $i2cur	= $i2current->{ $shrkey };
+				if ($i1current->{ $shrkey }->equal( $i2current->{ $shrkey } )) {
 					my @matching_i2_rows;
-					my $match_value	= $i1->current->{ $shrkey };
-					while ($match_value->equal( $i2->current->{ $shrkey } )) {
-						push( @matching_i2_rows, $i2->current );
-						unless ($i2->next) {
+					my $match_value	= $i1current->{ $shrkey };
+					while ($match_value->equal( $i2current->{ $shrkey } )) {
+						push( @matching_i2_rows, $i2current );
+						unless ($i2current = $i2->next) {
 #							warn "no more from i2";
 							last;
 						}
 					}
 					
-					while ($match_value->equal( $i1->current->{ $shrkey } )) {
+					while ($match_value->equal( $i1current->{ $shrkey } )) {
 						foreach my $i2_row (@matching_i2_rows) {
-							my $new	= $self->_join( $i1->current, $i2_row );
+							my $new	= $self->_join( $i1current, $i2_row );
 							push( @results, $new );
 						}
-						unless ($i1->next) {
+						unless ($i1current = $i1->next) {
 #							warn "no more from i1";
 							last;
 						}
 					}
-				} elsif ($i1->current->{ $shrkey }->compare( $i2->current->{ $shrkey } ) == -1) {
-					my $i1v	= $i1->current->{ $shrkey };
-					my $i2v	= $i2->current->{ $shrkey };
+				} elsif ($i1current->{ $shrkey }->compare( $i2current->{ $shrkey } ) == -1) {
+					my $i1v	= $i1current->{ $shrkey };
+					my $i2v	= $i2current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
-					$i1->next;
-				} else { # ($i1->current->{ $shrkey } > $i2->current->{ $shrkey })
-					my $i1v	= $i1->current->{ $shrkey };
-					my $i2v	= $i2->current->{ $shrkey };
+					$i1current	= $i1->next;
+				} else { # ($i1current->{ $shrkey } > $i2current->{ $shrkey })
+					my $i1v	= $i1current->{ $shrkey };
+					my $i2v	= $i2current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
-					$i2->next;
+					$i2current	= $i2->next;
 				}
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
