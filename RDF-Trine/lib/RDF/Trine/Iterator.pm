@@ -236,7 +236,6 @@ remain in queue until the next call to C<< next >>.
 sub peek {
 	my $self	= shift;
 	return if ($self->{_finished});
-	
 	my $value	= $self->next;
 	push( @{ $self->{_peek} }, $value );
 	return $value;
@@ -268,6 +267,7 @@ Returns true if the end of the stream has been reached, false otherwise.
 sub end { $_[0]->finished }
 sub finished {
 	my $self	= shift;
+	$self->peek;
 	return $self->{_finished};
 }
 
