@@ -174,6 +174,20 @@ sub _statement_as_string {
 }
 
 
+=item C<< statement_as_string ( $st ) >>
+
+Returns a string with the supplied RDF::Trine::Statement::Quad object serialized
+as N-Quads, ending in a DOT and newline.
+
+=cut
+
+sub statement_as_string {
+	my $self	= shift;
+	my $st		= shift;
+	my @nodes	= $st->nodes;
+	return join(' ', map { $_->as_ntriples } @nodes[0..3]) . " .\n";
+}
+
 1;
 
 __END__
