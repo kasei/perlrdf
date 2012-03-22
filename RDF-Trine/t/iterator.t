@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 65;
+use Test::More tests => 73;
 use Scalar::Util qw(reftype);
 
 use Data::Dumper;
@@ -190,3 +190,16 @@ END
 	is( reftype($b), 'HASH', 'expected variable bindings HASH' );
 	is( $b->{name}->literal_value, 'alice', 'expected variable binding literal value' );
 }
+
+{
+	my $iter	= RDF::Trine::Iterator->new([1,2]);
+	is( $iter->peek, 1, 'peek' );
+	is( $iter->peek, 1, 'peek again' );
+	is( $iter->next, 1, 'next' );
+	is( $iter->peek, 2, 'peek' );
+	is( $iter->peek, 2, 'peek again' );
+	is( $iter->next, 2, 'next' );
+	is( $iter->peek, undef, 'peek on eos' );
+	is( $iter->next, undef, 'next on eos' );
+}
+
