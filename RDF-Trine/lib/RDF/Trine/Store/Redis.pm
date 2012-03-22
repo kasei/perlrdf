@@ -140,9 +140,9 @@ sub _new_with_config {
 
 sub _config_meta {
 	return {
-		required_keys	=> [],
+		required_keys	=> [qw(server)],
 		fields			=> {
-			server		=> { description => 'server', type => 'string' },
+			server		=> { description => 'server:port', type => 'string' },
 			cache_size	=> { description => 'cache size', type => 'int' },
 		}
 	}
@@ -620,6 +620,10 @@ sub _dump {
 __END__
 
 =back
+
+=head1 REDIS DATA LAYOUT
+
+...
 
 =head1 BUGS
 
