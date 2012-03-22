@@ -50,7 +50,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(iri variable store literal);
+use RDF::Trine qw(iri variable store literal statement);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
@@ -65,7 +65,7 @@ use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(number_of_tests number_of_triple_tests create_data all_store_tests all_triple_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
+our @EXPORT = qw(number_of_tests number_of_triple_tests create_data all_store_tests all_triple_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_pattern_tests get_statements_tests_quads remove_statement_tests);
 
 
 
@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 223;								# Remember to update whenever adding tests
+	return 229;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 101;								# Remember to update whenever adding tests
+	return 107;								# Remember to update whenever adding tests
 }
 
 
@@ -188,6 +188,7 @@ sub all_store_tests {
 		count_statements_tests_triples( $store, $args, $ex, $nil );
 		contexts_tests( $store, $args );
 		get_statements_tests_triples( $store, $args, $ex );
+		get_pattern_tests( $store, $args, $ex );
 		get_statements_tests_quads( $store, $args, $ex, $nil	);
 	
 		remove_statement_tests( $store, $args, $ex, @names );
@@ -241,7 +242,7 @@ sub all_triple_store_tests {
 	
 		count_statements_tests_triples( $store, $args, $ex, $nil );
 		get_statements_tests_triples( $store, $args, $ex );
-
+		get_pattern_tests( $store, $args, $ex );
 	}
 }
 
@@ -914,6 +915,58 @@ sub get_statements_tests_quads {
 	}
 	
 }
+
+
+=item C<< get_pattern_tests( $store, $args, $data->{ex} )	>>
+
+Tests for getting statements using with get_pattern.
+
+=cut
+
+
+sub get_pattern_tests {
+	note " get_pattern tests";
+	my ($store, $args, $ex) = @_;
+	
+	{
+		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
+							 statement(
+								   $ex->a, $ex->b, variable('o1'),
+								  ),
+							 statement(
+								   $ex->a, $ex->c, variable('o2'),
+								  ),
+						         )
+						       );
+		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
+		my $count	= 0;
+		while (my $st = $iter->next()) {
+			$count++;
+		}
+		my $expected = ($args->{quads_unsupported}) ? 9 : 144;
+		is( $count, $expected, 'get_pattern( bbf, bbf ) expected result count'	 );
+		is( $iter->next, undef, 'pattern iterator end-of-stream' );
+	}
+	{
+		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
+							 statement(
+								   $ex->a, $ex->b, variable('o1'),
+								  ),
+							 statement(
+								   $ex->a, $ex->c, literal('DAAAAHUUUT'),
+								  ),
+						         )
+						       );
+		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
+		my $count	= 0;
+		while (my $st = $iter->next()) {
+			$count++;
+		}
+		is( $count, 0, 'get_pattern( bbf, bbu ) expected result count'	 );
+		is( $iter->next, undef, 'pattern iterator end-of-stream' );
+	}
+      }
+
 
 
 

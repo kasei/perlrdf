@@ -234,6 +234,9 @@ sub get_pattern {
 			}
 		}
 		my $_iter	= $self->get_statements( @nodes );
+		if ($_iter->finished) {
+			return RDF::Trine::Iterator::Bindings->new( [], [] );
+		}
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $_iter->next;
