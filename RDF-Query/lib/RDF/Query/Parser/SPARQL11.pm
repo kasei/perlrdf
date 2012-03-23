@@ -2211,6 +2211,7 @@ sub _VerbSimple {
 # VerbPath ::= Path
 sub _VerbPath_test {
 	my $self	= shift;
+	return 1 if ($self->_test(qr/DISTINCT[(]/i));
 	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/\^|[|(a!]/));
 	return 0;
@@ -2224,7 +2225,20 @@ sub _VerbPath {
 # [74]  	Path	  ::=  	PathAlternative
 sub _Path {
 	my $self	= shift;
+	my $distinct	= 0;
+	if ($self->_test(qr/DISTINCT[(]/i)) {
+		$self->_eat(qr/DISTINCT[(]/i);
+		$self->__consume_ws_opt;
+		$distinct	= 1;
+	}
 	$self->_PathAlternative;
+	if ($distinct) {
+		$self->__consume_ws_opt;
+		$self->_eat(qr/[)]/);
+		$self->__consume_ws_opt;
+		my ($path)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
+	}
 }
 
 ################################################################################
@@ -3468,13 +3482,13 @@ sub __new_path {
 sub __strip_path {
 	my $self	= shift;
 	my $path	= shift;
-	if (blessed($_)) {
-		return $_;
-	} elsif (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+	if (blessed($path)) {
+		return $path;
+	} elsif (reftype($path) eq 'ARRAY' and $path->[0] eq 'PATH') {
 		(undef, my $op, my @nodes)	= @$path;
 		return [$op, map { $self->__strip_path($_) } @nodes];
 	} else {
-		return $_;
+		return $path;
 	}
 }
 

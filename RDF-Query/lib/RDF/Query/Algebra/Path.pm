@@ -215,7 +215,9 @@ sub _expand_path {
 		my ($op, @nodes)	= @$array;
 		my @nodessse	= map { $self->_expand_path($_, $method) } @nodes;
 		my $psse;
-		if ($op eq '+') {
+		if ($op eq 'DISTINCT') {
+			$psse	= 'DISTINCT(' . join('/', @nodessse) . ')';
+		} elsif ($op eq '+') {
 			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
 		} elsif ($op eq '*') {
 			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
