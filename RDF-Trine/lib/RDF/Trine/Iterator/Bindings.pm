@@ -452,24 +452,14 @@ sub as_json {
 	
 	my $data	= {
 					head	=> { vars => \@variables },
-					results	=> { ordered => $order, distinct => $dist },
+					results	=> { ordered => $order, distinct => $dist, bindings => [] },
 				};
 	my @bindings;
-	while (!$self->finished) {
-		my %row;
-		for (my $i = 0; $i < $width; $i++) {
-			my $name		= $self->binding_name($i);
-			my $value		= $self->binding_value($i);
-			if (blessed($value)) {
-				if (my ($k, $v) = format_node_json($value, $name)) {
-					$row{ $k }		= $v;
-				}
-			}
-		}
-		
+	while (my $row = $self->next) {
+		my %row	= map { format_node_json($row->{$_}, $_) } (keys %$row);
 		push(@{ $data->{results}{bindings} }, \%row);
 		last if ($max_result_size and ++$count >= $max_result_size);
-	} continue { $self->next_result }
+	}
 	
 	return to_json( $data );
 }
