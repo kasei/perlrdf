@@ -927,36 +927,36 @@ Tests for getting statements using with get_pattern.
 sub get_pattern_tests {
 	note " get_pattern tests";
 	my ($store, $args, $ex) = @_;
-	
+	my $nil	= RDF::Trine::Node::Nil->new();
 	{
 		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
-							 statement(
-								   $ex->a, $ex->b, variable('o1'),
-								  ),
-							 statement(
-								   $ex->a, $ex->c, variable('o2'),
-								  ),
-						         )
-						       );
+							statement(
+								$ex->a, $ex->b, variable('o1'), $nil,
+							),
+							statement(
+								$ex->a, $ex->c, variable('o2'), $nil,
+							),
+						)
+					);
 		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
 		my $count	= 0;
 		while (my $st = $iter->next()) {
 			$count++;
 		}
-		my $expected = ($args->{quads_unsupported}) ? 9 : 144;
+		my $expected = 9;
 		is( $count, $expected, 'get_pattern( bbf, bbf ) expected result count'	 );
 		is( $iter->next, undef, 'pattern iterator end-of-stream' );
 	}
 	{
 		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
-							 statement(
-								   $ex->a, $ex->b, variable('o1'),
-								  ),
-							 statement(
-								   $ex->a, $ex->c, literal('DAAAAHUUUT'),
-								  ),
-						         )
-						       );
+							statement(
+								$ex->a, $ex->b, variable('o1'), $nil,
+							),
+							statement(
+								$ex->a, $ex->c, literal('DAAAAHUUUT'), $nil,
+							),
+						)
+					);
 		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
 		my $count	= 0;
 		while (my $st = $iter->next()) {
