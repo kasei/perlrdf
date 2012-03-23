@@ -205,7 +205,7 @@ sub explain {
 		return;
 	}
 	my ($plan, $ctx)	= $query->prepare( $model );
-	print $plan->sse . "\n";
+	print $plan->explain('  ', 0);
 }
 
 sub parse {
