@@ -413,18 +413,23 @@ sub execute {
 	
 	my $lang_iri	= '';
 	my $parser	= $self->{parser};
+	my $name;
 	if ($parser->isa('RDF::Query::Parser::SPARQL11')) {
 		if ($self->is_update) {
+			$name		= 'SPARQL 1.1 Update';
 			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update';
 		} else {
-			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
+			$name		= 'SPARQL 1.1 Query';
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
 		}
 	} elsif ($parser->isa('RDF::Query::Parser::SPARQL')) {
+		$name		= 'SPARQL 1.0 Query';
 		$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
 	}
 	
 # 	warn "passthrough checking if model supports $lang_iri\n";
 	if ($self->{options}{allow_passthrough} and $model->supports($lang_iri)) {
+		$l->info("delegating $name execution to the underlying model");
 		return $model->get_sparql( $self->{query_string} );
 	} else {
 		my ($plan, $context)	= $self->prepare( $model, %args );
