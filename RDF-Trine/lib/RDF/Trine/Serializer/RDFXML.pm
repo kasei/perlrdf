@@ -80,11 +80,14 @@ sub new {
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
- 	        $self->{base_uri} = $args{base};
-        }
+		$self->{base_uri} = $args{base};
+	}
 	if ($args{base_uri}) {
- 	        $self->{base_uri} = $args{base_uri};
-        }
+		$self->{base_uri} = $args{base_uri};
+	}
+	if ($args{scoped_namespaces}) {
+		$self->{scoped_namespaces} = $args{scoped_namespaces};
+	}
 	return $self;
 }
 
@@ -124,11 +127,11 @@ sub serialize_iterator_to_file {
 	my $iter	= shift;
 	
 	my $ns		= $self->_top_xmlns();
-	my $base_uri        = '';
+	my $base_uri	= '';
 	if ($self->{base_uri}) {
-	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
+		$base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
-	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
+	print {$fh} qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF ${base_uri}xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"$ns>\n];
 	
 	my $st			= $iter->next;
 	my @statements;
@@ -177,6 +180,7 @@ sub _statements_same_subject_as_string {
 	my $string	= '';
 	foreach my $st (@statements) {
 		my (undef, $p, $o)	= $st->nodes;
+		my %used_namespaces;
 		my ($ns, $ln);
 		try {
 			($ns,$ln)	= $p->qname;
@@ -184,10 +188,15 @@ sub _statements_same_subject_as_string {
 			my $uri	= $p->uri_value;
 			throw RDF::Trine::Error::SerializationError -text => "Can't turn predicate $uri into a QName.";
 		};
+		$used_namespaces{ $ns }++;
 		unless (exists $namespaces{ $ns }) {
 			$namespaces{ $ns }	= 'ns' . $counter++;
 		}
 		my $prefix	= $namespaces{ $ns };
+		my $nsdecl	= '';
+		if ($self->{scoped_namespaces}) {
+			$nsdecl	= qq[ xmlns:$prefix="$ns"];
+		}
 		if ($o->isa('RDF::Trine::Node::Literal')) {
 			my $lv		= $o->literal_value;
 			for ($lv) {
@@ -198,12 +207,13 @@ sub _statements_same_subject_as_string {
 			my $lang	= $o->literal_value_language;
 			my $dt		= $o->literal_datatype;
 			my $tag	= join(':', $prefix, $ln);
+			
 			if ($lang) {
-				$string	.= qq[\t<${tag} xml:lang="${lang}">${lv}</${tag}>\n];
+				$string	.= qq[\t<${tag}${nsdecl} xml:lang="${lang}">${lv}</${tag}>\n];
 			} elsif ($dt) {
-				$string	.= qq[\t<${tag} rdf:datatype="${dt}">${lv}</${tag}>\n];
+				$string	.= qq[\t<${tag}${nsdecl} rdf:datatype="${dt}">${lv}</${tag}>\n];
 			} else {
-				$string	.= qq[\t<${tag}>${lv}</${tag}>\n];
+				$string	.= qq[\t<${tag}${nsdecl}>${lv}</${tag}>\n];
 			}
 		} elsif ($o->isa('RDF::Trine::Node::Blank')) {
 			my $b	= $o->blank_identifier;
@@ -212,7 +222,7 @@ sub _statements_same_subject_as_string {
 				s/</&lt;/g;
 				s/"/&quot;/g;
 			}
-			$string	.= qq[\t<${prefix}:$ln rdf:nodeID="$b"/>\n];
+			$string	.= qq[\t<${prefix}:$ln${nsdecl} rdf:nodeID="$b"/>\n];
 		} else {
 			my $u	= $o->uri_value;
 			for ($u) {
@@ -220,7 +230,7 @@ sub _statements_same_subject_as_string {
 				s/</&lt;/g;
 				s/"/&quot;/g;
 			}
-			$string	.= qq[\t<${prefix}:$ln rdf:resource="$u"/>\n];
+			$string	.= qq[\t<${prefix}:$ln${nsdecl} rdf:resource="$u"/>\n];
 		}
 	}
 	
@@ -255,9 +265,9 @@ sub _serialize_bounded_description {
 	my $seen	= {};
 	
 	my $ns		= $self->_top_xmlns();
-	my $base_uri        = '';
+	my $base_uri	= '';
 	if ($self->{base_uri}) {
-	  $base_uri = "xml:base=\"$self->{base_uri}\" ";
+		$base_uri = "xml:base=\"$self->{base_uri}\" ";
 	}
 	my $string	= qq[<?xml version="1.0" encoding="utf-8"?>\n<rdf:RDF $base_uri$ns>\n];
 	$string		.= $self->__serialize_bounded_description( $model, $node, $seen );
@@ -293,9 +303,11 @@ sub _top_xmlns {
 	my $self	= shift;
 	my $namespaces	= $self->{namespaces};
 	my @keys		= sort { $namespaces->{$a} cmp $namespaces->{$b} } keys %$namespaces;
+	return '' if ($self->{scoped_namespaces});
 	
 	my @ns;
 	foreach my $v (@keys) {
+		next if ($v eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 		my $k	= $namespaces->{$v};
 		if (blessed($v)) {
 			$v	= $v->uri_value;
@@ -304,6 +316,9 @@ sub _top_xmlns {
 		push(@ns, $str);
 	}
 	my $ns		= join(' ', @ns);
+	if (length($ns)) {
+		$ns	= " $ns";
+	}
 	return $ns;
 }
 
