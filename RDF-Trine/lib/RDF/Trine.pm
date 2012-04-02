@@ -67,7 +67,9 @@ use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
 use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+if (! Log::Log4perl::initialized() ) {
+    Log::Log4perl->easy_init($ERROR);
+}
 
 use RDF::Trine::Graph;
 use RDF::Trine::Parser;
