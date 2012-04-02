@@ -1,4 +1,4 @@
-use Test::More tests => 55;
+use Test::More tests => 58;
 use strict;
 use warnings;
 
@@ -14,6 +14,26 @@ use RDF::Trine;
 # 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
 # ] );
 ################################################################################
+
+{
+	{
+		my $sparql	= "SELECT * WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( not($update->specifies_update_dataset), 'query specifies_update_dataset() is false' );
+	}
+	
+	{
+		my $sparql	= "DELETE { GRAPH <g1> { ?x <b> <c> } } INSERT { GRAPH <g1> { ?x <y> <z> } } WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( not($update->specifies_update_dataset), 'update specifies_update_dataset() is false' );
+	}
+	
+	{
+		my $sparql	= "DELETE { GRAPH <g1> { ?x <b> <c> } } INSERT { GRAPH <g1> { ?x <y> <z> } } USING <g1> WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( $update->specifies_update_dataset, 'update specifies_update_dataset() is true' );
+	}
+}
 
 {
 	print "# insert data\n";

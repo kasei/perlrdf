@@ -913,6 +913,11 @@ sub supports {
 	return $model->supports( @_ );
 }
 
+sub specifies_update_dataset {
+	my $self	= shift;
+	no warnings 'uninitialized';
+	return $self->{parsed}{custom_update_dataset} ? 1 : 0;
+}
 
 =begin private
 

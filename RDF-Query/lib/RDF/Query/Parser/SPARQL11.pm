@@ -293,6 +293,7 @@ sub _RW_Query {
 				unless ($self->{update});
 			my ($graph);
 			if ($self->_test(qr/WITH/)) {
+				$self->{build}{custom_update_dataset}	= 1;
 				$self->_eat(qr/WITH/i);
 				$self->__consume_ws_opt;
 				$self->_IRIref;
@@ -479,6 +480,7 @@ sub _InsertUpdate {
 	
 	my %dataset;
 	while ($self->_test(qr/USING/i)) {
+		$self->{build}{custom_update_dataset}	= 1;
 		$self->_eat(qr/USING/i);
 		$self->__consume_ws_opt;
 		my $named	= 0;
@@ -558,6 +560,7 @@ sub _DeleteUpdate {
 		}
 		
 		while ($self->_test(qr/USING/i)) {
+			$self->{build}{custom_update_dataset}	= 1;
 			$self->_eat(qr/USING/i);
 			$self->__consume_ws_opt;
 			my $named	= 0;
