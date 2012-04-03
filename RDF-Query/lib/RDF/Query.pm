@@ -131,7 +131,9 @@ use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+if (! Log::Log4perl::initialized()) {
+    Log::Log4perl->easy_init($ERROR);
+}
 
 no warnings 'numeric';
 use RDF::Trine 0.135;
