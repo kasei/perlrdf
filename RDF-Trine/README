@@ -68,6 +68,32 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.139 (2012-XX-XX)
+
+     * API CHANGES
+         Made server a required configuration key in RDF::Trine::Store::Redis.
+     * BUG FIXES
+         Fixed interaction of peek() and finished() in RDF::Trine::Iterator.
+         Fixed use of iterator finished method in RDF::Trine::Iterator::Bindings->as_json.
+         Fixed use of iterator finished method in RDF::Trine::Store::Hexastore->get_pattern.
+         Fixed bug when RDF::Trine::Iterator->finished is called before an (empty) iterator is used.
+         Fixed fallback parsing bug in RDF::Trine::Parser->parse_url_into_model.
+         Fixed PostgreSQL capitalization bug (patch from https://rt.cpan.org/Ticket/Display.html?id=71890 applied by Kjetil Kjernsmo).
+     * NEW FEATURES
+         Added RDF::Trine::Serializer::NQuads->statement_as_string method.
+     * ENHANCEMENTS
+         Added 'scoped_namespaces' constructor argument to RDF::Trine::Serializer::RDFXML to serialize only necessary namespace declarations. (github issue 33).
+         Initialize Log4perl only if it isn't initialized already (pull request 57 from kba).
+     * OTHER
+         Fixed expected result count in Test::RDF::Trine::Store->get_pattern_tests.
+         Simplified code in t/store-hexastore-pattern.t.
+         Added tests for RDF::Trine::Iterator->peek.
+         Adding some get_pattern tests to the Store tests (Kjetil Kjernsmo).
+         Replaced references to RDFQUERY_NO_REDLAND environment variable with proper RDFTRINE_NO_REDLAND.
+         Allow suppressing RDF::Redland use if the RDFQUERY_NO_REDLAND environment variable is set.
+         Removed erroneous copies of RDF::Trine::Store::DBI::Pg->init method.
+         Add pg tests (Kjetil Kjernsmo).
+
   Version 0.138 (2012-01-25)
 
      * BUG FIXES
