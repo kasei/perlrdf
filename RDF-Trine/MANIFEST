@@ -554,6 +554,7 @@ t/statement.t
 t/store-config.t
 t/store-context.t
 t/store-dbi-mysql.t
+t/store-dbi-pg.t
 t/store-dbi.t
 t/store-hexastore-pattern.t
 t/store-hexastore-storable.t
