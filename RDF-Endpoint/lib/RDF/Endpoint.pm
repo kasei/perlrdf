@@ -722,7 +722,7 @@ __END__
 
 =over 4
 
-=item * L<http://www.w3.org/TR/rdf-sparql-protocol/>
+=item * L<http://www.w3.org/TR/sparql11-protocol/>
 
 =item * L<http://www.perlrdf.org/>
 
