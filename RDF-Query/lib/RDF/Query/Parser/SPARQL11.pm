@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.907.
+This document describes RDF::Query::Parser::SPARQL11 version 2.908.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -85,13 +85,15 @@ our $r_AGGREGATE_CALL		= qr/(MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT)\b/i;
 
 =item C<< new >>
 
-Returns a new Turtle parser.
+Returns a new SPARQL 1.1 parser object.
 
 =cut
 
 sub new {
 	my $class	= shift;
+	my %args	= @_;
 	my $self	= bless({
+					args		=> \%args,
 					bindings	=> {},
 					bnode_id	=> 0,
 				}, $class);
@@ -291,6 +293,7 @@ sub _RW_Query {
 				unless ($self->{update});
 			my ($graph);
 			if ($self->_test(qr/WITH/)) {
+				$self->{build}{custom_update_dataset}	= 1;
 				$self->_eat(qr/WITH/i);
 				$self->__consume_ws_opt;
 				$self->_IRIref;
@@ -477,6 +480,7 @@ sub _InsertUpdate {
 	
 	my %dataset;
 	while ($self->_test(qr/USING/i)) {
+		$self->{build}{custom_update_dataset}	= 1;
 		$self->_eat(qr/USING/i);
 		$self->__consume_ws_opt;
 		my $named	= 0;
@@ -556,6 +560,7 @@ sub _DeleteUpdate {
 		}
 		
 		while ($self->_test(qr/USING/i)) {
+			$self->{build}{custom_update_dataset}	= 1;
 			$self->_eat(qr/USING/i);
 			$self->__consume_ws_opt;
 			my $named	= 0;
@@ -754,12 +759,35 @@ sub _DropGraph {
 	$self->{build}{method}		= 'CLEAR';
 }
 
+sub __graph {
+	my $self	= shift;
+	if ($self->_test(qr/DEFAULT/i)) {
+		$self->_eat(qr/DEFAULT/i);
+		return RDF::Trine::Node::Nil->new();
+	} else {
+		if ($self->_test(qr/GRAPH/)) {
+			$self->_eat(qr/GRAPH/i);
+			$self->__consume_ws_opt;
+		}
+		$self->_IRIref;
+		my ($g)	= splice( @{ $self->{stack} } );
+		return $g;
+	}
+}
+
 sub _CopyUpdate {
 	my $self	= shift;
 	my $op		= $self->_eat(qr/COPY(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
-	return $self->__UpdateShortcuts( 'COPY', $silent );
+	my $from	= $self->__graph();
+	$self->_ws;
+	$self->_eat(qr/TO/i);
+	$self->_ws;
+	my $to	= $self->__graph();
+	my $pattern	= RDF::Query::Algebra::Copy->new( $from, $to, $silent );
+	$self->_add_patterns( $pattern );
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _MoveUpdate {
@@ -767,7 +795,14 @@ sub _MoveUpdate {
 	my $op		= $self->_eat(qr/MOVE(\s+SILENT)?/i);
 	my $silent	= ($op =~ /SILENT/i);
 	$self->_ws;
-	return $self->__UpdateShortcuts( 'MOVE', $silent );
+	my $from	= $self->__graph();
+	$self->_ws;
+	$self->_eat(qr/TO/i);
+	$self->_ws;
+	my $to	= $self->__graph();
+	my $pattern	= RDF::Query::Algebra::Move->new( $from, $to, $silent );
+	$self->_add_patterns( $pattern );
+	$self->{build}{method}		= 'UPDATE';
 }
 
 sub _AddUpdate {
@@ -2179,6 +2214,7 @@ sub _VerbSimple {
 # VerbPath ::= Path
 sub _VerbPath_test {
 	my $self	= shift;
+	return 1 if ($self->_test(qr/DISTINCT[(]/i));
 	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/\^|[|(a!]/));
 	return 0;
@@ -2192,7 +2228,20 @@ sub _VerbPath {
 # [74]  	Path	  ::=  	PathAlternative
 sub _Path {
 	my $self	= shift;
+	my $distinct	= 0;
+	if ($self->_test(qr/DISTINCT[(]/i)) {
+		$self->_eat(qr/DISTINCT[(]/i);
+		$self->__consume_ws_opt;
+		$distinct	= 1;
+	}
 	$self->_PathAlternative;
+	if ($distinct) {
+		$self->__consume_ws_opt;
+		$self->_eat(qr/[)]/);
+		$self->__consume_ws_opt;
+		my ($path)	= splice(@{ $self->{stack} });
+		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
+	}
 }
 
 ################################################################################
@@ -2814,7 +2863,11 @@ sub _Aggregate {
 			if ($self->_test(qr/;/)) {
 				$self->_eat(qr/;/);
 				$self->__consume_ws_opt;
-				$self->_eat(qr/SEPARATOR/i);
+				if ($self->{args}{allow_typos}) {
+					$self->_eat(qr/SEP[AE]RATOR/i);	# accept common typo
+				} else {
+					$self->_eat(qr/SEPARATOR/i);
+				}
 				$self->__consume_ws_opt;
 				$self->_eat(qr/=/);
 				$self->__consume_ws_opt;
@@ -3152,7 +3205,8 @@ sub __solution_modifiers {
 	
 	my $having_expr;
 	my $aggdata	= delete( $self->{build}{__aggregate} );
-	if ($aggdata) {
+	my @aggkeys	= keys %{ $aggdata || {} };
+	if (scalar(@aggkeys)) {
 		my $groupby	= delete( $self->{build}{__group_by} ) || [];
 		my $pattern	= $self->{build}{triples};
 		my $ggp		= shift(@$pattern);
@@ -3431,13 +3485,13 @@ sub __new_path {
 sub __strip_path {
 	my $self	= shift;
 	my $path	= shift;
-	if (blessed($_)) {
-		return $_;
-	} elsif (reftype($_) eq 'ARRAY' and $_->[0] eq 'PATH') {
+	if (blessed($path)) {
+		return $path;
+	} elsif (reftype($path) eq 'ARRAY' and $path->[0] eq 'PATH') {
 		(undef, my $op, my @nodes)	= @$path;
 		return [$op, map { $self->__strip_path($_) } @nodes];
 	} else {
-		return $_;
+		return $path;
 	}
 }
 

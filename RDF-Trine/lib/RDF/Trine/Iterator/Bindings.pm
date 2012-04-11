@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query resu
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.138
+This document describes RDF::Trine::Iterator::Bindings version 0.139
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '0.139';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -452,24 +452,14 @@ sub as_json {
 	
 	my $data	= {
 					head	=> { vars => \@variables },
-					results	=> { ordered => $order, distinct => $dist },
+					results	=> { ordered => $order, distinct => $dist, bindings => [] },
 				};
 	my @bindings;
-	while (!$self->finished) {
-		my %row;
-		for (my $i = 0; $i < $width; $i++) {
-			my $name		= $self->binding_name($i);
-			my $value		= $self->binding_value($i);
-			if (blessed($value)) {
-				if (my ($k, $v) = format_node_json($value, $name)) {
-					$row{ $k }		= $v;
-				}
-			}
-		}
-		
+	while (my $row = $self->next) {
+		my %row	= map { format_node_json($row->{$_}, $_) } (keys %$row);
 		push(@{ $data->{results}{bindings} }, \%row);
 		last if ($max_result_size and ++$count >= $max_result_size);
-	} continue { $self->next_result }
+	}
 	
 	return to_json( $data );
 }
@@ -729,7 +719,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

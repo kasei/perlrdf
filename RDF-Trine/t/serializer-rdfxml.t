@@ -1,4 +1,4 @@
-use Test::More tests => 21;
+use Test::More tests => 22;
 use Test::Exception;
 
 use strict;
@@ -384,7 +384,7 @@ END
 	
 	my $expect	= <<"END";
 <?xml version="1.0" encoding="utf-8"?>
-<rdf:RDF xmlns:ex="http://example.com/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:ex="http://example.com/">
 <rdf:Description rdf:about="http://example.com/doc">
 	<ex:maker rdf:nodeID="a"/>
 </rdf:Description>
@@ -417,7 +417,7 @@ END
 	});
 	
 	my $xml = $serializer->serialize_model_to_string($model);
-	like( $xml, qr[xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:lang="http://purl.org/net/inkel/rdf/schemas/lang/1.1#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"]sm, 'xmlns sorted in rdf:RDF tag' );
+	like( $xml, qr[xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:foaf="http://xmlns.com/foaf/0.1/" xmlns:lang="http://purl.org/net/inkel/rdf/schemas/lang/1.1#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"]sm, 'xmlns sorted in rdf:RDF tag' );
 	like( $xml, qr[<lang:masters>en</lang:masters>]sm, 'Qname literal tag' );
 	like( $xml, qr[<rdfs:seeAlso rdf:resource="http://eve.example.com/"/>]sm, 'Qname resource tag' );
 }
@@ -433,3 +433,39 @@ END
 	like( $xml, qr[&amp;]sm, 'XML entity escaping' );
 }
 
+{
+	my $serializer = RDF::Trine::Serializer::RDFXML->new( scoped_namespaces => 1, namespaces => { ex => 'http://example.com/', unused1 => 'http://example.org/not-used', unused2 => 'tag:kasei.us,2012-01-01:' } );
+	my $model = RDF::Trine::Model->temporary_model;
+	$model->add_hashref({
+		'http://example.com/doc' => {
+			'http://example.com/maker' => [
+				{'type' => 'uri','value' => '_:a'},
+			],
+		},
+		'_:a' => {
+			'http://example.com/name' => [
+				{'type' => 'literal','value' => 'Alice', 'lang' => 'en'},
+			],
+			'http://example.com/homepage' => [
+				{'type' => 'uri', 'value' => 'http://example.com/' },
+			],
+		},
+	});
+	
+	my $expect	= <<"END";
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<rdf:Description rdf:about="http://example.com/doc">
+	<ex:maker xmlns:ex="http://example.com/" rdf:nodeID="a"/>
+</rdf:Description>
+<rdf:Description rdf:nodeID="a">
+	<ex:homepage xmlns:ex="http://example.com/" rdf:resource="http://example.com/"/>
+	<ex:name xmlns:ex="http://example.com/" xml:lang="en">Alice</ex:name>
+</rdf:Description>
+</rdf:RDF>
+END
+	
+	my $iter	= $model->bounded_description( iri('http://example.com/doc') );
+	my $xml		= $serializer->serialize_iterator_to_string( $iter );
+	is($xml, $expect, 'xmlns namespaces 2 with unused definitions');
+}

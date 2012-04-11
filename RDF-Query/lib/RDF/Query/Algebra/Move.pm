@@ -1,17 +1,17 @@
-# RDF::Query::Algebra::Clear
+# RDF::Query::Algebra::Move
 # -----------------------------------------------------------------------------
 
 =head1 NAME
 
-RDF::Query::Algebra::Clear - Algebra class for CLEAR operations
+RDF::Query::Algebra::Move - Algebra class for MOVE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Clear version 2.908.
+This document describes RDF::Query::Algebra::Move version 2.908.
 
 =cut
 
-package RDF::Query::Algebra::Clear;
+package RDF::Query::Algebra::Move;
 
 use strict;
 use warnings;
@@ -46,21 +46,18 @@ L<RDF::Query::Algebra> class.
 
 =cut
 
-=item C<new ( $graph [, $silent] )>
+=item C<new ( $from, $to, $silent )>
 
-Returns a new CLEAR structure.
+Returns a new MOVE structure.
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $graph	= shift;
-	my $silent	= shift;
-	unless ($graph) {
-		throw RDF::Query::Error::MethodInvocationError -text => "A graph argument is required in RDF::Query::Algebra::Clear->new";
-		$graph	= RDF::Trine::Node::Nil->new;
-	}
-	return bless([$graph, $silent], $class);
+	my $from	= shift;
+	my $to		= shift;
+	my $silent	= shift || 0;
+	return bless([$from, $to, $silent], $class);
 }
 
 =item C<< construct_args >>
@@ -72,7 +69,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->graph, $self->silent);
+	return ($self->from, $self->to, $self->silent);
 }
 
 =item C<< as_sparql >>
@@ -86,17 +83,17 @@ sub as_sparql {
 	my $context	= shift;
 	my $indent	= shift;
 	
-	my $graph	= $self->graph;
-	my $string;
-	if ($graph->is_nil) {
-		$string	= "CLEAR DEFAULT";
-	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
-		$string	= "CLEAR $1";
-	} else {
-		$string	= ($graph->is_nil)
-				? 'CLEAR GRAPH DEFAULT'
-				: sprintf( "CLEAR GRAPH <%s>", $graph->uri_value );
+	my $from	= $self->from;
+	my $to		= $self->to;
+	for ($from, $to) {
+		if ($_->isa('RDF::Trine::Node::Nil')) {
+			$_	= 'DEFAULT';
+		} else {
+			$_	= '<' . $_->uri_value . '>';
+		}
 	}
+	
+	my $string	= sprintf( "MOVE %s%s TO %s", ($self->silent ? 'SILENT ' : ''), $from, $to );
 	return $string;
 }
 
@@ -111,17 +108,16 @@ sub sse {
 	my $context	= shift;
 	my $indent	= shift;
 	
-	my $graph	= $self->graph;
-	my $string;
-	if ($graph->is_nil) {
-		$string	= "(clear default)";
-	} elsif ($graph->uri_value =~ m'^tag:gwilliams@cpan[.]org,2010-01-01:RT:(NAMED|ALL)$') {
-		$string	= "(clear " . lc($1) . ")";
-	} else {
-		$string	= ($graph->is_nil)
-				? '(clear default)'
-				: sprintf( "(clear <%s>)", $graph->uri_value );
+	my $from	= $self->from;
+	my $to		= $self->to;
+	for ($from, $to) {
+		if ($_->isa('RDF::Trine::Node::Nil')) {
+			$_	= 'DEFAULT';
+		} else {
+			$_	= '<' . $_->uri_value . '>';
+		}
 	}
+	my $string	= sprintf( "(move%s %s %s)", ($self->silent ? '-silent' : ''), $from, $to );
 	return $string;
 }
 
@@ -145,13 +141,22 @@ sub referenced_variables {
 	return;
 }
 
-=item C<< graph >>
+=item C<< from >>
 
 =cut
 
-sub graph {
+sub from {
 	my $self	= shift;
 	return $self->[0];
+}
+
+=item C<< to >>
+
+=cut
+
+sub to {
+	my $self	= shift;
+	return $self->[1];
 }
 
 =item C<< silent >>
@@ -160,7 +165,7 @@ sub graph {
 
 sub silent {
 	my $self	= shift;
-	return $self->[1];
+	return $self->[2];
 }
 
 1;

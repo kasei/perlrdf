@@ -7,7 +7,7 @@ RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.907.
+This document describes RDF::Query version 2.908.
 
 =head1 SYNOPSIS
 
@@ -156,7 +156,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.907';
+	$VERSION		= '2.908';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -411,13 +411,35 @@ sub execute {
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	$l->debug("executing query with model " . ($model or ''));
 	
-	my ($plan, $context)	= $self->prepare( $model, %args );
-	if ($l->is_trace) {
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		$l->trace($self->as_sparql);
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+	my $lang_iri	= '';
+	my $parser	= $self->{parser};
+	my $name;
+	if ($parser->isa('RDF::Query::Parser::SPARQL11')) {
+		if ($self->is_update) {
+			$name		= 'SPARQL 1.1 Update';
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update';
+		} else {
+			$name		= 'SPARQL 1.1 Query';
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
+		}
+	} elsif ($parser->isa('RDF::Query::Parser::SPARQL')) {
+		$name		= 'SPARQL 1.0 Query';
+		$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
 	}
-	return $self->execute_plan( $plan, $context );
+	
+# 	warn "passthrough checking if model supports $lang_iri\n";
+	if ($self->{options}{allow_passthrough} and $model->supports($lang_iri)) {
+		$l->info("delegating $name execution to the underlying model");
+		return $model->get_sparql( $self->{query_string} );
+	} else {
+		my ($plan, $context)	= $self->prepare( $model, %args );
+		if ($l->is_trace) {
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			$l->trace($self->as_sparql);
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		}
+		return $self->execute_plan( $plan, $context );
+	}
 }
 
 =item C<< execute_plan ( $plan, $context ) >>
@@ -718,6 +740,21 @@ sub pattern {
 	}
 }
 
+=item C<< is_update >>
+
+=cut
+
+sub is_update {
+	my $self	= shift;
+	my $pat		= $self->pattern;
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Clear'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Copy'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Create'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Move'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Update'));
+	return 0;
+}
+
 =item C<< as_sparql >>
 
 Returns the query as a string in the SPARQL syntax.
@@ -876,6 +913,11 @@ sub supports {
 	return $model->supports( @_ );
 }
 
+sub specifies_update_dataset {
+	my $self	= shift;
+	no warnings 'uninitialized';
+	return $self->{parsed}{custom_update_dataset} ? 1 : 0;
+}
 
 =begin private
 

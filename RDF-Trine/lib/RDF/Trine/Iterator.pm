@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.138.
+This document describes RDF::Trine::Iterator version 0.139.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '0.139';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -236,7 +236,6 @@ remain in queue until the next call to C<< next >>.
 sub peek {
 	my $self	= shift;
 	return if ($self->{_finished});
-	
 	my $value	= $self->next;
 	push( @{ $self->{_peek} }, $value );
 	return $value;
@@ -268,6 +267,8 @@ Returns true if the end of the stream has been reached, false otherwise.
 sub end { $_[0]->finished }
 sub finished {
 	my $self	= shift;
+	my $v		= $self->peek;
+	return 0 if (defined($v));
 	return $self->{_finished};
 }
 
@@ -667,7 +668,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

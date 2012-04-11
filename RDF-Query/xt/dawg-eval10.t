@@ -463,7 +463,7 @@ sub get_actual_results {
 	if ($args{plan}) {
 		warn $plan->explain('  ', 0);
 	}
-	warn 'Query plan: ' . $plan->explain;
+# 	warn 'Query plan: ' . $plan->explain;
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;

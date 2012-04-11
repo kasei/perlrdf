@@ -11,7 +11,7 @@ my @files	= map { "data/$_" } qw(foaf.xrdf);
 my @models	= test_models( @files );
 
 use Test::More;
-plan tests => 1 + (32 * scalar(@models));
+plan tests => 1 + (37 * scalar(@models));
 
 use_ok( 'RDF::Query' );
 foreach my $model (@models) {
@@ -28,6 +28,7 @@ foreach my $model (@models) {
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		isa_ok( $query, 'RDF::Query' );
+		ok( not($query->is_update), "query isn't an update" );
 		
 		print "# (?var qname literal)\n";
 		my ($p, $c)	= $query->prepare( $model );
@@ -49,6 +50,7 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		isa_ok( $query, 'RDF::Query' );
+		ok( not($query->is_update), "query isn't an update" );
 		
 		print "# (?var qname quri)\n";
 		my @results	= $query->execute( $model );
@@ -75,6 +77,7 @@ END
 			}
 END
 		isa_ok( $query, 'RDF::Query' );
+		ok( not($query->is_update), "query isn't an update" );
 		
 		my ($p, $c)	= $query->prepare( $model );
 		my @results	= $query->execute_plan( $p, $c );
@@ -96,6 +99,7 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		isa_ok( $query, 'RDF::Query' );
+		ok( not($query->is_update), "query isn't an update" );
 		
 		print "# chained (name->person->homepage)\n";
 		my @results	= $query->execute( $model );
@@ -118,6 +122,7 @@ END
 				foaf FOR <http://xmlns.com/foaf/0.1/>
 END
 		isa_ok( $query, 'RDF::Query' );
+		ok( not($query->is_update), "query isn't an update" );
 		
 		print "# chained (homepage->person->(name|mbox)\n";
 		my @results	= $query->execute( $model );

@@ -1,4 +1,4 @@
-use Test::More tests => 54;
+use Test::More tests => 58;
 use strict;
 use warnings;
 
@@ -16,6 +16,26 @@ use RDF::Trine;
 ################################################################################
 
 {
+	{
+		my $sparql	= "SELECT * WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( not($update->specifies_update_dataset), 'query specifies_update_dataset() is false' );
+	}
+	
+	{
+		my $sparql	= "DELETE { GRAPH <g1> { ?x <b> <c> } } INSERT { GRAPH <g1> { ?x <y> <z> } } WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( not($update->specifies_update_dataset), 'update specifies_update_dataset() is false' );
+	}
+	
+	{
+		my $sparql	= "DELETE { GRAPH <g1> { ?x <b> <c> } } INSERT { GRAPH <g1> { ?x <y> <z> } } USING <g1> WHERE { ?x a <Foo> }";
+		my $update	= RDF::Query->new($sparql, { update => 1 });
+		ok( $update->specifies_update_dataset, 'update specifies_update_dataset() is true' );
+	}
+}
+
+{
 	print "# insert data\n";
 	my $model	= RDF::Trine::Model->temporary_model;
 	is( $model->size, 0, 'empty model' );
@@ -27,6 +47,7 @@ use RDF::Trine;
 END
 	isa_ok( $insert, 'RDF::Query' );
 	warn RDF::Query->error unless ($insert);
+	ok( $insert->is_update, 'query is_update' );
 	$insert->execute( $model );
 	is( $model->size, 2, 'expected model size' );
 	

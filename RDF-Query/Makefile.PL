@@ -9,7 +9,6 @@ author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'perl';
 
 recommends			'LWP::Simple'				=> 0;
-recommends			'RDF::Redland'				=> 1;
 recommends			'Getopt::Simple'			=> 0;
 recommends			'Geo::Distance'				=> 0.09;
 recommends			'Crypt::GPG'				=> 0;
@@ -30,7 +29,7 @@ requires			'File::Spec'				=> 0;
 requires			'File::Temp'				=> 0;
 requires			'JSON'						=> 2;
 requires			'Parse::RecDescent'			=> 0;
-requires			'RDF::Trine'				=> 0.135;
+requires			'RDF::Trine'				=> 0.138;
 requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
 requires			'URI'						=> 1.52;

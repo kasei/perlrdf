@@ -7,7 +7,7 @@ RDF::Query::Algebra::Path - Algebra class for path patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Path version 2.907.
+This document describes RDF::Query::Algebra::Path version 2.908.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -215,7 +215,9 @@ sub _expand_path {
 		my ($op, @nodes)	= @$array;
 		my @nodessse	= map { $self->_expand_path($_, $method) } @nodes;
 		my $psse;
-		if ($op eq '+') {
+		if ($op eq 'DISTINCT') {
+			$psse	= 'DISTINCT(' . join('/', @nodessse) . ')';
+		} elsif ($op eq '+') {
 			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
 		} elsif ($op eq '*') {
 			$psse	= (scalar(@nodessse) == 1) ? $nodessse[0] . $op : '(' . join('/', @nodessse) . ')' . $op;
