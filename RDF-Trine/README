@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.139 (2012-XX-XX)
+  Version 0.139 (2012-04-11)
 
      * API CHANGES
          Made server a required configuration key in RDF::Trine::Store::Redis.

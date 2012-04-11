@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.139" ;
-                        doap:created      "2012-XX-XX" ;
+                        doap:created      "2012-04-11" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Serializer::NQuads->statement_as_string method." ;
