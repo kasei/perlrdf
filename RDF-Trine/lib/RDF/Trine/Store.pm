@@ -246,7 +246,7 @@ sub get_pattern {
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
+		my $t		= pop(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
 		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
