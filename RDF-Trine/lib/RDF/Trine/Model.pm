@@ -486,6 +486,7 @@ sub get_pattern {
 	my $bgp		= shift;
 	my $context	= shift;
 	my @args	= @_;
+	my %args	= @args;
 	
 	$self->end_bulk_ops();
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
@@ -503,7 +504,43 @@ sub get_pattern {
 	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
-		return $self->_get_pattern( $bgp, $context, @args );
+		my $iter	= $self->_get_pattern( $bgp, $context );
+		if (my $ob = $args{orderby}) {
+			my @order	= @$ob;
+			if (scalar(@order) % 2) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "Invalid arguments to orderby argument in get_pattern";
+			}
+			
+			my @results	= $iter->get_all();
+			my $order_vars	= scalar(@order) / 2;
+			my %seen;
+			foreach my $r (@results) {
+				foreach my $var (keys %$r) {
+					$seen{$var}++;
+				}
+			}
+			
+			@results	= sort {
+				my $r	= 0;
+				foreach my $i (0 .. ($order_vars-1)) {
+					my $var	= $order[$i*2];
+					my $rev	= ($order[$i*2+1] =~ /DESC/i);
+					$r	= RDF::Trine::Node::compare( $a->{$var}, $b->{$var} );
+					$r	*= -1 if ($rev);
+					last if ($r);
+				}
+				$r;
+			} @results;
+			
+			my @sortedby;
+			foreach my $i (0 .. ($order_vars-1)) {
+				my $var	= $order[$i*2];
+				my $dir	= $order[$i*2+1];
+				push(@sortedby, $var, $dir) if ($seen{$var});
+			}
+			$iter	= RDF::Trine::Iterator::Bindings->new(\@results, undef, sorted_by => \@sortedby);
+		}
+		return $iter;
 	}
 }
 
@@ -537,7 +574,10 @@ sub _get_pattern {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
 		}
-		my $iter	= $self->get_statements( @nodes, $context, @args );
+		if ($context) {
+			$nodes[3]	= $context;
+		}
+		my $iter	= $self->get_statements( @nodes );
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
@@ -547,7 +587,7 @@ sub _get_pattern {
 		};
 		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
+		my $t		= pop(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
 		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;

@@ -408,8 +408,8 @@ sub get_pattern {
 			my $shrkey	= $shared[0];
 # 			warn "- $shrkey\n";
 # 			warn $t2->as_string;
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			
 			my $i1current	= $i1->next;
 			my $i2current	= $i2->next;
@@ -454,8 +454,8 @@ sub get_pattern {
 		} else {
 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ) );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ) );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
 			my @i1;
 			while (my $row = $i1->next) {
 				push(@i1, $row);
@@ -470,7 +470,7 @@ sub get_pattern {
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		}
 	} else {
-		return $self->SUPER::get_pattern( $bgp );
+		return $self->SUPER::_get_pattern( $bgp );
 	}
 }
 
