@@ -171,7 +171,7 @@ sub model {
 			if ($sclass->can('_config_meta')) {
 				my $meta	= $sclass->_config_meta;
 				my $keys	= $meta->{required_keys};
-				my $config	= {};
+				my $config	= { storeclass => $sclass };
 				foreach my $k (@$keys) {
 					get_value( $term, $meta, $k, $config );
 				}
@@ -182,7 +182,7 @@ sub model {
 						return $m;
 					}
 				}
-				print "Failed to construct '$name'-backed model.\n";
+				print "Failed to construct '$name'-backed model. $@\n";
 				return;
 			} else {
 				print "Cannot construct model from '$name' storage class.\n";
