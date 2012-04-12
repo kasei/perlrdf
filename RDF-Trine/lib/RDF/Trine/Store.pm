@@ -216,6 +216,8 @@ sub _get_pattern {
 	
 	if ($bgp->isa('RDF::Trine::Statement')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
+	} else {
+		$bgp	= $bgp->sort_for_join_variables();
 	}
 	
 	my %iter_args;

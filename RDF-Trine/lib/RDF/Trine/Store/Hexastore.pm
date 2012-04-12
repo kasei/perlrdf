@@ -52,6 +52,14 @@ BEGIN {
 
 ######################################################################
 
+sub _config_meta {
+	return {
+		required_keys	=> [],
+		fields			=> {},
+	}
+}
+
+
 =head1 METHODS
 
 Beyond the methods documented below, this class inherits methods from the
@@ -123,7 +131,7 @@ sub _new_with_string {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	my @sources = @{$config->{sources}};
+	my @sources = @{ $config->{sources} || [] };
 	my $self	= $class->new();
 	foreach my $source (@sources) {
 		my %args;
@@ -395,6 +403,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	if ($bgp->isa('RDF::Trine::Pattern')) {
+		$bgp	= $bgp->sort_for_join_variables();
+	}
 	my @triples	= $bgp->triples;
 	if (2 == scalar(@triples)) {
 		my ($t1, $t2)	= @triples;

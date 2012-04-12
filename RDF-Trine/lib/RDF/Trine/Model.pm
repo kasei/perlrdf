@@ -26,7 +26,7 @@ BEGIN {
 	$VERSION	= '0.139';
 }
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Log::Log4perl;
 
 use RDF::Trine::Error qw(:try);
@@ -504,6 +504,9 @@ sub get_pattern {
 	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
+		if ($bgp->isa('RDF::Trine::Pattern')) {
+			$bgp	= $bgp->sort_for_join_variables();
+		}
 		my $iter	= $self->_get_pattern( $bgp, $context );
 		if (my $ob = $args{orderby}) {
 			my @order	= @$ob;
@@ -588,8 +591,8 @@ sub _get_pattern {
 		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
 		my $t		= pop(@triples);
-		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
-		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+		my $rhs	= $self->_get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->_get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
 		while (my $row = $rhs->next) {
 			push(@inner, $row);
