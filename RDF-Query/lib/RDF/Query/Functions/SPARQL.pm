@@ -88,6 +88,10 @@ Defines the following functions:
 
 =item * sparql:uri
 
+=item * sparql:uuid
+
+=item * sparql:struuid
+
 =cut
 
 package RDF::Query::Functions::SPARQL;
@@ -113,9 +117,10 @@ use DateTime::Format::W3CDTF;
 use RDF::Trine::Namespace qw(rdf xsd);
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA  qw(sha1_hex sha224_hex sha256_hex sha384_hex sha512_hex);
+use Data::UUID;
 
 use RDF::Query::Error qw(:try);
-use RDF::Query::Node qw(literal);
+use RDF::Query::Node qw(iri literal);
 
 =begin private
 
@@ -1091,6 +1096,9 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:strbefore", \&_strbefore);
 	RDF::Query::Functions->install_function("sparql:strafter", \&_strafter);
 	RDF::Query::Functions->install_function("sparql:replace", \&_replace);
+
+	RDF::Query::Functions->install_function("sparql:uuid", \&_uuid);
+	RDF::Query::Functions->install_function("sparql:struuid", \&_struuid);
 }
 
 =item * sparql:encode_for_uri
@@ -1579,6 +1587,18 @@ sub _replace {
 	$value	=~ s/$pattern/"$replace"/eeg;
 # 	warn "==> " . Dumper($value);
 	return RDF::Query::Node::Literal->new($value, $node->type_list);
+}
+
+sub _uuid {
+	my $query	= shift;
+	my $u		= Data::UUID->new();
+	return iri('urn:uuid:' . $u->to_string( $u->create() ));
+}
+
+sub _struuid {
+	my $query	= shift;
+	my $u		= Data::UUID->new();
+	return literal($u->to_string( $u->create() ));
 }
 
 
