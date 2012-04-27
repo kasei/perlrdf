@@ -2214,7 +2214,6 @@ sub _VerbSimple {
 # VerbPath ::= Path
 sub _VerbPath_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/DISTINCT[(]/i));
 	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/\^|[|(a!]/));
 	return 0;
@@ -2228,20 +2227,20 @@ sub _VerbPath {
 # [74]  	Path	  ::=  	PathAlternative
 sub _Path {
 	my $self	= shift;
-	my $distinct	= 0;
-	if ($self->_test(qr/DISTINCT[(]/i)) {
-		$self->_eat(qr/DISTINCT[(]/i);
-		$self->__consume_ws_opt;
-		$distinct	= 1;
-	}
+# 	my $distinct	= 1;
+# 	if ($self->_test(qr/DISTINCT[(]/i)) {
+# 		$self->_eat(qr/DISTINCT[(]/i);
+# 		$self->__consume_ws_opt;
+# 		$distinct	= 1;
+# 	}
 	$self->_PathAlternative;
-	if ($distinct) {
-		$self->__consume_ws_opt;
-		$self->_eat(qr/[)]/);
-		$self->__consume_ws_opt;
-		my ($path)	= splice(@{ $self->{stack} });
-		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
-	}
+# 	if ($distinct) {
+# 		$self->__consume_ws_opt;
+# 		$self->_eat(qr/[)]/);
+# 		$self->__consume_ws_opt;
+# 		my ($path)	= splice(@{ $self->{stack} });
+# 		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
+# 	}
 }
 
 ################################################################################
