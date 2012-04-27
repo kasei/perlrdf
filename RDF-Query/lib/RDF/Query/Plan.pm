@@ -1003,7 +1003,7 @@ sub __path_plan {
 	my $graph	= shift;
 	my $context	= shift;
 	my %args	= @_;
-	my $distinct	= $args{distinct} ? 1 : 0;
+	my $distinct	= 1; #$args{distinct} ? 1 : 0;
 	my $config		= $context->options || {};
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.path");
 	
@@ -1032,9 +1032,10 @@ sub __path_plan {
 	
 	my ($op, @nodes)	= @$path;
 	
-	if ($op eq 'DISTINCT') {
-		return $self->__path_plan( $start, $nodes[0], $end, $graph, $context, %args, distinct => 1 );
-	} elsif ($op eq '!') {
+# 	if ($op eq 'DISTINCT') {
+# 		return $self->__path_plan( $start, $nodes[0], $end, $graph, $context, %args, distinct => 1 );
+# 	}
+	if ($op eq '!') {
 		my $total	= scalar(@nodes);
 		my $neg		= scalar(@{ [ grep { not(blessed($_)) and $_->[0] eq '^' } @nodes ] });
 		my $pos		= $total - $neg;
