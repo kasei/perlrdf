@@ -20,7 +20,7 @@ use base qw(RDF::Trine::Node);
 
 use RDF::Trine::Error;
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed looks_like_number);
 use Carp qw(carp croak confess);
 
 ######################################################################
