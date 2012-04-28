@@ -201,13 +201,13 @@ sub temporary_store {
 	return RDF::Trine::Store::Memory->new();
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
+# =item C<< get_pattern ( $bgp [, $context] ) >>
+# 
+# Returns a stream object of all bindings matching the specified graph pattern.
+# 
+# =cut
 
-Returns a stream object of all bindings matching the specified graph pattern.
-
-=cut
-
-sub get_pattern {
+sub _get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $context	= shift;
@@ -216,6 +216,8 @@ sub get_pattern {
 	
 	if ($bgp->isa('RDF::Trine::Statement')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
+	} else {
+		$bgp	= $bgp->sort_for_join_variables();
 	}
 	
 	my %iter_args;
