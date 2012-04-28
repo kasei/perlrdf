@@ -932,7 +932,8 @@ sub _SelectQuery {
 		$self->_eat('{');
 		$self->__consume_ws_opt;
 		while ($self->_Binding_test) {
-			$self->_Binding($count);
+			my $terms	= $self->_Binding($count);
+			push( @{ $self->{build}{bindings}{terms} }, $terms );
 			$self->__consume_ws_opt;
 		}
 		$self->_eat('}');
@@ -1227,9 +1228,9 @@ sub _Binding {
 		push( @terms, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
-	push( @{ $self->{build}{bindings}{terms} }, \@terms );
 	$self->__consume_ws_opt;
 	$self->_eat( ')' );
+	return \@terms;
 }
 
 sub _BindingValue_test {
@@ -1566,7 +1567,7 @@ sub _GroupGraphPatternSub {
 	}
 	
 	my $cont		= $self->_pop_pattern_container;
-	
+
 	my @filters		= splice(@{ $self->{filters} });
 	my @patterns;
 	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
@@ -1593,6 +1594,9 @@ sub __handle_GraphPatternNotTriples {
 		
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
+	} elsif ($class eq 'RDF::Query::Algebra::Table') {
+ 		my ($table)	= @args;
+		$self->_add_patterns( $table );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
  		my ($bind)	= @args;
 		$self->_push_pattern_container;
@@ -1617,7 +1621,7 @@ sub __handle_GraphPatternNotTriples {
 			my $service	= $class->new( $endpoint, $pattern, $silent );
 			$self->_add_patterns( $service );
 		}
-	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
+	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern)$/) {
 		# no-op
 	} else {
 		throw RDF::Query::Error::ParseError 'Unrecognized GraphPattern: ' . $class;
@@ -1741,12 +1745,15 @@ TRIPLESBLOCKLOOP:
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
+	return 1 if $self->_test(qr/DATA/i); # InlineDataClause
 	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_test(qr/SERVICE/i)) {
+	if ($self->_test(qr/DATA/i)) {
+		$self->_InlineDataCluase;
+	} elsif ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
 		$self->_MinusGraphPattern;
@@ -1759,6 +1766,37 @@ sub _GraphPatternNotTriples {
 	} else {
 		$self->_GraphGraphPattern;
 	}
+}
+
+sub _InlineDataCluase {
+	my $self	= shift;
+	$self->_eat( qr/DATA/i );
+	$self->__consume_ws_opt;
+	my @vars;
+	while ($self->_test(qr/[\$?]/)) {
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	
+	my $count	= scalar(@vars);
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my @rows;
+	while ($self->_Binding_test) {
+		my $terms	= $self->_Binding($count);
+		push( @rows, $terms );
+		$self->__consume_ws_opt;
+	}
+	
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	
+	my @vbs		= map { my %d; @d{ map { $_->name } @vars } = @$_; RDF::Query::VariableBindings->new(\%d) } @rows;
+	
+	my $table	= RDF::Query::Algebra::Table->new( @vbs );
+	$self->_add_stack( ['RDF::Query::Algebra::Table', $table] );
+	
 }
 
 sub _Bind {
@@ -2333,33 +2371,34 @@ sub _PathMod {
 			$self->_add_stack( $self->_eat(qr/[*?+]/) );
 			$self->__consume_ws_opt;
 		}
-	} else {
-		$self->_eat(qr/{/);
-		$self->__consume_ws_opt;
-		my $value	= 0;
-		if ($self->_test(qr/}/)) {
-			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
-		}
-		if ($self->_test($r_INTEGER)) {
-			$value	= $self->_eat( $r_INTEGER );
-			$self->__consume_ws_opt;
-		}
-		if ($self->_test(qr/,/)) {
-			$self->_eat(qr/,/);
-			$self->__consume_ws_opt;
-			if ($self->_test(qr/}/)) {
-				$self->_eat(qr/}/);
-				$self->_add_stack( "$value-" );
-			} else {
-				my $end	= $self->_eat( $r_INTEGER );
-				$self->__consume_ws_opt;
-				$self->_eat(qr/}/);
-				$self->_add_stack( "$value-$end" );
-			}
-		} else {
-			$self->_eat(qr/}/);
-			$self->_add_stack( "$value" );
-		}
+### path repetition range syntax :path{n,m}; removed from 1.1 Query 2LC
+# 	} else {
+# 		$self->_eat(qr/{/);
+# 		$self->__consume_ws_opt;
+# 		my $value	= 0;
+# 		if ($self->_test(qr/}/)) {
+# 			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
+# 		}
+# 		if ($self->_test($r_INTEGER)) {
+# 			$value	= $self->_eat( $r_INTEGER );
+# 			$self->__consume_ws_opt;
+# 		}
+# 		if ($self->_test(qr/,/)) {
+# 			$self->_eat(qr/,/);
+# 			$self->__consume_ws_opt;
+# 			if ($self->_test(qr/}/)) {
+# 				$self->_eat(qr/}/);
+# 				$self->_add_stack( "$value-" );
+# 			} else {
+# 				my $end	= $self->_eat( $r_INTEGER );
+# 				$self->__consume_ws_opt;
+# 				$self->_eat(qr/}/);
+# 				$self->_add_stack( "$value-$end" );
+# 			}
+# 		} else {
+# 			$self->_eat(qr/}/);
+# 			$self->_add_stack( "$value" );
+# 		}
 	}
 }
 

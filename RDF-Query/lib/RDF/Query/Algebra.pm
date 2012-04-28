@@ -69,6 +69,7 @@ use RDF::Query::Algebra::Sequence;
 use RDF::Query::Algebra::Create;
 use RDF::Query::Algebra::Copy;
 use RDF::Query::Algebra::Move;
+use RDF::Query::Algebra::Table;
 
 use constant SSE_TAGS	=> {
 	'BGP'					=> 'RDF::Query::Algebra::BasicGraphPattern',
