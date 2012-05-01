@@ -165,6 +165,11 @@ sub new {
 Retrieves the content from C<< $url >> and attempts to parse the resulting RDF
 into C<< $model >> using a parser chosen by the associated content media type.
 
+If C<< %args >> contains a C<< 'content_cb' >> key with a CODE reference value,
+that callback function will be called after a successful response as:
+
+ $content_cb->( $url, $content, $http_response_object )
+
 =cut
 
 sub parse_url_into_model {
@@ -190,6 +195,10 @@ sub parse_url_into_model {
 	}
 	
 	my $content	= $resp->content;
+	if (my $cb = $args{content_cb}) {
+		$cb->( $url, $content, $resp );
+	}
+	
 	my $type	= $resp->header('content-type');
 	$type		=~ s/^([^\s;]+).*/$1/;
 	my $pclass	= $media_types{ $type };
