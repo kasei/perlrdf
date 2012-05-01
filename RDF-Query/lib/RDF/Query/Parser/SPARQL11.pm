@@ -1745,13 +1745,13 @@ TRIPLESBLOCKLOOP:
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
-	return 1 if $self->_test(qr/DATA/i); # InlineDataClause
+	return 1 if $self->_test(qr/VALUES/i); # InlineDataClause
 	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_test(qr/DATA/i)) {
+	if ($self->_test(qr/VALUES/i)) {
 		$self->_InlineDataCluase;
 	} elsif ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
@@ -1770,7 +1770,7 @@ sub _GraphPatternNotTriples {
 
 sub _InlineDataCluase {
 	my $self	= shift;
-	$self->_eat( qr/DATA/i );
+	$self->_eat( qr/VALUES/i );
 	$self->__consume_ws_opt;
 	my @vars;
 	while ($self->_test(qr/[\$?]/)) {
