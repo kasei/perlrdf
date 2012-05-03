@@ -155,6 +155,27 @@ sub add_statement {
 	return $self->_store->add_statement( @_ );
 }
 
+=item C<< add_iterator ( $iterator [, $context ] ) >>
+
+Add triples from a L<RDF::Trine::Iterator::Graph> to the model.
+
+=cut
+
+sub add_iterator {
+	my $self	   = shift;
+	my $iterator   = shift;
+	my $context = shift;
+
+	$self->begin_bulk_ops();
+	while (my $st = $iterator->next) {
+		# if (!$st->isa('RDF::Trine::Statement::Quad') and $content) {
+		#	my $st = RDF::Trine::Statement::Quad->new( $st->nodes, $context );
+		# }
+		$self->add_statement($st, $context);
+	}
+	$self->end_bulk_ops();
+}
+
 =item C<< add_hashref ( $hashref [, $context] ) >>
 
 Add triples represented in an RDF/JSON-like manner to the model.
