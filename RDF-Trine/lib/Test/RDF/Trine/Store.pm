@@ -927,9 +927,10 @@ Tests for getting statements using with get_pattern.
 sub get_pattern_tests {
 	note " get_pattern tests";
 	my ($store, $args, $ex) = @_;
+	my $model	= RDF::Trine::Model->new($store);
 	my $nil	= RDF::Trine::Node::Nil->new();
 	{
-		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
+		my $iter	= $model->get_pattern( RDF::Trine::Pattern->new(
 							statement(
 								$ex->a, $ex->b, variable('o1'), $nil,
 							),
@@ -948,7 +949,7 @@ sub get_pattern_tests {
 		is( $iter->next, undef, 'pattern iterator end-of-stream' );
 	}
 	{
-		my $iter	= $store->get_pattern( RDF::Trine::Pattern->new(
+		my $iter	= $model->get_pattern( RDF::Trine::Pattern->new(
 							statement(
 								$ex->a, $ex->b, variable('o1'), $nil,
 							),
