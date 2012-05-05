@@ -7,7 +7,7 @@ RDF::Trine::Model::Dataset - Model for SPARQL datasets
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Dataset version 0.139
+This document describes RDF::Trine::Model::Dataset version 0.139_01
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use RDF::Trine::Model;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '0.139_01';
 }
 
 ################################################################################
