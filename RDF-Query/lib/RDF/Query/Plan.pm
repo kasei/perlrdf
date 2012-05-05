@@ -811,6 +811,9 @@ sub generate_plans {
  	} elsif ($type eq 'Move') {
  		my $plan	= RDF::Query::Plan::Move->new( $algebra->from, $algebra->to, $algebra->silent );
 		push(@return_plans, $plan);
+	} elsif ($type eq 'Table') {
+		my $plan	= RDF::Query::Plan::Constant->new( $algebra->rows );
+		push(@return_plans, $plan);
 	} else {
 		throw RDF::Query::Error::MethodInvocationError (-text => "Cannot generate an execution plan for unknown algebra class $aclass");
 	}
@@ -821,7 +824,7 @@ sub generate_plans {
 	}
 	
 	foreach my $p (@return_plans) {
-		Carp::confess Dumper($p) unless ($p->isa('RDF::Query::Plan'));
+		Carp::confess 'not a plan: ' . Dumper($p) unless ($p->isa('RDF::Query::Plan'));
 		$p->label( algebra => $algebra );
 	}
 	
