@@ -36,6 +36,32 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.909 (2012-XX-XX)
+
+     * BUG FIXES
+         Fixed bad sparql serialization of filters with equality tests; was using '==' instead of '=' (github issue 53).
+         Fixed bug in RDF::Query::Algebra::Service->referenced_variables.
+         Fixed bug that wasn't passing the active graph to EXISTS filter evaluation.
+     * NEW FEATURES
+         Added support for VALUES graph pattern (in-place BINDINGS).
+         Added support for UUID() and STRUUID() functions.
+         Added is_update() and specifies_update_dataset() methods to RDF::Query.
+     * ENHANCEMENTS
+         Updated property path implementation to track W3C standard (changed counting semantics and dropped {m,n} form).
+         Added support to passthrough query eval to the model if supported and the 'allow_passthrough' option is set on the query object.
+         Accept common typo of SEPARATOR in SPARQL 1.1 parser ("SEPERATOR") with parser constructor arg 'allow_typos'.
+     * OTHER
+         Added ability to run tests of type mf:CSVResultFormatTest.
+         Fixed config handling in rqsh to allow the use of hexastore backends.
+         Merged Log4perl initialization cleanup patches (from github/kba).
+         Use $plan->explain instead of $plan->sse for "explain" rqsh command.
+         Updated EARL IRIs in bin/failing_earl_tests.sh and bin/passing_earl_tests.sh.
+         Removed RDF::Redland recommendation in Makefile.PL.
+         Added doap:implements statements, and updated release data to doap.rdf.
+         Updated RDF::Query::Util::cli_parse_args to allow no-argument setup.
+         Updated xt/dawg/earl.pl to use new EARL IRIs earl:passed and earl:failed.
+         Added POD to bin/rqsh.
+
   Version 2.908 (2012-01-31)
 
      * BUG FIXES
