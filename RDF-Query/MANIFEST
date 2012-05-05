@@ -85,6 +85,7 @@ lib/RDF/Query/Algebra/Sequence.pm
 lib/RDF/Query/Algebra/Service.pm
 lib/RDF/Query/Algebra/Sort.pm
 lib/RDF/Query/Algebra/SubSelect.pm
+lib/RDF/Query/Algebra/Table.pm
 lib/RDF/Query/Algebra/TimeGraph.pm
 lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
