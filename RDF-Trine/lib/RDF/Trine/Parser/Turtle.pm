@@ -214,7 +214,6 @@ sub _eat {
 		substr($self->{tokens}, 0, length($thing))	= '';
 		return;
 	} else {
-		
 		$l->logcluck("expected: $thing, got: $self->{tokens}");
 		throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 	}
