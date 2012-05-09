@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.139
+This document describes RDF::Trine::Store::Hexastore version 0.140
 
 =head1 SYNOPSIS
 
@@ -45,12 +45,20 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.139";
+	$VERSION	= "0.140";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
 
 ######################################################################
+
+sub _config_meta {
+	return {
+		required_keys	=> [],
+		fields			=> {},
+	}
+}
+
 
 =head1 METHODS
 
@@ -123,7 +131,7 @@ sub _new_with_string {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	my @sources = @{$config->{sources}};
+	my @sources = @{ $config->{sources} || [] };
 	my $self	= $class->new();
 	foreach my $source (@sources) {
 		my %args;
@@ -395,6 +403,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	if ($bgp->isa('RDF::Trine::Pattern')) {
+		$bgp	= $bgp->sort_for_join_variables();
+	}
 	my @triples	= $bgp->triples;
 	if (2 == scalar(@triples)) {
 		my ($t1, $t2)	= @triples;
@@ -408,8 +419,8 @@ sub get_pattern {
 			my $shrkey	= $shared[0];
 # 			warn "- $shrkey\n";
 # 			warn $t2->as_string;
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			
 			my $i1current	= $i1->next;
 			my $i2current	= $i2->next;
@@ -454,8 +465,8 @@ sub get_pattern {
 		} else {
 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ) );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ) );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
 			my @i1;
 			while (my $row = $i1->next) {
 				push(@i1, $row);
@@ -470,7 +481,7 @@ sub get_pattern {
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		}
 	} else {
-		return $self->SUPER::get_pattern( $bgp );
+		return $self->SUPER::_get_pattern( $bgp );
 	}
 }
 

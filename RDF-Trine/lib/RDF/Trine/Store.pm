@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.139
+This document describes RDF::Trine::Store version 0.140
 
 =cut
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '0.140';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -201,13 +201,13 @@ sub temporary_store {
 	return RDF::Trine::Store::Memory->new();
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
+# =item C<< get_pattern ( $bgp [, $context] ) >>
+# 
+# Returns a stream object of all bindings matching the specified graph pattern.
+# 
+# =cut
 
-Returns a stream object of all bindings matching the specified graph pattern.
-
-=cut
-
-sub get_pattern {
+sub _get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $context	= shift;
@@ -216,6 +216,8 @@ sub get_pattern {
 	
 	if ($bgp->isa('RDF::Trine::Statement')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
+	} else {
+		$bgp	= $bgp->sort_for_join_variables();
 	}
 	
 	my %iter_args;
@@ -246,7 +248,7 @@ sub get_pattern {
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
+		my $t		= pop(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
 		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;

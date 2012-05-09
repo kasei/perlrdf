@@ -133,7 +133,9 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 		my ($list)	= $model->objects( $m, $mf->entries );
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
-			if ($model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest)) {
+			my $et	= $model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest);
+			my $ct	= $model->count_statements($test, $rdf->type, $mf->CSVResultFormatTest);
+			if ($et + $ct) {
 				my ($name)	= $model->objects( $test, $mf->name );
 				unless ($test->uri_value =~ /$PATTERN/) {
 					next;

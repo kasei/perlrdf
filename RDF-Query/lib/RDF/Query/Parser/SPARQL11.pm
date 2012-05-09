@@ -2214,7 +2214,6 @@ sub _VerbSimple {
 # VerbPath ::= Path
 sub _VerbPath_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/DISTINCT[(]/i));
 	return 1 if ($self->_IRIref_test);
 	return 1 if ($self->_test(qr/\^|[|(a!]/));
 	return 0;
@@ -2228,20 +2227,20 @@ sub _VerbPath {
 # [74]  	Path	  ::=  	PathAlternative
 sub _Path {
 	my $self	= shift;
-	my $distinct	= 0;
-	if ($self->_test(qr/DISTINCT[(]/i)) {
-		$self->_eat(qr/DISTINCT[(]/i);
-		$self->__consume_ws_opt;
-		$distinct	= 1;
-	}
+# 	my $distinct	= 1;
+# 	if ($self->_test(qr/DISTINCT[(]/i)) {
+# 		$self->_eat(qr/DISTINCT[(]/i);
+# 		$self->__consume_ws_opt;
+# 		$distinct	= 1;
+# 	}
 	$self->_PathAlternative;
-	if ($distinct) {
-		$self->__consume_ws_opt;
-		$self->_eat(qr/[)]/);
-		$self->__consume_ws_opt;
-		my ($path)	= splice(@{ $self->{stack} });
-		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
-	}
+# 	if ($distinct) {
+# 		$self->__consume_ws_opt;
+# 		$self->_eat(qr/[)]/);
+# 		$self->__consume_ws_opt;
+# 		my ($path)	= splice(@{ $self->{stack} });
+# 		$self->_add_stack( ['PATH', 'DISTINCT', $path] );
+# 	}
 }
 
 ################################################################################
@@ -2901,7 +2900,7 @@ sub _BuiltInCall_test {
 	}
 	return 1 if $self->_test(qr/((NOT\s+)?EXISTS)|COALESCE/i);
 	return 1 if $self->_test(qr/ABS|CEIL|FLOOR|ROUND|CONCAT|SUBSTR|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|CONTAINS|STRSTARTS|STRENDS|RAND|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ|NOW/i);
-	return $self->_test(qr/STR|STRDT|STRLANG|STRBEFORE|STRAFTER|REPLACE|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
+	return $self->_test(qr/UUID|STRUUID|STR|STRDT|STRLANG|STRBEFORE|STRAFTER|REPLACE|BNODE|IRI|URI|LANG|LANGMATCHES|DATATYPE|BOUND|sameTerm|isIRI|isURI|isBLANK|isLITERAL|REGEX|IF|isNumeric/i);
 }
 
 sub _BuiltInCall {
@@ -2938,7 +2937,10 @@ sub _BuiltInCall {
 		$self->__consume_ws_opt;
 		$self->_eat('(');
 		$self->__consume_ws_opt;
-		if ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ)$/i) {
+		if ($op =~ /^(STR)?UUID$/i) {
+			# no-arg functions
+			$self->_add_stack( $self->new_function_expression($iri) );
+		} elsif ($op =~ /^(STR|URI|IRI|LANG|DATATYPE|isIRI|isURI|isBLANK|isLITERAL|isNumeric|ABS|CEIL|FLOOR|ROUND|STRLEN|UCASE|LCASE|ENCODE_FOR_URI|MD5|SHA1|SHA224|SHA256|SHA384|SHA512|HOURS|MINUTES|SECONDS|DAY|MONTH|YEAR|TIMEZONE|TZ)$/i) {
 			### one-arg functions that take an expression
 			$self->_Expression;
 			my ($expr)	= splice(@{ $self->{stack} });

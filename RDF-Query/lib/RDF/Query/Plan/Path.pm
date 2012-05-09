@@ -248,8 +248,9 @@ sub _run_oneormore {
 		# term path+ var
 		my $x	= $self->_path_eval($start, $path);
 		my $r	= [];
+		my $V	= {};
 		while (my $n = $x->next) {
-			$self->_alp( $n, $path, $r, {} );
+			$self->_alp( $n, $path, $r, $V );
 		}
 		
 		my $name	= $vars[0]->name;
@@ -264,9 +265,10 @@ sub _run_oneormore {
 		my $end		= $self->end;
 		my $path	= $self->path;
 		my $x		= $self->_path_eval($start, $path);
+		my $V		= {};
 		while (my $n = $x->next) {
 			my $r	= [];
-			$self->_alp( $n, $path, $r, {} );
+			$self->_alp( $n, $path, $r, $V );
 			foreach my $term (@$r) {
 				if ($term->equal( $end )) {
 					my $vb          = RDF::Query::VariableBindings->new({});
