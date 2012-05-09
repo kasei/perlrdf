@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "0.140" ;
-                        doap:created      "2012-XX-XX" ;
+                        doap:created      "2012-05-08" ;
                         ];
         asc:changes     [
                         asc:addition    "Added optional content_cb callback argument to RDF::Trine::Parser->parse_url_into_model." ;

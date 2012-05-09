@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.140 (2012-XX-XX)
+  Version 0.140 (2012-05-08)
 
      * API CHANGES
          Removed default get_pattern implementation in RDF::Trine::Store.
