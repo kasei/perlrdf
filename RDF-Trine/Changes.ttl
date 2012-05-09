@@ -10,6 +10,23 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-0.140.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.139.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.140" ;
+                        doap:created      "2012-05-08" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added optional content_cb callback argument to RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Removed default get_pattern implementation in RDF::Trine::Store." ;
+                        asc:update      "Added missing import of looks_like_number function in RDF::Trine::Node::Literal." ;
+                        asc:update      "Added RDF::Trine::Pattern->sort_for_join_variables method to prevent unnecessary cartesian joins." ;
+         
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.139.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.138.tar.gz> ;
