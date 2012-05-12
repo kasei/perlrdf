@@ -379,8 +379,6 @@ sub parse_file {
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
-
 =cut
 
 
