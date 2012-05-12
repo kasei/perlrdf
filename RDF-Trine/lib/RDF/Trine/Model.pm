@@ -138,15 +138,11 @@ sub add_statement {
 # 			warn "*** should upgrade to a DBI store here";
 			my $store	= RDF::Trine::Store::DBI->temporary_store;
 			my $iter	= $self->get_statements(undef, undef, undef, undef);
-			if ($store->can('_begin_bulk_ops')) {
-				$store->_begin_bulk_ops();
-			}
+			$store->begin_bulk_ops();
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			if ($store->can('_end_bulk_ops')) {
-				$store->_end_bulk_ops();
-			}
+			$store->end_bulk_ops();
 			$self->{store}	= $store;
 			$self->{temporary}	= 0;
 # 			warn "*** upgraded to a DBI store";
@@ -168,6 +164,7 @@ sub add_hashref {
 	my $index   = shift;
 	my $context = shift;
 	
+	$self->begin_bulk_ops();
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
 					RDF::Trine::Node::Blank->new($1) :
@@ -208,6 +205,23 @@ sub add_hashref {
 			}
 		}
 	}
+	$self->end_bulk_ops();	
+}
+
+=item C<< add_iterator ( $iter ) >>
+
+Add triples from the statement iteratorto the model.
+
+=cut
+
+sub add_iterator {
+	my $self	= shift;
+	my $iter	= shift;
+	$self->begin_bulk_ops();
+	while (my $st = $iter->next) {
+		$self->add_statement( $st );
+	}
+	$self->end_bulk_ops();	
 }
 
 =item C<< add_list ( @elements ) >>
