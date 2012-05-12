@@ -281,6 +281,25 @@ statement parsed, will call C<< $model->add_statement( $statement ) >>.
 =cut
 
 sub parse_into_model {
+	my $self	= shift;
+	my $base	= shift;
+	my $data	= shift;
+	my $model	= shift;
+	if (ref($data)) {
+		return $self->parse_file_into_model( $base, $data, $model, @_ );
+	} else {
+		return $self->parse_string_into_model( $base, $data, $model, @_ );
+	}
+}
+
+=item C<< parse_string_into_model ( $base_uri, $data, $model [, context => $context] ) >>
+
+Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+statement parsed, will call C<< $model->add_statement( $statement ) >>.
+
+=cut
+
+sub parse_string_into_model {
 	my $proto	= shift;
 	my $self	= blessed($proto) ? $proto : $proto->new();
 	my $uri		= shift;
