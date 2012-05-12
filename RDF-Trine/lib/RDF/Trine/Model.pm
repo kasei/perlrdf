@@ -138,11 +138,15 @@ sub add_statement {
 # 			warn "*** should upgrade to a DBI store here";
 			my $store	= RDF::Trine::Store::DBI->temporary_store;
 			my $iter	= $self->get_statements(undef, undef, undef, undef);
-			$store->begin_bulk_ops();
+			if ($store->can('_begin_bulk_ops')) {
+				$store->_begin_bulk_ops();
+			}
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			$store->end_bulk_ops();
+			if ($store->can('_begin_bulk_ops')) {
+				$store->_end_bulk_ops();
+			}
 			$self->{store}	= $store;
 			$self->{temporary}	= 0;
 # 			warn "*** upgraded to a DBI store";
