@@ -61,6 +61,10 @@ sub new {
 	my $dt		= shift;
 	my $canon	= shift;
 	
+	unless (defined($literal)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
+	}
+	
 	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
 		$dt	= $dt->uri_value;
 	}
@@ -585,6 +589,11 @@ sub numeric_value {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
