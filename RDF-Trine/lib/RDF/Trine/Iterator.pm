@@ -662,6 +662,11 @@ L<Scalar::Util|Scalar::Util>
 
 L<XML::SAX|XML::SAX>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>

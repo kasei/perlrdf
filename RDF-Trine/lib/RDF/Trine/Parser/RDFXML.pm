@@ -831,6 +831,11 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 SEE ALSO
 
 L<http://www.w3.org/TR/rdf-syntax-grammar/>

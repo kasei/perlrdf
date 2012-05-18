@@ -259,7 +259,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs to <http://rt.cpan.org/>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
