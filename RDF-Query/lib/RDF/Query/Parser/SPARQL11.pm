@@ -63,7 +63,7 @@ our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/;
 our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/;
 our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/;
 our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-our $r_PN_CHARS_U			= qr/(_|${r_PN_CHARS_BASE})/;
+our $r_PN_CHARS_U			= qr/([_:]|${r_PN_CHARS_BASE})/;
 our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/;
 our $r_VAR1					= qr/[?]${r_VARNAME}/;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/;
@@ -1752,7 +1752,7 @@ sub _GraphPatternNotTriples_test {
 sub _GraphPatternNotTriples {
 	my $self	= shift;
 	if ($self->_test(qr/VALUES/i)) {
-		$self->_InlineDataCluase;
+		$self->_InlineDataClause;
 	} elsif ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
@@ -1768,25 +1768,51 @@ sub _GraphPatternNotTriples {
 	}
 }
 
-sub _InlineDataCluase {
+sub _InlineDataClause {
 	my $self	= shift;
 	$self->_eat( qr/VALUES/i );
 	$self->__consume_ws_opt;
 	my @vars;
+	
+	my $parens	= 0;
+	if ($self->_test(qr/[(]/)) {
+		$self->_eat( qr/[(]/ );
+		$parens	= 1;
+	}
 	while ($self->_test(qr/[\$?]/)) {
 		$self->_Var;
 		push( @vars, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
+	if ($parens) {
+		$self->_eat( qr/[)]/ );
+	}
 	
 	my $count	= scalar(@vars);
+	
+	if (not($parens) and $count == 0) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+	}
+	
+	my $short	= (not($parens) and $count == 1);
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	my @rows;
-	while ($self->_Binding_test) {
-		my $terms	= $self->_Binding($count);
-		push( @rows, $terms );
-		$self->__consume_ws_opt;
+	if (not($short) or ($short and $self->_Binding_test)) {
+		# { (term) (term) }
+		while ($self->_Binding_test) {
+			my $terms	= $self->_Binding($count);
+			push( @rows, $terms );
+			$self->__consume_ws_opt;
+		}
+	} else {
+		# { term term }
+		while ($self->_BindingValue_test) {
+			$self->_BindingValue;
+			$self->__consume_ws_opt;
+			my ($term)	= splice(@{ $self->{stack} });
+			push( @rows, [$term] );
+		}
 	}
 	
 	$self->_eat('}');
