@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::Redland - RDFa Parser
+RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
