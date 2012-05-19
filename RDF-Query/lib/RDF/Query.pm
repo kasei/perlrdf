@@ -429,6 +429,8 @@ sub execute {
 		$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
 	}
 	
+	local($self->{model})	= $self->{model};
+# 	warn "model: $self->{model}";
 # 	warn "passthrough checking if model supports $lang_iri\n";
 	if ($self->{options}{allow_passthrough} and $model->supports($lang_iri)) {
 		$l->info("delegating $name execution to the underlying model");
@@ -915,6 +917,13 @@ sub supports {
 	return $model->supports( @_ );
 }
 
+=item C<< specifies_update_dataset >>
+
+Returns true if the query specifies a custom update dataset via the WITH or
+USING keywords, false otherwise.
+
+=cut
+
 sub specifies_update_dataset {
 	my $self	= shift;
 	no warnings 'uninitialized';
@@ -923,9 +932,11 @@ sub specifies_update_dataset {
 
 =begin private
 
-=item C<< get_model ( $store ) >>
+=item C<< get_model ( $model ) >>
 
-Returns a model object for the specified RDF C<< $store >>.
+Returns a model object for use during execution.
+If C<< $model >> is a usable model, it is simply returned.
+Otherwise, a temporary model is constructed and returned.
 
 =end private
 
@@ -1346,6 +1357,7 @@ sub model {
 	}
 	my $model	= $self->{model};
 	unless (defined $model) {
+		Carp::confess "query->model shouldn't be calling get_model";
 		$model	= $self->get_model();
 	}
 	

@@ -3,6 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use File::Spec;
+use Scalar::Util qw(blessed);
 
 use lib qw(. t);
 BEGIN { require "models.pl"; }
@@ -16,12 +17,14 @@ plan tests => 1 + ($tests * scalar(@models));
 use_ok( 'RDF::Query' );
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.query.plan.computedtriple	= DEBUG, Screen
-	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr					= 0
-	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query	= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.computedstatement	= TRACE, Screen
+# 	log4perl.category.rdf.query.plan.join.pushdownnestedloop	= TRACE, Screen
+# 	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr					= 0
+# 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 foreach my $model (@models) {
@@ -41,6 +44,12 @@ foreach my $model (@models) {
 END
 			$query->add_computed_statement_generator( 'http://www.jena.hpl.hp.com/ARQ/list#member' => \&__compute_list_member );
 			my $count	= 0;
+			
+# 			warn $model->as_string;
+#  			my ($plan, $ctx)	= $query->prepare( $model );
+# 			warn $plan->explain();
+# 			$query->execute_plan( $plan, $ctx );
+			
 			my $stream	= $query->execute( $model );
 			my %expect	= map { $_ => 1 } (1,2,3);
 			while (my $row = $stream->next) {
@@ -68,12 +77,12 @@ sub __compute_list_member {
 	my $first	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' );
 	my $rest	= RDF::Query::Node::Resource->new( 'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' );
 	
-	use Scalar::Util qw(blessed);
+	my $model	= $query->model;
 	if (blessed($p) and $p->isa('RDF::Query::Node::Resource') and $p->uri_value( 'http://www.jena.hpl.hp.com/ARQ/list#member' )) {
 		my @lists;
 		my $lists	= ($c)
-					? $query->model->get_named_statements( $s, $first, $o, $c )
-					: $query->model->get_statements( $s, $first, $o );
+					? $model->get_named_statements( $s, $first, $o, $c )
+					: $model->get_statements( $s, $first, $o );
 		while (my $l = $lists->next) {
 			push(@lists, [$l, $l->subject]);
 		}
@@ -100,12 +109,12 @@ sub __compute_list_member {
 			return undef if (blessed($list) and $list->isa('RDF::Query::Node::Resource') and $list->uri_value eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil');
 			my $obj		= $listst->object;
 			my $tail	= ($c)
-						? $query->model->get_named_statements( $list, $rest, undef, $c )
-						: $query->model->get_statements( $list, $rest, undef );
+						? $model->get_named_statements( $list, $rest, undef, $c )
+						: $model->get_statements( $list, $rest, undef );
 			while (my $st = $tail->next) {
 				my $lists	= ($c)
-							? $query->model->get_named_statements( $st->object, $first, $o, $c )
-							: $query->model->get_statements( $st->object, $first, $o );
+							? $model->get_named_statements( $st->object, $first, $o, $c )
+							: $model->get_statements( $st->object, $first, $o );
 				while (my $st = $lists->next) {
 					push(@lists, [$st, $head]);
 				}
