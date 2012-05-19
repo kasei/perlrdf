@@ -344,6 +344,7 @@ sub prepare {
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
+	local($self->{model})	= $self->{model};
 	my $model	= $self->{model} || $self->get_model( $_model, %args );
 	if ($model) {
 		$self->model( $model );
@@ -486,9 +487,9 @@ sub execute_plan {
 	my $stream	= $plan->as_iterator( $context );
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
-		$stream	= $self->describe( $stream );
+		$stream	= $self->describe( $stream, $context );
 	} elsif ($parsed->{'method'} eq 'ASK') {
-		$stream	= $self->ask( $stream );
+		$stream	= $self->ask( $stream, $context );
 	}
 	
 	$l->debug("going to call post-execute hook");
@@ -645,7 +646,7 @@ sub plan_class {
 
 =begin private
 
-=item C<describe ( $stream )>
+=item C<< describe ( $iter, $context ) >>
 
 Takes a stream of matching statements and constructs a DESCRIBE graph.
 
@@ -656,7 +657,8 @@ Takes a stream of matching statements and constructs a DESCRIBE graph.
 sub describe {
 	my $self	= shift;
 	my $stream	= shift;
-	my $model	= $self->model;
+	my $context	= shift;
+	my $model	= $context->model;
 	my @nodes;
 	my %seen;
 	while (my $row = $stream->next) {
@@ -696,7 +698,7 @@ sub describe {
 
 =begin private
 
-=item C<ask ( $stream )>
+=item C<ask ( $iter, $context )>
 
 Takes a stream of matching statements and returns a boolean query result stream.
 
@@ -707,6 +709,7 @@ Takes a stream of matching statements and returns a boolean query result stream.
 sub ask {
 	my $self	= shift;
 	my $stream	= shift;
+	my $context	= shift;
 	my $value	= $stream->next;
 	my $bool	= ($value) ? 1 : 0;
 	return RDF::Trine::Iterator::Boolean->new( [ $bool ] );
@@ -1548,7 +1551,7 @@ L<http://www.perlrdf.org/>
 
 =head1 LICENSE
 
-Copyright (c) 2005-2010 Gregory Todd Williams. This
+Copyright (c) 2005-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 
