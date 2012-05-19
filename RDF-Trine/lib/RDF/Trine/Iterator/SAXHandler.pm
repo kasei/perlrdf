@@ -48,15 +48,13 @@ my %values;
 my %bindings;
 my %booleans;
 my %variables;
-my %extra;
-my %extrakeys;
 my %has_head;
 my %has_end;
 my %result_count;
 my %result_handlers;
 my %config;
 
-my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
+my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal);
 
 =item C<< new ( [ \&handler ] ) >>
 
@@ -94,11 +92,7 @@ sub iterator {
 	} else {
 		my $vars	= delete $variables{ $addr };
 		my $results	= delete $results{ $addr };
-		my %args;
-		if (exists $extra{ $addr }) {
-			$args{ extra_result_data }	= delete $extra{ $addr };
-		}
-		return $self->iterator_class->new( $results, $vars, %args );
+		return $self->iterator_class->new( $results, $vars );
 	}
 }
 
@@ -159,12 +153,7 @@ sub iterator_args {
 		return;
 	} else {
 		my $vars	= $variables{ $addr };
-		my %args;
-		
-		my $extra			= (exists $extra{ $addr }) ? delete $extra{ $addr } : {};
-		$extra->{Handler}	= $self;
-		$args{ extra_result_data }	= $extra;
-		return ($vars, %args);
+		return ($vars);
 	}
 }
 
@@ -262,33 +251,7 @@ sub end_element {
 			$lang	= $langinf->{Value};
 		}
 		$values{ $addr }	= RDF::Trine::Node::Literal->new( $string, $lang, $dt );
-	} elsif ($tag eq 'link') {
-		my $link	= $el->{Attributes}{'{}href'}{Value};
-		if ($link and $link =~ m<^data:text/xml,%3Cextra>) {
-			my $u		= URI->new( $link );
-			my $data	= $u->data;
-			my $p		= XML::SAX::ParserFactory->parser(Handler => $self);
-			$p->parse_string( $data );
-		}
-	} elsif ($tag eq 'extra') {
-		my $key		= $el->{Attributes}{'{}name'}{Value};
-		my $value	= delete( $extrakeys{ $addr } );
-		push(@{ $extra{ $addr }{ $key } }, $value);
-	} elsif ($tag eq 'extrakey') {
-		my $key		= $el->{Attributes}{'{}id'}{Value};
-		my $value	= $string;
-		push(@{ $extrakeys{ $addr }{ $key } }, $value);
 	}
-}
-
-=item C<< extra >>
-
-=cut
-
-sub extra {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	return $extra{ $addr };
 }
 
 =item C<< characters >>
@@ -323,8 +286,6 @@ sub DESTROY {
 	delete $bindings{ $addr };
 	delete $booleans{ $addr };
 	delete $variables{ $addr };
-	delete $extra{ $addr };
-	delete $extrakeys{ $addr };
 	delete $has_head{ $addr };
 	delete $has_end{ $addr };
 	delete $result_count{ $addr };

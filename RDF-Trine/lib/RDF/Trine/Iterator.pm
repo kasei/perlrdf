@@ -326,22 +326,6 @@ sub concat {
 	return $s;
 }
 
-=item C<< count >>
-
-DEPRECATED. Returns the number of objects returned from this iterator.
-
-This method is deprecated. The C<< length >> method from either
-RDF::Trine::Iterator::Bindings::Materialized or
-RDF::Trine::Iterator::Graph::Materialized should be used instead.
-
-=cut
-
-sub count {
-	my $self	= shift;
-	Carp::carp "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
-	return $self->{_count};
-}
-
 =item C<< seen_count >>
 
 Returns the count of elements that have been returned by this iterator at the
@@ -501,33 +485,6 @@ sub _stream {
 	my $self	= shift;
 	return $self->{_stream};
 }
-
-
-=item C<< add_extra_result_data ( $tag, \%data ) >>
-
-=cut
-
-sub add_extra_result_data {
-	my $self	= shift;
-	my $tag		= shift;
-	my $data	= shift;
-	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
-}
-
-=item C<< extra_result_data >>
-
-=cut
-
-sub extra_result_data {
-	my $self	= shift;
-	$self->peek;
-	my $args	= $self->_args;
-	my $extra	= $args->{ extra_result_data };
-	return $extra;
-}
-
-
-
 
 
 =back
