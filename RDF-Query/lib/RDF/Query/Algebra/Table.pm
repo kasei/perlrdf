@@ -73,9 +73,9 @@ sub construct_args {
 	return ($self->rows);
 }
 
-=item C<< triples >>
+=item C<< rows >>
 
-Returns a list of triples belonging to this BGP.
+Returns a list of variable bindings belonging to this data table.
 
 =cut
 
