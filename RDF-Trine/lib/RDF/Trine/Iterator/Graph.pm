@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
+RDF::Trine::Iterator::Graph - Iterator class for graph query results
 
 =head1 VERSION
 
@@ -123,6 +123,9 @@ sub as_bindings {
 =item C<< materialize >>
 
 Returns a materialized version of the current graph iterator.
+The materialization process will leave this iterator empty. The materialized
+iterator that is returned should be used for any future need for the iterator's
+data.
 
 =cut
 

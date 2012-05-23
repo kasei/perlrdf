@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query results
+RDF::Trine::Iterator::Bindings - Iterator class for bindings query results
 
 =head1 VERSION
 
@@ -91,6 +91,9 @@ sub _new {
 =item C<< materialize >>
 
 Returns a materialized version of the current binding iterator.
+The materialization process will leave this iterator empty. The materialized
+iterator that is returned should be used for any future need for the iterator's
+data.
 
 =cut
 

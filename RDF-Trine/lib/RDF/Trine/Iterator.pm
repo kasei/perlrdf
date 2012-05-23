@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
+RDF::Trine::Iterator - Iterator class for SPARQL query results
 
 =head1 VERSION
 

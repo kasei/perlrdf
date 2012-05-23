@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query results
+RDF::Trine::Iterator::Boolean - Iterator class for boolean query results
 
 =head1 VERSION
 
