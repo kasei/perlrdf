@@ -99,7 +99,8 @@ my $st3		= RDF::Trine::Statement->new( $p3, $type, $person );
 {
 	my $stream1	= RDF::Trine::Iterator::Graph->new( [ $st2, $st3 ] );
 	my $stream2	= RDF::Trine::Iterator::Graph->new( [ $st1, $st3 ] );
-	my $stream = $stream1->concat($stream2);
-	is($stream->materialize->length, 4, 'Concatenated Graph Iterator has 4 statements');
-	is($stream->unique->materialize->length, 3, 'Concatenated Graph Iterator has 3 unique statements');
+	my $mstream = $stream1->concat($stream2)->materialize;
+	is($mstream->length, 4, 'Concatenated Graph Iterator has 4 statements');
+	$mstream->reset;
+	is($mstream->unique->length, 3, 'Concatenated Graph Iterator has 3 unique statements');
 }
