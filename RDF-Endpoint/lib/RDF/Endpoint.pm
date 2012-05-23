@@ -222,20 +222,55 @@ END
 	
 	my $sparql;
 	my $ct	= $req->header('Content-type');
-	if (defined($ct) and $ct eq 'application/sparql-query') {
+	if ($req->method !~ /^(GET|POST)$/i) {
+		my $method	= uc($req->method);
+		$content	= "Unexpected method $method (expecting GET or POST)";
+		$self->log_error( $req, $content );
+		my $code	= 400;
+		$response->status($code);
+		$response->body($content);
+		goto CLEANUP;
+	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
 		$sparql	= $req->content;
 	} elsif (defined($ct) and $ct eq 'application/sparql-update') {
 		if ($config->{endpoint}{update} and $req->method eq 'POST') {
 			$sparql	= $req->content;
 		}
 	} elsif ($req->param('query')) {
-		$sparql = $req->param('query');
+		my @sparql	= $req->param('query');
+		if (scalar(@sparql) > 1) {
+			$content	= "More than one query string submitted";
+			$self->log_error( $req, $content );
+			my $code	= 400;
+			$response->status($code);
+			$response->body($content);
+			goto CLEANUP;
+		} else {
+			$sparql = $sparql[0];
+		}
 	} elsif ($req->param('update')) {
+		my @sparql	= $req->param('query');
+		if (scalar(@sparql) > 1) {
+			$content	= "More than one update string submitted";
+			$self->log_error( $req, $content );
+			my $code	= 400;
+			$response->status($code);
+			$response->body($content);
+			goto CLEANUP;
+		}
+		
 		if ($config->{endpoint}{update} and $req->method eq 'POST') {
-			$sparql = $req->param('update');
+			$sparql = $sparql[0];
+		} elsif ($req->method ne 'POST') {
+			$content	= "Update operations must use POST";
+			$self->log_error( $req, $content );
+			my $code	= 400;
+			$response->status($code);
+			$response->body($content);
+			goto CLEANUP;
 		}
 	}
-
+	
 	my $ns = merge $config->{namespaces}, $NAMESPACES;
 
 	if ($sparql) {
@@ -278,11 +313,12 @@ END
 					$response->headers->header( ETag => $etag );
 				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
-					my @variants	= (['text/html', 1.0, 'text/html']);
+					my @variants	= (['text/html', 0.99, 'text/html']);
 					my %media_types	= %RDF::Trine::Serializer::media_types;
 					while (my($type, $sclass) = each(%media_types)) {
 						next if ($type =~ /html/);
-						push(@variants, [$type, 0.99, $type]);
+						my $value	= ($type =~ m#application/rdf[+]xml#) ? 1.00 : 0.98;
+						push(@variants, [$type, $value, $type]);
 					}
 					my $stype	= choose( \@variants, $headers );
 					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
@@ -340,8 +376,13 @@ END
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
 			}
-			warn $content;
 		}
+	} elsif ($req->method eq 'POST') {
+		$content	= "POST without recognized query or update";
+		$self->log_error( $req, $content );
+		my $code	= 400;
+		$response->status($code);
+		$response->body($content);
 	} else {
 		my @variants;
 		my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -372,6 +413,7 @@ END
 		}
 	}
 	
+CLEANUP:
 	my $length	= 0;
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
