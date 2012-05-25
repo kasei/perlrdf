@@ -55,6 +55,16 @@ included for execution. The boolean values 'default' and 'named_graphs' indicate
 that the respective SPARQL dataset graphs should be described by the service
 description.
 
+=item html
+
+An associative array (hash) containing details on how results should be
+serialized when the output media type is HTML. The boolean value 'resource_links'
+specifies whether URI values should be serialized as HTML anchors (links).
+The boolean value 'embed_images' specifies whether URI values that are typed as
+foaf:Image should be serialized as HTML images. If 'embed_images' is true, the
+integer value 'image_width' specifies the image width to be used in the HTML
+markup (letting the image height scale appropriately).
+
 =back
 
 =back
@@ -153,11 +163,6 @@ sub new {
 		my $store	= RDF::Trine::Store->new( $config->{store} );
 		$model		= RDF::Trine::Model->new( $store );
 	}
-	my $logfh;
-	if (my $logfile = $config->{endpoint}{log}) {
-		warn "opening log file $logfile\n";
-		open($logfh, '>>', $logfile) or warn $!;
-	}
 	
 	unless ($config->{endpoint}) {
 		$config->{endpoint}	= { %$config };
@@ -166,10 +171,8 @@ sub new {
 		conf		=> $config,
 		model		=> $model,
 		start_time	=> time,
-		logfh		=> $logfh,
 	}, $class );
 	$self->service_description();	# pre-generate the service description
-	$self->_log("Starting RDF::Endpoint (v$RDF::Endpoint::VERSION) with RDF::Query (v$RDF::Query::VERSION)");
 	return $self;
 }
 
@@ -183,6 +186,7 @@ an appropriate Plack::Response object.
 sub run {
 	my $self	= shift;
 	my $req		= shift;
+	
 	my $config	= $self->{conf};
 	my $endpoint_path = $config->{endpoint}{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
@@ -362,7 +366,8 @@ END
 					}
 				}
 			} else {
-				$self->log_error( $req, $query->error, $sparql );
+				my $error	= $query->error;
+				$self->log_error( $req, "$error\t$sparql" );
 				$response->status(500);
 				$response->body($query->error);
 				$content	= RDF::Query->error;
@@ -696,8 +701,6 @@ sub node_as_html {
 	}
 }
 
-
-
 =item C<< log_query ( $message ) >>
 
 =cut
@@ -705,15 +708,8 @@ sub node_as_html {
 sub log_query {
 	my $self	= shift;
 	my $req		= shift;
-	my @msg		= (
-		'REQ',
-		scalar(time),
-		$req->address,
-		$req->headers->referer,
-		$req->method,
-		@_
-	);
-	$self->_log( @msg );
+	my $message	= shift;
+	$self->_log( $req, { level => 'info', message => $message } );
 }
 
 =item C<< log_error ( $message ) >>
@@ -723,31 +719,17 @@ sub log_query {
 sub log_error {
 	my $self	= shift;
 	my $req		= shift;
-	my @msg		= (
-		'ERR',
-		scalar(time),
-		$req->address,
-		@_
-	);
-	$self->_log( @msg );
+	my $message	= shift;
+	$self->_log( $req, { level => 'error', message => $message } );
 }
-
 
 sub _log {
 	my $self	= shift;
-	my @msg		= @_;
-	my $fh		= $self->{logfh} or return;
-	foreach (@msg) {
-		s/\\/\\\\/g;
-		s/\n/\\n/g;
-		s/\t/\\t/g;
-		s/\r/\\r/g;
-		s/"/\\"/g;
-	}
-	flock($fh, LOCK_EX) or croak "Cannot lock logfile − $!\n";		#lock
-	seek($fh, 0, SEEK_END) or croak "Cannot seek − $!\n";
-	print $fh join("\t", @msg),"\n";
-	flock($fh, LOCK_UN) or croak "Cannot unlock logfile − $!\n";	#unlock
+	my $req		= shift;
+	my $data	= shift;
+	my $logger	= $req->logger || sub {};
+	
+	$logger->($data);
 }
 
 =end private
@@ -780,7 +762,7 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010 Gregory Todd Williams.
+Copyright (c) 2010-2012 Gregory Todd Williams.
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
