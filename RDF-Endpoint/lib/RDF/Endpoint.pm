@@ -230,8 +230,8 @@ END
 		my $method	= uc($req->method);
 		$content	= "Unexpected method $method (expecting GET or POST)";
 		$self->log_error( $req, $content );
-		my $code	= 400;
-		$response->status($code);
+		my $code	= 405;
+		$response->status("$code Method Not Allowed");
 		$response->body($content);
 		goto CLEANUP;
 	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
@@ -246,19 +246,19 @@ END
 			$content	= "More than one query string submitted";
 			$self->log_error( $req, $content );
 			my $code	= 400;
-			$response->status($code);
+			$response->status("$code Multiple Query Strings");
 			$response->body($content);
 			goto CLEANUP;
 		} else {
 			$sparql = $sparql[0];
 		}
 	} elsif ($req->param('update')) {
-		my @sparql	= $req->param('query');
+		my @sparql	= $req->param('update');
 		if (scalar(@sparql) > 1) {
 			$content	= "More than one update string submitted";
 			$self->log_error( $req, $content );
 			my $code	= 400;
-			$response->status($code);
+			$response->status("$code Multiple Update Strings");
 			$response->body($content);
 			goto CLEANUP;
 		}
@@ -266,10 +266,11 @@ END
 		if ($config->{endpoint}{update} and $req->method eq 'POST') {
 			$sparql = $sparql[0];
 		} elsif ($req->method ne 'POST') {
+			my $method	= $req->method;
 			$content	= "Update operations must use POST";
 			$self->log_error( $req, $content );
-			my $code	= 400;
-			$response->status($code);
+			my $code	= 405;
+			$response->status("$code $method Not Allowed for Update Operation");
 			$response->body($content);
 			goto CLEANUP;
 		}
@@ -376,7 +377,8 @@ END
 			$content	= RDF::Query->error;
 			$self->log_error( $req, $content );
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
-			$response->status($code);
+			my $message	= ($code == 400) ? "Syntax Error" : "Internal Server Error";
+			$response->status("$code $message");
 			$response->body($content);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
@@ -386,7 +388,7 @@ END
 		$content	= "POST without recognized query or update";
 		$self->log_error( $req, $content );
 		my $code	= 400;
-		$response->status($code);
+		$response->status("$code Missing SPARQL Query/Update String");
 		$response->body($content);
 	} else {
 		my @variants;
