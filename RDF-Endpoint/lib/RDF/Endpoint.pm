@@ -232,6 +232,7 @@ END
 		$self->log_error( $req, $content );
 		my $code	= 405;
 		$response->status("$code Method Not Allowed");
+		$response->header('Allow' => 'GET, POST');
 		$response->body($content);
 		goto CLEANUP;
 	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
@@ -271,6 +272,7 @@ END
 			$self->log_error( $req, $content );
 			my $code	= 405;
 			$response->status("$code $method Not Allowed for Update Operation");
+			$response->header('Allow' => 'POST');
 			$response->body($content);
 			goto CLEANUP;
 		}
@@ -421,6 +423,8 @@ END
 	}
 	
 CLEANUP:
+# 	warn Dumper($model);
+# 	warn $model->as_string;
 	my $length	= 0;
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
