@@ -297,8 +297,8 @@ sub update_eval_test {
 		$ok	= is( $eq, 1, $test->as_string );
 		unless ($ok) {
 			warn $test_graph->error;
-			warn $test_model->as_string;
-			warn $expected_model->as_string;
+			warn "Got model:\n" . $test_model->as_string;
+			warn "Expected model:\n" . $expected_model->as_string;
 		}
 	};
 	if ($@ or not($ok)) {
