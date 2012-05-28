@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested lo
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.907.
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.908.
 
 =head1 METHODS
 
@@ -23,14 +23,14 @@ package RDF::Query::Plan::Join::PushDownNestedLoop;
 use strict;
 use warnings;
 use base qw(RDF::Query::Plan::Join);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Data::Dumper;
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
 
@@ -46,6 +46,10 @@ sub new {
 	my $class	= shift;
 	my $lhs		= shift;
 	my $rhs		= shift;
+	
+	if ($rhs->isa('RDF::Query::Plan::SubSelect')) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Subselects cannot be the RHS of a PushDownNestedLoop join";
+	}
 	
 	my $opt		= shift || 0;
 	if (not($opt) and $rhs->isa('RDF::Query::Plan::Join') and $rhs->optional) {
@@ -70,6 +74,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "PushDownNestedLoop join plan can't be executed while already open";
 	}
@@ -145,11 +150,17 @@ sub next {
 				}
 #				warn "-> joined\n";
 				$self->[0]{inner_count}++;
+				if (my $d = $self->delegate) {
+					$d->log_result( $self, $joined );
+				}
 				return $joined;
 			} else {
 				$l->trace("failed to join bindings: $inner_row |><| $self->[0]{outer_row}");
 				if ($opt) {
 					$l->trace( "--> but operation is OPTIONAL, so returning $self->[0]{outer_row}" );
+					if (my $d = $self->delegate) {
+						$d->log_result( $self, $self->[0]{outer_row} );
+					}
 					return $self->[0]{outer_row};
 				}
 			}
@@ -161,6 +172,9 @@ sub next {
 		}
 		delete $self->[0]{inner};
 		if ($opt and $self->[0]{inner_count} == 0) {
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $self->[0]{outer_row} );
+			}
 			return $self->[0]{outer_row};
 		}
 	}
@@ -229,7 +243,7 @@ sub explain {
 	if ($self->[0]{stats}) {
 		$stats	= sprintf(' [%d/%d/%d]', @{ $self->[0]{stats} }{qw(outer_rows inner_rows results)});
 	}
-	my $string	= "${indent}${type}${stats}\n";
+	my $string	= sprintf("%s%s%s (0x%x)\n", $indent, $type, $stats, refaddr($self));
 	foreach my $p ($self->plan_node_data) {
 		$string	.= $p->explain( $s, $count+1 );
 	}

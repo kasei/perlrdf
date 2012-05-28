@@ -7,7 +7,7 @@ RDF::Query::Plan::ComputedStatement - Executable query plan for computed triples
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::ComputedStatement version 2.907.
+This document describes RDF::Query::Plan::ComputedStatement version 2.908.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -98,6 +98,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "COMPUTEDSTATEMENT plan can't be executed while already open";
 	}
@@ -119,13 +120,19 @@ sub execute ($) {
 			$nodes[ $i ]	= $bound->{ $nodes[$i]->name };
 		}
 	}
+
+	$l->trace( "computed statement pattern after pre-binding: " . join(' ', map { $_->as_string } @nodes));
 	
 	my $query	= $context->query;
 	my $csg		= $query->get_computed_statement_generators( $nodes[1]->uri_value );
 	unless (scalar(@$csg)) {
 		throw RDF::Query::Error::ExecutionError -text => "No computed statement generator found for predicate " . $nodes[1]->uri_value;
 	}
-	my $iter	= $csg->[0]->( $query, $bound, @nodes );
+	my $iter;
+	{
+		local($query->{model})	= $context->model;
+		$iter	= $csg->[0]->( $query, $bound, @nodes );
+	}
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;
@@ -181,6 +188,9 @@ sub next {
 		}
 		@{ $bindings }{ keys %$pre_bound }	= values %$pre_bound;
 		$self->[0]{count}++;
+		if (my $d = $self->delegate) {
+			$d->log_result( $self, $bindings );
+		}
 		return $bindings;
 	}
 	return;

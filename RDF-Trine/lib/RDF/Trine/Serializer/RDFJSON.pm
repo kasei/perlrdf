@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFJSON - RDF/JSON Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDF/JSON version 0.135
+This document describes RDF::Trine::Serializer::RDF/JSON version 0.140
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfjson' }	= __PACKAGE__;
 	foreach my $type (qw(application/json application/x-rdf+json)) {
 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -109,6 +109,11 @@ sub serialize_model_to_string {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 

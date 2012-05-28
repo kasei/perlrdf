@@ -7,7 +7,7 @@ RDF::Trine::Model::StatementFilter - Model for filtering statements based on a u
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::StatementFilter version 0.135
+This document describes RDF::Trine::Model::StatementFilter version 0.140
 
 =head1 METHODS
 
@@ -29,12 +29,11 @@ use Scalar::Util qw(blessed reftype);
 
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 ################################################################################
@@ -192,13 +191,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

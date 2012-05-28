@@ -7,7 +7,7 @@ use warnings;
 use RDF::Trine;
 use RDF::Trine::Parser;
 
-my $store	= RDF::Trine::Store::DBI->temporary_store();
+my $store	= RDF::Trine::Store->temporary_store();
 my $model	= RDF::Trine::Model->new( $store );
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');

@@ -7,7 +7,7 @@ RDF::Trine::Statement - Class for triples and triple patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement version 0.135
+This document describes RDF::Trine::Statement version 0.140
 
 =cut
 
@@ -22,12 +22,14 @@ use Log::Log4perl;
 use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use RDF::Trine::Iterator qw(smap sgrep swatch);
+use URI::Escape qw(uri_unescape);
+use Encode;
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 ######################################################################
@@ -323,7 +325,12 @@ sub from_redland {
 		my $node	= shift;
 		my $type	= $node->type;
 		if ($type == $RDF::Redland::Node::Type_Resource) {
-			return RDF::Trine::Node::Resource->new( $node->uri->as_string );
+			my $uri	= $node->uri->as_string;
+			if ($uri =~ /%/) {
+				# Redland's parser doesn't properly unescape percent-encoded RDF URI References
+				$uri	= decode_utf8(uri_unescape(encode_utf8($uri)));
+			}
+			return RDF::Trine::Node::Resource->new( $uri );
 		} elsif ($type == $RDF::Redland::Node::Type_Blank) {
 			return RDF::Trine::Node::Blank->new( $node->blank_identifier );
 		} elsif ($type == $RDF::Redland::Node::Type_Literal) {
@@ -334,7 +341,7 @@ sub from_redland {
 						: undef;
 			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
 		} else {
-			die;
+			croak 'Unknown node type in statement conversion';
 		}
 	};
 	
@@ -381,13 +388,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

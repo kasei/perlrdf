@@ -4,7 +4,7 @@ RDF::Trine::Store::Dydra - RDF Store proxy for a Dydra endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Dydra version 0.135
+This document describes RDF::Trine::Store::Dydra version 0.140
 
 =head1 SYNOPSIS
 
@@ -24,11 +24,9 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store::SPARQL);
 
-use Set::Scalar;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use List::MoreUtils qw(any mesh);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -40,7 +38,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.140";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -121,6 +119,12 @@ sub new {
 	
 	return $self;
 }
+
+=item C<< base >>
+
+Returns the service base URI ("http://dydra.com:80" by default).
+
+=cut
 
 sub base {
 	my $self	= shift;
@@ -234,12 +238,15 @@ sub add_statement {
 		my $url		= "${base}/${user}/${repo}/statements";
 		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
 			my $g	= $context || $st->context;
-			$url	.= '?context=' . uri_escape($g->as_ntriples);
+			$url	.= '?context=' . uri_escape($g->uri_value);
 		}
 		my $req		= HTTP::Request->new(POST => $url);
 		$req->authorization_basic($self->{token}) if (defined $self->{token});
 		$req->content_type('text/plain');
 		$req->content($s->statement_as_string($st));
+		
+		warn "add_statement request: " . Dumper($req);
+		
 		my $resp	= $ua->request( $req );
 		if ($resp->is_success) {
 			return;
@@ -279,18 +286,25 @@ sub remove_statement {
 		my $user	= $self->{user};
 		my $repo	= $self->{repo};
 		my $base	= $self->base;
-		my $url		= "${base}/${user}/${repo}/statements";
-		my $req		= HTTP::Request->new(DELETE => $url);
+		my $data	= $s->statement_as_string($st);
+		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
+			my $g	= $context || $st->context;
+			my $uri	= $g->uri_value;
+			$data	= "GRAPH <$uri> { $data }";
+		}
+		my $sparql	= "DELETE DATA { $data }";
+		my $url		= "${base}/${user}/${repo}/sparql";
+		my $req		= HTTP::Request::Common::POST( $url, [ query => $sparql ] );
 		$req->authorization_basic($self->{token}) if (defined $self->{token});
-		$req->content_type('text/plain');
-		$req->content($s->statement_as_string($st));
 		my $resp	= $ua->request( $req );
+		warn 'remove_statement: ' . Dumper($req, $resp);
+		
 		if ($resp->is_success) {
 			return;
 		} else {
 			my $status	= $resp->status_line;
 			warn Dumper($resp);
-			throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)";
+			throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)" . Dumper($st);
 		}
 	}
 	return;
@@ -391,12 +405,14 @@ sub size {
 	my $url		= "${base}/${user}/${repo}/size";
 	my $req		= HTTP::Request->new(GET => $url);
 	$req->authorization_basic($self->{token}) if (defined $self->{token});
+	$req->header(Accept => 'text/plain');
 	my $resp	= $ua->request( $req );
 	if ($resp->is_success) {
+		warn 'size(): ' . Dumper($req, $resp);
 		return 0+$resp->content;
 	} else {
 		my $status	= $resp->status_line;
-		warn Dumper($resp);
+		warn 'size() failed: ' . Dumper($resp);
 		throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in size ($status)";
 	}
 }
@@ -407,7 +423,7 @@ sub _end_bulk_ops {
 		my @ops	= splice(@{ $self->{ ops } });
 		my @aggops	= $self->_group_bulk_ops( @ops );
 		my @sparql;
-		warn Dumper(\@aggops);
+		warn '_end_bulk_ops: ' . Dumper(\@aggops);
 		throw RDF::Trine::Error::UnimplementedError -text => "bulk operations not implemented for Dydra stores yet";
 	}
 	$self->{BulkOps}	= 0;
@@ -433,7 +449,7 @@ sub nuke {
 		return;
 	} else {
 		my $status	= $resp->status_line;
-		warn Dumper($resp);
+		warn 'nuke failed: ' . Dumper($resp);
 		throw RDF::Trine::Error::DatabaseError -text => "Error making remote REST call in remove_statement ($status)";
 	}
 }
@@ -447,7 +463,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -455,7 +472,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

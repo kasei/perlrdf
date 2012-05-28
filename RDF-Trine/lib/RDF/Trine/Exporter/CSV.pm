@@ -7,7 +7,7 @@ RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::CSV version 0.135
+This document describes RDF::Trine::Exporter::CSV version 0.140
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 =head1 METHODS
@@ -43,7 +43,7 @@ BEGIN {
 =item C<< new ( sep_char => $sep_char, quote => $bool ) >>
 
 Returns a new RDF::Trine::Exporter::CSV object. If C<< $sep_char >> is provided,
-it is used as the seperator character in CSV serialization, otherwise a comma
+it is used as the separator character in CSV serialization, otherwise a comma
 (",") is used.
 
 =cut
@@ -132,13 +132,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

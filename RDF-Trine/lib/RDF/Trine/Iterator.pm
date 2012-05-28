@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
+RDF::Trine::Iterator - Iterator class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.135.
+This document describes RDF::Trine::Iterator version 0.140.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -236,7 +236,6 @@ remain in queue until the next call to C<< next >>.
 sub peek {
 	my $self	= shift;
 	return if ($self->{_finished});
-	
 	my $value	= $self->next;
 	push( @{ $self->{_peek} }, $value );
 	return $value;
@@ -268,6 +267,8 @@ Returns true if the end of the stream has been reached, false otherwise.
 sub end { $_[0]->finished }
 sub finished {
 	my $self	= shift;
+	my $v		= $self->peek;
+	return 0 if (defined($v));
 	return $self->{_finished};
 }
 
@@ -323,22 +324,6 @@ sub concat {
 	};
 	my $s	= $stream->_new( $next, @args );
 	return $s;
-}
-
-=item C<< count >>
-
-DEPRECATED. Returns the number of objects returned from this iterator.
-
-This method is deprecated. The C<< length >> method from either
-RDF::Trine::Iterator::Bindings::Materialized or
-RDF::Trine::Iterator::Graph::Materialized should be used instead.
-
-=cut
-
-sub count {
-	my $self	= shift;
-	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
-	return $self->{_count};
 }
 
 =item C<< seen_count >>
@@ -401,7 +386,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		return;
+		return '';
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;
@@ -500,33 +485,6 @@ sub _stream {
 	my $self	= shift;
 	return $self->{_stream};
 }
-
-
-=item C<< add_extra_result_data ( $tag, \%data ) >>
-
-=cut
-
-sub add_extra_result_data {
-	my $self	= shift;
-	my $tag		= shift;
-	my $data	= shift;
-	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
-}
-
-=item C<< extra_result_data >>
-
-=cut
-
-sub extra_result_data {
-	my $self	= shift;
-	$self->peek;
-	my $args	= $self->_args;
-	my $extra	= $args->{ extra_result_data };
-	return $extra;
-}
-
-
-
 
 
 =back
@@ -661,13 +619,18 @@ L<Scalar::Util|Scalar::Util>
 
 L<XML::SAX|XML::SAX>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

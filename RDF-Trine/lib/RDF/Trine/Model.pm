@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.135
+This document describes RDF::Trine::Model version 0.140
 
 =head1 METHODS
 
@@ -23,17 +23,17 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Log::Log4perl;
 
 use RDF::Trine::Error qw(:try);
 use RDF::Trine qw(variable);
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 use RDF::Trine::Model::Dataset;
 
 =item C<< new ( $store ) >>
@@ -144,7 +144,7 @@ sub add_statement {
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			if ($store->can('_end_bulk_ops')) {
+			if ($store->can('_begin_bulk_ops')) {
 				$store->_end_bulk_ops();
 			}
 			$self->{store}	= $store;
@@ -168,6 +168,7 @@ sub add_hashref {
 	my $index   = shift;
 	my $context = shift;
 	
+	$self->begin_bulk_ops();
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
 					RDF::Trine::Node::Blank->new($1) :
@@ -208,6 +209,23 @@ sub add_hashref {
 			}
 		}
 	}
+	$self->end_bulk_ops();	
+}
+
+=item C<< add_iterator ( $iter ) >>
+
+Add triples from the statement iteratorto the model.
+
+=cut
+
+sub add_iterator {
+	my $self	= shift;
+	my $iter	= shift;
+	$self->begin_bulk_ops();
+	while (my $st = $iter->next) {
+		$self->add_statement( $st );
+	}
+	$self->end_bulk_ops();	
 }
 
 =item C<< add_list ( @elements ) >>
@@ -445,6 +463,17 @@ sub get_statements {
 	my $self	= shift;
 	$self->end_bulk_ops();
 	
+	my @pos	= qw(subject predicate object graph);
+	foreach my $i (0 .. $#_) {
+		my $n	= $_[$i];
+		next unless defined($n);	# undef is OK
+		next if (blessed($n) and $n->isa('RDF::Trine::Node'));	# node objects are OK
+		my $pos	= $pos[$i];
+		local($Data::Dumper::Indent)	= 0;
+		my $ser	= Data::Dumper->Dump([$n], [$pos]);
+		throw RDF::Trine::Error::MethodInvocationError -text => "get_statements called with a value that isn't undef or a node object: $ser";
+	}
+	
 	if (scalar(@_) >= 4) {
 		my $graph	= $_[3];
 		if (blessed($graph) and $graph->isa('RDF::Trine::Node::Resource') and $graph->uri_value eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
@@ -475,6 +504,7 @@ sub get_pattern {
 	my $bgp		= shift;
 	my $context	= shift;
 	my @args	= @_;
+	my %args	= @args;
 	
 	$self->end_bulk_ops();
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
@@ -492,7 +522,46 @@ sub get_pattern {
 	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
-		return $self->_get_pattern( $bgp, $context, @args );
+		if ($bgp->isa('RDF::Trine::Pattern')) {
+			$bgp	= $bgp->sort_for_join_variables();
+		}
+		my $iter	= $self->_get_pattern( $bgp, $context );
+		if (my $ob = $args{orderby}) {
+			my @order	= @$ob;
+			if (scalar(@order) % 2) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "Invalid arguments to orderby argument in get_pattern";
+			}
+			
+			my @results	= $iter->get_all();
+			my $order_vars	= scalar(@order) / 2;
+			my %seen;
+			foreach my $r (@results) {
+				foreach my $var (keys %$r) {
+					$seen{$var}++;
+				}
+			}
+			
+			@results	= sort {
+				my $r	= 0;
+				foreach my $i (0 .. ($order_vars-1)) {
+					my $var	= $order[$i*2];
+					my $rev	= ($order[$i*2+1] =~ /DESC/i);
+					$r	= RDF::Trine::Node::compare( $a->{$var}, $b->{$var} );
+					$r	*= -1 if ($rev);
+					last if ($r);
+				}
+				$r;
+			} @results;
+			
+			my @sortedby;
+			foreach my $i (0 .. ($order_vars-1)) {
+				my $var	= $order[$i*2];
+				my $dir	= $order[$i*2+1];
+				push(@sortedby, $var, $dir) if ($seen{$var});
+			}
+			$iter	= RDF::Trine::Iterator::Bindings->new(\@results, undef, sorted_by => \@sortedby);
+		}
+		return $iter;
 	}
 }
 
@@ -526,7 +595,10 @@ sub _get_pattern {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
 		}
-		my $iter	= $self->get_statements( @nodes, $context, @args );
+		if ($context) {
+			$nodes[3]	= $context;
+		}
+		my $iter	= $self->get_statements( @nodes );
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
@@ -536,9 +608,9 @@ sub _get_pattern {
 		};
 		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
-		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
-		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+		my $t		= pop(@triples);
+		my $rhs	= $self->_get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->_get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
 		while (my $row = $rhs->next) {
 			push(@inner, $row);
@@ -652,33 +724,7 @@ library for PHP.
 sub as_hashref {
 	my $self	= shift;
 	$self->end_bulk_ops();
-	my $stream	= $self->as_stream;
-	my $index = {};
-	while (my $statement = $stream->next) {
-		
-		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
-			('_:'.$statement->subject->blank_identifier) :
-			$statement->subject->uri ;
-		my $p = $statement->predicate->uri ;
-		
-		my $o = {};
-		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}		= 'literal';
-			$o->{'value'}		= $statement->object->literal_value;
-			$o->{'lang'}		= $statement->object->literal_value_language
-				if $statement->object->has_language;
-			$o->{'datatype'}	= $statement->object->literal_datatype
-				if $statement->object->has_datatype;
-		} else {
-			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
-				('_:'.$statement->object->blank_identifier) :
-				$statement->object->uri ;
-		}
-
-		push @{ $index->{$s}->{$p} }, $o;
-	}
-	return $index;
+	return $self->as_stream->as_hashref;
 }
 
 =item C<< as_graphviz >>
@@ -979,13 +1025,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -20,8 +20,10 @@ REQUIREMENTS
 
 	To install RDF::Trine you'll need the following perl modules installed:
 
+     * Algorithm::Combinatorics
      * Data::UUID
      * DBI
+     * DBIx::Connector
      * DBD::SQLite
      * Digest::MD5
      * Error
@@ -32,7 +34,6 @@ REQUIREMENTS
      * List::MoreUtils
      * Log::Log4perl
      * Math::BigInt
-     * Math::Combinatorics
      * Scalar::Util
      * Set::Scalar
      * Text::CSV
@@ -66,6 +67,129 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 0.140 (2012-05-08)
+
+     * API CHANGES
+         Removed default get_pattern implementation in RDF::Trine::Store.
+     * BUG FIXES
+         Added missing import of looks_like_number function in RDF::Trine::Node::Literal.
+     * ENHANCEMENTS
+         Added RDF::Trine::Pattern->sort_for_join_variables method to prevent unnecessary cartesian joins.
+         Added optional content_cb callback argument to RDF::Trine::Parser->parse_url_into_model.
+
+  Version 0.139 (2012-04-11)
+
+     * API CHANGES
+         Made server a required configuration key in RDF::Trine::Store::Redis.
+     * BUG FIXES
+         Fixed interaction of peek() and finished() in RDF::Trine::Iterator.
+         Fixed use of iterator finished method in RDF::Trine::Iterator::Bindings->as_json.
+         Fixed use of iterator finished method in RDF::Trine::Store::Hexastore->get_pattern.
+         Fixed bug when RDF::Trine::Iterator->finished is called before an (empty) iterator is used.
+         Fixed fallback parsing bug in RDF::Trine::Parser->parse_url_into_model.
+         Fixed PostgreSQL capitalization bug (patch from https://rt.cpan.org/Ticket/Display.html?id=71890 applied by Kjetil Kjernsmo).
+     * NEW FEATURES
+         Added RDF::Trine::Serializer::NQuads->statement_as_string method.
+     * ENHANCEMENTS
+         Added 'scoped_namespaces' constructor argument to RDF::Trine::Serializer::RDFXML to serialize only necessary namespace declarations. (github issue 33).
+         Initialize Log4perl only if it isn't initialized already (pull request 57 from kba).
+     * OTHER
+         Fixed expected result count in Test::RDF::Trine::Store->get_pattern_tests.
+         Simplified code in t/store-hexastore-pattern.t.
+         Added tests for RDF::Trine::Iterator->peek.
+         Adding some get_pattern tests to the Store tests (Kjetil Kjernsmo).
+         Replaced references to RDFQUERY_NO_REDLAND environment variable with proper RDFTRINE_NO_REDLAND.
+         Allow suppressing RDF::Redland use if the RDFQUERY_NO_REDLAND environment variable is set.
+         Removed erroneous copies of RDF::Trine::Store::DBI::Pg->init method.
+         Add pg tests (Kjetil Kjernsmo).
+
+  Version 0.138 (2012-01-25)
+
+     * BUG FIXES
+         Fixed error-handling syntax bug in RDF::Trine::Parser->parse_url_into_model.
+     * NEW FEATURES
+         Make Hexastore support etag.
+     * ENHANCEMENTS
+         Croak rather than die in some places and use logdie in one place.
+     * OTHER
+         Fix documentation typos from fschlich@zedat.fu-berlin.de.
+         Improved performance of Redis store with use of variadic functions.
+         Added store tests for literals including utf-8 handling and languages.
+
+  Version 0.137 (2011-12-20)
+
+     * API CHANGES
+         Trying to instantiate a resource node with the Nil IRI results in the Nil node object.
+     * BUG FIXES
+         Fixed unicode escaping issues in RDF::Trine::Serializer::Turtle (bugreport from nichtich <4EB7B9BE.8000205@gbv.de>).
+         Fixed RDF::Trine::Parser::Turtle to properly unescape percent-encoded URIs.
+         Fixed RDF::Trine::Statement->from_redland to properly unescape percent-encoded URIs.
+         Only set parser metadata if RDF::RDFa::Parser is available (github issue 32 from nichtich).
+         Added PostgreSQL-specific init method to handle case sensitivity of table names (RT#71890 from John Nicholas Whitley).
+     * NEW FEATURES
+         Implement RDF::Trine::Store::Hexastore->nuke (KjetilK).
+         Added initial code for a Redis-based store.
+         Added serialize_node method to RDF::Trine::Serializer::NTriples and RDF::Trine::Serializer::Turtle.
+         Added parse_node method to RDF::Trine::Parser::NTriples.
+     * ENHANCEMENTS
+         Create a fallback-implementation of remove_statements in Store.pm  (KjetilK).
+         Updated RDF::Trine::Graph to use Algorithm::Combinatorics for memory/speed improvements (instead of Math::Combinatorics).
+     * OTHER
+         Support triple-only stores in the test suite (patches from KjetilK).
+         Added missing POD to RDF::Trine::Store::DBI::Pg and RDF::Trine::Store::Redis.
+         Check the Perl version when running Tiny::UUID (KjetilK).
+         RDF::Trine::Parser now attempts to use Data::UUID before UUID::Tiny in bnode ID generation (based on test failures).
+
+  Version 0.136 (2011-10-19)
+
+     * API CHANGES
+         Removed RDF::Trine::Iterator::SAXHandler->rate method and dropped dependency on Time::HiRes.
+         Consolidated bnode prefix handling in parser classes, adding support for UUID::Tiny.
+     * BUG FIXES
+         Fixed escaping of URIs in rdf:about attributes (patch from SADI Framework).
+         Return an empty string instead of undef in RDF::Trine::Iterator->format_node_xml.
+         Fixed RDF::Trine::Store::SPARQL->count_statements handling of variables.
+         Fixed turtle serializer to check if numerics are in canonical form.
+         Fixed mysql schema to quote index names that might contain reserved characters.
+         Fix RDF::Trine::Model->get_statements to throw an error when called with arguments that aren't either undef or node objects.
+         Fixed titlecase of table reference in RDF::Trine::Store::DBI::mysql->init.
+         Fixed bug in use of UUID::Tiny::UUID_V1 bareword in RDF::Trine::Parser->new_bnode_prefix.
+     * NEW FEATURES
+         Initial support for using Dydra as a store.
+         Added RDF::Trine::Parser::Turtle->parse_node method.
+         Added RDF::Trine::Node::Literal->is_canonical_lexical_form.
+         Made RDF::Trine::Serializer::NTriples->statement_as_string a public method.
+         RDF::Trine::Parser->parse_url_into_model now fill properly fall back on guesswork when media-type parsing fails.
+         Moved as_hashref functionality from RDF::Trine::Model to RDF::Trine::Iterator::Graph.
+         Added TSV serializer.
+     * ENHANCEMENTS
+         Allow empty namespace prefix in RDF::Trine::NamespaceMap (patch from Jakob Voss).
+         Added text/html media type, and added use of Module::Load::Conditional in RDF::Trine::Parser::RDFa.
+         Added support of SPARQL endpoints with URL parameters like Virtuoso's 'http://example.org:8890/sparql?default-graph-uri=...' (patch from Jakob Voss).
+         Updated RDF::Trine::Store::DBI to use DBIx::Connector.
+     * OTHER
+         Added option to sleep after each store update in Test::RDF::Trine::Store.
+         Fixed code in RDF::Trine::Store::SPARQL that was causing a warning when a variable name was redefined.
+         Updated RDF::Trine::Store::DBI::mysql->_add_node to return the node hash value.
+         Stop RDF::Trine::Store::DBI->add_statement from unnecessarily hashing nodes multiple times (patch from tobyink).
+         Moved redland store tests to developer xt directory.
+         Updated t/serializer-turtle.t to be more accepting of stores returning data in varying orders.
+         Removed 'or die' conditional from store tests.
+         Changed test endpoint from kasei.us to myrdf.us.
+         Added simple store tests for bulk_ops in Test::RDF::Trine::Store.
+         Removed heavy dependency on DBI store in test cases.
+         Require RDF::Redland 1.0.7.1 in xt/store-redland.t.
+         Add missing use of RDF::Trine::Statement::Quad.
+         Conditionally load DBI store, and return Memory store from temporary_store().
+         Removed dependency on Unicode::Escape.
+         Made XML::LibXML an optional dependency (RDF/XML parser will not perform c14n if it is not installed)
+         Updated RDF::Trine::Store::Memory to use Digest::SHA instead of Digest::MD5.
+         Removed depedency on List::MoreUtils.
+         Added POD for Test::RDF::Trine::Store->update_sleep.
+         Added POD for RDF::Trine::Serializer::NTriples->statement_as_string.
+         Removed depedency on Unicode::String and List::MoreUtils.
+         Removed unnecessary use statements.
 
   Version 0.135 (2011-04-30)
 

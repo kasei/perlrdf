@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.135
+This document describes RDF::Trine version 0.140
 
 =head1 SYNOPSIS
 
@@ -48,24 +48,28 @@ use Module::Load::Conditional qw[can_load];
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
 	
-	can_load( modules => {
-		'RDF::Redland'					=> undef,
-		'RDF::Trine::Store::Redland'	=> undef,
-		'RDF::Trine::Parser::Redland'	=> undef,
-	} );
+	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		can_load( modules => {
+			'RDF::Redland'					=> undef,
+			'RDF::Trine::Store::Redland'	=> undef,
+			'RDF::Trine::Parser::Redland'	=> undef,
+		} );
+	}
 }
 
 use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
 use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+if (! Log::Log4perl::initialized() ) {
+    Log::Log4perl->easy_init($ERROR);
+}
 
 use RDF::Trine::Graph;
 use RDF::Trine::Parser;
@@ -76,7 +80,6 @@ use RDF::Trine::Namespace;
 use RDF::Trine::NamespaceMap;
 use RDF::Trine::Iterator;
 use RDF::Trine::Store;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
@@ -173,8 +176,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
@@ -186,7 +189,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

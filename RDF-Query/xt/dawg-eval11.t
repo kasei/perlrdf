@@ -13,6 +13,8 @@ use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
 use Math::Combinatorics qw(permute);
 use LWP::MediaTypes qw(add_type);
+use Text::CSV;
+use Regexp::Common qw /URI/;
 
 add_type( 'application/rdf+xml' => qw(rdf xrdf rdfx) );
 add_type( 'text/turtle' => qw(ttl) );
@@ -28,12 +30,18 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-# use RDF::Redland;
+use RDF::Endpoint;
+use Carp;
+use HTTP::Request;
+use HTTP::Response;
+use HTTP::Message::PSGI;
+
+$RDF::Query::Plan::PLAN_CLASSES{'service'}	= 'Test::RDF::Query::Plan::Service';
 
 ################################################################################
 # Log::Log4perl::init( \q[
 # 	log4perl.category.rdf.query.plan.service		= TRACE, Screen
-# #	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
+# # 	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
 # 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
 # 	log4perl.appender.Screen.stderr			= 0
 # 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
@@ -66,6 +74,7 @@ while (defined(my $opt = shift)) {
 	}
 }
 
+$ENV{RDFQUERY_THROW_ON_SERVICE}	= 1;
 
 no warnings 'once';
 
@@ -78,24 +87,31 @@ warn "PATTERN: ${PATTERN}\n" if ($PATTERN and $debug);
 my $model		= RDF::Trine::Model->temporary_model;
 my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
+		add
 		aggregates
 		basic-update
 		bind
 		bindings
 		clear
 		construct
+		copy
+		csv-tsv-res
 		delete
 		delete-data
 		delete-insert
 		delete-where
 		drop
+		exists
 		functions
 		grouping
 		json-res
+		move
 		negation
 		project-expression
 		property-path
+		service
 		subquery
+		update-silent
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
@@ -104,6 +120,7 @@ foreach my $file (@manifests) {
 warn "done parsing manifests" if $debug;
 
 my $earl	= init_earl( $model );
+my $rs		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/result-set#');
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 my $ut		= RDF::Trine::Namespace->new('http://www.w3.org/2009/sparql/tests/test-update#');
 my $rq		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-query#');
@@ -116,7 +133,9 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 		my ($list)	= $model->objects( $m, $mf->entries );
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
-			if ($model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest)) {
+			my $et	= $model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest);
+			my $ct	= $model->count_statements($test, $rdf->type, $mf->CSVResultFormatTest);
+			if ($et + $ct) {
 				my ($name)	= $model->objects( $test, $mf->name );
 				unless ($test->uri_value =~ /$PATTERN/) {
 					next;
@@ -255,6 +274,10 @@ sub update_eval_test {
 		}
 	}
 	
+	if ($debug) {
+		warn "Dataset before update operation:\n";
+		warn $test_model->as_string;
+	}
 	my $ok	= 0;
 	eval {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
@@ -264,7 +287,6 @@ sub update_eval_test {
 		}
 		
 		my ($plan, $ctx)	= $query->prepare( $test_model );
-		$plan				= fixup_plan( $query, $plan, $ctx );
 		$query->execute_plan( $plan, $ctx );
 		
 		my $test_graph		= RDF::Trine::Graph->new( $test_model );
@@ -280,7 +302,9 @@ sub update_eval_test {
 		}
 	};
 	if ($@ or not($ok)) {
-		fail($test->as_string);
+		if ($@) {
+			fail($test->as_string);
+		}
 		earl_fail_test( $earl, $test, $@ );
 		print "# failed: " . $test->as_string . "\n";
 	} else {
@@ -302,6 +326,7 @@ sub query_eval_test {
 	my ($queryd)	= $model->objects( $action, $rq->query );
 	my ($data)		= $model->objects( $action, $rq->data );
 	my @gdata		= $model->objects( $action, $rq->graphData );
+	my @sdata		= $model->objects( $action, $rq->serviceData );
 	
 	if ($STRICT_APPROVAL) {
 		unless ($approved) {
@@ -331,6 +356,29 @@ sub query_eval_test {
 		warn "# result     : " . $result->as_string;
 		warn "# requires   : " . $req->as_string if (blessed($req));
 	}
+	
+	
+# 	warn 'service data: ' . Dumper(\@sdata);
+	foreach my $sd (@sdata) {
+		my ($url)	= $model->objects( $sd, $rq->endpoint );
+		print STDERR "setting up remote endpoint $url...\n" if ($debug);
+		my ($data)		= $model->objects( $sd, $rq->data );
+		my @gdata		= $model->objects( $sd, $rq->graphData );
+		if ($debug) {
+			warn "- data       : " . $data->as_string if (blessed($data));
+			warn "- graph data : " . $_->as_string for (@gdata);
+		}
+		my $model		= RDF::Trine::Model->new();
+		if ($data) {
+			RDF::Trine::Parser->parse_url_into_model( $data->uri_value, $model );
+		}
+		$Test::RDF::Query::Plan::Service::service_ctx{ $url->uri_value }	= $model;
+	}
+	
+	
+	
+	
+	
 	
 	print STDERR "constructing model... " if ($debug);
 	my ($test_model)	= RDF::Trine::Model->temporary_model;
@@ -406,11 +454,11 @@ sub add_to_model {
 }
 
 sub get_actual_results {
-	my $model	= shift;
-	my $sparql	= shift;
-	my $base	= shift;
-	my @gdata	= @_;
-	my $query	= RDF::Query->new( $sparql, { base => $base, lang => 'sparql11', load_data => 1 } );
+	my $model		= shift;
+	my $sparql		= shift;
+	my $base		= shift;
+	my @gdata		= @_;
+	my $query		= RDF::Query->new( $sparql, { base => $base, lang => 'sparql11', load_data => 1 } );
 	
 	unless ($query) {
 		warn RDF::Query->error if ($debug or $PATTERN);
@@ -421,7 +469,9 @@ sub get_actual_results {
 	my $rmodel	= RDF::Trine::Model->temporary_model;
 	
 	my ($plan, $ctx)	= $query->prepare_with_named_graphs( $model, @gdata );
-	$plan				= fixup_plan( $query, $plan, $ctx );
+	if ($args{plan}) {
+		warn $plan->explain('  ', 0);
+	}
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
@@ -448,14 +498,24 @@ sub get_expected_results {
 	if ($type eq 'graph') {
 		my $model	= RDF::Trine::Model->temporary_model;
 		RDF::Trine::Parser->parse_url_into_model( "file://$file", $model, canonicalize => 1 );
-		my $stream	= $model->get_statements();
-		return $stream;
+		my $results	= $model->get_statements();
+		if ($args{ results }) {
+			$results	= $results->materialize;
+			warn "Got expected results:\n";
+			warn $results->as_string;
+		}
+		return $results;
 	} elsif ($file =~ /[.](srj|json)/) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
 		my $results	= RDF::Trine::Iterator->from_json( $data, { canonicalize => 1 } );
 		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
-			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
+			my $value	= $results->next;
+			my $bool	= ($value ? 'true' : 'false');
+			$model->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
+			if ($args{ results }) {
+				warn "Got expected result: $bool\n";
+			}
 			return $model->get_statements;
 		} else {
 			if ($args{ results }) {
@@ -480,8 +540,94 @@ sub get_expected_results {
 			}
 			return binding_results_data( $results );
 		}
+	} elsif ($file =~ /[.]csv/) {
+		my $csv	= Text::CSV->new({binary => 1});
+		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
+		my $header	= $csv->getline($fh);
+		my @vars	= @$header;
+		my @data;
+		while (my $row = $csv->getline($fh)) {
+			my %result;
+			foreach my $i (0 .. $#vars) {
+				my $var		= $vars[$i];
+				my $value	= $row->[ $i ];
+				# XXX @@ heuristics that won't always work.
+				# XXX @@ expected to work on the test suite, though
+				if ($value =~ /^_:(\w+)$/) {
+					$value	= blank($1);
+				} elsif ($value =~ /$RE{URI}/) {
+					$value	= iri($value);
+				} elsif (defined($value) and length($value)) {
+					$value	= literal($value);
+				}
+				$result{ $var }	= $value;
+			}
+			push(@data, \%result);
+		}
+		if ($args{ results }) {
+			warn "Got expected results:\n";
+			warn Dumper(\@data);
+		}
+		return \@data;
+	} elsif ($file =~ /[.]tsv/) {
+		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
+		my $header	= <$fh>;
+		chomp($header);
+		my @vars	= split("\t", $header);
+		foreach (@vars) { s/[?]// }
+		
+		my @data;
+		my $parser	= RDF::Trine::Parser::Turtle->new();
+		while (defined(my $line = <$fh>)) {
+			chomp($line);
+			my $row	= [ split("\t", $line) ];
+			my %result;
+			foreach my $i (0 .. $#vars) {
+				my $var		= $vars[$i];
+				my $value	= $row->[ $i ];
+				my $node	= length($value) ? $parser->parse_node( $value ) : undef;
+				$result{ $var }	= $node;
+			}
+			
+			push(@data, RDF::Query::VariableBindings->new( \%result ));
+		}
+		my $iter	= RDF::Trine::Iterator::Bindings->new(\@data);
+		return binding_results_data($iter);
+	} elsif ($file =~ /[.]ttl/) {
+		my $model	= RDF::Trine::Model->new();
+		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
+		my $base	= 'file://' . File::Spec->rel2abs($file);
+		my $parser	= RDF::Trine::Parser->new('turtle');
+		$parser->parse_file_into_model( $base, $file, $model );
+		my ($res)	= $model->subjects( $rdf->type, $rs->ResultSet );
+		if (my($b) = $model->objects( $res, $rs->boolean )) {
+			my $bool	= $b->literal_value;
+			my $rmodel	= RDF::Trine::Model->new();
+			$rmodel->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
+			if ($args{ results }) {
+				warn "Got expected result: $bool\n";
+			}
+			return $rmodel->get_statements;
+		} else {
+			my @vars	= $model->objects( $res, $rs->resultVariable );
+			my @sols	= $model->objects( $res, $rs->solution );
+			my @names	= map { $_->literal_value } @vars;
+			my @bindings;
+			foreach my $r (@sols) {
+				my %data;
+				my @b	= $model->objects( $r, $rs->binding );
+				foreach my $b (@b) {
+					my ($value)	= $model->objects( $b, $rs->value );
+					my ($var)	= $model->objects( $b, $rs->variable );
+					$data{ $var->literal_value }	= $value;
+				}
+				push(@bindings, RDF::Trine::VariableBindings->new( \%data ));
+			}
+			my $iter	= RDF::Trine::Iterator::Bindings->new( \@bindings, \@names );
+			return binding_results_data($iter);
+		}
 	} else {
-		die;
+		die "Unrecognized type of expected results: $file";
 	}
 }
 
@@ -492,11 +638,32 @@ sub compare_results {
 	my $test		= shift;
 	my $comment		= shift || do { my $foo; \$foo };
 	my $TODO		= shift;
+	
+	
+	
+	my $lossy_cmp	= 0;
+	if (reftype($expected) eq 'ARRAY') {
+		# comparison with expected results coming from a lossy format like csv/tsv
+		$lossy_cmp	= 1;
+		my %data	= (results => [], blank_identifiers => {});
+		foreach my $row (@$expected) {
+			push(@{ $data{ results } }, $row );
+			foreach my $key (keys %$row) {
+				my $node	= $row->{$key};
+				if (blessed($node) and $node->isa('RDF::Trine::Node::Blank')) {
+					$data{ blank_identifiers }{ $node->blank_identifier }++;
+				}
+			}
+		}
+		$data{ blanks }	= scalar(@{ [ keys %{ $data{ blank_identifiers } } ] });
+		$expected	= \%data;
+	}
+	
 	if (not(ref($actual))) {
 		my $ok	= is( $actual, $expected, $test );
 		return $ok;
 	} elsif (blessed($actual) and $actual->isa('RDF::Trine::Iterator::Graph')) {
-		die unless (blessed($expected) and $expected->isa('RDF::Trine::Iterator::Graph'));
+		die "Unexpected Graph result type (was expecting " . ref($expected) . ")" unless (blessed($expected) and $expected->isa('RDF::Trine::Iterator::Graph'));
 		
 		my $act_graph	= RDF::Trine::Graph->new( $actual );
 		my $exp_graph	= RDF::Trine::Graph->new( $expected );
@@ -516,7 +683,7 @@ sub compare_results {
 			warn $act_graph->error;
 		}
 		return is( $eq, 1, $test );
-	} elsif (reftype($actual) eq 'HASH') {
+	} elsif (reftype($actual) eq 'HASH' and reftype($expected) eq 'HASH') {
 		my @aresults	= @{ $actual->{ results } };
 		my @eresults	= @{ $expected->{ results } };
 		my $acount		= scalar(@aresults);
@@ -532,14 +699,14 @@ sub compare_results {
 		my ($ewith, $ewithout)	= split_results_with_blank_nodes( @eresults );
 
 		# for the results without blanks, just serialize, sort, and compare
-		my @astrings	= sort map { result_to_string($_) } @$awithout;
-		my @estrings	= sort map { result_to_string($_) } @$ewithout;
+		my @astrings	= sort map { result_to_string($_, $lossy_cmp) } @$awithout;
+		my @estrings	= sort map { result_to_string($_, $lossy_cmp) } @$ewithout;
 		
 		if ($actual->{ blanks } == 0 and $expected->{ blanks } == 0) {
 			return is_deeply( \@astrings, \@estrings, $test );
 		} elsif (join("\xFF", @astrings) ne join("\xFF", @estrings)) {
 			warn "triples don't match: " . Dumper(\@astrings, \@estrings);
-			fail($test);
+			return fail($test);
 		}
 		
 		# compare the results with bnodes
@@ -551,7 +718,7 @@ sub compare_results {
 			@mapping{ @ka }	= @$mapping;
 			warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 			
-			my %ewith	= map { result_to_string($_) => 1 } @$ewith;
+			my %ewith	= map { result_to_string($_, $lossy_cmp) => 1 } @$ewith;
 			foreach my $row (@$awith) {
 				my %row;
 				foreach my $k (keys %$row) {
@@ -565,7 +732,7 @@ sub compare_results {
 						$row{ $k }	= $n;
 					}
 				}
-				my $mapped_row	= result_to_string( RDF::Query::VariableBindings->new( \%row ) );
+				my $mapped_row	= result_to_string( RDF::Query::VariableBindings->new( \%row ), $lossy_cmp );
 				warn "checking for '$mapped_row' in " . Dumper(\%ewith) if ($debug);
 				if ($ewith{ $mapped_row }) {
 					delete $ewith{ $mapped_row };
@@ -580,7 +747,7 @@ sub compare_results {
 		warn "failed to find bnode mapping: " . Dumper($awith, $ewith);
 		return fail($test);
 	} else {
-		die Dumper($actual, $expected);
+		die "Failed to compare actual and expected results: " . Dumper($actual, $expected);
 	}
 }
 
@@ -617,29 +784,109 @@ sub split_results_with_blank_nodes {
 }
 
 sub result_to_string {
-	my $row		= shift;
-	my @keys	= grep { ref($row->{ $_ }) } keys %$row;
+	my $row			= shift;
+	my $lossy_cmp	= shift;
+	my @keys		= grep { ref($row->{ $_ }) } keys %$row;
 	my @results;
+	
 	foreach my $k (@keys) {
 		my $node	= $row->{ $k };
 		if ($node->isa('RDF::Trine::Node::Literal') and $node->has_datatype) {
-			my $value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
-			$node		= RDF::Query::Node::Literal->new( $value, undef, $node->literal_datatype );
+			my ($value, $dt);
+			if ($lossy_cmp) {
+				$value	= $node->literal_value;
+				$dt		= undef;
+			} else {
+				$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
+				$dt		= $node->literal_datatype;
+			}
+			$node		= RDF::Query::Node::Literal->new( $value, undef, $dt );
 		}
 		push(@results, join('=', $k, $node->as_string));
 	}
 	return join(',', sort(@results));
 }
 
-sub fixup_plan {
-	my $query	= shift;
-	my $plan	= shift;
-	my $ctx		= shift;
+package Test::RDF::Query::Plan::Service;
+
+use strict;
+use warnings;
+use Data::Dumper;
+use Scalar::Util qw(refaddr);
+use base qw(RDF::Query::Plan::Service);
+
+our %ENDPOINTS;
+our %service_ctx;
+
+sub new {
+	my $class		= shift;
+	my $endpoint	= shift;
+	my $plan		= shift;
+	my $silent		= shift;
+	my $sparql		= shift;
 	
-	my @services	= $plan->subplans_of_type('RDF::Query::Plan::Service');
-	foreach my $p (@services) {
-		$p->endpoint('http://myrdf.us/sparql11');
+	if ($endpoint->isa('RDF::Query::Node::Resource')) {
+		my $uri			= $endpoint->uri_value;
+		warn "setting up mock endpoint for $uri" if ($debug);
 	}
 	
-	return $plan;
+	my $self	= $class->SUPER::new( $endpoint, $plan, $silent, $sparql, @_ );
+	
+	if ($endpoint->isa('RDF::Query::Node::Resource')) {
+		my $uri			= $endpoint->uri_value;
+		my $e			= URI->new($uri);
+		my $model 		= $service_ctx{ $uri };
+# 		warn "model for $uri: $model";
+		if ($model) {
+			my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
+			$ENDPOINTS{ refaddr($self) }	= $end;
+		}
+	}
+	
+	return $self;
+}
+
+# sub mock {
+# 	my $self		= shift;
+# 	return;
+# 	my $endpoint	= shift;
+# 	my $data		= shift;
+# 	my $e			= URI->new($endpoint);
+# 	
+# 	my $model		= RDF::Trine::Model->new();
+# 	my ($default, $named)	= @$data;
+# 	if ($default) {
+# 		RDF::Trine::Parser->parse_url_into_model( $default->uri_value, $model );
+# 		my $end		= RDF::Endpoint->new( $model, { endpoint => { endpoint_path => $e->path } } );
+# 		$ENDPOINTS{ refaddr($self) }	= $end;
+# 	}
+# }
+
+sub _request {
+	my $self	= shift;
+	my $ua		= shift;
+	my $req		= shift;
+	my $env		= $req->to_psgi;
+	my $end		= $ENDPOINTS{ refaddr($self) };
+	if ($end) {
+# 		warn "got mocked endpoint";
+		my $app			= sub {
+			my $env 	= shift;
+			my $req 	= Plack::Request->new($env);
+			my $resp	= $end->run( $req );
+			return $resp->finalize;
+		};
+		my $data	= $app->( $env );
+		my $resp	= HTTP::Response->from_psgi( $data );
+		return $resp;
+	} else {
+# 		warn "no mocked endpoint available";
+		return HTTP::Response->new(403);
+	}
+}
+
+sub DESTROY {
+	my $self	= shift;
+	delete $ENDPOINTS{ refaddr($self) };
+	$self->SUPER::DESTROY();
 }

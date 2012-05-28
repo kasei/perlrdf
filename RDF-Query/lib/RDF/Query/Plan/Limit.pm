@@ -7,7 +7,7 @@ RDF::Query::Plan::Limit - Executable query plan for Limits.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Limit version 2.907.
+This document describes RDF::Query::Plan::Limit version 2.908.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -53,6 +53,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "LIMIT plan can't be executed while already open";
 	}
@@ -82,6 +83,9 @@ sub next {
 	my $row		= $plan->next;
 	return undef unless ($row);
 	$self->[0]{count}++;
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
+	}
 	return $row;
 }
 

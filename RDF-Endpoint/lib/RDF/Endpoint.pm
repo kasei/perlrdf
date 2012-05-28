@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.04.
+This document describes RDF::Endpoint version 0.05.
 
 =head1 SYNOPSIS
 
@@ -55,6 +55,16 @@ included for execution. The boolean values 'default' and 'named_graphs' indicate
 that the respective SPARQL dataset graphs should be described by the service
 description.
 
+=item html
+
+An associative array (hash) containing details on how results should be
+serialized when the output media type is HTML. The boolean value 'resource_links'
+specifies whether URI values should be serialized as HTML anchors (links).
+The boolean value 'embed_images' specifies whether URI values that are typed as
+foaf:Image should be serialized as HTML images. If 'embed_images' is true, the
+integer value 'image_width' specifies the image width to be used in the HTML
+markup (letting the image height scale appropriately).
+
 =back
 
 =back
@@ -93,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.04';
+our $VERSION	= '0.05';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -109,11 +119,13 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator 0.101;
+use RDF::RDFa::Generator 0.102;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
+use Fcntl qw(:flock SEEK_END);
+use Carp qw(croak);
 
 
 my $NAMESPACES	= {
@@ -151,6 +163,7 @@ sub new {
 		my $store	= RDF::Trine::Store->new( $config->{store} );
 		$model		= RDF::Trine::Model->new( $store );
 	}
+	
 	unless ($config->{endpoint}) {
 		$config->{endpoint}	= { %$config };
 	}
@@ -173,8 +186,9 @@ an appropriate Plack::Response object.
 sub run {
 	my $self	= shift;
 	my $req		= shift;
+	
 	my $config	= $self->{conf};
-	my $endpoint_path = $config->{endpoint}->{endpoint_path} || '/sparql';
+	my $endpoint_path = $config->{endpoint}{endpoint_path} || '/sparql';
 	$config->{resource_links}	= 1 unless (exists $config->{resource_links});
 	my $model	= $self->{model};
 	
@@ -186,7 +200,7 @@ sub run {
 		my $dir		= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 		my $file	= File::Spec->catfile($dir, 'www', $path);
 		if (-r $file) {
-			open( my $fh, '<', $file ) or die $!;
+			open( my $fh, '<', $file ) or croak $!;
 			$response->status(200);
 			$content	= $fh;
 		} else {
@@ -201,7 +215,6 @@ END
 		return $response;
 	}
 	
-	
 	my $headers	= $req->headers;
 	my $type	= $headers->header('Accept') || 'application/sparql-results+xml';
 	if (my $t = $req->param('media-type')) {
@@ -213,20 +226,56 @@ END
 	
 	my $sparql;
 	my $ct	= $req->header('Content-type');
-	if (defined($ct) and $ct eq 'application/sparql-query') {
+	if ($req->method !~ /^(GET|POST)$/i) {
+		my $method	= uc($req->method);
+		$content	= "Unexpected method $method (expecting GET or POST)";
+		$self->log_error( $req, $content );
+		my $code	= 405;
+		$response->status("$code Method Not Allowed");
+		$response->body($content);
+		goto CLEANUP;
+	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
 		$sparql	= $req->content;
 	} elsif (defined($ct) and $ct eq 'application/sparql-update') {
 		if ($config->{endpoint}{update} and $req->method eq 'POST') {
 			$sparql	= $req->content;
 		}
 	} elsif ($req->param('query')) {
-		$sparql = $req->param('query');
+		my @sparql	= $req->param('query');
+		if (scalar(@sparql) > 1) {
+			$content	= "More than one query string submitted";
+			$self->log_error( $req, $content );
+			my $code	= 400;
+			$response->status("$code Multiple Query Strings");
+			$response->body($content);
+			goto CLEANUP;
+		} else {
+			$sparql = $sparql[0];
+		}
 	} elsif ($req->param('update')) {
+		my @sparql	= $req->param('update');
+		if (scalar(@sparql) > 1) {
+			$content	= "More than one update string submitted";
+			$self->log_error( $req, $content );
+			my $code	= 400;
+			$response->status("$code Multiple Update Strings");
+			$response->body($content);
+			goto CLEANUP;
+		}
+		
 		if ($config->{endpoint}{update} and $req->method eq 'POST') {
-			$sparql = $req->param('update');
+			$sparql = $sparql[0];
+		} elsif ($req->method ne 'POST') {
+			my $method	= $req->method;
+			$content	= "Update operations must use POST";
+			$self->log_error( $req, $content );
+			my $code	= 405;
+			$response->status("$code $method Not Allowed for Update Operation");
+			$response->body($content);
+			goto CLEANUP;
 		}
 	}
-
+	
 	my $ns = merge $config->{namespaces}, $NAMESPACES;
 
 	if ($sparql) {
@@ -258,6 +307,7 @@ END
 		
 		my $base	= $req->base;
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
+		$self->log_query( $req, $sparql );
 		if ($query) {
 			my ($plan, $ctx)	= $query->prepare( $model );
 # 			warn $plan->sse;
@@ -268,11 +318,12 @@ END
 					$response->headers->header( ETag => $etag );
 				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
-					my @variants	= (['text/html', 1.0, 'text/html']);
+					my @variants	= (['text/html', 0.99, 'text/html']);
 					my %media_types	= %RDF::Trine::Serializer::media_types;
 					while (my($type, $sclass) = each(%media_types)) {
 						next if ($type =~ /html/);
-						push(@variants, [$type, 0.99, $type]);
+						my $value	= ($type =~ m#application/rdf[+]xml#) ? 1.00 : 0.98;
+						push(@variants, [$type, $value, $type]);
 					}
 					my $stype	= choose( \@variants, $headers );
 					if ($stype !~ /html/ and my $sclass = $RDF::Trine::Serializer::media_types{ $stype }) {
@@ -316,20 +367,29 @@ END
 					}
 				}
 			} else {
+				my $error	= $query->error;
+				$self->log_error( $req, "$error\t$sparql" );
 				$response->status(500);
 				$response->body($query->error);
 				$content	= RDF::Query->error;
 			}
 		} else {
 			$content	= RDF::Query->error;
+			$self->log_error( $req, $content );
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
-			$response->status($code);
+			my $message	= ($code == 400) ? "Syntax Error" : "Internal Server Error";
+			$response->status("$code $message");
 			$response->body($content);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
 			}
-			warn $content;
 		}
+	} elsif ($req->method eq 'POST') {
+		$content	= "POST without recognized query or update";
+		$self->log_error( $req, $content );
+		my $code	= 400;
+		$response->status("$code Missing SPARQL Query/Update String");
+		$response->body($content);
 	} else {
 		my @variants;
 		my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -360,6 +420,7 @@ END
 		}
 	}
 	
+CLEANUP:
 	my $length	= 0;
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
@@ -445,13 +506,16 @@ sub service_description {
 	foreach my $func (@functions) {
 		$sdmodel->add_statement( statement( $s, $sd->extensionFunction, iri($func) ) );
 	}
+	
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_XML') ) );
+	$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri('http://www.w3.org/ns/formats/SPARQL_Results_JSON') ) );
 	foreach my $format (@formats) {
 		$sdmodel->add_statement( statement( $s, $sd->resultFormat, iri($format) ) );
 	}
 	
 	my $dataset		= blank('dataset');
 	$sdmodel->add_statement( statement( $s, $sd->endpoint, iri('') ) );
-	$sdmodel->add_statement( statement( $s, $sd->defaultDatasetDescription, $dataset ) );
+	$sdmodel->add_statement( statement( $s, $sd->defaultDataset, $dataset ) );
 	$sdmodel->add_statement( statement( $dataset, $rdf->type, $sd->Dataset ) );
 	if (my $d = $config->{endpoint}{service_description}{default}) {
 		my $def_graph	= ($d =~ /^\w+:/) ? iri($d) : blank('defaultGraph');
@@ -496,7 +560,7 @@ sub iter_as_html {
 	my $html;
 
 	if (-r $file) {
-		open( my $fh, '<', $file ) or die $!;
+		open( my $fh, '<', $file ) or croak $!;
 		$html = do { local $/; <$fh>; };
 		close $fh;
 	} else {
@@ -639,6 +703,37 @@ sub node_as_html {
 	}
 }
 
+=item C<< log_query ( $message ) >>
+
+=cut
+
+sub log_query {
+	my $self	= shift;
+	my $req		= shift;
+	my $message	= shift;
+	$self->_log( $req, { level => 'info', message => $message } );
+}
+
+=item C<< log_error ( $message ) >>
+
+=cut
+
+sub log_error {
+	my $self	= shift;
+	my $req		= shift;
+	my $message	= shift;
+	$self->_log( $req, { level => 'error', message => $message } );
+}
+
+sub _log {
+	my $self	= shift;
+	my $req		= shift;
+	my $data	= shift;
+	my $logger	= $req->logger || sub {};
+	
+	$logger->($data);
+}
+
 =end private
 
 =cut
@@ -653,7 +748,7 @@ __END__
 
 =over 4
 
-=item * L<http://www.w3.org/TR/rdf-sparql-protocol/>
+=item * L<http://www.w3.org/TR/sparql11-protocol/>
 
 =item * L<http://www.perlrdf.org/>
 
@@ -669,7 +764,7 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010 Gregory Todd Williams.
+Copyright (c) 2010-2012 Gregory Todd Williams.
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any

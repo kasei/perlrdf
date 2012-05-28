@@ -7,7 +7,59 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.135
+This document describes RDF::Trine::Store version 0.140
+
+=head1 DESCRIPTION
+
+RDF::Trine::Store provides a base class and common API for implementations of
+triple/quadstores for use with the RDF::Trine framework. In general, it should
+be used only be people implementing new stores. For interacting with stores
+(e.g. to read, insert, and delete triples) the RDF::Trine::Model interface
+should be used (using the model as an intermediary between the client/user and
+the underlying store).
+
+To be used by the RDF::Trine framework, store implementations must implement a
+set of required functionality:
+
+=over 4
+
+=item * C<< new >>
+
+=item * C<< get_statements >>
+
+=item * C<< get_contexts >>
+
+=item * C<< add_statement >>
+
+=item * C<< remove_statement >>
+
+=item * C<< count_statements >>
+
+=item * C<< supports >>
+
+=back
+
+Implementations may also provide the following methods if a native
+implementation would be more efficient than the default provided by
+RDF::Trine::Store:
+
+=over 4
+
+=item * C<< get_pattern >>
+
+=item * C<< get_sparql >>
+
+=item * C<< remove_statements >>
+
+=item * C<< size >>
+
+=item * C<< nuke >>
+
+=item * C<< _begin_bulk_ops >>
+
+=item * C<< _end_bulk_ops >>
+
+=back
 
 =cut
 
@@ -23,7 +75,6 @@ use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
 
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::SPARQL;
@@ -32,10 +83,13 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
+	can_load( modules => {
+		'RDF::Trine::Store::DBI'	=> undef,
+	} );
 }
 
 ######################################################################
@@ -196,16 +250,16 @@ Returns a new temporary triplestore (using appropriate default values).
 =cut
 
 sub temporary_store {
-	return RDF::Trine::Store::DBI->temporary_store();
+	return RDF::Trine::Store::Memory->new();
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
+# =item C<< get_pattern ( $bgp [, $context] ) >>
+# 
+# Returns a stream object of all bindings matching the specified graph pattern.
+# 
+# =cut
 
-Returns a stream object of all bindings matching the specified graph pattern.
-
-=cut
-
-sub get_pattern {
+sub _get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
 	my $context	= shift;
@@ -214,6 +268,8 @@ sub get_pattern {
 	
 	if ($bgp->isa('RDF::Trine::Statement')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
+	} else {
+		$bgp	= $bgp->sort_for_join_variables();
 	}
 	
 	my %iter_args;
@@ -232,6 +288,9 @@ sub get_pattern {
 			}
 		}
 		my $_iter	= $self->get_statements( @nodes );
+		if ($_iter->finished) {
+			return RDF::Trine::Iterator::Bindings->new( [], [] );
+		}
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $_iter->next;
@@ -241,7 +300,7 @@ sub get_pattern {
 		};
 		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
+		my $t		= pop(@triples);
 		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
 		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
@@ -380,7 +439,13 @@ Removes the specified C<$statement> from the underlying model.
 
 =cut
 
-sub remove_statements;
+sub remove_statements { # Fallback implementation
+  my $self = shift;
+  my $iterator = $self->get_statements(@_);
+  while (my $st = $iterator->next) {
+    $self->remove_statement($st);
+  }
+}
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 
@@ -435,13 +500,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

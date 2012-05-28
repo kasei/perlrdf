@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.907.
+This document describes RDF::Query::Plan::Filter version 2.908.
 
 =head1 METHODS
 
@@ -29,12 +29,12 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
 
-=item C<< new ( $plan, $expr ) >>
+=item C<< new ( $plan, $expr, $active_graph ) >>
 
 =cut
 
@@ -42,7 +42,8 @@ sub new {
 	my $class	= shift;
 	my $expr	= shift;
 	my $plan	= shift;
-	my $self	= $class->SUPER::new( $expr, $plan );
+	my $graph	= shift;
+	my $self	= $class->SUPER::new( $expr, $plan, $graph );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
@@ -54,6 +55,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "FILTER plan can't be executed while already open";
 	}
@@ -83,7 +85,7 @@ sub execute ($) {
 					# undef it if it wasn't defined before the local() call.
 					$query	= undef;
 				}
-				my $value	= $filter->evaluate( $query, $row, $context );
+				my $value	= $filter->evaluate( $query, $row, $context, $self->active_graph );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			} catch RDF::Query::Error with {
 				my $e	= shift;
@@ -123,6 +125,9 @@ sub next {
 		}
 		if ($filter->( $row )) {
 			$l->trace( "- filter returned true on row" );
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $row );
+			}
 			return $row;
 		} else {
 			$l->trace( "- filter returned false on row" );
@@ -153,6 +158,17 @@ Returns the query plan that will be used to produce the data to be filtered.
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< active_graph >>
+
+Returns the active graph.
+
+=cut
+
+sub active_graph {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinct >>

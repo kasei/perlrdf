@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Parser::Redland - RDFa Parser
+RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.135
+This document describes RDF::Trine::Parser::RDFa version 0.140
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ BEGIN {
 				],
 	);
 	
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
@@ -96,9 +96,11 @@ BEGIN {
 			(@{$FORMATS{$format}[3]});
 	}
 	
-	eval "use RDF::Redland 1.000701;";
-	unless ($@) {
-		$HAVE_REDLAND_PARSER	= 1;
+	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		eval "use RDF::Redland 1.000701;";
+		unless ($@) {
+			$HAVE_REDLAND_PARSER	= 1;
+		}
 	}
 }
 
@@ -234,13 +236,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -6,7 +6,6 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use DBI;
 use RDF::Trine qw(iri);
 use RDF::Trine::Model;
 

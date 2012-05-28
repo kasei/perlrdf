@@ -7,7 +7,7 @@ no warnings 'redefine';
 use RDF::Trine;
 use_ok('RDF::Trine::Serializer::RDFJSON');
 
-my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 
 $model->add_hashref({
 	'http://example.com/doc' => {

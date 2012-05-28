@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.135
+This document describes RDF::Trine::Graph version 0.140
 
 =head1 SYNOPSIS
 
@@ -15,6 +15,13 @@ This document describes RDF::Trine::Graph version 0.135
   my $a	= RDF::Trine::Graph->new( $model_a );
   my $b	= RDF::Trine::Graph->new( $model_b );
   print "graphs are " . ($a->equals( $b ) ? "the same" : "different");
+
+=head1 DESCRIPTION
+
+RDF::Trine::Graph provdes a mechanism for testing graph isomorphism based on
+graph triples from either a RDF::Trine::Model or a RDF::Trine::Iterator.
+Isomorphism testing requires materializing all of a graph's triples in memory,
+and so should be used carefully in situations with large graphs.
 
 =head1 METHODS
 
@@ -28,12 +35,12 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use Math::Combinatorics qw(permute);
+use Algorithm::Combinatorics qw(permutations);
 
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 use overload
@@ -73,7 +80,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
 use RDF::Trine::Node;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 
 =item C<< new ( $model ) >>
 
@@ -92,7 +99,7 @@ sub new {
 	my %data;
 	if ($_[0]->isa('RDF::Trine::Iterator::Graph')) {
 		my $iter	= shift;
-		my $model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store() );
+		my $model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store() );
 		while (my $st = $iter->next) {
 			$model->add_statement( $st );
 		}
@@ -241,15 +248,18 @@ sub _find_mapping {
 		}
 	}
 	
+	my %bb_master	= map { $_->as_string => 1 } @$bb;
+	
 	my @ka	= keys %blank_ids_a;
 	my @kb	= keys %blank_ids_b;
-	my @kbp	= permute( @kb );
-	MAPPING: foreach my $mapping (@kbp) {
+	my $kbp	= permutations( \@kb );
+	my $count	= 0;
+	MAPPING: while (my $mapping = $kbp->next) {
 		my %mapping;
 		@mapping{ @ka }	= @$mapping;
 		warn "trying mapping: " . Dumper(\%mapping) if ($debug);
 		
-		my %bb	= map { $_->as_string => 1 } @$bb;
+		my %bb	= %bb_master;
 		foreach my $st (@$ba) {
 			my @nodes;
 			foreach my $method ($st->node_names) {
@@ -358,13 +368,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.135
+This document describes RDF::Trine::Store::DBI::mysql version 0.140
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.135";
+	$VERSION	= "0.140";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -143,6 +143,7 @@ sub _add_node {
 	my $sql	= "INSERT IGNORE INTO ${table} (" . join(', ', @cols) . ") VALUES (" . join(',',('?')x scalar(@cols)) . ")";
 	my $sth	= $dbh->prepare( $sql );
 	$sth->execute( map "$_", @values{ @cols } );
+	return $hash;
 }
 
 =item C<< init >>
@@ -189,7 +190,7 @@ END
 		$dbh->commit or warn $dbh->errstr;
 	}
 
-	unless ($self->_table_exists("statements${id}")) {
+	unless ($self->_table_exists("Statements${id}")) {
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
 			CREATE TABLE IF NOT EXISTS Statements${id} (
 				Subject bigint unsigned NOT NULL,
@@ -223,9 +224,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -233,7 +233,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -44,7 +44,7 @@ SKIP: {
 			my $parser	= RDF::Trine::Parser->new('rdfa');
 			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 			my (undef, undef, $test)	= File::Spec->splitpath( $file );
-			my $model	= RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+			my $model	= RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 			my $url	= 'file://' . $file;
 			$parser->parse_into_model( $url, $data, $model );
 			my $got	= $serializer->serialize_model_to_string($model);

@@ -7,7 +7,7 @@ RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results fo
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::SAXHandler version 0.135
+This document describes RDF::Trine::Iterator::SAXHandler version 0.140
 
 =head1 SYNOPSIS
 
@@ -34,12 +34,11 @@ use Scalar::Util qw(refaddr);
 use base qw(XML::SAX::Base);
 
 use Data::Dumper;
-use Time::HiRes qw(time);
 use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 my %strings;
@@ -49,16 +48,13 @@ my %values;
 my %bindings;
 my %booleans;
 my %variables;
-my %extra;
-my %extrakeys;
 my %has_head;
 my %has_end;
-my %start_time;
 my %result_count;
 my %result_handlers;
 my %config;
 
-my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal extrakey);
+my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal);
 
 =item C<< new ( [ \&handler ] ) >>
 
@@ -96,11 +92,7 @@ sub iterator {
 	} else {
 		my $vars	= delete $variables{ $addr };
 		my $results	= delete $results{ $addr };
-		my %args;
-		if (exists $extra{ $addr }) {
-			$args{ extra_result_data }	= delete $extra{ $addr };
-		}
-		return $self->iterator_class->new( $results, $vars, %args );
+		return $self->iterator_class->new( $results, $vars );
 	}
 }
 
@@ -161,12 +153,7 @@ sub iterator_args {
 		return;
 	} else {
 		my $vars	= $variables{ $addr };
-		my %args;
-		
-		my $extra			= (exists $extra{ $addr }) ? delete $extra{ $addr } : {};
-		$extra->{Handler}	= $self;
-		$args{ extra_result_data }	= $extra;
-		return ($vars, %args);
+		return ($vars);
 	}
 }
 
@@ -194,22 +181,6 @@ sub pull_result {
 	return;
 }
 
-=item C<< rate >>
-
-Returns the number of results parsed per second for this iterator.
-
-=cut
-
-sub rate {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	my $now		= time;
-	my $start	= $start_time{ $addr };
-	my $dur		= ($now - $start);
-	my $count	= $result_count{ $addr };
-	return ($count / $dur);
-}
-
 =begin private
 
 =item C<< start_element >>
@@ -225,10 +196,6 @@ sub start_element {
 	unshift( @{ $tagstack{ $addr } }, [$tag, $el] );
 	if ($expecting_string{ $tag }) {
 		$strings{ $addr }	= '';
-	}
-	
-	if ($tag eq 'results') {
-		$start_time{ $addr }	= time;
 	}
 }
 
@@ -284,33 +251,7 @@ sub end_element {
 			$lang	= $langinf->{Value};
 		}
 		$values{ $addr }	= RDF::Trine::Node::Literal->new( $string, $lang, $dt );
-	} elsif ($tag eq 'link') {
-		my $link	= $el->{Attributes}{'{}href'}{Value};
-		if ($link and $link =~ m<^data:text/xml,%3Cextra>) {
-			my $u		= URI->new( $link );
-			my $data	= $u->data;
-			my $p		= XML::SAX::ParserFactory->parser(Handler => $self);
-			$p->parse_string( $data );
-		}
-	} elsif ($tag eq 'extra') {
-		my $key		= $el->{Attributes}{'{}name'}{Value};
-		my $value	= delete( $extrakeys{ $addr } );
-		push(@{ $extra{ $addr }{ $key } }, $value);
-	} elsif ($tag eq 'extrakey') {
-		my $key		= $el->{Attributes}{'{}id'}{Value};
-		my $value	= $string;
-		push(@{ $extrakeys{ $addr }{ $key } }, $value);
 	}
-}
-
-=item C<< extra >>
-
-=cut
-
-sub extra {
-	my $self	= shift;
-	my $addr	= refaddr( $self );
-	return $extra{ $addr };
 }
 
 =item C<< characters >>
@@ -345,11 +286,8 @@ sub DESTROY {
 	delete $bindings{ $addr };
 	delete $booleans{ $addr };
 	delete $variables{ $addr };
-	delete $extra{ $addr };
-	delete $extrakeys{ $addr };
 	delete $has_head{ $addr };
 	delete $has_end{ $addr };
-	delete $start_time{ $addr };
 	delete $result_count{ $addr };
 	delete $result_handlers{ $addr };
 	delete $config{ $addr };
@@ -364,13 +302,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

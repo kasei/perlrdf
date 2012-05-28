@@ -14,6 +14,6 @@
 			"service_description": {
 				"default": true,		# generate dataset description of the default graph
 				"named_graphs": true,	# generate dataset description of the available named graphs
-			}
+			},
 		}
 }

@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 0.135
+This document describes RDF::Trine::Node::Nil version 0.140
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 ######################################################################
@@ -82,6 +82,18 @@ sub sse {
 	return '(nil)';
 }
 
+=item C<< as_ntriples >>
+
+Returns the N-Triples serialization of the nil node's IRI
+<tag:gwilliams@cpan.org,2010-01-01:RT:NIL>.
+
+=cut
+
+sub as_ntriples {
+	my $self	= shift;
+	return sprintf('<%s>', &RDF::Trine::NIL_GRAPH());
+}
+
 =item C<< type >>
 
 Returns the type string of this node.
@@ -131,13 +143,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

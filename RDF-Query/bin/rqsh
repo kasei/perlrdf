@@ -145,6 +145,8 @@ Commands:
     DELETE ...             Execute the SPARQL 1.1 update.
     LOAD <uri>             Execute the SPARQL 1.1 update.
     CLEAR ...              Execute the SPARQL 1.1 update.
+    COPY ...               Execute the SPARQL 1.1 update.
+    MOVE ...               Execute the SPARQL 1.1 update.
 
 END
 }
@@ -169,7 +171,7 @@ sub model {
 			if ($sclass->can('_config_meta')) {
 				my $meta	= $sclass->_config_meta;
 				my $keys	= $meta->{required_keys};
-				my $config	= {};
+				my $config	= { storeclass => $sclass };
 				foreach my $k (@$keys) {
 					get_value( $term, $meta, $k, $config );
 				}
@@ -180,7 +182,7 @@ sub model {
 						return $m;
 					}
 				}
-				print "Failed to construct '$name'-backed model.\n";
+				print "Failed to construct '$name'-backed model. $@\n";
 				return;
 			} else {
 				print "Cannot construct model from '$name' storage class.\n";
@@ -203,7 +205,7 @@ sub explain {
 		return;
 	}
 	my ($plan, $ctx)	= $query->prepare( $model );
-	print $plan->sse . "\n";
+	print $plan->explain('  ', 0);
 }
 
 sub parse {
@@ -224,7 +226,15 @@ sub query {
 	my $model	= shift;
 	my $term	= shift;
 	my $sparql	= shift;
-	my $psparql	= join("\n", $NAMESPACES, $sparql);
+	
+	my $psparql;
+	if ($sparql =~ /^BASE <([^>]+)>/i) {
+		$sparql	=~ s/^BASE <([^>]+)>/BASE <$1>\n$NAMESPACES/;
+		$psparql	= $sparql;
+	} else {
+		$psparql	= join("\n", $NAMESPACES, $sparql);
+	}
+	
 	my $query	= $class->new( $psparql, \%args );
 	unless ($query) {
 		print "Error: " . RDF::Query->error . "\n";
@@ -345,3 +355,92 @@ sub memory_model {
 		return $model;
 	}
 }}
+
+__END__
+
+=head1 NAME
+
+rqsh - SPARQL database shell
+
+=head1 DESCRIPTION
+
+rqsh provides a command-line interface to the SPARQL 1.1 implementation of
+RDF::Query. It defaults to using an in-memory database, but can be configured
+to use any database implemented as an L<RDF::Trine::Store>.
+
+=head1 COMMANDS
+
+=over 4
+
+=item help
+
+Show help information on available commands.
+
+=item use [backend]
+
+Switch the storage backend (e.g. "use mysql").
+You will be prompted to enter any necessary connection/configuration data.
+
+=item init
+
+Initialize the storage backend (creating necessary indexes, etc.).
+
+=item set prefix [ns]: [uri]
+
+Set a namespace for use in subsequent queries.
+
+=item results (table|srx)
+
+Set the serializer used for tabular variable binding results.
+
+=item serializer [format]
+
+Set the serializer used for RDF results (e.g. "serializer turtle").
+
+=item debug
+
+Print all the quads in the storage backend.
+
+=item parse [sparql]
+
+Print the parsed algebra for the SPARQL 1.1 query/update.
+
+=item explain [sparql]
+
+Print the execution plan for the SPARQL 1.1 query/update.
+
+=item time [command]
+
+Time the execution of the command.
+
+=item execute <URI>
+
+Execute the SPARQL update/query obtained by dereferencing URI.
+
+=item SELECT ...
+
+=item ASK ...
+
+=item CONSTRUCT ...
+
+=item DESCRIBE ...
+
+Execute the SPARQL 1.1 query.
+
+=item INSERT ...
+
+=item DELETE ...
+
+=item LOAD <uri>
+
+=item CLEAR ...
+
+=item COPY ...
+
+=item MOVE ...
+
+Execute the SPARQL 1.1 update.
+
+=back
+
+=cut

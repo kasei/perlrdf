@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 0.135
+This document describes RDF::Trine::Node::Resource version 0.140
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
 
 ######################################################################
@@ -56,48 +56,18 @@ sub new {
 	my $uri		= shift;
 	my $base_uri	= shift;
 	
+	unless (defined($uri)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Resource constructor called with an undefined value";
+	}
+	
 	if (defined($base_uri)) {
 		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
 		$uri	= URI->new_abs($uri, $base_uri)->as_iri;
 	}
-# 	my @uni;
-# 	my $count	= 0;
-# 	
-# 	my $buri;
-# 	if (defined($base_uri)) {
-# 		$buri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-# 		while ($buri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-# 			my $text	= $1;
-# 			push(@uni, $text);
-# 			$buri		=~ s/$1/',____rq' . $count . '____,'/e;
-# 			$count++;
-# 		}
-# 	}
-# 	
-# 	while ($uri =~ /([\x{00C0}-\x{EFFFF}]+)/) {
-# 		my $text	= $1;
-# 		push(@uni, $text);
-# 		$uri		=~ s/$1/',____rq' . $count . '____,'/e;
-# 		$count++;
-# 	}
-# 	
-# 	if (defined($base_uri)) {
-# 		### We have to work around the URI module not accepting IRIs. If there's
-# 		### Unicode in the IRI, pull it out, leaving behind a breadcrumb. Turn
-# 		### the URI into an absolute URI, and then replace the breadcrumbs with
-# 		### the Unicode.
-# 		
-# 		my $abs			= URI->new_abs( $uri, $buri );
-# 		$uri			= $abs->as_string;
-# 	}
-# 
-# 	while ($uri =~ /,____rq(\d+)____,/) {
-# 		my $num	= $1;
-# 		my $i	= index($uri, ",____rq${num}____,");
-# 		my $len	= 12 + length($num);
-# 		substr($uri, $i, $len)	= shift(@uni);
-# 	}
-# 	
+	
+	if ($uri eq &RDF::Trine::NIL_GRAPH) {
+		return RDF::Trine::Node::Nil->new();
+	}
 	return bless( [ 'URI', $uri ], $class );
 }
 
@@ -286,13 +256,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

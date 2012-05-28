@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.135
+This document describes RDF::Trine::Node::Literal version 0.140
 
 =cut
 
@@ -20,14 +20,14 @@ use base qw(RDF::Trine::Node);
 
 use RDF::Trine::Error;
 use Data::Dumper;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed looks_like_number);
 use Carp qw(carp croak confess);
 
 ######################################################################
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -60,6 +60,10 @@ sub new {
 	my $lang	= shift;
 	my $dt		= shift;
 	my $canon	= shift;
+	
+	unless (defined($literal)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
+	}
 	
 	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
 		$dt	= $dt->uri_value;
@@ -290,7 +294,7 @@ If C<< $datatype >> is a recognized datatype, returns the canonical lexical
 representation of the value C<< $string >>. Otherwise returns C<< $string >>.
 
 Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
-Additionaly, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
+Additionally, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
 will trigger a warning.
 
 =cut
@@ -586,13 +590,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

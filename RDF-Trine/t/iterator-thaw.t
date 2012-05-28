@@ -3,7 +3,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 12;
+use Test::More tests => 10;
 
 use Data::Dumper;
 use IO::Socket::INET;
@@ -73,37 +73,4 @@ END
 	ok( $stream->get_boolean, 'expected result boolean' );
 }
 
-{
-	my $string	= <<"END";
-<?xml version="1.0"?>
-<sparql xmlns="http://www.w3.org/2005/sparql-results#">
-<head>
-	<variable name="p"/>
-	<variable name="name"/>
-	<link href="data:text/xml,%3Cextra%20name=%22bnode-map%22%3E%0A%09%3Cextrakey%20id=%22(r1201576432r20999r58)%22%3E!&amp;lt;http://xmlns.com/foaf/0.1/aimChatID%3E&amp;quot;test_chat_id&amp;quot;%3C/extrakey%3E%0A%09%3Cextrakey%20id=%22(r1201576432r20999r89)%22%3E!&amp;lt;http://xmlns.com/foaf/0.1/mbox_sha1sum%3E&amp;quot;f1f61020b9e2519b148b1acdddec6cedaac204f2&amp;quot;%3C/extrakey%3E%0A%09%3Cextrakey%20id=%22&amp;lt;http://kasei.us/about/foaf.xrdf%23greg%3E%22%3E&amp;lt;http://kasei.us/about/foaf.xrdf%23greg%3E,&amp;lt;http://kasei.us/about/foaf.xrdf%23greg%3E,&amp;lt;http://kasei.us/about/foaf.xrdf%23greg%3E,&amp;lt;http://kasei.us/about/foaf.xrdf%23greg%3E%3C/extrakey%3E%0A%3C/extra%3E%0A" />
-
-</head>
-<results>
-		<result>
-			<binding name="p"><uri>http://kasei.us/about/foaf.xrdf#greg</uri></binding>
-			<binding name="name"><literal>Gregory Todd Williams</literal></binding>
-		</result>
-</results>
-</sparql>
-END
-	my $stream	= RDF::Trine::Iterator->from_string( $string );
-	isa_ok( $stream, 'RDF::Trine::Iterator::Bindings' );
-	my $extra	= $stream->extra_result_data;
-	is_deeply(
-		$extra,
-		{
-			'bnode-map'	=> [{
-				'(r1201576432r20999r58)' => ['!<http://xmlns.com/foaf/0.1/aimChatID>"test_chat_id"'],
-				'(r1201576432r20999r89)' => ['!<http://xmlns.com/foaf/0.1/mbox_sha1sum>"f1f61020b9e2519b148b1acdddec6cedaac204f2"'],
-				'<http://kasei.us/about/foaf.xrdf#greg>' => ['<http://kasei.us/about/foaf.xrdf#greg>,<http://kasei.us/about/foaf.xrdf#greg>,<http://kasei.us/about/foaf.xrdf#greg>,<http://kasei.us/about/foaf.xrdf#greg>']
-			}]
-		},
-		'identity hints'
-	);
-}
 

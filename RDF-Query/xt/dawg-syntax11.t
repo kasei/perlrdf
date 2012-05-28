@@ -38,26 +38,14 @@ my $PATTERN		= shift(@ARGV) || '';
 my @manifests;
 my $model	= new_model( map { glob( "xt/dawg11/$_/manifest.ttl" ) }
 	qw(
+		aggregates
+		construct
+		delete-insert
+		grouping
 		syntax-query
+		syntax-fed
 		syntax-update-1
 		syntax-update-2
-		aggregates
-		basic-update
-		bind
-		clear
-		construct
-		delete
-		delete-data
-		delete-insert
-		delete-where
-		drop
-		functions
-		grouping
-		json-res
-		negation
-		project-expression
-		property-path
-		subquery
 	) );
 
 my $earl		= init_earl( $model );

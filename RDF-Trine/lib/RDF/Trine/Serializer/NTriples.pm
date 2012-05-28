@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 0.135
+This document describes RDF::Trine::Serializer::NTriples version 0.140
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
@@ -163,6 +163,13 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
+=item C<< statement_as_string ( $st ) >>
+
+Returns a string with the supplied RDF::Trine::Statement object serialized as
+N-Triples, ending in a DOT and newline.
+
+=cut
+
 sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
@@ -170,11 +177,28 @@ sub statement_as_string {
 	return join(' ', map { $_->as_ntriples } @nodes[0..2]) . " .\n";
 }
 
+=item C<< serialize_node ( $node ) >>
+
+Returns a string containing the N-Triples serialization of C<< $node >>.
+
+=cut
+
+sub serialize_node {
+	my $self	= shift;
+	my $node	= shift;
+	return $node->as_ntriples;
+}
+
 1;
 
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
@@ -186,7 +210,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

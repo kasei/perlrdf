@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.135
+This document describes RDF::Trine::Serializer version 0.140
 
 =head1 SYNOPSIS
 
@@ -34,10 +34,8 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.140';
 }
-
-use LWP::UserAgent;
 
 use RDF::Trine::Serializer::NQuads;
 use RDF::Trine::Serializer::NTriples;
@@ -236,11 +234,133 @@ sub serialize_iterator_to_string {
 	return $string;
 }
 
+
+
+
+=back
+
+=cut
+
+package RDF::Trine::Serializer::FileSink;
+
+use strict;
+use warnings;
+
+=begin private
+
+=head1 NAME
+
+RDF::Trine::Serializer::FileSink
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+=item C<< new ( $fh ) >>
+
+Returns a new serializer sink object backed by a filehandle.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $fh		= shift;
+	return bless([$fh],$class);
+}
+
+=item C<< emit ( $data ) >>
+
+Write the C<< $data >> to the sink.
+
+=cut
+
+sub emit {
+	my $self	= shift;
+	my $data	= shift;
+	print {$self->[0]} $data;
+}
+
+=back
+
+=cut
+
+package RDF::Trine::Serializer::StringSink;
+
+use strict;
+use warnings;
+use Encode;
+
+=head1 NAME
+
+RDF::Trine::Serializer::StringSink
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
+=item C<< new () >>
+
+Returns a new serializer sink object backed by a string.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $string	= decode_utf8("");
+	return bless(\$string,$class);
+}
+
+=item C<< emit ( $data ) >>
+
+Write the C<< $data >> to the sink.
+
+=cut
+
+sub emit {
+	my $self	= shift;
+	my $data	= shift;
+	$$self		.= $data;
+}
+
+=item C<< prepend ( $data ) >>
+
+Prepend the C<< $data >> to the underlying string.
+
+=cut
+
+sub prepend {
+	my $self	= shift;
+	my $data	= shift;
+	$$self		= $data . $$self;
+}
+
+=item C<< string () >>
+
+Returns the string value of all data written to the sink.
+
+=cut
+
+sub string {
+	my $self	= shift;
+	return $$self;
+}
+
+=back
+
+=end private
+
 1;
 
 __END__
 
-=back
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -248,7 +368,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

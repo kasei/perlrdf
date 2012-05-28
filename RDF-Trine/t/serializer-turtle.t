@@ -1,13 +1,20 @@
-use Test::More tests => 39;
+use Test::More;
 use Test::Exception;
 
 use strict;
 use warnings;
 no warnings 'redefine';
+use Scalar::Util qw(blessed reftype);
+use utf8;
 
-use RDF::Trine;
+use RDF::Trine qw(statement iri literal blank);
+use RDF::Trine::Namespace qw(rdf foaf);
 use_ok('RDF::Trine::Serializer::Turtle');
 
+
+my $ex		= RDF::Trine::Namespace->new('http://example.com/');
+my $ns		= RDF::Trine::Namespace->new('http://example.com/ns#');
+my $lang	= RDF::Trine::Namespace->new('http://purl.org/net/inkel/rdf/schemas/lang/1.1#');
 
 ################################################################################
 
@@ -56,14 +63,12 @@ my @tests	= (
 		'blank object'
 	],
 	[
-		{
-			'http://example.com/alice' => {
-				'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' => [{ type => 'resource', value => 'http://xmlns.com/foaf/0.1/Person' }],
-				'http://purl.org/net/inkel/rdf/schemas/lang/1.1#masters' => ['en'],
-				'http://xmlns.com/foaf/0.1/name' => [ 'Alice', {'type' => 'literal','value' => 'Alice', language => 'en' } ],
-			},
-		},
-		qq{<http://example.com/alice> <http://purl.org/net/inkel/rdf/schemas/lang/1.1#masters> "en" ;\n\ta <http://xmlns.com/foaf/0.1/Person> ;\n\t<http://xmlns.com/foaf/0.1/name> "Alice" .\n},
+		[
+			statement($ex->alice, $rdf->type, $foaf->Person),
+			statement($ex->alice, $foaf->name, literal('Alice', 'en')),
+			statement($ex->alice, $lang->masters, literal('en')),
+		],
+		qr{<http://example.com/alice> a <http://xmlns.com/foaf/0.1/Person> ;\n\t<http://xmlns.com/foaf/0.1/name> "Alice"\@en ;\n\t<http://purl.org/net/inkel/rdf/schemas/lang/1.1#masters> "en" .\n},
 		'multiple namespaces'
 	],
 	[
@@ -84,25 +89,12 @@ my @tests	= (
 				'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
 			},
 			'_:b' => {
-				'http://example.com/ns#foo' => [{type=>'literal', value=>'foo'}],
-				'http://example.com/ns#bar' => [{type=>'literal', value=>'bar'}],
+				'http://example.com/ns#foo' => ['foo'],
+				'http://example.com/ns#bar' => ['bar'],
 			},
 		},
 		qq{[] <http://example.com/ns#description> [\n\t\t<http://example.com/ns#bar> "bar" ;\n\t\t<http://example.com/ns#foo> "foo"\n\t] .\n},
 		'blank object with multiple predicates'
-	],
-	[
-		{
-			'_:a' => {
-				'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
-			},
-			'_:b' => {
-				'http://example.com/ns#foo' => [{type=>'literal', value=>'foo'}, 'FOO'],
-				'http://example.com/ns#bar' => [{type=>'literal', value=>'bar'}],
-			},
-		},
-		qq{[] <http://example.com/ns#description> [\n\t\t<http://example.com/ns#bar> "bar" ;\n\t\t<http://example.com/ns#foo> "FOO", "foo"\n\t] .\n},
-		'blank object with multiple predicates and objects'
 	],
 	[
 		{
@@ -177,7 +169,7 @@ my @tests	= (
 					},
 		},
 		qq{[] <http://example.com/predicate> [\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 2, 1 ;\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> [\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 3 ;\n\t\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>\n\t\t]\n\t] .\n},
-		'full rdf:List syntax on invalid list'
+		'TODO: full rdf:List syntax on invalid list'
 	],
 	[
 		{
@@ -224,13 +216,11 @@ my @tests	= (
 		'TODO rdf:List as subject syntax'
 	],
 	[
-		{
-			'_:b'	=> {
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#first' => [{type => 'blank', value => '_:b'}],
-						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
-						'http://example.com/predicate' => ['foo'],
-					},
-		},
+		[
+			statement(blank('b'), $ex->predicate, literal('foo')),
+			statement(blank('b'), $rdf->first, blank('b')),
+			statement(blank('b'), $rdf->rest, $rdf->nil),
+		],
 		qq{_:b <http://example.com/predicate> "foo" ;\n\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:b ;\n\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n},
 		'recursive rdf:List'
 	],
@@ -314,17 +304,37 @@ my @tests	= (
 );
 
 foreach my $d (@tests) {
-	my ($hash, $expect, $test)	= @$d;
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
-	$model->add_hashref($hash);
-	my $serializer = RDF::Trine::Serializer::Turtle->new();
-	my $turtle = $serializer->serialize_model_to_string($model);
+	my ($data, @data)	= @$d;
+	my $test	= pop(@data);
+	my @expects	= @data;
+	
+	my $turtle;
+	my $serializer	= RDF::Trine::Serializer::Turtle->new();
+	if (reftype($data) eq 'HASH') {
+		my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+		$model->add_hashref($data);
+		$turtle	= $serializer->serialize_model_to_string($model);
+	} else {
+		my $iter	= RDF::Trine::Iterator->new($data);
+		$turtle	= $serializer->serialize_iterator_to_string($iter);
+	}
 	TODO: {
-		if ($test =~ /TODO/) {
-			local $TODO	= "Not implemented yet";
-			is($turtle, $expect, $test);
-		} else {
-			is($turtle, $expect, $test);
+		foreach my $expect (@expects) {
+			my $re	= (blessed($expect) and $expect->isa('Regexp'));
+			if ($test =~ /TODO/) {
+				local $TODO	= "Not implemented yet";
+				if ($re) {
+					like($turtle, $expect, $test);
+				} else {
+					is($turtle, $expect, $test);
+				}
+			} else {
+				if ($re) {
+					like($turtle, $expect, $test);
+				} else {
+					is($turtle, $expect, $test);
+				}
+			}
 		}
 	}
 }
@@ -343,7 +353,7 @@ foreach my $d (@tests) {
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames');
@@ -359,7 +369,7 @@ END
 
 [] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single base URI');
@@ -376,7 +386,7 @@ END
 
 [] <http://xmlns.com/foaf/0.1/homepage> <./bar> .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single base URI, old style');
@@ -394,7 +404,7 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'single namespace Qnames (ignoring extra namespaces)');
@@ -414,7 +424,7 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle	= '';
 	open( my $fh, '>', \$turtle );
@@ -437,7 +447,7 @@ END
 	foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'multiple namespace Qnames (old namespace API)');
@@ -457,7 +467,7 @@ END
 	foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'multiple namespace Qnames (new namespace API)');
@@ -476,14 +486,31 @@ END
 [] foaf:name "Alice" .
 [] foaf:name "Eve" .
 END
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref($hash);
 	my $turtle = $serializer->serialize_model_to_string($model);
 	is($turtle, $expect, 'RDF::Trine::Namespace Qnames');
 }
 
 {
-	my $model = RDF::Trine::Model->new(RDF::Trine::Store::DBI->temporary_store);
+	my $serializer = RDF::Trine::Serializer::Turtle->new({ ex => 'http://example.org/' });
+	my $s		= RDF::Trine::Node::Blank->new('a');
+	my $p		= RDF::Trine::Node::Resource->new("http://example.org/Ä");
+	my $o		= RDF::Trine::Node::Literal->new("Ä");
+	my $st		= RDF::Trine::Statement->new($s, $p, $o);
+	my $expect	= <<"END";
+\@prefix ex: <http://example.org/> .
+
+[] ex:Ä "\\u00C4" .
+END
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_statement($st);
+	my $turtle = $serializer->serialize_model_to_string($model);
+	is($turtle, $expect, 'IRI with prefixes');
+}
+
+{
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 	$model->add_hashref({
 		'http://example.com/doc' => {
 			'http://example.com/predicate' => [
@@ -496,7 +523,11 @@ END
 	
 	my $serializer = RDF::Trine::Serializer::Turtle->new();
 	my $expect	= qq[<http://example.com/doc> <http://example.com/predicate> <http://example.com/bar>, "Foo", "baz"\@en .\n];
-	my $iter	= $model->as_stream;
+	my $iter	= RDF::Trine::Iterator->new([
+		statement($ex->doc, $ex->predicate, $ex->bar),
+		statement($ex->doc, $ex->predicate, literal('Foo')),
+		statement($ex->doc, $ex->predicate, literal('baz', 'en')),
+	]);
 	my $turtle = $serializer->serialize_iterator_to_string($iter);
 	is($turtle, $expect, 'serialize_iterator_to_string 1');
 }
@@ -683,3 +714,31 @@ END
 	$parser->parse_into_model( $base_uri, $got, $gotmodel );
 	is( $gotmodel->size, $model->size, 'bnode concise syntax' );
 }
+
+{
+	my $hash	= {
+		'_:a' => {
+			'http://example.com/ns#description' => [{type=>'uri', value=>'_:b'}],
+		},
+		'_:b' => {
+			'http://example.com/ns#foo' => [{type=>'literal', value=>'foo'}, 'FOO'],
+			'http://example.com/ns#bar' => [{type=>'literal', value=>'bar'}],
+		},
+	};
+	my $expect	= qr{[] <http://example.com/ns#description> [\n\t\t((<http://example.com/ns#bar> "bar" ;\n\t\t<http://example.com/ns#foo> "FOO", "foo")|(<http://example.com/ns#foo> "FOO", "foo" ;\n\t\t<http://example.com/ns#bar> "bar"))\n\t] .\n};
+	my $test	= 'blank object with multiple predicates and objects';
+	my $model = RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
+	$model->add_hashref($hash);
+	my $serializer = RDF::Trine::Serializer::Turtle->new();
+	my $turtle = $serializer->serialize_model_to_string($model);
+	TODO: {
+		if ($test =~ /TODO/) {
+			local $TODO	= "Not implemented yet";
+			like($turtle, $expect, $test);
+		} else {
+			like($turtle, $expect, $test);
+		}
+	}
+}
+
+done_testing();
