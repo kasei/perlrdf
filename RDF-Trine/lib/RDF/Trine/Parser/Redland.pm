@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.140
+This document describes RDF::Trine::Parser::Redland version 0.140
 
 =head1 SYNOPSIS
 
