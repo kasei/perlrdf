@@ -9,6 +9,12 @@ RDF::Query::Federate::Plan - Executable query plan nodes.
 
 This document describes RDF::Query::Federate::Plan version 2.908.
 
+=head1 STATUS
+
+This module's API and functionality should be considered deprecated.
+If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
+
 =head1 METHODS
 
 =over 4
