@@ -1844,7 +1844,7 @@ sub _Bind {
 	my %in_scope	= map { $_ => 1 } $ggp->potentially_bound();
 	my $var			= $alias->name;
 	if (exists $in_scope{ $var }) {
-		throw RDF::Query::Error::QueryPatternError -text => "BIND used with variable already in scope";
+		throw RDF::Query::Error::QueryPatternError -text => "Syntax error: BIND used with variable already in scope";
 	}
 	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
 	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind, @first] );
