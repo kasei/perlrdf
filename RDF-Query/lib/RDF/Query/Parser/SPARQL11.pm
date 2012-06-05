@@ -377,7 +377,7 @@ sub _RW_Query {
 
 sub _Query_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|INSERT|DELETE|WITH/i));
+	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|DROP|ADD|MOVE|COPY|CREATE|INSERT|DELETE|WITH/i));
 	return 0;
 }
 
