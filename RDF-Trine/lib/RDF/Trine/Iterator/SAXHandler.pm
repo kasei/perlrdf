@@ -9,6 +9,13 @@ RDF::Trine::Iterator::SAXHandler - SAX Handler for parsing SPARQL XML Results fo
 
 This document describes RDF::Trine::Iterator::SAXHandler version 0.140
 
+=head1 STATUS
+
+This module's API and functionality should be considered unstable.
+In the future, this module may change in backwards-incompatible ways,
+or be removed entirely. If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
+
 =head1 SYNOPSIS
 
     use RDF::Trine::Iterator::SAXHandler;
