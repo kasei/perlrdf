@@ -72,6 +72,18 @@ foreach my $file (@bad) {
 		$parser->parse_into_model(undef, $ntriples, $model);
 		is( $model->count_statements(undef, undef, literal('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean')), 1, 'expected 1 count for canonical boolean value' );
 	}
+
+	TODO: {
+		  local $TODO = 'UTF8 problems with Redland';
+		  my $model = RDF::Trine::Model->temporary_model;
+		  my $ntriples	= '<http://example.com/a> <http://example.com/b> "bl\\u00C3\\u00A5b\\u00C3\\u00A6rsyltet\\u00C3\\u00B8y"@nb .';
+		  $parser->parse_into_model(undef, $ntriples, $model);
+		  my $iter	= $model->as_stream;
+		  my $st = $iter->next;
+		  isa_ok( $st, 'RDF::Trine::Statement' );
+		  is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple object value with utf8 chars' );
+	  }
+
 }	
 
 
