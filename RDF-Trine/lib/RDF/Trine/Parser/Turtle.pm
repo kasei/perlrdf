@@ -68,7 +68,7 @@ BEGIN {
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 	
-	$r_boolean				= qr'(?:true|false)';
+	$r_boolean				= qr'(?:true|false)'i;
 	$r_comment				= qr'#[^\r\n]*';
 	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
 	$r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
@@ -582,7 +582,7 @@ sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
 	my $token	= $self->_eat_re_save( $r_boolean );
-	return $self->_typed( $token, $xsd->boolean );
+	return $self->_typed( lc $token, $xsd->boolean );
 }
 
 sub _blank_test {
