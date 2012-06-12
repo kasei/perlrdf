@@ -50,6 +50,7 @@ use RDF::Trine::Error;
 
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
+our ($r_lcharacters2, $r_scharacters2);
 BEGIN {
 	$VERSION				= '0.140';
 	foreach my $ext (qw(ttl)) {
@@ -67,17 +68,19 @@ BEGIN {
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 	$xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 	
-	$r_boolean				= qr'(?:true|false)';
+	$r_boolean				= qr'(?:true|false)'i;
 	$r_comment				= qr'#[^\r\n]*';
 	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
 	$r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
 	$r_integer				= qr'[+-]?[0-9]+';
 	$r_language				= qr'[a-z]+(-[a-z0-9]+)*'i;
 	$r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
+	$r_lcharacters2		= qr{(?s)[^'\\]*(?:(?:\\.|"(?!''))[^'\\]*)*};
 	$r_line					= qr'(?:[^\r\n]+[\r\n]+)(?=[^\r\n])';
 	$r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
 	$r_nameStartChar_minus_underscore	= qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
 	$r_scharacters			= qr'[^"\\]*(?:\\.[^"\\]*)*';
+	$r_scharacters2		= qr{[^'\\]*(?:\\.[^'\\]*)*};
 	$r_ucharacters			= qr'[^>\\]*(?:\\.[^>\\]*)*';
 	$r_booltest				= qr'(?:true|false)\b';
 	$r_nameStartChar		= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
@@ -579,7 +582,7 @@ sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
 	my $token	= $self->_eat_re_save( $r_boolean );
-	return $self->_typed( $token, $xsd->boolean );
+	return $self->_typed( lc $token, $xsd->boolean );
 }
 
 sub _blank_test {
@@ -870,6 +873,8 @@ sub _quotedString_test {
 	my $self	= shift;
 	if (substr($self->{tokens}, 0, 1) eq '"') {
 		return 1;
+	} elsif (substr($self->{tokens}, 0, 1) eq "'") {
+		return 1;
 	} else {
 		return 0;
 	}
@@ -888,9 +893,16 @@ sub _quotedString {
 sub _string {
 	my $self	= shift;
 	### #x22 scharacter* #x22
-	$self->_eat('"');
-	my $value	= $self->_eat_re_save( $r_scharacters );
-	$self->_eat('"');
+	my $value;
+	if ($self->__startswith( '"' )) {
+		$self->_eat('"');
+		$value	= $self->_eat_re_save( $r_scharacters );
+		$self->_eat('"');
+	} else {
+		$self->_eat("'");
+		$value	= $self->_eat_re_save( $r_scharacters2 );
+		$self->_eat("'");
+	}
 	my $string	= $self->_parse_short( $value );
 	return $string;
 }
@@ -898,6 +910,8 @@ sub _string {
 sub _longString_test {
 	my $self	= shift;
 	if ($self->__startswith( '"""' )) {
+		return 1;
+	} elsif ($self->__startswith( "'''" )) {
 		return 1;
 	} else {
 		return 0;
@@ -907,39 +921,55 @@ sub _longString_test {
 sub _longString {
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
-	$self->_eat('"""');
-	my $value	= $self->_eat_re_save( $r_lcharacters );
-	$self->_eat('"""');
+	my $value;
+	if ($self->__startswith( '"""' )) {
+		$self->_eat('"""');
+		$value = $self->_eat_re_save( $r_lcharacters );
+		$self->_eat('"""');
+	} else {
+		$self->_eat("'''");
+		$value = $self->_eat_re_save( $r_lcharacters2 );
+		$self->_eat("'''");
+	}
 	my $string	= $self->_parse_long( $value );
 	return $string;
 }
 
 ################################################################################
 
-sub _parse_short {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
-	}
-	return '' unless length($s);
-	return _unescape($s);
-}
+{
+	my %easy = (
+		q[\\]   =>  qq[\\],
+		r       =>  qq[\r],
+		n       =>  qq[\n],
+		t       =>  qq[\t],
+		q["]    =>  qq["],
+	);
+	
+	sub _parse_short {
+		my $self = shift;
+		my $s    = shift;
+		return '' unless length($s);
 
-sub _parse_long {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
+		$s =~ s{ \\ ( [\\tnr"] | u.{4} | U.{8} ) }{
+			if (exists $easy{$1})
+			{
+				$easy{$1};
+			}
+			else
+			{
+				my $hex = substr($1, 1);
+				die "invalid hexadecimal escape: $hex"
+					unless $hex =~ m{^[0-9A-Fa-f]+$};
+				chr(hex($hex));
+			}
+		}gex;
+		
+		return $s;
 	}
-	return '' unless length($s);
-	return _unescape($s);
+
+	# they're the same
+	*_parse_long = \&_parse_short;
 }
 
 sub _join_uri {
