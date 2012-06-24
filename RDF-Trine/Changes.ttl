@@ -10,6 +10,31 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.000.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.140.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.000" ;
+                        doap:created      "2012-06-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Model->add_iterator method." ;
+                        asc:update      "Made Literal and Resource node constructors throw exception when passed undef lexical value." ;
+                        asc:update      "Removed RDF::Trine methods count, add_extra_result_data, extra_result_data." ;
+                        asc:update      "Removed support for extra data serialized in SPARQL/XML result format link tags." ;
+                        asc:update      "Rolled back attempted optimization of bulk ops calls (which broke the code)." ;
+                        asc:update      "Fixed parsing of backslash escapes in Turtle quoted literals (from Toby Inkster via github pull request #63)." ;
+                        asc:update      "Fixed miscellaneous typos (from Evan Carew)." ;
+                        asc:update      "Updated bug reporting details in BUGS POD section." ;
+                        asc:update      "Updated documentation in several classes." ;
+                        asc:update      "Removed redundant documentation in RDF::Trine::Parser." ;
+                        asc:update      "Added Redland test for UTF8 (from Kjetil Kjernsmo)." ;
+                        asc:update      "Added two tests for concat graph iterators (from Kjetil Kjernsmo)." ;
+                        asc:update      "Fix usage of materialized iterators in t/iterator-graph.t (from Kjetil Kjernsmo)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.140.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.139.tar.gz> ;
