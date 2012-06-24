@@ -916,30 +916,35 @@ sub _longString {
 
 ################################################################################
 
-sub _parse_short {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
-	}
-	return '' unless length($s);
-	return _unescape($s);
-}
+{
+	my %easy = (
+		q[\\]   =>  qq[\\],
+		r       =>  qq[\r],
+		n       =>  qq[\n],
+		t       =>  qq[\t],
+		q["]    =>  qq["],
+	);
+	
+	sub _parse_short {
+		my $self = shift;
+		my $s    = shift;
+		return '' unless length($s);
 
-sub _parse_long {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
+		$s =~ s{ \\ ( [\\tnr"] | u.{4} | U.{8} ) }{
+			if (exists $easy{$1}) {
+				$easy{$1};
+			} else {
+				my $hex	= substr($1, 1);
+				die "invalid hexadecimal escape: $hex" unless $hex =~ m{^[0-9A-Fa-f]+$};
+				chr(hex($hex));
+			}
+		}gex;
+		
+		return $s;
 	}
-	return '' unless length($s);
-	return _unescape($s);
+	
+	# they're the same
+	*_parse_long = \&_parse_short;
 }
 
 sub _join_uri {
