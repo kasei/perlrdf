@@ -45,6 +45,7 @@ recommends			'XML::LibXML'				=> 1.70;
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",
 	'repository' => "http://github.com/kasei/perlrdf/",
+	'bugtracker' => "https://github.com/kasei/perlrdf/issues"
 );
 
 author_tests('xt');
