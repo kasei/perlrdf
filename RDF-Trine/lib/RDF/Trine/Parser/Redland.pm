@@ -236,6 +236,10 @@ __END__
 
 =back
 
+=head1 ENVIRONMENT VARIABLES
+
+Set C<RDFTRINE_NO_REDLAND> to something true to disable the Redland parsers.
+
 =head1 BUGS
 
 Please report any bugs or feature requests to through the GitHub web interface
