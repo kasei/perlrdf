@@ -94,8 +94,8 @@ RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.  If
 the C<< 'request_headers' >> key-value is supplied, the C<<
 $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.  The
 option C<< 'restrict' >>, set to a list of serializer names, can be
-used to limit the serializers to choose from. Finally, an C<<
-'extends' >> option can be set to a hashref that contains MIME-types
+used to limit the serializers to choose from. Finally, an C<<'extends' >> 
+option can be set to a hashref that contains MIME-types
 as keys and a custom variant as value. This will enable the user to
 use this negotiator to return a type that isn't supported by any
 serializers. The subsequent code will have to find out how to return a
