@@ -315,6 +315,7 @@ sub add_statement_tests_simple {
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	my $etag_before = $store->etag;
+	update_sleep($args);
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
    SKIP: {
@@ -331,7 +332,7 @@ sub add_statement_tests_simple {
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
 
-	$etag_before = $store->etag;
+	$retag_before = $store->etag;
 	$store->remove_statement( $triple, $ex->d );
 	update_sleep($args);
    SKIP: {
