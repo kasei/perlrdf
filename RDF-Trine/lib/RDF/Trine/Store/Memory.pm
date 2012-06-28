@@ -415,6 +415,7 @@ sub add_statement {
 	if ($count == 0) {
 		$self->{size}++;
 		my $id	= scalar(@{ $self->{ statements } });
+		$self->{hash}->add('+' . $st->as_string);
 		push( @{ $self->{ statements } }, $st );
 		foreach my $pos (0 .. $#pos_names) {
 			my $name	= $pos_names[ $pos ];
@@ -432,7 +433,6 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
-			$self->{hash}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -472,8 +472,8 @@ sub remove_statement {
 		$self->{size}--;
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
-		$self->{statements}[ $id ]	= undef;
 		$self->{hash}->add('-' . $st->as_string);
+		$self->{statements}[ $id ]	= undef;
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
