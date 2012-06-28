@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 229;								# Remember to update whenever adding tests
+	return 231;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 107;								# Remember to update whenever adding tests
+	return 109;								# Remember to update whenever adding tests
 }
 
 
@@ -314,9 +314,15 @@ sub add_statement_tests_simple {
 	
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	my $etag_before = $store->etag;
+	update_sleep($args);
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
-	
+   SKIP: {
+		skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		isnt($etag_before, $store->etag, 'Etag has changed');
+	}
+
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
 	TODO: {
@@ -326,7 +332,14 @@ sub add_statement_tests_simple {
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
 
+	$retag_before = $store->etag;
 	$store->remove_statement( $triple, $ex->d );
+	update_sleep($args);
+   SKIP: {
+		skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		isnt($etag_before, $store->etag, 'Etag has changed');
+	}
+
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
@@ -1035,7 +1048,7 @@ perform updates asynchronously.
 sub update_sleep {
 	my $args	= shift;
 	if (defined($args->{ update_sleep })) {
-		note " sleeping after store update";
+		note ' sleeping ' . $args->{ update_sleep }. ' secs after store update';
 		sleep($args->{ update_sleep });
 	}
 }
