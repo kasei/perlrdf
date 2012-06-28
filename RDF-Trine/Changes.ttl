@@ -20,6 +20,9 @@
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Model->add_iterator method." ;
+                        asc:update      "Fixed etag bug in RDF::Trine::Store::Memory." ;
+                        asc:update      "Document the extends option to negotiate in the serializer (from KjetilK)." ;
+                        asc:update      "Document RDFTRINE_NO_REDLAND (from KjetilK)." ;
                         asc:update      "Made Literal and Resource node constructors throw exception when passed undef lexical value." ;
                         asc:update      "Removed RDF::Trine methods count, add_extra_result_data, extra_result_data." ;
                         asc:update      "Removed support for extra data serialized in SPARQL/XML result format link tags." ;
