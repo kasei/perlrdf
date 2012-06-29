@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.140 (2012-06-XX)
+  Version 0.140 (2012-06-29)
 
      * API CHANGES
          Removed RDF::Trine methods count, add_extra_result_data, extra_result_data.

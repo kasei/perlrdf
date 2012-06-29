@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.000" ;
-                        doap:created      "2012-06-XX" ;
+                        doap:created      "2012-06-29" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Model->add_iterator method." ;
