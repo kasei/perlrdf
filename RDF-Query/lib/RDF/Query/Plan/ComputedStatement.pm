@@ -120,13 +120,19 @@ sub execute ($) {
 			$nodes[ $i ]	= $bound->{ $nodes[$i]->name };
 		}
 	}
+
+	$l->trace( "computed statement pattern after pre-binding: " . join(' ', map { $_->as_string } @nodes));
 	
 	my $query	= $context->query;
 	my $csg		= $query->get_computed_statement_generators( $nodes[1]->uri_value );
 	unless (scalar(@$csg)) {
 		throw RDF::Query::Error::ExecutionError -text => "No computed statement generator found for predicate " . $nodes[1]->uri_value;
 	}
-	my $iter	= $csg->[0]->( $query, $bound, @nodes );
+	my $iter;
+	{
+		local($query->{model})	= $context->model;
+		$iter	= $csg->[0]->( $query, $bound, @nodes );
+	}
 	if (blessed($iter)) {
 		$self->[0]{iter}	= $iter;
 		$self->[0]{bound}	= $bound;

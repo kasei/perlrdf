@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
+RDF::Trine::Iterator::Graph - Iterator class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 0.140
+This document describes RDF::Trine::Iterator::Graph version 1.000
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 ######################################################################
@@ -123,6 +123,9 @@ sub as_bindings {
 =item C<< materialize >>
 
 Returns a materialized version of the current graph iterator.
+The materialization process will leave this iterator empty. The materialized
+iterator that is returned should be used for any future need for the iterator's
+data.
 
 =cut
 
@@ -381,6 +384,10 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

@@ -7,7 +7,59 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.140
+This document describes RDF::Trine::Store version 1.000
+
+=head1 DESCRIPTION
+
+RDF::Trine::Store provides a base class and common API for implementations of
+triple/quadstores for use with the RDF::Trine framework. In general, it should
+be used only be people implementing new stores. For interacting with stores
+(e.g. to read, insert, and delete triples) the RDF::Trine::Model interface
+should be used (using the model as an intermediary between the client/user and
+the underlying store).
+
+To be used by the RDF::Trine framework, store implementations must implement a
+set of required functionality:
+
+=over 4
+
+=item * C<< new >>
+
+=item * C<< get_statements >>
+
+=item * C<< get_contexts >>
+
+=item * C<< add_statement >>
+
+=item * C<< remove_statement >>
+
+=item * C<< count_statements >>
+
+=item * C<< supports >>
+
+=back
+
+Implementations may also provide the following methods if a native
+implementation would be more efficient than the default provided by
+RDF::Trine::Store:
+
+=over 4
+
+=item * C<< get_pattern >>
+
+=item * C<< get_sparql >>
+
+=item * C<< remove_statements >>
+
+=item * C<< size >>
+
+=item * C<< nuke >>
+
+=item * C<< _begin_bulk_ops >>
+
+=item * C<< _end_bulk_ops >>
+
+=back
 
 =cut
 
@@ -31,7 +83,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -447,6 +499,11 @@ sub _end_bulk_ops {}
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.140
+This document describes RDF::Trine::Node::Literal version 1.000
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 	eval "use RDF::Trine::Node::Literal::XML;";
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";
@@ -60,6 +60,10 @@ sub new {
 	my $lang	= shift;
 	my $dt		= shift;
 	my $canon	= shift;
+	
+	unless (defined($literal)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
+	}
 	
 	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
 		$dt	= $dt->uri_value;
@@ -585,6 +589,11 @@ sub numeric_value {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

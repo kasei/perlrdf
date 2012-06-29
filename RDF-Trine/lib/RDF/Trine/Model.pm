@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.140
+This document describes RDF::Trine::Model version 1.000
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -144,7 +144,7 @@ sub add_statement {
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			if ($store->can('_end_bulk_ops')) {
+			if ($store->can('_begin_bulk_ops')) {
 				$store->_end_bulk_ops();
 			}
 			$self->{store}	= $store;
@@ -168,6 +168,7 @@ sub add_hashref {
 	my $index   = shift;
 	my $context = shift;
 	
+	$self->begin_bulk_ops();
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
 					RDF::Trine::Node::Blank->new($1) :
@@ -208,6 +209,23 @@ sub add_hashref {
 			}
 		}
 	}
+	$self->end_bulk_ops();	
+}
+
+=item C<< add_iterator ( $iter ) >>
+
+Add triples from the statement iteratorto the model.
+
+=cut
+
+sub add_iterator {
+	my $self	= shift;
+	my $iter	= shift;
+	$self->begin_bulk_ops();
+	while (my $st = $iter->next) {
+		$self->add_statement( $st );
+	}
+	$self->end_bulk_ops();	
 }
 
 =item C<< add_list ( @elements ) >>
@@ -1006,6 +1024,11 @@ sub _debug {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

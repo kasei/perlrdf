@@ -7,7 +7,31 @@ RDF::Trine::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Trine::VariableBindings version 0.140
+This document describes RDF::Trine::VariableBindings version 1.000
+
+=head1 SYNOPSIS
+
+  use RDF::Trine qw(literal);
+  use RDF::Trine::VariableBindings;
+  my $vb = RDF::Trine::VariableBindings->new( {} );
+  $vb->set( foo => literal("bar") );
+  $vb->set( baz => literal("blee") );
+  $vb->variables; # qw(foo baz)
+  
+  my $x = RDF::Trine::VariableBindings->new( { foo => literal("bar") } );
+  $x->set( greeting => literal("hello") );
+
+  my $j = $vb->join( $x ); # { foo => "bar", baz => "blee", greeting => "hello" }
+
+  my @keys = qw(baz greeting);
+  my $p = $j->project( @keys ); # { baz => "blee", greeting => "hello" }
+  print $p->{greeting}->literal_value; # "hello"
+
+=head1 DESCRIPTION
+
+RDF::Trine::VariableBindings objects provide a mapping from variable names to
+RDF::Trine::Node objects. The objects may be used as a hash reference, with
+variable names used as hash keys.
 
 =head1 METHODS
 
@@ -29,7 +53,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 ######################################################################
@@ -62,37 +86,6 @@ sub set {
 	my $name	= shift;
 	my $node	= shift;
 	$self->{ $name }	= $node;
-}
-
-=item C<< copy_labels_from ( $vb ) >>
-
-Copies the labels from C<< $vb >>, adding them to the labels for this object.
-
-=cut
-
-sub copy_labels_from {
-	my $self		= shift;
-	my $rowa		= shift;
-	my $self_labels	= $VB_LABELS{ refaddr($self) };
-	my $a_labels	= $VB_LABELS{ refaddr($rowa) };
-	if ($self_labels or $a_labels) {
-		$self_labels	||= {};
-		$a_labels		||= {};
-		my %new_labels	= ( %$self_labels, %$a_labels );
-		
-		if (exists $new_labels{'origin'}) {
-			my %origins;
-			foreach my $o (@{ $self_labels->{'origin'} || [] }) {
-				$origins{ $o }++;
-			}
-			foreach my $o (@{ $a_labels->{'origin'} || [] }) {
-				$origins{ $o }++;
-			}
-			$new_labels{'origin'}	= [ keys %origins ];
-		}
-		
-		$VB_LABELS{ refaddr($self) }	= \%new_labels;
-	}
 }
 
 =item C<< join ( $row ) >>
@@ -198,6 +191,37 @@ sub label {
 	}
 }
 
+=item C<< copy_labels_from ( $vb ) >>
+
+Copies the labels from C<< $vb >>, adding them to the labels for this object.
+
+=cut
+
+sub copy_labels_from {
+	my $self		= shift;
+	my $rowa		= shift;
+	my $self_labels	= $VB_LABELS{ refaddr($self) };
+	my $a_labels	= $VB_LABELS{ refaddr($rowa) };
+	if ($self_labels or $a_labels) {
+		$self_labels	||= {};
+		$a_labels		||= {};
+		my %new_labels	= ( %$self_labels, %$a_labels );
+		
+		if (exists $new_labels{'origin'}) {
+			my %origins;
+			foreach my $o (@{ $self_labels->{'origin'} || [] }) {
+				$origins{ $o }++;
+			}
+			foreach my $o (@{ $a_labels->{'origin'} || [] }) {
+				$origins{ $o }++;
+			}
+			$new_labels{'origin'}	= [ keys %origins ];
+		}
+		
+		$VB_LABELS{ refaddr($self) }	= \%new_labels;
+	}
+}
+
 sub _labels {
 	my $self	= shift;
 	my $addr	= refaddr($self);
@@ -217,6 +241,11 @@ sub DESTROY {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

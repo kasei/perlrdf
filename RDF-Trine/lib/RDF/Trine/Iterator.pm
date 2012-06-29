@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
+RDF::Trine::Iterator - Iterator class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.140.
+This document describes RDF::Trine::Iterator version 1.000.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -326,22 +326,6 @@ sub concat {
 	return $s;
 }
 
-=item C<< count >>
-
-DEPRECATED. Returns the number of objects returned from this iterator.
-
-This method is deprecated. The C<< length >> method from either
-RDF::Trine::Iterator::Bindings::Materialized or
-RDF::Trine::Iterator::Graph::Materialized should be used instead.
-
-=cut
-
-sub count {
-	my $self	= shift;
-	Carp::carp "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
-	return $self->{_count};
-}
-
 =item C<< seen_count >>
 
 Returns the count of elements that have been returned by this iterator at the
@@ -503,33 +487,6 @@ sub _stream {
 }
 
 
-=item C<< add_extra_result_data ( $tag, \%data ) >>
-
-=cut
-
-sub add_extra_result_data {
-	my $self	= shift;
-	my $tag		= shift;
-	my $data	= shift;
-	push( @{ $self->_args->{ extra_result_data }{ $tag } }, $data );
-}
-
-=item C<< extra_result_data >>
-
-=cut
-
-sub extra_result_data {
-	my $self	= shift;
-	$self->peek;
-	my $args	= $self->_args;
-	my $extra	= $args->{ extra_result_data };
-	return $extra;
-}
-
-
-
-
-
 =back
 
 =head1 FUNCTIONS
@@ -661,6 +618,11 @@ L<JSON|JSON>
 L<Scalar::Util|Scalar::Util>
 
 L<XML::SAX|XML::SAX>
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

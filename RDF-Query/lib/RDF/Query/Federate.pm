@@ -9,6 +9,12 @@ RDF::Query::Federate - A subclass of RDF::Query for efficient federated query ex
 
 This document describes RDF::Query::Federate version 2.908.
 
+=head1 STATUS
+
+This module's API and functionality should be considered deprecated.
+If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
+
 =head1 SYNOPSIS
 
  my $service = RDF::Query::ServiceDescription->new( $url );

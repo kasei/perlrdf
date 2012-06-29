@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Boolean - Stream (iterator) class for boolean query results
+RDF::Trine::Iterator::Boolean - Iterator class for boolean query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.140
+This document describes RDF::Trine::Iterator::Boolean version 1.000
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 =item C<new ( \@results, %args )>
@@ -170,6 +170,10 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

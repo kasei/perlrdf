@@ -297,8 +297,8 @@ sub update_eval_test {
 		$ok	= is( $eq, 1, $test->as_string );
 		unless ($ok) {
 			warn $test_graph->error;
-			warn $test_model->as_string;
-			warn $expected_model->as_string;
+			warn "Got model:\n" . $test_model->as_string;
+			warn "Expected model:\n" . $expected_model->as_string;
 		}
 	};
 	if ($@ or not($ok)) {
@@ -475,7 +475,7 @@ sub get_actual_results {
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
-		warn "Got actual results:\n";
+		warn "Actual results:\n";
 		warn $results->as_string;
 	}
 	if ($results->is_bindings) {
@@ -501,7 +501,7 @@ sub get_expected_results {
 		my $results	= $model->get_statements();
 		if ($args{ results }) {
 			$results	= $results->materialize;
-			warn "Got expected results:\n";
+			warn "Expected results:\n";
 			warn $results->as_string;
 		}
 		return $results;
@@ -514,13 +514,13 @@ sub get_expected_results {
 			my $bool	= ($value ? 'true' : 'false');
 			$model->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
 			if ($args{ results }) {
-				warn "Got expected result: $bool\n";
+				warn "Expected result: $bool\n";
 			}
 			return $model->get_statements;
 		} else {
 			if ($args{ results }) {
 				$results	= $results->materialize;
-				warn "Got expected results:\n";
+				warn "Expected results:\n";
 				warn $results->as_string;
 			}
 			return binding_results_data( $results );
@@ -535,7 +535,7 @@ sub get_expected_results {
 		} else {
 			if ($args{ results }) {
 				$results	= $results->materialize;
-				warn "Got expected results:\n";
+				warn "Expected results:\n";
 				warn $results->as_string;
 			}
 			return binding_results_data( $results );
@@ -565,7 +565,7 @@ sub get_expected_results {
 			push(@data, \%result);
 		}
 		if ($args{ results }) {
-			warn "Got expected results:\n";
+			warn "Expected results:\n";
 			warn Dumper(\@data);
 		}
 		return \@data;
@@ -605,7 +605,7 @@ sub get_expected_results {
 			my $rmodel	= RDF::Trine::Model->new();
 			$rmodel->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
 			if ($args{ results }) {
-				warn "Got expected result: $bool\n";
+				warn "Expected result: $bool\n";
 			}
 			return $rmodel->get_statements;
 		} else {

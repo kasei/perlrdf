@@ -7,7 +7,7 @@ RDF::Trine::Model::StatementFilter - Model for filtering statements based on a u
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::StatementFilter version 0.140
+This document describes RDF::Trine::Model::StatementFilter version 1.000
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 ################################################################################
@@ -190,6 +190,11 @@ sub add_rule {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

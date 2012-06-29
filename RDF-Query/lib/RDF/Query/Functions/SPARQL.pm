@@ -1511,11 +1511,25 @@ sub _strbefore {
 		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called with a datatyped (non-xsd:string) literal";
 	}
 	
+	my $lhs_simple	= not($node->has_language or $node->has_datatype);
+	my $lhs_xsd		= ($node->has_datatype and $node->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	my $rhs_simple	= not($substr->has_language or $substr->has_datatype);
+	my $rhs_xsd		= ($substr->has_datatype and $substr->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	if (($lhs_simple or $lhs_xsd) and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} elsif ($node->has_language and $substr->has_language and $node->literal_value_language eq $substr->literal_value_language) {
+		# ok
+	} elsif ($node->has_language and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called with literals that are not argument compatible";
+	}
+	
 	my $value	= $node->literal_value;
 	my $match	= $substr->literal_value;
 	my $i		= index($value, $match, 0);
 	if ($i < 0) {
-		return RDF::Query::Node::Literal->new('', $node->type_list);
+		return RDF::Query::Node::Literal->new('');
 	} else {
 		return RDF::Query::Node::Literal->new(substr($value, 0, $i), $node->type_list);
 	}
@@ -1538,11 +1552,26 @@ sub _strafter {
 	if ($node->has_datatype and $node->literal_datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
 		throw RDF::Query::Error::TypeError -text => "sparql:strafter called with a datatyped (non-xsd:string) literal";
 	}
+	
+	my $lhs_simple	= not($node->has_language or $node->has_datatype);
+	my $lhs_xsd		= ($node->has_datatype and $node->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	my $rhs_simple	= not($substr->has_language or $substr->has_datatype);
+	my $rhs_xsd		= ($substr->has_datatype and $substr->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	if (($lhs_simple or $lhs_xsd) and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} elsif ($node->has_language and $substr->has_language and $node->literal_value_language eq $substr->literal_value_language) {
+		# ok
+	} elsif ($node->has_language and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:strafter called with literals that are not argument compatible";
+	}
+	
 	my $value	= $node->literal_value;
 	my $match	= $substr->literal_value;
 	my $i		= index($value, $match, 0);
 	if ($i < 0) {
-		return RDF::Query::Node::Literal->new('', $node->type_list);
+		return RDF::Query::Node::Literal->new('');
 	} else {
 		return RDF::Query::Node::Literal->new(substr($value, $i+length($match)), $node->type_list);
 	}

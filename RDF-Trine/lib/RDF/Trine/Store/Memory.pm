@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 0.140
+This document describes RDF::Trine::Store::Memory version 1.000
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.140";
+	$VERSION	= "1.000";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -415,6 +415,7 @@ sub add_statement {
 	if ($count == 0) {
 		$self->{size}++;
 		my $id	= scalar(@{ $self->{ statements } });
+		$self->{hash}->add('+' . $st->as_string);
 		push( @{ $self->{ statements } }, $st );
 		foreach my $pos (0 .. $#pos_names) {
 			my $name	= $pos_names[ $pos ];
@@ -432,7 +433,6 @@ sub add_statement {
 		my $str	= $ctx->as_string;
 		unless (exists $self->{ ctx_nodes }{ $str }) {
 			$self->{ ctx_nodes }{ $str }	= $ctx;
-			$self->{hash}->add('+' . $st->as_string);
 		}
 # 	} else {
 # 		warn "store already has statement " . $st->as_string;
@@ -472,8 +472,8 @@ sub remove_statement {
 		$self->{size}--;
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
-		$self->{statements}[ $id ]	= undef;
 		$self->{hash}->add('-' . $st->as_string);
+		$self->{statements}[ $id ]	= undef;
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];
 			my $node	= $st->$name();
@@ -703,7 +703,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

@@ -63,7 +63,7 @@ our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/;
 our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/;
 our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/;
 our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-our $r_PN_CHARS_U			= qr/(_|${r_PN_CHARS_BASE})/;
+our $r_PN_CHARS_U			= qr/([_:]|${r_PN_CHARS_BASE})/;
 our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/;
 our $r_VAR1					= qr/[?]${r_VARNAME}/;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/;
@@ -377,7 +377,7 @@ sub _RW_Query {
 
 sub _Query_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|INSERT|DELETE|WITH/i));
+	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|DROP|ADD|MOVE|COPY|CREATE|INSERT|DELETE|WITH/i));
 	return 0;
 }
 
@@ -663,8 +663,8 @@ sub __ModifyTemplate {
 		$self->_GraphGraphPattern;
 		
 		{
-			my ($d)	= splice(@{ $self->{stack} });
-			$self->__handle_GraphPatternNotTriples( $d );
+			my (@d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( @d );
 		}
 	}
 }
@@ -932,7 +932,8 @@ sub _SelectQuery {
 		$self->_eat('{');
 		$self->__consume_ws_opt;
 		while ($self->_Binding_test) {
-			$self->_Binding($count);
+			my $terms	= $self->_Binding($count);
+			push( @{ $self->{build}{bindings}{terms} }, $terms );
 			$self->__consume_ws_opt;
 		}
 		$self->_eat('}');
@@ -1227,9 +1228,9 @@ sub _Binding {
 		push( @terms, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
-	push( @{ $self->{build}{bindings}{terms} }, \@terms );
 	$self->__consume_ws_opt;
 	$self->_eat( ')' );
+	return \@terms;
 }
 
 sub _BindingValue_test {
@@ -1518,8 +1519,8 @@ sub _GroupGraphPatternSub {
 			$got_pattern++;
 			$self->_GraphPatternNotTriples;
 			$self->__consume_ws_opt;
-			my ($data)	= splice(@{ $self->{stack} });
-			$self->__handle_GraphPatternNotTriples( $data );
+			my (@data)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( @data );
 			$self->__consume_ws_opt;
 		} elsif ($self->_test( qr/FILTER/i )) {
 			$got_pattern++;
@@ -1566,7 +1567,7 @@ sub _GroupGraphPatternSub {
 	}
 	
 	my $cont		= $self->_pop_pattern_container;
-	
+
 	my @filters		= splice(@{ $self->{filters} });
 	my @patterns;
 	my $pattern	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
@@ -1593,10 +1594,13 @@ sub __handle_GraphPatternNotTriples {
 		
 		my $opt	= $class->new( $ggp, @args );
 		$self->_add_patterns( $opt );
+	} elsif ($class eq 'RDF::Query::Algebra::Table') {
+ 		my ($table)	= @args;
+		$self->_add_patterns( $table );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
- 		my ($bind)	= @args;
+ 		my ($bind, @first)	= @args;
 		$self->_push_pattern_container;
-		$self->_add_patterns( $bind );
+		$self->_add_patterns( @first, $bind );
 	} elsif ($class eq 'RDF::Query::Algebra::Service') {
 		my ($endpoint, $pattern, $silent)	= @args;
 		if ($endpoint->isa('RDF::Query::Node::Variable')) {
@@ -1617,7 +1621,7 @@ sub __handle_GraphPatternNotTriples {
 			my $service	= $class->new( $endpoint, $pattern, $silent );
 			$self->_add_patterns( $service );
 		}
-	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern|Service)$/) {
+	} elsif ($class =~ /RDF::Query::Algebra::(Union|NamedGraph|GroupGraphPattern)$/) {
 		# no-op
 	} else {
 		throw RDF::Query::Error::ParseError 'Unrecognized GraphPattern: ' . $class;
@@ -1741,12 +1745,15 @@ TRIPLESBLOCKLOOP:
 # [22] GraphPatternNotTriples ::= OptionalGraphPattern | GroupOrUnionGraphPattern | GraphGraphPattern
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
+	return 1 if $self->_test(qr/VALUES/i); # InlineDataClause
 	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
 	my $self	= shift;
-	if ($self->_test(qr/SERVICE/i)) {
+	if ($self->_test(qr/VALUES/i)) {
+		$self->_InlineDataClause;
+	} elsif ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
 		$self->_MinusGraphPattern;
@@ -1761,20 +1768,86 @@ sub _GraphPatternNotTriples {
 	}
 }
 
+sub _InlineDataClause {
+	my $self	= shift;
+	$self->_eat( qr/VALUES/i );
+	$self->__consume_ws_opt;
+	my @vars;
+	
+	my $parens	= 0;
+	if ($self->_test(qr/[(]/)) {
+		$self->_eat( qr/[(]/ );
+		$parens	= 1;
+	}
+	while ($self->_test(qr/[\$?]/)) {
+		$self->_Var;
+		push( @vars, splice(@{ $self->{stack} }));
+		$self->__consume_ws_opt;
+	}
+	if ($parens) {
+		$self->_eat( qr/[)]/ );
+	}
+	
+	my $count	= scalar(@vars);
+	
+	if (not($parens) and $count == 0) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+	}
+	
+	my $short	= (not($parens) and $count == 1);
+	$self->_eat('{');
+	$self->__consume_ws_opt;
+	my @rows;
+	if (not($short) or ($short and $self->_Binding_test)) {
+		# { (term) (term) }
+		while ($self->_Binding_test) {
+			my $terms	= $self->_Binding($count);
+			push( @rows, $terms );
+			$self->__consume_ws_opt;
+		}
+	} else {
+		# { term term }
+		while ($self->_BindingValue_test) {
+			$self->_BindingValue;
+			$self->__consume_ws_opt;
+			my ($term)	= splice(@{ $self->{stack} });
+			push( @rows, [$term] );
+		}
+	}
+	
+	$self->_eat('}');
+	$self->__consume_ws_opt;
+	
+	my @vbs		= map { my %d; @d{ map { $_->name } @vars } = @$_; RDF::Query::VariableBindings->new(\%d) } @rows;
+	
+	my $table	= RDF::Query::Algebra::Table->new( @vbs );
+	$self->_add_stack( ['RDF::Query::Algebra::Table', $table] );
+	
+}
+
 sub _Bind {
 	my $self	= shift;
 	my $cont	= $self->_pop_pattern_container || [];
-	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+	my $ggp;
+	my @first;
+	if (scalar(@$cont) == 1 and blessed($cont->[0]) and $cont->[0]->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+		push(@first, @$cont);
+		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+	} else {
+		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
+	}
 	$self->_eat(qr/BIND/i);
 	$self->__consume_ws_opt;
 	$self->_BrackettedAliasExpression;
 	my ($alias)	= splice(@{ $self->{stack} });
 
-	unless ($ggp) {
-		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+	my %in_scope	= map { $_ => 1 } $ggp->potentially_bound();
+	my $var			= $alias->name;
+	if (exists $in_scope{ $var }) {
+		throw RDF::Query::Error::QueryPatternError -text => "Syntax error: BIND used with variable already in scope";
 	}
 	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
-	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind] );
+	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind, @first] );
 #	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
 #	$self->_add_stack( $opt );
 }
@@ -2333,33 +2406,34 @@ sub _PathMod {
 			$self->_add_stack( $self->_eat(qr/[*?+]/) );
 			$self->__consume_ws_opt;
 		}
-	} else {
-		$self->_eat(qr/{/);
-		$self->__consume_ws_opt;
-		my $value	= 0;
-		if ($self->_test(qr/}/)) {
-			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
-		}
-		if ($self->_test($r_INTEGER)) {
-			$value	= $self->_eat( $r_INTEGER );
-			$self->__consume_ws_opt;
-		}
-		if ($self->_test(qr/,/)) {
-			$self->_eat(qr/,/);
-			$self->__consume_ws_opt;
-			if ($self->_test(qr/}/)) {
-				$self->_eat(qr/}/);
-				$self->_add_stack( "$value-" );
-			} else {
-				my $end	= $self->_eat( $r_INTEGER );
-				$self->__consume_ws_opt;
-				$self->_eat(qr/}/);
-				$self->_add_stack( "$value-$end" );
-			}
-		} else {
-			$self->_eat(qr/}/);
-			$self->_add_stack( "$value" );
-		}
+### path repetition range syntax :path{n,m}; removed from 1.1 Query 2LC
+# 	} else {
+# 		$self->_eat(qr/{/);
+# 		$self->__consume_ws_opt;
+# 		my $value	= 0;
+# 		if ($self->_test(qr/}/)) {
+# 			throw RDF::Query::Error::ParseError -text => "Syntax error: Empty Path Modifier";
+# 		}
+# 		if ($self->_test($r_INTEGER)) {
+# 			$value	= $self->_eat( $r_INTEGER );
+# 			$self->__consume_ws_opt;
+# 		}
+# 		if ($self->_test(qr/,/)) {
+# 			$self->_eat(qr/,/);
+# 			$self->__consume_ws_opt;
+# 			if ($self->_test(qr/}/)) {
+# 				$self->_eat(qr/}/);
+# 				$self->_add_stack( "$value-" );
+# 			} else {
+# 				my $end	= $self->_eat( $r_INTEGER );
+# 				$self->__consume_ws_opt;
+# 				$self->_eat(qr/}/);
+# 				$self->_add_stack( "$value-$end" );
+# 			}
+# 		} else {
+# 			$self->_eat(qr/}/);
+# 			$self->_add_stack( "$value" );
+# 		}
 	}
 }
 

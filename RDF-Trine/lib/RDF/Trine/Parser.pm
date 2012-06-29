@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.140
+This document describes RDF::Trine::Parser version 1.000
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -379,8 +379,6 @@ sub parse_file {
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
-
 =cut
 
 
@@ -415,6 +413,11 @@ sub new_bnode_prefix {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
