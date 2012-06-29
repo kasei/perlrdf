@@ -68,6 +68,29 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 0.140 (2012-06-29)
+
+     * API CHANGES
+         Removed RDF::Trine methods count, add_extra_result_data, extra_result_data.
+         Removed support for extra data serialized in SPARQL/XML result format link tags.
+         Made Literal and Resource node constructors throw exception when passed undef lexical value.
+     * BUG FIXES
+         Fixed parsing of backslash escapes in Turtle quoted literals (from Toby Inkster via github pull request #63).
+         Rolled back attempted optimization of bulk ops calls (which broke the code).
+         Fixed etag bug in RDF::Trine::Store::Memory.
+     * NEW FEATURES
+         Added RDF::Trine::Model->add_iterator method.
+     * OTHER
+         Fixed miscellaneous typos (from Evan Carew).
+         Updated bug reporting details in BUGS POD section.
+         Updated documentation in several classes.
+         Removed redundant documentation in RDF::Trine::Parser.
+         Added Redland test for UTF8 (from Kjetil Kjernsmo).
+         Added two tests for concat graph iterators (from Kjetil Kjernsmo).
+         Fix usage of materialized iterators in t/iterator-graph.t (from Kjetil Kjernsmo).
+         Document the extends option to negotiate in the serializer (from KjetilK).
+         Document RDFTRINE_NO_REDLAND (from KjetilK).
+
   Version 0.140 (2012-05-08)
 
      * API CHANGES

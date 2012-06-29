@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.140
+This document describes RDF::Trine version 1.000
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.000';
 }
 
 use Log::Log4perl;
@@ -331,8 +331,8 @@ sub add_statement_tests_simple {
 		update_sleep($args);
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
-
-	$retag_before = $store->etag;
+	
+	$etag_before = $store->etag;
 	$store->remove_statement( $triple, $ex->d );
 	update_sleep($args);
    SKIP: {

@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 0.140
+This document describes RDF::Trine::Parser::Turtle version 1.000
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.140';
+	$VERSION				= '1.000';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -916,30 +916,35 @@ sub _longString {
 
 ################################################################################
 
-sub _parse_short {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
-	}
-	return '' unless length($s);
-	return _unescape($s);
-}
+{
+	my %easy = (
+		q[\\]   =>  qq[\\],
+		r       =>  qq[\r],
+		n       =>  qq[\n],
+		t       =>  qq[\t],
+		q["]    =>  qq["],
+	);
+	
+	sub _parse_short {
+		my $self = shift;
+		my $s    = shift;
+		return '' unless length($s);
 
-sub _parse_long {
-	my $self	= shift;
-	my $s		= shift;
-	for ($s) {
-		s/\\"/"/g;
-		s/\\t/\t/g;
-		s/\\r/\r/g;
-		s/\\n/\n/g;
+		$s =~ s{ \\ ( [\\tnr"] | u.{4} | U.{8} ) }{
+			if (exists $easy{$1}) {
+				$easy{$1};
+			} else {
+				my $hex	= substr($1, 1);
+				die "invalid hexadecimal escape: $hex" unless $hex =~ m{^[0-9A-Fa-f]+$};
+				chr(hex($hex));
+			}
+		}gex;
+		
+		return $s;
 	}
-	return '' unless length($s);
-	return _unescape($s);
+	
+	# they're the same
+	*_parse_long = \&_parse_short;
 }
 
 sub _join_uri {
