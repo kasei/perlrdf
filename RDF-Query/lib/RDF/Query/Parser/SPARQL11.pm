@@ -3300,6 +3300,16 @@ sub __solution_modifiers {
 		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
 		if (scalar(@vars)) {
 			my $pattern	= pop(@{ $self->{build}{triples} });
+			my @bound	= $pattern->potentially_bound;
+			my %bound	= map { $_ => 1 } @bound;
+			foreach my $v (@vars) {
+				my $name	= $v->name;
+				if ($bound{ $name }) {
+					throw RDF::Query::Error::ParseError -text => "Syntax error: Already-bound variable ($name) used in project expression";
+				}
+			}
+			
+			
 			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
 			push(@{ $self->{build}{triples} }, $proj);
 		}
