@@ -8,7 +8,23 @@ This document describes RDF::Trine::Store::DBI version 1.000
 
 =head1 SYNOPSIS
 
- use RDF::Trine::Store::DBI;
+  use RDF::Trine::Store::DBI;
+  
+  my $user = 'me';
+  my $pass = 'secret';
+  my $modelname = 'mymodel';
+
+  # First, construct a DBI connection to your database
+  my $dsn = "DBI:mysql:database=perlrdf";
+  my $dbh = DBI->connect( $dsn, $user, $pass );
+  
+  # Second, create a new Store object with the database connection
+  # and specifying (by name) which model in the Store you want to use
+  my $store = RDF::Trine::Store::DBI->new( $modelname, $dbh );
+  
+  # Finally, wrap the Store objec into a Model, and use it to access your data
+  my $model = RDF::Trine::Model->new($store);
+  print $model->size . " RDF statements in store\n";
 
 =head1 DESCRIPTION
 
