@@ -208,7 +208,8 @@ sub parse_url_into_model {
 			$data	= decode( $e, $content );
 		}
 		
-		my $parser	= $pclass->new();
+		# pass %args in here too so the constructor can take its pick
+		my $parser	= $pclass->new(%args);
 		my $ok	= 0;
 		try {
 			$parser->parse_into_model( $url, $data, $model, %args );
