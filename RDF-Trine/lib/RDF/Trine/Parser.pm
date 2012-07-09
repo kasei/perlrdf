@@ -207,8 +207,12 @@ sub parse_url_into_model {
 		if (my $e = $encodings{ $pclass }) {
 			$data	= decode( $e, $content );
 		}
-		
-		my $parser	= $pclass->new();
+
+        # prepend our own options to %args if called as an instance method
+        %args = (%$class, %args) if ref $class;
+
+		# pass %args in here too so the constructor can take its pick
+		my $parser	= $pclass->new(%args);
 		my $ok	= 0;
 		try {
 			$parser->parse_into_model( $url, $data, $model, %args );
