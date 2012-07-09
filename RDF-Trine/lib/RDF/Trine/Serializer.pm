@@ -190,7 +190,7 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
+	open( my $fh, '>:utf8', \$string );
 	$self->serialize_model_to_file( $fh, $model );
 	close($fh);
 	return $string;
