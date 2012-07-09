@@ -101,7 +101,7 @@ sub parse {
 	my $base	= shift;
 	my $string	= shift;
 	my $handler	= shift;
-	
+
 	my $parser  = RDF::RDFa::Parser->new($string, $base, $self->{'options'});
 	$parser->set_callbacks({
 		ontriple	=> sub {
