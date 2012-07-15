@@ -110,6 +110,12 @@ sub execute ($) {
 			}
 		}
 		
+		my @groups	= values %{ $group_data{'groups'} };
+		if (scalar(@groups) == 0) {
+			$group_data{'rows'}{''}		= [];
+			$group_data{'groups'}{''}	= [];
+		}
+		
 		my @rows;
 		GROUP: foreach my $group (keys %{ $group_data{ 'rows' } }) {
 			$l->debug( "group: $group" );
