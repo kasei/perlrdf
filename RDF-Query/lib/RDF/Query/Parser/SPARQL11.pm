@@ -63,14 +63,14 @@ our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/;
 our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/;
 our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/;
 our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-our $r_PN_CHARS_U			= qr/([_:]|${r_PN_CHARS_BASE})/;
+our $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/;
 our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/;
 our $r_VAR1					= qr/[?]${r_VARNAME}/;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/;
 our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
 our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
-our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=:/?#@%_\$]))|%[0-9A-Fa-f]{2}};
-our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[.])*${r_PN_CHARS})?)/;
+our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}};
+our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/;
 our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
 our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/;
 our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/;
@@ -915,27 +915,52 @@ sub _SelectQuery {
 	$self->_SolutionModifier();
 	
 	$self->__consume_ws_opt;
-	if ($self->_test( qr/BINDINGS/i )) {
-		$self->_eat( qr/BINDINGS/i );
+	if ($self->_test( qr/VALUES/i )) {
+		$self->_eat( qr/VALUES/i );
 		$self->__consume_ws_opt;
 		my @vars;
 # 		$self->_Var;
 # 		push( @vars, splice(@{ $self->{stack} }));
 # 		$self->__consume_ws_opt;
+		my $parens	= 0;
+		if ($self->_test(qr/[(]/)) {
+			$self->_eat( qr/[(]/ );
+			$parens	= 1;
+		}
 		while ($self->_test(qr/[\$?]/)) {
 			$self->_Var;
 			push( @vars, splice(@{ $self->{stack} }));
 			$self->__consume_ws_opt;
 		}
+		if ($parens) {
+			$self->_eat( qr/[)]/ );
+		}
+		$self->__consume_ws_opt;
 		
 		my $count	= scalar(@vars);
+		if (not($parens) and $count == 0) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+		}
+		
+		my $short	= (not($parens) and $count == 1);
 		$self->_eat('{');
 		$self->__consume_ws_opt;
-		while ($self->_Binding_test) {
-			my $terms	= $self->_Binding($count);
-			push( @{ $self->{build}{bindings}{terms} }, $terms );
-			$self->__consume_ws_opt;
+		if (not($short) or ($short and $self->_Binding_test)) {
+			while ($self->_Binding_test) {
+				my $terms	= $self->_Binding($count);
+				push( @{ $self->{build}{bindings}{terms} }, $terms );
+				$self->__consume_ws_opt;
+			}
+		} else {
+			while ($self->_BindingValue_test) {
+				$self->_BindingValue;
+				$self->__consume_ws_opt;
+				my ($term)	= splice(@{ $self->{stack} });
+				push( @{ $self->{build}{bindings}{terms} }, [$term] );
+				$self->__consume_ws_opt;
+			}
 		}
+		
 		$self->_eat('}');
 		$self->__consume_ws_opt;
 		$self->{build}{bindings}{vars}	= \@vars;
@@ -1111,7 +1136,7 @@ sub _DescribeQuery {
 sub _AskQuery {
 	my $self	= shift;
 	$self->_eat(qr/ASK/i);
-	$self->_ws;
+	$self->__consume_ws_opt;
 	
 	$self->_DatasetClause();
 	
@@ -1683,6 +1708,56 @@ sub _SubSelect {
 			my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
 			push(@{ $self->{build}{triples} }, $sort);
 		}
+		
+		$self->__consume_ws_opt;
+		if ($self->_test( qr/VALUES/i )) {
+			$self->_eat( qr/VALUES/i );
+			$self->__consume_ws_opt;
+			my @vars;
+			my $parens	= 0;
+			if ($self->_test(qr/[(]/)) {
+				$self->_eat( qr/[(]/ );
+				$parens	= 1;
+			}
+			while ($self->_test(qr/[\$?]/)) {
+				$self->_Var;
+				push( @vars, splice(@{ $self->{stack} }));
+				$self->__consume_ws_opt;
+			}
+			if ($parens) {
+				$self->_eat( qr/[)]/ );
+			}
+			$self->__consume_ws_opt;
+			
+			my $count	= scalar(@vars);
+			if (not($parens) and $count == 0) {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+			}
+			
+			my $short	= (not($parens) and $count == 1);
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			if (not($short) or ($short and $self->_Binding_test)) {
+				while ($self->_Binding_test) {
+					my $terms	= $self->_Binding($count);
+					push( @{ $self->{build}{bindings}{terms} }, $terms );
+					$self->__consume_ws_opt;
+				}
+			} else {
+				while ($self->_BindingValue_test) {
+					$self->_BindingValue;
+					$self->__consume_ws_opt;
+					my ($term)	= splice(@{ $self->{stack} });
+					push( @{ $self->{build}{bindings}{terms} }, [$term] );
+					$self->__consume_ws_opt;
+				}
+			}
+			
+			$self->_eat('}');
+			$self->__consume_ws_opt;
+			$self->{build}{bindings}{vars}	= \@vars;
+		}
+		
 		$self->__solution_modifiers( $star );
 		
 		delete $self->{build}{options};
@@ -1789,7 +1864,6 @@ sub _InlineDataClause {
 	}
 	
 	my $count	= scalar(@vars);
-	
 	if (not($parens) and $count == 0) {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
 	}
@@ -1820,7 +1894,7 @@ sub _InlineDataClause {
 	
 	my @vbs		= map { my %d; @d{ map { $_->name } @vars } = @$_; RDF::Query::VariableBindings->new(\%d) } @rows;
 	
-	my $table	= RDF::Query::Algebra::Table->new( @vbs );
+	my $table	= RDF::Query::Algebra::Table->new( [ map { $_->name } @vars ], @vbs );
 	$self->_add_stack( ['RDF::Query::Algebra::Table', $table] );
 	
 }
