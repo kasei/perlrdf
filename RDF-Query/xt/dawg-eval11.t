@@ -112,7 +112,6 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		service
 		subquery
 		update-silent
-		values
 	);
 foreach my $file (@manifests) {
 	warn "Parsing manifest $file" if $debug;
