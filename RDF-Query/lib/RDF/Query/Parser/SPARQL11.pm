@@ -940,6 +940,8 @@ sub _SelectQuery {
 		my $count	= scalar(@vars);
 		if (not($parens) and $count == 0) {
 			throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+		} elsif (not($parens) and $count > 1) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
 		}
 		
 		my $short	= (not($parens) and $count == 1);
@@ -1732,6 +1734,8 @@ sub _SubSelect {
 			my $count	= scalar(@vars);
 			if (not($parens) and $count == 0) {
 				throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+			} elsif (not($parens) and $count > 1) {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
 			}
 			
 			my $short	= (not($parens) and $count == 1);
@@ -1866,6 +1870,8 @@ sub _InlineDataClause {
 	my $count	= scalar(@vars);
 	if (not($parens) and $count == 0) {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+	} elsif (not($parens) and $count > 1) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
 	}
 	
 	my $short	= (not($parens) and $count == 1);
