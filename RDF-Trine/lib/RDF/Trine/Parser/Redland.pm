@@ -156,7 +156,7 @@ sub parse {
 	my $string	= shift;
 	my $handler = shift;
 	
-	my $parser	= $self->{parser};
+	my $parser	= RDF::Redland::Parser->new($self->{name});
 	
 	my $null_base	= 'urn:uuid:1d1e755d-c622-4610-bae8-40261157687b';
 	if ($base and blessed($base) and $base->isa('URI')) {
