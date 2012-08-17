@@ -132,7 +132,10 @@ Adds the specified C<< $statement >> to the rdf store.
 =cut
  
 sub add_statement {
-	my $self	= shift;
+	my ($self, @args)	= @_;
+	unless ($args[0]->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
+	}
 	if ($self->{temporary}) {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
@@ -152,7 +155,7 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
-	return $self->_store->add_statement( @_ );
+	return $self->_store->add_statement( @args );
 }
 
 =item C<< add_hashref ( $hashref [, $context] ) >>
