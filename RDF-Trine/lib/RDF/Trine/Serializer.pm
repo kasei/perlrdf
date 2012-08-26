@@ -240,6 +240,36 @@ sub serialize_iterator_to_string {
 }
 
 
+=item C<< serialize ( $from ) >>
+
+=item C<< serialize ( $from => $to ) >>
+
+Serialize the C<< $from >> object (either an iterator or a model).
+If C<< $to >> is absent, the method returns a serialized string.
+Otherwise data is serialized to the C<< $to >> filehandle object.
+
+=cut
+
+sub serialize {
+	my $self		= shift;
+	my @things		= @_;
+	my $from		= $things[0];
+	my $to_string	= (scalar(@things) == 1);
+	if ($to_string) {
+		if ($from->isa('RDF::Trine::Iterator')) {
+			return $self->serialize_iterator_to_string($from);
+		} else {
+			return $self->serialize_model_to_string($from);
+		}
+	} else {
+		my $to	= $things[1];
+		if ($from->isa('RDF::Trine::Iterator')) {
+			return $self->serialize_iterator_to_file($to, $from);
+		} else {
+			return $self->serialize_model_to_file($to, $from);
+		}
+	}
+}
 
 
 =back
