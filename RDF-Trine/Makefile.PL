@@ -14,6 +14,7 @@ build_requires		'Test::JSON'				=> 0;
 
 perl_version		'5.008003';
 
+requires			'Moose'						=> 2.0;
 requires			'Module::Load::Conditional'	=> 0.38;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
