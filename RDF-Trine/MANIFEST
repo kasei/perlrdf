@@ -75,6 +75,7 @@ lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Redis.pm
 lib/RDF/Trine/Store/Redland.pm
 lib/RDF/Trine/Store/SPARQL.pm
+lib/RDF/Trine/Types.pm
 lib/RDF/Trine/VariableBindings.pm
 lib/Test/RDF/Trine/Store.pm
 Makefile.PL
