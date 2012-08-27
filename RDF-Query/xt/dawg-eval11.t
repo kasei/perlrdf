@@ -30,7 +30,7 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-use RDF::Endpoint;
+use RDF::Endpoint 0.05;
 use Carp;
 use HTTP::Request;
 use HTTP::Response;
