@@ -82,7 +82,7 @@ BEGIN {
 	$r_booltest				= qr'(?:true|false)\b';
 	$r_nameStartChar		= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
 	$r_nameChar				= qr/${r_nameStartChar}|[-0-9\x{b7}\x{0300}-\x{036f}\x{203F}-\x{2040}]/;
-	$r_prefixName			= qr/(?:(?!_)${r_nameStartChar})($r_nameChar)*/;
+	$r_prefixName			= qr/(?:(?!_)${r_nameStartChar})(?:$r_nameChar)*/;
 	$r_qname				= qr/(?:${r_prefixName})?:/;
 	$r_resource_test		= qr/<|$r_qname/;
 	$r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
