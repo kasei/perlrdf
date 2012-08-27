@@ -1,4 +1,4 @@
-use Test::More tests => 69;
+use Test::More tests => 67;
 use Test::Exception;
 
 use utf8;
@@ -23,16 +23,16 @@ my $dl		= RDF::Trine::Node::Literal->new( '123', undef, 'http://www.w3.org/2001/
 my $dl2		= RDF::Trine::Node::Literal->new( '123', undef, $xsd->integer );
 my $dl3		= RDF::Trine::Node::Literal->new( '123', undef, $xsd->decimal );
 my $p		= RDF::Trine::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
-my $p2		= RDF::Trine::Node::Resource->new('#greg', URI->new('http://kasei.us/about/foaf.xrdf'));
+my $p2		= RDF::Trine::Node::Resource->new_with_base('#greg', URI->new('http://kasei.us/about/foaf.xrdf'));
 my $name	= RDF::Trine::Node::Resource->new('http://xmlns.com/foaf/0.1/name');
 my $v		= RDF::Trine::Node::Variable->new('v');
 my $k		= RDF::Trine::Node::Resource->new('http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#食べる');
-my $k2		= RDF::Trine::Node::Resource->new('/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#食べる', 'http://www.w3.org/');
-my $k3		= RDF::Trine::Node::Resource->new('#食べる', 'http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji/食');
+my $k2		= RDF::Trine::Node::Resource->new_with_base('/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#食べる', 'http://www.w3.org/');
+my $k3		= RDF::Trine::Node::Resource->new_with_base('#食べる', 'http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji/食');
 my $urn		= RDF::Trine::Node::Resource->new('urn:x-demonstrate:bug');
 
-throws_ok { RDF::Trine::Node::Literal->new('foo', 'en', 'http://dt') } 'RDF::Trine::Error::MethodInvocationError', 'RDF::Trine::Node::Literal::new throws with both langauge and datatype';
-throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with non-alphanumeric label';
+throws_ok { RDF::Trine::Node::Literal->new('foo', 'en', 'http://dt') } 'RDF::Trine::Exception', 'RDF::Trine::Node::Literal::new throws with both langauge and datatype';
+throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Exception', 'RDF::Trine::Node::Blank::new throws with non-alphanumeric label';
 
 is( $b->type, 'BLANK', 'blank type' );
 is( $l->type, 'LITERAL', 'literal type' );
@@ -85,7 +85,7 @@ is( $ll->as_ntriples, '"value"@en', 'language literal as_ntriples' );
 is( $dl->as_ntriples, '"123"^^<http://www.w3.org/2001/XMLSchema#integer>', 'datatype literal as_ntriples' );
 is( $p->as_ntriples, '<http://kasei.us/about/foaf.xrdf#greg>', 'resource as_ntriples' );
 is( $k->as_ntriples, '<http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#%E9%A3%9F%E3%81%B9%E3%82%8B>', 'unicode literal as_ntriples' );
-throws_ok { $v->as_ntriples } 'RDF::Trine::Error::UnimplementedError', 'RDF::Trine::Node::Variable::as_ntriples throws';
+throws_ok { $v->as_ntriples } 'RDF::Trine::Exception', 'RDF::Trine::Node::Variable::as_ntriples throws';
 
 {
 	local($RDF::Trine::Node::Literal::USE_XMLLITERALS)	= 0;
@@ -118,17 +118,17 @@ SKIP: {
 	}
 }
 
-{
-	my $u	= RDF::Trine::Node::Resource->new('http://example.com/');
-	$u->uri( 'http://example.org/' );
-	is( $u->uri, 'http://example.org/', 'resource uri after modification' );
-}
+#{
+#	my $u	= RDF::Trine::Node::Resource->new('http://example.com/');
+#	$u->uri( 'http://example.org/' );
+#	is( $u->uri, 'http://example.org/', 'resource uri after modification' );
+#}
 
-{
-	my $l	= RDF::Trine::Node::Literal->new('123', undef, $xsd->integer);
-	$l->literal_value( '787' );
-	is( $l->literal_value, '787', 'literal value after modification' );
-}
+#{
+#	my $l	= RDF::Trine::Node::Literal->new('123', undef, $xsd->integer);
+#	$l->literal_value( '787' );
+#	is( $l->literal_value, '787', 'literal value after modification' );
+#}
 
 {
 	my ($ns, $l);

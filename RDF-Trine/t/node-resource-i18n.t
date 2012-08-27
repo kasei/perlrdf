@@ -17,7 +17,7 @@ use RDF::Trine::Node;
 
 {
 	my $base	= RDF::Trine::Node::Resource->new('http://kasei.us/');
-	my $uri		= RDF::Trine::Node::Resource->new('#火星', $base);
+	my $uri		= RDF::Trine::Node::Resource->new_with_base('#火星', $base);
 	is( $uri->uri_value, 'http://kasei.us/#火星', 'i18n uri value using BASE' );
 }
 
