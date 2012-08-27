@@ -191,10 +191,8 @@ sub _eat_re_save {
 		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
-	if ($self->{tokens} =~ m/^($thing)/) {
-		my $match	= $1;
-		substr($self->{tokens}, 0, length($match))	= '';
-		return $match;
+	if ($self->{tokens} =~ m/^$thing/) {
+		return substr($self->{tokens}, 0, $+[0], '');
 	}
 	$l->error("Expected ($thing) with remaining: $self->{tokens}");
 	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
