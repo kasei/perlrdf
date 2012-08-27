@@ -12,6 +12,7 @@ For example, to test a Memory store, do something like:
 
 	use Test::RDF::Trine::Store qw(all_store_tests number_of_tests);
 	use Test::More tests => 1 + Test::RDF::Trine::Store::number_of_tests;
+	use Test::Moose;
 
 	use RDF::Trine qw(iri variable store literal);
 	use RDF::Trine::Store;
@@ -19,7 +20,7 @@ For example, to test a Memory store, do something like:
 	my $data = Test::RDF::Trine::Store::create_data;
 
 	my $store	= RDF::Trine::Store::Memory->temporary_store();
-	isa_ok( $store, 'RDF::Trine::Store::Memory' );
+	does_ok( $store, 'RDF::Trine::Store::Memory' );
 	Test::RDF::Trine::Store::all_store_tests($store, $data);
 
 
@@ -45,6 +46,7 @@ package Test::RDF::Trine::Store;
 
 use Test::More;
 use Test::Exception;
+use Test::Moose;
 
 use strict;
 use warnings;
@@ -151,7 +153,7 @@ sub all_store_tests {
 	my $nil			= $data->{nil};
 
 	note "## Testing store " . ref($store);
-	isa_ok( $store, 'RDF::Trine::Store' );
+	does_ok( $store, 'RDF::Trine::Store::API' );
 
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
@@ -218,7 +220,7 @@ sub all_triple_store_tests {
 	my $nil			= $data->{nil};
 
 	note "## Testing store " . ref($store);
-	isa_ok( $store, 'RDF::Trine::Store' );
+	does_ok( $store, 'RDF::Trine::Store' );
 
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
@@ -314,13 +316,20 @@ sub add_statement_tests_simple {
 	
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
-	my $etag_before = $store->etag;
+	my $etag_before;
+	if ($store->does('RDF::Trine::Store::API::ETags')) {
+		$etag_before = $store->etag;
+	}
+	
 	update_sleep($args);
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
-   SKIP: {
-		skip 'It is OK to not support etag', 1 unless defined($etag_before);
-		isnt($etag_before, $store->etag, 'Etag has changed');
+	SKIP: {
+		if ($store->does('RDF::Trine::Store::API::ETags')) {
+			isnt($etag_before, $store->etag, 'Etag has changed');
+		} else {
+			skip 'It is OK to not support etag', 1;
+		}
 	}
 
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
@@ -332,12 +341,17 @@ sub add_statement_tests_simple {
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
 	
-	$etag_before = $store->etag;
+	if ($store->does('RDF::Trine::Store::API::ETags')) {
+		$etag_before = $store->etag;
+	}
 	$store->remove_statement( $triple, $ex->d );
 	update_sleep($args);
    SKIP: {
-		skip 'It is OK to not support etag', 1 unless defined($etag_before);
-		isnt($etag_before, $store->etag, 'Etag has changed');
+		if ($store->does('RDF::Trine::Store::API::ETags')) {
+			isnt($etag_before, $store->etag, 'Etag has changed');
+		} else {
+			skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		}
 	}
 
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
