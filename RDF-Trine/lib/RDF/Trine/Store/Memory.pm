@@ -20,8 +20,16 @@ package RDF::Trine::Store::Memory;
 
 use strict;
 use warnings;
+use Moose;
+with (
+	'RDF::Trine::Store::API::Readable',
+	'RDF::Trine::Store::API::Writeable',
+	'RDF::Trine::Store::API::ETags',
+	'RDF::Trine::Store::API::StableBlankNodes',
+	'RDF::Trine::Store::API::QuadStore',
+);
+
 no warnings 'redefine';
-use base qw(RDF::Trine::Store);
 
 use Set::Scalar;
 use Data::Dumper;
@@ -106,21 +114,41 @@ The following example initializes a Memory store based on a local file and a rem
 
 =cut
 
-sub new {
-	my $class	= shift;
-	my $self	= bless({
-		size		=> 0,
-		statements	=> [],
-		subject		=> {},
-		predicate	=> {},
-		object		=> {},
-		context		=> {},
-		ctx_nodes	=> {},
-		hash		=> Digest::SHA->new,
-	}, $class);
+has [qw( subject predicate object context ctx_nodes)] => (
+	is => 'bare',
+	default => sub { {} }
+);
 
-	return $self;
-}
+has 'size' => (
+	is => 'bare',
+	default => 0,
+);
+
+has 'statements' => (
+	is => 'bare',
+	default => sub { [] }
+);
+
+has 'hash' => (
+	is => 'bare',
+	default => sub { Digest::SHA->new }
+);
+
+# sub new {
+# 	my $class	= shift;
+# 	my $self	= bless({
+# 		size		=> 0,
+# 		statements	=> [],
+# 		subject		=> {},
+# 		predicate	=> {},
+# 		object		=> {},
+# 		context		=> {},
+# 		ctx_nodes	=> {},
+# 		hash		=> Digest::SHA->new,
+# 	}, $class);
+# 
+# 	return $self;
+# }
 
 sub _new_with_string {
 	my $class	= shift;
@@ -217,6 +245,30 @@ sub get_statements {
 	my $iter	= ($use_quad)
 				? $self->_get_statements_quad( $bound, %bound )
 				: $self->_get_statements_triple( $bound, %bound );
+	return $iter;
+}
+
+sub get_quads {
+	my $self	= shift;
+	my @nodes	= @_[0..3];
+	my $bound	= 0;
+	my %bound;
+	
+	my $g	= $nodes[3];
+	if (blessed($g) and not($g->is_variable)) {
+		$bound++;
+		$bound{ 3 }	= $g;
+	}
+	
+	foreach my $pos (0 .. 2) {
+		my $n	= $nodes[ $pos ];
+		if (blessed($n) and not($n->is_variable)) {
+			$bound++;
+			$bound{ $pos }	= $n;
+		}
+	}
+	
+	my $iter	= $self->_get_statements_quad( $bound, %bound );
 	return $iter;
 }
 
@@ -380,11 +432,12 @@ the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
+*get_contexts = \&get_graphs;
 
 =item C<< add_statement ( $statement [, $context] ) >>
 

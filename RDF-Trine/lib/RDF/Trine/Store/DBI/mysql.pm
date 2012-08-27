@@ -18,8 +18,11 @@ package RDF::Trine::Store::DBI::mysql;
 
 use strict;
 use warnings;
+use Moose;
+
+extends qw(RDF::Trine::Store::DBI);
+
 no warnings 'redefine';
-use base qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 

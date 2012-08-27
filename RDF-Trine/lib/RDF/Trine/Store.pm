@@ -75,7 +75,7 @@ use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
 
-use RDF::Trine::Store::Memory;
+# use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::SPARQL;
 
@@ -87,9 +87,9 @@ BEGIN {
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
-	can_load( modules => {
-		'RDF::Trine::Store::DBI'	=> undef,
-	} );
+# 	can_load( modules => {
+# 		'RDF::Trine::Store::DBI'	=> undef,
+# 	} );
 }
 
 ######################################################################

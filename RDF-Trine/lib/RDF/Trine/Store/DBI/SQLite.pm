@@ -19,8 +19,9 @@ package RDF::Trine::Store::DBI::SQLite;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Trine::Store::DBI);
+use Moose;
 
+extends qw(RDF::Trine::Store::DBI);
 
 use Scalar::Util qw(blessed reftype refaddr);
 

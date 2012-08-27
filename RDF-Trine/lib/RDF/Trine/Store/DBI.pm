@@ -37,8 +37,16 @@ package RDF::Trine::Store::DBI;
 
 use strict;
 use warnings;
+use Moose;
+with (
+	'RDF::Trine::Store::API::Readable',
+	'RDF::Trine::Store::API::Writeable',
+	'RDF::Trine::Store::API::StableBlankNodes',
+	'RDF::Trine::Store::API::Pattern',
+	'RDF::Trine::Store::API::QuadStore',
+);
+
 no warnings 'redefine';
-use base qw(RDF::Trine::Store);
 
 use DBI;
 use DBIx::Connector;
@@ -57,9 +65,6 @@ use RDF::Trine::Iterator;
 use Log::Log4perl;
 
 use RDF::Trine::Error;
-use RDF::Trine::Store::DBI::mysql;
-use RDF::Trine::Store::DBI::SQLite;
-use RDF::Trine::Store::DBI::Pg;
 
 ######################################################################
 
@@ -121,7 +126,11 @@ Initialize the store with a L<DBI::db> object.
 
 =cut
 
-sub new {
+has [qw(model_name dbh conn statements_table_prefix)] => (
+	is => 'bare',
+);
+
+sub BUILDARGS {
 	my $class	= shift;
 	my ($dbh, $conn);
 	
@@ -167,15 +176,18 @@ sub new {
 		}
 	}
 	
-	my $self	= bless( {
+	return {
 		model_name				=> $name,
 		dbh						=> $dbh,
 		conn					=> $conn,
 		statements_table_prefix	=> 'Statements',
 		%args
-	}, $class );
+	};
+}
+
+sub BUILD {
+	my $self	= shift;
 	$self->init();
-	return $self;
 }
 
 sub _new_with_string {
@@ -230,6 +242,8 @@ supported features.
 =cut
 
 sub supports {
+	my $self	= shift;
+	
 	return;
 }
 
@@ -314,6 +328,79 @@ NEXTROW:
 		my @triple;
 		my $temp_var_count	= 1;
 		my @nodes	= ($st->nodes)[ $use_quad ? (0..3) : (0..2) ];
+		foreach my $node (@nodes) {
+			if ($node->is_variable) {
+				my $nodename	= $node->name;
+				my $uri			= $self->_column_name( $nodename, 'URI' );
+				my $name		= $self->_column_name( $nodename, 'Name' );
+				my $value		= $self->_column_name( $nodename, 'Value' );
+				my $node		= $self->_column_name( $nodename, 'Node' );
+				if ($row->{ $node } == 0) {
+					push( @triple, RDF::Trine::Node::Nil->new() );
+				} elsif (defined( my $u = $row->{ $uri })) {
+					$u	= decode('utf8', $u);
+					push( @triple, RDF::Trine::Node::Resource->new( $u ) );
+				} elsif (defined( my $n = $row->{ $name })) {
+					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
+				} elsif (defined( my $v = $row->{ $value })) {
+					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					$cols[0]	= decode('utf8', $cols[0]);
+					$cols[2]	= decode('utf8', $cols[2]);
+					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
+				} else {
+					warn "node isn't nil or a resource, blank, or literal?" . Dumper($row);
+					goto NEXTROW;
+				}
+			} else {
+				push(@triple, $node);
+			}
+		}
+		
+		my $st	= (@triple == 3)
+					? RDF::Trine::Statement->new( @triple )
+					: RDF::Trine::Statement::Quad->new( @triple );
+		return $st;
+	};
+	
+	return RDF::Trine::Iterator::Graph->new( $sub )
+}
+
+sub get_quads {
+	my $self	= shift;
+	my @nodes	= @_[0..3];
+	my $bound	= 0;
+	my %bound;
+	
+	my $g	= $nodes[3];
+	if (blessed($g) and not($g->is_variable)) {
+		$bound++;
+		$bound{ 3 }	= $g;
+	}
+	
+	my ($subj, $pred, $obj, $context)	= @nodes;
+	
+	my $var		= 0;
+	my $dbh		= $self->dbh;
+	my $st		= RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) );
+	
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	
+	my @vars	= $st->referenced_variables;
+	
+	local($self->{context_variable_count})	= 0;
+	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
+	my $sql		= $self->_sql_for_pattern( $st, $context, semantics => 'quad', unique => 1 );
+	my $sth		= $dbh->prepare( $sql );
+	
+	$sth->execute();
+	
+	my $sub		= sub {
+NEXTROW:
+		my $row	= $sth->fetchrow_hashref;
+		return undef unless (defined $row);
+		my @triple;
+		my $temp_var_count	= 1;
+		my @nodes	= ($st->nodes)[ 0..3 ];
 		foreach my $node (@nodes) {
 			if ($node->is_variable) {
 				my $nodename	= $node->name;
@@ -442,7 +529,7 @@ the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
 	my $stable	= $self->statements_table;
@@ -474,6 +561,7 @@ sub get_contexts {
 	};
 	return RDF::Trine::Iterator->new( $sub );
 }
+*get_contexts = \&get_graphs;
 
 =item C<< add_statement ( $statement [, $context] ) >>
 
@@ -663,6 +751,12 @@ sub count_statements {
 	$sth->bind_columns( \$count );
 	$sth->fetch;
 	return $count;
+}
+
+sub count_quads {
+	my $self	= shift;
+	my @nodes	= @_[0..3];
+	return $self->count_statements(@nodes);
 }
 
 =item C<add_uri ( $uri, $named, $format )>
