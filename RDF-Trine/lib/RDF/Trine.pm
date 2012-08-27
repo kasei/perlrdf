@@ -111,7 +111,11 @@ use RDF::Trine::Store;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
-
+use RDF::Trine::Store::Memory;
+use RDF::Trine::Store::DBI;
+use RDF::Trine::Store::DBI::mysql;
+use RDF::Trine::Store::DBI::SQLite;
+use RDF::Trine::Store::DBI::Pg;
 
 sub _uniq {
 	my %seen;
