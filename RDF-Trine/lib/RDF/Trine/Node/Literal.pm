@@ -39,9 +39,9 @@ sub BUILDARGS {
 	if (@_ >= 2 and @_ <= 5 and not ref $_[1]) {
 		return +{
 			value    => $_[1],
-			language => $_[2],
-			datatype => $_[3],
-			_canonicalize_on_construction => $_[4],
+			language => (length $_[2] ? $_[2] : undef),
+			datatype => (length $_[3] ? $_[3] : undef),
+			_canonicalize_on_construction => $_[4] || 0,
 		}
 	}
 	my $class = shift;

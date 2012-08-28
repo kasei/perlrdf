@@ -178,7 +178,7 @@ END
 	my $serializer = RDF::Trine::Serializer::RDFXML->new();
 	throws_ok {
 		my $xml = $serializer->serialize_model_to_string($model);
-	} 'RDF::Trine::Error::SerializationError', "serializing bad predicates throws exception (uri ends with '/')";
+	} 'RDF::Trine::Exception', "serializing bad predicates throws exception (uri ends with '/')";
 }
 
 {
