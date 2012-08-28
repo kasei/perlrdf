@@ -175,24 +175,6 @@ sub _eat_re {
 	_error("Expected: $thing");
 }
 
-sub _eat {
-	my $self	= shift;
-	my $thing	= shift;
-	if (not(length($self->{tokens}))) {
-		$logger->error("no tokens left ($thing)");
-		_error("No tokens");
-	}
-	
-	### thing is a string
-	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-		substr($self->{tokens}, 0, length($thing))	= '';
-		return;
-	} else {
-		$logger->logcluck("expected: $thing, got: $self->{tokens}");
-		_error("Expected: $thing");
-	}
-}
-
 sub _test {
 	my $self	= shift;
 	my $thing	= shift;
@@ -249,12 +231,12 @@ sub _statement {
 	if ($self->_directive_test()) {
 		$self->_directive();
 		$self->__consume_ws();
-		$self->_eat('.');
+		$self->{tokens} =~ s/^\.// or _error("Expected: .");
 		$self->__consume_ws();
 	} elsif ($self->_triples_test()) {
 		$self->_triples();
 		$self->__consume_ws();
-		$self->_eat('.');
+		$self->{tokens} =~ s/^\.// or _error("Expected: .");
 		$self->__consume_ws();
 	}  else {
 		$self->_ws();
@@ -296,7 +278,7 @@ sub _prefixID_test {
 sub _prefixID {
 	my $self	= shift;
 	### '@prefix' ws+ prefixName? ':' ws+ uriref
-	$self->_eat('@prefix');
+	$self->{tokens} =~ s/^\@prefix// or _error("Expected: \@prefix");
 	$self->_ws();
 	$self->__consume_ws();
 	
@@ -307,7 +289,7 @@ sub _prefixID {
 		$prefix	= '';
 	}
 	
-	$self->_eat(':');
+	$self->{tokens} =~ s/^:// or _error ('Expected: :');
 	$self->_ws();
 	$self->__consume_ws();
 	
@@ -326,7 +308,7 @@ sub _prefixID {
 sub _base {
 	my $self	= shift;
 	### '@base' ws+ uriref
-	$self->_eat('@base');
+	$self->{tokens} =~ s/^\@base// or _error("Expected: \@base");
 	$self->_ws();
 	$self->__consume_ws();
 	my $uri	= $self->_uriref();
@@ -393,7 +375,7 @@ sub _objectList {
 	$self->__consume_ws();
 	while ($self->_test(',')) {
 		$self->__consume_ws();
-		$self->_eat(',');
+		$self->{tokens} =~ s/,// or _error("Expected: ,");
 		$self->__consume_ws();
 		push(@list, $self->_object());
 		$self->__consume_ws();
@@ -414,7 +396,7 @@ sub _verb {
 	if ($self->_predicate_test()) {
 		return $self->_predicate();
 	} else {
-		$self->_eat('a');
+		$self->{tokens} =~ s/^a// or _error("Expected: a");
 		return $rdf->type;
 	}
 }
@@ -475,12 +457,10 @@ sub _literal {
 	
 	if ($self->_quotedString_test()) {
 		my $value = $self->_quotedString();
-		if ($self->_test('@')) {
-			$self->_eat('@');
+		if ($self->{tokens} =~ s/^@//) {
 			my $lang = $self->_language();
 			return $self->__Literal($value, $lang);
-		} elsif ($self->_test('^^')) {
-			$self->_eat('^^');
+		} elsif ($self->{tokens} =~ s/^\^\^//) {
 			my $dtype = $self->_resource();
 			return $self->_typed($value, $dtype);
 		} else {
@@ -586,10 +566,10 @@ sub _blank {
 	if ($self->_nodeID_test) {
 		return $self->__bNode( $self->__anonimize_bnode_id( $self->_nodeID() ) );
 	} elsif ($self->_test('[]')) {
-		$self->_eat('[]');
+		$self->{tokens} =~ s/^\[\]// or _error("Expected: []");
 		return $self->__bNode( $self->__generate_bnode_id() );
 	} elsif ($self->_test('[')) {
-		$self->_eat('[');
+		$self->{tokens} =~ s/^\[// or _error("Expected: [");
 		my $subj	= $self->__bNode( $self->__generate_bnode_id() );
 		$self->__consume_ws();
 		foreach my $data ($self->_predicateObjectList()) {
@@ -597,7 +577,7 @@ sub _blank {
 			$self->_triple( $subj, $pred, $objt );
 		}
 		$self->__consume_ws();
-		$self->_eat(']');
+		$self->{tokens} =~ s/^\]// or _error("Expected: ]");
 		return $subj;
 	} else {
 		return $self->_collection();
@@ -634,7 +614,7 @@ sub _collection {
 	### '(' ws* itemList? ws* ')'
 	my $b	= $self->__bNode( $self->__generate_bnode_id() );
 	my ($this, $rest)	= ($b, undef);
-	$self->_eat('(');
+	$self->{tokens} =~ s/^\(// or _error("Expected: (");
 	$self->__consume_ws();
 	if ($self->_itemList_test()) {
 #		while (my $objt = $self->_itemList()) {
@@ -653,7 +633,7 @@ sub _collection {
 		$b = $rdf->nil;
 	}
 	$self->__consume_ws();
-	$self->_eat(')');
+	$self->{tokens} =~ s/^\)// or _error("Expected: )");
 	return $b;
 }
 
@@ -722,7 +702,7 @@ sub _nodeID_test {
 sub _nodeID {
 	my $self	= shift;
 	### '_:' name
-	$self->_eat('_:');
+	$self->{tokens} =~ s/^_:// or _error("Expected: _:");
 	return $self->_name();
 }
 
@@ -730,7 +710,7 @@ sub _qname {
 	my $self	= shift;
 	### prefixName? ':' name?
 	my $prefix	= ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) ? $self->_prefixName() : '';
-	$self->_eat(':');
+	$self->{tokens} =~ s/^:// or _error("Expected: :");
 	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
 	unless (exists $self->{bindings}{$prefix}) {
 		_error("Undeclared prefix $prefix");
@@ -752,9 +732,9 @@ sub _uriref_test {
 sub _uriref {
 	my $self	= shift;
 	### '<' relativeURI '>'
-	$self->_eat('<');
+	$self->{tokens} =~ s/^<// or _error("Expected: <");
 	my $value	= $self->_relativeURI();
-	$self->_eat('>');
+	$self->{tokens} =~ s/^>// or _error("Expected: >");
 	my $uri	= uri_unescape(encode_utf8($value));
 	my $uni	= decode_utf8($uri);
 	return $uni;
@@ -884,12 +864,12 @@ sub _quotedString {
 sub _string {
 	my $self	= shift;
 	### #x22 scharacter* #x22
-	$self->_eat('"');
+	$self->{tokens} =~ s/^"// or _error('Expected: "');
 	unless ($self->{tokens} =~ /^$r_scharacters/o) {
 		_error("Expected: string");
 	}
 	my $value = substr($self->{tokens}, 0, $+[0], '');
-	$self->_eat('"');
+	$self->{tokens} =~ s/^"// or _error('Expected: "');
 	my $string	= $self->_parse_short( $value );
 	return $string;
 }
@@ -906,12 +886,12 @@ sub _longString_test {
 sub _longString {
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
-	$self->_eat('"""');
+	$self->{tokens} =~ s/^"""// or _error('Expected: """');
 	unless ($self->{tokens} =~ /^$r_lcharacters/o) {
 		_error("Expected: longString");
 	}
 	my $value = substr($self->{tokens}, 0, $+[0], '');
-	$self->_eat('"""');
+	$self->{tokens} =~ s/^"""// or _error('Expected: """');
 	my $string	= $self->_parse_long( $value );
 	return $string;
 }
