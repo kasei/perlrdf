@@ -140,7 +140,7 @@ sub _from_sse {
 			my @nodes;
 			s/^[(]project\s+[(]\s*//;
 			do {
-				push(@nodes, RDF::Trine::Node->from_sse( $_[0], $context ));
+				push(@nodes, RDF::Trine::Node::API->from_sse( $_[0], $context ));
 			} until (m/\s*[)]/);
 			if (m/^\s*[)]/) {
 				s/^\s*[)]\s*//;

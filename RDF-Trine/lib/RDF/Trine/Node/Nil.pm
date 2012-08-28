@@ -1,161 +1,109 @@
-# RDF::Trine::Node::Nil
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Nil;
+
+use utf8;
+use Scalar::Util qw(refaddr);
+
+use Moose;
+use MooseX::Singleton;
+
+with 'RDF::Trine::Node::API';
+
+sub is_nil { 1 }
+sub sse { '(nil)' }
+sub value { '' }
+sub as_ntriples {
+	my $self = shift;
+	return sprintf('<%s>', RDF::Trine::NIL_GRAPH());
+}
+sub type { 'NIL' }
+sub equal { refaddr(shift)==refaddr(shift) }
+sub _compare { 0 }
+
+__PACKAGE__->meta->make_immutable;
+1;
+
+__END__
 
 =head1 NAME
 
-RDF::Trine::Node::Nil - RDF Node class for the nil node
+RDF::Trine::Node::Nil - a node that is not a node
 
-=head1 VERSION
+=head1 DESCRIPTION
 
-This document describes RDF::Trine::Node::Nil version 1.000
+This node crops up in places like the "graph" slot of non-quad statements.
+It is a singleton.
 
-=cut
+=head2 Constructor
 
-package RDF::Trine::Node::Nil;
+=over
 
-use strict;
-use warnings;
-no warnings 'redefine';
-use base qw(RDF::Trine::Node);
+=item C<< new >>
 
-use Data::Dumper;
-use Scalar::Util qw(blessed refaddr);
-use Carp qw(carp croak confess);
+Takes no parameters.
 
-######################################################################
+=item C<< from_sse($string) >>
 
-my $NIL_NODE;
-our ($VERSION);
-BEGIN {
-	$VERSION	= '1.000';
-}
+Alternative constructor.
 
-######################################################################
+=back
 
-use overload	'""'	=> sub { $_[0]->sse },
-			;
+=head2 Methods
 
-=head1 METHODS
+This class provides the following methods:
 
-Beyond the methods documented below, this class inherits methods from the
-L<RDF::Trine::Node> class.
-
-=over 4
-
-=cut
-
-=item C<< new () >>
-
-Returns the nil-valued node.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	if (blessed($NIL_NODE)) {
-		return $NIL_NODE;
-	} else {
-		$NIL_NODE	= bless({}, $class);
-		return $NIL_NODE;
-	}
-}
-
-=item C<< is_nil >>
-
-Returns true if this object is the nil-valued node.
-
-=cut
-
-sub is_nil {
-	my $self	= shift;
-	return (refaddr($self) == refaddr($NIL_NODE));
-}
+=over
 
 =item C<< sse >>
 
-Returns the SSE string for this nil node.
-
-=cut
-
-sub sse {
-	my $self	= shift;
-	return '(nil)';
-}
-
-=item C<< as_ntriples >>
-
-Returns the N-Triples serialization of the nil node's IRI
-<tag:gwilliams@cpan.org,2010-01-01:RT:NIL>.
-
-=cut
-
-sub as_ntriples {
-	my $self	= shift;
-	return sprintf('<%s>', &RDF::Trine::NIL_GRAPH());
-}
+Returns the node in SSE syntax.
 
 =item C<< type >>
 
-Returns the type string of this node.
+Returns the string 'NIL'.
 
-=cut
+=item C<< is_node >>
 
-sub type {
-	return 'NIL';
-}
+Returns true.
+
+=item C<< is_blank >>
+
+Returns false.
+
+=item C<< is_resource >>
+
+Returns false.
+
+=item C<< is_literal >>
+
+Returns false.
+
+=item C<< is_nil >>
+
+Returns true.
+
+=item C<< is_variable >>
+
+Returns false.
+
+=item C<< as_string >>
+
+Returns a string representation of the node (currently identical to the SSE).
+
+=item C<< equal($other) >>
+
+Returns true if this node and is the same node as the other node.
+
+=item C<< compare($other) >>
+
+Like the C<< <=> >> operator, but sorts according to SPARQL ordering.
 
 =item C<< value >>
 
 Returns the empty string.
 
-=cut
+=item C<< as_ntriples >>
 
-sub value {
-	my $self	= shift;
-	return '';
-}
-
-=item C<< equal ( $node ) >>
-
-Returns true if the two nodes are equal, false otherwise.
-
-=cut
-
-sub equal {
-	my $self	= shift;
-	my $node	= shift;
-	return 0 unless (blessed($node));
-	if ($self->isa('RDF::Trine::Node::Nil') and $node->isa('RDF::Trine::Node::Nil')) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
-# called to compare two nodes of the same type
-sub _compare {
-	return 0;
-}
-
-1;
-
-__END__
+Returns an N-Triples IRI representing the concept of nil.
 
 =back
 
-=head1 BUGS
-
-Please report any bugs or feature requests to through the GitHub web interface
-at L<https://github.com/kasei/perlrdf/issues>.
-
-=head1 AUTHOR
-
-Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
-
-=head1 COPYRIGHT
-
-Copyright (c) 2006-2012 Gregory Todd Williams. This
-program is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
-
-=cut

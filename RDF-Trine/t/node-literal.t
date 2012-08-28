@@ -10,6 +10,8 @@ use utf8;
 use RDF::Trine qw(literal);
 use RDF::Trine::Namespace qw(xsd);
 
+note explain +{ RDF::Trine::Node::Literal::_registered_datatypes() };
+
 ok( literal('0', undef, $xsd->integer)->is_valid_lexical_form, 'integer valid lexical form' );
 ok( literal('1', undef, $xsd->integer)->is_valid_lexical_form, 'integer valid lexical form' );
 ok( literal('01', undef, $xsd->integer)->is_valid_lexical_form, 'integer valid lexical form' );
@@ -57,7 +59,7 @@ my %values	= (
 foreach my $type (keys %values) {
 	while (my($k,$v) = each(%{ $values{$type} })) {
 		my $canon	= literal($k, undef, $xsd->$type(), 1);
-		is( $canon->literal_value, $v, "canonicalization of xsd:$type" );
+		is( $canon->literal_value, $v, "canonicalization of xsd:$type [ '$k' => '$v' ]" );
 	}
 }
 

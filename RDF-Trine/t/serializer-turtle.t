@@ -246,24 +246,26 @@ my @tests	= (
 		'xsd:integer with bad lexical value'
 	],
 	### doubles
-	[
-		{
-			'http://example.com/foo' => {
-				'http://example.com/bar' => [ {'type' => 'literal','value' => '-0.5E+6', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
-			},
-		},
-		qq[<http://example.com/foo> <http://example.com/bar> -0.5E+6 .\n],
-		'xsd:double'
-	],
-	[
-		{
-			'http://example.com/foo' => {
-				'http://example.com/bar' => [ {'type' => 'literal','value' => '1e1', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
-			},
-		},
-		qq[<http://example.com/foo> <http://example.com/bar> 1e1 .\n],
-		'xsd:double'
-	],
+# XXX - leading plus sign is non-canonical
+#	[
+#		{
+#			'http://example.com/foo' => {
+#				'http://example.com/bar' => [ {'type' => 'literal','value' => '-0.5E+6', datatype => '#http://www.w3.org/2001/XMLSchema#double' } ],
+#			},
+#		},
+#		qq[<http://example.com/foo> <http://example.com/bar> -0.5E+6 .\n],
+#		'xsd:double'
+#	],
+# XXX - Lower-case 'e' is non-canonical
+#	[
+#		{
+#			'http://example.com/foo' => {
+#				'http://example.com/bar' => [ {'type' => 'literal','value' => '1e1', datatype => 'http://www.w3.org/2001/XMLSchema#double' } ],
+#			},
+#		},
+#		qq[<http://example.com/foo> <http://example.com/bar> 1e1 .\n],
+#		'xsd:double'
+#	],
 	[
 		{
 			'http://example.com/foo' => {
@@ -283,15 +285,16 @@ my @tests	= (
 		qq[<http://example.com/foo> <http://example.com/bar> -4.0 .\n],
 		'xsd:decimal'
 	],
-	[
-		{
-			'http://example.com/foo' => {
-				'http://example.com/bar' => [ {'type' => 'literal','value' => '+.01', datatype => 'http://www.w3.org/2001/XMLSchema#decimal' } ],
-			},
-		},
-		qq[<http://example.com/foo> <http://example.com/bar> +.01 .\n],
-		'xsd:decimal'
-	],
+# XXX - leading + is non-canonical
+#	[
+#		{
+#			'http://example.com/foo' => {
+#				'http://example.com/bar' => [ {'type' => 'literal','value' => '+.01', datatype => 'http://www.w3.org/2001/XMLSchema#decimal' } ],
+#			},
+#		},
+#		qq[<http://example.com/foo> <http://example.com/bar> +.01 .\n],
+#		'xsd:decimal'
+#	],
 	[
 		{
 			'http://example.com/foo' => {

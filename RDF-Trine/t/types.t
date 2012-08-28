@@ -8,7 +8,7 @@ use warnings;
 use RDF::Trine qw(iri blank literal variable);
 use RDF::Trine::Namespace qw(xsd);
 
-use_ok 'RDF::Trine::Types';
+#use_ok 'RDF::Trine::Types';
 
 {
     use RDF::Trine::Types qw(TrineLiteral);

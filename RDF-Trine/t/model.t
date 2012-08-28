@@ -34,7 +34,7 @@ my $st6		= RDF::Trine::Statement->new( $p, $foaf->age, $intval);
 
 my ($stores, $remove)	= stores();
 
-plan tests => 7 + 85 * scalar(@$stores);
+plan tests => 7 + 93 * scalar(@$stores);
 
 print "### Testing auto-creation of store\n";
 isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
@@ -56,7 +56,9 @@ foreach my $store (@$stores) {
 	{
 		my $stream	= $model->get_statements( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement' );
+		is $st->[0]->value, $st1->[0]->value, 'foaf:name statement subject';
+		is $st->[1]->value, $st1->[1]->value, 'foaf:name statement predicate';
+		is $st->[2]->value, $st1->[2]->value, 'foaf:name statement object';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
@@ -83,14 +85,20 @@ foreach my $store (@$stores) {
 	{
 		my $stream	= $model->get_statements( $b, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st3, 'foaf:name statement (with bnode in triple)' );
+		is $st->[0]->value, $st3->[0]->value, 'foaf:name statement (with bnode in triple) subject';
+		is $st->[1]->value, $st3->[1]->value, 'foaf:name statement (with bnode in triple) predicate';
+		is $st->[2]->value, $st3->[2]->value, 'foaf:name statement (with bnode in triple) object';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement (with literal in triple)' );
+		is $st->[0]->value, $st1->[0]->value, 'foaf:name statement (with literal in triple) subject';
+		is $st->[1]->value, $st1->[1]->value, 'foaf:name statement (with literal in triple) predicate';
+		is $st->[2]->value, $st1->[2]->value, 'foaf:name statement (with literal in triple) object';
+		is $st->[2]->datatype, $st1->[2]->datatype, 'foaf:name statement (with literal in triple) object-datatype';
+		is $st->[2]->language, $st1->[2]->language, 'foaf:name statement (with literal in triple) object-language';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 
@@ -99,7 +107,7 @@ foreach my $store (@$stores) {
 		my $count	= 0;
 		while (my $st = $stream->next) {
 			my $subj	= $st->subject;
-			isa_ok( $subj, 'RDF::Trine::Node' );
+			ok( $subj->DOES('RDF::Trine::Node::API') );
 			$count++;
 		}
 		is( $count, 2, 'expected result count (2 people) 1' );
@@ -115,7 +123,7 @@ foreach my $store (@$stores) {
 			my $count	= 0;
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+				ok( $b->{p}->DOES('RDF::Trine::Node::API'), 'node person' );
 				isa_ok( $b->{name}, 'RDF::Trine::Node::Literal', 'literal name' );
 				like( $b->{name}->literal_value, qr/Eve|Gregory/, 'name pattern' );
 				$count++;
@@ -130,7 +138,7 @@ foreach my $store (@$stores) {
 			my @expect	= ('Eve', 'Gregory Todd Williams');
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+				ok( $b->{p}->DOES('RDF::Trine::Node::API'), 'node person' );
 				my $name	= shift(@expect);
 				is( $b->{name}->literal_value, $name, 'name pattern' );
 				$count++;
@@ -145,7 +153,7 @@ foreach my $store (@$stores) {
 			my @expect	= ('Gregory Todd Williams', 'Eve');
 			while (my $b = $stream->next) {
 				isa_ok( $b, 'HASH' );
-				isa_ok( $b->{p}, 'RDF::Trine::Node', 'node person' );
+				ok( $b->{p}->DOES('RDF::Trine::Node::API'), 'node person' );
 				my $name	= shift(@expect);
 				is( $b->{name}->literal_value, $name, 'name pattern' );
 				$count++;

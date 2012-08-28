@@ -1,608 +1,317 @@
-# RDF::Trine::Node::Literal
-# -----------------------------------------------------------------------------
-
-=head1 NAME
-
-RDF::Trine::Node::Literal - RDF Node class for literals
-
-=head1 VERSION
-
-This document describes RDF::Trine::Node::Literal version 1.000
-
-=cut
-
 package RDF::Trine::Node::Literal;
 
-use strict;
-use warnings;
-no warnings 'redefine';
-use base qw(RDF::Trine::Node);
+use utf8;
+use Moose;
+use MooseX::Aliases;
+use RDF::Trine::Types qw(UriStr LanguageTag);
+use MooseX::Types::Moose qw(Str Bool);
+use namespace::autoclean;
 
-use RDF::Trine::Error;
-use Data::Dumper;
-use Scalar::Util qw(blessed looks_like_number);
-use Carp qw(carp croak confess);
+with 'RDF::Trine::Node::API::RDFNode';
 
-######################################################################
+has language => (
+	is        => 'ro',
+	isa       => LanguageTag,
+	predicate => "has_language",
+	traits    => [qw( MooseX::UndefTolerant::Attribute )],
+);
 
-our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
-BEGIN {
-	$VERSION	= '1.000';
-	eval "use RDF::Trine::Node::Literal::XML;";
-	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
-	eval "use RDF::Trine::Node::Formula;";
-	$USE_FORMULAE = (RDF::Trine::Node::Formula->can('new')) ? 1 : 0;
-}
+has datatype => (
+	is        => 'ro',
+	isa       => UriStr,
+	predicate => "has_datatype",
+	traits    => [qw( MooseX::UndefTolerant::Attribute )],
+	coerce    => 1,
+);
 
-######################################################################
+has '+value' => (writer => '_set_value');
+has '_canonicalize_on_construction' => (
+	is        => 'ro',
+	isa       => Bool,
+	default   => 0,
+);
 
-use overload	'""'	=> sub { $_[0]->sse },
-			;
+alias $_ => 'value' for qw(literal_value);
+alias literal_value_language => 'language';
+alias literal_datatype => 'datatype';
 
-=head1 METHODS
-
-Beyond the methods documented below, this class inherits methods from the
-L<RDF::Trine::Node> class.
-
-=over 4
-
-=cut
-
-=item C<new ( $string, $lang, $datatype, $canonical_flag )>
-
-Returns a new Literal structure.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	my $literal	= shift;
-	my $lang	= shift;
-	my $dt		= shift;
-	my $canon	= shift;
-	
-	unless (defined($literal)) {
-		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
-	}
-	
-	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
-		$dt	= $dt->uri_value;
-	}
-	
-	if ($dt and $canon) {
-		$literal	= $class->canonicalize_literal_value( $literal, $dt );
-	}
-	
-	if ($USE_XMLLITERALS and defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-		return RDF::Trine::Node::Literal::XML->new( $literal, $lang, $dt );
-	} elsif ($USE_FORMULAE and defined($dt) and $dt eq RDF::Trine::Node::Formula->literal_datatype) {
-		return RDF::Trine::Node::Formula->new( $literal );
-	} else {
-		return $class->_new( $literal, $lang, $dt );
-	}
-}
-
-sub _new {
-	my $class	= shift;
-	my $literal	= shift;
-	my $lang	= shift;
-	my $dt		= shift;
-	my $self;
-
-	if ($lang and $dt) {
-		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
-	}
-	
-	if ($lang) {
-		$self	= [ $literal, lc($lang), undef ];
-	} elsif ($dt) {
-		if (blessed($dt)) {
-			$dt	= $dt->uri_value;
+sub BUILDARGS {
+	if (@_ >= 2 and @_ <= 5 and not ref $_[1]) {
+		return +{
+			value    => $_[1],
+			language => (length $_[2] ? $_[2] : undef),
+			datatype => (length $_[3] ? $_[3] : undef),
+			_canonicalize_on_construction => $_[4] || 0,
 		}
-		$self	= [ $literal, undef, $dt ];
-	} else {
-		$self	= [ $literal ];
 	}
-	return bless($self, $class);
+	my $class = shift;
+	(@_==1 and ref $_[0] eq 'HASH')
+		? $class->SUPER::BUILDARGS(@_)
+		: $class->SUPER::BUILDARGS(+{@_})
 }
 
-=item C<< literal_value >>
+my %SUBCLASS;
 
-Returns the string value of the literal.
+# This is not really intended as a third-party extensibility point.
+# It's really for Trine-internal use.
+sub _register_datatype {
+	my ($datatype, $sc) = @_;
+	$datatype = $datatype->value if blessed $datatype;
+	$SUBCLASS{ $datatype } ||= $sc;
+}
+sub _registered_datatypes {
+	%SUBCLASS;
+}
 
-=cut
+require RDF::Trine::Node::Literal::Boolean;
+require RDF::Trine::Node::Literal::Integer;
+require RDF::Trine::Node::Literal::Decimal;
+require RDF::Trine::Node::Literal::Float;
+require RDF::Trine::Node::Literal::DateTime;
 
-sub literal_value {
-	my $self	= shift;
-	if (@_) {
-		$self->[0]	= shift;
+{
+	package RDF::Trine::Node::Literal::Exception::NotPossible;
+	use Moose;
+	extends 'RDF::Trine::Exception';
+	has literal => (is => 'ro');
+}
+
+sub BUILD {
+	my $self = shift;
+	
+	RDF::Trine::Node::Literal::Exception::NotPossible->throw(
+		message => "cannot have both a language and datatype",
+		literal => $self,
+	) if $self->has_datatype && $self->has_language;
+	
+	if ($self->has_datatype and my $r = $SUBCLASS{ $self->datatype }) {
+		$r->meta->rebless_instance($self);
 	}
-	return $self->[0];
-}
-
-=item C<< literal_value_language >>
-
-Returns the language tag of the ltieral.
-
-=cut
-
-sub literal_value_language {
-	my $self	= shift;
-	return $self->[1];
-}
-
-=item C<< literal_datatype >>
-
-Returns the datatype of the literal.
-
-=cut
-
-sub literal_datatype {
-	my $self	= shift;
-	return $self->[2];
-}
-
-=item C<< value >>
-
-Returns the literal value.
-
-=cut
-
-sub value {
-	my $self	= shift;
-	return $self->literal_value;
-}
-
-=item C<< sse >>
-
-Returns the SSE string for this literal.
-
-=cut
-
-sub sse {
-	my $self	= shift;
-	my $literal	= $self->literal_value;
-	my $escaped	= $self->_unicode_escape( $literal );
-	$literal	= $escaped;
-	if (defined(my $lang = $self->literal_value_language)) {
-		return qq("${literal}"\@${lang});
-	} elsif (defined(my $dt = $self->literal_datatype)) {
-		return qq("${literal}"^^<${dt}>);
-	} else {
-		return qq("${literal}");
+	
+	if ($self->_canonicalize_on_construction and $self->does('RDF::Trine::Node::API::Canonicalize')) {
+		$self->_set_value( $self->canonical_lexical_form );
 	}
 }
 
-=item C<< as_string >>
-
-Returns a string representation of the node.
-
-=cut
-
-sub as_string {
-	my $self	= shift;
-	my $string	= '"' . $self->literal_value . '"';
-	if (defined(my $dt = $self->literal_datatype)) {
-		$string	.= '^^<' . $dt . '>';
-	} elsif (defined(my $lang = $self->literal_value_language)) {
-		$string	.= '@' . $lang;
+sub new_canonical {
+	my $class = shift;
+	my $self  = $class->new(@_);
+	if ($self->does('RDF::Trine::Node::API::Canonicalize')) {
+		return $self->canonicalize;
 	}
-	return $string;
+	return $self;
 }
-
-=item C<< as_ntriples >>
-
-Returns the node in a string form suitable for NTriples serialization.
-
-=cut
-
-sub as_ntriples {
-	my $self	= shift;
-	my $literal	= $self->literal_value;
-	my $escaped	= $self->_unicode_escape( $literal );
-	$literal	= $escaped;
-	if (defined(my $lang = $self->literal_value_language)) {
-		return qq("${literal}"\@${lang});
-	} elsif (defined(my $dt = $self->literal_datatype)) {
-		return qq("${literal}"^^<${dt}>);
-	} else {
-		return qq("${literal}");
-	}
-}
-
-=item C<< type >>
-
-Returns the type string of this node.
-
-=cut
 
 sub type {
-	return 'LITERAL';
+	'LITERAL'
 }
 
-=item C<< has_language >>
-
-Returns true if this literal is language-tagged, false otherwise.
-
-=cut
-
-sub has_language {
-	my $self	= shift;
-	return defined($self->literal_value_language) ? 1 : 0;
+sub as_ntriples {
+	my $self = shift;
+	return sprintf("\"%s\"^^<%s>", $self->_escaped_value, $self->datatype)
+		if $self->has_datatype;
+	return sprintf("\"%s\"\@%s", $self->_escaped_value, $self->language)
+		if $self->has_language;
+	return sprintf("\"%s\"", $self->_escaped_value);
 }
 
-=item C<< has_datatype >>
-
-Returns true if this literal is datatyped, false otherwise.
-
-=cut
-
-sub has_datatype {
-	my $self	= shift;
-	return defined($self->literal_datatype) ? 1 : 0;
+sub sse {
+	my $self = shift;
+	return sprintf("\"%s\"^^<%s>", $self->value, $self->datatype)
+		if $self->has_datatype;
+	return sprintf("\"%s\"\@%s", $self->value, $self->language)
+		if $self->has_language;
+	return sprintf("\"%s\"", $self->value);
 }
 
-=item C<< equal ( $node ) >>
+sub is_literal { 1 }
 
-Returns true if the two nodes are equal, false otherwise.
-
-=cut
-
-sub equal {
-	my $self	= shift;
-	my $node	= shift;
-	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Literal'));
-	return 0 unless ($self->literal_value eq $node->literal_value);
-	if ($self->literal_datatype or $node->literal_datatype) {
-		no warnings 'uninitialized';
-		return 0 unless ($self->literal_datatype eq $node->literal_datatype);
-	}
-	if ($self->literal_value_language or $node->literal_value_language) {
-		no warnings 'uninitialized';
-		return 0 unless ($self->literal_value_language eq $node->literal_value_language);
-	}
-	return 1;
-}
-
-# called to compare two nodes of the same type
-sub _compare {
-	my $a	= shift;
-	my $b	= shift;
-	if ($a->literal_value ne $b->literal_value) {
-		return ($a->literal_value cmp $b->literal_value);
-	}
-	
-	# the nodes have the same lexical value
-	if ($a->has_language and $b->has_language) {
-		return ($a->literal_value_language cmp $b->literal_value_language);
-	}
-	
-	if ($a->has_datatype and $b->has_datatype) {
-		return ($a->literal_datatype cmp $b->literal_datatype);
-	} elsif ($a->has_datatype) {
-		return 1;
-	} elsif ($b->has_datatype) {
-		return -1;
-	}
-	
-	return 0;
-}
-
-=item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
-
-If C<< $datatype >> is a recognized datatype, returns the canonical lexical
-representation of the value C<< $string >>. Otherwise returns C<< $string >>.
-
-Currently, xsd:integer, xsd:decimal, and xsd:boolean are canonicalized.
-Additionally, invalid lexical forms for xsd:float, xsd:double, and xsd:dateTime
-will trigger a warning.
-
-=cut
-
-sub canonicalize_literal_value {
-	my $self	= shift;
-	my $value	= shift;
-	my $dt		= shift;
-	my $warn	= shift;
-	
-	if ($dt eq 'http://www.w3.org/2001/XMLSchema#integer') {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(\d)/$1/;
-			return "${sign}${num}";
-		} else {
-			warn "Bad lexical form for xsd:integer: '$value'" if ($warn);
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			my $int		= $3;
-			my $frac	= $4;
-			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(.)/$1/;
-			$num		=~ s/[.](\d)0+$/.$1/;
-			if ($num =~ /^[.]/) {
-				$num	= "0$num";
-			}
-			if ($num !~ /[.]/) {
-				$num	= "${num}.0";
-			}
-			return "${sign}${num}";
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			my $sign	= $1 || '';
-			my $num		= $2;
-			$sign		= '' if ($sign eq '+');
-			$num		=~ s/^0+(.)/$1/;
-			return "${sign}${num}";
-		} else {
-			warn "Bad lexical form for xsd:deciaml: '$value'" if ($warn);
-			$value		= sprintf('%f', $value);
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
-			my $sign	= $1;
-			my $inf		= $4;
-			my $nan		= $5;
-			no warnings 'uninitialized';
-			$sign		= '' if ($sign eq '+');
-			return "${sign}$inf" if ($inf);
-			return $nan if ($nan);
-
-			$value		= sprintf('%E', $value);
-			$value 		=~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/;
-			$sign		= $1;
-			$inf		= $4;
-			$nan		= $5;
-			my $num		= $2;
-			my $exp		= $3;
-			$num		=~ s/[.](\d+?)0+/.$1/;
-			$exp	=~ tr/e/E/;
-			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
-			$exp	=~ s/E(-?)0+$/E${1}0/;
-			return "${sign}${num}${exp}";
-		} else {
-			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
-			$value	= sprintf('%E', $value);
-			$value	=~ s/E[+]/E/;
-			$value	=~ s/E0+(\d)/E$1/;
-			$value	=~ s/(\d)0+E/$1E/;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {
-			my $sign	= $1;
-			my $inf		= $4;
-			my $nan		= $5;
-			no warnings 'uninitialized';
-			$sign		= '' if ($sign eq '+');
-			return "${sign}$inf" if ($inf);
-			return $nan if ($nan);
-
-			$value		= sprintf('%E', $value);
-			$value 		=~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/;
-			$sign		= $1;
-			$inf		= $4;
-			$nan		= $5;
-			my $num		= $2;
-			my $exp		= $3;
-			$num		=~ s/[.](\d+?)0+/.$1/;
-			$exp	=~ tr/e/E/;
-			$exp	=~ s/E[+]/E/;
-			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
-			$exp	=~ s/E(-?)0+$/E${1}0/;
-			return "${sign}${num}${exp}";
-		} else {
-			warn "Bad lexical form for xsd:double: '$value'" if ($warn);
-			$value	= sprintf('%E', $value);
-			$value	=~ s/E[+]/E/;
-			$value	=~ s/E0+(\d)/E$1/;
-			$value	=~ s/(\d)0+E/$1E/;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false|0|1)$/) {
-			$value	= 'true' if ($value eq '1');
-			$value	= 'false' if ($value eq '0');
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:boolean: '$value'" if ($warn);
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			# XXX need to canonicalize the dateTime
-			return $value;
-		} else {
-			warn "Bad lexical form for xsd:boolean: '$value'" if ($warn);
-		}
-	}
-	return $value;
-}
-
-=item C<< is_canonical_lexical_form >>
-
-=cut
-
-sub is_canonical_lexical_form {
-	my $self	= shift;
-	my $value	= $self->literal_value;
-	my $dt		= $self->literal_datatype;
-	
-	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
-	}
-	
-	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)[.]\d+)$/) {
-			return 1;
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+\.\d*|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} elsif ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?((\d+(\.\d*))|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} elsif ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	return 0;
-}
-
-=item C<< is_valid_lexical_form >>
-
-Returns true if the node is of a recognized datatype and has a valid lexical form
-for that datatype. If the lexical form is invalid, returns false. If the datatype
-is unrecognized, returns zero-but-true.
-
-=cut
-
-sub is_valid_lexical_form {
-	my $self	= shift;
-	my $value	= $self->literal_value;
-	my $dt		= $self->literal_datatype;
-	
-	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
-	}
-	
-	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
-			return 1;
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false|0|1)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	return 0;
-}
-
-=item C<< is_numeric_type >>
-
-Returns true if the literal is a known (xsd) numeric type.
-
-=cut
-
+my $numeric_datatypes = qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>;
 sub is_numeric_type {
-	my $self	= shift;
-	return 0 unless ($self->has_datatype);
-	my $type	= $self->literal_datatype;
-	if ($type =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		return 1;
-	} else {
-		return 0;
-	}
+	my $self = shift;
+	$self->has_datatype and $self->literal_datatype =~ $numeric_datatypes;
 }
 
-=item C<< numeric_value >>
-
-Returns the numeric value of the literal (even if the literal isn't a known numeric type.
-
-=cut
-
-sub numeric_value {
-	my $self	= shift;
-	if ($self->is_numeric_type) {
-		my $value	= $self->literal_value;
-		if (looks_like_number($value)) {
-			my $v	= 0 + eval "$value";
-			return $v;
-		} else {
-			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
-		}
-	} elsif (not $self->has_datatype) {
-		if (looks_like_number($self->literal_value)) {
-			return 0+$self->literal_value;
-		} else {
-			return;
-		}
-	} elsif ($self->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		return ($self->literal_value eq 'true') ? 1 : 0;
-	} else {
-		return;
-	}
+sub _compare {
+	my ($A, $B) = @_;
+	
+	return $A->value cmp $B->value
+		unless $A->value eq $B->value;
+	
+	return $A->language cmp $B->language
+		if $A->has_language && $B->has_language;
+	
+	return $A->datatype cmp $B->datatype
+		if $A->has_datatype && $B->has_datatype;
+	
+	return  1 if $A->has_datatype;
+	return -1 if $B->has_datatype;
+	return  0;
 }
+
+# stub stuff for subclasses
+sub is_valid_lexical_form     { '0E0' }  # 0 but true
+sub canonical_lexical_form    { shift->value }
+sub is_canonical_lexical_form { '0E0' }
+sub canonicalize              { +shift }
+sub numeric_value             { +undef }
+sub does_canonicalization     { 0 }
+sub does_lexical_validation   { 0 }
 
 1;
 
 __END__
 
+=head1 NAME
+
+RDF::Trine::Node::Literal - an RDF literal
+
+=head1 DESCRIPTION
+
+=head2 Constructor
+
+=over
+
+=item C<< new($value) >>
+
+=item C<< new($value, $language) >>
+
+=item C<< new($value, undef, $datatype) >>
+
+=item C<< new({ value => $value, %attrs }) >>
+
+Constructs a literal with an optional language code or datatype URI (but not both).
+
+=item C<< new_canonical >>
+
+The same as C<new> but canonicalizes the literal's lexical form if possible.
+
+=item C<< from_sse($string) >>
+
+Alternative constructor.
+
 =back
 
-=head1 BUGS
+=head2 Attributes
 
-Please report any bugs or feature requests to through the GitHub web interface
-at L<https://github.com/kasei/perlrdf/issues>.
+=over
 
-=head1 AUTHOR
+=item C<< value >>
 
-Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+The literal value.
 
-=head1 COPYRIGHT
+=item C<< language >>
 
-Copyright (c) 2006-2012 Gregory Todd Williams. This
-program is free software; you can redistribute it and/or modify it under
-the same terms as Perl itself.
+The literal language, if any. An additional method C<< has_language >> is also
+provided.
 
-=cut
+=item C<< datatype >>
+
+The literal datatype URI, if any. An additional method C<< has_datatype >> is
+also provided.
+
+=back
+
+=head2 Methods
+
+This class provides the following methods:
+
+=over
+
+=item C<< sse >>
+
+Returns the node in SSE syntax.
+
+=item C<< type >>
+
+Returns the string 'VAR'.
+
+=item C<< is_node >>
+
+Returns true.
+
+=item C<< is_blank >>
+
+Returns false.
+
+=item C<< is_resource >>
+
+Returns false.
+
+=item C<< is_literal >>
+
+Returns true.
+
+=item C<< is_nil >>
+
+Returns false.
+
+=item C<< is_variable >>
+
+Returns false.
+
+=item C<< as_string >>
+
+Returns a string representation of the node (currently identical to the SSE).
+
+=item C<< equal($other) >>
+
+Returns true if this node and is the same node as the other node.
+
+=item C<< compare($other) >>
+
+Like the C<< <=> >> operator, but sorts according to SPARQL ordering.
+
+=item C<< as_ntriples >>
+
+Returns an N-Triples representation of the node.
+
+=item C<< is_valid_lexical_form >>
+
+Returns true if the literal value is lexically valid according to its datatype.
+For example, "1" is a lexically valid xsd:integer, but "one" is not.
+
+If the validity cannot be determined (e.g. unknown datatype) then returns
+the string "0E0" which evaluates to true in a boolean context, but 0 in a
+numeric context.
+
+=item C<< is_canonical_lexical_form >>
+
+Returns true if the literal value is canonical according to its datatype.
+For example, "1" is a canonical xsd:integer; "0001" is a lexically valid, but
+non-canonical representation of the same number.
+
+If the canonicity cannot be determined (e.g. unknown datatype) then returns
+the string "0E0" which evaluates to true in a boolean context, but 0 in a
+numeric context.
+
+=item C<< is_numeric_datatype >>
+
+Returns true if the datatype URI is one of the recognised numeric datatypes
+from XML Schema.
+
+=item C<< canonical_lexical_form >>
+
+Returns the canonical lexical form of the literal, as a string. If it cannot
+be canonicalized, returns the current value as-is.
+
+=item C<< canonicalize >>
+
+As per C<< canonical_lexical_form >> but returns another
+L<RDF::Trine::Node::Literal> object.
+
+=item C<< numeric_value >>
+
+Returns the numeric value of the literal, if the literal has a numeric
+datatype. Returns undef otherwise.
+
+=item C<< does_canonicalization >>
+
+Returns true if canonicalization is supported for this datatype.
+
+=item C<< does_lexical_validation >>
+
+Returns true if lexical validation is supported for this datatype.
+
+=back
+

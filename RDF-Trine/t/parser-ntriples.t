@@ -53,14 +53,14 @@ END
 		my $o	= $st->object;
 		$got{ $o->as_string }++
 	};
-	my $ntriples	= <<"END";
+	my $ntriples	= <<'END';
 _:anon <http://example.org/property> <http://example.org/resource2> .
 # comment
 <http://example.org/resource14> <http://example.org/property> "x" .
-<http://example.org/resource16> <http://example.org/property> "\\u00E9" .
+<http://example.org/resource16> <http://example.org/property> "\u00E9" .
 
 <http://example.org/resource21> <http://example.org/property> "<p/>"^^<http://www.w3.org/2000/01/rdf-schema#XMLLiteral> .
-<http://example.org/resource30> <http://example.org/property> "chat"\@fr .
+<http://example.org/resource30> <http://example.org/property> "chat"@fr .
 END
 	$parser->parse(undef, $ntriples, $handler);
 	my %expect	= (
@@ -70,6 +70,7 @@ END
 		q["<p/>"^^<http://www.w3.org/2000/01/rdf-schema#XMLLiteral>]	=> 1,
 		q[<http://example.org/resource2>]	=> 1,
 	);
+	note explain \%got;
 	is_deeply( \%got, \%expect, 'expected statement object parsing' );
 }
 
