@@ -141,13 +141,13 @@ sub _compare {
 }
 
 # stub stuff for subclasses
-use constant is_valid_lexical_form => '0E0';  # 0 but true
-sub canonical_lexical_form { shift->value };
-use constant is_canonical_lexical_form => 1;
-sub canonicalize { shift };
-use constant numeric_value => undef;
-use constant does_canonicalization => 0;
-use constant does_lexical_validation => 0;
+sub is_valid_lexical_form     { '0E0' }  # 0 but true
+sub canonical_lexical_form    { shift->value }
+sub is_canonical_lexical_form { 1 }
+sub canonicalize              { +shift }
+sub numeric_value             { +undef }
+sub does_canonicalization     { 0 }
+sub does_lexical_validation   { 0 }
 
 1;
 
