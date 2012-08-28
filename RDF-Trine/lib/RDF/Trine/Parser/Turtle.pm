@@ -128,22 +128,15 @@ default, but can be set by using one of the default C<< parse_* >> methods.
 =cut
 
 sub parse {
-	my $self	= shift;
-	my $uri		= shift;
-	my $input	= shift;
-	my $handler	= shift;
-	local($self->{handle_triple});
-	if ($handler) {
-		$self->{handle_triple}	= $handler;
-	}
-	local($self->{baseURI})	= $uri;
+	my $self = shift;
+	local($self->{baseURI}) = shift;
+	local($self->{tokens}) = shift;
+	local($self->{handle_triple}) = shift;
 	
-	$input	= '' unless (defined($input));
-	$input	=~ s/^\x{FEFF}//;
+	$self->{tokens}	= '' unless (defined($self->{tokens}));
+	$self->{tokens}	=~ s/^\x{FEFF}//;
 	
-	local($self->{tokens})	= $input;
 	$self->_Document();
-	return;
 }
 
 =item C<< parse_node ( $string [, $base_uri] ) >>
