@@ -158,23 +158,6 @@ sub parse_node {
 	return $self->_object();
 }
 
-sub _eat_re {
-	my $self	= shift;
-	my $thing	= shift;
-	if (not(length($self->{tokens}))) {
-		$logger->error("no tokens left ($thing)");
-		_error("No tokens");
-	}
-	
-	if ($self->{tokens} =~ m/^($thing)/) {
-		my $match	= $1;
-		substr($self->{tokens}, 0, length($match))	= '';
-		return;
-	}
-	$logger->error("Expected ($thing) with remaining: $self->{tokens}");
-	_error("Expected: $thing");
-}
-
 sub _test {
 	my $self	= shift;
 	my $thing	= shift;
@@ -401,13 +384,6 @@ sub _verb {
 	}
 }
 
-sub _comment {
-	my $self	= shift;
-	### '#' ( [^#xA#xD] )*
-	$self->_eat_re($r_comment);
-	return 1;
-}
-
 sub _subject {
 	my $self	= shift;
 	### resource | blank
@@ -600,7 +576,7 @@ sub _itemList {
 	### object (ws+ object)*
 	my @list;
 	push(@list, $self->_object());
-	while ($self->_ws_test()) {
+	while ($self->{tokens} =~ m/^[\t\r\n #]/) {
 		$self->__consume_ws();
 		if (not $self->_test(')')) {
 			push(@list, $self->_object());
@@ -637,28 +613,10 @@ sub _collection {
 	return $b;
 }
 
-sub _ws_test {
-	my $self	= shift;
-	unless (length($self->{tokens})) {
-		return 0;
-	}
-	
-	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
-
 sub _ws {
 	my $self	= shift;
-	### #x9 | #xA | #xD | #x20 | comment
-	if ($self->_test('#')) {
-		$self->_comment();
-	} else {
-		unless ($self->{tokens} =~ s/^[\t\r\n ]+//) {
-			_error('Not whitespace');
-		}
+	unless ($self->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)+[\t\r ]*|[\t\r ]+//) {
+		_error("Expected: whitespace");
 	}
 }
 
