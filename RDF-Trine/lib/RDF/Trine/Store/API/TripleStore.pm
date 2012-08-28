@@ -94,5 +94,6 @@ sub get_graphs {
 	my $graph	= RDF::Trine::Node::Nil->new();
  	return RDF::Trine::Iterator->new( [$graph] );
 }
+*get_contexts = \&get_graphs;
 
 1;
