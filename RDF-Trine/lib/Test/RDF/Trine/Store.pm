@@ -240,7 +240,7 @@ sub all_triple_store_tests {
 		
 		literals_tests_simple( $store, $args, $ex );
 		blank_node_tests_triples( $store, $args, $ex );
-		count_statements_tests_simple( $store, $args, $ex );
+		count_triples_tests_simple( $store, $args, $ex );
 	
 		add_triples( $store, $args, @triples );
 		update_sleep($args);
@@ -815,22 +815,22 @@ sub blank_node_tests_triples {
 	is( $store->size, 3, 'store has 3 statements after (triple) add' );
 
 	{
-		my $count	= $store->count_statements( undef, undef, $blankfoo, undef );
+		my $count	= $store->count_statements( undef, undef, $blankfoo );
 		is( $count, 1, 'expected one object blank node' );
 	}
 
 	{
-		my $count	= $store->count_statements( $blankbar, undef, $blankfoo, undef );
+		my $count	= $store->count_statements( $blankbar, undef, $blankfoo );
 		is( $count, 0, 'expected zero subject-object blank node' );
 	}
 
 	{
-		my $count	= $store->count_statements( $blankfoo, undef, undef, $ex->d );
+		my $count	= $store->count_statements( $blankfoo, undef, undef );
 		is( $count, 1, 'expected one subject-context blank node' );
 	}
 
 	{
-		my $count	= $store->count_statements( $blankfoo, $ex->b, undef, undef );
+		my $count	= $store->count_statements( $blankfoo, $ex->b, undef );
 		is( $count, 1, 'expected one subject-predicate blank node' );
 	}
 
@@ -888,6 +888,45 @@ sub count_statements_tests_simple {
 	is( $store->count_statements( $ex->z, undef, undef, undef ), 0, 'count_statements(bfff) empty result set' );
 	is( $store->count_statements( $ex->z, undef, undef, $ex->x ), 0, 'count_statements(bffb) empty result set' );
 	
+}
+
+=item C<< count_triples_tests_simple( $store, $args,	 $data->{ex} )	>>
+
+Tests to check that counts are correct.
+
+=cut
+
+sub count_triples_tests_simple {
+	note " simple count_statements triples tests";
+	my ($store, $args, $ex) = @_;
+	
+	{
+		is( $store->size, 0, 'expected zero size before add statement' );
+		my $st	= RDF::Trine::Statement->new( $ex->a, $ex->b, $ex->c );
+		$store->add_statement( $st );
+
+		is( $store->size, 1, 'size' );
+		is( $store->count_statements(), 1, 'count_statements()' );
+		is( $store->count_statements(undef, undef, undef), 1, 'count_statements(fff) with undefs' );
+
+		# 1-bound
+		is( $store->count_statements($ex->a, undef, undef), 1, 'count_statements(bff)' );
+		is( $store->count_statements(undef, $ex->b, undef), 1, 'count_statements(fbf)' );
+		is( $store->count_statements(undef, undef, $ex->c), 1, 'count_statements(ffb)' );
+		is( $store->count_statements(undef, undef, undef), 1, 'count_statements(fff)' );
+		
+		# 2-bound
+		#		local($::debug)	= 1;
+		is( $store->count_statements($ex->a, $ex->b, undef), 1, 'count_statements(bbf)' );
+		is( $store->count_statements(undef, $ex->b, $ex->c), 1, 'count_statements(fbb)' );
+		is( $store->count_statements(undef, undef, $ex->c), 1, 'count_statements(ffb)' );
+		is( $store->count_statements($ex->a, undef, undef), 1, 'count_statements(bff)' );
+		
+		$store->remove_statement( $st );
+		is( $store->size, 0, 'size' );
+	}
+	
+	is( $store->count_statements( $ex->z, undef, undef ), 0, 'count_statements(bff) empty result set' );
 }
 
 
