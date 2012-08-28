@@ -3,7 +3,7 @@ package RDF::Trine::Node::Literal;
 use utf8;
 use Moose;
 use MooseX::Aliases;
-use RDF::Trine::Types qw(UriStr);
+use RDF::Trine::Types qw(UriStr LanguageTag);
 use MooseX::Types::Moose qw(Str Bool);
 use namespace::autoclean;
 
@@ -11,7 +11,7 @@ with 'RDF::Trine::Node::API::RDFNode';
 
 has language => (
 	is        => 'ro',
-	isa       => Str,
+	isa       => LanguageTag,
 	predicate => "has_language",
 	traits    => [qw( MooseX::UndefTolerant::Attribute )],
 );

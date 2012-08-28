@@ -5,7 +5,7 @@ use Moose;
 use MooseX::Types::Moose qw(Str);
 use namespace::autoclean;
 
-with 'RDF::Trine::Node::API::BaseNode';
+with 'RDF::Trine::Node::API';
 
 has name => (
 	is   => 'ro',

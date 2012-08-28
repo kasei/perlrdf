@@ -552,7 +552,7 @@ sub _node_concise_string {
 				}
 			} catch RDF::Trine::Error with {};
 			if ($qname) {
-				my $escaped	= $obj->_unicode_escape( $literal );
+				my $escaped	= $obj->_escaped_value;
 				return qq["$escaped"^^$qname];
 			}
 		}

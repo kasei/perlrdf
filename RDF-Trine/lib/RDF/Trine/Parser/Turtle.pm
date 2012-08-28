@@ -232,7 +232,7 @@ sub _triple {
 	my $p		= shift;
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
-		unless ($n->isa('RDF::Trine::Node')) {
+		unless ($n->DOES('RDF::Trine::Node::API')) {
 			throw RDF::Trine::Error::ParserError;
 		}
 	}

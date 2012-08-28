@@ -6,7 +6,7 @@ use Scalar::Util qw(refaddr);
 use Moose;
 use MooseX::Singleton;
 
-with 'RDF::Trine::Node::API::BaseNode';
+with 'RDF::Trine::Node::API';
 
 sub is_nil { 1 }
 sub sse { '(nil)' }
@@ -17,6 +17,7 @@ sub as_ntriples {
 }
 sub type { 'NIL' }
 sub equal { refaddr(shift)==refaddr(shift) }
+sub _compare { 0 }
 
 __PACKAGE__->meta->make_immutable;
 1;

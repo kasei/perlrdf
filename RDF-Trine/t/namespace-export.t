@@ -6,7 +6,7 @@ use RDF::Trine::Namespace qw(FOAF DC rdf);
 isa_ok( $FOAF, 'RDF::Trine::Namespace' );
 
 my $uri		= $FOAF->homepage;
-isa_ok( $uri, 'RDF::Trine::Node' );
+ok( $uri->DOES('RDF::Trine::Node::API') );
 
 is( $uri->uri_value, 'http://xmlns.com/foaf/0.1/homepage', 'foaf:homepage' );
 is( $DC->title->uri_value, 'http://purl.org/dc/elements/1.1/title', 'dc:title' );

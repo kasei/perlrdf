@@ -1,4 +1,4 @@
-package RDF::Trine::Node::API::BaseNode;
+package RDF::Trine::Node::API;
 
 use utf8;
 use Moose::Role;
@@ -6,6 +6,7 @@ use Moose::Role;
 requires qw(
 	sse
 	type
+	_compare
 );
 
 sub is_node     { 1 } 
@@ -30,8 +31,6 @@ my %order = (
 	URI      => 3,
 	LITERAL  => 4,
 );
-
-sub _compare { 0 }
 
 sub compare {
 	my $A  = shift;
@@ -120,13 +119,23 @@ sub from_sse {
 	}
 }
 
+for my $sub (qw(compare from_sse))
+{
+	no strict 'refs';
+	*{"RDF::Trine::Node::$sub"} = sub
+	{
+		Carp::carp("RDF::Trine::Node::$sub is deprecated; use RDF::Trine::Node::API::$sub instead");
+		goto \&{$sub};
+	}
+}
+
 1;
 
 __END__
 
 =head1 NAME
 
-RDF::Trine::Node::API::BaseNode - role for basic node functionality
+RDF::Trine::Node::API - role for basic node functionality
 
 =head1 DESCRIPTION
 
@@ -143,6 +152,8 @@ This role requires consuming classes to implement the following methods:
 =item C<< sse >>
 
 =item C<< type >>
+
+=item C<< _compare >>
 
 =back
 

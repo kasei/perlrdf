@@ -5,7 +5,7 @@ use Moose::Role;
 use MooseX::Types::Moose qw(Str);
 
 with qw(
-	RDF::Trine::Node::API::BaseNode
+	RDF::Trine::Node::API
 );
 
 requires qw(
@@ -81,7 +81,7 @@ sub sse {
 	shift->as_ntriples # not strictly correct
 }
 
-around _compare => sub { $_[0]->value cmp $_[1]->value };
+sub _compare { $_[0]->value cmp $_[1]->value }
 
 1;
 
@@ -93,8 +93,8 @@ RDF::Trine::Node::API::RDFNode - role for RDF-specific role functionality
 
 =head1 DESCRIPTION
 
-This role extends RDF::Trine::Node::API::BaseNode for nodes that occur
-in RDF - i.e. literals, URIs and blank nodes.
+This role extends RDF::Trine::Node::API for nodes that can occur in RDF -
+i.e. literals, URIs and blank nodes.
 
 =head2 Requires
 

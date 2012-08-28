@@ -34,9 +34,27 @@ with 'RDF::Trine::Node::API::RDFNode';
 
 alias $_ => 'value' for qw(uri uri_value);
 
+around BUILDARGS => sub {
+	my $orig = shift;
+	my $self = shift;
+	if (@_==2 and not ref $_[0] eq 'HASH') {
+		my $tmp = $self->new_with_base(@_);
+		return +{ %$tmp }; # !!!
+	}
+	if (@_==1 and not ref $_[0] eq 'HASH') {
+		return +{ value => $_[0] }
+	}
+	if (@_==1 and ref $_[0] eq 'HASH') {
+		return $_[0];
+	}
+	my %hash = @_;
+	return \%hash;
+};
+
 sub new_with_base {
 	my ($class, $uri, $base) = @_;
 	$base = $base->uri if blessed $base && $base->can('uri'); # :-(
+	$base = "" unless defined $base;
 	$class->new( URI->new_abs($uri, "$base")->as_iri );
 }
 
@@ -52,7 +70,7 @@ sub _build_as_ntriples {
 
 sub as_string {
 	my $self   = shift;
-	return '<'.$self->uri_value.'>';
+	return '<'.$self->value.'>';
 }
 
 {

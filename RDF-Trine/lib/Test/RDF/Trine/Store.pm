@@ -290,7 +290,7 @@ sub contexts_tests {
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my %seen;
 	while (my $c = $iter->next) {
-		isa_ok( $c, 'RDF::Trine::Node' );
+		ok( $c->DOES('RDF::Trine::Node::API') );
 		$seen{ $c->as_string }++;
 	}
 	my $expect	= {

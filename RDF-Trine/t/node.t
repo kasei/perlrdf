@@ -143,32 +143,32 @@ SKIP: {
 
 # from_sse
 {
-	my $n	= RDF::Trine::Node->from_sse( '(a)' );
+	my $n	= RDF::Trine::Node::API->from_sse( '(a)' );
 	isa_ok( $n, 'RDF::Trine::Node::Blank', 'blank from_sse' );
 	is( $n->blank_identifier, 'a', 'blank from_sse identifier' );
 }
 
 {
-	my $n	= RDF::Trine::Node->from_sse( '<iri>' );
+	my $n	= RDF::Trine::Node::API->from_sse( '<iri>' );
 	isa_ok( $n, 'RDF::Trine::Node::Resource', 'resource from_sse' );
 	is( $n->uri_value, 'iri', 'resource from_sse identifier' );
 }
 
 {
-	my $n	= RDF::Trine::Node->from_sse( '"value"' );
+	my $n	= RDF::Trine::Node::API->from_sse( '"value"' );
 	isa_ok( $n, 'RDF::Trine::Node::Literal', 'literal from_sse' );
 	is( $n->literal_value, 'value', 'literal from_sse value' );
 }
 
 {
-	my $n	= RDF::Trine::Node->from_sse( '"value"@en' );
+	my $n	= RDF::Trine::Node::API->from_sse( '"value"@en' );
 	isa_ok( $n, 'RDF::Trine::Node::Literal', 'language literal from_sse' );
 	is( $n->literal_value, 'value', 'language literal from_sse value' );
 	is( $n->literal_value_language, 'en', 'language literal from_sse language' );
 }
 
 {
-	my $n	= RDF::Trine::Node->from_sse( '"value"^^<dt>' );
+	my $n	= RDF::Trine::Node::API->from_sse( '"value"^^<dt>' );
 	isa_ok( $n, 'RDF::Trine::Node::Literal', 'datatype literal from_sse' );
 	is( $n->literal_value, 'value', 'datatype literal from_sse value' );
 	is( $n->literal_datatype, 'dt', 'datatype literal from_sse datatype' );
@@ -176,7 +176,7 @@ SKIP: {
 
 {
 	my $ctx	= { namespaces => { foaf => 'http://xmlns.com/foaf/0.1/' } };
-	my $n	= RDF::Trine::Node->from_sse( 'foaf:name', $ctx );
+	my $n	= RDF::Trine::Node::API->from_sse( 'foaf:name', $ctx );
 	isa_ok( $n, 'RDF::Trine::Node::Resource', 'resource from_sse' );
 	is( $n->uri_value, 'http://xmlns.com/foaf/0.1/name', 'qname from_sse identifier' );
 }

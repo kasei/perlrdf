@@ -635,7 +635,7 @@ sub _sort_mapped_data {
 		my $bv	= $b->[ $i ];
 		my $key	= $o->[ $i-1 ];
 		next unless (defined($av) or defined($bv));
-		my $cmp	= RDF::Trine::Node::compare( $av, $bv );
+		my $cmp	= RDF::Trine::Node::API::compare($av, $bv);
 		unless ($dir->{ $key }) {
 			$cmp	*= -1;
 		}
