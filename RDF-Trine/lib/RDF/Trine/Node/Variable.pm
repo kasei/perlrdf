@@ -27,10 +27,6 @@ sub sse {
 	sprintf '?%s', shift->name;
 }
 
-sub from_sse {
-	...;
-}
-
 {
 	package RDF::Trine::Node::Variable::Exception::NTriples;
 	use Moose;
@@ -51,4 +47,92 @@ sub is_variable { 1 }
 
 __PACKAGE__->meta->make_immutable;
 1;
+
+__END__
+
+=head1 NAME
+
+RDF::Trine::Node::Variable - a variable in a pattern
+
+=head1 DESCRIPTION
+
+=head2 Constructor
+
+=over
+
+=item C<< new($name) >>
+
+=item C<< new(name => $name) >>
+
+Constructs a variable with the given name.
+
+=item C<< from_sse($string) >>
+
+Alternative constructor.
+
+=back
+
+=head2 Attributes
+
+=over
+
+=item C<< name >>
+
+=back
+
+=head2 Methods
+
+This class provides the following methods:
+
+=over
+
+=item C<< sse >>
+
+Returns the node in SSE syntax.
+
+=item C<< type >>
+
+Returns the string 'VAR'.
+
+=item C<< is_node >>
+
+Returns true.
+
+=item C<< is_blank >>
+
+Returns false.
+
+=item C<< is_resource >>
+
+Returns false.
+
+=item C<< is_literal >>
+
+Returns false.
+
+=item C<< is_nil >>
+
+Returns false.
+
+=item C<< is_variable >>
+
+Returns true.
+
+=item C<< as_string >>
+
+Returns a string representation of the node (currently identical to the SSE).
+
+=item C<< equal($other) >>
+
+Returns true if this node and is the same node as the other node.
+
+=item C<< compare($other) >>
+
+Like the C<< <=> >> operator, but sorts according to SPARQL ordering.
+
+=item C<< as_ntriples >>
+
+Always throws an exception.
+
+=back
 

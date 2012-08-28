@@ -39,6 +39,8 @@ sub _build_canonical_lexical_form {
 	shift->value; # XXX - todo!
 }
 
+sub does_canonicalization { 0 };
+
 RDF::Trine::Node::Literal::_register_datatype(
 	q<http://www.w3.org/2001/XMLSchema#dateTime>,
 	__PACKAGE__,
@@ -47,3 +49,14 @@ RDF::Trine::Node::Literal::_register_datatype(
 __PACKAGE__->meta->make_immutable;
 
 1;
+
+__END__
+
+=head1 NAME
+
+RDF::Trine::Node::Literal::DateTime - literal subclass for xsd:dateTime
+
+=head1 DESCRIPTION
+
+This package should mainly be thought of as for internal use.
+

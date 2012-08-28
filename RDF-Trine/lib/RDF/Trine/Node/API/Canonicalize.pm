@@ -33,7 +33,7 @@ has canonical_lexical_form => (
 sub is_canonical_lexical_form
 {
 	my $self = shift;
-	$self->value eq $self->canonical_lexical_form
+	eval { $self->value eq $self->canonical_lexical_form } or 0;
 }
 
 sub canonicalize
@@ -104,7 +104,4 @@ Like C<< canonical_lexical_form >> but returns a new
 L<RDF::Trine::Node::Literal> object.
 
 =back
-
-
-
 

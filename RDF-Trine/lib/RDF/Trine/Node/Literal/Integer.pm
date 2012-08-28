@@ -44,3 +44,13 @@ RDF::Trine::Node::Literal::_register_datatype(
 __PACKAGE__->meta->make_immutable;
 
 1;
+__END__
+
+=head1 NAME
+
+RDF::Trine::Node::Literal::Integer - literal subclass for xsd:integer
+
+=head1 DESCRIPTION
+
+This package should mainly be thought of as for internal use.
+

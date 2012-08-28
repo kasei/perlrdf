@@ -46,7 +46,7 @@ sub type {
 
 sub _build_as_ntriples {
 	my $self   = shift;
-	my $string = URI->new( encode_utf8($self->uri_value) )->canonical;
+	my $string = $self->_uriobj->canonical;
 	return '<'.$string.'>';
 }
 
@@ -112,3 +112,105 @@ __PACKAGE__->meta->make_immutable;
 
 1;
 __END__
+
+=head1 NAME
+
+RDF::Trine::Node::Resource - an IRI node
+
+=head1 DESCRIPTION
+
+=head2 Constructor
+
+=over
+
+=item C<< new($iri) >>
+
+=item C<< new({ value => $iri, %attrs }) >>
+
+Constructs a resource node.
+
+=item C<< new_with_base($iri, $base) >>
+
+Constructs a resource node from a possibly relative IRI.
+
+=item C<< from_sse($string) >>
+
+Alternative constructor.
+
+=back
+
+=head2 Attributes
+
+=over
+
+=item C<< value >>
+
+The URI.
+
+=back
+
+=head2 Methods
+
+This class provides the following methods:
+
+=over
+
+=item C<< sse >>
+
+Returns the node in SSE syntax.
+
+=item C<< type >>
+
+Returns the string 'URI'.
+
+=item C<< is_node >>
+
+Returns true.
+
+=item C<< is_blank >>
+
+Returns false.
+
+=item C<< is_resource >>
+
+Returns true.
+
+=item C<< is_literal >>
+
+Returns false.
+
+=item C<< is_nil >>
+
+Returns false.
+
+=item C<< is_variable >>
+
+Returns false.
+
+=item C<< as_string >>
+
+Returns a string representation of the node (currently identical to the SSE).
+
+=item C<< equal($other) >>
+
+Returns true if this node and is the same node as the other node.
+
+=item C<< compare($other) >>
+
+Like the C<< <=> >> operator, but sorts according to SPARQL ordering.
+
+=item C<< as_ntriples >>
+
+Returns an N-Triples representation of the node.
+
+=item C<< qname >>
+
+Splits the IRI into a prefix, suffix pair, in preparation for making a QName.
+
+=item C<< scheme >>, C<< opaque >>, C<< path >>, C<< fragment >>, C<< authority >>, C<< host >>, C<< port >>
+
+Returns components of the URI. (See L<URI>.)
+
+=back
+
+

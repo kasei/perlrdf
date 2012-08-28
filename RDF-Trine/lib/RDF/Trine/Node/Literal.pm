@@ -143,7 +143,7 @@ sub _compare {
 # stub stuff for subclasses
 sub is_valid_lexical_form     { '0E0' }  # 0 but true
 sub canonical_lexical_form    { shift->value }
-sub is_canonical_lexical_form { 1 }
+sub is_canonical_lexical_form { '0E0' }
 sub canonicalize              { +shift }
 sub numeric_value             { +undef }
 sub does_canonicalization     { 0 }
@@ -152,3 +152,157 @@ sub does_lexical_validation   { 0 }
 1;
 
 __END__
+
+=head1 NAME
+
+RDF::Trine::Node::Literal - an RDF literal
+
+=head1 DESCRIPTION
+
+=head2 Constructor
+
+=over
+
+=item C<< new($value) >>
+
+=item C<< new($value, $language) >>
+
+=item C<< new($value, undef, $datatype) >>
+
+=item C<< new({ value => $value, %attrs }) >>
+
+Constructs a literal with an optional language code or datatype URI (but not both).
+
+=item C<< new_canonical >>
+
+The same as C<new> but canonicalizes the literal's lexical form if possible.
+
+=item C<< from_sse($string) >>
+
+Alternative constructor.
+
+=back
+
+=head2 Attributes
+
+=over
+
+=item C<< value >>
+
+The literal value.
+
+=item C<< language >>
+
+The literal language, if any. An additional method C<< has_language >> is also
+provided.
+
+=item C<< datatype >>
+
+The literal datatype URI, if any. An additional method C<< has_datatype >> is
+also provided.
+
+=back
+
+=head2 Methods
+
+This class provides the following methods:
+
+=over
+
+=item C<< sse >>
+
+Returns the node in SSE syntax.
+
+=item C<< type >>
+
+Returns the string 'VAR'.
+
+=item C<< is_node >>
+
+Returns true.
+
+=item C<< is_blank >>
+
+Returns false.
+
+=item C<< is_resource >>
+
+Returns false.
+
+=item C<< is_literal >>
+
+Returns true.
+
+=item C<< is_nil >>
+
+Returns false.
+
+=item C<< is_variable >>
+
+Returns false.
+
+=item C<< as_string >>
+
+Returns a string representation of the node (currently identical to the SSE).
+
+=item C<< equal($other) >>
+
+Returns true if this node and is the same node as the other node.
+
+=item C<< compare($other) >>
+
+Like the C<< <=> >> operator, but sorts according to SPARQL ordering.
+
+=item C<< as_ntriples >>
+
+Returns an N-Triples representation of the node.
+
+=item C<< is_valid_lexical_form >>
+
+Returns true if the literal value is lexically valid according to its datatype.
+For example, "1" is a lexically valid xsd:integer, but "one" is not.
+
+If the validity cannot be determined (e.g. unknown datatype) then returns
+the string "0E0" which evaluates to true in a boolean context, but 0 in a
+numeric context.
+
+=item C<< is_canonical_lexical_form >>
+
+Returns true if the literal value is canonical according to its datatype.
+For example, "1" is a canonical xsd:integer; "0001" is a lexically valid, but
+non-canonical representation of the same number.
+
+If the canonicity cannot be determined (e.g. unknown datatype) then returns
+the string "0E0" which evaluates to true in a boolean context, but 0 in a
+numeric context.
+
+=item C<< is_numeric_datatype >>
+
+Returns true if the datatype URI is one of the recognised numeric datatypes
+from XML Schema.
+
+=item C<< canonical_lexical_form >>
+
+Returns the canonical lexical form of the literal, as a string. If it cannot
+be canonicalized, returns the current value as-is.
+
+=item C<< canonicalize >>
+
+As per C<< canonical_lexical_form >> but returns another
+L<RDF::Trine::Node::Literal> object.
+
+=item C<< numeric_value >>
+
+Returns the numeric value of the literal, if the literal has a numeric
+datatype. Returns undef otherwise.
+
+=item C<< does_canonicalization >>
+
+Returns true if canonicalization is supported for this datatype.
+
+=item C<< does_lexical_validation >>
+
+Returns true if lexical validation is supported for this datatype.
+
+=back
+
