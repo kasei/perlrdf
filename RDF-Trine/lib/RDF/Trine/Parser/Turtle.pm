@@ -392,9 +392,8 @@ sub _predicateObjectList {
 		push(@list, [$pred, $objt]);
 	}
 	
-	while ($self->{tokens} =~ m/^[\t\r\n #]*;/) {
-		$self->__consume_ws();
-		$self->_eat(';');
+	$self->__consume_ws();
+	while ($self->{tokens} =~ s/^;//) {
 		$self->__consume_ws();
 		if ($self->_verb_test()) { # @@
 			$pred = $self->_verb();
@@ -403,6 +402,7 @@ sub _predicateObjectList {
 			foreach my $objt ($self->_objectList()) {
 				push(@list, [$pred, $objt]);
 			}
+			$self->__consume_ws();
 		} else {
 			last
 		}
