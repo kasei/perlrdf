@@ -29,7 +29,7 @@ my $st3		= RDF::Trine::Statement::Triple->new( $p3, $type, $person );
 	
 	$m->reset;
 	my $st		= $m->next;
-	isa_ok( $st, 'RDF::Trine::Statement' );
+	ok( $st->DOES('RDF::Trine::Statement::API') );
 	is( $st->subject->uri_value, 'http://example.org/alice' );
 }
 

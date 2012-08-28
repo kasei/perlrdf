@@ -34,7 +34,7 @@ my $st3		= RDF::Trine::Statement::Triple->new( $p3, $type, $person );
 	my $stream	= RDF::Trine::Iterator::Graph->new( [ $st1, $st2, $st3 ] );
 	isa_ok( $stream, 'RDF::Trine::Iterator::Graph' );
 	my $st		= $stream->next;
-	isa_ok( $st, 'RDF::Trine::Statement' );
+	ok( $st->DOES('RDF::Trine::Statement::API') );
 	is( $st->subject->uri_value, 'http://example.org/alice' );
 }
 
