@@ -1,17 +1,3 @@
-<<<<<<< HEAD
-package RDF::Trine::Types;
-
-use MooseX::Types -declare => [qw(UriStr)];
-use MooseX::Types::Moose -all;
-
-subtype UriStr, as Str, where { m{^\S+$} };
-coerce UriStr, from Object, via { $_->uri };
-
-
-1;
-
-
-=======
 # RDF::Trine::Types
 # -----------------------------------------------------------------------------
 
@@ -291,4 +277,3 @@ Copyright (c) 2012 Konstantin Baierer. This program is free software; you can
 redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
->>>>>>> a4fe45810ecb400527b2f583f3b82737837033ff
