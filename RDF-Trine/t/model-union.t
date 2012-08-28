@@ -9,7 +9,7 @@ use RDF::Trine;
 use RDF::Trine::Model::Union;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use File::Temp qw(tempfile);
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');

@@ -6,7 +6,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Namespace;
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');

@@ -6,7 +6,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Namespace;
 

@@ -43,7 +43,7 @@ use Data::Dumper;
 use Scalar::Util qw(blessed refaddr reftype);
 
 use RDF::Trine qw(variable iri);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Namespace qw(rdf);
 

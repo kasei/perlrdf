@@ -42,7 +42,7 @@ use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
 
 use RDF::Trine qw(literal);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################

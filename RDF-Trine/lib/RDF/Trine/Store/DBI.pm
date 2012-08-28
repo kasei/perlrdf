@@ -58,7 +58,7 @@ use Encode;
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 use Log::Log4perl;

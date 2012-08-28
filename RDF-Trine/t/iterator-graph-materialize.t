@@ -9,7 +9,7 @@ use Data::Dumper;
 use RDF::Trine;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Graph;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 
 my $p1		= RDF::Trine::Node::Resource->new('http://example.org/alice');
 my $p2		= RDF::Trine::Node::Resource->new('http://example.org/eve');

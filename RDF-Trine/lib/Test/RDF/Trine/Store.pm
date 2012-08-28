@@ -53,7 +53,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine qw(iri variable store literal statement);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
 

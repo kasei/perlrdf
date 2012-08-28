@@ -9,7 +9,7 @@ use Data::Dumper;
 use RDF::Trine qw(iri literal blank);
 use RDF::Trine::Iterator;
 use RDF::Trine::Namespace qw(rdf xsd foaf);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Serializer::TSV;
 
 my $p1		= RDF::Trine::Node::Resource->new('http://example.org/alice');

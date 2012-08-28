@@ -7,7 +7,7 @@ no warnings 'redefine';
 use Scalar::Util qw(blessed refaddr);
 
 use RDF::Trine qw(iri);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Namespace;
 

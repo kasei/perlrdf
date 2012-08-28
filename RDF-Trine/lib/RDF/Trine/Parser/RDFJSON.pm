@@ -40,7 +40,7 @@ use URI;
 use Log::Log4perl;
 
 use RDF::Trine qw(literal);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Namespace;
 use RDF::Trine::Error qw(:try);
 
