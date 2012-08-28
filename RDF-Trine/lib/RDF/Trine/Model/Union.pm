@@ -26,7 +26,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Model);
 use Scalar::Util qw(blessed);
 
-use RDF::Trine::Node;
+use RDF::Trine;
 use RDF::Trine::Store;
 
 our ($VERSION);

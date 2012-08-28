@@ -15,6 +15,8 @@ RDF::Trine - An RDF Framework for Perl.
      statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
    * RDF::Trine::Namespace - A convenience class for easily constructing RDF
      node objects from URI namespaces.
+   * RDF:Trine::Types - A convenience class that exports MooseX::Types for
+     most RDF::Trine data structures, many of them allowing coercion
 
 REQUIREMENTS
 
@@ -47,7 +49,10 @@ REQUIREMENTS
      * XML::SAX
      * XML::LibXML
      * XML::LibXML::SAX
-
+     * MooseX::Types
+     * MooseX::Types::URI
+     * MooseX::Types::Moose
+     * MooseX::Types::Path::Class
 
 	The following additional modules are optional:
 

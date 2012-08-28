@@ -39,11 +39,11 @@ use strict;
 use warnings;
 use Moose;
 with (
+	'RDF::Trine::Store::API::QuadStore',
 	'RDF::Trine::Store::API::Readable',
 	'RDF::Trine::Store::API::Writeable',
 	'RDF::Trine::Store::API::StableBlankNodes',
 	'RDF::Trine::Store::API::Pattern',
-	'RDF::Trine::Store::API::QuadStore',
 );
 
 no warnings 'redefine';
@@ -58,7 +58,6 @@ use Encode;
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
-use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
@@ -277,43 +276,30 @@ sub clear_restrictions {
 	return;
 }
 
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+=item C<< get_triples ($subject, $predicate, $object [, $context] ) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_triples {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
+	my @nodes	= @_[0..2];
 	my $bound	= 0;
 	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
 	
 	my ($subj, $pred, $obj, $context)	= @nodes;
 	
 	my $var		= 0;
 	my $dbh		= $self->dbh;
-	my $st		= ($use_quad)
-				? RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) )
-				: RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
 	my @vars	= $st->referenced_variables;
 	
-	my $semantics	= ($use_quad ? 'quad' : 'triple');
+	my $semantics	= 'triple';
 	local($self->{context_variable_count})	= 0;
 	local($self->{join_context_nodes})		= 1 if (blessed($context) and $context->is_variable);
 	my $sql		= $self->_sql_for_pattern( $st, $context, semantics => $semantics, unique => 1 );
@@ -327,7 +313,7 @@ NEXTROW:
 		return undef unless (defined $row);
 		my @triple;
 		my $temp_var_count	= 1;
-		my @nodes	= ($st->nodes)[ $use_quad ? (0..3) : (0..2) ];
+		my @nodes	= ($st->nodes)[ 0..2 ];
 		foreach my $node (@nodes) {
 			if ($node->is_variable) {
 				my $nodename	= $node->name;
@@ -364,6 +350,13 @@ NEXTROW:
 	
 	return RDF::Trine::Iterator::Graph->new( $sub )
 }
+
+=item C<< get_quads ($subject, $predicate, $object, $graph ) >>
+
+Returns a stream object of all statements matching the specified subject,
+predicate, object, and graph. Any of the arguments may be undef to match any value.
+
+=cut
 
 sub get_quads {
 	my $self	= shift;
@@ -708,41 +701,28 @@ sub _add_node {
 	return $hash;
 }
 
-=item C<< count_statements ($subject, $predicate, $object) >>
+=item C<< count_triples ($subject, $predicate, $object) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub count_statements {
+sub count_triples {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
+	my @nodes	= @_[0..2];
 	my $bound	= 0;
 	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
 	
 	my ($subj, $pred, $obj, $context)	= @nodes;
 	
 	my $dbh		= $self->dbh;
 	my $var		= 0;
-	my $st		= ($use_quad)
-				? RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) )
-				: RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	my @vars	= $st->referenced_variables;
 	
-	my $semantics	= ($use_quad ? 'quad' : 'triple');
-	my $countkey	= ($use_quad) ? 'count' : 'count-distinct';
+	my $semantics	= 'triple';
+	my $countkey	= 'count-distinct';
 	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
 #	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
 	my $count;
@@ -753,10 +733,43 @@ sub count_statements {
 	return $count;
 }
 
+=item C<< count_quads ($subject, $predicate, $object, $graph) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate, object and graph. Any of the arguments may be undef to match any value.
+
+=cut
+
 sub count_quads {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
-	return $self->count_statements(@nodes);
+	my $bound	= 0;
+	my %bound;
+	
+# 	warn "count statements with quad" if ($::debug);
+	my $g	= $nodes[3];
+	if (blessed($g) and not($g->is_variable)) {
+		$bound++;
+		$bound{ 3 }	= $g;
+	}
+	
+	my ($subj, $pred, $obj, $context)	= @nodes;
+	
+	my $dbh		= $self->dbh;
+	my $var		= 0;
+	my $st		= RDF::Trine::Statement::Quad->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj,$context) );
+	my @vars	= $st->referenced_variables;
+	
+	my $semantics	= 'quad';
+	my $countkey	= 'count';
+	my $sql		= $self->_sql_for_pattern( $st, $context, $countkey => 1, semantics => $semantics );
+#	$sql		=~ s/SELECT\b(.*?)\bFROM/SELECT COUNT(*) AS c FROM/smo;
+	my $count;
+	my $sth		= $dbh->prepare( $sql );
+	$sth->execute();
+	$sth->bind_columns( \$count );
+	$sth->fetch;
+	return $count;
 }
 
 =item C<add_uri ( $uri, $named, $format )>

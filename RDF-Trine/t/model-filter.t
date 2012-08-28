@@ -12,7 +12,6 @@ use RDF::Trine;
 use RDF::Trine::Model::StatementFilter;
 use RDF::Trine::Namespace;
 use RDF::Trine::Store::DBI;
-use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Statement;
 use File::Temp qw(tempfile);

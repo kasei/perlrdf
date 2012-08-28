@@ -53,7 +53,6 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine qw(iri variable store literal statement);
-use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
@@ -220,7 +219,7 @@ sub all_triple_store_tests {
 	my $nil			= $data->{nil};
 
 	note "## Testing store " . ref($store);
-	does_ok( $store, 'RDF::Trine::Store' );
+	does_ok( $store, 'RDF::Trine::Store::API' );
 
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;

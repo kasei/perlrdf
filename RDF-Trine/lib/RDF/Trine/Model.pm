@@ -31,7 +31,6 @@ use Log::Log4perl;
 
 use RDF::Trine::Error qw(:try);
 use RDF::Trine qw(variable);
-use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Store;
 use RDF::Trine::Model::Dataset;

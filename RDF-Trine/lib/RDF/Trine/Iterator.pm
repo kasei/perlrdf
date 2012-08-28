@@ -36,7 +36,7 @@ use Carp qw(carp);
 use Scalar::Util qw(blessed reftype refaddr);
 
 use XML::SAX;
-use RDF::Trine::Node;
+use RDF::Trine;
 use RDF::Trine::Iterator::SAXHandler;
 use RDF::Trine::Iterator::JSONHandler;
 

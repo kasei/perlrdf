@@ -40,6 +40,10 @@ requires			'XML::CommonNS'				=> 0.04;
 requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0.96;
 requires			'Time::HiRes'				=> 0;
+requires            'MooseX::Types'             => 0;
+requires            'MooseX::Types::URI'        => 0;
+requires            'MooseX::Types::Moose'      => 0;
+requires            'MooseX::Types::Path::Class'=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
 
