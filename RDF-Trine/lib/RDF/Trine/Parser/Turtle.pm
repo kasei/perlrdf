@@ -694,9 +694,9 @@ sub _uriref {
 	$self->{tokens} =~ s/^<// or _error("Expected: <");
 	my $value	= $self->_relativeURI();
 	$self->{tokens} =~ s/^>// or _error("Expected: >");
-	my $uri	= uri_unescape(encode_utf8($value));
-	my $uni	= decode_utf8($uri);
-	return $uni;
+	# faster unescaping, source: http://search.cpan.org/dist/URI/URI/Escape.pm#uri_unescape($string,...)
+	$value =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+	return $value;
 }
 
 sub _language {
