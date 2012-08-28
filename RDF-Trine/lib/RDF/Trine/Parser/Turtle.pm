@@ -681,8 +681,7 @@ sub _ws {
 	if ($self->_test('#')) {
 		$self->_comment();
 	} else {
-		my $ws	= $self->_eat_re_save( qr/[\n\r\t ]+/ );
-		unless ($ws =~ /^[\n\r\t ]/) {
+		unless ($self->{tokens} =~ s/^[\t\r\n ]+//) {
 			throw RDF::Trine::Error::ParserError -text => 'Not whitespace';
 		}
 	}
