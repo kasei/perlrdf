@@ -16,7 +16,6 @@ my $model	= RDF::Trine::Model->new( $store );
 
 throws_ok { $store->add_statement() } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws error with no statement';
 throws_ok { $store->remove_statement() } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws error with no statement';
-# throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::UnimplementedError', 'remove_statements throws unimplemented error';
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {

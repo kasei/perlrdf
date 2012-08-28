@@ -120,6 +120,7 @@ use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
+use RDF::Trine::Store::SPARQL;
 
 sub _uniq {
 	my %seen;

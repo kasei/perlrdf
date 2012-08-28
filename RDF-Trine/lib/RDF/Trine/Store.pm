@@ -77,7 +77,7 @@ use Module::Load::Conditional qw[can_load];
 
 # use RDF::Trine::Store::Memory;
 # use RDF::Trine::Store::Hexastore;
-use RDF::Trine::Store::SPARQL;
+# use RDF::Trine::Store::SPARQL;
 
 ######################################################################
 
@@ -217,14 +217,6 @@ sub new_with_object {
 	return;
 }
 
-=item C<< nuke >>
-
-Permanently removes the store and its data.
-
-=cut
-
-sub nuke {}
-
 =item C<< class_by_name ( $name ) >>
 
 Returns the class of the storage implementation with the given name.
@@ -252,87 +244,6 @@ Returns a new temporary triplestore (using appropriate default values).
 sub temporary_store {
 	return RDF::Trine::Store::Memory->new();
 }
-
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
-
-Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub get_statements;
-
-=item C<< get_contexts >>
-
-Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
-the set of contexts of the stored quads.
-
-=cut
-
-sub get_contexts;
-
-=item C<< add_statement ( $statement [, $context] ) >>
-
-Adds the specified C<$statement> to the underlying model.
-
-=cut
-
-sub add_statement;
-
-=item C<< remove_statement ( $statement [, $context]) >>
-
-Removes the specified C<$statement> from the underlying model.
-
-=cut
-
-sub remove_statement;
-
-=item C<< count_statements ($subject, $predicate, $object) >>
-
-Returns a count of all the statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub count_statements;
-
-=item C<< size >>
-
-Returns the number of statements in the store.
-
-=cut
-
-sub size {
-	my $self	= shift;
-	return $self->count_statements( undef, undef, undef, undef );
-}
-
-=item C<< etag >>
-
-If the store has the capability and knowledge to support caching, returns a
-persistent token that will remain consistent as long as the store's data doesn't
-change. This token is acceptable for use as an HTTP ETag.
-
-=cut
-
-sub etag {
-	return;
-}
-
-=item C<< supports ( [ $feature ] ) >>
-
-If C<< $feature >> is specified, returns true if the feature is supported by the
-store, false otherwise. If C<< $feature >> is not specified, returns a list of
-supported features.
-
-=cut
-
-sub supports {
-	return;
-}
-
-sub _begin_bulk_ops {}
-sub _end_bulk_ops {}
 
 1;
 

@@ -22,9 +22,15 @@ package RDF::Trine::Store::Redland;
 
 use strict;
 use warnings;
-no warnings 'redefine';
-use base qw(RDF::Trine::Store);
+use Moose;
+with (
+	'RDF::Trine::Store::API::TripleStore',
+	'RDF::Trine::Store::API::Readable',
+	'RDF::Trine::Store::API::Writeable',
+	'RDF::Trine::Store::API::StableBlankNodes',
+);
 
+no warnings 'redefine';
 use Encode;
 use Data::Dumper;
 use RDF::Redland 1.00;
@@ -149,24 +155,19 @@ sub temporary_store {
 	return $class->_new_with_string( "hashes;test;new='yes',hash-type='memory',contexts='yes'" );
 }
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
+=item C<< get_triples ( $subject, $predicate, $object ) >>
 
-Returns a stream object of all statements matching the specified subject,
+Returns an iterator of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_triples {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-	}
+	my @nodes	= @_[0..2];
 	
 	my @rnodes;
-	foreach my $pos (0 .. ($use_quad ? 3 : 2)) {
+	foreach my $pos (0 .. 2) {
 		my $n	= $nodes[ $pos ];
 		if (blessed($n) and not($n->is_variable)) {
 			push(@rnodes, _cast_to_redland($n));
@@ -175,9 +176,7 @@ sub get_statements {
 		}
 	}
 	
-	my $iter	= ($use_quad)
-				? $self->_get_statements_quad( @rnodes )
-				: $self->_get_statements_triple( @rnodes );
+	my $iter	= $self->_get_statements_triple( @rnodes );
 	return $iter;
 }
 
@@ -206,53 +205,6 @@ sub _get_statements_triple {
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-sub _get_statements_quad {
-	my $self	= shift;
-	my @rnodes	= @_;
-# 	warn '_get_statements_quad: ' . Dumper(\@rnodes);
-	
-	my $ctx		= $rnodes[3];
-	my $ctx_local;
-	if ($ctx) {
-# 		warn "-> context " . $ctx->as_string;
-		$ctx_local	= _cast_to_local( $ctx );
-	}
-	my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	my $iter	= $self->_model->find_statements( $st, $ctx );
-	my $nil		= RDF::Trine::Node::Nil->new();
-	my $sub		= sub {
-		return undef unless $iter;
-		return undef if $iter->end;
-		my $st	= $iter->current;
-		my $c	= $iter->context;
-		my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
-		if ($ctx) {
-			push(@nodes, $ctx_local);
-		} elsif ($c) {
-			push(@nodes, _cast_to_local($c));
-		} else {
-			push(@nodes, $nil);
-		}
-		$iter->next;
-# 		warn Dumper(\@nodes);
-		return RDF::Trine::Statement::Quad->new( @nodes );
-	};
-	return RDF::Trine::Iterator::Graph->new( $sub );
-}
-
-=item C<< get_contexts >>
-
-Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
-the set of contexts of the stored quads.
-
-=cut
-
-sub get_contexts {
-	my $self	= shift;
-	my @ctxs	= $self->_model->contexts();
- 	return RDF::Trine::Iterator->new( sub { my $n = shift(@ctxs); return _cast_to_local($n) } );
-}
-
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
@@ -264,25 +216,13 @@ sub add_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	my $nil	= RDF::Trine::Node::Nil->new();
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
-		if (blessed($context)) {
-			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
-		}
-	} else {
-		my @nodes	= $st->nodes;
-		if (blessed($context)) {
-			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
-		} else {
-			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
-		}
-	}
-	
 	my $model	= $self->_model;
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	$model->add_statement( $rst, $rnodes[3] );
+	unless ($model->contains_statement($rst)) {
+		$model->add_statement( $rst, $rnodes[3] );
+	}
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -296,23 +236,11 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
-		if (blessed($context)) {
-			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
-		}
-	} else {
-		my @nodes	= $st->nodes;
-		if (blessed($context)) {
-			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $context );
-		} else {
-			my $nil	= RDF::Trine::Node::Nil->new();
-			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
-		}
-	}
-
+	my $model	= $self->_model;
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
-	$self->_model->remove_statement( @rnodes );
+	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
+	$self->_model->remove_statement( $rst );
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
@@ -333,54 +261,29 @@ sub remove_statements {
 	}
 }
 
-=item C<< count_statements ( $subject, $predicate, $object, $context ) >>
+=item C<< count_triples ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
-predicate, object, and context. Any of the arguments may be undef to match any
-value.
+predicate and object. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub count_statements {
+sub count_triples {
 	my $self	= shift;
 	my @nodes	= @_;
-	if (scalar(@nodes) < 4) {
-# 		warn "restricting count_statements to triple semantics";
-		my @rnodes	= map { _cast_to_redland($_) } @nodes[0..2];
-		my $st		= RDF::Redland::Statement->new( @rnodes );
-		my $iter	= $self->_model->find_statements( $st );
-		my $count	= 0;
-		my %seen;
-		while ($iter and my $st = $iter->current) {
-			unless ($seen{ $st->as_string }++) {
-				$count++;
-			}
-			$iter->next;
-		}
-		return $count;
-	} else {
-		my @rnodes	= map { _cast_to_redland($_) } @nodes;
-		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
-		my $iter	= $self->_model->find_statements( $st, $rnodes[3] );
-		my $count	= 0;
-		while ($iter and my $st = $iter->current) {
+# 	warn "restricting count_statements to triple semantics";
+	my @rnodes	= map { _cast_to_redland($_) } @nodes[0..2];
+	my $st		= RDF::Redland::Statement->new( @rnodes );
+	my $iter	= $self->_model->find_statements( $st );
+	my $count	= 0;
+	my %seen;
+	while ($iter and my $st = $iter->current) {
+		unless ($seen{ $st->as_string }++) {
 			$count++;
-			my $ctx	= $iter->context;
-			$iter->next;
 		}
-		return $count;
+		$iter->next;
 	}
-}
-
-=item C<< size >>
-
-Returns the number of statements in the store.
-
-=cut
-
-sub size {
-	my $self	= shift;
-	return $self->_model->size;
+	return $count;
 }
 
 =item C<< supports ( [ $feature ] ) >>

@@ -21,15 +21,21 @@ package RDF::Trine::Store::SPARQL;
 
 use strict;
 use warnings;
+use Moose;
+with (
+	'RDF::Trine::Store::API::QuadStore',
+	'RDF::Trine::Store::API::Readable',
+	'RDF::Trine::Store::API::Writeable',
+	'RDF::Trine::Store::API::Pattern',
+	'RDF::Trine::Store::API::SPARQL',
+);
+
 no warnings 'redefine';
-use base qw(RDF::Trine::Store);
 
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
-
-use RDF::Trine::Error qw(:try);
 
 ######################################################################
 
@@ -75,17 +81,27 @@ The URL of the remote endpoint.
 
 =cut
 
-sub new {
+has 'ua' => (
+	is => 'ro',
+	isa => 'LWP::UserAgent',
+	default => sub {
+		my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
+		$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+		return $u;
+	},
+);
+
+has 'url' => (
+	isa => 'Str',
+	is => 'rw',
+);
+
+sub BUILDARGS {
 	my $class	= shift;
 	my $url		= shift;
-	my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
-	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
-	
-	my $self	= bless({
-		ua		=> $u,
+	return {
 		url		=> $url,
-	}, $class);
-	return $self;
+	};
 }
 
 sub _new_with_string {
@@ -123,27 +139,16 @@ sub _config_meta {
 }
 
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
-
-Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub get_statements {
+sub get_quads {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
 	my $bound	= 0;
 	my %bound;
 	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
-			$use_quad	= 1;
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
+	my $g	= $nodes[3];
+	if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
+		$bound++;
+		$bound{ 3 }	= $g;
 	}
 	
 	my @var_map	= qw(s p o g);
@@ -155,30 +160,20 @@ sub get_statements {
 		}
 	}
 	
-	my $node_count	= ($use_quad) ? 4 : 3;
-	my $st_class	= ($use_quad) ? 'RDF::Trine::Statement::Quad' : 'RDF::Trine::Statement';
+	my $node_count	= 4;
 	my @triple	= @nodes[ 0..2 ];
 	my $iter;
-	if ($use_quad) {
-		my @vars	= grep { $_->is_variable } @nodes;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
-		$iter	= $self->get_sparql( <<"END" );
+	my @vars	= grep { $_->is_variable } @nodes;
+	my $names	= join(' ', map { '?' . $_->name } @vars);
+	my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+	my $graph	= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
+	$iter	= $self->get_sparql( <<"END" );
 SELECT $names WHERE {
-	GRAPH $g {
+	GRAPH $graph {
 		$nodes
 	}
 }
 END
-	} else {
-		my @vars	= grep { $_->is_variable } @triple;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		$iter	= $self->get_sparql( <<"END" );
-SELECT $names WHERE { $nodes }
-END
-	}
 	my $sub		= sub {
 		my $row	= $iter->next;
 		return unless $row;
@@ -190,7 +185,48 @@ END
 				$triple[$i]	= $nodes[$i];
 			}
 		}
-		my $triple	= $st_class->new( @triple );
+		my $triple	= RDF::Trine::Statement::Quad->new( @triple );
+		return $triple;
+	};
+	return RDF::Trine::Iterator::Graph->new( $sub );
+}
+
+sub get_triples {
+	my $self	= shift;
+	my @nodes	= @_[0..2];
+	my $bound	= 0;
+	my %bound;
+	
+	my @var_map	= qw(s p o g);
+	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
+	my @node_map;
+	foreach my $i (0 .. $#nodes) {
+		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
+			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
+		}
+	}
+	
+	my $node_count	= 3;
+	my @triple	= @nodes[ 0..2 ];
+	my $iter;
+	my @vars	= grep { $_->is_variable } @triple;
+	my $names	= join(' ', map { '?' . $_->name } @vars);
+	my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+	$iter	= $self->get_sparql( <<"END" );
+SELECT $names WHERE { $nodes }
+END
+	my $sub		= sub {
+		my $row	= $iter->next;
+		return unless $row;
+		my @triple;
+		foreach my $i (0 .. ($node_count-1)) {
+			if ($nodes[$i]->is_variable) {
+				$triple[$i]	= $row->{ $nodes[$i]->name };
+			} else {
+				$triple[$i]	= $nodes[$i];
+			}
+		}
+		my $triple	= RDF::Trine::Statement->new( @triple );
 		return $triple;
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub );
@@ -254,14 +290,14 @@ END
 	return $iter;
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >>
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g {} }';
 	my $iter	= $self->get_sparql( $sparql );
@@ -273,6 +309,7 @@ sub get_contexts {
 	};
 	return RDF::Trine::Iterator->new( $sub );
 }
+*get_contexts = \&get_graphs;
 
 =item C<< add_statement ( $statement [, $context] ) >>
 
