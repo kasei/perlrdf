@@ -55,7 +55,8 @@ sub new_with_base {
 	my ($class, $uri, $base) = @_;
 	$base = $base->uri if blessed $base && $base->can('uri'); # :-(
 	$base = "" unless defined $base;
-	$class->new( URI->new_abs($uri, "$base")->as_iri );
+	return $class->new( URI->new_abs($uri, "$base")->as_iri ) if length $base;
+	$class->new($uri);
 }
 
 sub type {
