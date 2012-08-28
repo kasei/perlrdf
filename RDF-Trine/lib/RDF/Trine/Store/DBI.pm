@@ -1168,7 +1168,7 @@ sub _sql_for_equality_expr {
 	unless ($sorted[0]->isa('RDF::Trine::Node::Variable')) {
 		throw RDF::Trine::Error::CompilationError -text => "No variable in equality test";
 	}
-	unless ($sorted[1]->isa('RDF::Trine::Node') and not($sorted[1]->isa('RDF::Trine::Node::Variable'))) {
+	unless ($sorted[1]->DOES('RDF::Trine::Node::API::RDFNode')) {
 		throw RDF::Trine::Error::CompilationError -text => "No RDFNode in equality test";
 	}
 	
