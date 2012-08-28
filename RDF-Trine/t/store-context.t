@@ -1,4 +1,5 @@
 use Test::More;
+use Test::Moose;
 
 use strict;
 use warnings;
@@ -22,7 +23,7 @@ my @stores	= test_stores();
 plan tests => scalar(@stores) * 5;
 foreach my $store (@stores) {
 	print "### Testing store " . ref($store) . "\n";
-	isa_ok( $store, 'RDF::Trine::Store' );
+	does_ok( $store, 'RDF::Trine::Store::API' );
 	
 	{
 		$store->add_statement( $_ ) for ($st0, $st1, $st2);

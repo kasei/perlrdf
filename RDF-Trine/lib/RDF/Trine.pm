@@ -112,6 +112,7 @@ use RDF::Trine::Error;
 use RDF::Trine::Model;
 
 use RDF::Trine::Store::Memory;
+use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;

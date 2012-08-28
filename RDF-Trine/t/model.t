@@ -1,4 +1,5 @@
 use Test::More;
+use Test::Moose;
 use Test::Exception;
 
 use utf8;
@@ -41,7 +42,7 @@ isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
 
 foreach my $store (@$stores) {
 	print "### Testing store " . ref($store) . "\n";
-	isa_ok( $store, 'RDF::Trine::Store' );
+	does_ok( $store, 'RDF::Trine::Store::API' );
 	my $model	= RDF::Trine::Model->new( $store );
 	isa_ok( $model, 'RDF::Trine::Model' );
 	$model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);

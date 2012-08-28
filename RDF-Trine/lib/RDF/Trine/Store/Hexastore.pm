@@ -21,8 +21,17 @@ package RDF::Trine::Store::Hexastore;
 
 use strict;
 use warnings;
+use Moose;
+with (
+	'RDF::Trine::Store::API::TripleStore',
+	'RDF::Trine::Store::API::Readable',
+	'RDF::Trine::Store::API::Writeable',
+	'RDF::Trine::Store::API::ETags',
+	'RDF::Trine::Store::API::StableBlankNodes',
+	'RDF::Trine::Store::API::Pattern',
+);
+
 no warnings 'redefine';
-use base qw(RDF::Trine::Store);
 
 use Data::Dumper;
 use RDF::Trine qw(iri);
@@ -114,12 +123,17 @@ The following example initializes a Hexastore store based on a local file and a 
 
 =cut
 
-sub new {
-	my $class	= shift;
-	my $self        = bless({}, $class);
-	$self->nuke; # nuke resets the store, thus doing the same thing as init should do
-	return $self;
+sub BUILD {
+	my $self	= shift;
+	$self->nuke;
 }
+
+# sub new {
+# 	my $class	= shift;
+# 	my $self        = bless({}, $class);
+# 	$self->nuke; # nuke resets the store, thus doing the same thing as init should do
+# 	return $self;
+# }
 
 sub _new_with_string {
 	my ($self, $config) = @_;
@@ -194,6 +208,12 @@ sub temporary_store {
 	return $class->new();
 }
 
+sub get_triples {
+	my $self	= shift;
+	my @nodes	= splice(@_, 0, 3);
+	return $self->get_statements( @nodes, undef, @_);
+}
+
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
 Returns a stream object of all statements matching the specified subject,
@@ -204,7 +224,7 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub get_statements {
 	my $self	= shift;
 	my @nodes	= splice(@_, 0, 3);
-	my $context	= shift;
+	shift;	# un-used graph slot
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
 	
@@ -419,8 +439,8 @@ sub get_pattern {
 			my $shrkey	= $shared[0];
 # 			warn "- $shrkey\n";
 # 			warn $t2->as_string;
-			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
-			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i1	= $self->_get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i2	= $self->_get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			
 			my $i1current	= $i1->next;
 			my $i2current	= $i2->next;
@@ -465,8 +485,8 @@ sub get_pattern {
 		} else {
 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
-			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
-			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
+			my $i1	= $self->_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
+			my $i2	= $self->_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
 			my @i1;
 			while (my $row = $i1->next) {
 				push(@i1, $row);
@@ -481,9 +501,156 @@ sub get_pattern {
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		}
 	} else {
-		return $self->SUPER::_get_pattern( $bgp );
+		return $self->_get_pattern( $bgp );
 	}
 }
+
+# =item C<< get_pattern ( $bgp [, $context] ) >>
+# 
+# Returns a stream object of all bindings matching the specified graph pattern.
+# 
+# =cut
+
+sub _get_pattern {
+	my $self	= shift;
+	my $bgp		= shift;
+	my $context	= shift;
+	my @args	= @_;
+	my %args	= @args;
+	
+	if ($bgp->isa('RDF::Trine::Statement')) {
+		$bgp	= RDF::Trine::Pattern->new($bgp);
+	} else {
+		$bgp	= $bgp->sort_for_join_variables();
+	}
+	
+	my %iter_args;
+	my @triples	= $bgp->triples;
+	
+	my ($iter);
+	if (1 == scalar(@triples)) {
+		my $t		= shift(@triples);
+		my @nodes	= $t->nodes;
+		my $size	= scalar(@nodes);
+		my %vars;
+		my @names	= qw(subject predicate object context);
+		foreach my $n (0 .. $#nodes) {
+			if ($nodes[$n]->isa('RDF::Trine::Node::Variable')) {
+				$vars{ $names[ $n ] }	= $nodes[$n]->name;
+			}
+		}
+		my $_iter	= $self->get_statements( @nodes );
+		if ($_iter->finished) {
+			return RDF::Trine::Iterator::Bindings->new( [], [] );
+		}
+		my @vars	= values %vars;
+		my $sub		= sub {
+			my $row	= $_iter->next;
+			return undef unless ($row);
+			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
+			return RDF::Trine::VariableBindings->new( \%data );
+		};
+		$iter	= RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
+	} else {
+		my $t		= pop(@triples);
+		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+		my @inner;
+		while (my $row = $rhs->next) {
+			push(@inner, $row);
+		}
+		my @results;
+		while (my $row = $lhs->next) {
+			RESULT: foreach my $irow (@inner) {
+				my %keysa;
+				my @keysa	= keys %$irow;
+				@keysa{ @keysa }	= (1) x scalar(@keysa);
+				my @shared	= grep { exists $keysa{ $_ } } (keys %$row);
+				foreach my $key (@shared) {
+					my $val_a	= $irow->{ $key };
+					my $val_b	= $row->{ $key };
+					next unless (defined($val_a) and defined($val_b));
+					my $equal	= $val_a->equal( $val_b );
+					unless ($equal) {
+						next RESULT;
+					}
+				}
+				
+				my $jrow	= { (map { $_ => $irow->{$_} } grep { defined($irow->{$_}) } keys %$irow), (map { $_ => $row->{$_} } grep { defined($row->{$_}) } keys %$row) };
+				push(@results, RDF::Trine::VariableBindings->new($jrow));
+			}
+		}
+		$iter	= RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
+	}
+	
+	if (my $o = $args{ 'orderby' }) {
+		unless (reftype($o) eq 'ARRAY') {
+			throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument to get_pattern must be an ARRAY reference";
+		}
+		
+		my @order;
+		my %order;
+		my @o	= @$o;
+		my @sorted_by;
+		my %vars	= map { $_ => 1 } $bgp->referenced_variables;
+		if (scalar(@o) % 2 != 0) {
+			throw RDF::Trine::Error::MethodInvocationError -text => "The orderby argument ARRAY to get_pattern must contain an even number of elements";
+		}
+		while (@o) {
+			my ($k,$dir)	= splice(@o, 0, 2, ());
+			next unless ($vars{ $k });
+			unless ($dir =~ m/^ASC|DESC$/i) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "The sort direction for key $k must be either 'ASC' or 'DESC' in get_pattern call";
+			}
+			my $asc	= ($dir eq 'ASC') ? 1 : 0;
+			push(@order, $k);
+			$order{ $k }	= $asc;
+			push(@sorted_by, $k, $dir);
+		}
+		
+		my @results	= $iter->get_all;
+		@results	= _sort_bindings( \@results, \@order, \%order );
+		$iter_args{ sorted_by }	= \@sorted_by;
+		return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ], %iter_args );
+	} else {
+		return $iter;
+	}
+}
+
+sub _sort_bindings {
+	my $res		= shift;
+	my $o		= shift;
+	my $dir		= shift;
+	my @sorted	= map { $_->[0] } sort { _sort_mapped_data($a,$b,$o,$dir) } map { _map_sort_data( $_, $o ) } @$res;
+	return @sorted;
+}
+
+sub _sort_mapped_data {
+	my $a	= shift;
+	my $b	= shift;
+	my $o	= shift;
+	my $dir	= shift;
+	foreach my $i (1 .. $#{ $a }) {
+		my $av	= $a->[ $i ];
+		my $bv	= $b->[ $i ];
+		my $key	= $o->[ $i-1 ];
+		next unless (defined($av) or defined($bv));
+		my $cmp	= RDF::Trine::Node::compare( $av, $bv );
+		unless ($dir->{ $key }) {
+			$cmp	*= -1;
+		}
+		return $cmp if ($cmp);
+	}
+	return 0;
+}
+
+sub _map_sort_data {
+	my $res		= shift;
+	my $o		= shift;
+	my @data	= ($res, map { $res->{ $_ } } @$o);
+	return \@data;
+}
+
 
 =item C<< supports ( [ $feature ] ) >>
 
@@ -518,14 +685,6 @@ sub _join {
 	
 	my $row	= { (map { $_ => $rowa->{$_} } grep { defined($rowa->{$_}) } keys %$rowa), (map { $_ => $rowb->{$_} } grep { defined($rowb->{$_}) } keys %$rowb) };
 	return $row;
-}
-
-=item C<< get_contexts >>
-
-=cut
-
-sub get_contexts {
-	croak "Contexts not supported for the Hexastore store";
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -627,15 +786,14 @@ sub nuke {
 }
 
 
-
-=item C<< count_statements ($subject, $predicate, $object) >>
+=item C<< count_triples ($subject, $predicate, $object) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub count_statements {
+sub count_triples {
 	my $self	= shift;
 	my @nodes	= @_;
 	my @ids		= map { $self->_node2id( $_ ) } @nodes;

@@ -22,11 +22,11 @@ use strict;
 use warnings;
 use Moose;
 with (
+	'RDF::Trine::Store::API::QuadStore',
 	'RDF::Trine::Store::API::Readable',
 	'RDF::Trine::Store::API::Writeable',
 	'RDF::Trine::Store::API::ETags',
 	'RDF::Trine::Store::API::StableBlankNodes',
-	'RDF::Trine::Store::API::QuadStore',
 );
 
 no warnings 'redefine';
@@ -134,22 +134,6 @@ has 'hash' => (
 	default => sub { Digest::SHA->new }
 );
 
-# sub new {
-# 	my $class	= shift;
-# 	my $self	= bless({
-# 		size		=> 0,
-# 		statements	=> [],
-# 		subject		=> {},
-# 		predicate	=> {},
-# 		object		=> {},
-# 		context		=> {},
-# 		ctx_nodes	=> {},
-# 		hash		=> Digest::SHA->new,
-# 	}, $class);
-# 
-# 	return $self;
-# }
-
 sub _new_with_string {
 	my $class	= shift;
 	my $config	= shift || '';
@@ -211,28 +195,18 @@ sub temporary_store {
 	return $class->new();
 }
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
+=item C<< get_triples ( $subject, $predicate, $object ) >>
 
-Returns a stream object of all statements matching the specified subject,
+Returns an iterator of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_triples {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
+	my @nodes	= @_[0..2];
 	my $bound	= 0;
 	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
 	
 	foreach my $pos (0 .. 2) {
 		my $n	= $nodes[ $pos ];
@@ -242,11 +216,16 @@ sub get_statements {
 		}
 	}
 	
-	my $iter	= ($use_quad)
-				? $self->_get_statements_quad( $bound, %bound )
-				: $self->_get_statements_triple( $bound, %bound );
-	return $iter;
+	return $self->_get_statements_triple( $bound, %bound );
 }
+
+=item C<< get_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns an iterator of all statements matching the specified subject,
+predicate, object, and graph. Any of the arguments may be undef to match
+any value.
+
+=cut
 
 sub get_quads {
 	my $self	= shift;
@@ -542,118 +521,6 @@ sub remove_statement {
 		}
 	}
 	return;
-}
-
-=item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
-
-Removes the specified C<$statement> from the underlying model.
-
-=cut
-
-sub remove_statements {
-	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
-	my $context	= shift;
-	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
-	while (my $st = $iter->next) {
-		$self->remove_statement( $st );
-	}
-}
-
-=item C<< count_statements ( $subject, $predicate, $object, $context ) >>
-
-Returns a count of all the statements matching the specified subject,
-predicate, object, and context. Any of the arguments may be undef to match any
-value.
-
-=cut
-
-sub count_statements {
-	my $self	= shift;
-	my @nodes	= @_[0..3];
-	my $bound	= 0;
-	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
-	
-	foreach my $pos (0 .. 2) {
-		my $n	= $nodes[ $pos ];
-# 		unless (blessed($n)) {
-# 			$n	= RDF::Trine::Node::Nil->new();
-# 			$nodes[ $pos ]	= $n;
-# 		}
-		
-		if (blessed($n) and not($n->is_variable)) {
-			$bound++;
-			$bound{ $pos }	= $n;
-		}
-	}
-	
-# 	warn "use quad: $use_quad\n" if ($::debug);
-# 	warn "bound: $bound\n" if ($::debug);
-	if ($use_quad) {
-		if ($bound == 0) {
-# 			warn "counting all statements";
-			return $self->size;
-		} elsif ($bound == 1) {
-			my ($pos)	= keys %bound;
-			my $name	= $pos_names[ $pos ];
-			my $set		= $self->{$name}{ $bound{ $pos }->as_string };
-# 			warn Dumper($set) if ($::debug);
-			unless (blessed($set)) {
-				return 0;
-			}
-			return $set->size;
-		} else {
-			my @pos		= keys %bound;
-			my @names	= @pos_names[ @pos ];
-			my @sets;
-			foreach my $i (0 .. $#names) {
-				my $pos		= $pos[ $i ];
-				my $setname	= $names[ $i ];
-				my $data	= $self->{ $setname };
-				
-				my $node	= $bound{ $pos };
-				my $str		= $node->as_string;
-				my $set		= $data->{ $str };
-				push( @sets, $set );
-			}
-			foreach my $s (@sets) {
-# 				warn "set: " . Dumper($s) if ($::debug);
-				unless (blessed($s)) {
-# 					warn "*** returning zero" if ($::debug);
-					return 0;
-				}
-			}
-			my $i	= shift(@sets);
-			while (@sets) {
-				my $s	= shift(@sets);
-				$i	= $i->intersection($s);
-			}
-			return $i->size;
-		}
-	} else {
-		# use_quad is false here
-		# we're counting distinct (s,p,o) triples from the quadstore
-		my $count	= 0;
-		my $iter	= $self->get_statements( @nodes[ 0..2 ] );
-		while (my $st = $iter->next) {
-# 			warn $st->as_string if ($::debug);
-			$count++;
-		}
-		return $count;
-	}
 }
 
 =item C<< etag >>
