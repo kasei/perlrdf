@@ -4,7 +4,7 @@ use utf8;
 use Moose;
 use MooseX::Aliases;
 use RDF::Trine::Types qw(UriStr);
-use MooseX::Types::Moose qw(Str);
+use MooseX::Types::Moose qw(Str Bool);
 use namespace::autoclean;
 
 with 'RDF::Trine::Node::API::RDFNode';
@@ -24,17 +24,25 @@ has datatype => (
 	coerce    => 1,
 );
 
+has '+value' => (writer => '_set_value');
+has '_canonicalize_on_construction' => (
+	is        => 'ro',
+	isa       => Bool,
+	default   => 0,
+);
+
 alias $_ => 'value' for qw(literal_value);
 alias literal_value_language => 'language';
 alias literal_datatype => 'datatype';
 
 sub BUILDARGS {
-	if (@_ >= 2 and @_ <= 4 and not ref $_[1]) {
+	if (@_ >= 2 and @_ <= 5 and not ref $_[1]) {
 		return +{
 			value    => $_[1],
 			language => $_[2],
 			datatype => $_[3],
-		};
+			_canonicalize_on_construction => $_[4],
+		}
 	}
 	my $class = shift;
 	(@_==1 and ref $_[0] eq 'HASH')
@@ -51,9 +59,15 @@ sub _register_datatype {
 	$datatype = $datatype->value if blessed $datatype;
 	$SUBCLASS{ $datatype } ||= $sc;
 }
+sub _registered_datatypes {
+	%SUBCLASS;
+}
 
 require RDF::Trine::Node::Literal::Boolean;
 require RDF::Trine::Node::Literal::Integer;
+require RDF::Trine::Node::Literal::Decimal;
+require RDF::Trine::Node::Literal::Float;
+require RDF::Trine::Node::Literal::DateTime;
 
 {
 	package RDF::Trine::Node::Literal::Exception::NotPossible;
@@ -73,12 +87,16 @@ sub BUILD {
 	if (my $r = $SUBCLASS{ $self->datatype }) {
 		$r->meta->rebless_instance($self);
 	}
+	
+	if ($self->_canonicalize_on_construction and $self->does('RDF::Trine::Node::API::Canonicalize')) {
+		$self->_set_value( $self->canonical_lexical_form );
+	}
 }
 
 sub new_canonical {
 	my $class = shift;
 	my $self  = $class->new(@_);
-	if ($self->does('Trine::Role::Canonicalization')) {
+	if ($self->does('RDF::Trine::Node::API::Canonicalize')) {
 		return $self->canonicalize;
 	}
 	return $self;
@@ -105,13 +123,14 @@ sub is_numeric_type {
 	$self->has_datatype and $self->literal_datatype =~ $numeric_datatypes;
 }
 
-
-# NO-OP stuff
-use constant is_valid_lexical_form => 1;
+# stub stuff for subclasses
+use constant is_valid_lexical_form => '0E0';  # 0 but true
 sub canonical_lexical_form { shift->value };
 use constant is_canonical_lexical_form => 1;
 sub canonicalize { shift };
 use constant numeric_value => undef;
+use constant does_canonicalization => 0;
+use constant does_lexical_validation => 0;
 
 1;
 
@@ -181,12 +200,6 @@ sub canonicalize_literal_value {
 			$exp	=~ s/E(-?)0+([1-9])$/E$1$2/;
 			$exp	=~ s/E(-?)0+$/E${1}0/;
 			return "${sign}${num}${exp}";
-		} else {
-			warn "Bad lexical form for xsd:float: '$value'" if ($warn);
-			$value	= sprintf('%E', $value);
-			$value	=~ s/E[+]/E/;
-			$value	=~ s/E0+(\d)/E$1/;
-			$value	=~ s/(\d)0+E/$1E/;
 		}
 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
 		if ($value =~ m/^(?:([-+])?(?:(\d+(?:\.\d*)?|\.\d+)([Ee][-+]?\d+)?|(INF)))|(NaN)$/) {

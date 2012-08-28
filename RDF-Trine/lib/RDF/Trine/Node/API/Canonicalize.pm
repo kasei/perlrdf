@@ -11,6 +11,9 @@ requires qw(
 	_build_canonical_lexical_form
 );
 
+sub does_canonicalization   { 1 }
+sub does_lexical_validation { 1 }
+
 has is_valid_lexical_form => (
 	is        => 'ro',
 	isa       => Str,
@@ -36,10 +39,10 @@ sub is_canonical_lexical_form
 sub canonicalize
 {
 	my $self = shift;
-	RDF::Trine::Node::Literal->new(
+	RDF::Trine::Node::Literal->new({
 		value    => $self->canonical_lexical_form,
 		datatype => $self->datatype,
-	);
+	});
 }	
 
 {
@@ -48,7 +51,6 @@ sub canonicalize
 	extends 'RDF::Trine::Exception';
 	has literal => (is => 'ro');
 }
-
 
 1;
 

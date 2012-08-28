@@ -1,4 +1,4 @@
-package Trine::Literal::Boolean;
+package RDF::Trine::Node::Literal::Boolean;
 
 use utf8;
 use Moose;

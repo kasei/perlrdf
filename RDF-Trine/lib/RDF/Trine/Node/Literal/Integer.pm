@@ -1,4 +1,4 @@
-package Trine::Literal::Integer;
+package RDF::Trine::Node::Literal::Integer;
 
 use utf8;
 use Moose;
