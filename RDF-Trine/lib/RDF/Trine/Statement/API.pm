@@ -20,7 +20,7 @@ requires qw(
 sub RDF::Trine::Statement::new
 {
 	my $class = shift;
-	Carp::carp("RDF::Trine::Statement->new is deprecated; use RDF::Trine::Statement::Triple->new instead");
+	Carp::carp("RDF::Trine::Statement::Triple->new is deprecated; use RDF::Trine::Statement::Triple->new instead");
 	@_==4
 		? RDF::Trine::Statement::Quad->new(@_)
 		: RDF::Trine::Statement::Triple->new(@_);

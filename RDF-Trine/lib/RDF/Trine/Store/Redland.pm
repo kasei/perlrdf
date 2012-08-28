@@ -200,7 +200,7 @@ sub _get_statements_triple {
 			}
 			my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
 			$iter->next;
-			return RDF::Trine::Statement->new( @nodes );
+			return RDF::Trine::Statement::Triple->new( @nodes );
 		}
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub );

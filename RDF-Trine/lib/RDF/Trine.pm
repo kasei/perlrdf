@@ -191,7 +191,7 @@ sub statement {
 	if (scalar(@nodes) == 4) {
 		return RDF::Trine::Statement::Quad->new( @nodes );
 	} else {
-		return RDF::Trine::Statement->new( @nodes );
+		return RDF::Trine::Statement::Triple->new( @nodes );
 	}
 }
 

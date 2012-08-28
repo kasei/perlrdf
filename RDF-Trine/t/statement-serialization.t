@@ -22,7 +22,7 @@ my $name	= RDF::Trine::Node::Resource->new('http://xmlns.com/foaf/0.1/name');
 my $desc	= RDF::Trine::Node::Literal->new( 'my homepage' );
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $rdf->type, $foaf->Document );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $rdf->type, $foaf->Document );
 	is( $st->sse, '(triple <http://kasei.us/> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document>)' );
 }
 

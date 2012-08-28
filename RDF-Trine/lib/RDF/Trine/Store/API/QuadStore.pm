@@ -25,7 +25,7 @@ sub get_triples {
 			return unless $q;
 			
 			my @nodes	= $q->nodes;
-			my $t		= RDF::Trine::Statement->new( @nodes[0..2] );
+			my $t		= RDF::Trine::Statement::Triple->new( @nodes[0..2] );
 			next if ($seen{ $t->as_string }++);
 			return $t;
 		}

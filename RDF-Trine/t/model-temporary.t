@@ -23,7 +23,7 @@ is( $model->size, 0, 'expected model size' );
 $model->{threshold}	= 10;
 foreach my $i (0 .. $model->{threshold}) {
 	my $n	= iri("http://example.org/$i");
-	my $st	= RDF::Trine::Statement->new( $n, $n, $n );
+	my $st	= RDF::Trine::Statement::Triple->new( $n, $n, $n );
 	$model->add_statement( $st );
 }
 is( $model->size, 11, 'expected model size' );

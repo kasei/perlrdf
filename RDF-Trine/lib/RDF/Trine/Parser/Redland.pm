@@ -172,7 +172,7 @@ sub parse {
 	while ($stream and !$stream->end) {
 		#my $context = $stream->context;
 		#warn $context;
-		my $stmt = RDF::Trine::Statement->from_redland($stream->current);
+		my $stmt = RDF::Trine::Statement::API->from_redland($stream->current);
 		if ($self->{canonicalize}) {
 			my $o = $stmt->object;
 			# basically copied from RDF::Trine::Parser::Turtle

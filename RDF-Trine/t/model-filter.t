@@ -24,11 +24,11 @@ my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 my $nil		= RDF::Trine::Node::Nil->new();
 my $b		= RDF::Trine::Node::Blank->new();
 my $p		= RDF::Trine::Node::Resource->new('http://kasei.us/about/foaf.xrdf#greg');
-my $st0		= RDF::Trine::Statement->new( $p, $rdf->type, $foaf->Person );
-my $st1		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
+my $st0		= RDF::Trine::Statement::Triple->new( $p, $rdf->type, $foaf->Person );
+my $st1		= RDF::Trine::Statement::Triple->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 my $st1q	= RDF::Trine::Statement::Quad->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams'), $nil );
-my $st2		= RDF::Trine::Statement->new( $b, $rdf->type, $foaf->Person );
-my $st3		= RDF::Trine::Statement->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
+my $st2		= RDF::Trine::Statement::Triple->new( $b, $rdf->type, $foaf->Person );
+my $st3		= RDF::Trine::Statement::Triple->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve') );
 my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::Literal->new('Eve'), $nil );
 
 {
@@ -77,8 +77,8 @@ my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::
 	}
 	
 	{
-		my $p1		= RDF::Trine::Statement->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person );
-		my $p2		= RDF::Trine::Statement->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $p1		= RDF::Trine::Statement::Triple->new( RDF::Trine::Node::Variable->new('p'), $rdf->type, $foaf->Person );
+		my $p2		= RDF::Trine::Statement::Triple->new( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $pattern	= RDF::Trine::Pattern->new( $p1, $p2 );
 		
 		{
@@ -158,10 +158,10 @@ my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::
 	}
 	
 	{
-		my $st5		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('グレゴリ ウィリアムス', 'jp') );
+		my $st5		= RDF::Trine::Statement::Triple->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('グレゴリ ウィリアムス', 'jp') );
 		$model->add_statement( $st5 );
 		
-		my $pattern	= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $pattern	= RDF::Trine::Statement::Triple->new( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $stream	= $model->get_pattern( $pattern );
 		my $count	= 0;
 		while (my $b = $stream->next) {
@@ -177,10 +177,10 @@ my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::
 	}
 	
 	{
-		my $st6		= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams', undef, 'http://www.w3.org/2000/01/rdf-schema#Literal') );
+		my $st6		= RDF::Trine::Statement::Triple->new( $p, $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams', undef, 'http://www.w3.org/2000/01/rdf-schema#Literal') );
 		$model->add_statement( $st6 );
 		
-		my $pattern	= RDF::Trine::Statement->new( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
+		my $pattern	= RDF::Trine::Statement::Triple->new( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $stream	= $model->get_pattern( $pattern );
 		my $count	= 0;
 		my $dt		= 0;

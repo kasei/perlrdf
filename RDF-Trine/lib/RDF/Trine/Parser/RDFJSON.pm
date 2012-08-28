@@ -180,7 +180,7 @@ sub parse {
 							$to	= literal( $canon, undef, $dt );
 						}
 					}
-					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
+					my $st = RDF::Trine::Statement::Triple->new($ts, $tp, $to);
 					$handler->($st);
 				}
 			}

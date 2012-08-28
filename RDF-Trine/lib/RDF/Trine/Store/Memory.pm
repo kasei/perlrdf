@@ -304,7 +304,7 @@ sub _get_statements_triple {
 				next;
 			}
 			my @nodes	= $st->nodes;
-			my $triple	= RDF::Trine::Statement->new( @nodes[0..2] );
+			my $triple	= RDF::Trine::Statement::Triple->new( @nodes[0..2] );
 			if ($seen{ $triple->as_string }++) {
 # 				warn "already seen " . $triple->as_string . "\n" if ($::debug);
 				next;

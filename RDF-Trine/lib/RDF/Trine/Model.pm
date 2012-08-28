@@ -205,7 +205,7 @@ sub add_hashref {
 				}
 				
 				if ($ts and $tp and $to) {
-					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
+					my $st = RDF::Trine::Statement::Triple->new($ts, $tp, $to);
 					$self->add_statement($st, $context);
 				}
 			}
@@ -247,8 +247,8 @@ sub add_list {
 		my $head		= RDF::Query::Node::Blank->new();
 		my $node		= shift(@elements);
 		my $rest		= $self->add_list( @elements );
-		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
-		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		$self->add_statement( RDF::Trine::Statement::Triple->new($head, $rdf->first, $node) );
+		$self->add_statement( RDF::Trine::Statement::Triple->new($head, $rdf->rest, $rest) );
 		return $head;
 	}
 }

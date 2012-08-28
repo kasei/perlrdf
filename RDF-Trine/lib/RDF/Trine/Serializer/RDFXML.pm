@@ -283,13 +283,13 @@ sub __serialize_bounded_description {
 	return '' if ($seen->{ $node->sse }++);
 	
 	my $string	= '';
-	my $st		= RDF::Trine::Statement->new( $node, map { RDF::Trine::Node::Variable->new($_) } qw(p o) );
+	my $st		= RDF::Trine::Statement::Triple->new( $node, map { RDF::Trine::Node::Variable->new($_) } qw(p o) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $iter	= $model->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
 	
 	my @bindings	= $iter->get_all;
 	if (@bindings) {
-		my @samesubj	= map { RDF::Trine::Statement->new( $node, $_->{p}, $_->{o} ) } @bindings;
+		my @samesubj	= map { RDF::Trine::Statement::Triple->new( $node, $_->{p}, $_->{o} ) } @bindings;
 		my @blanks		= grep { blessed($_) and $_->isa('RDF::Trine::Node::Blank') } map { $_->{o} } @bindings;
 		$string			.= $self->_statements_same_subject_as_string( @samesubj );
 		foreach my $object (@blanks) {

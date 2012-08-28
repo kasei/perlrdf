@@ -313,7 +313,7 @@ sub get_statements {
 				if ($st) {
 					my @nodes	= (map { $st->$_() } qw(subject predicate object));
 					next if ($seen{ join(' ', map { $_->as_string } @nodes ) }++);
-					return RDF::Trine::Statement->new( @nodes );
+					return RDF::Trine::Statement::Triple->new( @nodes );
 				} else {
 					shift(@iters);
 				}

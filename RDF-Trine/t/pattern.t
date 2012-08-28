@@ -18,9 +18,9 @@ my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 
 my $g		= RDF::Trine::Node::Blank->new();
-my $st0		= RDF::Trine::Statement->new( $g, $rdf->type, $foaf->Person );
-my $st1		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
-my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, RDF::Trine::Node::Resource->new('http://kasei.us/') );
+my $st0		= RDF::Trine::Statement::Triple->new( $g, $rdf->type, $foaf->Person );
+my $st1		= RDF::Trine::Statement::Triple->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
+my $st2		= RDF::Trine::Statement::Triple->new( $g, $foaf->homepage, RDF::Trine::Node::Resource->new('http://kasei.us/') );
 $store->add_statement( $_ ) for ($st0, $st1, $st2);
 
 
@@ -35,7 +35,7 @@ throws_ok { RDF::Trine::Pattern->new($store) } 'RDF::Trine::Error', 'RDF::Trine:
 
 {
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
-	my $t	= RDF::Trine::Statement->new( $x, $rdf->type, $foaf->Person );
+	my $t	= RDF::Trine::Statement::Triple->new( $x, $rdf->type, $foaf->Person );
 	my $p	= RDF::Trine::Pattern->new( $t );
 	isa_ok( $p, 'RDF::Trine::Pattern' );
 	is_deeply( [ $p->construct_args ], [ $t ], 'construct args' );
@@ -51,11 +51,11 @@ throws_ok { RDF::Trine::Pattern->new($store) } 'RDF::Trine::Error', 'RDF::Trine:
 {
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
 	my $y	= RDF::Trine::Node::Variable->new( 'y' );
-	my $t	= RDF::Trine::Statement->new( $x, $rdf->type, $y );
+	my $t	= RDF::Trine::Statement::Triple->new( $x, $rdf->type, $y );
 	my $p	= RDF::Trine::Pattern->new( $t );
 
-	my $u	= RDF::Trine::Statement->new( $x, $rdf->type, $foaf->Person );
-	my $v	= RDF::Trine::Statement->new( $g, $x, $foaf->Person );
+	my $u	= RDF::Trine::Statement::Triple->new( $x, $rdf->type, $foaf->Person );
+	my $v	= RDF::Trine::Statement::Triple->new( $g, $x, $foaf->Person );
 	ok( $p->subsumes( $u ), 'fbf subsumes fbb' );
 	ok( not( $p->subsumes( $v ) ), 'fbf does not subsume bfb' );
 }
@@ -63,7 +63,7 @@ throws_ok { RDF::Trine::Pattern->new($store) } 'RDF::Trine::Error', 'RDF::Trine:
 {
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
 	my $y	= RDF::Trine::Node::Variable->new( 'y' );
-	my $t	= RDF::Trine::Statement->new( $x, $rdf->type, $y );
+	my $t	= RDF::Trine::Statement::Triple->new( $x, $rdf->type, $y );
 	my $p	= RDF::Trine::Pattern->new( $t );
 	my $q	= $p->bind_variables( { 'x' => $g, 'y' => $foaf->Person } );
 	ok( $q->subsumes( $st0 ), 'bind_variables' );

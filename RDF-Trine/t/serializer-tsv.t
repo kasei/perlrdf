@@ -21,9 +21,9 @@ my $person	= $foaf->Person;
 my $s		= RDF::Trine::Serializer::TSV->new();
 
 {
-	my $st1		= RDF::Trine::Statement->new( $p1, $type, $person );
-	my $st2		= RDF::Trine::Statement->new( $p2, $type, $person );
-	my $st3		= RDF::Trine::Statement->new( $p3, $type, $person );
+	my $st1		= RDF::Trine::Statement::Triple->new( $p1, $type, $person );
+	my $st2		= RDF::Trine::Statement::Triple->new( $p2, $type, $person );
+	my $st3		= RDF::Trine::Statement::Triple->new( $p3, $type, $person );
 	my $iter	= RDF::Trine::Iterator::Graph->new( [ $st1, $st2, $st3 ] );
 	my $string	= $s->serialize_iterator_to_string( $iter );
 	is( $string, <<"END", 'tsv serialization' );
@@ -34,10 +34,10 @@ END
 }
 
 {
-	my $st1		= RDF::Trine::Statement->new( $p2, $rdf->type, $foaf->Person );
-	my $st2		= RDF::Trine::Statement->new( $p2, $foaf->name, literal('Eve', 'en') );
-	my $st3		= RDF::Trine::Statement->new( $p2, $rdf->value, literal('123', undef, $xsd->integer) );
-	my $st4		= RDF::Trine::Statement->new( $p2, $rdf->value, blank('foo') );
+	my $st1		= RDF::Trine::Statement::Triple->new( $p2, $rdf->type, $foaf->Person );
+	my $st2		= RDF::Trine::Statement::Triple->new( $p2, $foaf->name, literal('Eve', 'en') );
+	my $st3		= RDF::Trine::Statement::Triple->new( $p2, $rdf->value, literal('123', undef, $xsd->integer) );
+	my $st4		= RDF::Trine::Statement::Triple->new( $p2, $rdf->value, blank('foo') );
 	my $iter	= RDF::Trine::Iterator::Graph->new( [ $st1, $st2, $st3, $st4 ] );
 	my $string	= $s->serialize_iterator_to_string( $iter );
 	is( $string, <<'END', 'tsv serialization' );

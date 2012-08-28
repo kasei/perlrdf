@@ -293,7 +293,7 @@ sub get_triples {
 	
 	my $var		= 0;
 	my $dbh		= $self->dbh;
-	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
@@ -343,7 +343,7 @@ NEXTROW:
 		}
 		
 		my $st	= (@triple == 3)
-					? RDF::Trine::Statement->new( @triple )
+					? RDF::Trine::Statement::Triple->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
 		return $st;
 	};
@@ -423,7 +423,7 @@ NEXTROW:
 		}
 		
 		my $st	= (@triple == 3)
-					? RDF::Trine::Statement->new( @triple )
+					? RDF::Trine::Statement::Triple->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
 		return $st;
 	};
@@ -718,7 +718,7 @@ sub count_triples {
 	
 	my $dbh		= $self->dbh;
 	my $var		= 0;
-	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= 'triple';

@@ -37,7 +37,7 @@ sub from_sse {
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		if (m/^\s*[)]/) {
 			s/^\s*[)]//;
-			return RDF::Trine::Statement->new( @nodes );
+			return RDF::Trine::Statement::Triple->new( @nodes );
 		} else {
 			throw RDF::Trine::Error -text => "Cannot parse end-of-quad from SSE string: >>$_<<";
 		}

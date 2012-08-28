@@ -311,7 +311,7 @@ Removes the specified C<$statement> from the underlying model.
 sub remove_statements {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
-	my $st		= RDF::Trine::Statement->new( @nodes[0..2] );
+	my $st		= RDF::Trine::Statement::Triple->new( @nodes[0..2] );
 	my $context	= $nodes[3];
 	
 	if ($self->_bulk_ops) {
@@ -429,7 +429,7 @@ sub get_statements {
 				my $key		= shift(@keys);
 				my @data	= split(':', $key);
 				my @nodes	= $self->_id_node( @data[0..2] );
-				my $st		= RDF::Trine::Statement->new( @nodes );
+				my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 				return $st;
 			};
 		} else {
@@ -447,7 +447,7 @@ sub get_statements {
 				my ($ids)	= $key =~ m/^RT:spog:(.*)$/;
 				my @data	= split(':', $ids);
 				my @nodes	= $self->_id_node( @data );
-				my $st		= RDF::Trine::Statement->new( @nodes );
+				my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 				return $st;
 			};
 		}

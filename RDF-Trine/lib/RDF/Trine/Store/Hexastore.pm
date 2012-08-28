@@ -246,7 +246,7 @@ sub get_statements {
 		my $index	= $self->_index_from_pair( $self->_index_root, @keys[ 0,1 ] );
 		my $list	= $self->_index_from_pair( $index, @keys[ 2,3 ] );
 		if ($self->_page_contains_node( $list, $ids[2] )) {
-			return RDF::Trine::Iterator::Graph->new( [ RDF::Trine::Statement->new( @nodes ) ] );
+			return RDF::Trine::Iterator::Graph->new( [ RDF::Trine::Statement::Triple->new( @nodes ) ] );
 		} else {
 			return RDF::Trine::Iterator::Graph->new( [] );
 		}
@@ -271,7 +271,7 @@ sub get_statements {
 			my $id	= shift(@local_list);
 			my %data	= map { $_ => $nodes[ NODEMAP->{ $_ } ] } @dkeys;
 			$data{ $ukey }	= $self->_id2node( $id );
-			my $st	= RDF::Trine::Statement->new( @data{qw(subject predicate object)} );
+			my $st	= RDF::Trine::Statement::Triple->new( @data{qw(subject predicate object)} );
 			return $st;
 		};
 		return RDF::Trine::Iterator::Graph->new( $sub );
@@ -327,7 +327,7 @@ sub get_statements {
 			my $id	= shift(@local_list);
 			my %data	= ($dkey => $nodes[ NODEMAP->{ $dkey } ]);
 			@data{ @ukeys }	= map { $self->_id2node( $_ ) } ($ukey1, $id);
-			my $st	= RDF::Trine::Statement->new( @data{qw(subject predicate object)} );
+			my $st	= RDF::Trine::Statement::Triple->new( @data{qw(subject predicate object)} );
 			return $st;
 		};
 		return RDF::Trine::Iterator::Graph->new( $sub );
@@ -407,7 +407,7 @@ sub get_statements {
 				$final_key		=> $id,
 			);
 			my @nodes	= map { $self->_id2node( $_ ) } (@data{qw(subject predicate object)});
-			my $st	= RDF::Trine::Statement->new( @nodes );
+			my $st	= RDF::Trine::Statement::Triple->new( @nodes );
 			return $st;
 		};
 		return RDF::Trine::Iterator::Graph->new( $sub );

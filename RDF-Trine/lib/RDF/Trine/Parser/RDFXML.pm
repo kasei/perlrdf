@@ -287,16 +287,16 @@ sub start_element {
 				my $list	= $self->new_bnode;
 				$l->trace("adding an OBJECT to a COLLECTION " . $list->sse . "\n");
 				if (my $last = $self->{ collection_last }[0]) {
-					my $st		= RDF::Trine::Statement->new( $last, $rdf->rest, $list );
+					my $st		= RDF::Trine::Statement::Triple->new( $last, $rdf->rest, $list );
 					$self->assert( $st );
 				}
 				$self->{ collection_last }[0]	= $list;
-				my $st		= RDF::Trine::Statement->new( $list, $rdf->first, $node_id );
+				my $st		= RDF::Trine::Statement::Triple->new( $list, $rdf->first, $node_id );
 				$self->assert( $st );
 				$self->{ collection_head }[0]	||= $list;
 			} elsif ($self->expect == OBJECT) {
 				my $nodes	= $self->{nodes};
-				my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $node_id );
+				my $st		= RDF::Trine::Statement::Triple->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $node_id );
 				$self->assert( $st );
 			}
 			
@@ -306,7 +306,7 @@ sub start_element {
 				my $type	= $node;
 				$l->trace("got object node " . $node_id->as_string . " of type " . $node->as_string);
 				# emit an rdf:type statement
-				my $st	= RDF::Trine::Statement->new( $node_id, $rdf->type, $node );
+				my $st	= RDF::Trine::Statement::Triple->new( $node_id, $rdf->type, $node );
 				$self->assert( $st );
 			}
 			push( @{ $self->{nodes} }, $node_id );
@@ -348,7 +348,7 @@ sub start_element {
 					my $node	= $self->new_bnode;
 					my $nodes	= $self->{nodes};
 					push( @$nodes, $node );
-					my $st	= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 2 .. $#{$nodes} ] );
+					my $st	= RDF::Trine::Statement::Triple->new( @{ $nodes }[ $#{$nodes} - 2 .. $#{$nodes} ] );
 					$self->assert( $st );
 					
 					$self->new_expect( PREDICATE );
@@ -384,7 +384,7 @@ sub start_element {
 				# fake an enclosing object scope
 				my $nodes	= $self->{nodes};
 				push( @$nodes, $node );
-				my $st	= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 2 .. $#{$nodes} ] );
+				my $st	= RDF::Trine::Statement::Triple->new( @{ $nodes }[ $#{$nodes} - 2 .. $#{$nodes} ] );
 				$self->assert( $st );
 				
 				$self->new_expect( PREDICATE );
@@ -473,7 +473,7 @@ sub end_element {
 			$l->trace("-> predicate used rdf:resource or rdf:nodeID\n");
 			my $uri	= delete $self->{'rdf:resource'};
 			my $nodes	= $self->{nodes};
-			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $uri );
+			my $st		= RDF::Trine::Statement::Triple->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $uri );
 			delete $self->{characters};
 			$self->assert( $st );
 		}
@@ -485,7 +485,7 @@ sub end_element {
 			my $literal	= $self->new_literal( $string );
 			$l->trace('node stack: ' . Dumper($self->{nodes}));
 			my $nodes	= $self->{nodes};
-			my $st		= RDF::Trine::Statement->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $literal );
+			my $st		= RDF::Trine::Statement::Triple->new( @{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $literal );
 			$self->assert( $st );
 			delete($self->{characters});
 			delete $self->{datatype};
@@ -500,12 +500,12 @@ sub end_element {
 			my $nodes	= $self->{nodes};
 			my $head	= $self->{ collection_head }[0] || $rdf->nil;
 			my @nodes	= (@{ $nodes }[ $#{$nodes} - 1, $#{$nodes} ], $head);
-			my $st		= RDF::Trine::Statement->new( @nodes );
+			my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 			$self->assert( $st );
 			
 			if (my $last = $self->{ collection_last }[0]) {
 				my @nodes	= ( $last, $rdf->rest, $rdf->nil );
-				my $st		= RDF::Trine::Statement->new( @nodes );
+				my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 				$self->assert( $st );
 			}
 			
@@ -581,11 +581,11 @@ sub parse_literal_property_attributes {
 		if ($uri eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type') {
 			# rdf:type is a special case -- it produces a resource instead of a literal
 			my $res		= $self->new_resource( $value );
-			my $st		= RDF::Trine::Statement->new( $node_id, $pred, $res );
+			my $st		= RDF::Trine::Statement::Triple->new( $node_id, $pred, $res );
 			$self->assert( $st );
 		} else {
 			my $lit		= $self->new_literal( $value );
-			my $st		= RDF::Trine::Statement->new( $node_id, $pred, $lit );
+			my $st		= RDF::Trine::Statement::Triple->new( $node_id, $pred, $lit );
 			$self->assert( $st );
 		}
 		$asserted++;
@@ -618,10 +618,10 @@ sub assert {
 		if (defined(my $id = $self->{reify_id}[0])) {
 			my $stid	= $self->new_resource( "#$id" );
 			
-			my $tst	= RDF::Trine::Statement->new( $stid, $rdf->type, $rdf->Statement );
-			my $sst	= RDF::Trine::Statement->new( $stid, $rdf->subject, $st->subject );
-			my $pst	= RDF::Trine::Statement->new( $stid, $rdf->predicate, $st->predicate );
-			my $ost	= RDF::Trine::Statement->new( $stid, $rdf->object, $st->object );
+			my $tst	= RDF::Trine::Statement::Triple->new( $stid, $rdf->type, $rdf->Statement );
+			my $sst	= RDF::Trine::Statement::Triple->new( $stid, $rdf->subject, $st->subject );
+			my $pst	= RDF::Trine::Statement::Triple->new( $stid, $rdf->predicate, $st->predicate );
+			my $ost	= RDF::Trine::Statement::Triple->new( $stid, $rdf->object, $st->object );
 			foreach ($tst, $sst, $pst, $ost) {
 				$self->{sthandler}->( $_ );
 			}

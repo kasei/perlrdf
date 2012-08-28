@@ -179,7 +179,7 @@ sub _emit_statement {
 				$nodes->[2] = $nodes->[2]->canonicalize;
 			}
 		}
-		$st	= RDF::Trine::Statement->new( @$nodes );
+		$st	= RDF::Trine::Statement::Triple->new( @$nodes );
 # 	} elsif (scalar(@$nodes) == 4) {
 # 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {

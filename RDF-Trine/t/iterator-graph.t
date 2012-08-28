@@ -18,9 +18,9 @@ my $p3		= RDF::Trine::Node::Resource->new('http://example.org/bob');
 my $type	= RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
 my $person	= RDF::Trine::Node::Resource->new('http://xmlns.com/foaf/0.1/Person');
 
-my $st1		= RDF::Trine::Statement->new( $p1, $type, $person );
-my $st2		= RDF::Trine::Statement->new( $p2, $type, $person );
-my $st3		= RDF::Trine::Statement->new( $p3, $type, $person );
+my $st1		= RDF::Trine::Statement::Triple->new( $p1, $type, $person );
+my $st2		= RDF::Trine::Statement::Triple->new( $p2, $type, $person );
+my $st3		= RDF::Trine::Statement::Triple->new( $p3, $type, $person );
 
 {
 	my $stream	= RDF::Trine::Iterator::Graph->new();

@@ -24,7 +24,7 @@ my $desc	= RDF::Trine::Node::Literal->new( 'my homepage' );
 my $v		= RDF::Trine::Node::Variable->new('v');
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $rdf->type, $foaf->Document );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $rdf->type, $foaf->Document );
 	is_deeply( [ $st->node_names ], [qw(subject predicate object)], 'triple node names' );
 	is( $st->type, 'TRIPLE' );
 	isa_ok( $st, 'RDF::Trine::Statement' );
@@ -52,13 +52,13 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, undef, undef );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, undef, undef );
 	isa_ok( $st->predicate, 'RDF::Trine::Node::Variable' );
 	isa_ok( $st->object, 'RDF::Trine::Node::Variable' );
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $rdf->type, $foaf->Document );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $rdf->type, $foaf->Document );
 	my @nodes	= $st->nodes;
 	is( scalar(@nodes), 3, 'triple node count' );
 	is_deeply( \@nodes, [$kasei, $rdf->type, $foaf->Document], 'nodes' );
@@ -72,7 +72,7 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $a, $b, $a );
+	my $st		= RDF::Trine::Statement::Triple->new( $a, $b, $a );
 	$st->subject( $kasei );
 	$st->predicate( $rdf->type );
 	$st->object( $foaf->Document );
@@ -81,33 +81,33 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 
 {
 	my $sse		= '(triple <http://kasei.us/about/foaf.xrdf#greg> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Document>)';
-	my $st_a	= RDF::Trine::Statement->new( $p, $rdf->type, $foaf->Document );
-	my $st_b	= RDF::Trine::Statement->from_sse( $sse );
+	my $st_a	= RDF::Trine::Statement::Triple->new( $p, $rdf->type, $foaf->Document );
+	my $st_b	= RDF::Trine::Statement::Triple->from_sse( $sse );
 	is_deeply( $st_a, $st_b, 'from_sse' );
 	is( $sse, $st_a->sse, 'sse comparison' );
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $dc->title, $v );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $dc->title, $v );
 	my @vars	= $st->definite_variables;
 	is_deeply( \@vars, [qw(v)], 'definite variables' );
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $dc->title, $v );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $dc->title, $v );
 	my $st2		= $st->clone;
 	is_deeply( $st, $st2, 'statement clone' );
 }
 
 {
-	my $st		= RDF::Trine::Statement->new( $kasei, $dc->title, $v );
-	my $expect	= RDF::Trine::Statement->new( $kasei, $dc->title, $desc );
+	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $dc->title, $v );
+	my $expect	= RDF::Trine::Statement::Triple->new( $kasei, $dc->title, $desc );
 	my $st2		= $st->bind_variables({ v => $desc });
 	is_deeply( $st2, $expect, 'statement after binding' );
 }
 
 throws_ok {
-	my $st		= RDF::Trine::Statement->new();
+	my $st		= RDF::Trine::Statement::Triple->new();
 } qr{required at constructor}, "RDF::Trine::Statement::new throws without 3 node arguments.";
 
 throws_ok {
@@ -126,7 +126,7 @@ SKIP: {
 		my $statement	= new RDF::Redland::Statement($subj, $pred, $obj);
 		isa_ok( $statement, 'RDF::Redland::Statement' );
 		
-		my $st	= RDF::Trine::Statement->from_redland( $statement );
+		my $st	= RDF::Trine::Statement::API->from_redland( $statement );
 		isa_ok( $st, 'RDF::Trine::Statement' );
 		is( $st->sse, '(triple <http://example.com/doc> <http://example.com/maker> _:eve)', 'triple sse after from_redland' );
 	}

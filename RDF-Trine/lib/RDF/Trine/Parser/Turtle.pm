@@ -242,7 +242,7 @@ sub _triple {
 			$o = $o->canonicalize;
 		}
 	}
-	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
+	my $st	= RDF::Trine::Statement::Triple->new( $s, $p, $o );
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}
