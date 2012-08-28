@@ -20,7 +20,7 @@ requires qw(
 sub RDF::Trine::Statement::new
 {
 	my $class = shift;
-	Carp::carp("RDF::Trine::Statement::Triple->new is deprecated; use RDF::Trine::Statement::Triple->new instead");
+	Carp::carp("RDF::Trine::Statement->new is deprecated; use RDF::Trine::Statement::Triple->new instead");
 	@_==4
 		? RDF::Trine::Statement::Quad->new(@_)
 		: RDF::Trine::Statement::Triple->new(@_);
@@ -192,4 +192,75 @@ sub as_ntriples {
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+RDF::Trine::Statement::API - a role for triples and more
+
+=head1 DESCRIBE
+
+=head2 Consumes
+
+This role consumes several other roles:
+
+=over
+
+=item C<< RDF::Trine::Statement::API::Element::Subject >>
+
+=item C<< RDF::Trine::Statement::API::Element::Predicate >>
+
+=item C<< RDF::Trine::Statement::API::Element::Object >>
+
+=item C<< MooseX::Clone >>
+
+=back
+
+=head2 Requires
+
+=over
+
+=item C<< type >>
+
+=item C<< node_names >>
+
+=item C<< from_sse >>
+
+=back
+
+=head2 Methods
+
+The following methods are provided:
+
+=over
+
+=item C<< sse >>
+
+=item C<< as_string >>
+
+=item C<< nodes >>
+
+=item C<< construct_args >>
+
+=item C<< has_blanks >>
+
+=item C<< referenced_variables >>
+
+=item C<< definite_variables >>
+
+=item C<< bind_variables >>
+
+=item C<< subsumes >>
+
+=item C<< from_redland >>
+
+=item C<< to_triple >>
+
+=item C<< rdf_compatible >>
+
+=item C<< as_ntriples >>
+
+=back
+
 
