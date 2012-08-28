@@ -24,10 +24,11 @@ sub equal {
 }
 
 my %order = (
-	NIL     => 0,
-	BLANK   => 1,
-	URI     => 2,
-	LITERAL => 3,
+	NIL      => 0,
+	VARIABLE => 1,
+	BLANK    => 2,
+	URI      => 3,
+	LITERAL  => 4,
 );
 
 sub _compare { 0 }

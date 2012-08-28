@@ -45,6 +45,8 @@ sub as_ntriples {
 	);
 }
 
+sub _compare { $_[0]->name cmp $_[1]->name }
+
 sub is_variable { 1 }
 
 __PACKAGE__->meta->make_immutable;

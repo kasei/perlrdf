@@ -86,6 +86,28 @@ sub qname {
 
 sub is_resource { 1 }
 
+around sse => sub
+{
+	my $orig = shift;
+	my $self = shift;
+	my ($context) = @_;
+	
+	if ($context) {
+		my $uri  = $self->uri_value;
+		my $ns   = $context->{namespaces} || {};
+		my %ns   = %$ns;
+		foreach my $k (keys %ns) {
+			my $v = $ns{ $k };
+			if (index($uri, $v) == 0) {
+				my $qname = join ':' => ($k, substr($uri, length $v));
+				return $qname;
+			}
+		}
+	}
+	
+	return $self->$orig(@_);
+};
+
 __PACKAGE__->meta->make_immutable;
 
 1;

@@ -81,6 +81,8 @@ sub sse {
 	shift->as_ntriples # not strictly correct
 }
 
+around _compare => sub { $_[0]->value cmp $_[1]->value };
+
 1;
 
 __END__
