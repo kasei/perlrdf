@@ -40,7 +40,7 @@ use Data::Dumper;
 use Scalar::Util qw(blessed);
 
 use RDF::Trine;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
@@ -81,7 +81,7 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $model	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
@@ -99,7 +99,7 @@ Serializes the C<$model> to N-Triples, returning the result as a string.
 sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
-	my $st		= RDF::Trine::Statement->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { RDF::Trine::Node::Variable->new($_) } qw(s p o) );
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );

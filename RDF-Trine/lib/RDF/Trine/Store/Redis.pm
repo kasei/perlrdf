@@ -236,11 +236,11 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
 	}
 	
-	if ($st->isa('RDF::Trine::Statement::Quad') and blessed($context)) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') and blessed($context)) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 	}
 	
@@ -273,11 +273,11 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statement";
 	}
 	
-	if ($st->isa('RDF::Trine::Statement::Quad') and blessed($context)) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') and blessed($context)) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 	}
 	
@@ -311,7 +311,7 @@ Removes the specified C<$statement> from the underlying model.
 sub remove_statements {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
-	my $st		= RDF::Trine::Statement->new( @nodes[0..2] );
+	my $st		= RDF::Trine::Statement::Triple->new( @nodes[0..2] );
 	my $context	= $nodes[3];
 	
 	if ($self->_bulk_ops) {
@@ -429,7 +429,7 @@ sub get_statements {
 				my $key		= shift(@keys);
 				my @data	= split(':', $key);
 				my @nodes	= $self->_id_node( @data[0..2] );
-				my $st		= RDF::Trine::Statement->new( @nodes );
+				my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 				return $st;
 			};
 		} else {
@@ -447,7 +447,7 @@ sub get_statements {
 				my ($ids)	= $key =~ m/^RT:spog:(.*)$/;
 				my @data	= split(':', $ids);
 				my @nodes	= $self->_id_node( @data );
-				my $st		= RDF::Trine::Statement->new( @nodes );
+				my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 				return $st;
 			};
 		}

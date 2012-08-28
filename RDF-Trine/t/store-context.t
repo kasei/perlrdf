@@ -6,7 +6,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Namespace;
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -14,9 +14,9 @@ my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
 my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 
 my $g		= RDF::Trine::Node::Blank->new();
-my $st0		= RDF::Trine::Statement->new( $g, $rdf->type, $foaf->Person );
-my $st1		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
-my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, RDF::Trine::Node::Resource->new('http://kasei.us/') );
+my $st0		= RDF::Trine::Statement::Triple->new( $g, $rdf->type, $foaf->Person );
+my $st1		= RDF::Trine::Statement::Triple->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
+my $st2		= RDF::Trine::Statement::Triple->new( $g, $foaf->homepage, RDF::Trine::Node::Resource->new('http://kasei.us/') );
 
 my @stores	= test_stores();
 plan tests => scalar(@stores) * 5;

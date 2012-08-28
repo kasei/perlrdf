@@ -500,7 +500,7 @@ END
 	my $s		= RDF::Trine::Node::Blank->new('a');
 	my $p		= RDF::Trine::Node::Resource->new("http://example.org/Ä");
 	my $o		= RDF::Trine::Node::Literal->new("Ä");
-	my $st		= RDF::Trine::Statement->new($s, $p, $o);
+	my $st		= RDF::Trine::Statement::Triple->new($s, $p, $o);
 	my $expect	= <<"END";
 \@prefix ex: <http://example.org/> .
 

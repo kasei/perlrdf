@@ -107,7 +107,8 @@ use RDF::Trine::Node::Resource;
 use RDF::Trine::Node::Blank;
 use RDF::Trine::Node::Variable;
 use RDF::Trine::Node::Nil;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
+use RDF::Trine::Statement::Quad;
 use RDF::Trine::Namespace;
 use RDF::Trine::NamespaceMap;
 use RDF::Trine::Iterator;
@@ -191,7 +192,7 @@ sub statement {
 	if (scalar(@nodes) == 4) {
 		return RDF::Trine::Statement::Quad->new( @nodes );
 	} else {
-		return RDF::Trine::Statement->new( @nodes );
+		return RDF::Trine::Statement::Triple->new( @nodes );
 	}
 }
 

@@ -43,7 +43,7 @@ use Scalar::Util qw(blessed looks_like_number);
 use URI::Escape qw(uri_unescape);
 
 use RDF::Trine qw(literal);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Namespace;
 use RDF::Trine::Error;
 
@@ -242,7 +242,7 @@ sub _triple {
 			$o = $o->canonicalize;
 		}
 	}
-	my $st	= RDF::Trine::Statement->new( $s, $p, $o );
+	my $st	= RDF::Trine::Statement::Triple->new( $s, $p, $o );
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}

@@ -91,7 +91,7 @@ sub add_statement {
 	}
 	
 	my @values	= map { $self->_mysql_node_hash( $_ ) } @nodes;
-	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+	if ($stmt->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}

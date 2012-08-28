@@ -114,7 +114,7 @@ sub as_bindings {
 		my %values		= map {
 			my $method = $bindings{ $_ };
 			$_ => $statement->$method()
-		} grep { ($statement->isa('RDF::Trine::Statement::Quad')) ? 1 : ($_ ne $context) } (keys %bindings);
+		} grep { ($statement->DOES('RDF::Trine::Statement::API::Element::Graph')) ? 1 : ($_ ne $context) } (keys %bindings);
 		return \%values;
 	};
 	return RDF::Trine::Iterator::Bindings->new( $sub, [ keys %bindings ] );

@@ -58,7 +58,7 @@ use Encode;
 use Digest::MD5 ('md5');
 use Math::BigInt;
 use Data::Dumper;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Statement::Quad;
 use RDF::Trine::Iterator;
 use Log::Log4perl;
@@ -293,7 +293,7 @@ sub get_triples {
 	
 	my $var		= 0;
 	my $dbh		= $self->dbh;
-	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
@@ -343,7 +343,7 @@ NEXTROW:
 		}
 		
 		my $st	= (@triple == 3)
-					? RDF::Trine::Statement->new( @triple )
+					? RDF::Trine::Statement::Triple->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
 		return $st;
 	};
@@ -423,7 +423,7 @@ NEXTROW:
 		}
 		
 		my $st	= (@triple == 3)
-					? RDF::Trine::Statement->new( @triple )
+					? RDF::Trine::Statement::Triple->new( @triple )
 					: RDF::Trine::Statement::Quad->new( @triple );
 		return $st;
 	};
@@ -572,7 +572,7 @@ sub add_statement {
 	my @nodes	= $stmt->nodes;
 	my @values = map { $self->_add_node( $_ ) } @nodes;
 	
-	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+	if ($stmt->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
@@ -607,7 +607,7 @@ sub remove_statement {
 		throw RDF::Trine::Error::MethodInvocationError -text => "no statement passed to remove_statement";
 	}
 	
-	if ($stmt->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($stmt->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 		}
@@ -718,7 +718,7 @@ sub count_triples {
 	
 	my $dbh		= $self->dbh;
 	my $var		= 0;
-	my $st		= RDF::Trine::Statement->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
+	my $st		= RDF::Trine::Statement::Triple->new( map { defined($_) ? $_ : RDF::Trine::Node::Variable->new( 'n' . $var++ ) } ($subj, $pred, $obj) );
 	my @vars	= $st->referenced_variables;
 	
 	my $semantics	= 'triple';
@@ -1202,7 +1202,7 @@ sub _sql_for_statement {
 		? %{ $self->{restrictions} }
 		: %default_restrictions;
 
-	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
+	my $quad	= $triple->DOES('RDF::Trine::Statement::API::Element::Graph');
 	no warnings 'uninitialized';
 	if ($args{semantics} eq 'triple') {
 		$quad	= 0;

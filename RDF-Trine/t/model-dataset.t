@@ -10,12 +10,12 @@ use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Model;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use File::Temp qw(tempfile);
 
 my $default	= RDF::Trine::Node::Nil->new;
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
-my $st0		= RDF::Trine::Statement->new( $ex->a, $ex->p, literal('default') );
+my $st0		= RDF::Trine::Statement::Triple->new( $ex->a, $ex->p, literal('default') );
 my $st1		= RDF::Trine::Statement::Quad->new( $ex->a, $ex->p, literal('g1'), $ex->g1 );
 my $st2		= RDF::Trine::Statement::Quad->new( $ex->a, $ex->r, literal('g2'), $ex->g2 );
 my $st3		= RDF::Trine::Statement::Quad->new( $ex->a, $ex->r, literal('g3'), $ex->g3 );

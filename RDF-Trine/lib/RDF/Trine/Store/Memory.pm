@@ -304,7 +304,7 @@ sub _get_statements_triple {
 				next;
 			}
 			my @nodes	= $st->nodes;
-			my $triple	= RDF::Trine::Statement->new( @nodes[0..2] );
+			my $triple	= RDF::Trine::Statement::Triple->new( @nodes[0..2] );
 			if ($seen{ $triple->as_string }++) {
 # 				warn "already seen " . $triple->as_string . "\n" if ($::debug);
 				next;
@@ -429,7 +429,7 @@ sub add_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
@@ -483,7 +483,7 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 		}

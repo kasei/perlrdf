@@ -132,7 +132,7 @@ Adds the specified C<< $statement >> to the rdf store.
  
 sub add_statement {
 	my ($self, @args)	= @_;
-	unless ($args[0]->isa('RDF::Trine::Statement')) {
+	unless ($args[0]->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
 	}
 	if ($self->{temporary}) {
@@ -205,7 +205,7 @@ sub add_hashref {
 				}
 				
 				if ($ts and $tp and $to) {
-					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
+					my $st = RDF::Trine::Statement::Triple->new($ts, $tp, $to);
 					$self->add_statement($st, $context);
 				}
 			}
@@ -247,8 +247,8 @@ sub add_list {
 		my $head		= RDF::Query::Node::Blank->new();
 		my $node		= shift(@elements);
 		my $rest		= $self->add_list( @elements );
-		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->first, $node) );
-		$self->add_statement( RDF::Trine::Statement->new($head, $rdf->rest, $rest) );
+		$self->add_statement( RDF::Trine::Statement::Triple->new($head, $rdf->first, $node) );
+		$self->add_statement( RDF::Trine::Statement::Triple->new($head, $rdf->rest, $rest) );
 		return $head;
 	}
 }
@@ -509,7 +509,7 @@ sub get_pattern {
 	my %args	= @args;
 	
 	$self->end_bulk_ops();
-	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
+	my (@triples)	= ($bgp->DOES('RDF::Trine::Statement::API') or $bgp->isa('RDF::Query::Algebra::Filter'))
 					? $bgp
 					: $bgp->triples;
 	unless (@triples) {
@@ -584,7 +584,7 @@ sub _get_pattern {
 	my $context	= shift;
 	my @args	= @_;
 	
-	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
+	my (@triples)	= ($bgp->DOES('RDF::Trine::Statement::API') or $bgp->isa('RDF::Query::Algebra::Filter'))
 					? $bgp
 					: $bgp->triples;
 	if (1 == scalar(@triples)) {

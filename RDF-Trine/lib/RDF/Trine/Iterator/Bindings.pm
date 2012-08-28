@@ -497,7 +497,7 @@ sub as_statements {
 		return undef unless (defined $row);
 		my @values	= @{ $row }{ @names };
 		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
-						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
+						? RDF::Trine::Statement::Triple->new( @values[ 0 .. 2 ] )
 						: RDF::Trine::Statement::Quad->new( @values );
 		return $statement;
 	};

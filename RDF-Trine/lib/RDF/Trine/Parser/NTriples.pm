@@ -43,7 +43,7 @@ use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
 
 use RDF::Trine qw(literal);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
@@ -179,7 +179,7 @@ sub _emit_statement {
 				$nodes->[2] = $nodes->[2]->canonicalize;
 			}
 		}
-		$st	= RDF::Trine::Statement->new( @$nodes );
+		$st	= RDF::Trine::Statement::Triple->new( @$nodes );
 # 	} elsif (scalar(@$nodes) == 4) {
 # 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
 	} else {

@@ -53,7 +53,7 @@ use warnings;
 no warnings 'redefine';
 
 use RDF::Trine qw(iri variable store literal statement);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Store::DBI;
 use RDF::Trine::Namespace qw(xsd);
 
@@ -115,7 +115,7 @@ sub create_data {
 			my $x	= $ex->$j();
 			foreach my $k (@names[0..2]) {
 				my $y	= $ex->$k();
-				my $triple	= RDF::Trine::Statement->new($w,$x,$y);
+				my $triple	= RDF::Trine::Statement::Triple->new($w,$x,$y);
 				push(@triples, $triple);
 				foreach my $l (@names[0..2]) {
 					my $z	= $ex->$l();
@@ -392,7 +392,7 @@ sub add_statement_tests_simple {
 	note "simple add_statement tests";
 	my ($store, $args, $ex) = @_;
 	
-	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $triple	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	my $etag_before;
 	if ($store->does('RDF::Trine::Store::API::ETags')) {
@@ -462,7 +462,7 @@ sub bulk_add_statement_tests_simple {
 	my ($store, $args, $ex) = @_;
 
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
-	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $triple	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	$store->_end_bulk_ops if ($store->can('_end_bulk_ops'));
@@ -571,7 +571,7 @@ sub literals_tests_simple {
 	my $litutf8			= RDF::Trine::Node::Literal->new('blåbærsyltetøy', 'nb' );
 	my $litstring		= RDF::Trine::Node::Literal->new('dahut', undef, $xsd->string);
 	my $litint			= RDF::Trine::Node::Literal->new(42, undef, $xsd->integer);
-	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
+	my $triple	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $litplain);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );		
@@ -626,7 +626,7 @@ sub literals_tests_simple {
 	}
 
 
-	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $litstring);
+	my $triple2	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $litstring);
 	$store->add_statement( $triple2 );
 	is( $store->size, 4, 'store has 4 statements after (triple) add' );
 
@@ -682,7 +682,7 @@ sub literals_tests_simple {
 	$store->remove_statements(undef, undef, $litlang2, undef );
 	is( $store->size, 2, 'expected 2 statements after language remove statements' );
 
-	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $litutf8);
+	my $triple3	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $litutf8);
 	$store->add_statement( $triple3 );
 	is( $store->size, 3, 'store has 3 statements after addition of literal with utf8 chars' );
 
@@ -714,7 +714,7 @@ sub blank_node_tests_quads {
 	
 	my $blankfoo		= RDF::Trine::Node::Blank->new('foo');
 	my $blankbar		= RDF::Trine::Node::Blank->new('bar');
-	my $triple	= RDF::Trine::Statement->new($blankfoo, $ex->b, $ex->c);
+	my $triple	= RDF::Trine::Statement::Triple->new($blankfoo, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
@@ -732,7 +732,7 @@ sub blank_node_tests_quads {
 	$store->add_statement( $quad );
 	is( $store->size, 2, 'store has 2 statements after (quad) add' );
 
-	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $blankfoo);
+	my $triple2	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $blankfoo);
 	$store->add_statement( $triple2 );
 	is( $store->size, 3, 'store has 3 statements after (quad) add' );
 
@@ -793,8 +793,8 @@ sub blank_node_tests_triples {
 	
 	my $blankfoo		= RDF::Trine::Node::Blank->new('foo');
 	my $blankbar		= RDF::Trine::Node::Blank->new('bar');
-	my $triple	= RDF::Trine::Statement->new($blankfoo, $ex->b, $ex->c);
-	my $triple2	= RDF::Trine::Statement->new($ex->c, $ex->d, $blankbar);
+	my $triple	= RDF::Trine::Statement::Triple->new($blankfoo, $ex->b, $ex->c);
+	my $triple2	= RDF::Trine::Statement::Triple->new($ex->c, $ex->d, $blankbar);
 	$store->add_statement( $triple );
 	is( $store->size, 1, 'store has 1 statement after (triple) add' );
 	TODO: {
@@ -810,7 +810,7 @@ sub blank_node_tests_triples {
 	$store->add_statement( $triple );
 	is( $store->size, 2, 'store has 2 statements after (triple) add' );
 
-	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $blankfoo);
+	my $triple3	= RDF::Trine::Statement::Triple->new($ex->a, $ex->b, $blankfoo);
 	$store->add_statement( $triple3 );
 	is( $store->size, 3, 'store has 3 statements after (triple) add' );
 
@@ -1209,7 +1209,7 @@ sub remove_statement_tests {
 			my $x	= $ex->$j();
 			foreach my $k (@names[0..2]) {
 				my $y	= $ex->$k();
-				my $triple	= RDF::Trine::Statement->new($w,$x,$y);
+				my $triple	= RDF::Trine::Statement::Triple->new($w,$x,$y);
 				$store->remove_statement( $triple );
 			}
 		}

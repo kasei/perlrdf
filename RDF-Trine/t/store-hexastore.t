@@ -27,7 +27,7 @@ END
 		RDF::Trine::Node::Resource->new('http://example.org/bar'),
 		RDF::Trine::Node::Literal->new('23', undef, 'http://www.w3.org/2001/XMLSchema#integer'),
 	);
-	my $st		= RDF::Trine::Statement->new( @nodes );
+	my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 	my $iter	= $store->get_statements( @nodes );
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my $next	= $iter->next;
@@ -40,7 +40,7 @@ END
 		RDF::Trine::Node::Resource->new('http://example.org/bar'),
 		RDF::Trine::Node::Literal->new('00', undef, 'http://www.w3.org/2001/XMLSchema#integer'),
 	);
-	my $st		= RDF::Trine::Statement->new( @nodes );
+	my $st		= RDF::Trine::Statement::Triple->new( @nodes );
 	my $iter	= $store->get_statements( @nodes );
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my $next	= $iter->next;
@@ -53,7 +53,7 @@ END
 		RDF::Trine::Node::Resource->new('http://example.org/bar'),
 		undef,
 	);
-	my $st		= RDF::Trine::Statement->new( @nodes[0,1], RDF::Trine::Node::Literal->new('23', undef, 'http://www.w3.org/2001/XMLSchema#integer') );
+	my $st		= RDF::Trine::Statement::Triple->new( @nodes[0,1], RDF::Trine::Node::Literal->new('23', undef, 'http://www.w3.org/2001/XMLSchema#integer') );
 	my $iter	= $store->get_statements( @nodes );
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my $count	= 0;
@@ -95,7 +95,7 @@ END
 		unless (blessed($e)) {
 			fail('no more nodes are expected, but one was found');
 		}
-		my $st		= RDF::Trine::Statement->new( @nodes[0,1], $e );
+		my $st		= RDF::Trine::Statement::Triple->new( @nodes[0,1], $e );
 		# is_deeply( $next, $st, 'got expected statement by 2-bound query' );
 		$count++;
 	}
@@ -121,7 +121,7 @@ END
 		unless (ref($e)) {
 			fail('no more nodes are expected, but one was found');
 		}
-		my $st		= RDF::Trine::Statement->new( $nodes[0], @$e );
+		my $st		= RDF::Trine::Statement::Triple->new( $nodes[0], @$e );
 		# is_deeply( $next, $st, 'got expected statement by 1-bound query' );
 		$count++;
 	}
@@ -143,7 +143,7 @@ END
 		unless (ref($e)) {
 			fail('no more nodes are expected, but one was found');
 		}
-		my $st		= RDF::Trine::Statement->new( @$e );
+		my $st		= RDF::Trine::Statement::Triple->new( @$e );
 		# is_deeply( $next, $st, 'got expected statement by all wildcard query' );
 		$count++;
 	}
@@ -159,7 +159,7 @@ is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.or
 is( $store->count_statements( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/bar'), RDF::Trine::Node::Literal->new('12345', undef, 'http://www.w3.org/2001/XMLSchema#integer') ), 0, 'count_statements(bbb) returned 0' );
 is( $store->count_statements, 4, 'count_statements(fff) returned expected 4' );
 
-$store->remove_statement( RDF::Trine::Statement->new( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/bar'), RDF::Trine::Node::Literal->new('23', undef, 'http://www.w3.org/2001/XMLSchema#integer') ) );
+$store->remove_statement( RDF::Trine::Statement::Triple->new( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/bar'), RDF::Trine::Node::Literal->new('23', undef, 'http://www.w3.org/2001/XMLSchema#integer') ) );
 
 {
 	my @expect	= (
@@ -175,14 +175,14 @@ $store->remove_statement( RDF::Trine::Statement->new( RDF::Trine::Node::Resource
 		unless (ref($e)) {
 			fail('no more nodes are expected, but one was found');
 		}
-		my $st		= RDF::Trine::Statement->new( @$e );
+		my $st		= RDF::Trine::Statement::Triple->new( @$e );
 		# is_deeply( $next, $st, 'got expected statement by all wildcard query (after removing a statement)' );
 		$count++;
 	}
 	is( $count, 3, 'iterator had 3 expected element' );
 }
 
-$store->remove_statement( RDF::Trine::Statement->new( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/baz'), RDF::Trine::Node::Literal->new('quux') ) );
+$store->remove_statement( RDF::Trine::Statement::Triple->new( RDF::Trine::Node::Resource->new('http://example.org/foo'), RDF::Trine::Node::Resource->new('http://example.org/baz'), RDF::Trine::Node::Literal->new('quux') ) );
 
 {
 	my @expect	= (
@@ -199,7 +199,7 @@ $store->remove_statement( RDF::Trine::Statement->new( RDF::Trine::Node::Resource
 		unless (ref($e)) {
 			fail('no more nodes are expected, but one was found');
 		}
-		my $st		= RDF::Trine::Statement->new( @$e );
+		my $st		= RDF::Trine::Statement::Triple->new( @$e );
 		# is_deeply( $next, $st, 'got expected statement by all wildcard query (after removing a second statement)' );
 		$count++;
 	}

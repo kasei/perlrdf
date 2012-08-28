@@ -16,10 +16,10 @@ my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 
 my $page	= RDF::Trine::Node::Resource->new('http://kasei.us/');
 my $g		= RDF::Trine::Node::Blank->new('greg');
-my $st0		= RDF::Trine::Statement->new( $g, $rdf->type, $foaf->Person );
-my $st1		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
-my $st2		= RDF::Trine::Statement->new( $g, $foaf->homepage, $page );
-my $st3		= RDF::Trine::Statement->new( $page, $rdf->type, $foaf->Document );
+my $st0		= RDF::Trine::Statement::Triple->new( $g, $rdf->type, $foaf->Person );
+my $st1		= RDF::Trine::Statement::Triple->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
+my $st2		= RDF::Trine::Statement::Triple->new( $g, $foaf->homepage, $page );
+my $st3		= RDF::Trine::Statement::Triple->new( $page, $rdf->type, $foaf->Document );
 $model->add_statement( $_ ) for ($st0, $st1, $st2, $st3);
 
 {

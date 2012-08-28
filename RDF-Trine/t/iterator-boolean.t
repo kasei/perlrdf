@@ -11,7 +11,7 @@ use Data::Dumper;
 use RDF::Trine;
 use RDF::Trine::Iterator qw(sgrep smap swatch);
 use RDF::Trine::Iterator::Boolean;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 
 {
 	my $stream	= RDF::Trine::Iterator::Boolean->new([1]);

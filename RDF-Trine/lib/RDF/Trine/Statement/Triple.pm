@@ -1,15 +1,11 @@
-package RDF::Trine::Statement::Quad;
+package RDF::Trine::Statement::Triple;
 
 use Moose;
-use MooseX::Aliases;
 use namespace::autoclean;
 
 with qw(
 	RDF::Trine::Statement::API
-	RDF::Trine::Statement::API::Element::Graph
 );
-
-alias context => 'graph';
 
 sub isa {
 	my ($self, $isa) = @_;
@@ -21,17 +17,26 @@ sub isa {
 	$self->SUPER::isa($isa);
 }
 
-sub type { 'QUAD' }
-sub node_names { qw(subject predicate object graph) }
+sub type { 'TRIPLE' }
+sub node_names { qw(subject predicate object) }
+
+sub to_triple { +shift }  # return $self
+
+sub as_ntriples {
+	my $self = shift;
+	join q[ ] => (
+		(map { $_->as_ntriples } $self->nodes),
+		".\n"
+	);
+}
 
 sub from_sse {
 	my $class   = shift;
 	my $context = $_[1];
-	$_          = $_[0];
-	if (m/^[(]quad/) {
-		s/^[(]quad\s+//;
+	$_			= $_[0];
+	if (m/^[(]triple/) {
+		s/^[(]triple\s+//;
 		my @nodes;
-		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
@@ -39,19 +44,11 @@ sub from_sse {
 			s/^\s*[)]//;
 			return RDF::Trine::Statement->new( @nodes );
 		} else {
-			throw RDF::Trine::Error -text => "Cannot parse end-of-quad from SSE string: >>$_<<";
+			throw RDF::Trine::Error -text => "Cannot parse end-of-triple from SSE string: >>$_<<";
 		}
 	} else {
-		throw RDF::Trine::Error -text => "Cannot parse quad from SSE string: >>$_<<";
+		throw RDF::Trine::Error -text => "Cannot parse triple from SSE string: >>$_<<";
 	}
-}
-
-sub as_nquads {
-	my $self = shift;
-	join q[ ] => (
-		(map { $_->as_ntriples } $self->nodes),
-		".\n"
-	);
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -61,7 +58,7 @@ __END__
 
 =head1 NAME
 
-RDF::Trine::Statement::Quad - an RDF statement plus a graph URI
+RDF::Trine::Statement::Triple - an RDF statement with no graph URI
 
 =head1 DESCRIPTION
 
@@ -69,17 +66,17 @@ RDF::Trine::Statement::Quad - an RDF statement plus a graph URI
 
 =over
 
-=item C<< new($s, $p, $o, $g) >>
+=item C<< new($s, $p, $o) >>
 
-=item C<< new({ subject => $s, predicate => $p, object => $o, graph => $g }) >>
+=item C<< new({ subject => $s, predicate => $p, object => $o }) >>
 
-Constructs a quad statement.
+Constructs a triple statement.
 
 =item C<< from_sse($string) >>
 
 Alternative constructor.
 
-=item C<< from_redland($redland_st, $graph) >>
+=item C<< from_redland($redland_st) >>
 
 Consumes triples from RDF::Redland.
 
@@ -101,11 +98,6 @@ A node representing the predicate of the statement.
 
 A node representing the object of the statement.
 
-=item C<< graph >>
-
-A node representing the graph of the statement. (This is not restricted
-to L<RDF::Trine::Node::Resource>.)
-
 =back
 
 =head2 Methods
@@ -116,7 +108,7 @@ This class provides the following methods:
 
 =item C<< type >>
 
-Returns the string "QUAD".
+Returns the string "TRIPLE".
 
 =item C<< construct_args >>
 
@@ -128,11 +120,11 @@ Returns a clone of this argument.
 
 =item C<< nodes >>
 
-Returns the subject, predicate, object and graph nodes as a list.
+Returns the subject, predicate and object nodes as a list.
 
 =item C<< node_names >>
 
-Returns "subject", "predicate", "object" and "graph" strings as a list.
+Returns "subject", "predicate" and "object" strings as a list.
 
 =item C<< as_string >>
 
@@ -166,8 +158,8 @@ Returns true if this statement will subsume the C<< $other >> statement when mat
 
 =item C<< to_triple >>
 
-Returns an L<RDF::Trine::Statement::Triple> with the same subject, predicate
-and object as this statement, but no graph.
+Returns C<< $self >>. This is provided to ease polymorphism with
+L<RDF::Trine::Statement::Quad>.
 
 =item C<< rdf_compatible >>
 
@@ -175,18 +167,12 @@ Returns true if and only if the statement can be expressed in RDF. That is,
 the subject of the statement must be a resource or blank node; the predicate
 must be a resource; and the object must be a resource, blank node or literal.
 
-The graph is completely ignored.
-
 RDF::Trine::Statement::Triple does allow statements to be created which cannot
 be expressed in RDF - for instance, statements including variables.
 
 =item C<< as_ntriples >>
 
-Returns the statement as an NTriples string, ignoring the graph.
-
-=item C<< as_nquads >>
-
-Returns the statement as an NQuads string.
+Returns the statement as an NTriples string.
 
 =back
 

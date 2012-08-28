@@ -116,7 +116,7 @@ sub get_pattern {
 	
 	my @rules	= $self->rules;
 	if (@rules) {
-		my (@triples)	= ($bgp->isa('RDF::Trine::Statement')) ? $bgp : $bgp->triples;
+		my (@triples)	= ($bgp->DOES('RDF::Trine::Statement::API')) ? $bgp : $bgp->triples;
 		unless (@triples) {
 			throw RDF::Trine::Error::CompilationError -text => 'Cannot call get_pattern() with empty pattern';
 		}
@@ -124,7 +124,7 @@ sub get_pattern {
 		my @streams;
 		foreach my $triple (@triples) {
 			my @vars	= map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } $triple->nodes;
-			Carp::confess "not a statement object: " . Dumper($triple) unless ($triple->isa('RDF::Trine::Statement'));
+			Carp::confess "not a statement object: " . Dumper($triple) unless ($triple->DOES('RDF::Trine::Statement::API'));
 			my $stream	= $self->get_statements( $triple->nodes, $context );
 			my $binds	= $stream->as_bindings( $triple->nodes )->project( @vars );
 			push(@streams, $binds);

@@ -9,7 +9,7 @@ use RDF::Trine;
 use RDF::Trine::Model::Union;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use File::Temp qw(tempfile);
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -18,10 +18,10 @@ my $kasei	= RDF::Trine::Namespace->new('http://kasei.us/');
 
 my $g		= RDF::Trine::Node::Blank->new();
 my $h		= RDF::Trine::Node::Blank->new();
-my $st0		= RDF::Trine::Statement->new( $h, $foaf->name, RDF::Trine::Node::Literal->new('Alice') );
-my $st1		= RDF::Trine::Statement->new( $g, $rdf->type, $foaf->Person );
-my $st2		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
-my $st3		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Gregory') );
+my $st0		= RDF::Trine::Statement::Triple->new( $h, $foaf->name, RDF::Trine::Node::Literal->new('Alice') );
+my $st1		= RDF::Trine::Statement::Triple->new( $g, $rdf->type, $foaf->Person );
+my $st2		= RDF::Trine::Statement::Triple->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
+my $st3		= RDF::Trine::Statement::Triple->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Gregory') );
 
 my $store1	= RDF::Trine::Store->temporary_store();
 my $store2	= RDF::Trine::Store->temporary_store();
@@ -33,7 +33,7 @@ $model->add_statement( $st3 );
 
 {
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
-	my $t	= RDF::Trine::Statement->new( $x, $rdf->type, $foaf->Person );
+	my $t	= RDF::Trine::Statement::Triple->new( $x, $rdf->type, $foaf->Person );
 	my $p	= RDF::Trine::Pattern->new( $t );
 	
 	my $iter	= $model->get_pattern( $p );
@@ -47,8 +47,8 @@ $model->add_statement( $st3 );
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
 	my $n	= RDF::Trine::Node::Variable->new( 'name' );
 	my $p	= RDF::Trine::Pattern->new(
-		RDF::Trine::Statement->new( $x, $rdf->type, $foaf->Person ),
-		RDF::Trine::Statement->new( $x, $foaf->name, $n ),
+		RDF::Trine::Statement::Triple->new( $x, $rdf->type, $foaf->Person ),
+		RDF::Trine::Statement::Triple->new( $x, $foaf->name, $n ),
 	);
 	
 	my $iter	= $model->get_pattern( $p );
@@ -71,8 +71,8 @@ $model->remove_statement( $st3 );
 	my $x	= RDF::Trine::Node::Variable->new( 'x' );
 	my $n	= RDF::Trine::Node::Variable->new( 'name' );
 	my $p	= RDF::Trine::Pattern->new(
-		RDF::Trine::Statement->new( $x, $rdf->type, $foaf->Person ),
-		RDF::Trine::Statement->new( $x, $foaf->name, $n ),
+		RDF::Trine::Statement::Triple->new( $x, $rdf->type, $foaf->Person ),
+		RDF::Trine::Statement::Triple->new( $x, $foaf->name, $n ),
 	);
 	
 	my $iter	= $model->get_pattern( $p );

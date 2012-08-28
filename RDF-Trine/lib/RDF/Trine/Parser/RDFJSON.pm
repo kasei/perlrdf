@@ -40,7 +40,7 @@ use URI;
 use Log::Log4perl;
 
 use RDF::Trine qw(literal);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Namespace;
 use RDF::Trine::Error qw(:try);
 
@@ -180,7 +180,7 @@ sub parse {
 							$to	= literal( $canon, undef, $dt );
 						}
 					}
-					my $st = RDF::Trine::Statement->new($ts, $tp, $to);
+					my $st = RDF::Trine::Statement::Triple->new($ts, $tp, $to);
 					$handler->($st);
 				}
 			}

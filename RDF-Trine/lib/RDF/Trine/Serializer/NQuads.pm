@@ -40,7 +40,7 @@ use Data::Dumper;
 use Scalar::Util qw(blessed);
 
 use RDF::Trine;
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::Triple;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################

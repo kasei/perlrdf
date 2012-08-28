@@ -199,7 +199,7 @@ sub _get_statements_triple {
 			}
 			my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
 			$iter->next;
-			return RDF::Trine::Statement->new( @nodes );
+			return RDF::Trine::Statement::Triple->new( @nodes );
 		}
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub );
@@ -306,7 +306,7 @@ sub _model {
 sub _cast_to_redland ($) {
 	my $node	= shift;
 	return undef unless (blessed($node));
-	if ($node->isa('RDF::Trine::Statement')) {
+	if ($node->DOES('RDF::Trine::Statement::API')) {
 		my @nodes	= map { _cast_to_redland( $_ ) } $node->nodes;
 		return RDF::Redland::Statement->new( @nodes );
 	} elsif ($node->isa('RDF::Trine::Node::Resource')) {

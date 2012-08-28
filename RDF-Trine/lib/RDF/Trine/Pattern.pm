@@ -46,7 +46,7 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-		unless (blessed($t) and $t->isa('RDF::Trine::Statement')) {
+		unless (blessed($t) and $t->DOES('RDF::Trine::Statement::API')) {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
