@@ -79,7 +79,7 @@ BEGIN {
 
 subtype TrineNode,
     as Object,
-    where {$_->isa('RDF::Trine::Node::Blank') || $_->isa('RDF::Trine::Node::Resource')};
+    where {$_->DOES('RDF::Trine::Node::API')};
 
 =head3 TrineResource 
 

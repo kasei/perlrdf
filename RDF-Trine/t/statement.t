@@ -41,14 +41,14 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 
 {
 	my $st		= RDF::Trine::Statement::Quad->new( $kasei, $dc->description, $desc, $myfoaf );
-	is_deeply( [ $st->node_names ], [qw(subject predicate object context)], 'quad node names' );
+	is_deeply( [ $st->node_names ], [qw(subject predicate object graph)], 'quad node names' );
 	is( $st->type, 'QUAD' );
 	isa_ok( $st, 'RDF::Trine::Statement::Quad' );
 	isa_ok( $st->object, 'RDF::Trine::Node::Literal' );
-	isa_ok( $st->context, 'RDF::Trine::Node::Resource' );
-	is( $st->context->uri_value, 'http://kasei.us/about/foaf.xrdf' );
-	$st->context( $kasei );
-	is( $st->context->uri_value, 'http://kasei.us/' );
+	isa_ok( $st->graph, 'RDF::Trine::Node::Resource' );
+	is( $st->graph->uri_value, 'http://kasei.us/about/foaf.xrdf' );
+	$st->graph( $kasei );
+	is( $st->graph->uri_value, 'http://kasei.us/' );
 }
 
 {
@@ -108,11 +108,11 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 
 throws_ok {
 	my $st		= RDF::Trine::Statement->new();
-} 'RDF::Trine::Error::MethodInvocationError', "RDF::Trine::Statement::new throws without 3 node arguments.";
+} qr{required at constructor}, "RDF::Trine::Statement::new throws without 3 node arguments.";
 
 throws_ok {
 	my $st		= RDF::Trine::Statement::Quad->new(1,2);
-} 'RDF::Trine::Error::MethodInvocationError', "RDF::Trine::Statement::Quad::new throws without 4 node arguments.";
+} qr{required at constructor}, "RDF::Trine::Statement::Quad::new throws without 4 node arguments.";
 
 
 SKIP: {

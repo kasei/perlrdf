@@ -1,15 +1,11 @@
-package RDF::Trine::Statement::Quad;
+package RDF::Trine::Statement::Triple;
 
 use Moose;
-use MooseX::Aliases;
 use namespace::autoclean;
 
 with qw(
 	RDF::Trine::Statement::API
-	RDF::Trine::Statement::API::Element::Graph
 );
-
-alias context => 'graph';
 
 sub isa {
 	my ($self, $isa) = @_;
@@ -21,17 +17,26 @@ sub isa {
 	$self->SUPER::isa($isa);
 }
 
-sub type { 'QUAD' }
-sub node_names { qw(subject predicate object graph) }
+sub type { 'TRIPLE' }
+sub node_names { qw(subject predicate object) }
+
+sub to_triple { +shift }  # return $self
+
+sub as_ntriples {
+	my $self = shift;
+	join q[ ] => (
+		(map { $_->as_ntriples } $self->nodes),
+		".\n"
+	);
+}
 
 sub from_sse {
 	my $class   = shift;
 	my $context = $_[1];
-	$_          = $_[0];
-	if (m/^[(]quad/) {
-		s/^[(]quad\s+//;
+	$_			= $_[0];
+	if (m/^[(]triple/) {
+		s/^[(]triple\s+//;
 		my @nodes;
-		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
@@ -39,10 +44,10 @@ sub from_sse {
 			s/^\s*[)]//;
 			return RDF::Trine::Statement->new( @nodes );
 		} else {
-			throw RDF::Trine::Error -text => "Cannot parse end-of-quad from SSE string: >>$_<<";
+			throw RDF::Trine::Error -text => "Cannot parse end-of-triple from SSE string: >>$_<<";
 		}
 	} else {
-		throw RDF::Trine::Error -text => "Cannot parse quad from SSE string: >>$_<<";
+		throw RDF::Trine::Error -text => "Cannot parse triple from SSE string: >>$_<<";
 	}
 }
 
