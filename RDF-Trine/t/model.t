@@ -34,7 +34,7 @@ my $st6		= RDF::Trine::Statement->new( $p, $foaf->age, $intval);
 
 my ($stores, $remove)	= stores();
 
-plan tests => 7 + 85 * scalar(@$stores);
+plan tests => 7 + 93 * scalar(@$stores);
 
 print "### Testing auto-creation of store\n";
 isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
@@ -56,7 +56,9 @@ foreach my $store (@$stores) {
 	{
 		my $stream	= $model->get_statements( $p, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement' );
+		is $st->[0]->value, $st1->[0]->value, 'foaf:name statement subject';
+		is $st->[1]->value, $st1->[1]->value, 'foaf:name statement predicate';
+		is $st->[2]->value, $st1->[2]->value, 'foaf:name statement object';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
@@ -83,14 +85,20 @@ foreach my $store (@$stores) {
 	{
 		my $stream	= $model->get_statements( $b, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st3, 'foaf:name statement (with bnode in triple)' );
+		is $st->[0]->value, $st3->[0]->value, 'foaf:name statement (with bnode in triple) subject';
+		is $st->[1]->value, $st3->[1]->value, 'foaf:name statement (with bnode in triple) predicate';
+		is $st->[2]->value, $st3->[2]->value, 'foaf:name statement (with bnode in triple) object';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 	
 	{
 		my $stream	= $model->get_statements( RDF::Trine::Node::Variable->new('p'), $foaf->name, RDF::Trine::Node::Literal->new('Gregory Todd Williams') );
 		my $st		= $stream->next;
-		is_deeply( $st, $st1, 'foaf:name statement (with literal in triple)' );
+		is $st->[0]->value, $st1->[0]->value, 'foaf:name statement (with literal in triple) subject';
+		is $st->[1]->value, $st1->[1]->value, 'foaf:name statement (with literal in triple) predicate';
+		is $st->[2]->value, $st1->[2]->value, 'foaf:name statement (with literal in triple) object';
+		is $st->[2]->datatype, $st1->[2]->datatype, 'foaf:name statement (with literal in triple) object-datatype';
+		is $st->[2]->language, $st1->[2]->language, 'foaf:name statement (with literal in triple) object-language';
 		is( $stream->next, undef, 'end-of-stream' );
 	}
 
