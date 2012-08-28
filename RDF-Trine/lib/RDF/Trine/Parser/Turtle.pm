@@ -71,7 +71,7 @@ BEGIN {
 	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
 	$r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
 	$r_integer				= qr'[+-]?[0-9]+';
-	$r_language				= qr'[a-z]+(-[a-z0-9]+)*'i;
+	$r_language				= qr'[a-z]+(?:-[a-z0-9]+)*'i;
 	$r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
 	$r_line					= qr'(?:[^\r\n]+[\r\n]+)(?=[^\r\n])';
 	$r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
@@ -391,9 +391,8 @@ sub _predicateObjectList {
 		push(@list, [$pred, $objt]);
 	}
 	
-	while ($self->{tokens} =~ m/^[\t\r\n #]*;/) {
-		$self->__consume_ws();
-		$self->_eat(';');
+  $self->__consume_ws();
+  while ($self->{tokens} =~ s/^;//) {
 		$self->__consume_ws();
 		if ($self->_verb_test()) { # @@
 			$pred = $self->_verb();
@@ -402,6 +401,7 @@ sub _predicateObjectList {
 			foreach my $objt ($self->_objectList()) {
 				push(@list, [$pred, $objt]);
 			}
+      $self->__consume_ws();
 		} else {
 			last
 		}
