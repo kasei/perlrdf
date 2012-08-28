@@ -38,7 +38,6 @@ use base qw(RDF::Trine::Parser);
 
 use URI;
 use Encode;
-use Log::Log4perl;
 use Scalar::Util qw(blessed looks_like_number);
 use URI::Escape qw(uri_unescape);
 
@@ -87,7 +86,6 @@ BEGIN {
 	$r_resource_test		= qr/<|$r_qname/;
 	$r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 }
-my $logger = Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 
 =item C<< new >>
 
