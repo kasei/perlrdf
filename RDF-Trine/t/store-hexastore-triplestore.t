@@ -20,10 +20,8 @@ my $ex = $data->{ex};
 my $store	= RDF::Trine::Store::Hexastore->temporary_store();
 isa_ok( $store, 'RDF::Trine::Store::Hexastore' );
 
-#
-# XXX - needed to comment these out. They don't work with the new nodes!!!
-#
 
+diag "XXX - needed to comment these out. They don't work with the new nodes!!!"
 #Test::RDF::Trine::Store::all_triple_store_tests($store, $data);
 
 done_testing;
