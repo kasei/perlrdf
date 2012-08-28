@@ -518,7 +518,7 @@ sub _get_pattern {
 	my @args	= @_;
 	my %args	= @args;
 	
-	if ($bgp->isa('RDF::Trine::Statement')) {
+	if ($bgp->DOES('RDF::Trine::Statement::API')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
 	} else {
 		$bgp	= $bgp->sort_for_join_variables();

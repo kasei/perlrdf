@@ -219,11 +219,11 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
 	}
 	
-	if ($st->isa('RDF::Trine::Statement::Quad') and blessed($context)) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') and blessed($context)) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 	}
 	
@@ -236,7 +236,7 @@ sub add_statement {
 		my $repo	= $self->{repo};
 		my $base	= $self->base;
 		my $url		= "${base}/${user}/${repo}/statements";
-		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
+		if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') or $context) {
 			my $g	= $context || $st->context;
 			$url	.= '?context=' . uri_escape($g->uri_value);
 		}
@@ -270,11 +270,11 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statement";
 	}
 	
-	if ($st->isa('RDF::Trine::Statement::Quad') and blessed($context)) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') and blessed($context)) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 	}
 	
@@ -287,7 +287,7 @@ sub remove_statement {
 		my $repo	= $self->{repo};
 		my $base	= $self->base;
 		my $data	= $s->statement_as_string($st);
-		if ($st->isa('RDF::Trine::Statement::Quad') or $context) {
+		if ($st->DOES('RDF::Trine::Statement::API::Element::Graph') or $context) {
 			my $g	= $context || $st->context;
 			my $uri	= $g->uri_value;
 			$data	= "GRAPH <$uri> { $data }";
@@ -321,7 +321,7 @@ sub remove_statements {
 	my $st		= shift;
 	my $context	= shift;
 	
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statements";
 	}
 	

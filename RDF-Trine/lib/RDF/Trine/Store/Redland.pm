@@ -265,7 +265,7 @@ sub add_statement {
 	my $context	= shift;
 	
 	my $nil	= RDF::Trine::Node::Nil->new();
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
@@ -296,7 +296,7 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 		}
@@ -403,7 +403,7 @@ sub _model {
 sub _cast_to_redland ($) {
 	my $node	= shift;
 	return undef unless (blessed($node));
-	if ($node->isa('RDF::Trine::Statement')) {
+	if ($node->DOES('RDF::Trine::Statement::API')) {
 		my @nodes	= map { _cast_to_redland( $_ ) } $node->nodes;
 		return RDF::Redland::Statement->new( @nodes );
 	} elsif ($node->isa('RDF::Trine::Node::Resource')) {

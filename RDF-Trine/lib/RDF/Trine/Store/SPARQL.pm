@@ -209,7 +209,7 @@ sub get_pattern {
 	my @args	= @_;
 	my %args	= @args;
 	
-	if ($bgp->isa('RDF::Trine::Statement')) {
+	if ($bgp->DOES('RDF::Trine::Statement::API')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
 	}
 	
@@ -284,7 +284,7 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
 	}
 	
@@ -304,7 +304,7 @@ sub _add_statements_sparql {
 	foreach my $op (@_) {
 		my $st		= $op->[0];
 		my $context	= $op->[1];
-		if ($st->isa('RDF::Trine::Statement::Quad')) {
+		if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
 		} else {
 			push(@parts, join(' ', map { $_->as_ntriples } $st->nodes) . ' .');
@@ -325,7 +325,7 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statement";
 	}
 	
@@ -345,7 +345,7 @@ sub _remove_statements_sparql {
 	foreach my $op (@_) {
 		my $st		= $op->[0];
 		my $context	= $op->[1];
-		if ($st->isa('RDF::Trine::Statement::Quad')) {
+		if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
 		} else {
 			push(@parts, join(' ', map { $_->as_ntriples } $st->nodes) . ' .');
@@ -366,7 +366,7 @@ sub remove_statements {
 	my $st		= shift;
 	my $context	= shift;
 	
-	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
+	unless (blessed($st) and $st->DOES('RDF::Trine::Statement::API')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statements";
 	}
 	
@@ -387,7 +387,7 @@ sub _remove_statement_patterns_sparql {
 		my $st		= $op->[0];
 		my $context	= $op->[1];
 		my $sparql;
-		if ($st->isa('RDF::Trine::Statement::Quad')) {
+		if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
 		} else {
 			push(@parts, join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } $st->nodes) . ' .');

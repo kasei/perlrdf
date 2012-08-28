@@ -429,7 +429,7 @@ sub add_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
@@ -483,7 +483,7 @@ sub remove_statement {
 	my $st		= shift;
 	my $context	= shift;
 	
-	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($st->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 		}

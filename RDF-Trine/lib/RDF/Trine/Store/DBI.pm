@@ -572,7 +572,7 @@ sub add_statement {
 	my @nodes	= $stmt->nodes;
 	my @values = map { $self->_add_node( $_ ) } @nodes;
 	
-	if ($stmt->isa('RDF::Trine::Statement::Quad')) {
+	if ($stmt->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "add_statement cannot be called with both a quad and a context";
 		}
@@ -607,7 +607,7 @@ sub remove_statement {
 		throw RDF::Trine::Error::MethodInvocationError -text => "no statement passed to remove_statement";
 	}
 	
-	if ($stmt->isa( 'RDF::Trine::Statement::Quad' )) {
+	if ($stmt->DOES('RDF::Trine::Statement::API::Element::Graph')) {
 		if (blessed($context)) {
 			throw RDF::Trine::Error::MethodInvocationError -text => "remove_statement cannot be called with both a quad and a context";
 		}
@@ -1202,7 +1202,7 @@ sub _sql_for_statement {
 		? %{ $self->{restrictions} }
 		: %default_restrictions;
 
-	my $quad	= $triple->isa('RDF::Trine::Statement::Quad');
+	my $quad	= $triple->DOES('RDF::Trine::Statement::API::Element::Graph');
 	no warnings 'uninitialized';
 	if ($args{semantics} eq 'triple') {
 		$quad	= 0;
