@@ -163,7 +163,7 @@ sub _eat_re {
 	my $thing	= shift;
 	if (not(length($self->{tokens}))) {
 		$logger->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
+		_error("No tokens");
 	}
 	
 	if ($self->{tokens} =~ m/^($thing)/) {
@@ -172,7 +172,7 @@ sub _eat_re {
 		return;
 	}
 	$logger->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
+	_error("Expected: $thing");
 }
 
 sub _eat {
@@ -180,7 +180,7 @@ sub _eat {
 	my $thing	= shift;
 	if (not(length($self->{tokens}))) {
 		$logger->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
+		_error("No tokens");
 	}
 	
 	### thing is a string
@@ -189,7 +189,7 @@ sub _eat {
 		return;
 	} else {
 		$logger->logcluck("expected: $thing, got: $self->{tokens}");
-		throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
+		_error("Expected: $thing");
 	}
 }
 
@@ -209,9 +209,7 @@ sub _triple {
 	my $p		= shift;
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
-		unless ($n->isa('RDF::Trine::Node')) {
-			throw RDF::Trine::Error::ParserError;
-		}
+		_error("Expected: node") unless ($n->isa('RDF::Trine::Node'));
 	}
 	
 	if ($self->{canonicalize}) {
@@ -514,7 +512,7 @@ sub _double {
 	### | ([0-9])+ exponent )
 	### exponent = [eE] ('-' | '+')? [0-9]+
 	unless ($self->{tokens} =~ /^$r_double/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: double";
+		_error("Expected: double");
 	}
 	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->double );
@@ -533,7 +531,7 @@ sub _decimal {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
 	unless ($self->{tokens} =~ /^$r_decimal/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: decimal";
+		_error("Expected: decimal");
 	}
 	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->decimal );
@@ -552,7 +550,7 @@ sub _integer {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
 	unless ($self->{tokens} =~ /^$r_integer/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: integer";
+		_error("Expected: integer");
 	}
 	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->integer );
@@ -562,7 +560,7 @@ sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
 	unless ($self->{tokens} =~ /^$r_boolean/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: boolean";
+		_error("Expected: boolean");
 	}
 	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->boolean );
@@ -679,7 +677,7 @@ sub _ws {
 		$self->_comment();
 	} else {
 		unless ($self->{tokens} =~ s/^[\t\r\n ]+//) {
-			throw RDF::Trine::Error::ParserError -text => 'Not whitespace';
+			_error('Not whitespace');
 		}
 	}
 }
@@ -735,7 +733,7 @@ sub _qname {
 	$self->_eat(':');
 	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
 	unless (exists $self->{bindings}{$prefix}) {
-		throw RDF::Trine::Error::ParserError -text => "Undeclared prefix $prefix";
+		_error("Undeclared prefix $prefix");
 	}
 	my $uri		= $self->{bindings}{$prefix};
 	return $uri . $name
@@ -766,7 +764,7 @@ sub _language {
 	my $self	= shift;
 	### [a-z]+ ('-' [a-z0-9]+ )*
 	unless ($self->{tokens} =~ /^$r_language/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: language";
+		_error("Expected: language");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');
 }
@@ -787,7 +785,7 @@ sub _nameStartChar {
 	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | 
 	### [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 	unless ($self->{tokens} =~ /^$r_nameStartChar/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: nameStartChar";
+		_error("Expected: nameStartChar");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');
 }
@@ -813,7 +811,7 @@ sub _nameChar {
 		return $nc;
 	} else {
 		unless ($self->{tokens} =~ /^$r_nameChar_extra/o) {
-			throw RDF::Trine::Error::ParserError -text => "Expected: nameStartChar";
+			_error("Expected: nameStartChar");
 		}
 		return substr($self->{tokens}, 0, $+[0], '');
 	}
@@ -823,7 +821,7 @@ sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
 	unless ($self->{tokens} =~ /^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: name";
+		_error("Expected: name");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');
 }
@@ -843,7 +841,7 @@ sub _prefixName {
 	### ( nameStartChar - '_' ) nameChar*
 	my @parts;
 	unless ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: name";
+		_error("Expected: name");
 	}
 	my $nsc = substr($self->{tokens}, 0, $+[0], '');
 	push(@parts, $nsc);
@@ -859,7 +857,7 @@ sub _relativeURI {
 	my $self	= shift;
 	### ucharacter*
 	unless ($self->{tokens} =~ /^$r_ucharacters/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: relativeURI";
+		_error("Expected: relativeURI");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');
 }
@@ -888,7 +886,7 @@ sub _string {
 	### #x22 scharacter* #x22
 	$self->_eat('"');
 	unless ($self->{tokens} =~ /^$r_scharacters/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: string";
+		_error("Expected: string");
 	}
 	my $value = substr($self->{tokens}, 0, $+[0], '');
 	$self->_eat('"');
@@ -910,7 +908,7 @@ sub _longString {
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
 	$self->_eat('"""');
 	unless ($self->{tokens} =~ /^$r_lcharacters/o) {
-		throw RDF::Trine::Error::ParserError -text => "Expected: longString";
+		_error("Expected: longString");
 	}
 	my $value = substr($self->{tokens}, 0, $+[0], '');
 	$self->_eat('"""');
@@ -1066,6 +1064,10 @@ sub _unescape {
 		}
 	}
 	return $us;
+}
+
+sub _error {
+  throw RDF::Trine::Error::ParserError -text => shift;
 }
 
 1;
