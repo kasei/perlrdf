@@ -6,7 +6,6 @@ use URI::file;
 use Test::More tests => 17;
 
 use RDF::Trine;
-use RDF::Trine::Node;
 
 {
 	my $literal	= RDF::Trine::Node::Literal->new('foo');

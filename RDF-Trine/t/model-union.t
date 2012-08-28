@@ -7,7 +7,6 @@ no warnings 'redefine';
 
 use RDF::Trine;
 use RDF::Trine::Model::Union;
-use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
 use RDF::Trine::Statement;

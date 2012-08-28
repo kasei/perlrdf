@@ -8,7 +8,6 @@ use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
 
 use RDF::Trine;
-use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
 use RDF::Trine::Pattern;

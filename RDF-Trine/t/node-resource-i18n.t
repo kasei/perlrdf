@@ -8,7 +8,6 @@ use Test::More tests => 2;
 use utf8;
 
 use RDF::Trine;
-use RDF::Trine::Node;
 
 {
 	my $uri	= RDF::Trine::Node::Resource->new('http://kasei.us/#火星');

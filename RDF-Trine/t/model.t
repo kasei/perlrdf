@@ -10,7 +10,6 @@ no warnings 'redefine';
 use DBI;
 use RDF::Trine qw(literal);
 use RDF::Trine::Model;
-use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
 use RDF::Trine::Store::DBI;

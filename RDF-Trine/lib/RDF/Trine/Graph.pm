@@ -79,7 +79,7 @@ sub _gt {
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed);
-use RDF::Trine::Node;
+use RDF::Trine;
 use RDF::Trine::Store;
 
 =item C<< new ( $model ) >>

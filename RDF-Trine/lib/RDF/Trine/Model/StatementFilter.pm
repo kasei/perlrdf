@@ -27,7 +27,7 @@ use Data::Dumper;
 use base qw(RDF::Trine::Model);
 use Scalar::Util qw(blessed reftype);
 
-use RDF::Trine::Node;
+use RDF::Trine;
 use RDF::Trine::Pattern;
 use RDF::Trine::Iterator qw(sgrep);
 

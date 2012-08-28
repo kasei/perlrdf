@@ -45,7 +45,6 @@ use URI::Escape qw(uri_unescape);
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
-use RDF::Trine::Node;
 use RDF::Trine::Error;
 
 our ($VERSION, $rdf, $xsd);

@@ -8,7 +8,6 @@ no warnings 'redefine';
 use URI::file;
 
 use RDF::Trine;
-use RDF::Trine::Node;
 use_ok( 'RDF::Trine::Iterator::Bindings' );
 
 {

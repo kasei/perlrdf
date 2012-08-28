@@ -9,7 +9,6 @@ use Scalar::Util qw(refaddr);
 
 use RDF::Trine qw(variable literal);
 use RDF::Trine::Error qw(:try);
-use RDF::Trine::Node;
 use RDF::Trine::Namespace qw(xsd);
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');

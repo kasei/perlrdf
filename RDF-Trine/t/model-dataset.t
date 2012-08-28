@@ -8,7 +8,6 @@ no warnings 'redefine';
 
 use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Model;
-use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
 use RDF::Trine::Statement;

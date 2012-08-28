@@ -441,7 +441,11 @@ sub _cast_to_local ($) {
 		my $dt		= ($dturi)
 					? $dturi->as_string
 					: undef;
-		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
+		my $value	= $node->literal_value;
+		if ($RDF::Redland::VERSION < 1.0014) {
+			$value	= decode('utf8', $value);
+		}
+		return RDF::Trine::Node::Literal->new( $value, $lang, $dt );
 	} else {
 		return undef;
 	}

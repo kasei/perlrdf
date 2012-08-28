@@ -42,7 +42,6 @@ use Log::Log4perl;
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement;
 use RDF::Trine::Namespace;
-use RDF::Trine::Node;
 use RDF::Trine::Error qw(:try);
 
 use Scalar::Util qw(blessed looks_like_number);

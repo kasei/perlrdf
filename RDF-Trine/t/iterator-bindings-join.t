@@ -6,7 +6,6 @@ use URI::file;
 use Test::More tests => 17;
 
 use RDF::Trine;
-use RDF::Trine::Node;
 use_ok( 'RDF::Trine::Iterator' );
 
 # something like { ?p a foaf:Person ; foaf:name ?n }
