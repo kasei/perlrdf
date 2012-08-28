@@ -175,21 +175,6 @@ sub _eat_re {
 	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 }
 
-sub _eat_re_save {
-	my $self	= shift;
-	my $thing	= shift;
-	if (not(length($self->{tokens}))) {
-		$logger->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
-	}
-	
-	if ($self->{tokens} =~ m/^$thing/) {
-		return substr($self->{tokens}, 0, $+[0], '');
-	}
-	$logger->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
-}
-
 sub _eat {
 	my $self	= shift;
 	my $thing	= shift;
@@ -528,7 +513,10 @@ sub _double {
 	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent 
 	### | ([0-9])+ exponent )
 	### exponent = [eE] ('-' | '+')? [0-9]+
-	my $token	= $self->_eat_re_save( $r_double );
+	unless ($self->{tokens} =~ /^$r_double/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: double";
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->double );
 }
 
@@ -544,7 +532,10 @@ sub _decimal_test {
 sub _decimal {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->_eat_re_save( $r_decimal );
+	unless ($self->{tokens} =~ /^$r_decimal/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: decimal";
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->decimal );
 }
 
@@ -560,14 +551,20 @@ sub _integer_test {
 sub _integer {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->_eat_re_save( $r_integer );
+	unless ($self->{tokens} =~ /^$r_integer/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: integer";
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->integer );
 }
 
 sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
-	my $token	= $self->_eat_re_save( $r_boolean );
+	unless ($self->{tokens} =~ /^$r_boolean/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: boolean";
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->boolean );
 }
 
@@ -768,8 +765,10 @@ sub _uriref {
 sub _language {
 	my $self	= shift;
 	### [a-z]+ ('-' [a-z0-9]+ )*
-	my $token	= $self->_eat_re_save( $r_language );
-	return $token;
+	unless ($self->{tokens} =~ /^$r_language/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: language";
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _nameStartChar_test {
@@ -787,8 +786,10 @@ sub _nameStartChar {
 	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] 
 	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | 
 	### [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
-	my $nc	= $self->_eat_re_save( $r_nameStartChar );
-	return $nc;
+	unless ($self->{tokens} =~ /^$r_nameStartChar/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: nameStartChar";
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _nameChar_test {
@@ -811,16 +812,20 @@ sub _nameChar {
 		my $nc	= $self->_nameStartChar();
 		return $nc;
 	} else {
-		my $nce	= $self->_eat_re_save( $r_nameChar_extra );
-		return $nce;
+		unless ($self->{tokens} =~ /^$r_nameChar_extra/o) {
+			throw RDF::Trine::Error::ParserError -text => "Expected: nameStartChar";
+		}
+		return substr($self->{tokens}, 0, $+[0], '');
 	}
 }
 
 sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	my $name	= $self->_eat_re_save( qr/^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/ );
-	return $name;
+	unless ($self->{tokens} =~ /^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: name";
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _prefixName_test {
@@ -837,7 +842,10 @@ sub _prefixName {
 	my $self	= shift;
 	### ( nameStartChar - '_' ) nameChar*
 	my @parts;
-	my $nsc	= $self->_eat_re_save( $r_nameStartChar_minus_underscore );
+	unless ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: name";
+	}
+	my $nsc = substr($self->{tokens}, 0, $+[0], '');
 	push(@parts, $nsc);
 #	while ($self->_nameChar_test()) {
 	while ($self->{tokens} =~ /^$r_nameChar_test/) {
@@ -850,8 +858,10 @@ sub _prefixName {
 sub _relativeURI {
 	my $self	= shift;
 	### ucharacter*
-	my $token	= $self->_eat_re_save( $r_ucharacters );
-	return $token;
+	unless ($self->{tokens} =~ /^$r_ucharacters/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: relativeURI";
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _quotedString_test {
@@ -877,7 +887,10 @@ sub _string {
 	my $self	= shift;
 	### #x22 scharacter* #x22
 	$self->_eat('"');
-	my $value	= $self->_eat_re_save( $r_scharacters );
+	unless ($self->{tokens} =~ /^$r_scharacters/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: string";
+	}
+	my $value = substr($self->{tokens}, 0, $+[0], '');
 	$self->_eat('"');
 	my $string	= $self->_parse_short( $value );
 	return $string;
@@ -896,7 +909,10 @@ sub _longString {
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
 	$self->_eat('"""');
-	my $value	= $self->_eat_re_save( $r_lcharacters );
+	unless ($self->{tokens} =~ /^$r_lcharacters/o) {
+		throw RDF::Trine::Error::ParserError -text => "Expected: longString";
+	}
+	my $value = substr($self->{tokens}, 0, $+[0], '');
 	$self->_eat('"""');
 	my $string	= $self->_parse_long( $value );
 	return $string;
