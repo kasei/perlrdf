@@ -60,6 +60,7 @@ use MooseX::Types -declare => [
 
     'CPAN_URI',
     'UriStr',
+    'LanguageTag',
     ];
 
 our ($VERSION);
@@ -195,6 +196,8 @@ No coercion
 =cut
 
 subtype UriStr, as Str;
+
+subtype LanguageTag, as Str, where { length $_ };
 
 # coerce( CPAN_URI,
 #     from Str, via { if (/^[a-z]+:/) { URI->new($_) },
