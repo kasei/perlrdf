@@ -103,10 +103,7 @@ sub _emit_statement {
 	
 	if ($self->{canonicalize}) {
 		if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
-			my $value	= $nodes->[2]->literal_value;
-			my $dt		= $nodes->[2]->literal_datatype;
-			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-			$nodes->[2]	= literal( $canon, undef, $dt );
+			$nodes->[2] = $nodes->[2]->canonicalize;
 		}
 	}
 

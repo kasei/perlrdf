@@ -115,6 +115,15 @@ sub as_ntriples {
 	return sprintf("\"%s\"", $self->_escaped_value);
 }
 
+sub sse {
+	my $self = shift;
+	return sprintf("\"%s\"^^<%s>", $self->value, $self->datatype)
+		if $self->has_datatype;
+	return sprintf("\"%s\"\@%s", $self->value, $self->language)
+		if $self->has_language;
+	return sprintf("\"%s\"", $self->value);
+}
+
 sub is_literal { 1 }
 
 my $numeric_datatypes = qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>;
