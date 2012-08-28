@@ -221,7 +221,6 @@ sub _statement {
 		$self->__consume_ws();
 	}  else {
 		$self->_ws();
-		$self->__consume_ws();
 	}
 }
 
@@ -261,7 +260,6 @@ sub _prefixID {
 	### '@prefix' ws+ prefixName? ':' ws+ uriref
 	$self->{tokens} =~ s/^\@prefix// or _error("Expected: \@prefix");
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my $prefix;
 	if ($self->_prefixName_test()) {
@@ -272,7 +270,6 @@ sub _prefixID {
 	
 	$self->{tokens} =~ s/^:// or _error ('Expected: :');
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my $uri = $self->_uriref();
 	$self->{bindings}{$prefix}	= $uri;
@@ -291,7 +288,6 @@ sub _base {
 	### '@base' ws+ uriref
 	$self->{tokens} =~ s/^\@base// or _error("Expected: \@base");
 	$self->_ws();
-	$self->__consume_ws();
 	my $uri	= $self->_uriref();
 	if (ref($uri)) {
 		$uri	= $uri->uri_value;
@@ -310,7 +306,6 @@ sub _triples {
 	### subject ws+ predicateObjectList
 	my $subj	= $self->_subject();
 	$self->_ws();
-	$self->__consume_ws;
 	foreach my $data ($self->_predicateObjectList()) {
 		my ($pred, $objt)	= @$data;
 		$self->_triple( $subj, $pred, $objt );
@@ -322,7 +317,6 @@ sub _predicateObjectList {
 	### verb ws+ objectList ( ws* ';' ws* verb ws+ objectList )* (ws* ';')?
 	my $pred = $self->_verb();
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my @list;
 	foreach my $objt ($self->_objectList()) {
@@ -335,7 +329,6 @@ sub _predicateObjectList {
 		if ($self->_verb_test()) { # @@
 			$pred = $self->_verb();
 			$self->_ws();
-			$self->__consume_ws();
 			foreach my $objt ($self->_objectList()) {
 				push(@list, [$pred, $objt]);
 			}
