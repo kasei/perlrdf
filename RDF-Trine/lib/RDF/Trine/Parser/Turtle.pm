@@ -614,10 +614,13 @@ sub _collection {
 }
 
 sub _ws {
-	my $self	= shift;
-	unless ($self->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)+[\t\r ]*|[\t\r ]+//) {
+	unless (shift->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)+[\t\r ]*|[\t\r ]+//) {
 		_error("Expected: whitespace");
 	}
+}
+
+sub __consume_ws {
+	shift->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)*[\t\r ]*//;
 }
 
 sub _resource_test {
@@ -928,13 +931,6 @@ sub __generate_bnode_id {
 	my $self	= shift;
 	my $id		= $self->{ bnode_id }++;
 	return 'r' . $self->{bnode_prefix} . 'r' . $id;
-}
-
-sub __consume_ws {
-	my $self	= shift;
-	while ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		$self->_ws()
-	}
 }
 
 sub __URI {
