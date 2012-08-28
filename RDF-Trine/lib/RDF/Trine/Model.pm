@@ -548,7 +548,7 @@ sub get_pattern {
 				foreach my $i (0 .. ($order_vars-1)) {
 					my $var	= $order[$i*2];
 					my $rev	= ($order[$i*2+1] =~ /DESC/i);
-					$r	= $a->{$var}->compare($b->{$var});
+                    $r  = RDF::Trine::Node::API::compare($a->{$var}, $b->{$var});
 					$r	*= -1 if ($rev);
 					last if ($r);
 				}
