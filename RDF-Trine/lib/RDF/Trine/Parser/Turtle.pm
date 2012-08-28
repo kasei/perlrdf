@@ -87,6 +87,7 @@ BEGIN {
 	$r_resource_test		= qr/<|$r_qname/;
 	$r_nameChar_test		= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 }
+my $logger = Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 
 =item C<< new >>
 
@@ -160,9 +161,8 @@ sub parse_node {
 sub _eat_re {
 	my $self	= shift;
 	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
+		$logger->error("no tokens left ($thing)");
 		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
@@ -171,32 +171,30 @@ sub _eat_re {
 		substr($self->{tokens}, 0, length($match))	= '';
 		return;
 	}
-	$l->error("Expected ($thing) with remaining: $self->{tokens}");
+	$logger->error("Expected ($thing) with remaining: $self->{tokens}");
 	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 }
 
 sub _eat_re_save {
 	my $self	= shift;
 	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
+		$logger->error("no tokens left ($thing)");
 		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
 	if ($self->{tokens} =~ m/^$thing/) {
 		return substr($self->{tokens}, 0, $+[0], '');
 	}
-	$l->error("Expected ($thing) with remaining: $self->{tokens}");
+	$logger->error("Expected ($thing) with remaining: $self->{tokens}");
 	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 }
 
 sub _eat {
 	my $self	= shift;
 	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
 	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
+		$logger->error("no tokens left ($thing)");
 		throw RDF::Trine::Error::ParserError -text => "No tokens";
 	}
 	
@@ -205,7 +203,7 @@ sub _eat {
 		substr($self->{tokens}, 0, length($thing))	= '';
 		return;
 	} else {
-		$l->logcluck("expected: $thing, got: $self->{tokens}");
+		$logger->logcluck("expected: $thing, got: $self->{tokens}");
 		throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
 	}
 }
