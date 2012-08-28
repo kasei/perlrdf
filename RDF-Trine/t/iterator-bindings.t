@@ -16,7 +16,7 @@ use_ok( 'RDF::Trine::Iterator::Bindings' );
 }
 
 {
-	diag('simple values');
+	note('simple values');
 	my @values	= (1,2);
 	my $sub		= sub { return shift(@values) };
 	my $iter	= RDF::Trine::Iterator::Bindings->new( $sub );
@@ -26,7 +26,7 @@ use_ok( 'RDF::Trine::Iterator::Bindings' );
 }
 
 {
-	diag('hash values');
+	note('hash values');
 	my @bindings	= (
 		{ qw( a 1 b 2 ) },
 		{ qw( b 3 c 4 ) },
@@ -39,14 +39,14 @@ use_ok( 'RDF::Trine::Iterator::Bindings' );
 }
 
 {
-	diag('as_json with empty iterator, no variables');
+	note('as_json with empty iterator, no variables');
 	my $iter	= RDF::Trine::Iterator::Bindings->new( [] );
 	my $expect	= '{"head":{"vars":[]},"results":{"bindings":[],"distinct":false,"ordered":false}}';
 	is_json( $iter->as_json, $expect, 'as_json empty bindings iterator without names' );
 }
 
 {
-	diag('as_json with empty iterator, 3 variables');
+	note('as_json with empty iterator, 3 variables');
 	my $iter	= RDF::Trine::Iterator::Bindings->new( [], [qw(a b c)] );
 	my $expect	= '{"head":{"vars":["a", "b", "c"]},"results":{"bindings":[],"distinct":false,"ordered":false}}';
 	is_json( $iter->as_json, $expect, 'as_json empty bindings iterator with names' );
