@@ -197,6 +197,12 @@ No coercion
 
 subtype UriStr, as Str;
 
+=head3 LanguageTag
+
+No coercion
+
+=cut
+
 subtype LanguageTag, as Str, where { length $_ };
 
 # coerce( CPAN_URI,
