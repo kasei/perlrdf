@@ -171,8 +171,10 @@ sub all_store_tests {
 		add_statement_tests_simple( $store, $args, $ex );
 		update_sleep($args);
 	
-		bulk_add_statement_tests_simple( $store, $args, $ex );
-		update_sleep($args);
+		if ($store->does('RDF::Trine::Store::API::BulkOps')) {
+			bulk_add_statement_tests_simple( $store, $args, $ex );
+			update_sleep($args);
+		}
 	
 		literals_tests_simple( $store, $args, $ex );
 		blank_node_tests_quads( $store, $args, $ex );
@@ -224,16 +226,18 @@ sub all_triple_store_tests {
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
-		dies_ok {
-			$store->get_contexts;
-		} 'get_context dies';
+# 		dies_ok {
+# 			$store->get_contexts;
+# 		} 'get_context dies';
 	
-		add_statement_tests_simple( $store, $args, $ex );
+		add_triple_tests_simple( $store, $args, $ex );
 		update_sleep($args);
-	
-		bulk_add_statement_tests_simple( $store, $args, $ex );
-		update_sleep($args);
-	
+		
+		if ($store->does('RDF::Trine::Store::API::BulkOps')) {
+			bulk_add_triple_tests_simple( $store, $args, $ex );
+			update_sleep($args);
+		}
+		
 		literals_tests_simple( $store, $args, $ex );
 		blank_node_tests_triples( $store, $args, $ex );
 		count_statements_tests_simple( $store, $args, $ex );
@@ -309,6 +313,81 @@ Tests to check add_statement.
 =cut
 
 
+sub add_triple_tests_simple {
+	note "simple add_statement tests";
+	my ($store, $args, $ex) = @_;
+	
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $etag_before;
+	if ($store->does('RDF::Trine::Store::API::ETags')) {
+		$etag_before = $store->etag;
+	}
+	
+	update_sleep($args);
+	$store->add_statement( $triple );
+	update_sleep($args);
+	SKIP: {
+		if ($store->does('RDF::Trine::Store::API::ETags')) {
+			isnt($etag_before, $store->etag, 'Etag has changed');
+		} else {
+			skip 'It is OK to not support etag', 1;
+		}
+	}
+
+	is( $store->size, 1, 'store has 1 statement after (triple) add' );
+	
+	TODO: {
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
+		$store->add_statement( $triple2 );
+		update_sleep($args);
+		is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' );
+	}
+	
+	if ($store->does('RDF::Trine::Store::API::ETags')) {
+		$etag_before = $store->etag;
+	}
+	$store->remove_statement( $triple );
+	update_sleep($args);
+	SKIP: {
+		if ($store->does('RDF::Trine::Store::API::ETags')) {
+			isnt($etag_before, $store->etag, 'Etag has changed');
+		} else {
+			skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		}
+	}
+
+	is( $store->size, 0, 'store has 0 statements after (triple) remove' );
+	
+	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->d);
+	$store->add_statement( $triple3 );
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple) add' );
+	
+	{
+		my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
+		is( $count, 0, 'expected zero count of specific-graph statements' );
+	}
+	
+	{
+		my $count	= $store->count_statements( undef, undef, $ex->d );
+		is( $count, 1, 'expected count of specific-object statements' );
+	}
+	
+	$store->remove_statement( $triple3 );
+	update_sleep($args);
+	
+	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
+=item C<< add_statement_tests_simple( $store, $args, $data->{ex} )	>>
+
+Tests to check add_statement.
+
+=cut
+
+
 sub add_statement_tests_simple {
 	note "simple add_statement tests";
 	my ($store, $args, $ex) = @_;
@@ -345,7 +424,7 @@ sub add_statement_tests_simple {
 	}
 	$store->remove_statement( $triple, $ex->d );
 	update_sleep($args);
-   SKIP: {
+	SKIP: {
 		if ($store->does('RDF::Trine::Store::API::ETags')) {
 			isnt($etag_before, $store->etag, 'Etag has changed');
 		} else {
@@ -423,6 +502,58 @@ sub bulk_add_statement_tests_simple {
 	is( $store->size, 0, 'expected zero size after remove statement' );
 }
 
+=item C<< bulk_add_statement_tests_simple( $store, $args, $data->{ex} ) >>
+
+Tests to check add_statement.
+
+=cut
+
+
+sub bulk_add_triple_tests_simple {
+	note "bulk add_statement triple tests";
+	my ($store, $args, $ex) = @_;
+
+	$store->_begin_bulk_ops;
+	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
+	$store->add_statement( $triple );
+	$store->_end_bulk_ops;
+	
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple) add' ) ;
+	
+	$store->_begin_bulk_ops;
+
+	TODO: {
+		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
+		$store->add_statement( $triple2 );
+		update_sleep($args);
+		is( $store->size, 1, 'store has 1 statement after duplicate (triple) add' ) ;
+	}
+	
+	$store->_end_bulk_ops;
+	
+	$store->_begin_bulk_ops;
+	$store->remove_statement( $triple );
+	is( $store->size, 0, 'store has 0 statements after (triple) remove' );
+	
+	my $triple3	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->d);
+	$store->add_statement( $triple3 );
+	$store->_end_bulk_ops;
+	update_sleep($args);
+	
+	is( $store->size, 1, 'store has 1 statement after (triple) add' );
+	
+	my $count	= $store->count_statements( undef, undef, $ex->d );
+	is( $count, 1, 'expected count of specific-object statements' );
+	
+	$store->remove_statement( $triple3 );
+	update_sleep($args);
+	
+	is( $store->size, 0, 'expected zero size after remove statement' );
+}
+
 
 =item C<< literals_tests_simple( $store, $args, $data->{ex})	>>
 
@@ -437,7 +568,7 @@ sub literals_tests_simple {
 	my $litplain		= RDF::Trine::Node::Literal->new('dahut');
 	my $litlang1		= RDF::Trine::Node::Literal->new('dahu', 'fr' );
 	my $litlang2		= RDF::Trine::Node::Literal->new('dahut', 'en' );
-	my $litutf8		= RDF::Trine::Node::Literal->new('blåbærsyltetøy', 'nb' );
+	my $litutf8			= RDF::Trine::Node::Literal->new('blåbærsyltetøy', 'nb' );
 	my $litstring		= RDF::Trine::Node::Literal->new('dahut', undef, $xsd->string);
 	my $litint			= RDF::Trine::Node::Literal->new(42, undef, $xsd->integer);
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
@@ -515,13 +646,13 @@ sub literals_tests_simple {
 		is($st->object->literal_value_language, undef, 'expected triple get_statements bound object language is undef' );
 		is($st->object->literal_datatype, $xsd->string->value, 'expected triple get_statements bound object datatype is string' );
 	}
-
+	
 	SKIP: {
 		skip 'Quad-only test', 1 if $args->{quads_unsupported};
 		my $count	= $store->count_statements( undef, undef, $litstring, $ex->d );
 		is( $count, 0, 'expected 0 string literal with context' );
 	}
-
+	
 	$store->remove_statement($quad);
 	is( $store->size, 3, 'store has 3 statements after plain literal remove' );
 
