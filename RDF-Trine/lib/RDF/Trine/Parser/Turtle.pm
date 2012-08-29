@@ -38,7 +38,6 @@ use base qw(RDF::Trine::Parser);
 
 use URI;
 use Encode;
-use Log::Log4perl;
 use Scalar::Util qw(blessed looks_like_number);
 use URI::Escape qw(uri_unescape);
 
@@ -127,22 +126,15 @@ default, but can be set by using one of the default C<< parse_* >> methods.
 =cut
 
 sub parse {
-	my $self	= shift;
-	my $uri		= shift;
-	my $input	= shift;
-	my $handler	= shift;
-	local($self->{handle_triple});
-	if ($handler) {
-		$self->{handle_triple}	= $handler;
-	}
-	local($self->{baseURI})	= $uri;
+	my $self = shift;
+	local($self->{baseURI}) = shift;
+	local($self->{tokens}) = shift;
+	local($self->{handle_triple}) = shift;
 	
-	$input	= '' unless (defined($input));
-	$input	=~ s/^\x{FEFF}//;
+	$self->{tokens}	= '' unless (defined($self->{tokens}));
+	$self->{tokens}	=~ s/^\x{FEFF}//;
 	
-	local($self->{tokens})	= $input;
 	$self->_Document();
-	return;
 }
 
 =item C<< parse_node ( $string [, $base_uri] ) >>
@@ -163,59 +155,6 @@ sub parse_node {
 	return $self->_object();
 }
 
-sub _eat_re {
-	my $self	= shift;
-	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
-	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
-	}
-	
-	if ($self->{tokens} =~ m/^($thing)/) {
-		my $match	= $1;
-		substr($self->{tokens}, 0, length($match))	= '';
-		return;
-	}
-	$l->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
-}
-
-sub _eat_re_save {
-	my $self	= shift;
-	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
-	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
-	}
-	
-	if ($self->{tokens} =~ m/^$thing/) {
-		return substr($self->{tokens}, 0, $+[0], '');
-	}
-	$l->error("Expected ($thing) with remaining: $self->{tokens}");
-	throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
-}
-
-sub _eat {
-	my $self	= shift;
-	my $thing	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.trine.parser.turtle");
-	if (not(length($self->{tokens}))) {
-		$l->error("no tokens left ($thing)");
-		throw RDF::Trine::Error::ParserError -text => "No tokens";
-	}
-	
-	### thing is a string
-	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
-		substr($self->{tokens}, 0, length($thing))	= '';
-		return;
-	} else {
-		$l->logcluck("expected: $thing, got: $self->{tokens}");
-		throw RDF::Trine::Error::ParserError -text => "Expected: $thing";
-	}
-}
-
 sub _test {
 	my $self	= shift;
 	my $thing	= shift;
@@ -232,9 +171,7 @@ sub _triple {
 	my $p		= shift;
 	my $o		= shift;
 	foreach my $n ($s, $p, $o) {
-		unless ($n->DOES('RDF::Trine::Node::API')) {
-			throw RDF::Trine::Error::ParserError;
-		}
+		_error("Expected: node") unless ($n->does('RDF::Trine::Node::API'));
 	}
 	
 	if ($self->{canonicalize}) {
@@ -271,16 +208,15 @@ sub _statement {
 	if ($self->_directive_test()) {
 		$self->_directive();
 		$self->__consume_ws();
-		$self->_eat('.');
+		$self->{tokens} =~ s/^\.// or _error("Expected: .");
 		$self->__consume_ws();
 	} elsif ($self->_triples_test()) {
 		$self->_triples();
 		$self->__consume_ws();
-		$self->_eat('.');
+		$self->{tokens} =~ s/^\.// or _error("Expected: .");
 		$self->__consume_ws();
 	}  else {
 		$self->_ws();
-		$self->__consume_ws();
 	}
 }
 
@@ -318,9 +254,8 @@ sub _prefixID_test {
 sub _prefixID {
 	my $self	= shift;
 	### '@prefix' ws+ prefixName? ':' ws+ uriref
-	$self->_eat('@prefix');
+	$self->{tokens} =~ s/^\@prefix// or _error("Expected: \@prefix");
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my $prefix;
 	if ($self->_prefixName_test()) {
@@ -329,9 +264,8 @@ sub _prefixID {
 		$prefix	= '';
 	}
 	
-	$self->_eat(':');
+	$self->{tokens} =~ s/^:// or _error ('Expected: :');
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my $uri = $self->_uriref();
 	$self->{bindings}{$prefix}	= $uri;
@@ -348,9 +282,8 @@ sub _prefixID {
 sub _base {
 	my $self	= shift;
 	### '@base' ws+ uriref
-	$self->_eat('@base');
+	$self->{tokens} =~ s/^\@base// or _error("Expected: \@base");
 	$self->_ws();
-	$self->__consume_ws();
 	my $uri	= $self->_uriref();
 	if (ref($uri)) {
 		$uri	= $uri->uri_value;
@@ -369,7 +302,6 @@ sub _triples {
 	### subject ws+ predicateObjectList
 	my $subj	= $self->_subject();
 	$self->_ws();
-	$self->__consume_ws;
 	foreach my $data ($self->_predicateObjectList()) {
 		my ($pred, $objt)	= @$data;
 		$self->_triple( $subj, $pred, $objt );
@@ -381,24 +313,22 @@ sub _predicateObjectList {
 	### verb ws+ objectList ( ws* ';' ws* verb ws+ objectList )* (ws* ';')?
 	my $pred = $self->_verb();
 	$self->_ws();
-	$self->__consume_ws();
 	
 	my @list;
 	foreach my $objt ($self->_objectList()) {
 		push(@list, [$pred, $objt]);
 	}
 	
-  $self->__consume_ws();
-  while ($self->{tokens} =~ s/^;//) {
+	$self->__consume_ws();
+	while ($self->{tokens} =~ s/^;//) {
 		$self->__consume_ws();
 		if ($self->_verb_test()) { # @@
 			$pred = $self->_verb();
 			$self->_ws();
-			$self->__consume_ws();
 			foreach my $objt ($self->_objectList()) {
 				push(@list, [$pred, $objt]);
 			}
-      $self->__consume_ws();
+			$self->__consume_ws();
 		} else {
 			last
 		}
@@ -415,7 +345,7 @@ sub _objectList {
 	$self->__consume_ws();
 	while ($self->_test(',')) {
 		$self->__consume_ws();
-		$self->_eat(',');
+		$self->{tokens} =~ s/,// or _error("Expected: ,");
 		$self->__consume_ws();
 		push(@list, $self->_object());
 		$self->__consume_ws();
@@ -436,16 +366,9 @@ sub _verb {
 	if ($self->_predicate_test()) {
 		return $self->_predicate();
 	} else {
-		$self->_eat('a');
+		$self->{tokens} =~ s/^a// or _error("Expected: a");
 		return $rdf->type;
 	}
-}
-
-sub _comment {
-	my $self	= shift;
-	### '#' ( [^#xA#xD] )*
-	$self->_eat_re($r_comment);
-	return 1;
 }
 
 sub _subject {
@@ -497,12 +420,10 @@ sub _literal {
 	
 	if ($self->_quotedString_test()) {
 		my $value = $self->_quotedString();
-		if ($self->_test('@')) {
-			$self->_eat('@');
+		if ($self->{tokens} =~ s/^@//) {
 			my $lang = $self->_language();
 			return $self->__Literal($value, $lang);
-		} elsif ($self->_test('^^')) {
-			$self->_eat('^^');
+		} elsif ($self->{tokens} =~ s/^\^\^//) {
 			my $dtype = $self->_resource();
 			return $self->_typed($value, $dtype);
 		} else {
@@ -533,7 +454,10 @@ sub _double {
 	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent 
 	### | ([0-9])+ exponent )
 	### exponent = [eE] ('-' | '+')? [0-9]+
-	my $token	= $self->_eat_re_save( $r_double );
+	unless ($self->{tokens} =~ /^$r_double/o) {
+		_error("Expected: double");
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->double );
 }
 
@@ -549,7 +473,10 @@ sub _decimal_test {
 sub _decimal {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->_eat_re_save( $r_decimal );
+	unless ($self->{tokens} =~ /^$r_decimal/o) {
+		_error("Expected: decimal");
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->decimal );
 }
 
@@ -565,14 +492,20 @@ sub _integer_test {
 sub _integer {
 	my $self	= shift;
 	### ('-' | '+')? ( [0-9]+ '.' [0-9]* | '.' ([0-9])+ | ([0-9])+ )
-	my $token	= $self->_eat_re_save( $r_integer );
+	unless ($self->{tokens} =~ /^$r_integer/o) {
+		_error("Expected: integer");
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->integer );
 }
 
 sub _boolean {
 	my $self	= shift;
 	### 'true' | 'false'
-	my $token	= $self->_eat_re_save( $r_boolean );
+	unless ($self->{tokens} =~ /^$r_boolean/o) {
+		_error("Expected: boolean");
+	}
+	my $token = substr($self->{tokens}, 0, $+[0], '');
 	return $self->_typed( $token, $xsd->boolean );
 }
 
@@ -596,10 +529,10 @@ sub _blank {
 	if ($self->_nodeID_test) {
 		return $self->__bNode( $self->__anonimize_bnode_id( $self->_nodeID() ) );
 	} elsif ($self->_test('[]')) {
-		$self->_eat('[]');
+		$self->{tokens} =~ s/^\[\]// or _error("Expected: []");
 		return $self->__bNode( $self->__generate_bnode_id() );
 	} elsif ($self->_test('[')) {
-		$self->_eat('[');
+		$self->{tokens} =~ s/^\[// or _error("Expected: [");
 		my $subj	= $self->__bNode( $self->__generate_bnode_id() );
 		$self->__consume_ws();
 		foreach my $data ($self->_predicateObjectList()) {
@@ -607,7 +540,7 @@ sub _blank {
 			$self->_triple( $subj, $pred, $objt );
 		}
 		$self->__consume_ws();
-		$self->_eat(']');
+		$self->{tokens} =~ s/^\]// or _error("Expected: ]");
 		return $subj;
 	} else {
 		return $self->_collection();
@@ -630,7 +563,7 @@ sub _itemList {
 	### object (ws+ object)*
 	my @list;
 	push(@list, $self->_object());
-	while ($self->_ws_test()) {
+	while ($self->{tokens} =~ m/^[\t\r\n #]/) {
 		$self->__consume_ws();
 		if (not $self->_test(')')) {
 			push(@list, $self->_object());
@@ -644,7 +577,7 @@ sub _collection {
 	### '(' ws* itemList? ws* ')'
 	my $b	= $self->__bNode( $self->__generate_bnode_id() );
 	my ($this, $rest)	= ($b, undef);
-	$self->_eat('(');
+	$self->{tokens} =~ s/^\(// or _error("Expected: (");
 	$self->__consume_ws();
 	if ($self->_itemList_test()) {
 #		while (my $objt = $self->_itemList()) {
@@ -663,34 +596,18 @@ sub _collection {
 		$b = $rdf->nil;
 	}
 	$self->__consume_ws();
-	$self->_eat(')');
+	$self->{tokens} =~ s/^\)// or _error("Expected: )");
 	return $b;
 }
 
-sub _ws_test {
-	my $self	= shift;
-	unless (length($self->{tokens})) {
-		return 0;
-	}
-	
-	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		return 1;
-	} else {
-		return 0;
+sub _ws {
+	unless (shift->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)+[\t\r ]*|[\t\r ]+//) {
+		_error("Expected: whitespace");
 	}
 }
 
-sub _ws {
-	my $self	= shift;
-	### #x9 | #xA | #xD | #x20 | comment
-	if ($self->_test('#')) {
-		$self->_comment();
-	} else {
-		my $ws	= $self->_eat_re_save( qr/[\n\r\t ]+/ );
-		unless ($ws =~ /^[\n\r\t ]/) {
-			throw RDF::Trine::Error::ParserError -text => 'Not whitespace';
-		}
-	}
+sub __consume_ws {
+	shift->{tokens} =~ s/^(?:[\t\r ]*(?:#.*)?\n)*[\t\r ]*//;
 }
 
 sub _resource_test {
@@ -733,7 +650,7 @@ sub _nodeID_test {
 sub _nodeID {
 	my $self	= shift;
 	### '_:' name
-	$self->_eat('_:');
+	$self->{tokens} =~ s/^_:// or _error("Expected: _:");
 	return $self->_name();
 }
 
@@ -741,10 +658,10 @@ sub _qname {
 	my $self	= shift;
 	### prefixName? ':' name?
 	my $prefix	= ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/) ? $self->_prefixName() : '';
-	$self->_eat(':');
+	$self->{tokens} =~ s/^:// or _error("Expected: :");
 	my $name	= ($self->{tokens} =~ /^$r_nameStartChar/) ? $self->_name() : '';
 	unless (exists $self->{bindings}{$prefix}) {
-		throw RDF::Trine::Error::ParserError -text => "Undeclared prefix $prefix";
+		_error("Undeclared prefix $prefix");
 	}
 	my $uri		= $self->{bindings}{$prefix};
 	return $uri . $name
@@ -763,19 +680,21 @@ sub _uriref_test {
 sub _uriref {
 	my $self	= shift;
 	### '<' relativeURI '>'
-	$self->_eat('<');
+	$self->{tokens} =~ s/^<// or _error("Expected: <");
 	my $value	= $self->_relativeURI();
-	$self->_eat('>');
-	my $uri	= uri_unescape(encode_utf8($value));
-	my $uni	= decode_utf8($uri);
-	return $uni;
+	$self->{tokens} =~ s/^>// or _error("Expected: >");
+	# faster unescaping, source: http://search.cpan.org/dist/URI/URI/Escape.pm#uri_unescape($string,...)
+	$value =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+	return $value;
 }
 
 sub _language {
 	my $self	= shift;
 	### [a-z]+ ('-' [a-z0-9]+ )*
-	my $token	= $self->_eat_re_save( $r_language );
-	return $token;
+	unless ($self->{tokens} =~ /^$r_language/o) {
+		_error("Expected: language");
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _nameStartChar_test {
@@ -793,8 +712,10 @@ sub _nameStartChar {
 	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] 
 	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | 
 	### [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
-	my $nc	= $self->_eat_re_save( $r_nameStartChar );
-	return $nc;
+	unless ($self->{tokens} =~ /^$r_nameStartChar/o) {
+		_error("Expected: nameStartChar");
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _nameChar_test {
@@ -817,16 +738,20 @@ sub _nameChar {
 		my $nc	= $self->_nameStartChar();
 		return $nc;
 	} else {
-		my $nce	= $self->_eat_re_save( $r_nameChar_extra );
-		return $nce;
+		unless ($self->{tokens} =~ /^$r_nameChar_extra/o) {
+			_error("Expected: nameStartChar");
+		}
+		return substr($self->{tokens}, 0, $+[0], '');
 	}
 }
 
 sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	my $name	= $self->_eat_re_save( qr/^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/ );
-	return $name;
+	unless ($self->{tokens} =~ /^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/o) {
+		_error("Expected: name");
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _prefixName_test {
@@ -843,7 +768,10 @@ sub _prefixName {
 	my $self	= shift;
 	### ( nameStartChar - '_' ) nameChar*
 	my @parts;
-	my $nsc	= $self->_eat_re_save( $r_nameStartChar_minus_underscore );
+	unless ($self->{tokens} =~ /^$r_nameStartChar_minus_underscore/o) {
+		_error("Expected: name");
+	}
+	my $nsc = substr($self->{tokens}, 0, $+[0], '');
 	push(@parts, $nsc);
 #	while ($self->_nameChar_test()) {
 	while ($self->{tokens} =~ /^$r_nameChar_test/) {
@@ -856,8 +784,10 @@ sub _prefixName {
 sub _relativeURI {
 	my $self	= shift;
 	### ucharacter*
-	my $token	= $self->_eat_re_save( $r_ucharacters );
-	return $token;
+	unless ($self->{tokens} =~ /^$r_ucharacters/o) {
+		_error("Expected: relativeURI");
+	}
+	return substr($self->{tokens}, 0, $+[0], '');
 }
 
 sub _quotedString_test {
@@ -882,9 +812,12 @@ sub _quotedString {
 sub _string {
 	my $self	= shift;
 	### #x22 scharacter* #x22
-	$self->_eat('"');
-	my $value	= $self->_eat_re_save( $r_scharacters );
-	$self->_eat('"');
+	$self->{tokens} =~ s/^"// or _error('Expected: "');
+	unless ($self->{tokens} =~ /^$r_scharacters/o) {
+		_error("Expected: string");
+	}
+	my $value = substr($self->{tokens}, 0, $+[0], '');
+	$self->{tokens} =~ s/^"// or _error('Expected: "');
 	my $string	= $self->_parse_short( $value );
 	return $string;
 }
@@ -901,9 +834,12 @@ sub _longString_test {
 sub _longString {
 	my $self	= shift;
       # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
-	$self->_eat('"""');
-	my $value	= $self->_eat_re_save( $r_lcharacters );
-	$self->_eat('"""');
+	$self->{tokens} =~ s/^"""// or _error('Expected: """');
+	unless ($self->{tokens} =~ /^$r_lcharacters/o) {
+		_error("Expected: longString");
+	}
+	my $value = substr($self->{tokens}, 0, $+[0], '');
+	$self->{tokens} =~ s/^"""// or _error('Expected: """');
 	my $string	= $self->_parse_long( $value );
 	return $string;
 }
@@ -984,13 +920,6 @@ sub __generate_bnode_id {
 	return 'r' . $self->{bnode_prefix} . 'r' . $id;
 }
 
-sub __consume_ws {
-	my $self	= shift;
-	while ($self->{tokens} =~ m/^[\t\r\n #]/) {
-		$self->_ws()
-	}
-}
-
 sub __URI {
 	my $self	= shift;
 	my $uri		= shift;
@@ -1056,6 +985,10 @@ sub _unescape {
 		}
 	}
 	return $us;
+}
+
+sub _error {
+  throw RDF::Trine::Error::ParserError -text => shift;
 }
 
 1;
