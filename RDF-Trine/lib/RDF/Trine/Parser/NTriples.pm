@@ -207,9 +207,17 @@ sub _parse_object {
 	}
 	# Try parsing object as string
 	elsif ($_[0] =~ s/^"//) {
-		$_[0] =~ /^(?:[^\\"]|(?:\\.))*/;
-		my $value = substr($_[0], 0, $+[0], '');
-		$self->_unescape_string($value);
+		my $value;
+		# First, try to parse a string without escape sequences
+		if ($_[0] =~ /^[^\\"]*(?=")/) {
+			$value = substr($_[0], 0, $+[0], '');
+		}
+		# If that doesn't work, try to parse a string with escape sequences
+		else {
+			$_[0] =~ /^(?:[^\\"]|(?:\\.))*/;
+			$value = substr($_[0], 0, $+[0], '');
+			$self->_unescape_string($value);
+		}
 		$_[0] =~ s/^"// or _error("Invalid string");
 		# Check if the object has a language code
 		if ($_[0] =~ s/^@//) {
@@ -252,11 +260,9 @@ sub _unescape_uri {
 	my %escapes = (q[\\] => qq[\\], r => qq[\r], n  => qq[\n], t => qq[\t], q["] => qq["]);
 	
 	sub _unescape_string {
-		if ($_[1] =~ /\\/) {
-			$_[1] =~ s/\\([\\tnr"])/$escapes{$1}/eg;
-			$_[1] =~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/eg;
-			$_[1] =~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/eg;
-		}
+		$_[1] =~ s/\\([\\tnr"])/$escapes{$1}/eg;
+		$_[1] =~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/eg;
+		$_[1] =~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/eg;
 	}
 }
 
