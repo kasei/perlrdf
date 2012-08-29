@@ -81,14 +81,6 @@ BEGIN {
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
-	
-	unless ($ENV{RDFTRINE_NO_REDLAND}) {
-		can_load( modules => {
-			'RDF::Redland'					=> undef,
-			'RDF::Trine::Store::Redland'	=> undef,
-			'RDF::Trine::Parser::Redland'	=> undef,
-		} );
-	}
 }
 
 use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
@@ -123,6 +115,24 @@ use RDF::Trine::Store::DBI::mysql;
 use RDF::Trine::Store::DBI::SQLite;
 use RDF::Trine::Store::DBI::Pg;
 use RDF::Trine::Store::SPARQL;
+
+use RDF::Trine::Parser::NTriples;
+use RDF::Trine::Parser::NQuads;
+use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::TriG;
+use RDF::Trine::Parser::RDFXML;
+use RDF::Trine::Parser::RDFJSON;
+use RDF::Trine::Parser::RDFa;
+
+BEGIN {
+	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		can_load( modules => {
+			'RDF::Redland'					=> undef,
+			'RDF::Trine::Store::Redland'	=> undef,
+			'RDF::Trine::Parser::Redland'	=> undef,
+		} );
+	}
+}
 
 sub _uniq {
 	my %seen;
