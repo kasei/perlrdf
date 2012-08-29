@@ -121,44 +121,44 @@ sub subsumes {
 	return 1;
 }
 
-sub from_redland {
-	my $self   = shift;
-	my $rstmt  = shift;
-	my $graph  = shift;
-	
-	my $cast = sub
-	{
-		my $node = shift;
-		my $type = $node->type;
-		if ($type == $RDF::Redland::Node::Type_Resource) {
-			my $uri = $node->uri->as_string;
-			if ($uri =~ /%/) {
-				# Redland's parser doesn't properly unescape percent-encoded RDF URI References
-				$uri = decode_utf8(uri_unescape(encode_utf8($uri)));
-			}
-			return RDF::Trine::Node::Resource->new( $uri );
-		}
-		elsif ($type == $RDF::Redland::Node::Type_Blank) {
-			return RDF::Trine::Node::Blank->new( $node->blank_identifier );
-		}
-		elsif ($type == $RDF::Redland::Node::Type_Literal) {
-			my $lang  = $node->literal_value_language;
-			my $dturi = $node->literal_datatype;
-			my $dt    = $dturi ? $dturi->as_string : undef;
-			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
-		}
-		else {
-			confess 'Unknown node type in statement conversion';
-		}
-	};
-	
-	return $self->new({
-		subject   => $cast->($rstmt->subject),
-		predicate => $cast->($rstmt->predicate),
-		object    => $cast->($rstmt->object),
-		graph     => $graph,
-	});
-}
+# sub from_redland {
+# 	my $self   = shift;
+# 	my $rstmt  = shift;
+# 	my $graph  = shift;
+# 	
+# 	my $cast = sub
+# 	{
+# 		my $node = shift;
+# 		my $type = $node->type;
+# 		if ($type == $RDF::Redland::Node::Type_Resource) {
+# 			my $uri = $node->uri->as_string;
+# 			if ($uri =~ /%/) {
+# 				# Redland's parser doesn't properly unescape percent-encoded RDF URI References
+# 				$uri = decode_utf8(uri_unescape(encode_utf8($uri)));
+# 			}
+# 			return RDF::Trine::Node::Resource->new( $uri );
+# 		}
+# 		elsif ($type == $RDF::Redland::Node::Type_Blank) {
+# 			return RDF::Trine::Node::Blank->new( $node->blank_identifier );
+# 		}
+# 		elsif ($type == $RDF::Redland::Node::Type_Literal) {
+# 			my $lang  = $node->literal_value_language;
+# 			my $dturi = $node->literal_datatype;
+# 			my $dt    = $dturi ? $dturi->as_string : undef;
+# 			return RDF::Trine::Node::Literal->new( $node->literal_value, $lang, $dt );
+# 		}
+# 		else {
+# 			confess 'Unknown node type in statement conversion';
+# 		}
+# 	};
+# 	
+# 	return RDF::Trine::Statement::Quad->new({
+# 		subject   => $cast->($rstmt->subject),
+# 		predicate => $cast->($rstmt->predicate),
+# 		object    => $cast->($rstmt->object),
+# 		graph     => $graph,
+# 	});
+# }
 
 sub to_triple {
 	my $self = shift;

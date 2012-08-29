@@ -79,10 +79,6 @@ Constructs a quad statement.
 
 Alternative constructor.
 
-=item C<< from_redland($redland_st, $graph) >>
-
-Consumes triples from RDF::Redland.
-
 =back
 
 =head2 Attributes

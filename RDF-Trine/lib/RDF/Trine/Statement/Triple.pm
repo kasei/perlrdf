@@ -42,7 +42,7 @@ sub from_sse {
 		push(@nodes, RDF::Trine::Node::API->from_sse( $_, $context ));
 		if (m/^\s*[)]/) {
 			s/^\s*[)]//;
-			return RDF::Trine::Statement->new( @nodes );
+			return RDF::Trine::Statement::Triple->new( @nodes );
 		} else {
 			throw RDF::Trine::Error -text => "Cannot parse end-of-triple from SSE string: >>$_<<";
 		}
@@ -75,10 +75,6 @@ Constructs a triple statement.
 =item C<< from_sse($string) >>
 
 Alternative constructor.
-
-=item C<< from_redland($redland_st) >>
-
-Consumes triples from RDF::Redland.
 
 =back
 
