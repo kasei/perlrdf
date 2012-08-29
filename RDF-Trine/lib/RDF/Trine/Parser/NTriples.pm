@@ -36,12 +36,6 @@ use utf8;
 
 use base qw(RDF::Trine::Parser);
 
-use Carp;
-use Encode qw(decode);
-use Data::Dumper;
-use Log::Log4perl;
-use Scalar::Util qw(blessed reftype);
-
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -133,186 +127,141 @@ sub parse_file {
 		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 	
-	my $lineno	= 0;
-	no warnings 'uninitialized';
-	while (defined(my $line = <$fh>)) {
-LINE:
-		($line, my @extra)	= split(/\r\n|\r|\n/, $line, 2);
-		$lineno++;
-		
-		next unless (defined($line) and length($line));
-		next unless ($line =~ /\S/);
-		chomp($line);
-		$line	=~ s/^\s*//;
-		$line	=~ s/\s*$//;
-		next if ($line =~ /^#/);
-		
-		my @nodes	= ();
-		try {
-			while (my $n = $self->_eat_node( $base, $lineno, $line )) {
-				push(@nodes, $n);
-				$line	=~ s/^\s*//;
-			}
-		};
-		$line	=~ s/^\s//g;
-		unless ($line eq '.') {
-# 			Carp::cluck 'N-Triples parser failed: ' . Dumper(\@nodes, $line);
-			throw RDF::Trine::Error::ParserError -text => "Missing expected '.' at line $lineno";
-		}
-		
-		$self->_emit_statement( $handler, \@nodes, $lineno );
-		if (@extra) {
-			$line	= shift(@extra);
-			goto LINE;
-		}
+	while (<$fh>) {
+		chomp( $_ );
+		my $statement = $self->parse_line($_);
+		$handler->($statement) if ref $statement;
 	}
 }
 
-sub _emit_statement {
-	my $self	= shift;
-	my $handler	= shift;
-	my $nodes	= shift;
-	my $lineno	= shift;
-	my $st;
-	if (scalar(@$nodes) == 3) {
-		if ($self->{canonicalize}) {
-			if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
-				my $value	= $nodes->[2]->literal_value;
-				my $dt		= $nodes->[2]->literal_datatype;
-				my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-				$nodes->[2]	= literal( $canon, undef, $dt );
-			}
-		}
-		$st	= RDF::Trine::Statement->new( @$nodes );
-# 	} elsif (scalar(@$nodes) == 4) {
-# 		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
-	} else {
-# 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples data at line $lineno];
-	}
-	$handler->( $st );
+sub parse_line {
+	my $self = shift;
+	my $line = shift;
+	$line =~ s/^[ \t]*(?:#.*)?//;
+	return unless $line;
+
+	my $subject = $self->_parse_subject($line);
+	$line =~ s/^[ \t]+// or _error("No whitespace between subject and predicate");
+	my $predicate = $self->_parse_predicate($line);
+	$line =~ s/^[ \t]+// or _error("No whitespace between predicate and object");
+	my $object = $self->_parse_object($line);
+	$line =~ s/^[ \t]*\.// or _error("Missing dot");
+	$line =~ /^[ \t]*$/ or _error("Invalid syntax after dot");
+
+	RDF::Trine::Statement->new($subject, $predicate, $object);
 }
 
-sub _eat_node {
-	my $self	= shift;
-	my $base	= shift;
-	my $lineno	= shift;
-	$_[0]	=~ s/^\s*//;
-	return unless length($_[0]);
-	my $char	= substr($_[0], 0, 1);
-	return if ($char eq '.');
-	
-	if ($char eq '<') {
-		my ($uri)	= $_[0] =~ m/^<([^>]*)>/;
-		substr($_[0], 0, length($uri)+2)	= '';
-		return RDF::Trine::Node::Resource->new( _unescape($uri, $lineno) );
-	} elsif ($char eq '_') {
-		my ($name)	= $_[0] =~ m/^_:([A-Za-z][A-Za-z0-9]*)/;
-		substr($_[0], 0, length($name)+2)	= '';
-		return RDF::Trine::Node::Blank->new( $name );
-	} elsif ($char eq '"') {
-		substr($_[0], 0, 1)	= '';
-		my $value	= decode('utf8', '');
-		while (length($_[0]) and substr($_[0], 0, 1) ne '"') {
-			while ($_[0] =~ m/^([^"\\]+)/) {
-				$value	.= $1;
-				substr($_[0],0,length($1))	= '';
-			}
-			if (substr($_[0],0,1) eq '\\') {
-				while ($_[0] =~ m/^\\(.)/) {
-					if ($1 eq 't') {
-						$value	.= "\t";
-						substr($_[0],0,2)	= '';
-					} elsif ($1 eq 'r') {
-						$value	.= "\r";
-						substr($_[0],0,2)	= '';
-					} elsif ($1 eq 'n') {
-						$value	.= "\n";
-						substr($_[0],0,2)	= '';
-					} elsif ($1 eq '"') {
-						$value	.= '"';
-						substr($_[0],0,2)	= '';
-					} elsif ($1 eq '\\') {
-						$value	.= "\\";
-						substr($_[0],0,2)	= '';
-					} elsif ($1 eq 'u') {
-						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
-						$value	.= chr(oct('0x' . $1));
-						substr($_[0],0,6)	= '';
-					} elsif ($1 eq 'U') {
-						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
-						$value	.= chr(oct('0x' . $1));
-						substr($_[0],0,10)	= '';
-					} else {
-						throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples escape character '\\$1' at line $lineno, near "$_[0]"];
-					}
-				}
-			}
-		}
-		if (substr($_[0],0,1) eq '"') {
-			substr($_[0],0,1)	= '';
-		} else {
-			throw RDF::Trine::Error::ParserError -text => qq[Ending double quote not found at line $lineno];
-		}
-		
-		if ($_[0] =~ m/^@([a-z]+(-[a-zA-Z0-9]+)*)/) {
-			my $lang	= $1;
-			substr($_[0],0,1+length($lang))	= '';
+sub _parse_subject {
+	my $self = shift;
+	# Try parsing subject as URI
+	if ($_[0] =~ s/^<//) {
+		$_[0] =~ /^[^> ]+/ or _error("Invalid URI");
+		my $uri = substr($_[0], 0, $+[0], '');
+		$self->_unescape_uri($uri);
+		$_[0] =~ s/^>// or _error("Invalid URI");
+		return RDF::Trine::Node::Resource->new($uri);
+	}
+	# Try parsing subject as blank node
+	elsif ($_[0] =~ s/^_://) {
+		$_[0] =~ /^[a-z][a-z0-9]*/i;
+		my $name = substr($_[0], 0, $+[0], '');
+    return RDF::Trine::Node::Blank->new($name);
+	}
+	# Subject must be invalid
+	else {
+		_error("Invalid subject");
+	}
+}
+
+sub _parse_predicate {
+	my $self = shift;
+	# Try parsing predicate as URI
+	if ($_[0] =~ s/^<//) {
+		$_[0] =~ /^[^> ]+/ or _error("Invalid URI");
+		my $uri = substr($_[0], 0, $+[0], '');
+		$self->_unescape_uri($uri);
+		$_[0] =~ s/^>// or _error("Invalid URI");
+		return RDF::Trine::Node::Resource->new($uri);
+	}
+	# Predicate must be invalid
+	else {
+		_error("Invalid predicate");
+	}
+}
+
+sub _parse_object {
+	my $self = shift;
+	# Try parsing object as URI
+	if ($_[0] =~ s/^<//) {
+		$_[0] =~ /^[^> ]+/ or _error("Invalid URI");
+		my $uri = substr($_[0], 0, $+[0], '');
+		$self->_unescape_uri($uri);
+		$_[0] =~ s/^>// or _error("Invalid URI");
+		return RDF::Trine::Node::Resource->new($uri);
+	}
+	# Try parsing object as blank node
+	elsif ($_[0] =~ s/^_://) {
+		$_[0] =~ /^[a-z][a-z0-9]*/i;
+		my $name = substr($_[0], 0, $+[0], '');
+    return RDF::Trine::Node::Blank->new($name);
+	}
+	# Try parsing object as string
+	elsif ($_[0] =~ s/^"//) {
+		$_[0] =~ /^(?:[^\\"]|(?:\\.))*/;
+		my $value = substr($_[0], 0, $+[0], '');
+		$self->_unescape_string($value);
+		$_[0] =~ s/^"// or _error("Invalid string");
+		# Check if the object has a language code
+		if ($_[0] =~ s/^@//) {
+			$_[0] =~ /^[a-z]+(?:-[a-z0-9]+)*/i or _error("Invalid language code");
+			my $lang = substr($_[0], 0, $+[0], '');
 			return RDF::Trine::Node::Literal->new($value, $lang);
-		} elsif (substr($_[0],0,3) eq '^^<') {
-			substr($_[0],0,3)	= '';
-			my ($uri)	= $_[0] =~ m/^([^>]*)>/;
-			substr($_[0], 0, length($uri)+1)	= '';
-			return RDF::Trine::Node::Literal->new($value, undef, $uri);
-		} else {
+		}
+		# Check if the object has a datatype
+		elsif ($_[0] =~ s/^\^\^//) {
+			$_[0] =~ s/^<// or _error("Invalid datatype");
+			$_[0] =~ /^[^> ]+/ or _error("Invalid datatype");
+			my $uri = substr($_[0], 0, $+[0], '');
+			$self->_unescape_uri($uri);
+			$_[0] =~ s/^>// or _error("Invalid datatype");
+			# Check if the value should be canonicalized
+			if ($self->{canonicalize}) {
+				$value = RDF::Trine::Node::Literal->canonicalize_literal_value($value, $uri, 1);
+				return literal($value, undef, $uri);
+			}
+			else {
+				return RDF::Trine::Node::Literal->new($value, undef, $uri);
+			}
+		}
+		else {
 			return RDF::Trine::Node::Literal->new($value);
 		}
-	} else {
-		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Triples node start character '$char' at line $lineno, near "$_[0]"];
+	}
+	# Object must be invalid
+	else {
+		_error("Invalid object");
 	}
 }
 
-sub _unescape {
-	my $string	= shift;
-	my $lineno	= shift;
-	my $value	= '';
-	while (length($string)) {
-		while ($string =~ m/^([^\\]+)/) {
-			$value	.= $1;
-			substr($string,0,length($1))	= '';
-		}
-		if (length($string)) {
-			while ($string =~ m/^\\(.)/) {
-				if ($1 eq 't') {
-					$value	.= "\t";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'r') {
-					$value	.= "\r";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'n') {
-					$value	.= "\n";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq '"') {
-					$value	.= '"';
-					substr($string,0,2)	= '';
-				} elsif ($1 eq '\\') {
-					$value	.= "\\";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'u') {
-					$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
-					$value	.= chr(oct('0x' . $1));
-					substr($string,0,6)	= '';
-				} elsif ($1 eq 'U') {
-					$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
-					$value	.= chr(oct('0x' . $1));
-					substr($string,0,10)	= '';
-				} else {
-					die $string;
-				}
-			}
+sub _unescape_uri {
+	$_[1] =~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/eg;
+	$_[1] =~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/eg;
+}
+
+{
+	my %escapes = (q[\\] => qq[\\], r => qq[\r], n  => qq[\n], t => qq[\t], q["] => qq["]);
+	
+	sub _unescape_string {
+		if ($_[1] =~ /\\/) {
+			$_[1] =~ s/\\([\\tnr"])/$escapes{$1}/eg;
+			$_[1] =~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/eg;
+			$_[1] =~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/eg;
 		}
 	}
-	return $value;
+}
+
+sub _error {
+  throw RDF::Trine::Error::ParserError -text => shift;
 }
 
 1;
