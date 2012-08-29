@@ -215,7 +215,7 @@ my $st3q	= RDF::Trine::Statement::Quad->new( $b, $foaf->name, RDF::Trine::Node::
 		my $stream	= $model->get_statements( undef, $rdf->type, $foaf->Person );
 		isa_ok( $stream, 'RDF::Trine::Iterator' );
 		my $st		= $stream->next;
-		ok( $st->DOES('RDF::Trine::Statement'), 'got expected type statement' );
+		ok( $st->does('RDF::Trine::Statement::API'), 'got expected type statement' );
 	}
 	
 	is( $model->count_statements(), 2, 'model size before add_rule' );

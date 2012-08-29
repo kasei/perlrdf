@@ -1,5 +1,6 @@
-use Test::More tests => 36;
+use Test::More tests => 31;
 use Test::Exception;
+use Test::Moose;
 
 use strict;
 use warnings;
@@ -27,7 +28,7 @@ my $v		= RDF::Trine::Node::Variable->new('v');
 	my $st		= RDF::Trine::Statement::Triple->new( $kasei, $rdf->type, $foaf->Document );
 	is_deeply( [ $st->node_names ], [qw(subject predicate object)], 'triple node names' );
 	is( $st->type, 'TRIPLE' );
-	isa_ok( $st, 'RDF::Trine::Statement' );
+	does_ok( $st, 'RDF::Trine::Statement::API' );
 	isa_ok( $st->subject, 'RDF::Trine::Node::Resource' );
 	isa_ok( $st->predicate, 'RDF::Trine::Node::Resource' );
 	isa_ok( $st->object, 'RDF::Trine::Node::Resource' );
@@ -113,33 +114,3 @@ throws_ok {
 throws_ok {
 	my $st		= RDF::Trine::Statement::Quad->new(1,2);
 } qr{required at constructor}, "RDF::Trine::Statement::Quad::new throws without 4 node arguments.";
-
-
-SKIP: {
-	eval "use RDF::Redland;";
-	skip( "Need RDF::Redland to run these tests.", 5 ) if ($@);
-	
-	{
-		my $subj		= RDF::Redland::Node->new_from_uri("http://example.com/doc");
-		my $pred		= RDF::Redland::Node->new_from_uri("http://example.com/maker");
-		my $obj			= RDF::Redland::Node->new_from_blank_identifier("eve");
-		my $statement	= new RDF::Redland::Statement($subj, $pred, $obj);
-		isa_ok( $statement, 'RDF::Redland::Statement' );
-		
-		my $st	= RDF::Trine::Statement::API->from_redland( $statement );
-		isa_ok( $st, 'RDF::Trine::Statement' );
-		is( $st->sse, '(triple <http://example.com/doc> <http://example.com/maker> _:eve)', 'triple sse after from_redland' );
-	}
-	
-	{
-		my $subj		= RDF::Redland::Node->new_from_uri("http://example.com/doc");
-		my $pred		= RDF::Redland::Node->new_from_uri("http://example.com/maker");
-		my $obj			= RDF::Redland::Node->new_from_blank_identifier("eve");
-		my $statement	= new RDF::Redland::Statement($subj, $pred, $obj);
-		
-		my $st	= RDF::Trine::Statement::Quad->from_redland( $statement, iri('graph') );
-		isa_ok( $st, 'RDF::Trine::Statement::Quad' );
-		is( $st->sse, '(quad <http://example.com/doc> <http://example.com/maker> _:eve <graph>)', 'quad sse after from_redland' );
-	}
-}
-
