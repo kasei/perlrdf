@@ -1,5 +1,6 @@
 use Test::More;
 use Test::Exception;
+use Test::Moose;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
 use File::Spec;
@@ -80,7 +81,7 @@ foreach my $file (@bad) {
 		  $parser->parse_into_model(undef, $ntriples, $model);
 		  my $iter	= $model->as_stream;
 		  my $st = $iter->next;
-		  isa_ok( $st, 'RDF::Trine::Statement' );
+		  does_ok( $st, 'RDF::Trine::Statement::API' );
 		  is($st->object->literal_value, 'blåbærsyltetøy', 'expected triple object value with utf8 chars' );
 	  }
 
