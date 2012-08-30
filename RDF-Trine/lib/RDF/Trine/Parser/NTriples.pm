@@ -147,7 +147,7 @@ sub parse_line {
 	$line =~ s/^[ \t]*\.// or _error("Missing dot");
 	$line =~ /^[ \t]*$/ or _error("Invalid syntax after dot");
 
-	RDF::Trine::Statement->new($subject, $predicate, $object);
+	RDF::Trine::Statement::Triple->new($subject, $predicate, $object);
 }
 
 sub _parse_subject {
@@ -233,8 +233,7 @@ sub _parse_object {
 			$_[0] =~ s/^>// or _error("Invalid datatype");
 			# Check if the value should be canonicalized
 			if ($self->{canonicalize}) {
-				$value = RDF::Trine::Node::Literal->canonicalize_literal_value($value, $uri, 1);
-				return literal($value, undef, $uri);
+				return literal($value, undef, $uri)->canonicalize;
 			}
 			else {
 				return RDF::Trine::Node::Literal->new($value, undef, $uri);
@@ -246,7 +245,7 @@ sub _parse_object {
 	}
 	# Object must be invalid
 	else {
-		_error("Invalid object");
+		_error("Invalid object: $_[0]");
 	}
 }
 
