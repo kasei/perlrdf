@@ -127,7 +127,7 @@ sub parse_file {
 	}
 	
 	while (<$fh>) {
-		chomp( $_ );
+		s/\r?\n$//;
 		my $statement = $self->parse_line($_);
 		$handler->($statement) if ref $statement;
 	}
@@ -164,7 +164,7 @@ sub _parse_subject {
 	elsif ($_[0] =~ s/^_://) {
 		$_[0] =~ /^[a-z][a-z0-9]*/i;
 		my $name = substr($_[0], 0, $+[0], '');
-    return RDF::Trine::Node::Blank->new($name);
+		return RDF::Trine::Node::Blank->new($name);
 	}
 	# Subject must be invalid
 	else {
@@ -202,7 +202,7 @@ sub _parse_object {
 	elsif ($_[0] =~ s/^_://) {
 		$_[0] =~ /^[a-z][a-z0-9]*/i;
 		my $name = substr($_[0], 0, $+[0], '');
-    return RDF::Trine::Node::Blank->new($name);
+		return RDF::Trine::Node::Blank->new($name);
 	}
 	# Try parsing object as string
 	elsif ($_[0] =~ s/^"//) {
@@ -265,7 +265,8 @@ sub _unescape_uri {
 }
 
 sub _error {
-  throw RDF::Trine::Error::ParserError -text => shift;
+	my $msg	= shift;
+	throw RDF::Trine::Error::ParserError -text => $msg;
 }
 
 1;
