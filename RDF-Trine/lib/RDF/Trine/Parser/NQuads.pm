@@ -65,58 +65,29 @@ BEGIN {
 
 ######################################################################
 
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
+sub parse_line {
+	my $self = shift;
+	my $line = shift;
+	$line =~ s/^[ \t]*(?:#.*)?//;
+	return unless $line;
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
-or quad parsed, will call C<< $model->add_statement( $statement ) >>.
-
-=cut
-
-sub parse_into_model {
-	my $proto	= shift;
-	my $self	= blessed($proto) ? $proto : $proto->new();
-	my $uri		= shift;
-	if (blessed($uri) and $uri->isa('RDF::Trine::Node::Resource')) {
-		$uri	= $uri->uri_value;
-	}
-	my $input	= shift;
-	my $model	= shift;
-	my %args	= @_;
-	
-	if (my $context = $args{'context'}) {
-		throw RDF::Trine::Error::ParserError -text => "Cannot pass a context node to N-Quads parse_into_model method";
-	}
-	
-	my $handler	= sub {
-		my $st	= shift;
-		$model->add_statement( $st );
-	};
-	return $self->parse( $uri, $input, $handler );
-}
-
-sub _emit_statement {
-	my $self	= shift;
-	my $handler	= shift;
-	my $nodes	= shift;
-	my $lineno	= shift;
-	my $st;
-	
-	if ($self->{canonicalize}) {
-		if ($nodes->[2]->isa('RDF::Trine::Node::Literal') and $nodes->[2]->has_datatype) {
-			$nodes->[2] = $nodes->[2]->canonicalize;
-		}
-	}
-
-	if (scalar(@$nodes) == 3) {
-		$st	= RDF::Trine::Statement::Triple->new( @$nodes );
-	} elsif (scalar(@$nodes) == 4) {
-		$st	= RDF::Trine::Statement::Quad->new( @$nodes );
+	my $subject = $self->_parse_subject($line);
+	$line =~ s/^[ \t]+// or _error("No whitespace between subject and predicate");
+	my $predicate = $self->_parse_predicate($line);
+	$line =~ s/^[ \t]+// or _error("No whitespace between predicate and object");
+	my $object = $self->_parse_object($line);
+	if ($line =~ /^[ \t]*\./) {
+		$line =~ s/^[ \t]*\.// or _error("Missing dot");
+		$line =~ /^[ \t]*$/ or _error("Invalid syntax after dot");
+		return RDF::Trine::Statement::Triple->new($subject, $predicate, $object);
 	} else {
-# 		warn Dumper($nodes);
-		throw RDF::Trine::Error::ParserError -text => qq[Not valid N-Quads data at line $lineno];
+		$line =~ s/^[ \t]+// or _error("No whitespace between object and graph");
+		my $graph = $self->_parse_object($line);
+		$line =~ s/^[ \t]*\.// or _error("Missing dot");
+		$line =~ /^[ \t]*$/ or _error("Invalid syntax after dot");
+		return RDF::Trine::Statement::Quad->new($subject, $predicate, $object, $graph);
 	}
-	
-	$handler->( $st );
+
 }
 
 
