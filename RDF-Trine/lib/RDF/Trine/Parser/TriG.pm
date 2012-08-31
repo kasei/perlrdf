@@ -61,16 +61,7 @@ sub _triple {
 		}
 	}
 	
-	my $graph	= $self->{graph};
-	if ($self->{canonicalize}) {
-		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
-			my $value	= $o->literal_value;
-			my $dt		= $o->literal_datatype;
-			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-			$o	= literal( $canon, undef, $dt );
-		}
-	}
-	my $st		= RDF::Trine::Statement::Quad->new( $s, $p, $o, $graph );
+	my $st		= RDF::Trine::Statement::Quad->new( $s, $p, $o, $self->{graph} );
 	
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
