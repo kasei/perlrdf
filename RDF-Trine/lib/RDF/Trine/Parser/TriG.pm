@@ -81,18 +81,7 @@ sub _triple {
 
 sub _Document {
 	my $self	= shift;
-	while ($self->_statement_test()) {
-		$self->_statement();
-	}
-}
-
-sub _statement_test {
-	my $self	= shift;
-	if (length($self->{tokens})) {
-		return 1;
-	} else {
-		return 0;
-	}
+	$self->_statement while length($self->{tokens});
 }
 
 sub _statement {
@@ -102,20 +91,12 @@ sub _statement {
 		$self->__consume_ws();
 		$self->{tokens} =~ s/^\.// or die $self->_error('Expected: .');
 		$self->__consume_ws();
-	} elsif ($self->_graph_test()) {
+	} elsif ($self->_resource_test() or $self->{tokens} =~ /^[=\{]/) {
 		$self->_graph();
 		$self->__consume_ws();
 	} else {
 		$self->_ws();
-		$self->__consume_ws();
 	}
-}
-
-sub _graph_test {
-	my $self	= shift;
-	return 1 if $self->_resource_test;
-	return 1 if $self->__startswith('=');
-	return $self->__startswith('{');
 }
 
 sub _graph {
