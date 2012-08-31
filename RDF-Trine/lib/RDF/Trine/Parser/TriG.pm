@@ -100,7 +100,7 @@ sub _statement {
 	if ($self->_directive_test()) {
 		$self->_directive();
 		$self->__consume_ws();
-		$self->_eat('.');
+		$self->{tokens} =~ s/^\.// or die $self->_error('Expected: .');
 		$self->__consume_ws();
 	} elsif ($self->_graph_test()) {
 		$self->_graph();
@@ -126,11 +126,10 @@ sub _graph {
 		$self->{graph}	= RDF::Trine::Node::Nil->new();
 	}
 	$self->__consume_ws();
-	if ($self->__startswith('=')) {
-		$self->_eat('=');
+	if ($self->{tokens} =~ s/^=//) {
 		$self->__consume_ws();
 	}
-	$self->_eat('{');
+	$self->{tokens} =~ s/^\{// or die $self->_error('Expected: {');
 	$self->__consume_ws();
 	my $gotdot	= 1;
 	while ($self->_triples_test()) {
@@ -142,7 +141,7 @@ sub _graph {
 		$self->_triples();
 		$self->__consume_ws();
 		if ($self->__startswith('.')) {
-			$self->_eat('.');
+			$self->{tokens} =~ s/^\.// or die $self->_error('Expected: .');
 			$self->__consume_ws();
 			$gotdot	= 1;
 		} else {
@@ -150,11 +149,9 @@ sub _graph {
 		}
 		$self->__consume_ws();
 	}
-	$self->_eat('}');
+	$self->{tokens} =~ s/^\}// or die $self->_error('Expected: }');
 	$self->__consume_ws();
-	if ($self->__startswith('.')) {
-		$self->_eat('.');
-	}
+	$self->{tokens} =~ s/^\.//;
 }
 
 1;
