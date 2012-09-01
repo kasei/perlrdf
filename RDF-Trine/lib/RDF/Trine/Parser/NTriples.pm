@@ -234,10 +234,10 @@ sub _parse_object {
 			# Check if the value should be canonicalized
 			if ($self->{canonicalize}) {
 				return literal($value, undef, $uri)->canonicalize;
-			}
-			else {
+			} else {
 				return RDF::Trine::Node::Literal->new($value, undef, $uri);
 			}
+			return RDF::Trine::Node::Literal->new($value, undef, $uri);
 		}
 		else {
 			return RDF::Trine::Node::Literal->new($value);

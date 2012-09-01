@@ -61,16 +61,7 @@ sub _triple {
 		}
 	}
 	
-	my $graph	= $self->{graph};
-	if ($self->{canonicalize}) {
-		if ($o->isa('RDF::Trine::Node::Literal') and $o->has_datatype) {
-			my $value	= $o->literal_value;
-			my $dt		= $o->literal_datatype;
-			my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-			$o	= literal( $canon, undef, $dt );
-		}
-	}
-	my $st		= RDF::Trine::Statement::Quad->new( $s, $p, $o, $graph );
+	my $st		= RDF::Trine::Statement::Quad->new( $s, $p, $o, $self->{graph} );
 	
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
@@ -81,18 +72,7 @@ sub _triple {
 
 sub _Document {
 	my $self	= shift;
-	while ($self->_statement_test()) {
-		$self->_statement();
-	}
-}
-
-sub _statement_test {
-	my $self	= shift;
-	if (length($self->{tokens})) {
-		return 1;
-	} else {
-		return 0;
-	}
+	$self->_statement while length($self->{tokens});
 }
 
 sub _statement {
@@ -102,20 +82,12 @@ sub _statement {
 		$self->__consume_ws();
 		$self->{tokens} =~ s/^[.]// or _error ('Expected: .');
 		$self->__consume_ws();
-	} elsif ($self->_graph_test()) {
+	} elsif ($self->_resource_test() or $self->{tokens} =~ /^[=\{]/) {
 		$self->_graph();
 		$self->__consume_ws();
 	} else {
 		$self->_ws();
-		$self->__consume_ws();
 	}
-}
-
-sub _graph_test {
-	my $self	= shift;
-	return 1 if $self->_resource_test;
-	return 1 if $self->__startswith('=');
-	return $self->__startswith('{');
 }
 
 sub _graph {

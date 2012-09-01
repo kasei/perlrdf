@@ -12,7 +12,7 @@ This document describes RDF::Trine::Parser::Turtle version 1.000
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
- my $parser	= RDF::Trine::Parser->new( 'turtle' );
+ my $parser = RDF::Trine::Parser->new( 'turtle' );
  $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION
@@ -53,13 +53,13 @@ BEGIN {
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
-	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
+	$RDF::Trine::Parser::parser_names{ 'turtle' } = __PACKAGE__;
 	my $class										= __PACKAGE__;
 	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
-	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' } = __PACKAGE__;
 	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/turtle';
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
-		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
+		$RDF::Trine::Parser::media_types{ $type } = __PACKAGE__;
 	}
 	
 	$rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
@@ -74,7 +74,7 @@ BEGIN {
 	$r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
 	$r_line					= qr'(?:[^\r\n]+[\r\n]+)(?=[^\r\n])';
 	$r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]';
-	$r_nameStartChar_minus_underscore	= qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
+	$r_nameStartChar_minus_underscore = qr'[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{00010000}-\x{000EFFFF}]';
 	$r_scharacters			= qr'[^"\\]*(?:\\.[^"\\]*)*';
 	$r_ucharacters			= qr'[^>\\]*(?:\\.[^>\\]*)*';
 	$r_booltest				= qr'(?:true|false)\b';
@@ -93,13 +93,13 @@ Returns a new Turtle parser.
 =cut
 
 sub new {
-	my $class	= shift;
+	my $class = shift;
 	my %args	= @_;
 	my $prefix	= '';
 	if (defined($args{ bnode_prefix })) {
-		$prefix	= $args{ bnode_prefix };
+		$prefix = $args{ bnode_prefix };
 	} else {
-		$prefix	= $class->new_bnode_prefix();
+		$prefix = $class->new_bnode_prefix();
 	}
 	my $self	= bless({
 					bindings		=> {},
@@ -131,8 +131,8 @@ sub parse {
 	local($self->{tokens}) = shift;
 	local($self->{handle_triple}) = shift;
 	
-	$self->{tokens}	= '' unless (defined($self->{tokens}));
-	$self->{tokens}	=~ s/^\x{FEFF}//;
+	$self->{tokens} = '' unless (defined($self->{tokens}));
+	$self->{tokens} =~ s/^\x{FEFF}//;
 	
 	$self->_Document();
 }
@@ -146,10 +146,10 @@ C<< $string >> in Turtle syntax.
 
 sub parse_node {
 	my $self	= shift;
-	my $input	= shift;
+	my $input = shift;
 	my $uri		= shift;
 	local($self->{handle_triple});
-	local($self->{baseURI})	= $uri;
+	local($self->{baseURI}) = $uri;
 	$input	=~ s/^\x{FEFF}//;
 	local($self->{tokens})	= $input;
 	return $self->_object();
@@ -157,7 +157,7 @@ sub parse_node {
 
 sub _test {
 	my $self	= shift;
-	my $thing	= shift;
+	my $thing = shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
 		return 1;
 	} else {
@@ -184,7 +184,7 @@ sub _triple {
 		$code->( $st );
 	}
 	
-	my $count	= ++$self->{triple_count};
+	my $count = ++$self->{triple_count};
 }
 
 sub _Document {
@@ -215,7 +215,7 @@ sub _statement {
 		$self->__consume_ws();
 		$self->{tokens} =~ s/^\.// or _error("Expected: .");
 		$self->__consume_ws();
-	}  else {
+	}	 else {
 		$self->_ws();
 	}
 }
@@ -261,7 +261,7 @@ sub _prefixID {
 	if ($self->_prefixName_test()) {
 		$prefix = $self->_prefixName();
 	} else {
-		$prefix	= '';
+		$prefix = '';
 	}
 	
 	$self->{tokens} =~ s/^:// or _error ('Expected: :');
@@ -284,11 +284,11 @@ sub _base {
 	### '@base' ws+ uriref
 	$self->{tokens} =~ s/^\@base// or _error("Expected: \@base");
 	$self->_ws();
-	my $uri	= $self->_uriref();
+	my $uri = $self->_uriref();
 	if (ref($uri)) {
 		$uri	= $uri->uri_value;
 	}
-	$self->{baseURI}	=	$self->_join_uri($self->{baseURI}, $uri);
+	$self->{baseURI}	= $self->_join_uri($self->{baseURI}, $uri);
 }
 
 sub _triples_test {
@@ -303,7 +303,7 @@ sub _triples {
 	my $subj	= $self->_subject();
 	$self->_ws();
 	foreach my $data ($self->_predicateObjectList()) {
-		my ($pred, $objt)	= @$data;
+		my ($pred, $objt) = @$data;
 		$self->_triple( $subj, $pred, $objt );
 	}
 }
@@ -374,7 +374,7 @@ sub _verb {
 sub _subject {
 	my $self	= shift;
 	### resource | blank
-#	if ($self->_resource_test()) {
+# if ($self->_resource_test()) {
 	if (length($self->{tokens}) and $self->{tokens} =~ /^$r_resource_test/) {
 		return $self->_resource();
 	} else {
@@ -400,7 +400,7 @@ sub _predicate {
 sub _object {
 	my $self	= shift;
 	### resource | blank | literal
-#	if ($self->_resource_test()) {
+# if ($self->_resource_test()) {
 	if (length($self->{tokens}) and $self->{tokens} =~ /^$r_resource_test/) {
 		return $self->_resource();
 	} elsif ($self->_blank_test()) {
@@ -414,7 +414,7 @@ sub _literal {
 	my $self	= shift;
 	### quotedString ( '@' language )? | datatypeString | integer | 
 	### double | decimal | boolean
-	### datatypeString = quotedString '^^' resource      
+	### datatypeString = quotedString '^^' resource			 
 	### (so we change this around a bit to make it parsable without a huge 
 	### multiple lookahead)
 	
@@ -536,7 +536,7 @@ sub _blank {
 		my $subj	= $self->__bNode( $self->__generate_bnode_id() );
 		$self->__consume_ws();
 		foreach my $data ($self->_predicateObjectList()) {
-			my ($pred, $objt)	= @$data;
+			my ($pred, $objt) = @$data;
 			$self->_triple( $subj, $pred, $objt );
 		}
 		$self->__consume_ws();
@@ -575,15 +575,15 @@ sub _itemList {
 sub _collection {
 	my $self	= shift;
 	### '(' ws* itemList? ws* ')'
-	my $b	= $self->__bNode( $self->__generate_bnode_id() );
-	my ($this, $rest)	= ($b, undef);
+	my $b = $self->__bNode( $self->__generate_bnode_id() );
+	my ($this, $rest) = ($b, undef);
 	$self->{tokens} =~ s/^\(// or _error("Expected: (");
 	$self->__consume_ws();
 	if ($self->_itemList_test()) {
 #		while (my $objt = $self->_itemList()) {
 		foreach my $objt ($self->_itemList()) {
 			if (defined($rest)) {
-				$this	= $self->__bNode( $self->__generate_bnode_id() );
+				$this = $self->__bNode( $self->__generate_bnode_id() );
 				$self->_triple( $rest, $rdf->rest, $this)
 			}
 			$self->_triple( $this, $rdf->first, $objt );
@@ -628,10 +628,10 @@ sub _resource {
 	my $self	= shift;
 	### uriref | qname
 	if ($self->_uriref_test()) {
-		my $uri	= $self->_uriref();
+		my $uri = $self->_uriref();
 		return $self->__URI($uri, $self->{baseURI});
 	} else {
-		my $qname	= $self->_qname();
+		my $qname = $self->_qname();
 		my $base	= $self->{baseURI};
 		return $self->__URI($qname, $base);
 	}
@@ -681,7 +681,7 @@ sub _uriref {
 	my $self	= shift;
 	### '<' relativeURI '>'
 	$self->{tokens} =~ s/^<// or _error("Expected: <");
-	my $value	= $self->_relativeURI();
+	my $value = $self->_relativeURI();
 	$self->{tokens} =~ s/^>// or _error("Expected: >");
 	# faster unescaping, source: http://search.cpan.org/dist/URI/URI/Escape.pm#uri_unescape($string,...)
 	$value =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
@@ -733,7 +733,7 @@ sub _nameChar {
 	my $self	= shift;
 	### nameStartChar | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | 
 	### [#x203F-#x2040]
-#	if ($self->_nameStartChar_test()) {
+# if ($self->_nameStartChar_test()) {
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {
 		my $nc	= $self->_nameStartChar();
 		return $nc;
@@ -773,7 +773,7 @@ sub _prefixName {
 	}
 	my $nsc = substr($self->{tokens}, 0, $+[0], '');
 	push(@parts, $nsc);
-#	while ($self->_nameChar_test()) {
+# while ($self->_nameChar_test()) {
 	while ($self->{tokens} =~ /^$r_nameChar_test/) {
 		my $nc	= $self->_nameChar();
 		push(@parts, $nc);
@@ -833,7 +833,7 @@ sub _longString_test {
 
 sub _longString {
 	my $self	= shift;
-      # #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
+			# #x22 #x22 #x22 lcharacter* #x22 #x22 #x22
 	$self->{tokens} =~ s/^"""// or _error('Expected: """');
 	unless ($self->{tokens} =~ /^$r_lcharacters/o) {
 		_error("Expected: longString");
@@ -848,23 +848,23 @@ sub _longString {
 
 {
 	my %easy = (
-		q[\\]   =>  qq[\\],
-		r       =>  qq[\r],
-		n       =>  qq[\n],
-		t       =>  qq[\t],
-		q["]    =>  qq["],
+		q[\\]		=>	qq[\\],
+		r				=>	qq[\r],
+		n				=>	qq[\n],
+		t				=>	qq[\t],
+		q["]		=>	qq["],
 	);
 	
 	sub _parse_short {
 		my $self = shift;
-		my $s    = shift;
+		my $s		 = shift;
 		return '' unless length($s);
 
 		$s =~ s{ \\ ( [\\tnr"] | u.{4} | U.{8} ) }{
 			if (exists $easy{$1}) {
 				$easy{$1};
 			} else {
-				my $hex	= substr($1, 1);
+				my $hex = substr($1, 1);
 				die "invalid hexadecimal escape: $hex" unless $hex =~ m{^[0-9A-Fa-f]+$};
 				chr(hex($hex));
 			}
@@ -899,7 +899,7 @@ sub _typed {
 			$value = $value . '.0';
 		}
 	}
-	return RDF::Trine::Node::Literal->new($value, undef, $datatype)
+	return $self->__DatatypedLiteral($value, $datatype)
 }
 
 sub __anonimize_bnode_id {
@@ -908,8 +908,8 @@ sub __anonimize_bnode_id {
 	if (my $aid = $self->{ bnode_map }{ $id }) {
 		return $aid;
 	} else {
-		my $aid	= $self->__generate_bnode_id;
-		$self->{ bnode_map }{ $id }	= $aid;
+		my $aid = $self->__generate_bnode_id;
+		$self->{ bnode_map }{ $id } = $aid;
 		return $aid;
 	}
 }
@@ -939,13 +939,17 @@ sub __Literal {
 
 sub __DatatypedLiteral {
 	my $self	= shift;
-	return RDF::Trine::Node::Literal->new( $_[0], undef, $_[1] )
+	my $l		= RDF::Trine::Node::Literal->new( $_[0], undef, $_[1] );
+	if ($self->{canonicalize}) {
+		$l	= $l->canonicalize;
+	}
+	return $l;
 }
 
 
 sub __startswith {
 	my $self	= shift;
-	my $thing	= shift;
+	my $thing = shift;
 	if (substr($self->{tokens}, 0, length($thing)) eq $thing) {
 		return 1;
 	} else {
@@ -988,7 +992,7 @@ sub _unescape {
 }
 
 sub _error {
-  throw RDF::Trine::Error::ParserError -text => shift;
+	throw RDF::Trine::Error::ParserError -text => shift;
 }
 
 1;
@@ -1004,7 +1008,7 @@ at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
-Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+Gregory Todd Williams	 C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
