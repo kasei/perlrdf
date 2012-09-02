@@ -21,7 +21,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 							     ]});
   isa_ok($store, 'RDF::Trine::Store::Memory');
   is($store->size, 1, "One statement in the model");
-  my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef); 
+  my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef);
   like($it->to_string, qr/Hello World/, 'Contains Hello World string');
 }
 
@@ -39,7 +39,7 @@ my $path	= File::Spec->catfile( $Bin, 'data' );
 							     ]});
   isa_ok($store, 'RDF::Trine::Store::Hexastore');
   is($store->size, 2, "Two statements in the model");
-  my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef); 
+  my $it = $store->get_statements(RDF::Trine::Node::Resource->new('http://example.org/ex#a'), RDF::Trine::Node::Resource->new('http://example.org/ex#b'), undef);
   like($it->to_string, qr/Hello World/, 'Contains Hello World string');
 }
 

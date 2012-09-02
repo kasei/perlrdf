@@ -9,12 +9,12 @@ requires qw(
 	_compare
 );
 
-sub is_node     { 1 } 
-sub is_blank    { 0 } 
-sub is_resource { 0 } 
-sub is_literal  { 0 } 
-sub is_nil      { 0 } 
-sub is_variable { 0 } 
+sub is_node     { 1 }
+sub is_blank    { 0 }
+sub is_resource { 0 }
+sub is_literal  { 0 }
+sub is_nil      { 0 }
+sub is_variable { 0 }
 
 sub as_string { shift->sse }
 

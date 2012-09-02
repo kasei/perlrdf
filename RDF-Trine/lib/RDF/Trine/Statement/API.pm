@@ -42,7 +42,7 @@ sub nodes {
 	map { $self->$_ } $self->node_names
 }
 
-alias construct_args => 'nodes'; 
+alias construct_args => 'nodes';
 
 my $VAR;
 sub BUILDARGS {

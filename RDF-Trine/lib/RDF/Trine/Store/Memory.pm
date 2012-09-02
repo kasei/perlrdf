@@ -170,7 +170,7 @@ sub _new_with_config {
 			$parser->parse_url_into_model( $source->{url}, $model, %args );
 			
 		} elsif ($source->{file}) {
-			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+			open(my $fh, "<:encoding(UTF-8)", $source->{file})
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
 			my $parser = RDF::Trine::Parser->new($source->{syntax});
 			my $model	= RDF::Trine::Model->new( $self );

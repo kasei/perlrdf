@@ -332,9 +332,9 @@ sub as_hashref {
 	my $index = {};
 	while (my $statement = $self->next) {
 		
-		my $s = $statement->subject->isa('RDF::Trine::Node::Blank') ? 
-			('_:'.$statement->subject->blank_identifier) :
-			$statement->subject->uri ;
+		my $s = $statement->subject->isa('RDF::Trine::Node::Blank')
+			? ('_:'.$statement->subject->blank_identifier)
+			: $statement->subject->uri ;
 		my $p = $statement->predicate->uri ;
 		
 		my $o = {};
@@ -347,9 +347,9 @@ sub as_hashref {
 				if $statement->object->has_datatype;
 		} else {
 			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
-				('_:'.$statement->object->blank_identifier) :
-				$statement->object->uri ;
+			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank')
+				? ('_:'.$statement->object->blank_identifier)
+				: $statement->object->uri ;
 		}
 
 		push @{ $index->{$s}->{$p} }, $o;

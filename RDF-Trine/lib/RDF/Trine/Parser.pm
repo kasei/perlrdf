@@ -304,7 +304,7 @@ sub parse_into_model {
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
 
-Parses all data read from the filehandle or file C<< $fh >>, using the 
+Parses all data read from the filehandle or file C<< $fh >>, using the
 given C<< $base_uri >>. For each RDF statement parsed, will call
 C<< $model->add_statement( $statement ) >>.
 

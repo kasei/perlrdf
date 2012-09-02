@@ -449,8 +449,8 @@ sub count_statements {
 
 =item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
 
-Returns an L<iterator|RDF::Trine::Iterator> of all statements matching the specified 
-subject, predicate and objects from the rdf store. Any of the arguments may be undef 
+Returns an L<iterator|RDF::Trine::Iterator> of all statements matching the specified
+subject, predicate and objects from the rdf store. Any of the arguments may be undef
 to match any value.
 
 If three or fewer arguments are given, the statements returned will be matched
@@ -645,7 +645,7 @@ sub _get_pattern {
 
 =item C<< get_contexts >>
 
-Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
+Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing
 the named graphs in the model.
 
 =cut
@@ -823,7 +823,7 @@ sub predicates {
 =item C<< objects ( $subject, $predicate [, $graph ] [, %options ] ) >>
 
 Returns a list of the nodes that appear as the object of statements with the
-specified C<< $subject >> and C<< $predicate >>. Either of the two arguments 
+specified C<< $subject >> and C<< $predicate >>. Either of the two arguments
 may be undef to signify a wildcard. You can further filter objects using the
 C<< %options >> argument. Keys in C<< %options >> indicate the restriction type
 and may be 'type', 'language', or 'datatype'. The value of the 'type' key may be

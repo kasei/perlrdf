@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Types - MooseX::Types for RDF::Trine 
+RDF::Trine::Types - MooseX::Types for RDF::Trine
 
 =head1 VERSION
 
@@ -81,7 +81,7 @@ subtype TrineNode,
     as Object,
     where {$_->DOES('RDF::Trine::Node::API')};
 
-=head3 TrineResource 
+=head3 TrineResource
 
 Coercion delegated to MooseX::Types::URI
 
@@ -242,7 +242,7 @@ coerce (UriStr,
 
 coerce( TrineModel,
     from Undef, via { RDF::Trine::Model->temporary_model },
-    from UriStr, via { 
+    from UriStr, via {
         my $m = TrineModel->coerce;
         RDF::Trine::Parser->parse_url_into_model( $_, $m );
         return $m;

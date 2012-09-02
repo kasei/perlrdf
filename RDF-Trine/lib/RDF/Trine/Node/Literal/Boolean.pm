@@ -84,7 +84,7 @@ Returns a canonicalized literal C<< "false"^^xsd:boolean >>.
 
 =over
 
-=item C<< truth >> 
+=item C<< truth >>
 
 Returns true if the literal is equivalent to C<< "true"^^xsd:boolean >>.
 

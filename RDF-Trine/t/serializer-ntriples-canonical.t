@@ -9,7 +9,7 @@ use RDF::Trine::Parser;
 
 my $data = <<"DATA";
 # Hello
-_:a <eg:zee> "why" . 
+_:a <eg:zee> "why" .
 _:a <eg:prop> "val" .
 <eg:b> <eg:prop> _:b .
 _:b3 <eg:prop> "val" .

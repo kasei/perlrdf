@@ -46,7 +46,7 @@ END
 }
 
 
-### 
+###
 {
 	my $foaf_a	= <<'END';
 	@prefix foaf: <http://xmlns.com/foaf/0.1/> .

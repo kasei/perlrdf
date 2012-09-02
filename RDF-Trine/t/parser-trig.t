@@ -30,7 +30,7 @@ isa_ok( $parser, 'RDF::Trine::Parser::TriG' );
 @prefix ex: <http://www.example.org/vocabulary#> .
 @prefix : <http://www.example.org/exampleDocument#> .
 :G1 = { :Monica a ex:Person ;
-                 ex:name "Monica Murphy" ;      
+                 ex:name "Monica Murphy" ;
                  ex:homepage <http://www.monicamurphy.org> ;
                  ex:email <mailto:monica@monicamurphy.org> ;
                  ex:hasSkill ex:Management ,
@@ -59,7 +59,7 @@ END
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix ex: <http://www.example.org/vocabulary#> .
 @prefix : <http://www.example.org/exampleDocument#> .
-:G1 { :Monica ex:name "Monica Murphy" .      
+:G1 { :Monica ex:name "Monica Murphy" .
       :Monica ex:homepage <http://www.monicamurphy.org> .
       :Monica ex:email <mailto:monica@monicamurphy.org> .
       :Monica ex:hasSkill ex:Management }
@@ -69,12 +69,12 @@ END
 
 :G3 { :G1 swp:assertedBy _:w1 .
       _:w1 swp:authority :Chris .
-      _:w1 dc:date "2003-10-02"^^xsd:date .   
+      _:w1 dc:date "2003-10-02"^^xsd:date .
       :G2 swp:quotedBy _:w2 .
       :G3 swp:assertedBy _:w2 .
       _:w2 dc:date "2003-09-03"^^xsd:date .
       _:w2 swp:authority :Chris .
-      :Chris rdf:type ex:Person .  
+      :Chris rdf:type ex:Person .
       :Chris ex:email <mailto:chris@bizer.de> }
 END
 	$parser->parse_into_model(undef, $trig, $model);
@@ -117,20 +117,20 @@ END
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 # default graph
-    { 
-      <http://example.org/bob> dc:publisher "Bob" . 
+    {
+      <http://example.org/bob> dc:publisher "Bob" .
       <http://example.org/alice> dc:publisher "Alice" .
     }
 
-<http://example.org/bob> 
-    { 
-       _:a foaf:name "Bob" . 
+<http://example.org/bob>
+    {
+       _:a foaf:name "Bob" .
        _:a foaf:mbox <mailto:bob@oldcorp.example.org> .
     }
  
 <http://example.org/alice>
-    { 
-       _:a foaf:name "Alice" . 
+    {
+       _:a foaf:name "Alice" .
        _:a foaf:mbox <mailto:alice@work.example.org> .
     }
 END
@@ -172,14 +172,14 @@ END
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix ex: <http://www.example.org/vocabulary#> .
 # default graph
-    { 
-      <http://example.org/bob> dc:publisher "Bob" . 
+    {
+      <http://example.org/bob> dc:publisher "Bob" .
       <http://example.org/alice> dc:publisher "Alice" .
     }
 
-<http://example.org/bob> 
-    { 
-       _:a foaf:name "Bob" . 
+<http://example.org/bob>
+    {
+       _:a foaf:name "Bob" .
        _:a ex:likes "Blåbærsyltetøy"@no .
     }
 

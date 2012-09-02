@@ -412,10 +412,10 @@ sub _object {
 
 sub _literal {
 	my $self	= shift;
-	### quotedString ( '@' language )? | datatypeString | integer | 
+	### quotedString ( '@' language )? | datatypeString | integer |
 	### double | decimal | boolean
 	### datatypeString = quotedString '^^' resource			 
-	### (so we change this around a bit to make it parsable without a huge 
+	### (so we change this around a bit to make it parsable without a huge
 	### multiple lookahead)
 	
 	if ($self->_quotedString_test()) {
@@ -451,7 +451,7 @@ sub _double_test {
 
 sub _double {
 	my $self	= shift;
-	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent 
+	### ('-' | '+') ? ( [0-9]+ '.' [0-9]* exponent | '.' ([0-9])+ exponent
 	### | ([0-9])+ exponent )
 	### exponent = [eE] ('-' | '+')? [0-9]+
 	unless ($self->{tokens} =~ /^$r_double/o) {
@@ -708,9 +708,9 @@ sub _nameStartChar_test {
 
 sub _nameStartChar {
 	my $self	= shift;
-	### [A-Z] | "_" | [a-z] | [#x00C0-#x00D6] | [#x00D8-#x00F6] | 
-	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D] 
-	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | 
+	### [A-Z] | "_" | [a-z] | [#x00C0-#x00D6] | [#x00D8-#x00F6] |
+	### [#x00F8-#x02FF] | [#x0370-#x037D] | [#x037F-#x1FFF] | [#x200C-#x200D]
+	### | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |
 	### [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 	unless ($self->{tokens} =~ /^$r_nameStartChar/o) {
 		_error("Expected: nameStartChar");
@@ -731,7 +731,7 @@ sub _nameChar_test {
 
 sub _nameChar {
 	my $self	= shift;
-	### nameStartChar | '-' | [0-9] | #x00B7 | [#x0300-#x036F] | 
+	### nameStartChar | '-' | [0-9] | #x00B7 | [#x0300-#x036F] |
 	### [#x203F-#x2040]
 # if ($self->_nameStartChar_test()) {
 	if ($self->{tokens} =~ /^$r_nameStartChar/) {

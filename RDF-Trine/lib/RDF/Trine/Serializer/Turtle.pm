@@ -468,7 +468,7 @@ sub _check_valid_rdf_list {
 		
 		if (not($head->equal( $node ))) {
 			# It's OK for the head of a list to have any outgoing links (e.g. (1 2) ex:p "o"
-			# but internal list elements should have only the expected links of rdf:first, 
+			# but internal list elements should have only the expected links of rdf:first,
 			# rdf:rest, and optionally an rdf:type rdf:List
 			my $out		= $model->count_statements( $node );
 			unless ($out == 2 or $out == 3) {

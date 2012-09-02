@@ -69,7 +69,7 @@ The valid key-values used in C<< %options >> are specific to a particular
 serializer implementation. For serializers that support namespace declarations
 (to allow more concise serialization), use C<< namespaces => \%namespaces >> in
 C<< %options >>, where the keys of C<< %namespaces >> are namespace names and
-the values are (partial) URIs. For serializers that support base URI declarations, 
+the values are (partial) URIs. For serializers that support base URI declarations,
 use C<< base_uri => $base_uri >> .
 
 =cut
@@ -94,7 +94,7 @@ RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.  If
 the C<< 'request_headers' >> key-value is supplied, the C<<
 $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.  The
 option C<< 'restrict' >>, set to a list of serializer names, can be
-used to limit the serializers to choose from. Finally, an C<<'extends' >> 
+used to limit the serializers to choose from. Finally, an C<<'extends' >>
 option can be set to a hashref that contains MIME-types
 as keys and a custom variant as value. This will enable the user to
 use this negotiator to return a type that isn't supported by any

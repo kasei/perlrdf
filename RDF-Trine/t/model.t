@@ -292,7 +292,7 @@ foreach my $file (@$remove) {
 	}
 	my @objs	= $model->objects( $p, undef, language => 'en' );
 	ok( $objs[0]->equal( $langval ), 'expected integer value as object' );
-	foreach my $dt ( $xsd->int, $xsd->int->uri_value ) { 
+	foreach my $dt ( $xsd->int, $xsd->int->uri_value ) {
 		@objs	= $model->objects( $p, undef, datatype => $dt );
 		ok( $objs[0]->equal( $intval ), 'expected integer value as object' );
 	}

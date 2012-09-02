@@ -46,7 +46,7 @@ sub test_model
 	ex:list3 [
 		a rdf:List ;
 		rdf:first "a" ;
-		rdf:rest [ 
+		rdf:rest [
 			a rdf:List ;
 			rdf:first "b" ;
 			ex:first "b" ;
