@@ -191,8 +191,8 @@ sub _get_statements_triple {
 	my %seen;
 	my $sub		= sub {
 		while (1) {
-			return undef unless $iter;
-			return undef if $iter->end;
+			return unless $iter;
+			return if $iter->end;
 			my $st	= $iter->current;
 			if ($seen{ $st->as_string }++) {
 				$iter->next;
@@ -221,8 +221,8 @@ sub _get_statements_quad {
 	my $iter	= $self->_model->find_statements( $st, $ctx );
 	my $nil		= RDF::Trine::Node::Nil->new();
 	my $sub		= sub {
-		return undef unless $iter;
-		return undef if $iter->end;
+		return unless $iter;
+		return if $iter->end;
 		my $st	= $iter->current;
 		my $c	= $iter->context;
 		my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
@@ -400,9 +400,9 @@ sub _model {
 	return $self->{model};
 }
 
-sub _cast_to_redland ($) {
+sub _cast_to_redland {
 	my $node	= shift;
-	return undef unless (blessed($node));
+	return unless (blessed($node));
 	if ($node->isa('RDF::Trine::Statement')) {
 		my @nodes	= map { _cast_to_redland( $_ ) } $node->nodes;
 		return RDF::Redland::Statement->new( @nodes );
@@ -418,13 +418,13 @@ sub _cast_to_redland ($) {
 	} elsif ($node->isa('RDF::Trine::Node::Nil')) {
 		return RDF::Redland::Node->new_from_uri( $NIL_TAG );
 	} else {
-		return undef;
+		return;
 	}
 }
 
-sub _cast_to_local ($) {
+sub _cast_to_local {
 	my $node	= shift;
-	return undef unless (blessed($node));
+	return unless (blessed($node));
 	my $type	= $node->type;
 	if ($type == $RDF::Redland::Node::Type_Resource) {
 		my $uri	= $node->uri->as_string;
@@ -443,7 +443,7 @@ sub _cast_to_local ($) {
 					: undef;
 		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
 	} else {
-		return undef;
+		return;
 	}
 }
 

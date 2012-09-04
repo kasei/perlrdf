@@ -70,7 +70,7 @@ sub _install_namespaces {
 			? XML::NamespaceFactory->new('http://www.w3.org/2001/XMLSchema#')
 			: XML::CommonNS->uri( uc($name) );
 		my $ns	= $class->new( "$uri" );
-		no strict 'refs';
+		no strict 'refs';	## no critic (ProhibitNoStrict)
 		*{ "${pkg}::${name}" }	= \$ns;
 	}
 }

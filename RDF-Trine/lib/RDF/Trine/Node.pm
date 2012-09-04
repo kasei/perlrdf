@@ -47,7 +47,7 @@ encoded literal.
 
 =cut
 
-sub ntriples_escape ($) {
+sub ntriples_escape {
 	my $class	= __PACKAGE__;
 	return $class->_unicode_escape( @_ );
 }

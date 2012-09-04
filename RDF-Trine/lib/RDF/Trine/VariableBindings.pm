@@ -110,7 +110,7 @@ sub join {
 		next unless (defined($val_a) and defined($val_b));
 		my $equal	= (refaddr($val_a) == refaddr($val_b)) || $val_a->equal( $val_b );
 		unless ($equal) {
-			return undef;
+			return;
 		}
 	}
 	

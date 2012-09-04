@@ -376,16 +376,16 @@ Returns a string representation of C<$node> for use in an XML serialization.
 
 =cut
 
-sub format_node_xml ($$$$) {
+sub format_node_xml {
 	my $self	= shift;
 # 	my $bridge	= shift;
-# 	return undef unless ($bridge);
+# 	return unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;
 	my $node_label;
 	
-	if(!defined $node) {
+	if (!defined $node) {
 		return '';
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
@@ -497,7 +497,7 @@ sub _stream {
 
 =cut
 
-sub sgrep (&$) {
+sub sgrep (&$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -507,11 +507,11 @@ sub sgrep (&$) {
 	my $next;
 	
 	$next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;
@@ -539,7 +539,7 @@ sub sgrep (&$) {
 
 =cut
 
-sub smap (&$;$$$) {
+sub smap (&$;$$$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -554,7 +554,7 @@ sub smap (&$;$$$) {
 	
 	my $open	= 1;
 	my $next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		if (@_ and $_[0]) {
 			$stream->close;
 			$open	= 0;
@@ -562,7 +562,7 @@ sub smap (&$;$$$) {
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;
@@ -577,7 +577,7 @@ sub smap (&$;$$$) {
 
 =cut
 
-sub swatch (&$) {
+sub swatch (&$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -585,7 +585,7 @@ sub swatch (&$) {
 	
 	my $open	= 1;
 	my $next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		if (@_ and $_[0]) {
 			$stream->close;
 			$open	= 0;
@@ -593,7 +593,7 @@ sub swatch (&$) {
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;

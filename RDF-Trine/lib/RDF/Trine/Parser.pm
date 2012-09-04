@@ -367,7 +367,7 @@ sub parse_file {
 			my $pclass = $self->guess_parser_by_filename( $filename );
 			$self = $pclass->new() if ($pclass and $pclass->can('new'));
 		}
-		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 
 	if ($self and $self->can('parse')) {
@@ -399,7 +399,6 @@ sub new_bnode_prefix {
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;
 	} elsif (defined($UUID::Tiny::VERSION) && ($] < 5.014000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
-		no strict 'subs';
 		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;

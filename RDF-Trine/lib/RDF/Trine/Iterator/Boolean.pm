@@ -125,7 +125,6 @@ Prints an XML serialization of the stream data to the filehandle $fh.
 sub print_xml {
 	my $self	= shift;
 	my $fh		= shift;
-	no strict 'refs';
 	print {$fh} $self->as_xml;
 }
 

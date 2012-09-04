@@ -605,7 +605,7 @@ sub _get_pattern {
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
