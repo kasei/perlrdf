@@ -1,10 +1,8 @@
 package RDF::Trine::Node::Literal::Boolean;
 
 use utf8;
-use Moose;
+use Moose::Role;
 use namespace::autoclean;
-
-extends 'RDF::Trine::Node::Literal';
 
 with qw(
 	RDF::Trine::Node::API::Canonicalize
@@ -49,8 +47,6 @@ RDF::Trine::Node::Literal::_register_datatype(
 	q<http://www.w3.org/2001/XMLSchema#boolean>,
 	__PACKAGE__,
 );
-
-__PACKAGE__->meta->make_immutable;
 
 1;
 

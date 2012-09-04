@@ -1,10 +1,8 @@
 package RDF::Trine::Node::Literal::Integer;
 
 use utf8;
-use Moose;
+use Moose::Role;
 use namespace::autoclean;
-
-extends 'RDF::Trine::Node::Literal';
 
 with qw(
 	RDF::Trine::Node::API::Canonicalize
@@ -41,9 +39,8 @@ RDF::Trine::Node::Literal::_register_datatype(
 	__PACKAGE__,
 );
 
-__PACKAGE__->meta->make_immutable;
-
 1;
+
 __END__
 
 =head1 NAME

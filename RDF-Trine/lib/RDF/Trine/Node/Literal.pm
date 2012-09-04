@@ -2,6 +2,7 @@ package RDF::Trine::Node::Literal;
 
 use utf8;
 use Moose;
+use Moose::Util qw(apply_all_roles);
 use MooseX::Aliases;
 use RDF::Trine::Types qw(UriStr LanguageTag);
 use MooseX::Types::Moose qw(Str Bool);
@@ -24,7 +25,10 @@ has datatype => (
 	coerce    => 1,
 );
 
-has '+value' => (writer => '_set_value');
+has '+value' => (
+	writer => '_set_value',
+	default	=> '',
+);
 has '_canonicalize_on_construction' => (
 	is        => 'ro',
 	isa       => Bool,
@@ -85,7 +89,7 @@ sub BUILD {
 	) if $self->has_datatype && $self->has_language;
 	
 	if ($self->has_datatype and my $r = $SUBCLASS{ $self->datatype }) {
-		$r->meta->rebless_instance($self);
+		apply_all_roles($self, $r);
 	}
 	
 	if ($self->_canonicalize_on_construction and $self->does('RDF::Trine::Node::API::Canonicalize')) {
@@ -149,14 +153,38 @@ sub _compare {
 	return  0;
 }
 
+sub numeric_value {
+	my $self	= shift;
+	warn "numeric value on $self";
+	if ($self->is_numeric_type) {
+		my $value	= $self->literal_value;
+		if (looks_like_number($value)) {
+			my $v	= 0 + eval "$value";	## no critic (ProhibitStringyEval)
+			return $v;
+		} else {
+			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
+		}
+	} elsif (not $self->has_datatype) {
+		if (looks_like_number($self->literal_value)) {
+			return 0+$self->literal_value;
+		} else {
+			return;
+		}
+	} elsif ($self->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		return ($self->literal_value eq 'true') ? 1 : 0;
+	} else {
+		return;
+	}
+}
+
 # stub stuff for subclasses
 sub is_valid_lexical_form     { '0E0' }  # 0 but true
 sub canonical_lexical_form    { shift->value }
 sub is_canonical_lexical_form { '0E0' }
 sub canonicalize              { +shift }
-sub numeric_value             { +undef }
 sub does_canonicalization     { 0 }
 sub does_lexical_validation   { 0 }
+
 
 1;
 

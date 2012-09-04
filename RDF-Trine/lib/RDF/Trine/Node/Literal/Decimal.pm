@@ -1,10 +1,8 @@
 package RDF::Trine::Node::Literal::Decimal;
 
 use utf8;
-use Moose;
+use Moose::Role;
 use namespace::autoclean;
-
-extends 'RDF::Trine::Node::Literal';
 
 with qw(
 	RDF::Trine::Node::API::Canonicalize
@@ -59,15 +57,16 @@ sub _build_canonical_lexical_form {
 }
 
 sub numeric_value {
-	0 + shift->canonical_lexical_form;
+	my $self	= shift;
+	my $v		= $self->canonical_lexical_form;
+	warn "canonical value: $v";
+	return 0 + $v
 }
 
 RDF::Trine::Node::Literal::_register_datatype(
 	q<http://www.w3.org/2001/XMLSchema#decimal>,
 	__PACKAGE__,
 );
-
-__PACKAGE__->meta->make_immutable;
 
 1;
 

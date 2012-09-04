@@ -95,10 +95,11 @@ sub parse {
 					} elsif ($type eq 'typed-literal') {
 						my $data	= $value->{value};
 						my $dt		= $value->{datatype};
+						my $node	= RDF::Trine::Node::Literal->new( $data, undef, $dt );
 						if ($self->{canonicalize}) {
-							$data	= RDF::Trine::Node::Literal->canonicalize_literal_value( $data, $dt, 0 );
+							$node	= $node->canonicalize;
 						}
-						$data{ $v }	= RDF::Trine::Node::Literal->new( $data, undef, $dt );
+						$data{ $v }	= $node;
 					} else {
 						warn Dumper($data, $b);
 						throw RDF::Trine::Error -text => "Unknown node type $type during parsing of SPARQL JSON Results";
