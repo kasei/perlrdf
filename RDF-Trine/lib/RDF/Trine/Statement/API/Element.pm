@@ -18,7 +18,7 @@
 		
 		has $p->name => (
 			is       => 'rw',       # :-(
-			isa      => 'TrineNode',
+			isa      => TrineNode,
 			required => $p->require,
 		);
 	}
