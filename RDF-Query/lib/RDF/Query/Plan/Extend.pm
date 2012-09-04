@@ -129,7 +129,7 @@ sub next {
 				$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
 			} otherwise {
 				my $e	= shift;
-				warn Dumper($e);
+				warn 'exception caught in Extend(): ' . Dumper($e);
 			};
 		}
 		next unless ($ok);
@@ -258,10 +258,7 @@ sub explain {
 	$string		.= "${indent}${s}vars:\n";
 	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
 	my @exprs	= @{$self->[3]};
-	use Data::Dumper;
-	warn Dumper(\@vars, \@exprs);
 	foreach my $e (@vars, @exprs) {
-		warn $e;
 		$string		.= $e->explain($s, $count+2);
 	}
 	$string		.= $self->pattern->explain( $s, $count+1 );

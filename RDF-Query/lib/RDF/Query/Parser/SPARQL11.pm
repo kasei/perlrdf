@@ -1625,9 +1625,23 @@ sub __handle_GraphPatternNotTriples {
  		my ($table)	= @args;
 		$self->_add_patterns( $table );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
- 		my ($bind, @first)	= @args;
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
-		$self->_add_patterns( @first, $bind );
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+
+		my $alias		= $args[0];
+		my %in_scope	= map { $_ => 1 } $ggp->potentially_bound();
+		my $var			= $alias->name;
+		if (exists $in_scope{ $var }) {
+			throw RDF::Query::Error::QueryPatternError -text => "Syntax error: BIND used with variable already in scope";
+		}
+		
+		my $bind	= $class->new( $ggp, [$alias] );
+		$self->_add_patterns( $bind );
 	} elsif ($class eq 'RDF::Query::Algebra::Service') {
 		my ($endpoint, $pattern, $silent)	= @args;
 		if ($endpoint->isa('RDF::Query::Node::Variable')) {
@@ -1907,29 +1921,11 @@ sub _InlineDataClause {
 
 sub _Bind {
 	my $self	= shift;
-	my $cont	= $self->_pop_pattern_container || [];
-	my $ggp;
-	my @first;
-	if (scalar(@$cont) == 1 and blessed($cont->[0]) and $cont->[0]->isa('RDF::Query::Algebra::GroupGraphPattern')) {
-		push(@first, @$cont);
-		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-	} else {
-		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
-	}
 	$self->_eat(qr/BIND/i);
 	$self->__consume_ws_opt;
 	$self->_BrackettedAliasExpression;
 	my ($alias)	= splice(@{ $self->{stack} });
-
-	my %in_scope	= map { $_ => 1 } $ggp->potentially_bound();
-	my $var			= $alias->name;
-	if (exists $in_scope{ $var }) {
-		throw RDF::Query::Error::QueryPatternError -text => "Syntax error: BIND used with variable already in scope";
-	}
-	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
-	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind, @first] );
-#	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
-#	$self->_add_stack( $opt );
+	$self->_add_stack( ['RDF::Query::Algebra::Extend', $alias] );
 }
 
 sub _ServiceGraphPattern {
