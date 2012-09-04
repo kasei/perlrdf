@@ -6,11 +6,11 @@
 	use MooseX::Role::Parameterized;
 	
 	parameter name => (
-		isa      => Str,
+		isa      => 'Str',
 		required => 1,
 	);
 	parameter require => (
-		isa      => Bool,
+		isa      => 'Bool',
 		default  => 1,
 	);
 	role {
@@ -18,7 +18,7 @@
 		
 		has $p->name => (
 			is       => 'rw',       # :-(
-			isa      => TrineNode,
+			isa      => 'TrineNode',
 			required => $p->require,
 		);
 	}
