@@ -50,7 +50,7 @@ sub new {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
-	return bless( [ @triples ] );
+	return bless( [ @triples ], $class );
 }
 
 =item C<< construct_args >>

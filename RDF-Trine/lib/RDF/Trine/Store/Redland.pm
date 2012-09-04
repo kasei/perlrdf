@@ -190,8 +190,8 @@ sub _get_statements_triple {
 	my %seen;
 	my $sub		= sub {
 		while (1) {
-			return undef unless $iter;
-			return undef if $iter->end;
+			return unless $iter;
+			return if $iter->end;
 			my $st	= $iter->current;
 			if ($seen{ $st->as_string }++) {
 				$iter->next;
@@ -303,7 +303,7 @@ sub _model {
 	return $self->{model};
 }
 
-sub _cast_to_redland ($) {
+sub _cast_to_redland {
 	my $node	= shift;
 	return undef unless (blessed($node));
 	if ($node->DOES('RDF::Trine::Statement::API')) {
@@ -321,13 +321,13 @@ sub _cast_to_redland ($) {
 	} elsif ($node->isa('RDF::Trine::Node::Nil')) {
 		return RDF::Redland::Node->new_from_uri( $NIL_TAG );
 	} else {
-		return undef;
+		return;
 	}
 }
 
-sub _cast_to_local ($) {
+sub _cast_to_local {
 	my $node	= shift;
-	return undef unless (blessed($node));
+	return unless (blessed($node));
 	my $type	= $node->type;
 	if ($type == $RDF::Redland::Node::Type_Resource) {
 		my $uri	= $node->uri->as_string;
@@ -350,7 +350,7 @@ sub _cast_to_local ($) {
 		}
 		return RDF::Trine::Node::Literal->new( $value, $lang, $dt );
 	} else {
-		return undef;
+		return;
 	}
 }
 

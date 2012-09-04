@@ -163,7 +163,7 @@ sub init {
 	
 	unless ($self->_table_exists("Literals")) {
 		$dbh->begin_work;
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Literals (
 				ID bigint unsigned PRIMARY KEY,
 				Value longtext NOT NULL,
@@ -172,19 +172,19 @@ sub init {
 			) CHARACTER SET utf8 COLLATE utf8_bin;
 END
 
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Resources (
 				ID bigint unsigned PRIMARY KEY,
 				URI text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Bnodes (
 				ID bigint unsigned PRIMARY KEY,
 				Name text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Models (
 				ID bigint unsigned PRIMARY KEY,
 				Name text NOT NULL
@@ -194,7 +194,7 @@ END
 	}
 
 	unless ($self->_table_exists("Statements${id}")) {
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Statements${id} (
 				Subject bigint unsigned NOT NULL,
 				Predicate bigint unsigned NOT NULL,
@@ -204,15 +204,15 @@ END
 			);
 END
 
-# 		$dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
+# 		$dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return };
 
 
-#		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+#		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return };
 
-# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	
 		$dbh->commit;

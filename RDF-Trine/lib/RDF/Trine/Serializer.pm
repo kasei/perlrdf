@@ -172,7 +172,8 @@ sub media_types {
 	while (my($type, $sclass) = each(%media_types)) {
 		push(@list, $type) if ($sclass eq $class);
 	}
-	return sort @list;
+	my @types	= sort @list;
+	return @types;
 }
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
@@ -190,7 +191,7 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>:utf8', \$string );
+	open( my $fh, '>:encoding(UTF-8)', \$string );
 	$self->serialize_model_to_file( $fh, $model );
 	close($fh);
 	return $string;

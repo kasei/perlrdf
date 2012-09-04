@@ -91,7 +91,7 @@ sub parse {
 	my $base	= shift;
 	my $string	= shift;
 	my $handler	= shift;
-	open( my $fh, '<:utf8', \$string );
+	open( my $fh, '<:encoding(UTF-8)', \$string );
 	return $self->parse_file( $base, $fh, $handler );
 }
 
@@ -123,7 +123,7 @@ sub parse_file {
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
-		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 	
 	while (<$fh>) {

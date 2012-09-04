@@ -285,7 +285,28 @@ If the canonicity cannot be determined (e.g. unknown datatype) then returns
 the string "0E0" which evaluates to true in a boolean context, but 0 in a
 numeric context.
 
-=item C<< is_numeric_datatype >>
+sub numeric_value {
+	my $self	= shift;
+	if ($self->is_numeric_type) {
+		my $value	= $self->literal_value;
+		if (looks_like_number($value)) {
+			my $v	= 0 + eval "$value";	## no critic (ProhibitStringyEval)
+			return $v;
+		} else {
+			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
+		}
+	} elsif (not $self->has_datatype) {
+		if (looks_like_number($self->literal_value)) {
+			return 0+$self->literal_value;
+		} else {
+			return;
+		}
+	} elsif ($self->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+		return ($self->literal_value eq 'true') ? 1 : 0;
+	} else {
+		return;
+	}
+}
 
 Returns true if the datatype URI is one of the recognised numeric datatypes
 from XML Schema.

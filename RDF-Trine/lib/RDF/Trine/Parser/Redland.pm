@@ -96,10 +96,12 @@ BEGIN {
 	}
 	
 	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		## no critic
 		eval "use RDF::Redland 1.000701;";
 		unless ($@) {
 			$HAVE_REDLAND_PARSER	= 1;
 		}
+		## use critic
 	}
 }
 
