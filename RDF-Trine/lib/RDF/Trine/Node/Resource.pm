@@ -35,17 +35,21 @@ with 'RDF::Trine::Node::API::RDFNode';
 alias $_ => 'value' for qw(uri uri_value);
 
 around BUILDARGS => sub {
-	my $orig = shift;
-	my $self = shift;
-	if (@_==2 and not ref $_[0] eq 'HASH') {
-		my $tmp = $self->new_with_base(@_);
+	my $orig	= shift;
+	my $self	= shift;
+	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('URI')) {
+		$uri	= $uri->as_string;
+	}
+	if (@_==1 and not ref $uri eq 'HASH') {
+		my $tmp = $self->new_with_base($uri, @_);
 		return +{ %$tmp }; # !!!
 	}
-	if (@_==1 and not ref $_[0] eq 'HASH') {
-		return +{ value => $_[0] }
+	if (@_==0 and not ref $uri eq 'HASH') {
+		return +{ value => $uri }
 	}
-	if (@_==1 and ref $_[0] eq 'HASH') {
-		return $_[0];
+	if (@_==0 and ref $uri eq 'HASH') {
+		return $uri;
 	}
 	my %hash = @_;
 	return \%hash;
