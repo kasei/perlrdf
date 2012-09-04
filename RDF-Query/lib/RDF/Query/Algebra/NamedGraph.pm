@@ -209,8 +209,8 @@ sub as_spin {
 	
 	my $ng		= RDF::Query::Node::Blank->new();
 	my $list	= $model->add_list( @t );
-	$model->add_statement( RDF::Trine::Statement->new($ng, $rdf->type, $spin->NamedGraph) );
-	$model->add_statement( RDF::Trine::Statement->new($ng, $spin->elements, $list) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($ng, $rdf->type, $spin->NamedGraph) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($ng, $spin->elements, $list) );
 	
 	return $ng;
 }

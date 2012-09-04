@@ -230,7 +230,7 @@ sub nodes {
 
 =item C<< triple >>
 
-Returns a RDF::Trine::Statement object representing the triple pattern this plan will return.
+Returns a RDF::Trine::Statement::Triple object representing the triple pattern this plan will return.
 
 =cut
 
@@ -240,7 +240,7 @@ sub triple {
 	if ($self->[2]) {
 		return RDF::Trine::Statement::Quad->new( @nodes );
 	} else {
-		return RDF::Trine::Statement->new( @nodes );
+		return RDF::Trine::Statement::Triple->new( @nodes );
 	}
 }
 

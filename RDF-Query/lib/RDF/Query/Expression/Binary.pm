@@ -163,14 +163,17 @@ sub evaluate {
 			throw RDF::Query::Error::ExecutionError -text => "Numeric binary operator '$op' with non-numeric data";
 		}
 	} elsif ($op =~ m#^([<>]=?)|!?=$#) {
-		my @types	= qw(RDF::Query::Node::Literal RDF::Query::Node::Resource RDF::Query::Node::Blank);
+		my @types	= qw(RDF::Trine::Node::Literal RDF::Trine::Node::Resource RDF::Trine::Node::Blank);
 		
 		if ($op =~ /[<>]/) {
 			# if it's a relational operation other than equality testing,
 			# the two nodes must be of the same type.
 			my $ok		= 0;
 			foreach my $type (@types) {
-				$ok	||= 1 if ($lhs->isa($type) and $rhs->isa($type));
+				if ($lhs->isa($type) and $rhs->isa($type)) {
+					warn "nodes are both of type $type";
+					$ok	||= 1;
+				}
 			}
 			if (not($ok) and not($RDF::Query::Node::Literal::LAZY_COMPARISONS)) {
 				throw RDF::Query::Error::TypeError -text => "Attempt to compare two nodes of different types.";

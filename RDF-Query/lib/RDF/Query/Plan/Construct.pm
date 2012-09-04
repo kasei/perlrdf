@@ -135,7 +135,7 @@ sub next {
 				}
 			}
 			next unless ($ok);
-			my $st	= RDF::Trine::Statement->new( @triple );
+			my $st	= RDF::Trine::Statement::Triple->new( @triple );
 			unless ($self->[0]{seen}{ $st->as_string }++) {
 				push(@{ $self->[0]{triples} }, $st);
 			}

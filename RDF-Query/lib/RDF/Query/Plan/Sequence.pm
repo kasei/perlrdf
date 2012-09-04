@@ -25,7 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Scalar::Util qw(blessed);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::API;
 
 ######################################################################
 

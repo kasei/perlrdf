@@ -16,7 +16,7 @@ package RDF::Query::Algebra::Triple;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Algebra RDF::Trine::Statement);
+use base qw(RDF::Query::Algebra RDF::Trine::Statement::Triple);
 
 use Data::Dumper;
 use Log::Log4perl;
@@ -134,9 +134,9 @@ sub as_spin {
 		}
 	}
 	
-	$model->add_statement( RDF::Trine::Statement->new($t, $spin->subject, $nodes[0]) );
-	$model->add_statement( RDF::Trine::Statement->new($t, $spin->predicate, $nodes[1]) );
-	$model->add_statement( RDF::Trine::Statement->new($t, $spin->object, $nodes[2]) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($t, $spin->subject, $nodes[0]) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($t, $spin->predicate, $nodes[1]) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($t, $spin->object, $nodes[2]) );
 	return $t;
 }
 
@@ -162,7 +162,7 @@ Returns true if the triple subsumes the pattern, false otherwise.
 sub subsumes {
 	my $self	= shift;
 	my $pattern	= shift;
-	return 0 unless ($pattern->isa('RDF::Trine::Statement'));
+	return 0 unless ($pattern->does('RDF::Trine::Statement::API'));
 	foreach my $method (@node_methods) {
 		my $snode	= $self->$method();
 		next if ($snode->isa('RDF::Trine::Node::Variable'));

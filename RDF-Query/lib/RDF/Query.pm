@@ -1026,7 +1026,7 @@ sub var_or_expr_value {
 		return $v->evaluate( $self, $bound, $ctx );
 	} elsif ($v->isa('RDF::Trine::Node::Variable')) {
 		return $bound->{ $v->name };
-	} elsif ($v->isa('RDF::Query::Node')) {
+	} elsif ($v->does('RDF::Trine::Node::API')) {
 		return $v;
 	} else {
 		Carp::cluck "not an expression or node value in var_or_expr_value: " . Dumper($v, $bound);

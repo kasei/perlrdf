@@ -39,13 +39,14 @@ use HTTP::Message::PSGI;
 $RDF::Query::Plan::PLAN_CLASSES{'service'}	= 'Test::RDF::Query::Plan::Service';
 
 ################################################################################
-# Log::Log4perl::init( \q[
+Log::Log4perl::init( \q[
+	log4perl.category.rdf.query.expression.binary	= TRACE, Screen
 # 	log4perl.category.rdf.query.plan.service		= TRACE, Screen
-# # 	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
-# 	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
-# 	log4perl.appender.Screen.stderr			= 0
-# 	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
-# ] );
+# 	log4perl.category.rdf.query.plan.join.pushdownnestedloop		= TRACE, Screen
+	log4perl.appender.Screen				= Log::Log4perl::Appender::Screen
+	log4perl.appender.Screen.stderr			= 0
+	log4perl.appender.Screen.layout			= Log::Log4perl::Layout::SimpleLayout
+] );
 ################################################################################
 
 our $debug				= 0;
@@ -423,7 +424,7 @@ sub query_eval_test {
 		#	warn "comparing results...";
 			compare_results( $expected, $actual, $earl, $test->as_string, \$comment );
 		};
-		warn $@ if ($@);
+		warn Dumper($@) if ($@);
 		if ($ok) {
 			earl_pass_test( $earl, $test );
 		} else {
@@ -493,6 +494,7 @@ sub get_actual_results {
 sub get_expected_results {
 	my $file		= shift;
 	my $type		= shift;
+	Carp::confess unless defined($type);	# XXX
 	
 	my $testns	= RDF::Trine::Namespace->new('http://example.com/test-results#');
 	if ($type eq 'graph') {
@@ -794,13 +796,10 @@ sub result_to_string {
 		if ($node->isa('RDF::Trine::Node::Literal') and $node->has_datatype) {
 			my ($value, $dt);
 			if ($lossy_cmp) {
-				$value	= $node->literal_value;
-				$dt		= undef;
+				$node	= RDF::Query::Node::Literal->new( $node->literal_value );
 			} else {
-				$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $node->literal_value, $node->literal_datatype );
-				$dt		= $node->literal_datatype;
+				$node	= $node->canonicalize;
 			}
-			$node		= RDF::Query::Node::Literal->new( $value, undef, $dt );
 		}
 		push(@results, join('=', $k, $node->as_string));
 	}

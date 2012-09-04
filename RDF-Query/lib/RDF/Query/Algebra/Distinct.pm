@@ -142,7 +142,7 @@ sub as_spin {
 	my $xsd		= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 	my $q		= $self->pattern->as_spin( $model );
 	
-	$model->add_statement( RDF::Trine::Statement->new($q, $spin->distinct, RDF::Query::Node::Literal->new('true', undef, $xsd->boolean)) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($q, $spin->distinct, RDF::Query::Node::Literal->new('true', undef, $xsd->boolean)) );
 	
 	return $q;
 }

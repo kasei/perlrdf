@@ -16,7 +16,8 @@ package RDF::Query::Node::Literal;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Node RDF::Trine::Node::Literal);
+use Moose;
+extends 'RDF::Trine::Node::Literal';
 
 use DateTime;
 use DateTime::Format::W3CDTF;

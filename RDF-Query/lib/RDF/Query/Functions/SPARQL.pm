@@ -777,7 +777,7 @@ sub install {
 			# """Returns the datatype IRI of typedLit; returns xsd:string if the parameter is a simple literal."""
 			my $query	= shift;
 			my $node	= shift;
-			unless (blessed($node) and $node->isa('RDF::Query::Node')) {
+			unless (blessed($node) and $node->does('RDF::Trine::Node::API')) {
 				throw RDF::Query::Error::MethodInvocationError -text => "DATATYPE() called without a valid RDF Term";
 			}
 			if ($node->is_literal) {
@@ -786,6 +786,7 @@ sub install {
 				} elsif ($node->has_datatype) {
 					my $type	= $node->literal_datatype;
 					$l->debug("datatype => $type");
+					warn $type;
 					return RDF::Query::Node::Resource->new($type);
 				} else {
 					$l->debug('datatype => string');
@@ -1218,8 +1219,7 @@ sub _strends {
 sub _rand {
 	my $query	= shift;
 	my $r		= rand();
-	my $value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $r, $xsd->double->as_string );
-	return RDF::Query::Node::Literal->new($value, undef, $xsd->double);
+	return RDF::Query::Node::Literal->new($r, undef, $xsd->double)->canonicalize;
 }
 
 =item * sparql:md5

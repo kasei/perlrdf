@@ -54,7 +54,7 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-		unless ($t->isa('RDF::Trine::Statement')) {
+		unless ($t->does('RDF::Trine::Statement::API')) {
 			throw RDF::Query::Error::QueryPatternError -text => "Patterns belonging to a BGP must be graph statements";
 		}
 	}
@@ -339,7 +339,7 @@ Returns true if the bgp subsumes the pattern, false otherwise.
 sub subsumes {
 	my $self	= shift;
 	my $pattern	= shift;
-	if ($pattern->isa('RDF::Trine::Statement')) {
+	if ($pattern->does('RDF::Trine::Statement::API')) {
 		foreach my $t ($self->triples) {
 			return 1 if ($t->subsumes($pattern));
 		}

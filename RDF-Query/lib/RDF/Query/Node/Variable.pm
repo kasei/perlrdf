@@ -16,7 +16,8 @@ package RDF::Query::Node::Variable;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Node RDF::Trine::Node::Variable);
+use Moose;
+extends 'RDF::Trine::Node::Variable';
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -42,23 +43,12 @@ L<RDF::Query::Node> and L<RDF::Trine::Node::Variable> classes.
 
 =cut
 
-use overload	'""'	=> sub { $_[0]->sse };
-
-=item C<< new ( $name ) >>
-
-Returns a new variable object.
-
-=cut
-
 my $COUNTER	= 0;
-sub new {
-	my $class	= shift;
-	my $name	= shift;
-	unless (defined($name)) {
-		$name	= 'v' . time() . 'r' . $COUNTER++;
-	}
-	return $class->SUPER::new( $name );
-}
+has '+name' => (
+	default => sub { 'v' . time() . 'r' . $COUNTER++; }
+);
+
+use overload	'""'	=> sub { $_[0]->sse };
 
 =item C<< as_sparql >>
 
@@ -90,26 +80,11 @@ package RDF::Query::Node::Variable::ExpressionProxy;
 
 use strict;
 use warnings;
-use base qw(RDF::Query::Node::Variable);
+use Moose;
+extends 'RDF::Query::Node::Variable';
 use Scalar::Util qw(blessed refaddr);
 
 =begin private
-
-=item C<< new >>
-
-=cut
-
-{my %vars;
-sub new {
-	my $class	= shift;
-	my $name	= shift;
-	my @vars	= @_;
-	my $self	= $class->SUPER::new( $name );
-	if (@vars) {
-		$vars{ refaddr($self) }	= [map {blessed($_) ? $_ : RDF::Query::Node::Variable->new($_)} @vars];
-	}
-	return $self;
-}
 
 =item C<< as_sparql >>
 
@@ -126,18 +101,11 @@ sub as_sparql {
 
 sub referenced_variables {
 	my $self	= shift;
-	my @vars	= map { blessed($_) ? $_->name : $_ } @{ $vars{ refaddr($self) } || [] };
-	return RDF::Query::_uniq(@vars);
+	return $self->name;
 }
 
 sub nonaggregated_referenced_variables {
 	return;
-}
-
-sub DESTROY {
-	my $self	= shift;
-	delete $vars{ refaddr($self) };
-}
 }
 
 =end private

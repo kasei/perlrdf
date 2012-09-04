@@ -22,6 +22,7 @@ use warnings;
 no warnings 'redefine';
 use Scalar::Util qw(blessed);
 
+use RDF::Query::Node::API;
 use RDF::Query::Node::Blank;
 use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
@@ -44,7 +45,7 @@ Returns true if this RDF node is a variable, false otherwise.
 
 sub is_variable {
 	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Query::Node::Variable'));
+	return (blessed($self) and $self->does('RDF::Query::Node::Variable'));
 }
 
 =item C<< compare ( $a, $b ) >>
@@ -59,7 +60,7 @@ sub compare {
 	my $b	= shift;
 	warn 'compare';
 	for ($a, $b) {
-		unless ($_->isa('RDF::Query::Node')) {
+		unless ($_->does('RDF::Query::Node')) {
 			$_	= RDF::Query::Node->from_trine( $_ );
 		}
 	}
@@ -83,6 +84,10 @@ sub from_trine {
 	if ($n->isa('RDF::Trine::Node::Variable')) {
 		return RDF::Query::Node::Variable->new( $n->name );
 	} elsif ($n->isa('RDF::Trine::Node::Literal')) {
+		unless (defined($n->literal_value)) {
+			use Data::Dumper;
+			Carp::cluck Dumper($n);
+		}
 		return RDF::Query::Node::Literal->new( $n->literal_value, $n->literal_value_language, $n->literal_datatype );
 	} elsif ($n->isa('RDF::Trine::Node::Resource')) {
 		return RDF::Query::Node::Resource->new( $n->uri_value );
@@ -132,7 +137,7 @@ sub compare {
 	my $b	= shift;
 	warn 'compare';
 	for ($a, $b) {
-		unless ($_->isa('RDF::Query::Node')) {
+		unless ($_->does('RDF::Query::Node::API')) {
 			$_	= RDF::Query::Node->from_trine( $_ );
 		}
 	}

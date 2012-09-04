@@ -23,7 +23,8 @@ package RDF::Query::Node::Blank;
 use strict;
 use warnings;
 no warnings 'redefine';
-use base qw(RDF::Query::Node RDF::Trine::Node::Blank);
+use Moose;
+extends 'RDF::Trine::Node::Blank';
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
@@ -37,6 +38,11 @@ BEGIN {
 }
 
 ######################################################################
+
+my $COUNTER	= 0;
+has '+value' => (
+	default => sub { 'r' . time() . 'r' . $COUNTER++; }
+);
 
 use overload	'<=>'	=> \&_cmp,
 				'cmp'	=> \&_cmp,
@@ -60,23 +66,6 @@ sub _cmp {
 	my $cmp	= $nodea->blank_identifier cmp $nodeb->blank_identifier;
 	$l->debug("-> $cmp");
 	return $cmp;
-}
-
-=item C<< new ( [ $name ] ) >>
-
-Returns a new Blank node object. If C<< $name >> is supplied, it will be used as
-the blank node identifier. Otherwise a time-based identifier will be generated
-and used.
-
-=cut
-
-sub new {
-	my $class	= shift;
-	my $name	= shift;
-	unless (defined($name)) {
-		$name	= 'r' . time() . 'r' . $RDF::Trine::Node::Blank::COUNTER++;
-	}
-	return $class->_new( $name );
 }
 
 =item C<< as_sparql >>

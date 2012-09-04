@@ -25,7 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Scalar::Util qw(blessed);
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::API;
 
 ######################################################################
 
@@ -47,7 +47,7 @@ sub new {
 					$nodes[3]	||= RDF::Trine::Node::Nil->new();
 					(scalar(@nodes) == 4)
 						? RDF::Trine::Statement::Quad->new( @nodes )
-						: RDF::Trine::Statement->new( @nodes )
+						: RDF::Trine::Statement::Triple->new( @nodes )
 				} @_;
 	my @vars	= map { $_->name } grep { $_->isa('RDF::Trine::Node::Variable') } map { $_->nodes } @triples;
 	my @uvars	= keys %{ { map { $_ => 1 } @vars } };
@@ -86,7 +86,7 @@ sub execute ($) {
 			}
 			my $triple	= (scalar(@nodes) == 4)
 						? RDF::Trine::Statement::Quad->new( @nodes )
-						: RDF::Trine::Statement->new( @nodes );
+						: RDF::Trine::Statement::Triple->new( @nodes );
 			push(@bound_triples, $triple);
 		}
 	} else {

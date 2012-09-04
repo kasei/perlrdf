@@ -140,8 +140,8 @@ sub as_spin {
 	my @rhs		= $self->optional->as_spin($model);
 	my $opt		= RDF::Query::Node::Blank->new();
 	my $list	= $model->add_list( @rhs );
-	$model->add_statement( RDF::Trine::Statement->new($opt, $rdf->type, $spin->Optional) );
-	$model->add_statement( RDF::Trine::Statement->new($opt, $spin->elements, $list) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($opt, $rdf->type, $spin->Optional) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($opt, $spin->elements, $list) );
 	return (@lhs, $opt);
 }
 

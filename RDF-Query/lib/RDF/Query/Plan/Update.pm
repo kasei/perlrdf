@@ -140,7 +140,7 @@ sub execute ($) {
 # 					next unless ($ok);
 					my $st	= (scalar(@nodes) == 4)
 							? RDF::Trine::Statement::Quad->new( @nodes )
-							: RDF::Trine::Statement->new( @nodes );
+							: RDF::Trine::Statement::Triple->new( @nodes );
 					$l->trace( "$method: " . $st->as_string );
 					if ($method eq 'remove_statements') {
 						$context->model->$method( $st->nodes );

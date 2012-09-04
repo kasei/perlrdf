@@ -55,7 +55,7 @@ use RDF::Query::Plan::NamedGraph;
 use RDF::Query::Plan::Copy;
 use RDF::Query::Plan::Move;
 
-use RDF::Trine::Statement;
+use RDF::Trine::Statement::API;
 use RDF::Trine::Statement::Quad;
 
 use constant READY		=> 0x01;

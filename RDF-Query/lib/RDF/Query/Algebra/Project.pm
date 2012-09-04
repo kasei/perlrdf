@@ -314,14 +314,14 @@ sub as_spin {
 	my $q		= RDF::Query::Node::Blank->new();
 	my @nodes	= $self->pattern->as_spin( $model );
 	
-	$model->add_statement( RDF::Trine::Statement->new($q, $rdf->type, $spin->Select) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($q, $rdf->type, $spin->Select) );
 	
 	my @vars	= map { RDF::Query::Node::Blank->new( "variable_" . $_->name ) } @{ $self->vars };
 	my $vlist	= $model->add_list( @vars );
-	$model->add_statement( RDF::Trine::Statement->new($q, $spin->resultVariables, $vlist) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($q, $spin->resultVariables, $vlist) );
 	
 	my $list	= $model->add_list( @nodes );
-	$model->add_statement( RDF::Trine::Statement->new($q, $spin->where, $list) );
+	$model->add_statement( RDF::Trine::Statement::Triple->new($q, $spin->where, $list) );
 	return $q;
 }
 
