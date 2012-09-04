@@ -22,7 +22,6 @@ use warnings;
 no warnings 'redefine';
 use Scalar::Util qw(blessed);
 
-use RDF::Query::Node::API;
 use RDF::Query::Node::Blank;
 use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
@@ -137,7 +136,7 @@ sub compare {
 	my $b	= shift;
 	warn 'compare';
 	for ($a, $b) {
-		unless ($_->does('RDF::Query::Node::API')) {
+		unless ($_->isa('RDF::Query::Node')) {
 			$_	= RDF::Query::Node->from_trine( $_ );
 		}
 	}
