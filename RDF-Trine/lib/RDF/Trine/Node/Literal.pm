@@ -288,6 +288,15 @@ sub _compare {
 	return 0;
 }
 
+sub canonicalize {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $dt		= $self->literal_datatype;
+	my $value	= $self->value;
+	my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
+	return $class->new($canon, undef, $dt);
+}
+
 =item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
 
 If C<< $datatype >> is a recognized datatype, returns the canonical lexical
