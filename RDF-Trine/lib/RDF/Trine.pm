@@ -111,6 +111,8 @@ use RDF::Trine::Store;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
+use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::TriG;
 
 
 sub _uniq {
