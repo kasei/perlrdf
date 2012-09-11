@@ -292,9 +292,12 @@ sub canonicalize {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $dt		= $self->literal_datatype;
+	my $lang	= $self->literal_value_language;
 	my $value	= $self->value;
-	my $canon	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-	return $class->new($canon, undef, $dt);
+	if (defined $dt) {
+		$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
+	}
+	return $class->new($value, $lang, $dt);
 }
 
 =item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
