@@ -7,6 +7,22 @@ use base qw(RDF::Trine::Parser);
 use RDF::Trine::Error qw(:try);
 use Data::Dumper;
 
+our $VERSION;
+BEGIN {
+	$VERSION				= '1.000';
+	foreach my $ext (qw(ttl)) {
+		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
+	}
+	$RDF::Trine::Parser::parser_names{ 'turtle' }	= __PACKAGE__;
+	my $class										= __PACKAGE__;
+	$RDF::Trine::Parser::encodings{ $class }		= 'utf8';
+	$RDF::Trine::Parser::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
+	$RDF::Trine::Parser::canonical_media_types{ $class }	= 'text/turtle';
+	foreach my $type (qw(application/x-turtle application/turtle text/turtle)) {
+		$RDF::Trine::Parser::media_types{ $type }	= __PACKAGE__;
+	}
+}
+
 my $rdf	= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd	= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
@@ -180,7 +196,7 @@ sub _assert_list {
 		my $obj	= shift(@objects);
 		$self->_triple($head, $rdf->first, $obj);
 		my $next	= scalar(@objects) ? RDF::Trine::Node::Blank->new() : $rdf->nil;
-		$self->_triple($head, $rdf->next, $next);
+		$self->_triple($head, $rdf->rest, $next);
 		$head		= $next;
 	}
 }
@@ -195,13 +211,12 @@ sub _predicateObjectList {
 			$self->throw_error("Expecting verb but got " . $t->type, $t, $l);
 		}
 		my $pred	= $self->_token_to_node($t);
-# 		warn "Predicate: $pred\n";
 		$self->_objectList($l, $subj, $pred);
 		
-		my $t		= $self->_next_nonws($l);
+		$t		= $self->_next_nonws($l);
 		last unless ($t);
 		if ($t->type eq 'SEMICOLON') {
-			my $t		= $self->_next_nonws($l);
+			$t		= $self->_next_nonws($l);
 			if ($t->type eq 'IRI' or $t->type eq 'PREFIXNAME' or $t->type eq 'A') {
 				next;
 			} else {
@@ -246,7 +261,6 @@ sub _triple {
 	}
 	
 	my $t		= RDF::Trine::Statement->new($subj, $pred, $obj);
-# 	warn $t->as_string;
 	if ($self->{handle_triple}) {
 		$self->{handle_triple}->( $t );
 	}
@@ -320,7 +334,7 @@ sub _token_to_node {
 			return $rdf->type;
 		}
 		when ('IRI') {
-			return RDF::Trine::Node::Resource->new($t->value);
+			return RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 		}
 		when ('INTEGER') {
 			return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->integer);
@@ -336,8 +350,8 @@ sub _token_to_node {
 		}
 		when ('PREFIXNAME') {
 			my ($ns, $local)	= @{ $t->args };
-			my $prefix	= $self->{map}->namespace_uri($ns);
-			my $iri		= $prefix->uri($local);
+			my $prefix			= $self->{map}->namespace_uri($ns);
+			my $iri				= $prefix->uri($local);
 			return $iri;
 		}
 		when ('BNODE') {
@@ -456,7 +470,7 @@ sub get_token {
 	given ($c) {
 		when('#') { return $self->get_comment }
 		when('@') { return $self->get_keyword }
-		when(/[ \r\n]/) { return $self->get_whitespace }
+		when(/[ \r\n\t]/) { return $self->get_whitespace }
 		when('[') { $self->_get_char; return $self->new_token('LBRACKET'); }
 		when(']') { $self->_get_char; return $self->new_token('RBRACKET'); }
 		when('(') { $self->_get_char; return $self->new_token('LPAREN'); }
@@ -483,7 +497,8 @@ sub get_token {
 			}
 		}
 		default {
-			return $self->throw_error("Unexpected byte '$c'");
+# 			Carp::cluck sprintf("Unexpected byte '$c' (0x%02x)", ord($c));
+			return $self->throw_error(sprintf("Unexpected byte '$c' (0x%02x)", ord($c)));
 		}
 	}
 	warn 'byte: ' . Dumper($c);
@@ -664,7 +679,7 @@ sub get_number {
 sub get_whitespace {
 	my $self	= shift;
 	my $c		= $self->_peek_char;
-	while (length($c) and $c =~ /[\r\n ]/) {
+	while (length($c) and $c =~ /[\t\r\n ]/) {
 		$self->_get_char;
 		$c		= $self->_peek_char;
 	}
