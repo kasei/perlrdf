@@ -94,7 +94,10 @@ my %CHAR_TOKEN	= (
 	']'	=> RBRACKET,
 	'('	=> LPAREN,
 	')'	=> RPAREN,
+	'{'	=> LBRACE,
+	'}'	=> RBRACE,
 	','	=> COMMA,
+	'='	=> EQUALS,
 );
 
 my %METHOD_TOKEN	= (

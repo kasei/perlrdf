@@ -140,6 +140,7 @@ sub _next_nonws {
 		return unless ($t);
 		my $type = $t->type;
 		next if ($type == WS or $type == COMMENT);
+# 		warn decrypt_constant($type) . "\n";
 		return $t;
 	}
 }
@@ -183,47 +184,54 @@ sub _statement {
 			$self->{baseURI}	= $iri;
 		}
 		default {
-			# subject
-			my $subj;
-			if ($type == LBRACKET) {
-				$subj	= RDF::Trine::Node::Blank->new();
-				my $t	= $self->_next_nonws($l);
-				if ($t->type != RBRACKET) {
-					$self->_unget_token($t);
-					$self->_predicateObjectList( $l, $subj );
-					$t	= $self->_get_token_type($l, RBRACKET);
-				}
-			} elsif ($type == LPAREN) {
-				my $t	= $self->_next_nonws($l);
-				if ($t->type == RPAREN) {
-					$subj	= RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil');
-				} else {
-					$subj	= RDF::Trine::Node::Blank->new();
-					my @objects	= $self->_object($l, $t);
-					
-					while (1) {
-						my $t	= $self->_next_nonws($l);
-						if ($t->type == RPAREN) {
-							last;
-						} else {
-							push(@objects, $self->_object($l, $t));
-						}
-					}
-					$self->_assert_list($subj, @objects);
-				}
-			} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
-				$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
-			} else {
-				$subj	= $self->_token_to_node($t);
-			}
-# 			warn "Subject: $subj\n";
-			
-			#predicateObjectList
-			$self->_predicateObjectList($l, $subj);
-
+			$self->_triple( $l, $t );
 			$t	= $self->_get_token_type($l, DOT);
 		}
 	}
+}
+
+sub _triple {
+	my $self	= shift;
+	my $l		= shift;
+	my $t		= shift;
+	my $type	= $t->type;
+	# subject
+	my $subj;
+	if ($type == LBRACKET) {
+		$subj	= RDF::Trine::Node::Blank->new();
+		my $t	= $self->_next_nonws($l);
+		if ($t->type != RBRACKET) {
+			$self->_unget_token($t);
+			$self->_predicateObjectList( $l, $subj );
+			$t	= $self->_get_token_type($l, RBRACKET);
+		}
+	} elsif ($type == LPAREN) {
+		my $t	= $self->_next_nonws($l);
+		if ($t->type == RPAREN) {
+			$subj	= RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil');
+		} else {
+			$subj	= RDF::Trine::Node::Blank->new();
+			my @objects	= $self->_object($l, $t);
+			
+			while (1) {
+				my $t	= $self->_next_nonws($l);
+				if ($t->type == RPAREN) {
+					last;
+				} else {
+					push(@objects, $self->_object($l, $t));
+				}
+			}
+			$self->_assert_list($subj, @objects);
+		}
+	} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
+		$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
+	} else {
+		$subj	= $self->_token_to_node($t);
+	}
+# 	warn "Subject: $subj\n";
+	
+	#predicateObjectList
+	$self->_predicateObjectList($l, $subj);
 }
 
 sub _assert_list {
@@ -233,9 +241,9 @@ sub _assert_list {
 	my $head	= $subj;
 	while (@objects) {
 		my $obj	= shift(@objects);
-		$self->_triple($head, $rdf->first, $obj);
+		$self->_assert_triple($head, $rdf->first, $obj);
 		my $next	= scalar(@objects) ? RDF::Trine::Node::Blank->new() : $rdf->nil;
-		$self->_triple($head, $rdf->rest, $next);
+		$self->_assert_triple($head, $rdf->rest, $next);
 		$head		= $next;
 	}
 }
@@ -279,7 +287,7 @@ sub _objectList {
 		my $t		= $self->_next_nonws($l);
 		last unless ($t);
 		my $obj		= $self->_object($l, $t);
-		$self->_triple($subj, $pred, $obj);
+		$self->_assert_triple($subj, $pred, $obj);
 		
 		my $t	= $self->_next_nonws($l);
 		if ($t->type == COMMA) {
@@ -291,7 +299,7 @@ sub _objectList {
 	}
 }
 
-sub _triple {
+sub _assert_triple {
 	my $self	= shift;
 	my $subj	= shift;
 	my $pred	= shift;
@@ -391,6 +399,9 @@ sub _token_to_node {
 		when (PREFIXNAME) {
 			my ($ns, $local)	= @{ $t->args };
 			my $prefix			= $self->{map}->namespace_uri($ns);
+			unless (blessed($prefix)) {
+				$self->throw_error("Use of undeclared prefix '$ns'", $t);
+			}
 			my $iri				= $prefix->uri($local);
 			return $iri;
 		}

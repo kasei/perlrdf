@@ -30,6 +30,9 @@ BEGIN {
 		BASE
 		PREFIX
 		LANG
+		LBRACE
+		RBRACE
+		EQUALS
 		decrypt_constant
 	)
 };
