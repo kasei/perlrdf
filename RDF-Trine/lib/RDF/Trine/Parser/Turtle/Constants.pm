@@ -1,5 +1,9 @@
 package RDF::Trine::Parser::Turtle::Constants;
 
+use strict;
+use warnings;
+use 5.014;
+
 our @EXPORT;
 BEGIN {
 	@EXPORT = qw(
@@ -32,13 +36,18 @@ BEGIN {
 use base 'Exporter';
 
 {
-	my ($cx, %reverse) = 0;
-	use constant +{
-		map  { my $value = ++$cx; $reverse{$value} = $_; $_ => $value }
-		grep { $_ ne 'decrypt_constant' }
-		@EXPORT
-	};
-	sub decrypt_constant { $reverse{+shift} }
+	my %mapping;
+	my %reverse;
+	BEGIN {
+		my $cx	= 0;
+		foreach my $name (grep { $_ ne 'decrypt_constant' } @EXPORT) {
+			my $value	= ++$cx;
+			$reverse{ $value }	= $name;
+			$mapping{ $name }	= $value;
+		}
+	}
+	use constant +{ %mapping };
+	sub decrypt_constant { my $num	= +shift; $reverse{$num} }
 };
 
 1;
