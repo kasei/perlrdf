@@ -139,7 +139,7 @@ sub _next_nonws {
 		my $t	= $l->get_token;
 		return unless ($t);
 		my $type = $t->type;
-		next if ($type == WS or $type == COMMENT);
+# 		next if ($type == WS or $type == COMMENT);
 # 		warn decrypt_constant($type) . "\n";
 		return $t;
 	}
@@ -163,7 +163,7 @@ sub _statement {
 	my $t		= shift;
 	my $type	= $t->type;
 	given ($type) {
-		when (WS) {}
+# 		when (WS) {}
 		when (PREFIX) {
 			$t	= $self->_get_token_type($l, PREFIXNAME);
 			my $name	= $t->value;

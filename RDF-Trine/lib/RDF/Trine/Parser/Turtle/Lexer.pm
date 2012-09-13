@@ -101,7 +101,7 @@ my %CHAR_TOKEN	= (
 );
 
 my %METHOD_TOKEN	= (
-	q[#]	=> 'get_comment',
+# 	q[#]	=> 'get_comment',
 	q[@]	=> 'get_keyword',
 	q[<]	=> 'get_iriref',
 	q[_]	=> 'get_bnode',
@@ -113,38 +113,48 @@ my %METHOD_TOKEN	= (
 
 sub get_token {
 	my $self	= shift;
-	unless (length($self->{buffer})) {
-		$self->fill_buffer;
-	}
-# 	warn "getting token with buffer: " . Dumper($self->{buffer});
-	my $c	= $self->_peek_char();
-	return unless (length($c));
-	if (defined(my $name = $CHAR_TOKEN{$c})) { $self->_get_char; return $self->new_token($name); }
-	elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
-	elsif ($c =~ /[ \r\n\t]/) {
-		while (length($c) and $c =~ /[\t\r\n ]/) {
-			$self->_get_char;
-			$c		= $self->_peek_char;
+	while (1) {
+		unless (length($self->{buffer})) {
+			$self->fill_buffer;
 		}
-		return $self->new_token(WS);
-	}
-	elsif ($c =~ /[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/) {
-		if ($self->{buffer} =~ /^a(?!:)\b/) {
-			$self->_get_char;
-			return $self->new_token(A);
-		} elsif ($self->{buffer} =~ /^(?:true|false)\b/) {
-			my $bool	= $self->_read_length($+[0]);
-			return $self->new_token(BOOLEAN, $bool);
-		} else {
-			return $self->get_pname;
+# 		warn "getting token with buffer: " . Dumper($self->{buffer});
+		my $c	= $self->_peek_char();
+		return unless (length($c));
+		if (defined(my $name = $CHAR_TOKEN{$c})) { $self->_get_char; return $self->new_token($name); }
+		elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
+		elsif ($c eq '#') {
+			# we're ignoring comment tokens, but we could return them here instead of falling through to the 'next':
+			$self->get_comment();
+			next;
 		}
-	}
-	elsif ($c eq '^') { $self->_read_word('^^'); return $self->new_token(HATHAT); }
-	else {
+		elsif ($c =~ /[ \r\n\t]/) {
+			while (length($c) and $c =~ /[\t\r\n ]/) {
+				$self->_get_char;
+				$c		= $self->_peek_char;
+			}
+			
+			# we're ignoring whitespace tokens, but we could return them here instead of falling through to the 'next':
+# 			return $self->new_token(WS);
+			next;
+		}
+		elsif ($c =~ /[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/) {
+			if ($self->{buffer} =~ /^a(?!:)\b/) {
+				$self->_get_char;
+				return $self->new_token(A);
+			} elsif ($self->{buffer} =~ /^(?:true|false)\b/) {
+				my $bool	= $self->_read_length($+[0]);
+				return $self->new_token(BOOLEAN, $bool);
+			} else {
+				return $self->get_pname;
+			}
+		}
+		elsif ($c eq '^') { $self->_read_word('^^'); return $self->new_token(HATHAT); }
+		else {
 # 			Carp::cluck sprintf("Unexpected byte '$c' (0x%02x)", ord($c));
-		return $self->throw_error(sprintf("Unexpected byte '$c' (0x%02x)", ord($c)));
+			return $self->throw_error(sprintf("Unexpected byte '$c' (0x%02x)", ord($c)));
+		}
+		warn 'byte: ' . Dumper($c);
 	}
-	warn 'byte: ' . Dumper($c);
 }
 
 sub _get_char_safe {
