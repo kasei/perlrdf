@@ -463,7 +463,7 @@ sub get_pattern {
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-			warn 'no shared variable -- cartesian product';
+# 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
