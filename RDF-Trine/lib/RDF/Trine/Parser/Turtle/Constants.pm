@@ -3,6 +3,8 @@ package RDF::Trine::Parser::Turtle::Constants;
 use strict;
 use warnings;
 use 5.014;
+use strict;
+use warnings;
 
 our @EXPORT;
 BEGIN {
@@ -50,7 +52,16 @@ use base 'Exporter';
 		}
 	}
 	use constant +{ %mapping };
+
+=item C<< decrypt_constant ( $type ) >>
+
+Returns the token name for the given toke type.
+
+=cut
+
 	sub decrypt_constant { my $num	= +shift; $reverse{$num} }
 };
 
 1;
+
+__END__

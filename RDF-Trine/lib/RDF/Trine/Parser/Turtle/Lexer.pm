@@ -2,6 +2,8 @@ package RDF::Trine::Parser::Turtle::Lexer;
 
 use RDF::Trine::Parser::Turtle::Constants;
 use 5.014;
+use strict;
+use warnings;
 use Moose;
 use Data::Dumper;
 use RDF::Trine::Error;
@@ -55,6 +57,13 @@ sub BUILDARGS {
 	}
 }
 
+=item C<< new_token ( $type, @values ) >>
+
+Returns a new token with the given type and optional values, capturing the
+current line and column of the input data.
+
+=cut
+
 sub new_token {
 	my $self	= shift;
 	my $type	= shift;
@@ -62,30 +71,6 @@ sub new_token {
 	my $col	= $self->column;
 	return RDF::Trine::Parser::Turtle::Token->fast_constructor($type, $line, $col, \@_);
 }
-
-sub lex_file {
-	my $self	= shift;
-	$self->get_token();
-}
-
-sub fill_buffer {
-	my $self	= shift;
-	unless (length($self->buffer)) {
-		my $line	= $self->file->getline;
-		if (defined($line)) {
-			$self->{buffer}	.= $line;
-		}
-	}
-}
-
-sub check_for_bom {
-	my $self	= shift;
-	my $c	= $self->_peek_char();
-	if ($c eq "\x{FEFF}") {
-		$self->_get_char;
-	}
-}
-
 
 my %CHAR_TOKEN	= (
 	'.'	=> DOT,
@@ -101,15 +86,21 @@ my %CHAR_TOKEN	= (
 );
 
 my %METHOD_TOKEN	= (
-# 	q[#]	=> 'get_comment',
-	q[@]	=> 'get_keyword',
-	q[<]	=> 'get_iriref',
-	q[_]	=> 'get_bnode',
-	q[']	=> 'get_literal',
-	q["]	=> 'get_literal',
-	q[:]	=> 'get_pname',
-	(map {$_ => 'get_number'} (0 .. 9, '-', '+'))
+# 	q[#]	=> '_get_comment',
+	q[@]	=> '_get_keyword',
+	q[<]	=> '_get_iriref',
+	q[_]	=> '_get_bnode',
+	q[']	=> '_get_literal',
+	q["]	=> '_get_literal',
+	q[:]	=> '_get_pname',
+	(map {$_ => '_get_number'} (0 .. 9, '-', '+'))
 );
+
+=item C<< get_token >>
+
+Returns the next token present in the input.
+
+=cut
 
 sub get_token {
 	my $self	= shift;
@@ -124,7 +115,7 @@ sub get_token {
 		elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
 		elsif ($c eq '#') {
 			# we're ignoring comment tokens, but we could return them here instead of falling through to the 'next':
-			$self->get_comment();
+			$self->_get_comment();
 			next;
 		}
 		elsif ($c =~ /[ \r\n\t]/) {
@@ -145,15 +136,49 @@ sub get_token {
 				my $bool	= $self->_read_length($+[0]);
 				return $self->new_token(BOOLEAN, $bool);
 			} else {
-				return $self->get_pname;
+				return $self->_get_pname;
 			}
 		}
 		elsif ($c eq '^') { $self->_read_word('^^'); return $self->new_token(HATHAT); }
 		else {
 # 			Carp::cluck sprintf("Unexpected byte '$c' (0x%02x)", ord($c));
-			return $self->throw_error(sprintf("Unexpected byte '$c' (0x%02x)", ord($c)));
+			return $self->_throw_error(sprintf("Unexpected byte '$c' (0x%02x)", ord($c)));
 		}
 		warn 'byte: ' . Dumper($c);
+	}
+}
+
+=begin private
+
+=cut
+
+=item C<< fill_buffer >>
+
+Fills the internal parse buffer with a new line from the input source.
+
+=cut
+
+sub fill_buffer {
+	my $self	= shift;
+	unless (length($self->buffer)) {
+		my $line	= $self->file->getline;
+		if (defined($line)) {
+			$self->{buffer}	.= $line;
+		}
+	}
+}
+
+=item C<< check_for_bom >>
+
+Checks the input buffer for a Unicode BOM, and consumes it if it is present.
+
+=cut
+
+sub check_for_bom {
+	my $self	= shift;
+	my $c	= $self->_peek_char();
+	if ($c eq "\x{FEFF}") {
+		$self->_get_char;
 	}
 }
 
@@ -162,7 +187,7 @@ sub _get_char_safe {
 	my $char	= shift;
 	my $c		= $self->_get_char;
 	if ($c ne $char) {
-		$self->throw_error("Expected '$char' but got '$c'");
+		$self->_throw_error("Expected '$char' but got '$c'");
 	}
 	return $c;
 }
@@ -221,7 +246,7 @@ sub _read_word {
 	}
 	
 	if (substr($self->{buffer}, 0, length($word)) ne $word) {
-		$self->throw_error("Expected '$word'");
+		$self->_throw_error("Expected '$word'");
 	}
 	
 	my $lines	= ($word =~ tr/\n//);
@@ -256,14 +281,14 @@ sub _read_length {
 	return $word;
 }
 
-sub get_pname {
+sub _get_pname {
 	my $self	= shift;
 
 	my $prefix	= '';
 	if ($self->{buffer} =~ /^$r_nameStartChar_minus_underscore/) {
 		my @parts;
 		unless ($self->{buffer} =~ /^$r_nameStartChar_minus_underscore/o) {
-			$self->throw_error("Expected: name");
+			$self->_throw_error("Expected: name");
 		}
 		my $nsc = substr($self->{buffer}, 0, $+[0]);
 		$self->_read_word($nsc);
@@ -295,7 +320,7 @@ sub get_pname {
 	}
 }
 
-sub get_iriref {
+sub _get_iriref {
 	my $self	= shift;
 	$self->_get_char_safe('<');
 	$self->{buffer}	=~ qr'[^>\\]*(?:\\.[^>\\]*)*'o;
@@ -305,7 +330,7 @@ sub get_iriref {
 	return $self->new_token(IRI, $iri);
 }
 
-sub get_bnode {
+sub _get_bnode {
 	my $self	= shift;
 	$self->_read_word('_:');
 	unless ($self->{buffer} =~ /^${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*/o) {
@@ -316,7 +341,7 @@ sub get_bnode {
 	return $self->new_token(BNODE, $name);
 }
 
-sub get_number {
+sub _get_number {
 	my $self	= shift;
 	if ($self->{buffer} =~ /^${r_double}/) {
 		return $self->new_token(DOUBLE, $self->_read_length($+[0]));
@@ -325,11 +350,11 @@ sub get_number {
 	} elsif ($self->{buffer} =~ /^${r_integer}/) {
 		return $self->new_token(INTEGER, $self->_read_length($+[0]));
 	} else {
-		$self->throw_error("Expected number");
+		$self->_throw_error("Expected number");
 	}
 }
 
-sub get_comment {
+sub _get_comment {
 	my $self	= shift;
 	$self->_get_char_safe('#');
 	my $comment	= '';
@@ -344,7 +369,7 @@ sub get_comment {
 	return $self->new_token(COMMENT, $comment);
 }
 
-sub get_literal {
+sub _get_literal {
 	my $self	= shift;
 	my $c		= $self->_peek_char();
 	$self->_get_char_safe(q["]);
@@ -358,7 +383,7 @@ sub get_literal {
 			if (length($self->{buffer}) == 0) {
 				$self->fill_buffer;
 				if (length($self->{buffer}) == 0) {
-					$self->throw_error("Found EOF in string literal");
+					$self->_throw_error("Found EOF in string literal");
 				}
 			}
 			if (substr($self->{buffer}, 0, 1) eq '"') {
@@ -385,19 +410,19 @@ sub get_literal {
 						when('U'){
 							my $codepoint	= $self->_read_length(8);
 							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 							}
 							$string .= chr(hex($codepoint));
 						}
 						when('u'){
 							my $codepoint	= $self->_read_length(4);
 							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 							}
 							$string .= chr(hex($codepoint));
 						}
 						default {
-							$self->throw_error("Unrecognized string escape '$esc'");
+							$self->_throw_error("Unrecognized string escape '$esc'");
 						}
 					}
 				} else {
@@ -424,19 +449,19 @@ sub get_literal {
 					when('U'){
 						my $codepoint	= $self->_read_length(8);
 						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
 						$string .= chr(hex($codepoint));
 					}
 					when('u'){
 						my $codepoint	= $self->_read_length(4);
 						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
 						$string .= chr(hex($codepoint));
 					}
 					default {
-						$self->throw_error("Unrecognized string escape '$esc'");
+						$self->_throw_error("Unrecognized string escape '$esc'");
 					}
 				}
 			} elsif ($self->{buffer} =~ /^[^"\\]+/) {
@@ -444,7 +469,7 @@ sub get_literal {
 			} elsif (substr($self->{buffer}, 0, 1) eq '"') {
 				last;
 			} else {
-				$self->throw_error("Got '$c' while expecting string character");
+				$self->_throw_error("Got '$c' while expecting string character");
 			}
 		}
 		$self->_get_char_safe(q["]);
@@ -452,7 +477,7 @@ sub get_literal {
 	}
 }
 
-sub get_keyword {
+sub _get_keyword {
 	my $self	= shift;
 	$self->_get_char_safe('@');
 	if ($self->{buffer} =~ /^base/) {
@@ -466,12 +491,12 @@ sub get_keyword {
 			my $lang	= $self->_read_length($+[0]);
 			return $self->new_token(LANG, $lang);
 		} else {
-			$self->throw_error("Expected keyword or language tag");
+			$self->_throw_error("Expected keyword or language tag");
 		}
 	}
 }
 
-sub throw_error {
+sub _throw_error {
 	my $self	= shift;
 	my $error	= shift;
 	my $line	= $self->line;
@@ -482,3 +507,10 @@ sub throw_error {
 
 __PACKAGE__->meta->make_immutable;
 
+1;
+
+__END__
+
+=end private
+
+=cut

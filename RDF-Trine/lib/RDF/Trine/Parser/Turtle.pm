@@ -32,6 +32,8 @@ package RDF::Trine::Parser::Turtle;
 
 use utf8;
 use 5.014;
+use strict;
+use warnings;
 use Scalar::Util qw(blessed);
 use base qw(RDF::Trine::Parser);
 use RDF::Trine::Error qw(:try);
@@ -58,6 +60,12 @@ BEGIN {
 
 my $rdf	= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd	= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+
+=item C<< new ( [ namespaces => $map ] ) >>
+
+Returns a new Turtle parser.
+
+=cut
 
 sub new {
 	my $class	= shift;
@@ -152,7 +160,7 @@ sub _get_token_type {
 	my $t		= $self->_next_nonws($l);
 	return unless ($t);
 	unless ($t->type eq $type) {
-		$self->throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
+		$self->_throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
 	}
 	return $t;
 }
@@ -224,7 +232,7 @@ sub _triple {
 			$self->_assert_list($subj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
-		$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
 	} else {
 		$subj	= $self->_token_to_node($t);
 	}
@@ -256,7 +264,7 @@ sub _predicateObjectList {
 	while (1) {
 		my $type = $t->type;
 		unless ($type==IRI or $type==PREFIXNAME or $type==A) {
-			$self->throw_error("Expecting verb but got " . decrypt_constant($type), $t, $l);
+			$self->_throw_error("Expecting verb but got " . decrypt_constant($type), $t, $l);
 		}
 		my $pred	= $self->_token_to_node($t);
 		$self->_objectList($l, $subj, $pred);
@@ -289,7 +297,7 @@ sub _objectList {
 		my $obj		= $self->_object($l, $t);
 		$self->_assert_triple($subj, $pred, $obj);
 		
-		my $t	= $self->_next_nonws($l);
+		$t	= $self->_next_nonws($l);
 		if ($t->type == COMMA) {
 			next;
 		} else {
@@ -348,7 +356,7 @@ sub _object {
 			$self->_assert_list($obj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==A or $type==STRING1D or $type==STRING3D or $type==BNODE or $type==INTEGER or $type==DECIMAL or $type==DOUBLE or $type==BOOLEAN)) {
-		$self->throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
 	} else {
 		if ($type==STRING1D or $type==STRING3D) {
 			my $value	= $t->value;
@@ -400,7 +408,7 @@ sub _token_to_node {
 			my ($ns, $local)	= @{ $t->args };
 			my $prefix			= $self->{map}->namespace_uri($ns);
 			unless (blessed($prefix)) {
-				$self->throw_error("Use of undeclared prefix '$ns'", $t);
+				$self->_throw_error("Use of undeclared prefix '$ns'", $t);
 			}
 			my $iri				= $prefix->uri($local);
 			return $iri;
@@ -409,12 +417,12 @@ sub _token_to_node {
 			return RDF::Trine::Node::Blank->new($t->value);
 		}
 		default {
-			$self->throw_error("Converting $type to node not implemented", $t);
+			$self->_throw_error("Converting $type to node not implemented", $t);
 		}
 	}
 }
 
-sub throw_error {
+sub _throw_error {
 	my $self	= shift;
 	my $message	= shift;
 	my $t		= shift;
@@ -422,7 +430,11 @@ sub throw_error {
 	my $line	= $t->line;
 	my $col		= $t->column;
 # 	Carp::cluck "$message at $line:$col";
-	throw RDF::Trine::Error::ParserError -text => "$message at $line:$col ('" . $t->value . "')";
+	my $text	= "$message at $line:$col";
+	if (defined($t->value)) {
+		$text	.= " ('" . $t->value . "')";
+	}
+	throw RDF::Trine::Error::ParserError -text => $text;
 }
 
 1;
