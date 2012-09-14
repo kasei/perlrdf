@@ -30,9 +30,9 @@ L<RDF::Trine::Parser> class.
 
 package RDF::Trine::Parser::TriG;
 
+use 5.014;
 use strict;
 use warnings;
-use 5.014;
 no warnings 'redefine';
 no warnings 'once';
 use base qw(RDF::Trine::Parser::Turtle);
