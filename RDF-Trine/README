@@ -68,7 +68,19 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 0.140 (2012-06-29)
+  Version 1.001 (2012-XX-XX)
+
+     * ENHANCEMENTS
+         Replaced old Turtle and TriG parsers with new streaming implementations.
+         Added RDF::Trine::Node::Literal->canonicalize method.
+         Updated RDF::Trine::Parser::Redland to construct a new parser object on each parse (avoiding a bug in redland).
+         Applied partial patch to "fix interaction with HTML::Data::Parser" (from Dorian Taylor; commit 9b713b23b6).
+     * OTHER
+         Added Moose and MooseX::ArrayRef to prerequisites list.
+         Updated code style to work with Perl::Critic core policies.
+         Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew).
+
+  Version 1.000 (2012-06-29)
 
      * API CHANGES
          Removed RDF::Trine methods count, add_extra_result_data, extra_result_data.
