@@ -1,7 +1,7 @@
 package RDF::Trine::Parser::Turtle::Lexer;
 
 use RDF::Trine::Parser::Turtle::Constants;
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 use Moose;
@@ -110,7 +110,7 @@ sub get_token {
 		}
 # 		warn "getting token with buffer: " . Dumper($self->{buffer});
 		my $c	= $self->_peek_char();
-		return unless (length($c));
+		return unless (defined($c) and length($c));
 		if (defined(my $name = $CHAR_TOKEN{$c})) { $self->_get_char; return $self->new_token($name); }
 		elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
 		elsif ($c eq '#') {
@@ -119,7 +119,7 @@ sub get_token {
 			next;
 		}
 		elsif ($c =~ /[ \r\n\t]/) {
-			while (length($c) and $c =~ /[\t\r\n ]/) {
+			while (defined($c) and length($c) and $c =~ /[\t\r\n ]/) {
 				$self->_get_char;
 				$c		= $self->_peek_char;
 			}
