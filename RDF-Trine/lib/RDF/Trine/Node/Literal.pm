@@ -288,6 +288,12 @@ sub _compare {
 	return 0;
 }
 
+=item C<< canonicalize >>
+
+Returns a new literal node object whose value is in canonical form (where applicable).
+
+=cut
+
 sub canonicalize {
 	my $self	= shift;
 	my $class	= ref($self);
