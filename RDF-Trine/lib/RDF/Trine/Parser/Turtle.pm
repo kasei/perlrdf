@@ -31,7 +31,7 @@ L<RDF::Trine::Parser> class.
 package RDF::Trine::Parser::Turtle;
 
 use utf8;
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 use Scalar::Util qw(blessed);

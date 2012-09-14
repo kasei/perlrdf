@@ -67,7 +67,7 @@ consists of several components:
 
 package RDF::Trine;
 
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 no warnings 'redefine';

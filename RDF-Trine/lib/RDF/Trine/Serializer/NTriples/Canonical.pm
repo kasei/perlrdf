@@ -52,7 +52,7 @@ L<RDF::Trine::Serializer::NTriples> class.
 
 package RDF::Trine::Serializer::NTriples::Canonical;
 
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 

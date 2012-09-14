@@ -2,7 +2,7 @@ package RDF::Trine::Parser::Turtle::Constants;
 
 use strict;
 use warnings;
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 

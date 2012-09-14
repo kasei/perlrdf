@@ -30,7 +30,7 @@ L<RDF::Trine::Parser> class.
 
 package RDF::Trine::Parser::TriG;
 
-use 5.014;
+use 5.010;
 use strict;
 use warnings;
 no warnings 'redefine';
