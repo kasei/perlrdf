@@ -4,6 +4,8 @@ use 5.014;
 use MooseX::ArrayRef;
 
 has type => ( is => 'ro', );
+has start_line => ( is => 'ro', );
+has start_column => ( is => 'ro', );
 has line => ( is => 'ro', );
 has column => ( is => 'ro', );
 has args => ( is => 'ro', );

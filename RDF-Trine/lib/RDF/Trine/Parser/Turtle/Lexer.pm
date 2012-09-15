@@ -46,6 +46,18 @@ has buffer => (
 	default => '',
 );
 
+has start_column => (
+	is => 'rw',
+	isa => 'Int',
+	default => -1,
+);
+
+has start_line => (
+	is => 'rw',
+	isa => 'Int',
+	default => -1,
+);
+
 sub BUILDARGS {
 	my $class	= shift;
 	if (scalar(@_) == 1) {
@@ -56,11 +68,20 @@ sub BUILDARGS {
 }
 
 sub new_token {
-	my $self	= shift;
-	my $type	= shift;
-	my $line	= $self->line;
-	my $col	= $self->column;
-	return RDF::Trine::Parser::Turtle::Token->fast_constructor($type, $line, $col, \@_);
+	my $self		= shift;
+	my $type		= shift;
+	my $start_line	= $self->start_line;
+	my $start_col	= $self->start_column;
+	my $line		= $self->line;
+	my $col			= $self->column;
+	return RDF::Trine::Parser::Turtle::Token->fast_constructor(
+			$type,
+			$start_line,
+			$start_col,
+			$line,
+			$col,
+			\@_,
+		);
 }
 
 sub lex_file {
@@ -120,6 +141,10 @@ sub get_token {
 # 		warn "getting token with buffer: " . Dumper($self->{buffer});
 		my $c	= $self->_peek_char();
 		return unless (length($c));
+		
+		$self->start_column( $self->column );
+		$self->start_line( $self->line );
+		
 		if (defined(my $name = $CHAR_TOKEN{$c})) { $self->_get_char; return $self->new_token($name); }
 		elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
 		elsif ($c eq '#') {
@@ -229,9 +254,9 @@ sub _read_word {
 	my $cols	= length($word) - $lastnl - 1;
 	$self->{lines}	+= $lines;
 	if ($lines) {
-		$self->{cols}	= $cols;
+		$self->{column}	= $cols;
 	} else {
-		$self->{cols}	+= $cols;
+		$self->{column}	+= $cols;
 	}
 	substr($self->{buffer}, 0, length($word), '');
 }
@@ -249,9 +274,9 @@ sub _read_length {
 	my $cols	= length($word) - $lastnl - 1;
 	$self->{lines}	+= $lines;
 	if ($lines) {
-		$self->{cols}	= $cols;
+		$self->{column}	= $cols;
 	} else {
-		$self->{cols}	+= $cols;
+		$self->{column}	+= $cols;
 	}
 	return $word;
 }
@@ -300,6 +325,7 @@ sub get_iriref {
 	$self->_get_char_safe('<');
 	$self->{buffer}	=~ qr'[^>\\]*(?:\\.[^>\\]*)*'o;
 	my $iri = substr($self->{buffer}, 0, $+[0]);
+	warn "iri: $iri";
 	$self->_read_word($iri);
 	$self->_get_char_safe('>');
 	return $self->new_token(IRI, $iri);
@@ -462,7 +488,7 @@ sub get_keyword {
 		$self->_read_word('prefix');
 		return $self->new_token(PREFIX);
 	} else {
-		if ($self->{buffer} =~ /^[a-z]+(-[a-z0-9]+)*/) {
+		if ($self->{buffer} =~ /^[a-z]+(-[a-z0-9]+)*\b/) {
 			my $lang	= $self->_read_length($+[0]);
 			return $self->new_token(LANG, $lang);
 		} else {
@@ -474,10 +500,13 @@ sub get_keyword {
 sub throw_error {
 	my $self	= shift;
 	my $error	= shift;
-	my $line	= $self->line;
-	my $col		= $self->column;
+	my $line	= $self->start_line;
+	my $col		= $self->start_column;
 # 	Carp::cluck "$line:$col: $error: " . Dumper($self->{buffer});
-	throw RDF::Trine::Error::ParserError -text => "$line:$col: $error";
+	RDF::Trine::Error::ParserError::Positioned->throw(
+		-text => "$error at $line:$col",
+		-value => [$line, $col],
+	);
 }
 
 __PACKAGE__->meta->make_immutable;

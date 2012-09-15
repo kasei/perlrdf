@@ -419,10 +419,17 @@ sub throw_error {
 	my $message	= shift;
 	my $t		= shift;
 	my $l		= shift;
-	my $line	= $t->line;
-	my $col		= $t->column;
+	my $line	= $t->start_line;
+	my $col		= $t->start_column;
 # 	Carp::cluck "$message at $line:$col";
-	throw RDF::Trine::Error::ParserError -text => "$message at $line:$col ('" . $t->value . "')";
+	my $text	= "$message at $line:$col";
+	if (defined($t->value)) {
+		$text	.= " (near '" . $t->value . "')";
+	}
+	RDF::Trine::Error::ParserError::Tokenized->throw(
+		-text => $text,
+		-object => $t,
+	);
 }
 
 1;

@@ -67,6 +67,107 @@ package RDF::Trine::Error::ParserError;
 
 use base qw(RDF::Trine::Error);
 
+package RDF::Trine::Error::ParserError::Explainable;
+
+use base qw(RDF::Trine::Error::ParserError);
+use Module::Load::Conditional qw[can_load];
+
+our $ANSI;
+BEGIN {
+	$ANSI	= can_load( modules => { 'Term::ANSIColor' => undef } );
+}
+
+sub _get_line {
+	my $self	= shift;
+	my $fh		= shift;
+	my $line	= shift;
+	my $buffer;
+	do {
+		$buffer	= $fh->getline;
+	} while (--$line);
+	return $buffer;
+}
+
+package RDF::Trine::Error::ParserError::Tokenized;
+
+use base qw(RDF::Trine::Error::ParserError::Explainable);
+
+sub explain {
+	my $self	= shift;
+	my $fh		= shift;
+	seek($fh, 0, 0);
+	my $text	= $self->text;
+	my $t		= $self->object;
+	my $line	= $t->start_line;
+	my $col		= $t->start_column;
+	my $buffer	= $self->_get_line( $fh, $line );
+	my $maxlen	= length($buffer) - $col;
+	my $len		= 1;
+	if ($t->line == $t->start_line) {
+		$len	= ($t->column - $t->start_column);
+	} else {
+		$len	= $maxlen;
+	}
+	
+	chomp($text);
+	print STDERR "$text:\n";
+	if ($RDF::Trine::Error::ParserError::Explainable::ANSI) {
+		print STDERR substr($buffer, 0, $col-1);
+		print STDERR Term::ANSIColor::color('red');
+		print STDERR substr($buffer, $col-1, $len);
+		print STDERR Term::ANSIColor::color('reset');
+		print STDERR substr($buffer, $col+$len-1);
+		print STDERR " " x ($col-1);
+		print STDERR Term::ANSIColor::color('blue');
+		print STDERR "^";
+		if ($len > 1) {
+			print STDERR ("~" x ($len-1));
+		}
+		print STDERR "\n";
+		print STDERR Term::ANSIColor::color('reset');
+	} else {
+		print STDERR $buffer;
+		print STDERR " " x ($col-1);
+		print STDERR "^";
+		if ($len > 1) {
+			print STDERR ("~" x ($len-1));
+		}
+		print STDERR "\n";
+	}
+}
+
+package RDF::Trine::Error::ParserError::Positioned;
+
+use base qw(RDF::Trine::Error::ParserError::Explainable);
+
+sub explain {
+	my $self	= shift;
+	my $fh		= shift;
+	seek($fh, 0, 0);
+	my $text	= $self->text;
+	my $pos		= $self->value;
+	my ($line, $col)	= @$pos;
+	my $buffer	= $self->_get_line( $fh, $line );
+	
+	chomp($text);
+	print STDERR "$text:\n";
+	
+	print STDERR $buffer;
+	if ($RDF::Trine::Error::ParserError::Explainable::ANSI) {
+		print STDERR " " x ($col-1);
+		print STDERR Term::ANSIColor::color('red');
+		print STDERR "^";
+		print STDERR Term::ANSIColor::color('reset');
+		print STDERR "\n";
+	} else {
+		print STDERR " " x ($col-1);
+		print STDERR "^";
+		print STDERR "\n";
+	}
+	
+	warn $self->stacktrace;
+}
+
 package RDF::Trine::Error::UnimplementedError;
 
 use base qw(RDF::Trine::Error);
