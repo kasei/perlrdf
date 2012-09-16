@@ -322,12 +322,48 @@ sub get_pname {
 
 sub get_iriref {
 	my $self	= shift;
-	$self->_get_char_safe('<');
-	$self->{buffer}	=~ qr'[^>\\]*(?:\\.[^>\\]*)*'o;
-	my $iri = substr($self->{buffer}, 0, $+[0]);
-	warn "iri: $iri";
-	$self->_read_word($iri);
-	$self->_get_char_safe('>');
+	$self->_get_char_safe(q[<]);
+	my $iri	= '';
+	while (1) {
+		my $c	= $self->_peek_char;
+		last unless defined($c);
+		if (substr($self->{buffer}, 0, 1) eq '\\') {
+			$self->_get_char_safe('\\');
+			my $esc	= $self->_get_char;
+			given ($esc) {
+				when('\\'){ $iri .= "\\" }
+				when('"'){ $iri .= '"' }
+				when('r'){ $iri .= "\r" }
+				when('t'){ $iri .= "\t" }
+				when('n'){ $iri .= "\n" }
+				when('>'){ $iri .= ">" }
+				when('U'){
+					my $codepoint	= $self->_read_length(8);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+					}
+					$iri .= chr(hex($codepoint));
+				}
+				when('u'){
+					my $codepoint	= $self->_read_length(4);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->throw_error("Bad unicode escape codepoint '$codepoint'");
+					}
+					$iri .= chr(hex($codepoint));
+				}
+				default {
+					$self->throw_error("Unrecognized iri escape '$esc'");
+				}
+			}
+		} elsif ($self->{buffer} =~ /^[^>\\]+/) {
+			$iri	.= $self->_read_length($+[0]);
+		} elsif (substr($self->{buffer}, 0, 1) eq '>') {
+			last;
+		} else {
+			$self->throw_error("Got '$c' while expecting IRI character");
+		}
+	}
+	$self->_get_char_safe(q[>]);
 	return $self->new_token(IRI, $iri);
 }
 
@@ -408,6 +444,7 @@ sub get_literal {
 						when('r'){ $string .= "\r" }
 						when('t'){ $string .= "\t" }
 						when('n'){ $string .= "\n" }
+						when('>'){ $string .= ">" }
 						when('U'){
 							my $codepoint	= $self->_read_length(8);
 							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
@@ -447,6 +484,7 @@ sub get_literal {
 					when('r'){ $string .= "\r" }
 					when('t'){ $string .= "\t" }
 					when('n'){ $string .= "\n" }
+					when('>'){ $string .= ">" }
 					when('U'){
 						my $codepoint	= $self->_read_length(8);
 						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
