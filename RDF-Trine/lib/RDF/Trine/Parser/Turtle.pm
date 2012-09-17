@@ -67,8 +67,8 @@ BEGIN {
 	
 	$r_boolean				= qr'(?:true|false)';
 	$r_comment				= qr'#[^\r\n]*';
-	$r_decimal				= qr'[+-]?([0-9]+\.[0-9]*|\.([0-9])+)';
-	$r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
+	$r_decimal				= qr'[+-]?(?:[0-9]+\.[0-9]*|\.([0-9])+)';
+	$r_double				= qr'[+-]?(?:[0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
 	$r_integer				= qr'[+-]?[0-9]+';
 	$r_language				= qr'[a-z]+(?:-[a-z0-9]+)*'i;
 	$r_lcharacters			= qr'(?s)[^"\\]*(?:(?:\\.|"(?!""))[^"\\]*)*';
@@ -748,7 +748,7 @@ sub _nameChar {
 sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	unless ($self->{tokens} =~ /^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/o) {
+	unless ($self->{tokens} =~ /^${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*/o) {
 		_error("Expected: name");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');

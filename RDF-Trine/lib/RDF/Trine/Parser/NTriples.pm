@@ -237,7 +237,6 @@ sub _parse_object {
 			} else {
 				return RDF::Trine::Node::Literal->new($value, undef, $uri);
 			}
-			return RDF::Trine::Node::Literal->new($value, undef, $uri);
 		}
 		else {
 			return RDF::Trine::Node::Literal->new($value);
