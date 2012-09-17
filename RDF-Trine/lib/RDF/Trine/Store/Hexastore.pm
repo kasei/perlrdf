@@ -52,6 +52,10 @@ BEGIN {
 
 ######################################################################
 
+use Package::DeprecationManager -deprecations => {
+	'get_statements-options'	=> '1.001',
+};
+
 sub _config_meta {
 	return {
 		required_keys	=> [],
@@ -203,6 +207,12 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements {
 	my $self	= shift;
+	if (scalar(@_) > 4) {
+		deprecated(
+			message => "Calling get_statements with more than 4 node arguments is deprecated",
+			feature => 'get_statements-options',
+		);
+	}
 	my @nodes	= splice(@_, 0, 3);
 	my $context	= shift;
 	my %args	= @_;
