@@ -158,7 +158,7 @@ sub _new_with_config {
 			$parser->parse_url_into_model( $source->{url}, $model, %args );
 			
 		} elsif ($source->{file}) {
-			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
+			open(my $fh, "<:encoding(UTF-8)", $source->{file})
 	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
 			my $parser = RDF::Trine::Parser->new($source->{syntax});
 			my $model	= RDF::Trine::Model->new( $self );
@@ -183,27 +183,48 @@ sub temporary_store {
 	return $class->new();
 }
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
+=item C<< get_triples ( $subject, $predicate, $object ) >>
 
-Returns a stream object of all statements matching the specified subject,
+Returns an iterator of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_triples {
+	my $self	= shift;
+	my @nodes	= @_[0..2];
+	my $bound	= 0;
+	my %bound;
+	
+	foreach my $pos (0 .. 2) {
+		my $n	= $nodes[ $pos ];
+		if (blessed($n) and not($n->is_variable)) {
+			$bound++;
+			$bound{ $pos }	= $n;
+		}
+	}
+	
+	return $self->_get_statements_triple( $bound, %bound );
+}
+
+=item C<< get_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns an iterator of all statements matching the specified subject,
+predicate, object, and graph. Any of the arguments may be undef to match
+any value.
+
+=cut
+
+sub get_quads {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
 	my $bound	= 0;
 	my %bound;
 	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
+	my $g	= $nodes[3];
+	if (blessed($g) and not($g->is_variable)) {
+		$bound++;
+		$bound{ 3 }	= $g;
 	}
 	
 	foreach my $pos (0 .. 2) {
@@ -214,9 +235,7 @@ sub get_statements {
 		}
 	}
 	
-	my $iter	= ($use_quad)
-				? $self->_get_statements_quad( $bound, %bound )
-				: $self->_get_statements_triple( $bound, %bound );
+	my $iter	= $self->_get_statements_quad( $bound, %bound );
 	return $iter;
 }
 
@@ -380,11 +399,12 @@ the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
+*get_contexts = \&get_graphs;
 
 =item C<< add_statement ( $statement [, $context] ) >>
 
@@ -489,24 +509,6 @@ sub remove_statement {
 		}
 	}
 	return;
-}
-
-=item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
-
-Removes the specified C<$statement> from the underlying model.
-
-=cut
-
-sub remove_statements {
-	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
-	my $context	= shift;
-	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
-	while (my $st = $iter->next) {
-		$self->remove_statement( $st );
-	}
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $context ) >>
