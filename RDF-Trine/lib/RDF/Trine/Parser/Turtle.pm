@@ -744,7 +744,7 @@ sub _nameChar {
 sub _name {
 	my $self	= shift;
 	### nameStartChar nameChar*
-	unless ($self->{tokens} =~ /^${r_nameStartChar}(${r_nameStartChar}|${r_nameChar_extra})*/o) {
+	unless ($self->{tokens} =~ /^${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*/o) {
 		_error("Expected: name");
 	}
 	return substr($self->{tokens}, 0, $+[0], '');
