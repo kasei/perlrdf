@@ -440,11 +440,11 @@ Removes the specified C<$statement> from the underlying model.
 =cut
 
 sub remove_statements { # Fallback implementation
-  my $self = shift;
-  my $iterator = $self->get_statements(@_);
-  while (my $st = $iterator->next) {
-    $self->remove_statement($st);
-  }
+	my $self = shift;
+	my $iterator = $self->get_statements(@_);
+	while (my $st = $iterator->next) {
+		$self->remove_statement($st);
+	}
 }
 
 =item C<< count_statements ($subject, $predicate, $object) >>
@@ -490,6 +490,116 @@ supported features.
 sub supports {
 	return;
 }
+
+=item C<< get_statements ( $subject, $predicate, $object [, $graph] ) >>
+
+Returns an iterator of all statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+ 
+=cut
+
+sub get_statements {
+	my $self	= shift;
+	my @nodes	= @_;
+	if (scalar(@nodes) > 3) {
+		return $self->get_quads( @nodes );
+	} else {
+		return $self->get_triples( @nodes );
+	}
+}
+
+=item C<< get_triples ( $subject, $predicate, $object ) >>
+
+Returns a iterator object of all triples matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub get_triples {
+	my $self	= shift;
+	my @nodes	= @_[0..2];
+	my $iter	= $self->can('get_quads')
+				? $self->get_quads( @nodes )
+				: $self->get_statements( @nodes, undef );
+	my %seen;
+	return RDF::Trine::Iterator->new(sub{
+		while (1) {
+			my $q	= $iter->next;
+			return unless $q;
+			
+			my @nodes	= $q->nodes;
+			my $t		= RDF::Trine::Statement->new( @nodes[0..2] );
+			next if ($seen{ $t->as_string }++);
+			return $t;
+		}
+	});
+}
+
+=item C<< get_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns a iterator object of all quads matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+For all stores implementing this (triplestore) role, the iterator will be empty
+unless C<< $graph >> is undefined or is an RDF::Trine::Node::Nil object.
+If C<< $graph >> is undefined, all quads returned by the iterator will have
+a graph value which is a RDF::Trine::Node::Nil object.
+
+=cut
+
+sub get_quads {
+	my $self	= shift;
+	my @nodes	= @_[0..3];
+	if (not(defined($nodes[3])) or (blessed($nodes[3])) and $nodes[3]->isa('RDF::Trine::Node::Nil')) {
+		my $iter	= $self->can('get_triples')
+					? $self->get_triples(@nodes[0..2])
+					: $self->get_statements(@nodes[0..2]);
+		my $graph	= RDF::Trine::Node::Nil->new();
+		return RDF::Trine::Iterator->new(sub{
+			my $t	= $iter->next;
+			return unless $t;
+			my $quad	= RDF::Trine::Statement::Quad->new( $t->nodes, $graph );
+			return $quad;
+		});
+	} else {
+		return RDF::Trine::Iterator->new([]);
+	}
+}
+
+=item C<< count_triples ( $subject, $predicate, $object ) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub count_triples {
+	my $self	= shift;
+	my $iter	= $self->get_triples( @_ );
+	my $count	= 0;
+	while (my $t = $iter->next) {
+		$count++;
+	}
+	return $count;
+}
+
+=item C<< count_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate, object, and graphs. Any of the arguments may be undef to match any
+value.
+
+=cut
+
+sub count_quads {
+	my $self	= shift;
+	my $iter	= $self->get_quads( @_ );
+	my $count	= 0;
+	while (my $t = $iter->next) {
+		$count++;
+	}
+	return $count;
+}
+
 
 sub _begin_bulk_ops {}
 sub _end_bulk_ops {}
