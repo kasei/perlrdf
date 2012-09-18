@@ -26,6 +26,10 @@
                         asc:update      "Added Moose and MooseX::ArrayRef to prerequisites list." ;
                         asc:update      "Updated code style to work with Perl::Critic core policies." ;
                         asc:update      "Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew)." ;
+                        asc:update      "Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available." ;
+                        asc:update      "Silenced undefined warnings in RDF::Trine::Parser::Turtle::Lexer." ;
+                        asc:update      "Updated required version of perl to 5.10." ;
+                        asc:update      "Silenced warning of cartesian joins in RDF::Trine::Store::Hexastore." ;
                         ] .
 
 

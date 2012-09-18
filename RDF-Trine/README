@@ -70,6 +70,8 @@ VERSION HISTORY
 
   Version 1.001 (2012-XX-XX)
 
+     * BUG FIXES
+         Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available.
      * ENHANCEMENTS
          Replaced old Turtle and TriG parsers with new streaming implementations.
          Added RDF::Trine::Node::Literal->canonicalize method.
@@ -79,6 +81,9 @@ VERSION HISTORY
          Added Moose and MooseX::ArrayRef to prerequisites list.
          Updated code style to work with Perl::Critic core policies.
          Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew).
+         Updated required version of perl to 5.10.
+         Silenced undefined warnings in RDF::Trine::Parser::Turtle::Lexer.
+         Silenced warning of cartesian joins in RDF::Trine::Store::Hexastore.
 
   Version 1.000 (2012-06-29)
 
