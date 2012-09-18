@@ -42,6 +42,7 @@ use Carp;
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
+use Encode;
 
 use RDF::Trine qw(literal);
 use RDF::Trine::Statement::Triple;
