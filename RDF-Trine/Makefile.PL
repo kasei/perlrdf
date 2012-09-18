@@ -43,6 +43,7 @@ requires			'XML::SAX'					=> 0.96;
 requires			'Time::HiRes'				=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
+recommends			'Term::ANSIColor'			=> 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",

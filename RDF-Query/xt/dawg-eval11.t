@@ -114,7 +114,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		update-silent
 	);
 foreach my $file (@manifests) {
-	warn "Parsing manifest $file" if $debug;
+	warn "Parsing manifest $file\n" if $debug;
 	RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 }
 warn "done parsing manifests" if $debug;
@@ -131,6 +131,9 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 	foreach my $m (@manifests) {
 		warn "Manifest: " . $m->as_string . "\n" if ($debug);
 		my ($list)	= $model->objects( $m, $mf->entries );
+		unless (blessed($list)) {
+			warn "No mf:entries found for manifest " . $m->as_string . "\n";
+		}
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
 			my $et	= $model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest);
@@ -198,10 +201,10 @@ sub update_eval_test {
 	if ($debug) {
 		warn "### test     : " . $test->as_string . "\n";
 		warn "# sparql     : $q\n";
-		warn "# data       : " . $data->as_string if (blessed($data));
-		warn "# graph data : " . $_->as_string for (@gdata);
-		warn "# result     : " . $result->as_string;
-		warn "# requires   : " . $req->as_string if (blessed($req));
+		warn "# data       : " . $data->as_string . "\n" if (blessed($data));
+		warn "# graph data : " . $_->as_string . "\n" for (@gdata);
+		warn "# result     : " . $result->as_string . "\n";
+		warn "# requires   : " . $req->as_string . "\n" if (blessed($req));
 	}
 	
 	print STDERR "constructing model... " if ($debug);
