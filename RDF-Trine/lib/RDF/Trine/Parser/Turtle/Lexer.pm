@@ -1,3 +1,28 @@
+# RDF::Trine::Parser::Turtle::Lexer
+# -----------------------------------------------------------------------------
+
+=head1 NAME
+
+RDF::Trine::Parser::Turtle::Lexer - Tokenizer for parsing Turtle, TriG, and N-Triples
+
+=head1 VERSION
+
+This document describes RDF::Trine::Parser::Turtle::Lexer version 1.000_02
+
+=head1 SYNOPSIS
+
+ use RDF::Trine::Parser::Lexer;
+ my $l = RDF::Trine::Parser::Lexer->new( file => $fh );
+ while (my $t = $l->get_token) {
+   ...
+ }
+
+=head1 METHODS
+
+=over 4
+
+=cut
+
 package RDF::Trine::Parser::Turtle::Lexer;
 
 use RDF::Trine::Parser::Turtle::Constants;
@@ -579,5 +604,22 @@ __PACKAGE__->meta->make_immutable;
 __END__
 
 =end private
+
+=back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
+=head1 AUTHOR
+
+Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
+
+=head1 COPYRIGHT
+
+Copyright (c) 2006-2012 Gregory Todd Williams. This
+program is free software; you can redistribute it and/or modify it under
+the same terms as Perl itself.
 
 =cut
