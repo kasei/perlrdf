@@ -109,9 +109,16 @@ sub explain {
 		$len	= $maxlen;
 	}
 	
+	my $tabs	= ($buffer =~ tr/\t//);
+	$buffer		=~ s/\t/    /g;
+	$col		+= 3 * $tabs;
+	
 	chomp($text);
-	print STDERR "$text:\n";
+	
 	if ($RDF::Trine::Error::ParserError::Explainable::ANSI) {
+		print STDERR Term::ANSIColor::color('red');
+		print STDERR "$text:\n";
+		print STDERR Term::ANSIColor::color('reset');
 		print STDERR substr($buffer, 0, $col-1);
 		print STDERR Term::ANSIColor::color('red');
 		print STDERR substr($buffer, $col-1, $len);
@@ -126,6 +133,7 @@ sub explain {
 		print STDERR "\n";
 		print STDERR Term::ANSIColor::color('reset');
 	} else {
+		print STDERR "$text:\n";
 		print STDERR $buffer;
 		print STDERR " " x ($col-1);
 		print STDERR "^";
@@ -149,23 +157,29 @@ sub explain {
 	my ($line, $col)	= @$pos;
 	my $buffer	= $self->_get_line( $fh, $line );
 	
-	chomp($text);
-	print STDERR "$text:\n";
+	my $tabs	= ($buffer =~ tr/\t//);
+	$buffer		=~ s/\t/    /g;
+	$col		+= 3 * $tabs;
 	
-	print STDERR $buffer;
+	chomp($text);
+	
 	if ($RDF::Trine::Error::ParserError::Explainable::ANSI) {
-		print STDERR " " x ($col-1);
 		print STDERR Term::ANSIColor::color('red');
+		print STDERR "$text:\n";
+		print STDERR Term::ANSIColor::color('reset');
+		print STDERR $buffer;
+		print STDERR Term::ANSIColor::color('red');
+		print STDERR " " x ($col-1);
 		print STDERR "^";
 		print STDERR Term::ANSIColor::color('reset');
 		print STDERR "\n";
 	} else {
+		print STDERR "$text:\n";
+		print STDERR $buffer;
 		print STDERR " " x ($col-1);
 		print STDERR "^";
 		print STDERR "\n";
 	}
-	
-	warn $self->stacktrace;
 }
 
 package RDF::Trine::Error::UnimplementedError;
