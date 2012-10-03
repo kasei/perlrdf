@@ -119,6 +119,16 @@ sub parse_file {
 	$self->_parse($l);
 }
 
+sub parse_node {
+	my $self	= shift;
+	my $string	= shift;
+	open(my $fh, '<:encoding(UTF-8)', \$string);
+	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
+	my $t = $self->_next_nonws($l);
+	my $node	= $self->_object($l, $t);
+	return $node;
+}
+
 sub _parse {
 	my $self	= shift;
 	my $l		= shift;
@@ -327,11 +337,15 @@ sub _object {
 	my $self	= shift;
 	my $l		= shift;
 	my $t		= shift;
+	my $tcopy	= $t;
 	my $obj;
 	my $type	= $t->type;
 	if ($type==LBRACKET) {
 		$obj	= RDF::Trine::Node::Blank->new();
 		my $t	= $self->_next_nonws($l);
+		unless ($t) {
+			$self->_throw_error("Expecting object but got only opening bracket", $tcopy, $l);
+		}
 		if ($t->type != RBRACKET) {
 			$self->_unget_token($t);
 			$self->_predicateObjectList( $l, $obj );
@@ -339,6 +353,9 @@ sub _object {
 		}
 	} elsif ($type == LPAREN) {
 		my $t	= $self->_next_nonws($l);
+		unless ($t) {
+			$self->_throw_error("Expecting object but got only opening paren", $tcopy, $l);
+		}
 		if ($t->type == RPAREN) {
 			$obj	= RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#nil');
 		} else {
@@ -363,15 +380,17 @@ sub _object {
 			my $t		= $self->_next_nonws($l);
 			my $dt;
 			my $lang;
-			if ($t->type == HATHAT) {
-				my $t		= $self->_next_nonws($l);
-				if ($t->type == IRI or $t->type == PREFIXNAME) {
-					$dt	= $self->_token_to_node($t);
+			if ($t) {
+				if ($t->type == HATHAT) {
+					my $t		= $self->_next_nonws($l);
+					if ($t->type == IRI or $t->type == PREFIXNAME) {
+						$dt	= $self->_token_to_node($t);
+					}
+				} elsif ($t->type == LANG) {
+					$lang	= $t->value;
+				} else {
+					$self->_unget_token($t);
 				}
-			} elsif ($t->type == LANG) {
-				$lang	= $t->value;
-			} else {
-				$self->_unget_token($t);
 			}
 			$obj	= RDF::Trine::Node::Literal->new($value, $lang, $dt);
 		} else {
@@ -415,6 +434,9 @@ sub _token_to_node {
 		}
 		when (BNODE) {
 			return RDF::Trine::Node::Blank->new($t->value);
+		}
+		when (STRING1D) {
+			return RDF::Trine::Node::Literal->new($t->value);
 		}
 		default {
 			$self->_throw_error("Converting $type to node not implemented", $t);
