@@ -286,6 +286,7 @@ sub update_eval_test {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 		unless ($query) {
 			warn 'Query error: ' . RDF::Query->error;
+			fail($test->as_string);
 			return;
 		}
 		
