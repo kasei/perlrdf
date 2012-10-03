@@ -119,9 +119,17 @@ sub parse_file {
 	$self->_parse($l);
 }
 
+=item C<< parse_node ( $string, $base ) >>
+
+Returns the RDF::Trine::Node object corresponding to the node whose N-Triples
+serialization is found at the beginning of C<< $string >>.
+
+=cut
+
 sub parse_node {
 	my $self	= shift;
 	my $string	= shift;
+	local($self->{baseURI})	= shift;
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	my $t = $self->_next_nonws($l);
