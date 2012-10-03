@@ -368,7 +368,9 @@ sub _RW_Query {
 	
 	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
-		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
+		my $pattern		= RDF::Query::Algebra::Sequence->new( @patterns );
+		$pattern->check_duplicate_blanks;
+		$self->{build}{triples}	= [ $pattern ];
 	}
 	
 # 	my %query	= (%p, %body);
