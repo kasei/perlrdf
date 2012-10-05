@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.000_03
+This document describes RDF::Trine version 1.001
 
 =head1 SYNOPSIS
 
@@ -76,7 +76,7 @@ use Module::Load::Conditional qw[can_load];
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.000_03';
+	$VERSION	= '1.001';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);

@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle::Constants - Constant definitions for use in parsing 
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle::Constants version 1.000_03
+This document describes RDF::Trine::Parser::Turtle::Constants version 1.001
 
 =head1 SYNOPSIS
 

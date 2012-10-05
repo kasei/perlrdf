@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.001 (2012-XX-XX)
+  Version 1.001 (2012-10-05)
 
      * BUG FIXES
          Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available.
