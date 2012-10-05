@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 1.000
+This document describes RDF::Trine::Parser::Turtle version 1.001
 
 =head1 SYNOPSIS
 
@@ -31,7 +31,9 @@ L<RDF::Trine::Parser> class.
 package RDF::Trine::Parser::Turtle;
 
 use utf8;
-use 5.014;
+use 5.010;
+use strict;
+use warnings;
 use Scalar::Util qw(blessed);
 use base qw(RDF::Trine::Parser);
 use RDF::Trine::Error qw(:try);
@@ -42,7 +44,7 @@ use RDF::Trine::Parser::Turtle::Token;
 
 our $VERSION;
 BEGIN {
-	$VERSION				= '1.000';
+	$VERSION				= '1.001';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -58,6 +60,12 @@ BEGIN {
 
 my $rdf	= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd	= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
+
+=item C<< new ( [ namespaces => $map ] ) >>
+
+Returns a new Turtle parser.
+
+=cut
 
 sub new {
 	my $class	= shift;
@@ -111,9 +119,17 @@ sub parse_file {
 	$self->_parse($l);
 }
 
+=item C<< parse_node ( $string, $base ) >>
+
+Returns the RDF::Trine::Node object corresponding to the node whose N-Triples
+serialization is found at the beginning of C<< $string >>.
+
+=cut
+
 sub parse_node {
 	my $self	= shift;
 	my $string	= shift;
+	local($self->{baseURI})	= shift;
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	my $t = $self->_next_nonws($l);
@@ -162,7 +178,7 @@ sub _get_token_type {
 	my $t		= $self->_next_nonws($l);
 	return unless ($t);
 	unless ($t->type eq $type) {
-		$self->throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
+		$self->_throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
 	}
 	return $t;
 }
@@ -234,7 +250,7 @@ sub _triple {
 			$self->_assert_list($subj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
-		$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
 	} else {
 		$subj	= $self->_token_to_node($t);
 	}
@@ -266,7 +282,7 @@ sub _predicateObjectList {
 	while (1) {
 		my $type = $t->type;
 		unless ($type==IRI or $type==PREFIXNAME or $type==A) {
-			$self->throw_error("Expecting verb but got " . decrypt_constant($type), $t, $l);
+			$self->_throw_error("Expecting verb but got " . decrypt_constant($type), $t, $l);
 		}
 		my $pred	= $self->_token_to_node($t);
 		$self->_objectList($l, $subj, $pred);
@@ -299,7 +315,7 @@ sub _objectList {
 		my $obj		= $self->_object($l, $t);
 		$self->_assert_triple($subj, $pred, $obj);
 		
-		my $t	= $self->_next_nonws($l);
+		$t	= $self->_next_nonws($l);
 		if ($t->type == COMMA) {
 			next;
 		} else {
@@ -365,7 +381,7 @@ sub _object {
 			$self->_assert_list($obj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==A or $type==STRING1D or $type==STRING3D or $type==BNODE or $type==INTEGER or $type==DECIMAL or $type==DOUBLE or $type==BOOLEAN)) {
-		$self->throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
 	} else {
 		if ($type==STRING1D or $type==STRING3D) {
 			my $value	= $t->value;
@@ -419,7 +435,7 @@ sub _token_to_node {
 			my ($ns, $local)	= @{ $t->args };
 			my $prefix			= $self->{map}->namespace_uri($ns);
 			unless (blessed($prefix)) {
-				$self->throw_error("Use of undeclared prefix '$ns'", $t);
+				$self->_throw_error("Use of undeclared prefix '$ns'", $t);
 			}
 			my $iri				= $prefix->uri($local);
 			return $iri;
@@ -431,12 +447,12 @@ sub _token_to_node {
 			return RDF::Trine::Node::Literal->new($t->value);
 		}
 		default {
-			$self->throw_error("Converting $type to node not implemented", $t);
+			$self->_throw_error("Converting $type to node not implemented", $t);
 		}
 	}
 }
 
-sub throw_error {
+sub _throw_error {
 	my $self	= shift;
 	my $message	= shift;
 	my $t		= shift;

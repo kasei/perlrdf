@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 1.000
+This document describes RDF::Trine::Store::Hexastore version 1.001
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.000";
+	$VERSION	= "1.001";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -463,7 +463,7 @@ sub get_pattern {
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-			warn 'no shared variable -- cartesian product';
+# 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );

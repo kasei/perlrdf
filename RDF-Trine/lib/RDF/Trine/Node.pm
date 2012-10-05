@@ -7,7 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 1.000
+This document describes RDF::Trine::Node version 1.001
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
