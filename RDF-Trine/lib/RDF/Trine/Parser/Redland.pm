@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Redland version 1.000
+This document describes RDF::Trine::Parser::Redland version 1.001
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ BEGIN {
 				],
 	);
 	
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
@@ -97,10 +97,12 @@ BEGIN {
 	}
 	
 	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		## no critic
 		eval "use RDF::Redland 1.000701;";
 		unless ($@) {
 			$HAVE_REDLAND_PARSER	= 1;
 		}
+		## use critic
 	}
 }
 
@@ -128,10 +130,11 @@ sub new {
 		throw RDF::Trine::Error
 			-text => "Unrecognized format name $args{name} for Redland parser";
 	}
-	$args{parser} = RDF::Redland::Parser->new($args{name}) or
+	
+	my $parser	= RDF::Redland::Parser->new($args{name}) or
 		throw RDF::Trine::Error
 			-text => "Could not load a Redland $args{name} parser.";
-
+	
 	#warn "sup dawgs";
 
 	my $self = bless( { %args }, $class);
@@ -155,13 +158,15 @@ sub parse {
 	my $string	= shift;
 	my $handler = shift;
 	
+	my $parser	= RDF::Redland::Parser->new($self->{name});
+	
 	my $null_base	= 'urn:uuid:1d1e755d-c622-4610-bae8-40261157687b';
 	if ($base and blessed($base) and $base->isa('URI')) {
 		$base	= $base->as_string;
 	}
 	$base		= RDF::Redland::URI->new(defined $base ? $base : $null_base);
 	my $stream	= eval {
-		$self->{parser}->parse_string_as_stream($string, $base)
+		$parser->parse_string_as_stream($string, $base)
 	};
 	if ($@) {
 		throw RDF::Trine::Error::ParserError -text => $@;
@@ -189,9 +194,10 @@ sub parse {
 
 		$stream->next;
 	}
+	undef $stream;
 	
 	if (my $map = $self->{ namespaces }) {
-		my %seen	= $self->{parser}->namespaces_seen;
+		my %seen	= $parser->namespaces_seen;
 		while (my ($ns, $uri) = each(%seen)) {
 			$map->add_mapping( $ns => $uri->as_string );
 		}

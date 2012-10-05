@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Iterator class for bindings query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 1.000
+This document describes RDF::Trine::Iterator::Bindings version 1.001
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -234,7 +234,7 @@ sub nested_loop_join {
 				$need_new_a		= 0;
 			}
 			$l->debug("OUTER: " . Dumper($rowa));
-			return undef unless ($rowa);
+			return unless ($rowa);
 			LOOP: while ($inner_index <= $#data) {
 				my $rowb	= $data[ $inner_index++ ];
 				$l->debug("- INNER[ $inner_index ]: " . Dumper($rowb));
@@ -494,7 +494,7 @@ sub as_statements {
 	my @names	= @_;
 	my $sub		= sub {
 		my $row	= $self->next;
-		return undef unless (defined $row);
+		return unless (defined $row);
 		my @values	= @{ $row }{ @names };
 		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
 						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
@@ -522,7 +522,6 @@ sub print_xml {
 		push(@variables, $name) if $name;
 	}
 	
-	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
@@ -568,9 +567,9 @@ Returns a string representation of C<$node> for use in a JSON serialization.
 
 =cut
 
-sub format_node_json ($$$) {
+sub format_node_json {
 # 	my $bridge	= shift;
-# 	return undef unless ($bridge);
+# 	return unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;

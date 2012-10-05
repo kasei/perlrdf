@@ -167,6 +167,11 @@ sub new {
 	unless ($config->{endpoint}) {
 		$config->{endpoint}	= { %$config };
 	}
+	
+	if ($config->{endpoint}{load_data} and $config->{endpoint}{update}) {
+		die "The load_data and update configuration options cannot be specified together.";
+	}
+	
 	my $self	= bless( {
 		conf		=> $config,
 		model		=> $model,
@@ -285,16 +290,29 @@ END
 		$args{ update }		= 1 if ($config->{endpoint}{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{endpoint}{load_data});
 		
-		my @default	= $req->param('default-graph-uri');
-		my @named	= $req->param('named-graph-uri');
-		if (scalar(@default) or scalar(@named)) {
-			delete $args{ load_data };
-			$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
-			foreach my $url (@named) {
-				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+		{
+			my @default	= $req->param('default-graph-uri');
+			my @named	= $req->param('named-graph-uri');
+			if (scalar(@default) or scalar(@named)) {
+				delete $args{ load_data };
+				$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
+				foreach my $url (@named) {
+					RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+				}
+				foreach my $url (@default) {
+					RDF::Trine::Parser->parse_url_into_model( $url, $model );
+				}
 			}
-			foreach my $url (@default) {
-				RDF::Trine::Parser->parse_url_into_model( $url, $model );
+		}
+		
+		my $protocl_specifies_update_dataset	= 0;
+		{
+			my @default	= $req->param('using-graph-uri');
+			my @named	= $req->param('using-named-graph-uri');
+			if (scalar(@named) or scalar(@default)) {
+				$protocl_specifies_update_dataset	= 1;
+				$model	= RDF::Trine::Model::Dataset->new( $model );
+				$model->push_dataset( default => \@default, named => \@named );
 			}
 		}
 		
@@ -311,6 +329,15 @@ END
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		$self->log_query( $req, $sparql );
 		if ($query) {
+			if ($protocl_specifies_update_dataset and $query->specifies_update_dataset) {
+				my $method	= $req->method;
+				$content	= "Update operations cannot specify a dataset in both the query and with protocol parameters";
+				$self->log_error( $req, $content );
+				my $code	= 400;
+				$response->status($code);
+				$response->body($content);
+				goto CLEANUP;
+			}
 			my ($plan, $ctx)	= $query->prepare( $model );
 # 			warn $plan->sse;
 			my $iter	= $query->execute_plan( $plan, $ctx );

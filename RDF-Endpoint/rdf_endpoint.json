@@ -5,7 +5,7 @@
 		"store": "DBI;endpoint;DBI:SQLite:dbname=endpoint.sqlite;;",
 		"endpoint": {
 			"update": true,				# allow SPARQL Update operations
-			"load_data": true,			# allow loading RDF data via SPARQL Protocol or FROM/FROM NAMED clauses
+			"load_data": false,			# allow loading RDF data via SPARQL Protocol or FROM/FROM NAMED clauses
 			"html": {
 				"resource_links": true,	# turn resources into links in HTML query result pages
 				"embed_images": false,	# display foaf:Images as images in HTML query result pages

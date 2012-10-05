@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 1.000
+This document describes RDF::Trine::Model version 1.001
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -132,7 +132,10 @@ Adds the specified C<< $statement >> to the rdf store.
 =cut
  
 sub add_statement {
-	my $self	= shift;
+	my ($self, @args)	= @_;
+	unless ($args[0]->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
+	}
 	if ($self->{temporary}) {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
@@ -152,7 +155,7 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
-	return $self->_store->add_statement( @_ );
+	return $self->_store->add_statement( @args );
 }
 
 =item C<< add_hashref ( $hashref [, $context] ) >>
@@ -602,7 +605,7 @@ sub _get_pattern {
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};

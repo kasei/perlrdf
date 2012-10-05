@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph - Iterator class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 1.000
+This document describes RDF::Trine::Iterator::Graph version 1.001
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 ######################################################################
@@ -110,7 +110,7 @@ sub as_bindings {
 	
 	my $sub	= sub {
 		my $statement	= $self->next;
-		return undef unless ($statement);
+		return unless ($statement);
 		my %values		= map {
 			my $method = $bindings{ $_ };
 			$_ => $statement->$method()
@@ -253,10 +253,8 @@ sub print_xml {
 	my $fh				= shift;
 	my $max_result_size	= shift || 0;
 	my $graph			= $self->unique();
-	binmode($fh, ':utf8');
 	
 	my $count	= 0;
-	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">

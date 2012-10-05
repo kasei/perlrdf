@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 1.000
+This document describes RDF::Trine::Store version 1.001
 
 =head1 DESCRIPTION
 
@@ -83,7 +83,7 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
@@ -294,7 +294,7 @@ sub _get_pattern {
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $_iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};

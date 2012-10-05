@@ -12,8 +12,10 @@ build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 
-perl_version		'5.008003';
+perl_version		'5.010';
 
+requires			'Moose'						=> 2;
+requires			'MooseX::ArrayRef'			=> 0;
 requires			'Module::Load::Conditional'	=> 0.38;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
@@ -41,6 +43,7 @@ requires			'XML::SAX'					=> 0.96;
 requires			'Time::HiRes'				=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
+recommends			'Term::ANSIColor'			=> 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",

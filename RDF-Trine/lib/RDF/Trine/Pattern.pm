@@ -7,7 +7,7 @@ RDF::Trine::Pattern - Class for basic graph patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Pattern version 1.000
+This document describes RDF::Trine::Pattern version 1.001
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 ######################################################################
@@ -50,7 +50,7 @@ sub new {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
-	return bless( [ @triples ] );
+	return bless( [ @triples ], $class );
 }
 
 =item C<< construct_args >>

@@ -171,6 +171,7 @@ END
 # This document contains a default graph and one named graphs with non-ASCII chars.
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix ex: <http://www.example.org/vocabulary#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
 # default graph
     { 
       <http://example.org/bob> dc:publisher "Bob" . 

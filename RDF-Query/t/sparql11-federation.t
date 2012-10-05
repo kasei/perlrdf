@@ -30,14 +30,14 @@ foreach my $model (@models) {
 	
 	
 	{
-		print "# BINDINGS (one var)\n";
+		print "# VALUES (one var)\n";
 		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11' } );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p ?name
 			WHERE {
 				?p a foaf:Person ; foaf:firstName ?name .
 			}
-			BINDINGS ?name { ("Gregory") ("Gary") }
+			VALUES ?name { "Gregory" "Gary" }
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
@@ -58,14 +58,14 @@ END
 	}
 	
 	{
-		print "# BINDINGS (two var)\n";
+		print "# VALUES (two var)\n";
 		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT ?p
 			WHERE {
 				?p a foaf:Person ; foaf:name ?name ; foaf:mbox_sha1sum ?email .
 			}
-			BINDINGS ?name ?email { ("Gregory Todd Williams" "2057969209f1dfdad832de387cf13e6ff8c93b12") }
+			VALUES (?name ?email) { ("Gregory Todd Williams" "2057969209f1dfdad832de387cf13e6ff8c93b12") }
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );
@@ -77,14 +77,14 @@ END
 	}
 
 	{
-		print "# BINDINGS with UNDEF\n";
+		print "# VALUES with UNDEF\n";
 		my $query	= RDF::Query->new( <<"END", undef, undef, 'sparql11' );
 			PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 			SELECT *
 			WHERE {
 				?p a foaf:Person ; foaf:name ?name ; foaf:schoolHomepage ?school .
 			}
-			BINDINGS ?name ?school { (UNDEF <http://www.samohi.smmusd.org/>) }
+			VALUES (?name ?school) { (UNDEF <http://www.samohi.smmusd.org/>) }
 END
 		my $count	= 0;
 		my $stream	= $query->execute( $model );

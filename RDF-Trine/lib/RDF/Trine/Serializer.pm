@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 1.000
+This document describes RDF::Trine::Serializer version 1.001
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 use RDF::Trine::Serializer::NQuads;
@@ -172,7 +172,8 @@ sub media_types {
 	while (my($type, $sclass) = each(%media_types)) {
 		push(@list, $type) if ($sclass eq $class);
 	}
-	return sort @list;
+	my @types	= sort @list;
+	return @types;
 }
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
@@ -190,7 +191,7 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
+	open( my $fh, '>:encoding(UTF-8)', \$string );
 	$self->serialize_model_to_file( $fh, $model );
 	close($fh);
 	return $string;

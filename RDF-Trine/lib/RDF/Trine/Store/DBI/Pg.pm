@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::Pg - PostgreSQL subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::Pg version 1.000
+This document describes RDF::Trine::Store::DBI::Pg version 1.001
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.000";
+	$VERSION	= "1.001";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -88,7 +88,7 @@ sub init {
 	
 	unless ($self->_table_exists("literals")) {
 		$dbh->begin_work;
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE literals (
 				ID NUMERIC(20) PRIMARY KEY,
 				Value text NOT NULL,
@@ -96,19 +96,19 @@ sub init {
 				Datatype text NOT NULL DEFAULT ''
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE resources (
 				ID NUMERIC(20) PRIMARY KEY,
 				URI text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE bnodes (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE models (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
@@ -119,7 +119,7 @@ END
 	}
 	
 	unless ($self->_table_exists("statements${id}")) {
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return };
 			CREATE TABLE statements${id} (
 				Subject NUMERIC(20) NOT NULL,
 				Predicate NUMERIC(20) NOT NULL,
@@ -128,7 +128,7 @@ END
 				PRIMARY KEY (Subject, Predicate, Object, Context)
 			);
 END
-# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	}
 	

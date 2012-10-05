@@ -7,7 +7,7 @@ RDF::Trine::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Trine::VariableBindings version 1.000
+This document describes RDF::Trine::VariableBindings version 1.001
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 }
 
 ######################################################################
@@ -110,7 +110,7 @@ sub join {
 		next unless (defined($val_a) and defined($val_b));
 		my $equal	= (refaddr($val_a) == refaddr($val_b)) || $val_a->equal( $val_b );
 		unless ($equal) {
-			return undef;
+			return;
 		}
 	}
 	
