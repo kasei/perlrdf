@@ -118,6 +118,29 @@ sub namespace_uri {
 	return $self->{ $name };
 }
 
+=item C<< list_namespaces >>
+
+Returns an array of L<RDF::Trine::Namespace> objects with all the namespaces.
+
+=cut
+
+sub list_namespaces {
+    # this has to be explicit or the context won't work
+    my @out = sort { $a cmp $b } values %{$_[0]};
+    return @out;
+}
+
+=item C<< list_prefixes >>
+
+Returns an array of prefixes.
+
+=cut
+
+sub list_prefixes {
+    my @out = sort keys %{$_[0]};
+    return @out;
+}
+
 =item C<< uri ( $prefixed_name ) >>
 
 Returns a URI (as L<RDF::Trine::Node::Resource>) for an abbreviated
