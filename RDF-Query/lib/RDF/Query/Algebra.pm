@@ -154,28 +154,19 @@ sub check_duplicate_blanks {
 	my @data;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push(@data, $arg->_check_duplicate_blanks);
-		}
-	}
-	
-	my %seen;
-	foreach my $d (@data) {
-		foreach my $b (@$d) {
-			if ($seen{ $b }++) {
-				throw RDF::Query::Error::QueryPatternError -text => "Same blank node identifier ($b) used in more than one BasicGraphPattern.";
-			}
+			$arg->check_duplicate_blanks();
 		}
 	}
 	
 	return 1;
 }
 
-sub _check_duplicate_blanks {
+sub _referenced_blanks {
 	my $self	= shift;
 	my @data;
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
-			push( @data, $arg->_check_duplicate_blanks );
+			push( @data, $arg->_referenced_blanks );
 		}
 	}
 	return @data;
