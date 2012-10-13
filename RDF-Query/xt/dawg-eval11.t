@@ -11,7 +11,7 @@ use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
-use Math::Combinatorics qw(permute);
+use Algorithm::Combinatorics qw(permutations);
 use LWP::MediaTypes qw(add_type);
 use Text::CSV;
 use Regexp::Common qw /URI/;
@@ -597,11 +597,11 @@ sub get_expected_results {
 		}
 		my $iter	= RDF::Trine::Iterator::Bindings->new(\@data);
 		return binding_results_data($iter);
-	} elsif ($file =~ /[.]ttl/) {
+	} elsif ($file =~ /[.](ttl|rdf)/) {
 		my $model	= RDF::Trine::Model->new();
 		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
 		my $base	= 'file://' . File::Spec->rel2abs($file);
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser->new(($file =~ /[.]ttl/) ? 'turtle' : 'rdfxml');
 		$parser->parse_file_into_model( $base, $file, $model );
 		my ($res)	= $model->subjects( $rdf->type, $rs->ResultSet );
 		if (my($b) = $model->objects( $res, $rs->boolean )) {
@@ -628,6 +628,11 @@ sub get_expected_results {
 				push(@bindings, RDF::Trine::VariableBindings->new( \%data ));
 			}
 			my $iter	= RDF::Trine::Iterator::Bindings->new( \@bindings, \@names );
+			if ($args{ results }) {
+				$iter	= $iter->materialize;
+				warn "Got expected results:\n";
+				warn $iter->as_string;
+			}
 			return binding_results_data($iter);
 		}
 	} else {
@@ -716,8 +721,9 @@ sub compare_results {
 		# compare the results with bnodes
 		my @ka	= keys %{ $actual->{blank_identifiers} };
 		my @kb	= keys %{ $expected->{blank_identifiers} };
-		my @kbp	= permute( @kb );
-		MAPPING: foreach my $mapping (@kbp) {
+
+		my $kbp = permutations( \@kb );
+		MAPPING: while (my $mapping = $kbp->next) {
 			my %mapping;
 			@mapping{ @ka }	= @$mapping;
 			warn "trying mapping: " . Dumper(\%mapping) if ($debug);
