@@ -305,12 +305,12 @@ END
 			}
 		}
 		
-		my $protocl_specifies_update_dataset	= 0;
+		my $protocol_specifies_update_dataset	= 0;
 		{
 			my @default	= $req->param('using-graph-uri');
 			my @named	= $req->param('using-named-graph-uri');
 			if (scalar(@named) or scalar(@default)) {
-				$protocl_specifies_update_dataset	= 1;
+				$protocol_specifies_update_dataset	= 1;
 				$model	= RDF::Trine::Model::Dataset->new( $model );
 				$model->push_dataset( default => \@default, named => \@named );
 			}
@@ -329,7 +329,7 @@ END
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		$self->log_query( $req, $sparql );
 		if ($query) {
-			if ($protocl_specifies_update_dataset and $query->specifies_update_dataset) {
+			if ($protocol_specifies_update_dataset and $query->specifies_update_dataset) {
 				my $method	= $req->method;
 				$content	= "Update operations cannot specify a dataset in both the query and with protocol parameters";
 				$self->log_error( $req, $content );

@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 1.000
+This document describes RDF::Trine::Parser::RDFXML version 1.001
 
 =head1 SYNOPSIS
 
@@ -52,7 +52,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -153,11 +153,17 @@ sub parse {
 		$self->{saxhandler}->set_handler( $handler );
 	}
 	
-	if (ref($string)) {
-		$self->{parser}->parse_file( $string );
-	} else {
-		$self->{parser}->parse_string( $string );
+	eval {
+		if (ref($string)) {
+			$self->{parser}->parse_file( $string );
+		} else {
+			$self->{parser}->parse_string( $string );
+		}
+	};
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
 	}
+	
 	my $nodes	= $self->{saxhandler}{nodes};
 	if ($nodes and scalar(@$nodes)) {
 		warn Dumper($nodes);

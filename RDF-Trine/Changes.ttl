@@ -10,6 +10,29 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.001.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.000.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.001" ;
+                        doap:created      "2012-10-05" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Replaced old Turtle and TriG parsers with new streaming implementations." ;
+                        asc:update      "Added RDF::Trine::Node::Literal->canonicalize method." ;
+                        asc:update      "Updated RDF::Trine::Parser::Redland to construct a new parser object on each parse (avoiding a bug in redland)." ;
+                        asc:update      "Applied partial patch to 'fix interaction with HTML::Data::Parser' (from Dorian Taylor; commit 9b713b23b6)." ;
+                        asc:update      "Added Moose and MooseX::ArrayRef to prerequisites list." ;
+                        asc:update      "Updated code style to work with Perl::Critic core policies." ;
+                        asc:update      "Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew)." ;
+                        asc:update      "Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available." ;
+                        asc:update      "Silenced undefined warnings in RDF::Trine::Parser::Turtle::Lexer." ;
+                        asc:update      "Updated required version of perl to 5.10." ;
+                        asc:update      "Silenced warning of cartesian joins in RDF::Trine::Store::Hexastore." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.000.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.140.tar.gz> ;

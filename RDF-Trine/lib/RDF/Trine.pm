@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.000
+This document describes RDF::Trine version 1.001
 
 =head1 SYNOPSIS
 
@@ -67,7 +67,7 @@ consists of several components:
 
 package RDF::Trine;
 
-use 5.008003;
+use 5.010;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -76,7 +76,7 @@ use Module::Load::Conditional qw[can_load];
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.000';
+	$VERSION	= '1.001';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
