@@ -153,11 +153,17 @@ sub parse {
 		$self->{saxhandler}->set_handler( $handler );
 	}
 	
-	if (ref($string)) {
-		$self->{parser}->parse_file( $string );
-	} else {
-		$self->{parser}->parse_string( $string );
+	eval {
+		if (ref($string)) {
+			$self->{parser}->parse_file( $string );
+		} else {
+			$self->{parser}->parse_string( $string );
+		}
+	};
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
 	}
+	
 	my $nodes	= $self->{saxhandler}{nodes};
 	if ($nodes and scalar(@$nodes)) {
 		warn Dumper($nodes);
