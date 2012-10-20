@@ -7,7 +7,7 @@ RDF::Trine::Statement::Quad - Class for quads and quad patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Statement::Quad version 1.001
+This document describes RDF::Trine::Statement::Quad version 1.002
 
 =cut
 
@@ -25,7 +25,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
