@@ -10,6 +10,19 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.002.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.002" ;
+                        doap:created      "2012-10-20" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Require Scalar::Util version 1.23." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.000.tar.gz> ;
