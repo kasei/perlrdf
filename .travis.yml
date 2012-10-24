@@ -2,7 +2,8 @@ language: perl
 
 install:
   - "cpanm --quiet --installdeps --notest RDF::Trine"
-before_script:
+  - "cpanm --quiet --notest Module::Install::AuthorTests"
+meta.before_script:
   - "cd RDF-Trine"
 script:
   - "perl Makefile.PL && make test"
