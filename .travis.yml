@@ -1,7 +1,7 @@
 language: perl
 
 install:
-  - "cpanm --quiet --installdeps --notest RDF-Trine"
+  - "cpanm --quiet --installdeps --notest RDF::Trine"
 before_script:
   - "cd RDF-Trine"
 script:
