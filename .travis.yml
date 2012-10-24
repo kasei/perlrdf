@@ -1,3 +1,7 @@
 language: perl
 before_script:
   - "cd RDF-Trine"
+script:
+  - "perl Makefile.PL && make test"
+after_script:
+  - "cd .."
