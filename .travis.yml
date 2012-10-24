@@ -1,7 +1,8 @@
 language: perl
+
+install:
+  - "cpanm --quiet --installdeps --notest RDF-Trine"
 before_script:
   - "cd RDF-Trine"
 script:
   - "perl Makefile.PL && make test"
-after_script:
-  - "cd .."
