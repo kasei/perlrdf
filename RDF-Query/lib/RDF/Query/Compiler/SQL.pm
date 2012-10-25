@@ -9,6 +9,12 @@ RDF::Query::Compiler::SQL - Compile a SPARQL query directly to SQL.
 
 This document describes RDF::Query::Compiler::SQL version 2.908_01.
 
+=head1 STATUS
+
+This module's API and functionality should be considered deprecated.
+If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
+
 =cut
 
 package RDF::Query::Compiler::SQL;

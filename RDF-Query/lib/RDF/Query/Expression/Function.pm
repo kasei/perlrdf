@@ -281,13 +281,32 @@ sub evaluate {
 		my ($ggp)	= $self->arguments;
 		return $func->( $query, $context, $bound, $ggp, $active_graph );
 	} else {
-		my @args	= map {
-						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bound, $context, $active_graph )
-							: ($_->isa('RDF::Trine::Node::Variable'))
-								? $bound->{ $_->name }
-								: $_
-					} $self->arguments;
+		my $model	= ref($query) ? $query->{model} : undef;
+		if (blessed($context)) {
+			$model	= $context->model;
+		}
+		
+		my @args;
+		if (ref($query)) {
+			# localize the model in the query object (legacy code wants the model accessible from the query object)
+			local($query->{model})	= $model;
+			@args	= map {
+							$_->isa('RDF::Query::Algebra')
+								? $_->evaluate( $query, $bound, $context, $active_graph )
+								: ($_->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $_->name }
+									: $_
+						} $self->arguments;
+		} else {
+			@args	= map {
+							$_->isa('RDF::Query::Algebra')
+								? $_->evaluate( $query, $bound, $context, $active_graph )
+								: ($_->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $_->name }
+									: $_
+						} $self->arguments;
+		}
+		
 		my $func	= $query->get_function($uri);
 		unless ($func) {
 			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";

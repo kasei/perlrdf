@@ -4,7 +4,7 @@ RDF::Trine::Serializer::NTriples::Canonical - Canonical representation of an RDF
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.139
+This document describes RDF::Trine::Serializer::NTriples::Canonical version 1.002
 
 =head1 SYNOPSIS
 
@@ -52,7 +52,7 @@ L<RDF::Trine::Serializer::NTriples> class.
 
 package RDF::Trine::Serializer::NTriples::Canonical;
 
-use 5.008001;
+use 5.010;
 use strict;
 use warnings;
 
@@ -64,7 +64,7 @@ use base qw(RDF::Trine::Serializer::NTriples);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples-canonical' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -259,7 +259,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs to <http://rt.cpan.org/>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 

@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph::Materialized - Materialized graph class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph::Materialized version 0.139
+This document describes RDF::Trine::Iterator::Graph::Materialized version 1.002
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use base qw(RDF::Trine::Iterator::Graph);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 }
 
 =item C<< new ( \@results, %args ) >>
@@ -130,6 +130,11 @@ sub length {
 1;
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

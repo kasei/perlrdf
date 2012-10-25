@@ -16,7 +16,6 @@ the work, if known):
 		* OpenURL COinS [tobyink]
 		* Microformats [tobyink]
 		* HTML [tobyink]
-		* Much faster Turtle parser
 		* Add optional support for HTTP::Link::Parser::parse_links_into_model to RDF::Trine::Parser [kasei]
 	* Serializers
 		* TriX [tobyink]

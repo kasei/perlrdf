@@ -128,35 +128,6 @@ sub lhs {
 	return $self->[4];
 }
 
-=item C<< add_bloom ( $variable, $filter ) >>
-
-Adds a FILTER to the enclosed GroupGraphPattern to restrict values of the named
-C<< $variable >> to the values encoded in the C<< $filter >> (a
-L<Bloom::Filter|Bloom::Filter> object).
-
-=cut
-
-sub add_bloom {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $var		= shift;
-	my $bloom	= shift;
-	my $l		= Log::Log4perl->get_logger("rdf.query.algebra.service");
-	
-	unless (blessed($var)) {
-		$var	= RDF::Query::Node::Variable->new( $var );
-	}
-	
-	my $pattern	= $self->pattern;
-	my $iri		= RDF::Query::Node::Resource->new('http://kasei.us/code/rdf-query/functions/bloom/filter');
-	$l->debug("Adding a bloom filter (with " . $bloom->key_count . " items) function to a remote query");
-	my $frozen	= $bloom->freeze;
-	my $literal	= RDF::Query::Node::Literal->new( $frozen );
-	my $expr	= RDF::Query::Expression::Function->new( $iri, $var, $literal );
-	my $filter	= RDF::Query::Algebra::Filter->new( $expr, $pattern );
-	return $class->new( $self->endpoint, $filter );
-}
-
 =item C<< sse >>
 
 Returns the SSE string for this algebra expression.

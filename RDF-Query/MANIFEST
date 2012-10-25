@@ -206,7 +206,6 @@ xt/dawg-syntax11.t
 xt/dev-service-description.t
 xt/dev-sql-compiler.t
 xt/dev-time-intervals.t
-xt/ext-federate-bindings.t
 xt/ext-service.t
 xt/federate.t
 xt/parser-rdql.t

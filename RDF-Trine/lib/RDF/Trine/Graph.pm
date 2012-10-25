@@ -7,7 +7,7 @@ RDF::Trine::Graph - Materialized RDF Graphs for testing isomorphism
 
 =head1 VERSION
 
-This document describes RDF::Trine::Graph version 0.139
+This document describes RDF::Trine::Graph version 1.002
 
 =head1 SYNOPSIS
 
@@ -15,6 +15,13 @@ This document describes RDF::Trine::Graph version 0.139
   my $a	= RDF::Trine::Graph->new( $model_a );
   my $b	= RDF::Trine::Graph->new( $model_b );
   print "graphs are " . ($a->equals( $b ) ? "the same" : "different");
+
+=head1 DESCRIPTION
+
+RDF::Trine::Graph provdes a mechanism for testing graph isomorphism based on
+graph triples from either a RDF::Trine::Model or a RDF::Trine::Iterator.
+Isomorphism testing requires materializing all of a graph's triples in memory,
+and so should be used carefully in situations with large graphs.
 
 =head1 METHODS
 
@@ -33,7 +40,7 @@ use Algorithm::Combinatorics qw(permutations);
 our ($VERSION, $debug, $AUTOLOAD);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 }
 
 use overload
@@ -360,6 +367,11 @@ sub error {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

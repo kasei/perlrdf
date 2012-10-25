@@ -63,14 +63,14 @@ our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/;
 our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/;
 our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/;
 our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-our $r_PN_CHARS_U			= qr/(_|${r_PN_CHARS_BASE})/;
+our $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/;
 our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/;
 our $r_VAR1					= qr/[?]${r_VARNAME}/;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/;
 our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
 our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
-our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=:/?#@%_\$]))|%[0-9A-Fa-f]{2}};
-our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[.])*${r_PN_CHARS})?)/;
+our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}};
+our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/;
 our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
 our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/;
 our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/;
@@ -368,7 +368,9 @@ sub _RW_Query {
 	
 	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
-		$self->{build}{triples}	= [ RDF::Query::Algebra::Sequence->new( @patterns ) ];
+		my $pattern		= RDF::Query::Algebra::Sequence->new( @patterns );
+		$pattern->check_duplicate_blanks;
+		$self->{build}{triples}	= [ $pattern ];
 	}
 	
 # 	my %query	= (%p, %body);
@@ -377,7 +379,7 @@ sub _RW_Query {
 
 sub _Query_test {
 	my $self	= shift;
-	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|INSERT|DELETE|WITH/i));
+	return 1 if ($self->_test(qr/SELECT|CONSTRUCT|DESCRIBE|ASK|LOAD|CLEAR|DROP|ADD|MOVE|COPY|CREATE|INSERT|DELETE|WITH/i));
 	return 0;
 }
 
@@ -440,7 +442,7 @@ sub _InsertDataUpdate {
 	$self->__consume_ws_opt;
 	
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty, undef, 1);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -458,7 +460,7 @@ sub _DeleteDataUpdate {
 	$self->__consume_ws_opt;
 	
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty);
+	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty, undef, 1);
 	$self->_add_patterns( $delete );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -518,7 +520,7 @@ sub _InsertUpdate {
 		$dataset{ default }	= [$graph || ()];
 	}
 	
-	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset, 0);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -607,7 +609,7 @@ sub _DeleteUpdate {
 		$dataset{ default }	= [$graph || ()];
 	}
 	
-	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset);
+	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset, 0);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -663,8 +665,8 @@ sub __ModifyTemplate {
 		$self->_GraphGraphPattern;
 		
 		{
-			my ($d)	= splice(@{ $self->{stack} });
-			$self->__handle_GraphPatternNotTriples( $d );
+			my (@d)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( @d );
 		}
 	}
 }
@@ -867,7 +869,7 @@ sub __UpdateShortcuts {
 	my $to_graph	= $to || RDF::Trine::Node::Nil->new;
 	my $from_graph	= $from || RDF::Trine::Node::Nil->new;
 	my $drop_to		= RDF::Query::Algebra::Clear->new( $to_graph, $silent );
-	my $update		= RDF::Query::Algebra::Update->new( undef, $to_pattern, $from_pattern );
+	my $update		= RDF::Query::Algebra::Update->new( undef, $to_pattern, $from_pattern, undef, 0 );
 	my $drop_from	= RDF::Query::Algebra::Clear->new( $from_graph );
 	my $pattern;
 	if ($op eq 'MOVE') {
@@ -915,27 +917,54 @@ sub _SelectQuery {
 	$self->_SolutionModifier();
 	
 	$self->__consume_ws_opt;
-	if ($self->_test( qr/BINDINGS/i )) {
-		$self->_eat( qr/BINDINGS/i );
+	if ($self->_test( qr/VALUES/i )) {
+		$self->_eat( qr/VALUES/i );
 		$self->__consume_ws_opt;
 		my @vars;
 # 		$self->_Var;
 # 		push( @vars, splice(@{ $self->{stack} }));
 # 		$self->__consume_ws_opt;
+		my $parens	= 0;
+		if ($self->_test(qr/[(]/)) {
+			$self->_eat( qr/[(]/ );
+			$parens	= 1;
+		}
 		while ($self->_test(qr/[\$?]/)) {
 			$self->_Var;
 			push( @vars, splice(@{ $self->{stack} }));
 			$self->__consume_ws_opt;
 		}
+		if ($parens) {
+			$self->_eat( qr/[)]/ );
+		}
+		$self->__consume_ws_opt;
 		
 		my $count	= scalar(@vars);
+		if (not($parens) and $count == 0) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+		} elsif (not($parens) and $count > 1) {
+			throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
+		}
+		
+		my $short	= (not($parens) and $count == 1);
 		$self->_eat('{');
 		$self->__consume_ws_opt;
-		while ($self->_Binding_test) {
-			my $terms	= $self->_Binding($count);
-			push( @{ $self->{build}{bindings}{terms} }, $terms );
-			$self->__consume_ws_opt;
+		if (not($short) or ($short and $self->_Binding_test)) {
+			while ($self->_Binding_test) {
+				my $terms	= $self->_Binding($count);
+				push( @{ $self->{build}{bindings}{terms} }, $terms );
+				$self->__consume_ws_opt;
+			}
+		} else {
+			while ($self->_BindingValue_test) {
+				$self->_BindingValue;
+				$self->__consume_ws_opt;
+				my ($term)	= splice(@{ $self->{stack} });
+				push( @{ $self->{build}{bindings}{terms} }, [$term] );
+				$self->__consume_ws_opt;
+			}
 		}
+		
 		$self->_eat('}');
 		$self->__consume_ws_opt;
 		$self->{build}{bindings}{vars}	= \@vars;
@@ -1111,7 +1140,7 @@ sub _DescribeQuery {
 sub _AskQuery {
 	my $self	= shift;
 	$self->_eat(qr/ASK/i);
-	$self->_ws;
+	$self->__consume_ws_opt;
 	
 	$self->_DatasetClause();
 	
@@ -1519,8 +1548,8 @@ sub _GroupGraphPatternSub {
 			$got_pattern++;
 			$self->_GraphPatternNotTriples;
 			$self->__consume_ws_opt;
-			my ($data)	= splice(@{ $self->{stack} });
-			$self->__handle_GraphPatternNotTriples( $data );
+			my (@data)	= splice(@{ $self->{stack} });
+			$self->__handle_GraphPatternNotTriples( @data );
 			$self->__consume_ws_opt;
 		} elsif ($self->_test( qr/FILTER/i )) {
 			$got_pattern++;
@@ -1598,8 +1627,22 @@ sub __handle_GraphPatternNotTriples {
  		my ($table)	= @args;
 		$self->_add_patterns( $table );
 	} elsif ($class eq 'RDF::Query::Algebra::Extend') {
- 		my ($bind)	= @args;
+		my $cont	= $self->_pop_pattern_container;
+		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
+		# my $ggp	= $self->_remove_pattern();
+		unless ($ggp) {
+			$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
+		}
+
+		my $alias		= $args[0];
+		my %in_scope	= map { $_ => 1 } $ggp->potentially_bound();
+		my $var			= $alias->name;
+		if (exists $in_scope{ $var }) {
+			throw RDF::Query::Error::QueryPatternError -text => "Syntax error: BIND used with variable already in scope";
+		}
+		
+		my $bind	= $class->new( $ggp, [$alias] );
 		$self->_add_patterns( $bind );
 	} elsif ($class eq 'RDF::Query::Algebra::Service') {
 		my ($endpoint, $pattern, $silent)	= @args;
@@ -1683,6 +1726,58 @@ sub _SubSelect {
 			my $sort	= RDF::Query::Algebra::Sort->new( $pattern, @$order );
 			push(@{ $self->{build}{triples} }, $sort);
 		}
+		
+		$self->__consume_ws_opt;
+		if ($self->_test( qr/VALUES/i )) {
+			$self->_eat( qr/VALUES/i );
+			$self->__consume_ws_opt;
+			my @vars;
+			my $parens	= 0;
+			if ($self->_test(qr/[(]/)) {
+				$self->_eat( qr/[(]/ );
+				$parens	= 1;
+			}
+			while ($self->_test(qr/[\$?]/)) {
+				$self->_Var;
+				push( @vars, splice(@{ $self->{stack} }));
+				$self->__consume_ws_opt;
+			}
+			if ($parens) {
+				$self->_eat( qr/[)]/ );
+			}
+			$self->__consume_ws_opt;
+			
+			my $count	= scalar(@vars);
+			if (not($parens) and $count == 0) {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+			} elsif (not($parens) and $count > 1) {
+				throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
+			}
+			
+			my $short	= (not($parens) and $count == 1);
+			$self->_eat('{');
+			$self->__consume_ws_opt;
+			if (not($short) or ($short and $self->_Binding_test)) {
+				while ($self->_Binding_test) {
+					my $terms	= $self->_Binding($count);
+					push( @{ $self->{build}{bindings}{terms} }, $terms );
+					$self->__consume_ws_opt;
+				}
+			} else {
+				while ($self->_BindingValue_test) {
+					$self->_BindingValue;
+					$self->__consume_ws_opt;
+					my ($term)	= splice(@{ $self->{stack} });
+					push( @{ $self->{build}{bindings}{terms} }, [$term] );
+					$self->__consume_ws_opt;
+				}
+			}
+			
+			$self->_eat('}');
+			$self->__consume_ws_opt;
+			$self->{build}{bindings}{vars}	= \@vars;
+		}
+		
 		$self->__solution_modifiers( $star );
 		
 		delete $self->{build}{options};
@@ -1752,7 +1847,7 @@ sub _GraphPatternNotTriples_test {
 sub _GraphPatternNotTriples {
 	my $self	= shift;
 	if ($self->_test(qr/VALUES/i)) {
-		$self->_InlineDataCluase;
+		$self->_InlineDataClause;
 	} elsif ($self->_test(qr/SERVICE/i)) {
 		$self->_ServiceGraphPattern;
 	} elsif ($self->_test(qr/MINUS/i)) {
@@ -1768,25 +1863,52 @@ sub _GraphPatternNotTriples {
 	}
 }
 
-sub _InlineDataCluase {
+sub _InlineDataClause {
 	my $self	= shift;
 	$self->_eat( qr/VALUES/i );
 	$self->__consume_ws_opt;
 	my @vars;
+	
+	my $parens	= 0;
+	if ($self->_test(qr/[(]/)) {
+		$self->_eat( qr/[(]/ );
+		$parens	= 1;
+	}
 	while ($self->_test(qr/[\$?]/)) {
 		$self->_Var;
 		push( @vars, splice(@{ $self->{stack} }));
 		$self->__consume_ws_opt;
 	}
+	if ($parens) {
+		$self->_eat( qr/[)]/ );
+	}
 	
 	my $count	= scalar(@vars);
+	if (not($parens) and $count == 0) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Expected VAR in inline data declaration";
+	} elsif (not($parens) and $count > 1) {
+		throw RDF::Query::Error::ParseError -text => "Syntax error: Inline data declaration can only have one variable when parens are omitted";
+	}
+	
+	my $short	= (not($parens) and $count == 1);
 	$self->_eat('{');
 	$self->__consume_ws_opt;
 	my @rows;
-	while ($self->_Binding_test) {
-		my $terms	= $self->_Binding($count);
-		push( @rows, $terms );
-		$self->__consume_ws_opt;
+	if (not($short) or ($short and $self->_Binding_test)) {
+		# { (term) (term) }
+		while ($self->_Binding_test) {
+			my $terms	= $self->_Binding($count);
+			push( @rows, $terms );
+			$self->__consume_ws_opt;
+		}
+	} else {
+		# { term term }
+		while ($self->_BindingValue_test) {
+			$self->_BindingValue;
+			$self->__consume_ws_opt;
+			my ($term)	= splice(@{ $self->{stack} });
+			push( @rows, [$term] );
+		}
 	}
 	
 	$self->_eat('}');
@@ -1794,27 +1916,18 @@ sub _InlineDataCluase {
 	
 	my @vbs		= map { my %d; @d{ map { $_->name } @vars } = @$_; RDF::Query::VariableBindings->new(\%d) } @rows;
 	
-	my $table	= RDF::Query::Algebra::Table->new( @vbs );
+	my $table	= RDF::Query::Algebra::Table->new( [ map { $_->name } @vars ], @vbs );
 	$self->_add_stack( ['RDF::Query::Algebra::Table', $table] );
 	
 }
 
 sub _Bind {
 	my $self	= shift;
-	my $cont	= $self->_pop_pattern_container || [];
-	my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 	$self->_eat(qr/BIND/i);
 	$self->__consume_ws_opt;
 	$self->_BrackettedAliasExpression;
 	my ($alias)	= splice(@{ $self->{stack} });
-
-	unless ($ggp) {
-		$ggp	= RDF::Query::Algebra::GroupGraphPattern->new();
-	}
-	my $bind	= RDF::Query::Algebra::Extend->new( $ggp, [$alias] );
-	$self->_add_stack( ['RDF::Query::Algebra::Extend', $bind] );
-#	my $opt		= ['RDF::Query::Algebra::Extend', $alias];
-#	$self->_add_stack( $opt );
+	$self->_add_stack( ['RDF::Query::Algebra::Extend', $alias] );
 }
 
 sub _ServiceGraphPattern {
@@ -3090,7 +3203,13 @@ sub _RDFLiteral {
 		my ($iri)	= splice(@{ $self->{stack} });
 		push(@args, $iri->uri_value);
 	}
-	$self->_add_stack( RDF::Query::Node::Literal->new( @args ) );
+	
+	my $obj	= RDF::Query::Node::Literal->new( @args );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	
+	$self->_add_stack( $obj );
 }
 
 # [61] NumericLiteral ::= NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
@@ -3127,14 +3246,24 @@ sub _NumericLiteral {
 	if ($sign) {
 		$value	= $sign . $value;
 	}
-	$self->_add_stack( RDF::Query::Node::Literal->new( $value, undef, $type->uri_value ) );
+	
+	my $obj	= RDF::Query::Node::Literal->new( $value, undef, $type->uri_value );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	$self->_add_stack( $obj );
 }
 
 # [65] BooleanLiteral ::= 'true' | 'false'
 sub _BooleanLiteral {
 	my $self	= shift;
 	my $bool	= $self->_eat(qr/(true|false)\b/);
-	$self->_add_stack( RDF::Query::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value ) );
+
+	my $obj	= RDF::Query::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	$self->_add_stack( $obj );
 }
 
 # [66] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2
@@ -3265,6 +3394,16 @@ sub __solution_modifiers {
 		my @vars	= grep { $_->isa('RDF::Query::Expression::Alias') } @$vars;
 		if (scalar(@vars)) {
 			my $pattern	= pop(@{ $self->{build}{triples} });
+			my @bound	= $pattern->potentially_bound;
+			my %bound	= map { $_ => 1 } @bound;
+			foreach my $v (@vars) {
+				my $name	= $v->name;
+				if ($bound{ $name }) {
+					throw RDF::Query::Error::ParseError -text => "Syntax error: Already-bound variable ($name) used in project expression";
+				}
+			}
+			
+			
 			my $proj	= RDF::Query::Algebra::Extend->new( $pattern, $vars );
 			push(@{ $self->{build}{triples} }, $proj);
 		}

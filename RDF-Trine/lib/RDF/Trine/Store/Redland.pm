@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 0.139
+This document describes RDF::Trine::Store::Redland version 1.002
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.139";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -191,8 +191,8 @@ sub _get_statements_triple {
 	my %seen;
 	my $sub		= sub {
 		while (1) {
-			return undef unless $iter;
-			return undef if $iter->end;
+			return unless $iter;
+			return if $iter->end;
 			my $st	= $iter->current;
 			if ($seen{ $st->as_string }++) {
 				$iter->next;
@@ -221,8 +221,8 @@ sub _get_statements_quad {
 	my $iter	= $self->_model->find_statements( $st, $ctx );
 	my $nil		= RDF::Trine::Node::Nil->new();
 	my $sub		= sub {
-		return undef unless $iter;
-		return undef if $iter->end;
+		return unless $iter;
+		return if $iter->end;
 		my $st	= $iter->current;
 		my $c	= $iter->context;
 		my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
@@ -400,9 +400,9 @@ sub _model {
 	return $self->{model};
 }
 
-sub _cast_to_redland ($) {
+sub _cast_to_redland {
 	my $node	= shift;
-	return undef unless (blessed($node));
+	return unless (blessed($node));
 	if ($node->isa('RDF::Trine::Statement')) {
 		my @nodes	= map { _cast_to_redland( $_ ) } $node->nodes;
 		return RDF::Redland::Statement->new( @nodes );
@@ -418,13 +418,13 @@ sub _cast_to_redland ($) {
 	} elsif ($node->isa('RDF::Trine::Node::Nil')) {
 		return RDF::Redland::Node->new_from_uri( $NIL_TAG );
 	} else {
-		return undef;
+		return;
 	}
 }
 
-sub _cast_to_local ($) {
+sub _cast_to_local {
 	my $node	= shift;
-	return undef unless (blessed($node));
+	return unless (blessed($node));
 	my $type	= $node->type;
 	if ($type == $RDF::Redland::Node::Type_Resource) {
 		my $uri	= $node->uri->as_string;
@@ -443,7 +443,7 @@ sub _cast_to_local ($) {
 					: undef;
 		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
 	} else {
-		return undef;
+		return;
 	}
 }
 
@@ -455,7 +455,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

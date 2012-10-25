@@ -8,7 +8,7 @@ RDF::Trine::NamespaceMap - Collection of Namespaces
 
 =head1 VERSION
 
-This document describes RDF::Trine::NamespaceMap version 0.139
+This document describes RDF::Trine::NamespaceMap version 1.002
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
@@ -144,6 +144,63 @@ sub uri {
 	}
 }
 
+=item prefix_for C<< uri ($uri) >>
+
+Returns the associated prefix (or potentially multiple prefixes, in
+list context) for the given URI.
+
+=cut
+
+sub prefix_for {
+    my ($self, $uri) = @_;
+    $uri = $uri->value if ref $uri;
+
+    my @candidates;
+    while (my ($k, $v) = each %$self) {
+        my $vuri = $v->uri->uri_value;
+        # the input should always be longer than the namespace
+        next if length $vuri > length $uri;
+
+        # candidate namespace must match exactly
+        my $cns = substr($uri, 0, length $vuri);
+        push @candidates, $k if $cns eq $vuri;
+    }
+
+    # make sure this behaves correctly when empty
+    return unless @candidates;
+
+    # if this returns more than one prefix, take the
+    # shortest/lexically lowest one.
+    @candidates = sort @candidates;
+
+    return wantarray ? @candidates : $candidates[0];
+}
+
+=item abbreviate C<< uri ($uri) >>
+
+Complement to L</namespace_uri>. Returns the given URI in C<foo:bar>
+format or C<undef> if it wasn't matched, therefore the idiom
+
+    my $str = $nsmap->abbreviate($uri_node) || $uri_node->uri_value;
+
+may be useful for certain serialization tasks.
+
+=cut
+
+sub abbreviate {
+    my ($self, $uri) = @_;
+    $uri = $uri->uri_value if ref $uri;
+    my $prefix = $self->prefix_for($uri);
+
+    # XXX is this actually the most desirable behaviour?
+    return unless defined $prefix;
+
+    my $offset = length $self->namespace_uri($prefix)->uri->uri_value;
+
+    return sprintf('%s:%s', $prefix, substr($uri, $offset));
+}
+
+
 sub AUTOLOAD {
 	my $self	= shift;
 	our $AUTOLOAD;
@@ -172,8 +229,8 @@ The method names 'new' and 'uri' are also forbidden.
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

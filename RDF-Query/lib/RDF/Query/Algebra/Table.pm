@@ -44,7 +44,7 @@ L<RDF::Query::Algebra> class.
 
 =cut
 
-=item C<new ( [ \@row1, \@row2, ... ] )>
+=item C<< new ( \@variables, $row1, $row2, ... ) >>
 
 Returns a new Table structure.
 
@@ -52,13 +52,14 @@ Returns a new Table structure.
 
 sub new {
 	my $class	= shift;
+	my $vars	= shift;
 	my @rows	= @_;
 	foreach my $t (@rows) {
 		unless ($t->isa('RDF::Trine::VariableBindings')) {
 			throw RDF::Query::Error::QueryPatternError -text => "Rows belonging to a table must be variable bindings";
 		}
 	}
-	return bless( [ @rows ] );
+	return bless( [ $vars, \@rows ], $class );
 }
 
 =item C<< construct_args >>
@@ -70,18 +71,29 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->rows);
+	return ([$self->variables], $self->rows);
 }
 
-=item C<< triples >>
+=item C<< variables >>
 
-Returns a list of triples belonging to this BGP.
+Returns a list of variable names used in this data table.
+
+=cut
+
+sub variables {
+	my $self	= shift;
+	return @{ $self->[0] };
+}
+
+=item C<< rows >>
+
+Returns a list of variable bindings belonging to this data table.
 
 =cut
 
 sub rows {
 	my $self	= shift;
-	return @$self;
+	return @{ $self->[1] };
 }
 
 =item C<< sse >>
@@ -131,23 +143,30 @@ Returns the SPARQL string for this algebra expression.
 
 sub as_sparql {
 	my $self	= shift;
-	die 'unimplemented';
-# 	if (exists $AS_SPARQL{ refaddr( $self ) }) {
-# 		return $AS_SPARQL{ refaddr( $self ) };
-# 	} else {
-# 		my $context	= shift;
-# # 		if (ref($context)) {
-# # 			$context	= { %$context };
-# # 		}
-# 		my $indent	= shift || '';
-# 		my @triples;
-# 		foreach my $t ($self->triples) {
-# 			push(@triples, $t->as_sparql( $context, $indent ));
+	if (exists $AS_SPARQL{ refaddr( $self ) }) {
+		return $AS_SPARQL{ refaddr( $self ) };
+	} else {
+		my $context	= shift;
+# 		if (ref($context)) {
+# 			$context	= { %$context };
 # 		}
-# 		my $string	= join("\n${indent}", @triples);
-# 		$AS_SPARQL{ refaddr( $self ) }	= $string;
-# 		return $string;
-# 	}
+		my $indent	= shift || '';
+		my @values;
+		my @vars	= $self->variables;
+		foreach my $row ($self->rows) {
+			my @row_values;
+			foreach my $var (@vars) {
+				my $node	= $row->{$var};
+				my $value	= ($node) ? $node->as_sparql($context, $indent) : 'UNDEF';
+				push(@row_values, $value);
+			}
+			push(@values, '(' . join(' ', @row_values) . ')');
+		}
+		my $vars	= join(' ', map { "?$_" } @vars);
+		my $string	= "VALUES ($vars) {\n${indent}" . join("\n${indent}", @values) . "\n}\n";
+		$AS_SPARQL{ refaddr( $self ) }	= $string;
+		return $string;
+	}
 }
 
 =item C<< as_hash >>

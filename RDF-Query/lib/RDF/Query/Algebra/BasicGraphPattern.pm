@@ -252,14 +252,7 @@ sub definite_variables {
 	return RDF::Query::_uniq(map { $_->definite_variables } $self->triples);
 }
 
-=item C<< check_duplicate_blanks >>
-
-Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
-across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
-
-=cut
-
-sub _check_duplicate_blanks {
+sub _referenced_blanks {
 	my $self	= shift;
 	my %seen;
 	foreach my $t ($self->triples) {

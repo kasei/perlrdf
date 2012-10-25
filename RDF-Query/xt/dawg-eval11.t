@@ -11,7 +11,7 @@ use Test::More;
 use File::Temp qw(tempfile);
 use Scalar::Util qw(blessed reftype);
 use Storable qw(dclone);
-use Math::Combinatorics qw(permute);
+use Algorithm::Combinatorics qw(permutations);
 use LWP::MediaTypes qw(add_type);
 use Text::CSV;
 use Regexp::Common qw /URI/;
@@ -30,7 +30,7 @@ use RDF::Trine::Error qw(:try);
 use RDF::Trine::Graph;
 use RDF::Trine::Namespace qw(rdf rdfs xsd);
 use RDF::Trine::Iterator qw(smap);
-use RDF::Endpoint;
+use RDF::Endpoint 0.05;
 use Carp;
 use HTTP::Request;
 use HTTP::Response;
@@ -114,7 +114,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		update-silent
 	);
 foreach my $file (@manifests) {
-	warn "Parsing manifest $file" if $debug;
+	warn "Parsing manifest $file\n" if $debug;
 	RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 }
 warn "done parsing manifests" if $debug;
@@ -131,6 +131,9 @@ my $dawgt	= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tes
 	foreach my $m (@manifests) {
 		warn "Manifest: " . $m->as_string . "\n" if ($debug);
 		my ($list)	= $model->objects( $m, $mf->entries );
+		unless (blessed($list)) {
+			warn "No mf:entries found for manifest " . $m->as_string . "\n";
+		}
 		my @tests	= $model->get_list( $list );
 		foreach my $test (@tests) {
 			my $et	= $model->count_statements($test, $rdf->type, $mf->QueryEvaluationTest);
@@ -198,10 +201,10 @@ sub update_eval_test {
 	if ($debug) {
 		warn "### test     : " . $test->as_string . "\n";
 		warn "# sparql     : $q\n";
-		warn "# data       : " . $data->as_string if (blessed($data));
-		warn "# graph data : " . $_->as_string for (@gdata);
-		warn "# result     : " . $result->as_string;
-		warn "# requires   : " . $req->as_string if (blessed($req));
+		warn "# data       : " . $data->as_string . "\n" if (blessed($data));
+		warn "# graph data : " . $_->as_string . "\n" for (@gdata);
+		warn "# result     : " . $result->as_string . "\n";
+		warn "# requires   : " . $req->as_string . "\n" if (blessed($req));
 	}
 	
 	print STDERR "constructing model... " if ($debug);
@@ -283,6 +286,7 @@ sub update_eval_test {
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', update => 1 } );
 		unless ($query) {
 			warn 'Query error: ' . RDF::Query->error;
+			fail($test->as_string);
 			return;
 		}
 		
@@ -297,8 +301,8 @@ sub update_eval_test {
 		$ok	= is( $eq, 1, $test->as_string );
 		unless ($ok) {
 			warn $test_graph->error;
-			warn $test_model->as_string;
-			warn $expected_model->as_string;
+			warn "Got model:\n" . $test_model->as_string;
+			warn "Expected model:\n" . $expected_model->as_string;
 		}
 	};
 	if ($@ or not($ok)) {
@@ -475,7 +479,7 @@ sub get_actual_results {
 	my $results			= $query->execute_plan( $plan, $ctx );
 	if ($args{ results }) {
 		$results	= $results->materialize;
-		warn "Got actual results:\n";
+		warn "Actual results:\n";
 		warn $results->as_string;
 	}
 	if ($results->is_bindings) {
@@ -501,7 +505,7 @@ sub get_expected_results {
 		my $results	= $model->get_statements();
 		if ($args{ results }) {
 			$results	= $results->materialize;
-			warn "Got expected results:\n";
+			warn "Expected results:\n";
 			warn $results->as_string;
 		}
 		return $results;
@@ -514,13 +518,13 @@ sub get_expected_results {
 			my $bool	= ($value ? 'true' : 'false');
 			$model->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
 			if ($args{ results }) {
-				warn "Got expected result: $bool\n";
+				warn "Expected result: $bool\n";
 			}
 			return $model->get_statements;
 		} else {
 			if ($args{ results }) {
 				$results	= $results->materialize;
-				warn "Got expected results:\n";
+				warn "Expected results:\n";
 				warn $results->as_string;
 			}
 			return binding_results_data( $results );
@@ -535,7 +539,7 @@ sub get_expected_results {
 		} else {
 			if ($args{ results }) {
 				$results	= $results->materialize;
-				warn "Got expected results:\n";
+				warn "Expected results:\n";
 				warn $results->as_string;
 			}
 			return binding_results_data( $results );
@@ -565,7 +569,7 @@ sub get_expected_results {
 			push(@data, \%result);
 		}
 		if ($args{ results }) {
-			warn "Got expected results:\n";
+			warn "Expected results:\n";
 			warn Dumper(\@data);
 		}
 		return \@data;
@@ -593,11 +597,11 @@ sub get_expected_results {
 		}
 		my $iter	= RDF::Trine::Iterator::Bindings->new(\@data);
 		return binding_results_data($iter);
-	} elsif ($file =~ /[.]ttl/) {
+	} elsif ($file =~ /[.](ttl|rdf)/) {
 		my $model	= RDF::Trine::Model->new();
 		open( my $fh, "<:encoding(utf8)", $file ) or die $!;
 		my $base	= 'file://' . File::Spec->rel2abs($file);
-		my $parser	= RDF::Trine::Parser->new('turtle');
+		my $parser	= RDF::Trine::Parser->new(($file =~ /[.]ttl/) ? 'turtle' : 'rdfxml');
 		$parser->parse_file_into_model( $base, $file, $model );
 		my ($res)	= $model->subjects( $rdf->type, $rs->ResultSet );
 		if (my($b) = $model->objects( $res, $rs->boolean )) {
@@ -605,7 +609,7 @@ sub get_expected_results {
 			my $rmodel	= RDF::Trine::Model->new();
 			$rmodel->add_statement( statement( $testns->result, $testns->boolean, literal($bool, undef, $xsd->boolean) ) );
 			if ($args{ results }) {
-				warn "Got expected result: $bool\n";
+				warn "Expected result: $bool\n";
 			}
 			return $rmodel->get_statements;
 		} else {
@@ -624,6 +628,11 @@ sub get_expected_results {
 				push(@bindings, RDF::Trine::VariableBindings->new( \%data ));
 			}
 			my $iter	= RDF::Trine::Iterator::Bindings->new( \@bindings, \@names );
+			if ($args{ results }) {
+				$iter	= $iter->materialize;
+				warn "Got expected results:\n";
+				warn $iter->as_string;
+			}
 			return binding_results_data($iter);
 		}
 	} else {
@@ -712,8 +721,9 @@ sub compare_results {
 		# compare the results with bnodes
 		my @ka	= keys %{ $actual->{blank_identifiers} };
 		my @kb	= keys %{ $expected->{blank_identifiers} };
-		my @kbp	= permute( @kb );
-		MAPPING: foreach my $mapping (@kbp) {
+
+		my $kbp = permutations( \@kb );
+		MAPPING: while (my $mapping = $kbp->next) {
 			my %mapping;
 			@mapping{ @ka }	= @$mapping;
 			warn "trying mapping: " . Dumper(\%mapping) if ($debug);

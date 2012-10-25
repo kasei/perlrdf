@@ -68,6 +68,61 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.002 (2012-10-20)
+
+     * OTHER
+         Require Scalar::Util version 1.23.
+
+  Version 1.001 (2012-10-05)
+
+     * BUG FIXES
+         Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available.
+     * ENHANCEMENTS
+         Replaced old Turtle and TriG parsers with new streaming implementations.
+         Added RDF::Trine::Node::Literal->canonicalize method.
+         Updated RDF::Trine::Parser::Redland to construct a new parser object on each parse (avoiding a bug in redland).
+         Applied partial patch to "fix interaction with HTML::Data::Parser" (from Dorian Taylor; commit 9b713b23b6).
+     * OTHER
+         Added Moose and MooseX::ArrayRef to prerequisites list.
+         Updated code style to work with Perl::Critic core policies.
+         Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew).
+         Updated required version of perl to 5.10.
+         Silenced undefined warnings in RDF::Trine::Parser::Turtle::Lexer.
+         Silenced warning of cartesian joins in RDF::Trine::Store::Hexastore.
+
+  Version 1.000 (2012-06-29)
+
+     * API CHANGES
+         Removed RDF::Trine methods count, add_extra_result_data, extra_result_data.
+         Removed support for extra data serialized in SPARQL/XML result format link tags.
+         Made Literal and Resource node constructors throw exception when passed undef lexical value.
+     * BUG FIXES
+         Fixed parsing of backslash escapes in Turtle quoted literals (from Toby Inkster via github pull request #63).
+         Rolled back attempted optimization of bulk ops calls (which broke the code).
+         Fixed etag bug in RDF::Trine::Store::Memory.
+     * NEW FEATURES
+         Added RDF::Trine::Model->add_iterator method.
+     * OTHER
+         Fixed miscellaneous typos (from Evan Carew).
+         Updated bug reporting details in BUGS POD section.
+         Updated documentation in several classes.
+         Removed redundant documentation in RDF::Trine::Parser.
+         Added Redland test for UTF8 (from Kjetil Kjernsmo).
+         Added two tests for concat graph iterators (from Kjetil Kjernsmo).
+         Fix usage of materialized iterators in t/iterator-graph.t (from Kjetil Kjernsmo).
+         Document the extends option to negotiate in the serializer (from KjetilK).
+         Document RDFTRINE_NO_REDLAND (from KjetilK).
+
+  Version 0.140 (2012-05-08)
+
+     * API CHANGES
+         Removed default get_pattern implementation in RDF::Trine::Store.
+     * BUG FIXES
+         Added missing import of looks_like_number function in RDF::Trine::Node::Literal.
+     * ENHANCEMENTS
+         Added RDF::Trine::Pattern->sort_for_join_variables method to prevent unnecessary cartesian joins.
+         Added optional content_cb callback argument to RDF::Trine::Parser->parse_url_into_model.
+
   Version 0.139 (2012-04-11)
 
      * API CHANGES

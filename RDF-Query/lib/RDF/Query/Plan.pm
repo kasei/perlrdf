@@ -1090,7 +1090,16 @@ sub __path_plan {
 		my $upath	= $nodes[0];
 		my $zplan	= $self->__path_plan($start, ['0', $upath], $end, $graph, $context, %args );
 		my $oplan	= $self->__path_plan($start, $upath, $end, $graph, $context, %args);
-		return RDF::Query::Plan::Union->new($zplan, $oplan);
+		
+		# project away any non-distinguished variables introduced by plan-to-bgp expansion
+		my @vars	= grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } ($start, $end);
+		my $odplan	= RDF::Query::Plan::Project->new( $oplan, \@vars );
+		
+		my $pplan	= RDF::Query::Plan::Union->new($zplan, $odplan);
+		
+		# distinct the results
+		my $plan	= RDF::Query::Plan::Distinct->new( $pplan );
+		return $plan;
 	} elsif ($op eq '*') {
 ### X path* Y
 		return RDF::Query::Plan::Path->new( 'ZeroOrMorePath', $start, $nodes[0], $end, $graph, $distinct, %args );

@@ -7,7 +7,7 @@ RDF::Trine::Pattern - Class for basic graph patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Pattern version 0.139
+This document describes RDF::Trine::Pattern version 1.002
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
@@ -50,7 +50,7 @@ sub new {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
-	return bless( [ @triples ] );
+	return bless( [ @triples ], $class );
 }
 
 =item C<< construct_args >>
@@ -239,6 +239,11 @@ sub sort_for_join_variables {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

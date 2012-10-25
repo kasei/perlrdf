@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 0.139
+This document describes RDF::Trine::Store::DBI::mysql version 1.002
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.139";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -160,7 +160,7 @@ sub init {
 	
 	unless ($self->_table_exists("Literals")) {
 		$dbh->begin_work;
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Literals (
 				ID bigint unsigned PRIMARY KEY,
 				Value longtext NOT NULL,
@@ -169,19 +169,19 @@ sub init {
 			) CHARACTER SET utf8 COLLATE utf8_bin;
 END
 
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Resources (
 				ID bigint unsigned PRIMARY KEY,
 				URI text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Bnodes (
 				ID bigint unsigned PRIMARY KEY,
 				Name text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Models (
 				ID bigint unsigned PRIMARY KEY,
 				Name text NOT NULL
@@ -191,7 +191,7 @@ END
 	}
 
 	unless ($self->_table_exists("Statements${id}")) {
-		$dbh->do( <<"END" ) || do { $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Statements${id} (
 				Subject bigint unsigned NOT NULL,
 				Predicate bigint unsigned NOT NULL,
@@ -201,15 +201,15 @@ END
 			);
 END
 
-# 		$dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return undef };
+# 		$dbh->do( "DROP TABLE IF EXISTS Statements${id}" ) || do { $dbh->rollback; return };
 
 
-#		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return undef };
+#		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_pogs` ON Statements${id} (Predicate,Object,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_opcs` ON Statements${id} (Object,Predicate,Context,Subject);", undef, $name ); # || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX `idx_${name}_cpos` ON Statements${id} (Context,Predicate,Object,Subject);", undef, $name ); # || do { $dbh->rollback; return };
 
-# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return undef };
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	
 		$dbh->commit;
@@ -224,9 +224,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

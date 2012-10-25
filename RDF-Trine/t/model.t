@@ -34,7 +34,7 @@ my $st6		= RDF::Trine::Statement->new( $p, $foaf->age, $intval);
 
 my ($stores, $remove)	= stores();
 
-plan tests => 7 + 82 * scalar(@$stores);
+plan tests => 7 + 85 * scalar(@$stores);
 
 print "### Testing auto-creation of store\n";
 isa_ok( RDF::Trine::Model->new( 'Memory' ), 'RDF::Trine::Model' );
@@ -67,6 +67,19 @@ foreach my $store (@$stores) {
 		
 	}
 	
+	{
+		throws_ok {
+			$model->add_statement($p, $rdf->type, $foaf->Person);
+		} 'RDF::Trine::Error::MethodInvocationError', 'add_statement called with 3 nodes, not a statement';
+		throws_ok {
+			$model->add_statement($p, $rdf->type, $foaf->Person, $p);
+		} 'RDF::Trine::Error::MethodInvocationError', 'add_statement called with 4 nodes, not a statement';
+		throws_ok {
+			$model->add_statement('http://example.org/subject', 'http://example.org/predicate', 'String');
+		} 'RDF::Trine::Error::MethodInvocationError', 'add_statement called with strings, not a statement';
+	}
+
+
 	{
 		my $stream	= $model->get_statements( $b, $foaf->name, RDF::Trine::Node::Variable->new('name') );
 		my $st		= $stream->next;

@@ -53,7 +53,7 @@ my $iter	= RDF::Trine::Iterator::Graph->new( sub {
 		lock($st);
 		if ($done) {
 # 			warn "got finish state";
-			return undef;
+			return;
 		}
 		cond_wait($st);
 		if (defined($st)) {

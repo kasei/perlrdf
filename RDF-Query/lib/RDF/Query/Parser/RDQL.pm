@@ -38,7 +38,7 @@ BEGIN {
 our($RDQL_GRAMMAR);
 BEGIN {
 	our $RDQL_GRAMMAR	= <<'END';
-	query:			'SELECT' variable(s) SourceClause(?) 'WHERE' triplepattern(s) constraints(?) OptOrderBy(?) 'USING' namespaces
+	query:			'SELECT' variable(s) SourceClause(?) 'WHERE' triplepattern(s) constraints(?) OptOrderBy(?) prefixes(?)
 																	{
 																		my $triples	= RDF::Query::Algebra::GroupGraphPattern->new( @{ $item[5] } );
 																		my $filter	= ($item[6][0] || []);
@@ -52,12 +52,13 @@ BEGIN {
 																			variables	=> $item[2],
 																			sources		=> $item[3][0],
 																			triples		=> [ $triples ],
-																			namespaces	=> $item[9]
+																			namespaces	=> (scalar(@{$item[8]}) ? $item[8][0] : {})
 																		};
 																		if (@{ $item[7] }) {
 																			$return->{options}{orderby}	= $item[9][0];
 																		}
 																	}
+	prefixes:					'USING' namespaces								{ $return = $item[2] }
 	OptOrderBy:					'ORDER BY' orderbyvariable(s)					{ $return = $item[2] }
 	orderbyvariable:			variable										{ $return = ['ASC', $item[1]] }
 					|			/ASC|DESC/i '[' variable ']'					{ $return = [uc($item[1]), $item[3]] }

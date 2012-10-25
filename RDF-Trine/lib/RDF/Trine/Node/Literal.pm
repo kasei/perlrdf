@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.139
+This document describes RDF::Trine::Node::Literal version 1.002
 
 =cut
 
@@ -27,10 +27,10 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.139';
-	eval "use RDF::Trine::Node::Literal::XML;";
+	$VERSION	= '1.002';
+	eval "use RDF::Trine::Node::Literal::XML;";	## no critic (ProhibitStringyEval)
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
-	eval "use RDF::Trine::Node::Formula;";
+	eval "use RDF::Trine::Node::Formula;";	## no critic (ProhibitStringyEval)
 	$USE_FORMULAE = (RDF::Trine::Node::Formula->can('new')) ? 1 : 0;
 }
 
@@ -60,6 +60,10 @@ sub new {
 	my $lang	= shift;
 	my $dt		= shift;
 	my $canon	= shift;
+	
+	unless (defined($literal)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
+	}
 	
 	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
 		$dt	= $dt->uri_value;
@@ -282,6 +286,24 @@ sub _compare {
 	}
 	
 	return 0;
+}
+
+=item C<< canonicalize >>
+
+Returns a new literal node object whose value is in canonical form (where applicable).
+
+=cut
+
+sub canonicalize {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $dt		= $self->literal_datatype;
+	my $lang	= $self->literal_value_language;
+	my $value	= $self->value;
+	if (defined $dt) {
+		$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
+	}
+	return $class->new($value, $lang, $dt);
 }
 
 =item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
@@ -562,7 +584,7 @@ sub numeric_value {
 	if ($self->is_numeric_type) {
 		my $value	= $self->literal_value;
 		if (looks_like_number($value)) {
-			my $v	= 0 + eval "$value";
+			my $v	= 0 + eval "$value";	## no critic (ProhibitStringyEval)
 			return $v;
 		} else {
 			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";
@@ -585,6 +607,11 @@ sub numeric_value {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 

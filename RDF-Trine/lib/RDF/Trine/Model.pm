@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.139
+This document describes RDF::Trine::Model version 1.002
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.139';
+	$VERSION	= '1.002';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -132,7 +132,10 @@ Adds the specified C<< $statement >> to the rdf store.
 =cut
  
 sub add_statement {
-	my $self	= shift;
+	my ($self, @args)	= @_;
+	unless ($args[0]->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
+	}
 	if ($self->{temporary}) {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
@@ -144,7 +147,7 @@ sub add_statement {
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			if ($store->can('_end_bulk_ops')) {
+			if ($store->can('_begin_bulk_ops')) {
 				$store->_end_bulk_ops();
 			}
 			$self->{store}	= $store;
@@ -152,7 +155,7 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
-	return $self->_store->add_statement( @_ );
+	return $self->_store->add_statement( @args );
 }
 
 =item C<< add_hashref ( $hashref [, $context] ) >>
@@ -168,6 +171,7 @@ sub add_hashref {
 	my $index   = shift;
 	my $context = shift;
 	
+	$self->begin_bulk_ops();
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
 					RDF::Trine::Node::Blank->new($1) :
@@ -208,6 +212,23 @@ sub add_hashref {
 			}
 		}
 	}
+	$self->end_bulk_ops();	
+}
+
+=item C<< add_iterator ( $iter ) >>
+
+Add triples from the statement iteratorto the model.
+
+=cut
+
+sub add_iterator {
+	my $self	= shift;
+	my $iter	= shift;
+	$self->begin_bulk_ops();
+	while (my $st = $iter->next) {
+		$self->add_statement( $st );
+	}
+	$self->end_bulk_ops();	
 }
 
 =item C<< add_list ( @elements ) >>
@@ -584,7 +605,7 @@ sub _get_pattern {
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
@@ -1006,6 +1027,11 @@ sub _debug {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
