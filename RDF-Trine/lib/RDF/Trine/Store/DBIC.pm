@@ -1,130 +1,85 @@
+=head1 NAME
+
+RDF::Trine::Store::DBIC - Persistent RDF storage based on DBIx::Class
+
+=head1 VERSION
+
+This document describes RDF::Trine::Store::DBIC version 1.001
+
+=head1 SYNOPSIS
+
+  use RDF::Trine::Store::DBIC;
+
+  my $user = 'me';
+  my $pass = 'secret';
+  my $modelname = 'mymodel';
+
+  # First, construct a DBI connection to your database
+  my $dsn = "DBI:mysql:database=perlrdf";
+  my $dbh = DBI->connect( $dsn, $user, $pass );
+
+  # Second, create a new Store object with the database connection and
+  # specifying (by name) which model in the Store you want to use
+  my $store = RDF::Trine::Store::DBIC->new( $modelname, $dbh );
+
+  # or, pass the credentials in directly:
+
+  $store = RDF::Trine::Store::DBIC->new($modelname, $dsn, $user, $pass);
+
+  # Finally, wrap the Store objec into a Model, and use it to access
+  # your data
+  my $model = RDF::Trine::Model->new($store);
+
+  # or, do it all from here:
+  $model = RDF::Trine::Model->new({
+    storetype => 'DBIC',
+    name      => $modelname,
+    dsn       => $dsn,
+    username  => $user,
+    password  => $pass,
+  );
+
+  print $model->size . " RDF statements in store\n";
+
+=head1 DESCRIPTION
+
+RDF::Trine::Store::DBIC provides a persistent triple-store using the
+L<DBIx::Class> module.
+
+=cut
+
 use utf8;
 package RDF::Trine::Store::DBIC;
 
 use strict;
 use warnings;
 
-use Moose;
-use MooseX::NonMoose;
-use namespace::autoclean;
+use base qw(RDF::Trine::Store);
 
-extends 'DBIx::Class::Schema' => { -constructor_name => 'clone' }; #,
-#    'RDF::Trine::Store';
+# modules for doing stuff
+use Encode          ();
+use Digest::MD5     ();
+use Scalar::Util    ();
+use Math::BigInt    ();
+use DBIx::Connector ();
 
-use Encode       ();
-use Digest::MD5  ();
-use Scalar::Util ();
-use Math::BigInt ();
+# nodes
+use RDF::Trine::Node::Resource  ();
+use RDF::Trine::Node::Blank     ();
+use RDF::Trine::Node::Literal   ();
+use RDF::Trine::Node::Variable  ();
+use RDF::Trine::Node::Nil       ();
+# statements
+use RDF::Trine::Statement       ();
+use RDF::Trine::Statement::Quad ();
+# exceptions
+use RDF::Trine::Error           ();
 
-use RDF::Trine;
+# and our baby
+use RDF::Trine::Store::DBIC::Schema;
 
-__PACKAGE__->load_namespaces(
-    result_namespace => "Schema",
-);
-
-has model_name => (
-    is       => 'rw',
-    isa      => 'Maybe[Str]',
-    init_arg => 'name',
-    required => 0,
-);
-
-has dbh => (
-    is       => 'ro',
-    isa      => 'DBI::db',
-    required => 0,
-);
-
-has dsn => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has username => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has password => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has attributes => (
-    is       => 'ro',
-    isa      => 'Maybe[HashRef]',
-    required => 0,
-);
-
-# NOTE: The constructor here is actually 'clone', which means we can
-# make our own 'new'.
-
-sub new {
-    my $class = shift;
-    my %args;
-    @args{qw(name dsn username password attributes)} = @_;
-    if (Scalar::Util::blessed($args{dsn}) and $args{dsn}->isa('DBI::db')) {
-        $args{dbh} = delete $args{dsn};
-    }
-    $class->clone(\%args);
-}
-
-sub _new_with_config {
-    my $self = shift;
-    $self->clone(shift);
-}
-
-# clone basically does what we want here
-*_new_with_object = \&_new_with_config;
-
-#sub _new_with_string {
-#    Carp::croak('lolol this will break a DBI dsn');
-#}
-
-sub FOREIGNBUILDARGS {
-    my $class = shift;
-    warn 'DUDE WHAT';
-    @_;
-}
-
-#sub BUILDARGS {
-#    warn $_ for @_;
-#}
-
-sub BUILD {
-    my $self = shift;
-    #$self->connection;
-    #warn Data::Dumper::Dumper($self);
-    if ($self->dbh) {
-        $self->connection(sub { $self->dbh }, $self->attributes);
-    }
-    else {
-        $self->connection
-            ($self->dsn, $self->username, $self->password, $self->attributes);
-    }
-
-    # is that enough?
-    my $stmt = $self->source('Statement');
-    $stmt->name($stmt->name . $self->model_id($self->model_name));
-
-    #warn $stmt->name;
-
-    $self;
-}
-
-#__PACKAGE__->mk_group_accessors(simple => 'model_name');
-
-sub model_id {
-    my ($self, $name) = @_;
-    my $rec = $self->resultset('Model')->find
-        ({ name => $name }, { key => 'model_name' });
-    return $rec->id if $rec;
-}
-
-# these two are totally cribbed from RDF::Trine::Store::DBI
+# these two are totally cribbed from RDF::Trine::Store::DBI, but i
+# changed the names because they aren't specifically mysql
 
 sub _half_md5 {
     my $data = Encode::encode(utf8 => shift);
@@ -166,8 +121,187 @@ sub _node_hash {
     }
 
     # return the content
-    _half_md5($data);
+    _half_md5($data) . '';
 }
+
+=head2 new
+
+=cut
+
+# override the insane constructor with my own insane constructor
+
+sub new {
+    my $class = shift;
+
+    warn Data::Dumper::Dumper(\@_);
+    throw RDF::Trine::Error::MethodInvocationError
+        -text => 'BUILDARGS must have at least one argument.' unless @_;
+
+    # first, deal with the possibility of being passed a reference
+    my %args;
+    if (my $ref = ref $_[0]) {
+        if (Scalar::Util::blessed($_[0])) {
+            if ($_[0]->isa('DBIx::Connector') or $_[0]->isa('DBI::db')) {
+                # put either one of these in the dbh slot, because
+                # it'll be coalesced down below.
+                $args{dbh} = shift;
+            }
+            else {
+                throw RDF::Trine::Error::MethodInvocationError
+                    -text => "Don't know what to do with a $ref object.";
+            }
+
+            # the next thing on the argument stack is an attribute
+            # set; anything else is ignored.
+            $args{attributes} = shift if @_;
+        }
+        elsif ($ref eq 'CODE') {
+            $args{dbh}        = shift;
+            $args{attributes} = shift if @_;
+        }
+        elsif ($ref eq 'HASH') {
+            %args = %{$_[0]};
+        }
+        else {
+            throw RDF::Trine::Error::MethodInvocationError
+                -text => "Don't know what to do with a $ref reference.";
+        }
+    }
+    else {
+        # otherwise convert the arglist into a nice hash
+
+        @args{qw(name dsn username password attributes)} = @_;
+    }
+
+    # handle attributes first
+    if (defined $args{attributes}) {
+        throw RDF::Trine::Error::MethodInvocationError
+            -text => 'DBI(C) attributes must be a HASH reference'
+                unless ref $args{attributes} eq 'HASH';
+
+        # if you pass in an object, the only way to pass in a model
+        # name or other parameters is through the attributes.
+        $args{name} ||= delete $args{attributes}{name};
+
+        # deal with this being temporary
+        $args{temporary} ||= delete $args{attributes}{temporary};
+    }
+    else {
+        # nuke empty attributes out of the args
+        delete $args{attributes};
+    }
+
+    # now check the name
+    throw RDF::Trine::Error::MethodInvocationError
+        -text => "Can't instantiate the DBIC store without a model name."
+            unless defined $args{name};
+
+    # the next chunk is only if the dbh isn't already defined.
+    unless (defined $args{dbh}) {
+
+        # no need to explicitly set the temporary flag for the default
+        # dsn, as it will get blown away.
+        $args{dsn} ||= 'dbi:SQLite:dbname=:memory:';
+
+        # now fix the dsn
+        if (my $ref = ref $args{dsn}) {
+            if ($ref eq 'CODE' or Scalar::Util::blessed($args{dsn})) {
+                $args{dbh} = delete $args{dsn};
+                # don't need these now
+                delete @args{qw(username password)};
+                # we still keep attributes because they may be for DBIC.
+            }
+            else {
+                # don't know what to do with it
+                throw RDF::Trine::Error::MethodInvocationError
+                    -text => "Sorry, can't work with a $ref reference.";
+            }
+        }
+        else {
+            $args{dbh} = DBIx::Connector->new
+                (@args{qw(dsn username password attributes)});
+            # don't keep these around
+            delete @args{qw(dsn username password)};
+        }
+    }
+
+    # ok NOW coalesce the dbh
+    my $conn = $args{connector}
+        = delete $args{dbh} if $args{dbh}->isa('DBIx::Connector');
+
+    warn Data::Dumper::Dumper(\%args);
+
+    my $self = bless \%args, $class;
+
+    my $schema = $self->{schema} = RDF::Trine::Store::DBIC::Schema->connect
+        (sub { $conn->dbh }, $args{attributes});
+
+    $schema->model_name($args{name});
+
+#    $schema->do_setup;
+
+    my $src = $schema->source('Statement');
+    $src->name($src->name . _half_md5($src->name));
+
+    $self;
+}
+
+=head2 new_with_config
+
+=cut
+
+*_new_with_config = \&new;
+
+=head2 new_with_object
+
+=cut
+
+*_new_with_object = \&new;
+
+=head2 new_with_string
+
+=cut
+
+sub _new_with_string {
+    throw RDF::Trine::Error::UnimplementedError
+        -text => "Do not use this if you like your DSN strings intact!";
+}
+
+
+sub FOREIGNBUILDARGS {
+    my ($class, $args) = @_;
+
+    warn 'FOREIGNBUILDARGS:';
+    warn Data::Dumper::Dumper($args);
+    # DO NOT DO ANYTHING IN THIS UNLESS YOU WANT TO SCREW THINGS UP
+
+    my @out;
+    if ($args->{connector}) {
+        push @out, sub { $args->{connector}->dbh };
+    }
+    elsif (my $dbh = delete $args->{dbh}) {
+        push @out, ref $dbh eq 'CODE' ? $dbh : sub { $dbh };
+    }
+    else {
+        throw RDF::Trine::Error::MethodInvocationError
+            -text => 'FOREIGNBUILDARGS must have a dbh already.';
+    }
+
+    push @out, delete $args->{attributes} if ref $args->{attributes} eq 'HASH';
+    @out;
+}
+
+# override connect so that it matches
+
+sub model_id {
+    my ($self, $name) = @_;
+    my $rec = $self->{schema}->resultset('Model')->find
+        ({ name => $name }, { key => 'model_name' });
+    return $rec->id if $rec;
+}
+
+
+# deployment filters
 
 sub _all_but_statements {
     my $schema = shift;
@@ -203,11 +337,10 @@ my %SET = (
     c => [[['cr']           => 'RDF::Trine::Node::Resource']],
 );
 
-sub get_statements ($;$$$$) {
+sub _statement_rs {
     my $self = shift;
 
     my @seq = qw(s p o);
-    my $stmt_class = 'RDF::Trine::Statement';
 
     my (%nodes, %where, @join);
     my @select = qw(me.subject me.predicate me.object);
@@ -215,12 +348,11 @@ sub get_statements ($;$$$$) {
 
     if (@_ >= 4) {
         push @seq, 'c';
-        $stmt_class .= '::Quad';
 
         @nodes{@seq} = @_;
 
         # CONTEXT
-        if (defined $nodes{c}) {
+        if (defined $nodes{c} and not $nodes{c}->is_variable) {
             $where{context} = $self->_node_hash($nodes{c});
         }
         else {
@@ -232,10 +364,12 @@ sub get_statements ($;$$$$) {
     else {
         # this is the only statement that gets repeated. wee-haw.
         @nodes{@seq} = @_;
+
+        #$where{context} = 0; # if @_;
     }
 
     # SUBJECT
-    if (defined $nodes{s}) {
+    if (defined $nodes{s} and not $nodes{s}->is_variable) {
         $where{subject} = $self->_node_hash($nodes{s});
     }
     else {
@@ -245,7 +379,7 @@ sub get_statements ($;$$$$) {
     }
 
     # PREDICATE
-    if (defined $nodes{p}) {
+    if (defined $nodes{p} and not $nodes{p}->is_variable) {
         #warn $nodes{p};
         $where{predicate} = $self->_node_hash($nodes{p});
     }
@@ -256,7 +390,7 @@ sub get_statements ($;$$$$) {
     }
 
     # OBJECT
-    if (defined $nodes{o}) {
+    if (defined $nodes{o} and not $nodes{o}->is_variable) {
         $where{object} = $self->_node_hash($nodes{o});
     }
     else {
@@ -268,7 +402,7 @@ sub get_statements ($;$$$$) {
         push @as,     qw(ou ob ol lang dt);
     }
 
-    my $rs = $self->resultset('Statement')->search(
+    my $rs = $self->{schema}->resultset('Statement')->search(
         \%where,
         {
             select => \@select,
@@ -277,26 +411,42 @@ sub get_statements ($;$$$$) {
         }
     );
 
+    return wantarray ? ($rs, \%nodes, @seq) : $rs;
+}
+
+sub get_statements ($;$$$$) {
+    my $self = shift;
+    my ($rs, $nodes, @seq) = $self->_statement_rs(@_);
+
+    my $stmt_class = 'RDF::Trine::Statement';
+    $stmt_class .= '::Quad' if @seq > 3;
+
     return RDF::Trine::Iterator::Graph->new(
         sub {
+          NEXTROW:
             return unless my $rec = $rs->next;
 
-            # the outer loop is: s, p, o [, c]
-
+            # the outer loop is (s, p, o [, c])
             my %out;
             for my $k (@seq) {
-                if (defined $nodes{$k} and not $nodes{$k}->is_variable) {
-                    $out{$k} = $nodes{$k};
+                if (defined $nodes->{$k} and not $nodes->{$k}->is_variable) {
+                    $out{$k} = $nodes->{$k};
                 }
                 elsif ($rec->get_column($k) == 0) {
                     $out{$k} = RDF::Trine::Node::Nil->new;
                 }
                 else {
                     # the inner loop is a list of pairs in %SET, each
-                    # containing an arrayref of columns and a class
-                    # name.
+                    # containing an arrayref of columns from the
+                    # SELECT record, and a class name for the RDF
+                    # node type.
                     for my $rule (@{$SET{$k}}) {
-                        my @cols = map { $rec->get_column($_) } @{$rule->[0]};
+                        # get the values of the columns associated
+                        # with this node type:
+                        my @cols = map {
+                            my $x = $rec->get_column($_);
+                            $x = Encode::decode(utf8 => $x) if defined $x;
+                            $x; } @{$rule->[0]};
                         my $class = $rule->[1];
 
                         # if the first element is undef, there was no
@@ -306,10 +456,26 @@ sub get_statements ($;$$$$) {
                         # instantiate a new node
                         $out{$k} = $class->new(@cols);
 
-                        # no more processing
+                        # ignore everything that follows
                         last;
                     }
                 }
+            }
+
+            if (grep { not defined $_ } @out{@seq}) {
+                # the inner loop exited without creating at least one
+                # node, which basically means the database is corrupt.
+
+                # PS this should basically never happen but with this
+                # janky database schema it very well might.
+
+                # XXX PROBABLY SHOULD LOG SOMETHING
+                warn join ' ', "DUDE CHECK YR DATA:",
+                    map { $_ || '!UNDEF!' } @out{@seq};
+
+                %out = ();
+                # suck it, dijkstra
+                goto NEXTROW;
             }
 
             # hash slice of original sequence
@@ -321,7 +487,7 @@ sub get_statements ($;$$$$) {
 sub get_contexts {
     my $self = shift;
 
-    my $rs = $self->resultset('Statement');
+    my $rs = $self->{schema}->resultset('Statement');
     #$rs->result_source->name('Statements' . $self->model_id('cardviz'));
     $rs = $rs->search(
         {},
@@ -337,8 +503,8 @@ sub get_contexts {
     return RDF::Trine::Iterator->new(
         sub {
             return unless my $rec = $rs->next;
- 
-           return RDF::Trine::Node::Nil->new if $rec->context == 0;
+
+            return RDF::Trine::Node::Nil->new if $rec->context == 0;
 
             my $uri = $rec->get_column('uri');
             return RDF::Trine::Node::Resource->new
@@ -347,18 +513,102 @@ sub get_contexts {
     );
 }
 
-sub add_statement {
+sub _ctx_preamble {
     my ($self, $stmt, $ctx) = @_;
-    
+
+    if ($ctx) {
+        throw RDF::Trine::Error::MethodInvocationError
+            -text => 'Supply either a quad or a context, not both.'
+                if $stmt->isa('RDF::Trine::Statement::Quad');
+        $stmt = RDF::Trine::Statement::Quad->new($stmt->nodes, $ctx);
+    }
+
+    $stmt;
+}
+
+sub _insert_node {
+    my ($self, $node) = @_;
+    my $hash = $self->_node_hash($node);
+
+    my $schema = $self->{schema};
+
+    # not gonna be fancy with the dispatch table this time
+    if ($node->isa('RDF::Trine::Node::Resource')) {
+        $schema->resultset('Resource')->find_or_create({
+            id  => $hash,
+            uri => Encode::encode(utf8 => $node->uri_value),
+        });
+    }
+    elsif ($node->isa('RDF::Trine::Node::Blank')) {
+        # XXX should probably rename this to Blank
+        $schema->resultset('BNode')->find_or_create({
+            id   => $hash,
+            name => Encode::encode(utf8 => $node->blank_identifier),
+        });
+    }
+    elsif ($node->isa('RDF::Trine::Node::Literal')) {
+        $schema->resultset('Literal')->find_or_create({
+            id    => $hash,
+            value    => Encode::encode(utf8 => $node->literal_value),
+            language => Encode::encode
+                (utf8 => $node->literal_value_language || ''),
+            datatype => Encode::encode(utf8 => $node->literal_datatype || ''),
+        });
+    }
+    else {
+        # noop
+    }
+
+    $hash;
+}
+
+sub add_statement {
+    my $self = shift;
+    my $stmt = $self->_ctx_preamble(@_);
+
+    my %stmt;
+    for my $name ($stmt->node_names) {
+        #warn $name;
+        my $node = $stmt->$name;
+
+
+        $stmt{$name} = $self->_insert_node($node);
+    }
+
+    $stmt{context} ||= 0;
+
+    #warn Data::Dumper::Dumper(\%stmt);
+
+    $self->{schema}->resultset('Statement')->find_or_create(\%stmt);
+
+    # return something? i dunno.
+    $stmt;
 }
 
 sub remove_statement {
-    my ($self, $stmt, $ctx) = @_;
+    my $self = shift;
+    my $stmt = $self->_ctx_preamble(@_);
 
+    my %stmt;
+    for my $name ($stmt->node_names) {
+        my $node = $stmt->$name;
+
+        $stmt{$name} = $self->_node_hash($node);
+    }
+
+    $stmt{context} ||= 0;
+
+    #warn "REMOVE " . Data::Dumper::Dumper(\%stmt);
+
+
+    $self->{schema}->resultset('Statement')->search(\%stmt)->delete;
+
+    $stmt;
 }
 
 sub count_statements {
-    my ($self, $s, $p, $o, $c) = @_;
+    my $self = shift;
+    $self->_statement_rs(@_)->count;
 }
 
 sub supports {
@@ -366,7 +616,17 @@ sub supports {
 
 # optional methods
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+sub temporary_store ($;$$$$) {
+    my $class = shift;
+    my $name  = sprintf('model_%x%x%x%x', map { int(rand(16)) } (1..4) );
+    my $self  = $class->new($name, @_);
+#    $self->_prune->{$name} = 1;
+    $self->init;
+    $self;
+}
+
+sub init {
+    shift->{schema}->init;
+}
 
 1;
