@@ -114,7 +114,6 @@ __PACKAGE__->might_have
     (context_resource => 'RDF::Trine::Store::DBIC::Schema::Resource',
      { 'foreign.id' => 'self.context' });
 
-
 sub name {
     my $self = shift;
     warn 'derp';
@@ -134,7 +133,7 @@ sub model_id {
 
 sub BUILD {
     my $self = shift;
-    warn $self->name;
+#    warn $self->name;
 };
 
 no Moose;

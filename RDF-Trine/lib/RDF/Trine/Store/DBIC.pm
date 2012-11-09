@@ -360,6 +360,10 @@ sub _statement_rs {
             push @select, qw(me.context context_resource.uri);
             push @as,     qw(c cr);
         }
+
+        #warn Data::Dumper::Dumper(\%where);
+
+        #$where{context} ||= 0;
     }
     else {
         # this is the only statement that gets repeated. wee-haw.
@@ -405,9 +409,10 @@ sub _statement_rs {
     my $rs = $self->{schema}->resultset('Statement')->search(
         \%where,
         {
-            select => \@select,
-            as     => \@as,
-            join   => \@join,
+            select   => \@select,
+            as       => \@as,
+            join     => \@join,
+            distinct => 1,
         }
     );
 
@@ -490,7 +495,7 @@ sub get_contexts {
     my $rs = $self->{schema}->resultset('Statement');
     #$rs->result_source->name('Statements' . $self->model_id('cardviz'));
     $rs = $rs->search(
-        {},
+        { context => { '!=' => 0 } },
         {
             select   => [qw(me.context context_resource.uri)],
             as       => [qw(context uri)],

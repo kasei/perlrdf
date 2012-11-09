@@ -1,127 +1,33 @@
+=head1 NAME
+
+RDF::Trine::Store::DBIC::Schema - DBIx::Class schema component
+
+=head1 VERSION
+
+This document describes RDF::Trine::Store::DBIC version 1.001
+
+
+=head1 DESCRIPTION
+
+No user-serviceable parts. See L<RDF::Trine::Store::DBIC>, L<DBIx::Class>.
+
+=cut
+
 use utf8;
-package RDF::Trine::Store::DBIC;
+package RDF::Trine::Store::DBIC::Schema;
 
 use strict;
 use warnings;
 
-use Moose;
-use MooseX::NonMoose;
-use namespace::autoclean;
+use base qw(DBIx::Class::Schema);
 
-extends 'DBIx::Class::Schema' => { -constructor_name => 'clone' }; #,
-#    'RDF::Trine::Store';
+__PACKAGE__->mk_group_accessors(simple => 'model_name');
 
-use Encode       ();
-use Digest::MD5  ();
-use Scalar::Util ();
-use Math::BigInt ();
-
-use RDF::Trine;
-
-__PACKAGE__->load_namespaces(
-    result_namespace => "Schema",
-);
-
-has model_name => (
-    is       => 'rw',
-    isa      => 'Maybe[Str]',
-    init_arg => 'name',
-    required => 0,
-);
-
-has dbh => (
-    is       => 'ro',
-    isa      => 'DBI::db',
-    required => 0,
-);
-
-has dsn => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has username => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has password => (
-    is       => 'ro',
-    isa      => 'Maybe[Str]',
-    required => 0,
-);
-
-has attributes => (
-    is       => 'ro',
-    isa      => 'Maybe[HashRef]',
-    required => 0,
-);
-
-# NOTE: The constructor here is actually 'clone', which means we can
-# make our own 'new'.
-
-sub new {
-    my $class = shift;
-    my %args;
-    @args{qw(name dsn username password attributes)} = @_;
-    if (Scalar::Util::blessed($args{dsn}) and $args{dsn}->isa('DBI::db')) {
-        $args{dbh} = delete $args{dsn};
-    }
-    $class->clone(\%args);
-}
-
-sub _new_with_config {
-    my $self = shift;
-    $self->clone(shift);
-}
-
-# clone basically does what we want here
-*_new_with_object = \&_new_with_config;
-
-#sub _new_with_string {
-#    Carp::croak('lolol this will break a DBI dsn');
-#}
-
-sub FOREIGNBUILDARGS {
-    my $class = shift;
-    warn 'DUDE WHAT';
-    @_;
-}
-
-#sub BUILDARGS {
-#    warn $_ for @_;
-#}
-
-sub BUILD {
-    my $self = shift;
-    #$self->connection;
-    #warn Data::Dumper::Dumper($self);
-    if ($self->dbh) {
-        $self->connection(sub { $self->dbh }, $self->attributes);
-    }
-    else {
-        $self->connection
-            ($self->dsn, $self->username, $self->password, $self->attributes);
-    }
-
-    # is that enough?
-    my $stmt = $self->source('Statement');
-    $stmt->name($stmt->name . $self->model_id($self->model_name));
-
-    #warn $stmt->name;
-
-    $self;
-}
-
-#__PACKAGE__->mk_group_accessors(simple => 'model_name');
+__PACKAGE__->load_classes(qw(Model Resource BNode Literal Statement));
 
 sub model_id {
     my ($self, $name) = @_;
-    my $rec = $self->resultset('Model')->find
-        ({ name => $name }, { key => 'model_name' });
-    return $rec->id if $rec;
+    _half_md5($name || $self->model_name);
 }
 
 # these two are totally cribbed from RDF::Trine::Store::DBI
@@ -169,6 +75,8 @@ sub _node_hash {
     _half_md5($data);
 }
 
+# deployment filters
+
 sub _all_but_statements {
     my $schema = shift;
     $schema->drop_table($_)
@@ -203,11 +111,10 @@ my %SET = (
     c => [[['cr']           => 'RDF::Trine::Node::Resource']],
 );
 
-sub get_statements ($;$$$$) {
+sub _statement_rs {
     my $self = shift;
 
     my @seq = qw(s p o);
-    my $stmt_class = 'RDF::Trine::Statement';
 
     my (%nodes, %where, @join);
     my @select = qw(me.subject me.predicate me.object);
@@ -215,12 +122,11 @@ sub get_statements ($;$$$$) {
 
     if (@_ >= 4) {
         push @seq, 'c';
-        $stmt_class .= '::Quad';
 
         @nodes{@seq} = @_;
 
         # CONTEXT
-        if (defined $nodes{c}) {
+        if (defined $nodes{c} and not $nodes{c}->is_variable) {
             $where{context} = $self->_node_hash($nodes{c});
         }
         else {
@@ -235,7 +141,7 @@ sub get_statements ($;$$$$) {
     }
 
     # SUBJECT
-    if (defined $nodes{s}) {
+    if (defined $nodes{s} and not $nodes{s}->is_variable) {
         $where{subject} = $self->_node_hash($nodes{s});
     }
     else {
@@ -245,7 +151,7 @@ sub get_statements ($;$$$$) {
     }
 
     # PREDICATE
-    if (defined $nodes{p}) {
+    if (defined $nodes{p} and not $nodes{p}->is_variable) {
         #warn $nodes{p};
         $where{predicate} = $self->_node_hash($nodes{p});
     }
@@ -256,7 +162,7 @@ sub get_statements ($;$$$$) {
     }
 
     # OBJECT
-    if (defined $nodes{o}) {
+    if (defined $nodes{o} and not $nodes{o}->is_variable) {
         $where{object} = $self->_node_hash($nodes{o});
     }
     else {
@@ -277,26 +183,42 @@ sub get_statements ($;$$$$) {
         }
     );
 
+    return wantarray ? ($rs, \%nodes, @seq) : $rs;
+}
+
+sub get_statements ($;$$$$) {
+    my $self = shift;
+    my ($rs, $nodes, @seq) = $self->_statement_rs(@_);
+
+    my $stmt_class = 'RDF::Trine::Statement';
+    $stmt_class .= '::Quad' if @seq > 3;
+
     return RDF::Trine::Iterator::Graph->new(
         sub {
+          NEXTROW:
             return unless my $rec = $rs->next;
 
-            # the outer loop is: s, p, o [, c]
-
+            # the outer loop is (s, p, o [, c])
             my %out;
             for my $k (@seq) {
-                if (defined $nodes{$k} and not $nodes{$k}->is_variable) {
-                    $out{$k} = $nodes{$k};
+                if (defined $nodes->{$k} and not $nodes->{$k}->is_variable) {
+                    $out{$k} = $nodes->{$k};
                 }
                 elsif ($rec->get_column($k) == 0) {
                     $out{$k} = RDF::Trine::Node::Nil->new;
                 }
                 else {
                     # the inner loop is a list of pairs in %SET, each
-                    # containing an arrayref of columns and a class
-                    # name.
+                    # containing an arrayref of columns from the
+                    # SELECT record, and a class name for the RDF
+                    # node type.
                     for my $rule (@{$SET{$k}}) {
-                        my @cols = map { $rec->get_column($_) } @{$rule->[0]};
+                        # get the values of the columns associated
+                        # with this node type:
+                        my @cols = map {
+                            my $x = $rec->get_column($_);
+                            $x = Encode::decode(utf8 => $x) if defined $x;
+                            $x; } @{$rule->[0]};
                         my $class = $rule->[1];
 
                         # if the first element is undef, there was no
@@ -306,10 +228,26 @@ sub get_statements ($;$$$$) {
                         # instantiate a new node
                         $out{$k} = $class->new(@cols);
 
-                        # no more processing
+                        # ignore everything that follows
                         last;
                     }
                 }
+            }
+
+            if (grep { not defined $_ } @out{@seq}) {
+                # the inner loop exited without creating at least one
+                # node, which basically means the database is corrupt.
+
+                # PS this should basically never happen but with this
+                # janky database schema it very well might.
+
+                # XXX PROBABLY SHOULD LOG SOMETHING
+                warn join ' ', "DUDE CHECK YR DATA:",
+                    map { $_ || '!UNDEF!' } @out{@seq};
+
+                %out = ();
+                # suck it, dijkstra
+                goto NEXTROW;
             }
 
             # hash slice of original sequence
@@ -337,8 +275,8 @@ sub get_contexts {
     return RDF::Trine::Iterator->new(
         sub {
             return unless my $rec = $rs->next;
- 
-           return RDF::Trine::Node::Nil->new if $rec->context == 0;
+
+            return RDF::Trine::Node::Nil->new if $rec->context == 0;
 
             my $uri = $rec->get_column('uri');
             return RDF::Trine::Node::Resource->new
@@ -347,18 +285,86 @@ sub get_contexts {
     );
 }
 
-sub add_statement {
+sub _ctx_preamble {
     my ($self, $stmt, $ctx) = @_;
-    
+
+    if ($ctx) {
+        throw RDF::Trine::Error::MethodInvocationError
+            -text => 'Supply either a quad or a context, not both.'
+                if $stmt->isa('RDF::Trine::Statement::Quad');
+        $stmt = RDF::Trine::Statement::Quad->new($stmt->nodes, $ctx);
+    }
+
+}
+
+sub _insert_node {
+    my ($self, $node) = @_;
+    my $hash = $self->_node_hash($node);
+
+    # not gonna be fancy with the dispatch table this time
+    if ($node->isa('RDF::Trine::Node::Resource')) {
+        $self->resultset('Resource')->find_or_create({
+            id  => $hash,
+            uri => Encode::encode(utf8 => $node->uri_value),
+        });
+    }
+    elsif ($node->isa('RDF::Trine::Node::Blank')) {
+        # XXX should probably rename this to Blank
+        $self->resultset('BNode')->find_or_create({
+            id   => $hash,
+            name => Encode::encode(utf8 => $node->blank_identifier),
+        });
+    }
+    elsif ($node->isa('RDF::Trine::Node::Literal')) {
+        $self->resultset('Literal')->find_or_create({
+            id    => $hash,
+            value => Encode::encode(utf8 => $node->literal_value),
+        });
+    }
+    else {
+        # noop
+    }
+
+    $hash;
+}
+
+sub add_statement {
+    my $self = shift;
+    my $stmt = $self->_ctx_preamble(@_);
+
+    my %stmt;
+    for my $name ($stmt->node_names) {
+        my $node = $stmt->$name;
+
+
+        $stmt{$name} = $self->_insert_node($node);
+    }
+
+    $self->resultset('Statement')->find_or_create(\%stmt);
+
+    # return something? i dunno.
+    $stmt;
 }
 
 sub remove_statement {
-    my ($self, $stmt, $ctx) = @_;
+    my $self = shift;
+    my $stmt = $self->_ctx_preamble(@_);
 
+    my %stmt;
+    for my $name ($stmt->node_names) {
+        my $node = $stmt->$name;
+
+        $stmt{$name} = $self->_node_hash($node);
+    }
+
+    $self->resultset('Statement')->search(\%stmt)->delete;
+
+    $stmt;
 }
 
 sub count_statements {
-    my ($self, $s, $p, $o, $c) = @_;
+    my $self = shift;
+    $self->_statement_rs(@_)->count;
 }
 
 sub supports {
@@ -366,7 +372,11 @@ sub supports {
 
 # optional methods
 
-no Moose;
-__PACKAGE__->meta->make_immutable;
+sub init {
+    my $self = shift;
+#    warn $self->deployment_statements;
+    $self->deploy({ filters => [ \&_all_but_statements ] });
+    $self->deploy({ filters => [ \&_statements_only ] });
+}
 
 1;
