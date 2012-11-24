@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.138
+This document describes RDF::Trine::Model version 1.002
 
 =head1 METHODS
 
@@ -23,10 +23,10 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Log::Log4perl;
 
 use RDF::Trine::Error qw(:try);
@@ -132,7 +132,10 @@ Adds the specified C<< $statement >> to the rdf store.
 =cut
  
 sub add_statement {
-	my $self	= shift;
+	my ($self, @args)	= @_;
+	unless ($args[0]->isa('RDF::Trine::Statement')) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
+	}
 	if ($self->{temporary}) {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
@@ -144,7 +147,7 @@ sub add_statement {
 			while (my $st = $iter->next) {
 				$store->add_statement( $st );
 			}
-			if ($store->can('_end_bulk_ops')) {
+			if ($store->can('_begin_bulk_ops')) {
 				$store->_end_bulk_ops();
 			}
 			$self->{store}	= $store;
@@ -152,7 +155,7 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
-	return $self->_store->add_statement( @_ );
+	return $self->_store->add_statement( @args );
 }
 
 =item C<< add_hashref ( $hashref [, $context] ) >>
@@ -168,6 +171,7 @@ sub add_hashref {
 	my $index   = shift;
 	my $context = shift;
 	
+	$self->begin_bulk_ops();
 	foreach my $s (keys %$index) {
 		my $ts = ( $s =~ /^_:(.*)$/ ) ?
 					RDF::Trine::Node::Blank->new($1) :
@@ -208,6 +212,23 @@ sub add_hashref {
 			}
 		}
 	}
+	$self->end_bulk_ops();	
+}
+
+=item C<< add_iterator ( $iter ) >>
+
+Add triples from the statement iteratorto the model.
+
+=cut
+
+sub add_iterator {
+	my $self	= shift;
+	my $iter	= shift;
+	$self->begin_bulk_ops();
+	while (my $st = $iter->next) {
+		$self->add_statement( $st );
+	}
+	$self->end_bulk_ops();	
 }
 
 =item C<< add_list ( @elements ) >>
@@ -486,6 +507,7 @@ sub get_pattern {
 	my $bgp		= shift;
 	my $context	= shift;
 	my @args	= @_;
+	my %args	= @args;
 	
 	$self->end_bulk_ops();
 	my (@triples)	= ($bgp->isa('RDF::Trine::Statement') or $bgp->isa('RDF::Query::Algebra::Filter'))
@@ -503,7 +525,46 @@ sub get_pattern {
 	if (blessed($store) and $store->can('get_pattern')) {
 		return $self->_store->get_pattern( $bgp, $context, @args );
 	} else {
-		return $self->_get_pattern( $bgp, $context, @args );
+		if ($bgp->isa('RDF::Trine::Pattern')) {
+			$bgp	= $bgp->sort_for_join_variables();
+		}
+		my $iter	= $self->_get_pattern( $bgp, $context );
+		if (my $ob = $args{orderby}) {
+			my @order	= @$ob;
+			if (scalar(@order) % 2) {
+				throw RDF::Trine::Error::MethodInvocationError -text => "Invalid arguments to orderby argument in get_pattern";
+			}
+			
+			my @results	= $iter->get_all();
+			my $order_vars	= scalar(@order) / 2;
+			my %seen;
+			foreach my $r (@results) {
+				foreach my $var (keys %$r) {
+					$seen{$var}++;
+				}
+			}
+			
+			@results	= sort {
+				my $r	= 0;
+				foreach my $i (0 .. ($order_vars-1)) {
+					my $var	= $order[$i*2];
+					my $rev	= ($order[$i*2+1] =~ /DESC/i);
+					$r	= RDF::Trine::Node::compare( $a->{$var}, $b->{$var} );
+					$r	*= -1 if ($rev);
+					last if ($r);
+				}
+				$r;
+			} @results;
+			
+			my @sortedby;
+			foreach my $i (0 .. ($order_vars-1)) {
+				my $var	= $order[$i*2];
+				my $dir	= $order[$i*2+1];
+				push(@sortedby, $var, $dir) if ($seen{$var});
+			}
+			$iter	= RDF::Trine::Iterator::Bindings->new(\@results, undef, sorted_by => \@sortedby);
+		}
+		return $iter;
 	}
 }
 
@@ -537,19 +598,22 @@ sub _get_pattern {
 				$vars{ $names[ $n ] }	= $nodes[$n]->name;
 			}
 		}
-		my $iter	= $self->get_statements( @nodes, $context, @args );
+		if ($context) {
+			$nodes[3]	= $context;
+		}
+		my $iter	= $self->get_statements( @nodes );
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
 		return RDF::Trine::Iterator::Bindings->new( $sub, \@vars );
 	} else {
-		my $t		= shift(@triples);
-		my $rhs	= $self->get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
-		my $lhs	= $self->get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
+		my $t		= pop(@triples);
+		my $rhs	= $self->_get_pattern( RDF::Trine::Pattern->new( $t ), $context, @args );
+		my $lhs	= $self->_get_pattern( RDF::Trine::Pattern->new( @triples ), $context, @args );
 		my @inner;
 		while (my $row = $rhs->next) {
 			push(@inner, $row);
@@ -964,13 +1028,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

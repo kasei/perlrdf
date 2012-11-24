@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.138
+This document describes RDF::Trine::Store::Hexastore version 1.002
 
 =head1 SYNOPSIS
 
@@ -45,12 +45,20 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.138";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
 
 ######################################################################
+
+sub _config_meta {
+	return {
+		required_keys	=> [],
+		fields			=> {},
+	}
+}
+
 
 =head1 METHODS
 
@@ -123,7 +131,7 @@ sub _new_with_string {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	my @sources = @{$config->{sources}};
+	my @sources = @{ $config->{sources} || [] };
 	my $self	= $class->new();
 	foreach my $source (@sources) {
 		my %args;
@@ -239,7 +247,7 @@ sub get_statements {
 		
 		my @local_list	= $self->_node_values( $list );
 		my $sub		= sub {
-			return undef unless (scalar(@local_list));
+			return unless (scalar(@local_list));
 			my $id	= shift(@local_list);
 			my %data	= map { $_ => $nodes[ NODEMAP->{ $_ } ] } @dkeys;
 			$data{ $ukey }	= $self->_id2node( $id );
@@ -287,7 +295,7 @@ sub get_statements {
 		my $ukey1;
 		my $sub		= sub {
 			while (0 == scalar(@local_list)) {
-				return undef unless (scalar(@ukeys1));
+				return unless (scalar(@ukeys1));
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
 				my $list	= $self->_index_from_pair( $index, $ukeys[0], $ukey1 );
@@ -354,7 +362,7 @@ sub get_statements {
 				# no more objects. go to next predicate.
 				while (0 == scalar(@pkeys)) {
 					# no more predicates. go to next subject.
-	 				return undef unless (scalar(@skeys));
+	 				return unless (scalar(@skeys));
 					$sid	= shift(@skeys);
 # 					warn "*** using subject $sid\n";
 					@pkeys	= sort { $a <=> $b } keys %{ $subj->{ $sid }{ $order_keys[1] } };
@@ -395,6 +403,9 @@ Returns a stream object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
+	if ($bgp->isa('RDF::Trine::Pattern')) {
+		$bgp	= $bgp->sort_for_join_variables();
+	}
 	my @triples	= $bgp->triples;
 	if (2 == scalar(@triples)) {
 		my ($t1, $t2)	= @triples;
@@ -408,56 +419,54 @@ sub get_pattern {
 			my $shrkey	= $shared[0];
 # 			warn "- $shrkey\n";
 # 			warn $t2->as_string;
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ), undef, orderby => [ $shrkey => 'ASC' ] );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ), undef, orderby => [ $shrkey => 'ASC' ] );
 			
-			
-			$i1->next;
-			$i2->next;
-			
+			my $i1current	= $i1->next;
+			my $i2current	= $i2->next;
 			my @results;
-			while (not($i1->finished) and not($i2->finished)) {
-				my $i1cur	= $i1->current->{ $shrkey };
-				my $i2cur	= $i2->current->{ $shrkey };
-				if ($i1->current->{ $shrkey }->equal( $i2->current->{ $shrkey } )) {
+			while (defined($i1current) and defined($i2current)) {
+				my $i1cur	= $i1current->{ $shrkey };
+				my $i2cur	= $i2current->{ $shrkey };
+				if ($i1current->{ $shrkey }->equal( $i2current->{ $shrkey } )) {
 					my @matching_i2_rows;
-					my $match_value	= $i1->current->{ $shrkey };
-					while ($match_value->equal( $i2->current->{ $shrkey } )) {
-						push( @matching_i2_rows, $i2->current );
-						unless ($i2->next) {
+					my $match_value	= $i1current->{ $shrkey };
+					while ($match_value->equal( $i2current->{ $shrkey } )) {
+						push( @matching_i2_rows, $i2current );
+						unless ($i2current = $i2->next) {
 #							warn "no more from i2";
 							last;
 						}
 					}
 					
-					while ($match_value->equal( $i1->current->{ $shrkey } )) {
+					while ($match_value->equal( $i1current->{ $shrkey } )) {
 						foreach my $i2_row (@matching_i2_rows) {
-							my $new	= $self->_join( $i1->current, $i2_row );
+							my $new	= $self->_join( $i1current, $i2_row );
 							push( @results, $new );
 						}
-						unless ($i1->next) {
+						unless ($i1current = $i1->next) {
 #							warn "no more from i1";
 							last;
 						}
 					}
-				} elsif ($i1->current->{ $shrkey }->compare( $i2->current->{ $shrkey } ) == -1) {
-					my $i1v	= $i1->current->{ $shrkey };
-					my $i2v	= $i2->current->{ $shrkey };
+				} elsif ($i1current->{ $shrkey }->compare( $i2current->{ $shrkey } ) == -1) {
+					my $i1v	= $i1current->{ $shrkey };
+					my $i2v	= $i2current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
-					$i1->next;
-				} else { # ($i1->current->{ $shrkey } > $i2->current->{ $shrkey })
-					my $i1v	= $i1->current->{ $shrkey };
-					my $i2v	= $i2->current->{ $shrkey };
+					$i1current	= $i1->next;
+				} else { # ($i1current->{ $shrkey } > $i2current->{ $shrkey })
+					my $i1v	= $i1current->{ $shrkey };
+					my $i2v	= $i2current->{ $shrkey };
 					warn "keys don't match: $i1v <=> $i2v\n";
-					$i2->next;
+					$i2current	= $i2->next;
 				}
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-			warn 'no shared variable -- cartesian product';
+# 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
-			my $i1	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t1 ) );
-			my $i2	= $self->SUPER::get_pattern( RDF::Trine::Pattern->new( $t2 ) );
+			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
+			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
 			my @i1;
 			while (my $row = $i1->next) {
 				push(@i1, $row);
@@ -472,7 +481,7 @@ sub get_pattern {
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		}
 	} else {
-		return $self->SUPER::get_pattern( $bgp );
+		return $self->SUPER::_get_pattern( $bgp );
 	}
 }
 
@@ -680,8 +689,8 @@ sub _count_statements {
 sub _node2id {
 	my $self	= shift;
 	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef if ($node->isa('RDF::Trine::Node::Variable'));
+	return unless (blessed($node));
+	return if ($node->isa('RDF::Trine::Node::Variable'));
 	if (exists( $self->{ node2id }{ $node->as_string } )) {
 		return $self->{ node2id }{ $node->as_string };
 	} else {
@@ -697,7 +706,7 @@ sub _id2node {
 	if (exists( $self->{ id2node }{ $id } )) {
 		return $self->{ id2node }{ $id };
 	} else {
-		return undef;
+		return;
 	}
 }
 
@@ -796,9 +805,11 @@ sub _index_values {
 	my $index	= shift;
 	my $rev		= shift;
 	if ($rev) {
-		return sort { $b <=> $a } keys %$index;
+		my @values	= sort { $b <=> $a } keys %$index;
+		return @values;
 	} else {
-		return sort { $a <=> $b } keys %$index;
+		my @values	= sort { $a <=> $b } keys %$index;
+		return @values;
 	}
 }
 #########################################
@@ -873,8 +884,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -882,7 +893,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

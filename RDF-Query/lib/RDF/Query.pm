@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
+RDF::Query - A complete SPARQL 1.1 Query and Update implementation for use with RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.908.
+This document describes RDF::Query version 2.909.
 
 =head1 SYNOPSIS
 
@@ -131,7 +131,9 @@ use Scalar::Util qw(blessed reftype looks_like_number);
 use DateTime::Format::W3CDTF;
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+if (! Log::Log4perl::initialized()) {
+    Log::Log4perl->easy_init($ERROR);
+}
 
 no warnings 'numeric';
 use RDF::Trine 0.135;
@@ -156,7 +158,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.908';
+	$VERSION		= '2.909';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -229,9 +231,13 @@ sub new {
 		$base_uri	= RDF::Query::Node::Resource->new( $base_uri );
 	}
 	
+	my %pargs;
+	if ($options{canonicalize}) {
+		$pargs{canonicalize}	= 1;
+	}
 	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
-	my $parser	= $pclass->new();
+	my $parser	= $pclass->new( %pargs );
 	my $parsed	= $parser->parse( $query, $base_uri, $update );
 	
 	my $self	= $class->_new(
@@ -342,6 +348,7 @@ sub prepare {
 	my $parsed	= $self->{parsed};
 	my @vars	= $self->variables( $parsed );
 	
+	local($self->{model})	= $self->{model};
 	my $model	= $self->{model} || $self->get_model( $_model, %args );
 	if ($model) {
 		$self->model( $model );
@@ -411,13 +418,37 @@ sub execute {
 	my $l		= Log::Log4perl->get_logger("rdf.query");
 	$l->debug("executing query with model " . ($model or ''));
 	
-	my ($plan, $context)	= $self->prepare( $model, %args );
-	if ($l->is_trace) {
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		$l->trace($self->as_sparql);
-		$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+	my $lang_iri	= '';
+	my $parser	= $self->{parser};
+	my $name;
+	if ($parser->isa('RDF::Query::Parser::SPARQL11')) {
+		if ($self->is_update) {
+			$name		= 'SPARQL 1.1 Update';
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Update';
+		} else {
+			$name		= 'SPARQL 1.1 Query';
+			$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL11Query';
+		}
+	} elsif ($parser->isa('RDF::Query::Parser::SPARQL')) {
+		$name		= 'SPARQL 1.0 Query';
+		$lang_iri	= 'http://www.w3.org/ns/sparql-service-description#SPARQL10Query';
 	}
-	return $self->execute_plan( $plan, $context );
+	
+	local($self->{model})	= $self->{model};
+# 	warn "model: $self->{model}";
+# 	warn "passthrough checking if model supports $lang_iri\n";
+	if ($self->{options}{allow_passthrough} and $model->supports($lang_iri)) {
+		$l->info("delegating $name execution to the underlying model");
+		return $model->get_sparql( $self->{query_string} );
+	} else {
+		my ($plan, $context)	= $self->prepare( $model, %args );
+		if ($l->is_trace) {
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+			$l->trace($self->as_sparql);
+			$l->trace(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+		}
+		return $self->execute_plan( $plan, $context );
+	}
 }
 
 =item C<< execute_plan ( $plan, $context ) >>
@@ -460,9 +491,9 @@ sub execute_plan {
 	my $stream	= $plan->as_iterator( $context );
 	
 	if ($parsed->{'method'} eq 'DESCRIBE') {
-		$stream	= $self->describe( $stream );
+		$stream	= $self->describe( $stream, $context );
 	} elsif ($parsed->{'method'} eq 'ASK') {
-		$stream	= $self->ask( $stream );
+		$stream	= $self->ask( $stream, $context );
 	}
 	
 	$l->debug("going to call post-execute hook");
@@ -619,7 +650,7 @@ sub plan_class {
 
 =begin private
 
-=item C<describe ( $stream )>
+=item C<< describe ( $iter, $context ) >>
 
 Takes a stream of matching statements and constructs a DESCRIBE graph.
 
@@ -630,7 +661,8 @@ Takes a stream of matching statements and constructs a DESCRIBE graph.
 sub describe {
 	my $self	= shift;
 	my $stream	= shift;
-	my $model	= $self->model;
+	my $context	= shift;
+	my $model	= $context->model;
 	my @nodes;
 	my %seen;
 	while (my $row = $stream->next) {
@@ -670,7 +702,7 @@ sub describe {
 
 =begin private
 
-=item C<ask ( $stream )>
+=item C<ask ( $iter, $context )>
 
 Takes a stream of matching statements and returns a boolean query result stream.
 
@@ -681,6 +713,7 @@ Takes a stream of matching statements and returns a boolean query result stream.
 sub ask {
 	my $self	= shift;
 	my $stream	= shift;
+	my $context	= shift;
 	my $value	= $stream->next;
 	my $bool	= ($value) ? 1 : 0;
 	return RDF::Trine::Iterator::Boolean->new( [ $bool ] );
@@ -716,6 +749,21 @@ sub pattern {
 	} else {
 		return RDF::Query::Algebra::GroupGraphPattern->new( @triples );
 	}
+}
+
+=item C<< is_update >>
+
+=cut
+
+sub is_update {
+	my $self	= shift;
+	my $pat		= $self->pattern;
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Clear'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Copy'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Create'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Move'));
+	return 1 if ($pat->subpatterns_of_type('RDF::Query::Algebra::Update'));
+	return 0;
 }
 
 =item C<< as_sparql >>
@@ -876,12 +924,26 @@ sub supports {
 	return $model->supports( @_ );
 }
 
+=item C<< specifies_update_dataset >>
+
+Returns true if the query specifies a custom update dataset via the WITH or
+USING keywords, false otherwise.
+
+=cut
+
+sub specifies_update_dataset {
+	my $self	= shift;
+	no warnings 'uninitialized';
+	return $self->{parsed}{custom_update_dataset} ? 1 : 0;
+}
 
 =begin private
 
-=item C<< get_model ( $store ) >>
+=item C<< get_model ( $model ) >>
 
-Returns a model object for the specified RDF C<< $store >>.
+Returns a model object for use during execution.
+If C<< $model >> is a usable model, it is simply returned.
+Otherwise, a temporary model is constructed and returned.
 
 =end private
 
@@ -1302,6 +1364,7 @@ sub model {
 	}
 	my $model	= $self->{model};
 	unless (defined $model) {
+		Carp::confess "query->model shouldn't be calling get_model";
 		$model	= $self->get_model();
 	}
 	
@@ -1492,7 +1555,7 @@ L<http://www.perlrdf.org/>
 
 =head1 LICENSE
 
-Copyright (c) 2005-2010 Gregory Todd Williams. This
+Copyright (c) 2005-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

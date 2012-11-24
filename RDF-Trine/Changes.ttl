@@ -10,6 +10,118 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.002.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.002" ;
+                        doap:created      "2012-10-20" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Require Scalar::Util version 1.23." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.001.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.000.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.001" ;
+                        doap:created      "2012-10-05" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Replaced old Turtle and TriG parsers with new streaming implementations." ;
+                        asc:update      "Added RDF::Trine::Node::Literal->canonicalize method." ;
+                        asc:update      "Updated RDF::Trine::Parser::Redland to construct a new parser object on each parse (avoiding a bug in redland)." ;
+                        asc:update      "Applied partial patch to 'fix interaction with HTML::Data::Parser' (from Dorian Taylor; commit 9b713b23b6)." ;
+                        asc:update      "Added Moose and MooseX::ArrayRef to prerequisites list." ;
+                        asc:update      "Updated code style to work with Perl::Critic core policies." ;
+                        asc:update      "Added POD to RDF::Trine and RDF::Trine::Store::DBI (based on patch from Evan Carew)." ;
+                        asc:update      "Fixed bareword bug in RDF::Trine::Parser when UUID::Tiny is not available." ;
+                        asc:update      "Silenced undefined warnings in RDF::Trine::Parser::Turtle::Lexer." ;
+                        asc:update      "Updated required version of perl to 5.10." ;
+                        asc:update      "Silenced warning of cartesian joins in RDF::Trine::Store::Hexastore." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.000.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.140.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.000" ;
+                        doap:created      "2012-06-29" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Model->add_iterator method." ;
+                        asc:update      "Fixed etag bug in RDF::Trine::Store::Memory." ;
+                        asc:update      "Document the extends option to negotiate in the serializer (from KjetilK)." ;
+                        asc:update      "Document RDFTRINE_NO_REDLAND (from KjetilK)." ;
+                        asc:update      "Made Literal and Resource node constructors throw exception when passed undef lexical value." ;
+                        asc:update      "Removed RDF::Trine methods count, add_extra_result_data, extra_result_data." ;
+                        asc:update      "Removed support for extra data serialized in SPARQL/XML result format link tags." ;
+                        asc:update      "Rolled back attempted optimization of bulk ops calls (which broke the code)." ;
+                        asc:update      "Fixed parsing of backslash escapes in Turtle quoted literals (from Toby Inkster via github pull request #63)." ;
+                        asc:update      "Fixed miscellaneous typos (from Evan Carew)." ;
+                        asc:update      "Updated bug reporting details in BUGS POD section." ;
+                        asc:update      "Updated documentation in several classes." ;
+                        asc:update      "Removed redundant documentation in RDF::Trine::Parser." ;
+                        asc:update      "Added Redland test for UTF8 (from Kjetil Kjernsmo)." ;
+                        asc:update      "Added two tests for concat graph iterators (from Kjetil Kjernsmo)." ;
+                        asc:update      "Fix usage of materialized iterators in t/iterator-graph.t (from Kjetil Kjernsmo)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.140.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.139.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.140" ;
+                        doap:created      "2012-05-08" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added optional content_cb callback argument to RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Removed default get_pattern implementation in RDF::Trine::Store." ;
+                        asc:update      "Added missing import of looks_like_number function in RDF::Trine::Node::Literal." ;
+                        asc:update      "Added RDF::Trine::Pattern->sort_for_join_variables method to prevent unnecessary cartesian joins." ;
+         
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-0.139.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.138.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "0.139" ;
+                        doap:created      "2012-04-11" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Serializer::NQuads->statement_as_string method." ;
+                        asc:addition    "Add pg tests (Kjetil Kjernsmo)." ;
+                        asc:addition    "Added tests for RDF::Trine::Iterator->peek." ;
+                        asc:addition    "Adding some get_pattern tests to the Store tests (Kjetil Kjernsmo)." ;
+                        asc:update      "Made server a required configuration key in RDF::Trine::Store::Redis." ;
+                        asc:update      "Fixed interaction of peek() and finished() in RDF::Trine::Iterator." ;
+                        asc:update      "Fixed use of iterator finished method in RDF::Trine::Iterator::Bindings->as_json." ;
+                        asc:update      "Fixed use of iterator finished method in RDF::Trine::Store::Hexastore->get_pattern." ;
+                        asc:update      "Fixed bug when RDF::Trine::Iterator->finished is called before an (empty) iterator is used." ;
+                        asc:update      "Fixed fallback parsing bug in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Fixed PostgreSQL capitalization bug (patch from https://rt.cpan.org/Ticket/Display.html?id=71890 applied by Kjetil Kjernsmo)." ;
+                        asc:update      "Added 'scoped_namespaces' constructor argument to RDF::Trine::Serializer::RDFXML to serialize only necessary namespace declarations. (github issue 33)." ;
+                        asc:update      "Initialize Log4perl only if it isn't initialized already (pull request 57 from kba)." ;
+                        asc:update      "Fixed expected result count in Test::RDF::Trine::Store->get_pattern_tests." ;
+                        asc:update      "Simplified code in t/store-hexastore-pattern.t." ;
+                        asc:update      "Replaced references to RDFQUERY_NO_REDLAND environment variable with proper RDFTRINE_NO_REDLAND." ;
+                        asc:update      "Allow suppressing RDF::Redland use if the RDFQUERY_NO_REDLAND environment variable is set." ;
+                        asc:update      "Removed erroneous copies of RDF::Trine::Store::DBI::Pg->init method." ;
+         
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-0.138.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-0.137.tar.gz> ;

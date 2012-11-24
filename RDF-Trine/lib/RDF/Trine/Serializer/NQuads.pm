@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NQuads - N-Quads Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NQuads version 0.138
+This document describes RDF::Trine::Serializer::NQuads version 1.002
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	$RDF::Trine::Serializer::serializer_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $type (qw(text/x-nquads)) {
@@ -174,11 +174,30 @@ sub _statement_as_string {
 }
 
 
+=item C<< statement_as_string ( $st ) >>
+
+Returns a string with the supplied RDF::Trine::Statement::Quad object serialized
+as N-Quads, ending in a DOT and newline.
+
+=cut
+
+sub statement_as_string {
+	my $self	= shift;
+	my $st		= shift;
+	my @nodes	= $st->nodes;
+	return join(' ', map { $_->as_ntriples } @nodes[0..3]) . " .\n";
+}
+
 1;
 
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
@@ -190,7 +209,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

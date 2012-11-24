@@ -4,8 +4,7 @@ RDF::Trine::Store::DBI::Pg - PostgreSQL subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::Pg version 0.138
-
+This document describes RDF::Trine::Store::DBI::Pg version 1.002
 
 =head1 SYNOPSIS
 
@@ -26,11 +25,10 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.138";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
-
 
 sub _config_meta {
 	return {
@@ -90,7 +88,7 @@ sub init {
 	
 	unless ($self->_table_exists("literals")) {
 		$dbh->begin_work;
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE literals (
 				ID NUMERIC(20) PRIMARY KEY,
 				Value text NOT NULL,
@@ -98,19 +96,19 @@ sub init {
 				Datatype text NOT NULL DEFAULT ''
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE resources (
 				ID NUMERIC(20) PRIMARY KEY,
 				URI text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE bnodes (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE models (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
@@ -121,7 +119,7 @@ END
 	}
 	
 	unless ($self->_table_exists("statements${id}")) {
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return };
 			CREATE TABLE statements${id} (
 				Subject NUMERIC(20) NOT NULL,
 				Predicate NUMERIC(20) NOT NULL,
@@ -130,7 +128,7 @@ END
 				PRIMARY KEY (Subject, Predicate, Object, Context)
 			);
 END
-# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	}
 	
@@ -144,9 +142,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -154,7 +151,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

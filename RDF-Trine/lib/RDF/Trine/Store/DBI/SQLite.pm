@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::SQLite version 0.138
+This document describes RDF::Trine::Store::DBI::SQLite version 1.002
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.138";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -89,10 +89,10 @@ sub init {
 	my $table	= "Statements${id}";
 	unless ($self->_table_exists($table)) {
 		$dbh->begin_work;
-		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);" ) || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);" ) || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);" ) || do { $dbh->rollback; return undef };
-		$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);" ) || do { $dbh->rollback; return undef };
+		$dbh->do( "CREATE INDEX idx_${name}_spog ON Statements${id} (Subject,Predicate,Object,Context);" ) || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX idx_${name}_pogs ON Statements${id} (Predicate,Object,Context,Subject);" ) || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX idx_${name}_opcs ON Statements${id} (Object,Predicate,Context,Subject);" ) || do { $dbh->rollback; return };
+		$dbh->do( "CREATE INDEX idx_${name}_cpos ON Statements${id} (Context,Predicate,Object,Subject);" ) || do { $dbh->rollback; return };
 		$dbh->commit;
 	}
 }
@@ -105,9 +105,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<bug-rdf-store-dbi@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -115,7 +114,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

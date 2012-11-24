@@ -7,7 +7,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 33;
+use Test::More tests => 34;
 
 use_ok( 'RDF::Query' );
 
@@ -187,6 +187,26 @@ END
 	my $again	= $qagain->as_sparql;
 	is( $sparql, $again, 'as_sparql: select DISTINCT' );
 }
+
+{
+	my $sparql	= <<"END";
+PREFIX bench: <http://localhost/vocabulary/benchInproc/>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+SELECT ?article
+WHERE {
+	?article a bench:Article .
+	?article ?property ?value .
+	FILTER( (?property = <http://swrc.ontoware.org/ontology#pages>) ) .
+}
+END
+	chomp($sparql);
+	$sparql		=~ s/\s+/ /gms;
+	my $query	= RDF::Query->new( $sparql );
+	my $string	= $query->as_sparql;
+	$string		=~ s/\s+/ /gms;
+	is( $string, $sparql, 'sparql to sparql with filter equality test' );
+}
+
 
 ################################################################################
 ### SSE TESTS

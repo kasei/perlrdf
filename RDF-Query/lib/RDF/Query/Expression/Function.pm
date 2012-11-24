@@ -7,7 +7,7 @@ RDF::Query::Expression::Function - Class for Function expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Function version 2.908.
+This document describes RDF::Query::Expression::Function version 2.909.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
@@ -227,6 +227,7 @@ sub evaluate {
 	my $query	= shift || 'RDF::Query';
 	my $bound	= shift;
 	my $context	= shift;
+	my $active_graph	= shift;
 	my $uri		= $self->uri;
 	
 	no warnings 'uninitialized';
@@ -242,7 +243,7 @@ sub evaluate {
 						my $val	= 0;
 						try {
 							$val	= $value->isa('RDF::Query::Expression')
-								? $value->evaluate( $query, $bound, $context )
+								? $value->evaluate( $query, $bound, $context, $active_graph )
 								: ($value->isa('RDF::Trine::Node::Variable'))
 									? $bound->{ $value->name }
 									: $value;
@@ -261,7 +262,7 @@ sub evaluate {
 		try {
 			my $exprval	= $query->var_or_expr_value( $bound, $expr, $context );
 			my $func	= RDF::Query::Expression::Function->new( $ebv, $exprval );
-			my $value	= $func->evaluate( $query, {}, $context );
+			my $value	= $func->evaluate( $query, {}, $context, $active_graph );
 			my $bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			if ($bool) {
 				$index	= 0;
@@ -278,15 +279,34 @@ sub evaluate {
 	} elsif ($uriv eq 'sparql:exists') {
 		my $func	= $query->get_function($uri);
 		my ($ggp)	= $self->arguments;
-		return $func->( $query, $context, $bound, $ggp );
+		return $func->( $query, $context, $bound, $ggp, $active_graph );
 	} else {
-		my @args	= map {
-						$_->isa('RDF::Query::Algebra')
-							? $_->evaluate( $query, $bound, $context )
-							: ($_->isa('RDF::Trine::Node::Variable'))
-								? $bound->{ $_->name }
-								: $_
-					} $self->arguments;
+		my $model	= ref($query) ? $query->{model} : undef;
+		if (blessed($context)) {
+			$model	= $context->model;
+		}
+		
+		my @args;
+		if (ref($query)) {
+			# localize the model in the query object (legacy code wants the model accessible from the query object)
+			local($query->{model})	= $model;
+			@args	= map {
+							$_->isa('RDF::Query::Algebra')
+								? $_->evaluate( $query, $bound, $context, $active_graph )
+								: ($_->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $_->name }
+									: $_
+						} $self->arguments;
+		} else {
+			@args	= map {
+							$_->isa('RDF::Query::Algebra')
+								? $_->evaluate( $query, $bound, $context, $active_graph )
+								: ($_->isa('RDF::Trine::Node::Variable'))
+									? $bound->{ $_->name }
+									: $_
+						} $self->arguments;
+		}
+		
 		my $func	= $query->get_function($uri);
 		unless ($func) {
 			throw RDF::Query::Error::ExecutionError -text => "Failed to get function for IRI $uri";

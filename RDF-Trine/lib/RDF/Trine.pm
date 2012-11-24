@@ -7,31 +7,59 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.138
+This document describes RDF::Trine version 1.002
 
 =head1 SYNOPSIS
 
   use RDF::Trine;
+  
+  my $store = RDF::Trine::Store::Memory->new();
+  my $model = RDF::Trine::Model->new($store);
+  
+  # parse some web data into the model, and print the count of resulting RDF statements
+  RDF::Trine::Parser->parse_url_into_model( 'http://kasei.us/about/foaf.xrdf', $model );
+  print $model->size . " RDF statements parsed\n";
+  
+  # Create a namespace object for the foaf vocabulary
+  my $foaf = RDF::Trine::Namespace->new( 'http://xmlns.com/foaf/0.1/' );
+  
+  # Create a node object for the FOAF name property
+  my $pred = $foaf->name;
+  # alternatively:
+  # my $pred = RDF::Trine::Node::Resource->new('http://xmlns.com/foaf/0.1/name');
+  
+  # Create an iterator for all the statements in the model with foaf:name as the predicate
+  my $iter = $model->get_statements(undef, $pred, undef);
+  
+  # Now print the results
+  print "Names of things:\n";
+  while (my $st = $iter->next) {
+    my $s = $st->subject;
+    my $name = $st->object;
+    
+    # $s and $name have string overloading, so will print correctly
+    print "The name of $s is $name\n";
+  }
 
 =head1 DESCRIPTION
 
-RDF::Trine provides an RDF framework with an emphasis on extensibility, API
-stability, and the presence of a test suite. The package consists of several
-components:
+RDF::Trine provides an Resource Descriptive Framework (RDF) with an emphasis on
+extensibility, API stability, and the presence of a test suite. The package
+consists of several components:
 
 =over 4
 
-=item * RDF::Trine::Model - RDF model providing access to a triple store.
+=item * RDF::Trine::Model - RDF model providing access to a triple store. This module would typically be used to access an existing store by a developer looking to "Just get stuff done."
 
 =item * RDF::Trine::Parser - RDF parsers for various serialization formats including RDF/XML, Turtle, RDFa, and RDF/JSON.
 
-=item * RDF::Trine::Store::Memory - An in-memory, non-persistant triple store.
+=item * RDF::Trine::Store::Memory - An in-memory, non-persistant triple store. Typically used for temporary data.
 
-=item * RDF::Trine::Store::DBI - A triple store for MySQL and SQLite, based on the Redland schema.
+=item * RDF::Trine::Store::DBI - A triple store for MySQL, PostgreSQL, and SQLite, based on the relational schema used by Redland. Typically used to for large, persistent data.
 
 =item * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
 
-=item * RDF::Trine::Namespace - A convenience class for easily constructing RDF node objects from URI namespaces.
+=item * RDF::Trine::Namespace - A convenience class for easily constructing RDF::Trine::Node::Resource objects from URI namespaces.
 
 =back
 
@@ -39,7 +67,7 @@ components:
 
 package RDF::Trine;
 
-use 5.008003;
+use 5.010;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -48,24 +76,28 @@ use Module::Load::Conditional qw[can_load];
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable statement store UNION_GRAPH NIL_GRAPH);
 	
-	can_load( modules => {
-		'RDF::Redland'					=> undef,
-		'RDF::Trine::Store::Redland'	=> undef,
-		'RDF::Trine::Parser::Redland'	=> undef,
-	} );
+	unless ($ENV{RDFTRINE_NO_REDLAND}) {
+		can_load( modules => {
+			'RDF::Redland'					=> undef,
+			'RDF::Trine::Store::Redland'	=> undef,
+			'RDF::Trine::Parser::Redland'	=> undef,
+		} );
+	}
 }
 
 use constant UNION_GRAPH	=> 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL';
 use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init($ERROR);
+if (! Log::Log4perl::initialized() ) {
+    Log::Log4perl->easy_init($ERROR);
+}
 
 use RDF::Trine::Graph;
 use RDF::Trine::Parser;
@@ -79,6 +111,8 @@ use RDF::Trine::Store;
 use RDF::Trine::Error;
 use RDF::Trine::Model;
 
+use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::TriG;
 
 
 sub _uniq {
@@ -172,8 +206,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
@@ -185,7 +219,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

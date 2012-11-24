@@ -11,13 +11,13 @@ use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Parser;
 
 ################################################################################
-Log::Log4perl::init( \q[
-	log4perl.category.rdf.trine.model          = TRACE, Screen
-	
-	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
-	log4perl.appender.Screen.stderr  = 0
-	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
-] );
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.trine.model          = TRACE, Screen
+# 	
+# 	log4perl.appender.Screen         = Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr  = 0
+# 	log4perl.appender.Screen.layout = Log::Log4perl::Layout::SimpleLayout
+# ] );
 ################################################################################
 
 my $parser	= RDF::Trine::Parser::TriG->new();
@@ -171,6 +171,7 @@ END
 # This document contains a default graph and one named graphs with non-ASCII chars.
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix ex: <http://www.example.org/vocabulary#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
 # default graph
     { 
       <http://example.org/bob> dc:publisher "Bob" . 

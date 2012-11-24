@@ -17,6 +17,18 @@ my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
 
 use RDF::Query;
 use RDF::Query::Node qw(iri);
+
+
+################################################################################
+# Log::Log4perl::init( \q[
+# 	log4perl.category.rdf.query.plan.filter	= TRACE, Screen
+# 	log4perl.appender.Screen						= Log::Log4perl::Appender::Screen
+# 	log4perl.appender.Screen.stderr					= 0
+# 	log4perl.appender.Screen.layout					= Log::Log4perl::Layout::SimpleLayout
+# ] );
+################################################################################
+
+
 foreach my $model (@models) {
 	print "\n#################################\n";
 	print "### Using model: $model\n\n";

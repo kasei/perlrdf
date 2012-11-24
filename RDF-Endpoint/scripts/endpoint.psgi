@@ -5,6 +5,7 @@ use warnings;
 
 use Data::Dumper;
 use Plack::Request;
+use Plack::Builder;
 use Config::JFDI;
 use Carp qw(confess);
 use RDF::Endpoint;
@@ -58,11 +59,16 @@ if (my $file = $ENV{RDF_ENDPOINT_FILE}) {
 
 my $end		= RDF::Endpoint->new( $config );
 
-sub {
+my $app	= sub {
     my $env 	= shift;
     my $req 	= Plack::Request->new($env);
     my $resp	= $end->run( $req );
 	return $resp->finalize;
-}
+};
+
+builder {
+	enable "AccessLog", format => "combined";
+	$app;
+};
 
 __END__

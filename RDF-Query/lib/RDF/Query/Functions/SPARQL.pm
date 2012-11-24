@@ -4,7 +4,7 @@ RDF::Query::Functions::SPARQL - SPARQL built-in functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::SPARQL version 2.908.
+This document describes RDF::Query::Functions::SPARQL version 2.909.
 
 =head1 DESCRIPTION
 
@@ -88,6 +88,10 @@ Defines the following functions:
 
 =item * sparql:uri
 
+=item * sparql:uuid
+
+=item * sparql:struuid
+
 =cut
 
 package RDF::Query::Functions::SPARQL;
@@ -98,7 +102,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.sparql");
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 use POSIX;
@@ -113,9 +117,10 @@ use DateTime::Format::W3CDTF;
 use RDF::Trine::Namespace qw(rdf xsd);
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA  qw(sha1_hex sha224_hex sha256_hex sha384_hex sha512_hex);
+use Data::UUID;
 
 use RDF::Query::Error qw(:try);
-use RDF::Query::Node qw(literal);
+use RDF::Query::Node qw(iri literal);
 
 =begin private
 
@@ -830,7 +835,8 @@ sub install {
 			my $context	= shift;
 			my $bound	= shift;
 			my $ggp		= shift;
-			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context );
+			my $graph	= shift;
+			my ($plan)	= RDF::Query::Plan->generate_plans( $ggp, $context, active_graph => $graph );
 			
 			Carp::confess "No execution contexted passed to sparql:exists" unless (blessed($context));
 			
@@ -1090,6 +1096,9 @@ sub install {
 	RDF::Query::Functions->install_function("sparql:strbefore", \&_strbefore);
 	RDF::Query::Functions->install_function("sparql:strafter", \&_strafter);
 	RDF::Query::Functions->install_function("sparql:replace", \&_replace);
+
+	RDF::Query::Functions->install_function("sparql:uuid", \&_uuid);
+	RDF::Query::Functions->install_function("sparql:struuid", \&_struuid);
 }
 
 =item * sparql:encode_for_uri
@@ -1502,11 +1511,25 @@ sub _strbefore {
 		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called with a datatyped (non-xsd:string) literal";
 	}
 	
+	my $lhs_simple	= not($node->has_language or $node->has_datatype);
+	my $lhs_xsd		= ($node->has_datatype and $node->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	my $rhs_simple	= not($substr->has_language or $substr->has_datatype);
+	my $rhs_xsd		= ($substr->has_datatype and $substr->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	if (($lhs_simple or $lhs_xsd) and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} elsif ($node->has_language and $substr->has_language and $node->literal_value_language eq $substr->literal_value_language) {
+		# ok
+	} elsif ($node->has_language and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:strbefore called with literals that are not argument compatible";
+	}
+	
 	my $value	= $node->literal_value;
 	my $match	= $substr->literal_value;
 	my $i		= index($value, $match, 0);
 	if ($i < 0) {
-		return RDF::Query::Node::Literal->new('', $node->type_list);
+		return RDF::Query::Node::Literal->new('');
 	} else {
 		return RDF::Query::Node::Literal->new(substr($value, 0, $i), $node->type_list);
 	}
@@ -1529,11 +1552,26 @@ sub _strafter {
 	if ($node->has_datatype and $node->literal_datatype ne 'http://www.w3.org/2001/XMLSchema#string') {
 		throw RDF::Query::Error::TypeError -text => "sparql:strafter called with a datatyped (non-xsd:string) literal";
 	}
+	
+	my $lhs_simple	= not($node->has_language or $node->has_datatype);
+	my $lhs_xsd		= ($node->has_datatype and $node->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	my $rhs_simple	= not($substr->has_language or $substr->has_datatype);
+	my $rhs_xsd		= ($substr->has_datatype and $substr->literal_datatype eq 'http://www.w3.org/2001/XMLSchema#string');
+	if (($lhs_simple or $lhs_xsd) and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} elsif ($node->has_language and $substr->has_language and $node->literal_value_language eq $substr->literal_value_language) {
+		# ok
+	} elsif ($node->has_language and ($rhs_simple or $rhs_xsd)) {
+		# ok
+	} else {
+		throw RDF::Query::Error::TypeError -text => "sparql:strafter called with literals that are not argument compatible";
+	}
+	
 	my $value	= $node->literal_value;
 	my $match	= $substr->literal_value;
 	my $i		= index($value, $match, 0);
 	if ($i < 0) {
-		return RDF::Query::Node::Literal->new('', $node->type_list);
+		return RDF::Query::Node::Literal->new('');
 	} else {
 		return RDF::Query::Node::Literal->new(substr($value, $i+length($match)), $node->type_list);
 	}
@@ -1578,6 +1616,18 @@ sub _replace {
 	$value	=~ s/$pattern/"$replace"/eeg;
 # 	warn "==> " . Dumper($value);
 	return RDF::Query::Node::Literal->new($value, $node->type_list);
+}
+
+sub _uuid {
+	my $query	= shift;
+	my $u		= Data::UUID->new();
+	return iri('urn:uuid:' . $u->to_string( $u->create() ));
+}
+
+sub _struuid {
+	my $query	= shift;
+	my $u		= Data::UUID->new();
+	return literal($u->to_string( $u->create() ));
 }
 
 

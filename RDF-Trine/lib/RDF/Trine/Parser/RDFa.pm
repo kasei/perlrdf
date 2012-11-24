@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 0.138
+This document describes RDF::Trine::Parser::RDFa version 1.002
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	if (can_load( modules => { 'RDF::RDFa::Parser' => 0.30 })) {
 		$HAVE_RDFA_PARSER	= 1;
 		$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
@@ -132,13 +132,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

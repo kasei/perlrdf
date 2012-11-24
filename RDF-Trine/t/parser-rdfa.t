@@ -36,6 +36,9 @@ my $serializer	= RDF::Trine::Serializer::NTriples::Canonical->new( onfail=>'spac
 SKIP: {
 	eval "use RDF::RDFa::Parser 0.30;";
 	skip( "Need RDF::RDFa::Parser to run these tests.", $tests ) if ($@);
+	if ($RDF::Trine::VERSION =~ /_/) {
+		diag "Using RDF::RDFa::Parser $RDF::RDFa::Parser::VERSION";
+	}
 	foreach my $file (keys %expect) {
 		my $expect	= $expect{ $file };
 		my $name	= $names{ $file };

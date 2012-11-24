@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.908.
+This document describes RDF::Query::Plan::Filter version 2.909.
 
 =head1 METHODS
 
@@ -24,17 +24,18 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 use RDF::Query::Error qw(:try);
+use Scalar::Util qw(blessed);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
 
-=item C<< new ( $plan, $expr ) >>
+=item C<< new ( $plan, $expr, $active_graph ) >>
 
 =cut
 
@@ -42,7 +43,8 @@ sub new {
 	my $class	= shift;
 	my $expr	= shift;
 	my $plan	= shift;
-	my $self	= $class->SUPER::new( $expr, $plan );
+	my $graph	= shift;
+	my $self	= $class->SUPER::new( $expr, $plan, $graph );
 	$self->[0]{referenced_variables}	= [ $plan->referenced_variables ];
 	return $self;
 }
@@ -84,7 +86,7 @@ sub execute ($) {
 					# undef it if it wasn't defined before the local() call.
 					$query	= undef;
 				}
-				my $value	= $filter->evaluate( $query, $row, $context );
+				my $value	= $filter->evaluate( $query, $row, $context, $self->active_graph );
 				$bool	= ($value->literal_value eq 'true') ? 1 : 0;
 			} catch RDF::Query::Error with {
 				my $e	= shift;
@@ -144,7 +146,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open FILTER";
 	}
 	delete $self->[0]{filter};
-	$self->[2]->close();
+	if (blessed($self->pattern)) {
+		$self->pattern->close();
+	}
 	$self->SUPER::close();
 }
 
@@ -157,6 +161,17 @@ Returns the query plan that will be used to produce the data to be filtered.
 sub pattern {
 	my $self	= shift;
 	return $self->[2];
+}
+
+=item C<< active_graph >>
+
+Returns the active graph.
+
+=cut
+
+sub active_graph {
+	my $self	= shift;
+	return $self->[3];
 }
 
 =item C<< distinct >>

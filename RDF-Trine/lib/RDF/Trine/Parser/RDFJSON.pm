@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFJSON - RDF/JSON RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFJSON version 0.138
+This document describes RDF::Trine::Parser::RDFJSON version 1.002
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use JSON;
 our ($VERSION, $rdf, $xsd);
 our ($r_boolean, $r_comment, $r_decimal, $r_double, $r_integer, $r_language, $r_lcharacters, $r_line, $r_nameChar_extra, $r_nameStartChar_minus_underscore, $r_scharacters, $r_ucharacters, $r_booltest, $r_nameStartChar, $r_nameChar, $r_prefixName, $r_qname, $r_resource_test, $r_nameChar_test);
 BEGIN {
-	$VERSION				= '0.138';
+	$VERSION				= '1.002';
 	$RDF::Trine::Parser::parser_names{ 'rdfjson' }	= __PACKAGE__;
 	foreach my $ext (qw(json js)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -198,6 +198,11 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
  Toby Inkster <tobyink@cpan.org>
@@ -205,7 +210,7 @@ __END__
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

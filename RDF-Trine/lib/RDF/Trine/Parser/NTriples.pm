@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.138
+This document describes RDF::Trine::Parser::NTriples version 1.002
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -98,7 +98,7 @@ sub parse {
 	my $base	= shift;
 	my $string	= shift;
 	my $handler	= shift;
-	open( my $fh, '<:utf8', \$string );
+	open( my $fh, '<:encoding(UTF-8)', \$string );
 	return $self->parse_file( $base, $fh, $handler );
 }
 
@@ -130,7 +130,7 @@ sub parse_file {
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
-		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 	
 	my $lineno	= 0;
@@ -321,13 +321,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

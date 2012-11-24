@@ -93,7 +93,7 @@ foreach my $data (@models) {
 	
 	{
 		my $query	= RDF::Query->new( <<"END", { lang => 'sparql11', force_no_optimization => 1 } );	# force_no_optimization because otherwise we'll get a model-optimized BGP instead of the bind-join
-PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } BINDINGS ?name { ("Gregory") ("Gary") }
+PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?p ?name WHERE { ?p foaf:firstName ?name . } VALUES ?name { ("Gregory") ("Gary") }
 END
 		my ($plan, $context)	= $query->prepare();
 		is( _CLEAN_WS($plan->sse), '(project (p name) (bind-join (quad ?p <http://xmlns.com/foaf/0.1/firstName> ?name (nil)) (table (row [?name "Gregory"]) (row [?name "Gary"]))))', 'sse: constant' ) or die;

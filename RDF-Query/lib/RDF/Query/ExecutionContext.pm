@@ -7,7 +7,7 @@ RDF::Query::ExecutionContext - Query execution context
 
 =head1 VERSION
 
-This document describes RDF::Query::ExecutionContext version 2.908.
+This document describes RDF::Query::ExecutionContext version 2.909.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use warnings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
@@ -121,18 +121,6 @@ sub bound {
 sub base_uri {
 	my $self	= shift;
 	return $self->_get_value( 'base_uri', @_ ) || {};
-}
-
-=item C<< base >>
-
-Deprecated, use base_uri.
-
-=cut
-
-sub base {
-	my $self	= shift;
-	warn "The RDF::QueryExecutionContext base method is deprecated in favor of base_uri";
-	return $self->base_uri(@_);
 }
 
 =item C<< ns >>
