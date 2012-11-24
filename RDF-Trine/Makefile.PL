@@ -31,7 +31,7 @@ requires			'List::Util'					=> 0;
 requires			'Log::Log4perl'					=> 0;
 requires			'Math::BigInt'					=> 0;
 requires			'Algorithm::Combinatorics'		=> 0;
-requires			'Scalar::Util'					=> 0;
+requires			'Scalar::Util'					=> 1.23;
 requires			'Set::Scalar'					=> 0;
 requires			'Storable'						=> 0;
 requires			'Text::CSV'						=> 0;
@@ -42,6 +42,7 @@ requires			'XML::Namespace'				=> 0;
 requires			'XML::SAX'						=> 0.96;
 requires			'Time::HiRes'					=> 0;
 requires			'Package::DeprecationManager'	=> 0;
+
 recommends			'XML::LibXML'					=> 1.70;
 recommends			'Term::ANSIColor'				=> 0;
 

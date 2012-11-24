@@ -108,6 +108,7 @@ our $VERSION	= '0.05';
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
 
+use JSON;
 use Encode;
 use File::Spec;
 use Data::Dumper;
@@ -235,10 +236,11 @@ END
 		my $method	= uc($req->method);
 		$content	= "Unexpected method $method (expecting GET or POST)";
 		$self->log_error( $req, $content );
-		my $code	= 405;
-		$response->status("$code Method Not Allowed");
+		$self->_set_response_error($req, $response, 405, {
+			title		=> 'Method not allowed',
+			describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method',
+		});
 		$response->header('Allow' => 'GET, POST');
-		$response->body($content);
 		goto CLEANUP;
 	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
 		$sparql	= $req->content;
@@ -251,9 +253,10 @@ END
 		if (scalar(@sparql) > 1) {
 			$content	= "More than one query string submitted";
 			$self->log_error( $req, $content );
-			my $code	= 400;
-			$response->status("$code Multiple Query Strings");
-			$response->body($content);
+			$self->_set_response_error($req, $response, 400, {
+				title		=> 'Multiple query strings not allowed',
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/multiple_queries',
+			});
 			goto CLEANUP;
 		} else {
 			$sparql = $sparql[0];
@@ -263,9 +266,10 @@ END
 		if (scalar(@sparql) > 1) {
 			$content	= "More than one update string submitted";
 			$self->log_error( $req, $content );
-			my $code	= 400;
-			$response->status("$code Multiple Update Strings");
-			$response->body($content);
+			$self->_set_response_error($req, $response, 400, {
+				title		=> 'Multiple update strings not allowed',
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/multiple_updates',
+			});
 			goto CLEANUP;
 		}
 		
@@ -275,10 +279,11 @@ END
 			my $method	= $req->method;
 			$content	= "Update operations must use POST";
 			$self->log_error( $req, $content );
-			my $code	= 405;
-			$response->status("$code $method Not Allowed for Update Operation");
+			$self->_set_response_error($req, $response, 405, {
+				title		=> "$method Not Allowed for Update Operation",
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method_update',
+			});
 			$response->header('Allow' => 'POST');
-			$response->body($content);
 			goto CLEANUP;
 		}
 	}
@@ -333,9 +338,11 @@ END
 				my $method	= $req->method;
 				$content	= "Update operations cannot specify a dataset in both the query and with protocol parameters";
 				$self->log_error( $req, $content );
-				my $code	= 400;
-				$response->status($code);
-				$response->body($content);
+				$self->_set_response_error($req, $response, 400, {
+					title		=> "Multiple datasets specified for update",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/update_specifies_multiple_datasets',
+					detail		=> $content,
+				});
 				goto CLEANUP;
 			}
 			my ($plan, $ctx)	= $query->prepare( $model );
@@ -397,28 +404,38 @@ END
 				}
 			} else {
 				my $error	= $query->error;
-				$self->log_error( $req, "$error\t$sparql" );
-				$response->status(500);
-				$response->body($query->error);
+				$self->_set_response_error($req, $response, 500, {
+					title		=> "SPARQL query/update execution error",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/execution_error',
+					detail		=> "$error; $sparql",
+				});
 				$content	= RDF::Query->error;
 			}
 		} else {
 			$content	= RDF::Query->error;
 			$self->log_error( $req, $content );
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
-			my $message	= ($code == 400) ? "Syntax Error" : "Internal Server Error";
-			$response->status("$code $message");
-			$response->body($content);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
+				$self->_set_response_error($req, $response, $code, {
+					title		=> $content,
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method_update',
+				});
+			} else {
+				$self->_set_response_error($req, $response, $code, {
+					title		=> "SPARQL query/update parse error",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/parse_error',
+					detail		=> $content,
+				});
 			}
 		}
 	} elsif ($req->method eq 'POST') {
 		$content	= "POST without recognized query or update";
 		$self->log_error( $req, $content );
-		my $code	= 400;
-		$response->status("$code Missing SPARQL Query/Update String");
-		$response->body($content);
+		$self->_set_response_error($req, $response, 400, {
+			title		=> "Missing SPARQL Query/Update String",
+			describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/missing_sparql_string',
+		});
 	} else {
 		my @variants;
 		my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -452,6 +469,7 @@ END
 CLEANUP:
 # 	warn Dumper($model);
 # 	warn $model->as_string;
+	$content	= $response->body || $content;
 	my $length	= 0;
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
@@ -763,6 +781,33 @@ sub _log {
 	my $logger	= $req->logger || sub {};
 	
 	$logger->($data);
+}
+
+sub _set_response_error {
+	my $self	= shift;
+	my $req		= shift;
+	my $resp	= shift;
+	my $code	= shift;
+	my $error	= shift;
+	my @variants	= (
+		['text/plain', 1.0, 'text/plain'],
+		['application/json-problem', 0.99, 'application/json-problem'],
+	);
+	my $headers	= $req->headers;
+	my $stype	= choose( \@variants, $headers ) || 'text/plain';
+	if ($stype eq 'application/json-problem') {
+		$resp->headers->content_type( 'application/json-problem' );
+		$resp->status($code);
+		my $content	= encode_json($error);
+		$resp->body($content);
+	} else {
+		$resp->headers->content_type( 'text/plain' );
+		$resp->status($code);
+		my @messages	= grep { defined($_) } @{ $error }{ qw(title detail) };
+		my $content		= join("\n\n", @messages);
+		$resp->body($content);
+	}
+	return;
 }
 
 =end private

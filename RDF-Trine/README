@@ -68,6 +68,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.002 (2012-10-20)
+
+     * OTHER
+         Require Scalar::Util version 1.23.
+
   Version 1.001 (2012-10-05)
 
      * BUG FIXES

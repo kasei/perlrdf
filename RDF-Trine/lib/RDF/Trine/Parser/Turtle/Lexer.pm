@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle::Lexer - Tokenizer for parsing Turtle, TriG, and N-Tr
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle::Lexer version 1.001
+This document describes RDF::Trine::Parser::Turtle::Lexer version 1.002
 
 =head1 SYNOPSIS
 
