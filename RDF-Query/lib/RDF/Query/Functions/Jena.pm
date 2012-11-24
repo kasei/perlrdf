@@ -4,7 +4,7 @@ RDF::Query::Functions::Jena - Jena/ARQ work-alike functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Jena version 2.908_01.
+This document describes RDF::Query::Functions::Jena version 2.909.
 
 =head1 DESCRIPTION
 
@@ -32,7 +32,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.jena");
-	$VERSION	= '2.908_01';
+	$VERSION	= '2.909';
 }
 
 use Digest::SHA qw(sha1_hex);
