@@ -527,7 +527,7 @@ predicate, object. Any of the arguments may be undef to match any value.
 sub get_triples {
 	my $self	= shift;
 	my @nodes	= splice(@_, 0, 3);
-	my $iter	= $self->get_quads( @nodes[0..2], undef, @_ );
+	my $iter	= $self->get_statements( @nodes[0..2], undef, @_ );
 	
 	my %seen;
 	return RDF::Trine::Iterator->new(sub{
@@ -558,7 +558,7 @@ sub get_quads {
 	my $self	= shift;
 	my @nodes	= splice(@_, 0, 4);
 	if (not(defined($nodes[3])) or (blessed($nodes[3])) and $nodes[3]->isa('RDF::Trine::Node::Nil')) {
-		my $iter	= $self->get_triples(@nodes[0..2], @_);
+		my $iter	= $self->get_statements(@nodes[0..2], @_);
 		my $graph	= RDF::Trine::Node::Nil->new();
 		return RDF::Trine::Iterator::Graph->new(sub{
 			my $t	= $iter->next;
