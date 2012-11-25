@@ -639,7 +639,13 @@ supported features.
 =cut
 
 sub supports {
-	return;
+	my $self	= shift;
+	my %features	= map { $_ => 1 } qw(triplestore quadstore);
+	if (@_) {
+		my $feature	= shift;
+		return +$features{ $feature };
+	}
+	return (keys %features);
 }
 
 sub _statement_id {
