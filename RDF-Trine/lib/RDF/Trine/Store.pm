@@ -94,6 +94,11 @@ BEGIN {
 
 ######################################################################
 
+use Package::DeprecationManager -deprecations => {
+	'get_statements-options'	=> '1.001',
+};
+
+
 =head1 METHODS
 
 =over 4
@@ -501,6 +506,12 @@ predicate and objects. Any of the arguments may be undef to match any value.
 sub get_statements {
 	my $self	= shift;
 	my @nodes	= @_;
+	if (scalar(@_) > 4) {
+		deprecated(
+			message => "Calling get_statements with more than 4 node arguments is deprecated",
+			feature => 'get_statements-options',
+		);
+	}
 	if (scalar(@nodes) > 3) {
 		return $self->get_quads( @nodes );
 	} else {
@@ -517,10 +528,9 @@ predicate, object. Any of the arguments may be undef to match any value.
 
 sub get_triples {
 	my $self	= shift;
-	my @nodes	= @_[0..2];
-	my $iter	= $self->can('get_quads')
-				? $self->get_quads( @nodes )
-				: $self->get_statements( @nodes, undef );
+	my @nodes	= splice(@_, 0, 3);
+	my $iter	= $self->get_quads( @nodes[0..2], undef, @_ );
+	
 	my %seen;
 	return RDF::Trine::Iterator->new(sub{
 		while (1) {
@@ -548,20 +558,32 @@ a graph value which is a RDF::Trine::Node::Nil object.
 
 sub get_quads {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
+	my @nodes	= splice(@_, 0, 4);
 	if (not(defined($nodes[3])) or (blessed($nodes[3])) and $nodes[3]->isa('RDF::Trine::Node::Nil')) {
-		my $iter	= $self->can('get_triples')
-					? $self->get_triples(@nodes[0..2])
-					: $self->get_statements(@nodes[0..2]);
+		my $iter	= $self->get_triples(@nodes[0..2], @_);
 		my $graph	= RDF::Trine::Node::Nil->new();
-		return RDF::Trine::Iterator->new(sub{
+		return RDF::Trine::Iterator::Graph->new(sub{
 			my $t	= $iter->next;
 			return unless $t;
 			my $quad	= RDF::Trine::Statement::Quad->new( $t->nodes, $graph );
 			return $quad;
 		});
 	} else {
-		return RDF::Trine::Iterator->new([]);
+		return RDF::Trine::Iterator::Graph->new([]);
+	}
+}
+
+=item C<< count_statements ( $subject, $predicate, $object, $graph ) >>
+
+=cut
+
+sub count_statements {
+	my $self	 = shift;
+	my @nodes	= @_;
+	if (scalar(@nodes) > 3) {
+		return $self->count_quads( @nodes[0..3] );
+	} else {
+		return $self->count_triples( @nodes[0..2] );
 	}
 }
 
@@ -574,7 +596,7 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub count_triples {
 	my $self	= shift;
-	my $iter	= $self->get_triples( @_ );
+	my $iter	= $self->get_triples( @_[0..2] );
 	my $count	= 0;
 	while (my $t = $iter->next) {
 		$count++;
@@ -592,7 +614,7 @@ value.
 
 sub count_quads {
 	my $self	= shift;
-	my $iter	= $self->get_quads( @_ );
+	my $iter	= $self->get_quads( @_[0..3] );
 	my $count	= 0;
 	while (my $t = $iter->next) {
 		$count++;
