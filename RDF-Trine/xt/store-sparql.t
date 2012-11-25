@@ -61,7 +61,7 @@ SKIP: {
 	}
 	
 	if (0) {
-		my @ctx	= $model->get_contexts;
-		is_deeply( \@ctx, [], 'empty get_contexts' );
+		my @ctx	= $model->get_graphs;
+		is_deeply( \@ctx, [], 'empty get_graphs' );
 	}
 }

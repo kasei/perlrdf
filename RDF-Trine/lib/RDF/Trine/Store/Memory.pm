@@ -392,7 +392,7 @@ sub _get_statements_quad {
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
@@ -404,7 +404,6 @@ sub get_graphs {
 	my @ctx		= grep { not($_->isa('RDF::Trine::Node::Nil')) } values %{ $self->{ ctx_nodes } };
  	return RDF::Trine::Iterator->new( \@ctx );
 }
-*get_contexts = \&get_graphs;
 
 =item C<< add_statement ( $statement [, $context] ) >>
 

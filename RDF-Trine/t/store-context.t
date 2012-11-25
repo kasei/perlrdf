@@ -26,7 +26,7 @@ foreach my $store (@stores) {
 	
 	{
 		$store->add_statement( $_ ) for ($st0, $st1, $st2);
-		my $stream	= $store->get_contexts;
+		my $stream	= $store->get_graphs;
 		my $c		= $stream->next;
 		is( $stream->next, undef, 'expected end-of-iterator' );
 	}
@@ -34,7 +34,7 @@ foreach my $store (@stores) {
 	{
 		my $ctx		= RDF::Trine::Node::Resource->new('http://kasei.us/about/foaf.xrdf');
 		$store->add_statement( $_, $ctx ) for ($st0, $st1, $st2);
-		my $stream	= $store->get_contexts;
+		my $stream	= $store->get_graphs;
 		my %seen;
 		while (my $c = $stream->next) {
 			$seen{ $c->as_string }++;
@@ -48,7 +48,7 @@ foreach my $store (@stores) {
 	{
 		my $ctx		= RDF::Trine::Node::Literal->new('Literal Context');
 		$store->add_statement( $_, $ctx ) for ($st0, $st1, $st2);
-		my $stream	= $store->get_contexts;
+		my $stream	= $store->get_graphs;
 		my %seen;
 		while (my $c = $stream->next) {
 			$seen{ $c->as_string }++;
@@ -63,7 +63,7 @@ foreach my $store (@stores) {
 	{
 		my $ctx		= RDF::Trine::Node::Blank->new('blankContext');
 		$store->add_statement( $_, $ctx ) for ($st0, $st1, $st2);
-		my $stream	= $store->get_contexts;
+		my $stream	= $store->get_graphs;
 		my %seen;
 		while (my $c = $stream->next) {
 			$seen{ $c->as_string }++;

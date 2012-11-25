@@ -36,6 +36,12 @@ use RDF::Trine::Pattern;
 use RDF::Trine::Store;
 use RDF::Trine::Model::Dataset;
 
+################################################################################
+
+use Package::DeprecationManager -deprecations => {
+	'get_contexts'				=> '1.004',
+};
+
 =item C<< new ( $store ) >>
 
 Returns a new model over the supplied L<rdf store|RDF::Trine::Store> or a new temporary model.
@@ -644,23 +650,31 @@ sub _get_pattern {
 	}
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
 
 Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
 the named graphs in the model.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my $store	= $self->_store;
 	$self->end_bulk_ops();
-	my $iter	= $store->get_contexts( @_ );
+	my $iter	= $store->get_graphs( @_ );
 	if (wantarray) {
 		return $iter->get_all;
 	} else {
 		return $iter;
 	}
+}
+sub get_contexts {
+	my $self	= shift;
+	deprecated(
+		message => "Calling get_contexts is deprecated; use get_graphs instead",
+		feature => 'get_contexts',
+	);
+	return $self->get_graphs( @_ );
 }
 
 =item C<< as_stream >>

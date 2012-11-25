@@ -19,28 +19,50 @@ should be used (using the model as an intermediary between the client/user and
 the underlying store).
 
 To be used by the RDF::Trine framework, store implementations must implement a
-set of required functionality:
+set of required methods:
 
 =over 4
 
 =item * C<< new >>
 
-=item * C<< get_statements >>
-
-=item * C<< get_contexts >>
-
 =item * C<< add_statement >>
 
 =item * C<< remove_statement >>
-
-=item * C<< count_statements >>
 
 =item * C<< supports >>
 
 =back
 
+Implementations must also implement B<either> the I<triplestore> or I<quadstore>
+methods.
+
+I<triplestore>s must return C<<'triplestore'>> from the C<< supports >> method,
+and implement the following methods:
+
+=over 4
+
+=item * C<< get_triples >>
+
+=item * C<< count_triples >>
+
+=back
+
+I<quadstore>s must return C<<'quadstore'>> from the C<< supports >> method,
+and implement the following methods:
+
+
+=over 4
+
+=item * C<< get_quads >>
+
+=item * C<< count_quads >>
+
+=item * C<< get_graphs >>
+
+=back
+
 Implementations may also provide the following methods if a native
-implementation would be more efficient than the default provided by
+implementation would be more efficient or accurate than the default provided by
 RDF::Trine::Store:
 
 =over 4
@@ -52,6 +74,8 @@ RDF::Trine::Store:
 =item * C<< remove_statements >>
 
 =item * C<< size >>
+
+=item * C<< etag >>
 
 =item * C<< nuke >>
 
@@ -96,6 +120,7 @@ BEGIN {
 
 use Package::DeprecationManager -deprecations => {
 	'get_statements-options'	=> '1.001',
+	'get_contexts'				=> '1.004',
 };
 
 
@@ -413,15 +438,6 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements;
 
-=item C<< get_contexts >>
-
-Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
-the set of contexts of the stored quads.
-
-=cut
-
-sub get_contexts;
-
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
@@ -571,6 +587,28 @@ sub get_quads {
 	} else {
 		return RDF::Trine::Iterator::Graph->new([]);
 	}
+}
+
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
+
+Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
+the set of named graphs of the stored quads. This iterator will not contain the
+default (unnamed) graph (which in quads will appear as the
+C<<RDF::Trine::Node::Nil>> object).
+
+=cut
+
+sub get_graphs {
+	my $self	= shift;
+	return RDF::Trine::Iterator->new( [] );
+}
+sub get_contexts {
+	my $self	= shift;
+	deprecated(
+		message => "Calling get_contexts is deprecated; use get_graphs instead",
+		feature => 'get_contexts',
+	);
+	return $self->get_graphs( @_ );
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $graph ) >>

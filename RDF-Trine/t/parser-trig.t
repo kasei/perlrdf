@@ -80,7 +80,7 @@ END
 	$parser->parse_into_model(undef, $trig, $model);
 	
 	{
-		my $iter	= $model->get_contexts;
+		my $iter	= $model->get_graphs;
 		my %expect	= (
 			'<http://www.example.org/exampleDocument#G1>'	=> 1,
 			'<http://www.example.org/exampleDocument#G2>'	=> 1,
@@ -137,7 +137,7 @@ END
 	$parser->parse_into_model(undef, $trig, $model);
 	
 	{
-		my $iter	= $model->get_contexts;
+		my $iter	= $model->get_graphs;
 		my %expect	= (
 			'<http://example.org/bob>'	=> 1,
 			'<http://example.org/alice>'	=> 1,

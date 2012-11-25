@@ -503,14 +503,14 @@ sub count_statements {
 	}
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my $r		= $self->conn;
 	my @keys	= $r->keys('RT:spog:*');

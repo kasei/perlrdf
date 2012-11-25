@@ -240,14 +240,14 @@ sub _get_statements_quad {
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
 
 Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
 the set of contexts of the stored quads.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
 	my @ctxs	= $self->_model->contexts();
  	return RDF::Trine::Iterator->new( sub { my $n = shift(@ctxs); return _cast_to_local($n) } );

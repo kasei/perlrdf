@@ -525,14 +525,6 @@ sub _join {
 	return $row;
 }
 
-=item C<< get_contexts >>
-
-=cut
-
-sub get_contexts {
-	croak "Contexts not supported for the Hexastore store";
-}
-
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.

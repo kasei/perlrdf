@@ -42,6 +42,10 @@ BEGIN {
 
 ################################################################################
 
+use Package::DeprecationManager -deprecations => {
+	'get_contexts'				=> '1.004',
+};
+
 =item C<< new ( $model ) >>
 
 Returns a new dataset-model over the supplied model.
@@ -169,7 +173,7 @@ sub count_statements {
 			}
 			return $count;
 		} elsif (not(defined($quad)) or (blessed($quad) and $quad->isa('RDF::Trine::Node::Variable'))) {
-			my $iter	= $self->get_contexts;
+			my $iter	= $self->get_graphs;
 			my $count	= 0;
 			while (my $g = $iter->next) {
 				$count	+= $self->model->count_statements( @_[0..2], $g );
@@ -271,7 +275,7 @@ sub get_statements {
 				push(@iters, RDF::Trine::Iterator::Graph->new( $code ));
 			}
 			if (not(defined($quad)) or $quad->isa('RDF::Trine::Node::Variable')) {
-				my $graphs	= $self->get_contexts;
+				my $graphs	= $self->get_graphs;
 				while (my $g = $graphs->next) {
 					next if ($g->isa('RDF::Trine::Node::Nil'));
 					push(@iters, $self->model->get_statements( @_[0..2], $g ));
@@ -300,7 +304,7 @@ sub get_statements {
 		my @iters;
 		my $iter	= $self->get_statements( @_[0..2], $nil );
 		push(@iters, $iter);
-		my $giter	= $self->get_contexts;
+		my $giter	= $self->get_graphs;
 		while (my $g = $giter->next) {
 			my $iter	= $self->get_statements( @_[0..2], $g );
 			push(@iters, $iter);
@@ -357,22 +361,30 @@ sub get_sparql {
 	throw RDF::Trine::Error::UnimplementedError -text => "Cannot execute SPARQL queries against a complex dataset model";
 }
 
-=item C<< get_contexts >>
+=item C<< get_graphs >> (aliased to C<< get_contexts >>)
 
 Returns an iterator containing the nodes representing the named graphs in the
 model.
 
 =cut
 
-sub get_contexts {
+sub get_graphs {
 	my $self	= shift;
-	return $self->model->get_contexts unless (scalar(@{ $self->{stack} }));
+	return $self->model->get_graphs unless (scalar(@{ $self->{stack} }));
 	my @nodes	= values %{ $self->{stack}[0]{named} };
 	if (wantarray) {
 		return @nodes;
 	} else {
 		return RDF::Trine::Iterator->new( \@nodes );
 	}
+}
+sub get_contexts {
+	my $self	= shift;
+	deprecated(
+		message => "Calling get_contexts is deprecated; use get_graphs instead",
+		feature => 'get_contexts',
+	);
+	return $self->get_graphs( @_ );
 }
 
 =item C<< model >>
