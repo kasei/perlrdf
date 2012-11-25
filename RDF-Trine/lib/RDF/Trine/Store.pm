@@ -429,15 +429,6 @@ sub _map_sort_data {
 	return \@data;
 }
 
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
-
-Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub get_statements;
-
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
@@ -468,15 +459,6 @@ sub remove_statements { # Fallback implementation
 	}
 }
 
-=item C<< count_statements ($subject, $predicate, $object) >>
-
-Returns a count of all the statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub count_statements;
-
 =item C<< size >>
 
 Returns the number of statements in the store.
@@ -485,7 +467,7 @@ Returns the number of statements in the store.
 
 sub size {
 	my $self	= shift;
-	return $self->count_statements( undef, undef, undef, undef );
+	return $self->count_quads();
 }
 
 =item C<< etag >>
@@ -612,6 +594,9 @@ sub get_contexts {
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $graph ) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
