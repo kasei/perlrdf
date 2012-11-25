@@ -224,8 +224,8 @@ sub all_triple_store_tests {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
 		dies_ok {
-			$store->get_contexts;
-		} 'get_context dies';
+			$store->get_graphs;
+		} 'get_graphs dies';
 	
 		add_statement_tests_simple( $store, $args, $ex );
 		update_sleep($args);
@@ -285,7 +285,7 @@ sub contexts_tests {
 	note "contexts tests";
 	my $store	= shift;
 	my $args	= shift;
-	my $iter	= $store->get_contexts();
+	my $iter	= $store->get_graphs();
 	isa_ok( $iter, 'RDF::Trine::Iterator' );
 	my %seen;
 	while (my $c = $iter->next) {
