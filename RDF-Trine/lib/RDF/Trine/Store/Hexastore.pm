@@ -52,10 +52,6 @@ BEGIN {
 
 ######################################################################
 
-use Package::DeprecationManager -deprecations => {
-	'get_statements-options'	=> '1.001',
-};
-
 sub _config_meta {
 	return {
 		required_keys	=> [],
@@ -198,23 +194,16 @@ sub temporary_store {
 	return $class->new();
 }
 
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+=item C<< get_triples ($subject, $predicate, $object ) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_triples {
 	my $self	= shift;
-	if (scalar(@_) > 4) {
-		deprecated(
-			message => "Calling get_statements with more than 4 node arguments is deprecated",
-			feature => 'get_statements-options',
-		);
-	}
 	my @nodes	= splice(@_, 0, 3);
-	my $context	= shift;
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
 	
@@ -504,7 +493,13 @@ supported features.
 =cut
 
 sub supports {
-	return;
+	my $self	= shift;
+	my %features	= map { $_ => 1 } qw(triplestore);
+	if (@_) {
+		my $feature	= shift;
+		return +$features{ $feature };
+	}
+	return (keys %features);
 }
 
 sub _join {
@@ -638,16 +633,16 @@ sub nuke {
 
 
 
-=item C<< count_statements ($subject, $predicate, $object) >>
+=item C<< count_triples ( $subject, $predicate, $object ) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub count_statements {
+sub count_triples {
 	my $self	= shift;
-	my @nodes	= @_;
+	my @nodes	= splice(@_, 0, 3);
 	my @ids		= map { $self->_node2id( $_ ) } @nodes;
 	my @names	= NODES;
 	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
