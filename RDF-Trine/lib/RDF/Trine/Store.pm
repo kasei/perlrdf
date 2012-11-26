@@ -637,12 +637,21 @@ value.
 
 sub count_quads {
 	my $self	= shift;
-	my $iter	= $self->get_quads( @_[0..3] );
-	my $count	= 0;
-	while (my $t = $iter->next) {
-		$count++;
+	my @nodes	= @_;
+	if ($self->supports('triplestore') and not($self->supports('quadstore'))) {
+		if (not(defined($nodes[3])) or (blessed($nodes[3])) and $nodes[3]->isa('RDF::Trine::Node::Nil')) {
+			return $self->count_triples(@nodes[0..2]);
+		} else {
+			return 0;
+		}
+	} else {
+		my $iter	= $self->get_quads( @_[0..3] );
+		my $count	= 0;
+		while (my $t = $iter->next) {
+			$count++;
+		}
+		return $count;
 	}
-	return $count;
 }
 
 
