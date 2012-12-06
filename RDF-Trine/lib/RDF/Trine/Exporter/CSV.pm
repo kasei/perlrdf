@@ -83,7 +83,7 @@ sub serialize_iterator_to_file {
 	my @keys;
 	while (my $row = $iter->next) {
 		unless (scalar(@keys)) {
-			@keys	= ($type eq 'bindings') ? (keys %$row) : qw(subject predicate object);
+			@keys	= ($type eq 'bindings') ? (sort keys %$row) : qw(subject predicate object);
 			$csv->print( $file, \@keys );
 			print {$file} "\n";
 		}

@@ -40,7 +40,7 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 
-use RDF::Trine::Node;
+use RDF::Trine qw(variable);
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
 
@@ -102,7 +102,12 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+
+	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+# 	my $iter	= $model->as_stream;
 	
 	$self->serialize_iterator_to_file( $fh, $iter );
 	return 1;

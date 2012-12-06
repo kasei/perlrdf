@@ -183,7 +183,7 @@ my @tests	= (
 						'http://www.w3.org/1999/02/22-rdf-syntax-ns#rest' => [{type => 'uri', value => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'}],
 					},
 		},
-		qq{[] <http://example.com/predicate> [\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 1 ;\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://example.com/listElement>\n\t] .\n<http://example.com/listElement> <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 2 ;\n\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n},
+		qq{[] <http://example.com/predicate> [\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 1 ;\n\t\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://example.com/listElement>\n\t] .\n<http://example.com/listElement> <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> 2 ;\n\t<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .\n},,
 		'full rdf:List syntax on IRI list element'
 	],
 	[

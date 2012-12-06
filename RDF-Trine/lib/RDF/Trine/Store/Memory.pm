@@ -228,7 +228,7 @@ sub _get_statements_triple {
 	my $match_set	= Set::Scalar->new( 0 .. $#{ $self->{statements} } );
 	if ($bound) {
 # 		warn "getting $bound-bound statements";
-		my @pos		= keys %bound;
+		my @pos		= sort { $a <=> $b } keys %bound;
 		my @names	= @pos_names[ @pos ];
 # 		warn "\tbound nodes are: " . join(', ', @names) . "\n";
 		
@@ -260,9 +260,11 @@ sub _get_statements_triple {
 	
 	my $open	= 1;
 	my %seen;
+	
+	my @members	= sort { $a <=> $b } $match_set->members;
 	my $sub	= sub {
 		while (1) {
-			my $e = $match_set->each();
+			my $e = shift(@members);
 			unless (defined($e)) {
 				$open	= 0;
 				return;
