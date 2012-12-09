@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 109;								# Remember to update whenever adding tests
+	return 30;								# Remember to update whenever adding tests
 }
 
 
@@ -227,15 +227,15 @@ sub all_triple_store_tests {
 			$store->get_graphs;
 		} 'get_graphs dies';
 	
-		add_statement_tests_simple( $store, $args, $ex );
-		update_sleep($args);
-	
-		bulk_add_statement_tests_simple( $store, $args, $ex );
-		update_sleep($args);
-	
-		literals_tests_simple( $store, $args, $ex );
-		blank_node_tests_triples( $store, $args, $ex );
-		count_statements_tests_simple( $store, $args, $ex );
+# 		add_statement_tests_simple( $store, $args, $ex );
+# 		update_sleep($args);
+# 	
+# 		bulk_add_statement_tests_simple( $store, $args, $ex );
+# 		update_sleep($args);
+# 	
+# 		literals_tests_simple( $store, $args, $ex );
+# 		blank_node_tests_triples( $store, $args, $ex );
+# 		count_statements_tests_simple( $store, $args, $ex );
 	
 		add_triples( $store, $args, @triples );
 		update_sleep($args);

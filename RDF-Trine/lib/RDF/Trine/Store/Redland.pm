@@ -283,7 +283,7 @@ sub count_triples {
 	my @nodes	= @_;
 # 	warn "restricting count_statements to triple semantics";
 	my @rnodes	= map { _cast_to_redland($_) } @nodes[0..2];
-	my $st		= RDF::Redland::Statement->new( @rnodes );
+	my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 	my $iter	= $self->_model->find_statements( $st );
 	my $count	= 0;
 	my %seen;

@@ -6,7 +6,7 @@ use lib "$Bin/lib";
 use Module::Load::Conditional qw[can_load];
 
 BEGIN {
- can_load(modules => {'RDF::Redland' => 1.000701}) || plan skip_all => 'Test needs RDF::Redland';
+	can_load(modules => {'RDF::Redland' => 1.000701}) || plan skip_all => 'Test needs RDF::Redland';
 }
 
 use RDF::Redland;
@@ -17,22 +17,21 @@ use RDF::Trine qw(iri variable store literal);
 use RDF::Trine::Store;
 
 if ($RDF::Trine::Store::HAVE_REDLAND) {
-  plan tests => 3 + Test::RDF::Trine::Store::number_of_tests;
+	plan tests => 1 + Test::RDF::Trine::Store::number_of_triple_tests;
 } else {
-  plan skip_all => 'Redland was not found';
+	plan skip_all => 'Redland was not found';
 }
-
 
 use strict;
 use warnings;
 no warnings 'redefine';
 
 
-
 my $data = Test::RDF::Trine::Store::create_data;
+my $ex = $data->{ex};
+
 my $store	= RDF::Trine::Store::Redland->temporary_store();
 isa_ok( $store, 'RDF::Trine::Store::Redland' );
-
-Test::RDF::Trine::Store::all_store_tests($store, $data, 1);
+Test::RDF::Trine::Store::all_triple_store_tests($store, $data);
 
 done_testing;
