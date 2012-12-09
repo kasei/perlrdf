@@ -67,131 +67,132 @@ END
 	is( $count, 4, 'expected count on b1b,213 (requires sorting on 3-free get_statements call)' );
 }
 
-{
-	my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('value'), undef, orderby => [ 's' => 'ASC' ] );
-	isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
-	my $count	= 0;
-	my %seen;
-	my $current;
-	while (my $t = $iter->next) {
-		if (defined($current)) {
-			my $new	= $t->subject;
-			if ($current->as_string ne $new->as_string) {
-				if ($seen{ $new->as_string }++) {
-					fail('distinct sorted subject value');
-				} else {
-					pass('distinct sorted subject value');
-				}
-			}
-			$current	= $new;
-		} else {
-			$seen{ $t->subject->as_string }++;
-		}
-		$current	= $t->subject;
-		$count++;
-	}
-	is( $count, 4, 'expected count on sorted get_statements call' );
-}
-
-{
-	my @sorted;
-	{
-		my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('o'), undef, orderby => [ 'o' => 'ASC' ] );
-		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
-		my $count	= 0;
-		my %seen;
-		my $current;
-		while (my $t = $iter->next) {
-			if (defined($current)) {
-				my $new	= $t->object;
-				if ($current->as_string ne $new->as_string) {
-					if ($seen{ $new->as_string }++) {
-						fail('distinct sorted object value');
-					} else {
-						pass('distinct sorted object value');
-					}
-					push(@sorted, $new->as_string);
-				}
-				$current	= $new;
-			} else {
-				my $s	= $t->object->as_string;
-				$seen{ $s }++;
-				push(@sorted, $s);
-			}
-			$current	= $t->object;
-			$count++;
-		}
-		is( $count, 4, 'expected count on sorted get_statements call' );
-	}
-	
-	{
-		my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('o'), undef, orderby => [ 'o' => 'DESC' ] );
-		my $current;
-		while (my $t = $iter->next) {
-			if (defined($current)) {
-				my $new	= $t->object;
-				if ($current->as_string ne $new->as_string) {
-					is( $new->as_string, pop(@sorted), 'expected reverse sorted object value' );
-				}
-				$current	= $new;
-			} else {
-				my $s	= $t->object->as_string;
-				is( $s, pop(@sorted), 'expected reverse sorted object value' );
-			}
-			$current	= $t->object;
-		}
-	}
-}
-
-{
-	my @sorted;
-	{
-		my $iter	= $store->get_statements( variable('s'), variable('p'), variable('o'), undef, orderby => [ 'o' => 'ASC' ] );
-		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
-		my $count	= 0;
-		my %seen;
-		my $current;
-		while (my $t = $iter->next) {
-			if (defined($current)) {
-				my $new	= $t->object;
-				if ($current->as_string ne $new->as_string) {
-					if ($seen{ $new->as_string }++) {
-						fail('distinct sorted object value');
-					} else {
-						pass('distinct sorted object value');
-					}
-					push(@sorted, $new->as_string);
-				}
-				$current	= $new;
-			} else {
-				my $s	= $t->object->as_string;
-				$seen{ $s }++;
-				push(@sorted, $s);
-			}
-			$current	= $t->object;
-			$count++;
-		}
-		is( $count, 5, 'expected count on sorted get_statements call' );
-	}
-	
-	{
-		my $iter	= $store->get_statements( variable('s'), variable('p'), variable('o'), undef, orderby => [ 'o' => 'DESC' ] );
-		my $current;
-		while (my $t = $iter->next) {
-			if (defined($current)) {
-				my $new	= $t->object;
-				if ($current->as_string ne $new->as_string) {
-					is( $new->as_string, pop(@sorted), 'expected reverse sorted object value' );
-				}
-				$current	= $new;
-			} else {
-				my $s	= $t->object->as_string;
-				is( $s, pop(@sorted), 'expected reverse sorted object value' );
-			}
-			$current	= $t->object;
-		}
-	}
-}
+### Calling get_statements with more than 4 node arguments is deprecated
+# {
+# 	my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('value'), undef, orderby => [ 's' => 'ASC' ] );
+# 	isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
+# 	my $count	= 0;
+# 	my %seen;
+# 	my $current;
+# 	while (my $t = $iter->next) {
+# 		if (defined($current)) {
+# 			my $new	= $t->subject;
+# 			if ($current->as_string ne $new->as_string) {
+# 				if ($seen{ $new->as_string }++) {
+# 					fail('distinct sorted subject value');
+# 				} else {
+# 					pass('distinct sorted subject value');
+# 				}
+# 			}
+# 			$current	= $new;
+# 		} else {
+# 			$seen{ $t->subject->as_string }++;
+# 		}
+# 		$current	= $t->subject;
+# 		$count++;
+# 	}
+# 	is( $count, 4, 'expected count on sorted get_statements call' );
+# }
+# 
+# {
+# 	my @sorted;
+# 	{
+# 		my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('o'), undef, orderby => [ 'o' => 'ASC' ] );
+# 		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
+# 		my $count	= 0;
+# 		my %seen;
+# 		my $current;
+# 		while (my $t = $iter->next) {
+# 			if (defined($current)) {
+# 				my $new	= $t->object;
+# 				if ($current->as_string ne $new->as_string) {
+# 					if ($seen{ $new->as_string }++) {
+# 						fail('distinct sorted object value');
+# 					} else {
+# 						pass('distinct sorted object value');
+# 					}
+# 					push(@sorted, $new->as_string);
+# 				}
+# 				$current	= $new;
+# 			} else {
+# 				my $s	= $t->object->as_string;
+# 				$seen{ $s }++;
+# 				push(@sorted, $s);
+# 			}
+# 			$current	= $t->object;
+# 			$count++;
+# 		}
+# 		is( $count, 4, 'expected count on sorted get_statements call' );
+# 	}
+# 	
+# 	{
+# 		my $iter	= $store->get_statements( variable('s'), iri('http://example.org/bar'), variable('o'), undef, orderby => [ 'o' => 'DESC' ] );
+# 		my $current;
+# 		while (my $t = $iter->next) {
+# 			if (defined($current)) {
+# 				my $new	= $t->object;
+# 				if ($current->as_string ne $new->as_string) {
+# 					is( $new->as_string, pop(@sorted), 'expected reverse sorted object value' );
+# 				}
+# 				$current	= $new;
+# 			} else {
+# 				my $s	= $t->object->as_string;
+# 				is( $s, pop(@sorted), 'expected reverse sorted object value' );
+# 			}
+# 			$current	= $t->object;
+# 		}
+# 	}
+# }
+# 
+# {
+# 	my @sorted;
+# 	{
+# 		my $iter	= $store->get_statements( variable('s'), variable('p'), variable('o'), undef, orderby => [ 'o' => 'ASC' ] );
+# 		isa_ok( $iter, 'RDF::Trine::Iterator::Graph' );
+# 		my $count	= 0;
+# 		my %seen;
+# 		my $current;
+# 		while (my $t = $iter->next) {
+# 			if (defined($current)) {
+# 				my $new	= $t->object;
+# 				if ($current->as_string ne $new->as_string) {
+# 					if ($seen{ $new->as_string }++) {
+# 						fail('distinct sorted object value');
+# 					} else {
+# 						pass('distinct sorted object value');
+# 					}
+# 					push(@sorted, $new->as_string);
+# 				}
+# 				$current	= $new;
+# 			} else {
+# 				my $s	= $t->object->as_string;
+# 				$seen{ $s }++;
+# 				push(@sorted, $s);
+# 			}
+# 			$current	= $t->object;
+# 			$count++;
+# 		}
+# 		is( $count, 5, 'expected count on sorted get_statements call' );
+# 	}
+# 	
+# 	{
+# 		my $iter	= $store->get_statements( variable('s'), variable('p'), variable('o'), undef, orderby => [ 'o' => 'DESC' ] );
+# 		my $current;
+# 		while (my $t = $iter->next) {
+# 			if (defined($current)) {
+# 				my $new	= $t->object;
+# 				if ($current->as_string ne $new->as_string) {
+# 					is( $new->as_string, pop(@sorted), 'expected reverse sorted object value' );
+# 				}
+# 				$current	= $new;
+# 			} else {
+# 				my $s	= $t->object->as_string;
+# 				is( $s, pop(@sorted), 'expected reverse sorted object value' );
+# 			}
+# 			$current	= $t->object;
+# 		}
+# 	}
+# }
 
 ################
 
