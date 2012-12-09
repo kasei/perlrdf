@@ -332,24 +332,16 @@ sub remove_statements {
 	return;
 }
 
-=item C<< get_statements ($subject, $predicate, $object [, $context] ) >>
+=item C<< get_quads ($subject, $predicate, $object, $graph ) >>
 
 Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
+predicate, object, and graphs. Any of the arguments may be undef to match any value.
 
 =cut
 
-sub get_statements {
+sub get_quads {
 	my $self	= shift;
 	my @nodes	= @_;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-	} elsif (scalar(@nodes) != 3) {
-		$#nodes		= 3;
-		$use_quad	= 1;
-	}
 	
 	my @var_map	= qw(s p o g);
 	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
@@ -361,115 +353,131 @@ sub get_statements {
 	}
 	
 	my $sub;
-	if ($use_quad) {
-		my $r	= $self->conn;
-		my @skeys;
-		my @indexes	= qw(s p o g);
-		foreach my $i (0 .. $#indexes) {
-			my $index	= $indexes[$i];
-			my $n		= $nodes[$i];
-			unless ($n->is_variable) {
-				my $id	= $self->_get_node_id($n);
-				unless (defined($id)) {
-					return RDF::Trine::Iterator::Graph->new( [] );
-				}
-				my $key	= "RT:${index}set:$id";
-				push(@skeys, $key);
+	my $r	= $self->conn;
+	my @skeys;
+	my @indexes	= qw(s p o g);
+	foreach my $i (0 .. $#indexes) {
+		my $index	= $indexes[$i];
+		my $n		= $nodes[$i];
+		unless ($n->is_variable) {
+			my $id	= $self->_get_node_id($n);
+			unless (defined($id)) {
+				return RDF::Trine::Iterator::Graph->new( [] );
 			}
+			my $key	= "RT:${index}set:$id";
+			push(@skeys, $key);
 		}
-		if (@skeys) {
-			my @keys	= $r->sinter(@skeys);
-			$sub		= sub {
-				return unless (scalar(@keys));
-				my $key		= shift(@keys);
-				my @data	= split(':', $key);
-				my @nodes	= $self->_id_node( @data[0..3] );
-				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
-				return $st;
-			};
-		} else {
-			my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes;
-			my $key		= 'RT:spog:' . join(':', @strs);
-			my @keys	= $r->keys($key);
-			$sub		= sub {
-				return unless (scalar(@keys));
-				my $key		= shift(@keys);
-				(undef, undef, my @data)	= split(':', $key);
-				my @nodes	= $self->_id_node( @data );
-				my $st		= RDF::Trine::Statement::Quad->new( @nodes );
-				return $st;
-			};
-		}
+	}
+	if (@skeys) {
+		my @keys	= $r->sinter(@skeys);
+		$sub		= sub {
+			return unless (scalar(@keys));
+			my $key		= shift(@keys);
+			my @data	= split(':', $key);
+			my @nodes	= $self->_id_node( @data[0..3] );
+			my $st		= RDF::Trine::Statement::Quad->new( @nodes );
+			return $st;
+		};
 	} else {
-		my $r	= $self->conn;
-		my @skeys;
-		my @indexes	= qw(s p o);
-		foreach my $i (0 .. $#indexes) {
-			my $index	= $indexes[$i];
-			my $n		= $nodes[$i];
-			unless ($n->is_variable) {
-				my $id	= $self->_get_node_id($n);
-				unless (defined($id)) {
-					return RDF::Trine::Iterator::Graph->new( [] );
-				}
-				my $key	= "RT:${index}set:$id";
-				push(@skeys, $key);
-			}
-		}
-		if (@skeys) {
-			my @keys	= $r->sinter(@skeys);
-			my %keys;
-			foreach (@keys) {
-				s/:[^:]+$//;
-				$keys{ $_ }++;
-			}
-			@keys	= keys %keys;
-			$sub		= sub {
-				return unless (scalar(@keys));
-				my $key		= shift(@keys);
-				my @data	= split(':', $key);
-				my @nodes	= $self->_id_node( @data[0..2] );
-				my $st		= RDF::Trine::Statement->new( @nodes );
-				return $st;
-			};
-		} else {
-			my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes[0..2];
-			my $key		= 'RT:spog:' . join(':', @strs, '*');
-			my %triples;
-			foreach ($r->keys($key)) {
-				s/:[^:]+$//;
-				$triples{ $_ }++;
-			}
-			my @keys	= keys %triples;
-			$sub		= sub {
-				return unless (scalar(@keys));
-				my $key		= shift(@keys);
-				my ($ids)	= $key =~ m/^RT:spog:(.*)$/;
-				my @data	= split(':', $ids);
-				my @nodes	= $self->_id_node( @data );
-				my $st		= RDF::Trine::Statement->new( @nodes );
-				return $st;
-			};
-		}
+		my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes;
+		my $key		= 'RT:spog:' . join(':', @strs);
+		my @keys	= $r->keys($key);
+		$sub		= sub {
+			return unless (scalar(@keys));
+			my $key		= shift(@keys);
+			(undef, undef, my @data)	= split(':', $key);
+			my @nodes	= $self->_id_node( @data );
+			my $st		= RDF::Trine::Statement::Quad->new( @nodes );
+			return $st;
+		};
 	}
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-=item C<< count_statements ( $subject, $predicate, $object, $context ) >>
+=item C<< get_triples ( $subject, $predicate, $object ) >>
+
+Returns a iterator object of all triples matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+
+=cut
+
+sub get_triples {
+	my $self	= shift;
+	my @nodes	= @_;
+	
+	my @var_map	= qw(s p o);
+	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
+	my @node_map;
+	foreach my $i (0 .. $#nodes) {
+		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
+			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
+		}
+	}
+	
+	my $sub;
+	my $r	= $self->conn;
+	my @skeys;
+	my @indexes	= qw(s p o);
+	foreach my $i (0 .. $#indexes) {
+		my $index	= $indexes[$i];
+		my $n		= $nodes[$i];
+		unless ($n->is_variable) {
+			my $id	= $self->_get_node_id($n);
+			unless (defined($id)) {
+				return RDF::Trine::Iterator::Graph->new( [] );
+			}
+			my $key	= "RT:${index}set:$id";
+			push(@skeys, $key);
+		}
+	}
+	if (@skeys) {
+		my @keys	= $r->sinter(@skeys);
+		my %keys;
+		foreach (@keys) {
+			s/:[^:]+$//;
+			$keys{ $_ }++;
+		}
+		@keys	= keys %keys;
+		$sub		= sub {
+			return unless (scalar(@keys));
+			my $key		= shift(@keys);
+			my @data	= split(':', $key);
+			my @nodes	= $self->_id_node( @data[0..2] );
+			my $st		= RDF::Trine::Statement->new( @nodes );
+			return $st;
+		};
+	} else {
+		my @strs	= map { ($_->is_variable) ? '*' : $self->_get_node_id($_) } @nodes[0..2];
+		my $key		= 'RT:spog:' . join(':', @strs, '*');
+		my %triples;
+		foreach ($r->keys($key)) {
+			s/:[^:]+$//;
+			$triples{ $_ }++;
+		}
+		my @keys	= keys %triples;
+		$sub		= sub {
+			return unless (scalar(@keys));
+			my $key		= shift(@keys);
+			my ($ids)	= $key =~ m/^RT:spog:(.*)$/;
+			my @data	= split(':', $ids);
+			my @nodes	= $self->_id_node( @data );
+			my $st		= RDF::Trine::Statement->new( @nodes );
+			return $st;
+		};
+	}
+	return RDF::Trine::Iterator::Graph->new( $sub );
+}
+
+=item C<< count_quads ( $subject, $predicate, $object, $graph ) >>
 
 Returns a count of all the statements matching the specified subject,
-predicate, object, and context. Any of the arguments may be undef to match any
+predicate, object, and graph. Any of the arguments may be undef to match any
 value.
 
 =cut
 
-sub count_statements {
+sub count_quads {
 	my $self	= shift;
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
-	}
 	my @nodes	= @_;
 	my @strs;
 	foreach my $n (@nodes[0..3]) {
@@ -484,23 +492,46 @@ sub count_statements {
 		}
 	}
 
-	if ($use_quad) {
-		my $key		= 'RT:spog:' . join(':', @strs);
-		my $r		= $self->conn;
-		my @keys	= $r->keys($key);
-		return scalar(@keys);
-	} else {
-		my $key		= 'RT:spog:' . join(':', @strs);
-		my $r		= $self->conn;
-		my @keys	= $r->keys($key);
-		my %keys;
-		foreach (@keys) {
-			s/:[^:]+$//;
-			$keys{ $_ }++;
+	my $key		= 'RT:spog:' . join(':', @strs);
+	my $r		= $self->conn;
+	my @keys	= $r->keys($key);
+	return scalar(@keys);
+}
+
+=item C<< count_triples ( $subject, $predicate, $object ) >>
+
+Returns a count of all the unique statements matching the specified subject,
+predicate, and object. Any of the arguments may be undef to match any
+value.
+
+=cut
+
+sub count_triples {
+	my $self	= shift;
+	my @nodes	= @_;
+	my @strs;
+	foreach my $n (@nodes[0..3]) {
+		if (not(blessed($n)) or $n->is_variable) {
+			push(@strs, '*');
+		} else {
+			my $id	= $self->_get_node_id($n);
+			unless (defined($id)) {
+				return 0;
+			}
+			push(@strs, $id);
 		}
-		@keys	= keys %keys;
-		return scalar(@keys);
 	}
+
+	my $key		= 'RT:spog:' . join(':', @strs);
+	my $r		= $self->conn;
+	my @keys	= $r->keys($key);
+	my %keys;
+	foreach (@keys) {
+		s/:[^:]+$//;
+		$keys{ $_ }++;
+	}
+	@keys	= keys %keys;
+	return scalar(@keys);
 }
 
 =item C<< get_graphs >> (aliased to C<< get_contexts >>)
@@ -534,16 +565,12 @@ supported features.
 
 sub supports {
 	my $self	= shift;
-	my %features	= map { $_ => 1 } (
-# 		'http://www.w3.org/ns/sparql-service-description#SPARQL10Query',
-# 		'http://www.w3.org/ns/sparql-service-description#SPARQL11Query',
-	);
+	my %features	= map { $_ => 1 } qw(triplestore quadstore);
 	if (@_) {
-		my $f	= shift;
-		return $features{ $f };
-	} else {
-		return keys %features;
+		my $feature	= shift;
+		return +$features{ $feature };
 	}
+	return (keys %features);
 }
 
 # =item C<< get_sparql ( $sparql ) >>

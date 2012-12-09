@@ -269,6 +269,17 @@ sub clear_restrictions {
 	return;
 }
 
+=item C<< get_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns a iterator object of all quads matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+For all stores implementing this (triplestore) role, the iterator will be empty
+unless C<< $graph >> is undefined or is an RDF::Trine::Node::Nil object.
+If C<< $graph >> is undefined, all quads returned by the iterator will have
+a graph value which is a RDF::Trine::Node::Nil object.
+
+=cut
+
 sub get_quads {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
@@ -341,6 +352,13 @@ NEXTROW:
 	
 	return RDF::Trine::Iterator::Graph->new( $sub )
 }
+
+=item C<< get_triples ( $subject, $predicate, $object ) >>
+
+Returns a iterator object of all triples matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+
+=cut
 
 sub get_triples {
 	my $self	= shift;
@@ -678,6 +696,14 @@ sub _add_node {
 	return $hash;
 }
 
+=item C<< count_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate, object, and graphs. Any of the arguments may be undef to match any
+value.
+
+=cut
+
 sub count_quads {
 	my $self	= shift;
 	my @nodes	= @_[0..3];
@@ -707,6 +733,13 @@ sub count_quads {
 	$sth->fetch;
 	return $count;
 }
+
+=item C<< count_triples ( $subject, $predicate, $object ) >>
+
+Returns a count of all the statements matching the specified subject,
+predicate and objects. Any of the arguments may be undef to match any value.
+
+=cut
 
 sub count_triples {
 	my $self	= shift;

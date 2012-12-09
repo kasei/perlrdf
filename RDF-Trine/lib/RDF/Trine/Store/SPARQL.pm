@@ -122,6 +122,13 @@ sub _config_meta {
 	}
 }
 
+=item C<< get_triples ( $subject, $predicate, $object ) >>
+
+Returns a iterator object of all triples matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+
+=cut
+
 sub get_triples {
 	my $self	= shift;
 	my @nodes	= @_[0..2];
@@ -161,6 +168,17 @@ END
 	};
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
+
+=item C<< get_quads ( $subject, $predicate, $object, $graph ) >>
+
+Returns a iterator object of all quads matching the specified subject,
+predicate, object. Any of the arguments may be undef to match any value.
+For all stores implementing this (triplestore) role, the iterator will be empty
+unless C<< $graph >> is undefined or is an RDF::Trine::Node::Nil object.
+If C<< $graph >> is undefined, all quads returned by the iterator will have
+a graph value which is a RDF::Trine::Node::Nil object.
+
+=cut
 
 sub get_quads {
 	my $self	= shift;
@@ -215,78 +233,78 @@ END
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
-
-Returns a stream object of all statements matching the specified subject,
-predicate and objects. Any of the arguments may be undef to match any value.
-
-=cut
-
-sub get_statements {
-	my $self	= shift;
-	my @nodes	= @_[0..3];
-	my $bound	= 0;
-	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
-			$use_quad	= 1;
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
-	
-	my @var_map	= qw(s p o g);
-	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
-	my @node_map;
-	foreach my $i (0 .. $#nodes) {
-		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
-			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
-		}
-	}
-	
-	my $node_count	= ($use_quad) ? 4 : 3;
-	my $st_class	= ($use_quad) ? 'RDF::Trine::Statement::Quad' : 'RDF::Trine::Statement';
-	my @triple	= @nodes[ 0..2 ];
-	my $iter;
-	if ($use_quad) {
-		my @vars	= grep { $_->is_variable } @nodes;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
-		$iter	= $self->get_sparql( <<"END" );
-SELECT $names WHERE {
-	GRAPH $g {
-		$nodes
-	}
-}
-END
-	} else {
-		my @vars	= grep { $_->is_variable } @triple;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		$iter	= $self->get_sparql( <<"END" );
-SELECT $names WHERE { $nodes }
-END
-	}
-	my $sub		= sub {
-		my $row	= $iter->next;
-		return unless $row;
-		my @triple;
-		foreach my $i (0 .. ($node_count-1)) {
-			if ($nodes[$i]->is_variable) {
-				$triple[$i]	= $row->{ $nodes[$i]->name };
-			} else {
-				$triple[$i]	= $nodes[$i];
-			}
-		}
-		my $triple	= $st_class->new( @triple );
-		return $triple;
-	};
-	return RDF::Trine::Iterator::Graph->new( $sub );
-}
+# =item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
+# 
+# Returns a stream object of all statements matching the specified subject,
+# predicate and objects. Any of the arguments may be undef to match any value.
+# 
+# =cut
+# 
+# sub get_statements {
+# 	my $self	= shift;
+# 	my @nodes	= @_[0..3];
+# 	my $bound	= 0;
+# 	my %bound;
+# 	
+# 	my $use_quad	= 0;
+# 	if (scalar(@_) >= 4) {
+# 		my $g	= $nodes[3];
+# 		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
+# 			$use_quad	= 1;
+# 			$bound++;
+# 			$bound{ 3 }	= $g;
+# 		}
+# 	}
+# 	
+# 	my @var_map	= qw(s p o g);
+# 	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
+# 	my @node_map;
+# 	foreach my $i (0 .. $#nodes) {
+# 		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
+# 			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
+# 		}
+# 	}
+# 	
+# 	my $node_count	= ($use_quad) ? 4 : 3;
+# 	my $st_class	= ($use_quad) ? 'RDF::Trine::Statement::Quad' : 'RDF::Trine::Statement';
+# 	my @triple	= @nodes[ 0..2 ];
+# 	my $iter;
+# 	if ($use_quad) {
+# 		my @vars	= grep { $_->is_variable } @nodes;
+# 		my $names	= join(' ', map { '?' . $_->name } @vars);
+# 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+# 		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
+# 		$iter	= $self->get_sparql( <<"END" );
+# SELECT $names WHERE {
+# 	GRAPH $g {
+# 		$nodes
+# 	}
+# }
+# END
+# 	} else {
+# 		my @vars	= grep { $_->is_variable } @triple;
+# 		my $names	= join(' ', map { '?' . $_->name } @vars);
+# 		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+# 		$iter	= $self->get_sparql( <<"END" );
+# SELECT $names WHERE { $nodes }
+# END
+# 	}
+# 	my $sub		= sub {
+# 		my $row	= $iter->next;
+# 		return unless $row;
+# 		my @triple;
+# 		foreach my $i (0 .. ($node_count-1)) {
+# 			if ($nodes[$i]->is_variable) {
+# 				$triple[$i]	= $row->{ $nodes[$i]->name };
+# 			} else {
+# 				$triple[$i]	= $nodes[$i];
+# 			}
+# 		}
+# 		my $triple	= $st_class->new( @triple );
+# 		return $triple;
+# 	};
+# 	return RDF::Trine::Iterator::Graph->new( $sub );
+# }
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
 
@@ -490,10 +508,10 @@ sub _remove_statement_patterns_sparql {
 	return $sparql;
 }
 
-=item C<< count_statements ( $subject, $predicate, $object, $context ) >>
+=item C<< count_quads ( $subject, $predicate, $object, $graph ) >>
 
 Returns a count of all the statements matching the specified subject,
-predicate, object, and context. Any of the arguments may be undef to match any
+predicate, object, and graphs. Any of the arguments may be undef to match any
 value.
 
 =cut
@@ -539,6 +557,14 @@ sub count_quads {
 	return $count->literal_value;
 }
 
+=item C<< count_triples ( $subject, $predicate, $object ) >>
+
+Returns a count of all the unique statements matching the specified subject,
+predicate, and object. Any of the arguments may be undef to match any
+value.
+
+=cut
+
 sub count_triples {
 	my $self	= shift;
 	my @nodes	= @_[0..2];
@@ -562,66 +588,66 @@ sub count_triples {
 	return $count->literal_value;
 }
 
-sub count_statements {
-	my $self	= shift;
-	my @nodes	= @_[0..3];
-	my $bound	= 0;
-	my %bound;
-	
-	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable)) {
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
-	
-	foreach my $i (0 .. $#nodes) {
-		my $node	= $nodes[$i];
-		unless (defined($node)) {
-			$nodes[$i]	= RDF::Trine::Node::Variable->new( "rt__" . $pos_names[$i] );
-		}
-	}
-	
-	
-	my $sparql;
-	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
-	if ($use_quad) {
-		my $nodes;
-		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
-			$nodes		= "GRAPH ?rt__graph { $triple }";
-		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
-			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
-		} else {
-			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
-			$nodes		= "GRAPH $graph { $triple }";
-		}
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
-	} else {
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
-	}
-	my $iter	= $self->get_sparql( $sparql );
-	my $row		= $iter->next;
-	my $count	= $row->{count};
-	return unless ($count);
-	return $count->literal_value;
-	
+# sub count_statements {
+# 	my $self	= shift;
+# 	my @nodes	= @_[0..3];
+# 	my $bound	= 0;
+# 	my %bound;
 # 	
-# 	
-# 	
-# 	
-# 	
-# 	# XXX try to send a COUNT() query and fall back if it fails
-# 	my $iter	= $self->get_statements( @_ );
-# 	my $count	= 0;
-# 	while (my $st = $iter->next) {
-# 		$count++;
+# 	my $use_quad	= 0;
+# 	if (scalar(@_) >= 4) {
+# 		$use_quad	= 1;
+# # 		warn "count statements with quad" if ($::debug);
+# 		my $g	= $nodes[3];
+# 		if (blessed($g) and not($g->is_variable)) {
+# 			$bound++;
+# 			$bound{ 3 }	= $g;
+# 		}
 # 	}
-# 	return $count;
-}
+# 	
+# 	foreach my $i (0 .. $#nodes) {
+# 		my $node	= $nodes[$i];
+# 		unless (defined($node)) {
+# 			$nodes[$i]	= RDF::Trine::Node::Variable->new( "rt__" . $pos_names[$i] );
+# 		}
+# 	}
+# 	
+# 	
+# 	my $sparql;
+# 	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+# 	if ($use_quad) {
+# 		my $nodes;
+# 		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
+# 			$nodes		= "GRAPH ?rt__graph { $triple }";
+# 		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
+# 			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+# 		} else {
+# 			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
+# 			$nodes		= "GRAPH $graph { $triple }";
+# 		}
+# 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
+# 	} else {
+# 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
+# 	}
+# 	my $iter	= $self->get_sparql( $sparql );
+# 	my $row		= $iter->next;
+# 	my $count	= $row->{count};
+# 	return unless ($count);
+# 	return $count->literal_value;
+# 	
+# # 	
+# # 	
+# # 	
+# # 	
+# # 	
+# # 	# XXX try to send a COUNT() query and fall back if it fails
+# # 	my $iter	= $self->get_statements( @_ );
+# # 	my $count	= 0;
+# # 	while (my $st = $iter->next) {
+# # 		$count++;
+# # 	}
+# # 	return $count;
+# }
 
 =item C<< size >>
 
