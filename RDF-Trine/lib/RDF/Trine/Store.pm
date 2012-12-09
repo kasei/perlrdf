@@ -582,6 +582,9 @@ C<<RDF::Trine::Node::Nil>> object).
 
 sub get_graphs {
 	my $self	= shift;
+	unless ($self->supports('quadstore')) {
+		throw RDF::Trine::Error -text => "get_graphs not supported by triplestore";
+	}
 	return RDF::Trine::Iterator->new( [] );
 }
 sub get_contexts {
