@@ -227,7 +227,7 @@ Checks the input buffer for a Unicode BOM, and consumes it if it is present.
 sub check_for_bom {
 	my $self	= shift;
 	my $c	= $self->_peek_char();
-	if ($c eq "\x{FEFF}") {
+	if (defined($c) and $c eq "\x{FEFF}") {
 		$self->_get_char;
 	}
 }
