@@ -29,6 +29,7 @@ use Cache::LRU;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
+use List::MoreUtils qw(zip);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -253,7 +254,8 @@ sub add_statement {
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
 		my @ids		= map { $self->_get_or_set_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
-		$r->set( "RT:spog:$key", 1 );
+		my @keys	= qw(s p o g);
+		$r->hmset( "RT:spog:$key", zip @keys, @ids );
 		$r->sadd( "RT:sset:$ids[0]", $key );
 		$r->sadd( "RT:pset:$ids[1]", $key );
 		$r->sadd( "RT:oset:$ids[2]", $key );
