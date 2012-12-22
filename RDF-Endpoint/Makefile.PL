@@ -11,6 +11,7 @@ license				'zlib';
 test_requires       'Test::More' 					=> '0.61';
 test_requires       'Test::WWW::Mechanize::PSGI'	=> 0;
 
+requires			'JSON'							=> 0;
 requires			'Carp'							=> 0;
 requires			'File::ShareDir'				=> 0;
 requires			'RDF::Trine'					=> 0.134;

@@ -10,6 +10,25 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.003.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.002.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.003" ;
+                        doap:created      "2012-12-22" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added prefix_for and abbreviate methods to RDF::Trine::NamespaceMap (patch from Dorian Taylor)" ;
+                        asc:update      "Fixes to code that depended on hash key ordering." ;
+                        asc:update      "Require Scalar::Util 1.24." ;
+                        asc:update      "Fixed test of error conditions in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Fixed bug in RDF::Trine::Parser::RDFXML that caused fatal errors on malformed input instead of throwing RDF::Trine::Error exceptions." ;
+                        asc:update      "Re-added RDF::Trine::Parser::Turtle->parse_node method." ;
+                        asc:update      "Fixed RDF::Trine::Parser::Turtle::Lexer->check_for_bom to handle zero-length input." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.002.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz> ;

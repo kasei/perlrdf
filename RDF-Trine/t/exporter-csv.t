@@ -42,10 +42,10 @@ $model->add_hashref({
 	close($wh);
 	my $got		= do { local($/) = undef; <$rh> };
 	my $expect	= <<'END';
-p,o
-<http://example.com/predicate>,<http://example.com/bar>
-<http://example.com/predicate>,"""Foo"""
-<http://example.com/predicate>,"""baz""@en"
+o,p
+<http://example.com/bar>,<http://example.com/predicate>
+"""Foo""",<http://example.com/predicate>
+"""baz""@en",<http://example.com/predicate>
 END
 	is( $got, $expect, 'quote=1' );
 }
@@ -60,10 +60,10 @@ END
 	close($wh);
 	my $got		= do { local($/) = undef; <$rh> };
 	my $expect	= <<'END';
-p,o
-http://example.com/predicate,http://example.com/bar
-http://example.com/predicate,Foo
-http://example.com/predicate,baz
+o,p
+http://example.com/bar,http://example.com/predicate
+Foo,http://example.com/predicate
+baz,http://example.com/predicate
 END
 	is( $got, $expect, 'quote=0' );
 }
@@ -74,10 +74,10 @@ END
 	my $iter	= $model->get_pattern( $t, undef, orderby => [ qw(p ASC o ASC) ] );
 	my $got		= $e->serialize_iterator_to_string( $iter );
 	my $expect	= <<'END';
-p|o
-http://example.com/predicate|http://example.com/bar
-http://example.com/predicate|Foo
-http://example.com/predicate|baz
+o|p
+http://example.com/bar|http://example.com/predicate
+Foo|http://example.com/predicate
+baz|http://example.com/predicate
 END
 	is( $got, $expect, 'sep_char=|' );
 }

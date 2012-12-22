@@ -85,6 +85,7 @@ lib/RDF/Query/Algebra/Sequence.pm
 lib/RDF/Query/Algebra/Service.pm
 lib/RDF/Query/Algebra/Sort.pm
 lib/RDF/Query/Algebra/SubSelect.pm
+lib/RDF/Query/Algebra/Table.pm
 lib/RDF/Query/Algebra/TimeGraph.pm
 lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
@@ -205,7 +206,6 @@ xt/dawg-syntax11.t
 xt/dev-service-description.t
 xt/dev-sql-compiler.t
 xt/dev-time-intervals.t
-xt/ext-service.t
 xt/federate.t
 xt/parser-rdql.t
 xt/parser-sparql.t

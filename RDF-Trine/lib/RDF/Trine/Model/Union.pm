@@ -7,7 +7,7 @@ RDF::Trine::Model::Union - Union models for joining multiple stores together
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Union version 1.002
+This document describes RDF::Trine::Model::Union version 1.003
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use RDF::Trine::Store;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.002';
+	$VERSION	= '1.003';
 }
 
 ################################################################################
