@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.003 (2012-XX-XX)
+  Version 1.003 (2012-12-22)
 
      * BUG FIXES
          Fixes to code that depended on hash key ordering.

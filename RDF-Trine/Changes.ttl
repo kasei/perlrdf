@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.003" ;
-                        doap:created      "2012-XX-XX" ;
+                        doap:created      "2012-12-22" ;
                         ];
         asc:changes     [
         				asc:addition    "Added prefix_for and abbreviate methods to RDF::Trine::NamespaceMap (patch from Dorian Taylor)" ;
