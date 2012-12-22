@@ -374,6 +374,7 @@ sub get_contexts {
 		return RDF::Trine::Iterator->new( \@nodes );
 	}
 }
+*get_graphs = \&get_contexts;
 
 =item C<< model >>
 

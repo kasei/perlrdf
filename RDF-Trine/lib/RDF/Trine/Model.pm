@@ -662,6 +662,7 @@ sub get_contexts {
 		return $iter;
 	}
 }
+*get_graphs = \&get_contexts;
 
 =item C<< as_stream >>
 
