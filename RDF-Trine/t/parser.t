@@ -1,4 +1,4 @@
-use Test::More tests => 7;
+use Test::More tests => 9;
 use Test::Exception;
 
 use strict;
@@ -13,6 +13,12 @@ use RDF::Trine::Parser;
 throws_ok { RDF::Trine::Parser->new('guess') } 'RDF::Trine::Error::UnimplementedError', "Guess parser isn't implemented yet";
 throws_ok { RDF::Trine::Parser->new('foobar') } 'RDF::Trine::Error::ParserError', "RDF::Trine::Parser constructor throws on unrecognized parser name";
 
+{
+  my $rxparser     = RDF::Trine::Parser->new( 'rdfxml' );
+  my $model	= RDF::Trine::Model->temporary_model;
+  lives_ok { $rxparser->parse_into_model( 'http://example.org/', undef, $model ); } "Undef body to the parser doesn't die";
+  lives_ok { $rxparser->parse_into_model( 'http://example.org/', '', $model ); } "Empty body to the parser doesn't die";
+}
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {
