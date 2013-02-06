@@ -357,6 +357,8 @@ sub get_sparql {
 	throw RDF::Trine::Error::UnimplementedError -text => "Cannot execute SPARQL queries against a complex dataset model";
 }
 
+=item C<< get_graphs >>
+
 =item C<< get_contexts >>
 
 Returns an iterator containing the nodes representing the named graphs in the

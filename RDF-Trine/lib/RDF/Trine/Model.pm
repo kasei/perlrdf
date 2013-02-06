@@ -644,6 +644,8 @@ sub _get_pattern {
 	}
 }
 
+=item C<< get_graphs >>
+
 =item C<< get_contexts >>
 
 Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
