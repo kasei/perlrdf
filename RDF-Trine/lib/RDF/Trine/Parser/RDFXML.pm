@@ -116,6 +116,9 @@ sub parse_into_model {
 		$uri	= $uri->uri_value;
 	}
 	my $input	= shift;
+	unless ($input) {
+	  throw RDF::Trine::Error::ParserError -text => "No RDF/XML content supplied to parser.";
+	}
 	my $model	= shift;
 	my %args	= @_;
 	my $context	= $args{'context'};
