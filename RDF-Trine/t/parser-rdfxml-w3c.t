@@ -26,6 +26,16 @@ plan qw(no_plan);
 
 use_ok( 'RDF::Trine::Parser::RDFXML' );
 
+{
+  my $parser = RDF::Trine::Parser::RDFXML->new;
+  my $model = RDF::Trine::Model->temporary_model;
+  throws_ok { $parser->parse_into_model('http://localhost/', '', $model) } 'RDF::Trine::Error::ParserError', 'Empty string data throws class';
+  throws_ok { $parser->parse_into_model('http://localhost/', '', $model) } qr|No RDF/XML content supplied to parser|, 'Empty string data throws string';
+  throws_ok { $parser->parse_into_model('http://localhost/', undef, $model) } 'RDF::Trine::Error::ParserError', 'Undef data throws class';
+  throws_ok { $parser->parse_into_model('http://localhost/', undef, $model) } qr|No RDF/XML content supplied to parser|, 'Undef data throws string';
+}
+
+
 my $ok_regex	= (@ARGV) ? shift : '';
 
 
