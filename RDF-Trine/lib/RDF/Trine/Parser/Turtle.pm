@@ -86,6 +86,8 @@ sub parse {
 	local($self->{baseURI})	= shift;
 	my $string				= shift;
 	local($self->{handle_triple}) = shift;
+	require Encode;
+	$string = Encode::encode("utf-8", $string);
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	$self->_parse($l);
