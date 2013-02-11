@@ -185,6 +185,8 @@ END
     }
 
 END
+	use Encode;
+	$trig = encode("utf-8", $trig);
 	$parser->parse_into_model(undef, $trig, $model);
 	my $iter = $model->get_statements( undef,
 					   RDF::Trine::Node::Resource->new('http://www.example.org/vocabulary#likes'),
