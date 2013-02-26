@@ -190,6 +190,12 @@ sub get_token {
 			} elsif ($self->{buffer} =~ /^(?:true|false)\b/) {
 				my $bool	= $self->_read_length($+[0]);
 				return $self->new_token(BOOLEAN, $bool);
+			} elsif ($self->{buffer} =~ /^BASE\b/i) {
+				$self->_read_length(4);
+				return $self->new_token(BASE);
+			} elsif ($self->{buffer} =~ /^PREFIX\b/i) {
+				$self->_read_length(6);
+				return $self->new_token(PREFIX);
 			} else {
 				return $self->_get_pname;
 			}
