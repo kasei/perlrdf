@@ -292,7 +292,11 @@ sub _predicateObjectList {
 		$t		= $self->_next_nonws($l);
 		last unless ($t);
 		if ($t->type == SEMICOLON) {
+			my $sc	= $t;
 			$t		= $self->_next_nonws($l);
+			unless ($t) {
+				$self->_throw_error("Expecting token after semicolon, but got EOF", $sc, $l);
+			}
 			if ($t->type == IRI or $t->type == PREFIXNAME or $t->type == A) {
 				next;
 			} else {
