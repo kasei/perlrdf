@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.004.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.003.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.004" ;
+                        doap:created      "2012-02-XX" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added get_graphs as an alias for get_contexts in RDF::Trine::Model and RDF:Trine::Model::Dataset." ;
+        				asc:addition    "Added turtle command line tools turtle_parse.pl, turtle_benchmark.pl, and turtle_tokenize.pl." ;
+                        asc:update      "Changed RT:spog:* keys to be a hash with node ID data for each quad position in Redis store." ;
+                        asc:update      "Treat data passed into parsers as characters (github pull request #82 from Tony Cook)." ;
+                        asc:update      "Improve the error message when trying to parse an empty RDF/XML string (Kjetil Kjernsmo)." ;
+                        asc:update      "Test to see if DBD::Pg is installed in test suite (github pull request #78 from Kjetil Kjernsmo)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.003.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.002.tar.gz> ;
