@@ -9,8 +9,8 @@ use Data::Dumper;
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Namespace qw(rdf);
 
+my $base	= iri('http://example/base/');
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle-2013' );
-
 my $model	= RDF::Trine::Model->temporary_model;
 my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
 RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
@@ -57,11 +57,11 @@ foreach my $test (@syntax_good) {
 note("Negative Syntax Tests");
 foreach my $test (@syntax_bad) {
 	my ($test_file)	= $model->objects($test, $mf->action);
-	my $file	= URI->new($test_file->uri)->file;
+	my $url		= URI->new($test_file->uri);
+	my $file	= $url->file;
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	throws_ok {
-		my $url	= 'file://' . $file;
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} 'RDF::Trine::Error::ParserError', $test;
@@ -69,12 +69,19 @@ foreach my $test (@syntax_bad) {
 
 note("Positive Evaluation Tests");
 foreach my $test (@eval_good) {
-	local $TODO	= 'positive eval tests not implemented';
 	my ($test_file)	= $model->objects($test, $mf->action);
-	my $file	= URI->new($test_file->uri)->file;
-	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+	my ($res_file)	= $model->objects($test, $mf->result);
+	my $url			= URI->new($test_file->uri);
+	my $file		= $url->file;
+	open( my $fh, '<:encoding(UTF-8)', $file ) or die "$!: $file";
+	my $nt			= URI->new($res_file->uri)->file;
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
-	fail($test);
+	my $parser	= RDF::Trine::Parser::Turtle->new();
+	my $model	= RDF::Trine::Model->temporary_model;
+	my $tbase	= URI->new_abs( $test, $base->uri_value )->as_string;
+	warn 'computing test base with: ' . Dumper([$test, $base->uri_value], $tbase);
+	$parser->parse_file_into_model( $tbase, $fh, $model );
+	compare($model, URI->new($res_file->uri), $base, $test);
 }
 
 note("Negative Evaluation Tests");
@@ -90,8 +97,6 @@ foreach my $test (@eval_bad) {
 	} 'RDF::Trine::Error::ParserError', $test;
 }
 
-# TODO: handle tests in @eval_good and @eval_bad
-
 done_testing();
 
 # sub _SILENCE {
@@ -102,3 +107,24 @@ done_testing();
 # 		"log4perl.appender.screen.layout"	=> 'Log::Log4perl::Layout::SimpleLayout',
 # 	} );
 # }
+
+
+
+sub compare {
+	my $model	= shift;
+	my $url		= shift;
+	my $base	= shift;
+	my $name	= shift;
+	my $parser	= RDF::Trine::Parser::NTriples->new();
+	my $emodel	= RDF::Trine::Model->temporary_model;
+	my $tbase	= URI->new_abs( $name, $base->uri_value )->as_string;
+	warn 'computing expected base with: ' . Dumper([$name, $base->uri_value], $tbase);
+	my $file		= $url->file;
+	open( my $fh, '<:encoding(UTF-8)', $file );
+	$parser->parse_file_into_model( $tbase, $fh, $emodel );
+	
+	my $got		= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $model );
+	my $expect	= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $emodel );
+	
+	is( $got, $expect, "expected triples: $name" );
+}
