@@ -68,6 +68,11 @@ sub new {
 	if ($uri eq &RDF::Trine::NIL_GRAPH) {
 		return RDF::Trine::Node::Nil->new();
 	}
+	
+	if ($uri =~ /([<>" {}|\\^`])/) {
+		throw RDF::Trine::Error -text => sprintf("Bad IRI character: '%s' (0x%x)", $1, ord($1));
+	}
+	
 	return bless( [ 'URI', $uri ], $class );
 }
 
