@@ -201,13 +201,13 @@ sub get_token {
 			if ($self->{buffer} =~ /^a(?!:)\b/) {
 				$self->_get_char;
 				return $self->new_token(A);
-			} elsif ($self->{buffer} =~ /^(?:true|false)\b/) {
+			} elsif ($self->{buffer} =~ /^(?:true|false)(?!:)\b/) {
 				my $bool	= $self->_read_length($+[0]);
 				return $self->new_token(BOOLEAN, $bool);
-			} elsif ($self->{buffer} =~ /^BASE\b/i) {
+			} elsif ($self->{buffer} =~ /^BASE(?!:)\b/i) {
 				$self->_read_length(4);
 				return $self->new_token(BASE);
-			} elsif ($self->{buffer} =~ /^PREFIX\b/i) {
+			} elsif ($self->{buffer} =~ /^PREFIX(?!:)\b/i) {
 				$self->_read_length(6);
 				return $self->new_token(PREFIX);
 			} else {
