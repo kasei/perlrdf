@@ -79,7 +79,6 @@ foreach my $test (@eval_good) {
 	my $parser	= RDF::Trine::Parser::Turtle->new();
 	my $model	= RDF::Trine::Model->temporary_model;
 	my $tbase	= URI->new_abs( $test, $base->uri_value )->as_string;
-	warn 'computing test base with: ' . Dumper([$test, $base->uri_value], $tbase);
 	$parser->parse_file_into_model( $tbase, $fh, $model );
 	compare($model, URI->new($res_file->uri), $base, $test);
 }
@@ -118,7 +117,6 @@ sub compare {
 	my $parser	= RDF::Trine::Parser::NTriples->new();
 	my $emodel	= RDF::Trine::Model->temporary_model;
 	my $tbase	= URI->new_abs( $name, $base->uri_value )->as_string;
-	warn 'computing expected base with: ' . Dumper([$name, $base->uri_value], $tbase);
 	my $file		= $url->file;
 	open( my $fh, '<:encoding(UTF-8)', $file );
 	$parser->parse_file_into_model( $tbase, $fh, $emodel );
