@@ -42,7 +42,7 @@ try {
 } catch (RDF::Trine::Error::ParserError::Tokenized $e) {
 	$e->explain( $fh );
 	exit;
-} otherwise {}
+} catch {}
 
 my $elapsed	= tv_interval( $t0, [gettimeofday]);
 print STDERR sprintf("\n%d triples parsed in %.3fs (%.1f T/s)\n", $count, $elapsed, ($count/$elapsed));
