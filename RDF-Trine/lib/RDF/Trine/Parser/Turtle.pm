@@ -199,6 +199,7 @@ sub _statement {
 		when (PREFIX) {
 			$t	= $self->_get_token_type($l, PREFIXNAME);
 			my $name	= $t->value;
+			$name		=~ s/:$//;
 			$t	= $self->_get_token_type($l, IRI);
 			my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 			my $iri	= $r->uri_value;
@@ -465,6 +466,7 @@ sub _token_to_node {
 		}
 		when (PREFIXNAME) {
 			my ($ns, $local)	= @{ $t->args };
+			$ns		=~ s/:$//;
 			my $prefix			= $self->{map}->namespace_uri($ns);
 			unless (blessed($prefix)) {
 				$self->_throw_error("Use of undeclared prefix '$ns'", $t);

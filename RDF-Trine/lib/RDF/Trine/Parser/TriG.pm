@@ -84,6 +84,7 @@ sub _statement {
 		when (PREFIX) {
 			$t	= $self->_get_token_type($l, PREFIXNAME);
 			my $name	= $t->value;
+			$name		=~ s/:$//;
 			$t	= $self->_get_token_type($l, IRI);
 			my $iri	= $t->value;
 			$t	= $self->_get_token_type($l, DOT);
