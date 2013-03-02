@@ -12,7 +12,7 @@ use RDF::Trine::Namespace qw(rdf);
 my $base	= iri('http://example/base/');
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle-2013' );
 my $model	= RDF::Trine::Model->temporary_model;
-my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
+my $file	= URI::file->new( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
 RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
