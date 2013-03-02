@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 1.003
+This document describes RDF::Trine::Model version 1.004
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.003';
+	$VERSION	= '1.004';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -644,6 +644,8 @@ sub _get_pattern {
 	}
 }
 
+=item C<< get_graphs >>
+
 =item C<< get_contexts >>
 
 Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
@@ -662,6 +664,7 @@ sub get_contexts {
 		return $iter;
 	}
 }
+*get_graphs = \&get_contexts;
 
 =item C<< as_stream >>
 

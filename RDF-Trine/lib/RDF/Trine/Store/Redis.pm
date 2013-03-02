@@ -4,7 +4,7 @@ RDF::Trine::Store::Redis - RDF Store for Redis
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redis version 1.003
+This document describes RDF::Trine::Store::Redis version 1.004
 
 =head1 SYNOPSIS
 
@@ -29,6 +29,7 @@ use Cache::LRU;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
+use List::MoreUtils qw(zip);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -42,7 +43,7 @@ our $CACHING	= 1;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.003";
+	$VERSION	= "1.004";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -253,7 +254,8 @@ sub add_statement {
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
 		my @ids		= map { $self->_get_or_set_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
-		$r->set( "RT:spog:$key", 1 );
+		my @keys	= qw(s p o g);
+		$r->hmset( "RT:spog:$key", zip @keys, @ids );
 		$r->sadd( "RT:sset:$ids[0]", $key );
 		$r->sadd( "RT:pset:$ids[1]", $key );
 		$r->sadd( "RT:oset:$ids[2]", $key );

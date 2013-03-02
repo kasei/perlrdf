@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 1.003
+This document describes RDF::Trine::Parser::Turtle version 1.004
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use RDF::Trine::Parser::Turtle::Token;
 
 our $VERSION;
 BEGIN {
-	$VERSION				= '1.003';
+	$VERSION				= '1.004';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -86,6 +86,8 @@ sub parse {
 	local($self->{baseURI})	= shift;
 	my $string				= shift;
 	local($self->{handle_triple}) = shift;
+	require Encode;
+	$string = Encode::encode("utf-8", $string);
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	$self->_parse($l);
