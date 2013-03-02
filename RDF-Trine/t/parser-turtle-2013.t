@@ -8,6 +8,7 @@ use File::Spec;
 use Data::Dumper;
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Namespace qw(rdf);
+use URI::file;
 
 my $base	= iri('http://example/base/');
 my $path	= File::Spec->catfile( $Bin, 'data', 'turtle-2013' );
