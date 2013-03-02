@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.004" ;
-                        doap:created      "2012-02-XX" ;
+                        doap:created      "2012-03-02" ;
                         ];
         asc:changes     [
         				asc:addition    "Added get_graphs as an alias for get_contexts in RDF::Trine::Model and RDF:Trine::Model::Dataset." ;

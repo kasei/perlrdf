@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.004 (2013-02-XX)
+  Version 1.004 (2013-03-02)
 
      * API CHANGES
          Changed RT:spog:* keys to be a hash with node ID data for each quad position in Redis store.
