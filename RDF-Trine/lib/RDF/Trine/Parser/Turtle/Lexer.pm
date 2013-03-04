@@ -501,6 +501,8 @@ sub _get_double_literal {
 						when('r'){ $string .= "\r" }
 						when('t'){ $string .= "\t" }
 						when('n'){ $string .= "\n" }
+						when('b'){ $string .= "\b" }
+						when('f'){ $string .= "\f" }
 						when('>'){ $string .= ">" }
 						when('U'){
 							my $codepoint	= $self->_read_length(8);
@@ -542,6 +544,8 @@ sub _get_double_literal {
 					when('r'){ $string .= "\r" }
 					when('t'){ $string .= "\t" }
 					when('n'){ $string .= "\n" }
+					when('b'){ $string .= "\b" }
+					when('f'){ $string .= "\f" }
 					when('>'){ $string .= ">" }
 					when('U'){
 						my $codepoint	= $self->_read_length(8);
@@ -613,6 +617,8 @@ sub _get_single_literal {
 						when('r'){ $string .= "\r" }
 						when('t'){ $string .= "\t" }
 						when('n'){ $string .= "\n" }
+						when('b'){ $string .= "\b" }
+						when('f'){ $string .= "\f" }
 						when('>'){ $string .= ">" }
 						when('U'){
 							my $codepoint	= $self->_read_length(8);
@@ -654,6 +660,8 @@ sub _get_single_literal {
 					when('r'){ $string .= "\r" }
 					when('t'){ $string .= "\t" }
 					when('n'){ $string .= "\n" }
+					when('b'){ $string .= "\b" }
+					when('f'){ $string .= "\f" }
 					when('>'){ $string .= ">" }
 					when('U'){
 						my $codepoint	= $self->_read_length(8);
