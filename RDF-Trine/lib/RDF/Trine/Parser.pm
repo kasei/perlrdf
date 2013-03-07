@@ -355,7 +355,7 @@ sub parse_file_into_model {
 
 Parses all data read from the filehandle or file C<< $fh >>, using the given
 C<< $base_uri >>. If C<< $fh >> is a filename, this method can guess the
-associated parse. For each RDF statement parses C<< $handler >> is called.
+associated parse. For each RDF statement parsed, C<< $handler->( $st ) >> is called.
 
 =cut
 

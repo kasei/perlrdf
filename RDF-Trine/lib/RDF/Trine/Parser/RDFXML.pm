@@ -179,6 +179,57 @@ sub parse {
 	}
 }
 
+=item C<< parse_file ( $base_uri, $fh, \&handler ) >>
+
+Parses all data read from the filehandle C<< $fh >>, using the given
+C<< $base_uri >>. For each RDF statement parsed, C<< $handler->( $st ) >> is called.
+
+Note: The filehandle should NOT be opened with the ":encoding(UTF-8)" IO layer,
+as this is known to cause problems for XML::SAX.
+
+=cut
+
+sub parse_file {
+	my $self	= shift;
+	my $base	= shift;
+	my $fh		= shift;
+	my $handler	= shift;
+	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	if ($base) {
+		unless (blessed($base)) {
+			$base	= RDF::Trine::Node::Resource->new( $base );
+		}
+		$self->{saxhandler}->push_base( $base );
+	}
+	
+	if ($handler) {
+		$self->{saxhandler}->set_handler( $handler );
+	}
+	
+	eval {
+		$self->{parser}->parse_file( $fh );
+	};
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
+	}
+	
+	my $nodes	= $self->{saxhandler}{nodes};
+	if ($nodes and scalar(@$nodes)) {
+		warn Dumper($nodes);
+		throw RDF::Trine::Error::ParserError -text => "node stack isn't empty after parse";
+	}
+	my $expect	= $self->{saxhandler}{expect};
+	if ($expect and scalar(@$expect) > 2) {
+		warn Dumper($expect);
+		throw RDF::Trine::Error::ParserError -text => "expect stack isn't empty after parse";
+	}
+}
+
 
 package RDF::Trine::Parser::RDFXML::SAXHandler;
 
