@@ -126,7 +126,7 @@ sub _graph {
 	}
 	
 	if ($t->type != LBRACE) {
-		$self->throw_error("Expecting LBRACE but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting LBRACE but got " . decrypt_constant($type), $t, $l);
 	}
 	
 	$t		= $self->_next_nonws($l);
@@ -189,7 +189,7 @@ sub _triple {
 			$self->_assert_list($subj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
-		$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
 	} else {
 		$subj	= $self->_token_to_node($t);
 	}
