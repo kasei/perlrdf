@@ -452,12 +452,12 @@ sub get_pattern {
 				} elsif ($i1current->{ $shrkey }->compare( $i2current->{ $shrkey } ) == -1) {
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i1current	= $i1->next;
 				} else { # ($i1current->{ $shrkey } > $i2current->{ $shrkey })
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i2current	= $i2->next;
 				}
 			}
