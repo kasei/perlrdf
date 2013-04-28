@@ -363,6 +363,7 @@ sub _get_pname {
 	if ($self->{buffer} =~ $r_PNAME_LN) {
 		my $ln	= $self->_read_length($+[0]);
 		my ($ns,$local)	= ($ln =~ /^([^:]*:)(.*)$/);
+		no warnings 'uninitialized';
 		$local	=~ s{\\([-~.!&'()*+,;=:/?#@%_\$])}{$1}g;
 		return $self->new_token(PREFIXNAME, $ns, $local);
 	} else {
