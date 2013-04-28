@@ -302,12 +302,12 @@ END
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 <rdf:Description xmlns:ns1="http://example.com/" rdf:about="http://example.com/doc">
-	<ns1:maker rdf:nodeID="a"/>
 	<ns1:creator rdf:nodeID="a"/>
+	<ns1:maker rdf:nodeID="a"/>
 </rdf:Description>
 <rdf:Description xmlns:ns1="http://example.com/" rdf:nodeID="a">
-	<ns1:name xml:lang="en">Alice</ns1:name>
 	<ns1:homepage rdf:resource="http://example.com/"/>
+	<ns1:name xml:lang="en">Alice</ns1:name>
 </rdf:Description>
 </rdf:RDF>
 END

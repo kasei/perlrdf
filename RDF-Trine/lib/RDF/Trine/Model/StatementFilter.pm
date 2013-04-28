@@ -7,7 +7,7 @@ RDF::Trine::Model::StatementFilter - Model for filtering statements based on a u
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::StatementFilter version 1.002
+This document describes RDF::Trine::Model::StatementFilter version 1.004
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.002';
+	$VERSION	= '1.004';
 }
 
 ################################################################################

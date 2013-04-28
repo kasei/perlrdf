@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 1.002
+This document describes RDF::Trine::Store::Memory version 1.004
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.002";
+	$VERSION	= "1.004";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -247,7 +247,7 @@ sub _get_statements_triple {
 	my $match_set	= Set::Scalar->new( 0 .. $#{ $self->{statements} } );
 	if ($bound) {
 # 		warn "getting $bound-bound statements";
-		my @pos		= keys %bound;
+		my @pos		= sort { $a <=> $b } keys %bound;
 		my @names	= @pos_names[ @pos ];
 # 		warn "\tbound nodes are: " . join(', ', @names) . "\n";
 		
@@ -279,9 +279,11 @@ sub _get_statements_triple {
 	
 	my $open	= 1;
 	my %seen;
+	
+	my @members	= sort { $a <=> $b } $match_set->members;
 	my $sub	= sub {
 		while (1) {
-			my $e = $match_set->each();
+			my $e = shift(@members);
 			unless (defined($e)) {
 				$open	= 0;
 				return;

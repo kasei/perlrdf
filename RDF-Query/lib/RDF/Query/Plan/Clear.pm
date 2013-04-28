@@ -82,7 +82,7 @@ sub execute ($) {
 			if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
 				$context->model->remove_statements( undef, undef, undef, undef );
 			} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
-				my $citer	= $context->model->get_contexts;
+				my $citer	= $context->model->get_graphs;
 				while (my $graph = $citer->next) {
 					$context->model->remove_statements( undef, undef, undef, $graph );
 				}

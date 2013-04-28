@@ -66,7 +66,7 @@ sub execute ($) {
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.namedgraph");
 	$l->trace('executing named graph plan');
 	my $model	= $context->model;
-	my $graphs	= $model->get_contexts;
+	my $graphs	= $model->get_graphs;
 	$self->[0]{graphs}	= $graphs;
 	$self->[0]{bound}	= $context->bound || {};
 	$self->[0]{context}	= $context;

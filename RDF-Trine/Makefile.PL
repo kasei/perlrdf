@@ -14,37 +14,37 @@ build_requires		'Test::JSON'					=> 0;
 
 perl_version		'5.010';
 
-requires			'Moose'							=> 2;
-requires			'MooseX::ArrayRef'				=> 0;
-requires			'Module::Load::Conditional'		=> 0.38;
-requires			'Data::UUID'					=> 0;
-requires			'DBI'							=> 0;
-requires			'DBIx::Connector'				=> 0;
-requires			'DBD::SQLite'					=> 1.14;
-requires			'Digest::MD5'					=> 0;
-requires			'Digest::SHA'					=> 0;
-requires			'Error'							=> 0;
-requires			'HTTP::Negotiate'				=> 0;
-requires			'JSON'							=> 2;
-requires			'LWP::UserAgent'				=> 0;
-requires			'List::Util'					=> 0;
-requires			'Log::Log4perl'					=> 0;
-requires			'Math::BigInt'					=> 0;
-requires			'Algorithm::Combinatorics'		=> 0;
-requires			'Scalar::Util'					=> 1.23;
-requires			'Set::Scalar'					=> 0;
-requires			'Storable'						=> 0;
-requires			'Text::CSV'						=> 0;
-requires			'Text::Table'					=> 0;
-requires			'URI'							=> 1.52;
-requires			'XML::CommonNS'					=> 0.04;
-requires			'XML::Namespace'				=> 0;
-requires			'XML::SAX'						=> 0.96;
-requires			'Time::HiRes'					=> 0;
-requires			'Package::DeprecationManager'	=> 0;
+requires			'Moose'						=> 2;
+requires			'MooseX::ArrayRef'			=> 0;
+requires			'Module::Load::Conditional'	=> 0.38;
+requires			'Data::UUID'				=> 0;
+requires			'DBI'						=> 0;
+requires			'DBIx::Connector'			=> 0;
+requires			'DBD::SQLite'				=> 1.14;
+requires			'Digest::MD5'				=> 0;
+requires			'Digest::SHA'				=> 0;
+requires			'Error'						=> 0;
+requires			'TryCatch'					=> 0;
+requires			'HTTP::Negotiate'			=> 0;
+requires			'JSON'						=> 2;
+requires			'LWP::UserAgent'			=> 0;
+requires			'List::Util'				=> 0;
+requires			'Log::Log4perl'				=> 0;
+requires			'Math::BigInt'				=> 0;
+requires			'Algorithm::Combinatorics'	=> 0;
+requires			'Scalar::Util'				=> 1.24;
+requires			'Set::Scalar'				=> 0;
+requires			'Storable'					=> 0;
+requires			'Text::CSV'					=> 0;
+requires			'Text::Table'				=> 0;
+requires			'URI'						=> 1.52;
+requires			'XML::CommonNS'				=> 0.04;
+requires			'XML::Namespace'			=> 0;
+requires			'XML::SAX'					=> 0.96;
+requires			'Time::HiRes'				=> 0;
 
-recommends			'XML::LibXML'					=> 1.70;
-recommends			'Term::ANSIColor'				=> 0;
+recommends			'XML::LibXML'				=> 1.70;
+recommends			'Term::ANSIColor'			=> 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",

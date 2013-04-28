@@ -7,7 +7,7 @@ RDF::Trine::Model::Dataset - Model for SPARQL datasets
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Dataset version 1.002
+This document describes RDF::Trine::Model::Dataset version 1.004
 
 =head1 STATUS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Model;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.002';
+	$VERSION	= '1.004';
 }
 
 ################################################################################
@@ -378,6 +378,7 @@ sub get_graphs {
 		return RDF::Trine::Iterator->new( \@nodes );
 	}
 }
+
 sub get_contexts {
 	my $self	= shift;
 	deprecated(

@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle - Turtle RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle version 1.002
+This document describes RDF::Trine::Parser::Turtle version 1.004
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use RDF::Trine::Parser::Turtle::Token;
 
 our $VERSION;
 BEGIN {
-	$VERSION				= '1.002';
+	$VERSION				= '1.004';
 	foreach my $ext (qw(ttl)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
 	}
@@ -85,7 +85,10 @@ sub parse {
 	my $self	= shift;
 	local($self->{baseURI})	= shift;
 	my $string				= shift;
+# 	warn 'parse() content: ' . Dumper($string);	# XXX
 	local($self->{handle_triple}) = shift;
+	require Encode;
+	$string = Encode::encode("utf-8", $string);
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	$self->_parse($l);
@@ -176,7 +179,10 @@ sub _get_token_type {
 	my $l		= shift;
 	my $type	= shift;
 	my $t		= $self->_next_nonws($l);
-	return unless ($t);
+	unless ($t) {
+		$l->_throw_error(sprintf("Expecting %s but got EOF", decrypt_constant($type)));
+		return;
+	}
 	unless ($t->type eq $type) {
 		$self->_throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
 	}
@@ -193,9 +199,14 @@ sub _statement {
 		when (PREFIX) {
 			$t	= $self->_get_token_type($l, PREFIXNAME);
 			my $name	= $t->value;
+			$name		=~ s/:$//;
 			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
-			$t	= $self->_get_token_type($l, DOT);
+			my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+			my $iri	= $r->uri_value;
+			$t	= $self->_next_nonws($l);
+			if ($t and $t->type != DOT) {
+				$self->_unget_token($t);
+			}
 			$self->{map}->add_mapping( $name => $iri );
 			if (my $ns = $self->{namespaces}) {
 				unless ($ns->namespace_uri($name)) {
@@ -205,8 +216,12 @@ sub _statement {
 		}
 		when (BASE) {
 			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
-			$t	= $self->_get_token_type($l, DOT);
+			my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+			my $iri	= $r->uri_value;
+			$t	= $self->_next_nonws($l);
+			if ($t and $t->type != DOT) {
+				$self->_unget_token($t);
+			}
 			$self->{baseURI}	= $iri;
 		}
 		default {
@@ -223,7 +238,9 @@ sub _triple {
 	my $type	= $t->type;
 	# subject
 	my $subj;
+	my $bnode_plist	= 0;
 	if ($type == LBRACKET) {
+		$bnode_plist	= 1;
 		$subj	= RDF::Trine::Node::Blank->new();
 		my $t	= $self->_next_nonws($l);
 		if ($t->type != RBRACKET) {
@@ -254,10 +271,19 @@ sub _triple {
 	} else {
 		$subj	= $self->_token_to_node($t);
 	}
-# 	warn "Subject: $subj\n";
+# 	warn "Subject: $subj\n";	# XXX
 	
-	#predicateObjectList
-	$self->_predicateObjectList($l, $subj);
+	if ($bnode_plist) {
+		#predicateObjectList?
+		$t	= $self->_next_nonws($l);
+		$self->_unget_token($t);
+		if ($t->type != DOT) {
+			$self->_predicateObjectList($l, $subj);
+		}
+	} else {
+		#predicateObjectList
+		$self->_predicateObjectList($l, $subj);
+	}
 }
 
 sub _assert_list {
@@ -290,7 +316,13 @@ sub _predicateObjectList {
 		$t		= $self->_next_nonws($l);
 		last unless ($t);
 		if ($t->type == SEMICOLON) {
+			my $sc	= $t;
+SEMICOLON_REPEAT:			
 			$t		= $self->_next_nonws($l);
+			unless ($t) {
+				$l->_throw_error("Expecting token after semicolon, but got EOF");
+			}
+			goto SEMICOLON_REPEAT if ($t->type == SEMICOLON);
 			if ($t->type == IRI or $t->type == PREFIXNAME or $t->type == A) {
 				next;
 			} else {
@@ -309,6 +341,7 @@ sub _objectList {
 	my $l		= shift;
 	my $subj	= shift;
 	my $pred	= shift;
+# 	warn "objectList: " . Dumper($subj, $pred);	# XXX
 	while (1) {
 		my $t		= $self->_next_nonws($l);
 		last unless ($t);
@@ -316,7 +349,7 @@ sub _objectList {
 		$self->_assert_triple($subj, $pred, $obj);
 		
 		$t	= $self->_next_nonws($l);
-		if ($t->type == COMMA) {
+		if ($t and $t->type == COMMA) {
 			next;
 		} else {
 			$self->_unget_token($t);
@@ -380,10 +413,10 @@ sub _object {
 			}
 			$self->_assert_list($obj, @objects);
 		}
-	} elsif (not($type==IRI or $type==PREFIXNAME or $type==A or $type==STRING1D or $type==STRING3D or $type==BNODE or $type==INTEGER or $type==DECIMAL or $type==DOUBLE or $type==BOOLEAN)) {
+	} elsif (not($type==IRI or $type==PREFIXNAME or $type==STRING1D or $type==STRING3D or $type==STRING1S or $type==STRING3S or $type==BNODE or $type==INTEGER or $type==DECIMAL or $type==DOUBLE or $type==BOOLEAN)) {
 		$self->_throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
 	} else {
-		if ($type==STRING1D or $type==STRING3D) {
+		if ($type==STRING1D or $type==STRING3D or $type==STRING1S or $type==STRING3S) {
 			my $value	= $t->value;
 			my $t		= $self->_next_nonws($l);
 			my $dt;
@@ -433,6 +466,7 @@ sub _token_to_node {
 		}
 		when (PREFIXNAME) {
 			my ($ns, $local)	= @{ $t->args };
+			$ns		=~ s/:$//;
 			my $prefix			= $self->{map}->namespace_uri($ns);
 			unless (blessed($prefix)) {
 				$self->_throw_error("Use of undeclared prefix '$ns'", $t);
@@ -444,6 +478,9 @@ sub _token_to_node {
 			return RDF::Trine::Node::Blank->new($t->value);
 		}
 		when (STRING1D) {
+			return RDF::Trine::Node::Literal->new($t->value);
+		}
+		when (STRING1S) {
 			return RDF::Trine::Node::Literal->new($t->value);
 		}
 		default {

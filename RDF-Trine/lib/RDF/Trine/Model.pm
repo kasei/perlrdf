@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 1.002
+This document describes RDF::Trine::Model version 1.004
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.002';
+	$VERSION	= '1.004';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -668,6 +668,7 @@ sub get_graphs {
 		return $iter;
 	}
 }
+
 sub get_contexts {
 	my $self	= shift;
 	deprecated(
@@ -943,18 +944,26 @@ sub bounded_description {
 # 				warn "CBD handling node " . $n->sse . "\n";
 				next if ($seen{ $n->sse });
 				try {
-					my $sts	= $self->get_statements( $n );
-					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
-# 					warn "+ " . $_->sse . "\n" for (@s);
-					push(@statements, @s);
+					my $st		= RDF::Trine::Statement->new( $n, map { variable($_) } qw(p o) );
+					my $pat		= RDF::Trine::Pattern->new( $st );
+					my $sts		= $self->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
+# 					my $sts		= $stream->as_statements( qw(s p o) );
+# 					my $sts	= $self->get_statements( $n );
+					my @s	= grep { not($seen{$_->{'o'}->sse}) } $sts->get_all;
+# 					warn "+ " . $_->as_string . "\n" for (@s);
+					push(@statements, map { RDF::Trine::Statement->new($n, @{ $_ }{qw(p o)}) } @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
 					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
 				};
 				try {
-					my $sts	= $self->get_statements( undef, undef, $n );
-					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
-# 					warn "- " . $_->sse . "\n" for (@s);
-					push(@statements, @s);
+					my $st		= RDF::Trine::Statement->new( (map { variable($_) } qw(s p)), $n );
+					my $pat		= RDF::Trine::Pattern->new( $st );
+					my $sts		= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC) ] );
+# 					my $sts		= $stream->as_statements( qw(s p o) );
+# 					my $sts	= $self->get_statements( undef, undef, $n );
+					my @s	= grep { not($seen{$_->{'s'}->sse}) and not($_->{'s'}->equal($n)) } $sts->get_all;
+# 					warn "- " . $_->as_string . "\n" for (@s);
+					push(@statements, map { RDF::Trine::Statement->new(@{ $_ }{qw(s p)}, $n) } @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
 					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
 				};
