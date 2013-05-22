@@ -37,6 +37,7 @@ use base qw(RDF::Trine::Parser);
 
 use URI;
 use Carp;
+use Encode;
 use XML::SAX;
 use Data::Dumper;
 use Log::Log4perl;
@@ -160,6 +161,7 @@ sub parse {
 		if (ref($string)) {
 			$self->{parser}->parse_file( $string );
 		} else {
+			$string	= encode('UTF-8', $string, Encode::FB_CROAK);
 			$self->{parser}->parse_string( $string );
 		}
 	};
