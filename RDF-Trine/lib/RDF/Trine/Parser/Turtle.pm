@@ -194,41 +194,40 @@ sub _statement {
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
-	given ($type) {
 # 		when (WS) {}
-		when (PREFIX) {
-			$t	= $self->_get_token_type($l, PREFIXNAME);
-			my $name	= $t->value;
-			$name		=~ s/:$//;
-			$t	= $self->_get_token_type($l, IRI);
-			my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
-			my $iri	= $r->uri_value;
-			$t	= $self->_next_nonws($l);
-			if ($t and $t->type != DOT) {
-				$self->_unget_token($t);
-			}
-			$self->{map}->add_mapping( $name => $iri );
-			if (my $ns = $self->{namespaces}) {
-				unless ($ns->namespace_uri($name)) {
-					$ns->add_mapping( $name => $iri );
-				}
-			}
+	if ($type eq PREFIX) {
+		$t	= $self->_get_token_type($l, PREFIXNAME);
+		my $name	= $t->value;
+		$name		=~ s/:$//;
+		$t	= $self->_get_token_type($l, IRI);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		$t	= $self->_next_nonws($l);
+		if ($t and $t->type != DOT) {
+			$self->_unget_token($t);
 		}
-		when (BASE) {
-			$t	= $self->_get_token_type($l, IRI);
-			my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
-			my $iri	= $r->uri_value;
-			$t	= $self->_next_nonws($l);
-			if ($t and $t->type != DOT) {
-				$self->_unget_token($t);
+		$self->{map}->add_mapping( $name => $iri );
+		if (my $ns = $self->{namespaces}) {
+			unless ($ns->namespace_uri($name)) {
+				$ns->add_mapping( $name => $iri );
 			}
-			$self->{baseURI}	= $iri;
-		}
-		default {
-			$self->_triple( $l, $t );
-			$t	= $self->_get_token_type($l, DOT);
 		}
 	}
+	elsif ($type eq BASE) {
+		$t	= $self->_get_token_type($l, IRI);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		$t	= $self->_next_nonws($l);
+		if ($t and $t->type != DOT) {
+			$self->_unget_token($t);
+		}
+		$self->{baseURI}	= $iri;
+	}
+	else {
+		$self->_triple( $l, $t );
+		$t	= $self->_get_token_type($l, DOT);
+	}
+# 	}
 }
 
 sub _triple {
@@ -445,47 +444,45 @@ sub _token_to_node {
 	my $self	= shift;
 	my $t		= shift;
 	my $type	= shift || $t->type;
-	given ($type) {
-		when (A) {
-			return $rdf->type;
+	if ($type eq A) {
+		return $rdf->type;
+	}
+	elsif ($type eq IRI) {
+		return RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+	}
+	elsif ($type eq INTEGER) {
+		return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->integer);
+	}
+	elsif ($type eq DECIMAL) {
+		return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->decimal);
+	}
+	elsif ($type eq DOUBLE) {
+		return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->double);
+	}
+	elsif ($type eq BOOLEAN) {
+		return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->boolean);
+	}
+	elsif ($type eq PREFIXNAME) {
+		my ($ns, $local)	= @{ $t->args };
+		$ns		=~ s/:$//;
+		my $prefix			= $self->{map}->namespace_uri($ns);
+		unless (blessed($prefix)) {
+			$self->_throw_error("Use of undeclared prefix '$ns'", $t);
 		}
-		when (IRI) {
-			return RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
-		}
-		when (INTEGER) {
-			return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->integer);
-		}
-		when (DECIMAL) {
-			return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->decimal);
-		}
-		when (DOUBLE) {
-			return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->double);
-		}
-		when (BOOLEAN) {
-			return RDF::Trine::Node::Literal->new($t->value, undef, $xsd->boolean);
-		}
-		when (PREFIXNAME) {
-			my ($ns, $local)	= @{ $t->args };
-			$ns		=~ s/:$//;
-			my $prefix			= $self->{map}->namespace_uri($ns);
-			unless (blessed($prefix)) {
-				$self->_throw_error("Use of undeclared prefix '$ns'", $t);
-			}
-			my $iri				= $prefix->uri($local);
-			return $iri;
-		}
-		when (BNODE) {
-			return RDF::Trine::Node::Blank->new($t->value);
-		}
-		when (STRING1D) {
-			return RDF::Trine::Node::Literal->new($t->value);
-		}
-		when (STRING1S) {
-			return RDF::Trine::Node::Literal->new($t->value);
-		}
-		default {
-			$self->_throw_error("Converting $type to node not implemented", $t);
-		}
+		my $iri				= $prefix->uri($local);
+		return $iri;
+	}
+	elsif ($type eq BNODE) {
+		return RDF::Trine::Node::Blank->new($t->value);
+	}
+	elsif ($type eq STRING1D) {
+		return RDF::Trine::Node::Literal->new($t->value);
+	}
+	elsif ($type eq STRING1S) {
+		return RDF::Trine::Node::Literal->new($t->value);
+	}
+	else {
+		$self->_throw_error("Converting $type to node not implemented", $t);
 	}
 }
 
