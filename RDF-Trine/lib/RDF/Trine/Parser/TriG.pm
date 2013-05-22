@@ -75,36 +75,34 @@ sub _statement {
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
-	given ($type) {
-		when (LBRACE) { return $self->_graph($l, $t); }
-		when (EQUALS) { return $self->_graph($l, $t); }
-		when (IRI) { return $self->_graph($l, $t); }
-		when (PREFIXNAME) { return $self->_graph($l, $t); }
-		when (WS) {}
-		when (PREFIX) {
-			$t	= $self->_get_token_type($l, PREFIXNAME);
-			my $name	= $t->value;
-			$name		=~ s/:$//;
-			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
-			$t	= $self->_get_token_type($l, DOT);
-			$self->{map}->add_mapping( $name => $iri );
-			if (my $ns = $self->{namespaces}) {
-				unless ($ns->namespace_uri($name)) {
-					$ns->add_mapping( $name => $iri );
-				}
+	if ($type == LBRACE) { return $self->_graph($l, $t); }
+	elsif ($type == EQUALS) { return $self->_graph($l, $t); }
+	elsif ($type == IRI) { return $self->_graph($l, $t); }
+	elsif ($type == PREFIXNAME) { return $self->_graph($l, $t); }
+	elsif ($type == WS) {}
+	elsif ($type == PREFIX) {
+		$t	= $self->_get_token_type($l, PREFIXNAME);
+		my $name	= $t->value;
+		$name		=~ s/:$//;
+		$t	= $self->_get_token_type($l, IRI);
+		my $iri	= $t->value;
+		$t	= $self->_get_token_type($l, DOT);
+		$self->{map}->add_mapping( $name => $iri );
+		if (my $ns = $self->{namespaces}) {
+			unless ($ns->namespace_uri($name)) {
+				$ns->add_mapping( $name => $iri );
 			}
 		}
-		when (BASE) {
-			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
-			$t	= $self->_get_token_type($l, DOT);
-			$self->{baseURI}	= $iri;
-		}
-		default {
-			$self->_triple( $l, $t );
-			$t	= $self->_get_token_type($l, DOT);
-		}
+	}
+	elsif ($type == BASE) {
+		$t	= $self->_get_token_type($l, IRI);
+		my $iri	= $t->value;
+		$t	= $self->_get_token_type($l, DOT);
+		$self->{baseURI}	= $iri;
+	}
+	else {
+		$self->_triple( $l, $t );
+		$t	= $self->_get_token_type($l, DOT);
 	}
 }
 

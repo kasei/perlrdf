@@ -383,34 +383,26 @@ sub _get_iriref {
 		if (substr($self->{buffer}, 0, 1) eq '\\') {
 			$self->_get_char_safe('\\');
 			my $esc	= $self->_get_char;
-			given ($esc) {
-				when('\\'){ $iri .= "\\" }
-# 				when('"'){ $iri .= '"' }
-# 				when('r'){ $iri .= "\r" }
-# 				when('t'){ $iri .= "\t" }
-# 				when('n'){ $iri .= "\n" }
-# 				when('>'){ $iri .= ">" }
-				when('U'){
-					my $codepoint	= $self->_read_length(8);
-					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-					}
-					$iri .= chr(hex($codepoint));
+			if ($esc eq '\\') {
+				$iri	.= "\\";
+			} elsif ($esc eq 'U') {
+				my $codepoint	= $self->_read_length(8);
+				unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+					$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 				}
-				when('u'){
-					my $codepoint	= $self->_read_length(4);
-					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-					}
-					my $char	= chr(hex($codepoint));
-					if ($char =~ /[<>" {}|\\^`]/) {
-						$self->_throw_error(sprintf("Bad IRI character: '%s' (0x%x)", $char, ord($char)));
-					}
-					$iri .= $char;
+				$iri .= chr(hex($codepoint));
+			} elsif ($esc eq 'u') {
+				my $codepoint	= $self->_read_length(4);
+				unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+					$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 				}
-				default {
-					$self->_throw_error("Unrecognized iri escape '$esc'");
+				my $char	= chr(hex($codepoint));
+				if ($char =~ /[<>" {}|\\^`]/) {
+					$self->_throw_error(sprintf("Bad IRI character: '%s' (0x%x)", $char, ord($char)));
 				}
+				$iri .= $char;
+			} else {
+				$self->_throw_error("Unrecognized iri escape '$esc'");
 			}
 		} elsif ($self->{buffer} =~ /^[^<>\x00-\x20\\"{}|^`]+/) {
 			$iri	.= $self->_read_length($+[0]);
@@ -495,33 +487,31 @@ sub _get_double_literal {
 					my $c	= $self->_get_char;
 # 					$self->_get_char_safe('\\');
 					my $esc	= $self->_get_char_fill_buffer;
-					given ($esc) {
-						when('\\'){ $string .= "\\" }
-						when('"'){ $string .= '"' }
-						when("'"){ $string .= "'" }
-						when('r'){ $string .= "\r" }
-						when('t'){ $string .= "\t" }
-						when('n'){ $string .= "\n" }
-						when('b'){ $string .= "\b" }
-						when('f'){ $string .= "\f" }
-						when('>'){ $string .= ">" }
-						when('U'){
-							my $codepoint	= $self->_read_length(8);
-							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-							}
-							$string .= chr(hex($codepoint));
+					if ($esc eq '\\'){ $string .= "\\" }
+					elsif ($esc eq '"'){ $string .= '"' }
+					elsif ($esc eq "'"){ $string .= "'" }
+					elsif ($esc eq 'r'){ $string .= "\r" }
+					elsif ($esc eq 't'){ $string .= "\t" }
+					elsif ($esc eq 'n'){ $string .= "\n" }
+					elsif ($esc eq 'b'){ $string .= "\b" }
+					elsif ($esc eq 'f'){ $string .= "\f" }
+					elsif ($esc eq '>'){ $string .= ">" }
+					elsif ($esc eq 'U'){
+						my $codepoint	= $self->_read_length(8);
+						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
-						when('u'){
-							my $codepoint	= $self->_read_length(4);
-							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-							}
-							$string .= chr(hex($codepoint));
+						$string .= chr(hex($codepoint));
+					}
+					elsif ($esc eq 'u'){
+						my $codepoint	= $self->_read_length(4);
+						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
-						default {
-							$self->_throw_error("Unrecognized string escape '$esc'");
-						}
+						$string .= chr(hex($codepoint));
+					}
+					else {
+						$self->_throw_error("Unrecognized string escape '$esc'");
 					}
 				} else {
 					$self->{buffer}	=~ /^[^"\\]+/;
@@ -538,33 +528,31 @@ sub _get_double_literal {
 				my $c	= $self->_peek_char;
 				$self->_get_char_safe('\\');
 				my $esc	= $self->_get_char;
-				given ($esc) {
-					when('\\'){ $string .= "\\" }
-					when('"'){ $string .= '"' }
-					when("'"){ $string .= "'" }
-					when('r'){ $string .= "\r" }
-					when('t'){ $string .= "\t" }
-					when('n'){ $string .= "\n" }
-					when('b'){ $string .= "\b" }
-					when('f'){ $string .= "\f" }
-					when('>'){ $string .= ">" }
-					when('U'){
-						my $codepoint	= $self->_read_length(8);
-						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-						}
-						$string .= chr(hex($codepoint));
+				if ($esc eq '\\'){ $string .= "\\" }
+				elsif ($esc eq '"'){ $string .= '"' }
+				elsif ($esc eq "'"){ $string .= "'" }
+				elsif ($esc eq 'r'){ $string .= "\r" }
+				elsif ($esc eq 't'){ $string .= "\t" }
+				elsif ($esc eq 'n'){ $string .= "\n" }
+				elsif ($esc eq 'b'){ $string .= "\b" }
+				elsif ($esc eq 'f'){ $string .= "\f" }
+				elsif ($esc eq '>'){ $string .= ">" }
+				elsif ($esc eq 'U'){
+					my $codepoint	= $self->_read_length(8);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 					}
-					when('u'){
-						my $codepoint	= $self->_read_length(4);
-						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-						}
-						$string .= chr(hex($codepoint));
+					$string .= chr(hex($codepoint));
+				}
+				elsif ($esc eq 'u'){
+					my $codepoint	= $self->_read_length(4);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 					}
-					default {
-						$self->_throw_error("Unrecognized string escape '$esc'");
-					}
+					$string .= chr(hex($codepoint));
+				}
+				else {
+					$self->_throw_error("Unrecognized string escape '$esc'");
 				}
 			} elsif ($self->{buffer} =~ /^[^"\\]+/) {
 				$string	.= $self->_read_length($+[0]);
@@ -611,33 +599,31 @@ sub _get_single_literal {
 					my $c	= $self->_get_char;
 # 					$self->_get_char_safe('\\');
 					my $esc	= $self->_get_char_fill_buffer;
-					given ($esc) {
-						when('\\'){ $string .= "\\" }
-						when('"'){ $string .= '"' }
-						when("'"){ $string .= "'" }
-						when('r'){ $string .= "\r" }
-						when('t'){ $string .= "\t" }
-						when('n'){ $string .= "\n" }
-						when('b'){ $string .= "\b" }
-						when('f'){ $string .= "\f" }
-						when('>'){ $string .= ">" }
-						when('U'){
-							my $codepoint	= $self->_read_length(8);
-							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-							}
-							$string .= chr(hex($codepoint));
+					if ($esc eq '\\'){ $string .= "\\" }
+					elsif ($esc eq '"'){ $string .= '"' }
+					elsif ($esc eq "'"){ $string .= "'" }
+					elsif ($esc eq 'r'){ $string .= "\r" }
+					elsif ($esc eq 't'){ $string .= "\t" }
+					elsif ($esc eq 'n'){ $string .= "\n" }
+					elsif ($esc eq 'b'){ $string .= "\b" }
+					elsif ($esc eq 'f'){ $string .= "\f" }
+					elsif ($esc eq '>'){ $string .= ">" }
+					elsif ($esc eq 'U'){
+						my $codepoint	= $self->_read_length(8);
+						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
-						when('u'){
-							my $codepoint	= $self->_read_length(4);
-							unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-								$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-							}
-							$string .= chr(hex($codepoint));
+						$string .= chr(hex($codepoint));
+					}
+					elsif ($esc eq 'u'){
+						my $codepoint	= $self->_read_length(4);
+						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 						}
-						default {
-							$self->_throw_error("Unrecognized string escape '$esc'");
-						}
+						$string .= chr(hex($codepoint));
+					}
+					else {
+						$self->_throw_error("Unrecognized string escape '$esc'");
 					}
 				} else {
 					$self->{buffer}	=~ /^[^'\\]+/;
@@ -654,33 +640,31 @@ sub _get_single_literal {
 				my $c	= $self->_peek_char;
 				$self->_get_char_safe('\\');
 				my $esc	= $self->_get_char;
-				given ($esc) {
-					when('\\'){ $string .= "\\" }
-					when('"'){ $string .= '"' }
-					when("'"){ $string .= "'" }
-					when('r'){ $string .= "\r" }
-					when('t'){ $string .= "\t" }
-					when('n'){ $string .= "\n" }
-					when('b'){ $string .= "\b" }
-					when('f'){ $string .= "\f" }
-					when('>'){ $string .= ">" }
-					when('U'){
-						my $codepoint	= $self->_read_length(8);
-						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-						}
-						$string .= chr(hex($codepoint));
+				if ($esc eq '\\'){ $string .= "\\" }
+				elsif ($esc eq '"'){ $string .= '"' }
+				elsif ($esc eq "'"){ $string .= "'" }
+				elsif ($esc eq 'r'){ $string .= "\r" }
+				elsif ($esc eq 't'){ $string .= "\t" }
+				elsif ($esc eq 'n'){ $string .= "\n" }
+				elsif ($esc eq 'b'){ $string .= "\b" }
+				elsif ($esc eq 'f'){ $string .= "\f" }
+				elsif ($esc eq '>'){ $string .= ">" }
+				elsif ($esc eq 'U'){
+					my $codepoint	= $self->_read_length(8);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 					}
-					when('u'){
-						my $codepoint	= $self->_read_length(4);
-						unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
-							$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
-						}
-						$string .= chr(hex($codepoint));
+					$string .= chr(hex($codepoint));
+				}
+				elsif ($esc eq 'u'){
+					my $codepoint	= $self->_read_length(4);
+					unless ($codepoint =~ /^[0-9A-Fa-f]+$/) {
+						$self->_throw_error("Bad unicode escape codepoint '$codepoint'");
 					}
-					default {
-						$self->_throw_error("Unrecognized string escape '$esc'");
-					}
+					$string .= chr(hex($codepoint));
+				}
+				else {
+					$self->_throw_error("Unrecognized string escape '$esc'");
 				}
 			} elsif ($self->{buffer} =~ /^[^'\\]+/) {
 				$string	.= $self->_read_length($+[0]);
@@ -705,7 +689,7 @@ sub _get_keyword {
 		$self->_read_word('prefix');
 		return $self->new_token(PREFIX);
 	} else {
-		if ($self->{buffer} =~ /^[a-z]+(-[a-z0-9]+)*\b/) {
+		if ($self->{buffer} =~ /^[a-zA-Z]+(-[a-zA-Z0-9]+)*\b/) {
 			my $lang	= $self->_read_length($+[0]);
 			return $self->new_token(LANG, $lang);
 		} else {
