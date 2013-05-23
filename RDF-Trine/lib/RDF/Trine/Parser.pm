@@ -214,8 +214,6 @@ sub parse_url_into_model {
 			$ok	= 1;
 		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
-	} else {
-		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
 	
 	### FALLBACK
@@ -276,7 +274,12 @@ sub parse_url_into_model {
 		my $e	= shift;
 	};
 	return 1 if ($ok);
-	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+	
+	if ($pclass) {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type";
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+	}
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
