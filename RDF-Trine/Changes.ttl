@@ -10,6 +10,20 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.005.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.004.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.005" ;
+                        doap:created      "2012-XX-XX" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "" ;
+                        asc:update      "" ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.004.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.003.tar.gz> ;
