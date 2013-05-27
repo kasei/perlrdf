@@ -68,10 +68,23 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.005 (2013-XX-XX)
+  Version 1.005 (2013-05-27)
 
+     * API CHANGES
+         Throw exception in RDF::Trine::Node::Resource->new when IRI contains bad characters.
+     * BUG FIXES
+         Fix RDF::Trine::Parser::RDFXML to UTF-8 encode strings before calling into the SAX parser (related to github pull request #82).
+         Fixed typo in exception throwing in RDF::Trine::Parser::TriG.
+         Fixed mistaken use of 'otherwise' exception handler in turtle_tokenize.pl.
      * ENHANCEMENTS
+         Updated Turtle parser to support the Turtle 2013 draft syntax.
+         Improved error handling in RDF::Trine::Parser->parse_url_into_model.
+         Implemented streaming version of RDF::Trine::Parser::RDFXML->parse_file using parse_file from XML::SAX.
      * OTHER
+         Removed use of given/when statements to make perl 5.18 happy.
+         Silence tracing code in RDF::Trine::Store::Hexastore.
+         Added TryCatch to list of required modules.
+         Changed key names and layout of nodemap data in Redis store.
 
   Version 1.004 (2013-03-02)
 
