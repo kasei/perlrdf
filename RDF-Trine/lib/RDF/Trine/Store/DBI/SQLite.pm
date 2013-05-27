@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::SQLite version 1.004
+This document describes RDF::Trine::Store::DBI::SQLite version 1.005
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.004";
+	$VERSION	= "1.005";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }

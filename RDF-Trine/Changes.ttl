@@ -10,6 +10,29 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.005.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.004.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.005" ;
+                        doap:created      "2012-05-27" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Updated Turtle parser to support the Turtle 2013 draft syntax." ;
+                        asc:update      "Throw exception in RDF::Trine::Node::Resource->new when IRI contains bad characters." ;
+                        asc:update      "Fix RDF::Trine::Parser::RDFXML to UTF-8 encode strings before calling into the SAX parser (related to github pull request #82)." ;
+                        asc:update      "Fixed typo in exception throwing in RDF::Trine::Parser::TriG." ;
+                        asc:update      "Fixed mistaken use of 'otherwise' exception handler in turtle_tokenize.pl." ;
+                        asc:update      "Improved error handling in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Implemented streaming version of RDF::Trine::Parser::RDFXML->parse_file using parse_file from XML::SAX." ;
+                        asc:update      "Removed use of given/when statements to make perl 5.18 happy." ;
+                        asc:update      "Silence tracing code in RDF::Trine::Store::Hexastore." ;
+                        asc:update      "Added TryCatch to list of required modules." ;
+                        asc:update      "Changed key names and layout of nodemap data in Redis store." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.004.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.003.tar.gz> ;

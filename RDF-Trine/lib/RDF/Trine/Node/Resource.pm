@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 1.004
+This document describes RDF::Trine::Node::Resource version 1.005
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '1.004';
+	$VERSION	= '1.005';
 }
 
 ######################################################################
@@ -68,6 +68,11 @@ sub new {
 	if ($uri eq &RDF::Trine::NIL_GRAPH) {
 		return RDF::Trine::Node::Nil->new();
 	}
+	
+	if ($uri =~ /([<>" {}|\\^`])/) {
+		throw RDF::Trine::Error -text => sprintf("Bad IRI character: '%s' (0x%x)", $1, ord($1));
+	}
+	
 	return bless( [ 'URI', $uri ], $class );
 }
 

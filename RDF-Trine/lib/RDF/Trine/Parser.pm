@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.004
+This document describes RDF::Trine::Parser version 1.005
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '1.004';
+	$VERSION	= '1.005';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -214,8 +214,6 @@ sub parse_url_into_model {
 			$ok	= 1;
 		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
-	} else {
-		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
 	
 	### FALLBACK
@@ -276,7 +274,12 @@ sub parse_url_into_model {
 		my $e	= shift;
 	};
 	return 1 if ($ok);
-	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+	
+	if ($pclass) {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type";
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+	}
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
@@ -355,7 +358,7 @@ sub parse_file_into_model {
 
 Parses all data read from the filehandle or file C<< $fh >>, using the given
 C<< $base_uri >>. If C<< $fh >> is a filename, this method can guess the
-associated parse. For each RDF statement parses C<< $handler >> is called.
+associated parse. For each RDF statement parsed, C<< $handler->( $st ) >> is called.
 
 =cut
 

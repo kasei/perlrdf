@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle::Constants - Constant definitions for use in parsing 
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle::Constants version 1.004
+This document describes RDF::Trine::Parser::Turtle::Constants version 1.005
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,7 @@ use 5.010;
 our $VERSION;
 our @EXPORT;
 BEGIN {
-	$VERSION				= '1.004';
+	$VERSION				= '1.005';
 	@EXPORT = qw(
 		LBRACKET
 		RBRACKET
@@ -49,7 +49,9 @@ BEGIN {
 		WS
 		COMMENT
 		STRING3D
+		STRING3S
 		STRING1D
+		STRING1S
 		BASE
 		PREFIX
 		LANG
