@@ -141,7 +141,7 @@ sub sse {
 	if ($sse{ $ra }) {
 		return $sse{ $ra };
 	} else {
-		my $string	= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $string	= URI->new( $self->uri_value )->canonical;
 		my $sse		= '<' . $string . '>';
 		$sse{ $ra }	= $sse;
 		return $sse;
@@ -176,7 +176,7 @@ sub as_ntriples {
 	if ($ntriples{ $ra }) {
 		return $ntriples{ $ra };
 	} else {
-		my $string		= URI->new( encode_utf8($self->uri_value) )->canonical;
+		my $string		= URI->new( $self->uri_value )->canonical;
 		my $ntriples	= '<' . $string . '>';
 		$ntriples{ $ra }	= $ntriples;
 		return $ntriples;
