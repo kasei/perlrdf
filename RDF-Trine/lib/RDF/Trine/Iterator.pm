@@ -166,7 +166,8 @@ sub to_string {
 
 =item C<< from_string ( $xml ) >>
 
-Returns a new iterator using the supplied XML in the SPARQL XML Results format.
+Returns a new iterator using the supplied XML byte sequence (note: not character data)
+in the SPARQL XML Results format.
 
 =cut
 
