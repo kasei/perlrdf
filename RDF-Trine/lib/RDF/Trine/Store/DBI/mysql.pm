@@ -131,6 +131,8 @@ sub _add_node {
 		$table	= "Literals";
 		@cols	= qw(ID Value);
 		@values{ @cols }	= ($hash, $node->literal_value);
+		$values{ 'Datatype' }	= '';
+		$values{ 'Language' }	= '';
 		if ($node->has_language) {
 			push(@cols, 'Language');
 			$values{ 'Language' }	= $node->literal_value_language;
@@ -157,15 +159,15 @@ sub init {
 	my $dbh		= $self->dbh;
 	my $name	= $self->model_name;
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
-	
+	local($dbh->{AutoCommit})	= 0;
 	unless ($self->_table_exists("Literals")) {
 		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Literals (
 				ID bigint unsigned PRIMARY KEY,
 				Value longtext NOT NULL,
-				Language text NOT NULL DEFAULT "",
-				Datatype text NOT NULL DEFAULT ""
+				Language text NOT NULL,
+				Datatype text NOT NULL
 			) CHARACTER SET utf8 COLLATE utf8_bin;
 END
 
