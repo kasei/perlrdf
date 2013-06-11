@@ -73,6 +73,12 @@ sub new {
 		throw RDF::Trine::Error -text => sprintf("Bad IRI character: '%s' (0x%x)", $1, ord($1));
 	}
 	
+	# percent-unescape URI octets and interpret them as UTF-8
+	if ($uri =~ /%[0-9A-Fa-f]{2}/) {
+		$uri =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
+		$uri	= decode('UTF-8', $uri);
+	}
+	
 	return bless( [ 'URI', $uri ], $class );
 }
 
@@ -176,7 +182,40 @@ sub as_ntriples {
 	if ($ntriples{ $ra }) {
 		return $ntriples{ $ra };
 	} else {
-		my $string		= URI->new( $self->uri_value )->canonical;
+		my $uri	= $self->uri_value;
+		my @chars	= split(//, $uri);
+		my $string	= '';
+		while (scalar(@chars)) {
+			my $c	= shift(@chars);
+			my $o	= ord($c);
+			if ($o < 0x8) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o == 0x9) {
+				$string	.= "\\t";
+			} elsif ($o == 0xA) {
+				$string	.= "\\n";
+			} elsif ($o < 0xC) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o == 0xD) {
+				$string	.= "\\r";
+			} elsif ($o < 0x1F) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o < 0x21) {
+				$string	.= $c;
+			} elsif ($o == 0x22) {
+				$string	.= "\"";
+			} elsif ($o < 0x5B) {
+				$string	.= $c;
+			} elsif ($o == 0x5C) {
+				$string	.= "\\";
+			} elsif ($o < 0x7E) {
+				$string	.= $c;
+			} elsif ($o < 0xFFFF) {
+				$string	.= sprintf("\\u%04X", $o);
+			} else {
+				$string	.= sprintf("\\U%08X", $o);
+			}
+		}
 		my $ntriples	= '<' . $string . '>';
 		$ntriples{ $ra }	= $ntriples;
 		return $ntriples;
