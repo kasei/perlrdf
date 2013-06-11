@@ -30,6 +30,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+use Encode;
 use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp);
@@ -166,12 +167,25 @@ sub to_string {
 
 =item C<< from_string ( $xml ) >>
 
+Returns a new iterator using the supplied XML string in the SPARQL XML Results format.
+
+=cut
+
+sub from_string {
+	my $class	= shift;
+	my $string	= shift;
+	my $bytes	= encode('UTF-8', $string);
+	return $class->from_bytes($bytes);
+}
+
+=item C<< from_bytes ( $xml ) >>
+
 Returns a new iterator using the supplied XML byte sequence (note: not character data)
 in the SPARQL XML Results format.
 
 =cut
 
-sub from_string {
+sub from_bytes {
 	my $class	= shift;
 	my $string	= shift;
 	unless (ref($string)) {
