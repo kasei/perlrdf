@@ -78,6 +78,8 @@ sub new {
 			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
 		}
 		$uri		= URI->new_abs($uri, $base_uri)->as_string;
+		
+		# put back the unicode characters where they belong
 		$uri =~ s/!(\d+)!/$chars[$1]/eg;
 	}
     utf8::upgrade($uri);
