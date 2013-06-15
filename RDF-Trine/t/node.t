@@ -1,4 +1,4 @@
-use Test::More tests => 69;
+use Test::More tests => 71;
 use Test::Exception;
 
 use utf8;
@@ -188,4 +188,16 @@ SKIP: {
 	is( refaddr($n1), refaddr($n2), 'Nil is a singleton' );
 	ok( $n1->equal( $n2 ), 'Nil nodes claim equality' );
 	ok( not($n1->equal( $k )), 'Nil node is not equal to non-Nil node' );
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--hestebedgrd-58a.dk/');
+	my $nt	= $uri->as_ntriples;
+	is($nt, "<http://www.hestebedg\\u00E5rd.dk/>", 'latin1-compatible punycode URI properly decoded as an IRI');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://xn--df-oiy.ws/');
+	my $nt	= $uri->as_ntriples;
+	is($nt, '<http://\\u272Adf.ws/>', 'high-codepoint punycode URI properly decoded as an IRI');
 }
