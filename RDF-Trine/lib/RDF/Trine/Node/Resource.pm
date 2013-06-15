@@ -13,6 +13,7 @@ This document describes RDF::Trine::Node::Resource version 1.005
 
 package RDF::Trine::Node::Resource;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -52,8 +53,8 @@ Returns a new Resource structure.
 =cut
 
 sub new {
-	my $class	= shift;
-	my $uri		= shift;
+	my $class		= shift;
+	my $uri			= shift;
 	my $base_uri	= shift;
 	
 	unless (defined($uri)) {
@@ -62,8 +63,12 @@ sub new {
 	
 	if (defined($base_uri)) {
 		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		$uri	= URI->new_abs($uri, $base_uri)->as_iri;
+		$uri		= URI->new_abs($uri, $base_uri)->as_iri;
+	} elsif ($uri =~ /xn--/) {
+		# perform punycode decoding to get a proper unicode IRI string
+		$uri		= URI->new($uri)->as_iri;
 	}
+    utf8::upgrade($uri);
 	
 	if ($uri eq &RDF::Trine::NIL_GRAPH) {
 		return RDF::Trine::Node::Nil->new();
