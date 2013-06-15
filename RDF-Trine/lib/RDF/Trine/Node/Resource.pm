@@ -64,9 +64,9 @@ sub new {
 	if (defined($base_uri)) {
 		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
 		$uri		= URI->new_abs($uri, $base_uri)->as_iri;
-	} elsif ($uri =~ /xn--/) {
-		# perform punycode decoding to get a proper unicode IRI string
-		$uri		= URI->new($uri)->as_iri;
+# 	} elsif ($uri =~ /xn--/) {
+# 		# perform punycode decoding to get a proper unicode IRI string
+# 		$uri		= URI->new($uri)->as_iri;
 	}
     utf8::upgrade($uri);
 	
@@ -76,12 +76,6 @@ sub new {
 	
 	if ($uri =~ /([<>" {}|\\^`])/) {
 		throw RDF::Trine::Error -text => sprintf("Bad IRI character: '%s' (0x%x)", $1, ord($1));
-	}
-	
-	# percent-unescape URI octets and interpret them as UTF-8
-	if ($uri =~ /%[0-9A-Fa-f]{2}/) {
-		$uri =~ s/%([0-9A-Fa-f]{2})/chr(hex($1))/eg;
-		$uri	= decode('UTF-8', $uri);
 	}
 	
 	return bless( [ 'URI', $uri ], $class );
@@ -188,6 +182,7 @@ sub as_ntriples {
 		return $ntriples{ $ra };
 	} else {
 		my $uri	= $self->uri_value;
+		$uri	= URI->new($uri)->as_iri;
 		my @chars	= split(//, $uri);
 		my $string	= '';
 		while (scalar(@chars)) {
@@ -259,7 +254,10 @@ sub equal {
 	return 0 unless defined($node);
 	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
-	return ($self->[1] eq $node->[1]);
+	
+	my $uri1	= URI->new($self->uri_value)->as_iri;
+	my $uri2	= URI->new($node->uri_value)->as_iri;
+	return ($uri1 eq $uri2);
 }
 
 # called to compare two nodes of the same type
