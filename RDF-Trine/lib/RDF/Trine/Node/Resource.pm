@@ -63,10 +63,22 @@ sub new {
 	
 	if (defined($base_uri)) {
 		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		$uri		= URI->new_abs($uri, $base_uri)->as_iri;
-# 	} elsif ($uri =~ /xn--/) {
-# 		# perform punycode decoding to get a proper unicode IRI string
-# 		$uri		= URI->new($uri)->as_iri;
+		
+		my @chars;
+		my $i	= 0;
+		if ("${base_uri}${uri}" =~ /!/) {
+			# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
+			for ($base_uri, $uri) {
+				s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+			}
+		}
+		
+		# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
+		for ($uri, $base_uri) {
+			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
+		}
+		$uri		= URI->new_abs($uri, $base_uri)->as_string;
+		$uri =~ s/!(\d+)!/$chars[$1]/eg;
 	}
     utf8::upgrade($uri);
 	

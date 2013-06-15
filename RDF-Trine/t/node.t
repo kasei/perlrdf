@@ -209,5 +209,5 @@ SKIP: {
 
 {
 	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013', 'http://base/');
-	is($uri->uri_value, "http://www.or\x{f8}folkedansere.dk/#8835/St\x{e6}vne%202013", 'punycode URI with percent-escapes with base');
+	is($uri->uri_value, "http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013", 'punycode URI with percent-escapes with base');
 }
