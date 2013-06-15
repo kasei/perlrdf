@@ -1,7 +1,7 @@
 use Test::More tests => 73;
 use Test::Exception;
 
-use utf8::all;
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
