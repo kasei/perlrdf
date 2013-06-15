@@ -1,7 +1,7 @@
 use Test::More tests => 71;
 use Test::Exception;
 
-use utf8;
+use utf8::all;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -200,4 +200,14 @@ SKIP: {
 	my $uri	= RDF::Trine::Node::Resource->new('http://xn--df-oiy.ws/');
 	my $nt	= $uri->as_ntriples;
 	is($nt, '<http://\\u272Adf.ws/>', 'high-codepoint punycode URI properly decoded as an IRI');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013');
+	is($uri->uri_value, 'http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013', 'punycode URI with percent-escapes');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013', 'http://base/');
+	is($uri->uri_value, 'http://www.or\x{f8}folkedansere.dk/#8835/St\x{e6}vne%202013', 'punycode URI with percent-escapes with base');
 }
