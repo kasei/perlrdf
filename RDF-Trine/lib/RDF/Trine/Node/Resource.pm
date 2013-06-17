@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Node::Resource - RDF Node class for resources
+RDF::Trine::Node::Resource - RDF Node class for IRI resources
 
 =head1 VERSION
 
@@ -185,6 +185,7 @@ sub as_string {
 =item C<< as_ntriples >>
 
 Returns the node in a string form suitable for NTriples serialization.
+If the IRI contains punycode, it will be decoded and serialized as unicode codepoints.
 
 =cut
 
@@ -234,16 +235,6 @@ sub as_ntriples {
 		$ntriples{ $ra }	= $ntriples;
 		return $ntriples;
 	}
-	
-# 	my $uri		= $self->uri_value;
-# 	my $string	= $uri;
-# 	$string	=~ s/\\/\\\\/g;
-# 	my $escaped	= $self->_unicode_escape( $string );
-# 	$escaped	=~ s/"/\\"/g;
-# 	$escaped	=~ s/\n/\\n/g;
-# 	$escaped	=~ s/\r/\\r/g;
-# 	$escaped	=~ s/\t/\\t/g;
-# 	return '<' . $escaped . '>';
 }
 
 =item C<< type >>

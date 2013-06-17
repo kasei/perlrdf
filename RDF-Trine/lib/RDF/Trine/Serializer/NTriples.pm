@@ -195,6 +195,12 @@ __END__
 
 =back
 
+=head1 NOTES
+
+As described in L<RDF::Trine::Node::Resource/as_ntriples>, N-Triples serialization will
+decode any L<punycode|http://www.ietf.org/rfc/rfc3492.txt> that is included in the IRI,
+and serialize it using unicode codepoint escapes.
+
 =head1 BUGS
 
 Please report any bugs or feature requests to through the GitHub web interface
