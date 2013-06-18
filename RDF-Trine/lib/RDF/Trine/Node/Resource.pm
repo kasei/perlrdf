@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-RDF::Trine::Node::Resource - RDF Node class for resources
+RDF::Trine::Node::Resource - RDF Node class for IRI resources
 
 =head1 VERSION
 
@@ -13,6 +13,7 @@ This document describes RDF::Trine::Node::Resource version 1.005
 
 package RDF::Trine::Node::Resource;
 
+use utf8;
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -52,8 +53,8 @@ Returns a new Resource structure.
 =cut
 
 sub new {
-	my $class	= shift;
-	my $uri		= shift;
+	my $class		= shift;
+	my $uri			= shift;
 	my $base_uri	= shift;
 	
 	unless (defined($uri)) {
@@ -62,8 +63,26 @@ sub new {
 	
 	if (defined($base_uri)) {
 		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		$uri	= URI->new_abs($uri, $base_uri)->as_iri;
+		
+		my @chars;
+		my $i	= 0;
+		if ("${base_uri}${uri}" =~ /!/) {
+			# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
+			for ($base_uri, $uri) {
+				s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+			}
+		}
+		
+		# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
+		for ($uri, $base_uri) {
+			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
+		}
+		$uri		= URI->new_abs($uri, $base_uri)->as_string;
+		
+		# put back the unicode characters where they belong
+		$uri =~ s/!(\d+)!/$chars[$1]/eg;
 	}
+    utf8::upgrade($uri);
 	
 	if ($uri eq &RDF::Trine::NIL_GRAPH) {
 		return RDF::Trine::Node::Nil->new();
@@ -166,6 +185,7 @@ sub as_string {
 =item C<< as_ntriples >>
 
 Returns the node in a string form suitable for NTriples serialization.
+If the IRI contains punycode, it will be decoded and serialized as unicode codepoints.
 
 =cut
 
@@ -176,21 +196,45 @@ sub as_ntriples {
 	if ($ntriples{ $ra }) {
 		return $ntriples{ $ra };
 	} else {
-		my $string		= URI->new( $self->uri_value )->canonical;
+		my $uri	= $self->uri_value;
+		$uri	= URI->new($uri)->as_iri;
+		my @chars	= split(//, $uri);
+		my $string	= '';
+		while (scalar(@chars)) {
+			my $c	= shift(@chars);
+			my $o	= ord($c);
+			if ($o < 0x8) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o == 0x9) {
+				$string	.= "\\t";
+			} elsif ($o == 0xA) {
+				$string	.= "\\n";
+			} elsif ($o < 0xC) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o == 0xD) {
+				$string	.= "\\r";
+			} elsif ($o < 0x1F) {
+				$string	.= sprintf("\\u%04X", $o);
+			} elsif ($o < 0x21) {
+				$string	.= $c;
+			} elsif ($o == 0x22) {
+				$string	.= "\"";
+			} elsif ($o < 0x5B) {
+				$string	.= $c;
+			} elsif ($o == 0x5C) {
+				$string	.= "\\";
+			} elsif ($o < 0x7E) {
+				$string	.= $c;
+			} elsif ($o < 0xFFFF) {
+				$string	.= sprintf("\\u%04X", $o);
+			} else {
+				$string	.= sprintf("\\U%08X", $o);
+			}
+		}
 		my $ntriples	= '<' . $string . '>';
 		$ntriples{ $ra }	= $ntriples;
 		return $ntriples;
 	}
-	
-# 	my $uri		= $self->uri_value;
-# 	my $string	= $uri;
-# 	$string	=~ s/\\/\\\\/g;
-# 	my $escaped	= $self->_unicode_escape( $string );
-# 	$escaped	=~ s/"/\\"/g;
-# 	$escaped	=~ s/\n/\\n/g;
-# 	$escaped	=~ s/\r/\\r/g;
-# 	$escaped	=~ s/\t/\\t/g;
-# 	return '<' . $escaped . '>';
 }
 
 =item C<< type >>
@@ -215,7 +259,10 @@ sub equal {
 	return 0 unless defined($node);
 	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
-	return ($self->[1] eq $node->[1]);
+	
+	my $uri1	= URI->new($self->uri_value)->as_iri;
+	my $uri2	= URI->new($node->uri_value)->as_iri;
+	return ($uri1 eq $uri2);
 }
 
 # called to compare two nodes of the same type

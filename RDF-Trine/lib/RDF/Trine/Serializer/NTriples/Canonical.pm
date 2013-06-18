@@ -143,9 +143,9 @@ sub serialize_model_to_string {
 		# Really need to canonicalise typed literals as per XSD.
 		
 		$st->{'lex'} = sprintf('%s %s %s',
-			($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->subject->sse),
-			$st->{'trine'}->predicate->sse,
-			($st->{'trine'}->object->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->object->sse)
+			($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->subject->as_ntriples),
+			$st->{'trine'}->predicate->as_ntriples,
+			($st->{'trine'}->object->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->object->as_ntriples)
 			);
 		$lexCounts{ $st->{'lex'} }++;
 	}
