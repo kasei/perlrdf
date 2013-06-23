@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 1.005
+This document describes RDF::Trine::Store::SPARQL version 1.005_01
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.005";
+	$VERSION	= "1.005_01";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
