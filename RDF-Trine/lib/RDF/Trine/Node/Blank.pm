@@ -56,9 +56,12 @@ sub new {
 	unless (defined($name)) {
 		$name	= 'r' . time() . 'r' . $COUNTER++;
 	}
-# 	if ($name =~ m/[^A-Za-z0-9]/) {
-# 		throw RDF::Trine::Error::SerializationError -text => "Only alphanumerics are allowed in bnode labels";
-# 	}
+	
+	my $r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]'o;
+	my $r_nameStartChar			= qr/[A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
+	unless ($name =~ /^(?:${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*)$/o) {
+		throw RDF::Trine::Error::SerializationError -text => "Bad blank node identifier: $name";
+	}
 	return $class->_new( $name );
 }
 
