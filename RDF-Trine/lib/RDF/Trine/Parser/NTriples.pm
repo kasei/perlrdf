@@ -236,11 +236,11 @@ sub _eat_node {
 						$value	.= "\\";
 						substr($_[0],0,2)	= '';
 					} elsif ($1 eq 'u') {
-						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\u([0-9A-Fa-f]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,6)	= '';
 					} elsif ($1 eq 'U') {
-						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\U([0-9A-Fa-f]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,10)	= '';
 					} else {

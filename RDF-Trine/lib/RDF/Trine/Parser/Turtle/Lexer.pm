@@ -198,7 +198,7 @@ sub get_token {
 			next;
 		}
 		elsif ($c =~ /[A-Za-z\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/) {
-			if ($self->{buffer} =~ /^a(?!:)\b/) {
+			if ($self->{buffer} =~ /^a(?!:)\s/) {
 				$self->_get_char;
 				return $self->new_token(A);
 			} elsif ($self->{buffer} =~ /^(?:true|false)(?!:)\b/) {
@@ -420,7 +420,7 @@ sub _get_bnode {
 	my $self	= shift;
 	$self->_read_word('_:');
 	unless ($self->{buffer} =~ /^${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*/o) {
-		$self->_error("Expected: name");
+		$self->_throw_error("Expected: name");
 	}
 	my $name	= substr($self->{buffer}, 0, $+[0]);
 	$self->_read_word($name);

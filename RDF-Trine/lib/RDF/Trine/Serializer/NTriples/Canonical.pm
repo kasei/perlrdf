@@ -83,8 +83,8 @@ and 'die', and their respective behaviour is described in L</DESCRIPTION> above.
 =cut
 
 sub new {
-	my $class = shift;
-	my %opts;
+	my $class	= shift;
+	my %opts	= (onfail => '');
 	
 	while (@_) {
 		my $field = lc shift;

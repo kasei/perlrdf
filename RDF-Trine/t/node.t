@@ -32,7 +32,7 @@ my $k3		= RDF::Trine::Node::Resource->new('#食べる', 'http://www.w3.org/2001/
 my $urn		= RDF::Trine::Node::Resource->new('urn:x-demonstrate:bug');
 
 throws_ok { RDF::Trine::Node::Literal->new('foo', 'en', 'http://dt') } 'RDF::Trine::Error::MethodInvocationError', 'RDF::Trine::Node::Literal::new throws with both langauge and datatype';
-throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with non-alphanumeric label';
+throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with a label that includes whitespace';
 
 is( $b->type, 'BLANK', 'blank type' );
 is( $l->type, 'LITERAL', 'literal type' );
