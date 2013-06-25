@@ -120,6 +120,16 @@ sub serialize_model_to_file {
 	my $file	= shift;
 	my $model	= shift;
 	
+	my %ns		= reverse(%{ $self->{ns} });
+	my @nskeys	= sort keys %ns;
+	if (@nskeys) {
+		foreach my $ns (sort @nskeys) {
+			my $uri	= $ns{ $ns };
+			print $file "\@prefix $ns: <$uri> .\n";
+		}
+		print $file "\n";
+	}
+	
 	my $s		= $self->{ttl};
 	my $count	= $model->count_statements(undef, undef, undef, RDF::Trine::Node::Nil->new());
 	if ($count) {
@@ -170,6 +180,16 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
+	
+	my %ns		= reverse(%{ $self->{ns} });
+	my @nskeys	= sort keys %ns;
+	if (@nskeys) {
+		foreach my $ns (sort @nskeys) {
+			my $uri	= $ns{ $ns };
+			print $file "\@prefix $ns: <$uri> .\n";
+		}
+		print $file "\n";
+	}
 	
 	my $g;
 	my $in_graph	= 0;

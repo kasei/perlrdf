@@ -34,7 +34,7 @@ my @tests	= (
 		quads	=> [
 			statement($ex->alice, $foaf->name, literal('Alice'), $nil),
 		],
-		trig	=> qq[{\n\t<http://example.com/alice> foaf:name "Alice" .\n}\n],
+		trig	=> qq[\@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n\n{\n\t<http://example.com/alice> foaf:name "Alice" .\n}\n],
 		test	=> 'single quad with prefix name',
 	},
 	{
@@ -58,7 +58,7 @@ my @tests	= (
 		quads	=> [
 			statement($ex->s, $ex->p, literal('o'), $ex->g),
 		],
-		trig	=> qq[ex:g {\n\tex:s ex:p "o" .\n}\n],
+		trig	=> qq[\@prefix ex: <http://example.com/> .\n\nex:g {\n\tex:s ex:p "o" .\n}\n],
 		test	=> 'one quad, with prefix name graph',
 	},
 );
