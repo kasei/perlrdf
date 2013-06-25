@@ -43,6 +43,7 @@ use RDF::Trine::Serializer::NTriples::Canonical;
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
+use RDF::Trine::Serializer::TriG;
 
 
 =head1 METHODS
