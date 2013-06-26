@@ -13,14 +13,12 @@ use TryCatch;
 
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 my $rdft	= RDF::Trine::Namespace->new('http://www.w3.org/ns/rdftest#');
-my $base	= iri('http://example/base/');
+my $base	= iri('http://www.w3.org/2013/TurtleTests/');
 my $model	= RDF::Trine::Model->temporary_model;
 
-foreach my $dir ('tests-ttl', 'coverage') {
-	my $path	= File::Spec->catfile( $Bin, '..', 't', 'data', 'turtle-2013', $dir );
-	my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
-	RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
-}
+my $path	= File::Spec->catfile( $Bin, '..', 't', 'data', 'turtle-2013' );
+my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
+RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 
 my @manifests	= $model->subjects($rdf->type, $mf->Manifest);
 foreach my $manifest (@manifests) {
