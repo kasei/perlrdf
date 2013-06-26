@@ -95,6 +95,7 @@ sub context {
 	}
 	return $self->[3];
 }
+*graph	= \&context;
 
 =item C<< sse >>
 

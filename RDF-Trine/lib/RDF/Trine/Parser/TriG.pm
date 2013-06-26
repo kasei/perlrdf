@@ -85,8 +85,12 @@ sub _statement {
 		my $name	= $t->value;
 		$name		=~ s/:$//;
 		$t	= $self->_get_token_type($l, IRI);
-		my $iri	= $t->value;
-		$t	= $self->_get_token_type($l, DOT);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		$t	= $self->_next_nonws($l);
+		if ($t and $t->type != DOT) {
+			$self->_unget_token($t);
+		}
 		$self->{map}->add_mapping( $name => $iri );
 		if (my $ns = $self->{namespaces}) {
 			unless ($ns->namespace_uri($name)) {
@@ -96,14 +100,18 @@ sub _statement {
 	}
 	elsif ($type == BASE) {
 		$t	= $self->_get_token_type($l, IRI);
-		my $iri	= $t->value;
-		$t	= $self->_get_token_type($l, DOT);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		$t	= $self->_next_nonws($l);
+		if ($t and $t->type != DOT) {
+			$self->_unget_token($t);
+		}
 		$self->{baseURI}	= $iri;
 	}
-	else {
-		$self->_triple( $l, $t );
-		$t	= $self->_get_token_type($l, DOT);
-	}
+# 	else {
+# 		$self->_triple( $l, $t );
+# 		$t	= $self->_get_token_type($l, DOT);
+# 	}
 }
 
 
@@ -167,6 +175,13 @@ sub _triple {
 			$self->_unget_token($t);
 			$self->_predicateObjectList( $l, $subj );
 			$t	= $self->_get_token_type($l, RBRACKET);
+			
+			$t		= $self->_next_nonws($l);
+			return unless defined($t);
+			$self->_unget_token($t);
+			if ($t->type == DOT) {
+				return;
+			}
 		}
 	} elsif ($type == LPAREN) {
 		my $t	= $self->_next_nonws($l);

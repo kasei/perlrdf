@@ -36,13 +36,19 @@ my $l		= RDF::Trine::Parser::Turtle::Lexer->new( file => $fh );
 try {
 	while (my $t = $l->get_token) {
 		$count++;
-		printf("%3d:%-3d %3d:%-3d %s\n", $t->start_line, $t->start_column, $t->line, $t->column, decrypt_constant($t->type));
+		printf("%3d:%-3d %3d:%-3d %s", $t->start_line, $t->start_column, $t->line, $t->column, decrypt_constant($t->type));
+		if (defined(my $v = $t->value)) {
+			printf("\t%s", $v);
+		}
+		print "\n";
 		throw Error if ($limit and $count >= $limit);
 	}
 } catch (RDF::Trine::Error::ParserError::Tokenized $e) {
 	$e->explain( $fh );
 	exit;
-} catch {}
+} catch ($e) {
+	warn $e
+}
 
 my $elapsed	= tv_interval( $t0, [gettimeofday]);
 print STDERR sprintf("\n%d triples parsed in %.3fs (%.1f T/s)\n", $count, $elapsed, ($count/$elapsed));
