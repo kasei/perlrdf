@@ -47,10 +47,13 @@ my $r_nameChar_test			= qr"(?:$r_nameStartChar|$r_nameChar_extra)";
 my $r_double				= qr'[+-]?([0-9]+\.[0-9]*[eE][+-]?[0-9]+|\.[0-9]+[eE][+-]?[0-9]+|[0-9]+[eE][+-]?[0-9]+)';
 my $r_decimal				= qr'[+-]?(([0-9]+\.[0-9]+)|\.([0-9])+)';
 my $r_integer				= qr'[+-]?[0-9]+';
+my $r_PN_CHARS_U			= qr/[_A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
+my $r_PN_CHARS				= qr"${r_PN_CHARS_U}|[-0-9\x{00B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]";
+my $r_bnode_id				= qr"(?:${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?";
 
 my $r_PN_CHARS_BASE			= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-my $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/;
-my $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
+# my $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/;
+# my $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
 my $r_PN_PREFIX				= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
 my $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}};
 my $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/;
@@ -206,10 +209,10 @@ sub get_token {
 				return $self->new_token(BOOLEAN, $bool);
 			} elsif ($self->{buffer} =~ /^BASE(?!:)\b/i) {
 				$self->_read_length(4);
-				return $self->new_token(BASE);
+				return $self->new_token(SPARQLBASE);
 			} elsif ($self->{buffer} =~ /^PREFIX(?!:)\b/i) {
 				$self->_read_length(6);
-				return $self->new_token(PREFIX);
+				return $self->new_token(SPARQLPREFIX);
 			} else {
 				return $self->_get_pname;
 			}
@@ -419,7 +422,7 @@ sub _get_iriref {
 sub _get_bnode {
 	my $self	= shift;
 	$self->_read_word('_:');
-	unless ($self->{buffer} =~ /^${r_nameStartChar}(?:${r_nameStartChar}|${r_nameChar_extra})*/o) {
+	unless ($self->{buffer} =~ /^${r_bnode_id}/o) {
 		$self->_throw_error("Expected: name");
 	}
 	my $name	= substr($self->{buffer}, 0, $+[0]);
