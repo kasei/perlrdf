@@ -106,7 +106,7 @@ foreach my $manifest (@manifests) {
 		} catch (RDF::Trine::Error::ParserError::Explainable $e) {
 			$parsed	= 0;
 			$e->explain( $fh );
-		} catch (Error $e) {
+		} catch (RDF::Trine::Error $e) {
 			$parsed	= 0;
 			warn "Failed to parse $file: " . $e->text;
 		} catch ($err) {
