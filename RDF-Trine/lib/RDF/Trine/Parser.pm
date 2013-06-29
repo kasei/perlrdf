@@ -176,6 +176,11 @@ sub parse_url_into_model {
 	my $model	= shift;
 	my %args	= @_;
 	
+	my $base	= $url;
+	if (exists($args{base})) {
+		$base	= $args{base};
+	}
+	
 	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
 	
 	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
@@ -210,7 +215,7 @@ sub parse_url_into_model {
 		my $parser	= $pclass->new(%args);
 		my $ok	= 0;
 		try {
-			$parser->parse_into_model( $url, $data, $model, %args );
+			$parser->parse_into_model( $base, $data, $model, %args );
 			$ok	= 1;
 		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
@@ -226,33 +231,33 @@ sub parse_url_into_model {
 	try {
 		if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
 			my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $base, $content, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
 			my $parser	= RDF::Trine::Parser::Turtle->new(%options);
 			my $data	= decode('utf8', $content);
-			$parser->parse_into_model( $url, $data, $model, %args );
+			$parser->parse_into_model( $base, $data, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]trig$/) {
 			my $parser	= RDF::Trine::Parser::Trig->new(%options);
 			my $data	= decode('utf8', $content);
-			$parser->parse_into_model( $url, $data, $model, %args );
+			$parser->parse_into_model( $base, $data, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]nt$/) {
 			my $parser	= RDF::Trine::Parser::NTriples->new(%options);
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $base, $content, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]nq$/) {
 			my $parser	= RDF::Trine::Parser::NQuads->new(%options);
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $base, $content, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]js(?:on)?$/) {
 			my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $base, $content, $model, %args );
 			$ok	= 1;;
 		} elsif ($url =~ /[.]x?html?$/) {
 			my $parser	= RDF::Trine::Parser::RDFa->new(%options);
-			$parser->parse_into_model( $url, $content, $model, %args );
+			$parser->parse_into_model( $base, $content, $model, %args );
 			$ok	= 1;;
 		} else {
 			my @types	= keys %{ { map { $_ => 1 } values %media_types } };
@@ -264,7 +269,7 @@ sub parse_url_into_model {
 				my $parser	= $pclass->new(%options);
 				my $ok		= 0;
 				try {
-					$parser->parse_into_model( $url, $data, $model, %args );
+					$parser->parse_into_model( $base, $data, $model, %args );
 					$ok	= 1;
 				} catch RDF::Trine::Error::ParserError with {};
 				last if ($ok);
