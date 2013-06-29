@@ -82,9 +82,11 @@ sub node_names {
 	return qw(subject predicate object context);
 }
 
+=item C<< graph >>
+
 =item C<< context >>
 
-Returns the context node of the quad pattern.
+Returns the graph node of the quad pattern.
 
 =cut
 
