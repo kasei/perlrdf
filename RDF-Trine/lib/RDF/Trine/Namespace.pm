@@ -84,7 +84,14 @@ added to the end of it.
 
 sub uri {
 	my $self	= shift;
-	my $uri		= $self->SUPER::uri( @_ );
+	my $local	= shift;
+	unless (defined($local)) {
+		$local	= '';
+	}
+	
+	# we should just call $self->SUPER::uri($local) here, but there's a bug in
+	# XML::Namespace 0.2 that assumes $local eq '' if $local is defined but false (e.g. '0')
+	my $uri		= $self->SUPER::uri() . $local;	
 	return RDF::Trine::Node::Resource->new( $uri );
 }
 

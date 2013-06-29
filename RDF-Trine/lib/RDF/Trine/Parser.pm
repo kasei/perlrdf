@@ -177,7 +177,7 @@ sub parse_url_into_model {
 	my %args	= @_;
 	
 	my $base	= $url;
-	if (exists($args{base})) {
+	if (defined($args{base})) {
 		$base	= $args{base};
 	}
 	

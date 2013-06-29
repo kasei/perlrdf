@@ -155,7 +155,7 @@ sub explain {
 	my $text	= $self->text;
 	my $pos		= $self->value;
 	my ($line, $col)	= @$pos;
-	my $buffer	= $self->_get_line( $fh, $line );
+	my $buffer	= $self->_get_line( $fh, $line ) || '';
 	
 	my $tabs	= ($buffer =~ tr/\t//);
 	$buffer		=~ s/\t/    /g;

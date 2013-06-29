@@ -195,16 +195,19 @@ sub _statement {
 	my $t		= shift;
 	my $type	= $t->type;
 # 		when (WS) {}
-	if ($type eq PREFIX) {
+	if ($type == PREFIX or $type == SPARQLPREFIX) {
 		$t	= $self->_get_token_type($l, PREFIXNAME);
 		my $name	= $t->value;
 		$name		=~ s/:$//;
 		$t	= $self->_get_token_type($l, IRI);
 		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 		my $iri	= $r->uri_value;
-		$t	= $self->_next_nonws($l);
-		if ($t and $t->type != DOT) {
-			$self->_unget_token($t);
+		if ($type == PREFIX) {
+			$t	= $self->_get_token_type($l, DOT);
+# 			$t	= $self->_next_nonws($l);
+# 			if ($t and $t->type != DOT) {
+# 				$self->_unget_token($t);
+# 			}
 		}
 		$self->{map}->add_mapping( $name => $iri );
 		if (my $ns = $self->{namespaces}) {
@@ -213,13 +216,16 @@ sub _statement {
 			}
 		}
 	}
-	elsif ($type eq BASE) {
+	elsif ($type == BASE or $type == SPARQLBASE) {
 		$t	= $self->_get_token_type($l, IRI);
 		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 		my $iri	= $r->uri_value;
-		$t	= $self->_next_nonws($l);
-		if ($t and $t->type != DOT) {
-			$self->_unget_token($t);
+		if ($type == BASE) {
+			$t	= $self->_get_token_type($l, DOT);
+# 			$t	= $self->_next_nonws($l);
+# 			if ($t and $t->type != DOT) {
+# 				$self->_unget_token($t);
+# 			}
 		}
 		$self->{baseURI}	= $iri;
 	}

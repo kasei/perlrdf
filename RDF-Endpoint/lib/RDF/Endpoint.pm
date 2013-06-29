@@ -140,6 +140,8 @@ my $NAMESPACES	= {
 	ldodds		=> 'java:com.ldodds.sparql.',
 	fn			=> 'http://www.w3.org/2005/xpath-functions#',
 	sparql		=> 'http://www.w3.org/ns/sparql#',
+	vann		=> 'http://purl.org/vocab/vann/',
+	sde			=> 'http://kasei.us/ns/service-description-extension#',
 };
 
 =item C<< new ( \%conf ) >>
@@ -528,7 +530,10 @@ sub service_description {
 	}
 	
 	my $config		= $self->{conf};
+	my $doap		= RDF::Trine::Namespace->new('http://usefulinc.com/ns/doap#');
 	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
+	my $sde			= RDF::Trine::Namespace->new('http://kasei.us/ns/service-description-extension#');
+	my $vann		= RDF::Trine::Namespace->new('http://purl.org/vocab/vann/');
 	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
 	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
 	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
@@ -585,6 +590,25 @@ sub service_description {
 			$sdmodel->add_statement( statement( $graph, $rdf->type, $sd->Graph ) );
 			$sdmodel->add_statement( statement( $graph, $rdf->type, $void->Dataset ) );
 			$sdmodel->add_statement( statement( $graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
+		}
+	}
+	
+	if (my $software = $config->{endpoint}{service_description}{software}) {
+		$sdmodel->add_statement( statement( $s, $sde->software, iri($software) ) );
+	}
+	
+	if (my $related = $config->{endpoint}{service_description}{related}) {
+		foreach my $r (@$related) {
+			$sdmodel->add_statement( statement( $s, $sde->relatedEndpoint, iri($r) ) );
+		}
+	}
+	
+	if (my $namespaces = $config->{endpoint}{service_description}{namespaces}) {
+		while (my($ns,$uri) = each(%$namespaces)) {
+			my $b	= RDF::Trine::Node::Blank->new();
+			$sdmodel->add_statement( statement( $s, $sde->namespace, $b ) );
+			$sdmodel->add_statement( statement( $b, $vann->preferredNamespacePrefix, literal($ns) ) );
+			$sdmodel->add_statement( statement( $b, $vann->preferredNamespaceUri, literal($uri) ) );
 		}
 	}
 	
