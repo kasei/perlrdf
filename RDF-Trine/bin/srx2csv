@@ -9,7 +9,7 @@ use Scalar::Util qw(reftype blessed);
 my $fh;
 if (scalar(@ARGV) and -r $ARGV[0]) {
 	my $file	= shift;
-	open($fh, '<:utf8', $file) or die $!;
+	open($fh, '<:encoding(UTF-8)', $file) or die $!;
 } else {
 	$fh	= \*STDIN;
 }

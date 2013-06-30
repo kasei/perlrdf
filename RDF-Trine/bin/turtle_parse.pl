@@ -35,7 +35,7 @@ my $limit		= shift || 0;
 
 # open(my $file, '<:encoding(UTF-8)', $test_file) or die $!;
 # open(my $file, '<', $test_file) or die $!;
-open(my $file, '<:utf8', $test_file) or die $!;
+open(my $file, '<:encoding(UTF-8)', $test_file) or die $!;
 
 my $t0		= [gettimeofday];
 
