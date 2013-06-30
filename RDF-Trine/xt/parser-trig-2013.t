@@ -161,6 +161,7 @@ sub compare {
 		$parser->parse_file_into_model( $tbase, $fh, $emodel );
 	};
 	
+	# TODO: compare datasets, not graphs (the nt serializer is ignoring the graph slot in the quads)
 	my $got		= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $model );
 	my $expect	= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $emodel );
 	
