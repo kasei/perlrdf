@@ -40,12 +40,16 @@ open(my $file, '<:encoding(UTF-8)', $test_file) or die $!;
 my $t0		= [gettimeofday];
 
 my $parser;
+my $format;
 if ($test_file =~ /[.]trig/) {
 	$parser	= RDF::Trine::Parser->new('trig');
+	$format	= 'nquads';
 } elsif ($test_file =~ /[.]nq/) {
 	$parser	= RDF::Trine::Parser->new('nquads');
+	$format	= 'nquads';
 } else {
 	$parser	= RDF::Trine::Parser->new('turtle');
+	$format	= 'ntriples';
 }
 
 my $base	= File::Spec->rel2abs($test_file);
@@ -53,7 +57,7 @@ if ($verbose) {
 	$Error::Debug	= 1;
 }
 
-my $s	= RDF::Trine::Serializer->new('ntriples');
+my $s	= RDF::Trine::Serializer->new($format);
 
 # Parse test file
 my $total = 0;
