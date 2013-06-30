@@ -75,21 +75,23 @@ sub _statement {
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
+# 	warn '--> ' . decrypt_constant($type);
 	if ($type == LBRACE) { return $self->_graph($l, $t); }
+	elsif ($type == LBRACKET) { return $self->_graph($l, $t); }
+	elsif ($type == BNODE) { return $self->_graph($l, $t); }
 	elsif ($type == EQUALS) { return $self->_graph($l, $t); }
 	elsif ($type == IRI) { return $self->_graph($l, $t); }
 	elsif ($type == PREFIXNAME) { return $self->_graph($l, $t); }
 	elsif ($type == WS) {}
-	elsif ($type == PREFIX) {
+	elsif ($type == PREFIX or $type == SPARQLPREFIX) {
 		$t	= $self->_get_token_type($l, PREFIXNAME);
 		my $name	= $t->value;
 		$name		=~ s/:$//;
 		$t	= $self->_get_token_type($l, IRI);
 		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 		my $iri	= $r->uri_value;
-		$t	= $self->_next_nonws($l);
-		if ($t and $t->type != DOT) {
-			$self->_unget_token($t);
+		if ($type == PREFIX) {
+			$t	= $self->_get_token_type($l, DOT);
 		}
 		$self->{map}->add_mapping( $name => $iri );
 		if (my $ns = $self->{namespaces}) {
@@ -98,22 +100,19 @@ sub _statement {
 			}
 		}
 	}
-	elsif ($type == BASE) {
+	elsif ($type == BASE or $type == SPARQLBASE) {
 		$t	= $self->_get_token_type($l, IRI);
 		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
 		my $iri	= $r->uri_value;
-		$t	= $self->_next_nonws($l);
-		if ($t and $t->type != DOT) {
-			$self->_unget_token($t);
+		if ($type == BASE) {
+			$t	= $self->_get_token_type($l, DOT);
 		}
 		$self->{baseURI}	= $iri;
 	}
-# 	else {
-# 		$self->_triple( $l, $t );
-# 		$t	= $self->_get_token_type($l, DOT);
-# 	}
+	else {
+		$self->_throw_error("Expecting statement but got " . decrypt_constant($type), $t, $l);
+	}
 }
-
 
 sub _graph {
 	my $self	= shift;
@@ -122,7 +121,18 @@ sub _graph {
 	my $type	= $t->type;
 	if ($type == IRI or $type == PREFIXNAME) {
 		$self->{graph}	= $self->_token_to_node($t);
+		my $old_token	= $t;
 		$t		= $self->_next_nonws($l);
+		unless (defined($t)) {
+			$l->_throw_error("Unexpected EOF after graph");
+		}
+	} elsif ($type == BNODE) {
+		$self->{graph}	= $self->_token_to_node($t);
+		$t		= $self->_next_nonws($l);
+	} elsif ($type == LBRACKET) {
+		$t	= $self->_get_token_type($l, RBRACKET);
+		$t	= $self->_next_nonws($l);
+		$self->{graph}	= RDF::Trine::Node::Blank->new();
 	} else {
 		$self->{graph}	= RDF::Trine::Node::Nil->new();
 	}
