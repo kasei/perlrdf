@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.006" ;
-                        doap:created      "2012-XX-XX" ;
+                        doap:created      "2012-07-01" ;
                         ];
         asc:changes     [
         				asc:addition    "Split RDF::Trine::Iterator->from_string into from_string and from_bytes." ;

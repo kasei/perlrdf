@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.006 (2013-XX-XX)
+  Version 1.006 (2013-07-01)
 
      * API CHANGES
          Punycode URIs are now left as-is (without decoding) in RDF::Trine::Node::Resource->new.
