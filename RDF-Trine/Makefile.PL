@@ -11,6 +11,7 @@ license				'perl';
 build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
+build_requires		'TryCatch'					=> 0;
 
 perl_version		'5.010';
 
@@ -24,7 +25,6 @@ requires			'DBD::SQLite'				=> 1.14;
 requires			'Digest::MD5'				=> 0;
 requires			'Digest::SHA'				=> 0;
 requires			'Error'						=> 0;
-requires			'TryCatch'					=> 0;
 requires			'HTTP::Negotiate'			=> 0;
 requires			'JSON'						=> 2;
 requires			'LWP::UserAgent'			=> 0;
