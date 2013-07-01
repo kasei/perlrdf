@@ -68,6 +68,24 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.006 (2013-07-01)
+
+     * API CHANGES
+         Punycode URIs are now left as-is (without decoding) in RDF::Trine::Node::Resource->new.
+     * BUG FIXES
+         Fix handling of IRIs with codepoints > 127 in RDF::Trine::Node::Resource (GitHub issue #85).
+         Remove empty-string default in SQL schema of RDF::Trine::Store::DBI::mysql and update code to compensate.
+         Remove bad calls to encode_utf8 in sse and as_ntriples methods of RDF::Trine::Node::Resource.
+     * NEW FEATURES
+         Split RDF::Trine::Iterator->from_string into from_string and from_bytes.
+     * ENHANCEMENTS
+         Normalize IRI values before serialization in RDF::Trine::Node::Resource->as_ntriples and RDF::Trine::Node::Resource->compare.
+     * OTHER
+         Update RDF::Trine::Serializer::NTriples::Canonical to use $node->as_ntriples instead of $node->sse.
+         Add documentation noting that punycode will be decoded as a part of N-Triples serialization.
+         Change use of utf8::all to utf8 in t/node.t.
+         Mark TryCatch as a build_requires instead of a requires module in Makefile.PL.
+
   Version 1.005 (2013-05-27)
 
      * API CHANGES
