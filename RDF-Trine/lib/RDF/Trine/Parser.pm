@@ -193,9 +193,7 @@ sub parse_url_into_model {
 		$ua	= $args{useragent};
 	} else {
 		$ua		= RDF::Trine->default_useragent->clone;
-	
-		# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
-		my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
+		my $accept	= $class->default_accept_header;
 		$ua->default_headers->push_header( 'Accept' => $accept );
 	}
 	
@@ -432,6 +430,21 @@ sub new_bnode_prefix {
 	}
 }
 
+=item C<< default_accept_header >>
+
+Returns the default HTTP Accept header value used in requesting RDF content (e.g. in
+L</parse_url_into_model>) that may be parsed by one of the available RDF::Trine::Parser
+subclasses.
+
+By default, RDF/XML and Turtle are preferred over other media types.
+
+=cut
+
+sub default_accept_header {
+	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
+	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
+	return $accept;
+}
 
 1;
 
