@@ -125,6 +125,22 @@ sub end_bulk_ops {
 	}
 }
 
+=item C<< logger ( [ $logger ] ) >>
+
+Returns the logging object responsible for recording data inserts and deletes.
+
+If C<< $logger >> is passed as an argument, sets the logger to this object.
+
+=cut
+
+sub logger {
+	my $self	= shift;
+	if (scalar(@_)) {
+		$self->{'logger'}	= shift;
+	}
+	return $self->{'logger'};
+}
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<< $statement >> to the rdf store.
@@ -155,6 +171,15 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
+	
+	if (my $log = $self->logger) {
+		my ($st, $context)	= @args;
+		if (defined($context)) {
+			$st	= RDF::Trine::Statement::Quad->new(($st->nodes)[0..2], $context);
+		}
+		$log->add($st);
+	}
+	
 	return $self->_store->add_statement( @args );
 }
 
@@ -367,7 +392,15 @@ Removes the specified C<< $statement >> from the rdf store.
 
 sub remove_statement {
 	my $self	= shift;
-	return $self->_store->remove_statement( @_ );
+	my @args	= @_;
+	if (my $log = $self->logger) {
+		my ($st, $context)	= @args;
+		if (defined($context)) {
+			$st	= RDF::Trine::Statement::Quad->new(($st->nodes)[0..2], $context);
+		}
+		$log->delete($st);
+	}
+	return $self->_store->remove_statement( @args );
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context] ) >>
@@ -378,6 +411,9 @@ Removes all statements matching the supplied C<< $statement >> pattern from the 
 
 sub remove_statements {
 	my $self	= shift;
+	if (my $log = $self->logger) {
+		$log->delete($_) foreach (@_);
+	}
 	return $self->_store->remove_statements( @_ );
 }
 
