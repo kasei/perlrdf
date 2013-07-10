@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFPatch - RDF-Patch Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFPatch version 1.005
+This document describes RDF::Trine::Serializer::RDFPatch version 1.006_01
 
 =head1 SYNOPSIS
 
@@ -49,7 +49,7 @@ use RDF::Trine::Exporter::RDFPatch;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.005';
+	$VERSION	= '1.006_01';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfpatch' }	= __PACKAGE__;
 # 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF-Patch' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf-patch)) {
