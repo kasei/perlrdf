@@ -22,6 +22,7 @@
         				asc:addition    "Added initial implementation of TriG serializer." ;
         				asc:addition    "Added implementation of the RDF Patch exporter and serializer, and ability to serialize model changes in RDF Patch format." ;
         				asc:addition    "Added ability to configure the LWP::UserAgent used through the RDF::Trine framework." ;
+        				asc:addition    "Added Test::Compile developer test xt/00_compile.t." ;
                         asc:update      "Update Turtle lexer to look for whitespace (instead of a word break) after 'a' when looking for the A token." ;
                         asc:update      "Work around a XML::Namespace bug in RDF::Trine::Namespace->uri." ;
                         asc:update      "Fixed xt/pod-coverage.t to avoid checking modules which fail to load." ;
@@ -35,6 +36,7 @@
                         asc:update      "Added POD for RDF::Trine::Statement::Quad->graph (alias for ->context)." ;
                         asc:update      "Updated RDF::Trine::Store::Memory to generate SHA digests (for ETag use) based on bytes, not unicode strings." ;
                         asc:update      "Add RDF::Trine::Statement::Quad->graph as an alias for RDF::Trine::Statement::Quad->context." ;
+                        asc:update      "Updated t/serializer-trig.t to load RDF::Trine before any sub-modules." ;
                         ] .
 
 

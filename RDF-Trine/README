@@ -90,6 +90,8 @@ VERSION HISTORY
          	Added POD for RDF::Trine::Statement::Quad->graph (alias for ->context).
          	Updated RDF::Trine::Store::Memory to generate SHA digests (for ETag use) based on bytes, not unicode strings.
          	Add RDF::Trine::Statement::Quad->graph as an alias for RDF::Trine::Statement::Quad->context.
+         	Updated t/serializer-trig.t to load RDF::Trine before any sub-modules.
+         	Added Test::Compile developer test xt/00_compile.t.
 
   Version 1.006 (2013-07-01)
 
