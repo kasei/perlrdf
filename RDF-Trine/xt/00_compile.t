@@ -8,3 +8,4 @@ unless (can_load( modules => { 'Test::Compile' => 0 })) {
 }
 Test::Compile->import;
 pm_file_ok($_) for grep { !m/Redland|mysql|Pg|Redis/ } all_pm_files();
+done_testing();
