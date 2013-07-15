@@ -7,11 +7,8 @@ no warnings 'redefine';
 use Scalar::Util qw(blessed reftype);
 use utf8;
 
-use RDF::Trine::Namespace qw(rdf foaf);
 use RDF::Trine qw(statement iri literal blank);
 use RDF::Trine::Namespace qw(rdf foaf);
-use_ok('RDF::Trine::Serializer::TriG');
-
 
 my $ex		= RDF::Trine::Namespace->new('http://example.com/');
 my $ns		= RDF::Trine::Namespace->new('http://example.com/ns#');
