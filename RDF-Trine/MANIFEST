@@ -1360,6 +1360,7 @@ t/store-redis.t
 t/store-triple_sql.t
 t/store.t
 t/syntax.t
+xt/00_compile.t
 xt/data/turtle/test-14.out
 xt/data/turtle/test-14.ttl
 xt/data/turtle/test-15.out
