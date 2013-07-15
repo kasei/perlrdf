@@ -1,6 +1,10 @@
 use strict;
 use warnings;
 use Test::More;
-eval "use Test::Compile";
-Test::More->builder->BAIL_OUT("Test::Compile required for testing compilation") if $@;
+
+use Module::Load::Conditional qw[can_load];
+unless (can_load( modules => { 'Test::Compile' => 0 })) {
+  plan skip_all => "Test::Compile must be installed for Postgres tests";
+}
+Test::Compile->import;
 pm_file_ok($_) for grep { !m/Redland|mysql|Pg|Redis/ } all_pm_files();
