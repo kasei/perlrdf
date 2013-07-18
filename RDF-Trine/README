@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.007 (2013-XX-XX)
+  Version 1.007 (2013-07-18)
 
      * BUG FIXES
          	Update Turtle lexer to look for whitespace (instead of a word break) after 'a' when looking for the A token.
