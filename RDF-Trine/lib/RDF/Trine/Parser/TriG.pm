@@ -7,7 +7,7 @@ RDF::Trine::Parser::TriG - TriG RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::TriG version 1.006
+This document describes RDF::Trine::Parser::TriG version 1.007
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '1.006';
+	$VERSION				= '1.007';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
 	foreach my $ext (qw(trig)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -75,18 +75,24 @@ sub _statement {
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
+# 	warn '--> ' . decrypt_constant($type);
 	if ($type == LBRACE) { return $self->_graph($l, $t); }
+	elsif ($type == LBRACKET) { return $self->_graph($l, $t); }
+	elsif ($type == BNODE) { return $self->_graph($l, $t); }
 	elsif ($type == EQUALS) { return $self->_graph($l, $t); }
 	elsif ($type == IRI) { return $self->_graph($l, $t); }
 	elsif ($type == PREFIXNAME) { return $self->_graph($l, $t); }
 	elsif ($type == WS) {}
-	elsif ($type == PREFIX) {
+	elsif ($type == PREFIX or $type == SPARQLPREFIX) {
 		$t	= $self->_get_token_type($l, PREFIXNAME);
 		my $name	= $t->value;
 		$name		=~ s/:$//;
 		$t	= $self->_get_token_type($l, IRI);
-		my $iri	= $t->value;
-		$t	= $self->_get_token_type($l, DOT);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		if ($type == PREFIX) {
+			$t	= $self->_get_token_type($l, DOT);
+		}
 		$self->{map}->add_mapping( $name => $iri );
 		if (my $ns = $self->{namespaces}) {
 			unless ($ns->namespace_uri($name)) {
@@ -94,18 +100,19 @@ sub _statement {
 			}
 		}
 	}
-	elsif ($type == BASE) {
+	elsif ($type == BASE or $type == SPARQLBASE) {
 		$t	= $self->_get_token_type($l, IRI);
-		my $iri	= $t->value;
-		$t	= $self->_get_token_type($l, DOT);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		if ($type == BASE) {
+			$t	= $self->_get_token_type($l, DOT);
+		}
 		$self->{baseURI}	= $iri;
 	}
 	else {
-		$self->_triple( $l, $t );
-		$t	= $self->_get_token_type($l, DOT);
+		$self->_throw_error("Expecting statement but got " . decrypt_constant($type), $t, $l);
 	}
 }
-
 
 sub _graph {
 	my $self	= shift;
@@ -114,7 +121,18 @@ sub _graph {
 	my $type	= $t->type;
 	if ($type == IRI or $type == PREFIXNAME) {
 		$self->{graph}	= $self->_token_to_node($t);
+		my $old_token	= $t;
 		$t		= $self->_next_nonws($l);
+		unless (defined($t)) {
+			$l->_throw_error("Unexpected EOF after graph");
+		}
+	} elsif ($type == BNODE) {
+		$self->{graph}	= $self->_token_to_node($t);
+		$t		= $self->_next_nonws($l);
+	} elsif ($type == LBRACKET) {
+		$t	= $self->_get_token_type($l, RBRACKET);
+		$t	= $self->_next_nonws($l);
+		$self->{graph}	= RDF::Trine::Node::Blank->new();
 	} else {
 		$self->{graph}	= RDF::Trine::Node::Nil->new();
 	}
@@ -167,6 +185,13 @@ sub _triple {
 			$self->_unget_token($t);
 			$self->_predicateObjectList( $l, $subj );
 			$t	= $self->_get_token_type($l, RBRACKET);
+			
+			$t		= $self->_next_nonws($l);
+			return unless defined($t);
+			$self->_unget_token($t);
+			if ($t->type == DOT) {
+				return;
+			}
 		}
 	} elsif ($type == LPAREN) {
 		my $t	= $self->_next_nonws($l);

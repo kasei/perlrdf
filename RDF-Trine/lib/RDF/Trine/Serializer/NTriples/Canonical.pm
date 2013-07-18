@@ -4,7 +4,7 @@ RDF::Trine::Serializer::NTriples::Canonical - Canonical representation of an RDF
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples::Canonical version 1.006
+This document describes RDF::Trine::Serializer::NTriples::Canonical version 1.007
 
 =head1 SYNOPSIS
 
@@ -64,7 +64,7 @@ use base qw(RDF::Trine::Serializer::NTriples);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.006';
+	$VERSION	= '1.007';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples-canonical' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -83,8 +83,8 @@ and 'die', and their respective behaviour is described in L</DESCRIPTION> above.
 =cut
 
 sub new {
-	my $class = shift;
-	my %opts;
+	my $class	= shift;
+	my %opts	= (onfail => '');
 	
 	while (@_) {
 		my $field = lc shift;

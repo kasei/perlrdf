@@ -385,7 +385,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open AGGREGATE";
 	}
 	delete $self->[0]{rows};
-	$self->[1]->close();
+	if (defined($self->[1])) {
+		$self->[1]->close();
+	}
 	$self->SUPER::close();
 }
 

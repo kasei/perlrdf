@@ -13,14 +13,12 @@ use TryCatch;
 
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 my $rdft	= RDF::Trine::Namespace->new('http://www.w3.org/ns/rdftest#');
-my $base	= iri('http://example/base/');
+my $base	= iri('http://www.w3.org/2013/TurtleTests/');
 my $model	= RDF::Trine::Model->temporary_model;
 
-foreach my $dir ('tests-ttl', 'coverage') {
-	my $path	= File::Spec->catfile( $Bin, '..', 't', 'data', 'turtle-2013', $dir );
-	my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
-	RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
-}
+my $path	= File::Spec->catfile( $Bin, '..', 't', 'data', 'turtle-2013' );
+my $file	= URI::file->new_abs( File::Spec->catfile($path, 'manifest.ttl') )->as_string;
+RDF::Trine::Parser->parse_url_into_model( $file, $model, canonicalize => 1 );
 
 my @manifests	= $model->subjects($rdf->type, $mf->Manifest);
 foreach my $manifest (@manifests) {
@@ -50,7 +48,11 @@ foreach my $manifest (@manifests) {
 	foreach my $test (@syntax_good) {
 		my ($test_file)	= $model->objects($test, $mf->action);
 		my $file	= URI->new($test_file->uri)->file;
-		my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+		my $data	= eval { do { open( my $fh, '<', $file ) or die $!; local($/) = undef; <$fh> } };
+		if ($@) {
+			fail("$test: $!");
+			next;
+		}
 		my (undef, undef, $test)	= File::Spec->splitpath( $file );
 		lives_ok {
 			my $url	= 'file://' . $file;
@@ -61,18 +63,19 @@ foreach my $manifest (@manifests) {
 
 	note("Negative Syntax Tests");
 	foreach my $test (@syntax_bad) {
-		TODO: {
-			my ($test_file)	= $model->objects($test, $mf->action);
-			my $url		= URI->new($test_file->uri);
-			my $file	= $url->file;
-			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
-			my (undef, undef, $test)	= File::Spec->splitpath( $file );
-			local($TODO)	= "Not yet implemented" if ($test =~ /turtle-syntax-bad-base-03.ttl/);
-			throws_ok {
-				my $parser	= RDF::Trine::Parser::Turtle->new();
-				$parser->parse( $url, $data );
-			} 'RDF::Trine::Error::ParserError', $test;
+		my ($test_file)	= $model->objects($test, $mf->action);
+		my $url		= URI->new($test_file->uri);
+		my $file	= $url->file;
+		my $data	= eval { do { open( my $fh, '<', $file ) or die $!; local($/) = undef; <$fh> } };
+		if ($@) {
+			fail("$test: $!");
+			next;
 		}
+		my (undef, undef, $test)	= File::Spec->splitpath( $file );
+		throws_ok {
+			my $parser	= RDF::Trine::Parser::Turtle->new();
+			$parser->parse( $url, $data );
+		} 'RDF::Trine::Error::ParserError', $test;
 	}
 
 	note("Positive Evaluation Tests");
@@ -90,9 +93,9 @@ foreach my $manifest (@manifests) {
 		my $parsed	= 1;
 		try {
 			$parser->parse_file_into_model( $tbase, $fh, $model );
-		} catch ($err) {
+		} catch (RDF::Trine::Error $e) {
 			$parsed	= 0;
-			warn "Failed to parse $file: " . $err->text;
+			warn "Failed to parse $file: " . $e->text;
 		}
 		if ($parsed) {
 			compare($model, URI->new($res_file->uri), $base, $test);
@@ -105,7 +108,11 @@ foreach my $manifest (@manifests) {
 	foreach my $test (@eval_bad) {
 		my ($test_file)	= $model->objects($test, $mf->action);
 		my $file	= URI->new($test_file->uri)->file;
-		my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+		my $data	= eval { do { open( my $fh, '<', $file ) or die $!; local($/) = undef; <$fh> } };
+		if ($@) {
+			fail("$test: $!");
+			next;
+		}
 		my (undef, undef, $test)	= File::Spec->splitpath( $file );
 		throws_ok {
 			my $url	= 'file://' . $file;

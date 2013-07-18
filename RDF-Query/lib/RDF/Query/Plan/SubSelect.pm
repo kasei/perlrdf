@@ -125,7 +125,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
 	my $plan			= $self->plan;
-	$plan->close();
+	if (defined($plan)) {
+		$plan->close();
+	}
 	delete $self->[0]{iter};
 	delete $self->[0]{args};
 	delete $self->[0]{count};
