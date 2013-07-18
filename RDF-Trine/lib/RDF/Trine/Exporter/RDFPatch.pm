@@ -7,7 +7,7 @@ RDF::Trine::Exporter::RDFPatch - RDF-Patch Export
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::RDFPatch version 1.005
+This document describes RDF::Trine::Exporter::RDFPatch version 1.007
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.005';
+	$VERSION	= '1.007';
 }
 
 ######################################################################

@@ -10,7 +10,7 @@ use Test::More;
 
 use Module::Load::Conditional qw[can_load];
 
-unless (can_load( modules => { 'DBD::Pg' })) {
+unless (can_load( modules => { 'DBD::Pg' => 0 })) {
   plan skip_all => "DBD::Pg must be installed for Postgres tests";
 }
 
