@@ -39,6 +39,11 @@ VERSION HISTORY
   Version 2.909 (2012-11-24)
 
      * BUG FIXES
+         Updated RDQL parser to work with recent RDF::Trine releases.
+
+  Version 2.909 (2012-11-24)
+
+     * BUG FIXES
          Fixed bad sparql serialization of filters with equality tests; was using '==' instead of '=' (github issue 53).
          Fixed bug in RDF::Query::Algebra::Service->referenced_variables.
          Fixed bug that wasn't passing the active graph to EXISTS filter evaluation.

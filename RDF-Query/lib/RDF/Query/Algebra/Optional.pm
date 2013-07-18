@@ -7,7 +7,7 @@ RDF::Query::Algebra::Optional - Algebra class for Optional patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Optional version 2.909.
+This document describes RDF::Query::Algebra::Optional version 2.909_01.
 
 =cut
 
@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.909';
+	$VERSION	= '2.909_01';
 }
 
 ######################################################################
