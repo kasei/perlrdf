@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.910" ;
-                        doap:created      "2013-07-XX" ;
+                        doap:created      "2013-07-22" ;
                         ];
         asc:changes     [
                         asc:update        "Updated RDQL parser to work with recent RDF::Trine releases." ;

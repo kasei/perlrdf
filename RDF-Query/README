@@ -36,7 +36,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.909 (2012-11-24)
+  Version 2.910 (2012-07-22)
 
      * BUG FIXES
          Updated RDQL parser to work with recent RDF::Trine releases.
