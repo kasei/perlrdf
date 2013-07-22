@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.909.
+This document describes RDF::Query::Parser::SPARQL11 version 2.910.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.909';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

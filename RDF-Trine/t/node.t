@@ -1,4 +1,4 @@
-use Test::More tests => 69;
+use Test::More tests => 73;
 use Test::Exception;
 
 use utf8;
@@ -32,7 +32,7 @@ my $k3		= RDF::Trine::Node::Resource->new('#食べる', 'http://www.w3.org/2001/
 my $urn		= RDF::Trine::Node::Resource->new('urn:x-demonstrate:bug');
 
 throws_ok { RDF::Trine::Node::Literal->new('foo', 'en', 'http://dt') } 'RDF::Trine::Error::MethodInvocationError', 'RDF::Trine::Node::Literal::new throws with both langauge and datatype';
-throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with non-alphanumeric label';
+throws_ok { RDF::Trine::Node::Blank->new('foo bar') } 'RDF::Trine::Error::SerializationError', 'RDF::Trine::Node::Blank::new throws with a label that includes whitespace';
 
 is( $b->type, 'BLANK', 'blank type' );
 is( $l->type, 'LITERAL', 'literal type' );
@@ -84,7 +84,7 @@ is( $l->as_ntriples, '"value"', 'plain literal as_ntriples' );
 is( $ll->as_ntriples, '"value"@en', 'language literal as_ntriples' );
 is( $dl->as_ntriples, '"123"^^<http://www.w3.org/2001/XMLSchema#integer>', 'datatype literal as_ntriples' );
 is( $p->as_ntriples, '<http://kasei.us/about/foaf.xrdf#greg>', 'resource as_ntriples' );
-is( $k->as_ntriples, '<http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#%E9%A3%9F%E3%81%B9%E3%82%8B>', 'unicode literal as_ntriples' );
+is( $k->as_ntriples, '<http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#\\u98DF\\u3079\\u308B>', 'unicode literal as_ntriples' );
 throws_ok { $v->as_ntriples } 'RDF::Trine::Error::UnimplementedError', 'RDF::Trine::Node::Variable::as_ntriples throws';
 
 {
@@ -188,4 +188,26 @@ SKIP: {
 	is( refaddr($n1), refaddr($n2), 'Nil is a singleton' );
 	ok( $n1->equal( $n2 ), 'Nil nodes claim equality' );
 	ok( not($n1->equal( $k )), 'Nil node is not equal to non-Nil node' );
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--hestebedgrd-58a.dk/');
+	my $nt	= $uri->as_ntriples;
+	is($nt, "<http://www.hestebedg\\u00E5rd.dk/>", 'latin1-compatible punycode URI properly decoded as an IRI');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://xn--df-oiy.ws/');
+	my $nt	= $uri->as_ntriples;
+	is($nt, '<http://\\u272Adf.ws/>', 'high-codepoint punycode URI properly decoded as an IRI');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013');
+	is($uri->uri_value, 'http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013', 'punycode URI with percent-escapes');
+}
+
+{
+	my $uri	= RDF::Trine::Node::Resource->new('http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013', 'http://base/');
+	is($uri->uri_value, "http://www.xn--orfolkedansere-rqb.dk/#8835/St%C3%A6vne%202013", 'punycode URI with percent-escapes with base');
 }

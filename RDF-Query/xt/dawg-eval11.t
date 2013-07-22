@@ -531,7 +531,7 @@ sub get_expected_results {
 		}
 	} elsif ($file =~ /[.]srx/) {
 		my $model	= RDF::Trine::Model->temporary_model;
-		my $data	= do { local($/) = undef; open(my $fh, '<', $file) or die $!; binmode($fh, ':utf8'); <$fh> };
+		my $data	= do { local($/) = undef; open(my $fh, '<:encoding(UTF-8)', $file) or die $!; <$fh> };
 		my $results	= RDF::Trine::Iterator->from_string( $data, { canonicalize => 1 } );
 		if ($results->isa('RDF::Trine::Iterator::Boolean')) {
 			$model->add_statement( statement( $testns->result, $testns->boolean, literal(($results->next ? 'true' : 'false'), undef, $xsd->boolean) ) );
