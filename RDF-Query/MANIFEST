@@ -186,6 +186,7 @@ t/protocol-serialization.t
 t/queryform-ask.t
 t/queryform-construct.t
 t/queryform-describe.t
+t/rdql.t
 t/resultforms.t
 t/serialize.t
 t/sha1.js
