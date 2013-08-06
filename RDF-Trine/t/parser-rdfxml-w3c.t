@@ -279,11 +279,14 @@ sub compare {
 	$file		=~ s/[.]rdf$/.nt/;
 	my $parser	= RDF::Trine::Parser::NTriples->new();
 	my $emodel	= RDF::Trine::Model->temporary_model;
-	open( my $fh, '<', $file );
-	$parser->parse_file_into_model ( $url, $fh, $emodel );
+	open( my $fh, '<:encoding(UTF-8)', $file );
+	$parser->parse_file_into_model( $url, $fh, $emodel );
 	
 	my $got		= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $model );
 	my $expect	= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $emodel );
+# 	use Data::Dumper;
+# 	warn Dumper($got, $expect);
+# 	warn Dumper($emodel);
 	
 	is( $got, $expect, "expected triples: $name ($parse_type)" );
 }

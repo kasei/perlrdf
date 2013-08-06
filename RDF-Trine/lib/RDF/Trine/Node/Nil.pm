@@ -1,5 +1,4 @@
-# RDF::Trine::Node::Nil
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Nil;
 
 =head1 NAME
 
@@ -11,12 +10,15 @@ This document describes RDF::Trine::Node::Nil version 1.007
 
 =cut
 
-package RDF::Trine::Node::Nil;
-
 use strict;
 use warnings;
-no warnings 'redefine';
+use utf8;
+use Scalar::Util qw(refaddr);
+use Moose;
+use MooseX::Singleton;
 use base qw(RDF::Trine::Node);
+
+with 'RDF::Trine::Node::API';
 
 use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
@@ -50,16 +52,6 @@ Returns the nil-valued node.
 
 =cut
 
-sub new {
-	my $class	= shift;
-	if (blessed($NIL_NODE)) {
-		return $NIL_NODE;
-	} else {
-		$NIL_NODE	= bless({}, $class);
-		return $NIL_NODE;
-	}
-}
-
 =item C<< is_nil >>
 
 Returns true if this object is the nil-valued node.
@@ -67,8 +59,7 @@ Returns true if this object is the nil-valued node.
 =cut
 
 sub is_nil {
-	my $self	= shift;
-	return (refaddr($self) == refaddr($NIL_NODE));
+	return 1;
 }
 
 =item C<< sse >>
@@ -121,16 +112,7 @@ Returns true if the two nodes are equal, false otherwise.
 
 =cut
 
-sub equal {
-	my $self	= shift;
-	my $node	= shift;
-	return 0 unless (blessed($node));
-	if ($self->isa('RDF::Trine::Node::Nil') and $node->isa('RDF::Trine::Node::Nil')) {
-		return 1;
-	} else {
-		return 0;
-	}
-}
+sub equal { refaddr(shift)==refaddr(shift) }
 
 # called to compare two nodes of the same type
 sub _compare {

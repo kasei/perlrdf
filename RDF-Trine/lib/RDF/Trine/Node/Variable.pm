@@ -1,5 +1,4 @@
-# RDF::Trine::Node::Variable
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Variable;
 
 =head1 NAME
 
@@ -11,16 +10,37 @@ This document describes RDF::Trine::Node::Variable version 1.007
 
 =cut
 
-package RDF::Trine::Node::Variable;
-
 use strict;
 use warnings;
-no warnings 'redefine';
+use utf8;
+use Moose;
+use MooseX::Types::Moose qw(Str);
+use MooseX::Aliases;
+use namespace::autoclean;
 use base qw(RDF::Trine::Node);
 
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
+
+with 'RDF::Trine::Node::API';
+
+has value => (
+	is   => 'ro',
+	isa  => Str,
+	required	=> 1,
+);
+
+alias 'name' => 'value';
+
+sub BUILDARGS {
+	if (@_ == 2 and not ref $_[1]) {
+		return +{ value => $_[1] };
+	} elsif (@_ == 3 and $_[1] eq 'name') {
+		$_[1]	= 'value';
+	}
+	return shift->SUPER::BUILDARGS(@_);
+}
 
 ######################################################################
 
@@ -49,22 +69,11 @@ Returns a new Variable structure.
 
 =cut
 
-sub new {
-	my $class	= shift;
-	my $name	= shift;
-	return bless( [ $name ], $class );
-}
-
 =item C<< name >>
 
 Returns the name of the variable.
 
 =cut
-
-sub name {
-	my $self	= shift;
-	return $self->[0];
-}
 
 =item C<< sse >>
 
@@ -94,11 +103,6 @@ sub as_string {
 Returns the variable name.
 
 =cut
-
-sub value {
-	my $self	= shift;
-	return $self->name;
-}
 
 =item C<< as_ntriples >>
 
@@ -141,6 +145,8 @@ sub _compare {
 	my $b	= shift;
 	return ($a->name cmp $b->name);
 }
+
+__PACKAGE__->meta->make_immutable;
 
 1;
 

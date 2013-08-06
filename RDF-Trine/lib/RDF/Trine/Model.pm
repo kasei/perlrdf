@@ -507,6 +507,7 @@ sub get_statements {
 		my $n	= $_[$i];
 		next unless defined($n);	# undef is OK
 		next if (blessed($n) and $n->isa('RDF::Trine::Node'));	# node objects are OK
+		next if (blessed($n) and $n->does('RDF::Trine::Node::API'));	# node objects are OK
 		my $pos	= $pos[$i];
 		local($Data::Dumper::Indent)	= 0;
 		my $ser	= Data::Dumper->Dump([$n], [$pos]);

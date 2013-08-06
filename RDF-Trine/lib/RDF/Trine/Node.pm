@@ -15,7 +15,7 @@ package RDF::Trine::Node;
 
 use strict;
 use warnings;
-no warnings 'redefine';
+use utf8;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
@@ -27,13 +27,6 @@ BEGIN {
 }
 
 use Scalar::Util qw(blessed refaddr);
-
-use RDF::Trine::Node::Nil;
-use RDF::Trine::Node::Blank;
-use RDF::Trine::Node::Literal;
-use RDF::Trine::Node::Resource;
-use RDF::Trine::Node::Variable;
-
 
 =head1 FUNCTIONS
 
@@ -52,153 +45,46 @@ sub ntriples_escape {
 	return $class->_unicode_escape( @_ );
 }
 
-=back
-
-=head1 METHODS
-
-=over 4
-
-=item C<< is_node >>
-
-Returns true if this object is a RDF node, false otherwise.
-
-=cut
-
-sub is_node {
+sub _unicode_escape {
 	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node'));
-}
-
-=item C<< is_nil >>
-
-Returns true if this object is the nil-valued node.
-
-=cut
-
-sub is_nil {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node::Nil'));
-}
-
-=item C<< is_blank >>
-
-Returns true if this RDF node is a blank node, false otherwise.
-
-=cut
-
-sub is_blank {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node::Blank'));
-}
-
-=item C<< is_resource >>
-
-Returns true if this RDF node is a resource, false otherwise.
-
-=cut
-
-sub is_resource {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node::Resource'));
-}
-
-=item C<< is_literal >>
-
-Returns true if this RDF node is a literal, false otherwise.
-
-=cut
-
-sub is_literal {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node::Literal'));
-}
-
-=item C<< is_variable >>
-
-Returns true if this RDF node is a variable, false otherwise.
-
-=cut
-
-sub is_variable {
-	my $self	= shift;
-	return (blessed($self) and $self->isa('RDF::Trine::Node::Variable'));
-}
-
-=item C<< as_string >>
-
-Returns the node in a string form.
-
-=cut
-
-sub as_string {
-	my $self	= shift;
-	Carp::confess unless ($self->can('sse'));
-	return $self->sse;
-}
-
-=item C<< as_ntriples >>
-
-Returns the node in a string form suitable for NTriples serialization.
-
-=cut
-
-sub as_ntriples {
-	return $_[0]->sse;
-}
-
-=item C<< sse >>
-
-Returns the SSE serialization of the node.
-
-=cut
-
-=item C<< equal ( $node ) >>
-
-Returns true if the two nodes are equal, false otherwise.
-
-=cut
-
-sub equal {
-	my $self	= shift;
-	my $node	= shift;
-	return 0 unless (blessed($node));
-	return (refaddr($self) == refaddr($node));
-}
-
-=item C<< compare ( $node_a, $node_b ) >>
-
-Returns -1, 0, or 1 if $node_a sorts less than, equal to, or greater than
-$node_b in the defined SPARQL ordering, respectively. This function may be
-used as the function argument to C<<sort>>.
-
-=cut
-
-my %order	= (
-	NIL		=> 0,
-	BLANK	=> 1,
-	URI		=> 2,
-	LITERAL	=> 3,
-);
-sub compare {
-	my $a	= shift;
-	my $b	= shift;
-	return -1 unless blessed($a);
-	return 1 unless blessed($b);
+	my $str		= shift;
 	
-	# (Lowest) no value assigned to the variable or expression in this solution.
-	# Blank nodes
-	# IRIs
-	# RDF literals (plain < xsd:string)
-	my $at	= $a->type;
-	my $bt	= $b->type;
-	if ($a->type ne $b->type) {
-		my $an	= $order{ $at };
-		my $bn	= $order{ $bt };
-		return ($an <=> $bn);
+	if ($str =~ /\A[^\\\n\t\r"\x{10000}-\x{10ffff}\x{7f}-\x{ffff}\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]*\z/sm) {
+		# hot path - no special characters to escape, just printable ascii
+		return $str;
 	} else {
-		return $a->_compare( $b );
+		# slow path - escape all the special characters
+		my $rslt	= '';
+		while (length($str)) {
+			if (my ($ascii) = $str =~ /^([A-Za-z0-9 \t]+)/) {
+				$rslt	.= $ascii;
+				substr($str, 0, length($ascii))	= '';
+			} else {
+				my $utf8	= substr($str,0,1,'');
+				if ($utf8 eq '\\') {
+					$rslt	.= '\\\\';
+				} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
+					$rslt	.= sprintf('\\U%08X', ord($utf8));
+				} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
+		#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
+					$rslt	.= sprintf('\\u%04X', ord($utf8));
+				} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
+					$rslt	.= sprintf('\\u%04X', ord($utf8));
+				} else {
+					$rslt	.= $utf8;
+				}
+			}
+		}
+#	 	$rslt		=~ s/\\/\\\\/g;
+		$rslt		=~ s/\n/\\n/g;
+		$rslt		=~ s/\t/\\t/g;
+		$rslt		=~ s/\r/\\r/g;
+		$rslt		=~ s/"/\\"/g;
+		return $rslt;
 	}
 }
+
+
 
 =item C<< from_sse ( $string, $context ) >>
 
@@ -253,44 +139,41 @@ sub from_sse {
 	}
 }
 
-sub _unicode_escape {
-	my $self	= shift;
-	my $str		= shift;
-	
-	if ($str =~ /\A[^\\\n\t\r"\x{10000}-\x{10ffff}\x{7f}-\x{ffff}\x{00}-\x{08}\x{0b}-\x{0c}\x{0e}-\x{1f}]*\z/sm) {
-		# hot path - no special characters to escape, just printable ascii
-		return $str;
+
+my %order	= (
+	NIL		=> 0,
+	BLANK	=> 1,
+	URI		=> 2,
+	LITERAL	=> 3,
+);
+sub compare {
+	my $a	= shift;
+	my $b	= shift;
+	return -1 unless blessed($a);
+	return 1 unless blessed($b);
+
+	# (Lowest) no value assigned to the variable or expression in this solution.
+	# Blank nodes
+	# IRIs
+	# RDF literals (plain < xsd:string)
+	my $at	= $a->type;
+	my $bt	= $b->type;
+	if ($a->type ne $b->type) {
+		my $an	= $order{ $at };
+		my $bn	= $order{ $bt };
+		return ($an <=> $bn);
 	} else {
-		# slow path - escape all the special characters
-		my $rslt	= '';
-		while (length($str)) {
-			if (my ($ascii) = $str =~ /^([A-Za-z0-9 \t]+)/) {
-				$rslt	.= $ascii;
-				substr($str, 0, length($ascii))	= '';
-			} else {
-				my $utf8	= substr($str,0,1,'');
-				if ($utf8 eq '\\') {
-					$rslt	.= '\\\\';
-				} elsif ($utf8 =~ /^[\x{10000}-\x{10ffff}]$/) {
-					$rslt	.= sprintf('\\U%08X', ord($utf8));
-				} elsif ($utf8 =~ /^[\x7f-\x{ffff}]$/) {
-		#			$rslt	= '\\u'.uc(unpack('H4', $uchar->utf16be)) . $rslt;
-					$rslt	.= sprintf('\\u%04X', ord($utf8));
-				} elsif ($utf8 =~ /^[\x00-\x08\x0b-\x0c\x0e-\x1f]$/) {
-					$rslt	.= sprintf('\\u%04X', ord($utf8));
-				} else {
-					$rslt	.= $utf8;
-				}
-			}
-		}
-#	 	$rslt		=~ s/\\/\\\\/g;
-		$rslt		=~ s/\n/\\n/g;
-		$rslt		=~ s/\t/\\t/g;
-		$rslt		=~ s/\r/\\r/g;
-		$rslt		=~ s/"/\\"/g;
-		return $rslt;
+		return $a->_compare( $b );
 	}
 }
+
+use RDF::Trine::Node::Nil;
+use RDF::Trine::Node::Blank;
+use RDF::Trine::Node::Literal;
+use RDF::Trine::Node::Resource;
+use RDF::Trine::Node::Variable;
+
+
 
 1;
 

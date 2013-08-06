@@ -41,7 +41,7 @@ use Encode qw(decode);
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed reftype);
-
+use URI::Escape qw(uri_unescape);
 use RDF::Trine qw(literal);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
@@ -276,6 +276,7 @@ sub _unescape {
 	my $string	= shift;
 	my $lineno	= shift;
 	my $value	= '';
+	utf8::upgrade($value);
 	while (length($string)) {
 		while ($string =~ m/^([^\\]+)/) {
 			$value	.= $1;

@@ -1,0 +1,51 @@
+package RDF::Trine::Node::Literal::Integer;
+
+use utf8;
+use Moose::Role;
+use RDF::Trine::Error;
+use namespace::autoclean;
+
+with qw(
+	RDF::Trine::Node::API::Canonicalize
+);
+
+my $regexp = qr{ ^ ([-+])? (\d+) $ }x;
+
+sub _build_is_valid_lexical_form {
+	my $self = shift;
+	$self->value =~ $regexp;
+}
+
+sub _build_canonical_lexical_form {
+	my $self = shift;
+	if ($self->value =~ $regexp) {
+		my $sign = $1 || '';
+		my $num  = $2;
+		$sign = '' if $sign eq '+';
+		$num =~ s/^0+(\d)/$1/;
+		return "${sign}${num}";
+	}
+	throw RDF::Trine::Error -text => "Literal cannot be canonicalized", -object => $self;
+}
+
+sub numeric_value {
+	0 + shift->canonical_lexical_form;
+}
+
+RDF::Trine::Node::Literal::_register_datatype(
+	q<http://www.w3.org/2001/XMLSchema#integer>,
+	__PACKAGE__,
+);
+
+1;
+
+__END__
+
+=head1 NAME
+
+RDF::Trine::Node::Literal::Integer - literal subclass for xsd:integer
+
+=head1 DESCRIPTION
+
+This package should mainly be thought of as for internal use.
+

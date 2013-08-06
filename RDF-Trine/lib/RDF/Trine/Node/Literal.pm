@@ -1,5 +1,4 @@
-# RDF::Trine::Node::Literal
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Literal;
 
 =head1 NAME
 
@@ -11,17 +10,72 @@ This document describes RDF::Trine::Node::Literal version 1.007
 
 =cut
 
-package RDF::Trine::Node::Literal;
-
 use strict;
 use warnings;
-no warnings 'redefine';
+use utf8;
+use Moose;
+use Moose::Util qw(apply_all_roles);
+use MooseX::Aliases;
+use RDF::Trine::Types qw(UriStr LanguageTag);
+use MooseX::Types::Moose qw(Str Bool);
+use namespace::autoclean;
 use base qw(RDF::Trine::Node);
 
 use RDF::Trine::Error;
 use Data::Dumper;
 use Scalar::Util qw(blessed looks_like_number);
 use Carp qw(carp croak confess);
+
+with 'RDF::Trine::Node::API::RDFNode';
+
+has language => (
+	is        => 'ro',
+	isa       => LanguageTag,
+	predicate => "has_language",
+	traits    => [qw( MooseX::UndefTolerant::Attribute )],
+);
+
+has datatype => (
+	is        => 'ro',
+	isa       => UriStr,
+	predicate => "has_datatype",
+	traits    => [qw( MooseX::UndefTolerant::Attribute )],
+	coerce    => 1,
+);
+
+has '+value' => (
+	writer => '_set_value',
+	default	=> '',
+);
+
+has '_canonicalize_on_construction' => (
+	is        => 'ro',
+	isa       => Bool,
+	default   => 0,
+);
+
+alias $_ => 'value' for qw(literal_value);
+alias literal_value_language => 'language';
+alias literal_datatype => 'datatype';
+
+my %SUBCLASS;
+
+# This is not really intended as a third-party extensibility point.
+# It's really for Trine-internal use.
+sub _register_datatype {
+	my ($datatype, $sc) = @_;
+	$datatype = $datatype->value if blessed $datatype;
+	$SUBCLASS{ $datatype } ||= $sc;
+}
+sub _registered_datatypes {
+	%SUBCLASS;
+}
+
+require RDF::Trine::Node::Literal::Boolean;
+require RDF::Trine::Node::Literal::Integer;
+require RDF::Trine::Node::Literal::Decimal;
+require RDF::Trine::Node::Literal::Float;
+require RDF::Trine::Node::Literal::DateTime;
 
 ######################################################################
 
@@ -54,56 +108,45 @@ Returns a new Literal structure.
 
 =cut
 
-sub new {
-	my $class	= shift;
-	my $literal	= shift;
-	my $lang	= shift;
-	my $dt		= shift;
-	my $canon	= shift;
-	
-	unless (defined($literal)) {
-		throw RDF::Trine::Error::MethodInvocationError -text => "Literal constructor called with an undefined value";
+sub BUILDARGS {
+	if (@_ >= 2 and @_ <= 5 and not ref $_[1]) {
+		return +{
+			value    => $_[1],
+			language => (length $_[2] ? $_[2] : undef),
+			datatype => (length $_[3] ? $_[3] : undef),
+			_canonicalize_on_construction => $_[4] || 0,
+		}
 	}
-	
-	if (blessed($dt) and $dt->isa('RDF::Trine::Node::Resource')) {
-		$dt	= $dt->uri_value;
+	my $class = shift;
+	(@_==1 and ref $_[0] eq 'HASH')
+		? $class->SUPER::BUILDARGS(@_)
+		: $class->SUPER::BUILDARGS(+{@_})
+}
+
+sub BUILD {
+	my $self = shift;
+
+	if ($self->has_datatype && $self->has_language) {
+		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
 	}
-	
-	if ($dt and $canon) {
-		$literal	= $class->canonicalize_literal_value( $literal, $dt );
+
+	if ($self->has_datatype and my $r = $SUBCLASS{ $self->datatype }) {
+# 		warn "applying role $r for literal of type " . $self->datatype;
+		apply_all_roles($self, $r);
 	}
-	
-	if ($USE_XMLLITERALS and defined($dt) and $dt eq 'http://www.w3.org/1999/02/22-rdf-syntax-ns#XMLLiteral') {
-		return RDF::Trine::Node::Literal::XML->new( $literal, $lang, $dt );
-	} elsif ($USE_FORMULAE and defined($dt) and $dt eq RDF::Trine::Node::Formula->literal_datatype) {
-		return RDF::Trine::Node::Formula->new( $literal );
-	} else {
-		return $class->_new( $literal, $lang, $dt );
+
+	if ($self->_canonicalize_on_construction and $self->does('RDF::Trine::Node::API::Canonicalize')) {
+		$self->_set_value( $self->canonical_lexical_form );
 	}
 }
 
-sub _new {
-	my $class	= shift;
-	my $literal	= shift;
-	my $lang	= shift;
-	my $dt		= shift;
-	my $self;
-
-	if ($lang and $dt) {
-		throw RDF::Trine::Error::MethodInvocationError ( -text => "Literal values cannot have both language and datatype" );
+sub new_canonical {
+	my $class = shift;
+	my $self  = $class->new(@_);
+	if ($self->does('RDF::Trine::Node::API::Canonicalize')) {
+		return $self->canonicalize;
 	}
-	
-	if ($lang) {
-		$self	= [ $literal, lc($lang), undef ];
-	} elsif ($dt) {
-		if (blessed($dt)) {
-			$dt	= $dt->uri_value;
-		}
-		$self	= [ $literal, undef, $dt ];
-	} else {
-		$self	= [ $literal ];
-	}
-	return bless($self, $class);
+	return $self;
 }
 
 =item C<< literal_value >>
@@ -112,24 +155,11 @@ Returns the string value of the literal.
 
 =cut
 
-sub literal_value {
-	my $self	= shift;
-	if (@_) {
-		$self->[0]	= shift;
-	}
-	return $self->[0];
-}
-
 =item C<< literal_value_language >>
 
 Returns the language tag of the ltieral.
 
 =cut
-
-sub literal_value_language {
-	my $self	= shift;
-	return $self->[1];
-}
 
 =item C<< literal_datatype >>
 
@@ -137,21 +167,11 @@ Returns the datatype of the literal.
 
 =cut
 
-sub literal_datatype {
-	my $self	= shift;
-	return $self->[2];
-}
-
 =item C<< value >>
 
 Returns the literal value.
 
 =cut
-
-sub value {
-	my $self	= shift;
-	return $self->literal_value;
-}
 
 =item C<< sse >>
 
@@ -226,21 +246,11 @@ Returns true if this literal is language-tagged, false otherwise.
 
 =cut
 
-sub has_language {
-	my $self	= shift;
-	return defined($self->literal_value_language) ? 1 : 0;
-}
-
 =item C<< has_datatype >>
 
 Returns true if this literal is datatyped, false otherwise.
 
 =cut
-
-sub has_datatype {
-	my $self	= shift;
-	return defined($self->literal_datatype) ? 1 : 0;
-}
 
 =item C<< equal ( $node ) >>
 
@@ -288,23 +298,23 @@ sub _compare {
 	return 0;
 }
 
-=item C<< canonicalize >>
-
-Returns a new literal node object whose value is in canonical form (where applicable).
-
-=cut
-
-sub canonicalize {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $dt		= $self->literal_datatype;
-	my $lang	= $self->literal_value_language;
-	my $value	= $self->value;
-	if (defined $dt) {
-		$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
-	}
-	return $class->new($value, $lang, $dt);
-}
+# =item C<< canonicalize >>
+# 
+# Returns a new literal node object whose value is in canonical form (where applicable).
+# 
+# =cut
+# 
+# sub canonicalize {
+# 	my $self	= shift;
+# 	my $class	= ref($self);
+# 	my $dt		= $self->literal_datatype;
+# 	my $lang	= $self->literal_value_language;
+# 	my $value	= $self->value;
+# 	if (defined $dt) {
+# 		$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
+# 	}
+# 	return $class->new($value, $lang, $dt);
+# }
 
 =item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
 
@@ -438,123 +448,123 @@ sub canonicalize_literal_value {
 	return $value;
 }
 
-=item C<< is_canonical_lexical_form >>
-
-=cut
-
-sub is_canonical_lexical_form {
-	my $self	= shift;
-	my $value	= $self->literal_value;
-	my $dt		= $self->literal_datatype;
-	
-	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
-	}
-	
-	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)[.]\d+)$/) {
-			return 1;
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+\.\d*|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} elsif ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?((\d+(\.\d*))|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} elsif ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	return 0;
-}
-
-=item C<< is_valid_lexical_form >>
-
-Returns true if the node is of a recognized datatype and has a valid lexical form
-for that datatype. If the lexical form is invalid, returns false. If the datatype
-is unrecognized, returns zero-but-true.
-
-=cut
-
-sub is_valid_lexical_form {
-	my $self	= shift;
-	my $value	= $self->literal_value;
-	my $dt		= $self->literal_datatype;
-	
-	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
-	}
-	
-	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
-		if ($value =~ m/^([-+])?(\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
-		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
-			return 1;
-		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
-		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
-		if ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
-		if ($value =~ m/^(true|false|0|1)$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
-		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	return 0;
-}
+# =item C<< is_canonical_lexical_form >>
+# 
+# =cut
+# 
+# sub is_canonical_lexical_form {
+# 	my $self	= shift;
+# 	my $value	= $self->literal_value;
+# 	my $dt		= $self->literal_datatype;
+# 	
+# 	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+# 		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
+# 	}
+# 	
+# 	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+# 		if ($value =~ m/^([-+])?(\d+)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
+# 		if ($value =~ m/^([-+])?((\d+)[.]\d+)$/) {
+# 			return 1;
+# 		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
+# 		if ($value =~ m/^[-+]?(\d+\.\d*|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} elsif ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
+# 		if ($value =~ m/^[-+]?((\d+(\.\d*))|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} elsif ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+# 		if ($value =~ m/^(true|false)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
+# 		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	}
+# 	return 0;
+# }
+# 
+# =item C<< is_valid_lexical_form >>
+# 
+# Returns true if the node is of a recognized datatype and has a valid lexical form
+# for that datatype. If the lexical form is invalid, returns false. If the datatype
+# is unrecognized, returns zero-but-true.
+# 
+# =cut
+# 
+# sub is_valid_lexical_form {
+# 	my $self	= shift;
+# 	my $value	= $self->literal_value;
+# 	my $dt		= $self->literal_datatype;
+# 	
+# 	unless ($dt =~ qr<^http://www.w3.org/2001/XMLSchema#(integer|decimal|float|double|boolean|dateTime|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+# 		return '0E0';	# zero but true (it's probably ok, but we don't recognize the datatype)
+# 	}
+# 	
+# 	if ($dt =~ m<http://www.w3.org/2001/XMLSchema#(integer|non(Positive|Negative)Integer|(positive|negative)Integer|long|int|short|byte|unsigned(Long|Int|Short|Byte))>) {
+# 		if ($value =~ m/^([-+])?(\d+)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#decimal') {
+# 		if ($value =~ m/^([-+])?((\d+)([.]\d*)?)$/) {
+# 			return 1;
+# 		} elsif ($value =~ m/^([-+])?([.]\d+)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#float') {
+# 		if ($value =~ m/^[-+]?(\d+(\.\d*)?|\.\d+)([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#double') {
+# 		if ($value =~ m/^[-+]?((\d+(\.\d*)?)|(\.\d+))([Ee][-+]?\d+)?|[-+]?INF|NaN$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#boolean') {
+# 		if ($value =~ m/^(true|false|0|1)$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	} elsif ($dt eq 'http://www.w3.org/2001/XMLSchema#dateTime') {
+# 		if ($value =~ m/^-?([1-9]\d{3,}|0\d{3})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T(([01]\d|2[0-3]):[0-5]\d:[0-5]\d(\.\d+)?|(24:00:00(\.0+)?))(Z|(\+|-)((0\d|1[0-3]):[0-5]\d|14:00))?$/) {
+# 			return 1;
+# 		} else {
+# 			return 0;
+# 		}
+# 	}
+# 	return 0;
+# }
 
 =item C<< is_numeric_type >>
 
@@ -601,6 +611,14 @@ sub numeric_value {
 		return;
 	}
 }
+
+# stub stuff for subclasses
+sub is_valid_lexical_form     { '0E0' }  # 0 but true
+sub canonical_lexical_form    { shift->value }
+sub is_canonical_lexical_form { '0E0' }
+sub canonicalize              { +shift }
+sub does_canonicalization     { 0 }
+sub does_lexical_validation   { 0 }
 
 1;
 

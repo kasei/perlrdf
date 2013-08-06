@@ -1,5 +1,4 @@
-# RDF::Trine::Node::Resource
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Resource;
 
 =head1 NAME
 
@@ -11,23 +10,45 @@ This document describes RDF::Trine::Node::Resource version 1.007
 
 =cut
 
-package RDF::Trine::Node::Resource;
-
 use utf8;
 use strict;
 use warnings;
-no warnings 'redefine';
-use base qw(RDF::Trine::Node);
 
 use URI 1.52;
 use Encode;
-use Data::Dumper;
-use Scalar::Util qw(blessed reftype refaddr);
+
+use Moose;
+use MooseX::Aliases;
+use MooseX::Types::Moose qw(Str);
+use namespace::autoclean;
 use Carp qw(carp croak confess);
+use Scalar::Util qw(refaddr reftype);
+use base qw(RDF::Trine::Node);
+
+has as_ntriples => (
+	is        => 'ro',
+	isa       => Str,
+	lazy      => 1,
+	builder   => '_build_as_ntriples',
+	init_arg  => undef,
+);
+
+has _uriobj => (
+	is        => 'ro',
+	isa       => 'URI',
+	lazy      => 1,
+	default   => sub { URI->new( encode_utf8(shift->uri_value) ) },
+	init_arg  => undef,
+	handles   => [qw[ scheme opaque path fragment authority host port ]],
+);
+
+with 'RDF::Trine::Node::API::RDFNode';
+
+alias $_ => 'value' for qw(uri uri_value);
 
 ######################################################################
 
-our ($VERSION, %sse, %ntriples);
+our ($VERSION);
 BEGIN {
 	$VERSION	= '1.007';
 }
@@ -52,47 +73,57 @@ Returns a new Resource structure.
 
 =cut
 
-sub new {
-	my $class		= shift;
-	my $uri			= shift;
-	my $base_uri	= shift;
-	
-	unless (defined($uri)) {
-		throw RDF::Trine::Error::MethodInvocationError -text => "Resource constructor called with an undefined value";
+sub BUILDARGS {
+	my $class	= shift;
+	if (ref($_[0]) and ref($_[0]) eq 'HASH') {
+		return $_[0];
 	}
 	
-	if (defined($base_uri)) {
-		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		
-		my @chars;
-		my $i	= 0;
-		if ("${base_uri}${uri}" =~ /!/) {
-			# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
-			for ($base_uri, $uri) {
-				s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+	my $uri		= shift;
+	if (blessed($uri) and $uri->isa('URI')) {
+		$uri	= $uri->as_string;
+	}
+	
+	if (scalar(@_)==1) {
+		my $base_uri	= shift;
+		if (defined($base_uri)) {
+			if (blessed($base_uri) and $base_uri->isa('URI')) {
+				$base_uri	= $base_uri->as_string;
 			}
-		}
+			$base_uri	= (defined($base_uri) and blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
 		
-		# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
-		for ($uri, $base_uri) {
-			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
-		}
-		$uri		= URI->new_abs($uri, $base_uri)->as_string;
+			my @chars;
+			my $i	= 0;
+			if ("${base_uri}${uri}" =~ /!/) {
+				# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
+				for ($base_uri, $uri) {
+					s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+				}
+			}
 		
-		# put back the unicode characters where they belong
-		$uri =~ s/!(\d+)!/$chars[$1]/eg;
+			# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
+			for ($uri, $base_uri) {
+				s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
+			}
+			$uri		= URI->new_abs($uri, $base_uri)->as_string;
+		
+			# put back the unicode characters where they belong
+			$uri =~ s/!(\d+)!/$chars[$1]/eg;
+			utf8::upgrade($uri);
+			return +{ value => $uri };
+		}
 	}
-    utf8::upgrade($uri);
 	
-	if ($uri eq &RDF::Trine::NIL_GRAPH) {
-		return RDF::Trine::Node::Nil->new();
-	}
-	
-	if ($uri =~ /([<>" {}|\\^`])/) {
+	use Data::Dumper;
+	warn Dumper(\@_) if (scalar(@_) % 2);
+	return +{ value => $uri, @_ };
+}
+
+sub BUILD {
+	my $self	= shift;
+	if ($self->value =~ /([<>" {}|\\^`])/) {
 		throw RDF::Trine::Error -text => sprintf("Bad IRI character: '%s' (0x%x)", $1, ord($1));
 	}
-	
-	return bless( [ 'URI', $uri ], $class );
 }
 
 =item C<< uri_value >>
@@ -101,37 +132,17 @@ Returns the URI/IRI value of this resource.
 
 =cut
 
-sub uri_value {
-	my $self	= shift;
-	return $self->[1];
-}
-
 =item C<< value >>
 
 Returns the URI/IRI value.
 
 =cut
 
-sub value {
-	my $self	= shift;
-	return $self->uri_value;
-}
-
 =item C<< uri ( $uri ) >>
 
 Returns the URI value of this resource, optionally updating the URI.
 
 =cut
-
-sub uri {
-	my $self	= shift;
-	if (@_) {
-		$self->[1]	= shift;
-		delete $sse{ refaddr($self) };
-		delete $ntriples{ refaddr($self) };
-	}
-	return $self->[1];
-}
 
 =item C<< sse >>
 
@@ -156,15 +167,9 @@ sub sse {
 		}
 	}
 	
-	my $ra	= refaddr($self);
-	if ($sse{ $ra }) {
-		return $sse{ $ra };
-	} else {
-		my $string	= URI->new( $self->uri_value )->canonical;
-		my $sse		= '<' . $string . '>';
-		$sse{ $ra }	= $sse;
-		return $sse;
-	}
+	my $string	= URI->new( $self->uri_value )->canonical;
+	my $sse		= '<' . $string . '>';
+	return $sse;
 	
 # 	my $string	= $uri;
 # 	my $escaped	= $self->_unicode_escape( $string );
@@ -189,52 +194,46 @@ If the IRI contains punycode, it will be decoded and serialized as unicode codep
 
 =cut
 
-sub as_ntriples {
+sub _build_as_ntriples {
 	my $self	= shift;
 	my $context	= shift;
-	my $ra		= refaddr($self);
-	if ($ntriples{ $ra }) {
-		return $ntriples{ $ra };
-	} else {
-		my $uri	= $self->uri_value;
-		$uri	= URI->new($uri)->as_iri;
-		my @chars	= split(//, $uri);
-		my $string	= '';
-		while (scalar(@chars)) {
-			my $c	= shift(@chars);
-			my $o	= ord($c);
-			if ($o < 0x8) {
-				$string	.= sprintf("\\u%04X", $o);
-			} elsif ($o == 0x9) {
-				$string	.= "\\t";
-			} elsif ($o == 0xA) {
-				$string	.= "\\n";
-			} elsif ($o < 0xC) {
-				$string	.= sprintf("\\u%04X", $o);
-			} elsif ($o == 0xD) {
-				$string	.= "\\r";
-			} elsif ($o < 0x1F) {
-				$string	.= sprintf("\\u%04X", $o);
-			} elsif ($o < 0x21) {
-				$string	.= $c;
-			} elsif ($o == 0x22) {
-				$string	.= "\"";
-			} elsif ($o < 0x5B) {
-				$string	.= $c;
-			} elsif ($o == 0x5C) {
-				$string	.= "\\";
-			} elsif ($o < 0x7E) {
-				$string	.= $c;
-			} elsif ($o < 0xFFFF) {
-				$string	.= sprintf("\\u%04X", $o);
-			} else {
-				$string	.= sprintf("\\U%08X", $o);
-			}
+	my $uri	= $self->uri_value;
+	$uri	= URI->new($uri)->as_iri;
+	my @chars	= split(//, $uri);
+	my $string	= '';
+	while (scalar(@chars)) {
+		my $c	= shift(@chars);
+		my $o	= ord($c);
+		if ($o < 0x8) {
+			$string	.= sprintf("\\u%04X", $o);
+		} elsif ($o == 0x9) {
+			$string	.= "\\t";
+		} elsif ($o == 0xA) {
+			$string	.= "\\n";
+		} elsif ($o < 0xC) {
+			$string	.= sprintf("\\u%04X", $o);
+		} elsif ($o == 0xD) {
+			$string	.= "\\r";
+		} elsif ($o < 0x1F) {
+			$string	.= sprintf("\\u%04X", $o);
+		} elsif ($o < 0x21) {
+			$string	.= $c;
+		} elsif ($o == 0x22) {
+			$string	.= "\"";
+		} elsif ($o < 0x5B) {
+			$string	.= $c;
+		} elsif ($o == 0x5C) {
+			$string	.= "\\";
+		} elsif ($o < 0x7E) {
+			$string	.= $c;
+		} elsif ($o < 0xFFFF) {
+			$string	.= sprintf("\\u%04X", $o);
+		} else {
+			$string	.= sprintf("\\U%08X", $o);
 		}
-		my $ntriples	= '<' . $string . '>';
-		$ntriples{ $ra }	= $ntriples;
-		return $ntriples;
 	}
+	my $ntriples	= '<' . $string . '>';
+	return $ntriples;
 }
 
 =item C<< type >>
@@ -294,12 +293,6 @@ sub qname {
 	} else {
 		throw RDF::Trine::Error -text => "Can't turn IRI $uri into a QName.";
 	}
-}
-
-sub DESTROY {
-	my $self	= shift;
-	delete $sse{ refaddr($self) };
-	delete $ntriples{ refaddr($self) };
 }
 
 1;

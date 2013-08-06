@@ -1,5 +1,4 @@
-# RDF::Trine::Node::Blank
-# -----------------------------------------------------------------------------
+package RDF::Trine::Node::Blank;
 
 =head1 NAME
 
@@ -11,16 +10,20 @@ This document describes RDF::Trine::Node::Blank version 1.007
 
 =cut
 
-package RDF::Trine::Node::Blank;
-
 use strict;
 use warnings;
-no warnings 'redefine';
-use base qw(RDF::Trine::Node);
-
+use utf8;
+use Moose;
+use MooseX::Aliases;
+use namespace::autoclean;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 use Carp qw(carp croak confess);
+use base qw(RDF::Trine::Node);
+
+with 'RDF::Trine::Node::API::RDFNode';
+
+alias $_ => 'value' for qw(blank_identifier);
 
 ######################################################################
 
@@ -50,38 +53,33 @@ Returns a new Blank structure.
 =cut
 
 my $COUNTER	= 0;
-sub new {
-	my $class	= shift;
-	my $name	= shift;
-	unless (defined($name)) {
-		$name	= 'r' . time() . 'r' . $COUNTER++;
-	}
+sub BUILDARGS {
+	my $class = shift;
 	
-my $r_PN_CHARS_U			= qr/[_A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
-my $r_PN_CHARS				= qr"${r_PN_CHARS_U}|[-0-9\x{00B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]";
-my $r_bnode_id				= qr"(?:${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?";
-	unless ($name =~ /^${r_bnode_id}$/o) {
-		throw RDF::Trine::Error::SerializationError -text => "Bad blank node identifier: $name";
+	if (!@_ or (@_==1 and not defined $_[0])) {
+		return +{ value => 'r' . time() . 'r' . $COUNTER++ };
 	}
-	return $class->_new( $name );
+
+	if (@_==1 and defined $_[0]) {
+		return +{ value => $_[0] };
+	}
+
+	(@_==1 and ref $_[0] eq 'HASH')
+		? $class->SUPER::BUILDARGS(@_)
+		: $class->SUPER::BUILDARGS(+{@_})
 }
 
-sub _new {
-	my $class	= shift;
-	my $name	= shift;
-	return bless( [ 'BLANK', $name ], $class );
+sub BUILD {
+	my $self = shift;
+	my $r_PN_CHARS_U			= qr/[_A-Za-z_\x{00C0}-\x{00D6}\x{00D8}-\x{00F6}\x{00F8}-\x{02FF}\x{0370}-\x{037D}\x{037F}-\x{1FFF}\x{200C}-\x{200D}\x{2070}-\x{218F}\x{2C00}-\x{2FEF}\x{3001}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{EFFFF}]/;
+	my $r_PN_CHARS				= qr"${r_PN_CHARS_U}|[-0-9\x{00B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]";
+	my $r_bnode_id				= qr"(?:${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?";
+	unless ($self->value =~ /^${r_bnode_id}$/o) {
+		throw RDF::Trine::Error::SerializationError -text => "Bad blank node identifier: " . $self->value;
+	}
 }
 
 =item C<< blank_identifier >>
-
-Returns the identifier of the blank node.
-
-=cut
-
-sub blank_identifier {
-	my $self	= shift;
-	return $self->[1];
-}
 
 =item C<< value >>
 
@@ -89,10 +87,8 @@ Returns the blank identifier.
 
 =cut
 
-sub value {
-	my $self	= shift;
-	return $self->blank_identifier;
-}
+
+
 
 =item C<< sse >>
 
