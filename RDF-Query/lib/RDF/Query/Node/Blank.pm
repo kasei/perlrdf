@@ -76,7 +76,7 @@ sub new {
 	unless (defined($name)) {
 		$name	= 'r' . time() . 'r' . $RDF::Trine::Node::Blank::COUNTER++;
 	}
-	return $class->_new( $name );
+	return $class->SUPER::new( $name );
 }
 
 =item C<< as_sparql >>
