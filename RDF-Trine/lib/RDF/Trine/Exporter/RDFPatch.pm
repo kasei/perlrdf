@@ -100,7 +100,27 @@ Serializes a comment with the given string.
 sub comment {
 	my $self	= shift;
 	my $c		= shift;
+	$c			=~ s/\n/\n# /g;
 	$self->_sink->emit("# $c\n");
+}
+
+=item C<< emit_operation ( $op, @operands ) >>
+
+Serializes an operation identified by the character C<< $op >>, followed by C<< @operands >>
+(separated by a single space) and a trailing DOT and newline.
+
+=cut
+
+sub emit_operation {
+	my $self	= shift;
+	my $op		= shift;
+	my @args	= @_;
+	$self->_sink->emit($op);
+	foreach my $arg (@args) {
+		$self->_sink->emit(' ');
+		$self->_sink->emit($arg);
+	}
+	$self->_sink->emit(" .\n");
 }
 
 =item C<< add ( $st ) >>
@@ -117,9 +137,8 @@ sub add {
 		$self->_sink->emit($header);
 		$self->{first}	= 0;
 	}
-	$self->_sink->emit('A ');
-	$self->_sink->emit($self->statement_as_string( $st ));
-	$self->_sink->emit(" .\n");
+	my @list	= $self->terms_as_string_list( $st->nodes );
+	$self->emit_operation( 'A', @list );
 }
 
 =item C<< delete ( $st ) >>
@@ -136,9 +155,8 @@ sub delete {
 		$self->_sink->emit($header);
 		$self->{first}	= 0;
 	}
-	$self->_sink->emit('D ');
-	$self->_sink->emit($self->statement_as_string( $st ));
-	$self->_sink->emit(" .\n");
+	my @list	= $self->terms_as_string_list( $st->nodes );
+	$self->emit_operation( 'D', @list );
 }
 
 sub _header {
@@ -158,8 +176,7 @@ sub _header {
 
 =item C<< statement_as_string ( $st ) >>
 
-Returns a string with the supplied RDF::Trine::Statement object serialized as
-RDF-Patch, ending in a DOT and newline.
+Returns a string with the supplied RDF::Trine::Statement object serialized as an RDF-Patch string.
 
 =cut
 
@@ -167,6 +184,19 @@ sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
 	my @nodes	= $st->nodes;
+	my @str_nodes	= $self->terms_as_string_list( @nodes );
+	return join(' ', @str_nodes);
+}
+
+=item C<< terms_as_string_list ( @terms ) >>
+
+Returns a list with each supplied term serialized as RDF-Patch strings.
+
+=cut
+
+sub terms_as_string_list {
+	my $self	= shift;
+	my @nodes	= @_;
 	my @str_nodes	= map { $self->node_as_concise_string($_) } @nodes;
 	if (1) {
 		foreach my $i (0 .. min(scalar(@nodes), scalar(@{$self->{'last'}}))) {
@@ -176,7 +206,7 @@ sub statement_as_string {
 		}
 		@{ $self->{'last'} }	= @nodes;
 	}
-	return join(' ', @str_nodes);
+	return @str_nodes;
 }
 
 =item C<< node_as_concise_string >>
