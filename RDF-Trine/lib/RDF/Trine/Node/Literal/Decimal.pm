@@ -19,7 +19,6 @@ sub _build_is_valid_lexical_form {
 	elsif ($value =~ m/^([-+])?([.]\d+)$/) {
 		return 1;
 	}
-	warn "-> no\n";
 	return 0;
 }
 
