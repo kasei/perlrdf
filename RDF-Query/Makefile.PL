@@ -11,8 +11,6 @@ license				'perl';
 recommends			'LWP::Simple'				=> 0;
 recommends			'Getopt::Simple'			=> 0;
 recommends			'Geo::Distance'				=> 0.09;
-recommends			'Crypt::GPG'				=> 0;
-recommends			'Bloom::Filter'				=> 1;
 
 build_requires		'Test::JSON'				=> 0;
 build_requires		'Test::More'				=> 0.88;
