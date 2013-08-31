@@ -57,7 +57,7 @@ sub _build_canonical_lexical_form {
 sub numeric_value {
 	my $self	= shift;
 	my $v		= $self->canonical_lexical_form;
-	warn "canonical value: $v";
+# 	warn "canonical value: $v";
 	return 0 + $v
 }
 
