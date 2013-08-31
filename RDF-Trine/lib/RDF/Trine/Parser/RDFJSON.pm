@@ -89,7 +89,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
@@ -121,7 +121,7 @@ sub parse_into_model {
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. Calls the
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. Calls the
 C<< triple >> method for each RDF triple parsed. This method does nothing by
 default, but can be set by using one of the default C<< parse_* >> methods.
 

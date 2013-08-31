@@ -78,7 +78,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>.
+Parses the bytes in C<< $data >>.
 For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
