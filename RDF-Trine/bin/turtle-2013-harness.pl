@@ -10,6 +10,7 @@ use RDF::Trine::Namespace qw(rdf);
 use RDF::EARL;
 use URI::file;
 use TryCatch;
+use DateTime::Format::W3CDTF;
 
 sub throws_ok (&;$) {	## no critic
 	my ( $coderef, $description ) = @_;
@@ -161,19 +162,23 @@ foreach my $manifest (@manifests) {
 
 my $model	= $earl->model;
 my $p		= RDF::Trine::Parser->new('turtle');
-$p->parse_into_model( undef, <<'END', $model );
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix doap: <http://usefulinc.com/ns/doap#> .
+$p->parse_into_model( undef, <<"END", $model );
+\@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+\@prefix doap: <http://usefulinc.com/ns/doap#> .
 <http://kasei.us/about/foaf.xrdf#greg> a foaf:Person ;
 	foaf:name "Gregory Todd Williams" ;
 	foaf:depiction <http://kasei.us/images/greg.png> ;
 	foaf:homepage <http://kasei.us/> ;
-	foaf:mbox <mailto:greg@evilfunhouse.com> ;
+	foaf:mbox <mailto:greg\@evilfunhouse.com> ;
 	foaf:mbox_sha1sum "19fc9d0234848371668cf10a1b71ac9bd4236806", "25c5f4f21afaedf113d92ac7c8591178ad9c03fa", "41cc0788a269f33e52fc99080a970278c845ee5f", "4e6174e69033cfce87eecf828a99f8ce2c0c2fa6", "6187ab068a6dd0887b8220b02075d68c96152e17", "7d1958feafea26921db0c51e6d0eb89f716f8c02", "8df861ee96107c82e516191816954050ed376d79", "9d179d12b032b4689cf5dd1ffaf237c3e007c919", "dde73ef37a2fc05d41b6a48d9670cd094baf7fb4", "f3c455a88761f83ba243b2653e6042de71fdd149", "f80a0f19d2a0897b89f48647b2fb5ca1f0bc1cb8" ;
 	.
 
 <http://kasei.us/code/rdf-trine/#project>
 	a <http://usefulinc.com/ns/doap#Project> ;
+	<http://usefulinc.com/ns/doap#release> [
+		a <http://usefulinc.com/ns/doap#Version> ;
+		<http://usefulinc.com/ns/doap#revision> "${RDF::Trine::VERSION}" ;
+	] ;
 	<http://usefulinc.com/ns/doap#name> "RDF::Trine" ;
 	<http://usefulinc.com/ns/doap#download-mirror> <http://kasei.us/code/rdf-trine/> ;
 	<http://usefulinc.com/ns/doap#download-page> <http://search.cpan.org/dist/RDF-Trine/> ;
@@ -192,7 +197,20 @@ my $map		= RDF::Trine::NamespaceMap->new( {
 			} );
 warn "EARL model has " . $model->size . " triples\n";
 my $s		= RDF::Trine::Serializer->new('turtle', namespaces => $map);
+
+print "\@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n";
+print "\@prefix dct: <http://purl.org/dc/terms/>.\n";
 $s->serialize_model_to_file( \*STDOUT, $model );
+
+my $w3c		= DateTime::Format::W3CDTF->new;
+my $date	= $w3c->format_datetime(DateTime->now);
+
+print <<"END";
+<> foaf:primaryTopic <http://kasei.us/code/rdf-trine/#project> ;
+	dct:issued "${date}"^^xsd:dateTime ;
+	foaf:maker <http://kasei.us/about/foaf.xrdf#greg> .
+
+END
 
 sub test_uri {
 	my $test	= shift;
