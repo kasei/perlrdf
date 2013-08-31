@@ -281,11 +281,11 @@ sub _unicode_escape {
 	}
 }
 
-use RDF::Trine::Node::Nil;
-use RDF::Trine::Node::Blank;
-use RDF::Trine::Node::Literal;
-use RDF::Trine::Node::Resource;
-use RDF::Trine::Node::Variable;
+require RDF::Trine::Node::Nil;
+require RDF::Trine::Node::Blank;
+require RDF::Trine::Node::Literal;
+require RDF::Trine::Node::Resource;
+require RDF::Trine::Node::Variable;
 
 
 
