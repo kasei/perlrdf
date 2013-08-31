@@ -13,25 +13,24 @@ This document describes RDF::Trine::Node::Variable version 1.007
 use strict;
 use warnings;
 use utf8;
+use Data::Dumper;
+use Scalar::Util qw(blessed);
+use Carp qw(carp croak confess);
+
 use Moose;
 use MooseX::Types::Moose qw(Str);
 use MooseX::Aliases;
 use namespace::autoclean;
 use base qw(RDF::Trine::Node);
 
-use Data::Dumper;
-use Scalar::Util qw(blessed);
-use Carp qw(carp croak confess);
-
 with 'RDF::Trine::Node::API';
 
-has value => (
-	is   => 'ro',
-	isa  => Str,
+has 'value' => (
+	is   		=> 'ro',
+	isa  		=> 'Str',
 	required	=> 1,
+	alias		=> 'name',
 );
-
-alias 'name' => 'value';
 
 sub BUILDARGS {
 	if (@_ == 2 and not ref $_[1]) {
