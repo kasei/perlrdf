@@ -68,7 +68,7 @@ BEGIN {
 
 =item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
 or quad parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
