@@ -105,6 +105,10 @@ sub parse_line {
 	my $line	= shift;
 	my $base	= shift;
 	my ($op, $tail)	= split(/ /, $line, 2);
+	unless ($op eq 'A' or $op eq 'D' or $op eq 'Q') {
+		throw RDF::Trine::Error::ParserError -text => "Unknown RDF Patch operation ID '$op'";
+	}
+	
 	my $p		= RDF::Trine::Parser::Turtle->new();
 	my @nodes;
 	foreach my $pos (1,2,3,4) {
@@ -116,11 +120,8 @@ sub parse_line {
 		} else {
 			my $token;
 			push(@nodes, $p->parse_node($tail, $base, token => \$token));
-# 			warn ">> removing $len chars";
-# 			warn "before: <<$tail>>\n";
 			my $len	= $token->column;
 			substr($tail, 0, $len, '');
-# 			warn "after : <<$tail>>\n";
 		}
 	}
 	
@@ -129,14 +130,12 @@ sub parse_line {
 		$st	= RDF::Trine::Statement->new(@nodes);
 	} elsif (scalar(@nodes) == 4) {
 		$st	= RDF::Trine::Statement::Quad->new(@nodes);
+	} else {
+		my $arity	= scalar(@nodes);
+		throw RDF::Trine::Error::ParserError -text => "RDFPatch operation '$op' has unexpected arity ($arity)";
 	}
 	
-	if ($st and $op eq 'A' or $op eq 'D' or $op eq 'Q') {
-# 		warn '### ' . $st->as_string;
-		return RDF::Trine::Parser::RDFPatch::Op->new( $op, $st );
-	} else {
-		die "Unknown op '$op'";
-	}
+	return RDF::Trine::Parser::RDFPatch::Op->new( $op, $st );
 }
 
 
