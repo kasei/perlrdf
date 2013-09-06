@@ -39,8 +39,9 @@ use List::Util qw(min);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
+use RDF::Trine::Parser::Turtle;
 
-e######################################################################
+######################################################################
 
 our ($VERSION);
 BEGIN {
@@ -91,6 +92,96 @@ sub parse_file {
 	}
 	
 	...
+}
+
+=item C<< parse_line ( $line, $base ) >>
+
+Returns an operation object.
+
+=cut
+
+sub parse_line {
+	my $self	= shift;
+	my $line	= shift;
+	my $base	= shift;
+	my ($op, $tail)	= split(/ /, $line, 2);
+	my $p		= RDF::Trine::Parser::Turtle->new();
+	my @nodes;
+	foreach my $pos (1,2,3,4) {
+		if ($tail =~ /^\s*U\b/) {
+			substr($tail, 0, $+[0], '');
+			push(@nodes, RDF::Trine::Node::Variable->new("v$pos"));
+		} elsif ($tail =~ /^\s*[.]/) {
+			last;
+		} else {
+			my $token;
+			push(@nodes, $p->parse_node($tail, $base, token => \$token));
+# 			warn ">> removing $len chars";
+# 			warn "before: <<$tail>>\n";
+			my $len	= $token->column;
+			substr($tail, 0, $len, '');
+# 			warn "after : <<$tail>>\n";
+		}
+	}
+	
+	my $st;
+	if (scalar(@nodes) == 3) {
+		$st	= RDF::Trine::Statement->new(@nodes);
+	} elsif (scalar(@nodes) == 4) {
+		$st	= RDF::Trine::Statement::Quad->new(@nodes);
+	}
+	
+	if ($st and $op eq 'A' or $op eq 'D' or $op eq 'Q') {
+# 		warn '### ' . $st->as_string;
+		return RDF::Trine::Parser::RDFPatch::Op->new( $op, $st );
+	} else {
+		die "Unknown op '$op'";
+	}
+}
+
+
+package RDF::Trine::Parser::RDFPatch::Op;
+
+use strict;
+use warnings;
+
+=item C<< new (  ) >>
+
+Returns a new RDF-Patch Parser object.
+
+=cut
+
+sub new {
+	my $class	= shift;
+	my $op		= shift;
+	my @args	= @_;
+	my $self = bless( { op => $op, args => \@args }, $class );
+	return $self;
+}
+
+sub op {
+	my $self	= shift;
+	return $self->{op};
+}
+
+sub args {
+	my $self	= shift;
+	return @{ $self->{args} };
+}
+
+sub execute {
+	my $self	= shift;
+	my $model	= shift;
+	if ($self->op eq 'A') {
+		return $model->add_statement( $self->args );
+	} elsif ($self->op eq 'D') {
+		return $model->remove_statement( $self->args );
+	} elsif ($self->op eq 'Q') {
+		my ($st)	= $self->args;
+		return $model->get_statements( $st->nodes );
+	} else {
+		die "unimplemented op";
+	}
 }
 
 1;
