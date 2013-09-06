@@ -1,13 +1,7 @@
 use Test::More;
 use Test::Exception;
-use FindBin qw($Bin);
-use File::Spec;
-use Data::Dumper;
-use utf8;
 use strict;
 use warnings;
-binmode( \*STDOUT, ':utf8' );
-binmode( \*STDERR, ':utf8' );
 
 use RDF::Trine qw(iri blank literal);
 use RDF::Trine::Parser;
@@ -19,37 +13,51 @@ isa_ok( $parser, 'RDF::Trine::Parser::RDFPatch' );
 my $model	= RDF::Trine::Model->new();
 
 {
+	throws_ok {
+		$parser->parse_line( 'X 1 .' );
+	} 'RDF::Trine::Error::ParserError', 'Bad RDF Patch operation ID threw RDF::Trine::Error::ParserError';
+	like( $@, qr/Unknown/, 'Good exception description' );
+}
+
+{
+	throws_ok {
+		$parser->parse_line( 'A 1 .' );
+	} 'RDF::Trine::Error::ParserError', 'Bad RDF Patch operation arity threw RDF::Trine::Error::ParserError';
+	like( $@, qr/arity/, 'Good exception description' );
+}
+
+{
 	my $op	= $parser->parse_line( "A _:a a 3 ." );
 	isa_ok($op, 'RDF::Trine::Parser::RDFPatch::Op' );
-	is($op->op, 'A');
+	is($op->op, 'A', 'Expected RDF Patch operation ID');
 	my ($st)	= $op->args;
 	isa_ok($st, 'RDF::Trine::Statement');
 	
-	is($model->size, 0);
+	is($model->size, 0, 'Expected empty test model');
 	$op->execute($model);
-	is($model->size, 1);
+	is($model->size, 1, 'Expected 1-statement test model');
 }
 
 {
 	my $op	= $parser->parse_line( "D _:a a 3 ." );
 	isa_ok($op, 'RDF::Trine::Parser::RDFPatch::Op' );
-	is($op->op, 'D');
+	is($op->op, 'D', 'Expected RDF Patch operation ID');
 	my ($st)	= $op->args;
 	isa_ok($st, 'RDF::Trine::Statement');
 
 	$op->execute($model);
-	is($model->size, 0);
+	is($model->size, 0, 'Expected empty test model');
 }
 
 {
 	my $op	= $parser->parse_line( "D _:a a 3 _:g ." );
 	isa_ok($op, 'RDF::Trine::Parser::RDFPatch::Op' );
-	is($op->op, 'D');
+	is($op->op, 'D', 'Expected RDF Patch operation ID');
 	my ($st)	= $op->args;
 	isa_ok($st, 'RDF::Trine::Statement::Quad');
 
 	$op->execute($model);
-	is($model->size, 0);
+	is($model->size, 0, 'Expected empty test model');
 }
 
 {
@@ -59,7 +67,7 @@ my $model	= RDF::Trine::Model->new();
 	
 	my $op	= $parser->parse_line( "Q U <p> U ." );
 	isa_ok($op, 'RDF::Trine::Parser::RDFPatch::Op' );
-	is($op->op, 'Q');
+	is($op->op, 'Q', 'Expected RDF Patch operation ID');
 	
 	my $iter	= $op->execute($model);
 	isa_ok($iter, 'RDF::Trine::Iterator' );
