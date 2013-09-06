@@ -149,7 +149,13 @@ Adds the specified C<< $statement >> to the rdf store.
  
 sub add_statement {
 	my ($self, @args)	= @_;
-	unless ($args[0]->isa('RDF::Trine::Statement')) {
+	if ($args[0]->isa('RDF::Trine::Statement')) {
+		foreach my $n ($args[0]->nodes) {
+			unless (blessed($n) and ($n->isa('RDF::Trine::Node::Resource') or $n->isa('RDF::Trine::Node::Literal') or $n->isa('RDF::Trine::Node::Blank') or $n->isa('RDF::Trine::Node::Nil'))) {
+				throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a pattern (non-ground statement) to a model';
+			}
+		}
+	} else {
 		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
 	}
 	if ($self->{temporary}) {
