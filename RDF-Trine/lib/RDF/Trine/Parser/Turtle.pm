@@ -122,10 +122,13 @@ sub parse_file {
 	$self->_parse($l);
 }
 
-=item C<< parse_node ( $string, $base ) >>
+=item C<< parse_node ( $string, $base, [ token => \$token ] ) >>
 
 Returns the RDF::Trine::Node object corresponding to the node whose N-Triples
 serialization is found at the beginning of C<< $string >>.
+If a reference to C<< $token >> is given, it is dereferenced and set to the
+RDF::Trine::Parser::Turtle::Token tokenizer object, allowing access to information such
+as the token's position in the input string.
 
 =cut
 
@@ -133,10 +136,16 @@ sub parse_node {
 	my $self	= shift;
 	my $string	= shift;
 	local($self->{baseURI})	= shift;
+	my %args	= @_;
 	open(my $fh, '<:encoding(UTF-8)', \$string);
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	my $t = $self->_next_nonws($l);
-	my $node	= $self->_object($l, $t);
+	return unless ($t);
+	my $node	= $self->_term($l, $t);
+	my $token_ref	= $args{token};
+	if (defined($token_ref) and ref($token_ref)) {
+		$$token_ref	= $t;
+	}
 	return $node;
 }
 
@@ -378,14 +387,13 @@ sub _assert_triple {
 	}
 }
 
-
 sub _object {
 	my $self	= shift;
 	my $l		= shift;
 	my $t		= shift;
+	my $type	= $t->type;
 	my $tcopy	= $t;
 	my $obj;
-	my $type	= $t->type;
 	if ($type==LBRACKET) {
 		$obj	= RDF::Trine::Node::Blank->new();
 		my $t	= $self->_next_nonws($l);
@@ -421,27 +429,38 @@ sub _object {
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==STRING1D or $type==STRING3D or $type==STRING1S or $type==STRING3S or $type==BNODE or $type==INTEGER or $type==DECIMAL or $type==DOUBLE or $type==BOOLEAN)) {
 		$self->_throw_error("Expecting object but got " . decrypt_constant($type), $t, $l);
 	} else {
-		if ($type==STRING1D or $type==STRING3D or $type==STRING1S or $type==STRING3S) {
-			my $value	= $t->value;
-			my $t		= $self->_next_nonws($l);
-			my $dt;
-			my $lang;
-			if ($t) {
-				if ($t->type == HATHAT) {
-					my $t		= $self->_next_nonws($l);
-					if ($t->type == IRI or $t->type == PREFIXNAME) {
-						$dt	= $self->_token_to_node($t);
-					}
-				} elsif ($t->type == LANG) {
-					$lang	= $t->value;
-				} else {
-					$self->_unget_token($t);
+		$obj		= $self->_term($l, $t);
+	}
+	return $obj;
+}
+
+sub _term {
+	my $self	= shift;
+	my $l		= shift;
+	my $t		= shift;
+	my $tcopy	= $t;
+	my $obj;
+	my $type	= $t->type;
+	if ($type==STRING1D or $type==STRING3D or $type==STRING1S or $type==STRING3S) {
+		my $value	= $t->value;
+		my $t		= $self->_next_nonws($l);
+		my $dt;
+		my $lang;
+		if ($t) {
+			if ($t->type == HATHAT) {
+				my $t		= $self->_next_nonws($l);
+				if ($t->type == IRI or $t->type == PREFIXNAME) {
+					$dt	= $self->_token_to_node($t);
 				}
+			} elsif ($t->type == LANG) {
+				$lang	= $t->value;
+			} else {
+				$self->_unget_token($t);
 			}
-			$obj	= RDF::Trine::Node::Literal->new($value, $lang, $dt);
-		} else {
-			$obj	= $self->_token_to_node($t, $type);
 		}
+		$obj	= RDF::Trine::Node::Literal->new($value, $lang, $dt);
+	} else {
+		$obj	= $self->_token_to_node($t, $type);
 	}
 	return $obj;
 }
