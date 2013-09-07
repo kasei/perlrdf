@@ -166,6 +166,7 @@ sub parse_line {
 	my $self	= shift;
 	my $line	= shift;
 	my $base	= shift;
+	return if ($line =~ /^#/);
 	if (substr($line, 0, 7) eq '@prefix') {
 		open( my $fh, '<:encoding(UTF-8)', \$line );
 		my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
