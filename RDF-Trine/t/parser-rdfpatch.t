@@ -81,4 +81,15 @@ my $model	= RDF::Trine::Model->new();
 	is($count, 2, 'expected result count');
 }
 
+{
+	my $parser	= RDF::Trine::Parser::RDFPatch->new();
+	$parser->parse_line( '@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .' );
+	my $op	= $parser->parse_line( "A _:a rdf:type 3 ." );
+	isa_ok($op, 'RDF::Trine::Parser::RDFPatch::Op' );
+	is($op->op, 'A', 'Expected RDF Patch operation ID');
+	my ($st)	= $op->args;
+	isa_ok($st, 'RDF::Trine::Statement');
+	is( $st->predicate->value, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'expected IRI from PrefixName' );
+}
+
 done_testing();

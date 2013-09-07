@@ -40,6 +40,7 @@ use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::Turtle;
+use RDF::Trine::Parser::Turtle::Constants;
 
 ######################################################################
 
@@ -58,8 +59,22 @@ Returns a new RDF-Patch Parser object.
 
 sub new {
 	my $class	= shift;
-	my $self = bless( {}, $class );
+	my $self = bless( {
+		last		=> [],
+		namespaces	=> RDF::Trine::NamespaceMap->new(),
+	}, $class );
 	return $self;
+}
+
+=item C<< namespace_map >>
+
+Returns the RDF::Trine::NamespaceMap object used in parsing.
+
+=cut
+
+sub namespace_map {
+	my $self	= shift;
+	return $self->{namespaces};
 }
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
@@ -91,7 +106,39 @@ sub parse_file {
 		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 	
-	...
+	my $lineno	= 0;
+	while (defined(my $line = <$fh>)) {
+		$lineno++;
+		my $op	= $self->parse_line( $line, $base );
+		last unless blessed($op);
+		$self->handle_op( $op, $handler, $lineno );
+	}
+}
+
+=item C<< handle_op ( $op, $handler, $lineno ) >>
+
+Handles the RDF::Trine::Parser::RDFPatch::Op operation object.
+For 'A'dd operations, the C<< $handler >> callback is called with the RDF statement.
+Otherwise an exception is thrown.
+
+=cut
+
+sub handle_op {
+	my $self	= shift;
+	my $op		= shift;
+	my $handler	= shift;
+	my $lineno	= shift;
+	my $opid	= $op->op;
+	if ($opid eq 'A') {
+		my ($st)	= $op->args;
+		$handler->( $st );
+	} else {
+		my $col	= 0;
+		throw RDF::Trine::Error::ParserError::Positioned (
+			-text => "Cannot handle RDF Patch operation type '$opid' during RDF parsing at $lineno:$col",
+			-value => [$lineno, $col],
+		);
+	}
 }
 
 =item C<< parse_line ( $line, $base ) >>
@@ -100,26 +147,67 @@ Returns an operation object.
 
 =cut
 
+sub _get_token_type {
+	my $self	= shift;
+	my $l		= shift;
+	my $type	= shift;
+	my $t		= $l->get_token;
+	unless ($t) {
+		$l->_throw_error(sprintf("Expecting %s but got EOF", decrypt_constant($type)));
+		return;
+	}
+	unless ($t->type eq $type) {
+		$self->_throw_error(sprintf("Expecting %s but got %s", decrypt_constant($type), decrypt_constant($t->type)), $t, $l);
+	}
+	return $t;
+}
+
 sub parse_line {
 	my $self	= shift;
 	my $line	= shift;
 	my $base	= shift;
+	if (substr($line, 0, 7) eq '@prefix') {
+		open( my $fh, '<:encoding(UTF-8)', \$line );
+		my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
+		$self->_get_token_type($l, PREFIX);
+		my $t	= $self->_get_token_type($l, PREFIXNAME);
+		my $name	= $t->value;
+		$name		=~ s/:$//;
+		$t	= $self->_get_token_type($l, IRI);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $base);
+		my $iri	= $r->uri_value;
+		$t	= $self->_get_token_type($l, DOT);
+		$self->{namespaces}->add_mapping( $name => $iri );
+		return;
+	}
+	
 	my ($op, $tail)	= split(/ /, $line, 2);
-	unless ($op eq 'A' or $op eq 'D' or $op eq 'Q') {
+	unless ($op =~ /^[ADQ]$/) {
 		throw RDF::Trine::Error::ParserError -text => "Unknown RDF Patch operation ID '$op'";
 	}
 	
-	my $p		= RDF::Trine::Parser::Turtle->new();
+	my $p		= RDF::Trine::Parser::Turtle->new( 'map' => $self->{namespaces} );
 	my @nodes;
 	foreach my $pos (1,2,3,4) {
 		if ($tail =~ /^\s*U\b/) {
 			substr($tail, 0, $+[0], '');
-			push(@nodes, RDF::Trine::Node::Variable->new("v$pos"));
+			my $v	= RDF::Trine::Node::Variable->new("v$pos");
+			$self->{last}[$pos]	= $v;
+			push(@nodes, $v);
+		} elsif ($tail =~ /^\s*R\b/) {
+			substr($tail, 0, $+[0], '');
+			my $node	= $self->{last}[$pos];
+			unless (blessed($node)) {
+				throw RDF::Trine::Error -text => "Use of non-existent `R`epeated term";
+			}
+			push(@nodes, $node);
 		} elsif ($tail =~ /^\s*[.]/) {
 			last;
 		} else {
 			my $token;
-			push(@nodes, $p->parse_node($tail, $base, token => \$token));
+			my $n	= $p->parse_node($tail, $base, token => \$token);
+			$self->{last}[$pos]	= $n;
+			push(@nodes, $n);
 			my $len	= $token->column;
 			substr($tail, 0, $len, '');
 		}
@@ -144,9 +232,9 @@ package RDF::Trine::Parser::RDFPatch::Op;
 use strict;
 use warnings;
 
-=item C<< new (  ) >>
+=item C<< new ( $op, @args ) >>
 
-Returns a new RDF-Patch Parser object.
+Returns a new RDF-Patch Parser operation object.
 
 =cut
 
@@ -171,15 +259,16 @@ sub args {
 sub execute {
 	my $self	= shift;
 	my $model	= shift;
-	if ($self->op eq 'A') {
+	my $op	= $self->op;
+	if ($op eq 'A') {
 		return $model->add_statement( $self->args );
-	} elsif ($self->op eq 'D') {
+	} elsif ($op eq 'D') {
 		return $model->remove_statement( $self->args );
-	} elsif ($self->op eq 'Q') {
+	} elsif ($op eq 'Q') {
 		my ($st)	= $self->args;
 		return $model->get_statements( $st->nodes );
 	} else {
-		die "unimplemented op";
+		throw RDF::Trine::Error -text => "Unexpected operation '$op' in RDF::Trine::Parser::RDFPatch::Op->execute";
 	}
 }
 
