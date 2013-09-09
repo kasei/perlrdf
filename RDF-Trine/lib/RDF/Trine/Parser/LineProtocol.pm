@@ -29,6 +29,7 @@ package RDF::Trine::Parser::LineProtocol;
 
 use strict;
 use warnings;
+use Scalar::Util qw(blessed);
 use base qw(RDF::Trine::Parser::RDFPatch);
 
 ######################################################################
@@ -107,6 +108,42 @@ sub parse_line {
 		return RDF::Trine::Parser::RDFPatch::Op->new( $op, @args );
 	} else {
 		return $self->SUPER::parse_line( $line, $base );
+	}
+}
+
+=item C<< execute_line ( $line, $model, $out ) >>
+
+Parses the Line Protocol string C<< $line >> and executes the parsed operation using
+the supplied C<< $model >>. If the operation returns results (in the case of a
+Query operation), they are printed to the C<< $out >> file handle.
+
+=cut
+
+sub execute_line {
+	my $self	= shift;
+	my $line	= shift;
+	my $model	= shift;
+	my $out		= shift;
+	
+	return unless ($line =~ /^\S/);
+	if ($line =~ /[?]/) {
+		print $out $model->as_string;
+		return;
+	}
+	
+	my $op		= $self->parse_line($line);
+	return unless ($op and blessed($op));
+	my $map		= $self->namespace_map;
+	if ($op->op =~ /^[AD]$/) {
+		$op->execute( $model );
+	} elsif ($op->op eq 'Q') {
+		my $iter	= $op->execute( $model );
+		my $s		= RDF::Trine::Serializer::Turtle->new( namespaces => $map );
+		while (my $st = $iter->next) {
+			my @nodes	= $st->nodes;
+			print $out join(' ', 'A', map { $s->serialize_node($_) } @nodes) . " .\n";
+		}
+		print $out "F .\n";
 	}
 }
 
