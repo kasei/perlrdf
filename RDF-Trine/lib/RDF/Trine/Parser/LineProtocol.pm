@@ -62,6 +62,13 @@ sub handle_op {
 	}
 }
 
+=item C<< parse_line ( $line, $base ) >>
+
+Parses the Line Protocol string C<< $line >> and returns the corresponding
+L<RDF::Trine::Parser::RDFPatch::Op> object.
+
+=cut
+
 sub parse_line {
 	my $self	= shift;
 	my $line	= shift;
