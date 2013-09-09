@@ -494,7 +494,6 @@ sub _token_to_node {
 		$ns		=~ s/:$//;
 		my $prefix			= $self->{map}->namespace_uri($ns);
 		unless (blessed($prefix)) {
-			Carp::cluck;
 			$self->_throw_error("Use of undeclared prefix '$ns'", $t);
 		}
 		my $iri				= $prefix->uri($local);
