@@ -185,7 +185,10 @@ sub statement_as_string {
 	my $self	= shift;
 	my $st		= shift;
 	my @nodes	= $st->nodes;
-	return join(' ', map { $_->as_ntriples } @nodes[0..3]) . " .\n";
+	if (scalar(@nodes) > 3 and blessed($nodes[3]) and $nodes[3]->is_nil) {
+		pop(@nodes);
+	}
+	return join(' ', map { $_->as_ntriples } @nodes) . " .\n";
 }
 
 1;
