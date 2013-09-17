@@ -299,11 +299,11 @@ sub _unescape {
 					$value	.= "\\";
 					substr($string,0,2)	= '';
 				} elsif ($1 eq 'u') {
-					$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
+					$string =~ m/^\\u([0-9A-Fa-f]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$string"];
 					$value	.= chr(oct('0x' . $1));
 					substr($string,0,6)	= '';
 				} elsif ($1 eq 'U') {
-					$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
+					$string =~ m/^\\U([0-9A-Fa-f]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$string"];
 					$value	.= chr(oct('0x' . $1));
 					substr($string,0,10)	= '';
 				} else {
