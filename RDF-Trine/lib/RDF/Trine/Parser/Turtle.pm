@@ -255,7 +255,9 @@ sub _triple {
 	# subject
 	my $subj;
 	my $bnode_plist	= 0;
-	if ($type == LBRACKET) {
+	if ($type == ANON) {
+		$subj	= RDF::Trine::Node::Blank->new();
+	} elsif ($type == LBRACKET) {
 		$bnode_plist	= 1;
 		$subj	= RDF::Trine::Node::Blank->new();
 		my $t	= $self->_next_nonws($l);
@@ -327,7 +329,14 @@ sub _predicateObjectList {
 			$self->_throw_error("Expecting verb but got " . decrypt_constant($type), $t, $l);
 		}
 		my $pred	= $self->_token_to_node($t);
-		$self->_objectList($l, $subj, $pred);
+# 		warn "Predicate: $pred\n";
+
+# 		try {
+			$self->_objectList($l, $subj, $pred);
+# 		} except {
+# 		   my $e = shift;
+# 		   warn $e;
+# 		};
 		
 		$t		= $self->_next_nonws($l);
 		last unless ($t);
@@ -362,6 +371,7 @@ sub _objectList {
 		my $t		= $self->_next_nonws($l);
 		last unless ($t);
 		my $obj		= $self->_object($l, $t);
+# 		warn "Object: $obj\n";
 		$self->_assert_triple($subj, $pred, $obj);
 		
 		$t	= $self->_next_nonws($l);
@@ -396,7 +406,9 @@ sub _object {
 	my $type	= $t->type;
 	my $tcopy	= $t;
 	my $obj;
-	if ($type==LBRACKET) {
+	if ($type == ANON) {
+		$obj	= RDF::Trine::Node::Blank->new();
+	} elsif ($type == LBRACKET) {
 		$obj	= RDF::Trine::Node::Blank->new();
 		my $t	= $self->_next_nonws($l);
 		unless ($t) {
@@ -498,6 +510,9 @@ sub _token_to_node {
 		}
 		my $iri				= $prefix->uri($local);
 		return $iri;
+	}
+	elsif ($type eq ANON) {
+		return RDF::Trine::Node::Blank->new();
 	}
 	elsif ($type eq BNODE) {
 		return RDF::Trine::Node::Blank->new($t->value);
