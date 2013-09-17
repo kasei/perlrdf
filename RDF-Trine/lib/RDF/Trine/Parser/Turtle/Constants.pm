@@ -60,6 +60,8 @@ BEGIN {
 		LBRACE
 		RBRACE
 		EQUALS
+		GRAPH
+		ANON
 		decrypt_constant
 	)
 };

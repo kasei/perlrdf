@@ -183,6 +183,15 @@ sub get_token {
 			return $self->_get_number();
 		}
 		
+		while ($self->{buffer} =~ /\A\[[\x{20}\x{09}\x{0D}\x{0A}]+\Z/sm) {
+			$self->fill_buffer(1);
+		}
+		
+		if ($c eq '[' and $self->{buffer} =~ /^\[[\x{20}\x{09}\x{0D}\x{0A}]*\]/sm) {
+			$self->_read_length($+[0]);
+			return $self->new_token(ANON);
+		}
+		
 		if (defined(my $name = $CHAR_TOKEN{$c})) { $self->_get_char; return $self->new_token($name); }
 		elsif (defined(my $method = $METHOD_TOKEN{$c})) { return $self->$method() }
 		elsif ($c eq '#') {
@@ -207,6 +216,9 @@ sub get_token {
 			} elsif ($self->{buffer} =~ /^(?:true|false)(?!:)\b/) {
 				my $bool	= $self->_read_length($+[0]);
 				return $self->new_token(BOOLEAN, $bool);
+			} elsif ($self->{buffer} =~ /^GRAPH(?!:)\b/i) {
+				$self->_read_length(5);
+				return $self->new_token(GRAPH);
 			} elsif ($self->{buffer} =~ /^BASE(?!:)\b/i) {
 				$self->_read_length(4);
 				return $self->new_token(SPARQLBASE);
@@ -238,7 +250,8 @@ Fills the internal parse buffer with a new line from the input source.
 
 sub fill_buffer {
 	my $self	= shift;
-	unless (length($self->buffer)) {
+	my $force	= shift || 0;
+	if ($force or not length($self->buffer)) {
 		my $line	= $self->file->getline;
 		if (defined($line)) {
 			$self->{buffer}	.= $line;
