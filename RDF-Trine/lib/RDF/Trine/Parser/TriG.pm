@@ -38,6 +38,7 @@ no warnings 'once';
 use base qw(RDF::Trine::Parser::Turtle);
 use RDF::Trine::Parser::Turtle::Constants;
 use RDF::Trine qw(literal);
+use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
@@ -61,8 +62,15 @@ sub _assert_triple {
 	if ($self->{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
 		$obj	= $obj->canonicalize;
 	}
-	my $st		= RDF::Trine::Statement::Quad->new( $subj, $pred, $obj, $graph );
 	
+	my $st;
+	if (blessed($graph)) {
+		$st		= RDF::Trine::Statement::Quad->new( $subj, $pred, $obj, $graph );
+	} else {
+		$st		= RDF::Trine::Statement->new( $subj, $pred, $obj );
+	}
+	
+# 	warn "Assert statement: " . $st->as_string . "\n";
 	if (my $code = $self->{handle_triple}) {
 		$code->( $st );
 	}
@@ -71,18 +79,28 @@ sub _assert_triple {
 }
 
 sub _statement {
+# 	warn "_statement";
 	my $self	= shift;
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
+	local($self->{graph});	# reset the graph name
 # 	warn '--> ' . decrypt_constant($type);
 	if ($type == LBRACE) { return $self->_graph($l, $t); }
-	elsif ($type == LBRACKET) { return $self->_graph($l, $t); }
-	elsif ($type == BNODE) { return $self->_graph($l, $t); }
+	elsif ($type == GRAPH) {
+		return $self->_graph($l, $t);
+	}
+	elsif ($type == LBRACKET) { return $self->_graph_or_triple($l, $t); }
+	elsif ($type == ANON) { return $self->_graph_or_triple($l, $t); }
+	elsif ($type == BNODE) { return $self->_graph_or_triple($l, $t); }
 	elsif ($type == EQUALS) { return $self->_graph($l, $t); }
-	elsif ($type == IRI) { return $self->_graph($l, $t); }
-	elsif ($type == PREFIXNAME) { return $self->_graph($l, $t); }
+	elsif ($type == IRI) { return $self->_graph_or_triple($l, $t); }
+	elsif ($type == PREFIXNAME) { return $self->_graph_or_triple($l, $t); }
 	elsif ($type == WS) {}
+	elsif ($type == LPAREN) {
+		$self->_triple($l, $t);
+		$self->_get_token_type($l, DOT);
+	}
 	elsif ($type == PREFIX or $type == SPARQLPREFIX) {
 		$t	= $self->_get_token_type($l, PREFIXNAME);
 		my $name	= $t->value;
@@ -114,12 +132,46 @@ sub _statement {
 	}
 }
 
-sub _graph {
+sub _graph_or_triple {
+# 	warn "_graph_or_triple";
 	my $self	= shift;
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
-	if ($type == IRI or $type == PREFIXNAME) {
+	
+	my $next	= $self->_next_nonws($l);
+	my $ntype	= $next->type;
+	$self->_unget_token($next);
+# 	if ($type == LBRACKET) {
+# 		if ($ntype == LBRACKET)
+# 	} else {
+		if ($ntype == LBRACE) {
+			return $self->_graph($l, $t);
+		} else {
+			$self->_triple($l, $t);
+			$self->_get_token_type($l, DOT);
+		}
+# 	}
+}
+
+sub _graph {
+# 	warn "_graph";
+	my $self	= shift;
+	my $l		= shift;
+	my $t		= shift;
+	my $type	= $t->type;
+	
+	my $graph_token	= 0;
+	if ($type == GRAPH) {
+		$graph_token	= 1;
+		$t		= $self->_next_nonws($l);
+		$type	= $t->type;
+		if ($type == LBRACE) {
+			$self->_throw_error("GRAPH token followed by " . decrypt_constant($type) . " instead of valid graph name", $t, $l);
+		}
+	}
+	
+	if ($type == IRI or $type == PREFIXNAME or $type == ANON) {
 		$self->{graph}	= $self->_token_to_node($t);
 		my $old_token	= $t;
 		$t		= $self->_next_nonws($l);
@@ -148,12 +200,15 @@ sub _graph {
 	$t		= $self->_next_nonws($l);
 	while (1) {
 		my $type	= $t->type;
-		unless ($type == LBRACKET or $type == LPAREN or $type == IRI or $type == PREFIXNAME or $type == BNODE) {
+		unless ($type == ANON or $type == LBRACKET or $type == LPAREN or $type == IRI or $type == PREFIXNAME or $type == BNODE) {
 			$self->_unget_token($t);
 			last;
 		}
 		$self->_triple($l, $t);
 		$t		= $self->_next_nonws($l);
+		unless ($t) {
+			$l->_throw_error("Unexpected EOF in graph block");
+		}
 		if ($t->type == RBRACE) {
 			$self->_unget_token($t);
 			last;
@@ -166,12 +221,15 @@ sub _graph {
 	$t	= $self->_get_token_type($l, RBRACE);
 	$t		= $self->_next_nonws($l);
 	return unless defined($t);
-	unless ($t->type == DOT) {
+	if ($t->type == DOT) {
+		$self->_throw_error("GRAPH block followed by DOT", $t, $l);
+	} else {
 		$self->_unget_token($t);
 	}
 }
 
 sub _triple {
+# 	warn "_triple";
 	my $self	= shift;
 	my $l		= shift;
 	my $t		= shift;
@@ -193,6 +251,8 @@ sub _triple {
 				return;
 			}
 		}
+	} elsif ($type == ANON) {
+		$subj	= RDF::Trine::Node::Blank->new();
 	} elsif ($type == LPAREN) {
 		my $t	= $self->_next_nonws($l);
 		if ($t->type == RPAREN) {
