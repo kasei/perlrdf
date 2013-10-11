@@ -89,7 +89,7 @@ sub parse {
 	local($self->{handle_triple}) = shift;
 	require Encode;
 	$string = Encode::encode("utf-8", $string);
-	open(my $fh, '<:encoding(UTF-8)', \$string);
+	open(my $fh, '<:encoding(UTF-8)', \$string) or die $!;
 	my $l	= RDF::Trine::Parser::Turtle::Lexer->new($fh);
 	$self->_parse($l);
 }
@@ -107,7 +107,6 @@ sub parse_file {
 	local($self->{baseURI})	= shift;
 	my $fh		= shift;
 	local($self->{handle_triple}) = shift;
-
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
