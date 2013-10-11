@@ -145,7 +145,10 @@ sub _graph_or_triple {
 # 	if ($type == LBRACKET) {
 # 		if ($ntype == LBRACKET)
 # 	} else {
-		if ($ntype == LBRACE) {
+		if ($ntype == EQUALS) {
+			$self->_next_nonws($l);
+			return $self->_graph($l, $t);
+		} elsif ($ntype == LBRACE) {
 			return $self->_graph($l, $t);
 		} else {
 			$self->_triple($l, $t);
@@ -222,7 +225,7 @@ sub _graph {
 	$t		= $self->_next_nonws($l);
 	return unless defined($t);
 	if ($t->type == DOT) {
-		$self->_throw_error("GRAPH block followed by DOT", $t, $l);
+# 		$self->_throw_error("GRAPH block followed by DOT", $t, $l);
 	} else {
 		$self->_unget_token($t);
 	}
