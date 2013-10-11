@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl -CO
 
 =head1 NAME
 
@@ -75,7 +75,12 @@ my $result = timeit(1, sub {
 		$e->explain( $file );
 		exit;
 	}
-	catch Error::Simple with { };
+	catch Error::Simple with {
+		my $e	= shift;
+		warn $e;
+	} otherwise {
+		warn $!
+	};
 });
 
 my $elapsed	= tv_interval( $t0, [gettimeofday]);
