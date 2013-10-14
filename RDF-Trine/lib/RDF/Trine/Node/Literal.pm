@@ -107,10 +107,6 @@ sub _new {
 
 		# 2. four-letter subtags are titlecase
 		$lang	=~ s{(?<=\w\w-)(\w\w\w\w)(?=($|-))}{\u\L$1}g;
-		if ($lang ne $oldlang) {
-			use Data::Dumper;
-			warn Dumper([$oldlang, $lang]);
-		}
 		$self	= [ $literal, lc($lang), undef ];
 	} elsif ($dt) {
 		if (blessed($dt)) {
