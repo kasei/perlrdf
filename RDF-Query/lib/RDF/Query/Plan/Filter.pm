@@ -7,7 +7,7 @@ RDF::Query::Plan::Filter - Executable query plan for Filters.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Filter version 2.908.
+This document describes RDF::Query::Plan::Filter version 2.910.
 
 =head1 METHODS
 
@@ -24,12 +24,13 @@ use strict;
 use warnings;
 use base qw(RDF::Query::Plan);
 use RDF::Query::Error qw(:try);
+use Scalar::Util qw(blessed);
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -145,7 +146,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open FILTER";
 	}
 	delete $self->[0]{filter};
-	$self->[2]->close();
+	if (blessed($self->pattern)) {
+		$self->pattern->close();
+	}
 	$self->SUPER::close();
 }
 

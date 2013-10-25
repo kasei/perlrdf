@@ -9,6 +9,75 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.910.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.909.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.910" ;
+                        doap:created      "2013-07-22" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated RDQL parser to work with recent RDF::Trine releases." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.909.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.908.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.909" ;
+                        doap:created      "2012-11-24" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added support for VALUES graph pattern (in-place BINDINGS)." ;
+                        asc:addition      "Added support for UUID() and STRUUID() functions." ;
+                        asc:addition      "Added is_update() and specifies_update_dataset() methods to RDF::Query." ;
+                        asc:update        "Accept common typo of SEPARATOR in SPARQL 1.1 parser ('SEPERATOR') with constructor arg 'allow_typos' in RDF::Query::Parser::SPARQL11." ;
+                        asc:update        "Fixed bad sparql serialization of filters with equality tests; was using '==' instead of '=' (github issue 53)." ;
+                        asc:update        "Fixed bug in RDF::Query::Algebra::Service->referenced_variables." ;
+                        asc:update        "Fixed bug that wasn't passing the active graph to EXISTS filter evaluation." ;                        asc:update        " Fixed bug that wasn't passing the active graph to EXISTS filter evaluation." ;
+                        asc:update        "Fixed RDF::Query prepare and execute methods to properly localize the model object." ;
+                        asc:update        "Fixed bug in RDQL parser that mistakenly required a USING clause (github issue 70)." ;
+                        asc:update        "Fixed handling of aggregates over empty groups." ;
+                        asc:update        "Fixed SPARQL 1.1 parsing to enforce not using shared bnode labels between update data operations." ;
+                        asc:update        "Improved SPARQL 1.1 parser detection of invalid use of BIND() (when binding already in-scope variables)." ;
+                        asc:update        "Fixed bug in SPARQL 1.1 parser to recognize legal Update operations." ;
+                        asc:update        "Updated SPARQL 1.1 parser to allow colon in local part of a prefixname." ;
+                        asc:update        "Updated STRBEFORE() and STRAFTER() implementations to track SPARQL 1.1 standard." ;
+                        asc:update        "Updated property path implementation to track W3C standard (changed counting semantics and dropped {m,n} form)." ;
+                        asc:update        "Added support to passthrough query eval to the model if supported and the 'allow_passthrough' option is set on the query object." ;
+                        asc:update        "Added 'canonicalize' option to RDF::Query constructor to canonicalize literal values." ;
+                        asc:update        "Updated handling of BIND() in the SPARQL 1.1 parser to match the latest spec semantics." ;
+                        asc:update        "Added ability to run tests of type mf:CSVResultFormatTest." ;
+                        asc:update        "Fixed config handling in rqsh to allow the use of hexastore backends." ;
+                        asc:update        "Merged Log4perl initialization cleanup patches (from github/kba)." ;
+                        asc:update        "Use $plan->explain instead of $plan->sse for 'explain' rqsh command." ;
+                        asc:update        "Updated EARL IRIs in bin/failing_earl_tests.sh and bin/passing_earl_tests.sh." ;
+                        asc:update        "Removed RDF::Redland recommendation in Makefile.PL." ;
+                        asc:update        "Added doap:implements statements, and updated release data to doap.rdf." ;
+                        asc:update        "Updated RDF::Query::Util::cli_parse_args to allow no-argument setup." ;
+                        asc:update        "Updated xt/dawg/earl.pl to use new EARL IRIs earl:passed and earl:failed." ;
+                        asc:update        "Added POD to bin/rqsh." ;
+                        asc:update        "Updated DAWG test harnesses to support expected query bindings results in RDF/XML format." ;
+                        asc:update        "Fixed xt/dawg-eval11.t to emit TAP failures when query parsing fails." ;
+                        asc:update        "Require RDF::Endpoint 0.05 in xt/dawg-eval11.t." ;
+                        asc:update        "Removed values from test directory list in xt/dawg-eval11.t." ;
+                        asc:update        "Added values to list of test directories in xt/dawg-eval11.t." ;
+                        asc:update        "Added exists test directory to xt/dawg-eval11.t." ;
+                        asc:update        "Added test case confirming bad sparql serialization of equality testing filters (github issue 53)." ;
+                        asc:update        "Removed tests for {m,n} property path forms." ;
+                        asc:update        "Fixed RDF::Query::Algebra::Project to throw exception on bad constructor arguments." ;
+                        asc:update        "Added bugtracker info to Makefile.PL." ;
+                        asc:update        "Added POD marking modules as unstable: RDF::Query::BGPOptimizer, RDF::Query::Compiler::SQL, RDF::Query::Federate, RDF::Query::Federate::Plan" ;
+                        asc:update        "Improved expected/actual results output when encountering failing tests." ;
+                        asc:update        "Removed old bloom-filter federation code." ;
+                        asc:update        "Removed RDF::Query::ExecutionContext->base method." ;
+                        asc:update        "Fix POD in RDF::Query::Algebra::Table." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.908.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.907.tar.gz> ;
@@ -24,7 +93,7 @@
                         asc:addition      "Added support for COPY and MOVE operations." ;
                         asc:addition      "Allow percent encoding and backslash escaping in prefix names." ;
                         asc:update        "Fixed SPARQL serialization of expressions using && and ||." ;
-                        asc:update        "Fixed SPARQL 1.1 parser to support "GRAPH<iri>" without whitespace." ;
+                        asc:update        "Fixed SPARQL 1.1 parser to support 'GRAPH<iri>' without whitespace." ;
                         asc:update        "Fixed bug resulting in false positive error when projecting expressions with aggregates." ;
                         asc:update        "Fixed aggregate evaluation to result in unbound variables on error (instead of dropping the result)." ;
                         asc:update        "Fixed numeric divide operation to return xsd:decimal when operands are xsd:integers." ;

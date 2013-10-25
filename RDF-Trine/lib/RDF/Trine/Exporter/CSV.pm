@@ -7,7 +7,7 @@ RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::CSV version 1.001
+This document describes RDF::Trine::Exporter::CSV version 1.007
 
 =head1 SYNOPSIS
 
@@ -33,7 +33,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 }
 
 =head1 METHODS
@@ -83,7 +83,7 @@ sub serialize_iterator_to_file {
 	my @keys;
 	while (my $row = $iter->next) {
 		unless (scalar(@keys)) {
-			@keys	= ($type eq 'bindings') ? (keys %$row) : qw(subject predicate object);
+			@keys	= ($type eq 'bindings') ? (sort keys %$row) : qw(subject predicate object);
 			$csv->print( $file, \@keys );
 			print {$file} "\n";
 		}

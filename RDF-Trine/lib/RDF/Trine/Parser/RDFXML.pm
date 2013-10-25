@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 1.001
+This document describes RDF::Trine::Parser::RDFXML version 1.007
 
 =head1 SYNOPSIS
 
@@ -37,6 +37,7 @@ use base qw(RDF::Trine::Parser);
 
 use URI;
 use Carp;
+use Encode;
 use XML::SAX;
 use Data::Dumper;
 use Log::Log4perl;
@@ -52,7 +53,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -103,7 +104,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
@@ -142,6 +143,9 @@ sub parse {
 	my $base	= shift;
 	my $string	= shift;
 	my $handler	= shift;
+	unless ($string) {
+		throw RDF::Trine::Error::ParserError -text => "No RDF/XML content supplied to parser.";
+	}
 	if ($base) {
 		unless (blessed($base)) {
 			$base	= RDF::Trine::Node::Resource->new( $base );
@@ -153,11 +157,69 @@ sub parse {
 		$self->{saxhandler}->set_handler( $handler );
 	}
 	
-	if (ref($string)) {
-		$self->{parser}->parse_file( $string );
-	} else {
-		$self->{parser}->parse_string( $string );
+	eval {
+		if (ref($string)) {
+			$self->{parser}->parse_file( $string );
+		} else {
+			$string	= encode('UTF-8', $string, Encode::FB_CROAK);
+			$self->{parser}->parse_string( $string );
+		}
+	};
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
 	}
+	
+	my $nodes	= $self->{saxhandler}{nodes};
+	if ($nodes and scalar(@$nodes)) {
+		warn Dumper($nodes);
+		throw RDF::Trine::Error::ParserError -text => "node stack isn't empty after parse";
+	}
+	my $expect	= $self->{saxhandler}{expect};
+	if ($expect and scalar(@$expect) > 2) {
+		warn Dumper($expect);
+		throw RDF::Trine::Error::ParserError -text => "expect stack isn't empty after parse";
+	}
+}
+
+=item C<< parse_file ( $base_uri, $fh, \&handler ) >>
+
+Parses all data read from the filehandle C<< $fh >>, using the given
+C<< $base_uri >>. For each RDF statement parsed, C<< $handler->( $st ) >> is called.
+
+Note: The filehandle should NOT be opened with the ":encoding(UTF-8)" IO layer,
+as this is known to cause problems for XML::SAX.
+
+=cut
+
+sub parse_file {
+	my $self	= shift;
+	my $base	= shift;
+	my $fh		= shift;
+	my $handler	= shift;
+	
+	unless (ref($fh)) {
+		my $filename	= $fh;
+		undef $fh;
+		open( $fh, '<', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+	}
+	if ($base) {
+		unless (blessed($base)) {
+			$base	= RDF::Trine::Node::Resource->new( $base );
+		}
+		$self->{saxhandler}->push_base( $base );
+	}
+	
+	if ($handler) {
+		$self->{saxhandler}->set_handler( $handler );
+	}
+	
+	eval {
+		$self->{parser}->parse_file( $fh );
+	};
+	if ($@) {
+		throw RDF::Trine::Error::ParserError -text => "$@";
+	}
+	
 	my $nodes	= $self->{saxhandler}{nodes};
 	if ($nodes and scalar(@$nodes)) {
 		warn Dumper($nodes);

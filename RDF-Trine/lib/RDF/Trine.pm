@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.001
+This document describes RDF::Trine version 1.007
 
 =head1 SYNOPSIS
 
@@ -72,11 +72,12 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use Module::Load::Conditional qw[can_load];
+use LWP::UserAgent;
 
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -198,6 +199,28 @@ sub store {
 	my $config	= shift;
 	return RDF::Trine::Store->new_with_string( $config );
 }
+
+=item C<< default_useragent ( [ $ua ] ) >>
+
+Returns the L<LWP::UserAgent> object used by default for any operation requiring network
+requests. Ordinarily, the calling code will obtain the default user agent, and clone it
+before further configuring it for a specific request, thus leaving the default object
+untouched.
+
+If C<< $ua >> is passed as an argument, sets the global default user agent to this object.
+
+=cut
+
+{ my $_useragent;
+sub default_useragent {
+	my $class	= shift;
+	my $ua		= shift || $_useragent;
+	unless (defined($ua)) {
+		$ua	= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
+	}
+	$_useragent	= $ua;
+	return $ua;
+}}
 
 1; # Magic true value required at end of module
 __END__

@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 1.001
+This document describes RDF::Trine::Store::SPARQL version 1.007
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.007";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -78,7 +78,7 @@ The URL of the remote endpoint.
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-	my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
+	my $u		= RDF::Trine->default_useragent->clone;
 	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	
 	my $self	= bless({

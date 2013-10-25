@@ -7,7 +7,7 @@ RDF::Query::Plan::Clear - Executable query plan for CLEAR operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Clear version 2.908.
+This document describes RDF::Query::Plan::Clear version 2.910.
 
 =head1 METHODS
 
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -82,7 +82,7 @@ sub execute ($) {
 			if ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:ALL') {
 				$context->model->remove_statements( undef, undef, undef, undef );
 			} elsif ($uri eq 'tag:gwilliams@cpan.org,2010-01-01:RT:NAMED') {
-				my $citer	= $context->model->get_contexts;
+				my $citer	= $context->model->get_graphs;
 				while (my $graph = $citer->next) {
 					$context->model->remove_statements( undef, undef, undef, $graph );
 				}

@@ -5317,3 +5317,4 @@ __END__
           - !!perl/array:RDF::Query::Node::Resource
             - URI
             - g1
+      - 0

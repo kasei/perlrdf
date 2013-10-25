@@ -7,7 +7,7 @@ RDF::Trine::Serializer::TSV - TSV Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 1.001
+This document describes RDF::Trine::Store version 1.007
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Serializer::serializer_names{ 'tsv' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/TSV' }	= __PACKAGE__;
 	foreach my $type (qw(text/tsv)) {

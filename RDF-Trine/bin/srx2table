@@ -7,7 +7,7 @@ use RDF::Trine;
 my $data;
 if (scalar(@ARGV) and -r $ARGV[0]) {
 	my $file	= shift;
-	$data	= do { local($/) = undef; open(my $fh, '<:utf8', $file) or die $!; <$fh> };
+	$data	= do { local($/) = undef; open(my $fh, '<:encoding(UTF-8)', $file) or die $!; <$fh> };
 } else {
 	local($/)	= undef;
 	$data	= <>;

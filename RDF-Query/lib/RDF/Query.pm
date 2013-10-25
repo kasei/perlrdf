@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Query - A SPARQL 1.1 Query implementation for use with RDF::Trine.
+RDF::Query - A complete SPARQL 1.1 Query and Update implementation for use with RDF::Trine.
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.908.
+This document describes RDF::Query version 2.910.
 
 =head1 SYNOPSIS
 
@@ -158,7 +158,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.908';
+	$VERSION		= '2.910';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 
@@ -231,9 +231,13 @@ sub new {
 		$base_uri	= RDF::Query::Node::Resource->new( $base_uri );
 	}
 	
+	my %pargs;
+	if ($options{canonicalize}) {
+		$pargs{canonicalize}	= 1;
+	}
 	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
-	my $parser	= $pclass->new();
+	my $parser	= $pclass->new( %pargs );
 	my $parsed	= $parser->parse( $query, $base_uri, $update );
 	
 	my $self	= $class->_new(

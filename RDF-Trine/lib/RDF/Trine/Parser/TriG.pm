@@ -7,7 +7,7 @@ RDF::Trine::Parser::TriG - TriG RDF Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::TriG version 1.001
+This document describes RDF::Trine::Parser::TriG version 1.007
 
 =head1 SYNOPSIS
 
@@ -41,7 +41,7 @@ use RDF::Trine qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION				= '1.001';
+	$VERSION				= '1.007';
 	$RDF::Trine::Parser::parser_names{ 'trig' }	= __PACKAGE__;
 	foreach my $ext (qw(trig)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -75,38 +75,44 @@ sub _statement {
 	my $l		= shift;
 	my $t		= shift;
 	my $type	= $t->type;
-	given ($type) {
-		when (LBRACE) { return $self->_graph($l, $t); }
-		when (EQUALS) { return $self->_graph($l, $t); }
-		when (IRI) { return $self->_graph($l, $t); }
-		when (PREFIXNAME) { return $self->_graph($l, $t); }
-		when (WS) {}
-		when (PREFIX) {
-			$t	= $self->_get_token_type($l, PREFIXNAME);
-			my $name	= $t->value;
-			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
+# 	warn '--> ' . decrypt_constant($type);
+	if ($type == LBRACE) { return $self->_graph($l, $t); }
+	elsif ($type == LBRACKET) { return $self->_graph($l, $t); }
+	elsif ($type == BNODE) { return $self->_graph($l, $t); }
+	elsif ($type == EQUALS) { return $self->_graph($l, $t); }
+	elsif ($type == IRI) { return $self->_graph($l, $t); }
+	elsif ($type == PREFIXNAME) { return $self->_graph($l, $t); }
+	elsif ($type == WS) {}
+	elsif ($type == PREFIX or $type == SPARQLPREFIX) {
+		$t	= $self->_get_token_type($l, PREFIXNAME);
+		my $name	= $t->value;
+		$name		=~ s/:$//;
+		$t	= $self->_get_token_type($l, IRI);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		if ($type == PREFIX) {
 			$t	= $self->_get_token_type($l, DOT);
-			$self->{map}->add_mapping( $name => $iri );
-			if (my $ns = $self->{namespaces}) {
-				unless ($ns->namespace_uri($name)) {
-					$ns->add_mapping( $name => $iri );
-				}
+		}
+		$self->{map}->add_mapping( $name => $iri );
+		if (my $ns = $self->{namespaces}) {
+			unless ($ns->namespace_uri($name)) {
+				$ns->add_mapping( $name => $iri );
 			}
 		}
-		when (BASE) {
-			$t	= $self->_get_token_type($l, IRI);
-			my $iri	= $t->value;
-			$t	= $self->_get_token_type($l, DOT);
-			$self->{baseURI}	= $iri;
-		}
-		default {
-			$self->_triple( $l, $t );
+	}
+	elsif ($type == BASE or $type == SPARQLBASE) {
+		$t	= $self->_get_token_type($l, IRI);
+		my $r	= RDF::Trine::Node::Resource->new($t->value, $self->{baseURI});
+		my $iri	= $r->uri_value;
+		if ($type == BASE) {
 			$t	= $self->_get_token_type($l, DOT);
 		}
+		$self->{baseURI}	= $iri;
+	}
+	else {
+		$self->_throw_error("Expecting statement but got " . decrypt_constant($type), $t, $l);
 	}
 }
-
 
 sub _graph {
 	my $self	= shift;
@@ -115,7 +121,18 @@ sub _graph {
 	my $type	= $t->type;
 	if ($type == IRI or $type == PREFIXNAME) {
 		$self->{graph}	= $self->_token_to_node($t);
+		my $old_token	= $t;
 		$t		= $self->_next_nonws($l);
+		unless (defined($t)) {
+			$l->_throw_error("Unexpected EOF after graph");
+		}
+	} elsif ($type == BNODE) {
+		$self->{graph}	= $self->_token_to_node($t);
+		$t		= $self->_next_nonws($l);
+	} elsif ($type == LBRACKET) {
+		$t	= $self->_get_token_type($l, RBRACKET);
+		$t	= $self->_next_nonws($l);
+		$self->{graph}	= RDF::Trine::Node::Blank->new();
 	} else {
 		$self->{graph}	= RDF::Trine::Node::Nil->new();
 	}
@@ -125,7 +142,7 @@ sub _graph {
 	}
 	
 	if ($t->type != LBRACE) {
-		$self->throw_error("Expecting LBRACE but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting LBRACE but got " . decrypt_constant($type), $t, $l);
 	}
 	
 	$t		= $self->_next_nonws($l);
@@ -168,6 +185,13 @@ sub _triple {
 			$self->_unget_token($t);
 			$self->_predicateObjectList( $l, $subj );
 			$t	= $self->_get_token_type($l, RBRACKET);
+			
+			$t		= $self->_next_nonws($l);
+			return unless defined($t);
+			$self->_unget_token($t);
+			if ($t->type == DOT) {
+				return;
+			}
 		}
 	} elsif ($type == LPAREN) {
 		my $t	= $self->_next_nonws($l);
@@ -188,7 +212,7 @@ sub _triple {
 			$self->_assert_list($subj, @objects);
 		}
 	} elsif (not($type==IRI or $type==PREFIXNAME or $type==BNODE)) {
-		$self->throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
+		$self->_throw_error("Expecting resource or bnode but got " . decrypt_constant($type), $t, $l);
 	} else {
 		$subj	= $self->_token_to_node($t);
 	}

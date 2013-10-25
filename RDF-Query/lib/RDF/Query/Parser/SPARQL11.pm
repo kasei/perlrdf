@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.908.
+This document describes RDF::Query::Parser::SPARQL11 version 2.910.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -442,7 +442,7 @@ sub _InsertDataUpdate {
 	$self->__consume_ws_opt;
 	
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty, undef, 1);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -460,7 +460,7 @@ sub _DeleteDataUpdate {
 	$self->__consume_ws_opt;
 	
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
-	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty);
+	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty, undef, 1);
 	$self->_add_patterns( $delete );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -520,7 +520,7 @@ sub _InsertUpdate {
 		$dataset{ default }	= [$graph || ()];
 	}
 	
-	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
+	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset, 0);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -609,7 +609,7 @@ sub _DeleteUpdate {
 		$dataset{ default }	= [$graph || ()];
 	}
 	
-	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset);
+	my $insert	= RDF::Query::Algebra::Update->new($delete_data, $insert_data, $ggp, \%dataset, 0);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
 }
@@ -869,7 +869,7 @@ sub __UpdateShortcuts {
 	my $to_graph	= $to || RDF::Trine::Node::Nil->new;
 	my $from_graph	= $from || RDF::Trine::Node::Nil->new;
 	my $drop_to		= RDF::Query::Algebra::Clear->new( $to_graph, $silent );
-	my $update		= RDF::Query::Algebra::Update->new( undef, $to_pattern, $from_pattern );
+	my $update		= RDF::Query::Algebra::Update->new( undef, $to_pattern, $from_pattern, undef, 0 );
 	my $drop_from	= RDF::Query::Algebra::Clear->new( $from_graph );
 	my $pattern;
 	if ($op eq 'MOVE') {
@@ -3203,7 +3203,13 @@ sub _RDFLiteral {
 		my ($iri)	= splice(@{ $self->{stack} });
 		push(@args, $iri->uri_value);
 	}
-	$self->_add_stack( RDF::Query::Node::Literal->new( @args ) );
+	
+	my $obj	= RDF::Query::Node::Literal->new( @args );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	
+	$self->_add_stack( $obj );
 }
 
 # [61] NumericLiteral ::= NumericLiteralUnsigned | NumericLiteralPositive | NumericLiteralNegative
@@ -3240,14 +3246,24 @@ sub _NumericLiteral {
 	if ($sign) {
 		$value	= $sign . $value;
 	}
-	$self->_add_stack( RDF::Query::Node::Literal->new( $value, undef, $type->uri_value ) );
+	
+	my $obj	= RDF::Query::Node::Literal->new( $value, undef, $type->uri_value );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	$self->_add_stack( $obj );
 }
 
 # [65] BooleanLiteral ::= 'true' | 'false'
 sub _BooleanLiteral {
 	my $self	= shift;
 	my $bool	= $self->_eat(qr/(true|false)\b/);
-	$self->_add_stack( RDF::Query::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value ) );
+
+	my $obj	= RDF::Query::Node::Literal->new( $bool, undef, $xsd->boolean->uri_value );
+	if ($self->{args}{canonicalize} and blessed($obj) and $obj->isa('RDF::Trine::Node::Literal')) {
+		$obj	= $obj->canonicalize;
+	}
+	$self->_add_stack( $obj );
 }
 
 # [66] String ::= STRING_LITERAL1 | STRING_LITERAL2 | STRING_LITERAL_LONG1 | STRING_LITERAL_LONG2

@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 1.001
+This document describes RDF::Trine::Serializer::RDFXML version 1.007
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use Carp;
 use Data::Dumper;
 use Scalar::Util qw(blessed);
 
-use RDF::Trine::Node;
+use RDF::Trine qw(variable);
 use RDF::Trine::Statement;
 use RDF::Trine::Error qw(:try);
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -102,7 +102,12 @@ sub serialize_model_to_file {
 	my $self	= shift;
 	my $fh		= shift;
 	my $model	= shift;
-	my $iter	= $model->as_stream;
+
+	my $st		= RDF::Trine::Statement->new( map { variable($_) } qw(s p o) );
+	my $pat		= RDF::Trine::Pattern->new( $st );
+	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
+	my $iter	= $stream->as_statements( qw(s p o) );
+# 	my $iter	= $model->as_stream;
 	
 	$self->serialize_iterator_to_file( $fh, $iter );
 	return 1;

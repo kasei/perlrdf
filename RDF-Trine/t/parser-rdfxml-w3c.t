@@ -26,6 +26,16 @@ plan qw(no_plan);
 
 use_ok( 'RDF::Trine::Parser::RDFXML' );
 
+{
+  my $parser = RDF::Trine::Parser::RDFXML->new;
+  my $model = RDF::Trine::Model->temporary_model;
+  throws_ok { $parser->parse_into_model('http://localhost/', '', $model) } 'RDF::Trine::Error::ParserError', 'Empty string data throws class';
+  throws_ok { $parser->parse_into_model('http://localhost/', '', $model) } qr|No RDF/XML content supplied to parser|, 'Empty string data throws string';
+  throws_ok { $parser->parse_into_model('http://localhost/', undef, $model) } 'RDF::Trine::Error::ParserError', 'Undef data throws class';
+  throws_ok { $parser->parse_into_model('http://localhost/', undef, $model) } qr|No RDF/XML content supplied to parser|, 'Undef data throws string';
+}
+
+
 my $ok_regex	= (@ARGV) ? shift : '';
 
 
@@ -223,19 +233,38 @@ foreach my $file (@good) {
 		if ($file =~ $ok_regex) {
 			local($TODO)	= 'rdf/xml parser is currently broken' if ($file =~ m/ex-(19|37|45|46|53|58)/);
 			my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
-			my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
+			note($name);
 			my (undef, undef, $test)	= File::Spec->splitpath( $file );
-			my $model;
-			lives_ok {
-				my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
-				my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
-				my $prefix	= $PREFIXES{ $filename } || 'genid';
-				my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
-				$model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store );
-				$parser->parse_into_model( $url, $data, $model );
-			} "parsing $name lives";
+			{
+				# test the parse() method
+				my $data	= do { open( my $fh, '<:encoding(UTF-8)', $file ); local($/) = undef; <$fh> };
+				my $model;
+				lives_ok {
+					my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
+					my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
+					my $prefix	= $PREFIXES{ $filename } || 'genid';
+					my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
+					$model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store );
+					$parser->parse_into_model( $url, $data, $model );
+				} "parsing $name with parse_into_model lives";
 			
-			compare( $model, $file );
+				compare( $model, $file, "parse_into_model" );
+			}
+
+			{
+				# test the parse_file() method
+				my $model;
+				lives_ok {
+					my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
+					my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
+					my $prefix	= $PREFIXES{ $filename } || 'genid';
+					my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
+					$model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store );
+					$parser->parse_file_into_model( $url, $file, $model );
+				} "parsing $name with parse_file_into_model lives";
+			
+				compare( $model, $file, "parse_file_into_model" );
+			}
 		}
 	}
 }
@@ -243,6 +272,7 @@ foreach my $file (@good) {
 sub compare {
 	my $model	= shift;
 	my $file	= shift;
+	my $parse_type	= shift;
 	my ($filename)	= $file	=~ m/rdfxml-w3c(.*)$/;
 	my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
 	my ($name)	= $file =~ m<^.*rdfxml-w3c(.*)[.]rdf>;
@@ -255,5 +285,5 @@ sub compare {
 	my $got		= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $model );
 	my $expect	= RDF::Trine::Serializer::NTriples::Canonical->new->serialize_model_to_string( $emodel );
 	
-	is( $got, $expect, "expected triples: $name" );
+	is( $got, $expect, "expected triples: $name ($parse_type)" );
 }

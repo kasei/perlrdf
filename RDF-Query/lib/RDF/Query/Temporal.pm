@@ -7,7 +7,7 @@ RDF::Query::Temporal - tSPARQL temporal extensions to the RDF::Query engine.
 
 =head1 VERSION
 
-This document describes RDF::Query::Temporal version 2.908.
+This document describes RDF::Query::Temporal version 2.910.
 
 =cut
 
@@ -24,7 +24,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

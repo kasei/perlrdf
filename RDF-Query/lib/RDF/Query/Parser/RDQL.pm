@@ -7,7 +7,7 @@ RDF::Query::Parser::RDQL - An RDQL parser for RDF::Query
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::RDQL version 2.908.
+This document describes RDF::Query::Parser::RDQL version 2.910.
 
 =cut
 
@@ -30,7 +30,7 @@ our ($VERSION, $lang, $languri);
 BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
 }
@@ -65,7 +65,7 @@ BEGIN {
 	SourceClause:				('SOURCE' | 'FROM') Source(s)					{ $return = $item[2] }
 	Source:						URI												{ $return = [$item[1]] }
 	variable:					'?' identifier									{ $return = RDF::Query::Parser->new_variable($item[2]) }
-	triplepattern:				'(' VarUri VarUri VarUriConst ')'				{ $return = RDF::Query::Parser->new_triple(@item[2,3,4]) }
+	triplepattern:				'(' VarUri VarUri VarUriConst ')'				{ $return = RDF::Query::Parser::RDQL::Triple->new(@item[2,3,4]) }
 	constraints:				'AND' Expression OptExpression(s?)				{
 																					if (scalar(@{ $item[3] })) {
 																						my ($op, $expr)	= @{ $item[3][0] };
@@ -198,7 +198,8 @@ BEGIN {
 	namespace:					identifier 'FOR' qURI							{ $return = {@item[1,3]} }
 	OptComma:					',' | ''
 	identifier:					/(([a-zA-Z0-9_.-])+)/							{ $return = $1 }
-	URI:						(qURI | QName)									{ $return = RDF::Query::Parser->new_uri( $item[1] ) }
+	URI:						qURI											{ $return = RDF::Query::Parser->new_uri( $item[1] ) }
+							|	QName											{ $return = RDF::Query::Parser::RDQL::URI->new( $item[1] ) }
 	qURI:						'<' /[A-Za-z0-9_.!~*'()%;\/?:@&=+,#\$-]+/ '>'	{ $return = $item[2] }
 	QName:						identifier ':' /([^ \t<>()]+)/					{ $return = [@item[1,3]] }
 	CONST:						Text											{ $return = RDF::Query::Parser->new_literal($item[1]) }
@@ -251,6 +252,7 @@ sub parse {
 		my $pattern	= $parsed->{triples}[0];
 		if (blessed($pattern)) {
 			my $ns		= $parsed->{namespaces};
+			$pattern	= $self->_fixup_pattern( $pattern, $ns );
 			my $fixed	= $pattern->qualify_uris( $ns );
 			$parsed->{triples}[0]	= $fixed;
 		}
@@ -262,6 +264,26 @@ sub parse {
 	} else {
 		return $self->fail( "Failed to parse: '$query'" );
 	}
+}
+
+sub _fixup_pattern {
+	my $self	= shift;
+	my $pattern	= shift;
+	my $ns		= shift;
+	
+	my @uris	= $pattern->subpatterns_of_type('RDF::Query::Parser::RDQL::URI');
+	foreach my $u (@uris) {
+		my $ns	= $ns->{ $u->[0] };
+		my $uri	= join('', $ns, $u->[1]);
+		@{ $u }	=  ( 'URI', $uri );
+		bless($u, 'RDF::Query::Node::Resource');	# evil
+	}
+	
+	my @triples	= $pattern->subpatterns_of_type('RDF::Query::Parser::RDQL::Triple');
+	foreach my $t (@triples) {
+		bless($t, 'RDF::Query::Algebra::Triple');	# evil
+	}
+	return $pattern;
 }
 
 sub AUTOLOAD {
@@ -287,6 +309,41 @@ sub AUTOLOAD {
 	}
 }
 
+
+package RDF::Query::Parser::RDQL::URI;
+
+use strict;
+use warnings;
+use base qw(RDF::Query::Algebra);
+
+sub new {
+	my $class	= shift;
+	my $data	= shift;
+	my ($ns, $local)	= @{ $data };
+	return bless([$ns, $local], $class);
+}
+
+sub construct_args {
+	my $self	= shift;
+	return [ @$self ];
+}
+
+package RDF::Query::Parser::RDQL::Triple;
+
+use strict;
+use warnings;
+use base qw(RDF::Query::Algebra);
+
+sub new {
+	my $class	= shift;
+	my @nodes	= @_;
+	return bless([@nodes], $class);
+}
+
+sub construct_args {
+	my $self	= shift;
+	return @$self;
+}
 
 1;
 

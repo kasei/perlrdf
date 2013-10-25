@@ -7,7 +7,7 @@ RDF::Trine::Node::Nil - RDF Node class for the nil node
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Nil version 1.001
+This document describes RDF::Trine::Node::Nil version 1.007
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 my $NIL_NODE;
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 }
 
 ######################################################################

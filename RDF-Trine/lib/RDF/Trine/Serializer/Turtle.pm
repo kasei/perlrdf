@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 1.001
+This document describes RDF::Trine::Serializer::Turtle version 1.007
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
@@ -192,7 +192,7 @@ sub serialize_iterator {
 	
 	unless ($sink->can('prepend')) {
 		if (@nskeys) {
-			foreach my $ns (@nskeys) {
+			foreach my $ns (sort @nskeys) {
 				my $uri	= $ns{ $ns };
 				$sink->emit("\@prefix $ns: <$uri> .\n");
 			}
@@ -287,7 +287,7 @@ sub serialize_iterator {
 		my @used_nskeys	= keys %{ $self->{used_ns} };
 		if (@used_nskeys) {
 			my $string	= '';
-			foreach my $ns (@used_nskeys) {
+			foreach my $ns (sort @used_nskeys) {
 				my $uri	= $ns{ $ns };
 				$string	.= "\@prefix $ns: <$uri> .\n";
 			}
@@ -344,7 +344,9 @@ sub _serialize_object_to_file {
 				warn "count=$count, rec=$rec for node " . $subj->as_string if ($debug);
 				if ($count == 1 and $rec == 0) {
 					unless ($seen->{ $subj->as_string }++ or $seen->{ '  heads' }{ $subj->as_string }) {
-						my $iter	= $model->get_statements( $subj, undef, undef );
+						my $pat		= RDF::Trine::Pattern->new( RDF::Trine::Statement->new($subj, variable('p'), variable('o')) );
+						my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
+						my $iter	= $stream->as_statements( qw(s p o) );
 						my $last_pred;
 						my $triple_count	= 0;
 						$sink->emit("[");

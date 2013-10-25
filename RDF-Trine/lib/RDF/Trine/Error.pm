@@ -7,7 +7,7 @@ RDF::Trine::Error - Error classes for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Error version 1.001
+This document describes RDF::Trine::Error version 1.007
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use base qw(Error);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 }
 
 ######################################################################
@@ -155,7 +155,7 @@ sub explain {
 	my $text	= $self->text;
 	my $pos		= $self->value;
 	my ($line, $col)	= @$pos;
-	my $buffer	= $self->_get_line( $fh, $line );
+	my $buffer	= $self->_get_line( $fh, $line ) || '';
 	
 	my $tabs	= ($buffer =~ tr/\t//);
 	$buffer		=~ s/\t/    /g;

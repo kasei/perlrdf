@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Redland version 1.001
+This document describes RDF::Trine::Parser::Redland version 1.007
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ BEGIN {
 				],
 	);
 	
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]
@@ -143,7 +143,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut

@@ -7,7 +7,7 @@ RDF::Trine::Parser::NQuads - N-Quads Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NQuads version 1.001
+This document describes RDF::Trine::Parser::NQuads version 1.007
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Parser::parser_names{ 'nquads' }	= __PACKAGE__;
 	$RDF::Trine::Parser::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 	foreach my $ext (qw(nq)) {
@@ -68,7 +68,7 @@ BEGIN {
 
 =item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF triple
 or quad parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
