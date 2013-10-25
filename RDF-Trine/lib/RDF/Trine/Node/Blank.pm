@@ -57,7 +57,8 @@ sub new {
 		$name	= 'r' . time() . 'r' . $COUNTER++;
 	}
 	if ($name =~ m/[^A-Za-z0-9]/) {
-		throw RDF::Trine::Error::SerializationError -text => "Only alphanumerics are allowed in N-Triples bnode labels";
+		throw RDF::Trine::Error::SerializationError
+            -text => "Only alphanumerics are allowed in N-Triples bnode labels (you supplied $name)";
 	}
 	return $class->_new( $name );
 }

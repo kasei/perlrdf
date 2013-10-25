@@ -176,7 +176,10 @@ sub all_store_tests {
 		literals_tests_simple( $store, $args, $ex );
 		blank_node_tests_quads( $store, $args, $ex );
 		count_statements_tests_simple( $store, $args, $ex );
-	
+        diag(scalar @triples);
+        diag(scalar @quads);
+        #diag($_->as_string) for @triples;
+        #diag($_->as_string) for @quads;
 		add_quads( $store, $args, @quads );
 		update_sleep($args);
 	
@@ -759,6 +762,7 @@ sub count_statements_tests_quads {
 	note " quad count_statements tests";
 	my ($store, $args, $ex) = @_;
 	{
+        #diag($store->size);
 		is( $store->count_statements, 27, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), 27, 'count_statements( fff )' );
 		is( $store->count_statements(undef, undef, undef, undef), 81, 'count_statements( ffff )' );
@@ -766,6 +770,7 @@ sub count_statements_tests_quads {
 		is( $store->count_statements( $ex->a, undef, undef ), 9, 'count_statements( bff )' );
 		is( $store->count_statements( $ex->a, undef, undef, undef ), 27, 'count_statements( bfff )' );
 		is( $store->count_statements( $ex->a, undef, undef, $ex->a ), 9, 'count_statements( bffb )' );
+        #exit;
 	}
 }
 

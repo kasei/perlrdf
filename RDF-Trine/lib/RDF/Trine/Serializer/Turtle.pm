@@ -90,18 +90,27 @@ sub new {
 			}
 		}
 	}
-	
+
 	my %rev;
-	while (my ($ns, $uri) = each(%{ $ns })) {
-		if (blessed($uri)) {
-			$uri	= $uri->uri_value;
-			if (blessed($uri)) {
-				$uri	= $uri->uri_value;
-			}
-		}
-		$rev{ $uri }	= $ns;
+    if (blessed($ns) and $ns->isa('RDF::Trine::NamespaceMap')) {
+        for my $prefix ($ns->list_prefixes) {
+            # way convoluted
+            my $nsuri = $ns->namespace_uri($prefix)->uri->value;
+            $rev{$nsuri} = $prefix;
+        }
+    }
+    else {
+        while (my ($ns, $uri) = each(%{ $ns })) {
+            if (blessed($uri)) {
+                $uri	= $uri->uri_value;
+                if (blessed($uri)) {
+                    $uri	= $uri->uri_value;
+                }
+            }
+            $rev{ $uri }	= $ns;
+        }
 	}
-	
+
 	my $self = bless( {
 		ns		=> \%rev,
 		base_uri	=> $base_uri,

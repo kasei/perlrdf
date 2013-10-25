@@ -2,14 +2,17 @@ bin/graph.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
 bin/rdf_parse_xml.pl
-bin/rdf_transcode.pl
 bin/rdf_store_add_file.pl
 bin/rdf_store_makeprivate.pl
 bin/rdf_store_serialize.pl
+bin/rdf_transcode.pl
 bin/srx2csv
 bin/srx2table
 Changes.ttl
 examples/foaf_labels.pl
+extra/mysql.sql
+inc/Module/Install.pm
+inc/Module/Install/AuthorTests.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
@@ -18,8 +21,6 @@ inc/Module/Install/Metadata.pm
 inc/Module/Install/Scripts.pm
 inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
-inc/Module/Install.pm
-inc/Module/Install/AuthorTests.pm
 lib/RDF/Trine.pm
 lib/RDF/Trine/Error.pm
 lib/RDF/Trine/Exporter/CSV.pm
@@ -63,8 +64,8 @@ lib/RDF/Trine/Serializer/NTriples.pm
 lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
 lib/RDF/Trine/Serializer/RDFXML.pm
-lib/RDF/Trine/Serializer/Turtle.pm
 lib/RDF/Trine/Serializer/TSV.pm
+lib/RDF/Trine/Serializer/Turtle.pm
 lib/RDF/Trine/Statement.pm
 lib/RDF/Trine/Statement/Quad.pm
 lib/RDF/Trine/Store.pm
@@ -72,6 +73,13 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/DBIC.pm
+lib/RDF/Trine/Store/DBIC/Schema.pm
+lib/RDF/Trine/Store/DBIC/Schema/BNode.pm
+lib/RDF/Trine/Store/DBIC/Schema/Literal.pm
+lib/RDF/Trine/Store/DBIC/Schema/Model.pm
+lib/RDF/Trine/Store/DBIC/Schema/Resource.pm
+lib/RDF/Trine/Store/DBIC/Schema/Statement.pm
 lib/RDF/Trine/Store/Dydra.pm
 lib/RDF/Trine/Store/Hexastore.pm
 lib/RDF/Trine/Store/Memory.pm
@@ -82,9 +90,11 @@ lib/RDF/Trine/VariableBindings.pm
 lib/Test/RDF/Trine/Store.pm
 Makefile.PL
 MANIFEST			This list of files
+MANIFEST.bak
 META.yml
+MYMETA.json
+MYMETA.yml
 README
-SIGNATURE
 t/00.load.t
 t/data/bugs/ttl-with-bom.ttl
 t/data/rdfa/test-sd.nt
@@ -559,6 +569,7 @@ t/store-context.t
 t/store-dbi-mysql.t
 t/store-dbi-pg.t
 t/store-dbi.t
+t/store-dbic.t
 t/store-hexastore-pattern.t
 t/store-hexastore-storable.t
 t/store-hexastore-triplestore.t
@@ -580,4 +591,3 @@ xt/pod.t
 xt/store-dydra.t
 xt/store-redland.t
 xt/store-sparql.t
-extra/mysql.sql
