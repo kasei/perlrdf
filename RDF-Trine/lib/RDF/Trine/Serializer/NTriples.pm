@@ -7,7 +7,7 @@ RDF::Trine::Serializer::NTriples - N-Triples Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples version 1.001
+This document describes RDF::Trine::Serializer::NTriples version 1.007
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/N-Triples' }	= __PACKAGE__;
 	foreach my $type (qw(text/plain)) {
@@ -194,6 +194,12 @@ sub serialize_node {
 __END__
 
 =back
+
+=head1 NOTES
+
+As described in L<RDF::Trine::Node::Resource/as_ntriples>, N-Triples serialization will
+decode any L<punycode|http://www.ietf.org/rfc/rfc3492.txt> that is included in the IRI,
+and serialize it using unicode codepoint escapes.
 
 =head1 BUGS
 

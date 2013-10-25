@@ -7,7 +7,7 @@ RDF::Trine::Iterator::JSONHandler - JSON Handler for parsing SPARQL JSON Results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::JSONHandler version 1.001
+This document describes RDF::Trine::Iterator::JSONHandler version 1.007
 
 =head1 STATUS
 
@@ -40,7 +40,7 @@ use RDF::Trine::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 }
 
 =item C<< new >>

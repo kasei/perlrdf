@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.001
+This document describes RDF::Trine::Parser version 1.007
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -61,7 +61,6 @@ BEGIN {
 }
 
 use Scalar::Util qw(blessed);
-use LWP::UserAgent;
 
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::NTriples;
@@ -101,6 +100,7 @@ sub media_types {
 =item C<< parser_by_media_type ( $media_type ) >>
 
 Returns the parser class appropriate for parsing content of the specified media type.
+Returns undef if not appropriate parser is found.
 
 =cut
 
@@ -114,6 +114,7 @@ sub parser_by_media_type {
 =item C<< guess_parser_by_filename ( $filename ) >>
 
 Returns the best-guess parser class to parse a file with the given filename.
+Defaults to L<RDF::Trine::Parser::RDFXML> if not appropriate parser is found.
 
 =cut
 
@@ -168,6 +169,12 @@ that callback function will be called after a successful response as:
 
  $content_cb->( $url, $content, $http_response_object )
 
+If C<< %args >> contains a C<< 'useragent' >> key with a LWP::UserAgent object value,
+that object is used to retrieve the requested URL without any configuration (such as
+setting the Accept: header) which would ordinarily take place. Otherwise, the default
+user agent (L<RDF::Trine/default_useragent>) is cloned and configured to retrieve
+content that will be acceptable to any available parser.
+
 =cut
 
 sub parse_url_into_model {
@@ -176,11 +183,19 @@ sub parse_url_into_model {
 	my $model	= shift;
 	my %args	= @_;
 	
-	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
+	my $base	= $url;
+	if (defined($args{base})) {
+		$base	= $args{base};
+	}
 	
-	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
-	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
-	$ua->default_headers->push_header( 'Accept' => $accept );
+	my $ua;
+	if (defined($args{useragent})) {
+		$ua	= $args{useragent};
+	} else {
+		$ua		= RDF::Trine->default_useragent->clone;
+		my $accept	= $class->default_accept_header;
+		$ua->default_headers->push_header( 'Accept' => $accept );
+	}
 	
 	my $resp	= $ua->get( $url );
 	if ($url =~ /^file:/) {
@@ -210,12 +225,10 @@ sub parse_url_into_model {
 		my $parser	= $pclass->new(%args);
 		my $ok	= 0;
 		try {
-			$parser->parse_into_model( $url, $data, $model, %args );
+			$parser->parse_into_model( $base, $data, $model, %args );
 			$ok	= 1;
 		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
-	} else {
-		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
 	}
 	
 	### FALLBACK
@@ -223,58 +236,70 @@ sub parse_url_into_model {
 	if (defined $args{canonicalize}) {
 		$options{ canonicalize }	= $args{canonicalize};
 	}
-	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
-		my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
-		my $parser	= RDF::Trine::Parser::Turtle->new(%options);
-		my $data	= decode('utf8', $content);
-		$parser->parse_into_model( $url, $data, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]trig$/) {
-		my $parser	= RDF::Trine::Parser::Trig->new(%options);
-		my $data	= decode('utf8', $content);
-		$parser->parse_into_model( $url, $data, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]nt$/) {
-		my $parser	= RDF::Trine::Parser::NTriples->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]nq$/) {
-		my $parser	= RDF::Trine::Parser::NQuads->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]js(?:on)?$/) {
-		my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]x?html?$/) {
-		my $parser	= RDF::Trine::Parser::RDFa->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} else {
-		my @types	= keys %{ { map { $_ => 1 } values %media_types } };
-		foreach my $pclass (@types) {
-			my $data	= $content;
-			if (my $e = $encodings{ $pclass }) {
-				$data	= decode( $e, $content );
+	
+	my $ok	= 0;
+	try {
+		if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
+			my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
+			$parser->parse_into_model( $base, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
+			my $parser	= RDF::Trine::Parser::Turtle->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse_into_model( $base, $data, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]trig$/) {
+			my $parser	= RDF::Trine::Parser::Trig->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse_into_model( $base, $data, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nt$/) {
+			my $parser	= RDF::Trine::Parser::NTriples->new(%options);
+			$parser->parse_into_model( $base, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nq$/) {
+			my $parser	= RDF::Trine::Parser::NQuads->new(%options);
+			$parser->parse_into_model( $base, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]js(?:on)?$/) {
+			my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
+			$parser->parse_into_model( $base, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]x?html?$/) {
+			my $parser	= RDF::Trine::Parser::RDFa->new(%options);
+			$parser->parse_into_model( $base, $content, $model, %args );
+			$ok	= 1;;
+		} else {
+			my @types	= keys %{ { map { $_ => 1 } values %media_types } };
+			foreach my $pclass (@types) {
+				my $data	= $content;
+				if (my $e = $encodings{ $pclass }) {
+					$data	= decode( $e, $content );
+				}
+				my $parser	= $pclass->new(%options);
+				my $ok		= 0;
+				try {
+					$parser->parse_into_model( $base, $data, $model, %args );
+					$ok	= 1;
+				} catch RDF::Trine::Error::ParserError with {};
+				last if ($ok);
 			}
-			my $parser	= $pclass->new(%options);
-			my $ok		= 0;
-			try {
-				$parser->parse_into_model( $url, $data, $model, %args );
-				$ok	= 1;
-			} catch RDF::Trine::Error::ParserError with {};
-			return 1 if ($ok);
 		}
+	} catch RDF::Trine::Error with {
+		my $e	= shift;
+	};
+	return 1 if ($ok);
+	
+	if ($pclass) {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type from $url";
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
 	}
-	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
 }
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut
@@ -348,7 +373,7 @@ sub parse_file_into_model {
 
 Parses all data read from the filehandle or file C<< $fh >>, using the given
 C<< $base_uri >>. If C<< $fh >> is a filename, this method can guess the
-associated parse. For each RDF statement parses C<< $handler >> is called.
+associated parse. For each RDF statement parsed, C<< $handler->( $st ) >> is called.
 
 =cut
 
@@ -405,6 +430,21 @@ sub new_bnode_prefix {
 	}
 }
 
+=item C<< default_accept_header >>
+
+Returns the default HTTP Accept header value used in requesting RDF content (e.g. in
+L</parse_url_into_model>) that may be parsed by one of the available RDF::Trine::Parser
+subclasses.
+
+By default, RDF/XML and Turtle are preferred over other media types.
+
+=cut
+
+sub default_accept_header {
+	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
+	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
+	return $accept;
+}
 
 1;
 

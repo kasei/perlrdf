@@ -10,6 +10,131 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.007.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.006.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.007" ;
+                        doap:created      "2012-07-18" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added initial implementation of TriG serializer." ;
+        				asc:addition    "Added implementation of the RDF Patch exporter and serializer, and ability to serialize model changes in RDF Patch format." ;
+        				asc:addition    "Added ability to configure the LWP::UserAgent used through the RDF::Trine framework." ;
+        				asc:addition    "Added Test::Compile developer test xt/00_compile.t." ;
+                        asc:update      "Update Turtle lexer to look for whitespace (instead of a word break) after 'a' when looking for the A token." ;
+                        asc:update      "Work around a XML::Namespace bug in RDF::Trine::Namespace->uri." ;
+                        asc:update      "Fixed xt/pod-coverage.t to avoid checking modules which fail to load." ;
+                        asc:update      "Updated Turtle and TriG parsers and test suites to track W3C standardization work." ;
+                        asc:update      "Update bin/turtle_parse.pl to output N-Quads when the input format contains quads." ;
+                        asc:update      "Update RDF::Trine::Parser->parse_url_into_model to accept a base argument." ;
+                        asc:update      "Allow lowercase hex codepoint values in N-Triples escapes in RDF::Trine::Parser::NTriples." ;
+                        asc:update      "Use the :encoding(UTF-8) IO layer where previously just :utf8 was used." ;
+                        asc:update      "s/exists/defined/ in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Update the characters that may be used in blank node identifiers in RDF::Trine::Node::Blank->new." ;
+                        asc:update      "Added POD for RDF::Trine::Statement::Quad->graph (alias for ->context)." ;
+                        asc:update      "Updated RDF::Trine::Store::Memory to generate SHA digests (for ETag use) based on bytes, not unicode strings." ;
+                        asc:update      "Add RDF::Trine::Statement::Quad->graph as an alias for RDF::Trine::Statement::Quad->context." ;
+                        asc:update      "Updated t/serializer-trig.t to load RDF::Trine before any sub-modules." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.006.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.005.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.006" ;
+                        doap:created      "2012-07-01" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Split RDF::Trine::Iterator->from_string into from_string and from_bytes." ;
+                        asc:update      "Punycode URIs are now left as-is (without decoding) in RDF::Trine::Node::Resource->new." ;
+                        asc:update      "Fix handling of IRIs with codepoints > 127 in RDF::Trine::Node::Resource (GitHub issue #85)." ;
+                        asc:update      "Remove empty-string default in SQL schema of RDF::Trine::Store::DBI::mysql and update code to compensate." ;
+                        asc:update      "Remove bad calls to encode_utf8 in sse and as_ntriples methods of RDF::Trine::Node::Resource." ;
+                        asc:update      "Normalize IRI values before serialization in RDF::Trine::Node::Resource->as_ntriples and RDF::Trine::Node::Resource->compare." ;
+                        asc:update      "Update RDF::Trine::Serializer::NTriples::Canonical to use $node->as_ntriples instead of $node->sse." ;
+                        asc:update      "Add documentation noting that punycode will be decoded as a part of N-Triples serialization." ;
+                        asc:update      "Change use of utf8::all to utf8 in t/node.t." ;
+                        asc:update      "Mark TryCatch as a build_requires instead of a requires module in Makefile.PL." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.005.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.004.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.005" ;
+                        doap:created      "2012-05-27" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Updated Turtle parser to support the Turtle 2013 draft syntax." ;
+                        asc:update      "Throw exception in RDF::Trine::Node::Resource->new when IRI contains bad characters." ;
+                        asc:update      "Fix RDF::Trine::Parser::RDFXML to UTF-8 encode strings before calling into the SAX parser (related to github pull request #82)." ;
+                        asc:update      "Fixed typo in exception throwing in RDF::Trine::Parser::TriG." ;
+                        asc:update      "Fixed mistaken use of 'otherwise' exception handler in turtle_tokenize.pl." ;
+                        asc:update      "Improved error handling in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Implemented streaming version of RDF::Trine::Parser::RDFXML->parse_file using parse_file from XML::SAX." ;
+                        asc:update      "Removed use of given/when statements to make perl 5.18 happy." ;
+                        asc:update      "Silence tracing code in RDF::Trine::Store::Hexastore." ;
+                        asc:update      "Added TryCatch to list of required modules." ;
+                        asc:update      "Changed key names and layout of nodemap data in Redis store." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.004.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.003.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.004" ;
+                        doap:created      "2012-03-02" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added get_graphs as an alias for get_contexts in RDF::Trine::Model and RDF:Trine::Model::Dataset." ;
+        				asc:addition    "Added turtle command line tools turtle_parse.pl, turtle_benchmark.pl, and turtle_tokenize.pl." ;
+                        asc:update      "Changed RT:spog:* keys to be a hash with node ID data for each quad position in Redis store." ;
+                        asc:update      "Treat data passed into parsers as characters (github pull request #82 from Tony Cook)." ;
+                        asc:update      "Improve the error message when trying to parse an empty RDF/XML string (Kjetil Kjernsmo)." ;
+                        asc:update      "Test to see if DBD::Pg is installed in test suite (github pull request #78 from Kjetil Kjernsmo)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.003.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.002.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.003" ;
+                        doap:created      "2012-12-22" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added prefix_for and abbreviate methods to RDF::Trine::NamespaceMap (patch from Dorian Taylor)" ;
+                        asc:update      "Fixes to code that depended on hash key ordering." ;
+                        asc:update      "Require Scalar::Util 1.24." ;
+                        asc:update      "Fixed test of error conditions in RDF::Trine::Parser->parse_url_into_model." ;
+                        asc:update      "Fixed bug in RDF::Trine::Parser::RDFXML that caused fatal errors on malformed input instead of throwing RDF::Trine::Error exceptions." ;
+                        asc:update      "Re-added RDF::Trine::Parser::Turtle->parse_node method." ;
+                        asc:update      "Fixed RDF::Trine::Parser::Turtle::Lexer->check_for_bom to handle zero-length input." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.002.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.002" ;
+                        doap:created      "2012-10-20" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Require Scalar::Util version 1.23." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.001.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.000.tar.gz> ;

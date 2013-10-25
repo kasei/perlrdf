@@ -7,7 +7,7 @@ RDF::Query::Algebra::Service - Algebra class for SERVICE (federation) patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Service version 2.908.
+This document describes RDF::Query::Algebra::Service version 2.910.
 
 =cut
 
@@ -32,7 +32,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 our ($VERSION, $BLOOM_FILTER_ERROR_RATE);
 BEGIN {
 	$BLOOM_FILTER_ERROR_RATE	= 0.1;
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

@@ -7,7 +7,7 @@ RDF::Query::Plan::Limit - Executable query plan for Limits.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Limit version 2.908.
+This document describes RDF::Query::Plan::Limit version 2.910.
 
 =head1 METHODS
 
@@ -28,7 +28,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

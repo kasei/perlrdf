@@ -23,13 +23,16 @@ my $algebra	= 0;
 my $plan	= 0;
 my $explain	= 0;
 my $spin	= 0;
+my $canon	= 0;
 my $endpoint;
-while ($ARGV[0] =~ /^-([EapPsS])$/) {
+while ($ARGV[0] =~ /^-([cEapPsS])$/) {
 	$algebra	= 1 if ($1 eq 'a');
 	$plan		= 1 if ($1 eq 'p');
 	$explain	= 1 if ($1 eq 'P');
 	$sparql		= 1 if ($1 eq 's');
 	$spin		= 1 if ($1 eq 'S');
+
+	$canon		= 1 if ($1 eq 'c');
 	shift(@ARGV);
 	
 	if ($1 eq 'E') {
@@ -42,7 +45,7 @@ unshift(@ARGV, '-w');
 my $query;
 try {
 	local($Error::Debug)	= 1;
-	$query	= &RDF::Query::Util::cli_make_query or die RDF::Query->error;
+	$query	= &RDF::Query::Util::cli_make_query( $canon ? (canonicalize => 1) : () ) or die RDF::Query->error;
 } catch RDF::Query::Error with {
 	my $e	= shift;
 	warn $e->stacktrace;

@@ -51,6 +51,7 @@ SKIP: {
 			my $url	= 'file://' . $file;
 			$parser->parse_into_model( $url, $data, $model );
 			my $got	= $serializer->serialize_model_to_string($model);
+			foreach ($got, $expect) { s/[\r\n]+/\n/g }
 			is( $got, $expect, "parse_into_model: $name" );
 		}
 		
@@ -60,6 +61,7 @@ SKIP: {
 			my $model	= RDF::Trine::Model->temporary_model;
 			$parser->parse_file_into_model( $url, $file, $model );
 			my $got	= $serializer->serialize_model_to_string($model);
+			foreach ($got, $expect) { s/[\r\n]+/\n/g }
 			is( $got, $expect, "parse_file_into_model: $name" );
 		}
 		

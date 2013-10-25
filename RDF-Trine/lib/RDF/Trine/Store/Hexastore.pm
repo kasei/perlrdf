@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 1.001
+This document describes RDF::Trine::Store::Hexastore version 1.007
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.007";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -452,12 +452,12 @@ sub get_pattern {
 				} elsif ($i1current->{ $shrkey }->compare( $i2current->{ $shrkey } ) == -1) {
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i1current	= $i1->next;
 				} else { # ($i1current->{ $shrkey } > $i2current->{ $shrkey })
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i2current	= $i2->next;
 				}
 			}

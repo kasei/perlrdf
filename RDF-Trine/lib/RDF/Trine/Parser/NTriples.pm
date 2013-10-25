@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 1.001
+This document describes RDF::Trine::Parser::NTriples version 1.007
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.007';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -78,7 +78,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>.
+Parses the bytes in C<< $data >>.
 For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
@@ -236,11 +236,11 @@ sub _eat_node {
 						$value	.= "\\";
 						substr($_[0],0,2)	= '';
 					} elsif ($1 eq 'u') {
-						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\u([0-9A-Fa-f]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,6)	= '';
 					} elsif ($1 eq 'U') {
-						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\U([0-9A-Fa-f]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,10)	= '';
 					} else {

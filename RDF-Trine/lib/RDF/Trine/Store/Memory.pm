@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 1.001
+This document describes RDF::Trine::Store::Memory version 1.007
 
 =head1 SYNOPSIS
 
@@ -23,6 +23,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
+use Encode;
 use Set::Scalar;
 use Data::Dumper;
 use Digest::SHA;
@@ -38,7 +39,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.007";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -228,7 +229,7 @@ sub _get_statements_triple {
 	my $match_set	= Set::Scalar->new( 0 .. $#{ $self->{statements} } );
 	if ($bound) {
 # 		warn "getting $bound-bound statements";
-		my @pos		= keys %bound;
+		my @pos		= sort { $a <=> $b } keys %bound;
 		my @names	= @pos_names[ @pos ];
 # 		warn "\tbound nodes are: " . join(', ', @names) . "\n";
 		
@@ -260,9 +261,11 @@ sub _get_statements_triple {
 	
 	my $open	= 1;
 	my %seen;
+	
+	my @members	= sort { $a <=> $b } $match_set->members;
 	my $sub	= sub {
 		while (1) {
-			my $e = $match_set->each();
+			my $e = shift(@members);
 			unless (defined($e)) {
 				$open	= 0;
 				return;
@@ -415,7 +418,7 @@ sub add_statement {
 	if ($count == 0) {
 		$self->{size}++;
 		my $id	= scalar(@{ $self->{ statements } });
-		$self->{hash}->add('+' . $st->as_string);
+		$self->{hash}->add('+' . encode_utf8($st->as_string));
 		push( @{ $self->{ statements } }, $st );
 		foreach my $pos (0 .. $#pos_names) {
 			my $name	= $pos_names[ $pos ];
@@ -472,7 +475,7 @@ sub remove_statement {
 		$self->{size}--;
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
-		$self->{hash}->add('-' . $st->as_string);
+		$self->{hash}->add('-' . encode_utf8($st->as_string));
 		$self->{statements}[ $id ]	= undef;
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];

@@ -68,6 +68,97 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.007 (2013-07-18)
+
+     * BUG FIXES
+         	Update Turtle lexer to look for whitespace (instead of a word break) after 'a' when looking for the A token.
+         	Work around a XML::Namespace bug in RDF::Trine::Namespace->uri.
+         	Fixed xt/pod-coverage.t to avoid checking modules which fail to load.
+     * NEW FEATURES
+         	Added initial implementation of TriG serializer.
+         	Added implementation of the RDF Patch exporter and serializer, and ability to serialize model changes in RDF Patch format.
+     * ENHANCEMENTS
+         	Added ability to configure the LWP::UserAgent used through the RDF::Trine framework.
+         	Updated Turtle and TriG parsers and test suites to track W3C standardization work.
+         	Update bin/turtle_parse.pl to output N-Quads when the input format contains quads.
+         	Update RDF::Trine::Parser->parse_url_into_model to accept a base argument.
+         	Allow lowercase hex codepoint values in N-Triples escapes in RDF::Trine::Parser::NTriples.
+     * OTHER
+         	Use the :encoding(UTF-8) IO layer where previously just :utf8 was used.
+         	s/exists/defined/ in RDF::Trine::Parser->parse_url_into_model.
+         	Update the characters that may be used in blank node identifiers in RDF::Trine::Node::Blank->new.
+         	Added POD for RDF::Trine::Statement::Quad->graph (alias for ->context).
+         	Updated RDF::Trine::Store::Memory to generate SHA digests (for ETag use) based on bytes, not unicode strings.
+         	Add RDF::Trine::Statement::Quad->graph as an alias for RDF::Trine::Statement::Quad->context.
+         	Updated t/serializer-trig.t to load RDF::Trine before any sub-modules.
+         	Added Test::Compile developer test xt/00_compile.t.
+
+  Version 1.006 (2013-07-01)
+
+     * API CHANGES
+         Punycode URIs are now left as-is (without decoding) in RDF::Trine::Node::Resource->new.
+     * BUG FIXES
+         Fix handling of IRIs with codepoints > 127 in RDF::Trine::Node::Resource (GitHub issue #85).
+         Remove empty-string default in SQL schema of RDF::Trine::Store::DBI::mysql and update code to compensate.
+         Remove bad calls to encode_utf8 in sse and as_ntriples methods of RDF::Trine::Node::Resource.
+     * NEW FEATURES
+         Split RDF::Trine::Iterator->from_string into from_string and from_bytes.
+     * ENHANCEMENTS
+         Normalize IRI values before serialization in RDF::Trine::Node::Resource->as_ntriples and RDF::Trine::Node::Resource->compare.
+     * OTHER
+         Update RDF::Trine::Serializer::NTriples::Canonical to use $node->as_ntriples instead of $node->sse.
+         Add documentation noting that punycode will be decoded as a part of N-Triples serialization.
+         Change use of utf8::all to utf8 in t/node.t.
+         Mark TryCatch as a build_requires instead of a requires module in Makefile.PL.
+
+  Version 1.005 (2013-05-27)
+
+     * API CHANGES
+         Throw exception in RDF::Trine::Node::Resource->new when IRI contains bad characters.
+     * BUG FIXES
+         Fix RDF::Trine::Parser::RDFXML to UTF-8 encode strings before calling into the SAX parser (related to github pull request #82).
+         Fixed typo in exception throwing in RDF::Trine::Parser::TriG.
+         Fixed mistaken use of 'otherwise' exception handler in turtle_tokenize.pl.
+     * ENHANCEMENTS
+         Updated Turtle parser to support the Turtle 2013 draft syntax.
+         Improved error handling in RDF::Trine::Parser->parse_url_into_model.
+         Implemented streaming version of RDF::Trine::Parser::RDFXML->parse_file using parse_file from XML::SAX.
+     * OTHER
+         Removed use of given/when statements to make perl 5.18 happy.
+         Silence tracing code in RDF::Trine::Store::Hexastore.
+         Added TryCatch to list of required modules.
+         Changed key names and layout of nodemap data in Redis store.
+
+  Version 1.004 (2013-03-02)
+
+     * API CHANGES
+         Changed RT:spog:* keys to be a hash with node ID data for each quad position in Redis store.
+     * ENHANCEMENTS
+         Treat data passed into parsers as characters (github pull request #82 from Tony Cook).
+         Improve the error message when trying to parse an empty RDF/XML string (Kjetil Kjernsmo).
+         Added get_graphs as an alias for get_contexts in RDF::Trine::Model and RDF:Trine::Model::Dataset.
+     * OTHER
+         Test to see if DBD::Pg is installed in test suite (github pull request #78 from Kjetil Kjernsmo).
+         Added turtle command line tools turtle_parse.pl, turtle_benchmark.pl, and turtle_tokenize.pl.
+
+  Version 1.003 (2012-12-22)
+
+     * BUG FIXES
+         Fixes to code that depended on hash key ordering.
+         Fixed test of error conditions in RDF::Trine::Parser->parse_url_into_model.
+         Fixed bug in RDF::Trine::Parser::RDFXML that caused fatal errors on malformed input instead of throwing RDF::Trine::Error exceptions.
+         Fixed RDF::Trine::Parser::Turtle::Lexer->check_for_bom to handle zero-length input.
+     * NEW FEATURES
+         Added prefix_for and abbreviate methods to RDF::Trine::NamespaceMap (patch from Dorian Taylor)
+     * OTHER
+         Require Scalar::Util 1.24.
+         Re-added RDF::Trine::Parser::Turtle->parse_node method.
+
+  Version 1.002 (2012-10-20)
+
+     * OTHER
+         Require Scalar::Util version 1.23.
+
   Version 1.001 (2012-10-05)
 
      * BUG FIXES

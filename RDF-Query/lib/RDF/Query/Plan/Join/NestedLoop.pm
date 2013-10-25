@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::NestedLoop - Executable query plan for nested loop joins
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::NestedLoop version 2.908.
+This document describes RDF::Query::Plan::Join::NestedLoop version 2.910.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::NestedLoop' }++;
 }
 

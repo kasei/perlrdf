@@ -7,7 +7,7 @@ RDF::Query::Plan::SubSelect - Executable query plan for sub-select queries.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::SubSelect version 2.908.
+This document describes RDF::Query::Plan::SubSelect version 2.910.
 
 =head1 METHODS
 
@@ -37,7 +37,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.908';
+	$VERSION		= '2.910';
 }
 
 ######################################################################
@@ -125,7 +125,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open SERVICE";
 	}
 	my $plan			= $self->plan;
-	$plan->close();
+	if (defined($plan)) {
+		$plan->close();
+	}
 	delete $self->[0]{iter};
 	delete $self->[0]{args};
 	delete $self->[0]{count};

@@ -1,0 +1,70 @@
+#!/usr/bin/env perl
+
+use utf8;
+use strict;
+use warnings;
+
+use RDF::Trine qw(iri blank literal);
+use RDF::Trine::Parser;
+use RDF::Trine::Parser::LineProtocol;
+use RDF::Trine::Error qw(:try);
+
+if (scalar(@ARGV) and $ARGV[0] =~ /-h/) {
+	die usage();
+}
+
+my $cli	= RDF::Trine::Parser::LineProtocol->new();
+my $model	= RDF::Trine::Model->new();
+
+my $out	= \*STDOUT;
+
+print $out "# RDF::Trine-${RDF::Trine::VERSION}\n";
+try {
+	while (defined(my $line = <>)) {
+		$cli->execute_line( $line, $model, $out );
+	}
+} catch RDF::Trine::Error with {
+	my $e	= shift;
+	warn $e->stacktrace;
+};
+
+### pod & usage in one
+sub usage {
+    my $usage .= << '=cut';
+=pod
+
+=head1 NAME
+
+    cliapi - a simple command line interface to an in-memory RDF quad store using the RDF Line Protocol
+
+=head1 DESCRIPTION
+
+    cliapi is a simple program which maintains an in-memory RDF quad store and allows inserting,
+    deleting, and querying data using the RDF Line Protocol format.
+
+=head1 SYNOPSIS
+
+    cliapi
+    ptar -h
+    ptar --help
+
+=head1 OPTIONS
+
+    h   Prints this help message
+
+=head1 SEE ALSO
+
+    L<RDF::Trine::Parser::LineProtocol>.
+
+=cut
+
+    ### strip the pod directives
+    $usage =~ s/=pod\n//g;
+    $usage =~ s/=head1 //g;
+
+    ### add some newlines
+    $usage .= $/.$/;
+
+    return $usage;
+}
+

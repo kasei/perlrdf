@@ -4,7 +4,7 @@ RDF::Trine::Store::Redis - RDF Store for Redis
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redis version 1.001
+This document describes RDF::Trine::Store::Redis version 1.007
 
 =head1 SYNOPSIS
 
@@ -28,7 +28,9 @@ use Redis;
 use Cache::LRU;
 use URI::Escape;
 use Data::Dumper;
+use Digest::MD5 qw(md5_base64);
 use List::Util qw(first);
+use List::MoreUtils qw(zip);
 use Scalar::Util qw(refaddr reftype blessed);
 use HTTP::Request::Common ();
 use JSON;
@@ -42,7 +44,7 @@ our $CACHING	= 1;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.007";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -153,25 +155,17 @@ sub _id_node {
 	my @id		= @_;
 	my $r		= $self->conn;
 	my $p		= RDF::Trine::Parser::NTriples->new();
-	my @valkey	= map {"RT:node.value.$_"} @id;
-	my @str;
-	if ($CACHING) {
-		@str		= map { $self->cache->get($_) } @valkey;
-	}
 	
-	my @not_set_indexes	= map { defined($str[$_]) ? () : $_ } (0 .. $#id);
-	if (@not_set_indexes) {
-		my @keys	= @valkey[ @not_set_indexes ];
-		my @values	= $r->mget( @keys );
-		@str[ @not_set_indexes ]	= @values;
-		if ($CACHING) {
-			foreach my $i (@not_set_indexes) {
-				$self->cache->set( $valkey[$i], $str[$i] );
-			}
-		}
+	my @nodes;
+	foreach my $id (@id) {
+		my $bucket	= int($id / 1000);
+		my $hid		= $id % 1000;
+		my $key		= "R:n.v:$bucket";
+		my $nt		= $r->hget($key, $hid);
+		my $node	= $p->parse_node( $nt );
+		push(@nodes, $node);
 	}
-	my @node	= map { defined($_) ? $p->parse_node( $_ ) : do { Carp::cluck; undef } } @str;	# @@
-	return @node;
+	return @nodes;
 }
 
 sub _get_node_id {
@@ -180,24 +174,14 @@ sub _get_node_id {
 	my $r		= $self->conn;
 	my $s		= RDF::Trine::Serializer::NTriples->new();
 	my @str		= map { $s->serialize_node( $_ ) } @node;
-	my @idkey	= map { "RT:node.id.$_" } @str;
-	my @id;
-	if ($CACHING) {
-		@id			= map { $self->cache->get($_) } @idkey;
+	my @ids;
+	foreach my $nt (@str) {
+		my $md5		= md5_base64($nt);
+		my $key		= "R:n.i:$md5";
+		my $id		= $r->get($key);
+		push(@ids, $id);
 	}
-	
-	my @not_set_indexes	= map { defined($id[$_]) ? () : $_ } (0 .. $#node);
-	if (@not_set_indexes) {
-		my @keys	= @idkey[ @not_set_indexes ];
-		my @values	= $r->mget( @keys );
-		@id[ @not_set_indexes ]	= @values;
-		if ($CACHING) {
-			foreach my $i (@not_set_indexes) {
-				$self->cache->set( $idkey[$i], $id[$i] );
-			}
-		}
-	}
-	return wantarray ? @id : $id[0];
+	return wantarray ? @ids : $ids[0];
 }
 
 sub _get_or_set_node_id {
@@ -205,24 +189,23 @@ sub _get_or_set_node_id {
 	my $node	= shift;
 	my $r		= $self->conn;
 	my $s		= RDF::Trine::Serializer::NTriples->new();
-	my $str		= $s->serialize_node( $node );
-	my $idkey	= "RT:node.id.$str";
-	my $id;
-	if ($CACHING) {
-		$id			= $self->cache->get($idkey);
-	}
-	unless (defined($id)) {
-		$id		= $r->get( $idkey );
-		if ($CACHING) {
-			$self->cache->set( $idkey, $id );
-		}
-	}
+	my $nt		= $s->serialize_node( $node );
+	
+	my $md5		= md5_base64($nt);
+	my $idkey	= "R:n.i:$md5";
+	my $id		= $r->get( $idkey );
 	return $id if (defined($id));
 	
-	$id			= $r->incr( 'node.next' );
-	my $valkey	= "RT:node.value.$id";
-	$r->set( $idkey, $id );
-	$r->set( $valkey, $str );
+	$id			= $r->incr( 'RT:node.next' );
+	
+	$r->set($idkey, $id);
+	
+	my $bucket	= int($id / 1000);
+	my $hid		= $id % 1000;
+	
+	my $valkey	= "R:n.v:$bucket";
+	$r->hset( $valkey, $hid, $nt );
+	
 	return $id;
 }
 
@@ -253,7 +236,8 @@ sub add_statement {
 		@nodes		= map { defined($_) ? $_ : RDF::Trine::Node::Nil->new } @nodes[0..3];
 		my @ids		= map { $self->_get_or_set_node_id($_) } @nodes;
 		my $key		= join(':', @ids);
-		$r->set( "RT:spog:$key", 1 );
+		my @keys	= qw(s p o g);
+		$r->hmset( "RT:spog:$key", zip @keys, @ids );
 		$r->sadd( "RT:sset:$ids[0]", $key );
 		$r->sadd( "RT:pset:$ids[1]", $key );
 		$r->sadd( "RT:oset:$ids[2]", $key );
@@ -587,11 +571,11 @@ Permanently removes the store and its data.
 sub nuke {
 	my $self	= shift;
 	my $r		= $self->conn;
-	$r->del('node.next');
-	foreach my $k ($r->keys('RT:node.id.*')) {
+	$r->del('RT:node.next');
+	foreach my $k ($r->keys('R:n.i:*')) {
 		$r->del($k);
 	}
-	foreach my $k ($r->keys('RT:node.value.*')) {
+	foreach my $k ($r->keys('R:n.v:*')) {
 		$r->del($k);
 	}
 	foreach my $k ($r->keys('RT:spog:*')) {
