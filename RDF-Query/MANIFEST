@@ -85,6 +85,7 @@ lib/RDF/Query/Algebra/Sequence.pm
 lib/RDF/Query/Algebra/Service.pm
 lib/RDF/Query/Algebra/Sort.pm
 lib/RDF/Query/Algebra/SubSelect.pm
+lib/RDF/Query/Algebra/Table.pm
 lib/RDF/Query/Algebra/TimeGraph.pm
 lib/RDF/Query/Algebra/Triple.pm
 lib/RDF/Query/Algebra/Union.pm
@@ -185,6 +186,7 @@ t/protocol-serialization.t
 t/queryform-ask.t
 t/queryform-construct.t
 t/queryform-describe.t
+t/rdql.t
 t/resultforms.t
 t/serialize.t
 t/sha1.js
