@@ -50,6 +50,7 @@ my $mech = Test::WWW::Mechanize::PSGI->new(
 	is( $mech->ct, 'text/html', 'main page text/html' );
 	$mech->content_lacks('xmlns:http://www.w3.org/1999/02/22-rdf-syntax-ns#="rdf"', 'No broken NS declaration');
 	$mech->content_contains('xmlns:sd="http://www.w3.org/ns/sparql-service-description#"', 'Correct service description NS declaration');
+	like($mech->response->header('Server'), qr|RDF::Endpoint/$RDF::Endpoint::VERSION|, 'Server header is there' );
 }
 
 {
