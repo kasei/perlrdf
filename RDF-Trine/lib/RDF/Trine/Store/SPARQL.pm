@@ -78,7 +78,7 @@ The URL of the remote endpoint.
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-	my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
+	my $u		= RDF::Trine->default_useragent->clone;
 	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
 	
 	my $self	= bless({

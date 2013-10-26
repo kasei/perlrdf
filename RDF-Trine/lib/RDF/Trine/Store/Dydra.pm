@@ -90,7 +90,7 @@ sub new {
 	my $user	= shift;
 	my $repo	= shift;
 	my $token	= shift;
-	my $ua = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
+	my $ua		= RDF::Trine->default_useragent->clone;
 	my $accept	= join(',',
 					"application/sparql-results+json",
 					"application/rdf+xml;q=0.5",

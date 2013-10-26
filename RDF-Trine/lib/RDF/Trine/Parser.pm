@@ -61,7 +61,6 @@ BEGIN {
 }
 
 use Scalar::Util qw(blessed);
-use LWP::UserAgent;
 
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::NTriples;
@@ -101,6 +100,7 @@ sub media_types {
 =item C<< parser_by_media_type ( $media_type ) >>
 
 Returns the parser class appropriate for parsing content of the specified media type.
+Returns undef if not appropriate parser is found.
 
 =cut
 
@@ -114,6 +114,7 @@ sub parser_by_media_type {
 =item C<< guess_parser_by_filename ( $filename ) >>
 
 Returns the best-guess parser class to parse a file with the given filename.
+Defaults to L<RDF::Trine::Parser::RDFXML> if not appropriate parser is found.
 
 =cut
 
@@ -168,6 +169,12 @@ that callback function will be called after a successful response as:
 
  $content_cb->( $url, $content, $http_response_object )
 
+If C<< %args >> contains a C<< 'useragent' >> key with a LWP::UserAgent object value,
+that object is used to retrieve the requested URL without any configuration (such as
+setting the Accept: header) which would ordinarily take place. Otherwise, the default
+user agent (L<RDF::Trine/default_useragent>) is cloned and configured to retrieve
+content that will be acceptable to any available parser.
+
 =cut
 
 sub parse_url_into_model {
@@ -181,11 +188,14 @@ sub parse_url_into_model {
 		$base	= $args{base};
 	}
 	
-	my $ua		= LWP::UserAgent->new( agent => "RDF::Trine/$RDF::Trine::VERSION" );
-	
-	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
-	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
-	$ua->default_headers->push_header( 'Accept' => $accept );
+	my $ua;
+	if (defined($args{useragent})) {
+		$ua	= $args{useragent};
+	} else {
+		$ua		= RDF::Trine->default_useragent->clone;
+		my $accept	= $class->default_accept_header;
+		$ua->default_headers->push_header( 'Accept' => $accept );
+	}
 	
 	my $resp	= $ua->get( $url );
 	if ($url =~ /^file:/) {
@@ -281,7 +291,7 @@ sub parse_url_into_model {
 	return 1 if ($ok);
 	
 	if ($pclass) {
-		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type";
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type from $url";
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
 	}
@@ -420,6 +430,21 @@ sub new_bnode_prefix {
 	}
 }
 
+=item C<< default_accept_header >>
+
+Returns the default HTTP Accept header value used in requesting RDF content (e.g. in
+L</parse_url_into_model>) that may be parsed by one of the available RDF::Trine::Parser
+subclasses.
+
+By default, RDF/XML and Turtle are preferred over other media types.
+
+=cut
+
+sub default_accept_header {
+	# prefer RDF/XML or Turtle, then anything else that we've got a parser for.
+	my $accept	= join(',', map { /(turtle|rdf[+]xml)/ ? "$_;q=1.0" : "$_;q=0.9" } keys %media_types);
+	return $accept;
+}
 
 1;
 
