@@ -202,6 +202,11 @@ sub run {
 	
 	my $content;
 	my $response	= Plack::Response->new;
+
+	my $server = "RDF::Endpoint/$VERSION";
+	$server .= " " . $response->headers->header('Server') if ($response->headers->header('Server'));
+	$response->headers->header('Server' => $server);
+
 	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
