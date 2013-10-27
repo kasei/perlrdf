@@ -204,7 +204,7 @@ sub run {
 	my $response	= Plack::Response->new;
 
 	my $server = "RDF::Endpoint/$VERSION";
-	$server .= " " . $response->headers->header('Server') if ($response->headers->header('Server'));
+	$server .= " " . $response->headers->header('Server') if defined($response->headers->header('Server'));
 	$response->headers->header('Server' => $server);
 
 	unless ($req->path eq $endpoint_path) {
