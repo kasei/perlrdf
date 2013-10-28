@@ -79,12 +79,17 @@ sub new {
 	my $class	= shift;
 	my $url		= shift;
 	my $u		= RDF::Trine->default_useragent->clone;
-	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
-	
+	$u->default_headers->push_header
+        ('Accept' => join(', ', qw(application/sparql-results+xml;q=0.9
+                                   application/rdf+xml;q=0.5
+                                   text/turtle;q=0.7
+                                   text/xml)));
+
 	my $self	= bless({
 		ua		=> $u,
 		url		=> $url,
 	}, $class);
+
 	return $self;
 }
 
@@ -542,7 +547,7 @@ sub _get_post_iterator {
 # 	warn $sparql;
 	
 	my $url			= $self->{url};
-	my $response	= $ua->post( $url, query => $sparql );
+	my $response	= $ua->post( $url, { query => $sparql } );
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
 		return $handler->iterator;

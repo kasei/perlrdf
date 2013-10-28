@@ -66,7 +66,6 @@ lib/RDF/Trine/Serializer/NTriples/Canonical.pm
 lib/RDF/Trine/Serializer/RDFJSON.pm
 lib/RDF/Trine/Serializer/RDFPatch.pm
 lib/RDF/Trine/Serializer/RDFXML.pm
-lib/RDF/Trine/Serializer/TriG.pm
 lib/RDF/Trine/Serializer/TSV.pm
 lib/RDF/Trine/Serializer/Turtle.pm
 lib/RDF/Trine/Statement.pm
@@ -76,6 +75,13 @@ lib/RDF/Trine/Store/DBI.pm
 lib/RDF/Trine/Store/DBI/mysql.pm
 lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
+lib/RDF/Trine/Store/DBIC.pm
+lib/RDF/Trine/Store/DBIC/Schema.pm
+lib/RDF/Trine/Store/DBIC/Schema/BNode.pm
+lib/RDF/Trine/Store/DBIC/Schema/Literal.pm
+lib/RDF/Trine/Store/DBIC/Schema/Model.pm
+lib/RDF/Trine/Store/DBIC/Schema/Resource.pm
+lib/RDF/Trine/Store/DBIC/Schema/Statement.pm
 lib/RDF/Trine/Store/Dydra.pm
 lib/RDF/Trine/Store/Hexastore.pm
 lib/RDF/Trine/Store/Memory.pm
@@ -86,9 +92,11 @@ lib/RDF/Trine/VariableBindings.pm
 lib/Test/RDF/Trine/Store.pm
 Makefile.PL
 MANIFEST			This list of files
+MANIFEST.bak
 META.yml
+MYMETA.json
+MYMETA.yml
 README
-SIGNATURE
 t/00.load.t
 t/data/bugs/ttl-with-bom.ttl
 t/data/rdfa/test-sd.nt
@@ -1351,6 +1359,7 @@ t/store-context.t
 t/store-dbi-mysql.t
 t/store-dbi-pg.t
 t/store-dbi.t
+t/store-dbic.t
 t/store-hexastore-pattern.t
 t/store-hexastore-storable.t
 t/store-hexastore-triplestore.t

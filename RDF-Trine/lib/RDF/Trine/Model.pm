@@ -513,6 +513,12 @@ sub get_statements {
 		my $n	= $_[$i];
 		next unless defined($n);	# undef is OK
 		next if (blessed($n) and $n->isa('RDF::Trine::Node'));	# node objects are OK
+
+        next if (ref $n eq 'ARRAY' and
+                     scalar(grep {
+                         blessed($_) and $_->isa('RDF::Trine::Node')
+                     } @$n) == scalar(@$n)); # arrayref of nodes is OK
+
 		my $pos	= $pos[$i];
 		local($Data::Dumper::Indent)	= 0;
 		my $ser	= Data::Dumper->Dump([$n], [$pos]);
@@ -822,6 +828,9 @@ be undef to signify a wildcard.
 
 sub subjects {
 	my $self	= shift;
+    if ($self->_store->can('_subjects')) {
+        return $self->_store->_subjects(@_);
+    }
 	my $pred	= shift;
 	my $obj		= shift;
 	my $graph	= shift;
@@ -849,6 +858,10 @@ be undef to signify a wildcard.
 
 sub predicates {
 	my $self	= shift;
+    if ($self->_store->can('_predicates')) {
+        return $self->_store->_predicates(@_);
+    }
+
 	my $subj	= shift;
 	my $obj		= shift;
 	my $graph	= shift;
@@ -881,6 +894,11 @@ specific language or datatype value, respectively.
 
 sub objects {
 	my $self	= shift;
+
+    if ($self->_store->can('_objects')) {
+        return $self->_store->_objects(@_);
+    }
+
 	my $subj	= shift;
 	my $pred	= shift;
 	my ($graph, %options)	= (@_ % 2 == 0) ? (undef, @_) : @_;

@@ -1,4 +1,4 @@
-use Test::More tests => 19;
+use Test::More tests => 21;
 
 use strict;
 use RDF::Trine;
@@ -56,6 +56,9 @@ is($map->abbreviate($map->foaf('Person')), 'foaf:Person', 'abbrev with prefix');
 is($map->abbreviate($map->uri(':foo')), ':foo', 'abbrev no prefix ');
 
 is($map->abbreviate('http://derp.net/foobar'), undef, 'abbrev no match');
+
+ok($map->list_prefixes, 'map contains prefixes');
+ok($map->list_namespaces, 'map contains namespaces');
 
 {
 	my $rdf	= <<'END';

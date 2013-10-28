@@ -89,6 +89,7 @@ BEGIN {
 	}
 	can_load( modules => {
 		'RDF::Trine::Store::DBI'	=> undef,
+		'RDF::Trine::Store::DBIC'	=> undef,
 	} );
 }
 

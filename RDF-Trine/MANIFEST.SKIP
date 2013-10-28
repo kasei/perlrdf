@@ -1,8 +1,9 @@
-inc/.author
-MANIFEST.SKIP
-Makefile
-.DS_Store
-.svn
-.cvsignore
-.prove
-.proverc
+inc/\.author
+MANIFEST\.SKIP
+Makefile$
+\.DS_Store
+\.svn
+\.cvsignore
+\.prove
+\.proverc
+RDF-Trine-.*
