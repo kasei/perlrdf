@@ -69,14 +69,23 @@ sub new {
 	my %args	= @_;
 	my $self = bless( { namespaces => { 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf' } }, $class);
 	if (my $ns = $args{namespaces}) {
-		my %ns		= %{ $ns };
 		my %nsmap;
-		while (my ($ns, $uri) = each(%ns)) {
-			for (1..2) {
-				$uri	= $uri->uri_value if (blessed($uri));
-			}
-			$nsmap{ $uri }	= $ns;
-		}
+        if (blessed($ns) and $ns->isa('RDF::Trine::NamespaceMap')) {
+            for my $prefix ($ns->list_prefixes) {
+                # way convoluted
+                my $nsuri = $ns->namespace_uri($prefix)->uri->value;
+                $nsmap{$nsuri} = $prefix;
+            }
+        }
+        else {
+            my %ns		= %{ $ns };
+            while (my ($ns, $uri) = each(%ns)) {
+                for (1..2) {
+                    $uri	= $uri->uri_value if (blessed($uri));
+                }
+                $nsmap{ $uri }	= $ns;
+            }
+        }
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
