@@ -27,13 +27,14 @@ use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
 use RDF::Query::Node::Variable;
 
-our ($VERSION, @ISA, @EXPORT_OK);
+our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN {
 	$VERSION	= '2.910';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable);
+	%EXPORT_TAGS	= ( 'all' => [qw(iri blank literal variable)] );
 }
 
 =item C<< is_variable >>
