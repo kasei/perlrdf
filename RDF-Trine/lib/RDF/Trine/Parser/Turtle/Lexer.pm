@@ -363,7 +363,7 @@ sub _get_pname {
 	my $self	= shift;
 	my $prefix	= '';
 	
-	if ($self->{buffer} =~ $r_PNAME_LN) {
+	if ($self->{buffer} =~ /^$r_PNAME_LN/) {
 		my $ln	= $self->_read_length($+[0]);
 		my ($ns,$local)	= ($ln =~ /^([^:]*:)(.*)$/);
 		no warnings 'uninitialized';
