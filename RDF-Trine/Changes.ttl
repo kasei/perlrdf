@@ -10,13 +10,37 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.008.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.007.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.008" ;
+                        doap:created      "2013-XX-XX" ;
+                        ];
+        asc:changes     [
+        				asc:addition    "Added RDF::Trine::Parser::RDFPatch." ;
+        				asc:addition    "Added RDF::Trine::Parser::LineProtocol as a RDFPatch parser subclass allowing querying (with bin/cliapi tool)." ;
+                        asc:update      "Fixed bug in Turtle lexer that was failing to anchor matches of PNAME_LN (GH issue #96 by Tobias Kuhn)." ;
+                        asc:update      "Fixed looping bug and handling of N-Triples escape sequences (GH issue #97 by Tobias Kuhn)." ;
+                        asc:update      "Sync RDF::Trine::NamespaceMap up with URI::NamespaceMap's interface (code from Dorian Taylor)." ;
+                        asc:update      "Updated RDF::Trine::Parser::Turtle->new to accept a default namespace 'map' key." ;
+                        asc:update      "Updated RDF::Trine::Model->add_statement to verify that statement nodes are ground (not variables)." ;
+                        asc:update      "Updated RDF::Trine::Parser::Turtle->parse_node to allow accessing the tokenizer object used in parsing." ;
+                        asc:update      "Added RDF::Trine::Parser::Turtle->_term method." ;
+                        asc:update      "Added W3C Turtle Test Suite harness bin/turtle-2013-harness.pl." ;
+                        asc:update      "Added xt/perl-critic.t." ;
+                        asc:update      "Updated parser method documentation to indicate where data is expected to be bytes." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.007.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.006.tar.gz> ;
 
         doap:Version    [
                         doap:revision     "1.007" ;
-                        doap:created      "2012-07-18" ;
+                        doap:created      "2013-07-18" ;
                         ];
         asc:changes     [
         				asc:addition    "Added initial implementation of TriG serializer." ;
@@ -46,7 +70,7 @@
 
         doap:Version    [
                         doap:revision     "1.006" ;
-                        doap:created      "2012-07-01" ;
+                        doap:created      "2013-07-01" ;
                         ];
         asc:changes     [
         				asc:addition    "Split RDF::Trine::Iterator->from_string into from_string and from_bytes." ;
@@ -68,7 +92,7 @@
 
         doap:Version    [
                         doap:revision     "1.005" ;
-                        doap:created      "2012-05-27" ;
+                        doap:created      "2013-05-27" ;
                         ];
         asc:changes     [
         				asc:addition    "Updated Turtle parser to support the Turtle 2013 draft syntax." ;
@@ -91,7 +115,7 @@
 
         doap:Version    [
                         doap:revision     "1.004" ;
-                        doap:created      "2012-03-02" ;
+                        doap:created      "2013-03-02" ;
                         ];
         asc:changes     [
         				asc:addition    "Added get_graphs as an alias for get_contexts in RDF::Trine::Model and RDF:Trine::Model::Dataset." ;

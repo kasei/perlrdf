@@ -68,6 +68,25 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.008 (2013-XX-XX)
+
+     * BUG FIXES
+         	Fixed bug in Turtle lexer that was failing to anchor matches of PNAME_LN (GH issue #96 by Tobias Kuhn).
+         	Fixed looping bug and handling of N-Triples escape sequences (GH issue #97 by Tobias Kuhn).
+     * NEW FEATURES
+         	Added RDF::Trine::Parser::RDFPatch.
+         	Added RDF::Trine::Parser::LineProtocol as a RDFPatch parser subclass allowing querying (with bin/cliapi tool).
+     * ENHANCEMENTS
+         	Sync RDF::Trine::NamespaceMap up with URI::NamespaceMap's interface (code from Dorian Taylor).
+         	Updated RDF::Trine::Parser::Turtle->new to accept a default namespace 'map' key.
+         	Updated RDF::Trine::Model->add_statement to verify that statement nodes are ground (not variables).
+         	Updated RDF::Trine::Parser::Turtle->parse_node to allow accessing the tokenizer object used in parsing.
+         	Added RDF::Trine::Parser::Turtle->_term method.
+     * OTHER
+         	Added W3C Turtle Test Suite harness bin/turtle-2013-harness.pl.
+         	Added xt/perl-critic.t.
+         	Updated parser method documentation to indicate where data is expected to be bytes.
+
   Version 1.007 (2013-07-18)
 
      * BUG FIXES

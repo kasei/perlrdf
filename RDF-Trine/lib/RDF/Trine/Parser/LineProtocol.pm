@@ -7,7 +7,7 @@ RDF::Trine::Parser::LineProtocol - RDF LineProtocol Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::LineProtocol version 1.007
+This document describes RDF::Trine::Parser::LineProtocol version 1.007_01
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use base qw(RDF::Trine::Parser::RDFPatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.007';
+	$VERSION	= '1.007_01';
 }
 
 ######################################################################

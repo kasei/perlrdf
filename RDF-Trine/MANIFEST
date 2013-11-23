@@ -1,3 +1,4 @@
+bin/cliapi
 bin/graph.pl
 bin/rdf_init_store.pl
 bin/rdf_parse_turtle.pl
@@ -47,10 +48,12 @@ lib/RDF/Trine/Node/Nil.pm
 lib/RDF/Trine/Node/Resource.pm
 lib/RDF/Trine/Node/Variable.pm
 lib/RDF/Trine/Parser.pm
+lib/RDF/Trine/Parser/LineProtocol.pm
 lib/RDF/Trine/Parser/NQuads.pm
 lib/RDF/Trine/Parser/NTriples.pm
 lib/RDF/Trine/Parser/RDFa.pm
 lib/RDF/Trine/Parser/RDFJSON.pm
+lib/RDF/Trine/Parser/RDFPatch.pm
 lib/RDF/Trine/Parser/RDFXML.pm
 lib/RDF/Trine/Parser/Redland.pm
 lib/RDF/Trine/Parser/TriG.pm
@@ -1326,6 +1329,7 @@ t/parser-nquads.t
 t/parser-ntriples.t
 t/parser-rdfa.t
 t/parser-rdfjson.t
+t/parser-rdfpatch.t
 t/parser-rdfxml-w3c.t
 t/parser-redland.t
 t/parser-trig.t
@@ -1368,6 +1372,7 @@ xt/data/turtle/test-15.ttl
 xt/data/turtle/test-16.out
 xt/data/turtle/test-16.ttl
 xt/parser-trig-2013.t
+xt/perl-critic.t
 xt/pod-coverage.t
 xt/pod.t
 xt/store-dydra.t
