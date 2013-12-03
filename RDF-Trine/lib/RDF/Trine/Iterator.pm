@@ -35,6 +35,7 @@ use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp);
 use Scalar::Util qw(blessed reftype refaddr);
+use File::Temp qw(tempfile);
 
 use XML::SAX;
 use RDF::Trine::Node;
@@ -195,6 +196,15 @@ sub from_bytes {
 	}
 	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
 	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+
+	if ($p->isa('XML::SAX::PurePerl')) {
+		# Fix what seems like a bug in XML::SAX::PurePerl that doesn't like reading from filehandles that are backed by scalars
+		my ($fh, $filename) = tempfile('trineiteratorXXXXX', UNLINK => 1);
+		print {$fh} do { local($/); <$string> };
+		seek($fh,0,0);
+		$string	= $fh;
+	}
+	
 	$p->parse_file( $string );
 	my $iter	= $handler->iterator;
 	return $iter;
