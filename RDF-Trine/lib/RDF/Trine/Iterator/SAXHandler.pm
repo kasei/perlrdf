@@ -247,6 +247,8 @@ sub end_element {
 			push( @{ $results{ $addr } }, $vb );
 		}
 	} elsif ($tag eq 'bnode') {
+        # guess what! virtuoso uses funny bnodes
+        $string =~ s!nodeID://!!;
 		$values{ $addr }	= RDF::Trine::Node::Blank->new( $string );
 	} elsif ($tag eq 'uri') {
 		$values{ $addr }	= RDF::Trine::Node::Resource->new( $string );

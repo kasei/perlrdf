@@ -24,6 +24,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Store);
 
+use URI;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
@@ -51,10 +52,11 @@ L<RDF::Trine::Store> class.
 
 =over 4
 
-=item C<< new ( $url ) >>
+=item C<< new ( $url [, $realm, $user, $pass ] ) >>
 
-Returns a new storage object that will act as a proxy for the SPARQL endpoint
-accessible via the supplied C<$url>.
+Returns a new storage object that will act as a proxy for the SPARQL
+endpoint accessible via the supplied C<$url>. Optionally, an
+authentication realm, username and password can be supplied.
 
 =item C<new_with_config ( $hashref )>
 
@@ -73,17 +75,69 @@ The URL of the remote endpoint.
 
 =back
 
+And these optional keys:
+
+=over
+
+=item C<context>
+
+The default context for graph queries.
+
+=item C<realm>
+
+The authentication realm of the endpoint.
+
+=item C<user>
+
+The username to authenticate with.
+
+=item C<password>
+
+The password.
+
+=back
+
 =cut
 
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-	my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
-	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
-	
+	my $context	= shift;
+	my $realm	= shift;
+	my $user	= shift;
+	my $pass	= shift;
+	my $u		= RDF::Trine->default_useragent->clone;
+	$u->default_headers->push_header
+		('Accept' => join(', ', qw(application/sparql-results+xml;q=0.9
+								   application/rdf+xml;q=0.5)));
+#								   text/turtle;q=0.5
+#								   text/xml)));
+	# virtuoso endpoint doesn't pay attention to the q-values
+
+    # set up access credentials
+	$url = URI->new($url)->canonical;
+	if (defined $realm && defined $user) {
+		$u->credentials($url->host_port, $realm, $user, $pass);
+	}
+
+	# virtuoso sparql won't work without a default context
+	if (defined $context) {
+		if (blessed $context) {
+			$context = RDF::Trine::Node::Resource->new("$context")
+				if $context->isa('URI');
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Context must be a Node object"
+					unless $context->isa('RDF::Trine::Node');
+		}
+		else {
+			$context = RDF::Trine::Node::Resource->new($context);
+		}
+	}
+
 	my $self	= bless({
 		ua		=> $u,
 		url		=> $url,
+		context => $context,
 	}, $class);
 	return $self;
 }
@@ -110,7 +164,7 @@ sub new_with_config {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	return $class->new( $config->{url} );
+	return $class->new( @{$config}{qw(url context realm user password)} );
 }
 
 sub _config_meta {
@@ -287,7 +341,12 @@ sub add_statement {
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
 	}
-	
+
+	if (defined $context and not
+			(blessed($context) and $context->isa('RDF::Trine::Node'))) {
+		throw RDF::Trine::Error::MethodInvocationError -text => "Invalid context $context passed to add_statement";
+	}
+
 	if ($self->_bulk_ops) {
 		push(@{ $self->{ ops } }, ['_add_statements', $st, $context]);
 	} else {
@@ -303,14 +362,19 @@ sub _add_statements_sparql {
 	my @parts;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
-		my $context	= $op->[1];
-		if ($st->isa('RDF::Trine::Statement::Quad')) {
-			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
-		} else {
-			push(@parts, join(' ', map { $_->as_ntriples } $st->nodes) . ' .');
-		}
+
+		my ($s, $p, $o, $c) = $st->nodes;
+		# quad context supersedes argument context
+		$c ||= $op->[1] || $self->{context};
+		# default context
+
+		my $pat = sprintf '%s %s %s .', map { $_->as_ntriples } ($s, $p, $o);
+		$pat = sprintf 'GRAPH %s { %s }', $c->as_ntriples, $pat if $c;
+
+		push @parts, $pat;
 	}
 	my $sparql	= sprintf( 'INSERT DATA { %s }', join("\n\t", @parts) );
+	#warn $sparql;
 	return $sparql;
 }
 
@@ -520,6 +584,7 @@ sub get_sparql {
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
+        #warn $response->content;
 		$p->parse_string( $response->content );
 		return $handler->iterator;
 	} else {
@@ -535,8 +600,6 @@ sub get_sparql {
 sub _get_post_iterator {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
 	
 # 	warn $sparql;
@@ -544,8 +607,22 @@ sub _get_post_iterator {
 	my $url			= $self->{url};
 	my $response	= $ua->post( $url, query => $sparql );
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		warn $response->content;
+		my $type = lc $response->content_type;
+		if ($type =~ /xml/) {
+			my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+			my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+			$p->parse_string( $response->content );
+			return $handler->iterator;
+		}
+		elsif ($type =~ /turtle/) {
+			#warn $response->content;
+			my $p = RDF::Trine::Parser->new('turtle');
+			my $m = RDF::Trine::Model->temporary_model;
+		}
+		else {
+			warn $response->content;
+		}
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
@@ -569,15 +646,20 @@ sub _begin_bulk_ops {
 sub _end_bulk_ops {
 	my $self			= shift;
 	if (scalar(@{ $self->{ ops } || []})) {
+		#warn scalar @{$self->{ops}};
 		my @ops	= splice(@{ $self->{ ops } });
+		#warn scalar @ops;
 		my @aggops	= $self->_group_bulk_ops( @ops );
 		my @sparql;
+		#warn Dumper(@aggops);
 		foreach my $aggop (@aggops) {
 			my ($type, @ops)	= @$aggop;
+			#warn 'wtf ' . scalar @ops;
 			my $method	= "${type}_sparql";
 			push(@sparql, $self->$method( @ops ));
 		}
 		my $sparql	= join(";\n", @sparql);
+		#warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -588,22 +670,18 @@ sub _group_bulk_ops {
 	my $self	= shift;
 	return unless (scalar(@_));
 	my @ops		= @_;
-	my @bulkops;
-	
-	my $op		= shift(@ops);
-	my $type	= $op->[0];
-	push(@bulkops, [$type, [ @{$op}[1 .. $#{ $op }] ]]);
-	while (scalar(@ops)) {
-		my $op	= shift(@ops);
-		my $type	= $op->[0];
-		if ($op->[0] eq $bulkops[ $#bulkops ][0]) {
-			push( @{ $bulkops[ $#bulkops ][1] }, [ @{$op}[1 .. $#{ $op }] ] );
-		} else {
-			push(@bulkops, [$type, [ @{$op}[1 .. $#{ $op }] ]]);
-		}
+
+	my %agg;
+	for my $op (@ops) {
+		# collate operations with a hash
+		my $x = $agg{$op->[0]} ||= [];
+		# add them as array ref
+		push @$x, [@{$op}[1..$#$op]];
 	}
-	
-	return @bulkops;
+
+	#warn Dumper(\%agg);
+	# unwind the contents
+	return map { [$_ => @{$agg{$_}}] } keys %agg;
 }
 
 1;
