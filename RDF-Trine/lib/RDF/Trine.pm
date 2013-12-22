@@ -34,11 +34,11 @@ This document describes RDF::Trine version 1.001
   # Now print the results
   print "Names of things:\n";
   while (my $st = $iter->next) {
-    my $s = $st->subject;
-    my $name = $st->object;
-    
-    # $s and $name have string overloading, so will print correctly
-    print "The name of $s is $name\n";
+	my $s = $st->subject;
+	my $name = $st->object;
+	
+	# $s and $name have string overloading, so will print correctly
+	print "The name of $s is $name\n";
   }
 
 =head1 DESCRIPTION
@@ -96,7 +96,7 @@ use constant NIL_GRAPH		=> 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
 use Log::Log4perl qw(:easy);
 if (! Log::Log4perl::initialized() ) {
-    Log::Log4perl->easy_init($ERROR);
+	Log::Log4perl->easy_init($ERROR);
 }
 
 use RDF::Trine::Graph;
@@ -198,6 +198,31 @@ sub store {
 	my $config	= shift;
 	return RDF::Trine::Store->new_with_string( $config );
 }
+
+=item C<< default_useragent ( [ $ua ] ) >>
+
+Returns the L<LWP::UserAgent> object used by default for any operation requiring network
+requests. Ordinarily, the calling code will obtain the default user agent, and clone it
+before further configuring it for a specific request, thus leaving the default object
+untouched.
+
+If C<< $ua >> is passed as an argument, sets the global default user agent to this object.
+
+=cut
+
+{ my $_useragent;
+sub default_useragent {
+	my $class	= shift;
+	my $ua		= shift || $_useragent;
+	unless (defined($ua)) {
+		$ua	= LWP::UserAgent->new(
+			agent		=> "RDF::Trine/$RDF::Trine::VERSION",
+			#keep_alive	=> 1, # this is actually meaningless
+		);
+	}
+	$_useragent	= $ua;
+	return $ua;
+}}
 
 1; # Magic true value required at end of module
 __END__

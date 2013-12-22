@@ -28,6 +28,7 @@ use URI;
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
+use List::MoreUtils qw(any);
 use Scalar::Util qw(refaddr reftype blessed);
 
 use RDF::Trine::Error qw(:try);
@@ -107,14 +108,17 @@ sub new {
 	my $user	= shift;
 	my $pass	= shift;
 	my $u		= RDF::Trine->default_useragent->clone;
-	$u->default_headers->push_header
-		('Accept' => join(', ', qw(application/sparql-results+xml;q=0.9
-								   application/rdf+xml;q=0.5)));
-#								   text/turtle;q=0.5
-#								   text/xml)));
-	# virtuoso endpoint doesn't pay attention to the q-values
 
-    # set up access credentials
+	# XXX virtuoso endpoint doesn't pay attention to the q-values
+	#my @accept = qw(application/sparql-results+xml;q=0.9
+	#				application/rdf+xml;q=0.7);
+	my @accept = qw(application/sparql-results+json);
+	$u->default_headers->push_header('Accept' => join(', ', @accept));
+
+	# cloning scrubs this away
+	$u->conn_cache({ total_capacity => 1 });
+
+	# set up access credentials
 	$url = URI->new($url)->canonical;
 	if (defined $realm && defined $user) {
 		$u->credentials($url->host_port, $realm, $user, $pass);
@@ -186,56 +190,92 @@ predicate and objects. Any of the arguments may be undef to match any value.
 
 sub get_statements {
 	my $self	= shift;
-	my @nodes	= @_[0..3];
-	my $bound	= 0;
-	my %bound;
-	
+	my @nodes	= @_;
+
 	my $use_quad	= 0;
-	if (scalar(@_) >= 4) {
-		my $g	= $nodes[3];
-		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
-			$use_quad	= 1;
-			$bound++;
-			$bound{ 3 }	= $g;
-		}
-	}
-	
 	my @var_map	= qw(s p o g);
-	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
 	my @node_map;
+	my %in;
 	foreach my $i (0 .. $#nodes) {
-		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
+		# stop processing
+		last if $i > 3;
+
+		# quad logic
+		$use_quad = 1 if $i == 3;
+
+		if (!defined $nodes[$i]
+				or (blessed($nodes[$i]) and $nodes[$i]->is_variable)) {
 			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
 		}
+		elsif (ref $nodes[$i] eq 'ARRAY') {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "ARRAY ref contents must be non-variable Node objects"
+					if any { !blessed($_) or !$_->isa('RDF::Trine::Node')
+								 or $_->is_variable } @{$nodes[$i]};
+
+			my $len = scalar @{$nodes[$i]};
+			if ($len == 1) {
+				# behave normally
+				$nodes[$i] = $nodes[$i][0] if $len == 1;
+			}
+			else {
+				if ($len != 0) {
+					# populate list for IN operator
+					for my $node (@{$nodes[$i]}) {
+						push @{$in{$var_map[$i]} ||= []}, $node;
+					}
+				}
+
+				# do this either way
+				$nodes[$i] = RDF::Trine::Node::Variable->new( $var_map[ $i ] );
+			}
+		}
+		elsif (blessed($nodes[$i]) and $nodes[$i]->isa('RDF::Trine::Node')) {
+			# noop
+		}
+		else {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Don't know what to do with $nodes[$i]";
+		}
 	}
-	
+
 	my $node_count	= ($use_quad) ? 4 : 3;
-	my $st_class	= ($use_quad) ? 'RDF::Trine::Statement::Quad' : 'RDF::Trine::Statement';
+	my $st_class	= 'RDF::Trine::Statement';
+	$st_class .= '::Quad' if $use_quad;
+
 	my @triple	= @nodes[ 0..2 ];
-	my $iter;
+
+	# create the select list
+	my @vars	= grep { blessed($_) and $_->is_variable } @nodes;
+	my $names	= join ' ', map { '?' . $_->name } @vars;
+	# create the where clause
+	my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+
+	# create the (optional) filter
+	my $filter  = '';
+	if (keys %in) {
+		my @f;
+		for my $k (keys %in) {
+			push @f, sprintf '?%s IN (%s)', $k, join(', ', @{$in{$k}});
+		}
+		$filter = sprintf 'FILTER (%s)', join(' && ', @f);
+	}
+
+	# create the format string
+	my $format	= 'SELECT %s WHERE { %s %s }';
 	if ($use_quad) {
-		my @vars	= grep { $_->is_variable } @nodes;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		my $g		= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
-		$iter	= $self->get_sparql( <<"END" );
-SELECT $names WHERE {
-	GRAPH $g {
-		$nodes
+		my $g	= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
+		# yo dawg i herd u liek formats so we put a format in yo format
+		$format	= sprintf 'SELECT %%s WHERE { GRAPH %s { %%s } %%s }', $g;
 	}
-}
-END
-	} else {
-		my @vars	= grep { $_->is_variable } @triple;
-		my $names	= join(' ', map { '?' . $_->name } @vars);
-		my $nodes	= join(' ', map { ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
-		$iter	= $self->get_sparql( <<"END" );
-SELECT $names WHERE { $nodes }
-END
-	}
+	# create the iterator
+	my $sparql	= sprintf $format, $names, $nodes, $filter;
+	#warn $sparql;
+	my $iter	= $self->get_sparql($sparql);
+
 	my $sub		= sub {
 		my $row	= $iter->next;
-		return unless $row;
+		return unless defined $row;
 		my @triple;
 		foreach my $i (0 .. ($node_count-1)) {
 			if ($nodes[$i]->is_variable) {
@@ -571,6 +611,20 @@ Returns an iterator object of all bindings matching the specified SPARQL query.
 
 =cut
 
+sub _json_literal {
+	RDF::Trine::Node::Literal->new(@{$_[0]}{qw(value lang datatype)});
+}
+my %JSON = (
+	uri   => sub { RDF::Trine::Node::Resource->new($_[0]{value}) },
+	bnode => sub {
+		my $x = $_[0]{value};
+		$x =~ s!nodeID://!!;
+		RDF::Trine::Node::Blank->new($x);
+	},
+	literal		 => \&_json_literal,
+	'typed-literal' => \&_json_literal,
+);
+
 sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
@@ -584,9 +638,41 @@ sub get_sparql {
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
-        #warn $response->content;
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		my $type = lc $response->content_type;
+		if ($type =~ /xml/) {
+			my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+			my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+			$p->parse_string( $response->content );
+			return $handler->iterator;
+		}
+		elsif ($type =~ /json/) {
+			#warn $response->as_string;
+			require JSON;
+			my $js = JSON->new->decode($response->content);
+			#warn Dumper($js);
+			my @names = @{$js->{head}{vars} || []};
+			my @b = @{$js->{results}{bindings} || []};
+			return RDF::Trine::Iterator::Bindings->new(
+				sub {
+					return unless my $x = shift @b;
+					return { map {
+						($_ => $JSON{$x->{$_}{type}}->($x->{$_}) ) } keys %$x };
+				},
+				\@names);
+		}
+		# elsif ($type =~ m!text/csv!) {
+		# 	warn $response->as_string;
+		# 	# XXX CSV would parse way faster but you can't tell what
+		# 	# the damn results are.
+		# 	require IO::Scalar;
+		# 	require Text::CSV;
+		# 	my $csv = Text::CSV->new({ binary => 1 });
+		# 	my $fh  = IO::Scalar->new($response->content_ref);
+		# 	my @names = $csv->getline($fh);
+		# 	$csv->column_names(@names);
+		# 	return RDF::Trine::Iterator::Bindings->new
+		# 		(sub { $csv->getline_hr($fh) }, \@names);
+		# }
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
@@ -682,6 +768,39 @@ sub _group_bulk_ops {
 	#warn Dumper(\%agg);
 	# unwind the contents
 	return map { [$_ => @{$agg{$_}}] } keys %agg;
+}
+
+sub _results {
+	my ($iter, $which) = @_;
+	my @out;
+	while (my $stmt = $iter->next) {
+		my @n = $stmt->nodes;
+		push @out, $n[$which];
+	}
+	@out;
+}
+
+sub _subjects {
+	my $self = shift;
+	my @nodes = (undef, @_);
+
+	_results($self->get_statements(@nodes), 0);
+}
+
+sub _predicates {
+	my $self = shift;
+	my @nodes = @_;
+	splice @nodes, 1, 0, undef;
+
+	_results($self->get_statements(@nodes), 1);
+}
+
+sub _objects {
+	my $self = shift;
+	my @nodes = @_;
+	splice @nodes, 2, 0, undef;
+
+	_results($self->get_statements(@nodes), 2);
 }
 
 1;
