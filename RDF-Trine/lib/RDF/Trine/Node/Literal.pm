@@ -107,7 +107,7 @@ sub _new {
 
 		# 2. four-letter subtags are titlecase
 		$lang	=~ s{(?<=\w\w-)(\w\w\w\w)(?=($|-))}{\u\L$1}g;
-		$self	= [ $literal, lc($lang), undef ];
+		$self	= [ $literal, $lang, undef ];
 	} elsif ($dt) {
 		if (blessed($dt)) {
 			$dt	= $dt->uri_value;
