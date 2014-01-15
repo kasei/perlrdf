@@ -28,7 +28,7 @@ use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
-
+use HTTP::Request::Common;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
@@ -542,7 +542,10 @@ sub _get_post_iterator {
 # 	warn $sparql;
 	
 	my $url			= $self->{url};
-	my $response	= $ua->post( $url, query => $sparql );
+	my $req			= POST($url, [ update => $sparql ]);
+	warn Dumper($req);
+	my $response	= $ua->request($req);
+# 	my $response	= $ua->post( $url, [ update => $sparql ] );
 	if ($response->is_success) {
 		$p->parse_string( $response->content );
 		return $handler->iterator;
