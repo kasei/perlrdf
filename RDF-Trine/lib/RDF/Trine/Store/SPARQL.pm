@@ -538,8 +538,6 @@ sub get_sparql {
 sub _get_post_iterator {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
 	
 # 	warn $sparql;
@@ -548,8 +546,7 @@ sub _get_post_iterator {
 	my $req			= POST($url, [ update => $sparql ]);
 	my $response	= $ua->request($req);
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		return RDF::Trine::Iterator::Boolean->new( [ 1 ] );
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
