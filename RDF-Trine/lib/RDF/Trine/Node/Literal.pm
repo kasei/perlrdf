@@ -94,7 +94,20 @@ sub _new {
 	}
 	
 	if ($lang) {
-		$self	= [ $literal, lc($lang), undef ];
+		my $oldlang	= $lang;
+		# http://tools.ietf.org/html/bcp47#section-2.1.1
+		# All subtags use lowercase letters
+		$lang	= lc($lang);
+
+		# with 2 exceptions: subtags that neither appear at the start of the tag nor occur after singletons
+		# i.e. there's a subtag of length at least 2 preceding the exception; and a following subtag or end-of-tag
+
+		# 1. two-letter subtags are all uppercase
+		$lang	=~ s{(?<=\w\w-)(\w\w)(?=($|-))}{\U$1}g;
+
+		# 2. four-letter subtags are titlecase
+		$lang	=~ s{(?<=\w\w-)(\w\w\w\w)(?=($|-))}{\u\L$1}g;
+		$self	= [ $literal, $lang, undef ];
 	} elsif ($dt) {
 		if (blessed($dt)) {
 			$dt	= $dt->uri_value;
@@ -105,6 +118,7 @@ sub _new {
 	}
 	return bless($self, $class);
 }
+
 
 =item C<< literal_value >>
 
