@@ -49,17 +49,29 @@ consists of several components:
 
 =over 4
 
-=item * RDF::Trine::Model - RDF model providing access to a triple store. This module would typically be used to access an existing store by a developer looking to "Just get stuff done."
+=item 
 
-=item * RDF::Trine::Parser - RDF parsers for various serialization formats including RDF/XML, Turtle, RDFa, and RDF/JSON.
+L<RDF::Trine::Model> - RDF model providing access to a triple store. This module would typically be used to access an existing store by a developer looking to "Just get stuff done."
 
-=item * RDF::Trine::Store::Memory - An in-memory, non-persistant triple store. Typically used for temporary data.
+=item 
 
-=item * RDF::Trine::Store::DBI - A triple store for MySQL, PostgreSQL, and SQLite, based on the relational schema used by Redland. Typically used to for large, persistent data.
+L<RDF::Trine::Parser> - RDF parsers for various serialization formats including RDF/XML, Turtle, RDFa, and RDF/JSON.
 
-=item * RDF::Trine::Iterator - Iterator classes for variable bindings and RDF statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
+=item 
 
-=item * RDF::Trine::Namespace - A convenience class for easily constructing RDF::Trine::Node::Resource objects from URI namespaces.
+L<RDF::Trine::Store::Memory> - An in-memory, non-persistant triple store. Typically used for temporary data.
+
+=item 
+
+L<RDF::Trine::Store::DBI> - A triple store for MySQL, PostgreSQL, and SQLite, based on the relational schema used by Redland. Typically used to for large, persistent data.
+
+=item 
+
+L<RDF::Trine::Iterator> - Iterator classes for variable bindings and RDF statements, used by RDF::Trine::Store, RDF::Trine::Model, and RDF::Query.
+
+=item 
+
+L<RDF::Trine::Namespace> - A convenience class for easily constructing RDF::Trine::Node::Resource objects from URI namespaces.
 
 =back
 
@@ -131,7 +143,7 @@ sub _uniq {
 
 =item C<< iri ( $iri ) >>
 
-Returns a RDF::Trine::Node::Resource object with the given IRI value.
+Returns a L<RDF::Trine::Node::Resource> object with the given IRI value.
 
 =cut
 
@@ -142,7 +154,7 @@ sub iri {
 
 =item C<< blank ( $id ) >>
 
-Returns a RDF::Trine::Node::Blank object with the given identifier.
+Returns a L<RDF::Trine::Node::Blank> object with the given identifier.
 
 =cut
 
@@ -153,7 +165,7 @@ sub blank {
 
 =item C<< literal ( $value, $lang, $dt ) >>
 
-Returns a RDF::Trine::Node::Literal object with the given value and optional
+Returns a L<RDF::Trine::Node::Literal> object with the given value and optional
 language/datatype.
 
 =cut
@@ -164,7 +176,7 @@ sub literal {
 
 =item C<< variable ( $name ) >>
 
-Returns a RDF::Trine::Node::Variable object with the given variable name.
+Returns a L<RDF::Trine::Node::Variable> object with the given variable name.
 
 =cut
 
@@ -175,7 +187,7 @@ sub variable {
 
 =item C<< statement ( @nodes ) >>
 
-Returns a RDF::Trine::Statement object with the supplied node objects.
+Returns a L<RDF::Trine::Statement> object with the supplied node objects.
 
 =cut
 
@@ -190,8 +202,7 @@ sub statement {
 
 =item C<< store ( $config ) >>
 
-Returns a RDF::Trine::Store object based on the supplied configuration string.
-See L<RDF::Trine::Store> for more information on store configuration strings.
+Returns a L<RDF::Trine::Store> object based on the supplied configuration string.
 
 =cut
 
