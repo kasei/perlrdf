@@ -123,6 +123,22 @@ sub evaluate {
 	return $value;
 }
 
+=item C<< as_hash >>
+
+Returns the alias as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'alias',
+		alias		=> $self->alias->as_hash,
+		expression	=> $self->expression->as_hash,
+	};
+}
+
 
 1;
 
