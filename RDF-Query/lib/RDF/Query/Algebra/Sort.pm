@@ -175,10 +175,17 @@ Returns the query as a nested set of plain data structures (no objects).
 sub as_hash {
 	my $self	= shift;
 	my $context	= shift;
+	
+	my @order	= $self->orderby;
+	my @expressions;
+	foreach my $o (@order) {
+		push(@expressions, { type => 'comparator', direction => $o->[0], expression => $o->[1]->as_hash });
+	}
+	
 	return {
 		type 		=> lc($self->type),
 		pattern		=> $self->pattern->as_hash,
-		order		=> [ map { $_->as_hash } $self->orderby ],
+		order		=> \@expressions,
 	};
 }
 
