@@ -129,6 +129,7 @@ sub new {
 	
 	my $name	= shift || 'model';
 	my %args;
+	my $reconnect;
 	if (scalar(@_) == 0) {
 		$l->trace("trying to construct a temporary model");
 		my $dsn		= "dbi:SQLite:dbname=:memory:";
@@ -137,6 +138,7 @@ sub new {
 	} elsif (blessed($_[0]) and $_[0]->isa('DBI::db')) {
 		$l->trace("got a DBD handle");
 		$dbh		= shift;
+		$reconnect      = shift;
 		my $name	= $dbh->get_info(17);
 		if ($name eq 'MySQL') {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
@@ -151,6 +153,7 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
+		$reconnect      = shift;
 		if ($dsn =~ /^DBI:mysql:/) {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
 		} elsif ($dsn =~ /^DBI:Pg:/) {
@@ -174,7 +177,7 @@ sub new {
 		statements_table_prefix	=> 'Statements',
 		%args
 	}, $class );
-	$self->init();
+	$self->init() unless $reconnect;
 	return $self;
 }
 
@@ -191,7 +194,8 @@ sub _new_with_config {
 	return $class->new( $config->{name},
 			    $config->{dsn},
 			    $config->{username},
-			    $config->{password} );
+			    $config->{password},
+			    $config->{reconnect} );
 }
 
 sub _new_with_object {
