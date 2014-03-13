@@ -316,6 +316,7 @@ sub add_statement_tests_simple {
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
 	my $etag_before = $store->etag;
 	update_sleep($args);
+    my $size = $store->size;
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
    SKIP: {
@@ -323,13 +324,17 @@ sub add_statement_tests_simple {
 		isnt($etag_before, $store->etag, 'Etag has changed');
 	}
 
-	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
-	
+    my $s = $size + 1;
+
+	is( $store->size, $s,
+        "store has $s statements after (triple+context) add" );
+
 	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
-		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
+		is( $store->size, $s,
+            "store has $s statements after duplicate (quad) add" );
 	}
 	
 	$etag_before = $store->etag;
@@ -340,21 +345,21 @@ sub add_statement_tests_simple {
 		isnt($etag_before, $store->etag, 'Etag has changed');
 	}
 
-	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
-	
+	is( $store->size, $size, 'store has 0 statements after (triple+context) remove' );
+
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
 	$store->add_statement( $quad2 );
 	update_sleep($args);
-	
-	is( $store->size, 1, 'store has 1 statement after (quad) add' );
-	
+
+	is( $store->size, $s, 'store has 1 statement after (quad) add' );
+
 	my $count	= $store->count_statements( undef, undef, undef, iri('graph') );
 	is( $count, 1, 'expected count of specific-context statements' );
-	
+
 	$store->remove_statement( $quad2 );
 	update_sleep($args);
-	
-	is( $store->size, 0, 'expected zero size after remove statement' );
+
+	is( $store->size, $size, 'expected zero size after remove statement' );
 }
 
 
