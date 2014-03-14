@@ -28,11 +28,14 @@ use_ok('RDF::Trine::Store::SPARQL');
 my $data  = Test::RDF::Trine::Store::create_data;
 my $store = RDF::Trine::Store::SPARQL->new(
     $ENV{RDFTRINE_STORE_SPARQL_ENDPOINT},
-    $ENV{RDFTRINE_STORE_SPARQL_CONTEXT},
-    $ENV{RDFTRINE_STORE_SPARQL_REALM},
     $ENV{RDFTRINE_STORE_SPARQL_USER},
     $ENV{RDFTRINE_STORE_SPARQL_PASSWORD},
-    1
+    {
+        realm   => $ENV{RDFTRINE_STORE_SPARQL_REALM},
+        #context => $ENV{RDFTRINE_STORE_SPARQL_CONTEXT},
+        product => 'virtuoso',
+        legacy  => 1,
+    }
 );
 
 isa_ok($store, 'RDF::Trine::Store::SPARQL');

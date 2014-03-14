@@ -51,15 +51,13 @@ BEGIN {
 Beyond the methods documented below, this class inherits methods from the
 L<RDF::Trine::Store> class.
 
-=over 4
-
-=item C<< new ( $url [, $realm, $user, $pass ] ) >>
+=head2 C<< new ( $url [, $user, $pass, $options ] ) >>
 
 Returns a new storage object that will act as a proxy for the SPARQL
 endpoint accessible via the supplied C<$url>. Optionally, an
 authentication realm, username and password can be supplied.
 
-=item C<new_with_config ( $hashref )>
+=head2 C<new_with_config ( $hashref )>
 
 Returns a new storage object configured with a hashref with certain
 keys as arguments.
@@ -68,51 +66,85 @@ The C<storetype> key must be C<SPARQL> for this backend.
 
 The following key must also be used:
 
-=over
-
-=item C<url>
+=head3 C<url>
 
 The URL of the remote endpoint.
 
-=back
-
 And these optional keys:
 
-=over
-
-=item C<context>
-
-The default context for graph queries.
-
-=item C<realm>
-
-The authentication realm of the endpoint.
-
-=item C<user>
+=head3 C<user>
 
 The username to authenticate with.
 
-=item C<password>
+=head3 C<password>
 
-The password.
+The user's password.
 
-=item C<legacy>
+=head3 C<options>
 
-Use legacy SPARUL C<INSERT>/C<DELETE> statements for SPARQL endpoints
-(like Virtuoso) that don't respond properly to SPARQL 1.1 Update.
+There are a number of options to further tune the connection to the
+SPARQL endpoint,
+
+=over 4
+
+=item realm
+
+The HTTP authentication realm will be detected when the store is
+constructed, but you can skip this step and supply one if you already
+know what it is.
+
+=item context
+
+Some endpoints (such as Virtuoso) require a default context for
+C<INSERT> and C<DELETE> operations.
+
+=item skolemize
+
+Skolemize blank nodes into IRIs. This should be a CODE reference that
+returns an L<RDF::Trine::Node::Resource> object.
+
+=item deskolemize
+
+Do the same thing in the opposite direction. This should be a CODE
+reference that returns an L<RDF::Trine::Node::Blank> object.
+
+=item legacy
+
+Set this bit to turn on legacy SPARUL C<INSERT> and C<DELETE> syntax,
+to properly communicate with endpoints that support only it.
+
+=item product
+
+The product string overrides a number of behaviours peculiar to a
+given endpoint. Currently the only supported product is C<virtuoso>.
 
 =back
 
 =cut
 
+# This structure takes the form product => [ \&skolemize, \&deskolemize ]
+my %SKOLEM = (
+    virtuoso => [
+        sub {
+            # assume blank node
+            RDF::Trine::Node::Resource->new
+                  ('nodeID://' . shift->blank_identifier);
+        },
+        sub {
+            # assume resource
+            my ($name) = (shift->uri_value =~ m!nodeID://(.*)!);
+            RDF::Trine::Node::Blank->new($name);
+        },
+    ],
+);
+
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-	my $context	= shift;
-	my $realm	= shift;
-	my $user	= shift;
-	my $pass	= shift;
-    my $legacy  = !!shift;
+    my $user    = shift;
+    my $pass    = shift;
+    my $options = shift || {};
+
 	my $u		= RDF::Trine->default_useragent->clone;
 
 	# cloning scrubs this away
@@ -121,6 +153,7 @@ sub new {
 	# set up access credentials
 	$url = URI->new($url)->canonical;
 	if (defined $user) {
+        my $realm = $options->{realm};
         unless (defined $realm and $realm ne '') {
             # get the realm
             my $resp = $u->head($url);
@@ -133,6 +166,15 @@ sub new {
 		$u->credentials($url->host_port, $realm, $user, $pass);
 	}
 
+    if (defined $options->{product}) {
+        if (lc $options->{product} eq 'virtuoso') {
+            # do virtuoso-specific stuff
+            $options->{legacy} = 1;
+            $options->{skolemize}   ||= $SKOLEM{virtuoso}[0];
+            $options->{deskolemize} ||= $SKOLEM{virtuoso}[1];
+            $options->{context} ||= RDF::Trine::Node::Nil->new;
+        }
+    }
 
 	# XXX virtuoso endpoint doesn't pay attention to the q-values
 	#my @accept = qw(application/sparql-results+xml;q=0.9
@@ -141,7 +183,7 @@ sub new {
 	$u->default_headers->push_header('Accept' => join(', ', @accept));
 
 	# virtuoso sparql won't work without a default context
-	if (defined $context) {
+	if (defined (my $context = $options->{context})) {
 		if (blessed $context) {
 			$context = RDF::Trine::Node::Resource->new("$context")
 				if $context->isa('URI');
@@ -152,13 +194,13 @@ sub new {
 		else {
 			$context = RDF::Trine::Node::Resource->new($context);
 		}
+        $options->{context} = $context;
 	}
 
 	my $self	= bless({
 		ua		=> $u,
 		url		=> $url,
-		context => $context,
-        legacy  => $legacy,
+        options => $options,
 	}, $class);
 	return $self;
 }
@@ -169,7 +211,7 @@ sub _new_with_string {
 	return $class->new( $config );
 }
 
-=item C<< new_with_config ( \%config ) >>
+=head2 C<< new_with_config ( \%config ) >>
 
 Returns a new RDF::Trine::Store object based on the supplied
 configuration hashref.
@@ -186,8 +228,7 @@ sub new_with_config {
 sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
-	return $class->new
-        (@{$config}{qw(url context realm user password legacy)});
+	return $class->new(@{$config}{qw(url user password options)});
 }
 
 sub _config_meta {
@@ -195,17 +236,18 @@ sub _config_meta {
 		required_keys	=> [qw(url)],
 		fields			=> {
 			url => { description => 'Endpoint URL', type => 'string' },
-            context => { description => 'Default context', type => 'string' },
-            realm => { description => 'Authentication realm', type => 'string' },
+#            context => { description => 'Default context', type => 'string' },
+#            realm => { description => 'Authentication realm', type => 'string' },
             user => { description => 'User name' , type => 'string' },
             password => { description => 'Password', type => 'string' },
-            legacy => { description => 'Use legacy syntax', type => 'int' },
+            options => { description => 'Misc. Options', type => 'hashref' },
+#            legacy => { description => 'Use legacy syntax', type => 'int' },
 		}
 	}
 }
 
 
-=item C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
+=head2 C<< get_statements ( $subject, $predicate, $object [, $context] ) >>
 
 Returns a stream object of all statements matching the specified subject,
 predicate and objects. Any of the arguments may be undef to match any value.
@@ -287,13 +329,15 @@ sub get_statements {
 	}
 
 	# create the format string
-	my $format	= 'SELECT %s WHERE { %s %s }';
+	my $format	= 'SELECT DISTINCT %s WHERE { %s %s }';
 	if ($use_quad) {
 		my $g	= $nodes[3]->is_variable ? '?g' : $nodes[3]->as_ntriples;
 		# yo dawg i herd u liek formats so we put a format in yo format
-		$format	= sprintf 'SELECT %%s WHERE { GRAPH %s { %%s } %%s }', $g;
+		$format	= sprintf 'SELECT DISTINCT %%s WHERE { GRAPH %s { %%s } %%s }', $g;
 	}
+    #warn 'wat';
 	# create the iterator
+    $names = '*' unless $names;
 	my $sparql	= sprintf $format, $names, $nodes, $filter;
 	#warn $sparql;
 	my $iter	= $self->get_sparql($sparql);
@@ -315,9 +359,10 @@ sub get_statements {
 	return RDF::Trine::Iterator::Graph->new( $sub );
 }
 
-=item C<< get_pattern ( $bgp [, $context] ) >>
+=head2 C<< get_pattern ( $bgp [, $context] ) >>
 
-Returns an iterator object of all bindings matching the specified graph pattern.
+Returns an iterator object of all bindings matching the specified
+graph pattern.
 
 =cut
 
@@ -327,15 +372,15 @@ sub get_pattern {
 	my $context	= shift;
 	my @args	= @_;
 	my %args	= @args;
-	
+
 	if ($bgp->isa('RDF::Trine::Statement')) {
 		$bgp	= RDF::Trine::Pattern->new($bgp);
 	}
-	
+
 	my %iter_args;
 	my @triples	= grep { $_->type eq 'TRIPLE' } $bgp->triples;
 	my @quads	= grep { $_->type eq 'QUAD' } $bgp->triples;
-	
+
 	my @tripless;
 	foreach my $t (@triples) {
 		my @nodes	= $t->nodes;
@@ -348,12 +393,13 @@ sub get_pattern {
 	my $triples	= join("\n\t", @tripless);
 	my $quads	= '';
 	if (@quads) {
-		return $self->SUPER::get_pattern( $bgp, $context, @args );
+        #warn $bgp->sse;
+		return $self->SUPER::_get_pattern( $bgp, $context, @args );
 		throw RDF::Trine::Error::UnimplementedError -text => "SPARQL get_pattern quad support not implemented";
 	}
-	
+
 	my $sparql	= <<"END";
-SELECT * WHERE {
+SELECT DISTINCT * WHERE {
 	$triples
 	$quads
 }
@@ -368,21 +414,21 @@ END
 			$sparql	.= "ORDER BY " . join(' ', @order);
 		}
 	}
-	
+
 	my $iter	= $self->get_sparql( $sparql );
 	return $iter;
 }
 
-=item C<< get_contexts >>
+=head2 C<< get_contexts >>
 
-Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects comprising
-the set of contexts of the stored quads.
+Returns an RDF::Trine::Iterator over the RDF::Trine::Node objects
+comprising the set of contexts of the stored quads.
 
 =cut
 
 sub get_contexts {
 	my $self	= shift;
-	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g {} }';
+	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g { ?s ?p ?o } }';
 	my $iter	= $self->get_sparql( $sparql );
 	my $sub	= sub {
 		my $row	= $iter->next;
@@ -393,7 +439,7 @@ sub get_contexts {
 	return RDF::Trine::Iterator->new( $sub );
 }
 
-=item C<< add_statement ( $statement [, $context] ) >>
+=head2 C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<$statement> to the underlying model.
 
@@ -422,10 +468,29 @@ sub add_statement {
 		push(@{ $self->{ ops } }, ['_add_statements', $st, $context]);
 	} else {
 		my $sparql	= $self->_add_statements_sparql( [ $st, $context ] );
+        warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
 	return;
+}
+
+sub _skolemize {
+    my ($self, $node) = @_;
+    return $node unless defined $node && $node->is_blank;
+    if (my $sk = $self->{options}{skolemize}) {
+        return $sk->($node);
+    }
+    $node;
+}
+
+sub _deskolemize {
+    my ($self, $node) = @_;
+    return $node unless defined $node;
+    if (my $dsk = $self->{options}{deskolemize}) {
+        return $dsk->($node);
+    }
+    $node;
 }
 
 sub _add_statements_sparql {
@@ -437,17 +502,18 @@ sub _add_statements_sparql {
 
 		my ($s, $p, $o, $c) = $st->nodes;
 		# quad context supersedes argument context
-		$c ||= $op->[1] || $self->{context};
+		$c ||= $op->[1] || $self->{options}{context};
 		# default context
 
-        my $x = $c{$c ? $c->as_ntriples : ''} ||= [];
+        my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
 
-		my $pat = sprintf '%s %s %s .', map { $_->as_ntriples } ($s, $p, $o);
+		my $pat = sprintf '%s %s %s .',
+            map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
         push @$x, $pat;
 	}
 
     my $sparql = '';
-    if ($self->{legacy}) {
+    if ($self->{options}{legacy}) {
         for my $k (sort keys %c) {
             my @parts = @{$c{$k}};
             my $stmts = join ("\n\t", @parts);
@@ -468,7 +534,7 @@ sub _add_statements_sparql {
 	return $sparql;
 }
 
-=item C<< remove_statement ( $statement [, $context]) >>
+=head2 C<< remove_statement ( $statement [, $context]) >>
 
 Removes the specified C<$statement> from the underlying model.
 
@@ -499,6 +565,7 @@ sub remove_statement {
 		push(@{ $self->{ ops } }, ['_remove_statements', $st, $context]);
 	} else {
 		my $sparql	= $self->_remove_statements_sparql( [ $st, $context ] );
+        warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -514,17 +581,18 @@ sub _remove_statements_sparql {
 
 		my ($s, $p, $o, $c) = $st->nodes;
 		# quad context supersedes argument context
-		$c ||= $op->[1] || $self->{context};
+		$c ||= $op->[1] || $self->{options}{context};
 		# default context
 
-        my $x = $c{$c ? $c->as_ntriples : ''} ||= [];
+        my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
 
-		my $pat = sprintf '%s %s %s .', map { $_->as_ntriples } ($s, $p, $o);
+		my $pat = sprintf '%s %s %s .',
+            map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
         push @$x, $pat;
 	}
 
     my $sparql = '';
-    if ($self->{legacy}) {
+    if ($self->{options}{legacy}) {
         for my $k (sort keys %c) {
             my @parts = @{$c{$k}};
             my $stmts = join ("\n\t", @parts);
@@ -545,7 +613,7 @@ sub _remove_statements_sparql {
 	return $sparql;
 }
 
-=item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
+=head2 C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
 
 Removes statements matching the given nodes from the underlying model.
 
@@ -563,6 +631,7 @@ sub remove_statements {
 
     my %n;
     (@n{qw(s p o)}, my $context) = @nodes;
+    $context ||= RDF::Trine::Node::Variable->new('g');
 
     my $st = RDF::Trine::Statement->new
         (map { $n{$_} || RDF::Trine::Node::Variable->new($_) } qw(s p o));
@@ -571,6 +640,7 @@ sub remove_statements {
 		push(@{ $self->{ ops } }, ['_remove_statement_patterns', $st, $context]);
 	} else {
 		my $sparql	= $self->_remove_statement_patterns_sparql( [ $st, $context ] );
+        warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -585,14 +655,15 @@ sub _remove_statement_patterns_sparql {
 
 		my ($s, $p, $o, $c) = $st->nodes;
 		# quad context supersedes argument context
-		$c ||= $op->[1] || $self->{context};
+		$c ||= $op->[1] || $self->{options}{context};
 		# default context
 
 		my $pat = sprintf '%s %s %s .',
-            map { $_->is_variable ? '?' . $_->name : $_->as_ntriples }
+            map { $_->is_variable ? '?' . $_->name :
+                      $self->_skolemize($_)->as_ntriples }
                 ($s, $p, $o);
 		$pat = sprintf 'GRAPH %s { %s }',
-            ($c->is_variable ? '?' . $c->name : $c->as_ntriples), $pat if $c;
+            ($c->is_variable ? '?' . $c->name : $self->_skolemize($c)->as_ntriples), $pat if $c;
 
 		push @parts, $pat;
 	}
@@ -601,7 +672,7 @@ sub _remove_statement_patterns_sparql {
 	return $sparql;
 }
 
-=item C<< count_statements ( $subject, $predicate, $object, $context ) >>
+=head2 C<< count_statements ( $subject, $predicate, $object, $context ) >>
 
 Returns a count of all the statements matching the specified subject,
 predicate, object, and context. Any of the arguments may be undef to match any
@@ -614,7 +685,7 @@ sub count_statements {
 	my @nodes	= @_[0..3];
 	my $bound	= 0;
 	my %bound;
-	
+
 	my $use_quad	= 0;
 	if (scalar(@_) >= 4) {
 		$use_quad	= 1;
@@ -625,42 +696,44 @@ sub count_statements {
 			$bound{ 3 }	= $g;
 		}
 	}
-	
+
 	foreach my $i (0 .. $#nodes) {
 		my $node	= $nodes[$i];
 		unless (defined($node)) {
 			$nodes[$i]	= RDF::Trine::Node::Variable->new( "rt__" . $pos_names[$i] );
 		}
 	}
-	
-	
+
 	my $sparql;
-	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $self->_skolemize($_)->as_ntriples } @nodes[0..2]);
 	if ($use_quad) {
+        my $default = $self->{options}{context};
 		my $nodes;
 		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
 			$nodes		= "GRAPH ?rt__graph { $triple }";
-		} elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')) {
-			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } @nodes[0..2]);
+		}
+        # XXX not sure what to do here re default graph
+        elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')
+                   and !defined($default) or !$default->is_nil) {
+			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $self->_skolemize($_)->as_ntriples } @nodes[0..2]);
 		} else {
-			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
+			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $self->_skolemize($nodes[3])->as_ntriples;
 			$nodes		= "GRAPH $graph { $triple }";
 		}
 		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
 	} else {
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
+		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { SELECT DISTINCT $triple WHERE { $triple } }";
 	}
 	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
 	my $count	= $row->{count};
 	return unless ($count);
 	return $count->literal_value;
-	
-# 	
-# 	
-# 	
-# 	
-# 	
+#
+#
+#
+#
+#
 # 	# XXX try to send a COUNT() query and fall back if it fails
 # 	my $iter	= $self->get_statements( @_ );
 # 	my $count	= 0;
@@ -670,7 +743,7 @@ sub count_statements {
 # 	return $count;
 }
 
-=item C<< size >>
+=head2 C<< size >>
 
 Returns the number of statements in the store.
 
@@ -681,11 +754,11 @@ sub size {
 	return $self->count_statements( undef, undef, undef, undef );
 }
 
-=item C<< supports ( [ $feature ] ) >>
+=head2 C<< supports ( [ $feature ] ) >>
 
-If C<< $feature >> is specified, returns true if the feature is supported by the
-store, false otherwise. If C<< $feature >> is not specified, returns a list of
-supported features.
+If C<< $feature >> is specified, returns true if the feature is
+supported by the store, false otherwise. If C<< $feature >> is not
+specified, returns a list of supported features.
 
 =cut
 
@@ -704,12 +777,12 @@ sub supports {
 	}
 }
 
-=item C<< get_sparql ( $sparql ) >>
+=head2 C<< get_sparql ( $sparql ) >>
 
-Returns an iterator object of all bindings matching the specified SPARQL query.
+Returns an iterator object of all bindings matching the specified
+SPARQL query.
 
 =cut
-
 
 sub _json_literal {
 	RDF::Trine::Node::Literal->new(@{$_[0]}{qw(value lang datatype)});
@@ -744,12 +817,12 @@ sub _json_iter {
 sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+	#my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	#my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
-	
-# 	warn $sparql;
-	
+
+    warn $sparql;
+
 	my $urlchar	= ($self->{url} =~ /\?/ ? '&' : '?');
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
@@ -782,8 +855,9 @@ sub get_sparql {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
-		warn Dumper($response);
-		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
+		#warn Dumper($response);
+		throw RDF::Trine::Error
+            -text => "Error making remote SPARQL call to endpoint $endpoint ($status):\n" . $response->content;
 	}
 }
 
@@ -819,8 +893,8 @@ sub _get_post_iterator {
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
 #		warn $sparql;
-		warn Dumper($response);
-		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status)";
+		#warn Dumper($response);
+		throw RDF::Trine::Error -text => "Error making remote SPARQL call to endpoint $endpoint ($status):\n" . $response->content;
 	}
 }
 
@@ -911,8 +985,6 @@ sub _objects {
 1;
 
 __END__
-
-=back
 
 =head1 BUGS
 
