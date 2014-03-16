@@ -257,6 +257,9 @@ sub subpatterns_of_type {
 	foreach my $arg ($self->construct_args) {
 		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
 			push(@patterns, $arg->subpatterns_of_type($type, $block));
+		} elsif (blessed($arg) and $arg->isa('RDF::Query')) {
+			my $pattern = $arg->pattern;
+			push(@patterns, $pattern->subpatterns_of_type($type, $block));
 		}
 	}
 	return @patterns;
