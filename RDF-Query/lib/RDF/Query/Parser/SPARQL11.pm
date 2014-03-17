@@ -1575,8 +1575,13 @@ sub _GroupGraphPatternSub {
 				$self->_TriplesBlock;
 				my $rhs		= $self->_remove_pattern;
 				my $lhs		= $self->_remove_pattern;
-				my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
-				$self->_add_patterns( $merged );
+				if ($rhs->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+					my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
+					$self->_add_patterns( $merged );
+				} else {
+					my $merged	= RDF::Query::Algebra::GroupGraphPattern->new($lhs, $rhs);
+					$self->_add_patterns( $merged );
+				}
 			} else {
 				$self->_TriplesBlock;
 			}
