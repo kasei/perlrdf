@@ -124,26 +124,26 @@ given endpoint. Currently the only supported product is C<virtuoso>.
 
 # This structure takes the form product => [ \&skolemize, \&deskolemize ]
 my %SKOLEM = (
-    virtuoso => [
-        sub {
-            # assume blank node
-            RDF::Trine::Node::Resource->new
-                  ('nodeID://' . shift->blank_identifier);
-        },
-        sub {
-            # assume resource
-            my ($name) = (shift->uri_value =~ m!nodeID://(.*)!);
-            RDF::Trine::Node::Blank->new($name);
-        },
-    ],
+	virtuoso => [
+		sub {
+			# assume blank node
+			RDF::Trine::Node::Resource->new
+				  ('nodeID://' . shift->blank_identifier);
+		},
+		sub {
+			# assume resource
+			my ($name) = (shift->uri_value =~ m!nodeID://(.*)!);
+			RDF::Trine::Node::Blank->new($name);
+		},
+	],
 );
 
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-    my $user    = shift;
-    my $pass    = shift;
-    my $options = shift || {};
+	my $user	= shift;
+	my $pass	= shift;
+	my $options = shift || {};
 
 	my $u		= RDF::Trine->default_useragent->clone;
 
@@ -153,33 +153,34 @@ sub new {
 	# set up access credentials
 	$url = URI->new($url)->canonical;
 	if (defined $user) {
-        my $realm = $options->{realm};
-        unless (defined $realm and $realm ne '') {
-            # get the realm
-            my $resp = $u->head($url);
-            if (my $auth = $resp->www_authenticate) {
-                my ($tok) = ($auth =~ /realm\s*=\s*("[^"]*"|'[^']*'|\S+)/i);
-                $tok =~ s/^['"]?(.*?)['"]?,?$/$1/;
-                $realm = $tok;
-            }
-        }
+		my $realm = $options->{realm};
+		unless (defined $realm and $realm ne '') {
+			# get the realm
+			my $resp = $u->head($url);
+			if (my $auth = $resp->www_authenticate) {
+				my ($tok) = ($auth =~ /realm\s*=\s*("[^"]*"|'[^']*'|\S+)/i);
+				$tok =~ s/^['"]?(.*?)['"]?,?$/$1/;
+				$realm = $tok;
+			}
+		}
 		$u->credentials($url->host_port, $realm, $user, $pass);
 	}
 
-    if (defined $options->{product}) {
-        if (lc $options->{product} eq 'virtuoso') {
-            # do virtuoso-specific stuff
-            $options->{legacy} = 1;
-            $options->{skolemize}   ||= $SKOLEM{virtuoso}[0];
-            $options->{deskolemize} ||= $SKOLEM{virtuoso}[1];
-            $options->{context} ||= RDF::Trine::Node::Nil->new;
-        }
-    }
+	if (defined $options->{product}) {
+		if (lc $options->{product} eq 'virtuoso') {
+			# do virtuoso-specific stuff
+			$options->{legacy} = 1;
+			$options->{skolemize}   ||= $SKOLEM{virtuoso}[0];
+			$options->{deskolemize} ||= $SKOLEM{virtuoso}[1];
+			$options->{context} ||= RDF::Trine::Node::Nil->new;
+		}
+	}
 
 	# XXX virtuoso endpoint doesn't pay attention to the q-values
 	#my @accept = qw(application/sparql-results+xml;q=0.9
 	#				application/rdf+xml;q=0.7);
-	my @accept = qw(application/sparql-results+json);
+	#my @accept = qw(application/sparql-results+json;0.7
+	my @accept = qw(application/rdf+json application/sparql-results+json);
 	$u->default_headers->push_header('Accept' => join(', ', @accept));
 
 	# virtuoso sparql won't work without a default context
@@ -194,13 +195,13 @@ sub new {
 		else {
 			$context = RDF::Trine::Node::Resource->new($context);
 		}
-        $options->{context} = $context;
+		$options->{context} = $context;
 	}
 
 	my $self	= bless({
 		ua		=> $u,
 		url		=> $url,
-        options => $options,
+		options => $options,
 	}, $class);
 	return $self;
 }
@@ -236,12 +237,12 @@ sub _config_meta {
 		required_keys	=> [qw(url)],
 		fields			=> {
 			url => { description => 'Endpoint URL', type => 'string' },
-#            context => { description => 'Default context', type => 'string' },
-#            realm => { description => 'Authentication realm', type => 'string' },
-            user => { description => 'User name' , type => 'string' },
-            password => { description => 'Password', type => 'string' },
-            options => { description => 'Misc. Options', type => 'hashref' },
-#            legacy => { description => 'Use legacy syntax', type => 'int' },
+#			context => { description => 'Default context', type => 'string' },
+#			realm => { description => 'Authentication realm', type => 'string' },
+			user => { description => 'User name' , type => 'string' },
+			password => { description => 'Password', type => 'string' },
+			options => { description => 'Misc. Options', type => 'hashref' },
+#			legacy => { description => 'Use legacy syntax', type => 'int' },
 		}
 	}
 }
@@ -316,7 +317,7 @@ sub get_statements {
 	my $names	= join ' ', map { '?' . $_->name } @vars;
 	# create the where clause
 	my $nodes	= join(' ', map {
-        ($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
+		($_->is_variable) ? '?' . $_->name : $_->as_ntriples } @triple);
 
 	# create the (optional) filter
 	my $filter  = '';
@@ -335,9 +336,9 @@ sub get_statements {
 		# yo dawg i herd u liek formats so we put a format in yo format
 		$format	= sprintf 'SELECT DISTINCT %%s WHERE { GRAPH %s { %%s } %%s }', $g;
 	}
-    #warn 'wat';
+	#warn 'wat';
 	# create the iterator
-    $names = '*' unless $names;
+	$names = '*' unless $names;
 	my $sparql	= sprintf $format, $names, $nodes, $filter;
 	#warn $sparql;
 	my $iter	= $self->get_sparql($sparql);
@@ -393,7 +394,7 @@ sub get_pattern {
 	my $triples	= join("\n\t", @tripless);
 	my $quads	= '';
 	if (@quads) {
-        #warn $bgp->sse;
+		#warn $bgp->sse;
 		return $self->SUPER::_get_pattern( $bgp, $context, @args );
 		throw RDF::Trine::Error::UnimplementedError -text => "SPARQL get_pattern quad support not implemented";
 	}
@@ -454,21 +455,21 @@ sub add_statement {
 	}
 
 	if (defined $context) {
-        unless (blessed($context) and $context->isa('RDF::Trine::Node')) {
-            throw RDF::Trine::Error::MethodInvocationError
-                -text => "Invalid context $context passed to add_statement";
-        }
-        if ($st->isa('RDF::Trine::Statement::Quad')) {
-            throw RDF::Trine::Error::MethodInvocationError
-                -text => "Adding a quad with a context is ambiguous.";
-        }
+		unless (blessed($context) and $context->isa('RDF::Trine::Node')) {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Invalid context $context passed to add_statement";
+		}
+		if ($st->isa('RDF::Trine::Statement::Quad')) {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Adding a quad with a context is ambiguous.";
+		}
 	}
 
 	if ($self->_bulk_ops) {
 		push(@{ $self->{ ops } }, ['_add_statements', $st, $context]);
 	} else {
 		my $sparql	= $self->_add_statements_sparql( [ $st, $context ] );
-        warn $sparql;
+		warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -476,27 +477,27 @@ sub add_statement {
 }
 
 sub _skolemize {
-    my ($self, $node) = @_;
-    return $node unless defined $node && $node->is_blank;
-    if (my $sk = $self->{options}{skolemize}) {
-        return $sk->($node);
-    }
-    $node;
+	my ($self, $node) = @_;
+	return $node unless defined $node && $node->is_blank;
+	if (my $sk = $self->{options}{skolemize}) {
+		return $sk->($node);
+	}
+	$node;
 }
 
 sub _deskolemize {
-    my ($self, $node) = @_;
-    return $node unless defined $node;
-    if (my $dsk = $self->{options}{deskolemize}) {
-        return $dsk->($node);
-    }
-    $node;
+	my ($self, $node) = @_;
+	return $node unless defined $node;
+	if (my $dsk = $self->{options}{deskolemize}) {
+		return $dsk->($node);
+	}
+	$node;
 }
 
 sub _add_statements_sparql {
 	my $self	= shift;
 	my @parts;
-    my %c;
+	my %c;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
 
@@ -505,31 +506,31 @@ sub _add_statements_sparql {
 		$c ||= $op->[1] || $self->{options}{context};
 		# default context
 
-        my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
+		my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
 
 		my $pat = sprintf '%s %s %s .',
-            map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
-        push @$x, $pat;
+			map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
+		push @$x, $pat;
 	}
 
-    my $sparql = '';
-    if ($self->{options}{legacy}) {
-        for my $k (sort keys %c) {
-            my @parts = @{$c{$k}};
-            my $stmts = join ("\n\t", @parts);
-            $sparql .= $k ? "INSERT INTO GRAPH $k \{$stmts\}\n"
-                : "INSERT \{$stmts\}\n";
-        }
-    }
-    else {
-        $sparql = "INSERT DATA {\n";
-        for my $k (sort keys %c) {
-            my @parts = @{$c{$k}};
-            my $stmts = join("\n\t", @parts);
-            $sparql .= $k ? "GRAPH $k \{$stmts\n\}" : $stmts;
-        }
-        $sparql .= "\n}";
-    }
+	my $sparql = '';
+	if ($self->{options}{legacy}) {
+		for my $k (sort keys %c) {
+			my @parts = @{$c{$k}};
+			my $stmts = join ("\n\t", @parts);
+			$sparql .= $k ? "INSERT INTO GRAPH $k \{$stmts\}\n"
+				: "INSERT \{$stmts\}\n";
+		}
+	}
+	else {
+		$sparql = "INSERT DATA {\n";
+		for my $k (sort keys %c) {
+			my @parts = @{$c{$k}};
+			my $stmts = join("\n\t", @parts);
+			$sparql .= $k ? "GRAPH $k \{$stmts\n\}" : $stmts;
+		}
+		$sparql .= "\n}";
+	}
 
 	return $sparql;
 }
@@ -547,25 +548,25 @@ sub remove_statement {
 
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError
-            -text => "Not a valid statement object passed to remove_statement";
+			-text => "Not a valid statement object passed to remove_statement";
 	}
 
 	if (defined $context) {
-        unless (blessed($context) and $context->isa('RDF::Trine::Node')) {
-            throw RDF::Trine::Error::MethodInvocationError
-                -text => "Invalid context $context passed to remove_statement";
-        }
-        if ($st->isa('RDF::Trine::Statement::Quad')) {
-            throw RDF::Trine::Error::MethodInvocationError
-                -text => "Removing a quad with a context is ambiguous.";
-        }
+		unless (blessed($context) and $context->isa('RDF::Trine::Node')) {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Invalid context $context passed to remove_statement";
+		}
+		if ($st->isa('RDF::Trine::Statement::Quad')) {
+			throw RDF::Trine::Error::MethodInvocationError
+				-text => "Removing a quad with a context is ambiguous.";
+		}
 	}
 
 	if ($self->_bulk_ops) {
 		push(@{ $self->{ ops } }, ['_remove_statements', $st, $context]);
 	} else {
 		my $sparql	= $self->_remove_statements_sparql( [ $st, $context ] );
-        warn $sparql;
+		warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -575,7 +576,7 @@ sub remove_statement {
 sub _remove_statements_sparql {
 	my $self	= shift;
 	my @parts;
-    my %c;
+	my %c;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
 
@@ -584,31 +585,31 @@ sub _remove_statements_sparql {
 		$c ||= $op->[1] || $self->{options}{context};
 		# default context
 
-        my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
+		my $x = $c{$c ? $self->_skolemize($c)->as_ntriples : ''} ||= [];
 
 		my $pat = sprintf '%s %s %s .',
-            map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
-        push @$x, $pat;
+			map { $self->_skolemize($_)->as_ntriples } ($s, $p, $o);
+		push @$x, $pat;
 	}
 
-    my $sparql = '';
-    if ($self->{options}{legacy}) {
-        for my $k (sort keys %c) {
-            my @parts = @{$c{$k}};
-            my $stmts = join ("\n\t", @parts);
-            $sparql .= $k ? "DELETE FROM GRAPH $k \{$stmts\}\n"
-                : "DELETE \{$stmts\}\n";
-        }
-    }
-    else {
-        $sparql = "DELETE DATA {\n";
-        for my $k (sort keys %c) {
-            my @parts = @{$c{$k}};
-            my $stmts = join("\n\t", @parts);
-            $sparql .= $k ? "GRAPH $k \{$stmts\n\}" : $stmts;
-        }
-        $sparql .= "\n}";
-    }
+	my $sparql = '';
+	if ($self->{options}{legacy}) {
+		for my $k (sort keys %c) {
+			my @parts = @{$c{$k}};
+			my $stmts = join ("\n\t", @parts);
+			$sparql .= $k ? "DELETE FROM GRAPH $k \{$stmts\}\n"
+				: "DELETE \{$stmts\}\n";
+		}
+	}
+	else {
+		$sparql = "DELETE DATA {\n";
+		for my $k (sort keys %c) {
+			my @parts = @{$c{$k}};
+			my $stmts = join("\n\t", @parts);
+			$sparql .= $k ? "GRAPH $k \{$stmts\n\}" : $stmts;
+		}
+		$sparql .= "\n}";
+	}
 
 	return $sparql;
 }
@@ -620,27 +621,27 @@ Removes statements matching the given nodes from the underlying model.
 =cut
 
 sub remove_statements {
-    my ($self, @nodes) = @_;
+	my ($self, @nodes) = @_;
 
-    for my $n (@nodes) {
-        throw RDF::Trine::Error::MethodInvocationError
-            -text => "Not a valid node object passed to remove_statements"
-                if defined $n
-                    and not blessed($n) && $n->isa('RDF::Trine::Node');
-    }
+	for my $n (@nodes) {
+		throw RDF::Trine::Error::MethodInvocationError
+			-text => "Not a valid node object passed to remove_statements"
+				if defined $n
+					and not blessed($n) && $n->isa('RDF::Trine::Node');
+	}
 
-    my %n;
-    (@n{qw(s p o)}, my $context) = @nodes;
-    $context ||= RDF::Trine::Node::Variable->new('g');
+	my %n;
+	(@n{qw(s p o)}, my $context) = @nodes;
+	$context ||= RDF::Trine::Node::Variable->new('g');
 
-    my $st = RDF::Trine::Statement->new
-        (map { $n{$_} || RDF::Trine::Node::Variable->new($_) } qw(s p o));
+	my $st = RDF::Trine::Statement->new
+		(map { $n{$_} || RDF::Trine::Node::Variable->new($_) } qw(s p o));
 
 	if ($self->_bulk_ops) {
 		push(@{ $self->{ ops } }, ['_remove_statement_patterns', $st, $context]);
 	} else {
 		my $sparql	= $self->_remove_statement_patterns_sparql( [ $st, $context ] );
-        warn $sparql;
+		warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -659,11 +660,11 @@ sub _remove_statement_patterns_sparql {
 		# default context
 
 		my $pat = sprintf '%s %s %s .',
-            map { $_->is_variable ? '?' . $_->name :
-                      $self->_skolemize($_)->as_ntriples }
-                ($s, $p, $o);
+			map { $_->is_variable ? '?' . $_->name :
+					  $self->_skolemize($_)->as_ntriples }
+				($s, $p, $o);
 		$pat = sprintf 'GRAPH %s { %s }',
-            ($c->is_variable ? '?' . $c->name : $self->_skolemize($c)->as_ntriples), $pat if $c;
+			($c->is_variable ? '?' . $c->name : $self->_skolemize($c)->as_ntriples), $pat if $c;
 
 		push @parts, $pat;
 	}
@@ -707,14 +708,14 @@ sub count_statements {
 	my $sparql;
 	my $triple	= join(' ', map { $_->is_variable ? '?' . $_->name : $self->_skolemize($_)->as_ntriples } @nodes[0..2]);
 	if ($use_quad) {
-        my $default = $self->{options}{context};
+		my $default = $self->{options}{context};
 		my $nodes;
 		if ($nodes[3]->isa('RDF::Trine::Node::Variable')) {
 			$nodes		= "GRAPH ?rt__graph { $triple }";
 		}
-        # XXX not sure what to do here re default graph
-        elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')
-                   and !defined($default) or !$default->is_nil) {
+		# XXX not sure what to do here re default graph
+		elsif ($nodes[3]->isa('RDF::Trine::Node::Nil')
+				   and !defined($default) or !$default->is_nil) {
 			$nodes	= join(' ', map { $_->is_variable ? '?' . $_->name : $self->_skolemize($_)->as_ntriples } @nodes[0..2]);
 		} else {
 			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $self->_skolemize($nodes[3])->as_ntriples;
@@ -784,34 +785,183 @@ SPARQL query.
 
 =cut
 
+sub _json_maybe_blank {
+	my $str = shift;
+	$str =~ m!^(_:|nodeID://)(.*?)$!i;
+	return RDF::Trine::Node::Blank->new($2) if defined $1;
+	return RDF::Trine::Node::Resource->new($str);
+}
+
 sub _json_literal {
 	RDF::Trine::Node::Literal->new(@{$_[0]}{qw(value lang datatype)});
 }
 my %JSON = (
-	uri   => sub { RDF::Trine::Node::Resource->new($_[0]{value}) },
-	bnode => sub {
-		my $x = $_[0]{value};
-		$x =~ s!nodeID://!!;
-		RDF::Trine::Node::Blank->new($x);
-	},
-	literal		 => \&_json_literal,
+	uri			 => sub { RDF::Trine::Node::Resource->new($_[0]{value}) },
+	bnode		   => sub { _json_maybe_blank($_[0]{value}) },
+	literal			=> \&_json_literal,
 	'typed-literal' => \&_json_literal,
 );
 
 sub _json_iter {
-    my $content = shift;
+	my $content = shift;
 
-    require JSON;
-    my $js = JSON->new->decode($content);
-    my @names = @{$js->{head}{vars} || []};
-    my @b = @{$js->{results}{bindings} || []};
-    return RDF::Trine::Iterator::Bindings->new(
-        sub {
-            return unless my $x = shift @b;
-            return { map {
-                ($_ => $JSON{$x->{$_}{type}}->($x->{$_}) ) } keys %$x };
-        },
-        \@names);
+	require JSON;
+	my $js = JSON->new->decode($content);
+	# sparql results
+	if ($js->{head}) {
+		my @names = @{$js->{head}{vars} || []};
+		my @b = @{$js->{results}{bindings} || []};
+		return RDF::Trine::Iterator::Bindings->new(
+			sub {
+				return unless my $x = shift @b;
+				return { map {
+					($_ => $JSON{$x->{$_}{type}}->($x->{$_}) ) } keys %$x };
+			},
+			\@names);
+	}
+	# talis-style json
+	else {
+		throw RDF::Trine::Error::DatabaseError
+			-text => 'Talis-style JSON is not a HASH reference'
+				unless ref $js eq 'HASH';
+
+		# The form of the JSON blob is { s => { p => [\%o] } } .
+
+		# That is, there is an ARRAY ref of object hashes inside a HASH
+		# ref keyed by predicate, inside a HASH ref keyed by subject.
+
+		# The problem is we need to turn this structure into an
+		# iterator of RDF::Trine::Statement objects.
+
+		# We can use the ARRAY refs as queues, and Perl hash objects
+		# have an internal iteration state which can be accessed by
+		# the 'each' operator. This naturally means that the state
+		# should remain outside the closure.
+
+		my ($s, $po, $p, $ol);
+
+		# We create an empty iterator 
+		my $empty = RDF::Trine::Iterator::Graph->new;
+		($s, \%po) = each %$js or return $empty;
+		$s = _json_maybe_blank($s);
+
+		#my $stop = 0;
+
+		#my ($ss, $po) = each %$js or $stop++;
+		#my ($ps, $ol) = each %$po or $stop++;
+		#my $oh = shift @{$ol || []} or $stop++;
+
+		my ($ss, $po, $ps, $ol, $oh);
+
+		my $psub = sub {
+			my ($s, $po) = @_;
+		};
+
+		my $ssub = sub {
+			my $js = shift;
+			($ss, $po) = each %$js or return;
+			my $s = _json_maybe_blank($ss);
+			$psub->($s, $po);
+		};
+
+		my $statement = sub {
+			my ($s, $p, $ol) = @_;
+			my $oh = shift @{$ol || []} or return;
+			my $o = $JSON{$oh->{type}}->($oh);
+			return RDF::Trine::Statement->new($s, $p, $o);
+		};
+
+		my ($s, $sh, $ps, $ph);
+
+		# the trick here is to preserve the iterators on the hash
+		# objects and use the lists as stacks
+
+		return RDF::Trine::Iterator::Graph->new(
+			sub {
+				if ($ss) {
+				}
+				else {
+					($ss, $po) = each %$js or return;
+					($ps, $ol) = each %$po or return;
+					
+				}
+
+				# shift 
+				if ($oh = shift @{$ol || []}) {
+				}
+				else {
+					if ($ps) {
+					}
+					else {
+					}
+					if ($ol) {
+						
+					unless ($ps) {
+						unless ($s) {
+							($s, $po) = each %$js or return;
+							$s = _json_maybe_blank($s);
+						}
+				unless ($ss) {
+					($ss, $po) = each %$js or return;
+					($ss, $sh
+				unless ($ss) {
+					($ss) = keys %$js or return;
+				}
+				($sh) = delete $js->{$ss} or return;
+
+
+				if (my $oh = shift @{$ol || []}) {
+				}
+				else {
+					if ($ol) {
+						if ($oh = shift @$ol) {
+						}
+						$oh = shift @$ol or return;
+					}
+						if ($ol) {
+						}
+					}
+					else {
+						
+				unless ($oh) {
+					unless ($ps) {
+						unless
+					}
+				($ss, $po) = each %$js or return;
+				($ps, $ol) = each %$po or return;
+				my $oh = shift @{$ol || []} or return;
+				return if $stop;
+
+				my $s = _json_maybe_blank($ss);
+				my $p = RDF::Trine::Node::Resource->new($ps);
+				my $o = $JSON{$oh->{type}}->($oh);
+
+				my $stmt = RDF::Trine::Statement->new($s, $p, $o);
+
+				unless ($oh = shift @$ol) {
+					# we have run out of objects, find the next predicate
+					if (($ps, $ol) = each %$po) {
+						$oh = shift @$ol
+						# we have run out of predicates, find the next subject
+						if (($ss, $po) = each %$js) {
+							# found a subject, now for predicate
+							if (($ps, $ol) = each %$po) {
+								$oh = shift @$ol or $stop++;
+							}
+							else {
+								$stop++;
+							}
+						}
+						else {
+							$stop++;
+						}
+					}
+				}
+
+				return $stmt;
+			});
+
+	}
 }
 
 sub get_sparql {
@@ -821,13 +971,14 @@ sub get_sparql {
 	#my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
 
-    warn $sparql;
+	warn $sparql;
 
 	my $urlchar	= ($self->{url} =~ /\?/ ? '&' : '?');
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
 		my $type = lc $response->content_type;
+		warn $response->content;
 		if ($type =~ /xml/) {
 			my $handler	= RDF::Trine::Iterator::SAXHandler->new();
 			my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
@@ -835,7 +986,7 @@ sub get_sparql {
 			return $handler->iterator;
 		}
 		elsif ($type =~ /json/) {
-            return _json_iter($response->content);
+			return _json_iter($response->content);
 		}
 		# elsif ($type =~ m!text/csv!) {
 		# 	warn $response->as_string;
@@ -857,7 +1008,7 @@ sub get_sparql {
 #		warn $sparql;
 		#warn Dumper($response);
 		throw RDF::Trine::Error
-            -text => "Error making remote SPARQL call to endpoint $endpoint ($status):\n" . $response->content;
+			-text => "Error making remote SPARQL call to endpoint $endpoint ($status):\n" . $response->content;
 	}
 }
 
@@ -867,9 +1018,12 @@ sub _get_post_iterator {
 	my $ua		= $self->{ua};
 
 	my $url			= $self->{url};
-	my $response	= $ua->post( $url, query => $sparql );
+	my $response	= $ua->post( $url, { query => $sparql } );
+	# first the response has to be successful
+	# then the response has to be an acceptable content-type
+	# then the response body has to be well-formed
 	if ($response->is_success) {
-		#warn $response->content;
+		# XXX this should be a dispatch table
 		my $type = lc $response->content_type;
 		if ($type =~ /xml/i) {
 			my $handler	= RDF::Trine::Iterator::SAXHandler->new();
@@ -882,11 +1036,12 @@ sub _get_post_iterator {
 			my $p = RDF::Trine::Parser->new('turtle');
 			my $m = RDF::Trine::Model->temporary_model;
 		}
-        elsif ($type =~ /json/i) {
-            return _json_iter($response->content);
-        }
+		elsif ($type =~ /json/i) {
+			return _json_iter($response->content);
+		}
 		else {
-			warn $response->content;
+			# XXX something more elegant than this
+			throw RDF::Trine::Error -text => $response->content;
 		}
 	} else {
 		my $status		= $response->status_line;

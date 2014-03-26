@@ -154,11 +154,11 @@ sub all_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
-    ok(defined(my $size = $store->size), 'size is defined');
-    diag("INITIAL SIZE: $size");
-    ok(my $count = $store->count_statements(undef, undef, undef),
-       'count is defined');
-    diag("INITIAL (DISTINCT) COUNT: $count");
+	ok(defined(my $size = $store->size), 'size is defined');
+	diag("INITIAL SIZE: $size");
+	ok(my $count = $store->count_statements(undef, undef, undef),
+	   'count is defined');
+	diag("INITIAL (DISTINCT) COUNT: $count");
 
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
@@ -182,22 +182,22 @@ sub all_store_tests {
 		literals_tests_simple( $store, $args, $ex, $size );
 		blank_node_tests_quads( $store, $args, $ex, $size );
 		count_statements_tests_simple( $store, $args, $ex, $size, $count );
-        diag(scalar @triples);
-        diag(scalar @quads);
-        #diag($_->as_string) for @triples;
-        #diag($_->as_string) for @quads;
+		diag(scalar @triples);
+		diag(scalar @quads);
+		#diag($_->as_string) for @triples;
+		#diag($_->as_string) for @quads;
 
-        diag("size $size");
-        diag("count $count");
+		diag("size $size");
+		diag("count $count");
 
 		add_quads( $store, $args, @quads );
 		update_sleep($args);
 
 		count_statements_tests_quads( $store, $args, $ex, $size, $count );
 
-        # take the size again before adding triples
-        #$size = $store->size;
-        #$count = $store->count_statements(undef, undef, undef);
+		# take the size again before adding triples
+		#$size = $store->size;
+		#$count = $store->count_statements(undef, undef, undef);
 
 		add_triples( $store, $args, @triples );
 		update_sleep($args);
@@ -312,15 +312,15 @@ sub contexts_tests {
 
 	my %seen;
 	while (my $c = $iter->next) {
-        # don't want to count other contexts
-        my $ok = blessed($c) && $c->isa('RDF::Trine::Node');
-        if ($ok) {
-            next unless $expect{$c->as_string};
-            $seen{ $c->as_string }++;
-        }
-        ok($ok, 'Context iterator returns an RDF::Trine::Node');
+		# don't want to count other contexts
+		my $ok = blessed($c) && $c->isa('RDF::Trine::Node');
+		if ($ok) {
+			next unless $expect{$c->as_string};
+			$seen{ $c->as_string }++;
+		}
+		ok($ok, 'Context iterator returns an RDF::Trine::Node');
 	}
-    #%seen = map { $_ => $seen{$_} } keys %expect;
+	#%seen = map { $_ => $seen{$_} } keys %expect;
 	is_deeply(\%seen, \%expect, 'expected contexts' );
 }
 
@@ -341,7 +341,7 @@ sub add_statement_tests_simple {
 	my $etag_before = $store->etag;
 	update_sleep($args);
 
-    diag("Initial size: $size");
+	diag("Initial size: $size");
 
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
@@ -350,16 +350,16 @@ sub add_statement_tests_simple {
 		isnt($etag_before, $store->etag, 'Etag has changed');
 	}
 
-    my $s = $size + 1;
+	my $s = $size + 1;
 	is( $store->size, $s,
-        "store has $s statement(s) after (triple+context) add" );
+		"store has $s statement(s) after (triple+context) add" );
 
 	TODO: {
 		local $TODO =  'Duplicate detection is unsupported' if $args->{suppress_dupe_tests};
 		$store->add_statement( $quad );
 		update_sleep($args);
 		is( $store->size, $s,
-            "store has $s statement(s) after duplicate (quad) add" );
+			"store has $s statement(s) after duplicate (quad) add" );
 	}
 	
 	$etag_before = $store->etag;
@@ -399,9 +399,9 @@ sub bulk_add_statement_tests_simple {
 	note "bulk add_statement tests";
 	my ($store, $args, $ex) = @_;
 
-    my $size = $store->size;
+	my $size = $store->size;
 
-    diag("Initial size: $size");
+	diag("Initial size: $size");
 
 	$store->_begin_bulk_ops if ($store->can('_begin_bulk_ops'));
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
@@ -411,7 +411,7 @@ sub bulk_add_statement_tests_simple {
 
 	update_sleep($args);
 
-    my $s = $size + 1;
+	my $s = $size + 1;
 
 	is( $store->size, $s, "store has $s statement(s) after (triple+context) add" ) ;
 
@@ -468,12 +468,12 @@ sub literals_tests_simple {
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $litplain);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litplain, $ex->d);
 
-    my $size = $store->size;
-    diag("Initial size: $size");
+	my $size = $store->size;
+	diag("Initial size: $size");
 
 	$store->add_statement( $triple, $ex->d );
 
-    my $s1 = $size + 1;
+	my $s1 = $size + 1;
 
 	is( $store->size, $s1, "store has $s1 statement(s) after (triple+context) add" );
   TODO: {
@@ -487,7 +487,7 @@ sub literals_tests_simple {
 	$store->add_statement( $quad );
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litlang2, $ex->d);
 	$store->add_statement( $quad2 );
-    my $s2 = $size + 2;
+	my $s2 = $size + 2;
 	is( $store->size, $s2, "store has $s2 statements after (quad) add" );
 
 	{
@@ -516,12 +516,12 @@ sub literals_tests_simple {
 	}
 
 	my $quad3	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $litlang1, $ex->d);
-    my $s3 = $size + 3;
+	my $s3 = $size + 3;
 	$store->add_statement( $quad3 );
 	is( $store->size, $s3, "store has $s3 statements after integer literal add" );
 
 	{
-		my $iter        = $store->get_statements( undef, undef, $litlang1, undef );
+		my $iter		= $store->get_statements( undef, undef, $litlang1, undef );
 		my $st = $iter->next;
 		is($st->object->literal_value, 'dahu', 'expected triple get_statements bound object value' );
 		is($st->object->literal_value_language, 'fr', 'expected triple get_statements bound object language' );
@@ -531,7 +531,7 @@ sub literals_tests_simple {
 
 	my $triple2	= RDF::Trine::Statement->new($ex->a, $ex->b, $litstring);
 	$store->add_statement( $triple2 );
-    my $s4 = $size + 4;
+	my $s4 = $size + 4;
 	is( $store->size, $s4, "store has $s4 statements after (triple) add" );
 
 	{
@@ -621,13 +621,13 @@ sub blank_node_tests_quads {
 	my $triple	= RDF::Trine::Statement->new($blankfoo, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($blankfoo, $ex->b, $ex->c, $ex->d);
 
-    my $size = $store->size;
+	my $size = $store->size;
 
-    diag("Initial size: $size");
+	diag("Initial size: $size");
 
-    my $s1 = $size + 1;
-    my $s2 = $size + 2;
-    my $s3 = $size + 3;
+	my $s1 = $size + 1;
+	my $s2 = $size + 2;
+	my $s3 = $size + 3;
 
 	$store->add_statement( $triple, $ex->d );
 	is( $store->size, $s1, "store has $s1 statement(s) after (triple+context) add" );
@@ -768,15 +768,15 @@ sub count_statements_tests_simple {
 
 	my ($store, $args, $ex, $size, $count) = @_;
 
-    diag("Initial size: $size");
+	diag("Initial size: $size");
 
 	{
 		is( $store->size, $size, 'expected initial size before add statement' );
 		my $st	= RDF::Trine::Statement::Quad->new( $ex->a, $ex->b, $ex->c, $ex->d );
 		$store->add_statement( $st );
 
-        my $s1 = $size + 1;
-        my $c1 = $count + 1;
+		my $s1 = $size + 1;
+		my $c1 = $count + 1;
 
 		is( $store->size, $s1, 'size' );
 		is( $store->count_statements(), $c1, 'count_statements()' );
@@ -822,7 +822,7 @@ sub count_statements_tests_quads {
 	note " quad count_statements tests";
 	my ($store, $args, $ex, $size, $count) = @_;
 	{
-        diag($store->size);
+		diag($store->size);
 		is( $store->count_statements, $count + 27, 'count_statements()' );
 		is( $store->count_statements(undef, undef, undef), $count + 27, 'count_statements( fff )' );
 		is( $store->count_statements(undef, undef, undef, undef), $size + 81, 'count_statements( ffff )' );
@@ -850,7 +850,7 @@ sub count_statements_tests_triples {
 		is( $store->count_statements, $count + 27, 'count_statements() after triples added' );
 		is( $store->count_statements(undef, undef, undef), $count + 27, 'count_statements( fff ) after triples added' );
 		is( $store->count_statements( $ex->a, undef, undef ), 9, 'count_statements( bff )' );
-        diag($nil->value);
+		diag($nil->value);
 		is( $store->count_statements( $ex->a, undef, undef, $nil ), 9, 'count_statements( bffb )' );
 	SKIP: {
 			skip 'Quad-only test', 2 if $args->{quads_unsupported};
@@ -975,7 +975,7 @@ sub get_statements_tests_quads {
 		isa_ok( $iter, 'RDF::Trine::Iterator' );
 		my $count	= 0;
 		while (my $st = $iter->next()) {
-            diag($st->sse);
+			diag($st->sse);
 			ok( $st->subject->equal( $ex->a ), 'expected triple get_statements bound subject' );
 			ok( $st->predicate->equal( $ex->b ), 'expected triple get_statements bound predicate' );
 			$count++;
@@ -1044,7 +1044,7 @@ sub get_pattern_tests {
 		is( $count, 0, 'get_pattern( bbf, bbu ) expected result count'	 );
 		is( $iter->next, undef, 'pattern iterator end-of-stream' );
 	}
-      }
+	  }
 
 
 
@@ -1060,7 +1060,7 @@ Tests for removing statements.
 sub remove_statement_tests {
 	note " remove_statement tests";
 	my ($store, $args, $ex, $names, $size, $count) = @_;
-    my @names = @$names;
+	my @names = @$names;
 	is( $store->count_statements( undef, undef, undef, undef ), $size + 108, 'store size before quad removal' );
 	foreach my $i (@names[0..2]) {
 		my $w	= $ex->$i();
