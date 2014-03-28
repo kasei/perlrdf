@@ -566,7 +566,7 @@ sub remove_statement {
 		push(@{ $self->{ ops } }, ['_remove_statements', $st, $context]);
 	} else {
 		my $sparql	= $self->_remove_statements_sparql( [ $st, $context ] );
-		warn $sparql;
+		#warn $sparql;
 		my $iter	= $self->_get_post_iterator( $sparql );
 		my $row		= $iter->next;
 	}
@@ -803,10 +803,10 @@ my %JSON = (
 );
 
 sub _json_sparql_results {
-    my $content = shift;
-    require JSON;
+	my $content = shift;
+	require JSON;
 	my $js = eval { JSON->new->decode($content) };
-    throw RDF::Trine::Error -text => $@ if $@;
+	throw RDF::Trine::Error -text => $@ if $@;
 
 	if ($js->{head} && $js->{results} && $js->{results}{bindings}) {
 		my @names = @{$js->{head}{vars} || []};
@@ -819,98 +819,98 @@ sub _json_sparql_results {
 			},
 			\@names);
 	}
-    else {
-        throw RDF::Trine::Error -text => "Malformed JSON response: $content";
-    }
+	else {
+		throw RDF::Trine::Error -text => "Malformed JSON response: $content";
+	}
 }
 
 sub _json_graph_results {
-    my $content = shift;
+	my $content = shift;
 
-    require JSON;
+	require JSON;
 	my $js = eval { JSON->new->decode($content) };
-    throw RDF::Trine::Error -text => $@ if $@;
+	throw RDF::Trine::Error -text => $@ if $@;
 
-    # The form of the JSON blob is { s => { p => [\%o] } } .
+	# The form of the JSON blob is { s => { p => [\%o] } } .
 
-    # That is, there is an ARRAY ref of object hashes inside a HASH
-    # ref keyed by predicate, inside a HASH ref keyed by subject.
+	# That is, there is an ARRAY ref of object hashes inside a HASH
+	# ref keyed by predicate, inside a HASH ref keyed by subject.
 
-    # The problem is we need to turn this structure into an
-    # iterator of RDF::Trine::Statement objects.
+	# The problem is we need to turn this structure into an
+	# iterator of RDF::Trine::Statement objects.
 
-    # We can use the ARRAY refs as queues, and Perl hash objects
-    # have an internal iteration state which can be accessed by
-    # the 'each' operator. This naturally means that the state
-    # should remain outside the closure.
+	# We can use the ARRAY refs as queues, and Perl hash objects
+	# have an internal iteration state which can be accessed by
+	# the 'each' operator. This naturally means that the state
+	# should remain outside the closure.
 
-    my ($s, $p, %sh, %ph, @ol);
-    %sh = %$js;
+	my ($s, $p, %sh, %ph, @ol);
+	%sh = %$js;
 
-    # shift off the first object and return a statement
-    # if we run out of objects, we get the next predicate
-    # if we run out of predicates, we get the next subject
+	# shift off the first object and return a statement
+	# if we run out of objects, we get the next predicate
+	# if we run out of predicates, we get the next subject
 
-    # advance s
-    my $as = sub {
-        my ($k, $v) = each %sh or return;
-        throw RDF::Trine::Error
-            -text => 'Malformed JSON' unless $v && ref $v eq 'HASH';
-        %ph = %$v;
+	# advance s
+	my $as = sub {
+		my ($k, $v) = each %sh or return;
+		throw RDF::Trine::Error
+			-text => 'Malformed JSON' unless $v && ref $v eq 'HASH';
+		%ph = %$v;
 
-        _json_maybe_blank($k);
-    };
+		_json_maybe_blank($k);
+	};
 
-    # advance p
-    my $ap = sub {
-        my ($k, $v) = each %ph or return;
-        throw RDF::Trine::Error
-            -text => 'Malformed JSON' unless $v && ref $v eq 'ARRAY';
-        @ol = @$v;
+	# advance p
+	my $ap = sub {
+		my ($k, $v) = each %ph or return;
+		throw RDF::Trine::Error
+			-text => 'Malformed JSON' unless $v && ref $v eq 'ARRAY';
+		@ol = @$v;
 
-        RDF::Trine::Node::Resource->new($k);
-    };
+		RDF::Trine::Node::Resource->new($k);
+	};
 
-    # wind these forward now
-    $s = $as->();
-    $p = $ap->();
+	# wind these forward now
+	$s = $as->();
+	$p = $ap->();
 
-    my $osub = sub {
-        my $oh = shift @ol or return;
-        my $o = $JSON{$oh->{type}}->($oh);
-        return RDF::Trine::Statement->new($s, $p, $o);
-    };
+	my $osub = sub {
+		my $oh = shift @ol or return;
+		my $o = $JSON{$oh->{type}}->($oh);
+		return RDF::Trine::Statement->new($s, $p, $o);
+	};
 
-    my $psub = sub {
-        my $stmt = $osub->();
-        return $stmt if $stmt;
+	my $psub = sub {
+		my $stmt = $osub->();
+		return $stmt if $stmt;
 
-        $p = $ap->() or return;
+		$p = $ap->() or return;
 
-        return $osub->();
-    };
+		return $osub->();
+	};
 
-    my $sub = sub {
-        my $stmt = $psub->();
-        return $stmt if $stmt;
+	my $sub = sub {
+		my $stmt = $psub->();
+		return $stmt if $stmt;
 
-        $s = $as->() or return;
+		$s = $as->() or return;
 
-        return $psub->();
-    };
+		return $psub->();
+	};
 
-    return RDF::Trine::Iterator::Graph->new($sub);
+	return RDF::Trine::Iterator::Graph->new($sub);
 }
 
 my %DISPATCH = (
-    'application/sparql-results+xml' => sub {
-        my $handler	= RDF::Trine::Iterator::SAXHandler->new;
-        my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
-        $p->parse_string(shift);
-        return $handler->iterator;
-    },
-    'application/sparql-results+json' => \&_json_sparql_results,
-    'application/rdf+json'            => \&_json_graph_results,
+	'application/sparql-results+xml' => sub {
+		my $handler	= RDF::Trine::Iterator::SAXHandler->new;
+		my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
+		$p->parse_string(shift);
+		return $handler->iterator;
+	},
+	'application/sparql-results+json' => \&_json_sparql_results,
+	'application/rdf+json'			=> \&_json_graph_results,
 );
 
 sub get_sparql {
@@ -927,16 +927,16 @@ sub get_sparql {
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
 		my $type = lc $response->content_type;
-        ($type) = split /\s*;\s*/, $type;
+		($type) = split /\s*;\s*/, $type;
 		#warn $response->content;
-        if ($DISPATCH{$type}) {
-            return $DISPATCH{$type}->($response->content);
-        }
-        else {
-            throw RDF::Trine::Error -text => "Unsupported response type $type";
-        }
+		if ($DISPATCH{$type}) {
+			return $DISPATCH{$type}->($response->content);
+		}
+		else {
+			throw RDF::Trine::Error -text => "Unsupported response type $type";
+		}
 	}
-    else {
+	else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
@@ -960,15 +960,15 @@ sub _get_post_iterator {
 	if ($response->is_success) {
 		# XXX this should be a dispatch table
 		my $type = lc $response->content_type;
-        ($type) = split /\s*;\s*/, $type;
-        if ($DISPATCH{$type}) {
-            return $DISPATCH{$type}->($response->content);
-        }
-        else {
-            throw RDF::Trine::Error -text => "Unsupported response type $type";
-        }
+		($type) = split /\s*;\s*/, $type;
+		if ($DISPATCH{$type}) {
+			return $DISPATCH{$type}->($response->content);
+		}
+		else {
+			throw RDF::Trine::Error -text => "Unsupported response type $type";
+		}
 	}
-    else {
+	else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};
 #		warn "url: $url\n";
