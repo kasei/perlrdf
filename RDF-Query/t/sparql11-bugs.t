@@ -49,4 +49,14 @@ END
 	isa_ok( $query, 'RDF::Query', 'https://github.com/kasei/perlrdf/issues/100' );
 }
 
+{
+	my $model	= RDF::Trine::Model->new();
+	my $query	= RDF::Query->new('PREFIX ex: <http://www.example.com/ns#> SELECT ?a WHERE { OPTIONAL { ?s ex:aggregate ?a } }');
+	my $plan;
+	lives_ok {
+		($plan, my $ctx)	= $query->prepare($model);
+	} 'Planning of optional plan (github issue 101)';
+	isa_ok($plan, 'RDF::Query::Plan', 'Plan object from optional plan (github issue 101)');
+}
+
 done_testing();

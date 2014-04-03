@@ -828,6 +828,9 @@ sub generate_plans {
 		$p->label( algebra => $algebra );
 	}
 	
+	unless (scalar(@return_plans)) {
+		throw RDF::Query::Error::CompilationError (-text => "Cannot generate an execution plan for algebra of type $type", -object => $algebra);
+	}
 	return @return_plans;
 }
 

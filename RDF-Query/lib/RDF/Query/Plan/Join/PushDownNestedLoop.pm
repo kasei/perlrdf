@@ -59,7 +59,8 @@ sub new {
 		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support optional patterns as RHS due to bottom-up variable scoping rules (use NestedLoop instead)";
 	}
 	
-	if ($rhs->sse =~ /aggregate/sm) {
+	my @aggs = $rhs->subplans_of_type('RDF::Query::Plan::Aggregate');
+	if (scalar(@aggs)) {
 		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support aggregates in the RHS due to aggregate group fragmentation";
 	}
 	
