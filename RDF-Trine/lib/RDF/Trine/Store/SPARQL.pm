@@ -805,7 +805,7 @@ my %JSON = (
 sub _json_sparql_results {
 	my $content = shift;
 	require JSON;
-	my $js = eval { JSON->new->decode($content) };
+	my $js = eval { JSON->new->decode($$content) };
 	throw RDF::Trine::Error -text => $@ if $@;
 
 	if ($js->{head} && $js->{results} && $js->{results}{bindings}) {
@@ -828,7 +828,7 @@ sub _json_graph_results {
 	my $content = shift;
 
 	require JSON;
-	my $js = eval { JSON->new->decode($content) };
+	my $js = eval { JSON->new->decode($$content) };
 	throw RDF::Trine::Error -text => $@ if $@;
 
 	# The form of the JSON blob is { s => { p => [\%o] } } .
@@ -885,7 +885,7 @@ sub _json_graph_results {
 		my $stmt = $osub->();
 		return $stmt if $stmt;
 
-		$p = $ap->() or return;
+        $p = $ap->() or return;
 
 		return $osub->();
 	};
@@ -894,9 +894,33 @@ sub _json_graph_results {
 		my $stmt = $psub->();
 		return $stmt if $stmt;
 
-		$s = $as->() or return;
+		unless ($s = $as->()) {
+            undef $js;
+            undef $s;
+            undef $p;
+            undef %sh;
+            undef %ph;
+            undef @ol;
+            undef $as;
+            undef $ap;
+            undef $osub;
+            undef $psub;
+            return;
+        }
 
-		return $psub->();
+		$stmt = $psub->();
+		return $stmt if $stmt;
+        undef $js;
+        undef $s;
+        undef $p;
+        undef %sh;
+        undef %ph;
+        undef @ol;
+        undef $as;
+        undef $ap;
+        undef $osub;
+        undef $psub;
+        return;
 	};
 
 	return RDF::Trine::Iterator::Graph->new($sub);
@@ -904,14 +928,17 @@ sub _json_graph_results {
 
 my %DISPATCH = (
 	'application/sparql-results+xml' => sub {
+        my $cref = shift;
 		my $handler	= RDF::Trine::Iterator::SAXHandler->new;
 		my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
-		$p->parse_string(shift);
+		$p->parse_string($$cref);
 		return $handler->iterator;
 	},
 	'application/sparql-results+json' => \&_json_sparql_results,
 	'application/rdf+json'			=> \&_json_graph_results,
 );
+
+# XXX yo is the only difference between these two methods the HTTP method?
 
 sub get_sparql {
 	my $self	= shift;
@@ -930,7 +957,7 @@ sub get_sparql {
 		($type) = split /\s*;\s*/, $type;
 		#warn $response->content;
 		if ($DISPATCH{$type}) {
-			return $DISPATCH{$type}->($response->content);
+			return $DISPATCH{$type}->($response->content_ref);
 		}
 		else {
 			throw RDF::Trine::Error -text => "Unsupported response type $type";
@@ -958,11 +985,13 @@ sub _get_post_iterator {
 	# then the response has to be an acceptable content-type
 	# then the response body has to be well-formed
 	if ($response->is_success) {
-		# XXX this should be a dispatch table
+		# clip off any parameters on the content-type
 		my $type = lc $response->content_type;
 		($type) = split /\s*;\s*/, $type;
+		# XXX this should be a dispatch table
+		# it IS a dispatch table!
 		if ($DISPATCH{$type}) {
-			return $DISPATCH{$type}->($response->content);
+			return $DISPATCH{$type}->($response->content_ref);
 		}
 		else {
 			throw RDF::Trine::Error -text => "Unsupported response type $type";
