@@ -9,6 +9,14 @@ This document describes RDF::Trine::Store::DBI::SQLite version 1.007_01
 =head1 SYNOPSIS
 
     use RDF::Trine::Store::DBI::SQLite;
+    my $store = RDF::Trine::Store->new({
+                                         storetype => 'DBI',
+                                         name      => 'test',
+                                         dsn       => "dbi:SQLite:dbname=test.db",
+                                         username  => '',
+                                         password  => ''
+                                       });
+
 
 =head1 DESCRIPTION
 
