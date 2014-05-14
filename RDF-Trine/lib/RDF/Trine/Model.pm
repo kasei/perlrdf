@@ -248,7 +248,7 @@ sub add_hashref {
 
 =item C<< add_iterator ( $iter ) >>
 
-Add triples from the statement iteratorto the model.
+Add triples from the statement iterator to the model.
 
 =cut
 
