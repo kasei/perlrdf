@@ -255,7 +255,7 @@ Add triples from the statement iterator to the model.
 sub add_iterator {
 	my $self	= shift;
 	my $iter	= shift;
-	unless (blessed($iter) and ($iter->isa('RDF::Trine::Iterator::Graph'))) {
+	unless (blessed($iter) and ($iter->is_graph)) {
 		throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a '. ref($iter) . ' iterator to a model, only graphs.';
 	}
 	$self->begin_bulk_ops();
