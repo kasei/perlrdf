@@ -151,11 +151,11 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-		if ($dsn =~ /^DBI:mysql:/) {
+		if ($dsn =~ /^DBI:mysql:/i) {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
-		} elsif ($dsn =~ /^DBI:Pg:/) {
+		} elsif ($dsn =~ /^DBI:Pg:/i) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
-		} elsif ($dsn =~ /^DBI:SQLite:/) {
+		} elsif ($dsn =~ /^DBI:SQLite:/i) {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
 			$user	= '';
 			$pass	= '';
