@@ -248,13 +248,16 @@ sub add_hashref {
 
 =item C<< add_iterator ( $iter ) >>
 
-Add triples from the statement iteratorto the model.
+Add triples from the statement iterator to the model.
 
 =cut
 
 sub add_iterator {
 	my $self	= shift;
 	my $iter	= shift;
+	unless (blessed($iter) and ($iter->is_graph)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a '. ref($iter) . ' iterator to a model, only graphs.';
+	}
 	$self->begin_bulk_ops();
 	while (my $st = $iter->next) {
 		$self->add_statement( $st );
