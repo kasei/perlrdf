@@ -166,7 +166,13 @@ sub explain {
 		$string	.= $patterns[0]->explain( $s, $count+1 );
 	} else {
 		foreach my $p (@patterns) {
-			$string	.= $p->explain( $s, $count+1 );
+			if ($p->can('explain')) {
+				$string	.= $p->explain( $s, $count+1 );
+			} else {
+				my $str	= $p->sse;
+				$str	.= "\n" unless (substr($str,-1) eq "\n");
+				$string	.= $str;
+			}
 		}
 	}
 	return $string;

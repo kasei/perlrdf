@@ -117,7 +117,11 @@ sub explain {
 	my $type	= $self->op;
 	my $string	= "${indent}${type}\n";
 	foreach my $p ($self->operands) {
-		$string	.= $p->explain( $s, $count+1 );
+		if ($p->can('explain')) {
+			$string	.= $p->explain( $s, $count+1 );
+		} else {
+			$string	.= $p->sse;
+		}
 	}
 	return $string;
 }

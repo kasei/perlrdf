@@ -156,6 +156,7 @@ on the command line.
 
 sub explain {
 	my $self	= shift;
+# 	warn 'Explaining query plan: ' . $self->serialize();
 	my ($s, $count)	= ('  ', 0);
 	if (@_) {
 		$s		= shift;
@@ -453,6 +454,7 @@ sub generate_plans {
 								my $code	= sub {
 									return if ($done);
 									$done	= 1;
+warn Dumper(\@triples); # XXX
 									my $count	= $model->count_statements( $triples[0]->nodes );
 									my $lit		= RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer');
 									my $vb	= RDF::Query::VariableBindings->new( {
