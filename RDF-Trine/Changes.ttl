@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.008" ;
-                        doap:created      "2013-XX-XX" ;
+                        doap:created      "2014-05-20" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Parser::RDFPatch." ;
