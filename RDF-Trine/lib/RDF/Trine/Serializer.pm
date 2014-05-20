@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 1.007_01
+This document describes RDF::Trine::Serializer version 1.008
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '1.007_01';
+	$VERSION	= '1.008';
 }
 
 use RDF::Trine::Serializer::NQuads;

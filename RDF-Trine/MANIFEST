@@ -9,6 +9,10 @@ bin/rdf_store_serialize.pl
 bin/rdf_transcode.pl
 bin/srx2csv
 bin/srx2table
+bin/turtle_benchmark.pl
+bin/turtle_parse.pl
+bin/turtle_tokenize.pl
+bin/turtle-2013-harness.pl
 Changes.ttl
 examples/foaf_labels.pl
 extra/mysql.sql
