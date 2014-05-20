@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 1.007
+This document describes RDF::Trine::Model version 1.008
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.007';
+	$VERSION	= '1.008';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -149,7 +149,13 @@ Adds the specified C<< $statement >> to the rdf store.
  
 sub add_statement {
 	my ($self, @args)	= @_;
-	unless ($args[0]->isa('RDF::Trine::Statement')) {
+	if ($args[0]->isa('RDF::Trine::Statement')) {
+		foreach my $n ($args[0]->nodes) {
+			unless (blessed($n) and ($n->isa('RDF::Trine::Node::Resource') or $n->isa('RDF::Trine::Node::Literal') or $n->isa('RDF::Trine::Node::Blank') or $n->isa('RDF::Trine::Node::Nil'))) {
+				throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a pattern (non-ground statement) to a model';
+			}
+		}
+	} else {
 		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
 	}
 	if ($self->{temporary}) {
@@ -242,13 +248,16 @@ sub add_hashref {
 
 =item C<< add_iterator ( $iter ) >>
 
-Add triples from the statement iteratorto the model.
+Add triples from the statement iterator to the model.
 
 =cut
 
 sub add_iterator {
 	my $self	= shift;
 	my $iter	= shift;
+	unless (blessed($iter) and ($iter->is_graph)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a '. ref($iter) . ' iterator to a model, only graphs.';
+	}
 	$self->begin_bulk_ops();
 	while (my $st = $iter->next) {
 		$self->add_statement( $st );

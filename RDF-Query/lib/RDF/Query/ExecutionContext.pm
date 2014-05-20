@@ -7,7 +7,7 @@ RDF::Query::ExecutionContext - Query execution context
 
 =head1 VERSION
 
-This document describes RDF::Query::ExecutionContext version 2.909.
+This document describes RDF::Query::ExecutionContext version 2.910.
 
 =head1 METHODS
 
@@ -24,7 +24,7 @@ use warnings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.909';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -114,6 +114,19 @@ sub bound {
 	return $self->_get_value( 'bound', @_ ) || {};
 }
 
+=item C<< bind_variable ( $varname => $node ) >>
+
+=cut
+
+sub bind_variable {
+	my $self	= shift;
+	my $var		= shift;
+	my $term	= shift;
+	my $bound	= $self->_get_value( 'bound', @_ ) || {};
+	$bound->{$var}	= $term;
+	return $self->_get_value('bound', $bound);
+}
+
 =item C<< base_uri >>
 
 =cut
@@ -200,6 +213,7 @@ sub _get_value {
 	my $key		= shift;
 	if (@_) {
 		$self->[0]{ $key }	= shift;
+		return $self->[0]{ $key };
 	}
 	foreach my $i (0 .. $#{ $self }) {
 		if (exists($self->[ $i ]{ $key })) {

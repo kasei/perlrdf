@@ -7,7 +7,7 @@ RDF::Trine::Serializer::RDFXML - RDF/XML Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::RDFXML version 1.007
+This document describes RDF::Trine::Serializer::RDFXML version 1.008
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.007';
+	$VERSION	= '1.008';
 	$RDF::Trine::Serializer::serializer_names{ 'rdfxml' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/RDF_XML' }	= __PACKAGE__;
 	foreach my $type (qw(application/rdf+xml)) {
@@ -69,14 +69,23 @@ sub new {
 	my %args	= @_;
 	my $self = bless( { namespaces => { 'http://www.w3.org/1999/02/22-rdf-syntax-ns#' => 'rdf' } }, $class);
 	if (my $ns = $args{namespaces}) {
-		my %ns		= %{ $ns };
 		my %nsmap;
-		while (my ($ns, $uri) = each(%ns)) {
-			for (1..2) {
-				$uri	= $uri->uri_value if (blessed($uri));
-			}
-			$nsmap{ $uri }	= $ns;
-		}
+        if (blessed($ns) and $ns->isa('RDF::Trine::NamespaceMap')) {
+            for my $prefix ($ns->list_prefixes) {
+                # way convoluted
+                my $nsuri = $ns->namespace_uri($prefix)->uri->value;
+                $nsmap{$nsuri} = $prefix;
+            }
+        }
+        else {
+            my %ns		= %{ $ns };
+            while (my ($ns, $uri) = each(%ns)) {
+                for (1..2) {
+                    $uri	= $uri->uri_value if (blessed($uri));
+                }
+                $nsmap{ $uri }	= $ns;
+            }
+        }
 		@{ $self->{namespaces} }{ keys %nsmap }	= values %nsmap;
 	}
 	if ($args{base}) {
