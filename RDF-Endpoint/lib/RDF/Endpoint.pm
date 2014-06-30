@@ -869,7 +869,7 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010-2012 Gregory Todd Williams.
+Copyright (c) 2010-2014 Gregory Todd Williams.
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any
