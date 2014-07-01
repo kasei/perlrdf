@@ -20,7 +20,7 @@
 	
 	doap:Version [
 		doap:revision     "0.06" ;
-		doap:created      "2014-XX-XX" ;
+		doap:created      "2014-07-01" ;
 	] ;
 	asc:changes [
 		asc:addition	"Add Server header (from Kjetil Kjernsmo via github pull request #93)." ;
