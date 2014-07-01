@@ -8,6 +8,12 @@ use Test::RDF::Trine::Store qw(all_store_tests number_of_tests);
 use strict;
 use Test::More;
 
+use Module::Load::Conditional qw[can_load];
+
+unless (can_load( modules => { 'DBD::Pg' => 0 })) {
+  plan skip_all => "DBD::Pg must be installed for Postgres tests";
+}
+
 
 unless (
 		exists $ENV{RDFTRINE_STORE_PG_DATABASE} and
@@ -19,7 +25,7 @@ my $db		= $ENV{RDFTRINE_STORE_PG_DATABASE};
 my $host	= $ENV{RDFTRINE_STORE_PG_HOST};
 my $port	= $ENV{RDFTRINE_STORE_PG_PORT};
 my $user	= $ENV{RDFTRINE_STORE_PG_USER};
-my $pass	= $ENV{RDFTRINE_STORE_PG_PASSWORD};
+my $pass	= $ENV{RDFTRINE_STORE_PG_PASSWORD}; 
 my $model	= $ENV{RDFTRINE_STORE_PG_MODEL};
 
 plan tests => 4 + Test::RDF::Trine::Store::number_of_tests;

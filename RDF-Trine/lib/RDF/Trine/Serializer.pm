@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 0.140
+This document describes RDF::Trine::Serializer version 1.008
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 use RDF::Trine::Serializer::NQuads;
@@ -43,6 +43,8 @@ use RDF::Trine::Serializer::NTriples::Canonical;
 use RDF::Trine::Serializer::RDFXML;
 use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
+use RDF::Trine::Serializer::TriG;
+use RDF::Trine::Serializer::RDFPatch;
 
 
 =head1 METHODS
@@ -90,12 +92,17 @@ sub new {
 =item C<< negotiate ( request_headers => $request_headers, %options ) >>
 
 Returns a two-element list containing an appropriate media type and
-RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.
-If the C<< 'request_headers' >> key-value is supplied, the
-C<< $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.
-The option C<< 'restrict' >>, set to a list of serializer names, can be 
-used to limit the serializers to choose from. The rest of 
-C<< %options >> is passed through to the serializer constructor.
+RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.  If
+the C<< 'request_headers' >> key-value is supplied, the C<<
+$request_headers >> is passed to C<< HTTP::Negotiate::choose >>.  The
+option C<< 'restrict' >>, set to a list of serializer names, can be
+used to limit the serializers to choose from. Finally, an C<<'extends' >> 
+option can be set to a hashref that contains MIME-types
+as keys and a custom variant as value. This will enable the user to
+use this negotiator to return a type that isn't supported by any
+serializers. The subsequent code will have to find out how to return a
+representation. The rest of C<< %options >> is passed through to the
+serializer constructor.
 
 =cut
 
@@ -167,7 +174,8 @@ sub media_types {
 	while (my($type, $sclass) = each(%media_types)) {
 		push(@list, $type) if ($sclass eq $class);
 	}
-	return sort @list;
+	my @types	= sort @list;
+	return @types;
 }
 
 =item C<< serialize_model_to_file ( $fh, $model ) >>
@@ -185,7 +193,7 @@ sub serialize_model_to_string {
 	my $self	= shift;
 	my $model	= shift;
 	my $string	= '';
-	open( my $fh, '>', \$string );
+	open( my $fh, '>:encoding(UTF-8)', \$string );
 	$self->serialize_model_to_file( $fh, $model );
 	close($fh);
 	return $string;

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sequence - Algebra class for a sequence of algebra operatio
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sequence version 2.908.
+This document describes RDF::Query::Algebra::Sequence version 2.910.
 
 =cut
 
@@ -20,7 +20,7 @@ use base qw(RDF::Query::Algebra);
 
 use Data::Dumper;
 use Log::Log4perl;
-use Scalar::Util qw(refaddr reftype);
+use Scalar::Util qw(refaddr reftype blessed);
 use Carp qw(carp croak confess);
 use Time::HiRes qw(gettimeofday tv_interval);
 use RDF::Trine::Iterator qw(smap swatch);
@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -206,6 +206,45 @@ sub bind_variables {
 	my $class	= ref($self);
 	my $bound	= shift;
 	return $class->new( map { $_->bind_variables( $bound ) } $self->patterns );
+}
+
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
+
+sub check_duplicate_blanks {
+	my $self	= shift;
+	my @data;
+	foreach my $arg (grep { blessed($_) and $_->isa('RDF::Query::Algebra::Update') and $_->data_only } $self->construct_args) {
+		push(@data, [$arg, $arg->_referenced_blanks()]);
+	}
+	
+	my %seen;
+	foreach my $d (@data) {
+		my ($pat, $data)	= @$d;
+		foreach my $b (@$data) {
+			if ($seen{ $b }) {
+				throw RDF::Query::Error::QueryPatternError -text => "Same blank node identifier ($b) used in more than one BasicGraphPattern.";
+			}
+			$seen{ $b }	= $pat;
+		}
+	}
+	
+	return 1;
+}
+
+sub _referenced_blanks {
+	my $self	= shift;
+	my @data;
+	foreach my $arg ($self->pattern) {
+		if (blessed($arg) and $arg->isa('RDF::Query::Algebra')) {
+			push( @data, $arg->_referenced_blanks );
+		}
+	}
+	return @data;
 }
 
 sub DESTROY {

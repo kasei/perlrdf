@@ -7,7 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 0.140
+This document describes RDF::Trine::Node version 1.008
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -47,7 +47,7 @@ encoded literal.
 
 =cut
 
-sub ntriples_escape ($) {
+sub ntriples_escape {
 	my $class	= __PACKAGE__;
 	return $class->_unicode_escape( @_ );
 }

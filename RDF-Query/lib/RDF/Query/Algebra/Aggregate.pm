@@ -7,7 +7,7 @@ RDF::Query::Algebra::Aggregate - Algebra class for aggregate patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Aggregate version 2.908.
+This document describes RDF::Query::Algebra::Aggregate version 2.910.
 
 =cut
 
@@ -27,7 +27,7 @@ use RDF::Trine::Iterator qw(smap);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -191,11 +191,19 @@ Returns the query as a nested set of plain data structures (no objects).
 sub as_hash {
 	my $self	= shift;
 	my $context	= shift;
+	
+	my @ops	= $self->ops;
+	my @expressions;
+	foreach my $o (@ops) {
+		my ($alias, $op, $agg_options, @cols)	= @$o;
+		push(@expressions, { alias => $alias, op => $op, scalarvals => $agg_options, columns => [ map { $_->as_hash } @cols ] });
+	}
+	
 	return {
 		type 		=> lc($self->type),
 		pattern		=> $self->pattern->as_hash,
 		groupby		=> [ map { $_->as_hash } $self->groupby ],
-		expressions	=> [ map { $_->as_hash } $self->ops ],
+		expressions	=> \@expressions,
 	};
 }
 

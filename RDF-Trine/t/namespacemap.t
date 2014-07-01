@@ -1,4 +1,4 @@
-use Test::More tests => 16;
+use Test::More tests => 21;
 
 use strict;
 use RDF::Trine;
@@ -48,6 +48,17 @@ is( $uri->uri_value, 'http://xmlns.com/foaf/0.1/', 'resolving via uri method' );
 
 $uri		= $map->uri('foaf');
 isa_ok( $type, 'RDF::Trine::Node::Resource' );
+
+# abbreviate implicitly checks prefix_for
+
+is($map->abbreviate($map->foaf('Person')), 'foaf:Person', 'abbrev with prefix');
+
+is($map->abbreviate($map->uri(':foo')), ':foo', 'abbrev no prefix ');
+
+is($map->abbreviate('http://derp.net/foobar'), undef, 'abbrev no match');
+
+ok($map->list_prefixes, 'map contains prefixes');
+ok($map->list_namespaces, 'map contains namespaces');
 
 {
 	my $rdf	= <<'END';

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Update - Algebra class for UPDATE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Update version 2.908.
+This document describes RDF::Query::Algebra::Update version 2.910.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -46,7 +46,7 @@ L<RDF::Query::Algebra> class.
 
 =cut
 
-=item C<new ( $delete_template, $insert_template, $pattern [, \%dataset] )>
+=item C<new ( $delete_template, $insert_template, $pattern, \%dataset, $data_only_flag )>
 
 Returns a new UPDATE structure.
 
@@ -58,7 +58,8 @@ sub new {
 	my $insert	= shift;
 	my $pat		= shift;
 	my $dataset	= shift;
-	return bless([$delete, $insert, $pat, $dataset], $class);
+	my $data	= shift;
+	return bless([$delete, $insert, $pat, $dataset, $data], $class);
 }
 
 =item C<< construct_args >>
@@ -253,6 +254,36 @@ sub dataset {
 	return $self->[3];
 }
 
+=item C<< data_only >>
+
+=cut
+
+sub data_only {
+	my $self	= shift;
+	return $self->[4];
+}
+
+=item C<< check_duplicate_blanks >>
+
+Returns true if blank nodes respect the SPARQL rule of no blank-label re-use
+across BGPs, otherwise throws a RDF::Query::Error::QueryPatternError exception.
+
+=cut
+
+sub check_duplicate_blanks {
+	my $self	= shift;
+	unless ($self->data_only) {
+		# if self isn't an INSERT/DELETE DATA operation, then we need to check the template patterns, too
+		if ($self->delete_template) {
+			$self->delete_template->check_duplicate_blanks;
+		}
+		
+		if ($self->insert_tempalte) {
+			$self->insert_tempalte->check_duplicate_blanks;
+		}
+	}
+	return $self->pattern->check_duplicate_blanks;
+}
 
 1;
 

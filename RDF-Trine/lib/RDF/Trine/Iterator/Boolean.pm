@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Boolean - Iterator class for boolean query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Boolean version 0.140
+This document describes RDF::Trine::Iterator::Boolean version 1.008
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use JSON 2.0;
 use base qw(RDF::Trine::Iterator);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 =item C<new ( \@results, %args )>
@@ -125,7 +125,6 @@ Prints an XML serialization of the stream data to the filehandle $fh.
 sub print_xml {
 	my $self	= shift;
 	my $fh		= shift;
-	no strict 'refs';
 	print {$fh} $self->as_xml;
 }
 

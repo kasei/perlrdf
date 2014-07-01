@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.140
+This document describes RDF::Trine::Store::SPARQL version 1.008
 
 =head1 SYNOPSIS
 
@@ -27,8 +27,9 @@ use base qw(RDF::Trine::Store);
 use URI::Escape;
 use Data::Dumper;
 use List::Util qw(first);
-use Scalar::Util qw(refaddr reftype blessed);
 
+use Scalar::Util qw(refaddr reftype blessed);
+use HTTP::Request::Common;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
@@ -36,7 +37,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.140";
+	$VERSION	= "1.008";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -78,8 +79,10 @@ The URL of the remote endpoint.
 sub new {
 	my $class	= shift;
 	my $url		= shift;
-	my $u = LWP::UserAgent->new( agent => "RDF::Trine/${RDF::Trine::VERSION}" );
+	my $u		= RDF::Trine->default_useragent->clone;
 	$u->default_headers->push_header( 'Accept' => "application/sparql-results+xml;q=0.9,application/rdf+xml;q=0.5,text/turtle;q=0.7,text/xml" );
+	
+	push(@{ $u->requests_redirectable }, 'POST');
 	
 	my $self	= bless({
 		ua		=> $u,
@@ -535,17 +538,15 @@ sub get_sparql {
 sub _get_post_iterator {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
-	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
 	
 # 	warn $sparql;
 	
 	my $url			= $self->{url};
-	my $response	= $ua->post( $url, query => $sparql );
+	my $req			= POST($url, [ update => $sparql ]);
+	my $response	= $ua->request($req);
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
-		return $handler->iterator;
+		return RDF::Trine::Iterator::Boolean->new( [ 1 ] );
 	} else {
 		my $status		= $response->status_line;
 		my $endpoint	= $self->{url};

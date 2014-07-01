@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 0.140
+This document describes RDF::Trine::Node::Literal version 1.008
 
 =cut
 
@@ -27,10 +27,10 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '0.140';
-	eval "use RDF::Trine::Node::Literal::XML;";
+	$VERSION	= '1.008';
+	eval "use RDF::Trine::Node::Literal::XML;";	## no critic (ProhibitStringyEval)
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
-	eval "use RDF::Trine::Node::Formula;";
+	eval "use RDF::Trine::Node::Formula;";	## no critic (ProhibitStringyEval)
 	$USE_FORMULAE = (RDF::Trine::Node::Formula->can('new')) ? 1 : 0;
 }
 
@@ -94,7 +94,20 @@ sub _new {
 	}
 	
 	if ($lang) {
-		$self	= [ $literal, lc($lang), undef ];
+		my $oldlang	= $lang;
+		# http://tools.ietf.org/html/bcp47#section-2.1.1
+		# All subtags use lowercase letters
+		$lang	= lc($lang);
+
+		# with 2 exceptions: subtags that neither appear at the start of the tag nor occur after singletons
+		# i.e. there's a subtag of length at least 2 preceding the exception; and a following subtag or end-of-tag
+
+		# 1. two-letter subtags are all uppercase
+		$lang	=~ s{(?<=\w\w-)(\w\w)(?=($|-))}{\U$1}g;
+
+		# 2. four-letter subtags are titlecase
+		$lang	=~ s{(?<=\w\w-)(\w\w\w\w)(?=($|-))}{\u\L$1}g;
+		$self	= [ $literal, $lang, undef ];
 	} elsif ($dt) {
 		if (blessed($dt)) {
 			$dt	= $dt->uri_value;
@@ -105,6 +118,7 @@ sub _new {
 	}
 	return bless($self, $class);
 }
+
 
 =item C<< literal_value >>
 
@@ -286,6 +300,24 @@ sub _compare {
 	}
 	
 	return 0;
+}
+
+=item C<< canonicalize >>
+
+Returns a new literal node object whose value is in canonical form (where applicable).
+
+=cut
+
+sub canonicalize {
+	my $self	= shift;
+	my $class	= ref($self);
+	my $dt		= $self->literal_datatype;
+	my $lang	= $self->literal_value_language;
+	my $value	= $self->value;
+	if (defined $dt) {
+		$value	= RDF::Trine::Node::Literal->canonicalize_literal_value( $value, $dt, 1 );
+	}
+	return $class->new($value, $lang, $dt);
 }
 
 =item C<< canonicalize_literal_value ( $string, $datatype, $warn ) >>
@@ -566,7 +598,7 @@ sub numeric_value {
 	if ($self->is_numeric_type) {
 		my $value	= $self->literal_value;
 		if (looks_like_number($value)) {
-			my $v	= 0 + eval "$value";
+			my $v	= 0 + eval "$value";	## no critic (ProhibitStringyEval)
 			return $v;
 		} else {
 			throw RDF::Query::Error::TypeError -text => "Literal with numeric type does not appear to have numeric value.";

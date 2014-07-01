@@ -7,7 +7,14 @@ RDF::Query::BGPOptimizer - Optimizer for ordering the joins of triple patterns i
 
 =head1 VERSION
 
-This document describes RDF::Query::BGPOptimizer version 2.908.
+This document describes RDF::Query::BGPOptimizer version 2.910.
+
+=head1 STATUS
+
+This module's API and functionality should be considered unstable.
+In the future, this module may change in backwards-incompatible ways,
+or be removed entirely. If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
 
 =head1 METHODS
 
@@ -28,7 +35,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

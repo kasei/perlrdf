@@ -7,7 +7,13 @@ RDF::Query::Federate::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate::Plan version 2.908.
+This document describes RDF::Query::Federate::Plan version 2.910.
+
+=head1 STATUS
+
+This module's API and functionality should be considered deprecated.
+If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
 
 =head1 METHODS
 
@@ -31,7 +37,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

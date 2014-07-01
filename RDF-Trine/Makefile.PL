@@ -11,9 +11,12 @@ license				'perl';
 build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
+build_requires		'TryCatch'					=> 0;
 
-perl_version		'5.008003';
+perl_version		'5.010';
 
+requires			'Moose'						=> 2;
+requires			'MooseX::ArrayRef'			=> 0;
 requires			'Module::Load::Conditional'	=> 0.38;
 requires			'Data::UUID'				=> 0;
 requires			'DBI'						=> 0;
@@ -29,7 +32,7 @@ requires			'List::Util'				=> 0;
 requires			'Log::Log4perl'				=> 0;
 requires			'Math::BigInt'				=> 0;
 requires			'Algorithm::Combinatorics'	=> 0;
-requires			'Scalar::Util'				=> 0;
+requires			'Scalar::Util'				=> 1.24;
 requires			'Set::Scalar'				=> 0;
 requires			'Storable'					=> 0;
 requires			'Text::CSV'					=> 0;
@@ -41,10 +44,12 @@ requires			'XML::SAX'					=> 0.96;
 requires			'Time::HiRes'				=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
+recommends			'Term::ANSIColor'			=> 0;
 
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",
 	'repository' => "http://github.com/kasei/perlrdf/",
+	'bugtracker' => "https://github.com/kasei/perlrdf/issues"
 );
 
 author_tests('xt');

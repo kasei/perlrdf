@@ -8,7 +8,7 @@ RDF::Trine::NamespaceMap - Collection of Namespaces
 
 =head1 VERSION
 
-This document describes RDF::Trine::NamespaceMap version 0.140
+This document describes RDF::Trine::NamespaceMap version 1.008
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 ######################################################################
@@ -59,7 +59,7 @@ L<RDF::Trine::Node::Resource>).
 sub new {
 	my $class	= shift;
 	my $map		= shift || {};
-	my $self	= bless( {}, $class );
+	my $self	= bless( { fwd => {}, rev => {} }, $class );
 	foreach my $name ( keys %$map ) {
 		$self->add_mapping( $name => $map->{$name} );
 	}
@@ -78,20 +78,25 @@ sub add_mapping {
 	my $name	= shift;
 	if ($name =~ /^(new|uri|can|isa|VERSION|DOES)$/) {
 		# reserved names
-		throw RDF::Trine::Error::MethodInvocationError -text => "Cannot use reserved name '$name' as a namespace prefix";
+		throw RDF::Trine::Error::MethodInvocationError
+            -text => "Cannot use reserved name '$name' as a namespace prefix";
 	}
-	
+
 	my $ns		= shift;
 	foreach (qw(1 2)) {
-		# loop twice because the first call to C<<uri_value>> might return a
-		# RDF::Trine::Namespace. Calling C<<uri_value>> on the namespace object
-		# will then return a URI string value.
+		# loop twice because the first call to C<<uri_value>> might
+		# return a RDF::Trine::Namespace. Calling C<<uri_value>> on
+		# the namespace object will then return a URI string value.
 		if (blessed($ns) and $ns->can('uri_value')) {
 			$ns = $ns->uri_value;
 		}
 	}
-	$ns	= RDF::Trine::Namespace->new( $ns );
-	$self->{ $name }	= $ns;
+
+    # reverse lookup is many-to-one
+    $self->{rev}{$ns} ||= {};
+    # forward lookup
+	return $self->{fwd}{$name} =
+        $self->{rev}{$ns}{$name} = RDF::Trine::Namespace->new($ns);
 }
 
 =item C<< remove_mapping ( $name ) >>
@@ -101,9 +106,10 @@ Removes a namespace from the map.
 =cut
 
 sub remove_mapping {
-	my $self	= shift;
-	my $name	= shift;
-	delete $self->{ $name };
+	my $self = shift;
+	my $name = shift;
+    my $ns   = delete $self->{fwd}{$name};
+    delete $self->{rev}{$ns->uri_value}{$name};
 }
 
 =item C<< namespace_uri ( $name ) >>
@@ -115,7 +121,30 @@ Returns the namespace object (if any) associated with the given name.
 sub namespace_uri {
 	my $self	= shift;
 	my $name	= shift;
-	return $self->{ $name };
+	return $self->{fwd}{$name};
+}
+
+=item C<< list_namespaces >>
+
+Returns an array of L<RDF::Trine::Namespace> objects with all the namespaces.
+
+=cut
+
+sub list_namespaces {
+    # this has to be explicit or the context won't work
+    my @out = sort { $a cmp $b } values %{$_[0]{fwd}};
+    return @out;
+}
+
+=item C<< list_prefixes >>
+
+Returns an array of prefixes.
+
+=cut
+
+sub list_prefixes {
+    my @out = sort keys %{$_[0]{fwd}};
+    return @out;
 }
 
 =item C<< uri ( $prefixed_name ) >>
@@ -131,25 +160,91 @@ sub uri {
 	my $ns;
 	my $local	= "";
 	if ($abbr =~ m/^([^:]*):(.*)$/) {
-		$ns	= $self->{ $1 };
+		$ns	= $self->{fwd}{ $1 };
 		$local	= $2;
 	} else {
-		$ns	= $self->{ $abbr };
+		$ns	= $self->{fwd}{$abbr};
 	}
 	return unless (blessed($ns));
 	if ($local ne '') {
-		return $ns->$local();
+        # don't invoke the AUTOLOAD here
+		return $ns->uri($local);
 	} else {
 		return $ns->uri_value;
 	}
 }
+
+=item prefix_for C<< uri ($uri) >>
+
+Returns the associated prefix (or potentially multiple prefixes, in
+list context) for the given URI.
+
+=cut
+
+sub prefix_for {
+    my ($self, $uri) = @_;
+    $uri = $uri->uri_value if ref $uri;
+
+    my @candidates;
+    for my $vuri (keys %{$self->{rev}}) {
+        next if length $vuri > length $uri;
+
+        # candidate namespace must match exactly
+        my $cns = substr($uri, 0, length $vuri);
+        push @candidates, keys %{$self->{rev}{$vuri}} if $cns eq $vuri;
+    }
+#     my @candidates;
+#     while (my ($k, $v) = each %{$self->{fwd}}) {
+#         my $vuri = $v->uri->uri_value;
+#         # the input should always be longer than the namespace
+#         next if length $vuri > length $uri;
+
+#         # candidate namespace must match exactly
+#         my $cns = substr($uri, 0, length $vuri);
+#         push @candidates, $k if $cns eq $vuri;
+#     }
+
+    # make sure this behaves correctly when empty
+    return unless @candidates;
+
+    # if this returns more than one prefix, take the
+    # shortest/lexically lowest one.
+    @candidates = sort @candidates;
+
+    return wantarray ? @candidates : $candidates[0];
+}
+
+=item abbreviate C<< uri ($uri) >>
+
+Complement to L</namespace_uri>. Returns the given URI in C<foo:bar>
+format or C<undef> if it wasn't matched, therefore the idiom
+
+    my $str = $nsmap->abbreviate($uri_node) || $uri_node->uri_value;
+
+may be useful for certain serialization tasks.
+
+=cut
+
+sub abbreviate {
+    my ($self, $uri) = @_;
+    $uri = $uri->uri_value if ref $uri;
+    my $prefix = $self->prefix_for($uri);
+
+    # XXX is this actually the most desirable behaviour?
+    return unless defined $prefix;
+
+    my $offset = length $self->namespace_uri($prefix)->uri->uri_value;
+
+    return sprintf('%s:%s', $prefix, substr($uri, $offset));
+}
+
 
 sub AUTOLOAD {
 	my $self	= shift;
 	our $AUTOLOAD;
 	return if ($AUTOLOAD =~ /:DESTROY$/);
 	my ($name)	= ($AUTOLOAD =~ m/^.*:(.*)$/);
-	my $ns		= $self->{ $name };
+	my $ns		= $self->{fwd}{$name};
 	return unless (blessed($ns));
 	if (scalar(@_)) {
 		my $local	= shift(@_);

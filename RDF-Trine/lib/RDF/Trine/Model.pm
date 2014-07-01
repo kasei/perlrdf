@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 0.140
+This document describes RDF::Trine::Model version 1.008
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -125,6 +125,22 @@ sub end_bulk_ops {
 	}
 }
 
+=item C<< logger ( [ $logger ] ) >>
+
+Returns the logging object responsible for recording data inserts and deletes.
+
+If C<< $logger >> is passed as an argument, sets the logger to this object.
+
+=cut
+
+sub logger {
+	my $self	= shift;
+	if (scalar(@_)) {
+		$self->{'logger'}	= shift;
+	}
+	return $self->{'logger'};
+}
+
 =item C<< add_statement ( $statement [, $context] ) >>
 
 Adds the specified C<< $statement >> to the rdf store.
@@ -132,7 +148,16 @@ Adds the specified C<< $statement >> to the rdf store.
 =cut
  
 sub add_statement {
-	my $self	= shift;
+	my ($self, @args)	= @_;
+	if ($args[0]->isa('RDF::Trine::Statement')) {
+		foreach my $n ($args[0]->nodes) {
+			unless (blessed($n) and ($n->isa('RDF::Trine::Node::Resource') or $n->isa('RDF::Trine::Node::Literal') or $n->isa('RDF::Trine::Node::Blank') or $n->isa('RDF::Trine::Node::Nil'))) {
+				throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a pattern (non-ground statement) to a model';
+			}
+		}
+	} else {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Argument is not an RDF::Trine::Statement';
+	}
 	if ($self->{temporary}) {
 		if ($self->{added}++ >= $self->{threshold}) {
 # 			warn "*** should upgrade to a DBI store here";
@@ -152,7 +177,16 @@ sub add_statement {
 # 			warn "*** upgraded to a DBI store";
 		}
 	}
-	return $self->_store->add_statement( @_ );
+	
+	if (my $log = $self->logger) {
+		my ($st, $context)	= @args;
+		if (defined($context)) {
+			$st	= RDF::Trine::Statement::Quad->new(($st->nodes)[0..2], $context);
+		}
+		$log->add($st);
+	}
+	
+	return $self->_store->add_statement( @args );
 }
 
 =item C<< add_hashref ( $hashref [, $context] ) >>
@@ -214,13 +248,16 @@ sub add_hashref {
 
 =item C<< add_iterator ( $iter ) >>
 
-Add triples from the statement iteratorto the model.
+Add triples from the statement iterator to the model.
 
 =cut
 
 sub add_iterator {
 	my $self	= shift;
 	my $iter	= shift;
+	unless (blessed($iter) and ($iter->is_graph)) {
+		throw RDF::Trine::Error::MethodInvocationError -text => 'Cannot add a '. ref($iter) . ' iterator to a model, only graphs.';
+	}
 	$self->begin_bulk_ops();
 	while (my $st = $iter->next) {
 		$self->add_statement( $st );
@@ -364,7 +401,15 @@ Removes the specified C<< $statement >> from the rdf store.
 
 sub remove_statement {
 	my $self	= shift;
-	return $self->_store->remove_statement( @_ );
+	my @args	= @_;
+	if (my $log = $self->logger) {
+		my ($st, $context)	= @args;
+		if (defined($context)) {
+			$st	= RDF::Trine::Statement::Quad->new(($st->nodes)[0..2], $context);
+		}
+		$log->delete($st);
+	}
+	return $self->_store->remove_statement( @args );
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context] ) >>
@@ -375,6 +420,9 @@ Removes all statements matching the supplied C<< $statement >> pattern from the 
 
 sub remove_statements {
 	my $self	= shift;
+	if (my $log = $self->logger) {
+		$log->delete($_) foreach (@_);
+	}
 	return $self->_store->remove_statements( @_ );
 }
 
@@ -602,7 +650,7 @@ sub _get_pattern {
 		my @vars	= values %vars;
 		my $sub		= sub {
 			my $row	= $iter->next;
-			return undef unless ($row);
+			return unless ($row);
 			my %data	= map { $vars{ $_ } => $row->$_() } (keys %vars);
 			return RDF::Trine::VariableBindings->new( \%data );
 		};
@@ -641,6 +689,8 @@ sub _get_pattern {
 	}
 }
 
+=item C<< get_graphs >>
+
 =item C<< get_contexts >>
 
 Returns an L<iterator|RDF::Trine::Iterator> containing the nodes representing 
@@ -659,6 +709,7 @@ sub get_contexts {
 		return $iter;
 	}
 }
+*get_graphs = \&get_contexts;
 
 =item C<< as_stream >>
 
@@ -926,18 +977,26 @@ sub bounded_description {
 # 				warn "CBD handling node " . $n->sse . "\n";
 				next if ($seen{ $n->sse });
 				try {
-					my $sts	= $self->get_statements( $n );
-					my @s	= grep { not($seen{$_->object->sse}) } $sts->get_all;
-# 					warn "+ " . $_->sse . "\n" for (@s);
-					push(@statements, @s);
+					my $st		= RDF::Trine::Statement->new( $n, map { variable($_) } qw(p o) );
+					my $pat		= RDF::Trine::Pattern->new( $st );
+					my $sts		= $self->get_pattern( $pat, undef, orderby => [ qw(p ASC o ASC) ] );
+# 					my $sts		= $stream->as_statements( qw(s p o) );
+# 					my $sts	= $self->get_statements( $n );
+					my @s	= grep { not($seen{$_->{'o'}->sse}) } $sts->get_all;
+# 					warn "+ " . $_->as_string . "\n" for (@s);
+					push(@statements, map { RDF::Trine::Statement->new($n, @{ $_ }{qw(p o)}) } @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
 					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
 				};
 				try {
-					my $sts	= $self->get_statements( undef, undef, $n );
-					my @s	= grep { not($seen{$_->subject->sse}) and not($_->subject->equal($n)) } $sts->get_all;
-# 					warn "- " . $_->sse . "\n" for (@s);
-					push(@statements, @s);
+					my $st		= RDF::Trine::Statement->new( (map { variable($_) } qw(s p)), $n );
+					my $pat		= RDF::Trine::Pattern->new( $st );
+					my $sts		= $self->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC) ] );
+# 					my $sts		= $stream->as_statements( qw(s p o) );
+# 					my $sts	= $self->get_statements( undef, undef, $n );
+					my @s	= grep { not($seen{$_->{'s'}->sse}) and not($_->{'s'}->equal($n)) } $sts->get_all;
+# 					warn "- " . $_->as_string . "\n" for (@s);
+					push(@statements, map { RDF::Trine::Statement->new(@{ $_ }{qw(s p)}, $n) } @s);
 				} catch RDF::Trine::Error::UnimplementedError with {
 					$l->debug('[model] Ignored UnimplementedError in bounded_description: ' . $_[0]->{'-text'});
 				};

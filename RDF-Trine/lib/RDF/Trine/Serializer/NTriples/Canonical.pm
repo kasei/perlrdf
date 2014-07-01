@@ -4,7 +4,7 @@ RDF::Trine::Serializer::NTriples::Canonical - Canonical representation of an RDF
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::NTriples::Canonical version 0.140
+This document describes RDF::Trine::Serializer::NTriples::Canonical version 1.008
 
 =head1 SYNOPSIS
 
@@ -52,7 +52,7 @@ L<RDF::Trine::Serializer::NTriples> class.
 
 package RDF::Trine::Serializer::NTriples::Canonical;
 
-use 5.008001;
+use 5.010;
 use strict;
 use warnings;
 
@@ -64,7 +64,7 @@ use base qw(RDF::Trine::Serializer::NTriples);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 	$RDF::Trine::Serializer::serializer_names{ 'ntriples-canonical' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/plain)) {
 # 		$RDF::Trine::Serializer::media_types{ $type }	= __PACKAGE__;
@@ -83,8 +83,8 @@ and 'die', and their respective behaviour is described in L</DESCRIPTION> above.
 =cut
 
 sub new {
-	my $class = shift;
-	my %opts;
+	my $class	= shift;
+	my %opts	= (onfail => '');
 	
 	while (@_) {
 		my $field = lc shift;
@@ -143,9 +143,9 @@ sub serialize_model_to_string {
 		# Really need to canonicalise typed literals as per XSD.
 		
 		$st->{'lex'} = sprintf('%s %s %s',
-			($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->subject->sse),
-			$st->{'trine'}->predicate->sse,
-			($st->{'trine'}->object->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->object->sse)
+			($st->{'trine'}->subject->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->subject->as_ntriples),
+			$st->{'trine'}->predicate->as_ntriples,
+			($st->{'trine'}->object->isa('RDF::Trine::Node::Blank') ? '~' : $st->{'trine'}->object->as_ntriples)
 			);
 		$lexCounts{ $st->{'lex'} }++;
 	}

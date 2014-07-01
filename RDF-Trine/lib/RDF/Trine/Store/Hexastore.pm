@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 0.140
+This document describes RDF::Trine::Store::Hexastore version 1.008
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.140";
+	$VERSION	= "1.008";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -247,7 +247,7 @@ sub get_statements {
 		
 		my @local_list	= $self->_node_values( $list );
 		my $sub		= sub {
-			return undef unless (scalar(@local_list));
+			return unless (scalar(@local_list));
 			my $id	= shift(@local_list);
 			my %data	= map { $_ => $nodes[ NODEMAP->{ $_ } ] } @dkeys;
 			$data{ $ukey }	= $self->_id2node( $id );
@@ -295,7 +295,7 @@ sub get_statements {
 		my $ukey1;
 		my $sub		= sub {
 			while (0 == scalar(@local_list)) {
-				return undef unless (scalar(@ukeys1));
+				return unless (scalar(@ukeys1));
 				$ukey1		= shift(@ukeys1);
 #				warn '>>>>>>>>> ' . Dumper( $ukeys[0], $ukey1, $data );
 				my $list	= $self->_index_from_pair( $index, $ukeys[0], $ukey1 );
@@ -362,7 +362,7 @@ sub get_statements {
 				# no more objects. go to next predicate.
 				while (0 == scalar(@pkeys)) {
 					# no more predicates. go to next subject.
-	 				return undef unless (scalar(@skeys));
+	 				return unless (scalar(@skeys));
 					$sid	= shift(@skeys);
 # 					warn "*** using subject $sid\n";
 					@pkeys	= sort { $a <=> $b } keys %{ $subj->{ $sid }{ $order_keys[1] } };
@@ -452,18 +452,18 @@ sub get_pattern {
 				} elsif ($i1current->{ $shrkey }->compare( $i2current->{ $shrkey } ) == -1) {
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i1current	= $i1->next;
 				} else { # ($i1current->{ $shrkey } > $i2current->{ $shrkey })
 					my $i1v	= $i1current->{ $shrkey };
 					my $i2v	= $i2current->{ $shrkey };
-					warn "keys don't match: $i1v <=> $i2v\n";
+# 					warn "keys don't match: $i1v <=> $i2v\n";
 					$i2current	= $i2->next;
 				}
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-			warn 'no shared variable -- cartesian product';
+# 			warn 'no shared variable -- cartesian product';
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
@@ -689,8 +689,8 @@ sub _count_statements {
 sub _node2id {
 	my $self	= shift;
 	my $node	= shift;
-	return undef unless (blessed($node));
-	return undef if ($node->isa('RDF::Trine::Node::Variable'));
+	return unless (blessed($node));
+	return if ($node->isa('RDF::Trine::Node::Variable'));
 	if (exists( $self->{ node2id }{ $node->as_string } )) {
 		return $self->{ node2id }{ $node->as_string };
 	} else {
@@ -706,7 +706,7 @@ sub _id2node {
 	if (exists( $self->{ id2node }{ $id } )) {
 		return $self->{ id2node }{ $id };
 	} else {
-		return undef;
+		return;
 	}
 }
 
@@ -805,9 +805,11 @@ sub _index_values {
 	my $index	= shift;
 	my $rev		= shift;
 	if ($rev) {
-		return sort { $b <=> $a } keys %$index;
+		my @values	= sort { $b <=> $a } keys %$index;
+		return @values;
 	} else {
-		return sort { $a <=> $b } keys %$index;
+		my @values	= sort { $a <=> $b } keys %$index;
+		return @values;
 	}
 }
 #########################################

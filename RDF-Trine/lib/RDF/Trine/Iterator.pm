@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Iterator class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.140.
+This document describes RDF::Trine::Iterator version 1.008.
 
 =head1 SYNOPSIS
 
@@ -30,6 +30,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
+use Encode;
 use Data::Dumper;
 use Log::Log4perl;
 use Carp qw(carp);
@@ -42,7 +43,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -166,11 +167,25 @@ sub to_string {
 
 =item C<< from_string ( $xml ) >>
 
-Returns a new iterator using the supplied XML in the SPARQL XML Results format.
+Returns a new iterator using the supplied XML string in the SPARQL XML Results format.
 
 =cut
 
 sub from_string {
+	my $class	= shift;
+	my $string	= shift;
+	my $bytes	= encode('UTF-8', $string);
+	return $class->from_bytes($bytes);
+}
+
+=item C<< from_bytes ( $xml ) >>
+
+Returns a new iterator using the supplied XML byte sequence (note: not character data)
+in the SPARQL XML Results format.
+
+=cut
+
+sub from_bytes {
 	my $class	= shift;
 	my $string	= shift;
 	unless (ref($string)) {
@@ -376,16 +391,16 @@ Returns a string representation of C<$node> for use in an XML serialization.
 
 =cut
 
-sub format_node_xml ($$$$) {
+sub format_node_xml {
 	my $self	= shift;
 # 	my $bridge	= shift;
-# 	return undef unless ($bridge);
+# 	return unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;
 	my $node_label;
 	
-	if(!defined $node) {
+	if (!defined $node) {
 		return '';
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
@@ -497,7 +512,7 @@ sub _stream {
 
 =cut
 
-sub sgrep (&$) {
+sub sgrep (&$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -507,11 +522,11 @@ sub sgrep (&$) {
 	my $next;
 	
 	$next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;
@@ -539,7 +554,7 @@ sub sgrep (&$) {
 
 =cut
 
-sub smap (&$;$$$) {
+sub smap (&$;$$$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -554,7 +569,7 @@ sub smap (&$;$$$) {
 	
 	my $open	= 1;
 	my $next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		if (@_ and $_[0]) {
 			$stream->close;
 			$open	= 0;
@@ -562,7 +577,7 @@ sub smap (&$;$$$) {
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;
@@ -577,7 +592,7 @@ sub smap (&$;$$$) {
 
 =cut
 
-sub swatch (&$) {
+sub swatch (&$) {	## no critic (ProhibitSubroutinePrototypes)
 	my $block	= shift;
 	my $stream	= shift;
 	my @args	= $stream->construct_args();
@@ -585,7 +600,7 @@ sub swatch (&$) {
 	
 	my $open	= 1;
 	my $next	= sub {
-		return undef unless ($open);
+		return unless ($open);
 		if (@_ and $_[0]) {
 			$stream->close;
 			$open	= 0;
@@ -593,7 +608,7 @@ sub swatch (&$) {
 		my $data	= $stream->next;
 		unless ($data) {
 			$open	= 0;
-			return undef;
+			return;
 		}
 		
 		local($_)	= $data;

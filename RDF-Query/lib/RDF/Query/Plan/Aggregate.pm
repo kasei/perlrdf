@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.908.
+This document describes RDF::Query::Plan::Aggregate version 2.910.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
@@ -108,6 +108,12 @@ sub execute ($) {
 				my $g	= $groupby[$i];
 				$group_data{ 'groupby_sample' }{ $group }	= $row;
 			}
+		}
+		
+		my @groups	= values %{ $group_data{'groups'} };
+		if (scalar(@groups) == 0) {
+			$group_data{'rows'}{''}		= [];
+			$group_data{'groups'}{''}	= [];
 		}
 		
 		my @rows;
@@ -379,7 +385,9 @@ sub close {
 		throw RDF::Query::Error::ExecutionError -text => "close() cannot be called on an un-open AGGREGATE";
 	}
 	delete $self->[0]{rows};
-	$self->[1]->close();
+	if (defined($self->[1])) {
+		$self->[1]->close();
+	}
 	$self->SUPER::close();
 }
 

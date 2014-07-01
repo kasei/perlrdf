@@ -7,7 +7,7 @@ RDF::Trine::Parser::NTriples - N-Triples Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::NTriples version 0.140
+This document describes RDF::Trine::Parser::NTriples version 1.008
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 	$RDF::Trine::Parser::parser_names{ 'ntriples' }	= __PACKAGE__;
 	foreach my $ext (qw(nt)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -78,7 +78,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>.
+Parses the bytes in C<< $data >>.
 For each RDF statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =item C<< parse_file_into_model ( $base_uri, $fh, $model [, context => $context] ) >>
@@ -98,7 +98,7 @@ sub parse {
 	my $base	= shift;
 	my $string	= shift;
 	my $handler	= shift;
-	open( my $fh, '<:utf8', \$string );
+	open( my $fh, '<:encoding(UTF-8)', \$string );
 	return $self->parse_file( $base, $fh, $handler );
 }
 
@@ -130,7 +130,7 @@ sub parse_file {
 	unless (ref($fh)) {
 		my $filename	= $fh;
 		undef $fh;
-		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 	
 	my $lineno	= 0;
@@ -236,11 +236,11 @@ sub _eat_node {
 						$value	.= "\\";
 						substr($_[0],0,2)	= '';
 					} elsif ($1 eq 'u') {
-						$_[0] =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\u([0-9A-Fa-f]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,6)	= '';
 					} elsif ($1 eq 'U') {
-						$_[0] =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
+						$_[0] =~ m/^\\U([0-9A-Fa-f]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
 						$value	.= chr(oct('0x' . $1));
 						substr($_[0],0,10)	= '';
 					} else {
@@ -282,33 +282,45 @@ sub _unescape {
 			substr($string,0,length($1))	= '';
 		}
 		if (length($string)) {
-			while ($string =~ m/^\\(.)/) {
-				if ($1 eq 't') {
-					$value	.= "\t";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'r') {
-					$value	.= "\r";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'n') {
-					$value	.= "\n";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq '"') {
-					$value	.= '"';
-					substr($string,0,2)	= '';
-				} elsif ($1 eq '\\') {
-					$value	.= "\\";
-					substr($string,0,2)	= '';
-				} elsif ($1 eq 'u') {
-					$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$_[0]"];
-					$value	.= chr(oct('0x' . $1));
-					substr($string,0,6)	= '';
-				} elsif ($1 eq 'U') {
-					$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$_[0]"];
-					$value	.= chr(oct('0x' . $1));
-					substr($string,0,10)	= '';
-				} else {
-					die $string;
+			if ($string eq '\\') {
+				throw RDF::Trine::Error::ParserError -text => qq[Backslash in N-Triples node without escaped character at line $lineno];
+			}
+			if ($string =~ m/^\\([tbnrf"'uU])/) {
+				while ($string =~ m/^\\([tbnrf"'uU])/) {
+					if ($1 eq 't') {
+						$value	.= "\t";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq 'b') {
+						$value	.= "\b";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq 'n') {
+						$value	.= "\n";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq 'r') {
+						$value	.= "\r";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq 'f') {
+						$value	.= "\f";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq '"') {
+						$value	.= '"';
+						substr($string,0,2)	= '';
+					} elsif ($1 eq '\\') {
+						$value	.= "\\";
+						substr($string,0,2)	= '';
+					} elsif ($1 eq 'u') {
+						$string =~ m/^\\u([0-9A-F]{4})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\u escape at line $lineno, near "$string"];
+						$value	.= chr(oct('0x' . $1));
+						substr($string,0,6)	= '';
+					} elsif ($1 eq 'U') {
+						$string =~ m/^\\U([0-9A-F]{8})/ or throw RDF::Trine::Error::ParserError -text => qq[Bad N-Triples \\U escape at line $lineno, near "$string"];
+						$value	.= chr(oct('0x' . $1));
+						substr($string,0,10)	= '';
+					}
 				}
+			} else {
+				my $esc	= substr($string, 0, 2);
+				throw RDF::Trine::Error::ParserError -text => qq[Not a valid N-Triples escape sequence '$esc' at line $lineno, near "$string"];
 			}
 		}
 	}

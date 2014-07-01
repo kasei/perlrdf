@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.05.
+This document describes RDF::Endpoint version 0.06.
 
 =head1 SYNOPSIS
 
@@ -103,11 +103,12 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.05';
+our $VERSION	= '0.06';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
 
+use JSON;
 use Encode;
 use File::Spec;
 use Data::Dumper;
@@ -139,6 +140,8 @@ my $NAMESPACES	= {
 	ldodds		=> 'java:com.ldodds.sparql.',
 	fn			=> 'http://www.w3.org/2005/xpath-functions#',
 	sparql		=> 'http://www.w3.org/ns/sparql#',
+	vann		=> 'http://purl.org/vocab/vann/',
+	sde			=> 'http://kasei.us/ns/service-description-extension#',
 };
 
 =item C<< new ( \%conf ) >>
@@ -167,6 +170,11 @@ sub new {
 	unless ($config->{endpoint}) {
 		$config->{endpoint}	= { %$config };
 	}
+	
+	if ($config->{endpoint}{load_data} and $config->{endpoint}{update}) {
+		die "The load_data and update configuration options cannot be specified together.";
+	}
+	
 	my $self	= bless( {
 		conf		=> $config,
 		model		=> $model,
@@ -194,6 +202,11 @@ sub run {
 	
 	my $content;
 	my $response	= Plack::Response->new;
+
+	my $server = "RDF::Endpoint/$VERSION";
+	$server .= " " . $response->headers->header('Server') if defined($response->headers->header('Server'));
+	$response->headers->header('Server' => $server);
+
 	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
@@ -230,9 +243,11 @@ END
 		my $method	= uc($req->method);
 		$content	= "Unexpected method $method (expecting GET or POST)";
 		$self->log_error( $req, $content );
-		my $code	= 405;
-		$response->status("$code Method Not Allowed");
-		$response->body($content);
+		$self->_set_response_error($req, $response, 405, {
+			title		=> 'Method not allowed',
+			describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method',
+		});
+		$response->header('Allow' => 'GET, POST');
 		goto CLEANUP;
 	} elsif (defined($ct) and $ct eq 'application/sparql-query') {
 		$sparql	= $req->content;
@@ -245,9 +260,10 @@ END
 		if (scalar(@sparql) > 1) {
 			$content	= "More than one query string submitted";
 			$self->log_error( $req, $content );
-			my $code	= 400;
-			$response->status("$code Multiple Query Strings");
-			$response->body($content);
+			$self->_set_response_error($req, $response, 400, {
+				title		=> 'Multiple query strings not allowed',
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/multiple_queries',
+			});
 			goto CLEANUP;
 		} else {
 			$sparql = $sparql[0];
@@ -257,9 +273,10 @@ END
 		if (scalar(@sparql) > 1) {
 			$content	= "More than one update string submitted";
 			$self->log_error( $req, $content );
-			my $code	= 400;
-			$response->status("$code Multiple Update Strings");
-			$response->body($content);
+			$self->_set_response_error($req, $response, 400, {
+				title		=> 'Multiple update strings not allowed',
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/multiple_updates',
+			});
 			goto CLEANUP;
 		}
 		
@@ -269,9 +286,11 @@ END
 			my $method	= $req->method;
 			$content	= "Update operations must use POST";
 			$self->log_error( $req, $content );
-			my $code	= 405;
-			$response->status("$code $method Not Allowed for Update Operation");
-			$response->body($content);
+			$self->_set_response_error($req, $response, 405, {
+				title		=> "$method Not Allowed for Update Operation",
+				describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method_update',
+			});
+			$response->header('Allow' => 'POST');
 			goto CLEANUP;
 		}
 	}
@@ -283,16 +302,29 @@ END
 		$args{ update }		= 1 if ($config->{endpoint}{update} and $req->method eq 'POST');
 		$args{ load_data }	= 1 if ($config->{endpoint}{load_data});
 		
-		my @default	= $req->param('default-graph-uri');
-		my @named	= $req->param('named-graph-uri');
-		if (scalar(@default) or scalar(@named)) {
-			delete $args{ load_data };
-			$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
-			foreach my $url (@named) {
-				RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+		{
+			my @default	= $req->param('default-graph-uri');
+			my @named	= $req->param('named-graph-uri');
+			if (scalar(@default) or scalar(@named)) {
+				delete $args{ load_data };
+				$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new() );
+				foreach my $url (@named) {
+					RDF::Trine::Parser->parse_url_into_model( $url, $model, context => iri($url) );
+				}
+				foreach my $url (@default) {
+					RDF::Trine::Parser->parse_url_into_model( $url, $model );
+				}
 			}
-			foreach my $url (@default) {
-				RDF::Trine::Parser->parse_url_into_model( $url, $model );
+		}
+		
+		my $protocol_specifies_update_dataset	= 0;
+		{
+			my @default	= $req->param('using-graph-uri');
+			my @named	= $req->param('using-named-graph-uri');
+			if (scalar(@named) or scalar(@default)) {
+				$protocol_specifies_update_dataset	= 1;
+				$model	= RDF::Trine::Model::Dataset->new( $model );
+				$model->push_dataset( default => \@default, named => \@named );
 			}
 		}
 		
@@ -309,6 +341,17 @@ END
 		my $query	= RDF::Query->new( $sparql, { lang => 'sparql11', base => $base, %args } );
 		$self->log_query( $req, $sparql );
 		if ($query) {
+			if ($protocol_specifies_update_dataset and $query->specifies_update_dataset) {
+				my $method	= $req->method;
+				$content	= "Update operations cannot specify a dataset in both the query and with protocol parameters";
+				$self->log_error( $req, $content );
+				$self->_set_response_error($req, $response, 400, {
+					title		=> "Multiple datasets specified for update",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/update_specifies_multiple_datasets',
+					detail		=> $content,
+				});
+				goto CLEANUP;
+			}
 			my ($plan, $ctx)	= $query->prepare( $model );
 # 			warn $plan->sse;
 			my $iter	= $query->execute_plan( $plan, $ctx );
@@ -368,28 +411,38 @@ END
 				}
 			} else {
 				my $error	= $query->error;
-				$self->log_error( $req, "$error\t$sparql" );
-				$response->status(500);
-				$response->body($query->error);
+				$self->_set_response_error($req, $response, 500, {
+					title		=> "SPARQL query/update execution error",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/execution_error',
+					detail		=> "$error; $sparql",
+				});
 				$content	= RDF::Query->error;
 			}
 		} else {
 			$content	= RDF::Query->error;
 			$self->log_error( $req, $content );
 			my $code	= ($content =~ /Syntax/) ? 400 : 500;
-			my $message	= ($code == 400) ? "Syntax Error" : "Internal Server Error";
-			$response->status("$code $message");
-			$response->body($content);
 			if ($req->method ne 'POST' and $content =~ /read-only queries/sm) {
 				$content	= 'Updates must use a HTTP POST request.';
+				$self->_set_response_error($req, $response, $code, {
+					title		=> $content,
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/bad_http_method_update',
+				});
+			} else {
+				$self->_set_response_error($req, $response, $code, {
+					title		=> "SPARQL query/update parse error",
+					describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/parse_error',
+					detail		=> $content,
+				});
 			}
 		}
 	} elsif ($req->method eq 'POST') {
 		$content	= "POST without recognized query or update";
 		$self->log_error( $req, $content );
-		my $code	= 400;
-		$response->status("$code Missing SPARQL Query/Update String");
-		$response->body($content);
+		$self->_set_response_error($req, $response, 400, {
+			title		=> "Missing SPARQL Query/Update String",
+			describedby	=> 'http://id.kasei.us/perl/rdf-endpoint/error/missing_sparql_string',
+		});
 	} else {
 		my @variants;
 		my %media_types	= %RDF::Trine::Serializer::media_types;
@@ -421,6 +474,9 @@ END
 	}
 	
 CLEANUP:
+# 	warn Dumper($model);
+# 	warn $model->as_string;
+	$content	= $response->body || $content;
 	my $length	= 0;
 	my %ae		= map { $_ => 1 } split(/\s*,\s*/, $ae);
 	if ($ae{'gzip'}) {
@@ -479,7 +535,10 @@ sub service_description {
 	}
 	
 	my $config		= $self->{conf};
+	my $doap		= RDF::Trine::Namespace->new('http://usefulinc.com/ns/doap#');
 	my $sd			= RDF::Trine::Namespace->new('http://www.w3.org/ns/sparql-service-description#');
+	my $sde			= RDF::Trine::Namespace->new('http://kasei.us/ns/service-description-extension#');
+	my $vann		= RDF::Trine::Namespace->new('http://purl.org/vocab/vann/');
 	my $void		= RDF::Trine::Namespace->new('http://rdfs.org/ns/void#');
 	my $scovo		= RDF::Trine::Namespace->new('http://purl.org/NET/scovo#');
 	my $count		= $model->count_statements( undef, undef, undef, RDF::Trine::Node::Nil->new );
@@ -536,6 +595,25 @@ sub service_description {
 			$sdmodel->add_statement( statement( $graph, $rdf->type, $sd->Graph ) );
 			$sdmodel->add_statement( statement( $graph, $rdf->type, $void->Dataset ) );
 			$sdmodel->add_statement( statement( $graph, $void->triples, literal( $count, undef, $xsd->integer ) ) );
+		}
+	}
+	
+	if (my $software = $config->{endpoint}{service_description}{software}) {
+		$sdmodel->add_statement( statement( $s, $sde->software, iri($software) ) );
+	}
+	
+	if (my $related = $config->{endpoint}{service_description}{related}) {
+		foreach my $r (@$related) {
+			$sdmodel->add_statement( statement( $s, $sde->relatedEndpoint, iri($r) ) );
+		}
+	}
+	
+	if (my $namespaces = $config->{endpoint}{service_description}{namespaces}) {
+		while (my($ns,$uri) = each(%$namespaces)) {
+			my $b	= RDF::Trine::Node::Blank->new();
+			$sdmodel->add_statement( statement( $s, $sde->namespace, $b ) );
+			$sdmodel->add_statement( statement( $b, $vann->preferredNamespacePrefix, literal($ns) ) );
+			$sdmodel->add_statement( statement( $b, $vann->preferredNamespaceUri, literal($uri) ) );
 		}
 	}
 	
@@ -734,6 +812,33 @@ sub _log {
 	$logger->($data);
 }
 
+sub _set_response_error {
+	my $self	= shift;
+	my $req		= shift;
+	my $resp	= shift;
+	my $code	= shift;
+	my $error	= shift;
+	my @variants	= (
+		['text/plain', 1.0, 'text/plain'],
+		['application/json-problem', 0.99, 'application/json-problem'],
+	);
+	my $headers	= $req->headers;
+	my $stype	= choose( \@variants, $headers ) || 'text/plain';
+	if ($stype eq 'application/json-problem') {
+		$resp->headers->content_type( 'application/json-problem' );
+		$resp->status($code);
+		my $content	= encode_json($error);
+		$resp->body($content);
+	} else {
+		$resp->headers->content_type( 'text/plain' );
+		$resp->status($code);
+		my @messages	= grep { defined($_) } @{ $error }{ qw(title detail) };
+		my $content		= join("\n\n", @messages);
+		$resp->body($content);
+	}
+	return;
+}
+
 =end private
 
 =cut
@@ -764,7 +869,7 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010-2012 Gregory Todd Williams.
+Copyright (c) 2010-2014 Gregory Todd Williams.
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any

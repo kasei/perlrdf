@@ -7,7 +7,7 @@ RDF::Query::Plan::ComputedStatement - Executable query plan for computed triples
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::ComputedStatement version 2.908.
+This document describes RDF::Query::Plan::ComputedStatement version 2.910.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.910';
 }
 
 ######################################################################

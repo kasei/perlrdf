@@ -7,7 +7,14 @@ RDF::Trine::Model::Dataset - Model for SPARQL datasets
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model::Dataset version 0.140
+This document describes RDF::Trine::Model::Dataset version 1.008
+
+=head1 STATUS
+
+This module's API and functionality should be considered unstable.
+In the future, this module may change in backwards-incompatible ways,
+or be removed entirely. If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
 
 =head1 METHODS
 
@@ -30,7 +37,7 @@ use RDF::Trine::Model;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 ################################################################################
@@ -350,6 +357,8 @@ sub get_sparql {
 	throw RDF::Trine::Error::UnimplementedError -text => "Cannot execute SPARQL queries against a complex dataset model";
 }
 
+=item C<< get_graphs >>
+
 =item C<< get_contexts >>
 
 Returns an iterator containing the nodes representing the named graphs in the
@@ -367,6 +376,7 @@ sub get_contexts {
 		return RDF::Trine::Iterator->new( \@nodes );
 	}
 }
+*get_graphs = \&get_contexts;
 
 =item C<< model >>
 

@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Iterator class for bindings query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.140
+This document describes RDF::Trine::Iterator::Bindings version 1.008
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.140';
+	$VERSION	= '1.008';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -234,7 +234,7 @@ sub nested_loop_join {
 				$need_new_a		= 0;
 			}
 			$l->debug("OUTER: " . Dumper($rowa));
-			return undef unless ($rowa);
+			return unless ($rowa);
 			LOOP: while ($inner_index <= $#data) {
 				my $rowb	= $data[ $inner_index++ ];
 				$l->debug("- INNER[ $inner_index ]: " . Dumper($rowb));
@@ -483,25 +483,57 @@ sub as_string {
 	}
 }
 
-=item C<< as_statements ( @names ) >>
+=item C<< as_statements ( $pattern | @names ) >>
 
 Returns a L<RDF::Trine::Iterator::Graph> with the statements of the stream.
+
+If C<$pattern>, an RDF::Trine::Pattern object, is given as an argument, each of
+its triples are instantiated with variable bindings from each row of the
+iterator, and returned as RDF::Trine::Statement objects from a new
+RDF::Trine::Iterator::Graph iterator.
+
+If 3 variable C<@names> are supplied, their corresponding variable bindings
+in each row of the iterator are used (in order) as the subject, predicate, and
+object of new RDF::Trine::Statement objects and returned from a new
+RDF::Trine::Iterator::Graph iterator.
 
 =cut
 
 sub as_statements {
 	my $self	= shift;
 	my @names	= @_;
-	my $sub		= sub {
-		my $row	= $self->next;
-		return undef unless (defined $row);
-		my @values	= @{ $row }{ @names };
-		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
-						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
-						: RDF::Trine::Statement::Quad->new( @values );
-		return $statement;
-	};
-	return RDF::Trine::Iterator::Graph->new( $sub )
+	if (scalar(@names) == 1 and $names[0]->can('triples')) {
+		my $pattern	= shift;
+		my @triples	= $pattern->triples;
+		my @queue;
+		my $sub		= sub {
+			while (1) {
+				if (scalar(@queue)) {
+					return shift(@queue);
+				}
+				my $row	= $self->next;
+				return unless (defined $row);
+				foreach my $t (@triples) {
+					my $st	= $t->bind_variables($row);
+					if ($st->rdf_compatible) {
+						push(@queue, $st);
+					}
+				}
+			}
+		};
+		return RDF::Trine::Iterator::Graph->new( $sub );
+	} else {
+		my $sub		= sub {
+			my $row	= $self->next;
+			return unless (defined $row);
+			my @values	= @{ $row }{ @names };
+			my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
+							? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
+							: RDF::Trine::Statement::Quad->new( @values );
+			return $statement;
+		};
+		return RDF::Trine::Iterator::Graph->new( $sub );
+	}
 }
 
 =item C<< print_xml ( $fh, $max_size ) >>
@@ -522,7 +554,6 @@ sub print_xml {
 		push(@variables, $name) if $name;
 	}
 	
-	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
@@ -568,9 +599,9 @@ Returns a string representation of C<$node> for use in a JSON serialization.
 
 =cut
 
-sub format_node_json ($$$) {
+sub format_node_json {
 # 	my $bridge	= shift;
-# 	return undef unless ($bridge);
+# 	return unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;

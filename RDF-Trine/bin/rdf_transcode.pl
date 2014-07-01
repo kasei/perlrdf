@@ -23,7 +23,7 @@ END
 }
 
 my $file	= shift or die "An RDF filename must be given";
-open( my $fh, '<:utf8', $file ) or die $!;
+open( my $fh, '<:encoding(UTF-8)', $file ) or die $!;
 
 my $done :shared;
 my $st :shared;
@@ -53,7 +53,7 @@ my $iter	= RDF::Trine::Iterator::Graph->new( sub {
 		lock($st);
 		if ($done) {
 # 			warn "got finish state";
-			return undef;
+			return;
 		}
 		cond_wait($st);
 		if (defined($st)) {
@@ -65,7 +65,7 @@ my $iter	= RDF::Trine::Iterator::Graph->new( sub {
 	}
 } );
 
-binmode(\*STDOUT, ':utf8');
+binmode(\*STDOUT, ':encoding(UTF-8)');
 # warn "serializing to STDOUT";
 $serializer->serialize_iterator_to_file( \*STDOUT, $iter );
 # warn "done";

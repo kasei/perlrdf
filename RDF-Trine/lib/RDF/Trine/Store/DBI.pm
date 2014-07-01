@@ -4,11 +4,27 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 0.140
+This document describes RDF::Trine::Store::DBI version 1.008
 
 =head1 SYNOPSIS
 
- use RDF::Trine::Store::DBI;
+  use RDF::Trine::Store::DBI;
+  
+  my $user = 'me';
+  my $pass = 'secret';
+  my $modelname = 'mymodel';
+
+  # First, construct a DBI connection to your database
+  my $dsn = "DBI:mysql:database=perlrdf";
+  my $dbh = DBI->connect( $dsn, $user, $pass );
+  
+  # Second, create a new Store object with the database connection
+  # and specifying (by name) which model in the Store you want to use
+  my $store = RDF::Trine::Store::DBI->new( $modelname, $dbh );
+  
+  # Finally, wrap the Store objec into a Model, and use it to access your data
+  my $model = RDF::Trine::Model->new($store);
+  print $model->size . " RDF statements in store\n";
 
 =head1 DESCRIPTION
 
@@ -49,7 +65,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.140";
+	$VERSION	= "1.008";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -135,11 +151,11 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-		if ($dsn =~ /^DBI:mysql:/) {
+		if ($dsn =~ /^DBI:mysql:/i) {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
-		} elsif ($dsn =~ /^DBI:Pg:/) {
+		} elsif ($dsn =~ /^DBI:Pg:/i) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
-		} elsif ($dsn =~ /^DBI:SQLite:/) {
+		} elsif ($dsn =~ /^DBI:SQLite:/i) {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
 			$user	= '';
 			$pass	= '';
@@ -201,8 +217,8 @@ sub nuke {
 	my $id		= _mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
-	$dbh->do( "DROP TABLE Statements${id};" ) || do { $l->trace( $dbh->errstr ); return undef };
-	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+	$dbh->do( "DROP TABLE Statements${id};" ) || do { $l->trace( $dbh->errstr ); return };
+	$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 }
 
 =item C<< supports ( [ $feature ] ) >>
@@ -294,7 +310,7 @@ sub get_statements {
 	my $sub		= sub {
 NEXTROW:
 		my $row	= $sth->fetchrow_hashref;
-		return undef unless (defined $row);
+		return unless (defined $row);
 		my @triple;
 		my $temp_var_count	= 1;
 		my @nodes	= ($st->nodes)[ $use_quad ? (0..3) : (0..2) ];
@@ -1199,11 +1215,13 @@ sub _mysql_hash_pp {
 }
 
 BEGIN {
+	## no critic
 	eval "use RDF::Trine::XS;";
 	no strict 'refs';
 	*{ '_mysql_hash' }	= (RDF::Trine::XS->can('hash'))
 		? \&RDF::Trine::XS::hash
 		: \&_mysql_hash_pp;
+	## use critic
 }
 
 =item C<< _mysql_node_hash ( $node ) >>
@@ -1240,7 +1258,7 @@ sub _mysql_node_hash {
 		$data	= sprintf("L%s<%s>%s", $value, $lang, $dt);
 #		warn "($data)";
 	} else {
-		return undef;
+		return;
 	}
 	my $hash;
 	$hash	= _mysql_hash( $data );
@@ -1366,7 +1384,7 @@ sub init {
 	
 	unless ($self->_table_exists("Literals")) {
 		$dbh->begin_work;
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Literals (
 				ID NUMERIC(20) PRIMARY KEY,
 				Value text NOT NULL,
@@ -1374,19 +1392,19 @@ sub init {
 				Datatype text NOT NULL DEFAULT ''
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Resources (
 				ID NUMERIC(20) PRIMARY KEY,
 				URI text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Bnodes (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
 			);
 END
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Models (
 				ID NUMERIC(20) PRIMARY KEY,
 				Name text NOT NULL
@@ -1397,7 +1415,7 @@ END
 	}
 	
 	unless ($self->_table_exists("Statements${id}")) {
-		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return undef };
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return };
 			CREATE TABLE Statements${id} (
 				Subject NUMERIC(20) NOT NULL,
 				Predicate NUMERIC(20) NOT NULL,
@@ -1406,7 +1424,7 @@ END
 				PRIMARY KEY (Subject, Predicate, Object, Context)
 			);
 END
-# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return undef };
+# 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	}
 	

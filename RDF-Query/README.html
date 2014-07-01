@@ -50,12 +50,78 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
+		<h3 id="v2_910">Version 2.910 (2012-07-22)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
+						<li>Updated RDQL parser to work with recent RDF::Trine releases.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_909">Version 2.909 (2012-11-24)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
+						<li>Fixed bad sparql serialization of filters with equality tests; was using '==' instead of '=' (github issue 53).</li>
+						<li>Fixed bug in RDF::Query::Algebra::Service->referenced_variables.</li>
+						<li>Fixed bug that wasn't passing the active graph to EXISTS filter evaluation.</li>
+						<li>Fixed RDF::Query prepare and execute methods to properly localize the model object.</li>
+						<li>Fixed bug in RDQL parser that mistakenly required a USING clause (github issue 70).</li>
+						<li>Fixed handling of aggregates over empty groups.</li>
+					</ul></li>
+				<li>New Features
+					<ul>
+						<li>Added support for VALUES graph pattern (in-place BINDINGS).</li>
+						<li>Added support for UUID() and STRUUID() functions.</li>
+						<li>Added is_update() and specifies_update_dataset() methods to RDF::Query.</li>
+						<li>Accept common typo of SEPARATOR in SPARQL 1.1 parser ("SEPERATOR") with constructor arg 'allow_typos' in RDF::Query::Parser::SPARQL11.</li>
+					</ul></li>
+				<li>Enhancements
+					<ul>
+						<li>Fixed SPARQL 1.1 parsing to enforce not using shared bnode labels between update data operations.</li>
+						<li>Improved SPARQL 1.1 parser detection of invalid use of BIND() (when binding already in-scope variables).</li>
+						<li>Fixed bug in SPARQL 1.1 parser to recognize legal Update operations.</li>
+						<li>Updated SPARQL 1.1 parser to allow colon in local part of a prefixname.</li>
+						<li>Updated STRBEFORE() and STRAFTER() implementations to track SPARQL 1.1 standard.</li>
+						<li>Updated property path implementation to track W3C standard (changed counting semantics and dropped {m,n} form).</li>
+						<li>Added support to passthrough query eval to the model if supported and the 'allow_passthrough' option is set on the query object.</li>
+						<li>Added 'canonicalize' option to RDF::Query constructor to canonicalize literal values.</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Updated handling of BIND() in the SPARQL 1.1 parser to match the latest spec semantics.</li>
+						<li>Added ability to run tests of type mf:CSVResultFormatTest.</li>
+						<li>Fixed config handling in rqsh to allow the use of hexastore backends.</li>
+						<li>Merged Log4perl initialization cleanup patches (from github/kba).</li>
+						<li>Use $plan->explain instead of $plan->sse for "explain" rqsh command.</li>
+						<li>Updated EARL IRIs in bin/failing_earl_tests.sh and bin/passing_earl_tests.sh.</li>
+						<li>Removed RDF::Redland recommendation in Makefile.PL.</li>
+						<li>Added doap:implements statements, and updated release data to doap.rdf.</li>
+						<li>Updated RDF::Query::Util::cli_parse_args to allow no-argument setup.</li>
+						<li>Updated xt/dawg/earl.pl to use new EARL IRIs earl:passed and earl:failed.</li>
+						<li>Added POD to bin/rqsh.</li>
+						<li>Updated DAWG test harnesses to support expected query bindings results in RDF/XML format.</li>
+						<li>Fixed xt/dawg-eval11.t to emit TAP failures when query parsing fails.</li>
+						<li>Require RDF::Endpoint 0.05 in xt/dawg-eval11.t.</li>
+						<li>Removed values from test directory list in xt/dawg-eval11.t.</li>
+						<li>Added values to list of test directories in xt/dawg-eval11.t.</li>
+						<li>Added exists test directory to xt/dawg-eval11.t.</li>
+						<li>Added test case confirming bad sparql serialization of equality testing filters (github issue 53).</li>
+						<li>Removed tests for {m,n} property path forms.</li>
+						<li>Fixed RDF::Query::Algebra::Project to throw exception on bad constructor arguments.</li>
+						<li>Added bugtracker info to Makefile.PL.</li>
+						<li>Added POD marking modules as unstable: RDF::Query::BGPOptimizer, RDF::Query::Compiler::SQL, RDF::Query::Federate, RDF::Query::Federate::Plan</li>
+						<li>Improved expected/actual results output when encountering failing tests.</li>
+						<li>Removed old bloom-filter federation code.</li>
+						<li>Removed RDF::Query::ExecutionContext->base method.</li>
+						<li>Fix POD in RDF::Query::Algebra::Table.</li>
+					</ul></li>
+			</ul>
 		<h3 id="v2_908">Version 2.908 (2012-01-31)</h3>
 			<ul>
 				<li>Bug Fixes
 					<ul>
 						<li>Fixed SPARQL serialization of expressions using &amp;&amp; and ||.</li>
-						<li>Fixed SPARQL 1.1 parser to support "GRAPH<iri>" without whitespace.</li>
+						<li>Fixed SPARQL 1.1 parser to support "GRAPH&lt;iri&gt;" without whitespace.</li>
 						<li>Fixed bug resulting in false positive error when projecting expressions with aggregates.</li>
 						<li>Fixed aggregate evaluation to result in unbound variables on error (instead of dropping the result).</li>
 						<li>Fixed numeric divide operation to return xsd:decimal when operands are xsd:integers.</li>
@@ -199,7 +265,7 @@
 						<li>Added SPARQL 1.1 date functions: NOW, TIMEZONE, TZ, YEAR, MONTH, DAY, HOURS, MINUTES, SECONDS</li>
 						<li>Added SPARQL 1.1 hashing functions: MD5, SHA1, SHA224, SHA256, SHA384, and SHA512</li>
 						<li>Added RDF::Query::Functions->install_function method, and implementations for fn:compare, fn:concat, and fn:substring.</li>
-						<li>Updated RDF::Query->execute_with_named_graphs to accept optional arguments to be passed to C<< execute >>.</li>
+						<li>Updated RDF::Query->execute_with_named_graphs to accept optional arguments to be passed to execute().</li>
 						<li>Added support for CONSTRUCT WHERE syntax shortcut.</li>
 						<li>Added support for SILENT modifier to SERVICE patterns.</li>
 						<li>Added SILENT flag in RDF::Query::Algebra::Service.</li>
@@ -389,7 +455,7 @@
 								<li>Negation with MINUS graph patterns and NOT EXISTS filters.</li>
 							</ul>
 						</li>
-						<li>Added support for SPARQL 1.1 Update features:</li>
+						<li>Added support for SPARQL 1.1 Update features:
 							<ul>
 								<li>INSERT/DELETE DATA, INSERT/DELETE WHERE, LOAD, and CLEAR</li>
 								<li>Added support for multi-statement updates.</li>

@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.908.
+This document describes RDF::Query::Plan version 2.910.
 
 =head1 METHODS
 
@@ -66,7 +66,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION, %PLAN_CLASSES);
 BEGIN {
-	$VERSION		= '2.908';
+	$VERSION		= '2.910';
 	%PLAN_CLASSES	= (
 		service	=> 'RDF::Query::Plan::Service',
 	);
@@ -156,6 +156,7 @@ on the command line.
 
 sub explain {
 	my $self	= shift;
+# 	warn 'Explaining query plan: ' . $self->serialize();
 	my ($s, $count)	= ('  ', 0);
 	if (@_) {
 		$s		= shift;
@@ -453,6 +454,7 @@ sub generate_plans {
 								my $code	= sub {
 									return if ($done);
 									$done	= 1;
+warn Dumper(\@triples); # XXX
 									my $count	= $model->count_statements( $triples[0]->nodes );
 									my $lit		= RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer');
 									my $vb	= RDF::Query::VariableBindings->new( {
@@ -828,6 +830,9 @@ sub generate_plans {
 		$p->label( algebra => $algebra );
 	}
 	
+	unless (scalar(@return_plans)) {
+		throw RDF::Query::Error::CompilationError (-text => "Cannot generate an execution plan for algebra of type $type", -object => $algebra);
+	}
 	return @return_plans;
 }
 
@@ -1090,7 +1095,16 @@ sub __path_plan {
 		my $upath	= $nodes[0];
 		my $zplan	= $self->__path_plan($start, ['0', $upath], $end, $graph, $context, %args );
 		my $oplan	= $self->__path_plan($start, $upath, $end, $graph, $context, %args);
-		return RDF::Query::Plan::Union->new($zplan, $oplan);
+		
+		# project away any non-distinguished variables introduced by plan-to-bgp expansion
+		my @vars	= grep { blessed($_) and $_->isa('RDF::Query::Node::Variable') } ($start, $end);
+		my $odplan	= RDF::Query::Plan::Project->new( $oplan, \@vars );
+		
+		my $pplan	= RDF::Query::Plan::Union->new($zplan, $odplan);
+		
+		# distinct the results
+		my $plan	= RDF::Query::Plan::Distinct->new( $pplan );
+		return $plan;
 	} elsif ($op eq '*') {
 ### X path* Y
 		return RDF::Query::Plan::Path->new( 'ZeroOrMorePath', $start, $nodes[0], $end, $graph, $distinct, %args );
