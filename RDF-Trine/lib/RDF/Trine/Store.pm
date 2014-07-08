@@ -78,6 +78,7 @@ use Module::Load::Conditional qw[can_load];
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::SPARQL;
+use RDF::Trine::Store::LanguagePreference;
 
 ######################################################################
 
