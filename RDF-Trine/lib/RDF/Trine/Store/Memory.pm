@@ -616,7 +616,7 @@ change. This token is acceptable for use as an HTTP ETag.
 
 sub etag {
 	my $self	= shift;
-	return $self->{hash}->hexdigest;
+	return $self->{hash}->b64digest;
 }
 
 =item C<< size >>
