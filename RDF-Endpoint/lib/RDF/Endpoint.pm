@@ -112,7 +112,7 @@ use JSON;
 use Encode;
 use File::Spec;
 use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw(md5_base64);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
@@ -329,7 +329,7 @@ END
 		}
 		
 		my $match	= $headers->header('if-none-match') || '';
-		my $etag	= md5_hex( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
+		my $etag	= md5_base64( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
 		if (length($match)) {
 			if (defined($etag) and ($etag eq $match)) {
 				$response->status(304);
@@ -512,7 +512,7 @@ Returns a unique key for each instantiation of this service.
 
 sub run_tag {
 	my $self	= shift;
-	return md5_hex(refaddr($self) . $self->{start_time});
+	return md5_base64(refaddr($self) . $self->{start_time});
 }
 
 =item C<< service_description ( $request, $model ) >>
