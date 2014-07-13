@@ -358,7 +358,14 @@ END
 			if ($iter) {
 				$response->status(200);
 				if (defined($etag)) {
-					$response->headers->header( ETag => $etag );
+					if ($etag !~ /"/) {
+						$etag	= qq["$etag"];
+					}
+					if ($etag =~ qr[^(W/)?"[\x{21}\x{23}-\x{7e}\x{80}-\x{FF}]*"$]) {
+						$response->headers->header( ETag => $etag );
+					} else {
+						warn "ETag value is not syntactically valid: " . Dumper($etag);
+					}
 				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 					my @variants	= (['text/html', 0.99, 'text/html']);
