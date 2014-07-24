@@ -7,7 +7,7 @@ RDF::Query::Plan::Quad - Executable query plan for Quads.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Quad version 2.910_01.
+This document describes RDF::Query::Plan::Quad version 2.911.
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.910_01';
+	$VERSION	= '2.911';
 }
 
 ######################################################################

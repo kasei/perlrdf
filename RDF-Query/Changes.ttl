@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.911" ;
-                        doap:created      "2014-XX-XX" ;
+                        doap:created      "2014-07-24" ;
                         ];
         asc:changes     [
                         asc:addition      "Added RDF::Query::ExecutionContext->bind_variable method." ;

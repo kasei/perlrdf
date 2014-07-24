@@ -7,7 +7,7 @@ RDF::Query::Parser::RDQL - An RDQL parser for RDF::Query
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::RDQL version 2.910_01.
+This document describes RDF::Query::Parser::RDQL version 2.911.
 
 =cut
 
@@ -30,7 +30,7 @@ our ($VERSION, $lang, $languri);
 BEGIN {
 	$::RD_TRACE	= undef;
 	$::RD_HINT	= undef;
-	$VERSION	= '2.910_01';
+	$VERSION	= '2.911';
 	$lang		= 'rdql';
 	$languri	= 'http://jena.hpl.hp.com/2003/07/query/RDQL';
 }

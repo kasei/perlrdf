@@ -7,7 +7,7 @@ RDF::Query::Federate::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Federate::Plan version 2.910_01.
+This document describes RDF::Query::Federate::Plan version 2.911.
 
 =head1 STATUS
 
@@ -37,7 +37,7 @@ use RDF::Query::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.910_01';
+	$VERSION	= '2.911';
 }
 
 ######################################################################

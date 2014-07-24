@@ -36,7 +36,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.911 (2014-XX-XX)
+  Version 2.911 (2014-07-24)
 
      * BUG FIXES
          Fixed bug in RDF::Query::Plan::Join::PushDownNestedLoop that didn't allow 'aggregate' to appear in the RHS serialized text (github issue 101).
