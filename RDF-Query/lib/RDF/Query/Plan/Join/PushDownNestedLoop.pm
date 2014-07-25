@@ -7,7 +7,7 @@ RDF::Query::Plan::Join::PushDownNestedLoop - Executable query plan for nested lo
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.910.
+This document describes RDF::Query::Plan::Join::PushDownNestedLoop version 2.911.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.910';
+	$VERSION	= '2.911';
 	$RDF::Query::Plan::Join::JOIN_CLASSES{ 'RDF::Query::Plan::Join::PushDownNestedLoop' }++;
 }
 
@@ -59,7 +59,8 @@ sub new {
 		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support optional patterns as RHS due to bottom-up variable scoping rules (use NestedLoop instead)";
 	}
 	
-	if ($rhs->sse =~ /aggregate/sm) {
+	my @aggs = $rhs->subplans_of_type('RDF::Query::Plan::Aggregate');
+	if (scalar(@aggs)) {
 		throw RDF::Query::Error::MethodInvocationError -text => "PushDownNestedLoop join does not support aggregates in the RHS due to aggregate group fragmentation";
 	}
 	

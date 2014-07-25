@@ -7,7 +7,7 @@ RDF::Query::Expression::Alias - Class for aliasing expressions with variable nam
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Alias version 2.910.
+This document describes RDF::Query::Expression::Alias version 2.911.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.910';
+	$VERSION	= '2.911';
 }
 
 ######################################################################
@@ -121,6 +121,22 @@ sub evaluate {
 	my $expr	= $self->expression;
 	my $value	= $query->var_or_expr_value( $bound, $expr, $ctx );
 	return $value;
+}
+
+=item C<< as_hash >>
+
+Returns the alias as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'alias',
+		alias		=> $self->alias->as_hash,
+		expression	=> $self->expression->as_hash,
+	};
 }
 
 
