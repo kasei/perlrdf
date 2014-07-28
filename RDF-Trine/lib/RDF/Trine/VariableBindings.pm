@@ -108,7 +108,7 @@ sub join {
 		my $val_a	= $self->{ $key };
 		my $val_b	= $rowb->{ $key };
 		next unless (defined($val_a) and defined($val_b));
-		my $equal	= (refaddr($val_a) == refaddr($val_b)) || $val_a->equal( $val_b );
+		my $equal	= (refaddr($val_a) == refaddr($val_b)) || ($val_a == $val_b) || $val_a->equal( $val_b );
 		unless ($equal) {
 			return;
 		}
