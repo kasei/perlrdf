@@ -20,6 +20,7 @@ no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
 use IRI;
+use URI 1.52;
 use Encode;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype refaddr);
