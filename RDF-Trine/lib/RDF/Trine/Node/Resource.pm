@@ -152,7 +152,8 @@ sub sse {
 	if ($sse{ $ra }) {
 		return $sse{ $ra };
 	} else {
-		my $sse		= '<' . $self->uri_value . '>';
+		my $string    = URI->new( $self->uri_value )->canonical;
+		my $sse        = '<' . $string . '>';
 		$sse{ $ra }	= $sse;
 		return $sse;
 	}
