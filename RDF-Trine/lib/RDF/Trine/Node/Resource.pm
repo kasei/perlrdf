@@ -19,7 +19,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
-use URI 1.52;
+use IRI;
 use Encode;
 use Data::Dumper;
 use Scalar::Util qw(blessed reftype refaddr);
@@ -62,25 +62,17 @@ sub new {
 	}
 	
 	if (defined($base_uri)) {
-		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		
-		my @chars;
-		my $i	= 0;
-		if ("${base_uri}${uri}" =~ /!/) {
-			# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
-			for ($base_uri, $uri) {
-				s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+		if (blessed($base_uri)) {
+			if ($base_uri->isa('RDF::Trine::Node::Resource')) {
+				$base_uri	= $base_uri->uri_value;
+			} elsif ($base_uri->isa('URI')) {
+				$base_uri	= $base_uri->as_string;
 			}
 		}
-		
-		# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
-		for ($uri, $base_uri) {
-			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
-		}
-		$uri		= URI->new_abs($uri, $base_uri)->as_string;
-		
-		# put back the unicode characters where they belong
-		$uri =~ s/!(\d+)!/$chars[$1]/eg;
+		my $base	= IRI->new( value => $base_uri );
+		my $iri		= IRI->new( value => $uri, base => $base );
+		$uri		= $iri->abs;
+		warn '*';
 	}
     utf8::upgrade($uri);
 	
@@ -160,8 +152,7 @@ sub sse {
 	if ($sse{ $ra }) {
 		return $sse{ $ra };
 	} else {
-		my $string	= URI->new( $self->uri_value )->canonical;
-		my $sse		= '<' . $string . '>';
+		my $sse		= '<' . $self->uri_value . '>';
 		$sse{ $ra }	= $sse;
 		return $sse;
 	}
@@ -260,8 +251,8 @@ sub equal {
 	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
 	
-	my $uri1	= URI->new($self->uri_value)->as_iri;
-	my $uri2	= URI->new($node->uri_value)->as_iri;
+	my $uri1	= IRI->new($self->uri_value)->value;
+	my $uri2	= IRI->new($node->uri_value)->value;
 	return ($uri1 eq $uri2);
 }
 
