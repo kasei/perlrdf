@@ -65,13 +65,12 @@ sub new {
 	if (defined($base_uri)) {
 		if (blessed($base_uri)) {
 			if ($base_uri->isa('RDF::Trine::Node::Resource')) {
-				$base_uri	= $base_uri->uri_value;
-			} elsif ($base_uri->isa('URI')) {
-				$base_uri	= $base_uri->as_string;
+				$base_uri	= IRI->new( $base_uri->uri_value );
 			}
+		} else {
+			$base_uri	= IRI->new($base_uri);
 		}
-		my $base	= IRI->new( value => $base_uri );
-		my $iri		= IRI->new( value => $uri, base => $base );
+		my $iri		= IRI->new( value => $uri, base => $base_uri );
 		$uri		= $iri->abs;
 	}
     utf8::upgrade($uri);
@@ -252,8 +251,8 @@ sub equal {
 	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
 	
-	my $uri1	= IRI->new($self->uri_value)->value;
-	my $uri2	= IRI->new($node->uri_value)->value;
+	my $uri1	= URI->new($self->uri_value)->as_iri;
+	my $uri2	= URI->new($node->uri_value)->as_iri;
 	return ($uri1 eq $uri2);
 }
 
