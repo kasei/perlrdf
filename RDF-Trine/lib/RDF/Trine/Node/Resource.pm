@@ -72,7 +72,6 @@ sub new {
 		my $base	= IRI->new( value => $base_uri );
 		my $iri		= IRI->new( value => $uri, base => $base );
 		$uri		= $iri->abs;
-		warn '*';
 	}
     utf8::upgrade($uri);
 	
