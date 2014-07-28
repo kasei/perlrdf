@@ -2,6 +2,7 @@
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 		 xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
 		 xmlns:foaf="http://xmlns.com/foaf/0.1/"
+		 xmlns:owl="http://www.w3.org/2002/07/owl#"
 		 xmlns="http://usefulinc.com/ns/doap#">
 
 <rdf:Description rdf:about="">
@@ -24,6 +25,7 @@
 	<implements rdf:resource="http://www.w3.org/TR/sparql11-query/"/>
 	<implements rdf:resource="http://www.w3.org/TR/sparql11-update/"/>
 	<rdfs:seeAlso rdf:resource="Changes.ttl"/>
+	<owl:sameAs rdf:resource="http://purl.org/NET/cpan-uri/dist/RDF-Query"/>
 	
 	<maintainer>
 		<foaf:Person>
