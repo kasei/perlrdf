@@ -99,7 +99,7 @@ The base URI to be used for a parsed file.
 The following example initializes a Hexastore store based on a local file and a remote URL:
 
   my $store = RDF::Trine::Store->new_with_config(
-                {storetype => 'Hexastore',
+	            {storetype => 'Hexastore',
 		 sources => [
 			      {
 			       file => 'test-23.ttl',
@@ -538,14 +538,19 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $added	= 0;
+
+	# believe it or not, these calls add up.
+	my %stmt = map { $_ => $st->$_ } NODES;
+	my %ids  = map { $_ => $self->_node2id($stmt{$_}) } NODES;
+
 	foreach my $first (NODES) {
-		my $firstnode	= $st->$first();
-		my $id1			= $self->_node2id( $firstnode );
+		my $firstnode	= $stmt{$first};
+	    my $id1			= $ids{$first};
 		my @others		= @{ OTHERNODES->{ $first } };
 		my @orders		= ([@others], [reverse @others]);
 		foreach my $order (@orders) {
 			my ($second, $third)	= @$order;
-			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
+	        my ($id2, $id3) = @ids{$second, $third};
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
 			if ($self->_add_node_to_page( $list, $id3 )) {
 				$added++;
@@ -569,7 +574,7 @@ sub remove_statement {
 	my $st		= shift;
 	my @ids		= map { $self->_node2id( $st->$_() ) } NODES;
 # 	warn "*** removing statement @ids\n";
-	
+
 	my $removed	= 0;
 	foreach my $first (NODES) {
 		my $firstnode	= $st->$first();
@@ -587,7 +592,7 @@ sub remove_statement {
 # 			warn "\t- remaining: [" . join(', ', @$list) . "]\n";
 		}
 	}
-	
+
 	if ($removed) {
 		$self->{ size }--;
 		$self->{etag} = time;
@@ -691,10 +696,16 @@ sub _node2id {
 	my $node	= shift;
 	return unless (blessed($node));
 	return if ($node->isa('RDF::Trine::Node::Variable'));
-	if (exists( $self->{ node2id }{ $node->as_string } )) {
-		return $self->{ node2id }{ $node->as_string };
+
+	# this gets called so much it actually significantly impacts run
+	# time. call it once per invocation of _node2id instead of twice.
+	my $str = $node->as_string;
+	my $id = $self->{ node2id }{ $str };
+
+	if (defined $id) {
+		return $id;
 	} else {
-		my $id	= ($self->{ node2id }{ $node->as_string } = $self->{ next_id }++);
+		$id	= ($self->{ node2id }{ $str } = $self->{ next_id }++);
 		$self->{ id2node }{ $id }	= $node;
 		return $id
 	}
