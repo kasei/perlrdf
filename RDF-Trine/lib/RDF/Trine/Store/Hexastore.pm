@@ -98,25 +98,25 @@ The base URI to be used for a parsed file.
 
 The following example initializes a Hexastore store based on a local file and a remote URL:
 
-  my $store = RDF::Trine::Store->new_with_config(
-	            {storetype => 'Hexastore',
-		 sources => [
-			      {
-			       file => 'test-23.ttl',
-			       syntax => 'turtle',
-			      },
-			      {
-			       url => 'http://www.kjetil.kjernsmo.net/foaf',
-			       syntax => 'rdfxml',
-		      	      }
-	        ]});
+  my $store = RDF::Trine::Store->new_with_config( {
+      storetype => 'Hexastore',
+      sources => [
+          {
+              file => 'test-23.ttl',
+              syntax => 'turtle',
+          },
+          {
+              url => 'http://www.kjetil.kjernsmo.net/foaf',
+              syntax => 'rdfxml',
+          }
+  ]});
 
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $self        = bless({}, $class);
+	my $self	= bless({}, $class);
 	$self->nuke; # nuke resets the store, thus doing the same thing as init should do
 	return $self;
 }
@@ -545,12 +545,12 @@ sub add_statement {
 
 	foreach my $first (NODES) {
 		my $firstnode	= $stmt{$first};
-	    my $id1			= $ids{$first};
+		my $id1			= $ids{$first};
 		my @others		= @{ OTHERNODES->{ $first } };
 		my @orders		= ([@others], [reverse @others]);
 		foreach my $order (@orders) {
 			my ($second, $third)	= @$order;
-	        my ($id2, $id3) = @ids{$second, $third};
+			my ($id2, $id3) = @ids{$second, $third};
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
 			if ($self->_add_node_to_page( $list, $id3 )) {
 				$added++;
