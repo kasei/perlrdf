@@ -32,6 +32,7 @@ use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
 use Carp qw(croak);
 use Time::HiRes qw ( time );
+use Log::Log4perl;
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -463,7 +464,8 @@ sub get_pattern {
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-# 			warn 'no shared variable -- cartesian product';
+			my $l		= Log::Log4perl->get_logger("rdf.trine.store.hexastore");
+			$l->info('No shared variable -- cartesian product');
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
