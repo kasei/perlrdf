@@ -164,7 +164,15 @@ sub new {
 	} else {
 		$config		= $arg;
 		my $store	= RDF::Trine::Store->new( $config->{store} );
+		unless ($store) {
+			warn "Failed to construct RDF Store object";
+			return;
+		}
 		$model		= RDF::Trine::Model->new( $store );
+		unless ($model) {
+			warn "Failed to construct RDF Model object";
+			return;
+		}
 	}
 	
 	unless ($config->{endpoint}) {
