@@ -1,22 +1,37 @@
 package Plack::App::RDF::Endpoint;
+
+use strict;
+use warnings;
+
 use parent qw( Plack::Component );
 use RDF::Endpoint;
 use Plack::Request;
+
+our $VERSION	= '0.06';
 
 =head1 NAME
 
 Plack::App::RDF::Endpoint - A Plack application for running RDF::Endpoint
 
+=head1 VERSION
+
+This document describes Plack::App::RDF::Endpoint version 0.06.
+
 =head1 SYNOPSIS
+
+  my $config  = {
+    store => 'Memory',
+    endpoint  => { endpoint_path   => '/' },
+  };
 
   my $ep = Plack::App::RDF::Endpoint->new();
   $ep->configure($config);
-  my $rdf_endpoint = $linkeddata->to_app;
+  my $app = $ep->to_app;
 
   builder {
-     enable "Head";
-     enable "ContentLength";
-     $rdf_endpoint;
+    enable "Head";
+    enable "ContentLength";
+    $app;
   };
 
 =head1 METHODS
@@ -53,7 +68,10 @@ Will be called by Plack to process the request.
 sub prepare_app {
 	my $self = shift;
 	my $config = $self->{config};
-	$self->{endpoint} = RDF::Endpoint->new( $config );
+	$self->{endpoint} = eval { RDF::Endpoint->new( $config ) };
+	if ($@) {
+		warn $@;
+	}
 }
 
 sub call {
