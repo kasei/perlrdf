@@ -26,6 +26,7 @@
 		asc:addition	"Added Plack::App::RDF::Endpoint." ;
 		asc:update      "Updated RDF::Endpoint to quote raw-value ETag values (github issue #106)." ;
 		asc:update      "Use base64 encoding of tags to get shorter strings (patch from Kjetil Kjernsmo)." ;
+		asc:update		"Updated endpoint.psgi to look for PERLRDF_STORE environment variable." ;
 	] ;
 	.
 
