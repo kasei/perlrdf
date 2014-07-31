@@ -33,11 +33,11 @@ if (my $file = $ENV{RDF_ENDPOINT_FILE}) {
 				image_width		=> 200,
 				resource_links	=> 1,
 			},
-			load_data	=> 1,
+			load_data	=> 0,
 			update		=> 1,
         }
     };
-} elsif ($config = Config::JFDI->open( name => "RDF::Endpoint")) {
+} elsif ($config = eval { Config::JFDI->open( name => "RDF::Endpoint") }) {
 } else {
 	$config	= {
 		store	=> "Memory",
@@ -51,10 +51,14 @@ if (my $file = $ENV{RDF_ENDPOINT_FILE}) {
 				image_width		=> 200,
 				resource_links	=> 1,
 			},
-			load_data	=> 1,
+			load_data	=> 0,
 			update		=> 1,
         }
     };
+}
+
+if (exists $ENV{'PERLRDF_STORE'}) {
+	$config->{store} = $ENV{'PERLRDF_STORE'};
 }
 
 my $end		= RDF::Endpoint->new( $config );
