@@ -69,7 +69,7 @@ our $r_VAR1					= qr/[?]${r_VARNAME}/o;
 our $r_VAR2					= qr/[\$]${r_VARNAME}/o;
 our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/o;
 our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/o;
-our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}};
+our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}}o;
 our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/o;
 our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/o;
 our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/o;
@@ -176,10 +176,10 @@ sub parse_pattern {
 	my $input	= shift;
 	my $baseuri	= shift;
 	my $ns		= shift;
-	
+
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
-	
+
 	delete $self->{error};
 	local($self->{namespaces})				= $ns;
 	local($self->{blank_ids})				= 1;
@@ -193,7 +193,7 @@ sub parse_pattern {
 	if ($baseuri) {
 		$self->{build}{base}	= $baseuri;
 	}
-	
+
 	try {
 		$self->_GroupGraphPattern();
 	} catch RDF::Query::Error with {
@@ -202,7 +202,7 @@ sub parse_pattern {
 		$self->{error}	= $e->text;
 	};
 	my $data								= delete $self->{build};
-	
+
 	return $data->{triples}[0];
 }
 
@@ -218,10 +218,10 @@ sub parse_expr {
 	my $input	= shift;
 	my $baseuri	= shift;
 	my $ns		= shift;
-	
+
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
-	
+
 	delete $self->{error};
 	local($self->{namespaces})				= $ns;
 	local($self->{blank_ids})				= 1;
@@ -235,7 +235,7 @@ sub parse_expr {
 	if ($baseuri) {
 		$self->{build}{base}	= $baseuri;
 	}
-	
+
 	try {
 		$self->_Expression();
 	} catch RDF::Query::Error with {
@@ -243,7 +243,7 @@ sub parse_expr {
 		$self->{build}	= undef;
 		$self->{error}	= $e->text;
 	};
-	
+
 	my $data	= splice(@{ $self->{stack} });
 	return $data;
 }
@@ -257,7 +257,7 @@ sub _RW_Query {
 	$self->__consume_ws_opt;
 	$self->_Prologue;
 	$self->__consume_ws_opt;
-	
+
 	my $read_query	= 0;
 	while (1) {
 		if ($self->_test(qr/SELECT/i)) {
@@ -345,7 +345,7 @@ sub _RW_Query {
 			}
 			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 		}
-		
+
 		last if ($read_query);
 		$self->__consume_ws_opt;
 		if ($self->_test(qr/;/)) {
@@ -359,20 +359,20 @@ sub _RW_Query {
 	}
 #	$self->_eat(qr/;/) if ($self->_test(qr/;/));
 	$self->__consume_ws_opt;
-	
+
 	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
-	
+
 	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
 		my $pattern		= RDF::Query::Algebra::Sequence->new( @patterns );
 		$pattern->check_duplicate_blanks;
 		$self->{build}{triples}	= [ $pattern ];
 	}
-	
+
 # 	my %query	= (%p, %body);
 # 	return \%query;
 }
@@ -388,7 +388,7 @@ sub _Query_test {
 # [4] PrefixDecl ::= 'PREFIX' PNAME_NS IRI_REF
 sub _Prologue {
 	my $self	= shift;
-	
+
 	my $base;
 	my @base;
 	if ($self->_test( qr/BASE/i )) {
@@ -401,7 +401,7 @@ sub _Prologue {
 		$self->__consume_ws_opt;
 		$self->{base}	= $base;
 	}
-	
+
 	my %namespaces;
 	while ($self->_test( qr/PREFIX/i )) {
 		$self->_eat( qr/PREFIX/i );
@@ -422,10 +422,10 @@ sub _Prologue {
 		$namespaces{ $ns }	= $iri;
 		$self->{namespaces}{$ns}	= $iri;
 	}
-	
+
 	$self->{build}{namespaces}	= \%namespaces;
 	$self->{build}{base}		= $base if (defined($base));
-	
+
 # 	push(@data, (base => $base)) if (defined($base));
 # 	return @data;
 }
@@ -440,7 +440,7 @@ sub _InsertDataUpdate {
 	my $data	= $self->_remove_pattern;
 	$self->_eat('}');
 	$self->__consume_ws_opt;
-	
+
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
 	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $empty);
 	$self->_add_patterns( $insert );
@@ -458,7 +458,7 @@ sub _DeleteDataUpdate {
 	my $data	= $self->_remove_pattern;
 	$self->_eat('}');
 	$self->__consume_ws_opt;
-	
+
 	my $empty	= RDF::Query::Algebra::GroupGraphPattern->new();
 	my $delete	= RDF::Query::Algebra::Update->new($data, undef, $empty);
 	$self->_add_patterns( $delete );
@@ -479,7 +479,7 @@ sub _InsertUpdate {
 		$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $data );
 	}
 
-	
+
 	my %dataset;
 	while ($self->_test(qr/USING/i)) {
 		$self->{build}{custom_update_dataset}	= 1;
@@ -500,7 +500,7 @@ sub _InsertUpdate {
 		}
 		$self->__consume_ws_opt;
 	}
-	
+
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
 	if ($graph) {
@@ -512,14 +512,14 @@ sub _InsertUpdate {
 	} else {
 		$self->_GroupGraphPattern;
 	}
-	
+
 	my $ggp	= $self->_remove_pattern;
-	
+
 	my @ds_keys	= keys %dataset;
 	unless (@ds_keys) {
 		$dataset{ default }	= [$graph || ()];
 	}
-	
+
 	my $insert	= RDF::Query::Algebra::Update->new(undef, $data, $ggp, \%dataset);
 	$self->_add_patterns( $insert );
 	$self->{build}{method}		= 'UPDATE';
