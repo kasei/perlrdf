@@ -7,7 +7,7 @@ use parent qw( Plack::Component );
 use RDF::Endpoint;
 use Plack::Request;
 
-our $VERSION	= '0.06_01';
+our $VERSION	= '0.07';
 
 =head1 NAME
 
@@ -15,7 +15,7 @@ Plack::App::RDF::Endpoint - A Plack application for running RDF::Endpoint
 
 =head1 VERSION
 
-This document describes Plack::App::RDF::Endpoint version 0.06_01.
+This document describes Plack::App::RDF::Endpoint version 0.07.
 
 =head1 SYNOPSIS
 
