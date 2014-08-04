@@ -42,21 +42,21 @@ BEGIN {
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
 
-    # XXX THE FOLLOWING IS TO KEEP DATA::DUMPER FROM CRAPPING OUT
+	# XXX THE FOLLOWING IS TO KEEP DATA::DUMPER FROM CRAPPING OUT
 
-    # insert these guys until we can get a fix into redland
-    my $fk = sub { 'DUMMY' };
-    my $nk = sub { undef };
-    my $f  = sub { 'REDLAND PLEASE FIX YOUR API' };
+	# insert these guys until we can get a fix into redland
+	my $fk = sub { 'DUMMY' };
+	my $nk = sub { undef };
+	my $f  = sub { 'REDLAND PLEASE FIX YOUR API' };
 
-    *_p_librdf_storage_s::FIRSTKEY = $fk;
-    *_p_librdf_storage_s::NEXTKEY  = $nk;
-    *_p_librdf_storage_s::FETCH    = $f;
-    *_p_librdf_model_s::FIRSTKEY   = $fk;
-    *_p_librdf_model_s::NEXTKEY    = $nk;
-    *_p_librdf_model_s::FETCH      = $f;
+	*_p_librdf_storage_s::FIRSTKEY = $fk;
+	*_p_librdf_storage_s::NEXTKEY  = $nk;
+	*_p_librdf_storage_s::FETCH	= $f;
+	*_p_librdf_model_s::FIRSTKEY   = $fk;
+	*_p_librdf_model_s::NEXTKEY	= $nk;
+	*_p_librdf_model_s::FETCH	  = $f;
 
-    # too bad these aren't implemented, since they could be useful
+	# too bad these aren't implemented, since they could be useful
 }
 
 ######################################################################
@@ -111,7 +111,7 @@ sub new {
 	my $model	= shift;
 	my $self	= bless({
 		model	=> $model,
-        bulk    => 0,
+		bulk	=> 0,
 	}, $class);
 	return $self;
 }
@@ -130,12 +130,12 @@ sub _new_with_config {
 	my $config	= shift || { store_name => 'memory' };
 
 	my $store	= RDF::Redland::Storage->new
-        (@{$config}{qw(store_name name options)})
-            or throw RDF::Trine::Error::DatabaseError
-                -text => "Couldn't initialize Redland storage";
+		(@{$config}{qw(store_name name options)})
+			or throw RDF::Trine::Error::DatabaseError
+				-text => "Couldn't initialize Redland storage";
 	my $model	= RDF::Redland::Model->new( $store, '' )
-        or throw RDF::Trine::Error::DatabaseError
-            -text => "Couldn't initialize Redland model";
+		or throw RDF::Trine::Error::DatabaseError
+			-text => "Couldn't initialize Redland model";
 	return $class->new( $model );
 }
 
@@ -301,13 +301,13 @@ sub add_statement {
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	my $ret     = $model->add_statement( $rst, $rnodes[3] );
+	my $ret	 = $model->add_statement( $rst, $rnodes[3] );
 
-    # redland needs to be synced
-    $model->sync unless $self->{bulk};
+	# redland needs to be synced
+	$model->sync unless $self->{bulk};
 
-    # for any code that was expecting this
-    $ret;
+	# for any code that was expecting this
+	$ret;
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -337,14 +337,14 @@ sub remove_statement {
 
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
-    my $model   = $self->_model;
-	my $ret     = $model->remove_statement( @rnodes );
+	my $model   = $self->_model;
+	my $ret	 = $model->remove_statement( @rnodes );
 
-    # redland needs to be synced
-    $model->sync unless $self->{bulk};
+	# redland needs to be synced
+	$model->sync unless $self->{bulk};
 
-    # for any code that was expecting this
-    $ret;
+	# for any code that was expecting this
+	$ret;
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
@@ -357,22 +357,22 @@ sub remove_statements {
 	my $self	= shift;
 	my $iter	= $self->get_statements(@_);
 
-    # temporarily store the value for bulk so we don't sync over and over
-    my $bulk    = $self->{bulk};
-    $self->{bulk} = 1;
+	# temporarily store the value for bulk so we don't sync over and over
+	my $bulk	= $self->{bulk};
+	$self->{bulk} = 1;
 
-    my $count = 0;
+	my $count = 0;
 	while (my $st = $iter->next) {
 		$self->remove_statement( $st );
-        $count++;
+		$count++;
 	}
 
-    # now put it back
-    $self->{bulk} = $bulk;
-    $self->_model->sync unless $bulk;
+	# now put it back
+	$self->{bulk} = $bulk;
+	$self->_model->sync unless $bulk;
 
-    # might as well return how many statements got deleted
-    $count;
+	# might as well return how many statements got deleted
+	$count;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $context ) >>
@@ -387,12 +387,12 @@ sub count_statements {
 	my $self	= shift;
 	my @nodes	= @_;
 	if (scalar(@nodes) < 4) {
-        # if it isn't 4, then make damn sure it's 3
-        push @nodes, (undef) x (3 - @nodes);
+		# if it isn't 4, then make damn sure it's 3
+		push @nodes, (undef) x (3 - @nodes);
 
 # 		warn "restricting count_statements to triple semantics";
 		my @rnodes	= map { _cast_to_redland($_) } @nodes[0..2];
-        # force a 3-element list or you'll be sorry
+		# force a 3-element list or you'll be sorry
 		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 		my $iter	= $self->_model->find_statements( $st );
 		my $count	= 0;
@@ -442,13 +442,13 @@ sub supports {
 }
 
 sub _begin_bulk_ops {
-    shift->{bulk} = 1;
+	shift->{bulk} = 1;
 }
 
 sub _end_bulk_ops {
-    my $self = shift;
-    $self->{bulk} = 0;
-    $self->_model->sync;
+	my $self = shift;
+	$self->{bulk} = 0;
+	$self->_model->sync;
 }
 
 sub _model {
