@@ -131,6 +131,10 @@ sub _new_with_string {
 	
 	my $model	= RDF::Trine::Model->new( $self );
 	foreach my $u (@uris) {
+		if ($u !~ /^\w+:/) {
+			$u	= "file://$u";
+			warn $u;
+		}
 		RDF::Trine::Parser->parse_url_into_model( $u, $model );
 	}
 	
