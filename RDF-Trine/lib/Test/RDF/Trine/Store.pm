@@ -91,7 +91,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 109;								# Remember to update whenever adding tests
+	return 111;								# Remember to update whenever adding tests
 }
 
 
@@ -154,10 +154,12 @@ sub all_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
-	ok(defined(my $size = $store->size), 'size is defined');
+	my $size = $store->size;
+	ok(defined $size, 'size is defined');
 	diag("INITIAL SIZE: $size");
-	ok(my $count = $store->count_statements(undef, undef, undef),
-	   'count is defined');
+
+	my $count = $store->count_statements(undef, undef, undef);
+	ok(defined $count, 'count is defined');
 	diag("INITIAL (DISTINCT) COUNT: $count");
 
 	TODO: {
@@ -237,28 +239,36 @@ sub all_triple_store_tests {
 	note "## Testing store " . ref($store);
 	isa_ok( $store, 'RDF::Trine::Store' );
 
+	my $size = $store->size;
+	ok(defined $size, 'size is defined');
+	diag("INITIAL SIZE: $size");
+
+	my $count = $store->count_statements(undef, undef, undef);
+	ok(defined $count, 'count is defined');
+	diag("INITIAL (DISTINCT) COUNT: $count");
+
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
-		
+
 		dies_ok {
 			$store->get_contexts;
 		} 'get_context dies';
-	
-		add_statement_tests_simple( $store, $args, $ex );
+
+		add_statement_tests_simple( $store, $args, $ex, $size );
 		update_sleep($args);
-	
-		bulk_add_statement_tests_simple( $store, $args, $ex );
+
+		bulk_add_statement_tests_simple( $store, $args, $ex, $size );
 		update_sleep($args);
-	
-		literals_tests_simple( $store, $args, $ex );
-		blank_node_tests_triples( $store, $args, $ex );
-		count_statements_tests_simple( $store, $args, $ex );
-	
+
+		literals_tests_simple( $store, $args, $ex, $size, );
+		blank_node_tests_triples( $store, $args, $ex, $size );
+		count_statements_tests_simple( $store, $args, $ex, $size, $count );
+
 		add_triples( $store, $args, @triples );
 		update_sleep($args);
-	
-		count_statements_tests_triples( $store, $args, $ex, $nil );
-		get_statements_tests_triples( $store, $args, $ex );
+
+		count_statements_tests_triples( $store, $args, $ex, $nil, $size, $count );
+		get_statements_tests_triples( $store, $args, $ex, $size, $count );
 		get_pattern_tests( $store, $args, $ex );
 	}
 }

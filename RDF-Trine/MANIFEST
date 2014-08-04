@@ -565,6 +565,7 @@ t/store-hexastore-triplestore.t
 t/store-hexastore.t
 t/store-memory.t
 t/store-redis.t
+t/store-sparql.t
 t/store-triple_sql.t
 t/store.t
 t/syntax.t

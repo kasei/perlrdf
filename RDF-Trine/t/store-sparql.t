@@ -44,21 +44,21 @@ can_ok($store, '_new_with_config');
 #Test::RDF::Trine::Store::add_quads($store, undef, @{$data->{quads}});
 #diag($_) for $store->_objects;
 
-#Test::RDF::Trine::Store::all_store_tests(
-#	$store, $data, undef, { update_sleep => 0 });
+Test::RDF::Trine::Store::all_store_tests(
+	$store, $data, undef, { update_sleep => 0 });
 
-my $iter = $store->get_sparql(<<'EOQ');
-prefix x: <urn:uuid:4095619e-dcea-4eec-8b81-6a5a7106c29f>
-construct { x: ?b ?c . ?c ?d ?e . ?f ?g ?h }
-where {
- { x: ?b ?c }
- optional { ?c ?d ?e }
- optional { ?f ?g ?h; ?i x: }
-}
-EOQ
-#construct { ?s ?p ?o } where { ?s ?p ?o filter isBLANK(?s) }
-#EOQ
+# my $iter = $store->get_sparql(<<'EOQ');
+# prefix x: <urn:uuid:4095619e-dcea-4eec-8b81-6a5a7106c29f>
+# construct { x: ?b ?c . ?c ?d ?e . ?f ?g ?h }
+# where {
+#  { x: ?b ?c }
+#  optional { ?c ?d ?e }
+#  optional { ?f ?g ?h; ?i x: }
+# }
+# EOQ
+# #construct { ?s ?p ?o } where { ?s ?p ?o filter isBLANK(?s) }
+# #EOQ
 
-while (my $stmt = $iter->next) {
-    warn $stmt->sse;
-}
+# while (my $stmt = $iter->next) {
+#     warn $stmt->sse;
+# }
