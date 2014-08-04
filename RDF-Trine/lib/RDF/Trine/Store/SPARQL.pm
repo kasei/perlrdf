@@ -885,7 +885,7 @@ sub _json_graph_results {
 		my $stmt = $osub->();
 		return $stmt if $stmt;
 
-        $p = $ap->() or return;
+		$p = $ap->() or return;
 
 		return $osub->();
 	};
@@ -895,32 +895,32 @@ sub _json_graph_results {
 		return $stmt if $stmt;
 
 		unless ($s = $as->()) {
-            undef $js;
-            undef $s;
-            undef $p;
-            undef %sh;
-            undef %ph;
-            undef @ol;
-            undef $as;
-            undef $ap;
-            undef $osub;
-            undef $psub;
-            return;
-        }
+			undef $js;
+			undef $s;
+			undef $p;
+			undef %sh;
+			undef %ph;
+			undef @ol;
+			undef $as;
+			undef $ap;
+			undef $osub;
+			undef $psub;
+			return;
+		}
 
 		$stmt = $psub->();
 		return $stmt if $stmt;
-        undef $js;
-        undef $s;
-        undef $p;
-        undef %sh;
-        undef %ph;
-        undef @ol;
-        undef $as;
-        undef $ap;
-        undef $osub;
-        undef $psub;
-        return;
+		undef $js;
+		undef $s;
+		undef $p;
+		undef %sh;
+		undef %ph;
+		undef @ol;
+		undef $as;
+		undef $ap;
+		undef $osub;
+		undef $psub;
+		return;
 	};
 
 	return RDF::Trine::Iterator::Graph->new($sub);
@@ -928,7 +928,7 @@ sub _json_graph_results {
 
 my %DISPATCH = (
 	'application/sparql-results+xml' => sub {
-        my $cref = shift;
+		my $cref = shift;
 		my $handler	= RDF::Trine::Iterator::SAXHandler->new;
 		my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 		$p->parse_string($$cref);
