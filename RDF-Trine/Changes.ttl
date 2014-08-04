@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.009.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.008.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.009" ;
+                        doap:created      "2014-08-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Adding model sync/bulk ops to redland store (Dorian Taylor)." ;
+                        asc:update      "Optimized use of regular expressions (Dorian Taylor)." ;
+                        asc:update      "Optimized Hexastore store class (Dorian Taylor)." ;
+                        asc:update      "Log an info message if there is a cartesian product (Kjetil Kjernsmo)." ;
+                        asc:update      "Use a base64 encoded digest for Memory store etags (Kjetil Kjernsmo)." ;
+                        asc:update      "Updated RDF::Trine::Iterator::Bindings->as_statements to accept a RDF::Trine::Pattern argument (github issue #104)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.008.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.007.tar.gz> ;
