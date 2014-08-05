@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 1.001
+This document describes RDF::Trine::Store::DBI version 1.008
 
 =head1 SYNOPSIS
 
@@ -65,7 +65,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.008";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -151,11 +151,11 @@ sub new {
 		my $dsn		= shift;
 		my $user	= shift;
 		my $pass	= shift;
-		if ($dsn =~ /^DBI:mysql:/) {
+		if ($dsn =~ /^DBI:mysql:/i) {
 			$class	= 'RDF::Trine::Store::DBI::mysql';
-		} elsif ($dsn =~ /^DBI:Pg:/) {
+		} elsif ($dsn =~ /^DBI:Pg:/i) {
 			$class	= 'RDF::Trine::Store::DBI::Pg';
-		} elsif ($dsn =~ /^DBI:SQLite:/) {
+		} elsif ($dsn =~ /^DBI:SQLite:/i) {
 			$class	= 'RDF::Trine::Store::DBI::SQLite';
 			$user	= '';
 			$pass	= '';

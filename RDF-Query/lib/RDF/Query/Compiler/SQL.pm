@@ -7,7 +7,7 @@ RDF::Query::Compiler::SQL - Compile a SPARQL query directly to SQL.
 
 =head1 VERSION
 
-This document describes RDF::Query::Compiler::SQL version 2.908.
+This document describes RDF::Query::Compiler::SQL version 2.911.
 
 =head1 STATUS
 
@@ -41,7 +41,7 @@ use RDF::Query::Error qw(:try);
 my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.911';
 	@NODE_TYPE_TABLES	= (
 							['Resources', 'ljr', 'URI'],
 							['Literals', 'ljl', qw(Value Language Datatype)],
@@ -574,8 +574,8 @@ sub expr2sql {
 	Carp::confess unless ref($expr);
 	
 	my $blessed	= blessed($expr);
-	if ($blessed and $expr->isa('RDF::Query::Node')) {
-		if ($expr->isa('RDF::Query::Node::Literal')) {
+	if ($blessed and $expr->isa('RDF::Trine::Node')) {
+		if ($expr->isa('RDF::Trine::Node::Literal')) {
 			my $literal	= $expr->literal_value;
 			my $dt		= $expr->literal_datatype;
 			
@@ -693,7 +693,7 @@ sub expr2sql {
 						}
 					} else {
 						++$$level; my $sql_a	= $self->expr2sql( $a, $level, equality => $equality );
-						if ($b->[0] eq 'VAR') {
+						if ($b->type eq 'VAR') {
 							# ?var cmp NODE
 							++$$level; my $var_name	= $self->expr2sql( $b, $level, equality => $equality );
 							my $sql_b	= "(SELECT value FROM Literals WHERE ${var_name} = ID LIMIT 1)";
@@ -825,8 +825,8 @@ sub qualify_uri {
 	my $self	= shift;
 	my $uri		= shift;
 	my $parsed	= $self->{parsed};
-	if (ref($uri) and $uri->[0] eq 'URI') {
-		$uri	= $uri->[1];
+	if (ref($uri) and $uri->type eq 'URI') {
+		$uri	= $uri->uri_value;
 	}
 	
 	if (ref($uri)) {
@@ -897,7 +897,7 @@ BEGIN {
 			push(@literal, $self->expr2sql( $args[0], $level ));
 		}
 		
-		if ($args[1][0] eq 'VAR') {
+		if ($args[1]->type eq 'VAR') {
 			my $name	= $args[0][1];
 			push(@pattern, "${name}_Value");
 			push(@pattern, "${name}_URI");

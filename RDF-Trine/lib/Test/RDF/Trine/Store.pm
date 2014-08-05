@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.001
+This document describes RDF::Trine version 1.008
 
 =head1 SYNOPSIS
 
@@ -59,7 +59,7 @@ use Scalar::Util qw(blessed);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.001';
+	$VERSION	= '1.008';
 }
 
 use Log::Log4perl;

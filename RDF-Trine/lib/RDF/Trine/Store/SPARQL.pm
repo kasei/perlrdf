@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 1.001
+This document describes RDF::Trine::Store::SPARQL version 1.008
 
 =head1 SYNOPSIS
 
@@ -31,6 +31,8 @@ use List::Util qw(first);
 use List::MoreUtils qw(any);
 use Scalar::Util qw(refaddr reftype blessed);
 
+use Scalar::Util qw(refaddr reftype blessed);
+use HTTP::Request::Common;
 use RDF::Trine::Error qw(:try);
 
 ######################################################################
@@ -38,7 +40,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.001";
+	$VERSION	= "1.008";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);

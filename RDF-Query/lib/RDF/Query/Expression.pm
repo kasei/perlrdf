@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.908.
+This document describes RDF::Query::Expression version 2.911.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.911';
 }
 
 ######################################################################
@@ -117,7 +117,11 @@ sub explain {
 	my $type	= $self->op;
 	my $string	= "${indent}${type}\n";
 	foreach my $p ($self->operands) {
-		$string	.= $p->explain( $s, $count+1 );
+		if ($p->can('explain')) {
+			$string	.= $p->explain( $s, $count+1 );
+		} else {
+			$string	.= $p->sse;
+		}
 	}
 	return $string;
 }

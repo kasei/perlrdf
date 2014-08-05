@@ -7,7 +7,7 @@ RDF::Query::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node version 2.908.
+This document describes RDF::Query::Node version 2.911.
 
 =head1 METHODS
 
@@ -27,13 +27,14 @@ use RDF::Query::Node::Literal;
 use RDF::Query::Node::Resource;
 use RDF::Query::Node::Variable;
 
-our ($VERSION, @ISA, @EXPORT_OK);
+our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.911';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
 	@EXPORT_OK	= qw(iri blank literal variable);
+	%EXPORT_TAGS	= ( 'all' => [qw(iri blank literal variable)] );
 }
 
 =item C<< is_variable >>

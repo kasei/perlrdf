@@ -1,4 +1,4 @@
-use Test::More tests => 10;
+use Test::More;
 use Test::JSON;
 
 use strict;
@@ -7,7 +7,7 @@ no warnings 'redefine';
 
 use URI::file;
 
-use RDF::Trine;
+use RDF::Trine qw(statement iri literal variable);
 use RDF::Trine::Node;
 use_ok( 'RDF::Trine::Iterator::Bindings' );
 
@@ -52,3 +52,40 @@ use_ok( 'RDF::Trine::Iterator::Bindings' );
 	my $expect	= '{"head":{"vars":["a", "b", "c"]},"results":{"bindings":[],"distinct":false,"ordered":false}}';
 	is_json( $iter->as_json, $expect, 'as_json empty bindings iterator with names' );
 }
+
+{
+	my $t1		= statement(variable('subj'), iri('pred1'), literal('foo'));
+	my $t2		= statement(variable('subj'), iri('pred2'), variable('obj'));
+	my $pattern	= RDF::Trine::Pattern->new($t1, $t2);
+	my @bindings	= (
+		{ 'subj' => iri('http://example.org/x1') },
+		{ 'subj' => iri('http://example.org/x2'), 'obj' => literal('bar') },
+	);
+	my $iter	= RDF::Trine::Iterator::Bindings->new( sub { return shift(@bindings) } );
+	my $sts		= $iter->as_statements($pattern);
+	my @triples	= $sts->get_all;
+	is(scalar(@triples), 3, 'expected triple count from as_statements with pattern');
+	
+	ok(
+		$triples[0]->subsumes(
+			statement(iri('http://example.org/x1'), iri('pred1'), literal('foo'))
+		),
+		'expected triple 1/3'
+	);
+	
+	ok(
+		$triples[1]->subsumes(
+			statement(iri('http://example.org/x2'), iri('pred1'), literal('foo'))
+		),
+		'expected triple 2/3'
+	);
+	
+	ok(
+		$triples[2]->subsumes(
+			statement(iri('http://example.org/x2'), iri('pred2'), literal('bar'))
+		),
+		'expected triple 3/3'
+	);
+}
+
+done_testing();
