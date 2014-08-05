@@ -274,9 +274,11 @@ sub get_statements {
 				or (blessed($nodes[$i]) and $nodes[$i]->is_variable)) {
 			$nodes[$i]	= RDF::Trine::Node::Variable->new( $var_map[ $i ] );
 		}
-        # This block represents the node multiplicity/cartesian
-        # product form of get_statements which will be introduced in
-        # another branch. -djt
+		# This block of code will never be executed if accessed
+		# through RDF::Trine::Model in its current state. This block
+		# represents the node multiplicity/cartesian product form of
+		# get_statements which will be introduced in another
+		# branch. -djt
 		elsif (ref $nodes[$i] eq 'ARRAY') {
 			throw RDF::Trine::Error::MethodInvocationError
 				-text => "ARRAY ref contents must be non-variable Node objects"
@@ -300,7 +302,7 @@ sub get_statements {
 				$nodes[$i] = RDF::Trine::Node::Variable->new( $var_map[ $i ] );
 			}
 		}
-        # End multiplicity block.
+		# End multiplicity block.
 		elsif (blessed($nodes[$i]) and $nodes[$i]->isa('RDF::Trine::Node')) {
 			# noop
 		}
