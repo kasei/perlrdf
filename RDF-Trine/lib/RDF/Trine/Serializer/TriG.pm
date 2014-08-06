@@ -7,7 +7,7 @@ RDF::Trine::Serializer::TriG - TriG Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::TriG version 1.008
+This document describes RDF::Trine::Serializer::TriG version 1.009
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.009';
 	$RDF::Trine::Serializer::serializer_names{ 'trig' }	= __PACKAGE__;
 # 	$RDF::Trine::Serializer::format_uris{ 'http://sw.deri.org/2008/07/n-quads/#n-quads' }	= __PACKAGE__;
 # 	foreach my $type (qw(text/x-nquads)) {
