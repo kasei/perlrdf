@@ -1,0 +1,51 @@
+RDF::Endpoint - A SPARQL Protocol Endpoint implementation
+
+   This modules implements the SPARQL Protocol for RDF using the PSGI
+   interface provided by Plack. It may be run with any Plack handler.
+
+REQUIREMENTS
+
+	To install RDF::Endpoint you'll need the following perl modules installed:
+
+     * JSON
+     * Carp
+     * File::ShareDir
+     * RDF::Trine
+     * RDF::Query
+     * RDF::RDFa::Generator
+     * Plack::Request
+     * Plack::Response
+     * Plack::Middleware::AccessLog
+     * Data::Dumper
+     * Config::JFDI
+     * HTTP::Negotiate
+     * IO::Compress::Gzip
+     * XML::LibXML
+     * HTML::HTML5::Writer
+     * HTML::HTML5::Parser
+     * Hash::Merge::Simple
+
+	The following additional modules are required for testing the installation:
+
+     * Test::More
+     * Test::WWW::Mechanize::PSGI
+
+INSTALLATION
+
+   To install, run:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+COPYRIGHT
+
+   Copyright (C) 2010-2014 Gregory Williams. All rights reserved.
+   This program is free software; you can redistribute it and/or
+   modify it under the same terms as Perl itself.
+
+AUTHOR
+
+	Gregory Williams <gwilliams@cpan.org>
+

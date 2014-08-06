@@ -15,6 +15,42 @@
 	.
 
 
+<http://kasei.us/code/files/RDF-Endpoint-0.07.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.07" ;
+		doap:created      "2014-08-04" ;
+	] ;
+	asc:changes [
+		asc:addition	"Added Plack::App::RDF::Endpoint." ;
+		asc:update      "Updated RDF::Endpoint to quote raw-value ETag values (github issue #106)." ;
+		asc:update      "Use base64 encoding of tags to get shorter strings (patch from Kjetil Kjernsmo)." ;
+		asc:update		"Updated endpoint.psgi to look for PERLRDF_STORE environment variable." ;
+	] ;
+	.
+
+
+<http://kasei.us/code/files/RDF-Endpoint-0.06.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.06" ;
+		doap:created      "2014-07-01" ;
+	] ;
+	asc:changes [
+		asc:addition	"Add Server header (from Kjetil Kjernsmo via github pull request #93)." ;
+		asc:addition	"Added initial support for application/json-problem errors." ;
+		asc:update      "Fixed config bug in t/psgi.t." ;
+		asc:update      "Added SPARQL 1.1 WG protocol tests." ;
+		asc:update      "The load_data and update configuration flags cannot both be true at the same time." ;
+		asc:update      "Updated RDF::Endpoint to return a 400 error when datasets are specified both in protocol and query." ;
+		asc:update      "Made RDF::Endpoint->new die on invalid config (when both load_data and update options are specified)." ;
+		asc:update      "Added Allow header to HTTP 405 responses." ;
+	] ;
+	.
+
+
 <http://kasei.us/code/files/RDF-Endpoint-0.05.tar.gz>
 	dcterms:isVersionOf my:project ;
 	
