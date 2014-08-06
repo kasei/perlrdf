@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.009" ;
-                        doap:created      "2014-08-XX" ;
+                        doap:created      "2014-08-06" ;
                         ];
         asc:changes     [
                         asc:addition    "Adding model sync/bulk ops to redland store (Dorian Taylor)." ;

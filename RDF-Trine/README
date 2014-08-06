@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.009 (2014-08-XX)
+  Version 1.009 (2014-08-06)
 
      * NEW FEATURES
          	Adding model sync/bulk ops to redland store (Dorian Taylor).
@@ -80,7 +80,7 @@ VERSION HISTORY
      * OTHER
          	Log an info message if there is a cartesian product (Kjetil Kjernsmo).
 
-  Version 1.008_01 (2014-05-20)
+  Version 1.009 (2014-05-20)
 
      * BUG FIXES
          	Fixed bug in Turtle lexer that was failing to anchor matches of PNAME_LN (GH issue #96 by Tobias Kuhn).
