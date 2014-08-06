@@ -931,7 +931,13 @@ sub _json_graph_results {
 my %DISPATCH = (
 	'application/sparql-results+xml' => sub {
 		my $cref = shift;
-		my $handler	= RDF::Trine::Iterator::SAXHandler->new;
+		my $handler	= RDF::Trine::Iterator::SAXHandler->new( {
+			generate_blank_id => sub {
+				my $string	= shift;
+				$string =~ s!nodeID://!!;
+				return $string;
+			}
+		});
 		my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 		$p->parse_string($$cref);
 		return $handler->iterator;

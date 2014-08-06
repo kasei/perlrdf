@@ -37,7 +37,7 @@ package RDF::Trine::Iterator::SAXHandler;
 
 use strict;
 use warnings;
-use Scalar::Util qw(refaddr);
+use Scalar::Util qw(refaddr reftype);
 use base qw(XML::SAX::Base);
 
 use Data::Dumper;
@@ -63,22 +63,42 @@ my %config;
 
 my %expecting_string	= map { $_ => 1 } qw(boolean bnode uri literal);
 
-=item C<< new ( [ \&handler ] ) >>
+=item C<< new ( [ \&handler, \%args ] ) >>
 
 Returns a new XML::SAX handler object. If C<< &handler >> is supplied, it will
 be called with a variable bindings object as each is parsed, bypassing the
 normal process of collecting the results for retrieval via an iterator object.
+
+Key-value pairs may be supplied in C<<\%args>> to configure custom behavior of
+the parsing. Valid pairs are:
+
+  variables => $bool
+
+If C<<$bool> is true, the callback handler will be called once with an ARRAY
+reference containing the variable name strings defined in the <head> section
+of the XML content. Subsequent calls to the callback handler will be passed
+variable bindings objects as usual.
+
+  generate_blank_id => sub ($string) { ... }
+  
+This specifies a closure to be used in generating blank node identifiers from
+the string value obtained during XML parsing. The return value should be a
+valid blank node identifier string which will be used in constructing an
+RDF::Trine::Node::Blank object.
 
 =cut
 
 sub new {
 	my $class	= shift;
 	my $self	= $class->SUPER::new();
-	if (@_) {
-		my $addr	= refaddr( $self );
-		my $code	= shift;
+	my %args;
+	my $addr	= refaddr( $self );
+	if (scalar(@_)) {
+		if (reftype($_[0] eq 'CODE')) {
+			my $code	= shift;
+			$result_handlers{ $addr }	= $code;
+		}
 		my $args	= shift || {};
-		$result_handlers{ $addr }	= $code;
 		$config{ $addr }			= { %$args };
 	}
 	return $self;
@@ -248,7 +268,11 @@ sub end_element {
 		}
 	} elsif ($tag eq 'bnode') {
 		# guess what! virtuoso uses funny bnodes
-		$string =~ s!nodeID://!!;
+		if (my $gen_id = $config{ $addr }{ generate_blank_id }) {
+			my $new	= $gen_id->($string);
+# 			warn "Generated blank node ID '$new' from parsed string '$string'";
+			$string	= $new;
+		}
 		$values{ $addr }	= RDF::Trine::Node::Blank->new( $string );
 	} elsif ($tag eq 'uri') {
 		$values{ $addr }	= RDF::Trine::Node::Resource->new( $string );
