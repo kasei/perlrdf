@@ -177,62 +177,70 @@ that they may be joined in order while avoiding cartesian products (if possible)
 sub sort_for_join_variables {
 	my $self	= shift;
 	my $class	= ref($self);
-	my @triples	= $self->triples;
-	my %triples_by_tid;
+	my @triples	= $self->triples; # T in HSP
+
+	my %variable_graph;
 	foreach my $t (@triples) {
-		$triples_by_tid{ refaddr($t) }	= $t;
-	}
-	
-	my %triples_with_variable;
-	foreach my $t (@triples) {
-		my $tid	= refaddr($t);
 		foreach my $n ($t->nodes) {
 			if ($n->isa('RDF::Trine::Node::Variable')) {
-				my $var	= $n->name;
-				$triples_with_variable{ $var }{ $tid }++;
+				$variable_graph{ $n->name }{ 'count' }++;
+				foreach my $o ($t->nodes) {
+					if ($o->isa('RDF::Trine::Node::Variable') && (! $o->equal($n))) {
+#						warn $n->name ."\t" .$o->name;
+						push(@{$variable_graph{$n->name}{'edges'}}, $o->name);
+					}
+				}
 			}
 		}
 	}
-	foreach my $var (keys %triples_with_variable) {
-		my @tids	= sort { $a <=> $b } keys %{ $triples_with_variable{ $var } };
-		$triples_with_variable{ $var }	= \@tids;
-	}
+
+	die Dumper(\%variable_graph);
+
+	# foreach my $var (keys %triples_with_variable) {
+	# 	my @tids	= sort { $a <=> $b } keys %{ $triples_with_variable{ $var } };
+	# 	$triples_with_variable{ $var }	= \@tids;
+	# }
 	
-	my %variables_in_triple;
-	foreach my $var (keys %triples_with_variable) {
-		foreach my $tid (@{ $triples_with_variable{ $var } }) {
-			$variables_in_triple{ $tid }{ $var }++;
-		}
-	}
-	foreach my $tid (keys %variables_in_triple) {
-		my @vars	= sort keys %{ $variables_in_triple{ $tid } };
-		$variables_in_triple{ $tid }	= \@vars;
-	}
+	# my %variables_in_triple;
+	# foreach my $var (keys %triples_with_variable) {
+	# 	foreach my $tid (@{ $triples_with_variable{ $var } }) {
+	# 		$variables_in_triple{ $tid }{ $var }++;
+	# 	}
+	# }
+	# foreach my $tid (keys %variables_in_triple) {
+	# 	my @vars	= sort keys %{ $variables_in_triple{ $tid } };
+	# 	$variables_in_triple{ $tid }	= \@vars;
+	# }
 	
-	my %used_vars;
-	my %used_tids;
-	my @sorted;
-	my $first	= shift(@triples);	# start with the first triple in syntactic order
-	push(@sorted, $first);
-	$used_tids{ refaddr($first) }++;
-	foreach my $var (@{ $variables_in_triple{ refaddr($first) } }) {
-		$used_vars{ $var }++;
-	}
-	while (@triples) {
-		my @candidate_tids	= grep { not($used_tids{$_}) } map { @{ $triples_with_variable{ $_ } } } (keys %used_vars);
-		last unless scalar(@candidate_tids);
-		my $next_id	= shift(@candidate_tids);
-		my $next	= $triples_by_tid{ $next_id };
-		push(@sorted, $next);
-		$used_tids{ refaddr($next) }++;
-		foreach my $var (@{ $variables_in_triple{ refaddr($next) } }) {
-			$used_vars{ $var }++;
-		}
-		@triples	= grep { refaddr($_) != $next_id } @triples;
-	}
-	push(@sorted, @triples);
-	return $class->new(@sorted);
+	
+	# my %used_vars;
+	# my %used_tids;
+	# my @sorted;
+	# my $first	= shift(@triples);	# start with the first triple in syntactic order
+	# push(@sorted, $first);
+	# $used_tids{ refaddr($first) }++;
+	# foreach my $var (@{ $variables_in_triple{ refaddr($first) } }) {
+	# 	$used_vars{ $var }++;
+	# }
+	# while (@triples) {
+	# 	my @candidate_tids	= grep { not($used_tids{$_}) } map { @{ $triples_with_variable{ $_ } } } (keys %used_vars);
+	# 	last unless scalar(@candidate_tids);
+	# 	my $next_id	= shift(@candidate_tids);
+	# 	my $next	= $triples_by_tid{ $next_id };
+	# 	push(@sorted, $next);
+	# 	$used_tids{ refaddr($next) }++;
+	# 	foreach my $var (@{ $variables_in_triple{ refaddr($next) } }) {
+	# 		$used_vars{ $var }++;
+	# 	}
+	# 	@triples	= grep { refaddr($_) != $next_id } @triples;
+	# }
+	# push(@sorted, @triples);
+	# return $class->new(@sorted);
 }
+
+sub _hsp_heuristic_triple_pattern_order { # Heuristic 1 of HSP
+	my @triples = @_;
+}	
 
 1;
 
