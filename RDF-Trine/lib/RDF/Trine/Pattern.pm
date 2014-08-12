@@ -186,6 +186,11 @@ sub sort_for_join_variables {
 				my $name = $n->name;
 				$structure_counts{ $name }{ 'name' } = $name;
 				$structure_counts{ $name }{ 'common_variable_count' }++;
+				$structure_counts{ $name }{ 'not_variable_count' } = 0 unless ($structure_counts{ $name }{ 'not_variable_count' });
+				$structure_counts{ $name }{ 'literal_count' } = 0 unless ($structure_counts{ $name }{ 'literal_count' });
+				foreach my $char (split(//, $n->as_string)) {
+					$structure_counts{ $name }{ 'string_sum' } += ord($char);
+				}
 				foreach my $o ($t->nodes) {
 					unless ($o->isa('RDF::Trine::Node::Variable')) {
 						$structure_counts{ $name }{ 'not_variable_count' }++;
@@ -205,7 +210,8 @@ sub sort_for_join_variables {
 	my @sorted_patterns = sort {     $b->{'common_variable_count'} <=> $a->{'common_variable_count'} 
 											or $b->{'literal_count'}         <=> $a->{'literal_count'}
 											or $b->{'not_variable_count'}    <=> $a->{'not_variable_count'}
-											or $b->{'string'}                cmp $a->{'string'} } values(%structure_counts);
+											or $b->{'string_sum'}            <=> $a->{'string_sum'} 
+										} values(%structure_counts);
 	die Dumper(@sorted_patterns);
 											
 
