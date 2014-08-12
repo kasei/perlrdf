@@ -180,11 +180,15 @@ sub sort_for_join_variables {
 	my @triples	= $self->triples; # T in HSP
 
 	my %structure_counts;
+	my %triples_by_tid;
 	foreach my $t (@triples) {
+		my $tid = refaddr($t);
+		$triples_by_tid{$tid}  = $t;
 		foreach my $n ($t->nodes) {
 			if ($n->isa('RDF::Trine::Node::Variable')) {
 				my $name = $n->name;
 				$structure_counts{ $name }{ 'name' } = $name;
+				push(@{$structure_counts{$name}{'claimed_patterns'}}, $tid);
 				$structure_counts{ $name }{ 'common_variable_count' }++;
 				$structure_counts{ $name }{ 'not_variable_count' } = 0 unless ($structure_counts{ $name }{ 'not_variable_count' });
 				$structure_counts{ $name }{ 'literal_count' } = 0 unless ($structure_counts{ $name }{ 'literal_count' });
