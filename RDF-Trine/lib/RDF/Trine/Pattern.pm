@@ -192,7 +192,7 @@ sub sort_for_join_variables {
 				$structure_counts{ $name }{ 'common_variable_count' }++;
 				$structure_counts{ $name }{ 'not_variable_count' } = 0 unless ($structure_counts{ $name }{ 'not_variable_count' });
 				$structure_counts{ $name }{ 'literal_count' } = 0 unless ($structure_counts{ $name }{ 'literal_count' });
-				foreach my $char (split(//, $n->as_string)) {
+				foreach my $char (split(//, $n->as_string)) { # TODO: Use a more standard format
 					$structure_counts{ $name }{ 'string_sum' } += ord($char);
 				}
 				foreach my $o ($t->nodes) {
@@ -200,7 +200,6 @@ sub sort_for_join_variables {
 						$structure_counts{ $name }{ 'not_variable_count' }++;
 					}
 					if ($o->isa('RDF::Trine::Node::Variable') && (! $o->equal($n))) {
-#						warn $name ."\t" .$o->name;
 						push(@{$structure_counts{$name}{'edges'}}, $o->name);
 					}
 					elsif ($o->isa('RDF::Trine::Node::Literal')) {
@@ -216,8 +215,22 @@ sub sort_for_join_variables {
 											or $b->{'not_variable_count'}    <=> $a->{'not_variable_count'}
 											or $b->{'string_sum'}            <=> $a->{'string_sum'} 
 										} values(%structure_counts);
-	die Dumper(@sorted_patterns);
-											
+
+	my @execution_list;
+	foreach my $item (@sorted_patterns) {
+		my @patterns;
+		if (scalar keys(%triples_by_tid) > 2) {
+			foreach my $pattern (@{$item->{'claimed_patterns'}}) {
+				push(@patterns, $triples_by_tid{$pattern});
+				delete $triples_by_tid{$pattern};
+			}
+			push(@execution_list, \@patterns);
+		} else {
+			push(@execution_list, [values(%triples_by_tid)]);
+			last;
+		}
+	}
+
 
 	# foreach my $var (keys %triples_with_variable) {
 	# 	my @tids	= sort { $a <=> $b } keys %{ $triples_with_variable{ $var } };
