@@ -179,22 +179,35 @@ sub sort_for_join_variables {
 	my $class	= ref($self);
 	my @triples	= $self->triples; # T in HSP
 
-	my %variable_graph;
+	my %structure_counts;
 	foreach my $t (@triples) {
 		foreach my $n ($t->nodes) {
 			if ($n->isa('RDF::Trine::Node::Variable')) {
-				$variable_graph{ $n->name }{ 'count' }++;
+				my $name = $n->name;
+				$structure_counts{ $name }{ 'name' } = $name;
+				$structure_counts{ $name }{ 'common_variable_count' }++;
 				foreach my $o ($t->nodes) {
+					unless ($o->isa('RDF::Trine::Node::Variable')) {
+						$structure_counts{ $name }{ 'not_variable_count' }++;
+					}
 					if ($o->isa('RDF::Trine::Node::Variable') && (! $o->equal($n))) {
-#						warn $n->name ."\t" .$o->name;
-						push(@{$variable_graph{$n->name}{'edges'}}, $o->name);
+#						warn $name ."\t" .$o->name;
+						push(@{$structure_counts{$name}{'edges'}}, $o->name);
+					}
+					elsif ($o->isa('RDF::Trine::Node::Literal')) {
+						$structure_counts{ $name }{ 'literal_count' }++;
 					}
 				}
 			}
 		}
 	}
 
-	die Dumper(\%variable_graph);
+	my @sorted_patterns = sort {     $b->{'common_variable_count'} <=> $a->{'common_variable_count'} 
+											or $b->{'literal_count'}         <=> $a->{'literal_count'}
+											or $b->{'not_variable_count'}    <=> $a->{'not_variable_count'}
+											or $b->{'string'}                cmp $a->{'string'} } values(%structure_counts);
+	die Dumper(@sorted_patterns);
+											
 
 	# foreach my $var (keys %triples_with_variable) {
 	# 	my @tids	= sort { $a <=> $b } keys %{ $triples_with_variable{ $var } };
