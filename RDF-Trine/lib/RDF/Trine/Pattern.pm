@@ -178,7 +178,8 @@ sub sort_for_join_variables {
 	my $self	= shift;
 	my $class	= ref($self);
 	my @triples	= $self->triples; # T in HSP
-
+	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
+	$l->debug('Reordering ' . scalar @triples . ' triples for heuristical optimizations');
 	my %structure_counts;
 	my %triples_by_tid;
 	foreach my $t (@triples) {
@@ -209,6 +210,7 @@ sub sort_for_join_variables {
 			}
 		}
 	}
+	$l->trace('Results of structural analysis: ' . Dumper(\%structure_counts));
 
 	my @sorted_patterns = sort {     $b->{'common_variable_count'} <=> $a->{'common_variable_count'} 
 											or $b->{'literal_count'}         <=> $a->{'literal_count'}
@@ -230,6 +232,8 @@ sub sort_for_join_variables {
 			last;
 		}
 	}
+
+	warn Dumper(\@execution_list);
 
 
 	# foreach my $var (keys %triples_with_variable) {
