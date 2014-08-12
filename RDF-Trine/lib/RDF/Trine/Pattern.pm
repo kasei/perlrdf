@@ -200,9 +200,6 @@ sub sort_for_join_variables {
 					unless ($o->isa('RDF::Trine::Node::Variable')) {
 						$structure_counts{ $name }{ 'not_variable_count' }++;
 					}
-					if ($o->isa('RDF::Trine::Node::Variable') && (! $o->equal($n))) {
-						push(@{$structure_counts{$name}{'edges'}}, $o->name);
-					}
 					elsif ($o->isa('RDF::Trine::Node::Literal')) {
 						$structure_counts{ $name }{ 'literal_count' }++;
 					}
