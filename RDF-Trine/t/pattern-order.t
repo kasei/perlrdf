@@ -40,7 +40,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 {
 	# Using no common terms to test only heuristic 1
-	my $spo = statement(iri('http://example.org/someone#1'), $rdf->page, iri('http://example.org/'));
+	my $spo = statement(iri('http://example.org/someone#1'), $foaf->page, iri('http://example.org/'));
 	my $svo = statement(iri('http://example.com/someone#2'), variable('v1'), literal('foo1'));
 	my $vpo = statement(variable('v2'), $foaf->name, literal('foo2'));
 	my $spv = statement(iri('http://example.com/someone#3'), $foaf->gender, variable('v3'));
