@@ -295,7 +295,41 @@ sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 	return @sorted_triples;
 }
 
-sub _hsp_heuristic_triple_sum { # Find a number to aid sorting
+# The below function finds a number to aid sorting
+# It takes into account Heuristic 1 and 4 of the HSP paper, see REFERENCES
+# as well as that it was noted in the text that rdf:type is usually less selective.
+
+# By assigning the integers to nodes, depending on whether they are in
+# triple (subject, predicate, object), variables, rdf:type and
+# literals, and sum them, they may be sorted. See code for the actual
+# values used.
+
+# Denoting s for bound subject, p for bound predicate, a for rdf:type
+# as predicate, o for bound object and l for literal object and ? for
+# variable, we get the following order, most of which are identical to
+# the HSP:
+
+# spl: 6
+# spo: 8
+# sao: 10
+# s?l: 14
+# s?p: 16
+# ?pl: 25
+# ?po: 27
+# sp?: 30
+# sa?: 32
+# ??l: 33
+# ??o: 35
+# s??: 38
+# ?p?: 49
+# ?a?: 51
+# ???: 57
+
+# Note that this number is not intended as an estimate of selectivity,
+# merely a sorting key, but further research may possibly create such
+# numbers.
+
+sub _hsp_heuristic_triple_sum {
 	my $t = shift;
 	my $sum = 0;
 	if ($t->subject->is_variable) {
@@ -337,6 +371,12 @@ __END__
 
 Please report any bugs or feature requests to through the GitHub web interface
 at L<https://github.com/kasei/perlrdf/issues>.
+
+=head1 REFERENCES
+
+The heuristics to order triple patterns in this module is strongly
+influenced by L<The ICS-FORTH Heuristics-based SPARQL Planner
+(HSP)|http://www.ics.forth.gr/isl/index_main.php?l=e&c=645>.
 
 =head1 AUTHOR
 
