@@ -22,6 +22,7 @@ use Log::Log4perl;
 use Scalar::Util qw(blessed refaddr);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
+use RDF::Trine qw(iri);
 
 ######################################################################
 
@@ -188,7 +189,7 @@ sub sort_for_join_variables {
 		foreach my $n ($t->nodes) {
 			if ($n->isa('RDF::Trine::Node::Variable')) {
 				my $name = $n->name;
-				$structure_counts{ $name }{ 'name' } = $name;
+				$structure_counts{ $name }{ 'name' } = $name; # TODO: Worth doing in an array?
 				push(@{$structure_counts{$name}{'claimed_patterns'}}, $tid);
 				$structure_counts{ $name }{ 'common_variable_count' }++;
 				$structure_counts{ $name }{ 'not_variable_count' } = 0 unless ($structure_counts{ $name }{ 'not_variable_count' });
@@ -223,6 +224,8 @@ sub sort_for_join_variables {
 				push(@patterns, $triples_by_tid{$pattern});
 				delete $triples_by_tid{$pattern};
 			}
+			my @sorted = _hsp_heuristic_1_4_triple_pattern_order(@patterns);
+			die Dumper(@sorted);
 			push(@execution_list, \@patterns);
 		} else {
 			push(@execution_list, [values(%triples_by_tid)]);
@@ -275,9 +278,54 @@ sub sort_for_join_variables {
 	# return $class->new(@sorted);
 }
 
-sub _hsp_heuristic_triple_pattern_order { # Heuristic 1 of HSP
+sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 	my @triples = @_;
-}	
+	my %triples_by_tid;
+	foreach my $t (@triples) {
+		my $tid = refaddr($t);
+		$triples_by_tid{$tid}{'tid'} = $tid; # TODO: Worth doing this in an array?
+		$triples_by_tid{$tid}{'triple'} = $t;
+		$triples_by_tid{$tid}{'sum'} = _hsp_heuristic_triple_sum($t);
+	}
+	my @sorted_tids = sort { $a->{'sum'} <=> $b->{'sum'} } values(%triples_by_tid);
+	my @sorted_triples;
+	foreach my $entry (@sorted_tids) {
+		push(@sorted_triples, $triples_by_tid{$entry->{'tid'}}->{'triple'});
+	}
+	return @sorted_triples;
+}
+
+sub _hsp_heuristic_triple_sum { # Find a number to aid sorting
+	my $t = shift;
+	my $sum = 0;
+	if ($t->subject->is_variable) {
+		$sum = 20;
+	} else {
+		$sum = 1;
+	}
+	if ($t->predicate->is_variable) {
+		$sum += 10;
+	} else {
+		if ($t->predicate->equal(iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'))) {
+			$sum += 4;
+		} else {
+			$sum += 2;
+		}
+	}
+	if ($t->object->is_variable) {
+		$sum += 27;
+	} elsif ($t->object->is_literal) {
+		$sum += 3;
+	} else {
+		$sum += 5;
+	}
+	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
+	$l->debug($t->as_string . " triple has sorting sum " . $sum);
+	return $sum;
+}
+
+
+	
 
 1;
 
