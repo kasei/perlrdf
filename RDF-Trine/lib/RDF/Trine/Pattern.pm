@@ -216,24 +216,34 @@ sub sort_for_join_variables {
 											or $b->{'string_sum'}            <=> $a->{'string_sum'} 
 										} values(%structure_counts);
 
-	my @execution_list;
+	my @sorted_triples;
 	foreach my $item (@sorted_patterns) {
 		my @patterns;
-		if (scalar keys(%triples_by_tid) > 2) {
+		my $triples_left = scalar keys(%triples_by_tid);
+		if ($triples_left > 2) {
 			foreach my $pattern (@{$item->{'claimed_patterns'}}) {
-				push(@patterns, $triples_by_tid{$pattern});
-				delete $triples_by_tid{$pattern};
+				if (defined($triples_by_tid{$pattern})) {
+					push(@patterns, $triples_by_tid{$pattern});
+					delete $triples_by_tid{$pattern};
+				}
 			}
-			my @sorted = _hsp_heuristic_1_4_triple_pattern_order(@patterns);
-			die Dumper(@sorted);
-			push(@execution_list, \@patterns);
+			$l->debug("Applying triple pattern sorting with $triples_left triples left");
+			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(@patterns));
 		} else {
-			push(@execution_list, [values(%triples_by_tid)]);
+			if ($triples_left == 0) {
+				last;
+			}
+			$l->debug("Applying triple pattern sorting to rest of $triples_left triples");
+			if ($triples_left == 1) {
+				push(@sorted_triples, values(%triples_by_tid));
+				last;
+			}
+			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(values(%triples_by_tid)));
 			last;
 		}
 	}
 
-	warn Dumper(\@execution_list);
+	return $class->new(@sorted_triples);
 
 
 	# foreach my $var (keys %triples_with_variable) {
