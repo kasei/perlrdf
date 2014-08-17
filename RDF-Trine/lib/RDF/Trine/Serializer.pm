@@ -361,6 +361,8 @@ sub string {
 
 =end private
 
+=cut
+
 1;
 
 __END__
