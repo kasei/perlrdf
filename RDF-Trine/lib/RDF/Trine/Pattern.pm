@@ -211,6 +211,22 @@ sub sort_for_join_variables {
 			}
 		}
 	}
+
+	warn Dumper(\%structure_counts);
+
+	# Group triple subpatterns with just one triple pattern
+	while (my ($name, $data) = each(%structure_counts)) {
+		if($data->{'common_variable_count'} == 1) {
+			$structure_counts{'_common'}->{'common_variable_count'} = 1;
+			$structure_counts{'_common'}->{'string_sum'} = 1;
+			$structure_counts{'_common'}->{'literal_count'} += $data->{'literal_count'};
+			$structure_counts{'_common'}->{'not_variable_count'} += $data->{'not_variable_count'};
+			push(@{$structure_counts{'_common'}{'claimed_patterns'}}, @{$data->{'claimed_patterns'}});
+
+			delete $structure_counts{$name}
+		}
+	}
+
 	$l->trace('Results of structural analysis: ' . Dumper(\%structure_counts));
 
 	# Now, sort the patterns in the order specified by first the number
@@ -221,6 +237,8 @@ sub sort_for_join_variables {
 											or $b->{'not_variable_count'}    <=> $a->{'not_variable_count'}
 											or $b->{'string_sum'}            <=> $a->{'string_sum'} 
 										} values(%structure_counts);
+
+#	warn Dumper(\@sorted_patterns);
 
 	my @sorted_triples;
 
