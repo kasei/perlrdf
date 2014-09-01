@@ -332,6 +332,11 @@ sub _hsp_heuristic_triple_sum {
 		$sum += 5;
 	}
 	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
+	# Now a trick to get an deterministic sort order, hard to test without.
+	$sum *= 10000000;
+	foreach my $c (split(//,$t->as_string)) {
+		$sum += ord($c);
+	}
 	$l->debug($t->as_string . " triple has sorting sum " . $sum);
 	return $sum;
 }
