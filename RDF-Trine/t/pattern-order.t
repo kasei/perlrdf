@@ -49,8 +49,8 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my $re = RDF::Trine::Pattern->new(
 												 statement(variable('jrn1'), $dct->title, literal("Journal 1 (1940)")),
 												 statement(variable('jrn1'), $rdf->type, $foaf->Document),
-												 statement(variable('jrn1'), $dct->revised, variable('rev')),
 												 statement(variable('jrn1'), $dct->issued, variable('iss')),
+												 statement(variable('jrn1'), $dct->revised, variable('rev')),
 												 statement(variable('jrn1'), $foaf->maker, variable('author')),
 												 statement(variable('author'), $foaf->name, variable('name')),
 												 );
