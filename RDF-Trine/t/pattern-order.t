@@ -14,6 +14,8 @@ use RDF::Trine::Pattern;
 
 my $rdf		= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $foaf	= RDF::Trine::Namespace->new('http://xmlns.com/foaf/0.1/');
+my $dct	= RDF::Trine::Namespace->new('http://purl.org/dc/terms/');
+
 
 note 'Testing Heuristic SPARQL Planner implementation';
 
@@ -36,6 +38,48 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is_deeply($in->sort_for_join_variables, $re, 'Variable and blank node in first triple pattern');
 }
 
+{
+	my $in = RDF::Trine::Pattern->new(statement(variable('jrn1'), $dct->revised, variable('rev')),
+												 statement(variable('jrn1'), $foaf->maker, variable('author')),
+												 statement(variable('jrn1'), $dct->title, literal("Journal 1 (1940)")),
+												 statement(variable('author'), $foaf->name, variable('name')),
+												 statement(variable('jrn1'), $dct->issued, variable('iss')),
+												 statement(variable('jrn1'), $rdf->type, $foaf->Document)
+												 );
+	my $re = RDF::Trine::Pattern->new(
+												 statement(variable('jrn1'), $dct->title, literal("Journal 1 (1940)")),
+												 statement(variable('jrn1'), $rdf->type, $foaf->Document),
+												 statement(variable('jrn1'), $dct->revised, variable('rev')),
+												 statement(variable('jrn1'), $dct->issued, variable('iss')),
+												 statement(variable('jrn1'), $foaf->maker, variable('author')),
+												 statement(variable('author'), $foaf->name, variable('name')),
+												 );
+	is_deeply($in->sort_for_join_variables, $re, 'Large star and one chain');
+}
+{
+	my $in = RDF::Trine::Pattern->new(
+												 statement(variable('author'), $foaf->member, iri('http://example.org')),
+												 statement(variable('person'), $foaf->name, literal('Someone')),
+												 statement(variable('author'), $foaf->name, variable('name')),
+												 statement(variable('jrn1'), $dct->revised, variable('rev')),
+												 statement(variable('jrn1'), $foaf->maker, variable('author')),
+												 statement(variable('jrn1'), $rdf->type, $foaf->Document),
+												 statement(variable('jrn1'), $dct->title, literal("Journal 1 (1940)")),
+												 statement(variable('author'), $foaf->knows, variable('person')),
+												);
+	my $re = RDF::Trine::Pattern->new(
+												 statement(variable('jrn1'), $dct->title, literal("Journal 1 (1940)")),
+												 statement(variable('jrn1'), $rdf->type, $foaf->Document),
+												 statement(variable('jrn1'), $dct->revised, variable('rev')),
+												 statement(variable('jrn1'), $foaf->maker, variable('author')),
+												 statement(variable('author'), $foaf->member, iri('http://example.org')),
+												 statement(variable('author'), $foaf->name, variable('name')),
+												 statement(variable('author'), $foaf->knows, variable('person')),
+												 statement(variable('person'), $foaf->name, literal('Someone'))
+												);
+	is_deeply($in->sort_for_join_variables, $re, 'Two connected stars');
+}
+
 # TODO: What to do if no definite variables?
 
 {
@@ -52,7 +96,9 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @reorder = shuffle(@statements);
 	my $in = RDF::Trine::Pattern->new(@reorder);
 	my $re = RDF::Trine::Pattern->new(@statements);
-	is_deeply($in->sort_for_join_variables, $re, 'All possible triple patterns in random order');
+	my $got = $in->sort_for_join_variables;
+#	warn Data::Dumper::Dumper($got);
+	is_deeply($got, $re, 'All possible triple patterns in random order');
 }
 
 
