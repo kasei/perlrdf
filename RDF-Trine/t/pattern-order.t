@@ -23,7 +23,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 	my $re = RDF::Trine::Pattern->new(statement(variable('v1'), $rdf->type, $foaf->Person),
 												 statement(variable('v1'), $foaf->name, variable('v2')));
-	is_deeply($in, $re->sort_for_join_variables, 'Two variables in first triple pattern');
+	is_deeply($in->sort_for_join_variables, $re, 'Two variables in first triple pattern');
 }
 
 
@@ -33,7 +33,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 	my $re = RDF::Trine::Pattern->new(statement(blank('v1'), $rdf->type, $foaf->Person),
 												 statement(blank('v1'), $foaf->name, variable('v2')));
-	is_deeply($in, $re->sort_for_join_variables, 'Variable and blank node in first triple pattern');
+	is_deeply($in->sort_for_join_variables, $re, 'Variable and blank node in first triple pattern');
 }
 
 # TODO: What to do if no definite variables?
@@ -52,7 +52,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @reorder = shuffle(@statements);
 	my $in = RDF::Trine::Pattern->new(@reorder);
 	my $re = RDF::Trine::Pattern->new(@statements);
-	is_deeply($in, $re->sort_for_join_variables, 'All possible triple patterns in random order');
+	is_deeply($in->sort_for_join_variables, $re, 'All possible triple patterns in random order');
 }
 
 
