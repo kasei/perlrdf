@@ -183,6 +183,9 @@ sub sort_for_join_variables {
 	$l->debug('Reordering ' . scalar @triples . ' triples for heuristical optimizations');
 	my %structure_counts;
 	my %triples_by_tid;
+	# First, we loop the dataset to compile some numbers for the
+	# variables in each triple pattern.  This is to break the pattern
+	# into subpatterns that can be joined on the same variable
 	foreach my $t (@triples) {
 		my $tid = refaddr($t);
 		$triples_by_tid{$tid}  = $t;
@@ -210,6 +213,9 @@ sub sort_for_join_variables {
 	}
 	$l->trace('Results of structural analysis: ' . Dumper(\%structure_counts));
 
+	# Now, sort the patterns in the order specified by first the number
+	# of occurances of common variables, then the number of literals
+	# and then the number of terms that are not variables
 	my @sorted_patterns = sort {     $b->{'common_variable_count'} <=> $a->{'common_variable_count'} 
 											or $b->{'literal_count'}         <=> $a->{'literal_count'}
 											or $b->{'not_variable_count'}    <=> $a->{'not_variable_count'}
@@ -217,6 +223,10 @@ sub sort_for_join_variables {
 										} values(%structure_counts);
 
 	my @sorted_triples;
+
+	# Now, loop through the sorted patterns, let the one with most
+	# weight first select the triples it wants to join.  Within those
+	# subpatterns, apply the sort order of triple pattern heuristic
 	foreach my $item (@sorted_patterns) {
 		my @patterns;
 		my $triples_left = scalar keys(%triples_by_tid);
