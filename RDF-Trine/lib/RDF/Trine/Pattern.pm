@@ -171,8 +171,11 @@ sub subsumes {
 
 =item C<< sort_for_join_variables >>
 
-Returns a new pattern object with the subpatterns of the referrant sorted so
-that they may be joined in order while avoiding cartesian products (if possible).
+Returns a new pattern object with the subpatterns of the referrant
+sorted based on heuristics that ensure firstly that patterns can be
+joined on the same variable and secondly on the usual selectivity
+(i.e. how quickly the engine can drill down to the answer) of triple
+patterns.
 
 =cut
 
