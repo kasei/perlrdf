@@ -3,7 +3,11 @@ language: perl
 install:
   - "cpanm --quiet --installdeps --notest RDF::Trine"
   - "cpanm --quiet --notest Module::Install::AuthorTests"
+env:
+  - RDFTRINE_STORE_PG_DATABASE="travis_ci_test"
+  - RDFTRINE_STORE_PG_MODEL="testmodel"
 before_script:
   - "cd RDF-Trine"
+  - psql -c 'create database travis_ci_test;' -U postgres
 script:
   - "perl Makefile.PL && make test"
