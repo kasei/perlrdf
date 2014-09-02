@@ -7,6 +7,10 @@ use Data::Dumper;
 use Scalar::Util qw(blessed refaddr);
 use List::Util qw(shuffle);
 
+use Log::Log4perl qw(:easy);
+Log::Log4perl->easy_init( { level   => $TRACE } ) if $ENV{TEST_VERBOSE};
+
+
 use RDF::Trine qw(statement iri literal blank variable);
 
 use RDF::Trine::Namespace;
@@ -97,7 +101,6 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my $in = RDF::Trine::Pattern->new(@reorder);
 	my $re = RDF::Trine::Pattern->new(@statements);
 	my $got = $in->sort_for_join_variables;
-#	warn Data::Dumper::Dumper($got);
 	is_deeply($got, $re, 'All possible triple patterns in random order');
 }
 
