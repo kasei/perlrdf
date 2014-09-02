@@ -20,6 +20,7 @@ no warnings 'redefine';
 use Data::Dumper;
 use Log::Log4perl;
 use Scalar::Util qw(blessed refaddr);
+use List::Util qw(any);
 use Carp qw(carp croak confess);
 use RDF::Trine::Iterator qw(smap);
 use RDF::Trine qw(iri);
@@ -212,22 +213,24 @@ sub sort_for_join_variables {
 		}
 	}
 
-	warn Dumper(\%structure_counts);
-
 	# Group triple subpatterns with just one triple pattern
+	my $just_ones;
 	while (my ($name, $data) = each(%structure_counts)) {
 		if($data->{'common_variable_count'} == 1) {
-			$structure_counts{'_common'}->{'common_variable_count'} = 1;
-			$structure_counts{'_common'}->{'string_sum'} = 1;
-			$structure_counts{'_common'}->{'literal_count'} += $data->{'literal_count'};
-			$structure_counts{'_common'}->{'not_variable_count'} += $data->{'not_variable_count'};
-			push(@{$structure_counts{'_common'}{'claimed_patterns'}}, @{$data->{'claimed_patterns'}});
-
-			delete $structure_counts{$name}
+			$just_ones->{'common_variable_count'} = 1;
+			$just_ones->{'string_sum'} = 1;
+			$just_ones->{'literal_count'} += $data->{'literal_count'};
+			$just_ones->{'not_variable_count'} += $data->{'not_variable_count'};
+			my @claimed = @{$data->{'claimed_patterns'}};
+			unless (any { $_ == $claimed[0] } @{$just_ones->{'claimed_patterns'}}) {
+				push(@{$just_ones->{'claimed_patterns'}}, $claimed[0]);
+			}
+			delete $structure_counts{$name};
 		}
 	}
 
 	$l->trace('Results of structural analysis: ' . Dumper(\%structure_counts));
+	$l->trace('Block of single-triple patterns: ' . Dumper($just_ones));
 
 	# Now, sort the patterns in the order specified by first the number
 	# of occurances of common variables, then the number of literals
@@ -238,7 +241,7 @@ sub sort_for_join_variables {
 											or $b->{'string_sum'}            <=> $a->{'string_sum'} 
 										} values(%structure_counts);
 
-#	warn Dumper(\@sorted_patterns);
+	push (@sorted_patterns, $just_ones);
 
 	my @sorted_triples;
 
