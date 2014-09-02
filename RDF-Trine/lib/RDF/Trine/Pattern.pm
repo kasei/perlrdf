@@ -190,6 +190,7 @@ sub sort_for_join_variables {
 	foreach my $t (@triples) {
 		my $tid = refaddr($t);
 		$triples_by_tid{$tid}  = $t;
+		my $not_variable = 0;
 		foreach my $n ($t->nodes) {
 			if ($n->isa('RDF::Trine::Node::Variable')) {
 				my $name = $n->name;
@@ -209,14 +210,25 @@ sub sort_for_join_variables {
 						$structure_counts{ $name }{ 'literal_count' }++;
 					}
 				}
+			} else {
+				$not_variable++;
 			}
 		}
+		if ($not_variable == 3) { # Then, there are no variables in the pattern
+			my $name = '_no_definite';
+			$structure_counts{ $name }{ 'not_variable_count' } = $not_variable;
+			$structure_counts{ $name }{ 'common_variable_count' } = 0;
+			$structure_counts{ $name }{ 'literal_count' } = 0; # Doesn't mean anything now
+			$structure_counts{ $name }{ 'string_sum' } = 0; # Doesn't mean anything now
+			push(@{$structure_counts{$name}{'claimed_patterns'}}, $tid);
+		}
+
 	}
 
 	# Group triple subpatterns with just one triple pattern
 	my $just_ones;
 	while (my ($name, $data) = each(%structure_counts)) {
-		if($data->{'common_variable_count'} == 1) {
+		if($data->{'common_variable_count'} <= 1) {
 			$just_ones->{'common_variable_count'} = 1;
 			$just_ones->{'string_sum'} = 1;
 			$just_ones->{'literal_count'} += $data->{'literal_count'};
