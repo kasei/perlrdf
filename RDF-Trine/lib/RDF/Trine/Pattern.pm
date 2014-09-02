@@ -401,6 +401,8 @@ influenced by L<The ICS-FORTH Heuristics-based SPARQL Planner
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
+Kjetil Kjernsmo C<< <kjetilk@cpan.org> >>
+
 =head1 COPYRIGHT
 
 Copyright (c) 2006-2012 Gregory Todd Williams. This
