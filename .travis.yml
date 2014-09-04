@@ -5,8 +5,7 @@ install:
   - "cpanm --quiet --notest Module::Install::AuthorTests"
   - "cpanm --quiet --notest DBD::Pg"
 env:
-  - RDFTRINE_STORE_PG_DATABASE="travis_ci_test"
-  - RDFTRINE_STORE_PG_MODEL="testmodel"
+  - RDFTRINE_STORE_PG_DATABASE="travis_ci_test" RDFTRINE_STORE_PG_MODEL="testmodel"
 before_script:
   - "cd RDF-Trine"
   - psql -c 'create database travis_ci_test;' -U postgres
