@@ -12,7 +12,7 @@ This document describes RDF::Query::Parser::SPARQL11 version 2.911.
 =head1 SYNOPSIS
 
  use RDF::Query::Parser::SPARQL11;
- my $parser	= RDF::Query::Parse::SPARQL11->new();
+ my $parser	= RDF::Query::Parser::SPARQL11->new();
  my $iterator = $parser->parse( $query, $base_uri );
 
 =head1 DESCRIPTION
