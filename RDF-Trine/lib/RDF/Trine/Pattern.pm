@@ -182,9 +182,51 @@ patterns.
 sub sort_for_join_variables {
 	my $self	= shift;
 	my $class	= ref($self);
-	my @triples	= $self->triples;
 	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
-	$l->debug('Reordering ' . scalar @triples . ' triples for heuristical optimizations');
+	$l->debug('Reordering ' . scalar @{$self->triples} . ' triples for heuristical optimizations');
+	my @sorted_patterns = $self->_group;
+
+	warn Dumper(\@sorted_patterns);
+
+	my @sorted_triples;
+
+	# Now, loop through the sorted patterns, let the one with most
+	# weight first select the triples it wants to join.  Within those
+	# subpatterns, apply the sort order of triple pattern heuristic
+	foreach my $item (@sorted_patterns) {
+		my @patterns;
+		my $triples_left = scalar keys(%triples_by_tid);
+		if ($triples_left > 2) {
+			foreach my $pattern (@{$item->{'claimed_patterns'}}) {
+				if (defined($triples_by_tid{$pattern})) {
+					push(@patterns, $triples_by_tid{$pattern});
+					delete $triples_by_tid{$pattern};
+				}
+			}
+			$l->debug("Applying triple pattern sorting with $triples_left triples left");
+			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(@patterns));
+		} else {
+			if ($triples_left == 0) {
+				last;
+			}
+			$l->debug("Applying triple pattern sorting to rest of $triples_left triples");
+			if ($triples_left == 1) {
+				push(@sorted_triples, values(%triples_by_tid));
+				last;
+			}
+			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(values(%triples_by_tid)));
+			last;
+		}
+	}
+
+	return $class->new(@sorted_triples);
+}
+
+
+sub _group {
+	my $self = shift;
+	my @triples = $self->triples;
+	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
 	my %structure_counts;
 	my %triples_by_tid;
 	# First, we loop the dataset to compile some numbers for the
@@ -257,39 +299,7 @@ sub sort_for_join_variables {
 										} values(%structure_counts);
 
 	push (@sorted_patterns, $just_ones);
-
-	my @sorted_triples;
-
-	# Now, loop through the sorted patterns, let the one with most
-	# weight first select the triples it wants to join.  Within those
-	# subpatterns, apply the sort order of triple pattern heuristic
-	foreach my $item (@sorted_patterns) {
-		my @patterns;
-		my $triples_left = scalar keys(%triples_by_tid);
-		if ($triples_left > 2) {
-			foreach my $pattern (@{$item->{'claimed_patterns'}}) {
-				if (defined($triples_by_tid{$pattern})) {
-					push(@patterns, $triples_by_tid{$pattern});
-					delete $triples_by_tid{$pattern};
-				}
-			}
-			$l->debug("Applying triple pattern sorting with $triples_left triples left");
-			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(@patterns));
-		} else {
-			if ($triples_left == 0) {
-				last;
-			}
-			$l->debug("Applying triple pattern sorting to rest of $triples_left triples");
-			if ($triples_left == 1) {
-				push(@sorted_triples, values(%triples_by_tid));
-				last;
-			}
-			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(values(%triples_by_tid)));
-			last;
-		}
-	}
-
-	return $class->new(@sorted_triples);
+	return @sorted_patterns;
 }
 
 sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
