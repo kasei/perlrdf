@@ -204,16 +204,16 @@ merge_patterns >> in that order.
 =cut
 
 sub sort_for_join_variables {
-	my $self	= shift;
-	my $class	= ref($self);
-	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
+	my $self	 = shift;
+	my $class = ref($self);
+	my $l		 = Log::Log4perl->get_logger("rdf.trine.pattern");
 	$l->debug('Reordering ' . scalar $self->triples . ' triples for heuristical optimizations');
 	my @sorted_triple_patterns = $self->subgroup;
 
 	my @patterns;
 	foreach my $pattern (@sorted_triple_patterns) {
-		$pattern->sort_triples(@sorted_triple_patterns);
-		push(@patterns, $pattern);
+		my $sorted = $pattern->sort_triples;
+		push(@patterns, $sorted);
 	}
 	return $class->merge_patterns(@patterns);
 }
@@ -347,7 +347,6 @@ for details.
 sub sort_triples {
 	my $self = shift;
 	return $self->_hsp_heuristic_1_4_triple_pattern_order;
-
 }
 
 sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
