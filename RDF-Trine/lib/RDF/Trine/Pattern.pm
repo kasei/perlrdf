@@ -55,29 +55,6 @@ sub new {
 	return bless( [ @triples ], $class );
 }
 
-=item C<< merge_patterns ( @patterns ) >>
-
-Given an array of patterns, this will merge them into one.
-
-=cut
-
-sub merge_patterns {
-	my ($class, @patterns) = @_;
-	my @all_triples;
-	foreach my $pattern (@patterns) {
-		unless (blessed($pattern) and $pattern->isa('RDF::Trine::Pattern')) {
-			throw RDF::Trine::Error -text => "Patterns to be merged must be patterns themselves";
-		}
-		foreach my $t ($pattern->triples) {
-			push(@all_triples, $t);
-		}
-	}
-	return $class->new(@all_triples);
-}
-
-
-
-
 =item C<< construct_args >>
 
 Returns a list of arguments that, passed to this class' constructor,
@@ -192,6 +169,24 @@ sub subsumes {
 	return 0;
 }
 
+=item C<< merge_patterns ( @patterns ) >>
+
+Given an array of patterns, this will merge them into one.
+
+=cut
+
+sub merge_patterns {
+	my ($class, @patterns) = @_;
+	my @all_triples;
+	foreach my $pattern (@patterns) {
+		unless (blessed($pattern) and $pattern->isa('RDF::Trine::Pattern')) {
+			throw RDF::Trine::Error -text => "Patterns to be merged must be patterns themselves";
+		}
+		push(@all_triples, $pattern->triples);
+	}
+	return $class->new(@all_triples);
+}
+
 =item C<< sort_for_join_variables >>
 
 Returns a new pattern object with the subpatterns of the referrant
@@ -204,9 +199,9 @@ merge_patterns >> in that order.
 =cut
 
 sub sort_for_join_variables {
-	my $self	 = shift;
-	my $class = ref($self);
-	my $l		 = Log::Log4perl->get_logger("rdf.trine.pattern");
+	my $self	= shift;
+	my $class	= ref($self);
+	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
 	$l->debug('Reordering ' . scalar $self->triples . ' triples for heuristical optimizations');
 	my @sorted_triple_patterns = $self->subgroup;
 
@@ -340,7 +335,7 @@ sub subgroup {
 
 Will sort the triple patterns based on heuristics that looks at how
 many variables the patterns have, and where they occur, see REFERENCES
-for details. Returns the sorted object.
+for details. Returns a new sorted pattern object.
 
 =cut
 
@@ -350,8 +345,9 @@ sub sort_triples {
 }
 
 sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
-	my $self = shift;
-	my @triples = @$self;
+	my $self	= shift;
+	my $class	= ref($self);
+	my @triples	= @$self;
 	return $self if (scalar @triples == 1);
 	my %triples_by_tid;
 	foreach my $t (@triples) {
@@ -365,7 +361,7 @@ sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 	foreach my $entry (@sorted_tids) {
 		push(@sorted_triples, $triples_by_tid{$entry->{'tid'}}->{'triple'});
 	}
-	$self = bless( [ @sorted_triples ], ref($self) );
+	return $class->new(@sorted_triples);
 }
 
 # The below function finds a number to aid sorting

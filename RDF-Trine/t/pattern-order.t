@@ -5,7 +5,7 @@ use warnings;
 no warnings 'redefine';
 use Data::Dumper;
 use Test::Deep;
-use Scalar::Util qw(blessed refaddr);
+use Scalar::Util qw(refaddr);
 use List::Util qw(shuffle);
 
 use Log::Log4perl qw(:easy);
