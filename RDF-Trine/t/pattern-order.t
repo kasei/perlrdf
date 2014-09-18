@@ -34,7 +34,8 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is(scalar @subgrouping, 1, 'Single entry for two-variable');
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable');
 	is_deeply($subgrouping[0], $in, 'Just the same for two-variable');
-	is_deeply($in->sort_for_join_variables, $re, 'Two variables in first triple pattern');
+	is_deeply($subgrouping[0]->sort_triples, $re, 'First entry the same for two-variable');
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Two variables in first triple pattern');
 }
 
 
@@ -48,7 +49,8 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is(scalar @subgrouping, 1, 'Single entry for two-variable with blank');
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable with blank');
 	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
-	is_deeply($in->sort_for_join_variables, $re, 'Variable and blank node in first triple pattern');
+	is_deeply($subgrouping[0]->sort_triples, $re, 'First entry the same for two-variable with blank');
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Variable and blank node in first triple pattern');
 }
 
 {
@@ -72,7 +74,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for large star with one chain');
 #	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
 
-	is_deeply($in->sort_for_join_variables, $re, 'Large star and one chain');
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Large star and one chain');
 }
 {
 	my $in = RDF::Trine::Pattern->new(
@@ -100,7 +102,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two connected stars');
 #	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
 
-	is_deeply($in->sort_for_join_variables, $re, 'Two connected stars');
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Two connected stars');
 }
 
 {
@@ -124,7 +126,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my $re = RDF::Trine::Pattern->new(@statements);
 	my $got = $in->sort_for_join_variables;
 
-	is_deeply($got, $re, 'All possible triple patterns in random order');
+	is_deeply($got, $re, 'Final sort: All possible triple patterns in random order');
 }
 
 
