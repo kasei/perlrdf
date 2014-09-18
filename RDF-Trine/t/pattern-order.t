@@ -9,7 +9,7 @@ use Scalar::Util qw(blessed refaddr);
 use List::Util qw(shuffle);
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init( { level   => $TRACE } ) if $ENV{TEST_VERBOSE};
+Log::Log4perl->easy_init( { level   => $INFO } ) if $ENV{TEST_VERBOSE};
 
 
 use RDF::Trine qw(statement iri literal blank variable);
@@ -84,6 +84,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Large star and one chain');
 }
 {
+	my $name = 'two connected stars';
 	my $in = RDF::Trine::Pattern->new(
 												 statement(variable('author'), $foaf->member, iri('http://example.org')),
 												 statement(variable('person'), $foaf->name, literal('Someone')),
@@ -105,11 +106,25 @@ note 'Testing Heuristic SPARQL Planner implementation';
 												 statement(variable('person'), $foaf->name, literal('Someone'))
 												);
 	my @subgrouping = $in->subgroup;
-	is(scalar @subgrouping, 3, 'Three entries for two connected stars');
-	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two connected stars');
+
+	my @intriples = $in->triples;
+	my $ingroups = [ RDF::Trine::Pattern->new(@intriples[3 .. 6]),
+						  RDF::Trine::Pattern->new(@intriples[0,2,7]),
+						  RDF::Trine::Pattern->new($intriples[1]) ];
+	my @retriples = $re->triples;
+	my $regroups = [ RDF::Trine::Pattern->new(@retriples[0 .. 3]),
+						  RDF::Trine::Pattern->new(@retriples[4 .. 6]),
+						  RDF::Trine::Pattern->new($retriples[7]) ];
+	cmp_bag([$subgrouping[0]->triples], [$ingroups->[0]->triples] , '1st pattern for ' . $name );
+	cmp_bag([$subgrouping[1]->triples], [$ingroups->[1]->triples] , '2st pattern for ' . $name );
+	cmp_bag([$subgrouping[2]->triples], [$ingroups->[2]->triples] , '3st pattern for ' . $name );
+
+
+	is(scalar @subgrouping, 3, 'Three entries for ' . $name);
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name);
 #	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
 
-	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Two connected stars');
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: ' . $name);
 }
 
 {
