@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 use Data::Dumper;
+use Test::Deep;
 use Scalar::Util qw(blessed refaddr);
 use List::Util qw(shuffle);
 
@@ -24,6 +25,7 @@ my $dct	= RDF::Trine::Namespace->new('http://purl.org/dc/terms/');
 note 'Testing Heuristic SPARQL Planner implementation';
 
 {
+	my $name = 'two-variable';
 	my $in = RDF::Trine::Pattern->new(statement(variable('v1'), $foaf->name, variable('v2')),
 												 statement(variable('v1'), $rdf->type, $foaf->Person));	
 
@@ -33,8 +35,9 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @subgrouping = $in->subgroup;
 	is(scalar @subgrouping, 1, 'Single entry for two-variable');
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable');
-	is_deeply($subgrouping[0], $in, 'Just the same for two-variable');
-	is_deeply($subgrouping[0]->sort_triples, $re, 'First entry the same for two-variable');
+	cmp_bag([$subgrouping[0]->triples], [$in->triples] , 'Just the same for two-variable');
+	is_deeply($in->sort_triples, $re, 'First entry the same for two-variable');
+	is_deeply($subgrouping[0]->sort_triples, $re, 'Grouped first entry the same for two-variable');
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Two variables in first triple pattern');
 }
 
