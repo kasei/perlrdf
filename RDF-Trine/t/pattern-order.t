@@ -78,7 +78,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is(scalar @subgrouping, 2, 'Two entries for large star with one chain');
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for large star with one chain');
 	my @firstgroup = $re->triples;
-	my $manualgroup = RDF::Trine::Pattern->new($firstgroup[0..4]);
+	my $manualgroup = RDF::Trine::Pattern->new(@firstgroup[0..4]);
 	is_deeply($subgrouping[0]->sort_triples, $manualgroup, 'First group has the correct sort ');
 
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Large star and one chain');
@@ -107,6 +107,9 @@ note 'Testing Heuristic SPARQL Planner implementation';
 												);
 	my @subgrouping = $in->subgroup;
 
+	is(scalar @subgrouping, 3, 'Three entries for ' . $name);
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name);
+
 	my @intriples = $in->triples;
 	my $ingroups = [ RDF::Trine::Pattern->new(@intriples[3 .. 6]),
 						  RDF::Trine::Pattern->new(@intriples[0,2,7]),
@@ -119,10 +122,18 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	cmp_bag([$subgrouping[1]->triples], [$ingroups->[1]->triples] , '2st pattern for ' . $name );
 	cmp_bag([$subgrouping[2]->triples], [$ingroups->[2]->triples] , '3st pattern for ' . $name );
 
+	is_deeply($subgrouping[0]->sort_triples, $regroups->[0], '1st group has the correct sort in ' . $name);
+	is_deeply($subgrouping[1]->sort_triples, $regroups->[1], '2st group has the correct sort in ' . $name);
+	is_deeply($subgrouping[2]->sort_triples, $regroups->[2], '3st group has the correct sort in ' . $name);
 
-	is(scalar @subgrouping, 3, 'Three entries for ' . $name);
-	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name);
-#	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
+	my @sortgroups = ( $subgrouping[0]->sort_triples,
+							 $subgrouping[1]->sort_triples,
+							 $subgrouping[2]->sort_triples );
+
+	my $merge = RDF::Trine::Pattern->merge_patterns(@sortgroups);
+	isa_ok($merge, 'RDF::Trine::Pattern');
+
+	is_deeply($merge, $re, 'Sort with manual process in ' . $name);
 
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: ' . $name);
 }
