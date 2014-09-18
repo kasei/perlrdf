@@ -9,6 +9,7 @@ author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'perl';
 
 build_requires		'Test::More'				=> 0.88;
+build_requires		'Test::Deep'				=> 0;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 build_requires		'TryCatch'					=> 0;

@@ -33,26 +33,28 @@ note 'Testing Heuristic SPARQL Planner implementation';
 												 statement(variable('v1'), $foaf->name, variable('v2')));
 
 	my @subgrouping = $in->subgroup;
-	is(scalar @subgrouping, 1, 'Single entry for two-variable');
-	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable');
-	cmp_bag([$subgrouping[0]->triples], [$in->triples] , 'Just the same for two-variable');
-	is_deeply($in->sort_triples, $re, 'First entry the same for two-variable');
-	is_deeply($subgrouping[0]->sort_triples, $re, 'Grouped first entry the same for two-variable');
-	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Two variables in first triple pattern');
+	is(scalar @subgrouping, 1, 'Single entry for ' . $name );
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name );
+	cmp_bag([$subgrouping[0]->triples], [$in->triples] , 'Just the same for ' . $name );
+	is_deeply($in->sort_triples, $re, 'First entry the same for ' . $name );
+	is_deeply($subgrouping[0]->sort_triples, $re, 'Grouped first entry the same for ' . $name );
+	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Ffirst triple pattern' . $name );
 }
 
 
 {
+	my $name = 'two-variable with blank';
 	my $in = RDF::Trine::Pattern->new(statement(blank('v1'), $foaf->name, variable('v2')),
 												 statement(blank('v1'), $rdf->type, $foaf->Person));	
 
 	my $re = RDF::Trine::Pattern->new(statement(blank('v1'), $rdf->type, $foaf->Person),
 												 statement(blank('v1'), $foaf->name, variable('v2')));
 	my @subgrouping = $in->subgroup;
-	is(scalar @subgrouping, 1, 'Single entry for two-variable with blank');
-	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable with blank');
-	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
-	is_deeply($subgrouping[0]->sort_triples, $re, 'First entry the same for two-variable with blank');
+	is(scalar @subgrouping, 1, 'Single entry for ' . $name );
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name );
+	cmp_bag([$subgrouping[0]->triples], [$in->triples] , 'Just the same for ' . $name );
+	is_deeply($in->sort_triples, $re, 'First entry the same for ' . $name );
+	is_deeply($subgrouping[0]->sort_triples, $re, 'Grouped first entry the same for ' . $name );
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Variable and blank node in first triple pattern');
 }
 
@@ -112,6 +114,7 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 {
 	# Using no common terms to test only heuristic 1
+	my $name = 'random';
 	my $spo = statement(iri('http://example.org/someone#1'), $foaf->page, iri('http://example.org/'));
 	my $svo = statement(iri('http://example.com/someone#2'), variable('v1'), literal('foo1'));
 	my $vpo = statement(variable('v2'), $foaf->name, literal('foo2'));
@@ -123,12 +126,15 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @statements = ($spo,$svo,$vpo,$spv,$vvo,$svv,$vpv,$vvv);
 	my @reorder = shuffle(@statements);
 	my $in = RDF::Trine::Pattern->new(@reorder);
-	my @subgrouping = $in->subgroup;
-	is(scalar @subgrouping, 1, 'Single large entry for random');
-	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for random');
-	is_deeply($subgrouping[0], $in, 'Just the same for random');
-
 	my $re = RDF::Trine::Pattern->new(@statements);
+	my @subgrouping = $in->subgroup;
+
+	is(scalar @subgrouping, 1, 'Single entry for ' . $name );
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for ' . $name );
+	cmp_bag([$subgrouping[0]->triples], [$in->triples] , 'Just the same for ' . $name );
+	is_deeply($in->sort_triples, $re, 'First entry the same for ' . $name );
+	is_deeply($subgrouping[0]->sort_triples, $re, 'Grouped first entry the same for ' . $name );
+
 	my $got = $in->sort_for_join_variables;
 
 	is_deeply($got, $re, 'Final sort: All possible triple patterns in random order');
