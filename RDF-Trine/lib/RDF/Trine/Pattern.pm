@@ -48,12 +48,37 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
+		warn "BAR " . ref($t) .  Dumper($t);
+		
 		unless (blessed($t) and $t->isa('RDF::Trine::Statement')) {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
 	}
 	return bless( [ @triples ], $class );
 }
+
+=item C<< merge_patterns ( @patterns ) >>
+
+Given an array of patterns, this will merge them into one.
+
+=cut
+
+sub merge_patterns {
+	my ($class, @patterns) = @_;
+	my @all_triples;
+	foreach my $pattern (@patterns) {
+		unless (blessed($pattern) and $pattern->isa('RDF::Trine::Pattern')) {
+			throw RDF::Trine::Error -text => "Patterns to be merged must be patterns themselves";
+		}
+		foreach my $t ($pattern->triples) {
+			push(@all_triples, $t);
+		}
+	}
+	return $class->new(@all_triples);
+}
+
+
+
 
 =item C<< construct_args >>
 
@@ -175,7 +200,8 @@ Returns a new pattern object with the subpatterns of the referrant
 sorted based on heuristics that ensure firstly that patterns can be
 joined on the same variable and secondly on the usual selectivity
 (i.e. how quickly the engine can drill down to the answer) of triple
-patterns.
+patterns. Calls C<< subgroup >>, C<< sort_triples >> and C<<
+merge_patterns >> in that order.
 
 =cut
 
@@ -183,47 +209,32 @@ sub sort_for_join_variables {
 	my $self	= shift;
 	my $class	= ref($self);
 	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
-	$l->debug('Reordering ' . scalar @{$self->triples} . ' triples for heuristical optimizations');
-	my @sorted_patterns = $self->_group;
+	$l->debug('Reordering ' . scalar $self->triples . ' triples for heuristical optimizations');
+	my @sorted_triple_patterns = $self->subgroup;
 
-	warn Dumper(\@sorted_patterns);
-
-	my @sorted_triples;
-
-	# Now, loop through the sorted patterns, let the one with most
-	# weight first select the triples it wants to join.  Within those
-	# subpatterns, apply the sort order of triple pattern heuristic
-	foreach my $item (@sorted_patterns) {
-		my @patterns;
-		my $triples_left = scalar keys(%triples_by_tid);
-		if ($triples_left > 2) {
-			foreach my $pattern (@{$item->{'claimed_patterns'}}) {
-				if (defined($triples_by_tid{$pattern})) {
-					push(@patterns, $triples_by_tid{$pattern});
-					delete $triples_by_tid{$pattern};
-				}
-			}
-			$l->debug("Applying triple pattern sorting with $triples_left triples left");
-			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(@patterns));
-		} else {
-			if ($triples_left == 0) {
-				last;
-			}
-			$l->debug("Applying triple pattern sorting to rest of $triples_left triples");
-			if ($triples_left == 1) {
-				push(@sorted_triples, values(%triples_by_tid));
-				last;
-			}
-			push(@sorted_triples, _hsp_heuristic_1_4_triple_pattern_order(values(%triples_by_tid)));
-			last;
-		}
+	my @patterns;
+	foreach my $pattern (@sorted_triple_patterns) {
+		$pattern->sort_triples(@sorted_triple_patterns);
+		push(@patterns, $pattern);
 	}
-
-	return $class->new(@sorted_triples);
+	return $class->merge_patterns(@patterns);
 }
 
 
-sub _group {
+=item C<< subgroup >>
+
+Splits the pattern object up in an array of pattern objects where the
+same triple patterns occur. It will group on common variables, so that
+triple patterns can be joined together is in a group together. It will
+also group triples that have no connection to other triples in a
+group. It will then order the groups, first by number triples with
+common variables, then by number of literals, then by the total number
+of terms that are not variables.
+
+
+=cut
+
+sub subgroup {
 	my $self = shift;
 	my @triples = $self->triples;
 	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
@@ -299,11 +310,55 @@ sub _group {
 										} values(%structure_counts);
 
 	push (@sorted_patterns, $just_ones);
-	return @sorted_patterns;
+
+	my @sorted_triple_patterns;
+
+	# Now, loop through the sorted patterns, let the one with most
+	# weight first select the triples it wants to join.  Within those
+	# subpatterns, apply the sort order of triple pattern heuristic
+	foreach my $item (@sorted_patterns) {
+		my @triple_patterns;
+		my $triples_left = scalar keys(%triples_by_tid);
+		if ($triples_left > 2) {
+			foreach my $tid (@{$item->{'claimed_patterns'}}) {
+				if (defined($triples_by_tid{$tid})) {
+					push(@triple_patterns, $triples_by_tid{$tid});
+					delete $triples_by_tid{$tid};
+				}
+			}
+			$l->debug("There are $triples_left triples left");
+			push(@sorted_triple_patterns, RDF::Trine::Pattern->new(@triple_patterns)); # TODO: Better way to call ourselves?
+		} else {
+			$l->debug("There is a rest of $triples_left triples");
+			push(@sorted_triple_patterns, RDF::Trine::Pattern->new(values(%triples_by_tid)));
+			last;
+		}
+	}
+	warn Dumper(@sorted_triple_patterns);
+
+	return @sorted_triple_patterns;
+}
+
+=item C<< sort_triples >>
+
+Will sort the triple patterns based on heuristics that looks at how
+many variables the patterns have, and where they occur, see REFERENCES
+for details.
+
+=cut
+
+sub sort_triples {
+	my ($self, @sorted_triple_patterns) = @_;
+	my @patterns;
+	foreach my $triples (@sorted_triple_patterns) {
+		push (@patterns, \_hsp_heuristic_1_4_triple_pattern_order(@$triples));
+	}
+	return @patterns;
 }
 
 sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 	my @triples = @_;
+	return @triples if (scalar @triples == 1);
 	my %triples_by_tid;
 	foreach my $t (@triples) {
 		my $tid = refaddr($t);
