@@ -340,7 +340,7 @@ sub subgroup {
 
 Will sort the triple patterns based on heuristics that looks at how
 many variables the patterns have, and where they occur, see REFERENCES
-for details.
+for details. Returns the sorted object.
 
 =cut
 
