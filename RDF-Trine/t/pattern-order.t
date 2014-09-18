@@ -9,7 +9,7 @@ use Scalar::Util qw(blessed refaddr);
 use List::Util qw(shuffle);
 
 use Log::Log4perl qw(:easy);
-Log::Log4perl->easy_init( { level   => $INFO } ) if $ENV{TEST_VERBOSE};
+Log::Log4perl->easy_init( { level   => $TRACE } ) if $ENV{TEST_VERBOSE};
 
 
 use RDF::Trine qw(statement iri literal blank variable);
