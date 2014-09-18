@@ -72,7 +72,9 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @subgrouping = $in->subgroup;
 	is(scalar @subgrouping, 2, 'Two entries for large star with one chain');
 	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for large star with one chain');
-#	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
+	my @firstgroup = $re->triples;
+	my $manualgroup = RDF::Trine::Pattern->new($firstgroup[0..4]);
+	is_deeply($subgrouping[0]->sort_triples, $manualgroup, 'First group has the correct sort ');
 
 	is_deeply($in->sort_for_join_variables, $re, 'Final sort: Large star and one chain');
 }
