@@ -29,6 +29,11 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 	my $re = RDF::Trine::Pattern->new(statement(variable('v1'), $rdf->type, $foaf->Person),
 												 statement(variable('v1'), $foaf->name, variable('v2')));
+
+	my @subgrouping = $in->subgroup;
+	is(scalar @subgrouping, 1, 'Single entry for two-variable');
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable');
+	is_deeply($subgrouping[0], $in, 'Just the same for two-variable');
 	is_deeply($in->sort_for_join_variables, $re, 'Two variables in first triple pattern');
 }
 
@@ -39,6 +44,10 @@ note 'Testing Heuristic SPARQL Planner implementation';
 
 	my $re = RDF::Trine::Pattern->new(statement(blank('v1'), $rdf->type, $foaf->Person),
 												 statement(blank('v1'), $foaf->name, variable('v2')));
+	my @subgrouping = $in->subgroup;
+	is(scalar @subgrouping, 1, 'Single entry for two-variable with blank');
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two-variable with blank');
+	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
 	is_deeply($in->sort_for_join_variables, $re, 'Variable and blank node in first triple pattern');
 }
 
@@ -58,6 +67,11 @@ note 'Testing Heuristic SPARQL Planner implementation';
 												 statement(variable('jrn1'), $foaf->maker, variable('author')),
 												 statement(variable('author'), $foaf->name, variable('name')),
 												 );
+	my @subgrouping = $in->subgroup;
+	is(scalar @subgrouping, 2, 'Two entries for large star with one chain');
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for large star with one chain');
+#	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
+
 	is_deeply($in->sort_for_join_variables, $re, 'Large star and one chain');
 }
 {
@@ -81,6 +95,11 @@ note 'Testing Heuristic SPARQL Planner implementation';
 												 statement(variable('author'), $foaf->knows, variable('person')),
 												 statement(variable('person'), $foaf->name, literal('Someone'))
 												);
+	my @subgrouping = $in->subgroup;
+	is(scalar @subgrouping, 3, 'Three entries for two connected stars');
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for two connected stars');
+#	is_deeply($subgrouping[0], $in, 'Just the same for two-variable with blank');
+
 	is_deeply($in->sort_for_join_variables, $re, 'Two connected stars');
 }
 
@@ -99,8 +118,14 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	my @statements = ($spo,$svo,$vpo,$spv,$vvo,$svv,$vpv,$vvv);
 	my @reorder = shuffle(@statements);
 	my $in = RDF::Trine::Pattern->new(@reorder);
+	my @subgrouping = $in->subgroup;
+	is(scalar @subgrouping, 1, 'Single large entry for random');
+	isa_ok(\@subgrouping, 'ARRAY', 'Subgroup produces array for random');
+	is_deeply($subgrouping[0], $in, 'Just the same for random');
+
 	my $re = RDF::Trine::Pattern->new(@statements);
 	my $got = $in->sort_for_join_variables;
+
 	is_deeply($got, $re, 'All possible triple patterns in random order');
 }
 
