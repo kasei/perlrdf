@@ -48,8 +48,6 @@ sub new {
 	my $class	= shift;
 	my @triples	= @_;
 	foreach my $t (@triples) {
-#		warn "BAR " . ref($t) .  Dumper($t);
-		
 		unless (blessed($t) and $t->isa('RDF::Trine::Statement')) {
 			throw RDF::Trine::Error -text => "Patterns belonging to a BGP must be triples";
 		}
@@ -334,7 +332,6 @@ sub subgroup {
 			last;
 		}
 	}
-#	warn Dumper(@sorted_triple_patterns);
 
 	return @sorted_triple_patterns;
 }
@@ -349,7 +346,6 @@ for details.
 
 sub sort_triples {
 	my $self = shift;
-#	warn "DAHUT " . Dumper($self);
 	return $self->_hsp_heuristic_1_4_triple_pattern_order;
 
 }
@@ -357,7 +353,7 @@ sub sort_triples {
 sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 	my $self = shift;
 	my @triples = @$self;
-#	return $self if (scalar @triples == 1);
+	return $self if (scalar @triples == 1);
 	my %triples_by_tid;
 	foreach my $t (@triples) {
 		my $tid = refaddr($t);
@@ -371,7 +367,6 @@ sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 		push(@sorted_triples, $triples_by_tid{$entry->{'tid'}}->{'triple'});
 	}
 	$self = bless( [ @sorted_triples ], ref($self) );
-#	return @sorted_triples;
 }
 
 # The below function finds a number to aid sorting
