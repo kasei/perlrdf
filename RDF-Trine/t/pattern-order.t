@@ -103,8 +103,6 @@ note 'Testing Heuristic SPARQL Planner implementation';
 	is_deeply($in->sort_for_join_variables, $re, 'Two connected stars');
 }
 
-# TODO: What to do if no definite variables?
-
 {
 	# Using no common terms to test only heuristic 1
 	my $spo = statement(iri('http://example.org/someone#1'), $foaf->page, iri('http://example.org/'));
