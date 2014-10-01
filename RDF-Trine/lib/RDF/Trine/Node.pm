@@ -200,6 +200,34 @@ sub compare {
 	}
 }
 
+=item C<< as_hashref >>
+
+Returns a hashref representing the node in an RDF/JSON-like manner.
+
+See C<< as_hashref >> at L<RDF::Trine::Model> for full documentation of the
+hashref format.
+
+=cut
+
+sub as_hashref {
+	my $self	= shift;
+	my $o = {};
+	if ($self->isa('RDF::Trine::Node::Literal')) {
+		$o->{'type'}		= 'literal';
+		$o->{'value'}		= $self->literal_value;
+		$o->{'lang'}		= $self->literal_value_language
+			if $self->has_language;
+		$o->{'datatype'}	= $self->literal_datatype
+			if $self->has_datatype;
+	} else {
+		$o->{'type'}		= $self->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+		$o->{'value'}		= $self->isa('RDF::Trine::Node::Blank') ? 
+			('_:'.$self->blank_identifier) :
+			$self->uri ;
+	}
+	return $o;
+}
+
 =item C<< from_sse ( $string, $context ) >>
 
 Parses the supplied SSE-encoded string and returns a RDF::Trine::Node object.
