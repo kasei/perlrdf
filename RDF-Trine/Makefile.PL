@@ -48,9 +48,10 @@ recommends			'XML::LibXML'				=> 1.70;
 recommends			'Term::ANSIColor'			=> 0;
 
 resources(
-	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",
-	'repository' => "http://github.com/kasei/perlrdf/",
-	'bugtracker' => "https://github.com/kasei/perlrdf/issues"
+	'homepage'		=> "http://search.cpan.org/dist/RDF-Trine/",
+	'repository'	=> "http://github.com/kasei/perlrdf/",
+	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
+	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
 
 author_tests('xt');
