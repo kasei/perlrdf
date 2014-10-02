@@ -10,6 +10,22 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.010.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.009.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.010" ;
+                        doap:created      "2014-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed bug in SPARQL store that wasn't properly decoding HTTP response content (github issue #118)." ;
+                        asc:update      "Refactored part of RDF::Trine::Iterator::Graph->as_hashref into RDF::Trine::Node->as_hashref (github issue #117)." ;
+                        asc:update      "Update RDF::Trine::Pattern with heuristic pattern sorter (github pull request #114 from Kjetil Kjernsmo)." ;
+                        asc:update      "Added IRC resource to Makefile.PL." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.009.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.008.tar.gz> ;

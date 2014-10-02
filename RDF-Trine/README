@@ -68,6 +68,17 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.010 (2014-XX-XX)
+
+     * BUG FIXES
+         	Fixed bug in SPARQL store that wasn't properly decoding HTTP response content (github issue #118).
+     * NEW FEATURES
+         	Refactored part of RDF::Trine::Iterator::Graph->as_hashref into RDF::Trine::Node->as_hashref (github issue #117).
+     * ENHANCEMENTS
+         	Update RDF::Trine::Pattern with heuristic pattern sorter (github pull request #114 from Kjetil Kjernsmo).
+     * OTHER
+         	Added IRC resource to Makefile.PL.
+
   Version 1.009 (2014-08-06)
 
      * NEW FEATURES
