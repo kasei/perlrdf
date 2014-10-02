@@ -523,7 +523,7 @@ sub get_sparql {
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
+		$p->parse_string( $response->decoded_content );
 		return $handler->iterator;
 	} else {
 		my $status		= $response->status_line;
