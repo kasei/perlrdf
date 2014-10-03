@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph - Iterator class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 1.009
+This document describes RDF::Trine::Iterator::Graph version 1.010
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.009';
+	$VERSION	= '1.010';
 }
 
 ######################################################################
@@ -334,23 +334,7 @@ sub as_hashref {
 			('_:'.$statement->subject->blank_identifier) :
 			$statement->subject->uri ;
 		my $p = $statement->predicate->uri ;
-		
-		my $o = {};
-		if ($statement->object->isa('RDF::Trine::Node::Literal')) {
-			$o->{'type'}		= 'literal';
-			$o->{'value'}		= $statement->object->literal_value;
-			$o->{'lang'}		= $statement->object->literal_value_language
-				if $statement->object->has_language;
-			$o->{'datatype'}	= $statement->object->literal_datatype
-				if $statement->object->has_datatype;
-		} else {
-			$o->{'type'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
-			$o->{'value'}		= $statement->object->isa('RDF::Trine::Node::Blank') ? 
-				('_:'.$statement->object->blank_identifier) :
-				$statement->object->uri ;
-		}
-
-		push @{ $index->{$s}->{$p} }, $o;
+		push @{ $index->{$s}->{$p} }, $statement->object->as_hashref;
 	}
 	return $index;
 }

@@ -8,7 +8,7 @@ RDF::Trine::NamespaceMap - Collection of Namespaces
 
 =head1 VERSION
 
-This document describes RDF::Trine::NamespaceMap version 1.009
+This document describes RDF::Trine::NamespaceMap version 1.010
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.009';
+	$VERSION	= '1.010';
 }
 
 ######################################################################
