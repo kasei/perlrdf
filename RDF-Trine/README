@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.010 (2014-XX-XX)
+  Version 1.010 (2014-10-03)
 
      * BUG FIXES
          	Fixed bug in SPARQL store that wasn't properly decoding HTTP response content (github issue #118).

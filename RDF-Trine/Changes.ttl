@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.010" ;
-                        doap:created      "2014-XX-XX" ;
+                        doap:created      "2014-10-03" ;
                         ];
         asc:changes     [
                         asc:update      "Fixed bug in SPARQL store that wasn't properly decoding HTTP response content (github issue #118)." ;
