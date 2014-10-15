@@ -187,6 +187,14 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
+=item C<< result_as_string ( $result, \@names ) >>
+
+Returns a string with the bound terms of the given RDF::Trine::VariableBindings
+corresponding to the given C<@names> serialized in N-Triples format, separated
+by tab characters.
+
+=cut
+
 sub result_as_string {
 	my $self	= shift;
 	my $r		= shift;
@@ -197,7 +205,8 @@ sub result_as_string {
 
 =item C<< statement_as_string ( $st ) >>
 
-Returns a string with the nodes of the given RDF::Trine::Statement serialized in N-Triples format, separated by tab characters.
+Returns a string with the nodes of the given RDF::Trine::Statement serialized
+in N-Triples format, separated by tab characters.
 
 =cut
 
