@@ -7,7 +7,7 @@ RDF::Trine::Serializer::TSV - TSV Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 1.008
+This document describes RDF::Trine::Store version 1.010
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.010';
 	$RDF::Trine::Serializer::serializer_names{ 'tsv' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/TSV' }	= __PACKAGE__;
 	foreach my $type (qw(text/tsv)) {
@@ -124,9 +124,19 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
-	# TODO: must print the header line corresponding to the bindings in the entire iterator...
-	while (my $st = $iter->next) {
-		print {$file} $self->statement_as_string( $st );
+	my $e		= $iter->peek;
+	
+	if (defined($e) and blessed($e) and $e->isa('RDF::Trine::Statement')) {
+		print {$file} join("\t", qw(?s ?p ?o)) . "\n";
+		while (my $st = $iter->next) {
+			print {$file} $self->statement_as_string( $st );
+		}
+	} elsif (defined($e) and blessed($e) and $e->isa('RDF::Trine::VariableBindings')) {
+		my @names	= $iter->binding_names;
+		print {$file} join("\t", map { "?$_" } @names) . "\n";
+		while (my $r = $iter->next) {
+			print {$file} $self->result_as_string( $r, \@names );
+		}
 	}
 }
 
@@ -139,11 +149,21 @@ Serializes the iterator to TSV, returning the result as a string.
 sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
+	
 	# TODO: must print the header line corresponding to the bindings in the entire iterator...
 	my $string	= '';
-	while (my $st = $iter->next) {
-		my @nodes	= $st->nodes;
-		$string		.= $self->statement_as_string( $st );
+	my $e		= $iter->peek;
+	if (defined($e) and blessed($e) and $e->isa('RDF::Trine::Statement')) {
+		$string	.= join("\t", qw(?s ?p ?o)) . "\n";
+		while (my $st = $iter->next) {
+			$string		.= $self->statement_as_string( $st );
+		}
+	} elsif (defined($e) and blessed($e) and $e->isa('RDF::Trine::VariableBindings')) {
+		my @names	= $iter->binding_names;
+		$string	.= join("\t", map { "?$_" } @names) . "\n";
+		while (my $r = $iter->next) {
+			$string		.= $self->result_as_string( $r, \@names );
+		}
 	}
 	return $string;
 }
@@ -167,9 +187,26 @@ sub _serialize_bounded_description {
 	return $string;
 }
 
+=item C<< result_as_string ( $result, \@names ) >>
+
+Returns a string with the bound terms of the given RDF::Trine::VariableBindings
+corresponding to the given C<@names> serialized in N-Triples format, separated
+by tab characters.
+
+=cut
+
+sub result_as_string {
+	my $self	= shift;
+	my $r		= shift;
+	my $names	= shift;
+	my @terms	= map { $r->{ $_ } } @$names;
+	return join("\t", map { blessed($_) ? $_->as_ntriples : '' } @terms) . "\n";
+}
+
 =item C<< statement_as_string ( $st ) >>
 
-Returns a string with the nodes of the given RDF::Trine::Statement serialized in N-Triples format, separated by tab characters.
+Returns a string with the nodes of the given RDF::Trine::Statement serialized
+in N-Triples format, separated by tab characters.
 
 =cut
 

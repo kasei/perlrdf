@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 1.008
+This document describes RDF::Trine::Store version 1.010
 
 =head1 DESCRIPTION
 
@@ -84,7 +84,7 @@ use RDF::Trine::Store::LanguagePreference;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.010';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}

@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.06.
+This document describes RDF::Endpoint version 0.07.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.06';
+our $VERSION	= '0.07';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -112,7 +112,7 @@ use JSON;
 use Encode;
 use File::Spec;
 use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw(md5_base64);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
@@ -164,7 +164,15 @@ sub new {
 	} else {
 		$config		= $arg;
 		my $store	= RDF::Trine::Store->new( $config->{store} );
+		unless ($store) {
+			warn "Failed to construct RDF Store object";
+			return;
+		}
 		$model		= RDF::Trine::Model->new( $store );
+		unless ($model) {
+			warn "Failed to construct RDF Model object";
+			return;
+		}
 	}
 	
 	unless ($config->{endpoint}) {
@@ -329,7 +337,7 @@ END
 		}
 		
 		my $match	= $headers->header('if-none-match') || '';
-		my $etag	= md5_hex( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
+		my $etag	= md5_base64( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
 		if (length($match)) {
 			if (defined($etag) and ($etag eq $match)) {
 				$response->status(304);
@@ -358,7 +366,14 @@ END
 			if ($iter) {
 				$response->status(200);
 				if (defined($etag)) {
-					$response->headers->header( ETag => $etag );
+					if ($etag !~ /"/) {
+						$etag	= qq["$etag"];
+					}
+					if ($etag =~ qr[^(W/)?"[\x{21}\x{23}-\x{7e}\x{80}-\x{FF}]*"$]) {
+						$response->headers->header( ETag => $etag );
+					} else {
+						warn "ETag value is not syntactically valid: " . Dumper($etag);
+					}
 				}
 				if ($iter->isa('RDF::Trine::Iterator::Graph')) {
 					my @variants	= (['text/html', 0.99, 'text/html']);
@@ -512,7 +527,7 @@ Returns a unique key for each instantiation of this service.
 
 sub run_tag {
 	my $self	= shift;
-	return md5_hex(refaddr($self) . $self->{start_time});
+	return md5_base64(refaddr($self) . $self->{start_time});
 }
 
 =item C<< service_description ( $request, $model ) >>
