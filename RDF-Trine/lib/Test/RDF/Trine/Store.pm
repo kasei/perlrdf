@@ -223,9 +223,9 @@ sub all_triple_store_tests {
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
-		dies_ok {
+		lives_ok {
 			$store->get_contexts;
-		} 'get_context dies';
+		} 'get_context lives';
 	
 		add_statement_tests_simple( $store, $args, $ex );
 		update_sleep($args);
