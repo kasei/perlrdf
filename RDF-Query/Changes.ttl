@@ -9,6 +9,21 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.912.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.911.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.912" ;
+                        doap:created      "2014-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added IRC resource to Makefile.PL." ;
+                        asc:update        "Fix bug in handling of SUM aggregates with non-literal data." ;
+                        asc:update        "Improved performance of regular expression use in SPARQL parser (from Dorian Taylor; github pull request #111)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.911.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.910.tar.gz> ;
