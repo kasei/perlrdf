@@ -144,8 +144,7 @@ sub _new_with_config {
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_url_into_model( $source->{url}, $model, %args );
 		} elsif ($source->{file}) {
-			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
-	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) || throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
 			my $parser = RDF::Trine::Parser->new($source->{syntax});
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
@@ -527,7 +526,9 @@ sub _join {
 =cut
 
 sub get_contexts {
-	croak "Contexts not supported for the Hexastore store";
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.hexastore");
+	$l->warn("Contexts not supported for the Hexastore store");
+ 	return RDF::Trine::Iterator->new([]);
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
