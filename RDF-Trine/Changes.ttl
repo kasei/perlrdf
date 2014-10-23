@@ -20,6 +20,7 @@
                         ];
         asc:changes     [
                         asc:update      "Fixed TSV serializer to print header rows and accept VariableBindings as input." ;
+                        asc:update      "Updated Hexastore store to return an empty iterator for get_contexts() instead of croaking." ;
                         ] .
 
 

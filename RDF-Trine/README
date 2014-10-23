@@ -68,6 +68,12 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.011 (2014-10-XX)
+
+     * BUG FIXES
+         	Updated Hexastore store to return an empty iterator for get_contexts() instead of croaking.
+         	Fixed TSV serializer to print header rows and accept VariableBindings as input.
+
   Version 1.010 (2014-10-03)
 
      * BUG FIXES
