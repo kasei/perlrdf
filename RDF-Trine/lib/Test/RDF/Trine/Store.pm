@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.010
+This document describes RDF::Trine version 1.011
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.010';
+	$VERSION	= '1.011';
 }
 
 use Log::Log4perl;
@@ -223,9 +223,9 @@ sub all_triple_store_tests {
 	TODO: {
 		local $TODO = ($todo) ? ref($store) . ' functionality is being worked on' : undef;
 		
-		dies_ok {
+		lives_ok {
 			$store->get_contexts;
-		} 'get_context dies';
+		} 'get_context lives';
 	
 		add_statement_tests_simple( $store, $args, $ex );
 		update_sleep($args);
