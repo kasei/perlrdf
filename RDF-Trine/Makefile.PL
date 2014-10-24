@@ -9,6 +9,7 @@ author				'Gregory Todd Williams <gwilliams@cpan.org>';
 license				'perl';
 
 build_requires		'Test::More'				=> 0.88;
+build_requires		'Test::Deep'				=> 0;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
 build_requires		'TryCatch'					=> 0;
@@ -28,7 +29,7 @@ requires			'Error'						=> 0;
 requires			'HTTP::Negotiate'			=> 0;
 requires			'JSON'						=> 2;
 requires			'LWP::UserAgent'			=> 0;
-requires			'List::Util'				=> 0;
+requires			'List::Util'				=> 1.33;
 requires			'Log::Log4perl'				=> 0;
 requires			'Math::BigInt'				=> 0;
 requires			'Algorithm::Combinatorics'	=> 0;
@@ -47,9 +48,10 @@ recommends			'XML::LibXML'				=> 1.70;
 recommends			'Term::ANSIColor'			=> 0;
 
 resources(
-	'homepage'   => "http://search.cpan.org/dist/RDF-Trine/",
-	'repository' => "http://github.com/kasei/perlrdf/",
-	'bugtracker' => "https://github.com/kasei/perlrdf/issues"
+	'homepage'		=> "http://search.cpan.org/dist/RDF-Trine/",
+	'repository'	=> "http://github.com/kasei/perlrdf/",
+	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
+	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
 
 author_tests('xt');

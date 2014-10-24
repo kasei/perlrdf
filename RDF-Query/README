@@ -36,6 +36,15 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.912 (2014-10-24)
+
+     * BUG FIXES
+         Fix bug in handling of SUM aggregates with non-literal data.
+     * ENHANCEMENTS
+         Improved performance of regular expression use in SPARQL parser (from Dorian Taylor; github pull request #111).
+     * OTHER
+         Added IRC resource to Makefile.PL.
+
   Version 2.911 (2014-07-24)
 
      * BUG FIXES

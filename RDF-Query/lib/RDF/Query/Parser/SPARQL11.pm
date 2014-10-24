@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.911.
+This document describes RDF::Query::Parser::SPARQL11 version 2.912.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.912';
 }
 
 ######################################################################
@@ -55,33 +55,33 @@ BEGIN {
 my $rdf			= RDF::Trine::Namespace->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#');
 my $xsd			= RDF::Trine::Namespace->new('http://www.w3.org/2001/XMLSchema#');
 
-our $r_ECHAR				= qr/\\([tbnrf\\"'])/;
-our $r_STRING_LITERAL1		= qr/'(([^\x{27}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*'/;
-our $r_STRING_LITERAL2		= qr/"(([^\x{22}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*"/;
-our $r_STRING_LITERAL_LONG1	= qr/'''(('|'')?([^'\\]|${r_ECHAR}))*'''/;
-our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/;
-our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/;
-our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/;
-our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/;
-our $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/;
-our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/;
-our $r_VAR1					= qr/[?]${r_VARNAME}/;
-our $r_VAR2					= qr/[\$]${r_VARNAME}/;
-our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/;
-our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
-our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}};
-our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/;
-our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/;
-our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/;
-our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/;
-our $r_EXPONENT				= qr/[eE][-+]?\d+/;
-our $r_DOUBLE				= qr/\d+[.]\d*${r_EXPONENT}|[.]\d+${r_EXPONENT}|\d+${r_EXPONENT}/;
-our $r_DECIMAL				= qr/(\d+[.]\d*)|([.]\d+)/;
-our $r_INTEGER				= qr/\d+/;
-our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL_BNODE}/;
-our $r_ANON					= qr/\[[\t\r\n ]*\]/;
-our $r_NIL					= qr/\([\n\r\t ]*\)/;
-our $r_AGGREGATE_CALL		= qr/(MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT)\b/i;
+our $r_ECHAR				= qr/\\([tbnrf\\"'])/o;
+our $r_STRING_LITERAL1		= qr/'(([^\x{27}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*'/o;
+our $r_STRING_LITERAL2		= qr/"(([^\x{22}\x{5C}\x{0A}\x{0D}])|${r_ECHAR})*"/o;
+our $r_STRING_LITERAL_LONG1	= qr/'''(('|'')?([^'\\]|${r_ECHAR}))*'''/o;
+our $r_STRING_LITERAL_LONG2	= qr/"""(("|"")?([^"\\]|${r_ECHAR}))*"""/o;
+our $r_LANGTAG				= qr/@[a-zA-Z]+(-[a-zA-Z0-9]+)*/o;
+our $r_IRI_REF				= qr/<([^<>"{}|^`\\\x{00}-\x{20}])*>/o;
+our $r_PN_CHARS_BASE		= qr/([A-Z]|[a-z]|[\x{00C0}-\x{00D6}]|[\x{00D8}-\x{00F6}]|[\x{00F8}-\x{02FF}]|[\x{0370}-\x{037D}]|[\x{037F}-\x{1FFF}]|[\x{200C}-\x{200D}]|[\x{2070}-\x{218F}]|[\x{2C00}-\x{2FEF}]|[\x{3001}-\x{D7FF}]|[\x{F900}-\x{FDCF}]|[\x{FDF0}-\x{FFFD}]|[\x{10000}-\x{EFFFF}])/o;
+our $r_PN_CHARS_U			= qr/([_]|${r_PN_CHARS_BASE})/o;
+our $r_VARNAME				= qr/((${r_PN_CHARS_U}|[0-9])(${r_PN_CHARS_U}|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}])*)/o;
+our $r_VAR1					= qr/[?]${r_VARNAME}/o;
+our $r_VAR2					= qr/[\$]${r_VARNAME}/o;
+our $r_PN_CHARS				= qr/${r_PN_CHARS_U}|-|[0-9]|\x{00B7}|[\x{0300}-\x{036F}]|[\x{203F}-\x{2040}]/o;
+our $r_PN_PREFIX			= qr/(${r_PN_CHARS_BASE}((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/o;
+our $r_PN_LOCAL_ESCAPED		= qr{(\\([-~.!&'()*+,;=/?#@%_\$]))|%[0-9A-Fa-f]{2}}o;
+our $r_PN_LOCAL				= qr/((${r_PN_CHARS_U}|[:0-9]|${r_PN_LOCAL_ESCAPED})((${r_PN_CHARS}|${r_PN_LOCAL_ESCAPED}|[:.])*(${r_PN_CHARS}|[:]|${r_PN_LOCAL_ESCAPED}))?)/o;
+our $r_PN_LOCAL_BNODE		= qr/((${r_PN_CHARS_U}|[0-9])((${r_PN_CHARS}|[.])*${r_PN_CHARS})?)/o;
+our $r_PNAME_NS				= qr/((${r_PN_PREFIX})?:)/o;
+our $r_PNAME_LN				= qr/(${r_PNAME_NS}${r_PN_LOCAL})/o;
+our $r_EXPONENT				= qr/[eE][-+]?\d+/o;
+our $r_DOUBLE				= qr/\d+[.]\d*${r_EXPONENT}|[.]\d+${r_EXPONENT}|\d+${r_EXPONENT}/o;
+our $r_DECIMAL				= qr/(\d+[.]\d*)|([.]\d+)/o;
+our $r_INTEGER				= qr/\d+/o;
+our $r_BLANK_NODE_LABEL		= qr/_:${r_PN_LOCAL_BNODE}/o;
+our $r_ANON					= qr/\[[\t\r\n ]*\]/o;
+our $r_NIL					= qr/\([\n\r\t ]*\)/o;
+our $r_AGGREGATE_CALL		= qr/(MIN|MAX|COUNT|AVG|SUM|SAMPLE|GROUP_CONCAT)\b/io;
 
 =item C<< new >>
 
@@ -113,19 +113,19 @@ SPARQL 1.1 Update statements.
 sub parse {
 	my $self	= shift;
 	my $input	= shift;
-	
+
 	unless (defined($input)) {
 		$self->{build}	= undef;
 		$self->{error}	= "No query string found to parse";
 		return;
 	}
-	
+
 	my $baseuri	= shift;
 	my $update	= shift || 0;
-	
+
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
-	
+
 	delete $self->{error};
 	local($self->{namespaces})				= {};
 	local($self->{blank_ids})				= 1;
@@ -176,10 +176,10 @@ sub parse_pattern {
 	my $input	= shift;
 	my $baseuri	= shift;
 	my $ns		= shift;
-	
+
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
-	
+
 	delete $self->{error};
 	local($self->{namespaces})				= $ns;
 	local($self->{blank_ids})				= 1;
@@ -193,7 +193,7 @@ sub parse_pattern {
 	if ($baseuri) {
 		$self->{build}{base}	= $baseuri;
 	}
-	
+
 	try {
 		$self->_GroupGraphPattern();
 	} catch RDF::Query::Error with {
@@ -202,7 +202,7 @@ sub parse_pattern {
 		$self->{error}	= $e->text;
 	};
 	my $data								= delete $self->{build};
-	
+
 	return $data->{triples}[0];
 }
 
@@ -218,10 +218,10 @@ sub parse_expr {
 	my $input	= shift;
 	my $baseuri	= shift;
 	my $ns		= shift;
-	
+
 	$input		=~ s/\\u([0-9A-Fa-f]{4})/chr(hex($1))/ge;
 	$input		=~ s/\\U([0-9A-Fa-f]{8})/chr(hex($1))/ge;
-	
+
 	delete $self->{error};
 	local($self->{namespaces})				= $ns;
 	local($self->{blank_ids})				= 1;
@@ -235,7 +235,7 @@ sub parse_expr {
 	if ($baseuri) {
 		$self->{build}{base}	= $baseuri;
 	}
-	
+
 	try {
 		$self->_Expression();
 	} catch RDF::Query::Error with {
@@ -243,7 +243,7 @@ sub parse_expr {
 		$self->{build}	= undef;
 		$self->{error}	= $e->text;
 	};
-	
+
 	my $data	= splice(@{ $self->{stack} });
 	return $data;
 }
@@ -257,7 +257,7 @@ sub _RW_Query {
 	$self->__consume_ws_opt;
 	$self->_Prologue;
 	$self->__consume_ws_opt;
-	
+
 	my $read_query	= 0;
 	while (1) {
 		if ($self->_test(qr/SELECT/i)) {
@@ -345,7 +345,7 @@ sub _RW_Query {
 			}
 			throw RDF::Query::Error::ParseError -text => 'Syntax error: Expected query type';
 		}
-		
+
 		last if ($read_query);
 		$self->__consume_ws_opt;
 		if ($self->_test(qr/;/)) {
@@ -359,20 +359,20 @@ sub _RW_Query {
 	}
 #	$self->_eat(qr/;/) if ($self->_test(qr/;/));
 	$self->__consume_ws_opt;
-	
+
 	my $count	= scalar(@{ $self->{build}{triples} });
 	my $remaining	= $self->{tokens};
 	if ($remaining =~ m/\S/) {
 		throw RDF::Query::Error::ParseError -text => "Syntax error: Remaining input after query: $remaining";
 	}
-	
+
 	if ($count == 0 or $count > 1) {
 		my @patterns	= splice(@{ $self->{build}{triples} });
 		my $pattern		= RDF::Query::Algebra::Sequence->new( @patterns );
 		$pattern->check_duplicate_blanks;
 		$self->{build}{triples}	= [ $pattern ];
 	}
-	
+
 # 	my %query	= (%p, %body);
 # 	return \%query;
 }
@@ -388,7 +388,7 @@ sub _Query_test {
 # [4] PrefixDecl ::= 'PREFIX' PNAME_NS IRI_REF
 sub _Prologue {
 	my $self	= shift;
-	
+
 	my $base;
 	my @base;
 	if ($self->_test( qr/BASE/i )) {
@@ -401,7 +401,7 @@ sub _Prologue {
 		$self->__consume_ws_opt;
 		$self->{base}	= $base;
 	}
-	
+
 	my %namespaces;
 	while ($self->_test( qr/PREFIX/i )) {
 		$self->_eat( qr/PREFIX/i );
@@ -422,10 +422,10 @@ sub _Prologue {
 		$namespaces{ $ns }	= $iri;
 		$self->{namespaces}{$ns}	= $iri;
 	}
-	
+
 	$self->{build}{namespaces}	= \%namespaces;
 	$self->{build}{base}		= $base if (defined($base));
-	
+
 # 	push(@data, (base => $base)) if (defined($base));
 # 	return @data;
 }
@@ -479,7 +479,7 @@ sub _InsertUpdate {
 		$data	= RDF::Query::Algebra::NamedGraph->new( $graph, $data );
 	}
 
-	
+
 	my %dataset;
 	while ($self->_test(qr/USING/i)) {
 		$self->{build}{custom_update_dataset}	= 1;
@@ -500,7 +500,7 @@ sub _InsertUpdate {
 		}
 		$self->__consume_ws_opt;
 	}
-	
+
 	$self->_eat(qr/WHERE/i);
 	$self->__consume_ws_opt;
 	if ($graph) {
@@ -512,9 +512,9 @@ sub _InsertUpdate {
 	} else {
 		$self->_GroupGraphPattern;
 	}
-	
+
 	my $ggp	= $self->_remove_pattern;
-	
+
 	my @ds_keys	= keys %dataset;
 	unless (@ds_keys) {
 		$dataset{ default }	= [$graph || ()];
@@ -3520,18 +3520,18 @@ sub _eat {
 	if (not(length($self->{tokens}))) {
 		$self->_syntax_error("No tokens left");
 	}
-	
+
 # 	if (substr($self->{tokens}, 0, 1) eq '^') {
 # 		Carp::cluck( "eating $thing with input $self->{tokens}" );
 # 	}
-	
+
 	if (ref($thing) and $thing->isa('Regexp')) {
-		if ($self->{tokens} =~ /^$thing/) {
-			my $match	= $&;
+		if ($self->{tokens} =~ /^($thing)/) {
+			my $match	= $1;
 			substr($self->{tokens}, 0, length($match))	= '';
 			return $match;
 		}
-		
+
 		$self->_syntax_error( "Expected $thing" );
 	} elsif (looks_like_number( $thing )) {
 		my ($token)	= substr( $self->{tokens}, 0, $thing, '' );
@@ -3561,12 +3561,12 @@ sub _syntax_error {
 			last;
 		}
 	}
-	
+
 	my $l		= Log::Log4perl->get_logger("rdf.query.parser.sparql");
 	if ($l->is_debug) {
 		$l->logcluck("Syntax error eating $thing with input <<$self->{tokens}>>");
 	}
-	
+
 	my $near	= "'" . substr($self->{tokens}, 0, 20) . "...'";
 	$near		=~ s/[\r\n ]+/ /g;
 	if ($thing) {
@@ -3600,7 +3600,7 @@ sub _ws_test {
 	unless (length($self->{tokens})) {
 		return 0;
 	}
-	
+
 	if ($self->{tokens} =~ m/^[\t\r\n #]/) {
 		return 1;
 	} else {

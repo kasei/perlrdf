@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 1.008
+This document describes RDF::Trine::Store::Redland version 1.011
 
 =head1 SYNOPSIS
 
@@ -37,10 +37,26 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.011";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
+
+	# XXX THE FOLLOWING IS TO KEEP DATA::DUMPER FROM CRAPPING OUT
+
+	# insert these guys until we can get a fix into redland
+	my $fk = sub { 'DUMMY' };
+	my $nk = sub { undef };
+	my $f  = sub { 'REDLAND PLEASE FIX YOUR API' };
+
+	*_p_librdf_storage_s::FIRSTKEY = $fk;
+	*_p_librdf_storage_s::NEXTKEY  = $nk;
+	*_p_librdf_storage_s::FETCH	= $f;
+	*_p_librdf_model_s::FIRSTKEY   = $fk;
+	*_p_librdf_model_s::NEXTKEY	= $nk;
+	*_p_librdf_model_s::FETCH	  = $f;
+
+	# too bad these aren't implemented, since they could be useful
 }
 
 ######################################################################
@@ -95,6 +111,7 @@ sub new {
 	my $model	= shift;
 	my $self	= bless({
 		model	=> $model,
+		bulk	=> 0,
 	}, $class);
 	return $self;
 }
@@ -110,13 +127,15 @@ sub _new_with_string {
 
 sub _new_with_config {
 	my $class	= shift;
-	my $config	= shift;
-	my $store	= RDF::Redland::Storage->new(
-						     $config->{store_name},
-						     $config->{name},
-						     $config->{options}
-						    );
-	my $model	= RDF::Redland::Model->new( $store, '' );
+	my $config	= shift || { store_name => 'memory' };
+
+	my $store	= RDF::Redland::Storage->new
+		(@{$config}{qw(store_name name options)})
+			or throw RDF::Trine::Error::DatabaseError
+				-text => "Couldn't initialize Redland storage";
+	my $model	= RDF::Redland::Model->new( $store, '' )
+		or throw RDF::Trine::Error::DatabaseError
+			-text => "Couldn't initialize Redland model";
 	return $class->new( $model );
 }
 
@@ -263,7 +282,7 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $context	= shift;
-	
+
 	my $nil	= RDF::Trine::Node::Nil->new();
 	if ($st->isa( 'RDF::Trine::Statement::Quad' )) {
 		if (blessed($context)) {
@@ -277,12 +296,18 @@ sub add_statement {
 			$st	= RDF::Trine::Statement::Quad->new( @nodes[0..2], $nil );
 		}
 	}
-	
+
 	my $model	= $self->_model;
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
 	my $rst		= RDF::Redland::Statement->new( @rnodes[0..2] );
-	$model->add_statement( $rst, $rnodes[3] );
+	my $ret	 = $model->add_statement( $rst, $rnodes[3] );
+
+	# redland needs to be synced
+	$model->sync unless $self->{bulk};
+
+	# for any code that was expecting this
+	$ret;
 }
 
 =item C<< remove_statement ( $statement [, $context]) >>
@@ -312,7 +337,14 @@ sub remove_statement {
 
 	my @nodes	= $st->nodes;
 	my @rnodes	= map { _cast_to_redland($_) } @nodes;
-	$self->_model->remove_statement( @rnodes );
+	my $model   = $self->_model;
+	my $ret	 = $model->remove_statement( @rnodes );
+
+	# redland needs to be synced
+	$model->sync unless $self->{bulk};
+
+	# for any code that was expecting this
+	$ret;
 }
 
 =item C<< remove_statements ( $subject, $predicate, $object [, $context]) >>
@@ -323,14 +355,24 @@ Removes the specified C<$statement> from the underlying model.
 
 sub remove_statements {
 	my $self	= shift;
-	my $subj	= shift;
-	my $pred	= shift;
-	my $obj		= shift;
-	my $context	= shift;
-	my $iter	= $self->get_statements( $subj, $pred, $obj, $context );
+	my $iter	= $self->get_statements(@_);
+
+	# temporarily store the value for bulk so we don't sync over and over
+	my $bulk	= $self->{bulk};
+	$self->{bulk} = 1;
+
+	my $count = 0;
 	while (my $st = $iter->next) {
 		$self->remove_statement( $st );
+		$count++;
 	}
+
+	# now put it back
+	$self->{bulk} = $bulk;
+	$self->_model->sync unless $bulk;
+
+	# might as well return how many statements got deleted
+	$count;
 }
 
 =item C<< count_statements ( $subject, $predicate, $object, $context ) >>
@@ -345,9 +387,13 @@ sub count_statements {
 	my $self	= shift;
 	my @nodes	= @_;
 	if (scalar(@nodes) < 4) {
+		# if it isn't 4, then make damn sure it's 3
+		push @nodes, (undef) x (3 - @nodes);
+
 # 		warn "restricting count_statements to triple semantics";
 		my @rnodes	= map { _cast_to_redland($_) } @nodes[0..2];
-		my $st		= RDF::Redland::Statement->new( @rnodes );
+		# force a 3-element list or you'll be sorry
+		my $st		= RDF::Redland::Statement->new( @rnodes[0..2] );
 		my $iter	= $self->_model->find_statements( $st );
 		my $count	= 0;
 		my %seen;
@@ -393,6 +439,16 @@ supported features.
 
 sub supports {
 	return;
+}
+
+sub _begin_bulk_ops {
+	shift->{bulk} = 1;
+}
+
+sub _end_bulk_ops {
+	my $self = shift;
+	$self->{bulk} = 0;
+	$self->_model->sync;
 }
 
 sub _model {
@@ -446,6 +502,7 @@ sub _cast_to_local {
 		return;
 	}
 }
+
 
 1;
 
