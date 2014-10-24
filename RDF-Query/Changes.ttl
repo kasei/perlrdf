@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.912" ;
-                        doap:created      "2014-XX-XX" ;
+                        doap:created      "2014-10-24" ;
                         ];
         asc:changes     [
                         asc:addition      "Added IRC resource to Makefile.PL." ;

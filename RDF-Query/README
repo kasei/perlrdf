@@ -36,7 +36,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.912 (2014-XX-XX)
+  Version 2.912 (2014-10-24)
 
      * BUG FIXES
          Fix bug in handling of SUM aggregates with non-literal data.
