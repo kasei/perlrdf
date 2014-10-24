@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.011 (2014-10-XX)
+  Version 1.011 (2014-10-24)
 
      * BUG FIXES
          	Updated Hexastore store to return an empty iterator for get_contexts() instead of croaking.

@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.011" ;
-                        doap:created      "2014-10-XX" ;
+                        doap:created      "2014-10-24" ;
                         ];
         asc:changes     [
                         asc:update      "Fixed TSV serializer to print header rows and accept VariableBindings as input." ;
