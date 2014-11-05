@@ -1877,6 +1877,7 @@ sub _InlineDataClause {
 	my $parens	= 0;
 	if ($self->_test(qr/[(]/)) {
 		$self->_eat( qr/[(]/ );
+		$self->__consume_ws_opt;
 		$parens	= 1;
 	}
 	while ($self->_test(qr/[\$?]/)) {
@@ -1886,6 +1887,7 @@ sub _InlineDataClause {
 	}
 	if ($parens) {
 		$self->_eat( qr/[)]/ );
+		$self->__consume_ws_opt;
 	}
 	
 	my $count	= scalar(@vars);
