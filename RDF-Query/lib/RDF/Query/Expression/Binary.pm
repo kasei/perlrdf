@@ -73,7 +73,6 @@ sub as_sparql {
 	return sprintf("(%s $op %s)", map { $_->as_sparql( $context, $indent ) } $self->operands);
 }
 
-
 =item C<< evaluate ( $query, \%bound ) >>
 
 Evaluates the expression using the supplied bound variables.

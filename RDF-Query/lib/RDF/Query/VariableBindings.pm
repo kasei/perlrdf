@@ -90,6 +90,20 @@ sub explain {
 	return $string;
 }
 
+=item C<< as_hash >>
+
+Returns the variable bindings as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my @keys	= sort keys %$self;
+	return { type => 'bindings', bindings => { map { $_ => $self->{$_}->as_hash($context) } @keys } };
+}
+
+
 1;
 
 __END__

@@ -126,6 +126,22 @@ sub explain {
 	return $string;
 }
 
+=item C<< as_hash >>
+
+Returns the expression as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'expression',
+		operator	=> $self->op,
+		operands	=> [map { $_->as_hash($context) } $self->operands],
+	};
+}
+
 =item C<< type >>
 
 Returns the type of this algebra expression.
