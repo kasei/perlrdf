@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.911.
+This document describes RDF::Query::Parser::SPARQL11 version 2.912.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.912';
 }
 
 ######################################################################
@@ -1877,6 +1877,7 @@ sub _InlineDataClause {
 	my $parens	= 0;
 	if ($self->_test(qr/[(]/)) {
 		$self->_eat( qr/[(]/ );
+		$self->__consume_ws_opt;
 		$parens	= 1;
 	}
 	while ($self->_test(qr/[\$?]/)) {
@@ -1886,6 +1887,7 @@ sub _InlineDataClause {
 	}
 	if ($parens) {
 		$self->_eat( qr/[)]/ );
+		$self->__consume_ws_opt;
 	}
 	
 	my $count	= scalar(@vars);

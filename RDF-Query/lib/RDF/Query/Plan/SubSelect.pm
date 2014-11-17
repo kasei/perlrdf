@@ -7,7 +7,7 @@ RDF::Query::Plan::SubSelect - Executable query plan for sub-select queries.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::SubSelect version 2.911.
+This document describes RDF::Query::Plan::SubSelect version 2.912.
 
 =head1 METHODS
 
@@ -37,7 +37,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION		= '2.911';
+	$VERSION		= '2.912';
 }
 
 ######################################################################
