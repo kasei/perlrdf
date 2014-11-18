@@ -203,6 +203,8 @@ sub sort_for_join_variables {
 	my $class	= ref($self);
 	my $l		= Log::Log4perl->get_logger("rdf.trine.pattern");
 	$l->debug('Reordering ' . scalar $self->triples . ' triples for heuristical optimizations');
+	return $self if (scalar $self->triples == 1);
+
 	my @sorted_triple_patterns = $self->subgroup;
 
 	my @patterns;
