@@ -208,6 +208,10 @@ sub get_statements {
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
 	
+	if (defined($context) and not($context->isa('RDF::Trine::Node::Nil'))) {
+		return RDF::Trine::Iterator::Graph->new( [] );
+	}
+	
 	my $defined	= 0;
 	my %variable_map;
 	foreach my $i (0 .. 2) {
@@ -651,6 +655,11 @@ sub count_statements {
 	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	my @dkeys;
 	my @ukeys;
+	
+	if (scalar(@nodes) > 3 and defined($nodes[3]) and not($nodes[3]->isa('RDF::Trine::Node::Nil'))) {
+		return 0;
+	}
+	
 	foreach my $i (0 .. 2) {
 		if (defined($nodes[ $i ])) {
 			push( @dkeys, $names[$i] );
