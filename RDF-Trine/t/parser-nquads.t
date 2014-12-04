@@ -32,7 +32,7 @@ isa_ok( $parser, 'RDF::Trine::Parser::NQuads' );
 END
 	$parser->parse_into_model(undef, $nquads, $model);
 	
-	is( $model->size, 2, 'expected model (triple) size after nquads parse' );
+	is( $model->size, 3, 'expected model size after nquads parse' );
 	is( $model->count_statements(undef, undef, undef, undef), 3, 'expected 3 count ffff' );
 	is( $model->count_statements(blank('a'), undef, undef, undef), 2, 'expected 2 count bfff' );
 	is( $model->count_statements(iri('a')), 1, 'expected 1 count bff' );
