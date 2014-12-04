@@ -435,7 +435,7 @@ Returns the number of statements in the model.
 sub size {
 	my $self	= shift;
 	$self->end_bulk_ops();
-	return $self->count_statements();
+	return $self->count_statements(undef, undef, undef, undef);
 }
 
 =item C<< etag >>
