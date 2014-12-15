@@ -576,6 +576,28 @@ warn Dumper(\@triples); # XXX
 		} elsif (scalar(@patterns) == 1) {
 			push(@plans, $self->generate_plans( @patterns, $context, %args ));
 		} else {
+			my ($rhs, $lhs)	= @patterns;
+			if ($rhs->isa('RDF::Query::Algebra::NamedGraph')) {
+				my $graph	= $rhs->graph;
+				if ($graph->isa('RDF::Query::Node::Variable')) {
+					my %vars	= map { $_ => 1 } ($lhs->definite_variables);
+					if ($vars{ $graph->name }) {
+						my $plan;
+						try {
+							my $child	= $rhs->pattern;
+							my ($lp)	= $self->generate_plans($lhs, $context, %args);
+							my ($rp)	= $self->generate_plans($child, $context, %args, active_graph => $graph);
+							$plan		= RDF::Query::Plan::Join::PushDownNestedLoop->new($lp, $rp, 0);
+						} catch RDF::Query::Error::MethodInvocationError with {
+			#				warn "caught MethodInvocationError.";
+						};
+						if (defined $plan) {
+							return $plan;
+						}
+					}
+				}
+			}
+							
 			push(@plans, map { $_->[0] } $self->_join_plans( $context, \@patterns, %args, method => 'patterns' ));
 		}
 		
@@ -586,10 +608,26 @@ warn Dumper(\@triples); # XXX
 		push(@return_plans, @plans);
 	} elsif ($type eq 'NamedGraph') {
 		my @plans;
+		my $pattern	= $algebra->pattern;
 		if ($algebra->graph->isa('RDF::Query::Node::Resource')) {
-			@plans	= $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $algebra->graph );
+			@plans	= $self->generate_plans( $pattern, $context, %args, active_graph => $algebra->graph );
 		} else {
-			@plans	= map { RDF::Query::Plan::NamedGraph->new( $algebra->graph, $_ ) } $self->generate_plans( $algebra->pattern, $context, %args, active_graph => $algebra->graph );
+			if ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+				my @patterns	= $pattern->patterns;
+				if (scalar(@patterns) == 1) {
+					my ($p)	= @patterns;
+					if ($p->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+						# we can do away with the NamedGraph for simple BGPs because the graph variable will be bound in the evaluation of the BGP
+						my $expr	= RDF::Query::Expression::Binary->new('!=', $algebra->graph, RDF::Trine::Node::Nil->new);
+						my @plans	= map {
+							RDF::Query::Plan::Filter->new( $expr, $_, $algebra->graph )
+						} $self->generate_plans($p, $context, %args, active_graph => $algebra->graph);
+						return @plans;
+					}
+				}
+			}
+
+			@plans	= map { RDF::Query::Plan::NamedGraph->new( $algebra->graph, $_ ) } $self->generate_plans( $pattern, $context, %args, active_graph => $algebra->graph );
 		}
 		push(@return_plans, @plans);
 	} elsif ($type eq 'Offset') {
@@ -910,6 +948,7 @@ sub _join_plans {
 								my $sparql		= $ggp->as_sparql;
 								$logging_keys{ sparql }	= $sparql;
 							}
+							
 							my $plan	= $join_type->new( $b, $a, 0, \%logging_keys );
 							push( @plans, [ $plan, [ @algebras ] ] );
 						} catch RDF::Query::Error::MethodInvocationError with {
