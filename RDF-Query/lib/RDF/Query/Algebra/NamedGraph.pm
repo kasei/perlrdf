@@ -265,8 +265,8 @@ Returns a list of the variable names that will be bound after evaluating this al
 sub definite_variables {
 	my $self	= shift;
 	return RDF::Query::_uniq(
-		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 		$self->pattern->definite_variables,
+		map { $_->name } grep { $_->isa('RDF::Query::Node::Variable') } ($self->graph),
 	);
 }
 
