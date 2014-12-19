@@ -2994,6 +2994,7 @@ sub _BrackettedExpression {
 sub _Aggregate {
 	my $self	= shift;
 	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
+	$self->__consume_ws_opt;
 	$self->_eat('(');
 	$self->__consume_ws_opt;
 	my $distinct	= 0;
