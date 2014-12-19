@@ -120,7 +120,7 @@ sub explain {
 		if ($p->can('explain')) {
 			$string	.= $p->explain( $s, $count+1 );
 		} else {
-			$string	.= $p->sse;
+			$string	.= "${indent}$s" . $p->sse . "\n";
 		}
 	}
 	return $string;
