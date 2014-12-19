@@ -612,21 +612,42 @@ warn Dumper(\@triples); # XXX
 		if ($algebra->graph->isa('RDF::Query::Node::Resource')) {
 			@plans	= $self->generate_plans( $pattern, $context, %args, active_graph => $algebra->graph );
 		} else {
+			my $can_drop_ng	= 0;
+			my $child;
 			if ($pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
 				my @patterns	= $pattern->patterns;
 				if (scalar(@patterns) == 1) {
 					my ($p)	= @patterns;
 					if ($p->isa('RDF::Query::Algebra::BasicGraphPattern')) {
-						# we can do away with the NamedGraph for simple BGPs because the graph variable will be bound in the evaluation of the BGP
-						my $expr	= RDF::Query::Expression::Binary->new('!=', $algebra->graph, RDF::Trine::Node::Nil->new);
-						my @plans	= map {
-							RDF::Query::Plan::Filter->new( $expr, $_, $algebra->graph )
-						} $self->generate_plans($p, $context, %args, active_graph => $algebra->graph);
-						return @plans;
+						$can_drop_ng	= 1;
+						$child			= $p;
 					}
 				}
 			}
-
+			if ($pattern->isa('RDF::Query::Algebra::Filter')) {
+				if ($pattern->pattern->isa('RDF::Query::Algebra::GroupGraphPattern')) {
+					my @patterns	= $pattern->pattern->patterns;
+					if (scalar(@patterns) == 1) {
+						my ($p)	= @patterns;
+						if ($p->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+							$can_drop_ng	= 1;
+							$child			= $pattern;
+						}
+					}
+				} elsif ($pattern->pattern->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+					$can_drop_ng	= 1;
+					$child			= $pattern;
+				}
+			}
+			if ($can_drop_ng) {
+				# we can do away with the NamedGraph for simple BGPs because the graph variable will be bound in the evaluation of the BGP
+				my $expr	= RDF::Query::Expression::Binary->new('!=', $algebra->graph, RDF::Trine::Node::Nil->new);
+				my @plans	= map {
+					RDF::Query::Plan::Filter->new( $expr, $_, $algebra->graph )
+				} $self->generate_plans($child, $context, %args, active_graph => $algebra->graph);
+				return @plans;
+			}
+			
 			@plans	= map { RDF::Query::Plan::NamedGraph->new( $algebra->graph, $_ ) } $self->generate_plans( $pattern, $context, %args, active_graph => $algebra->graph );
 		}
 		push(@return_plans, @plans);
