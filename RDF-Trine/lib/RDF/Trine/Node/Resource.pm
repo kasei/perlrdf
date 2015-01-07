@@ -259,6 +259,7 @@ sub equal {
 	return 0 unless defined($node);
 	return 1 if (refaddr($self) == refaddr($node));
 	return 0 unless (blessed($node) and $node->isa('RDF::Trine::Node::Resource'));
+	return 1 if ($self->uri_value eq $node->uri_value);
 	
 	my $uri1	= URI->new($self->uri_value)->as_iri;
 	my $uri2	= URI->new($node->uri_value)->as_iri;
