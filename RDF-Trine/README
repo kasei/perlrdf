@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.012 (2014-XX-XX)
+  Version 1.012 (2015-01-15)
 
      * BUG FIXES
          	Fixed SPARQL XML serialization of boolean results.

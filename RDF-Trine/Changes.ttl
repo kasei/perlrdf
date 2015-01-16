@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.012" ;
-                        doap:created      "2014-XX-XX" ;
+                        doap:created      "2015-01-15" ;
                         ];
         asc:changes     [
                         asc:update      "Fixed SPARQL XML serialization of boolean results." ;

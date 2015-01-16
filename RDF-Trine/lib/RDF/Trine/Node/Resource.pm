@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for IRI resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 1.011_01
+This document describes RDF::Trine::Node::Resource version 1.012
 
 =cut
 
@@ -29,7 +29,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '1.011_01';
+	$VERSION	= '1.012';
 }
 
 ######################################################################
