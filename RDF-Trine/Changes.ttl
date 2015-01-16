@@ -10,6 +10,19 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.012.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.011.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.012" ;
+                        doap:created      "2015-01-15" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed SPARQL XML serialization of boolean results." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.011.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.010.tar.gz> ;

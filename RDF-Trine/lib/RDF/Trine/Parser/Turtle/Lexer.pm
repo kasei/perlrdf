@@ -7,7 +7,7 @@ RDF::Trine::Parser::Turtle::Lexer - Tokenizer for parsing Turtle, TriG, and N-Tr
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Turtle::Lexer version 1.011
+This document describes RDF::Trine::Parser::Turtle::Lexer version 1.012
 
 =head1 SYNOPSIS
 
@@ -35,7 +35,7 @@ use RDF::Trine::Error;
 
 our $VERSION;
 BEGIN {
-	$VERSION				= '1.011';
+	$VERSION				= '1.012';
 }
 
 my $r_nameChar_extra		= qr'[-0-9\x{B7}\x{0300}-\x{036F}\x{203F}-\x{2040}]'o;

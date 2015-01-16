@@ -7,7 +7,7 @@ RDF::Query::Algebra::Offset - Algebra class for offseting query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Offset version 2.911.
+This document describes RDF::Query::Algebra::Offset version 2.912.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.912';
 }
 
 ######################################################################

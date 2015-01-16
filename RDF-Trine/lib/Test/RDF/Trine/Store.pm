@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.011
+This document describes RDF::Trine version 1.012
 
 =head1 SYNOPSIS
 
@@ -58,7 +58,7 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 }
 
 use Log::Log4perl;
