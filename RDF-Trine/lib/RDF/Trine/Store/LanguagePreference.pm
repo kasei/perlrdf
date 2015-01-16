@@ -1,3 +1,5 @@
+=encoding utf8
+
 =head1 NAME
 
 RDF::Trine::Store::LanguagePreference - RDF Store proxy for filtering language tagged literals
@@ -219,6 +221,14 @@ sub count_statements {
 	return $count;
 }
 
+=item C<< qvalueForLanguage ( $language, \%cache ) >>
+
+Returns the q-value for C<< $language >> based on the current language
+preference. C<< %cache >> is used across multiple calls to this method for
+performance reasons.
+
+=cut
+
 sub qvalueForLanguage {
 	my $self	= shift;
 	my $lang	= shift;
@@ -245,11 +255,37 @@ sub qvalueForLanguage {
 	}
 }
 
+=item C<< siteQValueForLanguage ( $language ) >>
+
+Returns an implementation-specific q-value preference for the given
+C<< $language >>. This method may be overridden by subclasses to control the
+default preferred language.
+
+=cut
+
 sub siteQValueForLanguage {
 	my $self	= shift;
 	my $lang	= shift;
 	return ($lang =~ /^en/) ? 1.0 : 0.999;
 }
+
+=item C<< availableLanguagesForStatement( $statement ) >>
+
+Returns a list of language tags that are available in the underlying store for
+the given statement object. For example, if C<< $statement >> represented the
+triple:
+
+ dbpedia:Los_Angeles rdf:label "Los Angeles"@en
+
+and the underlying store contains the triples:
+
+ dbpedia:Los_Angeles rdf:label "Los Angeles"@en
+ dbpedia:Los_Angeles rdf:label "ロサンゼルス"@ja
+ dbpedia:Los_Angeles rdf:label "Лос-Анджелес"@ru
+
+then the return value would be C<< ('en', 'ja', 'ru') >>.
+
+=cut
 
 sub availableLanguagesForStatement {
 	my $self	= shift;
@@ -267,6 +303,14 @@ sub availableLanguagesForStatement {
     }
     return keys %languages;
 }
+
+=item C<< languagePreferenceAllowsStatement ( $statement, \%cache ) >>
+
+Returns true if the C<< $statement >> is allowed by the current language
+preference. C<< %cache >> is used across multiple calls to this method for
+performance reasons.
+
+=cut
 
 sub languagePreferenceAllowsStatement {
 	my $self	= shift;
@@ -297,6 +341,16 @@ sub supports {
 	my $self	= shift;
 	return;
 }
+
+=begin private
+
+=item C<< can >>
+
+Delegating implementation.
+
+=end private
+
+=cut
 
 sub can {
 	my $proto	= shift;
