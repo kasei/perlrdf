@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 1.008
+This document describes RDF::Trine::Store::Hexastore version 1.012
 
 =head1 SYNOPSIS
 
@@ -32,6 +32,7 @@ use Scalar::Util qw(refaddr reftype blessed);
 use Storable qw(nstore retrieve);
 use Carp qw(croak);
 use Time::HiRes qw ( time );
+use Log::Log4perl;
 
 use constant NODES		=> qw(subject predicate object);
 use constant NODEMAP	=> { subject => 0, predicate => 1, object => 2, context => 3 };
@@ -45,7 +46,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.012";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -98,25 +99,25 @@ The base URI to be used for a parsed file.
 
 The following example initializes a Hexastore store based on a local file and a remote URL:
 
-  my $store = RDF::Trine::Store->new_with_config(
-                {storetype => 'Hexastore',
-		 sources => [
-			      {
-			       file => 'test-23.ttl',
-			       syntax => 'turtle',
-			      },
-			      {
-			       url => 'http://www.kjetil.kjernsmo.net/foaf',
-			       syntax => 'rdfxml',
-		      	      }
-	        ]});
+  my $store = RDF::Trine::Store->new_with_config( {
+      storetype => 'Hexastore',
+      sources => [
+          {
+              file => 'test-23.ttl',
+              syntax => 'turtle',
+          },
+          {
+              url => 'http://www.kjetil.kjernsmo.net/foaf',
+              syntax => 'rdfxml',
+          }
+  ]});
 
 
 =cut
 
 sub new {
 	my $class	= shift;
-	my $self        = bless({}, $class);
+	my $self	= bless({}, $class);
 	$self->nuke; # nuke resets the store, thus doing the same thing as init should do
 	return $self;
 }
@@ -143,8 +144,7 @@ sub _new_with_config {
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_url_into_model( $source->{url}, $model, %args );
 		} elsif ($source->{file}) {
-			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
-	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) || throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
 			my $parser = RDF::Trine::Parser->new($source->{syntax});
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
@@ -207,6 +207,10 @@ sub get_statements {
 	my $context	= shift;
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
+	
+	if (defined($context) and not($context->isa('RDF::Trine::Node::Nil'))) {
+		return RDF::Trine::Iterator::Graph->new( [] );
+	}
 	
 	my $defined	= 0;
 	my %variable_map;
@@ -463,7 +467,8 @@ sub get_pattern {
 			}
 			return RDF::Trine::Iterator::Bindings->new( \@results, [ $bgp->referenced_variables ] );
 		} else {
-# 			warn 'no shared variable -- cartesian product';
+			my $l		= Log::Log4perl->get_logger("rdf.trine.store.hexastore");
+			$l->info('No shared variable -- cartesian product');
 			# no shared variable -- cartesian product
 			my $i1	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t1 ) );
 			my $i2	= $self->SUPER::_get_pattern( RDF::Trine::Pattern->new( $t2 ) );
@@ -525,7 +530,9 @@ sub _join {
 =cut
 
 sub get_contexts {
-	croak "Contexts not supported for the Hexastore store";
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.hexastore");
+	$l->warn("Contexts not supported for the Hexastore store");
+ 	return RDF::Trine::Iterator->new([]);
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -538,14 +545,19 @@ sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
 	my $added	= 0;
+
+	# believe it or not, these calls add up.
+	my %stmt = map { $_ => $st->$_ } NODES;
+	my %ids  = map { $_ => $self->_node2id($stmt{$_}) } NODES;
+
 	foreach my $first (NODES) {
-		my $firstnode	= $st->$first();
-		my $id1			= $self->_node2id( $firstnode );
+		my $firstnode	= $stmt{$first};
+		my $id1			= $ids{$first};
 		my @others		= @{ OTHERNODES->{ $first } };
 		my @orders		= ([@others], [reverse @others]);
 		foreach my $order (@orders) {
 			my ($second, $third)	= @$order;
-			my ($id2, $id3)	= map { $self->_node2id( $st->$_() ) } ($second, $third);
+			my ($id2, $id3) = @ids{$second, $third};
 			my $list	= $self->_get_terminal_list( $first => $id1, $second => $id2 );
 			if ($self->_add_node_to_page( $list, $id3 )) {
 				$added++;
@@ -569,7 +581,7 @@ sub remove_statement {
 	my $st		= shift;
 	my @ids		= map { $self->_node2id( $st->$_() ) } NODES;
 # 	warn "*** removing statement @ids\n";
-	
+
 	my $removed	= 0;
 	foreach my $first (NODES) {
 		my $firstnode	= $st->$first();
@@ -587,7 +599,7 @@ sub remove_statement {
 # 			warn "\t- remaining: [" . join(', ', @$list) . "]\n";
 		}
 	}
-	
+
 	if ($removed) {
 		$self->{ size }--;
 		$self->{etag} = time;
@@ -643,6 +655,11 @@ sub count_statements {
 	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	my @dkeys;
 	my @ukeys;
+	
+	if (scalar(@nodes) > 3 and defined($nodes[3]) and not($nodes[3]->isa('RDF::Trine::Node::Nil'))) {
+		return 0;
+	}
+	
 	foreach my $i (0 .. 2) {
 		if (defined($nodes[ $i ])) {
 			push( @dkeys, $names[$i] );
@@ -691,10 +708,16 @@ sub _node2id {
 	my $node	= shift;
 	return unless (blessed($node));
 	return if ($node->isa('RDF::Trine::Node::Variable'));
-	if (exists( $self->{ node2id }{ $node->as_string } )) {
-		return $self->{ node2id }{ $node->as_string };
+
+	# this gets called so much it actually significantly impacts run
+	# time. call it once per invocation of _node2id instead of twice.
+	my $str = $node->as_string;
+	my $id = $self->{ node2id }{ $str };
+
+	if (defined $id) {
+		return $id;
 	} else {
-		my $id	= ($self->{ node2id }{ $node->as_string } = $self->{ next_id }++);
+		$id	= ($self->{ node2id }{ $str } = $self->{ next_id }++);
 		$self->{ id2node }{ $id }	= $node;
 		return $id
 	}

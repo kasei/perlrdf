@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.911.
+This document describes RDF::Query::Node::Resource version 2.912.
 
 =cut
 
@@ -28,7 +28,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.912';
 }
 
 ######################################################################
@@ -58,6 +58,7 @@ sub _cmp {
 	my $b	= shift;
 	return 1 unless blessed($b);
 	return -1 if ($b->isa('RDF::Query::Node::Literal'));
+	return -1 if ($b->isa('RDF::Trine::Node::Nil'));
 	return 1 if ($b->isa('RDF::Query::Node::Blank'));
 	return 0 unless ($b->isa('RDF::Query::Node::Resource'));
 	my $cmp	= $a->uri_value cmp $b->uri_value;

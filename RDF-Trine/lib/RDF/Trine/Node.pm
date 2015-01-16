@@ -7,7 +7,7 @@ RDF::Trine::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node version 1.008
+This document describes RDF::Trine::Node version 1.012
 
 =cut
 
@@ -19,7 +19,7 @@ no warnings 'redefine';
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.012';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -198,6 +198,34 @@ sub compare {
 	} else {
 		return $a->_compare( $b );
 	}
+}
+
+=item C<< as_hashref >>
+
+Returns a hashref representing the node in an RDF/JSON-like manner.
+
+See C<< as_hashref >> at L<RDF::Trine::Model> for full documentation of the
+hashref format.
+
+=cut
+
+sub as_hashref {
+	my $self	= shift;
+	my $o = {};
+	if ($self->isa('RDF::Trine::Node::Literal')) {
+		$o->{'type'}		= 'literal';
+		$o->{'value'}		= $self->literal_value;
+		$o->{'lang'}		= $self->literal_value_language
+			if $self->has_language;
+		$o->{'datatype'}	= $self->literal_datatype
+			if $self->has_datatype;
+	} else {
+		$o->{'type'}		= $self->isa('RDF::Trine::Node::Blank') ? 'bnode' : 'uri';
+		$o->{'value'}		= $self->isa('RDF::Trine::Node::Blank') ? 
+			('_:'.$self->blank_identifier) :
+			$self->uri ;
+	}
+	return $o;
 }
 
 =item C<< from_sse ( $string, $context ) >>

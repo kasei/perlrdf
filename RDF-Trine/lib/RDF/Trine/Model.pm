@@ -7,7 +7,7 @@ RDF::Trine::Model - Model class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Model version 1.008
+This document describes RDF::Trine::Model version 1.012
 
 =head1 METHODS
 
@@ -23,7 +23,7 @@ no warnings 'redefine';
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.012';
 }
 
 use Scalar::Util qw(blessed refaddr);
@@ -435,7 +435,7 @@ Returns the number of statements in the model.
 sub size {
 	my $self	= shift;
 	$self->end_bulk_ops();
-	return $self->count_statements();
+	return $self->count_statements(undef, undef, undef, undef);
 }
 
 =item C<< etag >>

@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.06.
+This document describes RDF::Endpoint version 0.07.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.06';
+our $VERSION	= '0.07';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -164,7 +164,15 @@ sub new {
 	} else {
 		$config		= $arg;
 		my $store	= RDF::Trine::Store->new( $config->{store} );
+		unless ($store) {
+			warn "Failed to construct RDF Store object";
+			return;
+		}
 		$model		= RDF::Trine::Model->new( $store );
+		unless ($model) {
+			warn "Failed to construct RDF Model object";
+			return;
+		}
 	}
 	
 	unless ($config->{endpoint}) {

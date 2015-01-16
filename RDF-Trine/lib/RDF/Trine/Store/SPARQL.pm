@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 1.008
+This document describes RDF::Trine::Store::SPARQL version 1.012
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.012";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -523,7 +523,7 @@ sub get_sparql {
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
-		$p->parse_string( $response->content );
+		$p->parse_string( $response->decoded_content );
 		return $handler->iterator;
 	} else {
 		my $status		= $response->status_line;
