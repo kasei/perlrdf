@@ -68,6 +68,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.012 (2015-01-15)
+
+     * BUG FIXES
+         	Fixed SPARQL XML serialization of boolean results.
+
   Version 1.011 (2014-10-24)
 
      * BUG FIXES
@@ -97,7 +102,7 @@ VERSION HISTORY
      * OTHER
          	Log an info message if there is a cartesian product (Kjetil Kjernsmo).
 
-  Version 1.009 (2014-05-20)
+  Version 1.008 (2014-05-20)
 
      * BUG FIXES
          	Fixed bug in Turtle lexer that was failing to anchor matches of PNAME_LN (GH issue #96 by Tobias Kuhn).

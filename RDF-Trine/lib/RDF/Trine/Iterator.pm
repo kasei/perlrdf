@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Iterator class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 1.011.
+This document describes RDF::Trine::Iterator version 1.012.
 
 =head1 SYNOPSIS
 
@@ -43,7 +43,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
