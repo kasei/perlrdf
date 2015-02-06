@@ -566,7 +566,22 @@ warn Dumper(\@triples); # XXX
 		}
 		
 	} elsif ($type eq 'GroupGraphPattern') {
-		my @patterns	= $algebra->patterns();
+		my @input	= $algebra->patterns();
+		my @patterns;
+		while (my $a = shift(@input)) {
+			if ($a->isa('RDF::Query::Algebra::Service')) {
+				if (scalar(@input) and $input[0]->isa('RDF::Query::Algebra::Service') and $a->endpoint->value eq $input[0]->endpoint->value) {
+					my $b	= shift(@input);
+					if ($a->silent == $b->silent) {
+						my $p	= RDF::Query::Algebra::GroupGraphPattern->new( map { $_->pattern } ($a, $b) );
+						my $s	= RDF::Query::Algebra::Service->new( $a->endpoint, $p, $a->silent );
+						push(@patterns, $s);
+						next;
+					}
+				}
+			}
+			push(@patterns, $a);
+		}
 		
 		my @plans;
 		if (scalar(@patterns) == 0) {
