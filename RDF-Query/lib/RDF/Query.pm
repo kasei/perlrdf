@@ -245,8 +245,10 @@ sub new {
 		$method		= 'ASK' if ($query->isa('RDF::Query::Algebra::Ask'));
 		$method		= 'CONSTRUCT' if ($query->isa('RDF::Query::Algebra::Construct'));
 		my @vars	= map { RDF::Query::Node::Variable->new($_) } _uniq($query->potentially_bound);
-		unless ($query->isa('RDF::Query::Algebra::Project')) {
-			$query	= RDF::Query::Algebra::Project->new($query, \@vars);
+		if ($method eq 'SELECT') {
+			unless ($query->isa('RDF::Query::Algebra::Project')) {
+				$query	= RDF::Query::Algebra::Project->new($query, \@vars);
+			}
 		}
 		$parsed	= {
 					method		=> $method,
