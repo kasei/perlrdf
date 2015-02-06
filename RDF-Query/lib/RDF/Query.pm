@@ -238,7 +238,29 @@ sub new {
 	my $update	= ((delete $options{update}) ? 1 : 0);
 	my $pclass	= $names{ $lang } || $uris{ $languri } || $names{ $DEFAULT_PARSER };
 	my $parser	= $pclass->new( %pargs );
-	my $parsed	= $parser->parse( $query, $base_uri, $update );
+	my $parsed;
+	
+	if (ref($query) and $query->isa('RDF::Query::Algebra')) {
+		my $method	= 'SELECT';
+		$method		= 'ASK' if ($query->isa('RDF::Query::Algebra::Ask'));
+		$method		= 'CONSTRUCT' if ($query->isa('RDF::Query::Algebra::Construct'));
+		my @vars	= map { RDF::Query::Node::Variable->new($_) } _uniq($query->potentially_bound);
+		unless ($query->isa('RDF::Query::Algebra::Project')) {
+			$query	= RDF::Query::Algebra::Project->new($query, \@vars);
+		}
+		$parsed	= {
+					method		=> $method,
+					triples		=> [$query],
+					sources		=> [],
+					base		=> $base_uri,
+					options		=> {},
+					star		=> 0,
+					variables	=> \@vars,
+				};
+		$query	= $query->as_sparql;
+	} else {
+		$parsed	= $parser->parse( $query, $base_uri, $update );
+	}
 	
 	my $self	= $class->_new(
 					base_uri		=> $base_uri,
