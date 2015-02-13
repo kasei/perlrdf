@@ -71,6 +71,7 @@ VERSION HISTORY
   Version 1.013 (2015-XX-XX)
 
      * BUG FIXES
+         	Update how file URIs are constructed to better deal with windows systems.
          	Fixed bug in RDF::Trine::Model->size that was only considering triples, not quads.
          	Fix get_statements and count_statements when called with quad patterns with non-nil graph.
      * NEW FEATURES

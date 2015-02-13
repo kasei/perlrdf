@@ -21,6 +21,7 @@
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Parser->parse_url method (github issue #119)." ;
                         asc:addition    "Added RDF::Trine::Store::LanguagePreference class." ;
+                        asc:update      "Update how file URIs are constructed to better deal with windows systems." ;
                         asc:update      "Improve insertion performance in RDF::Trine::Store::Memory by keeping caching quad SHA1 hashes." ;
                         asc:update      "Fixed bug in RDF::Trine::Model->size that was only considering triples, not quads." ;
                         asc:update      "Update triple store tests for expected results when passing in quad patterns with non-nil graphs." ;
