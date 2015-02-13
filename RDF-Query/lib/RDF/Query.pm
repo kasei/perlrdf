@@ -136,7 +136,7 @@ if (! Log::Log4perl::initialized()) {
 }
 
 no warnings 'numeric';
-use RDF::Trine 0.135;
+use RDF::Trine 1.004;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
