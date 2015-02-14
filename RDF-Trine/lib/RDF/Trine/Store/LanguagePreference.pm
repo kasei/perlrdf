@@ -6,7 +6,7 @@ RDF::Trine::Store::LanguagePreference - RDF Store proxy for filtering language t
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::LanguagePreference version 1.012_02
+This document describes RDF::Trine::Store::LanguagePreference version 1.013
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Iterator qw(sgrep);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.012_02";
+	$VERSION	= "1.013";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);

@@ -68,7 +68,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.013 (2015-XX-XX)
+  Version 1.013 (2015-02-14)
 
      * BUG FIXES
          	Update how file URIs are constructed to better deal with windows systems.

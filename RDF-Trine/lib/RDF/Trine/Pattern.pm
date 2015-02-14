@@ -7,7 +7,7 @@ RDF::Trine::Pattern - Class for basic graph patterns
 
 =head1 VERSION
 
-This document describes RDF::Trine::Pattern version 1.012_02
+This document describes RDF::Trine::Pattern version 1.013
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine qw(iri);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.012_02';
+	$VERSION	= '1.013';
 }
 
 ######################################################################

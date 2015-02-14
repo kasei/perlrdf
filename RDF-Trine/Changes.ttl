@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.013" ;
-                        doap:created      "2015-XX-XX" ;
+                        doap:created      "2015-02-14" ;
                         ];
         asc:changes     [
                         asc:addition    "Added RDF::Trine::Parser->parse_url method (github issue #119)." ;
