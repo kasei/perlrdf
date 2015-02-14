@@ -4,7 +4,7 @@ RDF::Query::Functions::Geo - Geographic extension functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::Geo version 2.912_01.
+This document describes RDF::Query::Functions::Geo version 2.912_02.
 
 =head1 DESCRIPTION
 
@@ -27,7 +27,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.geo");
-	$VERSION	= '2.912_01';
+	$VERSION	= '2.912_02';
 }
 
 our $GEO_DISTANCE_LOADED;
