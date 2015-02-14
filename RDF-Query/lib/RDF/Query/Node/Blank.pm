@@ -54,6 +54,7 @@ sub _cmp {
 	my $l		= Log::Log4perl->get_logger("rdf.query.node.blank");
 	$l->debug("blank comparison: " . Dumper($nodea, $nodeb));
 	return 1 unless blessed($nodeb);
+	return -1 if ($nodeb->isa('RDF::Trine::Node::Nil'));
 	return -1 if ($nodeb->isa('RDF::Query::Node::Literal'));
 	return -1 if ($nodeb->isa('RDF::Query::Node::Resource'));
 	return 1 unless ($nodeb->isa('RDF::Query::Node::Blank'));

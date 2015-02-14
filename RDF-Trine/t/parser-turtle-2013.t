@@ -55,7 +55,8 @@ foreach my $manifest (@manifests) {
 		}
 		my (undef, undef, $test)	= File::Spec->splitpath( $file );
 		lives_ok {
-			my $url	= 'file://' . $file;
+			my $uri	= URI::file->new($file, (($file =~ m#^\w:\\\\#) ? 'win32' : ()));
+			my $url	= $uri->as_string;
 			my $parser	= RDF::Trine::Parser::Turtle->new();
 			$parser->parse( $url, $data );
 		} $test;
