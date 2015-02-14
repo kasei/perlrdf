@@ -5,6 +5,7 @@ use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
 use File::Spec;
+use URI::file;
 
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Parser;
