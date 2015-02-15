@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.912.
+This document describes RDF::Query::Expression version 2.913.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.912';
+	$VERSION	= '2.913';
 }
 
 ######################################################################
@@ -124,6 +124,22 @@ sub explain {
 		}
 	}
 	return $string;
+}
+
+=item C<< as_hash >>
+
+Returns the expression as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	return {
+		type 		=> 'expression',
+		operator	=> $self->op,
+		operands	=> [map { $_->as_hash($context) } $self->operands],
+	};
 }
 
 =item C<< type >>

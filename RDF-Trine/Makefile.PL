@@ -16,6 +16,7 @@ build_requires		'TryCatch'					=> 0;
 
 perl_version		'5.010';
 
+requires			'IRI'						=> 0;
 requires			'Moose'						=> 2;
 requires			'MooseX::ArrayRef'			=> 0;
 requires			'Module::Load::Conditional'	=> 0.38;

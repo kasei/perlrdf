@@ -7,7 +7,7 @@ RDF::Trine::Parser::Redland - RDF Parser using the Redland library
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::Redland version 1.011
+This document describes RDF::Trine::Parser::Redland version 1.012
 
 =head1 SYNOPSIS
 
@@ -85,7 +85,7 @@ BEGIN {
 				],
 	);
 	
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 	for my $format (keys %FORMATS) {
 		$RDF::Trine::Parser::parser_names{$format} = $FORMATS{$format}[0];
 		$RDF::Trine::Parser::format_uris{ $FORMATS{$format}[1] } = $FORMATS{$format}[0]

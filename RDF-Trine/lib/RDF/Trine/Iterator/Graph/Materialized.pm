@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Graph::Materialized - Materialized graph class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph::Materialized version 1.011
+This document describes RDF::Trine::Iterator::Graph::Materialized version 1.012
 
 =head1 SYNOPSIS
 
@@ -48,7 +48,7 @@ use base qw(RDF::Trine::Iterator::Graph);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 }
 
 =item C<< new ( \@results, %args ) >>

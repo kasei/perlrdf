@@ -4,7 +4,7 @@ RDF::Trine::Store::Dydra - RDF Store proxy for a Dydra endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Dydra version 1.011
+This document describes RDF::Trine::Store::Dydra version 1.012
 
 =head1 SYNOPSIS
 
@@ -38,7 +38,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.011";
+	$VERSION	= "1.012";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);

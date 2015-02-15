@@ -7,7 +7,7 @@ RDF::Trine::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Literal version 1.011
+This document describes RDF::Trine::Node::Literal version 1.012
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $USE_XMLLITERALS, $USE_FORMULAE);
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 	eval "use RDF::Trine::Node::Literal::XML;";	## no critic (ProhibitStringyEval)
 	$USE_XMLLITERALS	= (RDF::Trine::Node::Literal::XML->can('new')) ? 1 : 0;
 	eval "use RDF::Trine::Node::Formula;";	## no critic (ProhibitStringyEval)

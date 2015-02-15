@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.011
+This document describes RDF::Trine::Parser version 1.012
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -280,6 +280,135 @@ sub parse_url_into_model {
 				my $ok		= 0;
 				try {
 					$parser->parse_into_model( $base, $data, $model, %args );
+					$ok	= 1;
+				} catch RDF::Trine::Error::ParserError with {};
+				last if ($ok);
+			}
+		}
+	} catch RDF::Trine::Error with {
+		my $e	= shift;
+	};
+	return 1 if ($ok);
+	
+	if ($pclass) {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data of type $type from $url";
+	} else {
+		throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
+	}
+}
+
+=item C<< parse_url ( $url, \&handler [, %args] ) >>
+
+Retrieves the content from C<< $url >> and attempts to parse the resulting RDF.
+For each parsed RDF triple that is parsed, C<&handler> will be called with the
+triple as an argument. Otherwise, this method acts just like
+C<parse_url_into_model>.
+
+=cut
+
+sub parse_url {
+	my $class	= shift;
+	my $url		= shift;
+	my $handler	= shift;
+	my %args	= @_;
+	
+	my $base	= $url;
+	if (defined($args{base})) {
+		$base	= $args{base};
+	}
+	
+	my $ua;
+	if (defined($args{useragent})) {
+		$ua	= $args{useragent};
+	} else {
+		$ua		= RDF::Trine->default_useragent->clone;
+		my $accept	= $class->default_accept_header;
+		$ua->default_headers->push_header( 'Accept' => $accept );
+	}
+	
+	my $resp	= $ua->get( $url );
+	if ($url =~ /^file:/) {
+		my $type	= guess_media_type($url);
+		$resp->header('Content-Type', $type);
+	}
+	
+	unless ($resp->is_success) {
+		throw RDF::Trine::Error::ParserError -text => $resp->status_line;
+	}
+	
+	my $content	= $resp->content;
+	if (my $cb = $args{content_cb}) {
+		$cb->( $url, $content, $resp );
+	}
+	
+	my $type	= $resp->header('content-type');
+	$type		=~ s/^([^\s;]+).*/$1/;
+	my $pclass	= $media_types{ $type };
+	if ($pclass and $pclass->can('new')) {
+		my $data	= $content;
+		if (my $e = $encodings{ $pclass }) {
+			$data	= decode( $e, $content );
+		}
+		
+		# pass %args in here too so the constructor can take its pick
+		my $parser	= $pclass->new(%args);
+		my $ok	= 0;
+		try {
+			$parser->parse( $base, $data, $handler );
+			$ok	= 1;
+		} catch RDF::Trine::Error with {};
+		return 1 if ($ok);
+	}
+	
+	### FALLBACK
+	my %options;
+	if (defined $args{canonicalize}) {
+		$options{ canonicalize }	= $args{canonicalize};
+	}
+	
+	my $ok	= 0;
+	try {
+		if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
+			my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
+			$parser->parse( $base, $content, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
+			my $parser	= RDF::Trine::Parser::Turtle->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse( $base, $data, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]trig$/) {
+			my $parser	= RDF::Trine::Parser::Trig->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse( $base, $data, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nt$/) {
+			my $parser	= RDF::Trine::Parser::NTriples->new(%options);
+			$parser->parse( $base, $content, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nq$/) {
+			my $parser	= RDF::Trine::Parser::NQuads->new(%options);
+			$parser->parse( $base, $content, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]js(?:on)?$/) {
+			my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
+			$parser->parse( $base, $content, $handler, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]x?html?$/) {
+			my $parser	= RDF::Trine::Parser::RDFa->new(%options);
+			$parser->parse( $base, $content, $handler, %args );
+			$ok	= 1;;
+		} else {
+			my @types	= keys %{ { map { $_ => 1 } values %media_types } };
+			foreach my $pclass (@types) {
+				my $data	= $content;
+				if (my $e = $encodings{ $pclass }) {
+					$data	= decode( $e, $content );
+				}
+				my $parser	= $pclass->new(%options);
+				my $ok		= 0;
+				try {
+					$parser->parse( $base, $data, $handler, %args );
 					$ok	= 1;
 				} catch RDF::Trine::Error::ParserError with {};
 				last if ($ok);

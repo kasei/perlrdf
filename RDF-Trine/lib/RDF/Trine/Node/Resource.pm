@@ -7,7 +7,7 @@ RDF::Trine::Node::Resource - RDF Node class for IRI resources
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Resource version 1.011
+This document describes RDF::Trine::Node::Resource version 1.012
 
 =cut
 
@@ -19,6 +19,7 @@ use warnings;
 no warnings 'redefine';
 use base qw(RDF::Trine::Node);
 
+use IRI;
 use URI 1.52;
 use Encode;
 use Data::Dumper;
@@ -29,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, %sse, %ntriples);
 BEGIN {
-	$VERSION	= '1.011';
+	$VERSION	= '1.012';
 }
 
 ######################################################################
@@ -62,25 +63,15 @@ sub new {
 	}
 	
 	if (defined($base_uri)) {
-		$base_uri	= (blessed($base_uri) and $base_uri->isa('RDF::Trine::Node::Resource')) ? $base_uri->uri_value : "$base_uri";
-		
-		my @chars;
-		my $i	= 0;
-		if ("${base_uri}${uri}" =~ /!/) {
-			# replace occurrences of '!' in $base_uri and $uri with '!(\d)!' and set $chars[$1] = '!'
-			for ($base_uri, $uri) {
-				s/!/$chars[$i] = '!'; sprintf('!%d!', $i++)/eg;
+		if (blessed($base_uri)) {
+			if ($base_uri->isa('RDF::Trine::Node::Resource')) {
+				$base_uri	= IRI->new( $base_uri->uri_value );
 			}
+		} else {
+			$base_uri	= IRI->new($base_uri);
 		}
-		
-		# swap unicode chars for "!${i}!" and add the char to $chars[$i++]
-		for ($uri, $base_uri) {
-			s/([^\x{00}-\x{127}]+)/$chars[$i] = $1; sprintf('!%d!', $i++)/eg;
-		}
-		$uri		= URI->new_abs($uri, $base_uri)->as_string;
-		
-		# put back the unicode characters where they belong
-		$uri =~ s/!(\d+)!/$chars[$1]/eg;
+		my $iri		= IRI->new( value => $uri, base => $base_uri );
+		$uri		= $iri->abs;
 	}
     utf8::upgrade($uri);
 	
@@ -160,8 +151,8 @@ sub sse {
 	if ($sse{ $ra }) {
 		return $sse{ $ra };
 	} else {
-		my $string	= URI->new( $self->uri_value )->canonical;
-		my $sse		= '<' . $string . '>';
+		my $string    = URI->new( $self->uri_value )->canonical;
+		my $sse        = '<' . $string . '>';
 		$sse{ $ra }	= $sse;
 		return $sse;
 	}

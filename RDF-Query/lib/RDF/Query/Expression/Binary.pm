@@ -7,7 +7,7 @@ RDF::Query::Expression::Binary - Algebra class for binary expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Binary version 2.912.
+This document describes RDF::Query::Expression::Binary version 2.913.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.912';
+	$VERSION	= '2.913';
 }
 
 ######################################################################
@@ -72,7 +72,6 @@ sub as_sparql {
  	$op			= '=' if ($op eq '==');
 	return sprintf("(%s $op %s)", map { $_->as_sparql( $context, $indent ) } $self->operands);
 }
-
 
 =item C<< evaluate ( $query, \%bound ) >>
 
