@@ -15,7 +15,7 @@
 
         doap:Version    [
                         doap:revision     "2.913" ;
-                        doap:created      "2015-XX-XX" ;
+                        doap:created      "2015-02-14" ;
                         ];
         asc:changes     [
                         asc:update        "Merge adjacent service blocks if their endpoints and silent flags match (github issue #124)." ;

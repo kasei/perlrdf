@@ -36,7 +36,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.913 (2015-XX-XX)
+  Version 2.913 (2015-02-14)
 
      * BUG FIXES
          Fix SPARQL 1.1 parsing bug that disallowed whitespace between an aggregate name and the following open-parenthesis.
