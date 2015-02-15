@@ -7,7 +7,7 @@ RDF::Query - A complete SPARQL 1.1 Query and Update implementation for use with 
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.912.
+This document describes RDF::Query version 2.913.
 
 =head1 SYNOPSIS
 
@@ -136,7 +136,7 @@ if (! Log::Log4perl::initialized()) {
 }
 
 no warnings 'numeric';
-use RDF::Trine 0.135;
+use RDF::Trine 1.004;
 require RDF::Query::Functions;	# (needs to happen at runtime because some of the functions rely on RDF::Query being fully loaded (to call add_hook(), for example))
 								# all the built-in functions including:
 								#     datatype casting, language ops, logical ops,
@@ -158,7 +158,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.912';
+	$VERSION		= '2.913';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 

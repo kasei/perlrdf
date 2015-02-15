@@ -36,6 +36,21 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.913 (2015-02-14)
+
+     * BUG FIXES
+         Fix SPARQL 1.1 parsing bug that disallowed whitespace between an aggregate name and the following open-parenthesis.
+         Fix bug in RDF::Query::Algebra::NamedGraph->definite_variables.
+         Fix rqsh to use a pure memory model when requested (instead of a temporary model).
+         Fixed whitespace handling bug during parsing of VALUES clauses (github issue #120).
+     * ENHANCEMENTS
+         Merge adjacent service blocks if their endpoints and silent flags match (github issue #124).
+         Allow RDF::Query->new to accept an algebra object instead of a query string.
+         Updated node classes to allow overloaded comparisions with RDF::Trine::Node::Nil objects.
+         Improve coverage of as_hash function for variable bindings and expressions (github issue #121).
+     * OTHER
+         Documentation fixes (from Kjetil Kjernsmo).
+
   Version 2.912 (2014-10-24)
 
      * BUG FIXES
