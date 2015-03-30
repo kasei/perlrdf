@@ -21,6 +21,7 @@ REQUIREMENTS
 	To install RDF::Trine you'll need the following perl modules installed:
 
      * Algorithm::Combinatorics
+     * Cache::LRU
      * Data::UUID
      * DBI
      * DBIx::Connector
