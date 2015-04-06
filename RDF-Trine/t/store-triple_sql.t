@@ -21,11 +21,13 @@ my $desc	= RDF::Trine::Node::Resource->new( $dc->description );
 my $v1		= RDF::Trine::Node::Variable->new( 'title' );
 my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 
+# Updated for shorter SQLite ids, which are not really 64-bin unsigned integers, but actually 64-bin SIGNED integers. :(
+
 {
 	my $triple	= RDF::Trine::Statement->new($s, $title, $v1);
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $sql		= $store->_sql_for_pattern( $triple );
-	sql_like( $sql, qr'SELECT s0[.]object AS title_Node, ljr0[.]URI AS title_URI, ljl0[.]Value AS title_Value, ljl0[.]Language AS title_Language, ljl0[.]Datatype AS title_Datatype, ljb0[.]Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 2882409734267140843 AND s0[.]predicate = 16668832798855018521', 'triple to sql' );
+	sql_like( $sql, qr'SELECT s0[.]object AS title_Node, ljr0[.]URI AS title_URI, ljl0[.]Value AS title_Value, ljl0[.]Language AS title_Language, ljl0[.]Datatype AS title_Datatype, ljb0[.]Name AS title_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 105972750023403 AND s0[.]predicate = 23528576093665305', 'triple to sql' );
 }
 
 {
@@ -34,7 +36,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $bgp		= RDF::Trine::Pattern->new( $triple1, $triple2 );
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $sql		= $store->_sql_for_pattern( $bgp );
-	sql_like( $sql, qr'SELECT s1[.]object AS description_Node, ljr0[.]URI AS description_URI, ljl0[.]Value AS description_Value, ljl0[.]Language AS description_Language, ljl0[.]Datatype AS description_Datatype, ljb0[.]Name AS description_Name, s0[.]object AS title_Node, ljr1[.]URI AS title_URI, ljl1[.]Value AS title_Value, ljl1[.]Language AS title_Language, ljl1[.]Datatype AS title_Datatype, ljb1[.]Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr1 ON [(]s0[.]object = ljr1[.]ID[)] LEFT JOIN Literals ljl1 ON [(]s0[.]object = ljl1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]object = ljb1[.]ID[)], Statements14109427105860845629 s1 LEFT JOIN Resources ljr0 ON [(]s1[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s1[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s1[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 2882409734267140843 AND s0[.]predicate = 16668832798855018521 AND s1[.]subject = 2882409734267140843 AND s1[.]predicate = 14986803616804843731$', 'bgp to sql' );
+	sql_like( $sql, qr'SELECT s1[.]object AS description_Node, ljr0[.]URI AS description_URI, ljl0[.]Value AS description_Value, ljl0[.]Language AS description_Language, ljl0[.]Datatype AS description_Datatype, ljb0[.]Name AS description_Name, s0[.]object AS title_Node, ljr1[.]URI AS title_URI, ljl1[.]Value AS title_Value, ljl1[.]Language AS title_Language, ljl1[.]Datatype AS title_Datatype, ljb1[.]Name AS title_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr1 ON [(]s0[.]object = ljr1[.]ID[)] LEFT JOIN Literals ljl1 ON [(]s0[.]object = ljl1[.]ID[)] LEFT JOIN Bnodes ljb1 ON [(]s0[.]object = ljb1[.]ID[)], Statements58196268464898109 s1 LEFT JOIN Resources ljr0 ON [(]s1[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s1[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s1[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 105972750023403 AND s0[.]predicate = 23528576093665305 AND s1[.]subject = 105972750023403 AND s1[.]predicate = 70881650953760979$', 'bgp to sql' );
 }
 
 {
@@ -42,7 +44,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
-	sql_like( $sql, qr'SELECT s0.object AS title_Node, ljr0.URI AS title_URI, ljl0.Value AS title_Value, ljl0.Language AS title_Language, ljl0.Datatype AS title_Datatype, ljb0.Name AS title_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.object = ljr0.ID[)] LEFT JOIN Literals ljl0 ON [(]s0.object = ljl0.ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0.object = ljb0.ID[)] WHERE s0.subject = 2882409734267140843 AND s0.predicate = 16668832798855018521 AND s0.Context = 2882409734267140843$', 'triple with context to sql (1)' );
+	sql_like( $sql, qr'SELECT s0.object AS title_Node, ljr0.URI AS title_URI, ljl0.Value AS title_Value, ljl0.Language AS title_Language, ljl0.Datatype AS title_Datatype, ljb0.Name AS title_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0.object = ljr0.ID[)] LEFT JOIN Literals ljl0 ON [(]s0.object = ljl0.ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0.object = ljb0.ID[)] WHERE s0.subject = 105972750023403 AND s0.predicate = 23528576093665305 AND s0.Context = 105972750023403$', 'triple with context to sql (1)' );
 }
 
 {
@@ -50,7 +52,7 @@ my $v2		= RDF::Trine::Node::Variable->new( 'description' );
 	my $store	= RDF::Trine::Store::DBI->new('temp');
 	my $ctx		= RDF::Trine::Node::Resource->new( 'http://example.com/' );
 	my $sql		= $store->_sql_for_pattern( $triple, $ctx );
-	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 2882409734267140843 AND [(]ljr0[.]URI IS NOT NULL[)]$', 'triple with context to sql (2)' );
+	sql_like( $sql, qr'SELECT s0.subject AS title_Node, ljr0.URI AS title_URI FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0.subject = ljr0.ID[)] WHERE s0.predicate = s0.subject AND s0.object = s0.subject AND s0.Context = 105972750023403 AND [(]ljr0[.]URI IS NOT NULL[)]$', 'triple with context to sql (2)' );
 }
 
 eval "use RDF::Query 2.000; use RDF::Query::Expression;";
@@ -72,7 +74,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype FROM Statements14109427105860845629 s0 LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND [(]ljl0[.]Value IS NOT NULL[)]$', 'triple with isliteral(?node) filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype FROM Statements58196268464898109 s0 LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] WHERE s0[.]subject = 9663035220319369 AND s0[.]predicate = 23528576093665305 AND [(]ljl0[.]Value IS NOT NULL[)]$', 'triple with isliteral(?node) filter' );
 		}
 		
 		{
@@ -106,7 +108,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND s0[.]object = 3959637603443298718$', 'triple with equality test filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 9663035220319369 AND s0[.]predicate = 23528576093665305 AND s0[.]object = 3959637603443298718$', 'triple with equality test filter' );
 		}
 		
 		{
@@ -118,7 +120,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $ggp );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND s0[.]object = 3959637603443298718$', 'GGP with equality test filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 9663035220319369 AND s0[.]predicate = 23528576093665305 AND s0[.]object = 3959637603443298718$', 'GGP with equality test filter' );
 		}
 		
 		{
@@ -132,7 +134,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND [(]s0[.]object = 3959637603443298718 OR s0[.]object = 15386739423987231717[)]$', 'triple with equality test disjunction filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 9663035220319369 AND s0[.]predicate = 23528576093665305 AND [(]s0[.]object = 3959637603443298718 OR s0[.]object = 15386739423987231717[)]$', 'triple with equality test disjunction filter' );
 		}
 		
 		{
@@ -149,7 +151,7 @@ SKIP: {
 			my $filter	= RDF::Query::Algebra::Filter->new( $expr, $triple );
 			my $store	= RDF::Trine::Store::DBI->new('temp');
 			my $sql		= $store->_sql_for_pattern( $filter );
-			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements14109427105860845629 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 17375543198360951945 AND s0[.]predicate = 16668832798855018521 AND [(]s0[.]object = 3959637603443298718 OR s0[.]object = 15386739423987231717 OR s0[.]object = 6604099646270077689[)]$', 'triple with equality test deep-disjunction filter' );
+			sql_like( $sql, qr'SELECT s0[.]object AS v_Node, ljr0[.]URI AS v_URI, ljl0[.]Value AS v_Value, ljl0[.]Language AS v_Language, ljl0[.]Datatype AS v_Datatype, ljb0[.]Name AS v_Name FROM Statements58196268464898109 s0 LEFT JOIN Resources ljr0 ON [(]s0[.]object = ljr0[.]ID[)] LEFT JOIN Literals ljl0 ON [(]s0[.]object = ljl0[.]ID[)] LEFT JOIN Bnodes ljb0 ON [(]s0[.]object = ljb0[.]ID[)] WHERE s0[.]subject = 9663035220319369 AND s0[.]predicate = 23528576093665305 AND [(]s0[.]object = 3959637603443298718 OR s0[.]object = 15386739423987231717 OR s0[.]object = 6604099646270077689[)]$', 'triple with equality test deep-disjunction filter' );
 		}
 		
 		throws_ok {
