@@ -31,6 +31,9 @@ use base qw(RDF::Trine::Store::DBI);
 
 
 use Scalar::Util qw(blessed reftype refaddr);
+use Encode;
+use Digest::MD5 ('md5');
+use Math::BigInt;
 
 our $VERSION;
 BEGIN {
@@ -87,12 +90,87 @@ Creates the necessary tables in the underlying database.
 
 =cut
 
+sub _init {
+	my $self	= shift;
+	my $dbh	 = $self->dbh;
+	my $name	= $self->model_name;
+	my $id		= $self->_mysql_hash( $name );
+	my $l	   = Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	 
+	#$dbh->trace(2);
+	unless ($self->_table_exists("Literals")) {
+		$dbh->begin_work;
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
+			CREATE TABLE Literals (
+				ID BIGINT PRIMARY KEY,
+				Value text NOT NULL,
+				Language text NOT NULL DEFAULT '',
+				Datatype text NOT NULL DEFAULT ''
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
+			CREATE TABLE Resources (
+				ID BIGINT PRIMARY KEY,
+				URI text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
+			CREATE TABLE Bnodes (
+				ID BIGINT PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
+			CREATE TABLE Models (
+				ID BIGINT PRIMARY KEY,
+				Name text NOT NULL
+			);
+END
+		 
+		$dbh->commit or warn $dbh->errstr;
+	}
+	 
+	unless ($self->_table_exists("Statements${id}")) {
+		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return };
+			CREATE TABLE Statements${id} (
+				Subject BIGINT NOT NULL,
+				Predicate BIGINT NOT NULL,
+				Object BIGINT NOT NULL,
+				Context BIGINT NOT NULL DEFAULT 0,
+				PRIMARY KEY (Subject, Predicate, Object, Context)
+			);
+END
+#		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
+		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
+	}
+	 
+}
+
+sub _mysql_hash
+{
+	my $self = shift;
+	my $data	= encode('utf8', shift);
+	my @data	= unpack('C*', md5( $data ));
+	my $sum		= Math::BigInt->new('0');
+	# CHANGE: 7 -> 6, Smaller numbers for Sqlite which does not support real 64-bit :(
+	foreach my $count (0 .. 6) {
+		my $data	= Math::BigInt->new( $data[ $count ] ); #shift(@data);
+		my $part	= $data << (8 * $count);
+#		warn "+ $part\n";
+		$sum		+= $part;
+	}
+#	warn "= $sum\n";
+	$sum	=~ s/\D//;	# get rid of the extraneous '+' that pops up under perl 5.6
+	return $sum;
+}
+
 sub init {
 	my $self	= shift;
 	my $dbh		= $self->dbh;
 	my $name	= $self->model_name;
-	$self->SUPER::init();
-	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
+	# Custom init for SQLite
+	$self->_init();
+	my $id		= $self->_mysql_hash( $name );
 	
 	my $table	= "Statements${id}";
 	unless ($self->_table_exists($table)) {
