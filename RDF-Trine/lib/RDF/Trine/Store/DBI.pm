@@ -1200,8 +1200,7 @@ using the same algorithm that Redland's mysql storage backend uses.
 
 sub _mysql_hash;
 sub _mysql_hash_pp {
-	if (ref($_[0]))
-	{
+	if (ref($_[0])) {
 		my $self = shift;
 	}
 	my $data	= encode('utf8', shift);
