@@ -954,7 +954,6 @@ sub install {
 		"sparql:concat",
 		sub {
 			my $query	= shift;
-			my $model	= $query->model;
 			my @nodes	= @_;
 			
 			my $lang;

@@ -25,6 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed refaddr);
+use Data::Dumper;
 
 ######################################################################
 
