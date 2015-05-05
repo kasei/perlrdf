@@ -18,7 +18,15 @@ This document describes RDF::Trine::Store::DBI::SQLite version 1.013
                                        });
 
 
-=head1 DESCRIPTION
+=head1 CHANGES IN VERSION 1.014
+
+The schema used to encode RDF data in SQLite changed in RDF::Trine version
+1.014 to fix a bug that was causing data loss. This change is not backwards
+compatible, and is not compatible with the shared schema used by the other
+database backends supported by RDF::Trine (PostgreSQL and MySQL).
+
+To exchange data between SQLite and other databases, the data will require
+export to an RDF serialization and re-import to the new database.
 
 =cut
 
