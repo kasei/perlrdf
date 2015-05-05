@@ -9,6 +9,19 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.914.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.913.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.914" ;
+                        doap:created      "2015-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed bug in evaluation of SPARQL CONCAT function." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.913.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.912.tar.gz> ;
