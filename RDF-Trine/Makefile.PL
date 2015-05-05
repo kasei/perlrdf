@@ -64,3 +64,23 @@ install_script glob('bin/srx2table');
 sign;
 
 WriteAll;
+
+print <<"END";
+
+*******************************************************************************
+
+The RDF::Trine SQLite backend in versions 1.013 and prior had a bug in
+the encoding of RDF data, likely causing data loss.
+
+RDF::Trine 1.014 and later have fixed this bug.
+
+However, the RDF data encoded in SQLite with RDF::Trine versions 1.014 and
+later will no longer be compatible with the shared schema used in other DBI
+backends (such as PostgreSQL or MySQL). To exchange data between SQLite and
+other databases, the data will require export to an RDF serialization and
+re-import to the new database.
+
+*******************************************************************************
+
+END
+

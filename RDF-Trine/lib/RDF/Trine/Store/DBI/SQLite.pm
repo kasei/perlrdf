@@ -18,7 +18,15 @@ This document describes RDF::Trine::Store::DBI::SQLite version 1.013
                                        });
 
 
-=head1 DESCRIPTION
+=head1 CHANGES IN VERSION 1.014
+
+The schema used to encode RDF data in SQLite changed in RDF::Trine version
+1.014 to fix a bug that was causing data loss. This change is not backwards
+compatible, and is not compatible with the shared schema used by the other
+database backends supported by RDF::Trine (PostgreSQL and MySQL).
+
+To exchange data between SQLite and other databases, the data will require
+export to an RDF serialization and re-import to the new database.
 
 =cut
 
@@ -31,6 +39,9 @@ use base qw(RDF::Trine::Store::DBI);
 
 
 use Scalar::Util qw(blessed reftype refaddr);
+use Encode;
+use Digest::MD5 ('md5');
+use Math::BigInt;
 
 our $VERSION;
 BEGIN {
@@ -81,6 +92,30 @@ sub new_with_config {
 	return $self;
 }
 
+# SQLite only supports 64-bit SIGNED integers, so this hash function masks out
+# the high-bit on hash values (unlike the superclass which produces full 64-bit
+# integers)
+sub _mysql_hash {
+	if (ref($_[0])) {
+		my $self = shift;
+	}
+	Carp::confess unless scalar(@_);
+	my $data	= encode('utf8', shift);
+	my @data	= unpack('C*', md5( $data ));
+	my $sum		= Math::BigInt->new('0');
+	# CHANGE: 7 -> 6, Smaller numbers for Sqlite which does not support real 64-bit :(
+	foreach my $count (0 .. 7) {
+		my $data	= Math::BigInt->new( $data[ $count ] ); #shift(@data);
+		my $part	= $data << (8 * $count);
+#		warn "+ $part\n";
+		$sum		+= $part;
+	}
+#	warn "= $sum\n";
+	$sum    = $sum->band(Math::BigInt->new('0x7fff_ffff_ffff_ffff'));
+	$sum	=~ s/\D//;	# get rid of the extraneous '+' that pops up under perl 5.6
+	return $sum;
+}
+
 =item C<< init >>
 
 Creates the necessary tables in the underlying database.
@@ -92,7 +127,7 @@ sub init {
 	my $dbh		= $self->dbh;
 	my $name	= $self->model_name;
 	$self->SUPER::init();
-	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
+	my $id		= $self->_mysql_hash( $name );
 	
 	my $table	= "Statements${id}";
 	unless ($self->_table_exists($table)) {
