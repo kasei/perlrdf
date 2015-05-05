@@ -10,9 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.014.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.013.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.014" ;
+                        doap:created      "2015-XX-XX" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fix data loss bug in SQLite backend schema and hash encoding (from Mike Frager PR #126)." ;
+                        asc:update      "Added Cache::LRU requirement to prerequisite list and README." ;
+                        asc:update      "Read data as utf8 from STDIN." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.013.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
-        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.011.tar.gz> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.012.tar.gz> ;
 
         doap:Version    [
                         doap:revision     "1.013" ;
