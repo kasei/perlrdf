@@ -114,8 +114,6 @@ sub from_attean {
 		return RDF::Query::Node::Resource->new( $n->as_string );
 	} elsif ($n->does('Attean::API::Blank')) {
 		return RDF::Query::Node::Blank->new( $n->value );
-	} elsif ($n->does('Attean::API::Nil')) {
-		return $n;
 	} else {
 		use Data::Dumper;
 		Carp::confess "from_attean called with unrecognized node type:" . Dumper($n);
