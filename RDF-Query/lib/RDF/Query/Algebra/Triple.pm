@@ -60,7 +60,11 @@ sub new {
 			$nodes[ $i ]	= RDF::Query::Node::Variable->new($node_methods[ $i ]);
 		}
 		if (blessed($nodes[ $i ]) and not($nodes[ $i ]->isa('RDF::Query::Node'))) {
-			$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+			if ($nodes[ $i ]->isa('RDF::Trine::Node')) {
+				$nodes[ $i ]	= RDF::Query::Node->from_trine( $nodes[ $i ] );
+			} elsif ($nodes[ $i ]->does('Attean::API::TermOrVariable')){
+				$nodes[ $i ]	= RDF::Query::Node->from_attean( $nodes[ $i ] );
+			}
 		}
 	}
 	return $class->_new( @nodes );
