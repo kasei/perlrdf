@@ -106,15 +106,15 @@ Likewise, but from L<Attean>.
 sub from_attean {
 	my $class	= shift;
 	my $n		= shift;
-	if ($n->isa('Attean::Variable')) {
+	if ($n->does('Attean::API::Variable')) {
 		return RDF::Query::Node::Variable->new( $n->value );
-	} elsif ($n->isa('Attean::Literal')) {
+	} elsif ($n->does('Attean::API::Literal')) {
 		return RDF::Query::Node::Literal->new( $n->value, $n->language, $n->datatype );
-	} elsif ($n->isa('Attean::IRI')) {
+	} elsif ($n->does('Attean::API::IRI')) {
 		return RDF::Query::Node::Resource->new( $n->as_string );
-	} elsif ($n->isa('Attean::Blank')) {
+	} elsif ($n->does('Attean::API::Blank')) {
 		return RDF::Query::Node::Blank->new( $n->value );
-	} elsif ($n->isa('Attean::Nil')) {
+	} elsif ($n->does('Attean::API::Nil')) {
 		return $n;
 	} else {
 		use Data::Dumper;
