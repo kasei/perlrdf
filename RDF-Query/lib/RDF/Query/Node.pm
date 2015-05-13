@@ -97,6 +97,29 @@ sub from_trine {
 	}
 }
 
+=item C<< from_attean ( $node ) >>
+
+Likewise, but from L<Attean>.
+
+=cut
+
+sub from_attean {
+	my $class	= shift;
+	my $n		= shift;
+	if ($n->does('Attean::API::Variable')) {
+		return RDF::Query::Node::Variable->new( $n->value );
+	} elsif ($n->does('Attean::API::Literal')) {
+		return RDF::Query::Node::Literal->new( $n->value, $n->language, $n->datatype );
+	} elsif ($n->does('Attean::API::IRI')) {
+		return RDF::Query::Node::Resource->new( $n->as_string );
+	} elsif ($n->does('Attean::API::Blank')) {
+		return RDF::Query::Node::Blank->new( $n->value );
+	} else {
+		use Data::Dumper;
+		Carp::confess "from_attean called with unrecognized node type:" . Dumper($n);
+	}
+}
+
 =item C<< explain >>
 
 Returns a string serialization of the node appropriate for display on the
