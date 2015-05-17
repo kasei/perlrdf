@@ -16,7 +16,7 @@
 
         doap:Version    [
                         doap:revision     "1.014" ;
-                        doap:created      "2015-XX-XX" ;
+                        doap:created      "2015-05-17" ;
                         ];
         asc:changes     [
                         asc:update      "Fix data loss bug in SQLite backend schema and hash encoding (from Mike Frager PR #126)." ;

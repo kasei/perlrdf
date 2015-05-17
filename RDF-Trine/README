@@ -69,7 +69,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 1.014 (2015-XX-XX)
+  Version 1.014 (2015-05-17)
 
      * BUG FIXES
          	Fix data loss bug in SQLite backend schema and hash encoding (from Mike Frager PR #126).

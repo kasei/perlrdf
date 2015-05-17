@@ -7,7 +7,7 @@ RDF::Trine - An RDF Framework for Perl
 
 =head1 VERSION
 
-This document describes RDF::Trine version 1.013_01
+This document describes RDF::Trine version 1.014
 
 =head1 SYNOPSIS
 
@@ -89,7 +89,7 @@ use LWP::UserAgent;
 our ($debug, @ISA, $VERSION, @EXPORT_OK);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.013_01';
+	$VERSION	= '1.014';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);

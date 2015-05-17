@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::SQLite version 1.013_01
+This document describes RDF::Trine::Store::DBI::SQLite version 1.014
 
 =head1 SYNOPSIS
 
@@ -45,7 +45,7 @@ use Math::BigInt;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.013_01";
+	$VERSION	= "1.014";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
