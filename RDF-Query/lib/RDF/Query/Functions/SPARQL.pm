@@ -4,7 +4,7 @@ RDF::Query::Functions::SPARQL - SPARQL built-in functions
 
 =head1 VERSION
 
-This document describes RDF::Query::Functions::SPARQL version 2.912.
+This document describes RDF::Query::Functions::SPARQL version 2.913.
 
 =head1 DESCRIPTION
 
@@ -102,7 +102,7 @@ use Log::Log4perl;
 our ($VERSION, $l);
 BEGIN {
 	$l			= Log::Log4perl->get_logger("rdf.query.functions.sparql");
-	$VERSION	= '2.912';
+	$VERSION	= '2.913';
 }
 
 use POSIX;
@@ -954,7 +954,6 @@ sub install {
 		"sparql:concat",
 		sub {
 			my $query	= shift;
-			my $model	= $query->model;
 			my @nodes	= @_;
 			
 			my $lang;
