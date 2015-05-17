@@ -36,7 +36,7 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.914 (2015-XX-XX)
+  Version 2.914 (2015-05-17)
 
      * BUG FIXES
          Fixed bug in evaluation of SPARQL CONCAT function.
