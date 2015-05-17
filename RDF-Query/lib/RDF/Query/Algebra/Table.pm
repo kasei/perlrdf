@@ -7,7 +7,7 @@ RDF::Query::Algebra::Table - Algebra class for constant table data
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Table version 2.913.
+This document describes RDF::Query::Algebra::Table version 2.914.
 
 =cut
 
@@ -30,7 +30,7 @@ use RDF::Trine::Iterator qw(smap swatch);
 our ($VERSION);
 my %AS_SPARQL;
 BEGIN {
-	$VERSION	= '2.913';
+	$VERSION	= '2.914';
 }
 
 ######################################################################

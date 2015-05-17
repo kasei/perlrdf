@@ -21,6 +21,7 @@ REQUIREMENTS
 	To install RDF::Trine you'll need the following perl modules installed:
 
      * Algorithm::Combinatorics
+     * Cache::LRU
      * Data::UUID
      * DBI
      * DBIx::Connector
@@ -67,6 +68,24 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 1.013 (2015-02-14)
+
+     * BUG FIXES
+         	Update how file URIs are constructed to better deal with windows systems.
+         	Fixed bug in RDF::Trine::Model->size that was only considering triples, not quads.
+         	Fix get_statements and count_statements when called with quad patterns with non-nil graph.
+     * NEW FEATURES
+         	Added RDF::Trine::Store::LanguagePreference class.
+         	Added RDF::Trine::Parser->parse_url method (github issue #119).
+     * ENHANCEMENTS
+         	Improve insertion performance in RDF::Trine::Store::Memory by keeping caching quad SHA1 hashes.
+         	Make RDF::Trine::VariableBindings->join more flexible in testing of equality.
+         	Simplify coercion of values in RDF::Trine::Node::Resource constructor.
+     * OTHER
+         	Update triple store tests for expected results when passing in quad patterns with non-nil graphs.
+         	Miscellaneous code and documentation improvements (from Kjetil Kjernsmo via github pull request #116).
+         	Added IRI to list of prereq modules in Makefile.PL.
 
   Version 1.012 (2015-01-15)
 
