@@ -46,6 +46,7 @@ use RDF::Query::Algebra::Construct;
 use RDF::Query::Algebra::Filter;
 use RDF::Query::Algebra::GroupGraphPattern;
 use RDF::Query::Algebra::Optional;
+use RDF::Query::Algebra::OptPlus;
 use RDF::Query::Algebra::Triple;
 use RDF::Query::Algebra::Quad;
 use RDF::Query::Algebra::Union;
@@ -88,6 +89,7 @@ use constant SSE_TAGS	=> {
 	'union'					=> 'RDF::Query::Algebra::Union',
 	'join'					=> 'RDF::Query::Algebra::GroupGraphPattern',
 	'leftjoin'				=> 'RDF::Query::Algebra::Optional',
+	'optplus'				=> 'RDF::Query::Algebra::OptPlus',
 };
 
 =item C<< potentially_bound >>

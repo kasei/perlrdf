@@ -1617,7 +1617,7 @@ sub __handle_GraphPatternNotTriples {
 	my $self	= shift;
 	my $data	= shift;
 	my ($class, @args)	= @$data;
-	if ($class =~ /^RDF::Query::Algebra::(Optional|Minus)$/) {
+	if ($class =~ /^RDF::Query::Algebra::(Optional|OptPlus|Minus)$/) {
 		my $cont	= $self->_pop_pattern_container;
 		my $ggp		= RDF::Query::Algebra::GroupGraphPattern->new( @$cont );
 		$self->_push_pattern_container;
@@ -1846,7 +1846,7 @@ TRIPLESBLOCKLOOP:
 sub _GraphPatternNotTriples_test {
 	my $self	= shift;
 	return 1 if $self->_test(qr/VALUES/i); # InlineDataClause
-	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|{|GRAPH/i);
+	return $self->_test(qr/BIND|SERVICE|MINUS|OPTIONAL|OPTPLUS|{|GRAPH/i);
 }
 
 sub _GraphPatternNotTriples {
@@ -1963,7 +1963,7 @@ sub _ServiceGraphPattern {
 # [23] OptionalGraphPattern ::= 'OPTIONAL' GroupGraphPattern
 sub _OptionalGraphPattern_test {
 	my $self	= shift;
-	return $self->_test( qr/OPTIONAL/i );
+	return $self->_test( qr/OPTIONAL|OPTPLUS/i );
 }
 
 sub __close_bgp_with_filters {
@@ -1986,13 +1986,15 @@ sub __close_bgp_with_filters {
 
 sub _OptionalGraphPattern {
 	my $self	= shift;
-	$self->_eat( qr/OPTIONAL/i );
+	my $op		= $self->_eat( qr/OPTIONAL|OPTPLUS/i );
 	$self->__close_bgp_with_filters;
 	
 	$self->__consume_ws_opt;
 	$self->_GroupGraphPattern;
 	my $ggp	= $self->_remove_pattern;
-	my $opt		= ['RDF::Query::Algebra::Optional', $ggp];
+	
+	my $class	= ($op =~ /OPTIONAL/i) ? 'RDF::Query::Algebra::Optional' : 'RDF::Query::Algebra::OptPlus';
+	my $opt		= [$class, $ggp];
 	$self->_add_stack( $opt );
 }
 
