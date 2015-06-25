@@ -385,7 +385,7 @@ sub _hsp_heuristic_1_4_triple_pattern_order { # Heuristic 1 and 4 of HSP
 # spo: 8
 # sao: 10
 # s?l: 14
-# s?p: 16
+# s?o: 16
 # ?pl: 25
 # ?po: 27
 # sp?: 30
