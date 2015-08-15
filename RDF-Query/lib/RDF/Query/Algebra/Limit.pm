@@ -104,7 +104,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	if ($self->pattern->isa('RDF::Query::Algebra::Offset')) {
 		my $l	= $self->limit;
