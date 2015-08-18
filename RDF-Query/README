@@ -36,6 +36,13 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.915 (2015-08-18)
+
+     * NEW FEATURES
+         Add RDF::Query::Node->from_attean method (PR #128 from Kjetil Kjernsmo).
+     * OTHER
+         Add default indentation to RDF::Query::Algebra::Limit->sse.
+
   Version 2.914 (2015-05-17)
 
      * BUG FIXES
@@ -1296,7 +1303,7 @@ VERSION HISTORY
 
 COPYRIGHT
 
-   Copyright (C) 2005-2010 Gregory Williams. All rights reserved.
+   Copyright (C) 2005-2015 Gregory Williams. All rights reserved.
    This program is free software; you can redistribute it and/or
    modify it under the same terms as Perl itself.
 

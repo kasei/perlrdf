@@ -7,7 +7,7 @@ RDF::Query::Algebra::Minus - Algebra class for Minus patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Minus version 2.914.
+This document describes RDF::Query::Algebra::Minus version 2.915.
 
 =cut
 
@@ -26,7 +26,7 @@ use RDF::Trine::Iterator qw(smap sgrep swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.914';
+	$VERSION	= '2.915';
 }
 
 ######################################################################
