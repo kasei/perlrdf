@@ -21,6 +21,7 @@ use base qw(RDF::Query::Node RDF::Trine::Node::Resource);
 use URI;
 use Encode;
 use Data::Dumper;
+use RDF::Query::Parser::SPARQL;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
 
@@ -86,7 +87,7 @@ sub as_sparql {
 			my $v	= $ns{ $k };
 			if (index($uri, $v) == 0) {
 				my $local	= substr($uri, length($v));
-				if ($local =~ /^[A-Za-z_]+$/) {
+				if ($local =~ $RDF::Query::Parser::SPARQL::r_PN_LOCAL) {
 					my $qname	= join(':', $k, $local);
 					return $qname;
 				}
