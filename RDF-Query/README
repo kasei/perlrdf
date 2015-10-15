@@ -36,6 +36,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.915 (2015-10-XX)
+
+     * ENHANCEMENTS
+         Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132).
+
   Version 2.915 (2015-08-18)
 
      * NEW FEATURES

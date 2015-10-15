@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.915.
+This document describes RDF::Query::Plan::Aggregate version 2.915_01.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.915';
+	$VERSION	= '2.915_01';
 }
 
 ######################################################################

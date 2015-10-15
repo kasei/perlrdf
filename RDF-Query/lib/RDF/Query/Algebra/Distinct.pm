@@ -7,7 +7,7 @@ RDF::Query::Algebra::Distinct - Algebra class for distinct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Distinct version 2.915.
+This document describes RDF::Query::Algebra::Distinct version 2.915_01.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.915';
+	$VERSION	= '2.915_01';
 }
 
 ######################################################################
