@@ -7,7 +7,7 @@ RDF::Query - A complete SPARQL 1.1 Query and Update implementation for use with 
 
 =head1 VERSION
 
-This document describes RDF::Query version 2.915_01.
+This document describes RDF::Query version 2.916.
 
 =head1 SYNOPSIS
 
@@ -158,7 +158,7 @@ use RDF::Query::Plan;
 
 our ($VERSION, $DEFAULT_PARSER);
 BEGIN {
-	$VERSION		= '2.915_01';
+	$VERSION		= '2.916';
 	$DEFAULT_PARSER	= 'sparql11';
 }
 

@@ -7,7 +7,7 @@ RDF::Query::Plan::Move - Executable query plan for MOVE operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Move version 2.915_01.
+This document describes RDF::Query::Plan::Move version 2.916.
 
 =head1 METHODS
 
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.915_01';
+	$VERSION	= '2.916';
 }
 
 ######################################################################
