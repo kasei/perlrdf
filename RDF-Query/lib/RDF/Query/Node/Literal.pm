@@ -7,7 +7,7 @@ RDF::Query::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Literal version 2.915.
+This document describes RDF::Query::Node::Literal version 2.916.
 
 =cut
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.915';
+	$VERSION	= '2.916';
 }
 
 ######################################################################

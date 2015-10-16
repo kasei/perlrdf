@@ -12,7 +12,7 @@ This document describes RDF::Trine::Parser::RDFa version 1.014
 =head1 SYNOPSIS
 
  use RDF::Trine::Parser;
- my $parser	= RDF::Trine::Parser->new( 'rdfxml' );
+ my $parser	= RDF::Trine::Parser->new( 'rdfa' );
  $parser->parse_into_model( $base_uri, $data, $model );
 
 =head1 DESCRIPTION

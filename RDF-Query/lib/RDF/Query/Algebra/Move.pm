@@ -7,7 +7,7 @@ RDF::Query::Algebra::Move - Algebra class for MOVE operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Move version 2.915.
+This document describes RDF::Query::Algebra::Move version 2.916.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.915';
+	$VERSION	= '2.916';
 }
 
 ######################################################################
