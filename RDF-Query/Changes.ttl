@@ -9,13 +9,26 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.916.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.915.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.916" ;
+                        doap:created      "2015-10-16" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.915.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.914.tar.gz> ;
 
         doap:Version    [
                         doap:revision     "2.915" ;
-                        doap:created      "2015-XX-XX" ;
+                        doap:created      "2015-08-18" ;
                         ];
         asc:changes     [
                         asc:addition      "Add RDF::Query::Node->from_attean method (PR #128 from Kjetil Kjernsmo)." ;
