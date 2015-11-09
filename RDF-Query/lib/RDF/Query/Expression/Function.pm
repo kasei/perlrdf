@@ -114,7 +114,7 @@ sub sse {
 	my $context	= shift;
 	
 	my $uri		= $self->uri->uri_value;
-	if ($uri =~ m/^(sop|sparql):(in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
+	if ($uri =~ m/^(sop|sparql):(in|notin|str(dt|lang)?|if|iri|uri|bnode|lang(matches)?|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i) {
 		my $func	= $2;
 		return sprintf(
 			'(%s %s)',
@@ -142,7 +142,7 @@ sub as_sparql {
 	my $indent	= shift;
 	my @args	= $self->arguments;
 	my $uri		= $self->uri->uri_value;
-	my $func	= ($uri =~ m/^(sop|sparql):(logical-and|logical-or|in|notin|str|strdt|strlang|if|iri|uri|bnode|lang|langmatches|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
+	my $func	= ($uri =~ m/^(sop|sparql):(logical-and|logical-or|in|notin|str(dt|lang)?|if|iri|uri|bnode|lang(matches)?|sameTerm|datatype|regex|bound|is(URI|IRI|Blank|Literal))/i)
 				? $FUNCTION_MAP{ lc($2) }
 				: $self->uri->as_sparql( $context, $indent );
 	if ($func eq 'IN' or $func eq 'NOT IN') {

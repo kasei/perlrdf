@@ -8,7 +8,7 @@ use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 38;
+use Test::More tests => 40;
 
 use_ok( 'RDF::Query' );
 
@@ -232,6 +232,33 @@ END
 		is( $sparql, $again, 'as_sparql: sparql round trip: Unicode PrefixName' );
 	}
 }
+
+{
+	# Github issue #133 -- Serialization of SPARQL functions improperly uses function name prefix
+	{
+		my $sparql	= <<"END";
+SELECT * WHERE { ?s ?p ?l . FILTER( LANGMATCHES(LANG(?l), "en") ) . }
+END
+		chomp($sparql);
+		$sparql		=~ s/\s+/ /gms;
+		my $query	= RDF::Query->new( $sparql );
+		my $string	= $query->as_sparql;
+		$string		=~ s/\s+/ /gms;
+		is( $string, $sparql, 'sparql to sparql with LANGMATCHES filter test' );
+	}
+	{
+		my $sparql	= <<"END";
+SELECT * WHERE { ?s ?p ?l . FILTER( STRLANG(?l, "en") ) . }
+END
+		chomp($sparql);
+		$sparql		=~ s/\s+/ /gms;
+		my $query	= RDF::Query->new( $sparql );
+		my $string	= $query->as_sparql;
+		$string		=~ s/\s+/ /gms;
+		is( $string, $sparql, 'sparql to sparql with STRLANG filter test' );
+	}
+}
+
 
 ################################################################################
 ### SSE TESTS
