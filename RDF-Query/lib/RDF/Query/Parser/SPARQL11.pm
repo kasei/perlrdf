@@ -1942,8 +1942,8 @@ sub _ServiceGraphPattern {
 	my $op		= $self->_eat( qr/SERVICE(\s+SILENT)?/i );
 	my $silent	= ($op =~ /SILENT/i);
 	$self->__consume_ws_opt;
+	$self->__close_bgp_with_filters;
 	if ($self->_test(qr/[\$?]/)) {
-		$self->__close_bgp_with_filters;
 		$self->_Var;
 	} else {
 		$self->_IRIref;

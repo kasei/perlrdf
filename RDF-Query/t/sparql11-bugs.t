@@ -59,4 +59,32 @@ END
 	isa_ok($plan, 'RDF::Query::Plan', 'Plan object from optional plan (github issue 101)');
 }
 
+{
+	# GitHub issue #134: RDF::Query: FILTER accidently moved into SERVICE
+	# <https://github.com/kasei/perlrdf/issues/134>
+	#
+	# The SPARQL Parser wasn't properly setting up a new scope for collecting
+	# filters in parsing SERVICE patterns with IRI endpoints.
+	
+	my $query	= RDF::Query->new(<<'END');
+PREFIX bd: <http://www.bigdata.com/rdf#>
+PREFIX wikibase: <http://wikiba.se/ontology#>
+SELECT * WHERE {
+    <http://www.wikidata.org/entity/Q1> ?p ?o .
+    FILTER regex(?o,'^[0-9]+$') .
+    SERVICE wikibase:label {
+        bd:serviceParam wikibase:language "en" .
+    }
+}
+END
+	my $algebra	= $query->pattern;
+	isa_ok($algebra, 'RDF::Query::Algebra::Project');
+	my $ggp		= $algebra->pattern;
+	isa_ok($ggp, 'RDF::Query::Algebra::GroupGraphPattern');
+	my @patterns	= $ggp->patterns;
+	is(scalar(@patterns), 2);
+	isa_ok($patterns[0], 'RDF::Query::Algebra::Filter');
+	isa_ok($patterns[1], 'RDF::Query::Algebra::Service');
+}
+
 done_testing();
