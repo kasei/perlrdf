@@ -74,6 +74,7 @@ Returns the SPARQL string for this node.
 
 sub as_sparql {
 	my $self	= shift;
+	my $PNLOCAL	= $RDF::Query::Parser::SPARQL::r_PN_LOCAL;
 	my $context	= shift || {};
 	if ($context) {
 		my $uri		= $self->uri_value;
@@ -87,7 +88,8 @@ sub as_sparql {
 			my $v	= $ns{ $k };
 			if (index($uri, $v) == 0) {
 				my $local	= substr($uri, length($v));
-				if ($local =~ $RDF::Query::Parser::SPARQL::r_PN_LOCAL) {
+				
+				if ($local =~ /^(?:$PNLOCAL)$/) {
 					my $qname	= join(':', $k, $local);
 					return $qname;
 				}

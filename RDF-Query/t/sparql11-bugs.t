@@ -87,4 +87,20 @@ END
 	isa_ok($patterns[1], 'RDF::Query::Algebra::Service');
 }
 
+{
+	# GitHub issue #135: RDF::Query: broken local name if prefixes overlap
+	# <https://github.com/kasei/perlrdf/issues/135>
+	
+	my $query	= RDF::Query->new(<<'END');
+PREFIX p: <http://www.wikidata.org/prop/>
+PREFIX ps: <http://www.wikidata.org/prop/statement/>
+SELECT * WHERE {
+    ?id p:P1549 ?statement .
+    ?statement ps:P1549 ?label .
+}
+END
+	my $sparql	= $query->as_sparql;
+	like($sparql, qr/ps:P1549/, 'SPARQL serialization of prefixedname containing a namespaced prefix');
+}
+
 done_testing();
