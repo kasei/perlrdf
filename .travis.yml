@@ -8,6 +8,7 @@ install:
   - "cpanm --quiet --notest Module::Install::AuthorTests"
   - "cpanm --quiet --notest IRI"
   - "cpanm --quiet --notest DBD::Pg"
+  - "cpanm --quiet --notest TEXT::CSV_XS"
 env:
   - RDFTRINE_STORE_PG_DATABASE="travis_ci_test" RDFTRINE_STORE_PG_MODEL="testmodel"
 before_script:
