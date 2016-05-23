@@ -7,7 +7,7 @@ RDF::Query::Algebra::Filter - Algebra class for Filter expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Filter version 2.916.
+This document describes RDF::Query::Algebra::Filter version 2.917.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.916';
+	$VERSION	= '2.917';
 }
 
 ######################################################################

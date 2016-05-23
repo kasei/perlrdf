@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.916.
+This document describes RDF::Query::Plan version 2.917.
 
 =head1 METHODS
 
@@ -66,7 +66,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION, %PLAN_CLASSES);
 BEGIN {
-	$VERSION		= '2.916';
+	$VERSION		= '2.917';
 	%PLAN_CLASSES	= (
 		service	=> 'RDF::Query::Plan::Service',
 	);

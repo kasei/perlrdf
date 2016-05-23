@@ -50,7 +50,21 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_915">Version 2.916 (2015-10-16)</h3>
+		<h3 id="v2_917">Version 2.917 (2016-05-22)</h3>
+			<ul>
+				<li>Enhancements
+					<ul>
+						<li>Change hashbang to use env (#137 from KjetilK).</li>
+						<li>Replaced Text::CSV by Text::CSV_XS (#127, #136; patch from jordivador).</li>
+					</ul></li>
+				<li>Bug Fixes
+					<ul>
+						<li>Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135).</li>
+						<li>Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134).</li>
+						<li>Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133).</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_916">Version 2.916 (2015-10-16)</h3>
 			<ul>
 				<li>Enhancements
 					<ul>
