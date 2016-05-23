@@ -7,7 +7,7 @@ RDF::Query::Plan::Minus - Executable query plan for minus operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Minus version 2.916.
+This document describes RDF::Query::Plan::Minus version 2.917.
 
 =head1 METHODS
 
@@ -35,7 +35,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.916';
+	$VERSION	= '2.917';
 }
 
 ######################################################################

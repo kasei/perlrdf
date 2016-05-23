@@ -7,7 +7,7 @@ RDF::Query::Expression::Shorthand - Base class for Expression expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Shorthand version 2.916.
+This document describes RDF::Query::Expression::Shorthand version 2.917.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::Expression::Shorthand;
 
 our (@ISA, @EXPORT);
 BEGIN {
-	our $VERSION	= '2.916';
+	our $VERSION	= '2.917';
 	
 	require Exporter;
 	@ISA	= qw(Exporter);
