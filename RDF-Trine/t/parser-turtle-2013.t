@@ -9,7 +9,7 @@ use Data::Dumper;
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Namespace qw(rdf);
 use URI::file;
-use TryCatch;
+use Error ':try';
 
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 my $rdft	= RDF::Trine::Namespace->new('http://www.w3.org/ns/rdftest#');
@@ -94,10 +94,11 @@ foreach my $manifest (@manifests) {
 		my $parsed	= 1;
 		try {
 			$parser->parse_file_into_model( $tbase, $fh, $model );
-		} catch (RDF::Trine::Error $e) {
+		} catch RDF::Trine::Error with {
+			my $e = shift;
 			$parsed	= 0;
-			warn "Failed to parse $file: " . $e->text;
-		}
+			warn "Failed to parse $file: " . $e->{text};
+		};
 		if ($parsed) {
 			compare($model, URI->new($res_file->uri), $base, $test);
 		} else {
@@ -146,7 +147,7 @@ sub compare {
 	my $tbase	= URI->new_abs( $name, $base->uri_value )->as_string;
 	my $file		= $url->file;
 	open( my $fh, '<:encoding(UTF-8)', $file );
-	try {
+	eval {
 		$parser->parse_file_into_model( $tbase, $fh, $emodel );
 	};
 	
