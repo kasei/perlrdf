@@ -189,9 +189,9 @@ sub _new_with_config {
 	my $class	= shift;
 	my $config	= shift;
 	return $class->new( $config->{name},
-			    $config->{dsn},
-			    $config->{username},
-			    $config->{password} );
+				$config->{dsn},
+				$config->{username},
+				$config->{password} );
 }
 
 sub _new_with_object {
@@ -309,19 +309,23 @@ sub get_statements {
 	
 	my $sub		= sub {
 NEXTROW:
-		my $row	= $sth->fetchrow_hashref;
-		return unless (defined $row);
+		my $row  = $sth->fetchrow_hashref;
+		return unless defined $row;
+
+		# this is how we deal with fairweather case sensitivity
+		$row = { map { lc $_ => $row->{$_} } keys %$row };
+
 		my @triple;
 		my $temp_var_count	= 1;
 		my @nodes	= ($st->nodes)[ $use_quad ? (0..3) : (0..2) ];
 		foreach my $node (@nodes) {
 			if ($node->is_variable) {
 				my $nodename	= $node->name;
-				my $uri			= $self->_column_name( $nodename, 'URI' );
-				my $name		= $self->_column_name( $nodename, 'Name' );
-				my $value		= $self->_column_name( $nodename, 'Value' );
-				my $node		= $self->_column_name( $nodename, 'Node' );
-				if ($row->{ $node } == 0) {
+				my $uri			= $self->_column_name( $nodename, 'uri' );
+				my $name		= $self->_column_name( $nodename, 'name' );
+				my $value		= $self->_column_name( $nodename, 'value' );
+				my $node		= $self->_column_name( $nodename, 'node' );
+				if (defined $row->{$node} and $row->{ $node } == 0) {
 					push( @triple, RDF::Trine::Node::Nil->new() );
 				} elsif (defined( my $u = $row->{ $uri })) {
 					$u	= decode('utf8', $u);
@@ -329,7 +333,8 @@ NEXTROW:
 				} elsif (defined( my $n = $row->{ $name })) {
 					push( @triple, RDF::Trine::Node::Blank->new( $n ) );
 				} elsif (defined( my $v = $row->{ $value })) {
-					my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+					my @cols	= map { $self->_column_name( $nodename, $_ ) }
+						qw(value language datatype);
 					$cols[0]	= decode('utf8', $cols[0]);
 					$cols[2]	= decode('utf8', $cols[2]);
 					push( @triple, RDF::Trine::Node::Literal->new( @{ $row }{ @cols } ) );
@@ -396,23 +401,28 @@ sub get_pattern {
 	my $sub		= sub {
 		my $row	= $sth->fetchrow_hashref;
 		return unless $row;
-		
+
+		# this is how we deal with fairweather case sensitivity
+		$row = { map { lc $_ => $row->{$_} } keys %$row };
+
 		my %bindings;
 		foreach my $nodename (@vars) {
-			my $uri		= $self->_column_name( $nodename, 'URI' );
-			my $name	= $self->_column_name( $nodename, 'Name' );
-			my $value	= $self->_column_name( $nodename, 'Value' );
+			my $uri		= $self->_column_name( $nodename, 'uri' );
+			my $name	= $self->_column_name( $nodename, 'name' );
+			my $value	= $self->_column_name( $nodename, 'value' );
 			if (defined( my $u = $row->{ $uri })) {
 				$u	= decode('utf8', $u);
 				$bindings{ $nodename }	 = RDF::Trine::Node::Resource->new( $u );
 			} elsif (defined( my $n = $row->{ $name })) {
 				$bindings{ $nodename }	 = RDF::Trine::Node::Blank->new( $n );
 			} elsif (defined( my $v = $row->{ $value })) {
-				my @cols	= map { $self->_column_name( $nodename, $_ ) } qw(Value Language Datatype);
+				my @cols	= map { $self->_column_name( $nodename, $_ ) }
+					qw(value language datatype);
 				my ($val,$lang,$dt)	= @{ $row }{ @cols };
 				$val	= decode('utf8', $val);
 				$dt		= decode('utf8', $dt);
-				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new( $val, $lang, $dt );
+				$bindings{ $nodename }	 = RDF::Trine::Node::Literal->new
+					( $val, $lang, $dt );
 			} else {
 				$bindings{ $nodename }	= undef;
 			}
@@ -452,10 +462,14 @@ sub get_contexts {
 	my $sub		= sub {
 		while (my $row = $sth->fetchrow_hashref) {
 			return unless defined($row);
-			my $uri		= $self->_column_name( 'URI' );
-			my $name	= $self->_column_name( 'Name' );
-			my $value	= $self->_column_name( 'Value' );
-			my $ctx		= $self->_column_name( 'Context' );
+
+			# this is how we deal with fairweather case sensitivity
+			$row = { map { lc $_ => $row->{$_} } keys %$row };
+
+			my $uri		= $self->_column_name( 'uri' );
+			my $name	= $self->_column_name( 'name' );
+			my $value	= $self->_column_name( 'value' );
+			my $ctx		= $self->_column_name( 'context' );
 			if ($row->{ $ctx } == 0) {
 				next;
 # 				return RDF::Trine::Node::Nil->new();
@@ -464,7 +478,8 @@ sub get_contexts {
 			} elsif ($row->{ $name }) {
 				return RDF::Trine::Node::Blank->new( $row->{ $name } );
 			} elsif (defined $row->{ $value }) {
-				my @cols	= map { $self->_column_name( $_ ) } qw(Value Language Datatype);
+				my @cols	= map { $self->_column_name( $_ ) }
+					qw(value language datatype);
 				return RDF::Trine::Node::Literal->new( @{ $row }{ @cols } );
 			} else {
 				return;
@@ -1367,8 +1382,12 @@ sub _debug {
 	$sth->execute;
 	my $count	= 1;
 	while (my $h = $sth->fetchrow_hashref) {
-		my ($s,$p,$o,$g)	= @{ $h }{ qw(Subject Predicate Object Context) };
-		warn sprintf("[%5d] subj=%-20d  pred=%-20d  obj=%-20d  context=%-20d\n", $count++, $s, $p, $o, $g );
+		# this is how we deal with fairweather case sensitivity
+		$h = { map { lc $_ => $h->{$_} } keys %$h };
+
+		my ($s,$p,$o,$g)	= @{ $h }{ qw(subject predicate object context) };
+		warn sprintf("[%5d] subj=%-20d  pred=%-20d  obj=%-20d  context=%-20d\n",
+					 $count++, $s, $p, $o, $g );
 	}
 }
 
@@ -1384,8 +1403,10 @@ sub init {
 	my $name	= $self->model_name;
 	my $id		= $self->_mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
-	
-	unless ($self->_table_exists("Literals")) {
+
+	# postgres is selectively case-sensitive
+	unless ($self->_table_exists("Literals")
+				or $self->_table_exists('literals')) {
 		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Literals (
@@ -1417,7 +1438,8 @@ END
 		$dbh->commit or warn $dbh->errstr;
 	}
 	
-	unless ($self->_table_exists("Statements${id}")) {
+	unless ($self->_table_exists("Statements${id}")
+				or $self->_table_exists("statements${id}")) {
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); return };
 			CREATE TABLE Statements${id} (
 				Subject NUMERIC(20) NOT NULL,
@@ -1430,7 +1452,6 @@ END
 # 		$dbh->do( "DELETE FROM Models WHERE ID = ${id}") || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 		$dbh->do( "INSERT INTO Models (ID, Name) VALUES (${id}, ?)", undef, $name );
 	}
-	
 }
 
 sub _table_exists {
