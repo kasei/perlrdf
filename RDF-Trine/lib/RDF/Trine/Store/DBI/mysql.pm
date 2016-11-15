@@ -161,7 +161,6 @@ sub init {
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	local($dbh->{AutoCommit})	= 0;
 	unless ($self->_table_exists("Literals")) {
-		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Literals (
 				ID bigint unsigned PRIMARY KEY,
