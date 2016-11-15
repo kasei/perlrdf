@@ -37,7 +37,7 @@ REQUIREMENTS
      * Math::BigInt
      * Scalar::Util
      * Set::Scalar
-     * Text::CSV
+     * Text::CSV_XS
      * Text::Table
      * Time::HiRes
      * Unicode::Escape
