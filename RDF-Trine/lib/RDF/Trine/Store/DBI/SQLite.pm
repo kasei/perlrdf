@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::SQLite - SQLite subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::SQLite version 1.014
+This document describes RDF::Trine::Store::DBI::SQLite version 1.015
 
 =head1 SYNOPSIS
 
@@ -18,10 +18,10 @@ This document describes RDF::Trine::Store::DBI::SQLite version 1.014
                                        });
 
 
-=head1 CHANGES IN VERSION 1.014
+=head1 CHANGES IN VERSION 1.015
 
 The schema used to encode RDF data in SQLite changed in RDF::Trine version
-1.014 to fix a bug that was causing data loss. This change is not backwards
+1.015 to fix a bug that was causing data loss. This change is not backwards
 compatible, and is not compatible with the shared schema used by the other
 database backends supported by RDF::Trine (PostgreSQL and MySQL).
 
@@ -45,7 +45,7 @@ use Math::BigInt;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.014";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
