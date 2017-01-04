@@ -7,7 +7,7 @@ RDF::Query::Expression - Class for Expr expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression version 2.917.
+This document describes RDF::Query::Expression version 2.918.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.917';
+	$VERSION	= '2.918';
 }
 
 ######################################################################

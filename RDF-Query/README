@@ -36,6 +36,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.918 (2017-01-04)
+
+     * SECURITY FIX
+         Do not search modules in relative paths (#141 from @ppisar).
+
   Version 2.917 (2016-05-22)
 
      * ENHANCEMENTS
@@ -45,7 +50,6 @@ VERSION HISTORY
          Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135).
          Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134).
          Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133).
-
 
   Version 2.916 (2015-10-16)
 

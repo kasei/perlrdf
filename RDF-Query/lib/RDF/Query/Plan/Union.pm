@@ -7,7 +7,7 @@ RDF::Query::Plan::Union - Executable query plan for unions.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Union version 2.917.
+This document describes RDF::Query::Plan::Union version 2.918.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::ExecutionContext;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.917';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
