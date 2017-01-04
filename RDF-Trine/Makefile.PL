@@ -12,7 +12,6 @@ build_requires		'Test::More'				=> 0.88;
 build_requires		'Test::Deep'				=> 0;
 build_requires		'Test::Exception'			=> 0;
 build_requires		'Test::JSON'				=> 0;
-build_requires		'TryCatch'					=> 0;
 
 perl_version		'5.010';
 
@@ -37,7 +36,7 @@ requires			'Algorithm::Combinatorics'	=> 0;
 requires			'Scalar::Util'				=> 1.24;
 requires			'Set::Scalar'				=> 0;
 requires			'Storable'					=> 0;
-requires			'Text::CSV_XS'					=> 0;
+requires			'Text::CSV_XS'				=> 0;
 requires			'Text::Table'				=> 0;
 requires			'URI'						=> 1.52;
 requires			'XML::CommonNS'				=> 0.04;
