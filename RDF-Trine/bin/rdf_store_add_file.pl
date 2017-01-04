@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -83,6 +83,7 @@ if ($file =~ qr[^http(s?)://]) {
 # }
 # 
 
-my $parser	= RDF::Trine::Parser::RDFXML->new();
+my $pclass	= RDF::Trine::Parser->guess_parser_by_filename( $file );
+my $parser	= $pclass->new();
 my $m		= RDF::Trine::Model->new( $store );
 $parser->parse_into_model( $base, $data, $m );

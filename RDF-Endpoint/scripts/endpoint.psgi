@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -6,7 +6,7 @@ use warnings;
 use Data::Dumper;
 use Plack::Request;
 use Plack::Builder;
-use Config::JFDI;
+use Config::ZOMG;
 use Carp qw(confess);
 use RDF::Endpoint;
 use LWP::MediaTypes qw(add_type);
@@ -37,7 +37,7 @@ if (my $file = $ENV{RDF_ENDPOINT_FILE}) {
 			update		=> 1,
         }
     };
-} elsif ($config = eval { Config::JFDI->open( name => "RDF::Endpoint") }) {
+} elsif ($config = eval { Config::ZOMG->open( name => "RDF::Endpoint") }) {
 } else {
 	$config	= {
 		store	=> "Memory",

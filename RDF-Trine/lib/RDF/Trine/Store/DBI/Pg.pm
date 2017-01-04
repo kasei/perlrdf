@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::Pg - PostgreSQL subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::Pg version 1.014
+This document describes RDF::Trine::Store::DBI::Pg version 1.015
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.014";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -86,8 +86,8 @@ sub init {
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
+	local($dbh->{AutoCommit})	= 0;
 	unless ($self->_table_exists("literals")) {
-		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE literals (
 				ID NUMERIC(20) PRIMARY KEY,

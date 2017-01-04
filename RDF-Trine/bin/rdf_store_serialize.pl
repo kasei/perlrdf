@@ -1,11 +1,10 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
 no warnings 'redefine';
 use File::Spec;
 use File::Slurp;
-use RDF::Redland;
 use LWP::UserAgent;
 use Data::Dumper;
 

@@ -10,6 +10,24 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.015.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.015" ;
+                        doap:created      "2017-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Remove call to $dbh->begin_work when already working with AutoCommit turned off." ;
+                        asc:update      "Remove use of RDF::Redland in bin/rdf_store_serialize.pl." ;
+                        asc:update      "Updated rdf_store_add_file.pl to guess the appropriate parser based on the filename." ;
+                        asc:update      "Remove use of TryCatch (#138 from @ppisar)." ;
+                        asc:update      "Change hashbang to use env (#137 from KjetilK)." ;
+                        asc:update      "Replaced all uses and initializations from Text::CSV in favour to Text::CSV_XS (#136 from @jordivador)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.013.tar.gz> ;

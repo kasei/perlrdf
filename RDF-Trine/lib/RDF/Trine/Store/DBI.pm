@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI - Persistent RDF storage based on DBI
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI version 1.014
+This document describes RDF::Trine::Store::DBI version 1.015
 
 =head1 SYNOPSIS
 
@@ -65,7 +65,7 @@ use RDF::Trine::Store::DBI::Pg;
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.014";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -1384,9 +1384,9 @@ sub init {
 	my $name	= $self->model_name;
 	my $id		= $self->_mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
+	local($dbh->{AutoCommit})	= 0;
 	
 	unless ($self->_table_exists("Literals")) {
-		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE Literals (
 				ID NUMERIC(20) PRIMARY KEY,

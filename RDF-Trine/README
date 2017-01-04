@@ -37,7 +37,7 @@ REQUIREMENTS
      * Math::BigInt
      * Scalar::Util
      * Set::Scalar
-     * Text::CSV
+     * Text::CSV_XS
      * Text::Table
      * Time::HiRes
      * Unicode::Escape
@@ -68,6 +68,18 @@ INSTALLATION
    make install
 
 VERSION HISTORY
+
+  Version 1.015 (2017-01-04)
+
+     * BUG FIXES
+         	Remove call to $dbh->begin_work when already working with AutoCommit turned off.
+     * ENHANCEMENTS
+         	Updated rdf_store_add_file.pl to guess the appropriate parser based on the filename.
+         	Replaced all uses and initializations from Text::CSV in favour to Text::CSV_XS (#136 from @jordivador).
+     * OTHER
+         	Change hashbang to use env (#137 from KjetilK).
+         	Remove use of RDF::Redland in bin/rdf_store_serialize.pl.
+         	Remove use of TryCatch (#138 from @ppisar).
 
   Version 1.014 (2015-05-17)
 

@@ -17,7 +17,7 @@ interface provided by L<Plack>. It may be run with any Plack handler.
 See L<Plack::Handler> for more details.
 
 When this module is used to create a SPARQL endpoint, configuration variables
-are loaded using L<Config::JFDI>. An example configuration file rdf_endpoint.json
+are loaded using L<Config::ZOMG>. An example configuration file rdf_endpoint.json
 is included with this package. Valid top-level configuration keys include:
 
 =over 4
