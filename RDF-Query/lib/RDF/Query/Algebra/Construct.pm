@@ -7,7 +7,7 @@ RDF::Query::Algebra::Construct - Algebra class for construct query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Construct version 2.917.
+This document describes RDF::Query::Algebra::Construct version 2.918.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.917';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
