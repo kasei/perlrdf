@@ -1,9 +1,9 @@
-#!/usr/bin/perl -l
+#!/usr/bin/env perl -l
 
 use strict;
 use warnings;
 use RDF::Trine;
-use Text::CSV;
+use Text::CSV_XS;
 use Scalar::Util qw(reftype blessed);
 
 my $fh;
@@ -14,7 +14,7 @@ if (scalar(@ARGV) and -r $ARGV[0]) {
 	$fh	= \*STDIN;
 }
 
-my $csv		= Text::CSV->new ( { binary => 1 } );
+my $csv		= Text::CSV_XS->new ( { binary => 1 } );
 my $handler	= RDF::Trine::Iterator::SAXHandler->new( sub {
 		our @keys;
 		my $vb	= shift;

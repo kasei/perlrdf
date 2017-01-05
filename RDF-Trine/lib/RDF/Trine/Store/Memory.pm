@@ -4,7 +4,7 @@ RDF::Trine::Store::Memory - Simple in-memory RDF store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Memory version 1.008
+This document describes RDF::Trine::Store::Memory version 1.015
 
 =head1 SYNOPSIS
 
@@ -26,7 +26,7 @@ use base qw(RDF::Trine::Store);
 use Encode;
 use Set::Scalar;
 use Data::Dumper;
-use Digest::SHA;
+use Digest::SHA qw(sha1);
 use List::Util qw(first);
 use Scalar::Util qw(refaddr reftype blessed);
 use RDF::Trine::Statement::Quad;
@@ -39,7 +39,7 @@ use RDF::Trine::Error;
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -118,6 +118,7 @@ sub new {
 		context		=> {},
 		ctx_nodes	=> {},
 		hash		=> Digest::SHA->new,
+		statement_hashes	=> {},
 	}, $class);
 
 	return $self;
@@ -414,31 +415,34 @@ sub add_statement {
 		}
 	}
 	
-	my $count	= $self->count_statements( $st->nodes );
-	if ($count == 0) {
-		$self->{size}++;
-		my $id	= scalar(@{ $self->{ statements } });
-		$self->{hash}->add('+' . encode_utf8($st->as_string));
-		push( @{ $self->{ statements } }, $st );
-		foreach my $pos (0 .. $#pos_names) {
-			my $name	= $pos_names[ $pos ];
-			my $node	= $st->$name();
-			my $string	= $node->as_string;
-			my $set	= $self->{$name}{ $string };
-			unless (blessed($set)) {
-				$set	= Set::Scalar->new();
-				$self->{$name}{ $string }	= $set;
-			}
-			$set->insert( $id );
-		}
-		
-		my $ctx	= $st->context;
-		my $str	= $ctx->as_string;
-		unless (exists $self->{ ctx_nodes }{ $str }) {
-			$self->{ ctx_nodes }{ $str }	= $ctx;
-		}
-# 	} else {
+	my $string	= encode_utf8($st->as_string);
+	my $st_hash	= sha1($string);
+	if ($self->{statement_hashes}{$st_hash}++) {
+		my $count	= $self->count_statements( $st->nodes );
 # 		warn "store already has statement " . $st->as_string;
+		return if $count;
+	}
+	
+	$self->{size}++;
+	my $id	= scalar(@{ $self->{ statements } });
+	$self->{hash}->add('+' . $string);
+	push( @{ $self->{ statements } }, $st );
+	foreach my $pos (0 .. $#pos_names) {
+		my $name	= $pos_names[ $pos ];
+		my $node	= $st->$name();
+		my $string	= $node->as_string;
+		my $set	= $self->{$name}{ $string };
+		unless (blessed($set)) {
+			$set	= Set::Scalar->new();
+			$self->{$name}{ $string }	= $set;
+		}
+		$set->insert( $id );
+	}
+	
+	my $ctx	= $st->context;
+	my $str	= $ctx->as_string;
+	unless (exists $self->{ ctx_nodes }{ $str }) {
+		$self->{ ctx_nodes }{ $str }	= $ctx;
 	}
 	return;
 }
@@ -468,6 +472,16 @@ sub remove_statement {
 		}
 	}
 
+	my $string	= encode_utf8($st->as_string);
+	my $st_hash	= sha1($string);
+	unless (exists $self->{statement_hashes}{$st_hash}) {
+		return;
+	}
+	
+	if (0 == --$self->{statement_hashes}{$st_hash}) {
+		delete $self->{statement_hashes}{$st_hash};
+	}
+	
 	my @nodes	= $st->nodes;
 	my $count	= $self->count_statements( @nodes[ 0..3 ] );
 # 	warn "remove_statement: count of statement is $count";
@@ -475,7 +489,7 @@ sub remove_statement {
 		$self->{size}--;
 		my $id	= $self->_statement_id( $st->nodes );
 # 		warn "removing statement $id: " . $st->as_string . "\n";
-		$self->{hash}->add('-' . encode_utf8($st->as_string));
+		$self->{hash}->add('-' . $string);
 		$self->{statements}[ $id ]	= undef;
 		foreach my $pos (0 .. 3) {
 			my $name	= $pos_names[ $pos ];

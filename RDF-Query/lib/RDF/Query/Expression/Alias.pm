@@ -7,7 +7,7 @@ RDF::Query::Expression::Alias - Class for aliasing expressions with variable nam
 
 =head1 VERSION
 
-This document describes RDF::Query::Expression::Alias version 2.911.
+This document describes RDF::Query::Expression::Alias version 2.918.
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################

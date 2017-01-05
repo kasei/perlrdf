@@ -5,6 +5,7 @@ use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
 use File::Spec;
+use URI::file;
 
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Parser;
@@ -15,8 +16,9 @@ my @good	= bsd_glob("${path}/test*.ttl");
 my @bad		= bsd_glob("${path}/bad*.ttl");
 
 {
-	my $file = $good[0];
-	my $base = 'file://' . $file;
+	my $file	= $good[0];
+	my $uri		= URI::file->new($file, (($file =~ m#^\w:\\\\#) ? 'win32' : ()));
+	my $base	= $uri->as_string;
 	my $model = RDF::Trine::Model->temporary_model;
 	RDF::Trine::Parser->parse_file_into_model( $base, $file, $model );
 	is( $model->size, 1, 'parse_file_into_model, guessed from filename' );
@@ -37,7 +39,8 @@ foreach my $file (@good) {
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	lives_ok {
-		my $url	= 'file://' . $file;
+		my $uri	= URI::file->new($file, (($file =~ m#^\w:\\\\#) ? 'win32' : ()));
+		my $url	= $uri->as_string;
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} $test;
@@ -48,7 +51,8 @@ foreach my $file (@bad) {
 	my $data	= do { open( my $fh, '<', $file ); local($/) = undef; <$fh> };
 	my (undef, undef, $test)	= File::Spec->splitpath( $file );
 	throws_ok {
-		my $url	= 'file://' . $file;
+		my $uri	= URI::file->new($file, (($file =~ m#^\w:\\\\#) ? 'win32' : ()));
+		my $url	= $uri->as_string;
 		my $parser	= RDF::Trine::Parser::Turtle->new();
 		$parser->parse( $url, $data );
 	} 'RDF::Trine::Error::ParserError', $test;

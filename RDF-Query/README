@@ -36,6 +36,62 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 2.918 (2017-01-04)
+
+     * SECURITY FIX
+         Do not search modules in relative paths (#141 from @ppisar).
+
+  Version 2.917 (2016-05-22)
+
+     * ENHANCEMENTS
+         Change hashbang to use env (#137 from KjetilK).
+         Replaced Text::CSV by Text::CSV_XS (#127, #136; patch from jordivador).
+     * BUG FIXES
+         Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135).
+         Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134).
+         Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133).
+
+  Version 2.916 (2015-10-16)
+
+     * ENHANCEMENTS
+         Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132).
+
+  Version 2.915 (2015-08-18)
+
+     * NEW FEATURES
+         Add RDF::Query::Node->from_attean method (PR #128 from Kjetil Kjernsmo).
+     * OTHER
+         Add default indentation to RDF::Query::Algebra::Limit->sse.
+
+  Version 2.914 (2015-05-17)
+
+     * BUG FIXES
+         Fixed bug in evaluation of SPARQL CONCAT function.
+
+  Version 2.913 (2015-02-14)
+
+     * BUG FIXES
+         Fix SPARQL 1.1 parsing bug that disallowed whitespace between an aggregate name and the following open-parenthesis.
+         Fix bug in RDF::Query::Algebra::NamedGraph->definite_variables.
+         Fix rqsh to use a pure memory model when requested (instead of a temporary model).
+         Fixed whitespace handling bug during parsing of VALUES clauses (github issue #120).
+     * ENHANCEMENTS
+         Merge adjacent service blocks if their endpoints and silent flags match (github issue #124).
+         Allow RDF::Query->new to accept an algebra object instead of a query string.
+         Updated node classes to allow overloaded comparisions with RDF::Trine::Node::Nil objects.
+         Improve coverage of as_hash function for variable bindings and expressions (github issue #121).
+     * OTHER
+         Documentation fixes (from Kjetil Kjernsmo).
+
+  Version 2.912 (2014-10-24)
+
+     * BUG FIXES
+         Fix bug in handling of SUM aggregates with non-literal data.
+     * ENHANCEMENTS
+         Improved performance of regular expression use in SPARQL parser (from Dorian Taylor; github pull request #111).
+     * OTHER
+         Added IRC resource to Makefile.PL.
+
   Version 2.911 (2014-07-24)
 
      * BUG FIXES
@@ -1267,7 +1323,7 @@ VERSION HISTORY
 
 COPYRIGHT
 
-   Copyright (C) 2005-2010 Gregory Williams. All rights reserved.
+   Copyright (C) 2005-2015 Gregory Williams. All rights reserved.
    This program is free software; you can redistribute it and/or
    modify it under the same terms as Perl itself.
 

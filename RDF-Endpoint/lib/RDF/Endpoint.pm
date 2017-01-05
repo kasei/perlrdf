@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.07.
+This document describes RDF::Endpoint version 0.08.
 
 =head1 SYNOPSIS
 
@@ -17,7 +17,7 @@ interface provided by L<Plack>. It may be run with any Plack handler.
 See L<Plack::Handler> for more details.
 
 When this module is used to create a SPARQL endpoint, configuration variables
-are loaded using L<Config::JFDI>. An example configuration file rdf_endpoint.json
+are loaded using L<Config::ZOMG>. An example configuration file rdf_endpoint.json
 is included with this package. Valid top-level configuration keys include:
 
 =over 4
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.07';
+our $VERSION	= '0.08';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);

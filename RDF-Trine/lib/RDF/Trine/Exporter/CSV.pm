@@ -7,7 +7,7 @@ RDF::Trine::Exporter::CSV - Export RDF data to CSV
 
 =head1 VERSION
 
-This document describes RDF::Trine::Exporter::CSV version 1.008
+This document describes RDF::Trine::Exporter::CSV version 1.015
 
 =head1 SYNOPSIS
 
@@ -27,13 +27,13 @@ use warnings;
 no warnings 'redefine';
 
 use Data::Dumper;
-use Text::CSV;
+use Text::CSV_XS;
 use Scalar::Util qw(blessed);
 use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.015';
 }
 
 =head1 METHODS
@@ -53,7 +53,7 @@ sub new {
 	my %args	= @_;
 	my $sep		= $args{ sep_char } || ',';
 	my $quote	= $args{ quote };
-	my $csv		= Text::CSV->new ( { binary => 1, sep_char => $sep } );
+	my $csv		= Text::CSV_XS->new ( { binary => 1, sep_char => $sep } );
 	my $self	= bless( { %args, csv => $csv }, $class );
 	return $self;
 }
@@ -69,7 +69,7 @@ sub serialize_iterator_to_file {
 	my $self	= shift;
 	my $file	= shift;
 	my $iter	= shift;
-	
+
 	unless (blessed($iter) and ($iter->isa('RDF::Trine::Iterator::Bindings') or $iter->isa('RDF::Trine::Iterator::Graph'))) {
 		my $type	= ref($iter);
 		$type		=~ s/^RDF::Trine::Iterator:://;
@@ -77,7 +77,7 @@ sub serialize_iterator_to_file {
 	}
 
 	my $type	= ($iter->isa('RDF::Trine::Iterator::Bindings')) ? 'bindings' : 'graph';
-	
+
 	my $csv		= $self->{csv};
 	my $quote	= $self->{quote};
 	my @keys;

@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 no warnings 'redefine';
-use lib qw(../lib lib);
 
 use Cwd;
 use Benchmark;
@@ -165,7 +164,7 @@ sub model {
 	my $sclass	= RDF::Trine::Store->class_by_name( $name );
 	if ($sclass) {
 		if ($sclass eq 'RDF::Trine::Store::Memory') {
-			$model	= memory_model();
+			$model	= RDF::Trine::Model->new( RDF::Trine::Store::Memory->new );
 			return;
 		} else {
 			if ($sclass->can('_config_meta')) {

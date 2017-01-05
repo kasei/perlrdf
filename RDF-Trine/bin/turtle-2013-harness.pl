@@ -9,7 +9,6 @@ use RDF::Trine qw(iri literal);
 use RDF::Trine::Namespace qw(rdf);
 use RDF::EARL;
 use URI::file;
-use TryCatch;
 
 sub throws_ok (&;$) {	## no critic
 	my ( $coderef, $description ) = @_;
@@ -117,11 +116,16 @@ foreach my $manifest (@manifests) {
 		my $model	= RDF::Trine::Model->temporary_model;
 		my $tbase	= URI->new_abs( $test, $base->uri_value )->as_string;
 		my $parsed	= 1;
-		try {
+		eval {
 			$parser->parse_file_into_model( $tbase, $fh, $model );
-		} catch (RDF::Trine::Error $e) {
-			$parsed	= 0;
-	# 		warn "Failed to parse $file: " . $err->text;
+		};
+		
+		if ($@) {
+			my $e	= $@;
+			if (blessed($e) and $e->isa('RDF::Trine::Error')) {
+				$parsed	= 0;
+# 				warn "Failed to parse $file: " . $err->text;
+			}
 		}
 		if ($parsed) {
 			my $ok	= compare($model, URI->new($res_file->uri), $base, $test);
@@ -211,9 +215,12 @@ sub compare {
 	my $tbase	= URI->new_abs( $name, $base->uri_value )->as_string;
 	my $file		= $url->file;
 	open( my $fh, '<:encoding(UTF-8)', $file );
-	try {
+	eval {
 		$parser->parse_file_into_model( $tbase, $fh, $emodel );
-	} catch ($err) {
+	};
+	
+	if ($@) {
+		my $err	= $@;
 # 		warn "Failed to parse $file: " . $err->text . "(test $name)";
 	}
 	

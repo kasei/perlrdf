@@ -44,6 +44,7 @@ share/www/js/undo.js
 share/www/js/unittests.js
 share/www/js/util.js
 t/00-load.t
+t/etag.t
 t/pod.t
 t/pod_coverage.t
 t/psgi.t

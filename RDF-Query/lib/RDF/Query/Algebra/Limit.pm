@@ -7,7 +7,7 @@ RDF::Query::Algebra::Limit - Algebra class for limiting query results
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Limit version 2.911.
+This document describes RDF::Query::Algebra::Limit version 2.918.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
@@ -104,7 +104,7 @@ sub sse {
 	my $self	= shift;
 	my $context	= shift;
 	my $prefix	= shift || '';
-	my $indent	= $context->{indent};
+	my $indent	= $context->{indent} || '  ';
 	
 	if ($self->pattern->isa('RDF::Query::Algebra::Offset')) {
 		my $l	= $self->limit;

@@ -10,6 +10,123 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.015.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.015" ;
+                        doap:created      "2017-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Remove call to $dbh->begin_work when already working with AutoCommit turned off." ;
+                        asc:update      "Remove use of RDF::Redland in bin/rdf_store_serialize.pl." ;
+                        asc:update      "Updated rdf_store_add_file.pl to guess the appropriate parser based on the filename." ;
+                        asc:update      "Remove use of TryCatch (#138 from @ppisar)." ;
+                        asc:update      "Change hashbang to use env (#137 from KjetilK)." ;
+                        asc:update      "Replaced all uses and initializations from Text::CSV in favour to Text::CSV_XS (#136 from @jordivador)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.014.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.013.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.014" ;
+                        doap:created      "2015-05-17" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fix data loss bug in SQLite backend schema and hash encoding (from Mike Frager PR #126)." ;
+                        asc:update      "Added Cache::LRU requirement to prerequisite list and README." ;
+                        asc:update      "Read data as utf8 from STDIN." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.013.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.012.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.013" ;
+                        doap:created      "2015-02-14" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Added RDF::Trine::Parser->parse_url method (github issue #119)." ;
+                        asc:addition    "Added RDF::Trine::Store::LanguagePreference class." ;
+                        asc:update      "Update how file URIs are constructed to better deal with windows systems." ;
+                        asc:update      "Improve insertion performance in RDF::Trine::Store::Memory by keeping caching quad SHA1 hashes." ;
+                        asc:update      "Fixed bug in RDF::Trine::Model->size that was only considering triples, not quads." ;
+                        asc:update      "Update triple store tests for expected results when passing in quad patterns with non-nil graphs." ;
+                        asc:update      "Fix get_statements and count_statements when called with quad patterns with non-nil graph." ;
+                        asc:update      "Miscellaneous code and documentation improvements (from Kjetil Kjernsmo via github pull request #116)." ;
+                        asc:update      "Make RDF::Trine::VariableBindings->join more flexible in testing of equality." ;
+                        asc:update      "Simplify coercion of values in RDF::Trine::Node::Resource constructor." ;
+                        asc:update      "Added IRI to list of prereq modules in Makefile.PL." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.012.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.011.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.012" ;
+                        doap:created      "2015-01-15" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed SPARQL XML serialization of boolean results." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.011.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.010.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.011" ;
+                        doap:created      "2014-10-24" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed TSV serializer to print header rows and accept VariableBindings as input." ;
+                        asc:update      "Updated Hexastore store to return an empty iterator for get_contexts() instead of croaking." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.010.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.009.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.010" ;
+                        doap:created      "2014-10-03" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Fixed bug in SPARQL store that wasn't properly decoding HTTP response content (github issue #118)." ;
+                        asc:update      "Refactored part of RDF::Trine::Iterator::Graph->as_hashref into RDF::Trine::Node->as_hashref (github issue #117)." ;
+                        asc:update      "Update RDF::Trine::Pattern with heuristic pattern sorter (github pull request #114 from Kjetil Kjernsmo)." ;
+                        asc:update      "Added IRC resource to Makefile.PL." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.009.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.008.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.009" ;
+                        doap:created      "2014-08-06" ;
+                        ];
+        asc:changes     [
+                        asc:addition    "Adding model sync/bulk ops to redland store (Dorian Taylor)." ;
+                        asc:update      "Optimized use of regular expressions (Dorian Taylor)." ;
+                        asc:update      "Optimized Hexastore store class (Dorian Taylor)." ;
+                        asc:update      "Log an info message if there is a cartesian product (Kjetil Kjernsmo)." ;
+                        asc:update      "Use a base64 encoded digest for Memory store etags (Kjetil Kjernsmo)." ;
+                        asc:update      "Updated RDF::Trine::Iterator::Bindings->as_statements to accept a RDF::Trine::Pattern argument (github issue #104)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.008.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.007.tar.gz> ;

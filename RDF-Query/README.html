@@ -50,23 +50,115 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_910">Version 2.911 (2014-07-24)</h3>
+		<h3 id="v2_917">Version 2.918 (2017-01-04)</h3>
+			<ul>
+				<li>Security Fix
+					<ul>
+						<li>Do not search modules in relative paths (#141 from @ppisar).</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_917">Version 2.917 (2016-05-22)</h3>
+			<ul>
+				<li>Enhancements
+					<ul>
+						<li>Change hashbang to use env (#137 from KjetilK).</li>
+						<li>Replaced Text::CSV by Text::CSV_XS (#127, #136; patch from jordivador).</li>
+					</ul></li>
+				<li>Bug Fixes
+					<ul>
+						<li>Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135).</li>
+						<li>Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134).</li>
+						<li>Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133).</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_916">Version 2.916 (2015-10-16)</h3>
+			<ul>
+				<li>Enhancements
+					<ul>
+						<li>Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132).</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Add default indentation to RDF::Query::Algebra::Limit->sse.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_915">Version 2.915 (2015-08-18)</h3>
+			<ul>
+				<li>New Features
+					<ul>
+						<li>Add RDF::Query::Node->from_attean method (PR #128 from Kjetil Kjernsmo).</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Add default indentation to RDF::Query::Algebra::Limit->sse.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_914">Version 2.914 (2015-05-17)</h3>
 			<ul>
 				<li>Bug Fixes
+					<ul>
+						<li>Fixed bug in evaluation of SPARQL CONCAT function.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_913">Version 2.913 (2015-02-14)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
+						<li>Fix SPARQL 1.1 parsing bug that disallowed whitespace between an aggregate name and the following open-parenthesis.</li>
+						<li>Fix bug in RDF::Query::Algebra::NamedGraph->definite_variables.</li>
+						<li>Fix rqsh to use a pure memory model when requested (instead of a temporary model).</li>
+						<li>Fixed whitespace handling bug during parsing of VALUES clauses (github issue #120).</li>
+					</ul></li>
+				<li>Enhancements
+					<ul>
+						<li>Merge adjacent service blocks if their endpoints and silent flags match (github issue #124).</li>
+						<li>Allow RDF::Query->new to accept an algebra object instead of a query string.</li>
+						<li>Updated node classes to allow overloaded comparisions with RDF::Trine::Node::Nil objects.</li>
+						<li>Improve coverage of as_hash function for variable bindings and expressions (github issue #121).</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Documentation fixes (from Kjetil Kjernsmo).</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_912">Version 2.912 (2014-10-24)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
+						<li>Fix bug in handling of SUM aggregates with non-literal data.</li>
+					</ul></li>
+				<li>Enhancements
+					<ul>
+						<li>Improved performance of regular expression use in SPARQL parser (from Dorian Taylor; github pull request #111).</li>
+					</ul></li>
+				<li>Other
+					<ul>
+						<li>Added IRC resource to Makefile.PL.</li>
+					</ul></li>
+			</ul>
+		<h3 id="v2_911">Version 2.911 (2014-07-24)</h3>
+			<ul>
+				<li>Bug Fixes
+					<ul>
 						<li>Fixed bug in RDF::Query::Plan::Join::PushDownNestedLoop that didn't allow 'aggregate' to appear in the RHS serialized text (github issue 101).</li>
 						<li>Fixed SPARQL 1.1 GGP parsing bug (github issue 100).</li>
 						<li>Fixed RDF::Query::Algebra->subpatterns_of_type to support descent into sub-queries.</li>
 						<li>Disabled pushing full updates down into the store object (only meant to be full queries at this point).</li>
 						<li>Fixed as_hash method in RDF::Query::Algebra::Aggregate, RDF::Query::Algebra::Sort, and RDF::Query::Expression::Alias.</li>
 						<li>Updated RDF::Query::Compiler::SQL to respect node class encapsulation.</li>
+					</ul></li>
 				<li>Enhancements
+					<ul>
 						<li>Modularized implementation of explain method in algebra and plan classes.</li>
 						<li>Updated rqsh script to use env perl instead of hardcoded bin path.</li>
 						<li>Added JSON output to bin/parse.pl script.</li>
 						<li>Added RDF::Query::ExecutionContext->bind_variable method.</li>
+					</ul></li>
 				<li>Other
+					<ul>
 						<li>Added :all export tag to RDF::Trine::Node.</li>
 						<li>Remove Crypt::GPG and Bloom::Filter from list of recommended modules (no longer used in code).</li>
+					</ul></li>
 			</ul>
 		<h3 id="v2_910">Version 2.910 (2013-07-22)</h3>
 			<ul>
@@ -1382,5 +1474,5 @@
 				<li>Moving over to redland's query API (pass in the model when query is executed)</li>
 			</ul>
 	<h2>Copyright</h2>
-		<p>Copyright &copy; 2005&#8211;2010 Gregory Williams. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
+		<p>Copyright &copy; 2005&#8211;2015 Gregory Williams. This program is free software; you can redistribute it and/or modify it under the same terms as Perl itself.</p>
 </body></html>

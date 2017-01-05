@@ -7,7 +7,7 @@ RDF::Query::Node - Base class for RDF Nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node version 2.911.
+This document describes RDF::Query::Node version 2.918.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use RDF::Query::Node::Variable;
 
 our ($VERSION, @ISA, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -94,6 +94,29 @@ sub from_trine {
 	} else {
 		use Data::Dumper;
 		Carp::confess "from_trine called with unrecognized node type:" . Dumper($n);
+	}
+}
+
+=item C<< from_attean ( $node ) >>
+
+Likewise, but from L<Attean>.
+
+=cut
+
+sub from_attean {
+	my $class	= shift;
+	my $n		= shift;
+	if ($n->does('Attean::API::Variable')) {
+		return RDF::Query::Node::Variable->new( $n->value );
+	} elsif ($n->does('Attean::API::Literal')) {
+		return RDF::Query::Node::Literal->new( $n->value, $n->language, $n->datatype );
+	} elsif ($n->does('Attean::API::IRI')) {
+		return RDF::Query::Node::Resource->new( $n->as_string );
+	} elsif ($n->does('Attean::API::Blank')) {
+		return RDF::Query::Node::Blank->new( $n->value );
+	} else {
+		use Data::Dumper;
+		Carp::confess "from_attean called with unrecognized node type:" . Dumper($n);
 	}
 }
 

@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 1.008
+This document describes RDF::Trine::Serializer version 1.015
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.015';
 }
 
 use RDF::Trine::Serializer::NQuads;
@@ -96,7 +96,7 @@ RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.  If
 the C<< 'request_headers' >> key-value is supplied, the C<<
 $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.  The
 option C<< 'restrict' >>, set to a list of serializer names, can be
-used to limit the serializers to choose from. Finally, an C<<'extends' >> 
+used to limit the serializers to choose from. Finally, an C<<'extend' >> 
 option can be set to a hashref that contains MIME-types
 as keys and a custom variant as value. This will enable the user to
 use this negotiator to return a type that isn't supported by any
@@ -360,6 +360,8 @@ sub string {
 =back
 
 =end private
+
+=cut
 
 1;
 

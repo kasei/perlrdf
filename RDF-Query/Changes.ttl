@@ -9,6 +9,112 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.918.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.917.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.918" ;
+                        doap:created      "2017-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Do not search modules in relative paths (#141 from @ppisar)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.917.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.916.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.917" ;
+                        doap:created      "2016-05-22" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Change hashbang to use env (#137 from KjetilK)." ;
+                        asc:update        "Replaced Text::CSV by Text::CSV_XS (#127, #136; patch from jordivador)." ;
+                        asc:update        "Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135)." ;
+                        asc:update        "Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134)." ;
+                        asc:update        "Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.916.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.915.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.916" ;
+                        doap:created      "2015-10-16" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.915.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.914.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.915" ;
+                        doap:created      "2015-08-18" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Add RDF::Query::Node->from_attean method (PR #128 from Kjetil Kjernsmo)." ;
+                        asc:update        "Add default indentation to RDF::Query::Algebra::Limit->sse." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.914.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.913.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.914" ;
+                        doap:created      "2015-05-17" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed bug in evaluation of SPARQL CONCAT function." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.913.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.912.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.913" ;
+                        doap:created      "2015-02-14" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Merge adjacent service blocks if their endpoints and silent flags match (github issue #124)." ;
+                        asc:update        "Allow RDF::Query->new to accept an algebra object instead of a query string." ;
+                        asc:update        "Fix SPARQL 1.1 parsing bug that disallowed whitespace between an aggregate name and the following open-parenthesis." ;
+                        asc:update        "Updated node classes to allow overloaded comparisions with RDF::Trine::Node::Nil objects." ;
+                        asc:update        "Fix bug in RDF::Query::Algebra::NamedGraph->definite_variables." ;
+                        asc:update        "Fix rqsh to use a pure memory model when requested (instead of a temporary model)." ;
+                        asc:update        "Improve coverage of as_hash function for variable bindings and expressions (github issue #121)." ;
+                        asc:update        "Fixed whitespace handling bug during parsing of VALUES clauses (github issue #120)." ;
+                        asc:update        "Documentation fixes (from Kjetil Kjernsmo)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Query-2.912.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.911.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.912" ;
+                        doap:created      "2014-10-24" ;
+                        ];
+        asc:changes     [
+                        asc:addition      "Added IRC resource to Makefile.PL." ;
+                        asc:update        "Fix bug in handling of SUM aggregates with non-literal data." ;
+                        asc:update        "Improved performance of regular expression use in SPARQL parser (from Dorian Taylor; github pull request #111)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.911.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.910.tar.gz> ;

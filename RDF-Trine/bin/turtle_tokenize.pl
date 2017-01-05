@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -19,10 +19,10 @@ use RDF::Trine;
 use RDF::Trine::Parser::Turtle::Lexer;
 use RDF::Trine::Parser::Turtle::Constants;
 
+use Scalar::Util qw(blessed);
 use Time::HiRes qw(gettimeofday tv_interval);
 use Data::Dumper;
 use File::Spec;
-use TryCatch;
 
 $|				= 1;
 my $verbose		= 0;
@@ -33,7 +33,7 @@ my $count	= 0;
 my $t0		= [gettimeofday];
 
 my $l		= RDF::Trine::Parser::Turtle::Lexer->new( file => $fh );
-try {
+eval {
 	while (my $t = $l->get_token) {
 		$count++;
 		printf("%3d:%-3d %3d:%-3d %s", $t->start_line, $t->start_column, $t->line, $t->column, decrypt_constant($t->type));
@@ -43,11 +43,15 @@ try {
 		print "\n";
 		throw Error if ($limit and $count >= $limit);
 	}
-} catch (RDF::Trine::Error::ParserError::Tokenized $e) {
-	$e->explain( $fh );
-	exit;
-} catch ($e) {
-	warn $e
+};
+
+if ($@) {
+	my $e	= $@;
+	if (blessed($e) and $e->isa('RDF::Trine::Error::ParserError::Tokenized')) {
+		$e->explain($fh);
+	} else {
+		warn $@;
+	}
 }
 
 my $elapsed	= tv_interval( $t0, [gettimeofday]);

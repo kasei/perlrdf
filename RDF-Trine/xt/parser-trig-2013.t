@@ -5,11 +5,11 @@ use Test::Exception;
 use FindBin qw($Bin);
 use File::Glob qw(bsd_glob);
 use File::Spec;
+use Scalar::Util qw(blessed);
 use Data::Dumper;
 use RDF::Trine qw(iri literal);
 use RDF::Trine::Namespace qw(rdf);
 use URI::file;
-use TryCatch;
 
 my $mf		= RDF::Trine::Namespace->new('http://www.w3.org/2001/sw/DataAccess/tests/test-manifest#');
 my $rdft	= RDF::Trine::Namespace->new('http://www.w3.org/ns/rdftest#');
@@ -58,14 +58,18 @@ TODO: {
 		
 			my $url	= 'file://' . $file;
 			my $parser	= RDF::Trine::Parser::TriG->new();
-			try {
+			eval {
 				$parser->parse( $url, $data );
 				$parsed	= 1;
-			} catch (RDF::Trine::Error::ParserError::Explainable $e) {
-				$e->explain( $fh );
-				$error	= $e;
-			} catch ($e) {
-				$error	= $e;
+			};
+			
+			if (my $e = $@) {
+				if (blessed($e) and $e->isa('RDF::Trine::Error::ParserError::Explainable')) {
+					$e->explain( $fh );
+					$error	= $e;
+				} else {
+					$error	= $e;
+				}
 			}
 		
 			ok($parsed, $test);
@@ -100,17 +104,21 @@ TODO: {
 			my $model	= RDF::Trine::Model->temporary_model;
 			my $tbase	= URI->new_abs( $test, $base->uri_value )->as_string;
 			my $parsed	= 1;
-			try {
+			eval {
 				$parser->parse_file_into_model( $tbase, $fh, $model );
-			} catch (RDF::Trine::Error::ParserError::Explainable $e) {
-				$parsed	= 0;
-				$e->explain( $fh );
-			} catch (RDF::Trine::Error $e) {
-				$parsed	= 0;
-				warn "Failed to parse $file: " . $e->text;
-			} catch ($err) {
-				warn $err;
-				$parsed	= 0;
+			};
+			
+			if (my $e = $@) {
+				if (blessed($e) and $e->isa('RDF::Trine::Error::ParserError::Explainable')) {
+					$parsed	= 0;
+					$e->explain( $fh );
+				} elsif ($e->isa('RDF::Trine::Error')) {
+					$parsed	= 0;
+					warn "Failed to parse $file: " . $e->text;
+				} else {
+					warn $e;
+					$parsed	= 0;
+				}
 			}
 			if ($parsed) {
 				compare($model, URI->new($res_file->uri), $base, $test);
@@ -157,7 +165,7 @@ sub compare {
 	my $tbase	= URI->new_abs( $name, $base->uri_value )->as_string;
 	my $file		= $url->file;
 	open( my $fh, '<:encoding(UTF-8)', $file );
-	try {
+	eval {
 		$parser->parse_file_into_model( $tbase, $fh, $emodel );
 	};
 	

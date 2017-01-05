@@ -85,6 +85,7 @@ lib/RDF/Trine/Store/DBI/Pg.pm
 lib/RDF/Trine/Store/DBI/SQLite.pm
 lib/RDF/Trine/Store/Dydra.pm
 lib/RDF/Trine/Store/Hexastore.pm
+lib/RDF/Trine/Store/LanguagePreference.pm
 lib/RDF/Trine/Store/Memory.pm
 lib/RDF/Trine/Store/Redis.pm
 lib/RDF/Trine/Store/Redland.pm
@@ -1358,11 +1359,13 @@ t/store-config.t
 t/store-context.t
 t/store-dbi-mysql.t
 t/store-dbi-pg.t
+t/store-dbi-sqlite.t
 t/store-dbi.t
 t/store-hexastore-pattern.t
 t/store-hexastore-storable.t
 t/store-hexastore-triplestore.t
 t/store-hexastore.t
+t/store-language.t
 t/store-memory.t
 t/store-redis.t
 t/store-triple_sql.t

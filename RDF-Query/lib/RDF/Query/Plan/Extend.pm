@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.911.
+This document describes RDF::Query::Plan::Extend version 2.918.
 
 =head1 METHODS
 
@@ -25,12 +25,13 @@ use warnings;
 use base qw(RDF::Query::Plan);
 use RDF::Query::Error qw(:try);
 use Scalar::Util qw(blessed refaddr);
+use Data::Dumper;
 
 ######################################################################
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################

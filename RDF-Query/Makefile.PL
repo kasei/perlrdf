@@ -27,16 +27,17 @@ requires			'File::Spec'				=> 0;
 requires			'File::Temp'				=> 0;
 requires			'JSON'						=> 2;
 requires			'Parse::RecDescent'			=> 0;
-requires			'RDF::Trine'				=> 1.003;
+requires			'RDF::Trine'				=> 1.004;
 requires			'Scalar::Util'				=> 0;
 requires			'Set::Scalar'				=> 0;
 requires			'URI'						=> 1.52;
 requires			'I18N::LangTags'			=> 0;
 
 resources(
-	'homepage'   => "http://search.cpan.org/dist/RDF-Query/",
-	'repository' => "http://github.com/kasei/perlrdf/",
-	'bugtracker' => "https://github.com/kasei/perlrdf/issues"
+	'homepage'		=> "http://search.cpan.org/dist/RDF-Query/",
+	'repository'	=> "http://github.com/kasei/perlrdf/",
+	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
+	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
 
 author_tests('xt');

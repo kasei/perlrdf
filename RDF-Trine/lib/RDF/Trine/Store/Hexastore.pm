@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 1.008
+This document describes RDF::Trine::Store::Hexastore version 1.015
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -144,8 +144,7 @@ sub _new_with_config {
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_url_into_model( $source->{url}, $model, %args );
 		} elsif ($source->{file}) {
-			open(my $fh, "<:encoding(UTF-8)", $source->{file}) 
-	|| throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
+			open(my $fh, "<:encoding(UTF-8)", $source->{file}) || throw RDF::Trine::Error -text => "Couldn't open file $source->{file}";
 			my $parser = RDF::Trine::Parser->new($source->{syntax});
 			my $model	= RDF::Trine::Model->new( $self );
 			$parser->parse_file_into_model( $source->{base_uri}, $source->{file}, $model, %args );
@@ -208,6 +207,10 @@ sub get_statements {
 	my $context	= shift;
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
+	
+	if (defined($context) and not($context->isa('RDF::Trine::Node::Nil'))) {
+		return RDF::Trine::Iterator::Graph->new( [] );
+	}
 	
 	my $defined	= 0;
 	my %variable_map;
@@ -527,7 +530,9 @@ sub _join {
 =cut
 
 sub get_contexts {
-	croak "Contexts not supported for the Hexastore store";
+	my $l		= Log::Log4perl->get_logger("rdf.trine.store.hexastore");
+	$l->warn("Contexts not supported for the Hexastore store");
+ 	return RDF::Trine::Iterator->new([]);
 }
 
 =item C<< add_statement ( $statement [, $context] ) >>
@@ -650,6 +655,11 @@ sub count_statements {
 	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	my @dkeys;
 	my @ukeys;
+	
+	if (scalar(@nodes) > 3 and defined($nodes[3]) and not($nodes[3]->isa('RDF::Trine::Node::Nil'))) {
+		return 0;
+	}
+	
 	foreach my $i (0 .. 2) {
 		if (defined($nodes[ $i ])) {
 			push( @dkeys, $names[$i] );

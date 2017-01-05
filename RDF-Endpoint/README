@@ -17,7 +17,7 @@ REQUIREMENTS
      * Plack::Response
      * Plack::Middleware::AccessLog
      * Data::Dumper
-     * Config::JFDI
+     * Config::ZOMG
      * HTTP::Negotiate
      * IO::Compress::Gzip
      * XML::LibXML

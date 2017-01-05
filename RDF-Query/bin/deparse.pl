@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 no warnings 'redefine';
@@ -23,14 +23,16 @@ my $algebra	= 0;
 my $plan	= 0;
 my $explain	= 0;
 my $spin	= 0;
+my $hash	= 0;
 my $canon	= 0;
 my $endpoint;
-while ($ARGV[0] =~ /^-([cEapPsS])$/) {
+while ($ARGV[0] =~ /^-([cEapPsSh])$/) {
 	$algebra	= 1 if ($1 eq 'a');
 	$plan		= 1 if ($1 eq 'p');
 	$explain	= 1 if ($1 eq 'P');
 	$sparql		= 1 if ($1 eq 's');
 	$spin		= 1 if ($1 eq 'S');
+	$hash		= 1 if ($1 eq 'h');
 
 	$canon		= 1 if ($1 eq 'c');
 	shift(@ARGV);
@@ -61,6 +63,11 @@ if ($query) {
 	if ($algebra) {
 		print "\n# Algebra:\n";
 		print $query->pattern->sse . "\n";
+	}
+	
+	if ($hash) {
+		print "\n# Algebra:\n";
+		print Data::Dumper->Dump([$query->as_hash], [qw(query)]);
 	}
 	
 	if ($spin) {

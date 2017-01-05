@@ -4,7 +4,7 @@ RDF::Trine::Store::DBI::mysql - Mysql subclass of DBI store
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::DBI::mysql version 1.008
+This document describes RDF::Trine::Store::DBI::mysql version 1.015
 
 =head1 SYNOPSIS
 
@@ -25,7 +25,7 @@ use Scalar::Util qw(blessed reftype refaddr);
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.008";
+	$VERSION	= "1.015";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -161,7 +161,6 @@ sub init {
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	local($dbh->{AutoCommit})	= 0;
 	unless ($self->_table_exists("Literals")) {
-		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $dbh->rollback; return };
 			CREATE TABLE IF NOT EXISTS Literals (
 				ID bigint unsigned PRIMARY KEY,

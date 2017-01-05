@@ -7,7 +7,7 @@ RDF::Query::Node::Resource - RDF Node class for resources
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Resource version 2.911.
+This document describes RDF::Query::Node::Resource version 2.918.
 
 =cut
 
@@ -21,6 +21,7 @@ use base qw(RDF::Query::Node RDF::Trine::Node::Resource);
 use URI;
 use Encode;
 use Data::Dumper;
+use RDF::Query::Parser::SPARQL;
 use Scalar::Util qw(blessed reftype);
 use Carp qw(carp croak confess);
 
@@ -28,7 +29,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
@@ -58,6 +59,7 @@ sub _cmp {
 	my $b	= shift;
 	return 1 unless blessed($b);
 	return -1 if ($b->isa('RDF::Query::Node::Literal'));
+	return -1 if ($b->isa('RDF::Trine::Node::Nil'));
 	return 1 if ($b->isa('RDF::Query::Node::Blank'));
 	return 0 unless ($b->isa('RDF::Query::Node::Resource'));
 	my $cmp	= $a->uri_value cmp $b->uri_value;
@@ -72,6 +74,7 @@ Returns the SPARQL string for this node.
 
 sub as_sparql {
 	my $self	= shift;
+	my $PNLOCAL	= $RDF::Query::Parser::SPARQL::r_PN_LOCAL;
 	my $context	= shift || {};
 	if ($context) {
 		my $uri		= $self->uri_value;
@@ -85,7 +88,8 @@ sub as_sparql {
 			my $v	= $ns{ $k };
 			if (index($uri, $v) == 0) {
 				my $local	= substr($uri, length($v));
-				if ($local =~ /^[A-Za-z_]+$/) {
+				
+				if ($local =~ /^(?:$PNLOCAL)$/) {
 					my $qname	= join(':', $k, $local);
 					return $qname;
 				}

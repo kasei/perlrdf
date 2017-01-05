@@ -7,7 +7,7 @@ RDF::Query::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Blank version 2.911.
+This document describes RDF::Query::Node::Blank version 2.918.
 
 =head1 METHODS
 
@@ -33,7 +33,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
@@ -54,6 +54,7 @@ sub _cmp {
 	my $l		= Log::Log4perl->get_logger("rdf.query.node.blank");
 	$l->debug("blank comparison: " . Dumper($nodea, $nodeb));
 	return 1 unless blessed($nodeb);
+	return -1 if ($nodeb->isa('RDF::Trine::Node::Nil'));
 	return -1 if ($nodeb->isa('RDF::Query::Node::Literal'));
 	return -1 if ($nodeb->isa('RDF::Query::Node::Resource'));
 	return 1 unless ($nodeb->isa('RDF::Query::Node::Blank'));

@@ -1,9 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 no warnings 'redefine';
 use URI::file;
-use Test::More tests => 2;
+use Test::More;
 
 use Data::Dumper;
 use RDF::Trine qw(iri literal blank);
@@ -27,6 +27,7 @@ my $s		= RDF::Trine::Serializer::TSV->new();
 	my $iter	= RDF::Trine::Iterator::Graph->new( [ $st1, $st2, $st3 ] );
 	my $string	= $s->serialize_iterator_to_string( $iter );
 	is( $string, <<"END", 'tsv serialization' );
+?s	?p	?o
 <http://example.org/alice>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://xmlns.com/foaf/0.1/Person>
 <http://example.org/eve>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://xmlns.com/foaf/0.1/Person>
 <http://example.org/bob>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://xmlns.com/foaf/0.1/Person>
@@ -41,9 +42,26 @@ END
 	my $iter	= RDF::Trine::Iterator::Graph->new( [ $st1, $st2, $st3, $st4 ] );
 	my $string	= $s->serialize_iterator_to_string( $iter );
 	is( $string, <<'END', 'tsv serialization' );
+?s	?p	?o
 <http://example.org/eve>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://xmlns.com/foaf/0.1/Person>
 <http://example.org/eve>	<http://xmlns.com/foaf/0.1/name>	"Eve"@en
 <http://example.org/eve>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#value>	"123"^^<http://www.w3.org/2001/XMLSchema#integer>
 <http://example.org/eve>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#value>	_:foo
 END
 }
+
+{
+	my $r1		= RDF::Trine::VariableBindings->new({ foo => literal('Eve', 'en'), bar => $foaf->Person });
+	my $r2		= RDF::Trine::VariableBindings->new({ foo => literal('Alice'), bar => $foaf->Agent });
+	my $r3		= RDF::Trine::VariableBindings->new({ foo => literal('Bob') });
+	my $iter	= RDF::Trine::Iterator::Bindings->new( [ $r1, $r2, $r3 ], [qw(foo bar)] );
+	my $string	= $s->serialize_iterator_to_string( $iter );
+	is( $string, <<'END', 'tsv serialization' );
+?foo	?bar
+"Eve"@en	<http://xmlns.com/foaf/0.1/Person>
+"Alice"	<http://xmlns.com/foaf/0.1/Agent>
+"Bob"	
+END
+}
+
+done_testing();

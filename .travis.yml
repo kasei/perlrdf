@@ -1,9 +1,18 @@
 language: perl
 
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -y librdf-perl
 install:
   - "cpanm --quiet --installdeps --notest RDF::Trine"
   - "cpanm --quiet --notest Module::Install::AuthorTests"
+  - "cpanm --quiet --notest IRI"
+  - "cpanm --quiet --notest DBD::Pg"
+  - "cpanm --quiet --notest Text::CSV_XS"
+env:
+  - RDFTRINE_STORE_PG_DATABASE="travis_ci_test" RDFTRINE_STORE_PG_MODEL="testmodel"
 before_script:
   - "cd RDF-Trine"
+  - psql -c 'create database travis_ci_test;' -U postgres
 script:
   - "perl Makefile.PL && make test"

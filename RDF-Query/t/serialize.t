@@ -1,13 +1,14 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use strict;
 use warnings;
 no warnings 'redefine';
 
+use utf8;
 use lib qw(. t);
 BEGIN { require "models.pl"; }
 
 use Test::Exception;
-use Test::More tests => 34;
+use Test::More tests => 40;
 
 use_ok( 'RDF::Query' );
 
@@ -205,6 +206,57 @@ END
 	my $string	= $query->as_sparql;
 	$string		=~ s/\s+/ /gms;
 	is( $string, $sparql, 'sparql to sparql with filter equality test' );
+}
+
+{
+	# Github issue #132 -- Improve support of qNames in RDF::Query::Node::Resource
+	{
+		my $query	= RDF::Query->new('PREFIX ex: <http://example.org/> SELECT * WHERE { ?s ex:123 ?o }');
+		my $sparql	= $query->as_sparql;
+		like($sparql, qr/ex:123/, 'Non-alpha PrefixName');
+		my $again	= RDF::Query->new( $sparql )->as_sparql;
+		is( $sparql, $again, 'as_sparql: sparql round trip: Non-alpha PrefixName' );
+	}
+
+	{
+		my $query	= new RDF::Query ( <<'END' );
+	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+	PREFIX 食: <http://www.w3.org/2001/sw/DataAccess/tests/data/i18n/kanji.ttl#>
+	SELECT ?name WHERE {
+	  [ foaf:name ?name ;
+		食:食べる 食:海老 ] . }
+END
+		my $sparql	= $query->as_sparql;
+		like($sparql, qr/食:食べる/, 'Unicode PrefixName');
+		my $again	= RDF::Query->new( $sparql )->as_sparql;
+		is( $sparql, $again, 'as_sparql: sparql round trip: Unicode PrefixName' );
+	}
+}
+
+{
+	# Github issue #133 -- Serialization of SPARQL functions improperly uses function name prefix
+	{
+		my $sparql	= <<"END";
+SELECT * WHERE { ?s ?p ?l . FILTER( LANGMATCHES(LANG(?l), "en") ) . }
+END
+		chomp($sparql);
+		$sparql		=~ s/\s+/ /gms;
+		my $query	= RDF::Query->new( $sparql );
+		my $string	= $query->as_sparql;
+		$string		=~ s/\s+/ /gms;
+		is( $string, $sparql, 'sparql to sparql with LANGMATCHES filter test' );
+	}
+	{
+		my $sparql	= <<"END";
+SELECT * WHERE { ?s ?p ?l . FILTER( STRLANG(?l, "en") ) . }
+END
+		chomp($sparql);
+		$sparql		=~ s/\s+/ /gms;
+		my $query	= RDF::Query->new( $sparql );
+		my $string	= $query->as_sparql;
+		$string		=~ s/\s+/ /gms;
+		is( $string, $sparql, 'sparql to sparql with STRLANG filter test' );
+	}
 }
 
 

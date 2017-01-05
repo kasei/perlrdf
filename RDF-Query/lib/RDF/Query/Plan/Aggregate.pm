@@ -7,7 +7,7 @@ RDF::Query::Plan::Aggregate - Executable query plan for Aggregates.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Aggregate version 2.911.
+This document describes RDF::Query::Plan::Aggregate version 2.918.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use RDF::Query::Node qw(literal);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
@@ -177,6 +177,10 @@ sub execute ($) {
 							$aggregate_data->{ $alias }{ $group }[0]	= $op;
 							
 							my $strict	= 1;
+							unless ($value->isa('RDF::Query::Node::Literal') and $value->is_numeric_type) {
+								throw RDF::Query::Error::TypeError -text => "Cannot compute SUM aggregate with a non-numeric term: " . $value->as_ntriples;
+							}
+							
 	#						if ($value->isa('RDF::Query::Node::Literal')) {
 							my $v	= $value->numeric_value;
 							if (scalar( @{ $aggregate_data->{ $alias }{ $group } } ) > 1) {
@@ -316,6 +320,8 @@ sub execute ($) {
 						}
 					}
 				} catch RDF::Query::Error::ComparisonError with {
+					delete $aggregate_data->{ $alias }{ $group };
+				} catch RDF::Query::Error::TypeError with {
 					delete $aggregate_data->{ $alias }{ $group };
 				}
 			}

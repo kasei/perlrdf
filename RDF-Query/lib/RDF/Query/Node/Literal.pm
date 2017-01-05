@@ -7,7 +7,7 @@ RDF::Query::Node::Literal - RDF Node class for literals
 
 =head1 VERSION
 
-This document describes RDF::Query::Node::Literal version 2.911.
+This document describes RDF::Query::Node::Literal version 2.918.
 
 =cut
 
@@ -30,7 +30,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION, $LAZY_COMPARISONS);
 BEGIN {
-	$VERSION	= '2.911';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
@@ -65,6 +65,7 @@ sub _cmp {
 	$l->debug('literal comparison: ' . Dumper($nodea, $nodeb));
 	
 	return 1 unless blessed($nodeb);
+	return -1 if ($nodeb->isa('RDF::Trine::Node::Nil'));
 	return 1 if ($nodeb->isa('RDF::Query::Node::Blank'));
 	return 1 if ($nodeb->isa('RDF::Query::Node::Resource'));
 	return 1 unless ($nodeb->isa('RDF::Query::Node::Literal'));
