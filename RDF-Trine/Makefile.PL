@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 
+use lib '.';
 use inc::Module::Install;
 
 name				'RDF-Trine';
@@ -44,7 +45,6 @@ requires			'XML::Namespace'			=> 0;
 requires			'XML::SAX'					=> 0.96;
 requires			'Time::HiRes'				=> 0;
 requires			'Cache::LRU'				=> 0;
-requires			'RDF::EARL'					=> 0;
 
 recommends			'XML::LibXML'				=> 1.70;
 recommends			'Term::ANSIColor'			=> 0;
