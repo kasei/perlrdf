@@ -103,6 +103,8 @@ foreach my $file (@bad) {
 _:a foaf:name "Bob" . 
 _:a ex:likes "Blåbærsyltetøy"@no .
 END
+	use Encode;
+	$ttl = encode("utf-8", $ttl);
 	$parser->parse_into_model(undef, $ttl, $model);
 	my $iter = $model->get_statements( undef, iri('http://www.example.org/vocabulary#likes'), undef );
 	my $st = $iter->next;
