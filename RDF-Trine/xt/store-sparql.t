@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 17;
 use Test::Exception;
 
 use strict;
@@ -17,6 +17,48 @@ my $model	= RDF::Trine::Model->new( $store );
 throws_ok { $store->add_statement() } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws error with no statement';
 throws_ok { $store->remove_statement() } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws error with no statement';
 # throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::UnimplementedError', 'remove_statements throws unimplemented error';
+
+my $subject = RDF::Trine::Node::Resource->new('http://example.org/resource/1');
+my $subject2 = RDF::Trine::Node::Resource->new('http://example.org/resource/2');
+my $predicate = RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+my $object = RDF::Trine::Node::Resource->new('http://example.org/vocab/Record');
+my $statement = RDF::Trine::Statement->new($subject, $predicate, $object);
+my $statement2 = RDF::Trine::Statement->new($subject2, $predicate, $object);
+
+GROUP_BULK_OPS: {
+    my @bulk_ops = ();
+    push(@bulk_ops, ['_add_statements', $statement, undef]);
+    push(@bulk_ops, ['_add_statements', $statement2, undef]);
+    my @aggops = $store->_group_bulk_ops( @bulk_ops );
+    is(scalar @aggops, 1, "There should just be one _add_statements aggregated operation");
+    my $aggop = shift @aggops;
+    my ($type, $ops) = @$aggop;
+    is($type, '_add_statements', "Type is correct: _add_statements");
+    is(scalar @$ops, 2, 'There should be two ops here');
+}
+
+BULK_OPS_INTEGRATION: {
+    no warnings 'redefine';
+    local *RDF::Trine::Store::SPARQL::_get_post_iterator = sub {
+        my ($self,$sparql) = @_;
+        my @statements = ();
+        if ($sparql =~ /INSERT DATA {(.*)}/s){
+            my $ntriples = $1;
+            if ($ntriples){
+                my $parser = RDF::Trine::Parser->new('ntriples');
+                $parser->parse(undef, $ntriples, sub { my $st  = shift; push(@statements,$st); } );
+            }
+        }
+        is(@statements,2,"There should be two statements being posted.");
+
+        #This boolean isn't really checked so just default to true
+        return RDF::Trine::Iterator::Boolean->new( [ 1 ] );
+     };
+    $store->_begin_bulk_ops;
+    $store->add_statement($statement);
+    $store->add_statement($statement2);
+    $store->_end_bulk_ops;
+}
 
 SKIP: {
 	unless ($ENV{RDFTRINE_NETWORK_TESTS}) {
