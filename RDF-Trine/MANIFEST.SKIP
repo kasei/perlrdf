@@ -6,3 +6,4 @@ Makefile
 .cvsignore
 .prove
 .proverc
+bin/turtle-2013-harness.pl

@@ -10,6 +10,21 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.016.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.015.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.016" ;
+                        doap:created      "2017-04-24" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Updated Makefile.PL for perl 5.26." ;
+                        asc:update      "Fixes to RDF::Trine::Store::Redland (#145 from @doriantaylor)." ;
+                        asc:update      "Remove use of TryCatch in scripts and developer tests." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.015.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz> ;
