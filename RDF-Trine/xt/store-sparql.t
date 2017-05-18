@@ -42,7 +42,7 @@ BULK_OPS_INTEGRATION: {
     local *RDF::Trine::Store::SPARQL::_get_post_iterator = sub {
         my ($self,$sparql) = @_;
         my @statements = ();
-        if ($sparql =~ /INSERT DATA {(.*)}/s){
+        if ($sparql =~ /INSERT DATA [{](.*)[}]/s){
             my $ntriples = $1;
             if ($ntriples){
                 my $parser = RDF::Trine::Parser->new('ntriples');
