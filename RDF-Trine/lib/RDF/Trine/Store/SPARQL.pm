@@ -574,9 +574,9 @@ sub _end_bulk_ops {
 		my @aggops	= $self->_group_bulk_ops( @ops );
 		my @sparql;
 		foreach my $aggop (@aggops) {
-			my ($type, @ops)	= @$aggop;
+			my ($type, $ops)	= @$aggop;
 			my $method	= "${type}_sparql";
-			push(@sparql, $self->$method( @ops ));
+			push(@sparql, $self->$method( @$ops ));
 		}
 		my $sparql	= join(";\n", @sparql);
 		my $iter	= $self->_get_post_iterator( $sparql );
@@ -593,14 +593,14 @@ sub _group_bulk_ops {
 	
 	my $op		= shift(@ops);
 	my $type	= $op->[0];
-	push(@bulkops, [$type, [ @{$op}[1 .. $#{ $op }] ]]);
+	push(@bulkops, [$type, [[ @{$op}[1 .. $#{ $op }] ]]]);
 	while (scalar(@ops)) {
 		my $op	= shift(@ops);
 		my $type	= $op->[0];
 		if ($op->[0] eq $bulkops[ $#bulkops ][0]) {
 			push( @{ $bulkops[ $#bulkops ][1] }, [ @{$op}[1 .. $#{ $op }] ] );
 		} else {
-			push(@bulkops, [$type, [ @{$op}[1 .. $#{ $op }] ]]);
+			push(@bulkops, [$type, [[ @{$op}[1 .. $#{ $op }] ]]]);
 		}
 	}
 	
