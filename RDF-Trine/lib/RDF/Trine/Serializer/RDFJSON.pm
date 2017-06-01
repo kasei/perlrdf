@@ -84,7 +84,7 @@ sub serialize_model_to_file {
 	my $file	  = shift;
 	my $model  = shift;
 	my $opts   = shift;
-	my $string = to_json($model->as_hashref, $opts);
+	my $string = $opts ? to_json($model->as_hashref, $opts) : encode_json($model->as_hashref);
 	print {$file} $string;
 }
 
@@ -100,7 +100,7 @@ sub serialize_model_to_string {
 	my $self	  = shift;
 	my $model  = shift;
 	my $opts   = shift;
-	my $string = to_json($model->as_hashref, $opts);
+	my $string = $opts ? to_json($model->as_hashref, $opts) : encode_json($model->as_hashref);
 	return $string;
 }
 
