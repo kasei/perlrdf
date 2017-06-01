@@ -10,6 +10,19 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.017.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.016.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.017" ;
+                        doap:created      "2017-06-01" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Fixes to data update code in RDF::Trine::Store::SPARQL (#146 from @minusdavid)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.016.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.015.tar.gz> ;
@@ -25,12 +38,12 @@
                         ] .
 
 
-<http://kasei.us/code/files/RDF-Trine-1.015.tar.gz>
+<http://kasei.us/code/files/RDF-Trine-1.016.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz> ;
 
         doap:Version    [
-                        doap:revision     "1.015" ;
+                        doap:revision     "1.016" ;
                         doap:created      "2017-01-04" ;
                         ];
         asc:changes     [
