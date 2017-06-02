@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 18;
 use Test::Exception;
 
 use strict;
@@ -107,3 +107,34 @@ SKIP: {
 		is_deeply( \@ctx, [], 'empty get_contexts' );
 	}
 }
+
+subtest 'test remove_statements interface' => sub {
+    plan tests => 8;
+
+    no warnings 'redefine';
+    my $cached_sparql;
+    local *RDF::Trine::Store::SPARQL::_get_post_iterator = sub {
+        my ($self,$sparql) = @_;
+        #Cache the SPARQL at subroutine scope for testing
+        $cached_sparql = $sparql;
+        #This boolean isn't really checked so just default to true
+        return RDF::Trine::Iterator::Boolean->new( [ 1 ] );
+    };
+
+    my $store   = RDF::Trine::Store::SPARQL->new('http://localhost/sparql');
+
+    my $subject = RDF::Trine::Node::Resource->new('http://example.org/resource/1');
+    my $predicate = RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+    my $object = RDF::Trine::Node::Resource->new('http://example.org/vocab/Record');
+    my $context = RDF::Trine::Node::Resource->new('http://example.org/graph/1');
+    my $triple = RDF::Trine::Statement->new($subject, $predicate, $object);
+    my $quad = RDF::Trine::Statement::Quad->new($subject, $predicate, $object, $context);
+    lives_ok {  $store->remove_statements($triple) } 'Use non-standard interface for remove_statements w/ triple';
+    is( $cached_sparql, 'DELETE WHERE { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> . }','SPARQL OK');
+    lives_ok {  $store->remove_statements($quad) } 'Use non-standard interface for remove_statements w/ quad';
+    is( $cached_sparql, 'DELETE WHERE { GRAPH <http://example.org/graph/1> { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> } }', 'SPARQL OK');
+    lives_ok {  $store->remove_statements($subject, $predicate, $object, $context) } 'Use standard interface for remove_statements w/ context';
+    is( $cached_sparql, 'DELETE WHERE { GRAPH <http://example.org/graph/1> { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> } }', 'SPARQL OK');
+    lives_ok {  $store->remove_statements($subject, $predicate, $object, undef) } 'Use standard interface for remove_statements w/o context';
+    is( $cached_sparql, 'DELETE WHERE { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> . }','SPARQL OK');
+};

@@ -366,8 +366,21 @@ Removes the specified C<$statement> from the underlying model.
 
 sub remove_statements {
 	my $self	= shift;
-	my $st		= shift;
-	my $context	= shift;
+	my $st		= $_[0];
+    my $context;
+    if ( $st->isa("RDF::Trine::Statement") ){
+        $context = $_[1];
+    }
+    else {
+        my ($subj,$pred,$obj) = @_[ 0..2 ];
+        $context = $_[3];
+        if ($context){
+            $st = RDF::Trine::Statement::Quad->new($subj,$pred,$obj,$context);
+        }
+        else {
+            $st = RDF::Trine::Statement->new($subj,$pred,$obj);
+        }
+    }
 	
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statements";
