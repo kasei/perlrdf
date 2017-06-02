@@ -18,12 +18,12 @@ throws_ok { $store->add_statement() } 'RDF::Trine::Error::MethodInvocationError'
 throws_ok { $store->remove_statement() } 'RDF::Trine::Error::MethodInvocationError', 'remove_statement throws error with no statement';
 # throws_ok { $store->remove_statements(iri('asdfkj')) } 'RDF::Trine::Error::UnimplementedError', 'remove_statements throws unimplemented error';
 
-my $subject = RDF::Trine::Node::Resource->new('http://example.org/resource/1');
-my $subject2 = RDF::Trine::Node::Resource->new('http://example.org/resource/2');
-my $predicate = RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
-my $object = RDF::Trine::Node::Resource->new('http://example.org/vocab/Record');
-my $statement = RDF::Trine::Statement->new($subject, $predicate, $object);
-my $statement2 = RDF::Trine::Statement->new($subject2, $predicate, $object);
+my $subject = iri('http://example.org/resource/1');
+my $subject2 = iri('http://example.org/resource/2');
+my $predicate = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+my $object = iri('http://example.org/vocab/Record');
+my $statement = statement($subject, $predicate, $object);
+my $statement2 = statement($subject2, $predicate, $object);
 
 GROUP_BULK_OPS: {
     my @bulk_ops = ();
@@ -123,18 +123,22 @@ subtest 'test remove_statements interface' => sub {
 
     my $store   = RDF::Trine::Store::SPARQL->new('http://localhost/sparql');
 
-    my $subject = RDF::Trine::Node::Resource->new('http://example.org/resource/1');
-    my $predicate = RDF::Trine::Node::Resource->new('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
-    my $object = RDF::Trine::Node::Resource->new('http://example.org/vocab/Record');
-    my $context = RDF::Trine::Node::Resource->new('http://example.org/graph/1');
-    my $triple = RDF::Trine::Statement->new($subject, $predicate, $object);
-    my $quad = RDF::Trine::Statement::Quad->new($subject, $predicate, $object, $context);
+    my $subject = iri('http://example.org/resource/1');
+    my $predicate = iri('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+    my $object = iri('http://example.org/vocab/Record');
+    my $context = iri('http://example.org/graph/1');
+    my $triple = statement($subject, $predicate, $object);
+    my $quad = statement($subject, $predicate, $object, $context);
+    
     lives_ok {  $store->remove_statements($triple) } 'Use non-standard interface for remove_statements w/ triple';
     is( $cached_sparql, 'DELETE WHERE { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> . }','SPARQL OK');
+    
     lives_ok {  $store->remove_statements($quad) } 'Use non-standard interface for remove_statements w/ quad';
     is( $cached_sparql, 'DELETE WHERE { GRAPH <http://example.org/graph/1> { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> } }', 'SPARQL OK');
+    
     lives_ok {  $store->remove_statements($subject, $predicate, $object, $context) } 'Use standard interface for remove_statements w/ context';
     is( $cached_sparql, 'DELETE WHERE { GRAPH <http://example.org/graph/1> { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> } }', 'SPARQL OK');
+    
     lives_ok {  $store->remove_statements($subject, $predicate, $object, undef) } 'Use standard interface for remove_statements w/o context';
     is( $cached_sparql, 'DELETE WHERE { <http://example.org/resource/1> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab/Record> . }','SPARQL OK');
 };
