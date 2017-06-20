@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 1.017
+This document describes RDF::Trine::Store::SPARQL version 1.018
 
 =head1 SYNOPSIS
 
@@ -37,9 +37,9 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.017";
+	$VERSION	= "1.018";
 	my $class	= __PACKAGE__;
-	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
+	$RDF::Trine::Store::STORE_CLASSES{ $class } = $VERSION;
 	@pos_names	= qw(subject predicate object context);
 }
 
@@ -120,7 +120,7 @@ sub _config_meta {
 	return {
 		required_keys	=> [qw(url)],
 		fields			=> {
-			url	=> { description => 'Endpoint URL', type => 'string' },
+			url => { description => 'Endpoint URL', type => 'string' },
 		}
 	}
 }
@@ -145,12 +145,12 @@ sub get_statements {
 		if (blessed($g) and not($g->is_variable) and not($g->is_nil)) {
 			$use_quad	= 1;
 			$bound++;
-			$bound{ 3 }	= $g;
+			$bound{ 3 } = $g;
 		}
 	}
 	
-	my @var_map	= qw(s p o g);
-	my %var_map	= map { $var_map[$_] => $_ } (0 .. $#var_map);
+	my @var_map = qw(s p o g);
+	my %var_map = map { $var_map[$_] => $_ } (0 .. $#var_map);
 	my @node_map;
 	foreach my $i (0 .. $#nodes) {
 		if (not(blessed($nodes[$i])) or $nodes[$i]->is_variable) {
@@ -183,14 +183,14 @@ SELECT $names WHERE { $nodes }
 END
 	}
 	my $sub		= sub {
-		my $row	= $iter->next;
+		my $row = $iter->next;
 		return unless $row;
 		my @triple;
 		foreach my $i (0 .. ($node_count-1)) {
 			if ($nodes[$i]->is_variable) {
-				$triple[$i]	= $row->{ $nodes[$i]->name };
+				$triple[$i] = $row->{ $nodes[$i]->name };
 			} else {
-				$triple[$i]	= $nodes[$i];
+				$triple[$i] = $nodes[$i];
 			}
 		}
 		my $triple	= $st_class->new( @triple );
@@ -208,7 +208,7 @@ Returns an iterator object of all bindings matching the specified graph pattern.
 sub get_pattern {
 	my $self	= shift;
 	my $bgp		= shift;
-	my $context	= shift;
+	my $context = shift;
 	my @args	= @_;
 	my %args	= @args;
 	
@@ -217,7 +217,7 @@ sub get_pattern {
 	}
 	
 	my %iter_args;
-	my @triples	= grep { $_->type eq 'TRIPLE' } $bgp->triples;
+	my @triples = grep { $_->type eq 'TRIPLE' } $bgp->triples;
 	my @quads	= grep { $_->type eq 'QUAD' } $bgp->triples;
 	
 	my @tripless;
@@ -229,7 +229,7 @@ sub get_pattern {
 		}
 		push(@tripless, join(' ', @nodess) . ' .');
 	}
-	my $triples	= join("\n\t", @tripless);
+	my $triples = join("\n\t", @tripless);
 	my $quads	= '';
 	if (@quads) {
 		return $self->SUPER::get_pattern( $bgp, $context, @args );
@@ -249,7 +249,7 @@ END
 			push(@order, "${order}(?$k)");
 		}
 		if (@order) {
-			$sparql	.= "ORDER BY " . join(' ', @order);
+			$sparql .= "ORDER BY " . join(' ', @order);
 		}
 	}
 	
@@ -268,8 +268,8 @@ sub get_contexts {
 	my $self	= shift;
 	my $sparql	= 'SELECT DISTINCT ?g WHERE { GRAPH ?g {} }';
 	my $iter	= $self->get_sparql( $sparql );
-	my $sub	= sub {
-		my $row	= $iter->next;
+	my $sub = sub {
+		my $row = $iter->next;
 		return unless $row;
 		my $g	= $row->{g};
 		return $g;
@@ -286,7 +286,7 @@ Adds the specified C<$statement> to the underlying model.
 sub add_statement {
 	my $self	= shift;
 	my $st		= shift;
-	my $context	= shift;
+	my $context = shift;
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to add_statement";
 	}
@@ -306,7 +306,7 @@ sub _add_statements_sparql {
 	my @parts;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
-		my $context	= $op->[1];
+		my $context = $op->[1];
 		if ($st->isa('RDF::Trine::Statement::Quad')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
 		} else {
@@ -326,7 +326,7 @@ Removes the specified C<$statement> from the underlying model.
 sub remove_statement {
 	my $self	= shift;
 	my $st		= shift;
-	my $context	= shift;
+	my $context = shift;
 	
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statement";
@@ -347,7 +347,7 @@ sub _remove_statements_sparql {
 	my @parts;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
-		my $context	= $op->[1];
+		my $context = $op->[1];
 		if ($st->isa('RDF::Trine::Statement::Quad')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
 		} else {
@@ -366,8 +366,19 @@ Removes the specified C<$statement> from the underlying model.
 
 sub remove_statements {
 	my $self	= shift;
-	my $st		= shift;
-	my $context	= shift;
+	my $st		= $_[0];
+	my $context;
+	if ($st->isa("RDF::Trine::Statement")) {
+		$context = $_[1];
+	} else {
+		my ($subj,$pred,$obj) = @_[0..2];
+		$context = $_[3];
+		if ($context) {
+			$st = RDF::Trine::Statement::Quad->new($subj, $pred, $obj, $context);
+		} else {
+			$st = RDF::Trine::Statement->new($subj, $pred, $obj);
+		}
+	}
 	
 	unless (blessed($st) and $st->isa('RDF::Trine::Statement')) {
 		throw RDF::Trine::Error::MethodInvocationError -text => "Not a valid statement object passed to remove_statements";
@@ -388,7 +399,7 @@ sub _remove_statement_patterns_sparql {
 	my @parts;
 	foreach my $op (@_) {
 		my $st		= $op->[0];
-		my $context	= $op->[1];
+		my $context = $op->[1];
 		my $sparql;
 		if ($st->isa('RDF::Trine::Statement::Quad')) {
 			push(@parts, 'GRAPH ' . $st->context->as_ntriples . ' { ' . join(' ', map { $_->is_variable ? '?' . $_->name : $_->as_ntriples } ($st->nodes)[0..2]) . ' }');
@@ -418,11 +429,11 @@ sub count_statements {
 	my $use_quad	= 0;
 	if (scalar(@_) >= 4) {
 		$use_quad	= 1;
-# 		warn "count statements with quad" if ($::debug);
+#		warn "count statements with quad" if ($::debug);
 		my $g	= $nodes[3];
 		if (blessed($g) and not($g->is_variable)) {
 			$bound++;
-			$bound{ 3 }	= $g;
+			$bound{ 3 } = $g;
 		}
 	}
 	
@@ -446,9 +457,9 @@ sub count_statements {
 			my $graph	= $nodes[3]->is_variable ? '?' . $nodes[3]->name : $nodes[3]->as_ntriples;
 			$nodes		= "GRAPH $graph { $triple }";
 		}
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
+		$sparql = "SELECT (COUNT(*) AS ?count) WHERE { $nodes }";
 	} else {
-		$sparql	= "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
+		$sparql = "SELECT (COUNT(*) AS ?count) WHERE { $triple }";
 	}
 	my $iter	= $self->get_sparql( $sparql );
 	my $row		= $iter->next;
@@ -456,18 +467,18 @@ sub count_statements {
 	return unless ($count);
 	return $count->literal_value;
 	
-# 	
-# 	
-# 	
-# 	
-# 	
-# 	# XXX try to send a COUNT() query and fall back if it fails
-# 	my $iter	= $self->get_statements( @_ );
-# 	my $count	= 0;
-# 	while (my $st = $iter->next) {
-# 		$count++;
-# 	}
-# 	return $count;
+#	
+#	
+#	
+#	
+#	
+#	# XXX try to send a COUNT() query and fall back if it fails
+#	my $iter	= $self->get_statements( @_ );
+#	my $count	= 0;
+#	while (my $st = $iter->next) {
+#		$count++;
+#	}
+#	return $count;
 }
 
 =item C<< size >>
@@ -513,13 +524,13 @@ Returns an iterator object of all bindings matching the specified SPARQL query.
 sub get_sparql {
 	my $self	= shift;
 	my $sparql	= shift;
-	my $handler	= RDF::Trine::Iterator::SAXHandler->new();
+	my $handler = RDF::Trine::Iterator::SAXHandler->new();
 	my $p		= XML::SAX::ParserFactory->parser(Handler => $handler);
 	my $ua		= $self->{ua};
 	
-# 	warn $sparql;
+#	warn $sparql;
 	
-	my $urlchar	= ($self->{url} =~ /\?/ ? '&' : '?');
+	my $urlchar = ($self->{url} =~ /\?/ ? '&' : '?');
 	my $url		= $self->{url} . $urlchar . 'query=' . uri_escape($sparql);
 	my $response	= $ua->get( $url );
 	if ($response->is_success) {
@@ -540,7 +551,7 @@ sub _get_post_iterator {
 	my $sparql	= shift;
 	my $ua		= $self->{ua};
 	
-# 	warn $sparql;
+#	warn $sparql;
 	
 	my $url			= $self->{url};
 	my $req			= POST($url, [ update => $sparql ]);
@@ -570,7 +581,7 @@ sub _begin_bulk_ops {
 sub _end_bulk_ops {
 	my $self			= shift;
 	if (scalar(@{ $self->{ ops } || []})) {
-		my @ops	= splice(@{ $self->{ ops } });
+		my @ops = splice(@{ $self->{ ops } });
 		my @aggops	= $self->_group_bulk_ops( @ops );
 		my @sparql;
 		foreach my $aggop (@aggops) {

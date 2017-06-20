@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFPatch - RDF-Patch Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFPatch version 1.017
+This document describes RDF::Trine::Parser::RDFPatch version 1.018
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use RDF::Trine::Parser::Turtle::Constants;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.017';
+	$VERSION	= '1.018';
 }
 
 ######################################################################

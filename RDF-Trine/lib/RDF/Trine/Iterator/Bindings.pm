@@ -7,7 +7,7 @@ RDF::Trine::Iterator::Bindings - Iterator class for bindings query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 1.017
+This document describes RDF::Trine::Iterator::Bindings version 1.018
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.017';
+	$VERSION	= '1.018';
 }
 
 =item C<new ( \@results, \@names, %args )>
