@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFa - RDFa Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFa version 1.017
+This document describes RDF::Trine::Parser::RDFa version 1.018
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAVE_RDFA_PARSER);
 BEGIN {
-	$VERSION	= '1.017';
+	$VERSION	= '1.018';
 	if (can_load( modules => { 'RDF::RDFa::Parser' => 0.30 })) {
 		$HAVE_RDFA_PARSER	= 1;
 		$RDF::Trine::Parser::parser_names{ 'rdfa' }	= __PACKAGE__;
