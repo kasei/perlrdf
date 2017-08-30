@@ -476,7 +476,7 @@ END
 		} else {
 			my $dir			= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
-			my $parser		= HTML::HTML5::Parser->new;
+			my $parser		= XML::LibXML->new;
 			my $doc			= $parser->parse_file( $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', namespaces => { %$ns } );
 			$gen->inject_document($doc, $sdmodel);
