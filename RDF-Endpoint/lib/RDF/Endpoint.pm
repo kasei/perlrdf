@@ -122,7 +122,6 @@ use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
 use RDF::RDFa::Generator 0.102;
 use IO::Compress::Gzip qw(gzip);
-use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
 use Fcntl qw(:flock SEEK_END);
