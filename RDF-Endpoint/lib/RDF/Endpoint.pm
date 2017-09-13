@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.08.
+This document describes RDF::Endpoint version 0.09.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.08';
+our $VERSION	= '0.09';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -122,7 +122,6 @@ use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
 use RDF::RDFa::Generator 0.102;
 use IO::Compress::Gzip qw(gzip);
-use HTML::HTML5::Parser;
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
 use Fcntl qw(:flock SEEK_END);
@@ -476,7 +475,7 @@ END
 		} else {
 			my $dir			= $ENV{RDF_ENDPOINT_SHAREDIR} || eval { dist_dir('RDF-Endpoint') } || 'share';
 			my $template	= File::Spec->catfile($dir, 'index.html');
-			my $parser		= HTML::HTML5::Parser->new;
+			my $parser		= XML::LibXML->new(validation => 0, suppress_errors => 1, no_network => 1, recover => 2)  ;
 			my $doc			= $parser->parse_file( $template );
 			my $gen			= RDF::RDFa::Generator->new( style => 'HTML::Head', namespaces => { %$ns } );
 			$gen->inject_document($doc, $sdmodel);

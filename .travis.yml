@@ -16,3 +16,7 @@ before_script:
   - psql -c 'create database travis_ci_test;' -U postgres
 script:
   - "perl Makefile.PL && make test"
+
+notifications:
+  irc: "irc://irc.perl.org/#perlrdf"
+

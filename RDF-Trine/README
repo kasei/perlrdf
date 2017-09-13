@@ -69,6 +69,24 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.018 (2017-06-20)
+
+     * BUG FIXES
+         	Fix API inconsistency in RDF::Trine::Store::SPARQL (#149, #150 from @minusdavid).
+
+  Version 1.017 (2017-06-01)
+
+     * BUG FIXES
+         	Fixes to data update code in RDF::Trine::Store::SPARQL (#146 from @minusdavid).
+
+  Version 1.016 (2017-04-24)
+
+     * BUG FIXES
+         	Fixes to RDF::Trine::Store::Redland (#145 from @doriantaylor).
+     * OTHER
+     		Updated Makefile.PL for perl 5.26.
+         	Remove use of TryCatch in scripts and developer tests.
+
   Version 1.015 (2017-01-04)
 
      * BUG FIXES

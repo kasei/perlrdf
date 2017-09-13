@@ -22,7 +22,6 @@ REQUIREMENTS
      * IO::Compress::Gzip
      * XML::LibXML
      * HTML::HTML5::Writer
-     * HTML::HTML5::Parser
      * Hash::Merge::Simple
 
 	The following additional modules are required for testing the installation:

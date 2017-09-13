@@ -26,7 +26,6 @@ requires			'HTTP::Negotiate'				=> 0;
 requires			'IO::Compress::Gzip'			=> 0;
 requires			'XML::LibXML'					=> 1.70;
 requires			'HTML::HTML5::Writer'			=> 0;
-requires			'HTML::HTML5::Parser'			=> 0;
 requires			'Hash::Merge::Simple'   		=> 0;
 resources(
 	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
