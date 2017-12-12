@@ -64,4 +64,17 @@ END
 END
 }
 
+{
+	my $model	= RDF::Trine::Model->new();
+	my $st1		= RDF::Trine::Statement->new( $p1, $type, $person );
+	$model->add_statement($st1);
+	my $string	= '';
+	open(my $fh, '>', \$string);
+	$s->serialize_model_to_file($fh, $model);
+	is( $string, <<"END", 'tsv serialization: serialize_model_to_file (#155, #156)' );
+s	p	o
+<http://example.org/alice>	<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>	<http://xmlns.com/foaf/0.1/Person>
+END
+}
+
 done_testing();
