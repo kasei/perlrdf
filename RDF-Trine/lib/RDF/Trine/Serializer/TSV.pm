@@ -104,7 +104,7 @@ sub serialize_model_to_string {
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
-
+	
 	my $string	= join("\t", qw(s p o)) . "\n";
 	while (my $st = $iter->next) {
 		my @nodes	= $st->nodes;
@@ -125,7 +125,7 @@ sub serialize_iterator_to_file {
 	my $file	= shift;
 	my $iter	= shift;
 	my $e		= $iter->peek;
-
+	
 	if (defined($e) and blessed($e) and $e->isa('RDF::Trine::Statement')) {
 		print {$file} join("\t", qw(?s ?p ?o)) . "\n";
 		while (my $st = $iter->next) {
@@ -149,7 +149,7 @@ Serializes the iterator to TSV, returning the result as a string.
 sub serialize_iterator_to_string {
 	my $self	= shift;
 	my $iter	= shift;
-
+	
 	# TODO: must print the header line corresponding to the bindings in the entire iterator...
 	my $string	= '';
 	my $e		= $iter->peek;
