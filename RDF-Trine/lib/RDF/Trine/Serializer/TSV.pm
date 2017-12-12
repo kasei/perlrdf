@@ -85,7 +85,7 @@ sub serialize_model_to_file {
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
-	print {$file} join("\t", qw(s p o));
+	print {$file} join("\t", qw(s p o)) . "\n";
 	while (my $st = $iter->next) {
 		print {$file} $self->statement_as_string( $st );
 	}

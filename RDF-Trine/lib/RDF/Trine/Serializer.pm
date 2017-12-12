@@ -45,7 +45,7 @@ use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::TriG;
 use RDF::Trine::Serializer::RDFPatch;
-
+use RDF::Trine::Serializer::TSV;
 
 =head1 METHODS
 
