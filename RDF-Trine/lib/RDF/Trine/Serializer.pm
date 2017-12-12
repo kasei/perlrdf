@@ -45,7 +45,7 @@ use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::TriG;
 use RDF::Trine::Serializer::RDFPatch;
-
+use RDF::Trine::Serializer::TSV;
 
 =head1 METHODS
 
@@ -71,7 +71,7 @@ The valid key-values used in C<< %options >> are specific to a particular
 serializer implementation. For serializers that support namespace declarations
 (to allow more concise serialization), use C<< namespaces => \%namespaces >> in
 C<< %options >>, where the keys of C<< %namespaces >> are namespace names and
-the values are (partial) URIs. For serializers that support base URI declarations, 
+the values are (partial) URIs. For serializers that support base URI declarations,
 use C<< base_uri => $base_uri >> .
 
 =cut
@@ -81,7 +81,7 @@ sub new {
 	my $name	= shift;
 	my $key		= lc($name);
 	$key		=~ s/[^-a-z]//g;
-	
+
 	if (my $class = $serializer_names{ $key }) {
 		return $class->new( @_ );
 	} else {
@@ -96,7 +96,7 @@ RDF::Trine::Serializer object as decided by L<HTTP::Negotiate>.  If
 the C<< 'request_headers' >> key-value is supplied, the C<<
 $request_headers >> is passed to C<< HTTP::Negotiate::choose >>.  The
 option C<< 'restrict' >>, set to a list of serializer names, can be
-used to limit the serializers to choose from. Finally, an C<<'extend' >> 
+used to limit the serializers to choose from. Finally, an C<<'extend' >>
 option can be set to a hashref that contains MIME-types
 as keys and a custom variant as value. This will enable the user to
 use this negotiator to return a type that isn't supported by any
@@ -135,25 +135,25 @@ sub negotiate {
 		$qv		-= 0.01 if ($type =~ m#^application/(?!rdf[+]xml)#);	# prefer standard rdf/xml to other application/* formats
 		push(@default_variants, [$type, $qv, $type]);
 	}
-	
+
 	my %custom_thunks;
 	my @custom_variants;
 	while (my($type,$thunk) = each(%$extend)) {
 		push(@custom_variants, [$thunk, 1.0, $type]);
 		$custom_thunks{ $thunk }	= [$type, $thunk];
 	}
-	
+
 	# remove variants with media types that are in custom_variants from @variants
 	my @variants	= grep { not exists $extend->{ $_->[2] } } @default_variants;
 	push(@variants, @custom_variants);
-	
+
 	my $stype	= choose( \@variants, $headers );
 	if (defined($stype) and $custom_thunks{ $stype }) {
 		my $thunk	= $stype;
 		my $type	= $custom_thunks{ $stype }[0];
 		return ($type, $thunk);
 	}
-	
+
 	if (defined($stype) and my $sclass = $media_types{ $stype }) {
 		return ($stype, $sclass->new( %options ));
 	} else {
