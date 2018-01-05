@@ -7,7 +7,7 @@ RDF::Trine::Serializer - RDF Serializer class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer version 1.018
+This document describes RDF::Trine::Serializer version 1.019
 
 =head1 SYNOPSIS
 
@@ -34,7 +34,7 @@ our %serializer_names;
 our %format_uris;
 our %media_types;
 BEGIN {
-	$VERSION	= '1.018';
+	$VERSION	= '1.019';
 }
 
 use RDF::Trine::Serializer::NQuads;
@@ -45,7 +45,7 @@ use RDF::Trine::Serializer::RDFJSON;
 use RDF::Trine::Serializer::Turtle;
 use RDF::Trine::Serializer::TriG;
 use RDF::Trine::Serializer::RDFPatch;
-
+use RDF::Trine::Serializer::TSV;
 
 =head1 METHODS
 
