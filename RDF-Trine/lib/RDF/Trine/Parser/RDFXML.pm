@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 1.018
+This document describes RDF::Trine::Parser::RDFXML version 1.019
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '1.018';
+	$VERSION	= '1.019';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;

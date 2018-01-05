@@ -69,6 +69,11 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.019 (2018-01-04)
+
+     * BUG FIXES
+         	Add test case for TSV serializer fixes (#155, #156 from @phochste).
+
   Version 1.018 (2017-06-20)
 
      * BUG FIXES
