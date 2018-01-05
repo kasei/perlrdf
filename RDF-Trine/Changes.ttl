@@ -10,6 +10,19 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.019.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.018.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.019" ;
+                        doap:created      "2018-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Add test case for TSV serializer fixes (#155, #156 from @phochste)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.018.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.017.tar.gz> ;
