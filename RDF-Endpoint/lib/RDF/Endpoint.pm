@@ -120,7 +120,7 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator 0.199;
+use RDF::RDFa::Generator 0.200;
 use RDF::TrineX::Compatibility::Attean;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
