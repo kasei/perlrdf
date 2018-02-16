@@ -15,6 +15,19 @@
 	.
 
 
+<http://kasei.us/code/files/RDF-Endpoint-0.10.tar.gz>
+	dcterms:isVersionOf my:project ;
+	
+	doap:Version [
+		doap:revision     "0.10" ;
+		doap:created      "2018-02-16" ;
+	] ;
+	asc:changes [
+		asc:update		"Changes to support the new RDFa serializer (#157 from Kjetil Kjernsmo)." ;
+	] ;
+	.
+
+
 <http://kasei.us/code/files/RDF-Endpoint-0.09.tar.gz>
 	dcterms:isVersionOf my:project ;
 	
