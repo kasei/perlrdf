@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.09.
+This document describes RDF::Endpoint version 0.10.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.09';
+our $VERSION	= '0.10';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -120,7 +120,8 @@ use Scalar::Util qw(blessed refaddr);
 use File::ShareDir qw(dist_dir);
 use HTTP::Negotiate qw(choose);
 use RDF::Trine::Namespace qw(rdf xsd);
-use RDF::RDFa::Generator 0.102;
+use RDF::RDFa::Generator 0.200;
+use RDF::TrineX::Compatibility::Attean;
 use IO::Compress::Gzip qw(gzip);
 use HTML::HTML5::Writer qw(DOCTYPE_XHTML_RDFA);
 use Hash::Merge::Simple qw/ merge /;
