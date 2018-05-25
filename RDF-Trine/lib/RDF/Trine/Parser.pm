@@ -207,7 +207,7 @@ sub parse_url_into_model {
 		throw RDF::Trine::Error::ParserError -text => $resp->status_line;
 	}
 	
-	my $content	= $resp->content;
+	my $content	= $resp->decoded_content;
 	if (my $cb = $args{content_cb}) {
 		$cb->( $url, $content, $resp );
 	}
