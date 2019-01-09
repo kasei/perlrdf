@@ -334,41 +334,6 @@ sub cli_parse_args {
 	return %args;
 }
 
-=item C<< start_endpoint ( $model, $port ) >>
-
-Starts an SPARQL endpoint HTTP server on port $port.
-
-If called in list context, returns the PID and the actual port the server bound
-to. If called in scalar context, returns only the port.
-
-=cut
-
-sub start_endpoint {
-	my $model	= shift;
-	my $port	= shift;
-	my $path	= shift;
-	
-	require CGI;
-	require RDF::Endpoint::Server;
-	
-	local($ENV{TMPDIR})	= '/tmp';
-	my $cgi	= CGI->new;
-	my $s	= RDF::Endpoint::Server->new_with_model( $model,
-				Port		=> $port,
-				Prefix		=> '',
-				CGI			=> $cgi,
-				IncludePath	=> $path,
-			);
-	
-	my $pid	= $s->background();
-#	warn "Endpoint started as [$pid]\n";
-	if (wantarray) {
-		return ($pid, $port);
-	} else {
-		return $port;
-	}
-}
-
 1;
 
 __END__
