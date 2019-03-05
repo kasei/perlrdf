@@ -5,6 +5,7 @@ use lib "$Bin/lib";
 use RDF::Trine qw(iri literal statement);
 use Test::RDF::Trine::Store qw(all_store_tests number_of_tests);
 
+use utf8;
 use strict;
 use Test::More;
 
@@ -28,7 +29,7 @@ my $user	= $ENV{RDFTRINE_STORE_PG_USER};
 my $pass	= $ENV{RDFTRINE_STORE_PG_PASSWORD}; 
 my $model	= $ENV{RDFTRINE_STORE_PG_MODEL};
 
-plan tests => 4 + Test::RDF::Trine::Store::number_of_tests;
+plan tests => 9 + Test::RDF::Trine::Store::number_of_tests;
 
 use strict;
 use warnings;
@@ -42,6 +43,7 @@ $dsn	.= ";host=$host" if (defined($host));
 $dsn	.= ";port=$port" if (defined($port));
 
 persist_test($dsn, $user, $pass, $model);
+unicode_test($dsn, $user, $pass, $model);
 
 my $data = Test::RDF::Trine::Store::create_data;
 
@@ -86,6 +88,52 @@ sub persist_test {
 		my $store	= new_store( $dsn, $user, $pass, $model );
 		is( $store->count_statements, 1, 'statement persists across dbh connections' );
 		$store->remove_statement( $st );
+		is( $store->count_statements, 0, 'cleaned up persistent statement' );
+	}
+}
+
+sub unicode_test {
+	note " unicode tests";
+	my $dsn		= shift;
+	my $user	= shift;
+	my $pass	= shift;
+	my $model	= shift;
+	
+	my $s		= iri('http://example.org/');
+	my $p		= iri('http://purl.org/dc/elements/1.1/title');
+	{
+		my $store	= new_store( $dsn, $user, $pass, $model );
+		$store->add_statement( statement($s, $p, literal('火星', 'ja')) );
+		$store->add_statement( statement($s, $p, literal('café', 'fr')) );
+		is( $store->count_statements, 2, 'insert statements' );
+	}
+	
+	{
+		my $dbh		= DBI->connect($dsn, $user, $pass);
+		my $client_encoding = $dbh->selectrow_array('SHOW client_encoding');
+		my $sth		= $dbh->prepare("SELECT * FROM literals WHERE language IN ('fr', 'ja') ORDER BY value;");
+		$sth->execute();
+		my %seen;
+		while (my $row = $sth->fetchrow_hashref) {
+			$seen{$row->{value}}++;
+		}
+	
+		ok(exists $seen{'café'}, 'e-acute value found in literals table');
+		ok(exists $seen{'火星'}, 'kanji value found in literals table');
+		
+# 		use Data::Dumper;
+# 		use Devel::Peek;
+# 		binmode(\*STDERR, ':utf8');
+# 		warn Dumper(\%seen);
+# 		foreach my $k (keys %seen) {
+# 			Dump($k);
+# 		}
+	}
+	
+	{
+		my $store	= new_store( $dsn, $user, $pass, $model );
+		is( $store->count_statements, 2, 'statement persists across dbh connections' );
+		$store->remove_statements();
 		is( $store->count_statements, 0, 'cleaned up persistent statement' );
 	}
 }
