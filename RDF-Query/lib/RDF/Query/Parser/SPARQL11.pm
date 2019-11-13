@@ -2841,9 +2841,9 @@ sub _RelationalExpression {
 		$self->_NumericExpression;
 		push(@list, splice(@{ $self->{stack} }));
 		$self->_add_stack( $self->new_binary_expression( $op, @list ) );
-	} elsif ($self->_test(qr/(NOT )?IN/)) {
+	} elsif ($self->_test(qr/(NOT )?IN/i)) {
 		my @list	= splice(@{ $self->{stack} });
-		my $op		= lc($self->_eat(qr/(NOT )?IN/));
+		my $op		= lc($self->_eat(qr/(NOT )?IN/i));
 		$op			=~ s/\s+//g;
 		$self->__consume_ws_opt;
 		$self->_ExpressionList();
