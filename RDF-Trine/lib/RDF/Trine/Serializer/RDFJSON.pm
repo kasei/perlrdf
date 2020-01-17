@@ -110,6 +110,11 @@ __END__
 
 =back
 
+=head1 NOTES
+
+As noted in L<https://www.w3.org/TR/rdf-json/>, this serialization format
+is deprecated, and other formats should be preferred.
+
 =head1 BUGS
 
 Please report any bugs or feature requests to through the GitHub web interface
@@ -117,7 +122,7 @@ at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 SEE ALSO
 
-L<http://n2.talis.com/wiki/RDF_JSON_Specification>
+L<https://www.w3.org/TR/rdf-json/>
 
 =head1 AUTHOR
 
