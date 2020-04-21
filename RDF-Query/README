@@ -23,7 +23,7 @@ REQUIREMENTS
 
 	The following additional modules are recommended for some functionality:
 
-     * Geo::Distance
+     * GIS::Distance
 
 INSTALLATION
 

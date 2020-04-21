@@ -10,7 +10,7 @@ license				'perl';
 
 recommends			'LWP::Simple'				=> 0;
 recommends			'Getopt::Simple'			=> 0;
-recommends			'Geo::Distance'				=> 0.09;
+recommends			'GIS::Distance'				=> 0;
 
 build_requires		'Test::JSON'				=> 0;
 build_requires		'Test::More'				=> 0.88;

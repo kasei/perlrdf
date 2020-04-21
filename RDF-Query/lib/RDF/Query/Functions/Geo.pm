@@ -34,7 +34,7 @@ our $GEO_DISTANCE_LOADED;
 BEGIN {
 	$GEO_DISTANCE_LOADED	= do {
 		eval {
-			require Geo::Distance;
+			require GIS::Distance;
 		};
 		($@) ? 0 : 1;
 	};
@@ -59,12 +59,12 @@ sub install {
 			my ($lat1, $lon1, $lat2, $lon2);
 			
 			unless ($GEO_DISTANCE_LOADED) {
-				throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute distance because Geo::Distance is not available" );
+				throw RDF::Query::Error::FilterEvaluationError ( -text => "Cannot compute distance because GIS::Distance is not available" );
 			}
 	
 			my $geo		= ref($query)
-						? ($query->{_query_cache}{'java:com.ldodds.sparql.Distance'}{_geo_dist_obj} ||= new Geo::Distance)
-						: new Geo::Distance;
+						? ($query->{_query_cache}{'java:com.ldodds.sparql.Distance'}{_geo_dist_obj} ||= new GIS::Distance)
+						: new GIS::Distance;
 			if (2 == @_) {
 				my ($point1, $point2)	= map { $_->literal_value } splice(@_,0,2);
 				($lat1, $lon1)	= split(/ /, $point1);
@@ -74,11 +74,11 @@ sub install {
 			}
 			
 			my $dist	= $geo->distance(
-							'kilometer',
-							$lon1,
+# 							'kilometer',
 							$lat1,
-							$lon2,
+							$lon1,
 							$lat2,
+							$lon2,
 						);
 		#	warn "ldodds:Distance => $dist\n";
 			return RDF::Query::Node::Literal->new("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');

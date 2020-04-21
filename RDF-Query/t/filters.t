@@ -12,7 +12,7 @@ my @models	= test_models( @files );
 my $tests	= 0 + (scalar(@models) * 46);
 plan tests => $tests;
 
-eval "use Geo::Distance 0.09;";
+eval "use GIS::Distance;";
 my $GEO_DISTANCE_LOADED	= ($@) ? 0 : 1;
 
 use RDF::Query;
@@ -137,7 +137,7 @@ END
 	}
 	
 	SKIP: {
-		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
+		skip( "Need GIS::Distance to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
 		print "# FILTER geo:distance(...)\n";
 		my $sparql	= <<"END";
 			PREFIX	rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
@@ -158,17 +158,17 @@ END
 		my $query	= RDF::Query->new( $sparql, undef, undef, 'sparql' );
 		$query->add_function( 'http://kasei.us/e/ns/geo#distance', sub {
 			my $query	= shift;
-			my $geo		= new Geo::Distance;
+			my $geo		= new GIS::Distance;
 			my $point	= shift;
 			my $plat	= get_first_literal( $model, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#lat' );
 			my $plon	= get_first_literal( $model, $point, 'http://www.w3.org/2003/01/geo/wgs84_pos#long' );
 			my ($lat, $lon)	= map { Scalar::Util::blessed($_) ? $_->literal_value : $_ } @_;
 			my $dist	= $geo->distance(
-							'kilometer',
-							$lon,
+# 							'kilometer',
 							$lat,
+							$lon,
+							$plat,
 							$plon,
-							$plat
 						);
 # 			warn "\t-> ${dist} kilometers from Providence";
 			return RDF::Query::Node::Literal->new("$dist", undef, 'http://www.w3.org/2001/XMLSchema#float');
@@ -295,7 +295,7 @@ END
 
 	SKIP: {
 		local($RDF::Query::error)	= 1;
-		skip( "Need Geo::Distance 0.09 or higher to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
+		skip( "Need GIS::Distance to run these tests.", 4 ) unless ($GEO_DISTANCE_LOADED);
 		my $sparql	= <<"END";
 			PREFIX	ldodds: <java:com.ldodds.sparql.>
 			PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
