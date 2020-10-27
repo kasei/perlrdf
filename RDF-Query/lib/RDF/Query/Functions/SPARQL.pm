@@ -145,19 +145,10 @@ sub install {
 				if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 					$value	= ($value eq 'true') ? '1' : '0';
 				} elsif ($node->is_numeric_type) {
-					if ($type eq 'http://www.w3.org/2001/XMLSchema#double') {
-						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot cast to xsd:integer as precision would be lost" );
-					} elsif (int($value) != $value) {
-						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot cast to xsd:integer as precision would be lost" );
-					} else {
-						$value	= $node->numeric_value;
-					}
-				} elsif (looks_like_number($value)) {
-					if ($value =~ /[eE]/) {	# double
-						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
-					} elsif (int($value) != $value) {
-						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:integer as precision would be lost" );
-					}
+					$value	= $node->numeric_value;
+					$value	=~ s/[.]\d+$//;
+				} elsif ($value =~ /^[-+]?\d+$/) {
+					# no-op
 				} else {
 					throw RDF::Query::Error::TypeError ( -text => "cannot cast unrecognized value '$value' to xsd:integer" );
 				}
@@ -180,15 +171,13 @@ sub install {
 				if ($type eq 'http://www.w3.org/2001/XMLSchema#boolean') {
 					$value	= ($value eq 'true') ? '1' : '0';
 				} elsif ($node->is_numeric_type) {
-					if ($type eq 'http://www.w3.org/2001/XMLSchema#double') {
-						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:decimal as precision would be lost" );
-					} else {
-						$value	= $node->numeric_value;
-					}
+					$value	= $node->numeric_value;
+					$value	=~ s/[.](\d*[123456789])0*/.$1/;
 				} elsif (looks_like_number($value)) {
 					if ($value =~ /[eE]/) {	# double
 						throw RDF::Query::Error::FilterEvaluationError ( -text => "cannot to xsd:decimal as precision would be lost" );
 					}
+					$value	=~ s/[.](\d*[123456789])0*/.$1/;
 				} else {
 					throw RDF::Query::Error::TypeError ( -text => "cannot cast unrecognized value '$value' to xsd:decimal" );
 				}
@@ -324,9 +313,9 @@ sub install {
 					}
 				} else {
 					my $value	= $node->literal_value;
-					if ($value eq 'true') {
+					if ($value eq 'true' or $value eq '1') {
 						return RDF::Query::Node::Literal->new('true', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
-					} elsif ($value eq 'false') {
+					} elsif ($value eq 'false' or $value eq '0') {
 						return RDF::Query::Node::Literal->new('false', undef, 'http://www.w3.org/2001/XMLSchema#boolean');
 					} else {
 						throw RDF::Query::Error::TypeError -text => "Cannot cast to xsd:boolean: " . Dumper($node);
