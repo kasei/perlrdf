@@ -1,0 +1,221 @@
+# -*-n3-*-
+
+@prefix :			<http://usefulinc.com/ns/doap#> .
+@prefix dc:			<http://purl.org/dc/terms/> .
+@prefix dcs:		<http://ontologi.es/doap-changeset#> .
+@prefix foaf:		<http://xmlns.com/foaf/0.1/> .
+@prefix rdfs:		<http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:		<http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms:	<http://purl.org/dc/terms/> .
+@prefix doap:		<http://usefulinc.com/ns/doap#> .
+@prefix my:			<http://purl.org/NET/cpan-uri/dist/Attean/> .
+
+<>
+	dc:title			"Changes for RDF::Endpoint" ;
+	dc:description		"Changes for RDF::Endpoint" ;
+	dc:subject			my:project ;
+	dc:creator			my:developer ;
+	.
+
+my:project
+	a						:Project ;
+	:name					"RDF-Endpoint" ;
+	:shortdesc				"A SPARQL Protocol Endpoint implementation"@en ;
+	:programming-language	"Perl" ;
+	:homepage				<http://search.cpan.org/dist/RDF-Endpoint/> ;
+	:download-page			<http://search.cpan.org/dist/RDF-Endpoint/> ;
+	:download-mirror		<http://kasei.us/code/files/> ;
+	:bug-database			<https://github.com/kasei/perlrdf/issues> ;
+	:maintainer				<http://kasei.us/about/foaf.xrdf#greg> ;
+	:developer				<http://kasei.us/about/foaf.xrdf#greg> ;
+	:documenter				<http://kasei.us/about/foaf.xrdf#greg> ;
+	:tester					<http://kasei.us/about/foaf.xrdf#greg> ;
+	:created				"2010-06-19"^^xsd:date ;
+	:license				<http://dev.perl.org/licenses/> ;
+	:release				my:v_0-01 , my:v_0-02 , my:v_0-03 , my:v_0-04 , my:v_0-05 ,
+							my:v_0-06 , my:v_0-07 , my:v_0-08 , my:v_0-09 , my:v_0-10 ,
+							my:v_0-11 ;
+	.
+
+
+my:v_0-11
+	a					:Version ;
+	dc:issued			"2020-12-XX"^^xsd:date ;
+	:revision			"0.11" ;
+	dcterms:replaces	my:v_0-10 ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Update project metadata." ]
+	]
+	.
+
+my:v_0-10
+	a					:Version ;
+	:revision			"0.10" ;
+	dcterms:replaces	my:v_0-09 ;
+	dc:issued			"2018-02-16" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Changes to support the new RDFa serializer (#157 from Kjetil Kjernsmo)." ]
+
+	] ;
+	.
+
+
+my:v_0-09
+	a					:Version ;
+	:revision			"0.09" ;
+	dcterms:replaces	my:v_0-08 ;
+	dc:issued			"2017-09-13" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Switch from HTML::HTML5::Parser to XML::LibXML parser for RDFa SD generation (#153 from Kjetil Kjernsmo)." ]
+
+	] ;
+	.
+
+
+my:v_0-08
+	a					:Version ;
+	:revision			"0.08" ;
+	dcterms:replaces	my:v_0-07 ;
+	dc:issued			"2017-01-05" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Replaced use of Config::JFDI with Config::ZOMG (github issue #142)." ]
+	] ;
+	.
+
+
+my:v_0-07
+	a					:Version ;
+	:revision			"0.07" ;
+	dcterms:replaces	my:v_0-06 ;
+	dc:issued			"2014-08-04" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Added Plack::App::RDF::Endpoint." ] ,
+			[ a dcs:Update ; rdfs:label "Updated RDF::Endpoint to quote raw-value ETag values (github issue #106)." ] ,
+			[ a dcs:Update ; rdfs:label "Use base64 encoding of tags to get shorter strings (patch from Kjetil Kjernsmo)." ] ,
+			[ a dcs:Update ; rdfs:label "Updated endpoint.psgi to look for PERLRDF_STORE environment variable." ]
+	] ;
+	.
+
+
+my:v_0-06
+	a					:Version ;
+	:revision			"0.06" ;
+	dcterms:replaces	my:v_0-05 ;
+	dc:issued			"2014-07-01" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Add Server header (from Kjetil Kjernsmo via github pull request #93)." ] ,
+			[ a dcs:Update ; rdfs:label "Added initial support for application/json-problem errors." ] ,
+			[ a dcs:Update ; rdfs:label "Fixed config bug in t/psgi.t." ] ,
+			[ a dcs:Update ; rdfs:label "Added SPARQL 1.1 WG protocol tests." ] ,
+			[ a dcs:Update ; rdfs:label "The load_data and update configuration flags cannot both be true at the same time." ] ,
+			[ a dcs:Update ; rdfs:label "Updated RDF::Endpoint to return a 400 error when datasets are specified both in protocol and query." ] ,
+			[ a dcs:Update ; rdfs:label "Made RDF::Endpoint->new die on invalid config (when both load_data and update options are specified)." ] ,
+			[ a dcs:Update ; rdfs:label "Added Allow header to HTTP 405 responses." ]
+	] ;
+	.
+
+
+my:v_0-05
+	a					:Version ;
+	:revision			"0.05" ;
+	dcterms:replaces	my:v_0-04 ;
+	dc:issued			"2012-05-28" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Use a default in-memory store if no config file is available." ] ,
+			[ a dcs:Update ; rdfs:label "Let RDF_ENDPOINT_FILE env variable override the Config::JFDI default." ] ,
+			[ a dcs:Update ; rdfs:label "Fixed bug in handling of update requests." ] ,
+			[ a dcs:Update ; rdfs:label "Improved conformance with SPARQL 1.1 Protocol spec." ] ,
+			[ a dcs:Update ; rdfs:label "Added use of Plack::Builder and Plack::Middleware::AccessLog in default configuration." ] ,
+			[ a dcs:Update ; rdfs:label "Improved HTTP error status code messages." ] ,
+			[ a dcs:Update ; rdfs:label "Added Service Description resultFormat triples for SPARQL XML and JSON Results." ] ,
+			[ a dcs:Update ; rdfs:label "Renamed Service Description sd:defaultDatasetDescription property to sd:defaultDataset." ] ,
+			[ a dcs:Update ; rdfs:label "Croak when unable to open file handles" ] ,
+			[ a dcs:Update ; rdfs:label "Removed custom logging code (should be done with Plack middleware)." ] ,
+			[ a dcs:Update ; rdfs:label "Require a recent version (0.99) of Plack::Request with support for logging." ] ,
+			[ a dcs:Update ; rdfs:label "Updated see also link to SPARQL Protocol (1.1)." ]
+	] ;
+	.
+
+
+my:v_0-04
+	a					:Version ;
+	:revision			"0.04" ;
+	dcterms:replaces	my:v_0-03 ;
+	dc:issued			"2011-07-19" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Added RDFa serialization tests (from KjetilK)." ] ,
+			[ a dcs:Update ; rdfs:label "Allow the service description default graph to be a URI or a blank node (based on config value)." ] ,
+			[ a dcs:Update ; rdfs:label "Require RDF::RDFa::Generator 0.102 (fixes RDFa service description serialization bug)." ] ,
+			[ a dcs:Update ; rdfs:label "Fixed bug introduced by commit 3fb5e48 causing query results to disappear from HTML results page." ]
+	] ;
+	.
+
+
+my:v_0-03
+	a					:Version ;
+	:revision			"0.03" ;
+	dcterms:replaces	my:v_0-02 ;
+	dc:issued			"2011-06-07" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Removed duplicated, hard-coded HTML to allow better customization of HTML (from nichtich)." ] ,
+			[ a dcs:Update ; rdfs:label "Actually dereference correctly endpoint_path, and make the test use root (from kjetilk)." ] ,
+			[ a dcs:Update ; rdfs:label "Make endpoint path configurable (from kjetilk)." ] ,
+			[ a dcs:Update ; rdfs:label "style element must go in head (from kjetilk)." ] ,
+			[ a dcs:Update ; rdfs:label "Updated service description RDF to use sd:endpoint instead of sd:url (tracking updates in the SD spec)." ] ,
+			[ a dcs:Update ; rdfs:label "Add merging of namespace hashes (from kjetilk)." ] ,
+			[ a dcs:Update ; rdfs:label "Replace new_with_string with new and change docs (from kjetilk)." ]
+	] ;
+	.
+
+
+my:v_0-02
+	a					:Version ;
+	:revision			"0.02" ;
+	dcterms:replaces	my:v_0-01 ;
+	dc:issued			"2011-04-16" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "Added ETag support for query results, varying based on Accept and Accept-Encoding headers, and query string." ] ,
+			[ a dcs:Update ; rdfs:label "Added support for POSTing queries and updates directly using the appropriate media types." ] ,
+			[ a dcs:Update ; rdfs:label "Added CodeMirror files for syntax highlighting SPARQL query form markup." ] ,
+			[ a dcs:Update ; rdfs:label "Changes to align with SPARQL Protocol 1.1." ] ,
+			[ a dcs:Update ; rdfs:label "Updated tests to test functionality directly via PSGI." ] ,
+			[ a dcs:Update ; rdfs:label "Updated content negotiation quality values." ] ,
+			[ a dcs:Update ; rdfs:label "Moved endpoint-specific configuration variables into top-level 'endpoint' hash." ] ,
+			[ a dcs:Update ; rdfs:label "Fixed caching bug in which browsers would use cached results across endpoint instantiations." ] ,
+			[ a dcs:Update ; rdfs:label "Service description is now cached in the RDF::Endpoint object." ] ,
+			[ a dcs:Update ; rdfs:label "Updated endpoint.psgi to move config parsing and endpoint object construction outside of the request handler." ] ,
+			[ a dcs:Update ; rdfs:label "Updated RDF::Endpoint to use a persistent model object across run() calls." ]
+	] ;
+	.
+
+
+my:v_0-01
+	a					:Version ;
+	:revision			"0.01" ;
+	dcterms:replaces	my:v_0-10 ;
+	dc:issued			"2010-07-14" ;
+	dcs:changeset [
+		dcs:item
+			[ a dcs:Update ; rdfs:label "First release." ]
+	] ;
+	.
+
+
+<http://kasei.us/about/foaf.xrdf#greg>
+	a               foaf:Person ;
+	foaf:name       "Gregory Todd Williams" ;
+	foaf:homepage   <http://kasei.us/> ;
+	foaf:page       <http://search.cpan.org/~gwilliams/> ;
+	foaf:mbox       <mailto:gwilliams@cpan.org> ;
+	<http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/NET/cpan-uri/person/gwilliams> ;
+	.

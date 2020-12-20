@@ -28,13 +28,15 @@ requires			'IO::Compress::Gzip'			=> 0;
 requires			'XML::LibXML'					=> 1.70;
 requires			'HTML::HTML5::Writer'			=> 0;
 requires			'Hash::Merge::Simple'   		=> 0;
+
 resources(
-	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
-	'repository' => "http://github.com/kasei/perlrdf/",
+	'homepage'		=> "https://metacpan.org/release/RDF-Endpoint/",
+	'repository'	=> "https://github.com/kasei/perlrdf/",
+	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
+	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
 
-write_doap_changes;
-write_doap_changes_xml;
+write_doap_changes "meta/changes.ttl", "Changes", "turtle";
 
 install_share;
 install_script glob('scripts/*');
