@@ -22,14 +22,14 @@ my:project
 	:name					"RDF-Endpoint" ;
 	:shortdesc				"A SPARQL Protocol Endpoint implementation"@en ;
 	:programming-language	"Perl" ;
-	:homepage				<http://search.cpan.org/dist/RDF-Endpoint/> ;
-	:download-page			<http://search.cpan.org/dist/RDF-Endpoint/> ;
+	:homepage				<https://metacpan.org/release/RDF-Endpoint/> ;
+	:download-page			<https://metacpan.org/release/RDF-Endpoint/> ;
 	:download-mirror		<http://kasei.us/code/files/> ;
 	:bug-database			<https://github.com/kasei/perlrdf/issues> ;
-	:maintainer				<http://kasei.us/about/foaf.xrdf#greg> ;
-	:developer				<http://kasei.us/about/foaf.xrdf#greg> ;
-	:documenter				<http://kasei.us/about/foaf.xrdf#greg> ;
-	:tester					<http://kasei.us/about/foaf.xrdf#greg> ;
+	:maintainer				my:developer ;
+	:developer				my:developer ;
+	:documenter				my:developer ;
+	:tester					my:developer ;
 	:created				"2010-06-19"^^xsd:date ;
 	:license				<http://dev.perl.org/licenses/> ;
 	:release				my:v_0-01 , my:v_0-02 , my:v_0-03 , my:v_0-04 , my:v_0-05 ,
@@ -40,7 +40,7 @@ my:project
 
 my:v_0-11
 	a					:Version ;
-	dc:issued			"2020-12-XX"^^xsd:date ;
+	dc:issued			"2020-12-22"^^xsd:date ;
 	:revision			"0.11" ;
 	dcterms:replaces	my:v_0-10 ;
 	dcs:changeset [
@@ -211,11 +211,11 @@ my:v_0-01
 	.
 
 
-<http://kasei.us/about/foaf.xrdf#greg>
+my:developer
 	a               foaf:Person ;
 	foaf:name       "Gregory Todd Williams" ;
 	foaf:homepage   <http://kasei.us/> ;
-	foaf:page       <http://search.cpan.org/~gwilliams/> ;
+	foaf:page		<https://metacpan.org/author/GWILLIAMS> , <https://github.com/kasei/> ;
 	foaf:mbox       <mailto:gwilliams@cpan.org> ;
 	<http://www.w3.org/2002/07/owl#sameAs> <http://purl.org/NET/cpan-uri/person/gwilliams> ;
 	.
