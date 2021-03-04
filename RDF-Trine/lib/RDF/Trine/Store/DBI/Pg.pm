@@ -73,6 +73,22 @@ sub _column_name {
 	return $col;
 }
 
+=item C<< _encode ( $data ) >>
+
+No-op because Postgres already handles encoding.
+
+=cut
+
+sub _encode { $_[1] }
+
+=item C<< _decode ( $data ) >>
+
+No-op because Postgres already handles encoding.
+
+=cut
+
+sub _decode { $_[1] }
+
 =item C<< init >>
 
 Creates the necessary tables in the underlying database.
