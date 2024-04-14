@@ -34,8 +34,8 @@ requires			'URI'						=> 1.52;
 requires			'I18N::LangTags'			=> 0;
 
 resources(
-	'homepage'		=> "http://search.cpan.org/dist/RDF-Query/",
-	'repository'	=> "http://github.com/kasei/perlrdf/",
+	'homepage'		=> "https://metacpan.org/release/RDF-Query/",
+	'repository'	=> "https://github.com/kasei/perlrdf/",
 	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
 	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
