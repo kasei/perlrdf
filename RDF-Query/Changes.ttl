@@ -9,6 +9,21 @@
         dc:description          "Changes for RDF::Query" ;
         dcterms:references      <http://kasei.us/code/rdf-query/#project> .
 
+<http://kasei.us/code/files/RDF-Query-2.919.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.918.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "2.919" ;
+                        doap:created      "2024-06-13" ;
+                        ];
+        asc:changes     [
+                        asc:update        "Fixed XPath Constructor (cast) functions." ;
+                        asc:update        "Fix case-sensitivity bug in parser for IN expression (#165)." ;
+                        asc:update        "Removed RDF::Query::Util::start_endpoint as it required unreleased/unsupported code (#139)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Query-2.918.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-query/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Query-2.917.tar.gz> ;

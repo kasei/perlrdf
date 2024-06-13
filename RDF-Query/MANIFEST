@@ -207,7 +207,6 @@ xt/dawg-syntax11.t
 xt/dev-service-description.t
 xt/dev-sql-compiler.t
 xt/dev-time-intervals.t
-xt/federate.t
 xt/parser-rdql.t
 xt/parser-sparql.t
 xt/parser-sparql11.t

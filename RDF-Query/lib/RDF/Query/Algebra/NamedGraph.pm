@@ -7,7 +7,7 @@ RDF::Query::Algebra::NamedGraph - Algebra class for NamedGraph patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::NamedGraph version 2.918.
+This document describes RDF::Query::Algebra::NamedGraph version 2.919.
 
 =cut
 
@@ -29,7 +29,7 @@ use RDF::Trine::Iterator qw(sgrep smap swatch);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.918';
+	$VERSION	= '2.919';
 }
 
 ######################################################################
