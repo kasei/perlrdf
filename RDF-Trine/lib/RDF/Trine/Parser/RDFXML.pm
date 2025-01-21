@@ -7,7 +7,7 @@ RDF::Trine::Parser::RDFXML - RDF/XML Parser
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser::RDFXML version 1.007
+This document describes RDF::Trine::Parser::RDFXML version 1.008
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION, $HAS_XML_LIBXML);
 BEGIN {
-	$VERSION	= '1.007';
+	$VERSION	= '1.008';
 	$RDF::Trine::Parser::parser_names{ 'rdfxml' }	= __PACKAGE__;
 	foreach my $ext (qw(rdf xrdf rdfx)) {
 		$RDF::Trine::Parser::file_extensions{ $ext }	= __PACKAGE__;
@@ -104,7 +104,7 @@ sub new {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut

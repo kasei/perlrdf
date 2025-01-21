@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.910.
+This document describes RDF::Query::Parser::SPARQL11 version 2.911.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.910';
+	$VERSION	= '2.911';
 }
 
 ######################################################################
@@ -1575,8 +1575,13 @@ sub _GroupGraphPatternSub {
 				$self->_TriplesBlock;
 				my $rhs		= $self->_remove_pattern;
 				my $lhs		= $self->_remove_pattern;
-				my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
-				$self->_add_patterns( $merged );
+				if ($rhs->isa('RDF::Query::Algebra::BasicGraphPattern')) {
+					my $merged	= $self->__new_bgp( map { $_->triples } ($lhs, $rhs) );
+					$self->_add_patterns( $merged );
+				} else {
+					my $merged	= RDF::Query::Algebra::GroupGraphPattern->new($lhs, $rhs);
+					$self->_add_patterns( $merged );
+				}
 			} else {
 				$self->_TriplesBlock;
 			}

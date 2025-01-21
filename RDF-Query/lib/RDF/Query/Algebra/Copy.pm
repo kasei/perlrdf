@@ -7,7 +7,7 @@ RDF::Query::Algebra::Copy - Algebra class for COPY operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Copy version 2.910.
+This document describes RDF::Query::Algebra::Copy version 2.911.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.910';
+	$VERSION	= '2.911';
 }
 
 ######################################################################

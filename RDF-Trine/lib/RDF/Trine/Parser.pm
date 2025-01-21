@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.007
+This document describes RDF::Trine::Parser version 1.008
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '1.007';
+	$VERSION	= '1.008';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -299,7 +299,7 @@ sub parse_url_into_model {
 
 =item C<< parse_into_model ( $base_uri, $data, $model [, context => $context] ) >>
 
-Parses the C<< $data >>, using the given C<< $base_uri >>. For each RDF
+Parses the bytes in C<< $data >>, using the given C<< $base_uri >>. For each RDF
 statement parsed, will call C<< $model->add_statement( $statement ) >>.
 
 =cut

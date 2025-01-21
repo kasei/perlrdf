@@ -7,7 +7,7 @@ RDF::Trine::Serializer::Turtle - Turtle Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Serializer::Turtle version 1.007
+This document describes RDF::Trine::Serializer::Turtle version 1.008
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ use RDF::Trine::Namespace qw(rdf);
 our ($VERSION, $debug);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '1.007';
+	$VERSION	= '1.008';
 	$RDF::Trine::Serializer::serializer_names{ 'turtle' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/Turtle' }	= __PACKAGE__;
 	foreach my $type (qw(application/x-turtle application/turtle text/turtle text/rdf+n3)) {
@@ -90,18 +90,27 @@ sub new {
 			}
 		}
 	}
-	
+
 	my %rev;
-	while (my ($ns, $uri) = each(%{ $ns })) {
-		if (blessed($uri)) {
-			$uri	= $uri->uri_value;
-			if (blessed($uri)) {
-				$uri	= $uri->uri_value;
-			}
-		}
-		$rev{ $uri }	= $ns;
+    if (blessed($ns) and $ns->isa('RDF::Trine::NamespaceMap')) {
+        for my $prefix ($ns->list_prefixes) {
+            # way convoluted
+            my $nsuri = $ns->namespace_uri($prefix)->uri->value;
+            $rev{$nsuri} = $prefix;
+        }
+    }
+    else {
+        while (my ($ns, $uri) = each(%{ $ns })) {
+            if (blessed($uri)) {
+                $uri	= $uri->uri_value;
+                if (blessed($uri)) {
+                    $uri	= $uri->uri_value;
+                }
+            }
+            $rev{ $uri }	= $ns;
+        }
 	}
-	
+
 	my $self = bless( {
 		ns		=> \%rev,
 		base_uri	=> $base_uri,

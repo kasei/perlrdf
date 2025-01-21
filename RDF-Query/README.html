@@ -50,7 +50,25 @@
 			make install<br />
 		</div>
 	<h2 id="changelog">Version History</h2>
-		<h3 id="v2_910">Version 2.910 (2012-07-22)</h3>
+		<h3 id="v2_910">Version 2.911 (2014-07-24)</h3>
+			<ul>
+				<li>Bug Fixes
+						<li>Fixed bug in RDF::Query::Plan::Join::PushDownNestedLoop that didn't allow 'aggregate' to appear in the RHS serialized text (github issue 101).</li>
+						<li>Fixed SPARQL 1.1 GGP parsing bug (github issue 100).</li>
+						<li>Fixed RDF::Query::Algebra->subpatterns_of_type to support descent into sub-queries.</li>
+						<li>Disabled pushing full updates down into the store object (only meant to be full queries at this point).</li>
+						<li>Fixed as_hash method in RDF::Query::Algebra::Aggregate, RDF::Query::Algebra::Sort, and RDF::Query::Expression::Alias.</li>
+						<li>Updated RDF::Query::Compiler::SQL to respect node class encapsulation.</li>
+				<li>Enhancements
+						<li>Modularized implementation of explain method in algebra and plan classes.</li>
+						<li>Updated rqsh script to use env perl instead of hardcoded bin path.</li>
+						<li>Added JSON output to bin/parse.pl script.</li>
+						<li>Added RDF::Query::ExecutionContext->bind_variable method.</li>
+				<li>Other
+						<li>Added :all export tag to RDF::Trine::Node.</li>
+						<li>Remove Crypt::GPG and Bloom::Filter from list of recommended modules (no longer used in code).</li>
+			</ul>
+		<h3 id="v2_910">Version 2.910 (2013-07-22)</h3>
 			<ul>
 				<li>Bug Fixes
 					<ul>

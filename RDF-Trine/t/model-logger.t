@@ -35,14 +35,20 @@ my $st3		= RDF::Trine::Statement->new( $page, $rdf->type, $foaf->Document );
 	$model->add_statement( $st0 );
 	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n] );
 	
+	$log->comment("foo");
+	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n# foo\n] );
+	
 	$model->add_statement( $st1 );
-	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\nA R foaf:name "Greg" .\n] );
+	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n# foo\nA R foaf:name "Greg" .\n] );
 
 	$model->add_statement( $st3 );
-	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\nA R foaf:name "Greg" .\nA <http://kasei.us/> rdf:type foaf:Document .\n] );
+	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n# foo\nA R foaf:name "Greg" .\nA <http://kasei.us/> rdf:type foaf:Document .\n] );
 	
 	$model->remove_statement( $st0 );
-	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\nA R foaf:name "Greg" .\nA <http://kasei.us/> rdf:type foaf:Document .\nD _:greg R foaf:Person .\n] );
+	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n# foo\nA R foaf:name "Greg" .\nA <http://kasei.us/> rdf:type foaf:Document .\nD _:greg R foaf:Person .\n] );
+	
+	$log->comment("multi-line\ncomment");
+	is( $sink->string, qq[${HEADER}A _:greg rdf:type foaf:Person .\n# foo\nA R foaf:name "Greg" .\nA <http://kasei.us/> rdf:type foaf:Document .\nD _:greg R foaf:Person .\n# multi-line\n# comment\n] );
 }
 
 done_testing();

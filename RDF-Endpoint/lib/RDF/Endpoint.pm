@@ -4,7 +4,7 @@ RDF::Endpoint - A SPARQL Protocol Endpoint implementation
 
 =head1 VERSION
 
-This document describes RDF::Endpoint version 0.05.
+This document describes RDF::Endpoint version 0.06.
 
 =head1 SYNOPSIS
 
@@ -103,7 +103,7 @@ package RDF::Endpoint;
 use 5.008;
 use strict;
 use warnings;
-our $VERSION	= '0.05';
+our $VERSION	= '0.06';
 
 use RDF::Query 2.905;
 use RDF::Trine 0.134 qw(statement iri blank literal);
@@ -112,7 +112,7 @@ use JSON;
 use Encode;
 use File::Spec;
 use Data::Dumper;
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw(md5_base64);
 use XML::LibXML 1.70;
 use Plack::Request;
 use Plack::Response;
@@ -202,6 +202,11 @@ sub run {
 	
 	my $content;
 	my $response	= Plack::Response->new;
+
+	my $server = "RDF::Endpoint/$VERSION";
+	$server .= " " . $response->headers->header('Server') if defined($response->headers->header('Server'));
+	$response->headers->header('Server' => $server);
+
 	unless ($req->path eq $endpoint_path) {
 		my $path	= $req->path_info;
 		$path		=~ s#^/##;
@@ -324,7 +329,7 @@ END
 		}
 		
 		my $match	= $headers->header('if-none-match') || '';
-		my $etag	= md5_hex( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
+		my $etag	= md5_base64( join('#', $self->run_tag, $model->etag, $type, $ae, $sparql) );
 		if (length($match)) {
 			if (defined($etag) and ($etag eq $match)) {
 				$response->status(304);
@@ -507,7 +512,7 @@ Returns a unique key for each instantiation of this service.
 
 sub run_tag {
 	my $self	= shift;
-	return md5_hex(refaddr($self) . $self->{start_time});
+	return md5_base64(refaddr($self) . $self->{start_time});
 }
 
 =item C<< service_description ( $request, $model ) >>
@@ -864,7 +869,7 @@ __END__
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright (c) 2010-2012 Gregory Todd Williams.
+Copyright (c) 2010-2014 Gregory Todd Williams.
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any

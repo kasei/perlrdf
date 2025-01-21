@@ -68,6 +68,39 @@ INSTALLATION
 
 VERSION HISTORY
 
+  Version 1.008 (2014-05-20)
+
+     * BUG FIXES
+         	Fixed bug in Turtle lexer that was failing to anchor matches of PNAME_LN (GH issue #96 by Tobias Kuhn).
+         	Fixed looping bug and handling of N-Triples escape sequences (GH issue #97 by Tobias Kuhn).
+         	Made checking for known DBI backend DSN strings case insensitive.
+         	Fix bug in RDF::Query::Plan::Join::PushDownNestedLoop that didn't allow 'aggregate' to appear in the RHS serialized text (github issue #101).
+         	Fix SPARQL 1.1 GGP parsing bug (github issue #100).
+         	Fixed bug in constructing the HTTP request object for SPARQL updates.
+     * NEW FEATURES
+         	Added RDF::Trine::Parser::RDFPatch.
+         	Added RDF::Trine::Parser::LineProtocol as a RDFPatch parser subclass allowing querying (with bin/cliapi tool).
+     * ENHANCEMENTS
+         	Sync RDF::Trine::NamespaceMap up with URI::NamespaceMap's interface (code from Dorian Taylor).
+         	Updated RDF::Trine::Parser::Turtle->new to accept a default namespace 'map' key.
+         	Updated RDF::Trine::Model->add_statement to verify that statement nodes are ground (not variables).
+         	Updated RDF::Trine::Parser::Turtle->parse_node to allow accessing the tokenizer object used in parsing.
+         	Added RDF::Trine::Parser::Turtle->_term method.
+         	Fixed RDF::Query::Algebra->subpatterns_of_type to support descent into sub-queries.
+         	Fixed as_hash method in RDF::Query::Expression::Alias, RDF::Query::Algebra::Aggregate and RDF::Query::Algebra::Sort.
+         	Return a success iterator for POST requests based only on response code (and regardless of the response content).
+         	Allow POST responses to redirect in RDF::Trine::Store::SPARQL.
+         	Use normalized langauge tags in RDF::Trine::Node::Literal->new.
+         	Added RDF::Query::ExecutionContext->bind_variable method.
+     * OTHER
+         	Added W3C Turtle Test Suite harness bin/turtle-2013-harness.pl.
+         	Added xt/perl-critic.t.
+         	Updated parser method documentation to indicate where data is expected to be bytes.
+         	Added some more docs to the SQlite config (pull request #102 from KjetilK).
+         	Throw error if bindings iterator is given rather than graph in RDF::Trine::Model->add_iterator (pull request #103 from KjetilK).
+         	Disable pushing full updates down into the store object (only meant to be full queries at this point).
+         	Add POD hyperlinks to RDF::Trine documentation (pull request #99 from nichtich).
+
   Version 1.007 (2013-07-18)
 
      * BUG FIXES
