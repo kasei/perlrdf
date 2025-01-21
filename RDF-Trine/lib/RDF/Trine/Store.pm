@@ -7,7 +7,7 @@ RDF::Trine::Store - RDF triplestore base class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.135
+This document describes RDF::Trine::Store version 0.138
 
 =cut
 
@@ -23,7 +23,6 @@ use Carp qw(carp croak confess);
 use Scalar::Util qw(blessed reftype);
 use Module::Load::Conditional qw[can_load];
 
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Store::Memory;
 use RDF::Trine::Store::Hexastore;
 use RDF::Trine::Store::SPARQL;
@@ -32,10 +31,13 @@ use RDF::Trine::Store::SPARQL;
 
 our ($VERSION, $HAVE_REDLAND, %STORE_CLASSES);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 	if ($RDF::Redland::VERSION) {
 		$HAVE_REDLAND	= 1;
 	}
+	can_load( modules => {
+		'RDF::Trine::Store::DBI'	=> undef,
+	} );
 }
 
 ######################################################################
@@ -196,7 +198,7 @@ Returns a new temporary triplestore (using appropriate default values).
 =cut
 
 sub temporary_store {
-	return RDF::Trine::Store::DBI->temporary_store();
+	return RDF::Trine::Store::Memory->new();
 }
 
 =item C<< get_pattern ( $bgp [, $context] ) >>
@@ -380,7 +382,13 @@ Removes the specified C<$statement> from the underlying model.
 
 =cut
 
-sub remove_statements;
+sub remove_statements { # Fallback implementation
+  my $self = shift;
+  my $iterator = $self->get_statements(@_);
+  while (my $st = $iterator->next) {
+    $self->remove_statement($st);
+  }
+}
 
 =item C<< count_statements ($subject, $predicate, $object) >>
 

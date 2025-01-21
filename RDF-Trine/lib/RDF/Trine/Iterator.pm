@@ -7,7 +7,7 @@ RDF::Trine::Iterator - Stream (iterator) class for SPARQL query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator version 0.135.
+This document describes RDF::Trine::Iterator version 0.138.
 
 =head1 SYNOPSIS
 
@@ -42,7 +42,7 @@ use RDF::Trine::Iterator::JSONHandler;
 
 our ($VERSION, @ISA, @EXPORT_OK);
 BEGIN {
-	$VERSION	= '0.135';
+	$VERSION	= '0.138';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);
@@ -337,7 +337,7 @@ RDF::Trine::Iterator::Graph::Materialized should be used instead.
 
 sub count {
 	my $self	= shift;
-	warn "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
+	Carp::carp "RDF::Trine::Iterator->count is deprecated. The 'length' method from either RDF::Trine::Iterator::Bindings::Materialized or RDF::Trine::Iterator::Graph::Materialized should be used instead.";
 	return $self->{_count};
 }
 
@@ -401,7 +401,7 @@ sub format_node_xml ($$$$) {
 	my $node_label;
 	
 	if(!defined $node) {
-		return;
+		return '';
 	} elsif ($node->is_resource) {
 		$node_label	= $node->uri_value;
 		$node_label	=~ s/&/&amp;/g;

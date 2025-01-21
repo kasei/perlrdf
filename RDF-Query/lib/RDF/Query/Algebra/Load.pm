@@ -7,7 +7,7 @@ RDF::Query::Algebra::Load - Algebra class for LOAD operations
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Load version 2.907.
+This document describes RDF::Query::Algebra::Load version 2.908.
 
 =cut
 
@@ -32,7 +32,7 @@ our ($VERSION);
 my %TRIPLE_LABELS;
 my @node_methods	= qw(subject predicate object);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -56,7 +56,8 @@ sub new {
 	my $class	= shift;
 	my $url		= shift;
 	my $graph	= shift;
-	return bless([$url, $graph], $class);
+	my $silent	= shift;
+	return bless([$url, $graph, $silent], $class);
 }
 
 =item C<< construct_args >>
@@ -68,7 +69,7 @@ will produce a clone of this algebra pattern.
 
 sub construct_args {
 	my $self	= shift;
-	return ($self->url, $self->graph);
+	return ($self->url, $self->graph, $self->silent);
 }
 
 =item C<< sse >>
@@ -85,15 +86,18 @@ sub sse {
 	my $url		= $self->url;
 	my $graph	= $self->graph;
 	my $string;
+	my $s		= $self->silent ? "SILENT " : '';
 	if ($graph) {
 		$string	= sprintf(
-			"(load <%s> <%s>)",
+			"(load %s<%s> <%s>)",
+			$s,
 			$url->uri_value,
 			$graph->uri_value,
 		);
 	} else {
 		$string	= sprintf(
-			"(load <%s>)",
+			"(load %s<%s>)",
+			$s,
 			$url->uri_value,
 		);
 	}
@@ -113,16 +117,19 @@ sub as_sparql {
 	
 	my $url		= $self->url;
 	my $graph	= $self->graph;
+	my $s		= $self->silent ? "SILENT " : '';
 	my $string;
 	if ($graph) {
 		$string	= sprintf(
-			"LOAD <%s> INTO GRAPH <%s>",
+			"LOAD %s<%s> INTO GRAPH <%s>",
+			$s,
 			$url->uri_value,
 			$graph->uri_value,
 		);
 	} else {
 		$string	= sprintf(
-			"LOAD <%s>",
+			"LOAD %s<%s>",
+			$s,
 			$url->uri_value,
 		);
 	}
@@ -167,6 +174,14 @@ sub graph {
 	return $self->[1];
 }
 
+=item C<< silent >>
+
+=cut
+
+sub silent {
+	my $self	= shift;
+	return $self->[2];
+}
 
 1;
 

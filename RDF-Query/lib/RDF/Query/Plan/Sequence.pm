@@ -7,7 +7,7 @@ RDF::Query::Plan::Sequence - Executable query plan for a sequence of operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Sequence version 2.907.
+This document describes RDF::Query::Plan::Sequence version 2.908.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use RDF::Trine::Statement;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -54,6 +54,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "SEQUENCE plan can't be executed twice";
 	}
@@ -90,6 +91,9 @@ sub next {
 	
 	my $iter	= $self->[0]{iter};
 	my $row		= $iter->next;
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $row );
+	}
 	return $row;
 }
 

@@ -11,7 +11,7 @@ use RDF::Trine::Namespace qw(rdf foaf);
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser;
 
-my $store	= RDF::Trine::Store::SPARQL->new('http://kasei.us/sparql');
+my $store	= RDF::Trine::Store::SPARQL->new('http://myrdf.us/sparql11');
 my $model	= RDF::Trine::Model->new( $store );
 
 throws_ok { $store->add_statement() } 'RDF::Trine::Error::MethodInvocationError', 'add_statement throws error with no statement';

@@ -7,7 +7,7 @@ RDF::Query::Plan::NamedGraph - Executable query plan for named graphs.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::NamedGraph version 2.907.
+This document describes RDF::Query::Plan::NamedGraph version 2.908.
 
 =head1 METHODS
 
@@ -29,7 +29,7 @@ use base qw(RDF::Query::Plan);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -58,6 +58,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "NamedGraph plan can't be executed while already open";
 	}
@@ -109,6 +110,9 @@ sub next {
 				}
 			}
 			$row->{ $self->graph->name }	= $g;
+			if (my $d = $self->delegate) {
+				$d->log_result( $self, $row );
+			}
 			return $row;
 		} else {
 			my $g		= $self->[0]{graphs}->next;

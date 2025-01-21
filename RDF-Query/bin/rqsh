@@ -224,7 +224,15 @@ sub query {
 	my $model	= shift;
 	my $term	= shift;
 	my $sparql	= shift;
-	my $psparql	= join("\n", $NAMESPACES, $sparql);
+	
+	my $psparql;
+	if ($sparql =~ /^BASE <([^>]+)>/i) {
+		$sparql	=~ s/^BASE <([^>]+)>/BASE <$1>\n$NAMESPACES/;
+		$psparql	= $sparql;
+	} else {
+		$psparql	= join("\n", $NAMESPACES, $sparql);
+	}
+	
 	my $query	= $class->new( $psparql, \%args );
 	unless ($query) {
 		print "Error: " . RDF::Query->error . "\n";

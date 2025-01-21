@@ -5,13 +5,11 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use DBI;
 use RDF::Trine;
 use RDF::Trine::Model::Union;
 use RDF::Trine::Node;
 use RDF::Trine::Pattern;
 use RDF::Trine::Namespace;
-use RDF::Trine::Store::DBI;
 use RDF::Trine::Statement;
 use File::Temp qw(tempfile);
 
@@ -26,8 +24,8 @@ my $st1		= RDF::Trine::Statement->new( $g, $rdf->type, $foaf->Person );
 my $st2		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Greg') );
 my $st3		= RDF::Trine::Statement->new( $g, $foaf->name, RDF::Trine::Node::Literal->new('Gregory') );
 
-my $store1	= RDF::Trine::Store::DBI->temporary_store();
-my $store2	= RDF::Trine::Store::DBI->temporary_store();
+my $store1	= RDF::Trine::Store->temporary_store();
+my $store2	= RDF::Trine::Store->temporary_store();
 my $model	= RDF::Trine::Model::Union->new( $store1, $store2 );
 
 $store1->add_statement( $_ ) for ($st0, $st1);

@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.907.
+This document describes RDF::Query::Util version 2.908.
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use JSON;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -319,7 +319,7 @@ sub cli_parse_args {
 			my $file	= shift(@ARGV);
 			my $sparql	= ($file eq '-')
 						? do { local($/) = undef; <> }
-						: do { local($/) = undef; open(my $fh, '<', $file) || die $!; binmode($fh, ':utf8'); <$fh> };
+						: do { local($/) = undef; open(my $fh, '<', $file) || croak $!; binmode($fh, ':utf8'); <$fh> };
 			$args{ query }	= $sparql;
 		}
 	}

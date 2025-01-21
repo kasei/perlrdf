@@ -9,7 +9,7 @@ use File::Find qw(find);
 
 use RDF::Trine;
 use RDF::Trine::Model;
-use RDF::Trine::Store::DBI;
+use RDF::Trine::Store;
 use RDF::Trine::Serializer::NTriples;
 
 plan qw(no_plan);
@@ -231,7 +231,7 @@ foreach my $file (@good) {
 				my $url	= 'http://www.w3.org/2000/10/rdf-tests/rdfcore' . $filename;
 				my $prefix	= $PREFIXES{ $filename } || 'genid';
 				my $parser	= RDF::Trine::Parser::RDFXML->new( BNodePrefix => $prefix );
-				$model	= RDF::Trine::Model->new( RDF::Trine::Store::DBI->temporary_store );
+				$model	= RDF::Trine::Model->new( RDF::Trine::Store->temporary_store );
 				$parser->parse_into_model( $url, $data, $model );
 			} "parsing $name lives";
 			

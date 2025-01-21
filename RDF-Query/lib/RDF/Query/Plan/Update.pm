@@ -7,7 +7,7 @@ RDF::Query::Plan::Update - Executable query plan for DELETE/INSERT operations.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Update version 2.907.
+This document describes RDF::Query::Plan::Update version 2.908.
 
 =head1 METHODS
 
@@ -25,7 +25,7 @@ use warnings;
 use base qw(RDF::Query::Plan);
 
 use Log::Log4perl;
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed refaddr);
 use Time::HiRes qw(gettimeofday tv_interval);
 
 use RDF::Query::Error qw(:try);
@@ -36,7 +36,7 @@ use RDF::Query::VariableBindings;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.907';
+	$VERSION	= '2.908';
 }
 
 ######################################################################
@@ -62,6 +62,7 @@ sub new {
 sub execute ($) {
 	my $self	= shift;
 	my $context	= shift;
+	$self->[0]{delegate}	= $context->delegate;
 	if ($self->state == $self->OPEN) {
 		throw RDF::Query::Error::ExecutionError -text => "UPDATE plan can't be executed while already open";
 	}
@@ -169,6 +170,9 @@ sub next {
 	
 	my $l		= Log::Log4perl->get_logger("rdf.query.plan.update");
 	$self->close();
+	if (my $d = $self->delegate) {
+		$d->log_result( $self, $self->[0]{ok} );
+	}
 	return $self->[0]{ok};
 }
 
@@ -298,7 +302,7 @@ sub explain {
 	my $count	= shift;
 	my $indent	= $s x $count;
 	my $type	= $self->plan_node_name;
-	my $string	= "${indent}$type\n";
+	my $string	= sprintf("%s%s (0x%x)\n", $indent, $type, refaddr($self));
 	
 	if (my $d = $self->delete_template) {
 		$string	.= "${indent}${s}delete:\n";
