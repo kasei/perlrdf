@@ -86,8 +86,8 @@ sub init {
 	my $id		= RDF::Trine::Store::DBI::_mysql_hash( $name );
 	my $l		= Log::Log4perl->get_logger("rdf.trine.store.dbi");
 	
+	local($dbh->{AutoCommit})	= 0;
 	unless ($self->_table_exists("literals")) {
-		$dbh->begin_work;
 		$dbh->do( <<"END" ) || do { $l->trace( $dbh->errstr ); $dbh->rollback; return };
 			CREATE TABLE literals (
 				ID NUMERIC(20) PRIMARY KEY,

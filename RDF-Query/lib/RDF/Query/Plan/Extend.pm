@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.917.
+This document describes RDF::Query::Plan::Extend version 2.918.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use Data::Dumper;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.917';
+	$VERSION	= '2.918';
 }
 
 ######################################################################
