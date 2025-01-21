@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 1.008
+This document describes RDF::Trine::Parser version 1.011
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '1.008';
+	$VERSION	= '1.011';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
