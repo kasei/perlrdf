@@ -4,7 +4,7 @@ RDF::Trine::Store::SPARQL - RDF Store proxy for a SPARQL endpoint
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::SPARQL version 0.138
+This document describes RDF::Trine::Store::SPARQL version 1.002
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,7 @@ use RDF::Trine::Error qw(:try);
 my @pos_names;
 our $VERSION;
 BEGIN {
-	$VERSION	= "0.138";
+	$VERSION	= "1.002";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	@pos_names	= qw(subject predicate object context);
@@ -614,7 +614,8 @@ __END__
 
 =head1 BUGS
 
-Please report any bugs or feature requests to C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -622,7 +623,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

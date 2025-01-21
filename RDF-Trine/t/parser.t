@@ -44,7 +44,7 @@ SKIP: {
 	}
 	
 	{
-		my $url		= 'http://bad.hostname/bad_file.ttl';
+		my $url		= 'tag:gwilliams@cpan.org,2012-10-18:foobar';
 		my $model	= RDF::Trine::Model->new(RDF::Trine::Store->temporary_store);
 		throws_ok {
 			RDF::Trine::Parser->parse_url_into_model( $url, $model );

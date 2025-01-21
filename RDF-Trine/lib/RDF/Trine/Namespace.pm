@@ -8,7 +8,7 @@ RDF::Trine::Namespace - Abbreviated syntax for constructing RDF node objects
 
 =head1 VERSION
 
-This document describes RDF::Trine::Namespace version 0.138
+This document describes RDF::Trine::Namespace version 1.002
 
 =head1 SYNOPSIS
 
@@ -44,7 +44,7 @@ use base qw(XML::Namespace);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
@@ -70,7 +70,7 @@ sub _install_namespaces {
 			? XML::NamespaceFactory->new('http://www.w3.org/2001/XMLSchema#')
 			: XML::CommonNS->uri( uc($name) );
 		my $ns	= $class->new( "$uri" );
-		no strict 'refs';
+		no strict 'refs';	## no critic (ProhibitNoStrict)
 		*{ "${pkg}::${name}" }	= \$ns;
 	}
 }
@@ -110,8 +110,8 @@ L<XML::Namespace>
 
 =head1 BUGS
 
-Please report any bugs or feature requests to
-C<< <gwilliams@cpan.org> >>.
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -119,7 +119,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

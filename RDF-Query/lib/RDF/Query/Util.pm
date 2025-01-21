@@ -7,7 +7,7 @@ RDF::Query::Util - Miscellaneous utility functions to support work with RDF::Que
 
 =head1 VERSION
 
-This document describes RDF::Query::Util version 2.908.
+This document describes RDF::Query::Util version 2.909.
 
 =head1 SYNOPSIS
 
@@ -40,7 +40,7 @@ use JSON;
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
@@ -104,7 +104,7 @@ following the final argument parsed by C<< &cli_parse_args >>.
 =cut
 
 sub cli_make_query {
-	my %args	= cli_parse_args();
+	my %args	= cli_parse_args(@_);
 	my $class	= delete $args{ class } || 'RDF::Query';
 	my $sparql	= delete $args{ query };
 	my $l		= Log::Log4perl->get_logger("rdf.query.util");
@@ -230,7 +230,6 @@ sub cli_parse_args {
 	$args{ class }	= 'RDF::Query';
 	my @service_descriptions;
 	
-	return unless (@ARGV);
 	while (scalar(@ARGV) and $ARGV[0] =~ /^-(\w+)/) {
 		my $opt	= shift(@ARGV);
 		if ($opt eq '-e') {
@@ -241,6 +240,8 @@ sub cli_parse_args {
 			$args{ optimize }	= 1;
 		} elsif ($opt eq '-o') {
 			$args{ force_no_optimization }	= 1;
+		} elsif ($opt eq '-k') {
+			$args{ canonicalize }	= 1;
 		} elsif ($opt eq '-C') {
 			my $k	= shift(@ARGV);
 			my $v	= shift(@ARGV);

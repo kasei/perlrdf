@@ -7,7 +7,7 @@ RDF::Query::Algebra::Project - Algebra class for projection
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Project version 2.908.
+This document describes RDF::Query::Algebra::Project version 2.909.
 
 =cut
 
@@ -28,7 +28,7 @@ use RDF::Trine::Iterator qw(sgrep);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
@@ -52,6 +52,9 @@ sub new {
 	my $class	= shift;
 	my $pattern	= shift;
 	my $vars	= shift;
+	unless (blessed($pattern)) {
+		throw RDF::Query::Error::MethodInvocationError -text => "Sub-pattern in RDF::Query::Algebra::Project constructor must be a valid algebra object";
+	}
 	unless (reftype($vars) eq 'ARRAY' and not(blessed($vars))) {
 		throw RDF::Query::Error::MethodInvocationError -text => "Variable list in RDF::Query::Algebra::Project constructor must be an ARRAY reference";
 	}

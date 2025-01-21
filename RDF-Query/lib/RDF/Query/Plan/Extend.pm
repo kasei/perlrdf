@@ -7,7 +7,7 @@ RDF::Query::Plan::Extend - Executable query plan for Extends.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Extend version 2.908.
+This document describes RDF::Query::Plan::Extend version 2.909.
 
 =head1 METHODS
 
@@ -30,7 +30,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 }
 
 ######################################################################
@@ -129,7 +129,7 @@ sub next {
 				$l->trace( "- evaluating extend expression resulted in an error; dropping the variable binding" );
 			} otherwise {
 				my $e	= shift;
-				warn Dumper($e);
+				warn 'exception caught in Extend(): ' . Dumper($e);
 			};
 		}
 		next unless ($ok);
@@ -258,10 +258,7 @@ sub explain {
 	$string		.= "${indent}${s}vars:\n";
 	my @vars	= map { RDF::Query::Node::Variable->new( $_ ) } @{$self->[2]};
 	my @exprs	= @{$self->[3]};
-	use Data::Dumper;
-	warn Dumper(\@vars, \@exprs);
 	foreach my $e (@vars, @exprs) {
-		warn $e;
 		$string		.= $e->explain($s, $count+2);
 	}
 	$string		.= $self->pattern->explain( $s, $count+1 );

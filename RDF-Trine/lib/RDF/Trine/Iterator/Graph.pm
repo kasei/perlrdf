@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Graph - Stream (iterator) class for graph query results
+RDF::Trine::Iterator::Graph - Iterator class for graph query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Graph version 0.138
+This document describes RDF::Trine::Iterator::Graph version 1.002
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use base qw(RDF::Trine::Iterator);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
@@ -110,7 +110,7 @@ sub as_bindings {
 	
 	my $sub	= sub {
 		my $statement	= $self->next;
-		return undef unless ($statement);
+		return unless ($statement);
 		my %values		= map {
 			my $method = $bindings{ $_ };
 			$_ => $statement->$method()
@@ -123,6 +123,9 @@ sub as_bindings {
 =item C<< materialize >>
 
 Returns a materialized version of the current graph iterator.
+The materialization process will leave this iterator empty. The materialized
+iterator that is returned should be used for any future need for the iterator's
+data.
 
 =cut
 
@@ -250,10 +253,8 @@ sub print_xml {
 	my $fh				= shift;
 	my $max_result_size	= shift || 0;
 	my $graph			= $self->unique();
-	binmode($fh, ':utf8');
 	
 	my $count	= 0;
-	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -381,6 +382,10 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -388,7 +393,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

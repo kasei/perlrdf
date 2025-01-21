@@ -7,7 +7,13 @@ RDF::Query::Compiler::SQL - Compile a SPARQL query directly to SQL.
 
 =head1 VERSION
 
-This document describes RDF::Query::Compiler::SQL version 2.908.
+This document describes RDF::Query::Compiler::SQL version 2.909.
+
+=head1 STATUS
+
+This module's API and functionality should be considered deprecated.
+If you need functionality that this module provides,
+please L<get in touch|http://www.perlrdf.org/>.
 
 =cut
 
@@ -35,7 +41,7 @@ use RDF::Query::Error qw(:try);
 my (@NODE_TYPE_TABLES, %NODE_TYPE_TABLES);
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.908';
+	$VERSION	= '2.909';
 	@NODE_TYPE_TABLES	= (
 							['Resources', 'ljr', 'URI'],
 							['Literals', 'ljl', qw(Value Language Datatype)],

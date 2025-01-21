@@ -7,7 +7,7 @@ RDF::Trine::Node::Blank - RDF Node class for blank nodes
 
 =head1 VERSION
 
-This document describes RDF::Trine::Node::Blank version 0.138
+This document describes RDF::Trine::Node::Blank version 1.002
 
 =cut
 
@@ -26,7 +26,7 @@ use Carp qw(carp croak confess);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
 ######################################################################
@@ -161,13 +161,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

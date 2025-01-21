@@ -7,7 +7,7 @@ RDF::Trine::Parser - RDF Parser class
 
 =head1 VERSION
 
-This document describes RDF::Trine::Parser version 0.138
+This document describes RDF::Trine::Parser version 1.002
 
 =head1 SYNOPSIS
 
@@ -53,7 +53,7 @@ our %format_uris;
 our %encodings;
 
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	can_load( modules => {
 		'Data::UUID'	=> undef,
 		'UUID::Tiny'	=> undef,
@@ -66,8 +66,6 @@ use LWP::UserAgent;
 use RDF::Trine::Error qw(:try);
 use RDF::Trine::Parser::NTriples;
 use RDF::Trine::Parser::NQuads;
-use RDF::Trine::Parser::Turtle;
-use RDF::Trine::Parser::TriG;
 use RDF::Trine::Parser::RDFXML;
 use RDF::Trine::Parser::RDFJSON;
 use RDF::Trine::Parser::RDFa;
@@ -165,6 +163,11 @@ sub new {
 Retrieves the content from C<< $url >> and attempts to parse the resulting RDF
 into C<< $model >> using a parser chosen by the associated content media type.
 
+If C<< %args >> contains a C<< 'content_cb' >> key with a CODE reference value,
+that callback function will be called after a successful response as:
+
+ $content_cb->( $url, $content, $http_response_object )
+
 =cut
 
 sub parse_url_into_model {
@@ -190,6 +193,10 @@ sub parse_url_into_model {
 	}
 	
 	my $content	= $resp->content;
+	if (my $cb = $args{content_cb}) {
+		$cb->( $url, $content, $resp );
+	}
+	
 	my $type	= $resp->header('content-type');
 	$type		=~ s/^([^\s;]+).*/$1/;
 	my $pclass	= $media_types{ $type };
@@ -199,12 +206,13 @@ sub parse_url_into_model {
 			$data	= decode( $e, $content );
 		}
 		
-		my $parser	= $pclass->new();
+		# pass %args in here too so the constructor can take its pick
+		my $parser	= $pclass->new(%args);
 		my $ok	= 0;
 		try {
 			$parser->parse_into_model( $url, $data, $model, %args );
 			$ok	= 1;
-		};
+		} catch RDF::Trine::Error with {};
 		return 1 if ($ok);
 	} else {
 		throw RDF::Trine::Error::ParserError -text => "No parser found for content type $type";
@@ -215,52 +223,59 @@ sub parse_url_into_model {
 	if (defined $args{canonicalize}) {
 		$options{ canonicalize }	= $args{canonicalize};
 	}
-	if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
-		my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
-		my $parser	= RDF::Trine::Parser::Turtle->new(%options);
-		my $data	= decode('utf8', $content);
-		$parser->parse_into_model( $url, $data, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]trig$/) {
-		my $parser	= RDF::Trine::Parser::Trig->new(%options);
-		my $data	= decode('utf8', $content);
-		$parser->parse_into_model( $url, $data, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]nt$/) {
-		my $parser	= RDF::Trine::Parser::NTriples->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]nq$/) {
-		my $parser	= RDF::Trine::Parser::NQuads->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]js(?:on)?$/) {
-		my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} elsif ($url =~ /[.]x?html?$/) {
-		my $parser	= RDF::Trine::Parser::RDFa->new(%options);
-		$parser->parse_into_model( $url, $content, $model, %args );
-		return 1;
-	} else {
-		my @types	= keys %{ { map { $_ => 1 } values %media_types } };
-		foreach my $pclass (@types) {
-			my $data	= $content;
-			if (my $e = $encodings{ $pclass }) {
-				$data	= decode( $e, $content );
+	
+	my $ok	= 0;
+	try {
+		if ($url =~ /[.](x?rdf|owl)$/ or $content =~ m/\x{FEFF}?<[?]xml /smo) {
+			my $parser	= RDF::Trine::Parser::RDFXML->new(%options);
+			$parser->parse_into_model( $url, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]ttl$/ or $content =~ m/@(prefix|base)/smo) {
+			my $parser	= RDF::Trine::Parser::Turtle->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse_into_model( $url, $data, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]trig$/) {
+			my $parser	= RDF::Trine::Parser::Trig->new(%options);
+			my $data	= decode('utf8', $content);
+			$parser->parse_into_model( $url, $data, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nt$/) {
+			my $parser	= RDF::Trine::Parser::NTriples->new(%options);
+			$parser->parse_into_model( $url, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]nq$/) {
+			my $parser	= RDF::Trine::Parser::NQuads->new(%options);
+			$parser->parse_into_model( $url, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]js(?:on)?$/) {
+			my $parser	= RDF::Trine::Parser::RDFJSON->new(%options);
+			$parser->parse_into_model( $url, $content, $model, %args );
+			$ok	= 1;;
+		} elsif ($url =~ /[.]x?html?$/) {
+			my $parser	= RDF::Trine::Parser::RDFa->new(%options);
+			$parser->parse_into_model( $url, $content, $model, %args );
+			$ok	= 1;;
+		} else {
+			my @types	= keys %{ { map { $_ => 1 } values %media_types } };
+			foreach my $pclass (@types) {
+				my $data	= $content;
+				if (my $e = $encodings{ $pclass }) {
+					$data	= decode( $e, $content );
+				}
+				my $parser	= $pclass->new(%options);
+				my $ok		= 0;
+				try {
+					$parser->parse_into_model( $url, $data, $model, %args );
+					$ok	= 1;
+				} catch RDF::Trine::Error::ParserError with {};
+				last if ($ok);
 			}
-			my $parser	= $pclass->new(%options);
-			my $ok		= 0;
-			try {
-				$parser->parse_into_model( $url, $data, $model, %args );
-				$ok	= 1;
-			} catch RDF::Trine::Error::ParserError with {};
-			return 1 if ($ok);
 		}
-	}
+	} catch RDF::Trine::Error with {
+		my $e	= shift;
+	};
+	return 1 if ($ok);
 	throw RDF::Trine::Error::ParserError -text => "Failed to parse data from $url";
 }
 
@@ -357,7 +372,7 @@ sub parse_file {
 			my $pclass = $self->guess_parser_by_filename( $filename );
 			$self = $pclass->new() if ($pclass and $pclass->can('new'));
 		}
-		open( $fh, '<:utf8', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
+		open( $fh, '<:encoding(UTF-8)', $filename ) or throw RDF::Trine::Error::ParserError -text => $!;
 	}
 
 	if ($self and $self->can('parse')) {
@@ -369,8 +384,6 @@ sub parse_file {
 }
 
 =item C<< parse ( $base_uri, $rdf, \&handler ) >>
-
-=item C<< parse_into_model ( $base_uri, $data, $model ) >>
 
 =cut
 
@@ -390,9 +403,8 @@ sub new_bnode_prefix {
 		my $uuid	= $ug->to_string( $ug->create() );
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;
-	} elsif (defined($UUID::Tiny::VERSION) && ($] < 5.014000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
-		no strict 'subs';
-		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1);
+	} elsif (defined($UUID::Tiny::VERSION) && ($] < 5.010000)) { # UUID::Tiny 1.03 isn't working nice with thread support in Perl 5.14. When this is fixed, this may be removed and dep added.
+		my $uuid	= UUID::Tiny::create_UUID_as_string(UUID::Tiny::UUID_V1());
 		$uuid		=~ s/-//g;
 		return 'b' . $uuid;
 	} else {
@@ -407,13 +419,18 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 AUTHOR
 
 Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

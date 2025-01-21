@@ -53,6 +53,9 @@ lib/RDF/Trine/Parser/RDFXML.pm
 lib/RDF/Trine/Parser/Redland.pm
 lib/RDF/Trine/Parser/TriG.pm
 lib/RDF/Trine/Parser/Turtle.pm
+lib/RDF/Trine/Parser/Turtle/Constants.pm
+lib/RDF/Trine/Parser/Turtle/Lexer.pm
+lib/RDF/Trine/Parser/Turtle/Token.pm
 lib/RDF/Trine/Pattern.pm
 lib/RDF/Trine/Serializer.pm
 lib/RDF/Trine/Serializer/NQuads.pm
@@ -554,6 +557,7 @@ t/statement.t
 t/store-config.t
 t/store-context.t
 t/store-dbi-mysql.t
+t/store-dbi-pg.t
 t/store-dbi.t
 t/store-hexastore-pattern.t
 t/store-hexastore-storable.t

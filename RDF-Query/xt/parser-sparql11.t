@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 113;
+use Test::More tests => 114;
 use YAML;
 use Data::Dumper;
 use Scalar::Util qw(reftype);
@@ -30,7 +30,7 @@ my (@data)	= YAML::Load(do { local($/) = undef; <DATA> });
 foreach (@data) {
 	next unless (reftype($_) eq 'ARRAY');
 	my ($name, $sparql, $correct)	= @$_;
-	my $parsed	= $parser->parse( $sparql );
+	my $parsed	= $parser->parse( $sparql, undef, 1 );
 	my $r	= is_deeply( $parsed, $correct, $name );
 	unless ($r) {
 		warn 'PARSE ERROR: ' . $parser->error;
@@ -546,7 +546,7 @@ __END__
     - !!perl/array:RDF::Query::Node::Variable
       - node
 ---
-- SELECT, WHERE, USING
+- SELECT, WHERE
 - |
   PREFIX	rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
@@ -589,7 +589,7 @@ __END__
           - page
   variables: *1
 ---
-- SELECT, WHERE, USING; variables with "$"
+- SELECT, WHERE; variables with "$"
 - |
   PREFIX	rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
   PREFIX	foaf: <http://xmlns.com/foaf/0.1/>
@@ -5256,3 +5256,65 @@ __END__
             - p
           - !!perl/array:RDF::Query::Node::Variable
             - o
+---
+- INSERT-DELETE-USING-WHERE
+- |
+  DELETE { GRAPH <g1> { ?x <b> <c> } } INSERT { GRAPH <g1> { ?x <y> <z> } } USING <g1> WHERE { ?x a <Foo> }
+- method: UPDATE
+  custom_update_dataset: 1
+  namespaces: {}
+  sources: []
+  triples:
+    - !!perl/array:RDF::Query::Algebra::Update
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::NamedGraph
+          - GRAPH
+          - &1 !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - g1
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Quad
+                - !!perl/array:RDF::Query::Node::Variable
+                  - x
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - b
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - c
+                - *1
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::NamedGraph
+          - GRAPH
+          - &2 !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - g1
+          - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+            - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+              - !!perl/array:RDF::Query::Algebra::Quad
+                - !!perl/array:RDF::Query::Node::Variable
+                  - x
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - y
+                - !!perl/array:RDF::Query::Node::Resource
+                  - URI
+                  - z
+                - *2
+      - !!perl/array:RDF::Query::Algebra::GroupGraphPattern
+        - !!perl/array:RDF::Query::Algebra::BasicGraphPattern
+          - !!perl/array:RDF::Query::Algebra::Triple
+            - !!perl/array:RDF::Query::Node::Variable
+              - x
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+            - !!perl/array:RDF::Query::Node::Resource
+              - URI
+              - Foo
+      - default:
+          - !!perl/array:RDF::Query::Node::Resource
+            - URI
+            - g1
+      - 0

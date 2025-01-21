@@ -7,7 +7,7 @@ RDF::Trine::Serializer::TSV - TSV Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 0.138
+This document describes RDF::Trine::Store version 1.002
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 	$RDF::Trine::Serializer::serializer_names{ 'tsv' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/TSV' }	= __PACKAGE__;
 	foreach my $type (qw(text/tsv)) {
@@ -186,6 +186,11 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
+
 =head1 SEE ALSO
 
 L<http://www.w3.org/TR/rdf-testcases/#ntriples>
@@ -196,7 +201,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

@@ -3,11 +3,11 @@
 
 =head1 NAME
 
-RDF::Trine::Iterator::Bindings - Stream (iterator) class for bindings query results
+RDF::Trine::Iterator::Bindings - Iterator class for bindings query results
 
 =head1 VERSION
 
-This document describes RDF::Trine::Iterator::Bindings version 0.138
+This document describes RDF::Trine::Iterator::Bindings version 1.002
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ use Carp qw(croak);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
 =item C<new ( \@results, \@names, %args )>
@@ -91,6 +91,9 @@ sub _new {
 =item C<< materialize >>
 
 Returns a materialized version of the current binding iterator.
+The materialization process will leave this iterator empty. The materialized
+iterator that is returned should be used for any future need for the iterator's
+data.
 
 =cut
 
@@ -211,27 +214,6 @@ sub nested_loop_join {
 # 	Carp::confess unless ($bstream->isa('RDF::Trine::Iterator::Bindings'));
 	my $l		= Log::Log4perl->get_logger("rdf.trine.iterator.bindings");
 	
-	################################################
-	### BNODE MAP STUFF
-	my $a_extra	= $astream->extra_result_data || {};
-	my $b_extra	= $bstream->extra_result_data || {};
-	my (%a_map, %b_map);
-	foreach my $h (@{ $a_extra->{'bnode-map'} || [] }) {
-		foreach my $id (keys %$h) {
-			my @values	= @{ $h->{ $id } };
-			push( @{ $a_map{ $id } }, @values );
-		}
-	}
-	foreach my $h (@{ $b_extra->{'bnode-map'} || [] }) {
-		foreach my $id (keys %$h) {
-			my @values	= @{ $h->{ $id } };
-			push( @{ $b_map{ $id } }, @values );
-		}
-	}
-	my $a_map	= (%a_map) ? \%a_map : undef;
-	my $b_map	= (%b_map) ? \%b_map : undef;
-	################################################
-	
 	my @names	= RDF::Trine::_uniq( map { $_->binding_names() } ($astream, $bstream) );
 	my $a		= $astream->project( @names );
 	my $b		= $bstream->project( @names );
@@ -252,7 +234,7 @@ sub nested_loop_join {
 				$need_new_a		= 0;
 			}
 			$l->debug("OUTER: " . Dumper($rowa));
-			return undef unless ($rowa);
+			return unless ($rowa);
 			LOOP: while ($inner_index <= $#data) {
 				my $rowb	= $data[ $inner_index++ ];
 				$l->debug("- INNER[ $inner_index ]: " . Dumper($rowb));
@@ -268,35 +250,6 @@ sub nested_loop_join {
 					}
 					if ($defined == 2) {
 						my $equal	= $val_a->equal( $val_b );
-						if (not $equal) {
-							my $query 	= $args{ query };
-							my $bridge	= $args{ bridge };
-							if ($query and $bridge) {
-								warn 'join values and bnode maps: ' . Dumper($val_a, $val_b, $a_map, $b_map) if ($a_map or $b_map);
-								if ($a_map and $val_a->isa('RDF::Trine::Node::Blank')) {
-									my $anames	= Set::Scalar->new( @{ $a_map{ $val_a->blank_identifier } } );
-									my $bnames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_b, $query, $bridge, {} ) );
-									if (my $int = $anames->intersection( $bnames )) {
-										warn "node equality based on $int";
-										$equal	= 1;
-									}
-								} elsif ($b_map and $val_b->isa('RDF::Trine::Node::Blank')) {
-									my $bnames	= Set::Scalar->new( @{ $b_map{ $val_b->blank_identifier } } );
-									my $anames	= Set::Scalar->new( RDF::Query::Algebra::Service->_names_for_node( $val_a, $query, $bridge, {} ) );
-									warn "anames: $anames\n";
-									warn "bnames: $bnames\n";
-									if (my $int = $anames->intersection( $bnames )) {
-										warn "node equality based on $int";
-										$equal	= 1;
-									}
-								}
-							} else {
-								if ($l->is_debug) {
-									$l->logcluck("no query,bridge in args");
-								}
-							}
-						}
-						
 						unless ($equal) {
 							$l->debug("can't join because mismatch of $key (" . join(' <==> ', map {$_->as_string} ($val_a, $val_b)) . ")");
 							next LOOP;
@@ -452,24 +405,14 @@ sub as_json {
 	
 	my $data	= {
 					head	=> { vars => \@variables },
-					results	=> { ordered => $order, distinct => $dist },
+					results	=> { ordered => $order, distinct => $dist, bindings => [] },
 				};
 	my @bindings;
-	while (!$self->finished) {
-		my %row;
-		for (my $i = 0; $i < $width; $i++) {
-			my $name		= $self->binding_name($i);
-			my $value		= $self->binding_value($i);
-			if (blessed($value)) {
-				if (my ($k, $v) = format_node_json($value, $name)) {
-					$row{ $k }		= $v;
-				}
-			}
-		}
-		
+	while (my $row = $self->next) {
+		my %row	= map { format_node_json($row->{$_}, $_) } (keys %$row);
 		push(@{ $data->{results}{bindings} }, \%row);
 		last if ($max_result_size and ++$count >= $max_result_size);
-	} continue { $self->next_result }
+	}
 	
 	return to_json( $data );
 }
@@ -551,7 +494,7 @@ sub as_statements {
 	my @names	= @_;
 	my $sub		= sub {
 		my $row	= $self->next;
-		return undef unless (defined $row);
+		return unless (defined $row);
 		my @values	= @{ $row }{ @names };
 		my $statement	= (scalar(@values) == 3 or not(defined($values[3])))
 						? RDF::Trine::Statement->new( @values[ 0 .. 2 ] )
@@ -579,7 +522,6 @@ sub print_xml {
 		push(@variables, $name) if $name;
 	}
 	
-	no strict 'refs';
 	print {$fh} <<"END";
 <?xml version="1.0" encoding="utf-8"?>
 <sparql xmlns="http://www.w3.org/2005/sparql-results#">
@@ -588,17 +530,8 @@ END
 	
 	my $t	= join("\n", map { qq(\t<variable name="$_"/>) } @variables);
 	
-	my $delay_output	= 0;
-	my $delayed			= '';
-	
-	if ($self->extra_result_data) {
-		$delay_output	= $fh;
-		undef $fh;
-		open( $fh, '>', \$delayed ) or croak $!;
-	} else {
-		if ($t) {
-			print {$fh} "${t}\n";
-		}
+	if ($t) {
+		print {$fh} "${t}\n";
 	}
 	
 	print {$fh} <<"END";
@@ -620,41 +553,6 @@ END
 		last if ($max_result_size and ++$count >= $max_result_size);
 	}
 	
-	if ($delay_output) {
-		my $extra = $self->extra_result_data;
-		my $extraxml	= '';
-		foreach my $tag (keys %$extra) {
-			$extraxml	.= qq[<extra name="${tag}">\n];
-			my $value	= $extra->{ $tag };
-			foreach my $e (@$value) {
-				foreach my $k (keys %$e) {
-					my $v		= $e->{ $k };
-					my @values	= @$v;
-					foreach ($k, @values) {
-						s/&/&amp;/g;
-						s/</&lt;/g;
-						s/"/&quot;/g;
-					}
-					$extraxml	.= qq[\t<extrakey id="$k">] . join(',', @values) . qq[</extrakey>\n];
-				}
-			}
-			$extraxml	.= "</extra>\n";
-		}
-		my $u	= URI->new('data:');
-		$u->media_type('text/xml');
-		$u->data($extraxml);
-		my $uri	= "$u";
-		$uri	=~ s/&/&amp;/g;
-		$uri	=~ s/</&lt;/g;
-		$uri	=~ s/'/&apos;/g;
-		$uri	=~ s/"/&quot;/g;
-		
-		$fh		= $delay_output;
-		print {$fh} "${t}\n";
-		print {$fh} qq[\t<link href="$uri" />\n];
-		print {$fh} $delayed;
-	}
-	
 	print {$fh} "</results>\n";
 	print {$fh} "</sparql>\n";
 }
@@ -669,9 +567,9 @@ Returns a string representation of C<$node> for use in a JSON serialization.
 
 =cut
 
-sub format_node_json ($$$) {
+sub format_node_json {
 # 	my $bridge	= shift;
-# 	return undef unless ($bridge);
+# 	return unless ($bridge);
 	
 	my $node	= shift;
 	my $name	= shift;
@@ -722,6 +620,10 @@ L<JSON|JSON>
 
 L<Scalar::Util|Scalar::Util>
 
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
@@ -729,7 +631,7 @@ Gregory Todd Williams  C<< <gwilliams@cpan.org> >>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006-2010 Gregory Todd Williams. This
+Copyright (c) 2006-2012 Gregory Todd Williams. This
 program is free software; you can redistribute it and/or modify it under
 the same terms as Perl itself.
 

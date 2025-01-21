@@ -4,7 +4,7 @@ Test::RDF::Trine::Store - A collection of functions to test RDF::Trine::Stores
 
 =head1 VERSION
 
-This document describes RDF::Trine version 0.138
+This document describes RDF::Trine version 1.002
 
 =head1 SYNOPSIS
 
@@ -50,7 +50,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-use RDF::Trine qw(iri variable store literal);
+use RDF::Trine qw(iri variable store literal statement);
 use RDF::Trine::Node;
 use RDF::Trine::Statement;
 use RDF::Trine::Store::DBI;
@@ -58,14 +58,14 @@ use RDF::Trine::Namespace qw(xsd);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '0.138';
+	$VERSION	= '1.002';
 }
 
 use Log::Log4perl;
 
 Log::Log4perl->easy_init if $ENV{TEST_VERBOSE};
 
-our @EXPORT = qw(number_of_tests number_of_triple_tests create_data all_store_tests all_triple_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_statements_tests_quads remove_statement_tests);
+our @EXPORT = qw(number_of_tests number_of_triple_tests create_data all_store_tests all_triple_store_tests add_quads add_triples contexts_tests add_statement_tests_simple count_statements_tests_simple count_statements_tests_quads count_statements_tests_triples get_statements_tests_triples get_pattern_tests get_statements_tests_quads remove_statement_tests);
 
 
 
@@ -80,7 +80,7 @@ Returns the number of tests run with C<all_store_tests>.
 =cut
 
 sub number_of_tests {
-	return 223;								# Remember to update whenever adding tests
+	return 231;								# Remember to update whenever adding tests
 }
 
 =item C<< number_of_triple_tests >>
@@ -90,7 +90,7 @@ Returns the number of tests run with C<all_triple_store_tests>.
 =cut
 
 sub number_of_triple_tests {
-	return 101;								# Remember to update whenever adding tests
+	return 109;								# Remember to update whenever adding tests
 }
 
 
@@ -188,6 +188,7 @@ sub all_store_tests {
 		count_statements_tests_triples( $store, $args, $ex, $nil );
 		contexts_tests( $store, $args );
 		get_statements_tests_triples( $store, $args, $ex );
+		get_pattern_tests( $store, $args, $ex );
 		get_statements_tests_quads( $store, $args, $ex, $nil	);
 	
 		remove_statement_tests( $store, $args, $ex, @names );
@@ -241,7 +242,7 @@ sub all_triple_store_tests {
 	
 		count_statements_tests_triples( $store, $args, $ex, $nil );
 		get_statements_tests_triples( $store, $args, $ex );
-
+		get_pattern_tests( $store, $args, $ex );
 	}
 }
 
@@ -313,9 +314,15 @@ sub add_statement_tests_simple {
 	
 	my $triple	= RDF::Trine::Statement->new($ex->a, $ex->b, $ex->c);
 	my $quad	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, $ex->d);
+	my $etag_before = $store->etag;
+	update_sleep($args);
 	$store->add_statement( $triple, $ex->d );
 	update_sleep($args);
-	
+   SKIP: {
+		skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		isnt($etag_before, $store->etag, 'Etag has changed');
+	}
+
 	is( $store->size, 1, 'store has 1 statement after (triple+context) add' );
 	
 	TODO: {
@@ -324,8 +331,15 @@ sub add_statement_tests_simple {
 		update_sleep($args);
 		is( $store->size, 1, 'store has 1 statement after duplicate (quad) add' );
 	}
-
+	
+	$etag_before = $store->etag;
 	$store->remove_statement( $triple, $ex->d );
+	update_sleep($args);
+   SKIP: {
+		skip 'It is OK to not support etag', 1 unless defined($etag_before);
+		isnt($etag_before, $store->etag, 'Etag has changed');
+	}
+
 	is( $store->size, 0, 'store has 0 statements after (triple+context) remove' );
 	
 	my $quad2	= RDF::Trine::Statement::Quad->new($ex->a, $ex->b, $ex->c, iri('graph'));
@@ -916,6 +930,59 @@ sub get_statements_tests_quads {
 }
 
 
+=item C<< get_pattern_tests( $store, $args, $data->{ex} )	>>
+
+Tests for getting statements using with get_pattern.
+
+=cut
+
+
+sub get_pattern_tests {
+	note " get_pattern tests";
+	my ($store, $args, $ex) = @_;
+	my $model	= RDF::Trine::Model->new($store);
+	my $nil	= RDF::Trine::Node::Nil->new();
+	{
+		my $iter	= $model->get_pattern( RDF::Trine::Pattern->new(
+							statement(
+								$ex->a, $ex->b, variable('o1'), $nil,
+							),
+							statement(
+								$ex->a, $ex->c, variable('o2'), $nil,
+							),
+						)
+					);
+		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
+		my $count	= 0;
+		while (my $st = $iter->next()) {
+			$count++;
+		}
+		my $expected = 9;
+		is( $count, $expected, 'get_pattern( bbf, bbf ) expected result count'	 );
+		is( $iter->next, undef, 'pattern iterator end-of-stream' );
+	}
+	{
+		my $iter	= $model->get_pattern( RDF::Trine::Pattern->new(
+							statement(
+								$ex->a, $ex->b, variable('o1'), $nil,
+							),
+							statement(
+								$ex->a, $ex->c, literal('DAAAAHUUUT'), $nil,
+							),
+						)
+					);
+		isa_ok( $iter, 'RDF::Trine::Iterator::Bindings' );
+		my $count	= 0;
+		while (my $st = $iter->next()) {
+			$count++;
+		}
+		is( $count, 0, 'get_pattern( bbf, bbu ) expected result count'	 );
+		is( $iter->next, undef, 'pattern iterator end-of-stream' );
+	}
+      }
+
+
+
 
 =item C<< remove_statement_tests( $store, $args, $data->{ex}, @{$data->{names}} );	>>
 
@@ -981,7 +1048,7 @@ perform updates asynchronously.
 sub update_sleep {
 	my $args	= shift;
 	if (defined($args->{ update_sleep })) {
-		note " sleeping after store update";
+		note ' sleeping ' . $args->{ update_sleep }. ' secs after store update';
 		sleep($args->{ update_sleep });
 	}
 }
@@ -990,6 +1057,11 @@ sub update_sleep {
 __END__
 
 =back
+
+=head1 BUGS
+
+Please report any bugs or feature requests to through the GitHub web interface
+at L<https://github.com/kasei/perlrdf/issues>.
 
 =head1 AUTHOR
 
