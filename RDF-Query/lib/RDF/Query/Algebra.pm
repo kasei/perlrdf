@@ -7,7 +7,7 @@ RDF::Query::Algebra - Base class for Algebra expressions
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra version 2.916.
+This document describes RDF::Query::Algebra version 2.917.
 
 =head1 METHODS
 
@@ -19,7 +19,7 @@ package RDF::Query::Algebra;
 
 our (@ISA, @EXPORT_OK);
 BEGIN {
-	our $VERSION	= '2.916';
+	our $VERSION	= '2.917';
 	
 	require Exporter;
 	@ISA		= qw(Exporter);

@@ -36,7 +36,18 @@ INSTALLATION
 
 VERSION HISTORY
 
-  Version 2.915 (2015-10-16)
+  Version 2.917 (2016-05-22)
+
+     * ENHANCEMENTS
+         Change hashbang to use env (#137 from KjetilK).
+         Replaced Text::CSV by Text::CSV_XS (#127, #136; patch from jordivador).
+     * BUG FIXES
+         Fixed bug that didn't properly anchor the regex match in serializing prefixnames (#135).
+         Fixed SPARQL parsing bug causing filters to improperly appear inside of service blocks (github issue #134).
+         Fix SPARQL serialization of functions that have a prefix that is also a valid function name (#133).
+
+
+  Version 2.916 (2015-10-16)
 
      * ENHANCEMENTS
          Updated RDF::Query::Node::Resource->as_sparql to allow SPARQL 1.0 PN_LOCAL prefix names (GitHub issue #132).

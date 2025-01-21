@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.916.
+This document describes RDF::Query::Parser::SPARQL11 version 2.917.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.916';
+	$VERSION	= '2.917';
 }
 
 ######################################################################
@@ -1942,8 +1942,8 @@ sub _ServiceGraphPattern {
 	my $op		= $self->_eat( qr/SERVICE(\s+SILENT)?/i );
 	my $silent	= ($op =~ /SILENT/i);
 	$self->__consume_ws_opt;
+	$self->__close_bgp_with_filters;
 	if ($self->_test(qr/[\$?]/)) {
-		$self->__close_bgp_with_filters;
 		$self->_Var;
 	} else {
 		$self->_IRIref;
