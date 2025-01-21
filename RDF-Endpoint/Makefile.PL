@@ -16,7 +16,8 @@ requires			'Carp'							=> 0;
 requires			'File::ShareDir'				=> 0;
 requires			'RDF::Trine'					=> 0.134;
 requires			'RDF::Query'					=> 2.905;
-requires			'RDF::RDFa::Generator'			=> 0.102;
+requires			'RDF::RDFa::Generator'			=> 0.200;
+requires			'RDF::TrineX::Compatibility::Attean' => 0;
 requires			'Plack::Request'				=> 0.99;
 requires			'Plack::Response'				=> 0;
 requires			'Plack::Middleware::AccessLog'	=> 0;
@@ -26,15 +27,16 @@ requires			'HTTP::Negotiate'				=> 0;
 requires			'IO::Compress::Gzip'			=> 0;
 requires			'XML::LibXML'					=> 1.70;
 requires			'HTML::HTML5::Writer'			=> 0;
-requires			'HTML::HTML5::Parser'			=> 0;
 requires			'Hash::Merge::Simple'   		=> 0;
+
 resources(
-	'homepage'   => "http://search.cpan.org/dist/RDF-Endpoint/",
-	'repository' => "http://github.com/kasei/perlrdf/",
+	'homepage'		=> "https://metacpan.org/release/RDF-Endpoint/",
+	'repository'	=> "https://github.com/kasei/perlrdf/",
+	'bugtracker'	=> "https://github.com/kasei/perlrdf/issues",
+	'IRC'			=> "irc://irc.perl.org/#perlrdf",
 );
 
-write_doap_changes;
-write_doap_changes_xml;
+write_doap_changes "meta/changes.ttl", "Changes", "turtle";
 
 install_share;
 install_script glob('scripts/*');

@@ -7,7 +7,7 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.918.
+This document describes RDF::Query::Parser::SPARQL11 version 2.919.
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.918';
+	$VERSION	= '2.919';
 }
 
 ######################################################################
@@ -2841,9 +2841,9 @@ sub _RelationalExpression {
 		$self->_NumericExpression;
 		push(@list, splice(@{ $self->{stack} }));
 		$self->_add_stack( $self->new_binary_expression( $op, @list ) );
-	} elsif ($self->_test(qr/(NOT )?IN/)) {
+	} elsif ($self->_test(qr/(NOT )?IN/i)) {
 		my @list	= splice(@{ $self->{stack} });
-		my $op		= lc($self->_eat(qr/(NOT )?IN/));
+		my $op		= lc($self->_eat(qr/(NOT )?IN/i));
 		$op			=~ s/\s+//g;
 		$self->__consume_ws_opt;
 		$self->_ExpressionList();

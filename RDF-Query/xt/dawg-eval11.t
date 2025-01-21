@@ -92,6 +92,7 @@ my @manifests	= map { $_->as_string } map { URI::file->new_abs( $_ ) } map { glo
 		basic-update
 		bind
 		bindings
+		cast
 		clear
 		construct
 		copy
@@ -355,10 +356,10 @@ sub query_eval_test {
 	if ($debug) {
 		warn "### test     : " . $test->as_string . "\n";
 		warn "# sparql     : $q\n";
-		warn "# data       : " . $data->as_string if (blessed($data));
-		warn "# graph data : " . $_->as_string for (@gdata);
-		warn "# result     : " . $result->as_string;
-		warn "# requires   : " . $req->as_string if (blessed($req));
+		warn "# data       : " . $data->as_string  . "\n" if (blessed($data));
+		warn "# graph data : " . $_->as_string  . "\n" for (@gdata);
+		warn "# result     : " . $result->as_string . "\n";
+		warn "# requires   : " . $req->as_string  . "\n" if (blessed($req));
 	}
 
 
@@ -408,7 +409,7 @@ sub query_eval_test {
 	my $resfilename	= $resuri->file;
 
 	TODO: {
-		local($TODO)	= (blessed($req)) ? "requires " . $req->as_string : '';
+		local($TODO)	= (blessed($req)) ? "requires " . $req->as_string : undef;
 		my $comment;
 		my $ok	= eval {
 			if ($debug) {

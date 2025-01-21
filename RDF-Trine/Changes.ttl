@@ -10,6 +10,78 @@
         dcterms:references      <http://kasei.us/code/rdf-trine/#project> .
 
 
+<http://kasei.us/code/files/RDF-Trine-1.019.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.018.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.019" ;
+                        doap:created      "2018-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Add test case for TSV serializer fixes (#155, #156 from @phochste)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.018.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.017.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.018" ;
+                        doap:created      "2017-06-20" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Fix API inconsistency in RDF::Trine::Store::SPARQL (#149, #150 from @minusdavid)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.017.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.016.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.017" ;
+                        doap:created      "2017-06-01" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Fixes to data update code in RDF::Trine::Store::SPARQL (#146 from @minusdavid)." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.016.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.015.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.016" ;
+                        doap:created      "2017-04-24" ;
+                        ];
+        asc:changes     [
+                        asc:update		"Updated Makefile.PL for perl 5.26." ;
+                        asc:update      "Fixes to RDF::Trine::Store::Redland (#145 from @doriantaylor)." ;
+                        asc:update      "Remove use of TryCatch in scripts and developer tests." ;
+                        ] .
+
+
+<http://kasei.us/code/files/RDF-Trine-1.016.tar.gz>
+        dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
+        dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz> ;
+
+        doap:Version    [
+                        doap:revision     "1.016" ;
+                        doap:created      "2017-01-04" ;
+                        ];
+        asc:changes     [
+                        asc:update      "Remove call to $dbh->begin_work when already working with AutoCommit turned off." ;
+                        asc:update      "Remove use of RDF::Redland in bin/rdf_store_serialize.pl." ;
+                        asc:update      "Updated rdf_store_add_file.pl to guess the appropriate parser based on the filename." ;
+                        asc:update      "Remove use of TryCatch (#138 from @ppisar)." ;
+                        asc:update      "Change hashbang to use env (#137 from KjetilK)." ;
+                        asc:update      "Replaced all uses and initializations from Text::CSV in favour to Text::CSV_XS (#136 from @jordivador)." ;
+                        ] .
+
+
 <http://kasei.us/code/files/RDF-Trine-1.014.tar.gz>
         dcterms:isVersionOf <http://kasei.us/code/rdf-trine/#project> ;
         dcterms:replaces    <http://kasei.us/code/files/RDF-Trine-1.013.tar.gz> ;

@@ -7,7 +7,7 @@ RDF::Trine::Serializer::TSV - TSV Serializer
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store version 1.014
+This document describes RDF::Trine::Store version 1.019
 
 =head1 SYNOPSIS
 
@@ -47,7 +47,7 @@ use RDF::Trine::Error qw(:try);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '1.014';
+	$VERSION	= '1.019';
 	$RDF::Trine::Serializer::serializer_names{ 'tsv' }	= __PACKAGE__;
 	$RDF::Trine::Serializer::format_uris{ 'http://www.w3.org/ns/formats/TSV' }	= __PACKAGE__;
 	foreach my $type (qw(text/tsv)) {
@@ -85,7 +85,7 @@ sub serialize_model_to_file {
 	my $pat		= RDF::Trine::Pattern->new( $st );
 	my $stream	= $model->get_pattern( $pat, undef, orderby => [ qw(s ASC p ASC o ASC) ] );
 	my $iter	= $stream->as_statements( qw(s p o) );
-	print {$file} join("\t", qw(s p o));
+	print {$file} join("\t", qw(s p o)) . "\n";
 	while (my $st = $iter->next) {
 		print {$file} $self->statement_as_string( $st );
 	}

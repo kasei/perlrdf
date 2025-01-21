@@ -4,7 +4,7 @@ use warnings;
 no warnings 'redefine';
 use utf8;
 
-use Test::More tests => 210;
+use Test::More;
 use Test::Exception;
 use Scalar::Util qw(reftype blessed);
 
@@ -31,6 +31,7 @@ my $l5d		= RDF::Query::Node::Literal->new( '5.3', undef, 'http://www.w3.org/2001
 my $l01d	= RDF::Query::Node::Literal->new( '01', undef, 'http://www.w3.org/2001/XMLSchema#integer' );
 my $l0d		= RDF::Query::Node::Literal->new( '0', undef, 'http://www.w3.org/2001/XMLSchema#integer' );
 my $l3dd	= RDF::Query::Node::Literal->new( '3', undef, 'http://www.w3.org/2001/XMLSchema#double' );
+my $l5i		= RDF::Query::Node::Literal->new( '5', undef, 'http://www.w3.org/2001/XMLSchema#double' );
 my $lpat	= RDF::Query::Node::Literal->new( '^b' );
 my $lemail	= RDF::Query::Node::Literal->new( 'mailto:greg@evilfunhouse.com' );
 
@@ -113,11 +114,12 @@ local($RDF::Query::Node::Literal::LAZY_COMPARISONS)	= 1;
 	}
 
 	{
-		my $TEST	= 'double->integer cast (throws)';
+		my $TEST	= 'float->integer cast (throws)';
 		my $alg		= $func->new( "${xsd}integer", $l5d );
-		throws_ok {
-			my $value	= $alg->evaluate( undef, {} );
-		} 'RDF::Query::Error::FilterEvaluationError', $TEST;
+		my $value	= $alg->evaluate( undef, {} );
+		isa_ok( $value, 'RDF::Query::Node::Literal' );
+		is( $value->numeric_value, 5, "$TEST value" );
+		is( $value->literal_datatype, 'http://www.w3.org/2001/XMLSchema#integer', "$TEST datatype" );
 	}
 }
 
@@ -889,6 +891,7 @@ SKIP: {
 	}
 }
 
+done_testing();
 
 __END__
 

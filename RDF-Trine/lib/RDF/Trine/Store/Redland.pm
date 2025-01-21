@@ -4,7 +4,7 @@ RDF::Trine::Store::Redland - Redland-backed RDF store for RDF::Trine
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Redland version 1.014
+This document describes RDF::Trine::Store::Redland version 1.019
 
 =head1 SYNOPSIS
 
@@ -37,7 +37,7 @@ use RDF::Trine::Error;
 our $NIL_TAG;
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.014";
+	$VERSION	= "1.019";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 	$NIL_TAG	= 'tag:gwilliams@cpan.org,2010-01-01:RT:NIL';
@@ -211,8 +211,8 @@ sub _get_statements_triple {
 	my $sub		= sub {
 		while (1) {
 			return unless $iter;
-			return if $iter->end;
-			my $st	= $iter->current;
+			#return if $iter->end;
+			my $st	= $iter->current or return;
 			if ($seen{ $st->as_string }++) {
 				$iter->next;
 				next;
@@ -241,8 +241,8 @@ sub _get_statements_quad {
 	my $nil		= RDF::Trine::Node::Nil->new();
 	my $sub		= sub {
 		return unless $iter;
-		return if $iter->end;
-		my $st	= $iter->current;
+		#return if $iter->end;
+		my $st	= $iter->current or return;
 		my $c	= $iter->context;
 		my @nodes	= map { _cast_to_local($st->$_()) } qw(subject predicate object);
 		if ($ctx) {
@@ -497,7 +497,9 @@ sub _cast_to_local {
 		my $dt		= ($dturi)
 					? $dturi->as_string
 					: undef;
-		return RDF::Trine::Node::Literal->new( decode('utf8', $node->literal_value), $lang, $dt );
+		my $lv = $node->literal_value;
+		utf8::decode($lv) unless utf8::is_utf8($lv);
+		return RDF::Trine::Node::Literal->new($lv, $lang, $dt );
 	} else {
 		return;
 	}
