@@ -7,7 +7,7 @@ RDF::Query::Plan - Executable query plan nodes.
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan version 2.914.
+This document describes RDF::Query::Plan version 2.915.
 
 =head1 METHODS
 
@@ -66,7 +66,7 @@ use constant CLOSED		=> 0x04;
 
 our ($VERSION, %PLAN_CLASSES);
 BEGIN {
-	$VERSION		= '2.914';
+	$VERSION		= '2.915';
 	%PLAN_CLASSES	= (
 		service	=> 'RDF::Query::Plan::Service',
 	);
@@ -454,7 +454,7 @@ sub generate_plans {
 								my $code	= sub {
 									return if ($done);
 									$done	= 1;
-warn Dumper(\@triples); # XXX
+									#warn Dumper(\@triples); # XXX
 									my $count	= $model->count_statements( $triples[0]->nodes );
 									my $lit		= RDF::Query::Node::Literal->new($count, undef, 'http://www.w3.org/2001/XMLSchema#integer');
 									my $vb	= RDF::Query::VariableBindings->new( {
