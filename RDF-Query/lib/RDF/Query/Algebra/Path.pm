@@ -7,7 +7,7 @@ RDF::Query::Algebra::Path - Algebra class for path patterns
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Path version 2.913.
+This document describes RDF::Query::Algebra::Path version 2.914.
 
 =cut
 
@@ -27,7 +27,7 @@ use Carp qw(carp croak confess);
 our ($VERSION, $debug, $lang, $languri);
 BEGIN {
 	$debug		= 0;
-	$VERSION	= '2.913';
+	$VERSION	= '2.914';
 }
 
 ######################################################################
