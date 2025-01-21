@@ -18,7 +18,7 @@ if ($url =~ m#^http://#) {
 } else {
 	my $file	= File::Spec->rel2abs( $url );
 	$data	= do {
-					open( my $fh, '<:utf8', $file );
+					open( my $fh, '<:encoding(UTF-8)', $file );
 					local($/) = undef;
 					<$fh>
 				};

@@ -7,7 +7,7 @@ RDF::Query::Algebra::Sort - Algebra class for sorting
 
 =head1 VERSION
 
-This document describes RDF::Query::Algebra::Sort version 2.909.
+This document describes RDF::Query::Algebra::Sort version 2.910.
 
 =cut
 
@@ -29,7 +29,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.909';
+	$VERSION	= '2.910';
 }
 
 ######################################################################
