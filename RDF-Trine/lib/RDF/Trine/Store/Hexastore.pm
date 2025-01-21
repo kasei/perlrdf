@@ -4,7 +4,7 @@ RDF::Trine::Store::Hexastore - RDF store implemented with the hexastore index
 
 =head1 VERSION
 
-This document describes RDF::Trine::Store::Hexastore version 1.011
+This document describes RDF::Trine::Store::Hexastore version 1.012
 
 =head1 SYNOPSIS
 
@@ -46,7 +46,7 @@ use constant OTHERNODES	=> {
 
 our $VERSION;
 BEGIN {
-	$VERSION	= "1.011";
+	$VERSION	= "1.012";
 	my $class	= __PACKAGE__;
 	$RDF::Trine::Store::STORE_CLASSES{ $class }	= $VERSION;
 }
@@ -207,6 +207,10 @@ sub get_statements {
 	my $context	= shift;
 	my %args	= @_;
 	my @orderby	= (ref($args{orderby})) ? @{$args{orderby}} : ();
+	
+	if (defined($context) and not($context->isa('RDF::Trine::Node::Nil'))) {
+		return RDF::Trine::Iterator::Graph->new( [] );
+	}
 	
 	my $defined	= 0;
 	my %variable_map;
@@ -651,6 +655,11 @@ sub count_statements {
 	my @keys	= map { $names[$_], $ids[$_] } (0 .. $#names);
 	my @dkeys;
 	my @ukeys;
+	
+	if (scalar(@nodes) > 3 and defined($nodes[3]) and not($nodes[3]->isa('RDF::Trine::Node::Nil'))) {
+		return 0;
+	}
+	
 	foreach my $i (0 .. 2) {
 		if (defined($nodes[ $i ])) {
 			push( @dkeys, $names[$i] );

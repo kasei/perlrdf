@@ -7,12 +7,12 @@ RDF::Query::Parser::SPARQL11 - SPARQL 1.1 Parser.
 
 =head1 VERSION
 
-This document describes RDF::Query::Parser::SPARQL11 version 2.912.
+This document describes RDF::Query::Parser::SPARQL11 version 2.913.
 
 =head1 SYNOPSIS
 
  use RDF::Query::Parser::SPARQL11;
- my $parser	= RDF::Query::Parse::SPARQL11->new();
+ my $parser	= RDF::Query::Parser::SPARQL11->new();
  my $iterator = $parser->parse( $query, $base_uri );
 
 =head1 DESCRIPTION
@@ -47,7 +47,7 @@ use Scalar::Util qw(blessed looks_like_number reftype);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.912';
+	$VERSION	= '2.913';
 }
 
 ######################################################################
@@ -1877,6 +1877,7 @@ sub _InlineDataClause {
 	my $parens	= 0;
 	if ($self->_test(qr/[(]/)) {
 		$self->_eat( qr/[(]/ );
+		$self->__consume_ws_opt;
 		$parens	= 1;
 	}
 	while ($self->_test(qr/[\$?]/)) {
@@ -1886,6 +1887,7 @@ sub _InlineDataClause {
 	}
 	if ($parens) {
 		$self->_eat( qr/[)]/ );
+		$self->__consume_ws_opt;
 	}
 	
 	my $count	= scalar(@vars);
@@ -2992,6 +2994,7 @@ sub _BrackettedExpression {
 sub _Aggregate {
 	my $self	= shift;
 	my $op	= uc( $self->_eat( $r_AGGREGATE_CALL ) );
+	$self->__consume_ws_opt;
 	$self->_eat('(');
 	$self->__consume_ws_opt;
 	my $distinct	= 0;

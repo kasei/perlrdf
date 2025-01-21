@@ -7,7 +7,7 @@ RDF::Query::VariableBindings - Variable bindings
 
 =head1 VERSION
 
-This document describes RDF::Query::VariableBindings version 2.912.
+This document describes RDF::Query::VariableBindings version 2.913.
 
 =head1 METHODS
 
@@ -32,7 +32,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.912';
+	$VERSION	= '2.913';
 }
 
 ######################################################################
@@ -89,6 +89,20 @@ sub explain {
 	}
 	return $string;
 }
+
+=item C<< as_hash >>
+
+Returns the variable bindings as a nested set of plain data structures (no objects).
+
+=cut
+
+sub as_hash {
+	my $self	= shift;
+	my $context	= shift;
+	my @keys	= sort keys %$self;
+	return { type => 'bindings', bindings => { map { $_ => $self->{$_}->as_hash($context) } @keys } };
+}
+
 
 1;
 
