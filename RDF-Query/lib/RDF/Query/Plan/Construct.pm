@@ -7,7 +7,7 @@ RDF::Query::Plan::Construct - Executable query plan for constructing a graph fro
 
 =head1 VERSION
 
-This document describes RDF::Query::Plan::Construct version 2.915.
+This document describes RDF::Query::Plan::Construct version 2.916.
 
 =head1 METHODS
 
@@ -31,7 +31,7 @@ use Scalar::Util qw(blessed refaddr);
 
 our ($VERSION);
 BEGIN {
-	$VERSION	= '2.915';
+	$VERSION	= '2.916';
 }
 
 ######################################################################
